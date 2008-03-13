@@ -1,0 +1,7 @@
+debug {
+      unix:LIBS += -lQtAssistantClient_debug
+      else:LIBS += -lQtAssistantClientd
+} else {
+      LIBS += -lQtAssistantClient
+}
+INCLUDEPATH = $$QMAKE_INCDIR_QT/QtAssistant $$INCLUDEPATH

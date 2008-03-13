@@ -1,0 +1,3 @@
+!contains(TEMPLATE, subdirs):!macx-xcode {
+    addExclusiveBuilds(debug, Debug, release, Release)
+}

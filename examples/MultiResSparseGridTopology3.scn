@@ -1,0 +1,22 @@
+<Node name="root"  dt="0.005" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="1" >
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="CollisionResponse" name="Response" response="default" />
+	<Object type="CollisionGroup" name="Group" />
+	<Object type="Gravity" name="the gravity" x="0" y="-10" z="0" />
+	<Node name="La barre de Fer">
+		<Object name="CGImplicit" type="CGImplicit" iterations="20"/>
+		<Object name="MechObj" type="MechanicalObject" dx="0.0" dy="0.0" dz="0.0"/>
+		<Object name="Mass" type="UniformMass" mass="1"/>
+		<Object name="GConstraint" type="BoxConstraint"
+			xmin="0" xmax="10" ymin="0" ymax="10" zmin="0" zmax="1"/>
+		<Object name="Grid" type="MultiResSparseGridTopology"
+			filevoxel="Topology/cube.voxel" resolution ="3"
+			/>
+		<Object type="SparseGridSpringForceField" name="Springs" stiffness="5000" damping="300"/>
+		<Node name="Surf">
+			<Object type="OglModel" name="Visual"
+				filename="Topology/cube.trian" color="red"/>
+			<Object name="Mapping" type="BarycentricMapping" object1="../.." object2="Visual" />
+		</Node>
+	</Node>
+</Node>

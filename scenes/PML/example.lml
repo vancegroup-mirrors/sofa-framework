@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- physical model load file -->
+<loads xmlns='http://www-timc.imag.fr/load'
+       xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+<load xsi:type="Translation">
+	<appliedTo>0-3,26-27,30-31</appliedTo>
+	<valueEvent date="0" value="1"/>
+	<direction x="NULL" y="NULL" z="NULL"/>
+	<unit>mm</unit>
+</load>
+
+</loads>

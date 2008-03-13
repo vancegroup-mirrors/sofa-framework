@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<Node name="root"  gravity="0.0 0.0 -9.8" dt="0.01" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="1">
+
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="CollisionResponse" name="Response" response="default" />
+	<Object type="NewProximityIntersection" alarmDistance="0.002" contactDistance="0.001" />
+	<Object type="CollisionGroup" name="Group" />
+
+#level 4 of the pyramide
+	<include name="Cube0_4" href="obj-cube-dist.xml" dx="-0.14 " dy="0.0" dz="0.03" color="cyan" />
+	<include name="Cube1_4" href="obj-cube-dist.xml" dx="-0.07 " dy="0.0" dz="0.03" color="cyan" />
+	<include name="Cube2_4" href="obj-cube-dist.xml" dx=" 0.0  " dy="0.0" dz="0.03" color="cyan" />
+	<include name="Cube3_4" href="obj-cube-dist.xml" dx=" 0.07 " dy="0.0" dz="0.03" color="cyan" />
+	<include name="Cube4_4" href="obj-cube-dist.xml" dx=" 0.14 " dy="0.0" dz="0.03" color="cyan" />
+
+#level 3 of the pyramide
+	<include name="Cube0_3" href="obj-cube-dist.xml" dx="-0.105" dy="0.0" dz="0.09" color="green" />
+	<include name="Cube1_3" href="obj-cube-dist.xml" dx="-0.035" dy="0.0" dz="0.09" color="green" />
+	<include name="Cube2_3" href="obj-cube-dist.xml" dx=" 0.035" dy="0.0" dz="0.09" color="green" />
+	<include name="Cube3_3" href="obj-cube-dist.xml" dx=" 0.105" dy="0.0" dz="0.09" color="green" />
+
+#level 2 of the pyramide
+	<include name="Cube0_2" href="obj-cube-dist.xml" dx="-0.070" dy="0.0" dz="0.15" color="blue" />
+	<include name="Cube1_2" href="obj-cube-dist.xml" dx=" 0.0  " dy="0.0" dz="0.15" color="blue" />
+	<include name="Cube2_2" href="obj-cube-dist.xml" dx=" 0.070" dy="0.0" dz="0.15" color="blue" />
+
+#Level 1 of the pyramide
+	<include name="Cube0_1" href="obj-cube-dist.xml" dx="-0.035" dy="0.0" dz="0.21" color="yellow" />
+	<include name="Cube1_1" href="obj-cube-dist.xml" dx=" 0.035" dy="0.0" dz="0.21" color="yellow" />
+
+#Level 0 of the pyramide
+	<include name="Cube0_0" href="obj-cube-dist.xml" dx=" 0    " dy="0.0" dz="0.27" color="red" />
+
+	<Node name="Floor">
+		<Node name="Visu">
+			<Object type="CubeTopology" internalPoints="0" splitNormals="1"
+				nx="5" ny="5" nz="2"
+				xmin="-0.45" xmax="0.45"
+				ymin="-0.45" ymax="0.45"
+				zmin="-0.03" zmax="0.0"
+			/>
+			<Object type="MechanicalObject" />
+			<Object type="VisualModel" name="FloorV" color="gray" />
+		</Node>
+		<Node name="Surf">
+			<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="0" dz="-1"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+		</Node>
+		<Node name="Surf">
+			<Object type="MechanicalObject"  template="Rigid"   dx="-1.45" dy="0" dz="0.5"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+		</Node>
+		<Node name="Surf">
+			<Object type="MechanicalObject"  template="Rigid"   dx="1.45" dy="0" dz="0.5"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+		</Node>
+		<Node name="Surf">
+			<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="-1.45" dz="0.5"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+		</Node>
+		<Node name="Surf">
+			<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="1.45" dz="0.5"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+		</Node>
+
+	</Node>
+
+</Node>

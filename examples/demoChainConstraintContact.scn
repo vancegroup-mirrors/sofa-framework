@@ -1,0 +1,36 @@
+<Node name="root"  dt="0.01" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0">
+	<Object type="MasterContactSolver"/>   
+	<Object type="CollisionPipeline" depth="6" verbose="0" draw="0"/>
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="VoxelGridDetection" name="Voxel" min="-15" max="15" miny="-5"  n="4" draw="0" />
+	<Object type="MinProximityIntersection" name="Proximity" usePointPoint="0" alarmDistance="2.0" contactDistance="1.0"/>
+	<Object type="CollisionResponse" name="Response" contact="default" response="FrictionContact"/>
+	<Object type="CollisionGroup" name="Group" />
+		
+	<Node name="Torus1">
+		<Object type="Mesh" filename="CollisionModels/torus2_for_collision.obj"/>
+		<Object type="MechanicalObject" scale="5.0"/>
+		<Object type="Triangle" static="1"/>
+	<!--	<Object type="Line" static="1" /> -->
+		<Object type="Point" static="1"/>
+		<Object type="OglModel" name="Visual" filename="VisualModels/torus2.obj" color="red" scale="5.0"/>
+	</Node>
+	
+	 <Node name="Torus2">
+		<Object type="ComplianceEuler"/>
+		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-12" dy="0"/>
+		<Object type="UniformMass" filename="BehaviorModels/torus.rigid" mass="500.0"/>
+		<Node name="Visual">
+			<Object type="OglModel" name="Visual" filename="VisualModels/torus.obj" color="white" scale="5.0"/>
+			<Object type="RigidMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="Collision">
+			<Object type="Mesh" filename="CollisionModels/torus_for_collision.obj"/>
+			<Object type="MechanicalObject" scale="5.0"/>
+			<Object type="Triangle" />	
+		<!--	<Object type="Line"  />	-->
+			<Object type="Point" />
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+</Node>

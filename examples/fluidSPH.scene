@@ -1,0 +1,72 @@
+<scene formatVersion="">
+    <environment>
+        <!--<colourBackground r="0.22" g="0.22" b="0.275" a="0" />-->
+        <colourAmbient r="0.1" g="0.1" b="0.1" />
+        <fog mode="exp2" expDensity="0.015">
+<!--            <colourDiffuse r="0.22" g="0.22" b="0.275" a="0" />-->
+            <colourDiffuse r="0" g="0" b="0" a="0" />
+        </fog>
+    </environment>
+    <nodes>
+<!--
+        <node name="Robot" id="3">
+            <position x="0" y="0" z="0" />
+            <scale x="1" y="1" z="1" />
+            <entity name="Robot" meshFile="robot.mesh" static="false" />
+        </node>
+-->
+        <node name="Plane01" id="4">
+            <position x="0.0" y="0" z="0" />
+            <scale x="1" y="1" z="1" />
+            <plane name="Plane01" distance="4" width="100" height="100" xSegments="40" ySegments="40" uTile="4" vTile="4" material="Examples/Rocky">
+                <normal x="0.5" y="1" z="0.1" />
+                <upVector x="0" y="0" z="1" />
+            </plane>
+        </node>
+<!--
+		<Object type="PlaneForceField" normal="1 0 0" d="-4"/>
+		<Object type="PlaneForceField" normal="-1 0 0" d="-4"/>
+		<Object type="PlaneForceField" normal="0.5 1 0.1" d="-4"/>
+		<Object type="PlaneForceField" normal="0 0 1" d="-4"/>
+		<Object type="PlaneForceField" normal="0 0 -1" d="-4"/>
+-->
+		<!--
+        <node name="Plane02" id="4">
+            <position x="0.0" y="0" z="0" />
+            <rotation angleX="180" angleY="0" angleZ="0" />
+            <scale x="1" y="1" z="1" />
+            <plane name="Plane02" distance="20" width="100" height="100" xSegments="10" ySegments="10" material="Examples/Rocky">
+                <normal x="0" y="1" z="0" />
+                <upVector x="0" y="0" z="1" />
+            </plane>
+        </node>
+        -->
+        <node name="Omni01">
+            <position x="-5" y="25" z="-9" />
+            <light name="Omni01" type="omni" castShadows="false">
+                <colourDiffuse r="0.4" g="0.4" b="0.4" />
+                <colourSpecular r="0.5" g="0.5" b="0.5" />
+            </light>
+        </node>
+        <node name="Spot01" id="5">
+            <position x="11" y="25" z="9" />
+            <lookTarget>
+                <position x="0" y="0" z="0" />
+                <localDirection x="0" y="0" z="1" />
+            </lookTarget>
+            <light name="Spot01" type="spot" intensity="1" contrast="0">
+                <colourDiffuse r="0.7" g="0.7" b="1.0" />
+                <colourSpecular r="0.95" g="0.95" b="0.95" />
+                <lightRange inner="30" outer="50" />
+            </light>
+        </node>
+    </nodes>
+    <camera name="Cam01">
+        <clipping near="0.5" far="200"/>
+        <position x="10" y="8" z="15" />
+            <lookTarget>
+                <position x="0" y="-2" z="0" />
+            </lookTarget>
+<!--        <rotation angleX="-20" angleY="0" angleZ="0" /> -->
+    </camera>
+</scene>

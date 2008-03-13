@@ -1,0 +1,41 @@
+<Node name="root"  dt="0.02" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="CollisionResponse" name="Response" response="default" />
+	<Object type="CollisionGroup" name="Group" />
+	<Node name="Dragon1">
+		<Object type="CGImplicit" iterations="100"/>
+		<Object type="MechanicalObject" dz="-10"/>
+		<Object type="UniformMass" mass="0.5"/>
+		<Object type="TrimmedRegularGrid"
+			nx="7" ny="5" nz="4"
+			xmin="-10" xmax="10"
+			ymin="-7.5" ymax="7.5"
+			zmin="-5" zmax="5"
+		/>
+		<Object type="RegularGridSpringForceField" name="Springs" stiffness="500" damping="10" />
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" filename="VisualModels/dragon.obj" color="yellow" />
+			<Object type="BarycentricMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="Surf">
+			<Object type="Sphere" filename="CollisionModels/dragon.sph" />
+			<Object type="BarycentricMapping"  />
+		</Node>
+	</Node>
+	<Node name="Dragon2">
+		<Object type="CGImplicit" iterations="100"/>
+		<Object type="MechanicalObject" template="Rigid" dz="10"/>
+		<Object type="UniformMass" mass="100"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" filename="VisualModels/dragon.obj" color="gray" />
+			<Object type="RigidMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="Surf">
+			<Object type="Sphere" filename="CollisionModels/dragon.sph" />
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+	<Object type="Sphere" name="Floor" filename="CollisionModels/floor.sph" static="1" dy="-20" />
+	<Object type="OglModel" name="FloorV" filename="VisualModels/floor.obj" texturename="VisualModels/floor2.bmp" scaleTex="0.25" dy="-20" />
+</Node>

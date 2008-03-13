@@ -1,0 +1,72 @@
+<!-- Definition time-step and setting of display -->
+
+<Node name="root"  dt="0.05" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+
+	<!-- Required for collision detection -->
+	<Object type="CollisionPipeline" verbose="0" />
+	
+	<!-- Required for a MechanicalObject" template="Rigid -->
+	<Object type="TestDetection" name="TestDetection" />
+
+	<Object type="CollisionResponse" name="Response" response="default" />
+
+	<Node name="dragon1">
+		<Object type="CGImplicit" iterations="50"/>
+		<Object type="MechanicalObject" template="Rigid" dx="1" dy="3.0" dz="0.0"/>
+		<Object type="UniformMass" filename="BehaviorModels/dragon-1500.rigid" mass="100"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/floor.bmp" color="gray" />
+			<Object type="RigidMapping" object1="../.." object2="../Visual" />
+		</Node>
+		<Node name="Surf">
+			<Object type="SphereTree" filename="CollisionModels/dragon-1500-medial.sph" static="0"  />  
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+
+	<Node name="dragon2">
+		<Object type="CGImplicit" iterations="50"/>
+		<Object type="MechanicalObject" template="Rigid" dx="1" dy="2.0" dz="-1.0"/>
+		<Object type="UniformMass" filename="BehaviorModels/dragon-1500.rigid" mass="100"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/floor.bmp" color="gray" />
+			<Object type="RigidMapping" object1="../.." object2="../Visual" />
+		</Node>
+		<Node name="Surf">
+			<Object type="SphereTree" filename="CollisionModels/dragon-1500-medial.sph" static="0"  />  
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+
+	<Node name="cow1">
+		<Object type="CGImplicit" iterations="50"/>
+		<Object type="MechanicalObject" template="Rigid" dx="0" dy="4.0" dz="-1.0"/>
+		<Object type="UniformMass" filename="BehaviorModels/cow-1500.rigid" mass="100"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" filename="VisualModels/cow-1500.obj" texturename="VisualModels/FIFA2.bmp" color="gray" />
+			<Object type="RigidMapping" object1="../.." object2="../Visual" />
+		</Node>
+		<Node name="Surf">
+			<Object type="SphereTree" filename="CollisionModels/cow-1500.sph" static="0"  />  
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+	
+	
+
+	<!-- Definition of static models -->
+
+	<Object type="SphereTree" name="dragon3" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="1" dy="-1" dz="0"/>
+	<Object type="OglModel" name="dragon3" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="1" dy="-1" dz="0"/>
+
+	<Object type="SphereTree" name="dragon4" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="0" dy="-1" dz="-1"/>
+	<Object type="OglModel" name="dragon4" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="0" dy="-1" dz="-1"/>
+
+	<Object type="SphereTree" name="dragon5" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="1" dy="-1" dz="1"/>
+	<Object type="OglModel" name="dragon5" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="1" dy="-1" dz="1"/>
+
+	<Object type="SphereTree" name="dragon6" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="1" dy="-1" dz="-1"/>
+	<Object type="OglModel" name="dragon6" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="1" dy="-1" dz="-1"/>
+
+
+</Node>

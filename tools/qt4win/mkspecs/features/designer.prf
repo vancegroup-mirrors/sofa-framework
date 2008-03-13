@@ -1,0 +1,16 @@
+QT += xml
+qt:load(qt)
+
+# Include the correct version of the designer library
+CONFIG(debug, debug|release) {
+    unix: LIBS += -lQtDesigner_debug
+    else: LIBS += -lQtDesignerd
+} else {
+    LIBS += -lQtDesigner
+}
+
+plugin {
+    DEFINES += QDESIGNER_EXPORT_WIDGETS
+}
+
+INCLUDEPATH = $$QMAKE_INCDIR_QT/QtDesigner $$INCLUDEPATH

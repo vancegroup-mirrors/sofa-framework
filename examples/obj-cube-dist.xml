@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<Node name="Cube">
+	<Object type="CGImplicit"  iterations="10" tolerance="1e-5" threshold="1e-5" vdamping="0"/>
+	<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="0" dz="0"/>
+
+	<Object type="UniformMass" template="Rigid" mass="20 0.000216 0.0006 0.0 0.0 0.0 0.0006 0.0 0.0 0.0 0.0006"/>
+
+	<Node name="Visu">
+		<Object type="CubeTopology" internalPoints="0" splitNormals="1"
+			nx="5" ny="5" nz="5"
+			min="-0.03" max="0.03"
+		/>
+		<Object type="VisualModel" name="Visual" color="white" />
+		<Object type="IdentityMapping" object1="../.." object2="Visual" />
+	</Node>
+<!--
+	<Node name="Surf">
+		<Object type="CubeTopology" internalPoints="0"
+			nx="4" ny="4" nz="4"
+			min="-0.0250" max="0.0250"
+		/>
+		<Object type="MechanicalObject" />
+		<Object type="Triangle"  proximity="0.0046" contactStiffness="50.0" contactFriction="0.25"/>
+		<Object type="RigidMapping" />
+	</Node>
+-->
+	<!--	<Object type="DistanceGrid" filename="VisualModels/smCube125.obj" scale="0.00857142857" usePoints="1" proximity="0.0" contactStiffness="10.0" contactFriction="0.0"/> -->
+	<Object type="DistanceGrid" filename="#cube" nx="128" ny="128" nz="128" scale="0.03" usePoints="1" proximity="0.0" contactStiffness="10.0" contactFriction="0.0"/>
+</Node>

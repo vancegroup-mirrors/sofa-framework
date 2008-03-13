@@ -1,0 +1,18 @@
+<Node name="root"  dt="0.02" showBehaviorModels="1" showCollisionModels="1" showMappings="1" showForceFields="1" showBoundingCollisionModels="0">
+  <Object type="CollisionPipeline" verbose="0" />
+  <Object type="BruteForceDetection" name="N2" />
+  <Object type="CollisionResponse" name="Response" response="default" />
+  <Object type="CollisionGroup" name="Group" />
+  <Node name="cubeFEM">
+    <Object type="CGImplicit" iterations="25"/>
+    <Object type="MechanicalObject"/>
+    <Object type="EdgeSetTopology" filename="BehaviorModels/smCube27.xs3"/>
+    <Object type="DiagonalMass" massDensity="1.0"/>
+    <Object type="SpringEdgeDataForceField" name="Springs" filename="BehaviorModels/smCube27.xs3"/>
+    <Object type="FixedConstraint" indices="0 3 6 9 12 15 18 21 24"/>
+    <Node name="Surf">
+      <Object type="Sphere" filename="CollisionModels/smCube27b.sph"/>
+      <Object type="IdentityMapping" />
+    </Node>
+  </Node>
+</Node>

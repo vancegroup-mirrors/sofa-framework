@@ -1,0 +1,15 @@
+<Node name="root" dt="0.004" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+	<Node name="M1">
+		<Object type="RungeKutta4" />
+		<Object type="MechanicalObject" />
+		<Object type="UniformMass" totalmass="400" />
+		<Object type="RegularGrid"
+			nx="6" ny="6" nz="26"
+			xmin="0" xmax="3"
+			ymin="0" ymax="3"
+			zmin="0" zmax="15"
+		/>
+		<Object type="FixedConstraint" indices="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35" />
+		<Object type="RegularGridSpringForceField" stiffness="4200" />
+	</Node>
+</Node>

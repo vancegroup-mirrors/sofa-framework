@@ -1,0 +1,26 @@
+<!-- Mechanical MassSpring Group Basic Example -->
+<Node name="root" dt="0.05" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0" showBoundingTree="0" gravity="0 0 0">
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="CollisionResponse" response="default" />
+	<Object type="ProximityIntersection" name="Proximity" alarmDistance="0.8" contactDistance="0.5" />
+	<Object type="CollisionGroup" />
+	<Node name="SquareGravity">
+<!--		<Object type="CGImplicit" iterations="40" tolerance="1e-6" threshold="1e-10" rayleighStiffness="0.5"/> -->
+<!--		<Object type="Euler" /> -->
+		<Object type="StaticSolver" iterations="140" /> 
+		<Object type="MechanicalObject"  />
+		<Object type="TetrahedronSetTopology" filename="Topology/cylinder.msh" scale="1"/>
+		<Object type="DiagonalMass" massDensity="0.5" />
+		<Object type="FixedPlaneConstraint" direction="0 0 1" dmin="-0.1" dmax="0.1"/>
+		<Object type="FixedConstraint" indices="0" />
+		<Object type="TrianglePressureForceField" normal="0 0 1" dmin="0.9" dmax="1.1" pressure="0.4 0 0"/>
+<!--		<Object type="TetrahedralTensorMassForceField" name="FEM" youngModulus="10" poissonRatio="0.3" /> -->
+		<Object type="TetrahedralBiquadraticSpringsForceField" name="FEM" youngModulus="10" poissonRatio="0.45" />
+		<Object type="Gravity" gravity="0 0 0"/>
+		<Object type="Triangle"/>
+		<Object type="OglModel" name="Visual" color="red"/>
+		<Object type="IdentityMapping" object1=".." object2="Visual"/>
+	</Node>
+</Node>
+

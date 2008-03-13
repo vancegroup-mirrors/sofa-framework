@@ -1,0 +1,64 @@
+ <Node name="root"  dt="0.01" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="0">
+	<Object type="CollisionPipeline" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="MinProximityIntersection" name="Proximity" alarmDistance="0.7" contactDistance="0.5" />
+	<Object type="CollisionResponse" name="Response" response="default" />
+	<Node name="Sofa">
+		<Object type="CGImplicit" iterations="10"/>
+		<Object type="MechanicalObject" template="Rigid"/>
+		<Object type="UniformMass" totalmass="25" />
+		<Node name="VM">
+			<Object type="OglModel" name="Visual" filename="TUTO/canapVM.obj" color="0.77 0.24 0.01" />
+			<Object type="RigidMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="CM">
+			<Object type="Mesh" filename="TUTO/canapCM.obj" />
+			<Object type="MechanicalObject"/>
+			<Object type="Triangle" />
+			<Object type="Line" />
+			<Object type="Point" />
+			<Object type="RigidMapping" object1="../.." object2="CM"/>
+		</Node>
+	</Node>
+	<Node name="SofaText">
+		<Object type="CGImplicit" iterations="10"/>
+		<Object type="MechanicalObject" dz="0.0" dy="15.0"/>
+		<Object type="RegularGrid"
+			nx="6" ny="3" nz="3"
+			xmin="-10" xmax="10"
+			ymin="-5" ymax="5"
+			zmin="-5" zmax="5"
+		/>
+		<Object type="UniformMass" mass="1.0"/>
+		<Object type="RegularGridSpringForceField" name="Springs" stiffness="160" damping="4" />
+		<Object type="FixedConstraint" indices="12 17 48 53"/>
+		<Node name="VM">
+			<Object type="OglModel" name="Visual" filename="TUTO/sofaTextVM.obj" color="white"/>
+			<Object type="BarycentricMapping" object1="../.." object2="Visual"/>
+		</Node>
+		<Node name="CM">
+			<Object type="Mesh" filename="TUTO/sofaTextCM.obj" />
+			<Object type="MechanicalObject"/>
+			<Object type="Triangle" />
+			<Object type="Line" />
+			<Object type="Point" />
+			<Object type="BarycentricMapping" object1="../.." object2="CM"/>
+		</Node>
+	</Node>
+	<Node name="Table">
+                    <Object type="Mesh" filename="TUTO/tableCM.obj" />
+                    <Object type="MechanicalObject" dy="-5.8" dz="12"/>
+                    <Object type="Triangle" static="1"/>
+                    <Object type="Line" static="1"/>
+                    <Object type="Point" static="1"/>
+                    <Object type="OglModel" name="Visual" filename="TUTO/tableVM.obj" color="0.77 0.24 0.01" dy="-5.8" dz="12"/>
+	</Node>	
+	<Node name="Floor">
+		<Object type="Mesh" filename="TUTO/floor.obj"/>
+		<Object type="MechanicalObject" scale="0.5" dy="-5"/>
+		<Object type="Triangle" name="Floor" static="1" />
+		<Object type="Line" name="Floor" static="1" />
+                    <Object type="Point" name="Floor" static="1" />
+		<Object type="OglModel" name="FloorV" filename="TUTO/floor.obj" texturename="TUTO/texture.bmp" scale="0.5" dy="-5"/>
+	</Node>
+</Node>

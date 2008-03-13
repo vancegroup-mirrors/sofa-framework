@@ -1,0 +1,43 @@
+<Node name="root" dt="0.02" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+	<Node name="M1">
+		<Object type="CGImplicit" iterations="25" threshold="0.0000001" />
+		<Object type="MechanicalObject" />
+		<Object type="UniformMass" mass="1" />
+		<Object type="RegularGrid"
+			nx="6" ny="6" nz="20"
+			xmin="-9" xmax="-6"
+			ymin="0" ymax="3"
+			zmin="0" zmax="19"
+		/>
+		<Object type="FixedConstraint" indices="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35" />
+		<Object type="TetrahedronFEMForceField" name="FEM" youngModulus="10000" poissonRatio="0.3" method="polar" />
+	</Node>
+	<Node name="M2">
+		<Object type="CGImplicit" iterations="25" threshold="0.0000001" />
+		<Object type="MechanicalObject" />
+		<Object type="UniformMass" mass="1" />
+		<Object type="RegularGrid"
+			nx="6" ny="6" nz="20"
+			xmin="0" xmax="3"
+			ymin="0" ymax="3"
+			zmin="0" zmax="19"
+		/>
+		<Object type="FixedConstraint" indices="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35" />
+		<Object type="TetrahedronFEMForceField" name="FEM" youngModulus="10000" poissonRatio="0.3" method="large" />
+	</Node>
+<!--
+	<Node name="M3">
+		<Object type="CGImplicit" iterations="25" threshold="0.0000001" />
+		<Object type="MechanicalObject" />
+		<Object type="UniformMass" mass="1" />
+		<Object type="RegularGrid"
+			nx="6" ny="6" nz="20"
+			xmin="9" xmax="12"
+			ymin="0" ymax="3"
+			zmin="0" zmax="19"
+		/>
+		<Object type="FixedConstraint" indices="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35" />
+		<Object type="TetrahedronFEMForceField" name="FEM" youngModulus="10000" poissonRatio="0.3" method="small" />
+	</Node>
+-->
+</Node>

@@ -1,0 +1,17 @@
+
+//Material used by default if no color has been specified
+material Sofa/Default
+{
+	technique
+	{
+		pass
+		{	
+			cull_hardware none
+			texture_unit Sofa_Default
+			{						
+				texture Sofa_Default.bmp
+			}
+		   
+  		}
+	}
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+	<Node name="Ball">
+		<Object type="CGImplicit" iterations="25" />
+                <Object type="DampVelocity" rate="0.1" printLog="0" name="damp"/>
+		<Object type="MechanicalObject"  dy="0.0" dx="0.0" dz="0.0"/>
+
+		<Object type="UniformMass" mass="0.5"/>
+		<Object type="RegularGrid"
+			nx="2" ny="2" nz="2"
+			ymin="-0.150" ymax="0.150"
+			xmin="-0.150" xmax="0.150"
+			zmin="-0.15" zmax="0.150"
+			/>
+
+		<Object type="RegularGridSpringForceField" name="Springs" stiffness="800" damping="8" />
+
+		<Node name="Surf">
+			<Object type="Sphere" filename="Ball_small.sph" scale="2.0" />
+			<Object type="BarycentricMapping" />
+
+
+		</Node>
+
+		<Node name="Visu">
+			<Object type="VisualModel" name="Visual" filename="sphere.obj" scale="0.15"  color="green" />
+			<Object type="BarycentricMapping" object1="../.." object2="Visual" />
+		</Node>
+
+
+
+	</Node>

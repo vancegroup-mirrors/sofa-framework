@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<Node name="Cube">
+	<Object type="CGImplicit"  iterations="20" rayleighStiffness="0" rayleighMass="0" tolerance="1e-8" threshold="1e-8" />
+
+	<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="0" dz="0"/>
+
+	<Object type="UniformMass" template="Rigid" mass="2 0.000216 0.0006 0.0 0.0 0.0 0.0006 0.0 0.0 0.0 0.0006"/>
+
+
+	<Node name="Visu">
+		<Object type="VisualModel" filename="CubeFish.obj" scale="2"  name="Visual" color="blue" />
+		<Object type="IdentityMapping" object1="../.." object2="Visual" />
+	</Node>
+	<Object type="DistanceGrid" filename="#cube" nx="128" ny="128" nz="128" scale="0.0295" usePoints="1" proximity="0.0" contactStiffness="5" contactFriction="0.0"/>
+</Node>

@@ -1,0 +1,10 @@
+<Node name="root" dt="0.02" showBehaviorModels="1" showForceFields="1">
+   <Node name="mass-spring system">
+      <Object type="MechanicalObject" name="massSpring" position="0 0 0  1 0 0" velocity="0 0 0  0 1 0"/>
+      <Object type="FixedConstraint" name="FixedConstraint" indices="0" />
+      <Object type="UniformMass" name="totalMass" mass="1"/>
+      <Object type="StiffSpringForceField" name="Spring" spring="0 1 10. 0. 1." />
+      <Object type="Gravity" gravity="0.0 0.0 0.0"/>
+      <Object type="Euler" symplectic="1"/>
+   </Node>
+</Node>

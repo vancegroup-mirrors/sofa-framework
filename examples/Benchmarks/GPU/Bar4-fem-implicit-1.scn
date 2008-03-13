@@ -1,0 +1,25 @@
+<Node name="root" dt="0.008" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="CollisionResponse" name="Response" />
+	<Object type="CudaProximityIntersection" alarmDistance="0.002" contactDistance="0.001" />
+
+	<Node name="M1">
+		<Object type="CGImplicit" iterations="25" rayleighStiffness="0" rayleighMass="0" />
+		<Object type="MechanicalObject" template="CudaVec3f" />
+		<Object type="UniformMass" totalmass="400" />
+		<Object type="RegularGrid"
+			nx="4" ny="4" nz="19"
+			xmin="0" xmax="3"
+			ymin="0" ymax="3"
+			zmin="0" zmax="15"
+		/>
+		<Object type="FixedConstraint" indices="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15" />
+		<Object type="TetrahedronFEMForceField" name="FEM" youngModulus="4000" poissonRatio="0.3" method="large" />
+		<Node name="M1">
+			<Object type="SphereModel" template="CudaVec3f" radius="1.0" position="1.5 1.5 15" />
+			<Object type="BarycentricMapping" />
+		</Node>
+	</Node>
+</Node>

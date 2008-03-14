@@ -46,19 +46,16 @@ namespace collision
 class ProximityIntersection : public DiscreteIntersection
 {
 public:
-    DataField<bool> useTriangleTriangle;
-    DataField<bool> useLineTriangle;
-    DataField<bool> usePointTriangle;
-    DataField<bool> useSphereTriangle;
-    DataField<double> alarmDistance;
-    DataField<double> contactDistance;
+    Data<bool> useTriangleTriangle;
+    Data<bool> useLineTriangle;
+    Data<bool> usePointTriangle;
+    Data<bool> useSphereTriangle;
+    Data<double> alarmDistance;
+    Data<double> contactDistance;
 
     ProximityIntersection();
 
     virtual void init();
-
-    /// Return the intersector class handling the given pair of collision models, or NULL if not supported.
-    virtual core::componentmodel::collision::ElementIntersector* findIntersector(core::CollisionModel* object1, core::CollisionModel* object2);
 
     /// returns true if algorithm uses continous detection
     virtual bool useProximity() const { return true; }
@@ -73,21 +70,21 @@ public:
 
     bool testIntersection(Cube& ,Cube&);
     bool testIntersection(Sphere & ,Sphere &);
-    bool testIntersection(Sphere &, Triangle &);
-    bool testIntersection(Triangle& ,Triangle&);
-    bool testIntersection(Line& ,Triangle&);
-    bool testIntersection(Point& ,Triangle&);
-    bool testIntersection(Sphere & ,Ray &);
+    bool testIntersection(Triangle&, Sphere&);
+    bool testIntersection(Triangle&, Triangle&);
+    bool testIntersection(Triangle&, Line&);
+    bool testIntersection(Triangle&, Point&);
+    bool testIntersection(Ray&, Sphere&);
     bool testIntersection(Ray & ,Triangle &);
 
     int computeIntersection(Cube&, Cube&, OutputVector*);
-    int computeIntersection(Sphere & ,Sphere &, OutputVector*);
-    int computeIntersection(Sphere & ,Ray &, OutputVector*);
-    int computeIntersection(Sphere &, Triangle &, OutputVector*);
+    int computeIntersection(Sphere& ,Sphere&, OutputVector*);
+    int computeIntersection(Triangle&, Sphere&, OutputVector*);
     int computeIntersection(Triangle& ,Triangle&, OutputVector*);
-    int computeIntersection(Line& ,Triangle&, OutputVector*);
-    int computeIntersection(Point& ,Triangle&, OutputVector*);
-    int computeIntersection(Ray & ,Triangle &, OutputVector*);
+    int computeIntersection(Triangle&, Line&, OutputVector*);
+    int computeIntersection(Triangle&, Point&, OutputVector*);
+    int computeIntersection(Ray&, Sphere&, OutputVector*);
+    int computeIntersection(Ray& ,Triangle&, OutputVector*);
 };
 
 } // namespace collision

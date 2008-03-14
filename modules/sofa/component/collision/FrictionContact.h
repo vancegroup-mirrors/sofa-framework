@@ -19,9 +19,36 @@ namespace collision
 
 using namespace sofa::defaulttype;
 
+class Identifier
+{
+public:
+	Identifier()
+	{
+		if (!availableId.empty())
+		{
+			id = availableId.front();
+			availableId.pop_front();
+		}
+		else
+			id = cpt++;
+
+	//	std::cout << id << std::endl;
+	}
+
+	virtual ~Identifier()
+	{
+		availableId.push_back(id);
+	}
+
+protected:
+	static unsigned int cpt;
+	unsigned int id;
+	static std::list<unsigned int> availableId;
+};
+
 
 template <class TCollisionModel1, class TCollisionModel2>
-class FrictionContact : public core::componentmodel::collision::Contact
+class FrictionContact : public core::componentmodel::collision::Contact, public Identifier
 {
 public:
 	typedef TCollisionModel1 CollisionModel1;
@@ -54,6 +81,8 @@ public:
 	FrictionContact(CollisionModel1* model1, CollisionModel2* model2, Intersection* intersectionMethod);
 	virtual ~FrictionContact();
 
+	void cleanup();
+
 	std::pair<core::CollisionModel*,core::CollisionModel*> getCollisionModels() { return std::make_pair(model1,model2); }
 
 	void setDetectionOutputs(OutputVector* outputs);
@@ -62,6 +91,12 @@ public:
 
 	void removeResponse();
 };
+
+long cantorPolynomia(unsigned long x, unsigned long y)
+{
+	// Polynome de Cantor de N² sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
+	return ((x+y)*(x+y)+3*x+y)/2;
+}
 
 } // collision
 

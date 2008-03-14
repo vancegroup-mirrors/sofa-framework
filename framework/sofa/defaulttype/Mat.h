@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <sofa/helper/static_assert.h>
 
+
 namespace sofa
 {
 
@@ -36,9 +37,9 @@ namespace defaulttype
 {
 
 template <int L, int C, class real=float>
-class Mat : public helper::fixed_array<Vec<C,real>,L>
+class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
         //class Mat : public Vec<L,Vec<C,real> >
-        {
+{
  public:
 
   enum { N = L*C };
@@ -47,9 +48,14 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   typedef Vec<C,real> Line;
   typedef Vec<L,real> Col;
 
-  Mat()
-  {
-  }
+    Mat()
+    {
+	clear();
+    }
+
+    explicit Mat(NoInit)
+    {
+    }
 
 /*
   /// Specific constructor with a single line.
@@ -267,7 +273,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Return the transpose of m.
   Mat<C,L,real> transposed() const
   {
-    Mat<C,L,real> m;
+    Mat<C,L,real> m(NOINIT);
     for (int i=0;i<L;i++)
       for (int j=0;j<C;j++)
         m[j][i]=this->elems[i][j];
@@ -308,7 +314,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
 	{
 		for (int i=0;i<L;i++)
 			for (int j=i+1;j<C;j++)
-				if( this->elems[i][j] !=  this->elems[j][i] ) return false;
+				if( fabs( this->elems[i][j] - this->elems[j][i] ) > EQUALITY_THRESHOLD ) return false;
 	   return true;
 	}
 
@@ -321,7 +327,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   template <int P>
   Mat<L,P,real> operator*(const Mat<C,P,real>& m) const
   {
-    Mat<L,P,real> r;
+    Mat<L,P,real> r(NOINIT);
     for(int i=0;i<L;i++)
       for(int j=0;j<P;j++)
       {
@@ -335,7 +341,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Matrix addition operator.
   Mat<L,C,real> operator+(const Mat<L,C,real>& m) const
   {
-    Mat r;
+    Mat<L,C,real> r(NOINIT);
     for(int i = 0; i < L; i++)
       r[i] = (*this)[i] + m[i];
     return r;
@@ -344,7 +350,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Matrix subtraction operator.
   Mat<L,C,real> operator-(const Mat<L,C,real>& m) const
   {
-    Mat r;
+    Mat<L,C,real> r(NOINIT);
     for(int i = 0; i < L; i++)
       r[i] = (*this)[i] - m[i];
     return r;
@@ -353,7 +359,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Multiplication operator Matrix * Line.
   Col operator*(const Line& v) const
   {
-    Col r;
+    Col r(NOINIT);
     for(int i=0;i<L;i++)
     {
       r[i]=(*this)[i][0] * v[0];
@@ -366,7 +372,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Multiplication of the transposed Matrix * Column
   Line multTranspose(const Col& v) const
   {
-      Line r;
+      Line r(NOINIT);
       for(int i=0;i<C;i++)
       {
           r[i]=(*this)[0][i] * v[0];
@@ -381,7 +387,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   template <int P>
   Mat<C,P,real> multTranspose(const Mat<L,P,real>& m) const
   {
-    Mat<C,P,real> r;
+    Mat<C,P,real> r(NOINIT);
     for(int i=0;i<C;i++)
       for(int j=0;j<P;j++)
       {
@@ -396,7 +402,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Scalar multiplication operator.
   Mat<L,C,real> operator*(real f) const
   {
-    Mat<L,C,real> r;
+    Mat<L,C,real> r(NOINIT);
     for(int i=0;i<L;i++)
       for(int j=0;j<C;j++)
 	r[i][j] = (*this)[i][j] * f;
@@ -406,7 +412,7 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
   /// Scalar division operator.
   Mat<L,C,real> operator/(real f) const
   {
-	  Mat<L,C,real> r;
+    Mat<L,C,real> r(NOINIT);
 	  for(int i=0;i<L;i++)
 		  for(int j=0;j<C;j++)
 			  r[i][j] = (*this)[i][j] / f;
@@ -465,6 +471,29 @@ class Mat : public helper::fixed_array<Vec<C,real>,L>
     return invertMatrix(*this, m);
   }
 
+};
+
+/// Same as Mat except the values are not initialized by default
+template <int L, int C, typename real=float>
+class MatNoInit : public Mat<L,C,real>
+{
+public:
+    MatNoInit()
+    : Mat<L,C,real>(NOINIT)
+    {
+    }
+
+    /// Assignment from an array of elements (stored per line).
+    void operator=(const real* p)
+    {
+	this->Mat<L,C,real>::operator=(p);
+    }
+
+    /// Assignment from another matrix
+    template<int L2, int C2, typename real2> void operator=(const Mat<L2,C2,real2>& m)
+    {
+	this->Mat<L,C,real>::operator=(m);
+    }
 };
 
 /// Determinant of a 3x3 matrix.
@@ -750,7 +779,7 @@ template< int n, typename Real>
 template <int L, int C, typename T>
 inline Mat<L,C,T> dyad( const Vec<L,T>& u, const Vec<C,T>& v )
 {
-    Mat<L,C,T> res;
+    Mat<L,C,T> res(NOINIT);
     for( int i=0; i<L; i++ )
         for( int j=0; j<C; j++ )
             res[i][j] = u[i]*v[j];

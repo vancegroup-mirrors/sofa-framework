@@ -52,11 +52,22 @@ GNode::GNode(const std::string& name, GNode* parent)
 	totalTime.tTree = 0;
 	setName(name);
 	if( parent )
-		parent->addChild(this);
+		parent->addChild(this);		
 }
 
 GNode::~GNode()
 {}
+
+/// Update the parameters of the GNode
+void GNode::reinit()
+{
+  GNode *context = static_cast<GNode *>(getContext());
+  for (GNode::ChildIterator it= context->child.begin(); it != context->child.end(); ++it)
+  { 
+     (*it)->is_activated.setValue(is_activated.getValue());
+     (*it)->reinit();
+  } 
+}
 
 /// Add a child node
 void GNode::doAddChild(GNode* node)
@@ -140,6 +151,161 @@ const core::objectmodel::BaseContext* GNode::getContext() const
 	return this;
 }
 
+
+/// Generic object access, possibly searching up or down from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, SearchDirection dir) const
+{
+	if (dir == SearchRoot)
+	{
+		if (parent != NULL) return parent->getObject(class_info, dir);
+		else dir = SearchDown; // we are the root, search down from here.
+	}
+    void *result = NULL;
+    for (ObjectIterator it = this->object.begin(); it != this->object.end(); ++it)
+    {
+	result = class_info.dynamicCast(*it);
+	if (result != NULL) break;
+    }
+    if (result == NULL)
+    {
+	switch(dir)
+	{
+	case Local:
+	    break;
+	case SearchUp:
+	    if (parent) result = parent->getObject(class_info, dir);
+	    break;
+	case SearchDown:
+            for(ChildIterator it = child.begin(); it != child.end(); ++it)
+	    {
+		result = (*it)->getObject(class_info, dir);
+		if (result != NULL) break;
+            }
+	    break;
+	case SearchRoot:
+		std::cerr << "SearchRoot SHOULD NOT BE POSSIBLE HERE!\n";
+		break;
+	}
+    }
+    return result;
+}
+
+/// Generic object access, given a path from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, const std::string& path) const
+{
+	if (path.empty())
+	{
+		return getObject(class_info, Local);
+	}
+	else if (path[0] == '/')
+	{
+		if (parent) return parent->getObject(class_info, path);
+		else return getObject(class_info,std::string(path,1));
+	}
+	else if (std::string(path,0,2)==std::string("./"))
+	{
+		std::string newpath = std::string(path, 2);
+		while (!newpath.empty() && path[0] == '/')
+			newpath.erase(0);
+		return getObject(newpath);
+	}
+	else if (std::string(path,0,3)==std::string("../"))
+	{
+		std::string newpath = std::string(path, 3);
+		while (!newpath.empty() && path[0] == '/')
+			newpath.erase(0);
+		if (parent) return parent->getObject(newpath);
+		else return getObject(newpath);
+	}
+	else
+	{
+		std::string::size_type pend = path.find('/');
+		if (pend == std::string::npos) pend = path.length();
+		std::string name ( path, 0, pend );
+		GNode* child = getChild(name);
+		if (child)
+		{
+			while (pend < path.length() && path[pend] == '/')
+				++pend;
+			return child->getObject(class_info, std::string(path, pend));
+		}
+		else if (pend < path.length())
+		{
+			std::cerr << "ERROR: child node "<<name<<" not found in "<<getPathName()<<std::endl;
+			return NULL;
+		}
+		else
+		{
+			core::objectmodel::BaseObject* obj = getObject(name);
+			if (obj == NULL)
+			{
+				std::cerr << "ERROR: object "<<name<<" not found in "<<getPathName()<<std::endl;
+				return NULL;
+			}
+			else
+			{
+				void* result = class_info.dynamicCast(obj);
+				if (result == NULL)
+				{
+					std::cerr << "ERROR: object "<<name<<" in "<<getPathName()<<" does not implement class "<<class_info.name()<<std::endl;
+					return NULL;
+				}
+				else
+				{
+					return result;
+				}
+			}
+		}
+	}
+}
+
+
+/// Generic list of objects access, possibly searching up or down from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void GNode::getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir) const
+{
+	if (dir == SearchRoot)
+	{
+		if (parent != NULL)
+		{
+			parent->getObjects(class_info, container, dir);
+			return;
+		}
+		else dir = SearchDown; // we are the root, search down from here.
+	}
+    for (ObjectIterator it = this->object.begin(); it != this->object.end(); ++it)
+    {
+	void* result = class_info.dynamicCast(*it);
+	if (result != NULL)
+	    container(result);
+    }
+
+    {
+	switch(dir)
+	{
+	case Local:
+	    break;
+	case SearchUp:
+	    if (parent) parent->getObjects(class_info, container, dir);
+	    break;
+	case SearchDown:
+            for(ChildIterator it = child.begin(); it != child.end(); ++it)
+	    {
+		(*it)->getObjects(class_info, container, dir);
+            }
+	    break;
+	case SearchRoot:
+		std::cerr << "SearchRoot SHOULD NOT BE POSSIBLE HERE!\n";
+		break;
+	}
+    }
+}
+
 /// Mechanical Degrees-of-Freedom
 core::objectmodel::BaseObject* GNode::getMechanicalState() const
 {
@@ -185,6 +351,17 @@ core::objectmodel::BaseObject* GNode::getMainTopology() const
         return NULL;
 }
 
+/// Shader
+core::objectmodel::BaseObject* GNode::getShader() const
+{
+    if (shader)
+        return shader;
+    else if (parent)
+        return parent->getShader();
+    else
+        return NULL;
+}
+
 /// Add an object. Detect the implemented interfaces and add the object to the corresponding lists.
 bool GNode::addObject(BaseObject* obj)
 {
@@ -215,6 +392,7 @@ void GNode::doAddObject(BaseObject* obj)
 	mass.add(dynamic_cast< core::componentmodel::behavior::BaseMass* >(obj));
 	topology.add(dynamic_cast< core::componentmodel::topology::Topology* >(obj));
 	basicTopology.add(dynamic_cast< core::componentmodel::topology::BaseTopology* >(obj));
+	shader.add(dynamic_cast< sofa::core::Shader* >(obj));
 
 	if (!interactionForceField.add(dynamic_cast< core::componentmodel::behavior::InteractionForceField* >(obj)))
 		forceField.add(dynamic_cast< core::componentmodel::behavior::BaseForceField* >(obj));
@@ -241,6 +419,7 @@ void GNode::doRemoveObject(BaseObject* obj)
 	mass.remove(dynamic_cast< core::componentmodel::behavior::BaseMass* >(obj));
 	topology.remove(dynamic_cast< core::componentmodel::topology::Topology* >(obj));
 	basicTopology.remove(dynamic_cast< core::componentmodel::topology::BaseTopology* >(obj));
+	shader.remove(dynamic_cast<sofa::core::Shader* >(obj));
 
 	forceField.remove(dynamic_cast< core::componentmodel::behavior::BaseForceField* >(obj));
 	interactionForceField.remove(dynamic_cast< core::componentmodel::behavior::InteractionForceField* >(obj));
@@ -262,12 +441,42 @@ void GNode::doRemoveObject(BaseObject* obj)
 	}
 }
 
+void GNode::initVisualContext()
+{
+  if (getParent() != NULL)
+  {
+    if (showVisualModels_.getValue() == -1)            showVisualModels_.setValue(static_cast<GNode *>(getParent())->showVisualModels_.getValue());
+    if (showBehaviorModels_.getValue() == -1)          showBehaviorModels_.setValue(static_cast<GNode *>(getParent())->showBehaviorModels_.getValue());
+    if (showCollisionModels_.getValue() == -1)         showCollisionModels_.setValue(static_cast<GNode *>(getParent())->showCollisionModels_.getValue());
+    if (showBoundingCollisionModels_.getValue() == -1) showBoundingCollisionModels_.setValue(static_cast<GNode *>(getParent())->showBoundingCollisionModels_.getValue());
+    if (showMappings_.getValue() == -1)                showMappings_.setValue(static_cast<GNode *>(getParent())->showMappings_.getValue());
+    if (showMechanicalMappings_.getValue() == -1)      showMechanicalMappings_.setValue(static_cast<GNode *>(getParent())->showMechanicalMappings_.getValue());
+    if (showForceFields_.getValue() == -1)             showForceFields_.setValue(static_cast<GNode *>(getParent())->showForceFields_.getValue());
+    if (showInteractionForceFields_.getValue() == -1)  showInteractionForceFields_.setValue(static_cast<GNode *>(getParent())->showInteractionForceFields_.getValue());
+    if (showWireFrame_.getValue() == -1)               showWireFrame_.setValue(static_cast<GNode *>(getParent())->showWireFrame_.getValue());
+    if (showNormals_.getValue() == -1)                 showNormals_.setValue(static_cast<GNode *>(getParent())->showNormals_.getValue());
+  }  
+}
 
+void GNode::setDefaultVisualContextValue()
+{
+  if (showVisualModels_.getValue() == -1)            showVisualModels_.setValue(true);
+  if (showBehaviorModels_.getValue() == -1)          showBehaviorModels_.setValue(false);
+  if (showCollisionModels_.getValue() == -1)         showCollisionModels_.setValue(false);
+  if (showBoundingCollisionModels_.getValue() == -1) showBoundingCollisionModels_.setValue(false);
+  if (showMappings_.getValue() == -1)                showMappings_.setValue(false);
+  if (showMechanicalMappings_.getValue() == -1)      showMechanicalMappings_.setValue(false);
+  if (showForceFields_.getValue() == -1)             showForceFields_.setValue(false);
+  if (showInteractionForceFields_.getValue() == -1)  showInteractionForceFields_.setValue(false);
+  if (showWireFrame_.getValue() == -1)               showWireFrame_.setValue(false);
+  if (showNormals_.getValue() == -1)                 showNormals_.setValue(false);
+}
 
 void GNode::initialize()
 {
     //cerr<<"GNode::initialize()"<<endl; 
-
+    
+    initVisualContext(); 
     // Put the OdeSolver, if any, in first position. This makes sure that the OdeSolver component is initialized only when all its sibling and children components are already initialized.
     /// @todo Putting the solver first means that it will be initialized *before* any sibling or childrens. Is that what we want? -- Jeremie A.
     Sequence<BaseObject>::iterator i=object.begin(), iend=object.end();
@@ -287,7 +496,7 @@ void GNode::initialize()
     }
 
     // 
-    updateContext();
+    updateSimulationContext();
     
     // this is now done by the InitVisitor
     //for (Sequence<GNode>::iterator it = child.begin(); it != child.end(); it++) {
@@ -346,13 +555,74 @@ void GNode::updateContext()
         // project the gravity to the local coordinate system
 /*        getContext()->setGravity( getContext()->getLocalFrame().backProjectVector(getContext()->getWorldGravity()) );*/
         
-	if( debug_ ) std::cerr<<"GNode::updateContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
+        if( debug_ ) std::cerr<<"GNode::updateContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
+}
+
+void GNode::updateSimulationContext()
+{
+  if( getParent() != NULL ) {
+    copySimulationContext(*parent);		
+  }
+  
+	// Apply local modifications to the context
+  if (getLogTime()) {
+    for( unsigned i=0; i<contextObject.size(); ++i ) {
+      contextObject[i]->init();
+      contextObject[i]->apply();
+    }
+  }
+  else {
+    for( unsigned i=0; i<contextObject.size(); ++i ) {
+      contextObject[i]->init();
+      contextObject[i]->apply();			
+    }
+  }
+  if( debug_ ) std::cerr<<"GNode::updateSimulationContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
+}
+
+void GNode::updateVisualContext(int FILTER)
+{  
+  if( getParent() != NULL ) {
+    if (!FILTER)
+      copyVisualContext(*parent);		
+    else
+    {
+      switch(FILTER)
+      {
+	case 1:  showVisualModels_.setValue((*parent).showVisualModels_.getValue());  break;
+	case 2:  showBehaviorModels_.setValue((*parent).showBehaviorModels_.getValue());  break;
+	case 3:  showCollisionModels_.setValue((*parent).showCollisionModels_.getValue());  break;
+	case 4:  showBoundingCollisionModels_.setValue((*parent).showBoundingCollisionModels_.getValue());  break;
+	case 5:  showMappings_.setValue((*parent).showMappings_.getValue());  break;
+	case 6:  showMechanicalMappings_.setValue((*parent).showMechanicalMappings_.getValue());  break;
+	case 7:  showForceFields_.setValue((*parent).showForceFields_.getValue());  break;
+	case 8:  showInteractionForceFields_.setValue((*parent).showInteractionForceFields_.getValue()); break;
+	case 9:  showWireFrame_.setValue((*parent).showWireFrame_.getValue()); break;
+	case 10: showNormals_.setValue((*parent).showNormals_.getValue()); break;
+      }
+    }
+  }
+	// Apply local modifications to the context
+  if (getLogTime()) {
+    for( unsigned i=0; i<contextObject.size(); ++i ) {
+      contextObject[i]->init();
+      contextObject[i]->apply();
+    }
+  }
+  else {
+    for( unsigned i=0; i<contextObject.size(); ++i ) {
+      contextObject[i]->init();
+      contextObject[i]->apply();			
+    }
+  }
+  if( debug_ ) std::cerr<<"GNode::updateVisualContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
 }
 
 
 /// Execute a recursive action starting from this node
 void GNode::executeVisitor(Visitor* action)
 {
+  if (!this->is_activated.getValue()) return;
 	if (actionScheduler)
 		actionScheduler->executeVisitor(this,action);
 	else
@@ -409,8 +679,17 @@ void GNode::doExecuteVisitor(Visitor* action)
     }
 }
 
+/// Find an object given its name
+core::objectmodel::BaseObject* GNode::getObject(const std::string& name) const
+{
+    for (ObjectIterator it = object.begin(), itend = object.end(); it != itend; ++it)
+        if ((*it)->getName() == name)
+            return *it;
+    return NULL;
+}
+
 /// Find a child node given its name
-GNode* GNode::getChild(const std::string& name)
+GNode* GNode::getChild(const std::string& name) const
 {
     for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
         if ((*it)->getName() == name)
@@ -419,7 +698,7 @@ GNode* GNode::getChild(const std::string& name)
 }
 
 /// Get a descendant node given its name
-GNode* GNode::getTreeNode(const std::string& name)
+GNode* GNode::getTreeNode(const std::string& name) const
 {
     GNode* result = NULL;
     result = getChild(name);

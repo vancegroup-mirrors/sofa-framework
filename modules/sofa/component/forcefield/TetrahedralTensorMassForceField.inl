@@ -26,11 +26,6 @@
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
 #include <sofa/helper/gl/template.h>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <sofa/component/topology/TetrahedronData.inl>
 #include <sofa/component/topology/EdgeData.inl>
 
@@ -244,8 +239,8 @@ template <class DataTypes> TetrahedralTensorMassForceField<DataTypes>::Tetrahedr
 : _mesh(NULL)
 , _initialPoints(0) 
 , updateMatrix(true)
-, f_poissonRatio(dataField(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
-, f_youngModulus(dataField(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
+, f_poissonRatio(initData(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
+, f_youngModulus(initData(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
 , lambda(0)
 , mu(0)
 	{
@@ -303,7 +298,7 @@ template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init
 	}
 	// create edge tensor by calling the tetrahedron creation function
 	std::vector<unsigned int> tetrahedronAdded;
-	for (i=0;i<container->getNumberOfTetrahedra();++i)
+	for (i=0;i<1/*container->getNumberOfTetrahedra()*/;++i)
 		tetrahedronAdded.push_back(i);
 	TetrahedralTMTetrahedronCreationFunction(tetrahedronAdded,(void*) this,
 		edgeInfo);

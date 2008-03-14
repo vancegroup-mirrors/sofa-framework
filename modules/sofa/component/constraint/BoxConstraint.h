@@ -69,7 +69,7 @@ public:
 	void init();
         
         //virtual const char* getTypeName() const { return "BoxConstraint"; }
-        DataField<Vec6> box;
+        Data<Vec6> box;
 	
 	
 	// -- VisualModel interface

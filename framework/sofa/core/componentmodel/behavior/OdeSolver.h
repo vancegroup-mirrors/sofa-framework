@@ -74,9 +74,6 @@ public:
     /// advancing the state from time t to t+dt.
     virtual void solve (double dt) = 0;
 
-    /// Method called at initialization, during the backwards traversal of the data structure.
-    virtual void bwdInit() {}
-
     /// @name Visitors and MultiVectors
     /// These methods provides an abstract view of the mechanical system to animate.
     /// They are implemented by executing Visitors in the subtree of the scene-graph below this solver.

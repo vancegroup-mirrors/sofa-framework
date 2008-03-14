@@ -50,19 +50,20 @@ class MeshTopology : public core::componentmodel::topology::Topology
 {
 public:
 
-	typedef int index_type;
-	
-	typedef Vec<2,index_type> Line;
-	typedef Vec<3,index_type> Triangle;
-	typedef Vec<4,index_type> Quad;
-	typedef Vec<4,index_type> Tetra;
-	typedef Vec<8,index_type> Cube;
-	
-	typedef vector<Line> SeqLines;
-	typedef vector<Triangle> SeqTriangles;
-	typedef vector<Quad> SeqQuads;
-	typedef vector<Tetra> SeqTetras;
-	typedef vector<Cube> SeqCubes;
+    //typedef int index_type;
+    typedef unsigned index_type;
+    
+    typedef fixed_array<index_type,2> Line;
+    typedef fixed_array<index_type,3> Triangle;
+    typedef fixed_array<index_type,4> Quad;
+    typedef fixed_array<index_type,4> Tetra;
+    typedef fixed_array<index_type,8> Cube;
+    
+    typedef vector<Line> SeqLines;
+    typedef vector<Triangle> SeqTriangles;
+    typedef vector<Quad> SeqQuads;
+    typedef vector<Tetra> SeqTetras;
+    typedef vector<Cube> SeqCubes;
 	
 	MeshTopology();
         //virtual const char* getTypeName() const { return "Mesh"; }
@@ -114,6 +115,7 @@ public:
 	virtual double getPX(int i) const;
 	virtual double getPY(int i) const;
 	virtual double getPZ(int i) const;
+	virtual std::string getFilename() const{return filename.getValue();}
 	
 	// for procedural creation without file loader
 	void addPoint(double px, double py, double pz);
@@ -127,11 +129,11 @@ protected:
 	int nbPoints;
 	vector< fixed_array<double,3> > seqPoints;
 	
-	DataField<SeqLines> seqLines;
+	Data<SeqLines> seqLines;
 	bool validLines;
 	
 	//SeqTriangles   seqTriangles;
-        DataField<SeqTriangles> seqTriangles;
+        Data<SeqTriangles> seqTriangles;
 	bool         validTriangles;
 	SeqQuads       seqQuads;
 	bool         validQuads;
@@ -143,7 +145,7 @@ protected:
 
 	int revision;
 
-	DataField< std::string > filename;
+	Data< std::string > filename;
 
 	void invalidate();
 	

@@ -33,8 +33,12 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/component/topology/MeshTopology.h>
 #include <sofa/component/topology/TriangleSetTopology.h>
+#include <sofa/component/topology/QuadSetTopology.h>
 #include <sofa/component/topology/TetrahedronSetTopology.h>
+#include <sofa/component/topology/HexahedronSetTopology.h>
 #include <sofa/helper/io/Mesh.h>
+
+#include <map>
 
 namespace sofa
 {
@@ -105,6 +109,7 @@ protected:
     typedef Vec<2, float> TexCoord;
     typedef helper::fixed_array<int, 3> Triangle;
     typedef helper::fixed_array<int, 4> Quad;
+	//typedef helper::fixed_array<int, 4> Tetrahedron;
 
     //ResizableExtVector<Coord>* inputVertices;
 
@@ -113,19 +118,22 @@ protected:
     bool useNormals; ///< True if normals should be read from file
     bool castShadow; ///< True if object cast shadows
 
-/*     DataField< ResizableExtVector<Coord> > vertices; */
-    Field< ResizableExtVector<Coord> > field_vertices;
+/*     Data< ResizableExtVector<Coord> > vertices; */
+    DataPtr< ResizableExtVector<Coord> > field_vertices;
     ResizableExtVector<Coord> vertices;
 
-    Field< ResizableExtVector<Coord> > field_vnormals;
+    DataPtr< ResizableExtVector<Coord> > field_vnormals;
     ResizableExtVector<Coord> vnormals;
-    Field< ResizableExtVector<TexCoord> > field_vtexcoords;
+    DataPtr< ResizableExtVector<TexCoord> > field_vtexcoords;
     ResizableExtVector<TexCoord> vtexcoords;
 
-    Field< ResizableExtVector<Triangle> > field_triangles;
+    DataPtr< ResizableExtVector<Triangle> > field_triangles;
     ResizableExtVector<Triangle> triangles;
-    Field< ResizableExtVector<Quad> > field_quads;
+    DataPtr< ResizableExtVector<Quad> > field_quads;
     ResizableExtVector<Quad> quads;
+
+	sofa::helper::vector<unsigned int> Loc2GlobVec;
+	std::map<unsigned int, unsigned int> Glob2LocMap;
 
     /// If vertices have multiple normals/texcoords, then we need to separate them
     /// This vector store which input position is used for each vertice
@@ -136,7 +144,7 @@ protected:
     /// If it is empty then each vertex correspond to one normal
     ResizableExtVector<int> vertNormIdx;
 
-    DataField< std::string > texturename;
+    Data< std::string > texturename;
 
     Vec3f bbox[2];
 
@@ -144,7 +152,7 @@ protected:
     {}
 
 public:
-    DataField< sofa::helper::io::Mesh::Material > material;
+    Data< sofa::helper::io::Mesh::Material > material;
 
     VisualModelImpl();
 

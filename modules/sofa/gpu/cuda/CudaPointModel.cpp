@@ -2,7 +2,7 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <fstream>
-#include <GL/gl.h>
+#include <sofa/helper/system/gl.h>
 
 namespace sofa
 {
@@ -23,7 +23,7 @@ int CudaPointModelClass = core::RegisterObject("GPU-based point collision model 
 using namespace defaulttype;
 
 CudaPointModel::CudaPointModel()
-: groupSize( dataField( &groupSize, (int)BSIZE, "groupSize", "number of point per collision element" ) )
+: groupSize( initData( &groupSize, (int)BSIZE, "groupSize", "number of point per collision element" ) )
 , mstate(NULL)
 {
 }
@@ -74,10 +74,7 @@ void CudaPointModel::draw()
 
 		glDisable(GL_LIGHTING);
 		glPointSize(3);
-		if (isStatic())
-			glColor3f(0.5, 0.5, 0.5);
-		else
-			glColor3f(1.0, 0.0, 0.0);
+		glColor4fv(getColor4f());
 
 		for (int i=0;i<size;i++)
 		{
@@ -109,7 +106,7 @@ void CudaPointModel::computeBoundingTree(int maxDepth)
         updated = true;
     }
     if (updated) cubeModel->resize(0);
-    if (isStatic() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
+    if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 
     cubeModel->resize(size);
     if (!empty())

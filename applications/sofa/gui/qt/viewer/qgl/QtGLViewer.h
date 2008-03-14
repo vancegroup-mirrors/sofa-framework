@@ -72,12 +72,6 @@ namespace sofa
 	      Q_OBJECT
 		private:
 
-	      enum {
-		BTLEFT_MODE = 101,
-		BTRIGHT_MODE = 102,
-		BTMIDDLE_MODE = 103,
-	      };
-
 	      QTimer* timerAnimate;
 	      int				_W, _H;
 	      int				_clearBuffer;
@@ -110,17 +104,12 @@ namespace sofa
 	      ctime_t			_beginTime;
 	
 	
-	      int	_navigationMode;
-	      bool _mouseInteractorMoving;
-	      int _mouseInteractorSavedPosX;
-	      int _mouseInteractorSavedPosY;
-	
 	      bool _waitForRender;
 
-	      bool    sceneBBoxIsValid;
+	      
 	      Vector3 sceneMinBBox;
 	      Vector3 sceneMaxBBox;
-	      bool initTexturesDone;
+	      
 	    public:
 
 	      /// Activate this class of viewer.
@@ -150,7 +139,7 @@ namespace sofa
 	      void StoreLightMatrices();
 
 	    public:
-	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool keepParams=false);
+// 	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool keepParams=false);
 
 	      void			SwitchToAutomateView();
 	      //void			reshape(int width, int height);
@@ -168,7 +157,7 @@ namespace sofa
 	      void	UpdateOBJ(void);	  
 	      
 	      void moveRayPickInteractor(int eventX, int eventY);
-	      void moveLaparoscopic(QMouseEvent *e);
+
 	      // 	static Quaternion _newQuat;
 
 	      // Display scene from the automate

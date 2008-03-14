@@ -78,7 +78,8 @@ void FixedConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
 template <class DataTypes>
 FixedConstraint<DataTypes>::FixedConstraint()
 : core::componentmodel::behavior::Constraint<DataTypes>(NULL)
-, f_indices( dataField(&f_indices,"indices","Indices of the fixed points") )
+, f_indices( initData(&f_indices,"indices","Indices of the fixed points") )
+, f_fixAll( initData(&f_fixAll,"fixAll","filter all the DOF to implement a fixed object") )
 {
     // default to indice 0
     f_indices.beginEdit()->push_back(0);
@@ -146,14 +147,20 @@ void FixedConstraint<DataTypes>::init()
 template <class DataTypes>
 void FixedConstraint<DataTypes>::projectResponse(VecDeriv& res)
 {
-  //std::cerr<<"FixedConstraint<DataTypes>::projectResponse, res.size()="<<res.size()<<endl;
     const SetIndexArray & indices = f_indices.getValue().getArray();
+  //std::cerr<<"FixedConstraint<DataTypes>::projectResponse, res.size()="<<res.size()<<endl;
+  	if( f_fixAll.getValue()==true ) {  // fix everyting
+		for( unsigned i=0; i<res.size(); i++ )
+			res[i] = Deriv();
+	}
+	else {
     for (SetIndexArray::const_iterator it = indices.begin();
         it != indices.end();
         ++it)
     {
         res[*it] = Deriv();
     }
+	}
 }
 
 // Matrix Integration interface
@@ -224,12 +231,16 @@ void FixedConstraint<DataTypes>::draw()
     glBegin (GL_POINTS);
 	const SetIndexArray & indices = f_indices.getValue().getArray();
     //std::cerr<<"FixedConstraint<DataTypes>::draw(), indices = "<<indices<<endl;
-    for (SetIndexArray::const_iterator it = indices.begin();
+    if( f_fixAll.getValue()==true ) for (unsigned i=0; i<x.size(); i++ )
+		{
+        gl::glVertexT(x[i]);
+		}
+    else for (SetIndexArray::const_iterator it = indices.begin();
         it != indices.end();
         ++it)
-    {
+		{
         gl::glVertexT(x[*it]);
-    }
+		}
     glEnd();
 }
 

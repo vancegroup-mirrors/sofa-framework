@@ -44,9 +44,9 @@ public:
 
     /// Correspondance array
     typedef helper::vector<unsigned int> IndexArray;
-    DataField < IndexArray > f_indices;
-    DataField < int > f_first;
-    DataField < int > f_last;
+    Data < IndexArray > f_indices;
+    Data < int > f_first;
+    Data < int > f_last;
     SubsetMappingInternalData<typename In::DataTypes, typename Out::DataTypes> data;
     void postInit();
     
@@ -66,6 +66,7 @@ public:
     
     void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
+    void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 };
 
 } // namespace mapping

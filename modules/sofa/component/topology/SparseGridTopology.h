@@ -70,12 +70,31 @@ namespace sofa
 					
 					
 					typedef std::map<Vec3,int> MapBetweenCornerPositionAndIndice;///< a vertex indice for a given vertex position in space
-					typedef std::map<int,fixed_array<int,8> > HierarchicalCubeMap; ///< a cube indice -> corresponding 8 child indices on the potential _finerSparseGrid
+					
+					/// connexion between several coarsened levels
+					typedef std::vector<fixed_array<int,8> > HierarchicalCubeMap; ///< a cube indice -> corresponding 8 child indices on the potential _finerSparseGrid
 					HierarchicalCubeMap _hierarchicalCubeMap;
-					typedef helper::vector<std::map<int,float> > HierarchicalPointMap; ///< a point indice -> corresponding 8 child indices on the potential _finerSparseGrid with corresponding weight
+					typedef helper::vector<int> InverseHierarchicalCubeMap; ///< a fine cube indice -> corresponding coarser cube indice
+					InverseHierarchicalCubeMap _inverseHierarchicalCubeMap;
+					
+					typedef std::map<int,float> AHierarchicalPointMap;
+// 					typedef helper::vector< std::pair<int,float> >  AHierarchicalPointMap;
+					typedef helper::vector< AHierarchicalPointMap > HierarchicalPointMap; ///< a point indice -> corresponding 27 child indices on the potential _finerSparseGrid with corresponding weight
 					HierarchicalPointMap _hierarchicalPointMap;
+					typedef helper::vector< AHierarchicalPointMap > InverseHierarchicalPointMap; ///< a fine point indice -> corresponding some parent points for interpolation
+					InverseHierarchicalPointMap _inverseHierarchicalPointMap;
+					typedef helper::vector< int > PointMap;
+					PointMap _pointMap; ///< a coarse point indice -> corresponding point in finer level
+					PointMap _inversePointMap;  ///< a fine point indice -> corresponding point in coarser level
 					
 					
+					enum{UP,DOWN,RIGHT,LEFT,BEFORE,BEHIND,NUM_CONNECTED_NODES};
+					typedef helper::vector< helper::fixed_array<int,NUM_CONNECTED_NODES> > NodeAdjacency; ///< a node -> its 6 neighboors
+					NodeAdjacency _nodeAdjacency;
+					typedef helper::vector< helper::vector<int> >NodeCubesAdjacency; ///< a node -> its 8 neighboor cells
+					NodeCubesAdjacency _nodeCubesAdjacency;
+					typedef helper::vector< helper::vector<int> >NodeCornersAdjacency; ///< a node -> its 8 corners of neighboor cells
+					NodeCornersAdjacency _nodeCornersAdjacency;
 					
 					
 					int getNx() const { return nx.getValue(); }
@@ -113,27 +132,30 @@ namespace sofa
 					/// return the type of the i-th cube 
 					virtual Type getType( int i );
 					
+					SparseGridTopology* getFinerSparseGrid() const {return _finerSparseGrid;}
 					void setFinerSparseGrid( SparseGridTopology* fsp ){_finerSparseGrid=fsp;}
+					SparseGridTopology* getCoarserSparseGrid() const {return _coarserSparseGrid;}
+					void setCoarserSparseGrid( SparseGridTopology* csp ){_coarserSparseGrid=csp;}
 					
 					RegularGridTopology _regularGrid; ///< based on a corresponding RegularGrid
 					vector< int > _indicesOfRegularCubeInSparseGrid; ///< to redirect an indice of a cube in the regular grid to its indice in the sparse grid
 					
 					Vec3 getPointPos( int i ){ return Vec3( seqPoints[i][0],seqPoints[i][1],seqPoints[i][2] ); }
-	
+					
 				protected:
 					
 					/// cutting number in all directions
-					DataField<int> nx;
-					DataField<int> ny;
-					DataField<int> nz;
+					Data<int> nx;
+					Data<int> ny;
+					Data<int> nz;
 					
 					/// bounding box positions, by default the real bounding box is used
-					DataField<double> xmin;
-					DataField<double> ymin;
-					DataField<double> zmin;
-					DataField<double> xmax;
-					DataField<double> ymax;
-					DataField<double> zmax;
+					Data<double> xmin;
+					Data<double> ymin;
+					Data<double> zmin;
+					Data<double> xmax;
+					Data<double> ymax;
+					Data<double> zmax;
 					
 	
 					virtual void updateLines();
@@ -149,7 +171,8 @@ namespace sofa
 					
 					
 					
-					SparseGridTopology* _finerSparseGrid; ///< an eventual finer sparse grid that can be used to built this coarser sparse grid
+					SparseGridTopology* _finerSparseGrid;   ///< an eventual finer sparse grid that can be used to built this coarser sparse grid
+					SparseGridTopology* _coarserSparseGrid; ///< an eventual coarser sparse grid
 					
 					
 					/*	/// to compute valid cubes (intersection between mesh segments and cubes)
@@ -204,6 +227,7 @@ namespace sofa
 						return getCubes().size();
 					}
 					
+					virtual vector< fixed_array<double,3> >& getPoints(){return this->seqPoints;}
 					
 			};
 

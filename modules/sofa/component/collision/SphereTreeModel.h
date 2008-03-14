@@ -166,7 +166,7 @@ protected:
 	sofa::helper::vector<double> radius;	
 
 	/** @brief default radius */
-	DataField<double> defaultRadius;	
+	Data<double> defaultRadius;	
 
 	virtual void init( void );
 

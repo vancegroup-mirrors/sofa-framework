@@ -46,10 +46,11 @@ namespace sofa
     using namespace sofa::defaulttype;
     template <class DataTypes>
     MechanicalObject<DataTypes>::MechanicalObject()
-      : x(new VecCoord), v(new VecDeriv), x0(new VecCoord),reset_position(new VecCoord), v0(NULL), c(new VecConst), vsize(0), m_gnuplotFileX(NULL), m_gnuplotFileV(NULL)
-      , f_X ( new XField<DataTypes>(&x,  "position coordinates ot the degrees of freedom") )
-      , f_V ( new VField<DataTypes>(&v,  "velocity coordinates ot the degrees of freedom") )
-      , f_X0( new XField<DataTypes>(&x0, "rest position coordinates ot the degrees of freedom") )      
+      : x(new VecCoord), v(new VecDeriv), x0(new VecCoord),reset_position(NULL), v0(NULL), c(new VecConst), vsize(0), m_gnuplotFileX(NULL), m_gnuplotFileV(NULL)
+      , f_X ( new XDataPtr<DataTypes>(&x,  "position coordinates ot the degrees of freedom") )
+      , f_V ( new VDataPtr<DataTypes>(&v,  "velocity coordinates ot the degrees of freedom") )
+      , f_X0( new XDataPtr<DataTypes>(&x0, "rest position coordinates ot the degrees of freedom") )     
+	, restScale(initData(&restScale, (Real)1, "restScale","optional scaling of rest position coordinates (to simulated pre-existing internal tension)"))
     {
       initialized = false;
       this->addField(f_X, "position");
@@ -166,12 +167,18 @@ namespace sofa
       if (arg->getAttribute("dx")!=NULL || arg->getAttribute("dy")!=NULL || arg->getAttribute("dz")!=NULL) {
         this->applyTranslation(atof(arg->getAttribute("dx","0.0")),atof(arg->getAttribute("dy","0.0")),atof(arg->getAttribute("dz","0.0")));
       }
+      if (arg->getAttribute("rx")!=NULL || arg->getAttribute("ry")!=NULL || arg->getAttribute("rz")!=NULL) {
+	Vec<3, double> rotationVector = Vec<3,double>(atof(arg->getAttribute("rx","0.0")),atof(arg->getAttribute("ry","0.0")),atof(arg->getAttribute("rz","0.0")))*3.141592653/180.0;
+	this->applyRotation(defaulttype::Quat::createFromRotationVector( rotationVector));
+      }
     }
 
     template <class DataTypes>
     MechanicalObject<DataTypes>::~MechanicalObject()
     {
       delete externalForces;
+      if (reset_position!=NULL)
+        delete reset_position;
       if (x0!=NULL)
         delete x0;
       if (v0!=NULL)
@@ -192,15 +199,28 @@ namespace sofa
     template <class DataTypes>
     void MechanicalObject<DataTypes>::replaceValue (const int inputIndex, const int outputIndex)
     {
-      // standard state vectors
-      (*x) [outputIndex] = (*x) [inputIndex];
-      (*x0)[outputIndex] = (*x0)[inputIndex];
-      (*v) [outputIndex] = (*v) [inputIndex];
-      (*v0)[outputIndex] = (*v0)[inputIndex];
-      if ((*f).size()>0)
-	(*f) [outputIndex] = (*f) [inputIndex];
-      if ((*dx).size()>0)
-	(*dx)[outputIndex] = (*dx)[inputIndex];
+        // standard state vectors
+        // Note that the x,v,f,dx,xfree,vfree and internalForces vectors (but
+        // not x0, v0, reset_position, and externalForces) are present in the
+        // array of all vectors, so then don't need to be processed separatly.
+        //(*x) [outputIndex] = (*x) [inputIndex];
+        (*x0)[outputIndex] = (*x0)[inputIndex];
+        //(*v) [outputIndex] = (*v) [inputIndex];
+        if (v0 != NULL)
+            (*v0)[outputIndex] = (*v0)[inputIndex];
+        //if ((*f).size()>0)
+        //    (*f) [outputIndex] = (*f) [inputIndex];
+        //if ((*dx).size()>0)
+        //    (*dx)[outputIndex] = (*dx)[inputIndex];
+        // forces
+        //if ((*internalForces).size()>0)
+        //    (*internalForces)[outputIndex] = (*internalForces)[inputIndex];
+        if ((*externalForces).size()>0)
+            (*externalForces)[outputIndex] = (*externalForces)[inputIndex];
+
+        // Note: the following assumes that topological changes won't be reset
+        if (reset_position != NULL)
+            (*reset_position)[outputIndex] = (*reset_position)[inputIndex];
 
       // temporary state vectors
       unsigned int i;
@@ -217,43 +237,57 @@ namespace sofa
 	    vector[outputIndex]=vector[inputIndex];
 	}
 
-      // forces
-      if ((*internalForces).size()>0)
-	(*internalForces)[outputIndex] = (*internalForces)[inputIndex];
-      if ((*externalForces).size()>0)
-	(*externalForces)[outputIndex] = (*externalForces)[inputIndex];
-
     }
 
     template <class DataTypes>
     void MechanicalObject<DataTypes>::swapValues (const int idx1, const int idx2)
     {
-    
-      // standard state vectors
-      Coord tmp = (*x)[idx1];
-      (*x) [idx1] = (*x) [idx2];
-      (*x) [idx2] = tmp;
+        // standard state vectors
+        // Note that the x,v,f,dx,xfree,vfree and internalForces vectors (but
+        // not x0, v0, reset_position, and externalForces) are present in the
+        // array of all vectors, so then don't need to be processed separatly.
+        Coord tmp;
+        Deriv tmp2;
+        //tmp = (*x)[idx1];
+        //(*x) [idx1] = (*x) [idx2];
+        //(*x) [idx2] = tmp;
 
-      tmp = (*x0)[idx1];
-      (*x0)[idx1] = (*x0)[idx2];
-      (*x0)[idx2] = tmp;
+        tmp = (*x0)[idx1];
+        (*x0)[idx1] = (*x0)[idx2];
+        (*x0)[idx2] = tmp;
 
-      Deriv tmp2 = (*v)[idx1];
-      (*v) [idx1] = (*v) [idx2];
-      (*v) [idx2] = tmp2;
+        //tmp2 = (*v)[idx1];
+        //(*v) [idx1] = (*v) [idx2];
+        //(*v) [idx2] = tmp2;
 
-      tmp2 = (*v0) [idx1];
-      (*v0)[idx1] = (*v0)[idx2];
-      (*v0)[idx2] = tmp2;
+        tmp2 = (*v0) [idx1];
+        (*v0)[idx1] = (*v0)[idx2];
+        (*v0)[idx2] = tmp2;
 
-      tmp2 = (*f) [idx1];
-      (*f) [idx1] = (*f)[idx2];
-      (*f) [idx2] = tmp2;
+        //tmp2 = (*f) [idx1];
+        //(*f) [idx1] = (*f)[idx2];
+        //(*f) [idx2] = tmp2;
 
-      tmp2 = (*dx) [idx1];
-      (*dx)[idx1] = (*dx)[idx2];
-      (*dx)[idx2] = tmp2;
-	
+        //tmp2 = (*dx) [idx1];
+        //(*dx)[idx1] = (*dx)[idx2];
+        //(*dx)[idx2] = tmp2;
+
+        // forces
+        //tmp2 = (*internalForces)[idx1];
+        //(*internalForces)[idx1] = (*internalForces)[idx2];
+        //(*internalForces)[idx2] = tmp2;
+        if (externalForces->size()>0)
+        {
+            tmp2 = (*externalForces)[idx1];
+            (*externalForces)[idx1] = (*externalForces)[idx2];
+            (*externalForces)[idx2] = tmp2;
+        }
+
+        // Note: the following assumes that topological changes won't be reset
+        tmp = (*reset_position)[idx1];
+        (*reset_position)[idx1] = (*reset_position)[idx2];
+        (*reset_position)[idx2] = tmp;
+
       // temporary state vectors
       unsigned int i;
       for (i=0;i<vectorsCoord.size();i++){ 
@@ -268,16 +302,6 @@ namespace sofa
         vector[idx1] = vector[idx2];
 	vector[idx2] = tmp2;
       }
-
-      // forces
-      tmp2 = (*internalForces)[idx1];
-      (*internalForces)[idx1] = (*internalForces)[idx2];
-      (*internalForces)[idx2] = tmp2;
-
-      tmp2 = (*externalForces)[idx1];
-      (*externalForces)[idx1] = (*externalForces)[idx2];
-      (*externalForces)[idx2] = tmp2;
-
     }
 
 
@@ -285,15 +309,21 @@ namespace sofa
     template <class DataTypes>
     void MechanicalObject<DataTypes>::renumberValues( const sofa::helper::vector< unsigned int > &index )
     {
-    
-      // standard state vectors
-      VecCoord x_cp  = (*x);
-      VecCoord x0_cp = (*x0);
-
-      VecDeriv v_cp  = (*v);
-      VecDeriv v0_cp = (*v0);
-      VecDeriv f_cp  = (*f);
-      VecDeriv dx_cp = (*dx);
+        // standard state vectors
+        // Note that the x,v,f,dx,xfree,vfree and internalForces vectors (but
+        // not x0, v0, reset_position, and externalForces) are present in the
+        // array of all vectors, so then don't need to be processed separatly.
+        //VecCoord x_cp  = (*x);
+        VecCoord x0_cp = (*x0);
+        //VecDeriv v_cp  = (*v);
+        VecDeriv v0_cp = (*v0);
+        //VecDeriv f_cp  = (*f);
+        //VecDeriv dx_cp = (*dx);
+        // forces
+        //VecDeriv intern_cp = (*internalForces);
+        VecDeriv extern_cp = (*externalForces);
+        // Note: the following assumes that topological changes won't be reset
+        VecCoord reset_position_cp = (*reset_position);
 	
       // temporary state vectors
       sofa::helper::vector< VecCoord > vecCoord_cp;
@@ -307,30 +337,29 @@ namespace sofa
 	vecDeriv_cp[i] = ( *(vectorsDeriv[i]) );
       }
 
-      // forces
-      VecDeriv intern_cp = (*internalForces);
-      VecDeriv extern_cp = (*externalForces);
-
-      for (unsigned int i = 0; i < index.size(); ++i)
+        for (unsigned int i = 0; i < index.size(); ++i)
 	{
-	  (*x )[i] = x_cp [ index[i] ];
+	  //(*x )[i] = x_cp [ index[i] ];
 	  (*x0)[i] = x0_cp[ index[i] ];
-	  (*v )[i] = v_cp [ index[i] ];
+	  //(*v )[i] = v_cp [ index[i] ];
 	  (*v0)[i] = v0_cp[ index[i] ];
-	  (*f )[i] = f_cp [ index[i] ];
-	  (*dx)[i] = dx_cp[ index[i] ];
+	  //(*f )[i] = f_cp [ index[i] ];
+	  //(*dx)[i] = dx_cp[ index[i] ];
+	  (*reset_position)[i] = reset_position_cp[ index[i] ];
+        
+	  //(*internalForces)[i] = intern_cp[ index[i] ];
 
 	  for (unsigned j = 0; j < vectorsCoord.size(); ++j)
             (*vectorsCoord[j])[i] = vecCoord_cp[j][ index[i] ];
 
 	  for (unsigned j = 0; j < vectorsDeriv.size(); ++j)
             (*vectorsDeriv[j])[i] = vecDeriv_cp[j][ index[i] ];
-        
-	  (*internalForces)[i] = intern_cp[ index[i] ];
-	  (*externalForces)[i] = extern_cp[ index[i] ];
 
 
 	}
+        if (externalForces->size()>0)
+            for (unsigned int i = 0; i < index.size(); ++i)
+                (*externalForces)[i] = extern_cp[ index[i] ];
     }
 
 
@@ -338,28 +367,32 @@ namespace sofa
     template <class DataTypes>
     void MechanicalObject<DataTypes>::resize(const int size)
     {
-      (*x).resize(size);
-      // Note (Jeremie A.): should we really update initial position vector size ???
-       if (initialized && x0!=NULL)
-         (*x0).resize(size);
-      (*v).resize(size);
-      if (v0!=NULL)
-        (*v0).resize(size);
-      (*f).resize(size);
-      (*dx).resize(size);
-
-      (*xfree).resize(size);
-      (*vfree).resize(size);
+        (*x).resize(size);
+        if (initialized && x0!=NULL)
+            (*x0).resize(size);
+        (*v).resize(size);
+        if (v0!=NULL)
+            (*v0).resize(size);
+        (*f).resize(size);
+        (*dx).resize(size);
+        (*xfree).resize(size);
+        (*vfree).resize(size);
+        if (externalForces->size()>0)
+            externalForces->resize(size);
+        internalForces->resize(size);
+        // Note: the following assumes that topological changes won't be reset
+        if (reset_position!=NULL)
+            (*reset_position).resize(size);
 	
-      if (size!=vsize)
+        //if (size!=vsize)
 	{
-	  vsize=size;
-	  for (unsigned int i=0;i<vectorsCoord.size();i++)
-            if (vectorsCoord[i]!=NULL && vectorsCoord[i]->size()!=0)
-	      vectorsCoord[i]->resize(size);
-	  for (unsigned int i=0;i<vectorsDeriv.size();i++)
-            if (vectorsDeriv[i]!=NULL && vectorsDeriv[i]->size()!=0)
-	      vectorsDeriv[i]->resize(size);
+            vsize=size;
+            for (unsigned int i=0;i<vectorsCoord.size();i++)
+                if (vectorsCoord[i]!=NULL && vectorsCoord[i]->size()!=0)
+                vectorsCoord[i]->resize(size);
+            for (unsigned int i=0;i<vectorsDeriv.size();i++)
+                if (vectorsDeriv[i]!=NULL && vectorsDeriv[i]->size()!=0)
+                vectorsDeriv[i]->resize(size);
 	}
     }
 
@@ -379,6 +412,20 @@ namespace sofa
 	}
     }
 
+    template <class DataTypes>
+	void MechanicalObject<DataTypes>::applyRotation (const defaulttype::Quat q)
+    {      
+       VecCoord& x = *this->getX();
+      for (unsigned int i = 0; i < x.size(); i++)
+      {
+	Vec3d pos;
+	DataTypes::get(pos[0],pos[1],pos[2],x[i]);
+	Vec3d newposition = q.rotate(pos);
+	DataTypes::set(x[i],newposition[0],newposition[1],newposition[2]);
+      }
+      //TODO: special case of rigid bodies. need to update the orientation
+    }
+    
     template <class DataTypes>
     void MechanicalObject<DataTypes>::applyScale(const double s)
     {
@@ -407,22 +454,39 @@ namespace sofa
     template <class DataTypes>
     void MechanicalObject<DataTypes>::computeWeightedValue( const unsigned int i, const sofa::helper::vector< unsigned int >& ancestors, const sofa::helper::vector< double >& coefs)
     {
-      /// HD interpolate position, speed,force,...
-      /// assume all coef sum to 1.0
-      (*x)[i]=Coord();
-      (*x0)[i]=Coord();
-      (*v)[i]=Deriv();
-      (*f)[i]=Deriv();
-      (*dx)[i]=Deriv();
-      unsigned int j;
-      for (j=0;j<ancestors.size();++j) {
-	(*x)[i]+=(*x)[ancestors[j]]*coefs[j];
-	(*x0)[i]+=(*x0)[ancestors[j]]*coefs[j];
-	(*v)[i]+=(*v)[ancestors[j]]*coefs[j];
-	(*f)[i]+=(*f)[ancestors[j]]*coefs[j];
-	(*dx)[i]+=(*dx)[ancestors[j]]*coefs[j];
+        // HD interpolate position, speed,force,...
+        // assume all coef sum to 1.0
+        unsigned int j;
 
-      }
+        // Note that the x,v,f,dx,xfree,vfree and internalForces vectors (but
+        // not x0, v0, reset_position, and externalForces) are present in the
+        // array of all vectors, so then don't need to be processed separatly.
+        //(*x)[i]=Coord();
+        (*x0)[i]=Coord();
+        for (j=0;j<ancestors.size();++j)
+            (*x0)[i]+=(*x0)[ancestors[j]]*coefs[j];
+        if (v0 != NULL)
+        {
+            (*v0)[i]=Deriv();
+            for (j=0;j<ancestors.size();++j)
+                (*v0)[i]+=(*v0)[ancestors[j]]*coefs[j];
+        }
+        //(*v)[i]=Deriv();
+        //(*f)[i]=Deriv();
+        //(*dx)[i]=Deriv();
+        // Note: the following assumes that topological changes won't be reset
+        if (reset_position != NULL)
+        {
+            (*reset_position)[i]=Coord();
+            for (j=0;j<ancestors.size();++j)
+                (*reset_position)[i]+=(*reset_position)[ancestors[j]]*coefs[j];
+        }
+        if (externalForces->size()>0)
+        {
+            (*externalForces)[i]=Deriv();
+            for (j=0;j<ancestors.size();++j)
+                (*externalForces)[i]+=(*externalForces)[ancestors[j]]*coefs[j];
+        }
       for (unsigned int k=0;k<vectorsCoord.size();k++) {
 	if (vectorsCoord[k]!=NULL && vectorsCoord[k]->size()!=0) {
 	  (*vectorsCoord[k])[i]=Coord();
@@ -441,6 +505,37 @@ namespace sofa
       }
     }
 
+	template <class DataTypes>
+    void MechanicalObject<DataTypes>::computeNewPoint( const unsigned int i, const sofa::helper::vector< double >& m_x) 
+	{
+	
+		  this->resize(i+1);
+
+		  DataTypes::set((*getX())[i], m_x[0]*scale+translation[0], m_x[1]*scale+translation[1], m_x[2]*scale+translation[2]);
+
+		  // Save initial state for reset button
+		  if (reset_position == NULL) this->reset_position = new VecCoord;
+		  *this->reset_position = *x;
+		  if (v0 == NULL) this->v0 = new VecDeriv;
+		  *this->v0 = *v;
+		  // free position = position
+		  *this->xfree = *x;
+
+		  //Rest position
+
+		  if (x0->size() == 0)
+		  {
+			  *x0 = *x;
+			  if (restScale.getValue() != (Real)1)
+			  {
+				  Real s = restScale.getValue();
+				  for (unsigned int i=0; i<x0->size(); i++)
+				  (*x0)[i] *= s;
+			  }
+		  }
+		  
+		  initialized = true;
+    }
 
     template <class DataTypes>
     void MechanicalObject<DataTypes>::contributeToMatrixDimension(unsigned int * const nbRow, unsigned int * const nbCol)
@@ -463,18 +558,32 @@ namespace sofa
     }
 
 
-    template <class DataTypes>
-    void MechanicalObject<DataTypes>::loadInBaseVector(defaulttype::BaseVector * dest, VecId src, unsigned int &offset)
-    {
-      VecDeriv* vSrc = getVecDeriv(src.index);
-      unsigned int derivDim = DataTypeInfo<Deriv>::size();
+	template <class DataTypes>
+	void MechanicalObject<DataTypes>::loadInBaseVector(defaulttype::BaseVector * dest, VecId src, unsigned int &offset)
+	{
+		if (src.type == VecId::V_COORD)
+		{
+			VecCoord* vSrc = getVecCoord(src.index);
+			unsigned int coordDim = DataTypeInfo<Coord>::size();
 
-      for (unsigned int i=0; i<vSrc->size(); i++)
-	for (unsigned int j=0; j<derivDim; j++)
-	  DataTypeInfo<Deriv>::getValue((*vSrc)[i],j,dest->element(offset + i * derivDim + j));
+			for (unsigned int i=0; i<vSrc->size(); i++)
+				for (unsigned int j=0; j<coordDim; j++)
+					DataTypeInfo<Coord>::getValue((*vSrc)[i],j,dest->element(offset + i * coordDim + j));
 
-      offset += vSrc->size() * derivDim;
-    }
+			offset += vSrc->size() * coordDim;
+		}
+		else
+		{
+			VecDeriv* vSrc = getVecDeriv(src.index);
+			unsigned int derivDim = DataTypeInfo<Deriv>::size();
+
+			for (unsigned int i=0; i<vSrc->size(); i++)
+				for (unsigned int j=0; j<derivDim; j++)
+					DataTypeInfo<Deriv>::getValue((*vSrc)[i],j,dest->element(offset + i * derivDim + j));
+
+			offset += vSrc->size() * derivDim;
+		}
+	}
 
     template <class DataTypes>
     void MechanicalObject<DataTypes>::addBaseVectorToState(VecId dest, defaulttype::BaseVector *src, unsigned int &offset)
@@ -514,21 +623,6 @@ namespace sofa
     }
 
     template <class DataTypes>
-    void MechanicalObject<DataTypes>::getCompliance (double** /*W*/)
-    {
-    }
-
-    template <class DataTypes>
-    void MechanicalObject<DataTypes>::applyContactForce(double* /*f*/)
-    {
-    }
-
-    template <class DataTypes>
-    void MechanicalObject<DataTypes>::resetContactForce()
-    {
-    }
-
-    template <class DataTypes>
     void MechanicalObject<DataTypes>::addDxToCollisionModel()
     {
       for (unsigned int i=0; i < this->xfree->size(); i++)
@@ -549,7 +643,7 @@ namespace sofa
 	  if (topo!=NULL && topo->hasPos() && topo->getContext() == this->getContext())
 	    {
 	      int nbp = topo->getNbPoints();
-	      std::cout<<"Setting "<<nbp<<" points from topology."<<std::endl;
+// 	      std::cout<<"Setting "<<nbp<<" points from topology."<<std::endl;
 	      this->resize(nbp);
 	      for (int i=0;i<nbp;i++)
 		{
@@ -560,9 +654,9 @@ namespace sofa
 	    }
 	}
       // Save initial state for reset button
-      this->reset_position = new VecCoord;
+      if (reset_position == NULL) this->reset_position = new VecCoord;
       *this->reset_position = *x;
-      this->v0 = new VecDeriv;
+      if (v0 == NULL) this->v0 = new VecDeriv;
       *this->v0 = *v;
       // free position = position
       *this->xfree = *x;
@@ -570,11 +664,17 @@ namespace sofa
       //Rest position
 
       if (x0->size() == 0)
-	{
-	*x0 = *x;	
-	}
-    
-	initialized = true;
+      {
+	  *x0 = *x;
+	  if (restScale.getValue() != (Real)1)
+	  {
+	      Real s = restScale.getValue();
+	      for (unsigned int i=0; i<x0->size(); i++)
+		  (*x0)[i] *= s;
+	  }
+      }
+
+      initialized = true;
     }
 
     //
@@ -587,7 +687,7 @@ namespace sofa
       if (reset_position == NULL)
         return;
       // Back to initial state
-      this->resize(this->reset_position->size());
+      this->resize(reset_position->size());
       *this->x = *reset_position;
       *this->v = *v0;
 
@@ -1131,6 +1231,19 @@ namespace sofa
     }
 
     template <class DataTypes>
+    void MechanicalObject<DataTypes>::setVfree(VecId v)
+    {
+      if (v.type == VecId::V_DERIV)
+	{
+	  this->vfree = getVecDeriv(v.index);
+	}
+      else
+	{
+	  std::cerr << "Invalid setVfree operation ("<<v<<")\n";
+	}
+    }
+
+    template <class DataTypes>
     void MechanicalObject<DataTypes>::setV(VecId v)
     {
       if (v.type == VecId::V_DERIV)
@@ -1281,12 +1394,12 @@ namespace sofa
     //
     // Template specializations
 
-    template<>
-    void MechanicalObject<defaulttype::Rigid3Types>::getCompliance (double**W);
-    template<>
-    void MechanicalObject<defaulttype::Rigid3Types>::applyContactForce(double *f);
-    template<>
-    void MechanicalObject<defaulttype::Rigid3Types>::resetContactForce();
+    //template<>
+    //void MechanicalObject<defaulttype::Rigid3Types>::getCompliance (double**W);
+    //template<>
+    //void MechanicalObject<defaulttype::Rigid3Types>::applyContactForce(double *f);
+    //template<>
+    //void MechanicalObject<defaulttype::Rigid3Types>::resetContactForce();
 
 
   } // namespace component

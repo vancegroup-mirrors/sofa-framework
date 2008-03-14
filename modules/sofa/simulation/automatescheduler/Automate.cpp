@@ -72,7 +72,7 @@ Automate* Automate::getInstance()
 	return automate;
 }
 
-void Automate::load(char *_automateType, bool _periphInSimulation)
+void Automate::load(const char *_automateType, bool _periphInSimulation)
 {
 	if (strcmp(_automateType, "simpleMonoFrequency") == 0)
 	{

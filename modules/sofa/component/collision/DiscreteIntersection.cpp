@@ -27,7 +27,7 @@
 #include <sofa/component/collision/DiscreteIntersection.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
-#include <sofa/component/collision/RayPickInteractor.h>
+//#include <sofa/component/collision/RayPickInteractor.h>
 #include <sofa/component/collision/ProximityIntersection.h>
 #include <sofa/component/collision/proximity.h>
 #include <iostream>
@@ -55,36 +55,38 @@ SOFA_DECL_CLASS(DiscreteIntersection)
 
 DiscreteIntersection::DiscreteIntersection()
 {
-	intersectors.add<CubeModel,       CubeModel,         DiscreteIntersection, false> (this);
-	intersectors.add<SphereModel,     SphereModel,       DiscreteIntersection, false> (this);
-	intersectors.add<SphereModel,     RayModel,          DiscreteIntersection, true>  (this);
-	intersectors.add<SphereModel,     RayPickInteractor, DiscreteIntersection, true>  (this);
-	intersectors.add<SphereTreeModel, RayPickInteractor, DiscreteIntersection, true>  (this);
-	intersectors.add<SphereTreeModel, SphereTreeModel,   DiscreteIntersection, false> (this);
-	intersectors.add<SphereTreeModel, CubeModel,         DiscreteIntersection, true>  (this);
-	intersectors.add<SphereTreeModel, TriangleModel,     DiscreteIntersection, true>  (this);
-	//intersectors.add<SphereTreeModel, SphereModel,       DiscreteIntersection, true>  (this);
-	//intersectors.add<SphereModel,     TriangleModel,     DiscreteIntersection, true>  (this);
-	//intersectors.add<TriangleModel,   TriangleModel,     DiscreteIntersection, false> (this);
-	intersectors.add<RigidDistanceGridCollisionModel, RigidDistanceGridCollisionModel, DiscreteIntersection, false> (this);
-	intersectors.add<RigidDistanceGridCollisionModel, PointModel,                      DiscreteIntersection, true>  (this);
-	intersectors.add<RigidDistanceGridCollisionModel, SphereModel,                     DiscreteIntersection, true>  (this);
-	intersectors.add<RigidDistanceGridCollisionModel, TriangleModel,                   DiscreteIntersection, true>  (this);
-	intersectors.add<RigidDistanceGridCollisionModel, RayModel,                        DiscreteIntersection, true>  (this);
-	intersectors.add<RigidDistanceGridCollisionModel, RayPickInteractor,               DiscreteIntersection, true>  (this);
-	intersectors.add<FFDDistanceGridCollisionModel,   RigidDistanceGridCollisionModel, DiscreteIntersection, true>  (this);
-	intersectors.add<FFDDistanceGridCollisionModel,   FFDDistanceGridCollisionModel,   DiscreteIntersection, false> (this);
-	intersectors.add<FFDDistanceGridCollisionModel, PointModel,                        DiscreteIntersection, true>  (this);
-	intersectors.add<FFDDistanceGridCollisionModel, SphereModel,                       DiscreteIntersection, true>  (this);
-	intersectors.add<FFDDistanceGridCollisionModel, TriangleModel,                     DiscreteIntersection, true>  (this);
-	intersectors.add<FFDDistanceGridCollisionModel,   RayModel,                        DiscreteIntersection, true>  (this);
-	intersectors.add<FFDDistanceGridCollisionModel,   RayPickInteractor,               DiscreteIntersection, true>  (this);
+	intersectors.add<CubeModel,       CubeModel,         DiscreteIntersection> (this);
+	intersectors.add<SphereModel,     SphereModel,       DiscreteIntersection> (this);
+	intersectors.add<SphereTreeModel, SphereTreeModel,   DiscreteIntersection> (this);
+	intersectors.add<SphereTreeModel, CubeModel,         DiscreteIntersection>  (this);
+	intersectors.add<SphereTreeModel, TriangleModel,     DiscreteIntersection>  (this);
+	//intersectors.add<SphereTreeModel, SphereModel,       DiscreteIntersection>  (this);
+	//intersectors.add<SphereModel,     TriangleModel,     DiscreteIntersection>  (this);
+	intersectors.add<TriangleModel,     LineModel,       DiscreteIntersection>  (this);
+	//intersectors.add<TriangleModel,   TriangleModel,     DiscreteIntersection> (this);
+	intersectors.add<RigidDistanceGridCollisionModel, PointModel,                      DiscreteIntersection>  (this);
+	intersectors.add<RigidDistanceGridCollisionModel, SphereModel,                     DiscreteIntersection>  (this);
+	intersectors.add<RigidDistanceGridCollisionModel, TriangleModel,                   DiscreteIntersection>  (this);
+	intersectors.add<RigidDistanceGridCollisionModel, RigidDistanceGridCollisionModel, DiscreteIntersection> (this);
+	intersectors.add<FFDDistanceGridCollisionModel, PointModel,                        DiscreteIntersection>  (this);
+	intersectors.add<FFDDistanceGridCollisionModel, SphereModel,                       DiscreteIntersection>  (this);
+	intersectors.add<FFDDistanceGridCollisionModel, TriangleModel,                     DiscreteIntersection>  (this);
+	intersectors.add<FFDDistanceGridCollisionModel,   RigidDistanceGridCollisionModel, DiscreteIntersection>  (this);
+	intersectors.add<FFDDistanceGridCollisionModel,   FFDDistanceGridCollisionModel,   DiscreteIntersection> (this);
+
+	intersectors.add<RayModel, SphereModel,                     DiscreteIntersection>  (this);
+	intersectors.add<RayModel, SphereTreeModel,                 DiscreteIntersection>  (this);
+    intersectors.ignore<RayModel, PointModel>();
+    intersectors.ignore<RayModel, LineModel>();
+    intersectors.add<RayModel, TriangleModel,                   DiscreteIntersection>  (this);
+	intersectors.add<RayModel, RigidDistanceGridCollisionModel, DiscreteIntersection>  (this);
+	intersectors.add<RayModel, FFDDistanceGridCollisionModel,   DiscreteIntersection>  (this);
 }
 
 /// Return the intersector class handling the given pair of collision models, or NULL if not supported.
-ElementIntersector* DiscreteIntersection::findIntersector(core::CollisionModel* object1, core::CollisionModel* object2)
+ElementIntersector* DiscreteIntersection::findIntersector(core::CollisionModel* object1, core::CollisionModel* object2, bool& swapModels)
 {
-	return intersectors.get(object1, object2);
+	return intersectors.get(object1, object2, swapModels);
 }
 
 bool DiscreteIntersection::testIntersection(Cube& cube1, Cube& cube2)
@@ -121,6 +123,93 @@ int DiscreteIntersection::computeIntersection(Cube&, Cube&, OutputVector*)
 //	std::cout<<"Distance correction between Triangle - Triangle"<<std::endl;
 //	return 0;
 //}
+
+bool DiscreteIntersection::testIntersection(Triangle&, Line&)
+{
+    return true;
+}
+
+int DiscreteIntersection::computeIntersection(Triangle& e1, Line& e2, OutputVector* contacts)
+{
+	Vector3 A = e1.p1();
+	Vector3 AB = e1.p2()-A;
+	Vector3 AC = e1.p3()-A;
+	Vector3 P = e2.p1();
+	Vector3 PQ = e2.p2()-P;
+	Matrix3 M, Minv;
+	Vector3 right;
+	for (int i=0;i<3;i++)
+	{
+		M[i][0] = AB[i];
+		M[i][1] = AC[i];
+		M[i][2] = -PQ[i];
+		right[i] = P[i]-A[i];
+	}
+	//std::cout << "M="<<M<<std::endl;
+	if (!Minv.invert(M))
+		return 0;
+	Vector3 baryCoords = Minv * right;
+	if (baryCoords[0] < 0 || baryCoords[1] < 0 || baryCoords[0]+baryCoords[1] > 1)
+		return 0; // out of the triangle
+	if (baryCoords[2] < 0 || baryCoords[2] > 1)
+		return 0; // out of the line
+	
+	Vector3 X = P+PQ*baryCoords[2];
+	
+	contacts->resize(contacts->size()+1);
+	DetectionOutput *detection = &*(contacts->end()-1);
+	detection->point[0] = X;
+	detection->point[1] = X;
+	detection->normal = e1.n();
+	detection->value = 0;
+	detection->elem.first = e1;
+	detection->elem.second = e2;
+	detection->id = e2.getIndex();
+	return 1;
+}
+
+bool DiscreteIntersection::testIntersection(Ray&, Triangle&)
+{
+    return true;
+}
+
+int DiscreteIntersection::computeIntersection(Ray& e1, Triangle& e2, OutputVector* contacts)
+{
+	Vector3 A = e2.p1();
+	Vector3 AB = e2.p2()-A;
+	Vector3 AC = e2.p3()-A;
+	Vector3 P = e1.origin();
+	Vector3 PQ = e1.direction();
+	Matrix3 M, Minv;
+	Vector3 right;
+	for (int i=0;i<3;i++)
+	{
+		M[i][0] = AB[i];
+		M[i][1] = AC[i];
+		M[i][2] = -PQ[i];
+		right[i] = P[i]-A[i];
+	}
+	if (!Minv.invert(M))
+		return 0;
+	Vector3 baryCoords = Minv * right;
+	if (baryCoords[0] < 0 || baryCoords[1] < 0 || baryCoords[0]+baryCoords[1] > 1)
+		return 0; // out of the triangle
+	if (baryCoords[2] < 0 || baryCoords[2] > e1.l())
+		return 0; // out of the line
+	
+	Vector3 X = P+PQ*baryCoords[2];
+	
+	contacts->resize(contacts->size()+1);
+	DetectionOutput *detection = &*(contacts->end()-1);
+	detection->point[0] = X;
+	detection->point[1] = X;
+	detection->normal = -e2.n();
+	detection->value = 0;
+	detection->elem.first = e1;
+	detection->elem.second = e2;
+	detection->id = e1.getIndex();
+	return 1;
+}
 
 bool DiscreteIntersection::testIntersection(RigidDistanceGridCollisionElement&, RigidDistanceGridCollisionElement&)
 {
@@ -794,12 +883,12 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     return 1;
 }
 
-bool DiscreteIntersection::testIntersection(RigidDistanceGridCollisionElement& /*e1*/, Ray& /*e2*/)
+bool DiscreteIntersection::testIntersection(Ray& /*e2*/, RigidDistanceGridCollisionElement& /*e1*/)
 {
     return true;
 }
 
-int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement& e1, Ray& e2, OutputVector* contacts)
+int DiscreteIntersection::computeIntersection(Ray& e2, RigidDistanceGridCollisionElement& e1, OutputVector* contacts)
 {
     Vector3 rayOrigin(e2.origin());
     Vector3 rayDirection(e2.direction());
@@ -899,12 +988,12 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
             contacts->resize(contacts->size()+1);
             DetectionOutput *detection = &*(contacts->end()-1);
             
-            detection->point[0] = p;
-            detection->point[1] = e2.origin() + e2.direction()*l0;
-            detection->normal = -e2.direction(); // normal in global space from p1's surface
+            detection->point[0] = e2.origin() + e2.direction()*l0;
+            detection->point[1] = p;
+            detection->normal = e2.direction(); // normal in global space from p1's surface
             detection->value = dist;
-            detection->elem.first = e1;
-            detection->elem.second = e2;
+            detection->elem.first = e2;
+            detection->elem.second = e1;
             detection->id = e2.getIndex();
             ++nc;
         }
@@ -1576,12 +1665,12 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     return nc;
 }
 
-bool DiscreteIntersection::testIntersection(FFDDistanceGridCollisionElement& /*e1*/, Ray& /*e2*/)
+bool DiscreteIntersection::testIntersection(Ray& /*e1*/, FFDDistanceGridCollisionElement& /*e2*/)
 {
     return true;
 }
 
-int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e1, Ray& e2, OutputVector* contacts)
+int DiscreteIntersection::computeIntersection(Ray& e2, FFDDistanceGridCollisionElement& e1, OutputVector* contacts)
 {
     Vector3 rayOrigin(e2.origin());
     Vector3 rayDirection(e2.direction());
@@ -1656,12 +1745,12 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 contacts->resize(contacts->size()+1);
                 DetectionOutput *detection = &*(contacts->end()-1);
                 
-                detection->point[0] = c1.initpos(b);
-                detection->point[1] = e2.origin() + e2.direction()*rayPos;
-                detection->normal = -e2.direction(); // normal in global space from p1's surface
+                detection->point[0] = e2.origin() + e2.direction()*rayPos;
+                detection->point[1] = c1.initpos(b);
+                detection->normal = e2.direction(); // normal in global space from p1's surface
                 detection->value = d;
-                detection->elem.first = e1;
-                detection->elem.second = e2;
+                detection->elem.first = e2;
+                detection->elem.second = e1;
                 detection->id = e2.getIndex();
                 return 1;
             }

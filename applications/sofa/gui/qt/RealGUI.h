@@ -65,6 +65,19 @@ namespace sofa
 
       //enum TYPE{ NORMAL, PML, LML};  
 
+      enum {
+	ALL,
+ VISUALMODELS, 
+ BEHAVIORMODELS, 
+ COLLISIONMODELS,
+ BOUNDINGTREES,
+ MAPPINGS,
+ MECHANICALMAPPINGS,
+ FORCEFIELDS,
+ INTERACTIONS,
+ WIREFRAME,
+ NORMALS};
+ 
       using sofa::simulation::tree::GNode;
 #ifdef SOFA_PML
       using namespace sofa::filemanager::pml;
@@ -99,16 +112,18 @@ namespace sofa
 
 
 	  virtual void fileOpen(const char* filename); //, int TYPE=NORMAL);
-      	  virtual void fileOpen(const char* filename, bool keepParams); //, int TYPE=NORMAL);
-      	  virtual void fileOpenSimu(const char* filename, bool keepParams); //, int TYPE=NORMAL);
-	  virtual void fileSaveAs(const char* filename);
-	  virtual void setScene(GNode* groot, const char* filename=NULL, bool keepParams=false);
+      	  virtual void fileOpenSimu(const char* filename); //, int TYPE=NORMAL);
+	  virtual void setScene(GNode* groot, const char* filename=NULL);
 	  virtual void setTitle( const char* windowTitle );
 
 	  //public slots:
+	  virtual void fileNew();
 	  virtual void fileOpen();
-	  //virtual void fileSave();
-	  virtual void fileSaveAs();
+	  virtual void fileSave(); 
+ 	  virtual void fileSaveAs(){fileSaveAs((GNode *)NULL);};
+	  virtual void fileSaveAs(GNode *node);	 
+	  virtual void fileSaveAs(GNode* node,const char* filename);
+	  
 	  virtual void fileReload();
 	  //virtual void filePrint();
 	  virtual void fileExit();
@@ -122,6 +137,7 @@ namespace sofa
 	  virtual void viewerOpenGL();
 	  virtual void viewerQGLViewer();
 	  virtual void viewerOGRE();
+	  virtual void viewExecutionGraph();
 	  //virtual void helpIndex();
 	  //virtual void helpContents();
 	  //virtual void helpAbout();
@@ -140,17 +156,63 @@ namespace sofa
 	  void setDt(const QString&);
 	  void resetScene();
 	  void screenshot();
-	  void slot_showVisual(bool);
-	  void slot_showBehavior(bool);
-	  void slot_showCollision(bool);
-	  void slot_showBoundingCollision(bool);
-	  void slot_showMapping(bool);
-	  void slot_showMechanicalMapping(bool);
-	  void slot_showForceField(bool);
-	  void slot_showInteractionForceField(bool);
-	  void slot_showWireFrame(bool);
-	  void slot_showNormals(bool);
 
+	  void showVisualModels()      {showhideElements(VISUALMODELS,true);};          
+	  void showBehaviorModels()    {showhideElements(BEHAVIORMODELS,true);};
+	  void showCollisionModels()   {showhideElements(COLLISIONMODELS,true);};
+	  void showBoundingTrees()     {showhideElements(BOUNDINGTREES,true);};
+	  void showMappings()          {showhideElements(MAPPINGS,true);};
+	  void showMechanicalMappings(){showhideElements(MECHANICALMAPPINGS,true);};
+	  void showForceFields()       {showhideElements(FORCEFIELDS,true);};
+	  void showInteractions()      {showhideElements(INTERACTIONS,true);};
+	  void showAll()               {showhideElements(ALL,true);};
+	  void showWireFrame()         {showhideElements(WIREFRAME,true);};
+	  void showNormals()           {showhideElements(NORMALS,true);};
+
+	  void hideVisualModels()      {showhideElements(VISUALMODELS,false);};          
+	  void hideBehaviorModels()    {showhideElements(BEHAVIORMODELS,false);};	
+	  void hideCollisionModels()   {showhideElements(COLLISIONMODELS,false);};	
+	  void hideBoundingTrees()     {showhideElements(BOUNDINGTREES,false);};		
+	  void hideMappings()          {showhideElements(MAPPINGS,false);};		
+	  void hideMechanicalMappings(){showhideElements(MECHANICALMAPPINGS,false);};	
+	  void hideForceFields()       {showhideElements(FORCEFIELDS,false);};		
+	  void hideInteractions()      {showhideElements(INTERACTIONS,false);};		
+	  void hideAll()               {showhideElements(ALL,false);};			
+	  void hideWireFrame()         {showhideElements(WIREFRAME,false);};		
+	  void hideNormals()           {showhideElements(NORMALS,false);};		
+
+	  void showhideElements(int FILTER, bool value)
+	  {	    
+	    GNode* groot = getScene();
+	    if ( groot )
+	    {
+	      switch(FILTER)
+	      {
+		case ALL:		  
+		  groot->getContext()->setShowVisualModels ( value );
+		  groot->getContext()->setShowBehaviorModels ( value );
+		  groot->getContext()->setShowCollisionModels ( value );
+		  groot->getContext()->setShowBoundingCollisionModels ( value );  
+		  groot->getContext()->setShowMappings ( value );
+		  groot->getContext()->setShowMechanicalMappings ( value );
+		  groot->getContext()->setShowForceFields ( value );
+		  groot->getContext()->setShowInteractionForceFields ( value );
+		  break; 
+		case VISUALMODELS:       groot->getContext()->setShowVisualModels ( value ); break;
+		case BEHAVIORMODELS:     groot->getContext()->setShowBehaviorModels ( value ); break;
+		case COLLISIONMODELS:    groot->getContext()->setShowCollisionModels ( value ); break;
+		case BOUNDINGTREES:      groot->getContext()->setShowBoundingCollisionModels ( value );  break;
+		case MAPPINGS:           groot->getContext()->setShowMappings ( value ); break;
+		case MECHANICALMAPPINGS: groot->getContext()->setShowMechanicalMappings ( value ); break;
+		case FORCEFIELDS:        groot->getContext()->setShowForceFields ( value ); break;
+		case INTERACTIONS:       groot->getContext()->setShowInteractionForceFields ( value );break;
+		case WIREFRAME:          groot->getContext()->setShowWireFrame ( value );break;
+		case NORMALS:            groot->getContext()->setShowNormals ( value );break;
+	      }
+	      sofa::simulation::tree::getSimulation()->updateVisualContext ( groot, FILTER );
+	    }
+	    viewer->getQWidget()->update();
+	  }
 
 	  void slot_recordSimulation( bool);
 	  void slot_backward( );
@@ -164,6 +226,25 @@ namespace sofa
 
 
 
+	  void changeInstrument(int);
+  
+	  //Used in Context Menu
+	  void graphSaveObject();
+	  void graphAddObject();
+	  void graphRemoveObject();
+	  void graphModify();
+	  void graphCollapse();
+	  void graphExpand();
+	  void graphDesactivateNode();
+	  void graphActivateNode();
+	  //When adding an object in the graph
+	  void loadObject(std::string path, double dx, double dy, double dz,double rx, double ry, double rz, double scale=1.0);
+	  //refresh the visualization window	 
+	  void redraw();
+	  //when a dialog modify object is closed
+	  void modifyUnlock(void *Id);
+	  void transformObject( GNode *node, double dx, double dy, double dz, double rx, double ry, double rz, double scale=1.0);
+	  
 
 	  void exportGraph();
 	  void exportGraph(sofa::simulation::tree::GNode*);
@@ -173,20 +254,6 @@ namespace sofa
 	  void setExportGnuplot(bool);
 	  void currentTabChanged(QWidget*);
 
-
-	  //Used in Context Menu
-	  void graphAddObject();
-	  void graphRemoveObject();
-	  void graphModify();
-	  void graphCollapse();
-	  void graphExpand();
-	  //When adding an object in the graph
-	  void loadObject(std::string path, double dx, double dy, double dz, double scale=1.0);
-	  //refresh the visualization window	 
-	  void redraw();
-	  //when a dialog modify object is closed
-	  void modifyUnlock(int Id);
-	  void transformObject( GNode *node, double dx, double dy, double dz, double scale=1.0);
 
 	signals:
 	  void reload();
@@ -203,8 +270,11 @@ namespace sofa
 	  
 	  void playSimulation(bool);
 
-	  GNode *searchNode(GNode *node, Q3ListViewItem *item_clicked);
-	  GNode *verifyNode(GNode *node, Q3ListViewItem *item_clicked);
+	  //Graph Stats
+	  bool graphCreateStats(GNode *groot,QListViewItem *parent); 	  
+	  bool graphAddCollisionModelsStat(sofa::helper::vector< sofa::core::CollisionModel* > &v,QListViewItem *parent);	  
+	  void graphSummary();
+	  	 
 	  bool isErasable(core::objectmodel::Base* element);
 
 	  bool m_dumpState;
@@ -215,6 +285,8 @@ namespace sofa
 
 
 	  QWidget* currentTab;
+	  QWidget *tabInstrument;
+	  
 	  GraphListenerQListView* graphListener;
 	  QListViewItem *item_clicked;
 	  GNode *node_clicked;
@@ -237,7 +309,7 @@ namespace sofa
 	  QPushButton* playforward_record;
 	  QPushButton* stepforward_record;
 	  QPushButton* forward_record;
-	 
+	  
 	  QLineEdit* loadRecordTime;
 	  QLabel* initialTime;
 	  QLabel* finalTime;
@@ -249,9 +321,9 @@ namespace sofa
 
 	  QWidgetStack* left_stack;
 	  AddObject *dialog;
-	  
 
-	  //these are already stored in the viewe
+
+	  //these are already stored in the viewer
 	  //do not duplicate them
 	  //sofa::simulation::tree::GNode* groot;
 	  //std::string sceneFileName;
@@ -259,39 +331,43 @@ namespace sofa
 
 	private:
 	  //Map: Id -> Node currently modified. Used to avoid dependancies during removing actions
-	  std::map< int, core::objectmodel::Base* >       map_modifyDialogOpened;
+	  std::map< void*, core::objectmodel::Base* >            map_modifyDialogOpened;
+	  
+	  std::map< void*, QDialog* >                       map_modifyObjectWindow;
+	  std::vector<std::pair<core::objectmodel::Base*, Q3ListViewItem*> > items_stats;
 	  //unique ID to pass to a modify object dialog
-	  int current_Id_modifyDialog;
+	  void *current_Id_modifyDialog;
 
-	  //At initialization: list of the path to the basic objects you can add to the scene
-	  std::vector< std::string > list_object;
-
-	  std::string list_demo[3];
-
-	  //Bounding Box of each object
-	  std::vector< float > list_object_BoundingBox;
+ 
 	  //currently unused: scale is experimental
  	  float object_Scale[2]; 
 
 	  float initial_time;
+	  
+	  //At initialization: list of the path to the basic objects you can add to the scene
+	  std::vector< std::string > list_object;
 	  std::list< GNode *> list_object_added;
 	  std::list< GNode *> list_object_removed;
 	  std::list< GNode *> list_object_initial;
-	  std::list< GNode* > list_node_contactPoints;
 	  bool record_simulation;
 
 	  bool setViewer(const char* name);
 	  void addViewer();
 	  void setGUI(void);
 	  
-
 #ifdef SOFA_PML
 	  virtual void pmlOpen(const char* filename, bool resetView=true);
 	  virtual void lmlOpen(const char* filename);
 	  PMLReader *pmlreader;
 	  LMLReader *lmlreader;
 #endif
-	};
+
+        public:
+	  static QString getExistingDirectory ( QWidget* parent, const QString & dir = QString(), const char * name = 0, const QString & caption = QString() );
+	  static QString getOpenFileName ( QWidget* parent, const QString & startWith = QString(), const QString & filter = QString(), const char * name = 0, const QString & caption = QString(), QString * selectedFilter = 0 );
+	  static QString getSaveFileName ( QWidget* parent, const QString & startWith = QString(), const QString & filter = QString(), const char * name = 0, const QString & caption = QString(), QString * selectedFilter = 0 );
+
+};
 
 
 

@@ -33,13 +33,8 @@
 #include <map>
 #include <queue>
 #include <stack>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#include <GLUT/glut.h>
-#else
-#include <GL/gl.h>
-#include <GL/glut.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 
 /* for debugging the collision method */
@@ -70,7 +65,7 @@ using std::cout; // added for testing
 using namespace core::objectmodel;
 
 TestDetection::TestDetection()
-: bDraw(dataField(&bDraw, false, "draw", "enable/disable display of results"))
+: bDraw(initData(&bDraw, false, "draw", "enable/disable display of results"))
 {
 }
 
@@ -83,7 +78,7 @@ void TestDetection::addCollisionModel(CollisionModel *cm)
 	{
 		CollisionModel* cm2 = *it;
 		// Check if the collision models are movables
-		if (cm->isStatic() && cm2->isStatic())
+		if (!cm->isSimulated() && !cm2->isSimulated())
 			continue;
 		// Check if there exists a manner to check the collision between the collision models
 		if (!cm->canCollideWith(cm2))
@@ -93,14 +88,20 @@ void TestDetection::addCollisionModel(CollisionModel *cm)
 		// So far: cube-cube, sphere-sphere, sphere-ray, etc.
 		// Define the intersection function to use
 		// findIntersector is based on a map.
-		core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2);
-
+            bool swapModels = false;
+            core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
+            if (intersector == NULL)
+                continue;
+            
+            core::CollisionModel* cm1 = (swapModels?cm2:cm);
+            cm2 = (swapModels?cm:cm2);
+            
 		if (intersector == NULL)
 			continue;
 
-		if (intersector->canIntersect(cm, cm2))	
+		if (intersector->canIntersect(cm1, cm2))	
 		{ // If colAdd the colliding models pair to a list so they can be tested in the narrow phase.
-			cmPairs.push_back(std::make_pair(cm, cm2));
+			cmPairs.push_back(std::make_pair(cm1, cm2));
 		}		
 
 	}
@@ -118,29 +119,36 @@ void TestDetection::addCollisionPair(const std::pair<CollisionModel*, CollisionM
 	// Collision Models
 	CollisionModel *cm1 = cmPair.first; 
 	CollisionModel *cm2 = cmPair.second;
-
-	typedef  std::pair<CollisionElementIterator,CollisionElementIterator>  TestPair;
-	TestPair pair; 
-	// List of colliding pairs to be tested
-	std::queue< TestPair > pairList;
-
-	// Root nodes of the colliding models 
-	pair.first = cm1->getFirst()->begin(); 
-	pair.second = cm2->getFirst()->begin();
-	
+    
+    //// Find the intersector to be used.
+    CollisionModel *finalcm1 = cm1->getLast();
+    CollisionModel *finalcm2 = cm2->getLast();
+    bool swapModels = false;
+    core::componentmodel::collision::ElementIntersector* finalIntersector = intersectionMethod->findIntersector(finalcm1, finalcm2, swapModels);
+    if (swapModels)
+    {
+        core::CollisionModel* tmp;
+        tmp = cm1; cm1 = cm2; cm2 = tmp;
+        tmp = finalcm1; finalcm1 = finalcm2; finalcm2 = tmp;
+    }
+    
 	//// Find the intersector to be used.
-	core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm1, cm2);
-
-	//// Find the intersector to be used.
-	CollisionModel *finalcm1 = cm1->getLast();
-	CollisionModel *finalcm2 = cm2->getLast();
-	core::componentmodel::collision::ElementIntersector* finalIntersector = intersectionMethod->findIntersector(finalcm1, finalcm2);
+	core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm1, cm2, swapModels);
 
 	if (intersector == NULL || finalIntersector == NULL) {
 		//cout << "couldn't find intersector" << endl;
 		return;
 	}
-
+    
+    typedef  std::pair<CollisionElementIterator,CollisionElementIterator>  TestPair;
+    TestPair pair; 
+    // List of colliding pairs to be tested
+    std::queue< TestPair > pairList;
+    
+    // Root nodes of the colliding models 
+    pair.first = cm1->getFirst()->begin(); 
+    pair.second = cm2->getFirst()->begin();
+    
     DetectionOutputVector*& outputs = outputsMap[std::make_pair(finalcm1, finalcm2)];
     finalIntersector->beginIntersect(finalcm1, finalcm2, outputs);
 

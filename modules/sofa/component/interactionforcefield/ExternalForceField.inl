@@ -37,11 +37,6 @@
 #include <sofa/helper/gl/template.h>
 #include <assert.h>
 #include <iostream>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 using std::cerr;
 using std::endl;
 
@@ -63,8 +58,8 @@ using namespace sofa::defaulttype;
 
 template<class DataTypes>
 ExternalForceField<DataTypes>::ExternalForceField ()
-: m_forces(dataField(&m_forces,"forces","Values of the forces"))
-, m_indices(dataField(&m_indices,"indices","Indices of the particles undergoing the forces"))
+: m_forces(initData(&m_forces,"forces","Values of the forces"))
+, m_indices(initData(&m_indices,"indices","Indices of the particles undergoing the forces"))
 {
 }
 

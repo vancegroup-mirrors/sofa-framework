@@ -37,15 +37,15 @@ public:
     typedef DataTypes::VecCoord VecCoord;
     typedef DataTypes::VecDeriv VecDeriv;
     
-    DataField<std::string> filename;
-    DataField<std::string> texturename;
-    DataField<std::string> materialname;
-    DataField<std::string> colorname;
+    Data<std::string> filename;
+    Data<std::string> texturename;
+    Data<std::string> materialname;
+    Data<std::string> colorname;
        
     float color[4];
 
     //Initial Position of a OgreVisualModel
-    DataField<float> dx,dy,dz,scale,scaleTex;
+    Data<float> dx,dy,dz,scale,scaleTex;
 
      sofa::defaulttype::ResizableExtVector<Coord> x;
      sofa::defaulttype::ResizableExtVector<Coord> normals;

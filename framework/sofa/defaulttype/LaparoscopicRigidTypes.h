@@ -105,8 +105,8 @@ public:
 		const Real& getVTranslation (void) const { return vTranslation; }
 		const Vec3& getVOrientation (void) const { return vOrientation; }
 		inline friend std::ostream& operator << (std::ostream& out, const Deriv& v ){
-		    out<<"vTranslation = "<<v.getVTranslation();
-		    out<<", vOrientation = "<<v.getVOrientation();
+		    out<<v.getVTranslation();
+		    out<<" "<<v.getVOrientation();
 		    return out;
 		}
                 inline friend std::istream& operator >> (std::istream& in, Deriv& v ){
@@ -152,7 +152,7 @@ public:
 		
 		void operator +=(const Coord& a)
 		{
-			std::cout << "+="<<std::endl;
+// 			std::cout << "+="<<std::endl;
 			translation += a.getTranslation();
 			//orientation += a.getOrientation();
 			//orientation.normalize();
@@ -160,7 +160,7 @@ public:
 		
 		void operator*=(double a)
 		{
-			std::cout << "*="<<std::endl;
+// 			std::cout << "*="<<std::endl;
 			translation *= a;
 			//orientation *= a;
 		}
@@ -185,8 +185,8 @@ public:
 		const Real& getTranslation () const { return translation; }
 		const Quat& getOrientation () const { return orientation; }
 		inline friend std::ostream& operator << (std::ostream& out, const Coord& c ){
-			out<<"translation = "<<c.getTranslation();
-			out<<", rotation = "<<c.getOrientation();
+			out<<c.getTranslation();
+			out<<" "<<c.getOrientation();
 			return out;
 		}
                 inline friend std::istream& operator >> (std::istream& in, Coord& c ){

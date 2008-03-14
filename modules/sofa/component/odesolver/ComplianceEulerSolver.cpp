@@ -51,7 +51,7 @@ int ComplianceEulerSolverClass = core::RegisterObject("A simple explicit time in
 SOFA_DECL_CLASS(ComplianceEuler);
 
 ComplianceEulerSolver::ComplianceEulerSolver()
-  : firstCallToSolve( dataField( &firstCallToSolve, true, "firstCallToSolve", "If true, the free movement is computed, if false, the constraint movement is computed"))
+  : firstCallToSolve( initData( &firstCallToSolve, true, "firstCallToSolve", "If true, the free movement is computed, if false, the constraint movement is computed"))
 {
 }
 
@@ -68,7 +68,7 @@ void ComplianceEulerSolver::solve(double dt)
 
 	bool printLog = f_printLog.getValue();
 
-	simulation::tree::GNode *context = dynamic_cast<simulation::tree::GNode *>(this->getContext()); // access to current node
+// 	simulation::tree::GNode *context = dynamic_cast<simulation::tree::GNode *>(this->getContext()); // access to current node
 
 	if( printLog )
     {
@@ -77,24 +77,40 @@ void ComplianceEulerSolver::solve(double dt)
         cerr<<"ComplianceEulerSolver, initial v = "<< vel <<endl;
     }
 
-	if (!firstCallToSolve.getValue()) // f = contact force
-	{
-		computeContactAcc(getTime(), acc, pos, vel);
-		vel.eq(velFree); // computes velocity after a constraint movement
-		vel.peq(acc,dt);
-		pos.peq(vel,dt); // Computes position after a constraint movement
-		dx.peq(acc,(dt*dt));
-		simulation::tree::MechanicalPropagateAndAddDxVisitor(dx).execute(context);
-	}
-	else // f = mass * gravity
-	{
+
+	//if (!firstCallToSolve.getValue()) // f = contact force
+	//{
+	//	/*
+	//	computeContactAcc(getTime(), acc, pos, vel);
+	//	vel.eq(velFree); // computes velocity after a constraint movement
+	//	vel.peq(acc,dt);
+	//	pos.peq(vel,dt); // Computes position after a constraint movement
+	//	dx.peq(acc,(dt*dt));
+	//	*/
+
+	//	simulation::tree::MechanicalPropagateAndAddDxVisitor().execute(context);
+	//}
+	//else // f = mass * gravity
+	//{
+
+		//computeAcc(getTime(), acc, pos, vel);
+		//velFree.eq(vel);
+		//velFree.peq(acc,dt);
+		//posFree.eq(pos);
+		//posFree.peq(velFree,dt);
+		//simulation::tree::MechanicalPropagateFreePositionVisitor().execute(context);
+
+		addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
+
 		computeAcc(getTime(), acc, pos, vel);
-		velFree.eq(vel);
-		velFree.peq(acc,dt);
-		posFree.eq(pos);
-		posFree.peq(velFree,dt);
-		simulation::tree::MechanicalPropagateFreePositionVisitor().execute(context);
-	}
+		vel.eq(vel);
+		vel.peq(acc,dt);
+		pos.eq(pos);
+		pos.peq(vel,dt);
+		//simulation::tree::MechanicalPropagateFreePositionVisitor().execute(context);
+
+//}
+
 
 	firstCallToSolve.setValue(!firstCallToSolve.getValue());
 

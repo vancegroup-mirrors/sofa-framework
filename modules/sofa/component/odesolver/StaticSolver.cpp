@@ -47,29 +47,27 @@ using namespace sofa::defaulttype;
 using namespace core::componentmodel::behavior;
 
 StaticSolver::StaticSolver()
-: f_maxCGIter( dataField(&f_maxCGIter,(unsigned)25,"iterations","Maximum number of iterations for the conjugated gradient algorithmIndices of the fixed points") )
-, f_smallDenominatorThreshold( dataField(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
+: f_maxCGIter( initData(&f_maxCGIter,(unsigned)25,"iterations","Maximum number of iterations for the conjugated gradient algorithmIndices of the fixed points") )
+, f_smallDenominatorThreshold( initData(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
 {
 }
 
-void StaticSolver::solve(double)
+void StaticSolver::solve(double , VecId b)
 {
+	/*std::cout << "Static Solver will solve knowing b!! "<< this->getName() << "\n";*/
     //objectmodel::BaseContext* group = getContext();
     OdeSolver* group = this;
     MultiVector pos(group, VecId::position());
     MultiVector vel(group, VecId::velocity());
     MultiVector dx(group, VecId::dx());
     MultiVector f(group, VecId::force());
-    MultiVector b(group, VecId::V_DERIV);
     MultiVector p(group, VecId::V_DERIV);
     MultiVector q(group, VecId::V_DERIV);
     MultiVector r(group, VecId::V_DERIV);
     MultiVector x(group, VecId::V_DERIV);
     MultiVector z(group, VecId::V_DERIV);
-
-    // compute the right-hand term of the equation system
-    group->computeForce(b);             // b = f0
-    b.teq(-1);                          // b = -f0
+	
+//    b.teq(-1);                          // b = -f0
     group->projectResponse(b);         // b is projected to the constrained space
     //     cerr<<"StaticSolver::solve, initial position = "<<pos<<endl;
     //     cerr<<"StaticSolver::solve, b = "<<b<<endl;
@@ -106,7 +104,11 @@ void StaticSolver::solve(double)
         double den = p.dot(q);
         /*        cerr<<"StaticSolver::solve, den = "<<den<<endl;*/
         if( fabs(den)<f_smallDenominatorThreshold.getValue() )
-            break;
+		{
+			std::cout << "nb_iter = " << nb_iter << std::endl;
+			break;
+		}
+			
         alpha = rho/den;
         /*        cerr<<"StaticSolver::solve, rho = "<< rho <<endl;
                 cerr<<"StaticSolver::solve, den = "<< den <<endl;
@@ -125,6 +127,19 @@ void StaticSolver::solve(double)
         cerr<<"StaticSolver::solve, solution = "<<x<<endl;*/
     pos.peq( x );
     /*    cerr<<"StaticSolver::solve, new pos = "<<pos<<endl;*/
+}
+void StaticSolver::solve(double dt)
+{
+    //objectmodel::BaseContext* group = getContext();
+    OdeSolver* group = this;
+    MultiVector b(group, VecId::V_DERIV);
+
+	addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
+
+    // compute the right-hand term of the equation system
+    group->computeForce(b);             // b = f0
+    b.teq(-1); 
+	solve(dt, b);
 }
 
 int StaticSolverClass = core::RegisterObject("A solver which seeks the static equilibrium of the scene it monitors")

@@ -72,8 +72,8 @@ public:
 	static ExecBus* getInstance();	
 
 	StateMachine* getStateMachine();
-	simulation::automatescheduler::Node* getNext(char *, simulation::automatescheduler::Node *oldNode);
-	bool isEmpty(char *);
+	simulation::automatescheduler::Node* getNext(const char *, simulation::automatescheduler::Node *oldNode);
+	bool isEmpty(const char *);
 };
 
 } // namespace automatescheduler

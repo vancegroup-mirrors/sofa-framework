@@ -47,6 +47,11 @@ public:
 	RegularGridTopology(int nx, int ny, int nz);
 	RegularGridTopology();
 	
+	virtual void reinit()
+	{	 
+	  setPos(min.getValue()[0],max.getValue()[0],min.getValue()[1],max.getValue()[1],min.getValue()[2],max.getValue()[2]);
+
+	}
 	void parse(core::objectmodel::BaseObjectDescription* arg);
 
 	void setP0(const Vec3& val) { p0 = val; }
@@ -55,6 +60,7 @@ public:
 	void setDz(const Vec3& val) { dz = val; inv_dz2 = 1/(dz*dz); }
 	
 	void setPos(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax);
+	
 	
 	const Vec3& getP0() const { return p0; }
 	const Vec3& getDx() const { return dx; }
@@ -66,8 +72,11 @@ public:
 	Vec3 getPoint(int x, int y, int z) const;
 	bool hasPos()  const{ return true; }
 	double getPX(int i)  const { return getPoint(i)[0]; }
-	double getPY(int i) const { return getPoint(i)[1]; }
+	double getPY(int i) const { return getPoint(i)[1]; }	
 	double getPZ(int i) const { return getPoint(i)[2]; }
+	
+	Vec3   getMin() const { return min.getValue();}
+	Vec3   getMax() const { return max.getValue();}
 	
 	/// return the cube containing the given point (or -1 if not found).
 	virtual int findCube(const Vec3& pos);
@@ -84,7 +93,7 @@ public:
 	virtual int findNearestCube(const Vec3& pos, double& fx, double &fy, double &fz);
 	
 protected:
-	DataField< Vec3 > min, max;
+	Data< Vec3 > min, max;
 	/// Position of point 0
 	Vec3 p0;
 	/// Distance between points in the grid. Must be perpendicular to each other

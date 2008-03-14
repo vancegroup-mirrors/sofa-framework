@@ -424,8 +424,10 @@ namespace sofa
 
 
       template< class DataTypes >
-      void QuadSetTopologyModifier< DataTypes >::removePointsProcess( sofa::helper::vector<unsigned int> &indices) 
+      void QuadSetTopologyModifier< DataTypes >::removePointsProcess( sofa::helper::vector<unsigned int> &indices, const bool removeDOF) 
       {	
+	// Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
+
 	// now update the local container structures
 	QuadSetTopology<DataTypes> *topology = dynamic_cast<QuadSetTopology<DataTypes> *>(this->m_basicTopology);
 	assert (topology != 0);
@@ -436,7 +438,7 @@ namespace sofa
 	container->getQuadVertexShellArray();	
 
 	// start by calling the standard method.
-	EdgeSetTopologyModifier< DataTypes >::removePointsProcess( indices );
+	EdgeSetTopologyModifier< DataTypes >::removePointsProcess( indices, removeDOF );
 
 	int vertexIndex;
 

@@ -45,23 +45,23 @@
 		</Node>
 		<Node name="Surf">
 			<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="0" dz="-1"/>
-			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="MechanicalObject"  template="Rigid"   dx="-1.45" dy="0" dz="0.5"/>
-			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="MechanicalObject"  template="Rigid"   dx="1.45" dy="0" dz="0.5"/>
-			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="-1.45" dz="0.5"/>
-			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="MechanicalObject"  template="Rigid"   dx="0" dy="1.45" dz="0.5"/>
-			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" static="1"/>
+			<Object type="DistanceGrid" filename="#cube" scale="1" usePoints="0" proximity="0.0" contactStiffness="10.0" contactFriction="0.0" simulated="0" moving="0"/>
 		</Node>
 
 	</Node>

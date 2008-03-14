@@ -34,7 +34,7 @@ namespace simulation
 namespace automatescheduler
 {
 
-ObjSubAutomateNodeExec::ObjSubAutomateNodeExec(ObjSubAutomate *_subAutomate, char *s, double x, double y) 
+ObjSubAutomateNodeExec::ObjSubAutomateNodeExec(ObjSubAutomate *_subAutomate, const char *s, double x, double y) 
 : Node(s,x,y)
 {
 	subAutomate = _subAutomate;
@@ -45,7 +45,7 @@ void ObjSubAutomateNodeExec::setVisitor( myFuncPtr func )
 	mf = func;
 }
 
-void ObjSubAutomateNodeExec::execute(char *)
+void ObjSubAutomateNodeExec::execute(const char *)
 {
 	(subAutomate->*mf)();
 }

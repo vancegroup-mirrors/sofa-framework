@@ -56,6 +56,7 @@ namespace sofa
 		    mCamera->setPosition(camera_position);
 
 		    in.close();
+		    update();
 		    return;
 		  }		
 	      } 

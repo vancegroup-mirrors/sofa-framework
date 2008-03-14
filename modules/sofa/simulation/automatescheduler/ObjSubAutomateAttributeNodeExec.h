@@ -46,10 +46,10 @@ class ObjSubAutomateAttributeNodeExec : public simulation::automatescheduler::No
 
 public:
 
-	ObjSubAutomateAttributeNodeExec(std::vector<ObjSubAutomateAttributeNodeClass *> _execList, char *s, double x, double y);
+	ObjSubAutomateAttributeNodeExec(std::vector<ObjSubAutomateAttributeNodeClass *> _execList, const char *s, double x, double y);
 
 	void addAttribute(ObjSubAutomateAttributeNodeClass _attribute);
-	void execute(char *);
+	void execute(const char *);
 	std::vector<ObjSubAutomateAttributeNodeClass *> *getExecList(void);
 };
 

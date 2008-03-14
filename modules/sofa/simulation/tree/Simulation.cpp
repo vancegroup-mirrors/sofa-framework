@@ -78,7 +78,7 @@ namespace sofa
 			GNode* Simulation::load ( const char *filename )
 			{
 				::sofa::simulation::tree::init();
-				std::cerr << "Loading simulation XML file "<<filename<<std::endl;
+// 				std::cerr << "Loading simulation XML file "<<filename<<std::endl;
 				xml::BaseElement* xml = xml::load ( filename );
 				if ( xml==NULL )
 				{
@@ -88,7 +88,7 @@ namespace sofa
 				// We go the the current file's directory so that all relative path are correct
 				helper::system::SetDirectory chdir ( filename );
 
-				std::cout << "Initializing objects"<<std::endl;
+// 				std::cout << "Initializing objects"<<std::endl;
 				if ( !xml->init() )
 				{
 					std::cerr << "Objects initialization failed."<<std::endl;
@@ -102,7 +102,7 @@ namespace sofa
 					return NULL;
 				}
 
-				std::cout << "Initializing simulation "<<root->getName() <<std::endl;
+// 				std::cout << "Initializing simulation "<<root->getName() <<std::endl;
 				
 				// Find the Simulation component in the scene
 				FindByTypeVisitor<Simulation> findSimu;
@@ -117,16 +117,16 @@ namespace sofa
 				// BUGFIX (Jeremie A.): disabled as initTexture was not called yet, and the GUI might not even be up yet
 				//root->execute<VisualUpdateVisitor>();
 
-				std::cout << "load done."<<std::endl;
-
+// 				std::cout << "load done."<<std::endl;
 				delete xml;
 
 				return root;
 			}
 
 Simulation::Simulation()
-: numMechSteps( dataField(&numMechSteps,(unsigned) 1,"numMechSteps","Number of mechanical steps within one update step. If the update time step is dt, the mechanical time step is dt/numMechSteps.") ),
-gnuplotDirectory( dataField(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved"))
+: numMechSteps( initData(&numMechSteps,(unsigned) 1,"numMechSteps","Number of mechanical steps within one update step. If the update time step is dt, the mechanical time step is dt/numMechSteps.") ),
+gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
+instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used"))
 {}
 
 Simulation::~Simulation(){
@@ -162,8 +162,21 @@ Simulation::~Simulation(){
 			{
 				if ( !root ) return;
 				root->execute<InitVisitor>();
+				
+				//Get the list of instruments present in the scene graph
+				getInstruments(root);
 			}
 
+			void Simulation::getInstruments( GNode *node)
+			{
+			  std::string name = node->getName(); name.resize(10);
+  			  if (name == "Instrument") instruments.push_back(node); 
+			  for (GNode::ChildIterator it= node->child.begin(); it != node->child.end(); ++it)
+			  {
+			    getInstruments((*it));
+			  }			  
+			}
+			
 /// Execute one timestep. If dt is 0, the dt parameter in the graph will be used
 			void Simulation::animate ( GNode* root, double dt )
 			{
@@ -191,17 +204,17 @@ Simulation::~Simulation(){
 				{
 					root->execute ( act );
 					root->setTime ( startTime + (i+1)* act.getDt() ); 
-					root->execute<UpdateContextVisitor>();
+					root->execute<UpdateSimulationContextVisitor>();
 				}
-
+                            
+                            {
+                                AnimateEndEvent ev ( dt );
+                                PropagateEventVisitor act ( &ev );
+                                root->execute ( act );
+                            }
+                            
 				root->execute<UpdateMappingVisitor>();
 				root->execute<VisualUpdateVisitor>();
-
-				{
-					AnimateEndEvent ev ( dt );
-					PropagateEventVisitor act ( &ev );
-					root->execute ( act );
-				}
 			}
 
 /// Reset to initial state
@@ -245,14 +258,21 @@ Simulation::~Simulation(){
 				if ( !root ) return;
 				root->execute<UpdateContextVisitor>();
 			}
-
+			
+/// Update only Visual contexts. Required before drawing the scene if root flags are modified.( can filter by specifying a specific element)
+			void Simulation::updateVisualContext ( GNode* root, int FILTER)
+			{
+			  if ( !root ) return;
+			  UpdateVisualContextVisitor vis(FILTER);
+			  vis.execute(root);			  
+			}
 /// Render the scene
 			void Simulation::draw ( GNode* root )
 			{
 				if ( !root ) return;
-				//std::cout << "draw\n";
 				VisualDrawVisitor act ( VisualDrawVisitor::Std );
 				root->execute ( &act );
+
 				VisualDrawVisitor act2 ( VisualDrawVisitor::Transparent );
 				root->execute ( &act2 );
 			}
@@ -270,6 +290,8 @@ Simulation::~Simulation(){
 			void Simulation::unload ( GNode* root )
 			{
 				if ( !root ) return;
+				instruments.clear();
+				instrumentInUse.setValue(-1);
 				root->execute<DeleteVisitor>();
 				if ( root->getParent() !=NULL )
 					root->getParent()->removeChild ( root );

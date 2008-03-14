@@ -16,9 +16,9 @@ namespace mapping
 template <class BaseMapping>
 SubsetMapping<BaseMapping>::SubsetMapping(In* from, Out* to)
 : Inherit(from, to)
-, f_indices( dataField(&f_indices, "indices", "list of input indices"))
-, f_first( dataField(&f_first, -1, "first", "first index (use if indices are sequential)"))
-, f_last( dataField(&f_last, -1, "last", "last index (use if indices are sequential)"))
+, f_indices( initData(&f_indices, "indices", "list of input indices"))
+, f_first( initData(&f_first, -1, "first", "first index (use if indices are sequential)"))
+, f_last( initData(&f_last, -1, "last", "last index (use if indices are sequential)"))
 {
 }
 
@@ -68,18 +68,21 @@ void SubsetMapping<BaseMapping>::init()
     }
     else if (f_indices.getValue().empty())
     {
+
+
 	// We have to construct the correspondance index
 	const InVecCoord& in   = *this->fromModel->getX();
         const OutVecCoord& out = *this->toModel->getX();
         IndexArray& indices = *f_indices.beginEdit();
         indices.resize(out.size());
-        // searching for the first corresponding point in the 'from' model (there might be several ones).
+	
+	// searching for the first corresponding point in the 'from' model (there might be several ones).
         for (unsigned int i = 0; i < out.size(); ++i)
         {
             bool found = false;
             for (unsigned int j = 0;  j < in.size() && !found; ++j )
             {
-                if ( (out[i] - in[j]).norm() < 1.0e-10 )
+                if ( (out[i] - in[j]).norm() < 1.0e-5 )
                 {
                     indices[i] = j;
                     found = true;
@@ -146,6 +149,24 @@ void SubsetMapping<BaseMapping>::applyJT( typename In::VecDeriv& out, const type
     {
         out[indices[i]] += in[ i ];
     }
+}
+
+template <class BaseMapping>
+void SubsetMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
+{
+	int offset = out.size();
+    out.resize(offset+in.size());
+
+    const IndexArray& indices = f_indices.getValue();
+    for(unsigned int c = 0; c < in.size(); ++c)
+    {
+		for(unsigned int j=0;j<in[c].size();j++)
+        {
+            const typename Out::SparseDeriv cIn = in[c][j];
+			out[c+offset].push_back(typename In::SparseDeriv( indices[cIn.index] , (typename In::Deriv) cIn.data ));
+		}
+	}
+
 }
 
 } // namespace mapping

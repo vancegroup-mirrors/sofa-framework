@@ -15,14 +15,27 @@ namespace cuda
 extern "C" {
 extern int mycudaInit(int device);
 extern void mycudaMalloc(void **devPtr, size_t size);
+extern void mycudaMallocPitch(void **devPtr, size_t* pitch, size_t width, size_t height);
 extern void mycudaFree(void *devPtr);
+extern void mycudaMallocHost(void **hostPtr, size_t size);
+extern void mycudaFreeHost(void *hostPtr);
 //extern void mycudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind);
 extern void mycudaMemcpyHostToDevice(void *dst, const void *src, size_t count);
 extern void mycudaMemcpyDeviceToDevice(void *dst, const void *src, size_t count);
 extern void mycudaMemcpyDeviceToHost(void *dst, const void *src, size_t count);
+extern void mycudaMemcpyHostToDevice2D(void *dst, size_t dpitch, const void *src, size_t spitch, size_t width, size_t height);
+extern void mycudaMemcpyDeviceToDevice2D(void *dst, size_t dpitch, const void *src, size_t spitch, size_t width, size_t height);
+extern void mycudaMemcpyDeviceToHost2D(void *dst, size_t dpitch, const void *src, size_t spitch, size_t width, size_t height);
 
 extern void mycudaLogError(int err, const char* src);
 extern int myprintf(const char* fmt, ...);
+
+extern void mycudaGLRegisterBufferObject(int id);
+extern void mycudaGLUnregisterBufferObject(int id);
+
+extern void mycudaGLMapBufferObject(void** ptr, int id);
+extern void mycudaGLUnmapBufferObject(int id);
+
 }
 
 #if defined(__cplusplus)

@@ -52,12 +52,12 @@ class Node : public NodeGFX
 
 	public:
 		Node();
-		Node(char *s, double x, double y);
+		Node(const char *s, double x, double y);
 		virtual ~Node () {};
 
 		virtual void onEnter(StateMachine *);
 		virtual void onExit(StateMachine *);
-		virtual void execute(char *src);
+		virtual void execute(const char *src);
                 
 		void update(StateMachine *sm);
 		void addOutput(Edge *);
@@ -70,12 +70,12 @@ class Node : public NodeGFX
 class NodeExec : public Node
 {
 	void (*myFuncPtr1)(void);
-	void (*myFuncPtr2)(char *);
+	void (*myFuncPtr2)(const char *);
 	char param[100];
 
 public:
 
-	NodeExec(char *s, double x, double y) : Node(s,x,y){};
+	NodeExec(const char *s, double x, double y) : Node(s,x,y){};
 
 	void setVisitor( void (*func)(void) )
 	{
@@ -84,7 +84,7 @@ public:
 		myFuncPtr2 = NULL;
 	}
 
-	void setVisitor( void (*func)(char *), char *_param)
+	void setVisitor( void (*func)(const char *), const char *_param)
 	{
 		myFuncPtr2 = func;
 		strcpy(param, _param);
@@ -92,7 +92,7 @@ public:
 		myFuncPtr1 = NULL;
 	}
 
-	void execute(char *)
+	void execute(const char *)
 	{
 		if (myFuncPtr1 == NULL)
 		{
@@ -115,12 +115,12 @@ class NodePush : public Node
 
 public:
 
-	NodePush(char *s, double x, double y, Node *sr) : Node(s,x,y) 
+	NodePush(const char *s, double x, double y, Node *sr) : Node(s,x,y) 
 	{
 		src = sr;
 	}
 
-	void execute(char *){} 
+	void execute(const char *){} 
 
 	void onExit(StateMachine *sm);
 
@@ -137,12 +137,12 @@ class NodePushDisplay : public Node
 
 public:
 
-	NodePushDisplay(char *s, double x, double y, Node *sr) : Node(s,x,y) 
+	NodePushDisplay(const char *s, double x, double y, Node *sr) : Node(s,x,y) 
 	{
 		src = sr;
 	}
 
-	void execute(char *){} 
+	void execute(const char *){} 
 
 	void onExit(StateMachine *sm);
 
@@ -160,12 +160,12 @@ class NodePushPeriph : public Node
 
 public:
 
-	NodePushPeriph(char *s, double x, double y, Node *sr) : Node(s,x,y) 
+	NodePushPeriph(const char *s, double x, double y, Node *sr) : Node(s,x,y) 
 	{
 		src = sr;
 	}
 
-	void execute(char *){} 
+	void execute(const char *){} 
 
 	void onExit(StateMachine *sm);
 

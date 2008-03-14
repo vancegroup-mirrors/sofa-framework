@@ -31,11 +31,16 @@
 #include <functional>
 //#define SOFA_DEFAULTTYPE_VEC_H
 
+
+#define EQUALITY_THRESHOLD 1e-6
+
 namespace sofa
 {
 
 namespace defaulttype
 {
+
+enum NoInit { NOINIT }; ///< use when calling Vec or Mat constructor to skip initialization of values to 0
 
 template <int N, typename real=float>
 class Vec : public helper::fixed_array<real,N>
@@ -45,8 +50,12 @@ public:
         /// Default constructor: sets all values to 0.
         Vec()
         {
-            //this->assign(0);
-            this->assign(real());// modified by Matthieu Nesme -> takes into account if the template type is more complex than a real-like.
+            this->clear();
+        }
+
+        /// Fast constructor: no initialization
+        explicit Vec(NoInit)
+        {
         }
 
         /// Specific constructor for 1-element vectors.
@@ -226,11 +235,11 @@ public:
                         this->elems[i] = (real)v(i);
         }
 
-        /// Sets every element to 0.
-        void clear()
-        {
-                this->assign(0);
-        }
+    /// Sets every element to 0.
+    void clear()
+    {
+	this->assign(real());
+    }
 
         /// Sets every element to r.
         void fill(real r)
@@ -293,15 +302,15 @@ public:
 
         // LINEAR ALGEBRA
 
-        /// Multiplication by a scalar f.
-        template<class real2>
-        Vec<N,real> operator*(real2 f) const
-        {
-                Vec<N,real> r;
-                for (int i=0;i<N;i++)
-                        r[i] = this->elems[i]*(real)f;
-                return r;
-        }
+    /// Multiplication by a scalar f.
+    template<class real2>
+    Vec<N,real> operator*(real2 f) const
+    {
+	Vec<N,real> r(NOINIT);
+	for (int i=0;i<N;i++)
+	    r[i] = this->elems[i]*(real)f;
+	return r;
+    }
 
         /// On-place multiplication by a scalar f.
         template<class real2>
@@ -311,15 +320,15 @@ public:
                         this->elems[i]*=(real)f;
         }
 
-        /// Division by a scalar f.
-        template<class real2>
-        Vec<N,real> operator/(real2 f) const
-        {
-                Vec<N,real> r;
-                for (int i=0;i<N;i++)
-                        r[i] = this->elems[i]/(real)f;
-                return r;
-        }
+    /// Division by a scalar f.
+    template<class real2>
+    Vec<N,real> operator/(real2 f) const
+    {
+	Vec<N,real> r(NOINIT);
+	for (int i=0;i<N;i++)
+	    r[i] = this->elems[i]/(real)f;
+	return r;
+    }
 
         /// On-place division by a scalar f.
         template<class real2>
@@ -339,25 +348,25 @@ public:
                 return r;
         }
 
-		/// linear product.
-        template<class real2>
-        Vec<N,real> linearProduct(const Vec<N,real2>& v) const
-        {
-                Vec<N,real> r;
-                for (int i=0;i<N;i++)
-                        r[i]=this->elems[i]*(real)v[i];
-                return r;
-        }
+    /// linear product.
+    template<class real2>
+    Vec<N,real> linearProduct(const Vec<N,real2>& v) const
+    {
+	Vec<N,real> r(NOINIT);
+	for (int i=0;i<N;i++)
+	    r[i]=this->elems[i]*(real)v[i];
+	return r;
+    }
 
-        /// Vector addition.
-        template<class real2>
-        Vec<N,real> operator+(const Vec<N,real2>& v) const
-        {
-                Vec<N,real> r;
-                for (int i=0;i<N;i++)
-                        r[i]=this->elems[i]+(real)v[i];
-                return r;
-        }
+    /// Vector addition.
+    template<class real2>
+    Vec<N,real> operator+(const Vec<N,real2>& v) const
+    {
+	Vec<N,real> r(NOINIT);
+	for (int i=0;i<N;i++)
+	    r[i]=this->elems[i]+(real)v[i];
+	return r;
+    }
 
         /// On-place vector addition.
         template<class real2>
@@ -367,15 +376,15 @@ public:
                         this->elems[i]+=(real)v[i];
         }
 
-        /// Vector subtraction.
-        template<class real2>
-        Vec<N,real> operator-(const Vec<N,real2>& v) const
-        {
-                Vec<N,real> r;
-                for (int i=0;i<N;i++)
-                        r[i]=this->elems[i]-(real)v[i];
-                return r;
-        }
+    /// Vector subtraction.
+    template<class real2>
+    Vec<N,real> operator-(const Vec<N,real2>& v) const
+    {
+	Vec<N,real> r(NOINIT);
+	for (int i=0;i<N;i++)
+	    r[i]=this->elems[i]-(real)v[i];
+	return r;
+    }
 
         /// On-place vector subtraction.
         template<class real2>
@@ -385,15 +394,14 @@ public:
                         this->elems[i]-=(real)v[i];
         }
 
-        /// Vector negation.
-        Vec<N,real> operator-() const
-        {
-                Vec<N,real> r;
-                for (int i=0;i<N;i++)
-                        r[i]=-this->elems[i];
-                return r;
-        }
-
+    /// Vector negation.
+    Vec<N,real> operator-() const
+    {
+	Vec<N,real> r(NOINIT);
+	for (int i=0;i<N;i++)
+	    r[i]=-this->elems[i];
+	return r;
+    }
 
         /// Squared norm.
         real norm2() const
@@ -446,18 +454,43 @@ public:
     bool operator==(const Vec& b) const
     {
         for (int i=0;i<N;i++)
-            if (!(this->elems[i]==b[i])) return false;
+			if ( fabs( this->elems[i] - b[i] ) > EQUALITY_THRESHOLD ) return false;
         return true;
     }
 
     bool operator!=(const Vec& b) const
     {
         for (int i=0;i<N;i++)
-            if (this->elems[i]!=b[i]) return true;
+			if ( fabs( this->elems[i] - b[i] ) > EQUALITY_THRESHOLD ) return true;
         return false;
     }
 
     /// @}
+};
+
+/// Same as Vec except the values are not initialized by default
+template <int N, typename real=float>
+class VecNoInit : public Vec<N,real>
+{
+public:
+    VecNoInit()
+    : Vec<N,real>(NOINIT)
+    {
+    }
+
+    /// Assignment operator from an array of values.
+    template<typename real2>
+    void operator=(const real2* p)
+    {
+	this->Vec<N,real>::operator=(p);
+    }
+
+    /// Assignment from a vector with different dimensions.
+    template<int M, typename real2>
+    void operator=(const Vec<M,real2>& v)
+    {
+	this->Vec<N,real>::operator=(v);
+    }
 };
 
 /// Read from an input stream

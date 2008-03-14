@@ -7,13 +7,8 @@
 #include <sofa/component/topology/EdgeData.inl>
 #include <sofa/component/topology/TopologyChangedEvent.h>
 #include <sofa/helper/system/config.h>
+#include <sofa/helper/system/gl.h>
 #include <assert.h>
-#include <iostream>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -115,9 +110,9 @@ template <class DataTypes>
 VectorSpringForceField<DataTypes>::VectorSpringForceField(MechanicalState* _object)
 : Inherit(_object, _object)
 , m_potentialEnergy( 0.0 ), useTopology( false ), topology ( NULL )
-, m_filename( dataField(&m_filename,std::string(""),"filename","File name from which the spring informations are loaded") )
-, m_stiffness( dataField(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") )
-, m_viscosity( dataField(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
+, m_filename( initData(&m_filename,std::string(""),"filename","File name from which the spring informations are loaded") )
+, m_stiffness( initData(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") )
+, m_viscosity( initData(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
 {
     springArray.setCreateFunction(springCreationFunction);
     springArray.setCreateParameter( (void *) this );
@@ -127,9 +122,9 @@ template <class DataTypes>
 VectorSpringForceField<DataTypes>::VectorSpringForceField(MechanicalState* _object1, MechanicalState* _object2)
 : Inherit(_object1, _object2)
 , m_potentialEnergy( 0.0 ), useTopology( false ), topology ( NULL )
-, m_filename( dataField(&m_filename,std::string(""),"filename","File name from which the spring informations are loaded") )
-, m_stiffness( dataField(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") )
-, m_viscosity( dataField(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
+, m_filename( initData(&m_filename,std::string(""),"filename","File name from which the spring informations are loaded") )
+, m_stiffness( initData(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") )
+, m_viscosity( initData(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
 {
     springArray.setCreateFunction(springCreationFunction);
     springArray.setCreateParameter( (void *) this );

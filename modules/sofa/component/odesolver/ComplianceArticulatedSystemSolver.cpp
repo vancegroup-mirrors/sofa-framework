@@ -45,18 +45,24 @@ using namespace sofa::defaulttype;
 using namespace core::componentmodel::behavior;
 
 ComplianceArticulatedSystemSolver::ComplianceArticulatedSystemSolver()
-: f_maxCGIter( dataField(&f_maxCGIter,(unsigned)25,"iterations","Maximum number of iterations for the conjugated gradient algorithmIndices of the fixed points") )
-, f_smallDenominatorThreshold( dataField(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
-, firstCallToSolve( dataField( &firstCallToSolve, true, "firstCallToSolve", "If true, the free movement is computed, if false, the constraint movement is computed"))
+: f_maxCGIter( initData(&f_maxCGIter,(unsigned)25,"iterations","Maximum number of iterations for the conjugated gradient algorithmIndices of the fixed points") )
+, f_smallDenominatorThreshold( initData(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
+, firstCallToSolve( initData( &firstCallToSolve, true, "firstCallToSolve", "If true, the free movement is computed, if false, the constraint movement is computed"))
 {
 	dxfree = new NewMatVector();
+	frame = 0;
 }
 
 void ComplianceArticulatedSystemSolver::init()
 {
 	context = dynamic_cast<simulation::tree::GNode *>(this->getContext()); // access to current node
 
+	context->getTreeObject(ahc);
+
 	articulations = dynamic_cast<component::MechanicalObject<Vec1dTypes>*>(context->getMechanicalState());	
+
+	simulation::tree::GNode *c = *context->child.begin();
+	Objects6D = dynamic_cast<component::MechanicalObject<RigidTypes>*>(c->getMechanicalState());
 
 	dxfree->resize((*articulations->getX()).size());
 	dxfree->element(0) = -0.01;
@@ -80,8 +86,37 @@ void ComplianceArticulatedSystemSolver::solve(double)
 	else // f = mass * gravity
 	{
 		// Free motion :
-		multiVectorPeqBaseVector(posFree, dxfree);
+		if(!ahc->chargedFromFile)
+		{
+			multiVectorPeqBaseVector(posFree, dxfree);
+		}
+		else
+		{
+			vector<sofa::component::container::ArticulatedHierarchyContainer::ArticulationCenter::Articulation*> art;
+			context->getTreeObjects<sofa::component::container::ArticulatedHierarchyContainer::ArticulationCenter::Articulation>(&art);
+
+			vector<sofa::component::container::ArticulatedHierarchyContainer::ArticulationCenter::Articulation*>::const_iterator a = art.begin();
+			vector<sofa::component::container::ArticulatedHierarchyContainer::ArticulationCenter::Articulation*>::const_iterator aEnd = art.end();
+			
+			for (int i=0; a != aEnd; a++, i++)
+			{
+				if (i < 3){
+					(*Objects6D->getXfree())[0].getCenter()[i] = (*a)->motion[frame];
+				}
+				else{
+					(*articulations->getXfree())[i] = ((*a)->motion[frame]/180.0)*3.14;
+					(*articulations->getX())[i] = ((*a)->motion[frame]/180.0)*3.14;
+				}
+			}
+		}
 		simulation::tree::MechanicalPropagateFreePositionVisitor().execute(context);
+		if(ahc->chargedFromFile)
+		{
+			if (!(frame==ahc->numOfFrames-1))
+			{
+				frame++;
+			}
+		}
 	}
 
 	firstCallToSolve.setValue(!firstCallToSolve.getValue());

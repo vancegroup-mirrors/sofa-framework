@@ -38,33 +38,24 @@ namespace tree
 Visitor::Result InitVisitor::processNodeTopDown(GNode* node)
 {
     node->initialize(); 
-
-    for( GNode::Sequence<sofa::core::objectmodel::BaseObject>::iterator i=node->
-         object.begin(), iend=node->object.end();
-         i!=iend;
-         i++ ) 
-    {
-        //cerr<<"InitVisitor::processNodeBottomUp(), initializing node "<<(*i)->getName()<<endl;
-        (*i)->init();
-    }
     
+	for(unsigned int i=0; i<node->object.size(); ++i) 
+    {
+		node->object[i]->init();
+    }
+
     return RESULT_CONTINUE;
 }
 
 void InitVisitor::processNodeBottomUp(GNode* node)
 {
-    // init all the components in reverse order
-//     for( GNode::Sequence<OdeSolver>::iterator i=node->
-//          solver.begin(), iend=node->solver.end();
-//          i!=iend;
-//          i++ ) 
-//     {
-//         cerr<<"InitVisitor::processNodeBottomUp(), initializing solver "<<(*i)->getName()<<endl;
-//         (*i)->init();
-//     }
-    if( !node->solver.empty() )
-      for( unsigned i=0; i<node->solver.size(); i++ )
-        node->solver[i]->bwdInit();
+    // init all the components in reverse order 
+    node->setDefaultVisualContextValue(); 
+    
+	for(unsigned int i=0; i<node->object.size(); ++i) 
+    {
+		node->object[i]->bwdInit();
+    }
 }
 
 

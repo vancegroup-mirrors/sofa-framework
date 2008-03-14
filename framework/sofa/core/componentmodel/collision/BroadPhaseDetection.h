@@ -43,23 +43,12 @@ namespace collision
 
 class BroadPhaseDetection : virtual public Detection
 {
-protected:
-	// it's an information to update the collisionMethod (like voxelgrid)
-	int timeStamp;
-	sofa::helper::vector< std::pair<core::CollisionModel*, core::CollisionModel*> > cmPairs;
-
-	/// Contains the collisions models 
-	/// which are included in the broadphase 
-	/// but which are not in collisions with another model
-	sofa::helper::vector<core::CollisionModel*> cmNoCollision;
-
 public:
 	virtual ~BroadPhaseDetection() { }
 	
 	virtual void beginBroadPhase()
 	{
 		cmPairs.clear();
-		cmNoCollision.clear();
 	}
 	
 	virtual void addCollisionModel(core::CollisionModel *cm) = 0;
@@ -76,21 +65,15 @@ public:
 	
 	sofa::helper::vector<std::pair<core::CollisionModel*, core::CollisionModel*> >& getCollisionModelPairs() { return cmPairs; }
 
-	void removeCmNoCollision(core::CollisionModel* cm)
-	{
-		sofa::helper::vector<core::CollisionModel*>::iterator it = std::find(cmNoCollision.begin(), cmNoCollision.end(), cm);
-		if (it != cmNoCollision.end())
-		{
-			cmNoCollision.erase(it);
-		}
-	}
-	
-	void addNoCollisionDetect (core::CollisionModel* cm)
-	{
-		cmNoCollision.push_back(cm);
-	}
+protected:
+	sofa::helper::vector< std::pair<core::CollisionModel*, core::CollisionModel*> > cmPairs;
+	std::map<Instance,sofa::helper::vector< std::pair<core::CollisionModel*, core::CollisionModel*> > > storedCmPairs;
 
-	sofa::helper::vector<core::CollisionModel*>& getListNoCollisionModel() {return cmNoCollision;};
+	virtual void changeInstanceBP(Instance inst)
+	{
+		storedCmPairs[instance].swap(cmPairs);
+		cmPairs.swap(storedCmPairs[inst]);
+	}
 };
 
 } // namespace collision

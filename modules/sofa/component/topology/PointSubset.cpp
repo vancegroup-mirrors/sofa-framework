@@ -118,13 +118,13 @@ namespace topology
 			m_subset[i] =index[m_subset[i] ];
 		}
 	}
-	/// Needed to be compliant with DataFields.
+	/// Needed to be compliant with Datas.
 	std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset)
 	{
 		return os << pointSubset.m_subset;
 	}
 
-	/// Needed to be compliant with DataFields.
+	/// Needed to be compliant with Datas.
 	std::istream& operator>>(std::istream& i, PointSubset& pointSubset)
 	{
 		return i >> pointSubset.m_subset;

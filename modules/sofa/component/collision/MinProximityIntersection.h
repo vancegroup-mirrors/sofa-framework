@@ -46,17 +46,17 @@ namespace collision
 class MinProximityIntersection : public DiscreteIntersection
 {
 public:
-    DataField<bool> useSphereTriangle;
-    DataField<bool> usePointPoint;
-    DataField<double> alarmDistance;
-    DataField<double> contactDistance;
+    Data<bool> useSphereTriangle;
+    Data<bool> usePointPoint;
+    Data<double> alarmDistance;
+    Data<double> contactDistance;
+	Data<bool> filterIntersection;
+	Data<double> angleCone;
+
 
     MinProximityIntersection();
     
     virtual void init();
-
-    /// Return the intersector class handling the given pair of collision models, or NULL if not supported.
-    virtual core::componentmodel::collision::ElementIntersector* findIntersector(core::CollisionModel* object1, core::CollisionModel* object2);
 
     /// returns true if algorithm uses proximity
     virtual bool useProximity() const { return true; }
@@ -73,29 +73,40 @@ public:
 
     bool testIntersection(Cube& ,Cube&);
 
-    bool testIntersection(Sphere&, Sphere&);
-    bool testIntersection(Sphere&, Triangle&);
-    bool testIntersection(Sphere&, Line&);
-    bool testIntersection(Sphere&, Point&);
-    bool testIntersection(Sphere&, Ray&);
-    bool testIntersection(Point& ,Triangle&);
-    bool testIntersection(Line&, Line&);
-    bool testIntersection(Point&, Line&);
     bool testIntersection(Point&, Point&);
+    bool testIntersection(Sphere&, Point&);
+    bool testIntersection(Sphere&, Sphere&);
+    bool testIntersection(Line&, Point&);
+    bool testIntersection(Line&, Sphere&);
+    bool testIntersection(Line&, Line&);
+    bool testIntersection(Triangle&, Point&);
+    bool testIntersection(Triangle&, Sphere&);
+    bool testIntersection(Ray&, Sphere&);
     bool testIntersection(Ray&, Triangle&);
 
     int computeIntersection(Cube&, Cube&, OutputVector*);
-    int computeIntersection(Sphere&, Sphere&, OutputVector*);
-    int computeIntersection(Sphere&, Triangle&, OutputVector*);
-    int computeIntersection(Sphere&, Line&, OutputVector*);
-    int computeIntersection(Sphere&, Point&, OutputVector*);
-    int computeIntersection(Sphere&, Ray&, OutputVector*);
-    int computeIntersection(Point&, Triangle&, OutputVector*);
-    int computeIntersection(Line&, Line&, OutputVector*);
-    int computeIntersection(Point&, Line&, OutputVector*);
     int computeIntersection(Point&, Point&, OutputVector*);
+    int computeIntersection(Sphere&, Point&, OutputVector*);
+    int computeIntersection(Sphere&, Sphere&, OutputVector*);
+    int computeIntersection(Line&, Point&, OutputVector*);
+    int computeIntersection(Line&, Sphere&, OutputVector*);
+    int computeIntersection(Line&, Line&, OutputVector*);
+    int computeIntersection(Triangle&, Point&, OutputVector*);
+    int computeIntersection(Triangle&, Sphere&, OutputVector*);
+    int computeIntersection(Ray&, Sphere&, OutputVector*);
     int computeIntersection(Ray&, Triangle&, OutputVector*);
 
+	/// These methods check the validity of a found intersection.
+	/// According to the local configuration around the found intersected primitive,
+	/// we build a "Region Of Interest" geometric cone. 
+	/// Pertinent intersections have to belong to this cone, others are not taking into account anymore.
+	bool testValidity(Point&, const Vector3&);
+	bool testValidity(Line&, const Vector3&);
+	bool testValidity(Triangle&, const Vector3&);
+
+private:
+	double mainAlarmDistance;
+	double mainContactDistance;
 };
 
 } // namespace collision

@@ -1,21 +1,17 @@
 #include <iostream>
 #include <fstream>
 #include <sofa/helper/ArgumentParser.h>
-#include <sofa/simulation/tree/Simulation.h> 
+#include <sofa/simulation/tree/Simulation.h>
 #include <sofa/helper/Factory.h>
 #include <sofa/helper/BackTrace.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/gui/SofaGUI.h>
- 
-#if defined (__APPLE__)
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
-#ifndef WIN32  
-#include <dlfcn.h> 
-bool loadPlugin(const char* filename) 
+#ifndef WIN32
+#include <dlfcn.h>
+bool loadPlugin(const char* filename)
 {
   void *handle;
   handle=dlopen(filename, RTLD_LAZY);

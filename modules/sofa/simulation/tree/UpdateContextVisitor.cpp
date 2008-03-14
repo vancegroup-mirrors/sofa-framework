@@ -36,8 +36,20 @@ namespace tree
 
 Visitor::Result UpdateContextVisitor::processNodeTopDown(GNode* node)
 {
-	node->updateContext();
-	return RESULT_CONTINUE;
+  node->updateContext();
+  return RESULT_CONTINUE;
+}
+
+Visitor::Result UpdateSimulationContextVisitor::processNodeTopDown(GNode* node)
+{
+  node->updateSimulationContext();
+  return RESULT_CONTINUE;
+}
+
+Visitor::Result UpdateVisualContextVisitor::processNodeTopDown(GNode* node)
+{
+  node->updateVisualContext(filter);
+  return RESULT_CONTINUE;
 }
 
 } // namespace tree

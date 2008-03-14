@@ -5,7 +5,7 @@
 #include <sofa/component/topology/TetrahedronSetTopology.h>
 #include <sofa/helper/vector.h>
 #include <vector>
-#include <iostream>
+#include <iostream> 
 
 
 namespace sofa
@@ -124,7 +124,7 @@ namespace topology
             }
 
             resize( this->size() - index.size() );
-            std::cout << "EdgeData: vector has now "<<this->size()<<" entries."<<std::endl;
+            //std::cout << "EdgeData: vector has now "<<this->size()<<" entries."<<std::endl; 
         }
 
 

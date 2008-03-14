@@ -26,8 +26,6 @@
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/simulation/tree/MechanicalVisitor.h>
-#include <sofa/simulation/tree/UpdateMappingVisitor.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/ObjectFactory.h>
@@ -38,14 +36,10 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <GL/glaux.h>
 #endif
-#if defined (__APPLE__)
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include <sofa/helper/system/glut.h>
 #include <qevent.h>
 #include "GenGraphForm.h"
 #include "Main.h"
@@ -64,7 +58,6 @@
 #include <sofa/simulation/automatescheduler/ThreadSimulation.h>
 
 #include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 
 
 // define this if you want video and OBJ capture to be only done once per N iteration
@@ -957,7 +950,7 @@ namespace sofa
     
 	    if (!initTexturesDone)
 	      {
-		std::cout << "-----------------------------------> initTexturesDone\n";
+// 		std::cout << "-----------------------------------> initTexturesDone\n";
 		//---------------------------------------------------
 		getSimulation()->initTextures(groot);
 		//---------------------------------------------------
@@ -1379,6 +1372,11 @@ namespace sofa
 	    glMatrixMode(GL_PROJECTION);
 	    glLoadIdentity();
 
+	    xFactor *= 0.01;
+	    yFactor *= 0.01;
+	    zNear *= 0.01;
+	    zFar *= 10.0;
+	    
 	    zForeground = -zNear - offset;
 	    zBackground = -zFar + offset;
 
@@ -1387,7 +1385,7 @@ namespace sofa
 			yNear * yFactor, zNear, zFar);
 	    else
 	      {
-		float ratio = zFar/(zNear*2.0);
+		float ratio = zFar/(zNear*20);
 		glOrtho( (-xNear * xFactor)*ratio , (xNear * xFactor)*ratio , (-yNear * yFactor)*ratio,
 			 (yNear * yFactor)*ratio, zNear, zFar);
 	      }
@@ -1608,7 +1606,7 @@ namespace sofa
 	  {
 	    if( isControlPressed() ) // pass event to the scene data structure
 	      {
-		//cerr<<"QtViewer::keyPressEvent, key = "<<e->key()<<" with Control pressed "<<endl;
+	//	cerr<<"QtViewer::keyPressEvent, key = "<<e->key()<<" with Control pressed "<<endl;
 		if (groot)
 		  {
 		    sofa::core::objectmodel::KeypressedEvent keyEvent(e->key());
@@ -1673,23 +1671,37 @@ namespace sofa
 		}
 	  }
 
+	void QtViewer::keyReleaseEvent ( QKeyEvent * e )
+	{
+		SofaViewer::keyReleaseEvent(e);
+	}
 
 
 	  void QtViewer::wheelEvent(QWheelEvent* e)
 	  {
-	    int eventX = e->x();
-	    int eventY = e->y();
+		if( e->state()&Qt::ControlButton )
+		{
+			if (groot)
+			{
+				sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Wheel, e->delta());
+				groot->propagateEvent(&mouseEvent);
+			}
+		}
+		else
+		{
+			int eventX = e->x();
+			int eventY = e->y();
 
+			_navigationMode = ZOOM_MODE;
+			_moving = true;
+			_spinning = false;
+			_mouseX = eventX;
+			_mouseY = eventY + e->delta();
+			_previousEyePos[2] = _sceneTransform.translation[2];              
+			ApplySceneTransformation(eventX, eventY);
 
-	    _navigationMode = ZOOM_MODE;
-	    _moving = true;
-	    _spinning = false;
-	    _mouseX = eventX;
-	    _mouseY = eventY + e->delta();
-	    _previousEyePos[2] = _sceneTransform.translation[2];              
-	    ApplySceneTransformation(eventX, eventY);
-
-	    _moving = false;
+			_moving = false;
+		}
 	  }
 
 	  void QtViewer::mousePressEvent ( QMouseEvent * e )
@@ -1705,7 +1717,7 @@ namespace sofa
 	  void QtViewer::mouseMoveEvent ( QMouseEvent * e )
 	  {
 	    mouseEvent(e);
-	  }
+	  }  
 
 
 	  // ---------------------- Here are the mouse controls for the scene  ----------------------
@@ -1794,6 +1806,10 @@ namespace sofa
 	      {
 		_moving = false;
 		SofaViewer::mouseEvent(e);
+	      }
+	    else if (e->state()&Qt::ControlButton)
+	      {
+		moveLaparoscopic(e);
 	      }
 	    else if (e->state()&Qt::AltButton)
 	      {
@@ -1903,121 +1919,6 @@ namespace sofa
 			_mouseInteractorSavedPosX = eventX;
 			_mouseInteractorSavedPosY = eventY;
 		      }
-		  }
-	      }
-	    else if (e->state()&Qt::ControlButton)
-	      {
-		std::vector< sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>* > instruments;
-		if (groot) groot->getTreeObjects<sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>, std::vector< sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>* > >(&instruments);
-		//std::cout << instruments.size() << " instruments\n";
-		if (!instruments.empty())
-		  {
-		    _moving = false;
-		    sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>* instrument = instruments[0];
-		    switch (e->type())
-		      {
-		      case QEvent::MouseButtonPress:
-			// Mouse left button is pushed
-			if (e->button() == Qt::LeftButton)
-			  {
-			    _navigationMode = BTLEFT_MODE;
-			    _mouseInteractorMoving = true;
-			    _mouseInteractorSavedPosX = eventX;
-			    _mouseInteractorSavedPosY = eventY;
-			  }
-			// Mouse right button is pushed 
-			else if (e->button() == Qt::RightButton)
-			  {
-
-			    _navigationMode = BTRIGHT_MODE;
-			    _mouseInteractorMoving = true;
-			    _mouseInteractorSavedPosX = eventX;
-			    _mouseInteractorSavedPosY = eventY;
-			  }
-			// Mouse middle button is pushed 
-			else if (e->button() == Qt::MidButton)
-			  {
-			    _navigationMode = BTMIDDLE_MODE;
-			    _mouseInteractorMoving = true;
-			    _mouseInteractorSavedPosX = eventX;
-			    _mouseInteractorSavedPosY = eventY;
-			  }
-			break;
-
-		      case QEvent::MouseMove:
-			// 
-			break;
-
-		      case QEvent::MouseButtonRelease:
-			// Mouse left button is released 
-			if (e->button() == Qt::LeftButton)
-			  {
-			    if (_mouseInteractorMoving)
-			      {
-				_mouseInteractorMoving = false;
-			      }
-			  }
-			// Mouse right button is released
-			else if (e->button() == Qt::RightButton)
-			  {
-			    if (_mouseInteractorMoving)
-			      {
-				_mouseInteractorMoving = false;
-			      }
-			  }
-			// Mouse middle button is released
-			else if (e->button() == Qt::MidButton)
-			  {
-			    if (_mouseInteractorMoving)
-			      {
-				_mouseInteractorMoving = false;
-			      }
-			  }
-			break;
-
-		      default:
-			break;
-		      }
-		    if (_mouseInteractorMoving && _navigationMode == BTLEFT_MODE)
-		      {
-			int dx = eventX - _mouseInteractorSavedPosX;
-			int dy = eventY - _mouseInteractorSavedPosY;
-			if (dx || dy)
-			  {
-			    (*instrument->getX())[0].getOrientation() = (*instrument->getX())[0].getOrientation() * Quat(Vector3(0,1,0),dx*0.001) * Quat(Vector3(0,0,1),dy*0.001);
-			    update();
-			    _mouseInteractorSavedPosX = eventX;
-			    _mouseInteractorSavedPosY = eventY;
-			  }
-		      }
-		    else if (_mouseInteractorMoving && _navigationMode == BTRIGHT_MODE)
-		      {
-			int dx = eventX - _mouseInteractorSavedPosX;
-			int dy = eventY - _mouseInteractorSavedPosY;
-			if (dx || dy)
-			  {
-			    if (!groot || !groot->getContext()->getAnimate())
-			      update();
-			    _mouseInteractorSavedPosX = eventX;
-			    _mouseInteractorSavedPosY = eventY;
-			  }
-		      }
-		    else if (_mouseInteractorMoving && _navigationMode == BTMIDDLE_MODE)
-		      {
-			int dx = eventX - _mouseInteractorSavedPosX;
-			int dy = eventY - _mouseInteractorSavedPosY;
-			if (dx || dy)
-			  {
-			    (*instrument->getX())[0].getTranslation() += (dy)*0.01;
-			    (*instrument->getX())[0].getOrientation() = (*instrument->getX())[0].getOrientation() * Quat(Vector3(1,0,0),dx*0.001);
-			    if (!groot || !groot->getContext()->getAnimate())
-			      update();
-			    _mouseInteractorSavedPosX = eventX;
-			    _mouseInteractorSavedPosY = eventY;
-			  }
-		      }
-		    static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::MechanicalPropagatePositionAndVelocityVisitor>();
-		    static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::UpdateMappingVisitor>();
 		  }
 	      }
 	    else
@@ -2234,47 +2135,16 @@ namespace sofa
 
 
 	  void QtViewer::setScene(sofa::simulation::tree::GNode* scene, const char* filename, bool keepParams)
-	  {
-	    std::ostringstream ofilename;
-	    std::string screenshot_prefix;
-	    sceneFileName = (filename==NULL)?"":filename;
-	    if (!sceneFileName.empty())
-	      {
-		const char* begin = sceneFileName.c_str();
-		const char* end = strrchr(begin,'.');
-		if (!end) end = begin + sceneFileName.length();
-		ofilename << std::string(begin, end);
-		ofilename << "_";
+          {
 
-		screenshot_prefix = ofilename.str();
-		std::string::size_type position_scene = screenshot_prefix.rfind("scenes/");
-		if (position_scene != std::string::npos)
-		  {
-		    screenshot_prefix.replace(position_scene, 7, "share/screenshots/");
-		  }
-
-	      }
-	    else
-	      screenshot_prefix = "scene_";
-
-	    capture.setPrefix(screenshot_prefix);
-	
 	    bool newScene = (scene != groot); 
-	
-	    groot = scene;
+            SofaViewer::setScene(scene, filename, keepParams);
 	    if (newScene)
 	      {
-		initTexturesDone = false;
 		getSimulation()->computeBBox(groot, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
-		sceneBBoxIsValid = true;
 		_panSpeed = (sceneMaxBBox-sceneMinBBox).norm()*0.5;
-		_zoomSpeed = (sceneMaxBBox-sceneMinBBox).norm();
-	
-		if (!keepParams) resetView();
-		if (interactor != NULL)
-		  interactor = NULL;
+		_zoomSpeed = (sceneMaxBBox-sceneMinBBox).norm();	
 	      }
-	    update();
 	  }
 
 	  /// Render Scene called during multiThread simulation using automate
@@ -2318,10 +2188,14 @@ namespace sofa
 <li><b>B</b>: TO CHANGE THE BACKGROUND<br></li>\
 <li><b>C</b>: TO SWITCH INTERACTION MODE: press the KEY C.<br>\
 Allow or not the navigation with the mouse.<br></li>\
+<li><b>L</b>: TO DRAW SHADOWS<br></li>\
+<li><b>O</b>: TO EXPORT TO .OBJ<br>\
+The generated files scene-time.obj and scene-time.mtl are saved in the running project directory<br></li>\
+<li><b>P</b>: TO SAVE A SEQUENCE OF OBJ<br>\
+Each time the frame is updated an obj is exported<br></li>\
+<li><b>R</b>: TO DRAW THE SCENE AXIS<br></li>\
 <li><b>S</b>: TO SAVE A SCREENSHOT<br>\
 The captured images are saved in the running project directory under the name format capturexxxx.bmp<br></li>\
-<li><b>L</b>: TO DRAW SHADOWS<br></li>\
-<li><b>R</b>: TO DRAW THE SCENE AXIS<br></li>\
 <li><b>T</b>: TO CHANGE BETWEEN A PERSPECTIVE OR AN ORTHOGRAPHIC CAMERA<br></li>\
 <li><b>V</b>: TO SAVE A VIDEO<br>\
 Each time the frame is updated a screenshot is saved<br></li>\

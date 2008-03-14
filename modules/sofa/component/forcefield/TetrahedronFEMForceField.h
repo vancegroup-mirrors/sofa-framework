@@ -97,7 +97,7 @@ protected:
     /// @{
 
     /// Displacement vector (deformation of the 4 corners of a tetrahedron
-    typedef Vec<12, Real> Displacement;
+    typedef VecNoInit<12, Real> Displacement;
 
     /// Material stiffness matrix of a tetrahedron
     typedef Mat<6, 6, Real> MaterialStiffness;
@@ -106,7 +106,7 @@ protected:
     typedef Mat<12, 6, Real> StrainDisplacement;
 
     /// Rigid transformation (rotation) matrix
-    typedef Mat<3, 3, Real> Transformation; 
+    typedef MatNoInit<3, 3, Real> Transformation; 
 
     /// Stiffness matrix ( = RJKJtRt  with K the Material stiffness matrix, J the strain-displacement matrix, and R the transformation matrix if any )
     typedef Mat<12, 12, Real> StiffnessMatrix;
@@ -136,31 +136,40 @@ protected:
     topology::MeshTopology* _mesh;
     topology::FittedRegularGridTopology* _trimgrid;
     const VecElement *_indexedElements;
-    DataField< VecCoord > _initialPoints; ///< the intial positions of the points
+    VecCoord _initialPoints; ///< the intial positions of the points
 
     TetrahedronFEMForceFieldInternalData<DataTypes> data;
 
 public:
 
-    DataField<int> f_method; ///< the computation method of the displacements
-    DataField<Real> f_poissonRatio;
-    DataField<Real> f_youngModulus;
-    DataField<VecReal> f_localStiffnessFactor;
-    //DataField<Real> f_dampingRatio;
-    DataField<bool> f_updateStiffnessMatrix;
-    DataField<bool> f_assembling;
+    DataPtr< VecCoord > f_initialPoints; ///< the intial positions of the points
+    int method;
+    Data<std::string> f_method; ///< the computation method of the displacements
+            Real   _poissonRatio;
+    DataPtr<Real> f_poissonRatio;
+            Real   _youngModulus;
+    DataPtr<Real> f_youngModulus;
+            VecReal   _localStiffnessFactor;
+    DataPtr<VecReal> f_localStiffnessFactor;
+            bool   _updateStiffnessMatrix;
+    DataPtr<bool> f_updateStiffnessMatrix;
+            bool   _assembling;
+    DataPtr<bool> f_assembling;
 
     TetrahedronFEMForceField()
     : _mesh(NULL), _trimgrid(NULL)
     , _indexedElements(NULL)
-    , _initialPoints(dataField(&_initialPoints, "initialPoints", "Initial Position"))
-    , f_method(dataField(&f_method,(int)LARGE,"method","0: small displacements, 1: large displacements by QR, 2: large displacements by polar"))
-    , f_poissonRatio(dataField(&f_poissonRatio,(Real)0.45f,"poissonRatio","FEM Poisson Ratio"))
-    , f_youngModulus(dataField(&f_youngModulus,(Real)5000,"youngModulus","FEM Young Modulus"))
-    , f_localStiffnessFactor(dataField(&f_localStiffnessFactor,"localStiffnessFactor","Allow specification of different stiffness per element. If there are N element and M values are specified, the youngModulus factor for element i would be localStiffnessFactor[i*M/N]"))
-    //, f_dampingRatio(dataField(&f_dampingRatio,(Real)0,"dampingRatio",""))
-    , f_updateStiffnessMatrix(dataField(&f_updateStiffnessMatrix,true,"updateStiffnessMatrix",""))
-    , f_assembling(dataField(&f_assembling,false,"assembling",""))
+    , f_initialPoints(initDataPtr(&f_initialPoints, &_initialPoints, "initialPoints", "Initial Position"))
+    , f_method(initData(&f_method,std::string("large"),"method","\"small\", \"large\" (by QR) or \"polar\" displacements"))
+    ,  _poissonRatio((Real)0.45f)
+    , f_poissonRatio(initDataPtr(&f_poissonRatio,&_poissonRatio,"poissonRatio","FEM Poisson Ratio"))
+    ,  _youngModulus((Real)5000)
+    , f_youngModulus(initDataPtr(&f_youngModulus,&_youngModulus,"youngModulus","FEM Young Modulus"))
+    , f_localStiffnessFactor(initDataPtr(&f_localStiffnessFactor,&_localStiffnessFactor,"localStiffnessFactor","Allow specification of different stiffness per element. If there are N element and M values are specified, the youngModulus factor for element i would be localStiffnessFactor[i*M/N]"))
+    ,  _updateStiffnessMatrix(false)
+    , f_updateStiffnessMatrix(initDataPtr(&f_updateStiffnessMatrix,&_updateStiffnessMatrix,"updateStiffnessMatrix",""))
+    ,  _assembling(false)
+    , f_assembling(initDataPtr(&f_assembling,&_assembling,"assembling",""))
     {}
 
     void parse(core::objectmodel::BaseObjectDescription* arg);
@@ -169,7 +178,7 @@ public:
 
     void setYoungModulus(Real val) { this->f_youngModulus.setValue(val); }
 
-    void setMethod(int val) { this->f_method.setValue(val); }
+    void setMethod(int val) { method = val; }
 
     void setUpdateStiffnessMatrix(bool val) { this->f_updateStiffnessMatrix.setValue(val); }
 

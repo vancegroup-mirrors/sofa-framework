@@ -27,13 +27,9 @@
 #include <sofa/simulation/tree/GNode.h>
 #include <sofa/core/ObjectFactory.h>
 
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 
-#define VERBOSE(a) if (bVerbose.getValue()) a; else
+#define VERBOSE(a) if (bVerbose.getValue()) a; else {}
 
 namespace sofa
 {
@@ -57,9 +53,9 @@ int DefaultPipelineClass = core::RegisterObject("The default collision detection
 ;
 
 DefaultPipeline::DefaultPipeline()
-: bVerbose(dataField(&bVerbose, false, "verbose","Display current step information"))
-, bDraw(dataField(&bDraw, false, "draw","Draw detected collisions"))
-, depth(dataField(&depth, 6, "depth","Max depth of bounding trees"))
+: bVerbose(initData(&bVerbose, false, "verbose","Display current step information"))
+, bDraw(initData(&bDraw, false, "draw","Draw detected collisions"))
+, depth(initData(&depth, 6, "depth","Max depth of bounding trees"))
 {
 }
 
@@ -100,15 +96,6 @@ void DefaultPipeline::doCollisionDetection(const sofa::helper::vector<core::Coll
 	ctime_t t0 = 0;
 	const std::string category = "collision";
 
-	// clear all detection outputs
-	//{
-	//sofa::helper::vector< DetectionOutput* >::iterator it = detectionOutputs.begin();
-	//sofa::helper::vector< DetectionOutput* >::iterator itEnd = detectionOutputs.end();
-	//for (; it != itEnd; it++)
-	//	delete *it;
-	//}
-	//detectionOutputs.clear();
-	
 	VERBOSE(std::cout << "Compute Bounding Trees"<<std::endl);
 	// First, we compute a bounding volume for the collision model (for example bounding sphere)
 	// or we have loaded a collision model that knows its other model
@@ -154,42 +141,6 @@ void DefaultPipeline::doCollisionDetection(const sofa::helper::vector<core::Coll
 	narrowPhaseDetection->addCollisionPairs(vectCMPair);
 	narrowPhaseDetection->endNarrowPhase();
 	if (node) t0 = node->endTime(t0, category, narrowPhaseDetection, this);
-#if 0 // no longer required as it is done within the narrow phase now
-	VERBOSE(std::cout << "CollisionDetection "<<std::endl);
-	// then we start the real detection between primitives
-	{
-		sofa::helper::vector<std::pair<CollisionElementIterator, CollisionElementIterator> >& vectElemPair = narrowPhaseDetection->getCollisionElementPairs();
-		sofa::helper::vector<std::pair<CollisionElementIterator, CollisionElementIterator> >::iterator it4 = vectElemPair.begin();
-		sofa::helper::vector<std::pair<CollisionElementIterator, CollisionElementIterator> >::iterator it4End = vectElemPair.end();
-		
-		// Cache the intersector used
-		ElementIntersector* intersector = NULL;
-		core::CollisionModel* model1 = NULL;
-		core::CollisionModel* model2 = NULL;
-		
-		if (node) t0 = node->startTime();
-		for (; it4 != it4End; it4++)
-		{
-			CollisionElementIterator cm1 = it4->first; 
-			CollisionElementIterator cm2 = it4->second;
-			if (cm1.getCollisionModel() != model1 || cm2.getCollisionModel() != model2)
-			{
-				model1 = cm1.getCollisionModel();
-				model2 = cm2.getCollisionModel();
-				intersector = intersectionMethod->findIntersector(model1, model2);
-			}
-			if (intersector != NULL)
-			{
-				DetectionOutput *detection = intersector->intersect(cm1, cm2);
-				
-				if (detection)
-					detectionOutputs.push_back(detection);
-			}
-		}
-		if (node) t0 = node->endTime(t0, category, intersectionMethod, this);
-	}
-	VERBOSE(std::cout << detectionOutputs.size()<<" collisions detected"<<std::endl);
-#endif
 }
 
 void DefaultPipeline::doCollisionResponse()
@@ -211,17 +162,17 @@ void DefaultPipeline::doCollisionResponse()
 
 	const sofa::helper::vector<Contact*>& contacts = contactManager->getContacts();
 
-	// First we remove all contacts with static objects and directly add them
+	// First we remove all contacts with non-simulated objects and directly add them
 	sofa::helper::vector<Contact*> notStaticContacts;
 
 	for (sofa::helper::vector<Contact*>::const_iterator it = contacts.begin(); it!=contacts.end(); it++)
 	{
 		Contact* c = *it;
-		if (c->getCollisionModels().first->isStatic())
+		if (!c->getCollisionModels().first->isSimulated())
 		{
 			c->createResponse(c->getCollisionModels().second->getContext());
 		}
-		else if (c->getCollisionModels().second->isStatic())
+		else if (!c->getCollisionModels().second->isSimulated())
 		{
 			c->createResponse(c->getCollisionModels().first->getContext());
 		}

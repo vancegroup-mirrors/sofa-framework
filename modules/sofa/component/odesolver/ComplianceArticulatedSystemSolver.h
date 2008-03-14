@@ -32,6 +32,9 @@
 #include <sofa/defaulttype/NewMatVector.h>
 #include <sofa/component/MechanicalObject.h>
 #include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/component/container/ArticulatedHierarchyContainer.h>
+
 
 namespace sofa
 {
@@ -43,7 +46,7 @@ namespace odesolver
 {
 
 using namespace sofa::defaulttype;
-using core::objectmodel::DataField;
+using core::objectmodel::Data;
 
 /** 
 * Solver to test compliance computation for new articulated system objects.
@@ -52,12 +55,15 @@ class ComplianceArticulatedSystemSolver : public sofa::simulation::tree::OdeSolv
 {
 
 public:
-    DataField<unsigned int> f_maxCGIter;
-	DataField<double> f_smallDenominatorThreshold;
-	DataField<bool> firstCallToSolve;
+    Data<unsigned int> f_maxCGIter;
+	Data<double> f_smallDenominatorThreshold;
+	Data<bool> firstCallToSolve;
 	simulation::tree::GNode *context;
 	component::MechanicalObject<Vec1dTypes>* articulations;
+	component::MechanicalObject<RigidTypes>* Objects6D;
 	NewMatVector *dxfree;
+	int frame;
+	sofa::component::container::ArticulatedHierarchyContainer* ahc;
 
 	void init();
 	ComplianceArticulatedSystemSolver();

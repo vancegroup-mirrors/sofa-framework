@@ -52,7 +52,7 @@ using namespace sofa::defaulttype;
 
 template <class DataTypes>
 BoxConstraint<DataTypes>::BoxConstraint()
-: box( dataField( &box, Vec6(0,0,0,1,1,1), "box", "DOFs in the box defined by xmin,ymin,zmin, xmax,ymax,zmax are fixed") )
+: box( initData( &box, Vec6(0,0,0,1,1,1), "box", "DOFs in the box defined by xmin,ymin,zmin, xmax,ymax,zmax are fixed") )
 {}
 
 template <class DataTypes>

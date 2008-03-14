@@ -20,14 +20,14 @@
 			<Object type="RigidMapping" object1="../.." object2="../Visual" />
 		</Node>
 		<Node name="Surf">
-			<Object type="SphereTree" filename="CollisionModels/shammy-medial.sph" static="0"  />  
+			<Object type="SphereTree" filename="CollisionModels/shammy-medial.sph" simulated="1" moving="1"  />  
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
 
 
 	<!-- Definition of collision model -->
-	<Object type="SphereTree" name="shammy" filename="CollisionModels/shammy-medial.sph" static="1" dy="-20" />
+	<Object type="SphereTree" name="shammy" filename="CollisionModels/shammy-medial.sph" simulated="0" moving="0" dy="-20" />
 	<Object type="OglModel" name="shammy" filename="VisualModels/shammy.obj" texturename="VisualModels/greeny.bmp" dy="-20" />
 
 </Node>

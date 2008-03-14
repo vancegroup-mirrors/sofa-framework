@@ -44,7 +44,7 @@ public:
 	{
 		impl = new NewMAT::Matrix;
 	}
-
+	
 	virtual ~NewMatMatrix()
 	{
 		delete impl;
@@ -80,6 +80,12 @@ public:
 		*(rv->impl) = impl->i() * (*(ov->impl));
 	};
 
+	virtual void inverse()
+	{
+	  NewMAT::Matrix *back = impl;
+	  impl=new NewMAT::Matrix(impl->i());
+	  delete back;
+	}
 private:
 	NewMAT::Matrix *impl;
 };

@@ -24,6 +24,10 @@
 *******************************************************************************/
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
+#include <sofa/core/componentmodel/topology/Topology.h>
+#include <sofa/core/componentmodel/topology/BaseTopology.h>
+#include <sofa/core/Shader.h>
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -52,6 +56,9 @@ BaseContext* BaseContext::getDefault()
 ////////////////
 // Parameters //
 ////////////////
+
+/// The Context is active
+const bool BaseContext::isActive() const { return true;};
 
 /// Gravity in the local coordinate system
 BaseContext::Vec3 BaseContext::getLocalGravity() const
@@ -164,10 +171,10 @@ int BaseContext::getFinestLevel() const
 {
 	return 0;
 }
-unsigned int BaseContext::nbLevels() const
-{
-	return getCoarsestLevel() - getFinestLevel() + 1;
-}
+// unsigned int BaseContext::nbLevels() const
+// {
+// 	return getCoarsestLevel() - getFinestLevel() + 1;
+// }
 
 //////////////////////////////
 // Local Coordinates System //
@@ -196,25 +203,53 @@ const BaseContext::Vec3& BaseContext::getVelocityBasedLinearAccelerationInWorld(
 }
 
 
-///////////////
-// Variables //
-///////////////
+////////////////
+// Containers //
+////////////////
 
+/// Generic object access, possibly searching up or down from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void* BaseContext::getObject(const ClassInfo& /*class_info*/, SearchDirection /*dir*/) const
+{
+    return NULL;
+}
+
+/// Generic object access, given a path from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void* BaseContext::getObject(const ClassInfo& /*class_info*/, const std::string& /*path*/) const
+{
+    return NULL;
+}
+
+/// Generic list of objects access, possibly searching up or down from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void BaseContext::getObjects(const ClassInfo& /*class_info*/, GetObjectsCallBack& /*container*/, SearchDirection /*dir*/) const
+{
+}
 
 /// Mechanical Degrees-of-Freedom
 BaseObject* BaseContext::getMechanicalState() const
 {
-    return NULL;
+    return this->get<sofa::core::componentmodel::behavior::BaseMechanicalState>();
 }
 
 /// Topology
 BaseObject* BaseContext::getTopology() const
 {
-    return NULL;
+    return this->get<sofa::core::componentmodel::topology::Topology>();
 }
 /// Topology
 BaseObject* BaseContext::getMainTopology() const
 {
+    return this->get<sofa::core::componentmodel::topology::BaseTopology>();
+}
+/// Shader
+BaseObject* BaseContext::getShader() const
+{
+    return this->get<sofa::core::Shader>();
     return NULL;
 }
 

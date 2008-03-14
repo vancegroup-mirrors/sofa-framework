@@ -51,7 +51,7 @@ class NodeGFX
 	
 	int status;
 
-	NodeGFX(char *str, double x, double y);
+	NodeGFX(const char *str, double x, double y);
 	virtual ~NodeGFX() {}
 	
 	virtual void draw();

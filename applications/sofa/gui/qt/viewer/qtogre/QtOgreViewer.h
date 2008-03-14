@@ -107,6 +107,7 @@ namespace sofa
 	      QString helpString();
 
 	      void moveRayPickInteractor(int eventX, int eventY);
+	      
 	    private:
 				
 	      Ogre::String mResourcePath;
@@ -235,8 +236,8 @@ namespace sofa
 	      }
 
 
-	      public slots:
-	      virtual void resetView(); 
+	      public slots:	      
+	      virtual void resetView();
 	      virtual void saveView();  
 	      virtual void screenshot(const std::string filename); 
 	      virtual void setSizeW(int); 

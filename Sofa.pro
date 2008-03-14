@@ -4,7 +4,7 @@ TEMPLATE = subdirs
 include($${SOFA_DIR}/sofa.cfg) 
 
 SUBDIRS += extlibs/NewMAT
-SUBDIRS += extlibs/SLC
+#SUBDIRS += extlibs/SLC
 SUBDIRS += extlibs/qwt
 
 # PML
@@ -46,7 +46,12 @@ contains (CONFIGDEBUG, release) {
     message( "|  Mode: RELEASE with debug symbols")
   }
   else {
-    message( "|  Mode: RELEASE")
+    contains (CONFIGDEBUG, profile) {
+      message( "|  Mode: RELEASE with profiling")
+    }
+    else {
+      message( "|  Mode: RELEASE")
+    }
   }
 }
 

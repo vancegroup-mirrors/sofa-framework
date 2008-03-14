@@ -107,7 +107,7 @@ public:
             std::cerr << "ERROR: BarycentricContactMapper only works for scenegraph scenes.\n";
             return NULL;
         }
-        simulation::tree::GNode* child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateContext();
+	simulation::tree::GNode* child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateSimulationContext();
         MMechanicalState* mstate = new MMechanicalObject; child->addObject(mstate);
         mapper = new MMapper(model->getTopology());
         mapping = new MMapping(model->getMechanicalState(), mstate, mapper); child->addObject(mapping);
@@ -149,9 +149,9 @@ public:
 
 };
 
-/// Mapper for TriangleModel
+/// Mapper for TriangleMeshModel
 template<class DataTypes>
-class ContactMapper<TriangleModel, DataTypes> : public BarycentricContactMapper<TriangleModel, DataTypes>
+class ContactMapper<TriangleMeshModel, DataTypes> : public BarycentricContactMapper<TriangleMeshModel, DataTypes>
 {
 public:
     int addPoint(const Vector3& P, int index)
@@ -160,10 +160,32 @@ public:
         if (index < nbt)
             return this->mapper->createPointInTriangle(P, index, this->model->getMechanicalState()->getX());
         else
-            return this->mapper->createPointInQuad(P, (index - nbt)/2, this->model->getMechanicalState()->getX());
+        {
+            int qindex = (index - nbt)/2;
+            int nbq = this->model->getTopology()->getNbQuads();
+            if (qindex < nbq)
+                return this->mapper->createPointInQuad(P, qindex, this->model->getMechanicalState()->getX());
+            else
+            {
+                std::cerr << "ContactMapper<TriangleMeshModel>: ERROR invalid contact element index "<<index<<" on a topology with "<<nbt<<" triangles and "<<nbq<<" quads."<<std::endl;
+                std::cerr << "model="<<this->model->getName()<<" size="<<this->model->getSize()<<std::endl;
+                return -1;
+            }
+        }
     }
 };
 
+/// Mapper for TriangleSetModel
+template<class DataTypes>
+class ContactMapper<TriangleSetModel, DataTypes> : public BarycentricContactMapper<TriangleSetModel, DataTypes>
+{
+public:
+    int addPoint(const Vector3& P, int index)
+    {
+        return this->mapper->createPointInTriangle(P, this->model->convertLoc2Glob(index), this->model->getMechanicalState()->getX());
+    }
+};
+    
 /// Base class for IdentityMapping based mappers
 template<class TCollisionModel, class DataTypes>
 class IdentityContactMapper
@@ -210,7 +232,7 @@ public:
             std::cerr << "ERROR: IdentityContactMapper only works for scenegraph scenes.\n";
             return NULL;
         }
-        simulation::tree::GNode* child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateContext();
+	simulation::tree::GNode* child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateSimulationContext();
         MMechanicalState* mstate = new MMechanicalObject; child->addObject(mstate);
         mapping = new MMapping(model->getMechanicalState(), mstate); child->addObject(mapping);
         return mstate;
@@ -293,11 +315,11 @@ public:
 };
 
 /// Mapper for SphereModel
-template<class InDataTypes, class DataTypes>
-class ContactMapper<TSphereModel<InDataTypes>, DataTypes> : public IdentityContactMapper<TSphereModel<InDataTypes>, DataTypes>
+template<class TInDataTypes, class DataTypes>
+class ContactMapper<TSphereModel<TInDataTypes>, DataTypes> : public IdentityContactMapper<TSphereModel<TInDataTypes>, DataTypes>
 {
 public:
-    double radius(const TSphere<InDataTypes>& e)
+    double radius(const TSphere<TInDataTypes>& e)
     {
         return e.r();
     }
@@ -356,7 +378,7 @@ public:
                 std::cerr << "ERROR: RigidContactMapper only works for scenegraph scenes.\n";
                 return NULL;
             }
-            child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateContext();
+	    child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateSimulationContext();
             outmodel = new MMechanicalObject; child->addObject(outmodel);
             mapping = new MMapping(instate, outmodel); child->addObject(mapping);
         }
@@ -368,7 +390,7 @@ public:
                 std::cerr << "ERROR: RigidContactMapper only works for scenegraph scenes.\n";
                 return NULL;
             }
-            child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateContext();
+	    child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateSimulationContext();
             outmodel = new MMechanicalObject; child->addObject(outmodel);
             mapping = NULL;
         }
@@ -528,7 +550,7 @@ public:
     {
         if (child!=NULL)
         {
-            simulation::tree::Simulation::unload(child);
+            simulation::tree::getSimulation()->unload(child);
         }
     }
     
@@ -544,7 +566,7 @@ public:
                 std::cerr << "ERROR: SubsetContactMapper only works for scenegraph scenes.\n";
                 return NULL;
             }
-            child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateContext();
+	    child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateSimulationContext();
             outmodel = new MMechanicalObject; child->addObject(outmodel);
             mapping = new MMapping(instate, outmodel); child->addObject(mapping);
         }
@@ -556,7 +578,7 @@ public:
                 std::cerr << "ERROR: SubsetContactMapper only works for scenegraph scenes.\n";
                 return NULL;
             }
-            child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateContext();
+	    child = new simulation::tree::GNode("contactPoints"); parent->addChild(child); child->updateSimulationContext();
             outmodel = new MMechanicalObject; child->addObject(outmodel);
             mapping = NULL;
         }

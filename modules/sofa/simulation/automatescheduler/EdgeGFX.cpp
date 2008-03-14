@@ -24,17 +24,7 @@
 *******************************************************************************/
 #include <sofa/simulation/automatescheduler/EdgeGFX.h>
 #include <sofa/simulation/automatescheduler/Node.h>
-
-// added by Sylvere F.
-#ifdef _WIN32
-#include <windows.h>
-#endif /* _WIN32 */
-
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 
 namespace sofa
 {

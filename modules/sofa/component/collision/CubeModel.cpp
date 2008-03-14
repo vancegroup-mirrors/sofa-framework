@@ -26,12 +26,7 @@
 #include <sofa/core/ObjectFactory.h>
 #include <algorithm>
 #include <math.h>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
-
+#include <sofa/helper/system/gl.h>
 
 namespace sofa
 {
@@ -178,7 +173,7 @@ void CubeModel::draw()
         ++level;
         color *= 0.5f;
     }
-    if (isStatic())
+    if (isSimulated())
         glColor4f(1.0f, 1.0f, 1.0f, color);
     else
         glColor4f(1.0f, 1.0f, 0.0f, color);

@@ -225,12 +225,12 @@ private :
 
 class MultiFrequencyUpdateAttribute : public ObjSubAutomateNodeAttribute
 {
-	typedef void(*updateFunc)(char *);
+	typedef void(*updateFunc)(const char *);
 
 public :
 
 	MultiFrequencyUpdateAttribute(){};
-	MultiFrequencyUpdateAttribute(updateFunc _functionPtr, char* _param);
+	MultiFrequencyUpdateAttribute(updateFunc _functionPtr, const char* _param);
 
 	updateFunc getFunction();
 	char *getParameters();

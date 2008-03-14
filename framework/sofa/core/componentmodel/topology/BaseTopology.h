@@ -32,10 +32,10 @@ namespace core
       /// Translates topology events (TopologyChange objects) from a topology so that they apply on another one.
       class TopologicalMapping;
 
-
       /// The enumeration used to give unique identifiers to TopologyChange objects.
       enum TopologyChangeType {
 	BASE,               ///< For TopologyChange class, should never be used.
+	ENDING_EVENT,       ///< To notify the end for the current sequence of topological change events
 	POINTSINDICESSWAP,  ///< For PointsIndicesSwap class.
 	POINTSADDED,        ///< For PointsAdded class.
 	POINTSREMOVED,      ///< For PointsRemoved class.
@@ -89,6 +89,14 @@ namespace core
 	virtual ~TopologyChange() { };
       }; 
 
+	  /** notifies the end for the current sequence of topological change events */
+      class EndingEvent : public core::componentmodel::topology::TopologyChange  {
+
+      public:
+      EndingEvent() : core::componentmodel::topology::TopologyChange(core::componentmodel::topology::ENDING_EVENT) {
+	}
+
+      };
 
 
       /** \brief Base class that gives access to the 4 topology related objects and an array of topology modifications.
@@ -107,6 +115,7 @@ namespace core
       class BaseTopology : public objectmodel::BaseObject {
 
       public :
+
 	/** \brief Provides an iterator on the first element in the list of TopologyChange objects.
 	 */
 	std::list<const TopologyChange *>::const_iterator firstChange() const;
@@ -126,15 +135,13 @@ namespace core
 	}
 
 
-
 	/** \brief Returns the TopologyModifier object of this Topology.
 	 */
 	TopologyModifier *getTopologyModifier() const {
 	  return m_topologyModifier;
 	}
 
-            
-            
+       
 	/** \brief Returns the TopologyAlgorithms object of this Topology if it is a main topology, 0 otherwise.
 	 *
 	 * Specific topologies cannot be allowed to be directly modified, since this might invalidate their 
@@ -262,7 +269,7 @@ namespace core
 	  return out;
         }
 
-        /// Needed to be compliant with DataFields.
+        /// Needed to be compliant with Datas.
         inline friend std::istream& operator>>(std::istream& in, TopologyContainer& )
         {
 	  return in;
@@ -300,6 +307,7 @@ namespace core
 	friend class TopologyModifier;
 	friend class TopologyAlgorithms;
 	friend class BaseTopology;
+
       };
 
 
@@ -308,6 +316,9 @@ namespace core
       class TopologyModifier {
 
       public:
+
+	friend class TopologyMapping;
+
 	/** \brief Constructor.
 	 *
 	 * @param basicTopology the topology this object applies to.
@@ -359,6 +370,15 @@ namespace core
 	void addTopologyChange(const TopologyChange *topologyChange) {
 	  m_basicTopology->getTopologyContainer()->addTopologyChange(topologyChange);
 	}
+
+	  public:
+	/** \notify the end for the current sequence of topological change events.
+	 */
+	void notifyEndingEvent() {
+		EndingEvent *e=new EndingEvent();
+		addTopologyChange(e);
+	}
+
       };
 
         

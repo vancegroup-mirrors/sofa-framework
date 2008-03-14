@@ -6,8 +6,8 @@
 #include <sofa/helper/FnDispatcher.h>
 #include <sofa/simulation/tree/xml/ObjectFactory.h>
 #include <map>
-#include <GL/gl.h>
-#include <GL/glut.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 
 /* for debugging the collision method */
@@ -175,20 +175,10 @@ void VoxelGrid::add(CollisionModel *cm, int phase)
 				collisionDetected = true;
 				cmPairs.push_back(std::pair<CollisionModel*, CollisionModel*>(it->getCollisionModel(), itCollis->getCollisionModel()));
 				elemPairs.push_back(std::pair<CollisionElementIterator, CollisionElementIterator> (it, *itCollis));
-				
-				if ((cm == it->getCollisionModel()) || (cm == itCollis->getCollisionModel()))
-				{
-					removeCmNoCollision (itCollis->getCollisionModel());
-				}
 			}
 		}
 		collisionElems.clear();
 	}
-
-	if (!collisionDetected) 
-		addNoCollisionDetect(cm);
-	else
-		removeCmNoCollision (cm);
 
 	if (cm->isStatic())
 		settimestamp(cm, 0);

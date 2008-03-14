@@ -35,6 +35,7 @@ HEADERS += automatescheduler/Automate.h \
            tree/ExportOBJVisitor.h \
            tree/FindByTypeVisitor.h \
            tree/GNode.h \
+           tree/GrabVisitor.h \
            tree/init.h \
            tree/InitVisitor.h \
            tree/LocalStorage.h \
@@ -62,6 +63,8 @@ HEADERS += automatescheduler/Automate.h \
            tree/xml/Element.inl \
            tree/xml/NodeElement.h \
            tree/xml/ObjectElement.h \
+           tree/xml/AttributeElement.h \
+           tree/xml/DataElement.h \
            tree/xml/XML.h \
            tree/XMLPrintVisitor.h 
 SOURCES += automatescheduler/Automate.cpp \
@@ -90,6 +93,7 @@ SOURCES += automatescheduler/Automate.cpp \
            tree/ExportGnuplotVisitor.cpp \
            tree/ExportOBJVisitor.cpp \
            tree/GNode.cpp \
+           tree/GrabVisitor.cpp \
            tree/init.cpp \
            tree/InitVisitor.cpp \
            tree/MechanicalVisitor.cpp \
@@ -114,6 +118,8 @@ SOURCES += automatescheduler/Automate.cpp \
            tree/xml/BaseElement.cpp \
            tree/xml/NodeElement.cpp \
            tree/xml/ObjectElement.cpp \
+           tree/xml/AttributeElement.cpp \
+           tree/xml/DataElement.cpp \
            tree/xml/XML.cpp \
            tree/XMLPrintVisitor.cpp 
 SOFA_DIR=../../..

@@ -24,11 +24,7 @@
 *******************************************************************************/
 #include <sofa/helper/gl/Axis.h>
 
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 
 #include <assert.h>
 #include <algorithm>
@@ -288,6 +284,87 @@ void Axis::draw(const double *mat, double len)
     Axis* a = get(Vector3(len,len,len));
     a->update(mat);
     a->draw();
+}
+
+void Axis::draw(const Vector3& p1, const Vector3& p2, const double& r)
+{
+  Vector3 v = p2-p1;
+  Axis::draw(p1, p1+v*0.9, r,r);
+  Axis::draw(p1+v*0.9,p2, 2.0*r,0.0);
+}
+
+void Axis::draw(const Vector3& p1, const Vector3& p2, const double& r1, const double& r2 )
+{
+  int i;
+  double theta;
+  Vec3d n,p,q,perp;
+
+  double theta2 = 2*3.141592653;
+  double m = 16; //precision
+  
+  /* Normal pointing from p1 to p2 */
+  n = p1-p2;
+  
+   /*
+  Create two perpendicular vectors perp and q
+  on the plane of the disk:  
+   */
+  
+  if      (n[1] != 0 || n[2] != 0)  perp = Vec3d(1,0,0);
+  else                              perp = Vec3d(0,1,0);
+   
+  
+  q = perp.cross(n);
+  perp = n.cross(q);
+  perp.normalize();
+  q.normalize();
+
+  glBegin(GL_QUAD_STRIP);
+  for (i=0;i<=m;i++) {
+    theta = i * (theta2) / m;
+
+    n = perp*cos(theta) + q*sin(theta);
+    n.normalize();
+
+    p = p1 + n*r1;
+    glNormal3d(n[0],n[1],n[2]);   glTexCoord2d(i/(double)m,0.0);
+    glVertex3d(p[0],p[1],p[2]);
+    
+    p = p2 + n*r2;
+    glNormal3d(n[0],n[1],n[2]);   glTexCoord2d(i/(double)m,1.0);
+    glVertex3d(p[0],p[1],p[2]);
+
+  }  
+  glEnd(); 
+  
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex3d(p1[0],p1[1],p1[2]);
+  for (i=0;i<=m && r1 != 0;i++) {
+    theta = i * (theta2) / m;
+
+    n = perp*cos(theta) + q*sin(theta);
+    n.normalize();
+
+    p = p1 + n*r1;
+    glNormal3d(n[0],n[1],n[2]);  glTexCoord2d(i/(double)m,0.0);
+    glVertex3d(p[0],p[1],p[2]);
+  }
+  glEnd(); 
+  
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex3d(p2[0],p2[1],p2[2]);
+  for (i=0;i<=m && r2 != 0;i++) {
+    theta = i * (theta2) / m;
+
+    n = perp*cos(theta) + q*sin(theta);
+    n.normalize();
+    
+    p = p2 + n*r2;
+    glNormal3d(n[0],n[1],n[2]);  glTexCoord2d(i/(double)m,1.0);
+    glVertex3d(p[0],p[1],p[2]);
+  }
+  glEnd(); 
+   
 }
 
 } // namespace gl

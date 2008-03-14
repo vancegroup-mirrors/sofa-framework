@@ -1,8 +1,7 @@
 #include <sofa/component/topology/TriangleSetTopology.h>
 #include <sofa/component/topology/TriangleSetTopology.inl>
 #include <sofa/defaulttype/Vec3Types.h>
-//#include <sofa/simulation/tree/xml/ObjectFactory.h>
-#include <sofa/core/ObjectFactory.h>
+#include <sofa/core/ObjectFactory.h>   
 
 namespace sofa
 {
@@ -12,7 +11,7 @@ namespace component
 
 namespace topology
 {
- 
+
 using namespace sofa::defaulttype;
 
 
@@ -46,6 +45,13 @@ template class TriangleSetGeometryAlgorithms<Vec2fTypes>;
 template class TriangleSetGeometryAlgorithms<Vec2dTypes>;
 template class TriangleSetGeometryAlgorithms<Vec1fTypes>;
 template class TriangleSetGeometryAlgorithms<Vec1dTypes>;
+
+template class TriangleSetTopologyModifier<Vec3dTypes>;
+template class TriangleSetTopologyModifier<Vec3fTypes>;
+template class TriangleSetTopologyModifier<Vec2dTypes>;
+template class TriangleSetTopologyModifier<Vec2fTypes>;
+template class TriangleSetTopologyModifier<Vec1dTypes>;
+template class TriangleSetTopologyModifier<Vec1fTypes>;
 
 // implementation TriangleSetTopologyContainer
 
@@ -269,42 +275,40 @@ TriangleSetTopologyContainer::TriangleSetTopologyContainer(core::componentmodel:
 }
 bool TriangleSetTopologyContainer::checkTopology() const
 {
+	//std::cout << "*** CHECK TriangleSetTopologyContainer ***" << std::endl;
+
 	EdgeSetTopologyContainer::checkTopology();
 	if (m_triangleVertexShell.size()>0) {
 		unsigned int i,j;
 		for (i=0;i<m_triangleVertexShell.size();++i) {
 			const sofa::helper::vector<unsigned int> &tvs=m_triangleVertexShell[i];
-			for (j=0;j<tvs.size();++j)
-				assert((m_triangle[tvs[j]][0]==i) ||  (m_triangle[tvs[j]][1]==i) || (m_triangle[tvs[j]][2]==i));
+			for (j=0;j<tvs.size();++j){
+				bool check_triangle_vertex_shell = (m_triangle[tvs[j]][0]==i) ||  (m_triangle[tvs[j]][1]==i) || (m_triangle[tvs[j]][2]==i);
+				if(!check_triangle_vertex_shell){
+					std::cout << "*** CHECK FAILED : check_triangle_vertex_shell, i = " << i << " , j = " << j << std::endl;
+				}
+				assert(check_triangle_vertex_shell);
+			}
 		}
+		//std::cout << "******** DONE : check_triangle_vertex_shell" << std::endl;
 	}
 
 	if (m_triangleEdgeShell.size()>0) {
 		unsigned int i,j;
 		for (i=0;i<m_triangleEdgeShell.size();++i) {
 			const sofa::helper::vector<unsigned int> &tes=m_triangleEdgeShell[i];
-			for (j=0;j<tes.size();++j)
-				assert((m_triangleEdge[tes[j]][0]==i) ||  (m_triangleEdge[tes[j]][1]==i) || (m_triangleEdge[tes[j]][2]==i));
+			for (j=0;j<tes.size();++j){
+				bool check_triangle_edge_shell = (m_triangleEdge[tes[j]][0]==i) ||  (m_triangleEdge[tes[j]][1]==i) || (m_triangleEdge[tes[j]][2]==i);
+				if(!check_triangle_edge_shell){
+					std::cout << "*** CHECK FAILED : check_triangle_edge_shell, i = " << i << " , j = " << j << std::endl;
+				}
+				assert(check_triangle_edge_shell);
+			}
 		}
+		//std::cout << "******** DONE : check_triangle_edge_shell" << std::endl;
 	}
 	return true;
 }
-
-
-// factory related stuff
-/*
-template<class DataTypes>
-void create(TriangleSetTopology<DataTypes>*& obj, simulation::tree::xml::ObjectDescription* arg)
-{
-	simulation::tree::xml::createWithParent< TriangleSetTopology<DataTypes>, component::MechanicalObject<DataTypes> >(obj, arg);
-	if (obj!=NULL)
-	{
-		if (arg->getAttribute("filename"))
-			obj->load(arg->getAttribute("filename"));
-	}
-}
-
-*/
 
 } // namespace topology
 

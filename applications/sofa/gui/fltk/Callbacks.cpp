@@ -173,7 +173,7 @@ void ChangeForceIntensityCB(double /*value*/)
 void SmoothOnOffCB(bool value)
 {
 	GUI->viewer->GetScene()->setShowForceFields(value);
-	Simulation::updateContext(GUI->viewer->GetScene());
+	Simulation::updateVisualContext(GUI->viewer->GetScene());
 	if (value)
 	{
 		cout << "Smooth value set to TRUE" << endl;
@@ -186,7 +186,7 @@ void SmoothOnOffCB(bool value)
 void CollisionOnOffCB(bool value)
 {
 	GUI->viewer->GetScene()->setShowCollisionModels(value);
-	Simulation::updateContext(GUI->viewer->GetScene());
+	Simulation::updateVisualContext(GUI->viewer->GetScene());
 	if (value)
 	{
 		cout << "Collision value set to TRUE" << endl;
@@ -199,7 +199,7 @@ void CollisionOnOffCB(bool value)
 void BehaviorOnOffCB(bool value)
 {
 	GUI->viewer->GetScene()->setShowBehaviorModels(value);
-	Simulation::updateContext(GUI->viewer->GetScene());
+	Simulation::updateVisualContext(GUI->viewer->GetScene());
 	if (value)
 	{
 		cout << "Behavior value set to TRUE" << endl;
@@ -212,7 +212,7 @@ void BehaviorOnOffCB(bool value)
 void VisualOnOffCB(bool value)
 {
 	GUI->viewer->GetScene()->setShowVisualModels(value);
-	Simulation::updateContext(GUI->viewer->GetScene());
+	Simulation::updateVisualContext(GUI->viewer->GetScene());
 	if (value)
 	{
 		cout << "Visual value set to TRUE" << endl;
@@ -225,7 +225,7 @@ void VisualOnOffCB(bool value)
 void MappingOnOffCB(bool value)
 {
 	GUI->viewer->GetScene()->setShowMappings(value);
-	Simulation::updateContext(GUI->viewer->GetScene());
+	Simulation::updateVisualContext(GUI->viewer->GetScene());
 	if (value)
 	{
 		cout << "Mapping value set to TRUE" << endl;

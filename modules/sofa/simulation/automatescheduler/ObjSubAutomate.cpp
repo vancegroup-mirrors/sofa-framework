@@ -69,7 +69,7 @@ std::string MonoFrequencyObjSubAutomateAttribute::getParameters()
 ///////////////////////////////////
 
 
-MultiFrequencyUpdateAttribute::MultiFrequencyUpdateAttribute(updateFunc _functionPtr, char* _param)
+MultiFrequencyUpdateAttribute::MultiFrequencyUpdateAttribute(updateFunc _functionPtr, const char* _param)
 {
 	functionPtr = _functionPtr;
 	strcpy(param, _param);

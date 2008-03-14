@@ -22,7 +22,7 @@
 			<Object type="RigidMapping" object1="../.." object2="../Visual" />
 		</Node>
 		<Node name="Surf1">
-			<Object type="SphereTree" filename="CollisionModels/dragon_clean-medial.sph" static="0"/>
+			<Object type="SphereTree" filename="CollisionModels/dragon_clean-medial.sph" simulated="1" moving="1"/>
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
@@ -37,7 +37,7 @@
 			<Object type="RigidMapping" object1="../.." object2="../Visual" />
 		</Node>
 		<Node name="Surf2">
-			<Object type="SphereTree" filename="CollisionModels/dragon_clean-medial.sph" static="0" />
+			<Object type="SphereTree" filename="CollisionModels/dragon_clean-medial.sph" simulated="1" moving="1" />
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
@@ -47,10 +47,10 @@
 	<!-- Definition of static models -->
 
 
-	<Object type="SphereTree" name="BigDragonSphereTree3" filename="CollisionModels/dragon_clean-medial.sph" static="1" dx="-5" dz="-5" dy="-10" />
+	<Object type="SphereTree" name="BigDragonSphereTree3" filename="CollisionModels/dragon_clean-medial.sph" simulated="0" moving="0" dx="-5" dz="-5" dy="-10" />
 	<Object type="OglModel" name="BigDragon3" filename="VisualModels/dragon_clean.obj" texturename="VisualModels/floor.bmp" dx="-5" dz="-5" dy="-10" />
 
-	<Object type="SphereTree" name="BigDragonSphereTree4" filename="CollisionModels/dragon_clean-medial.sph" static="1" dx="-5" dz="5" dy="-10" />
+	<Object type="SphereTree" name="BigDragonSphereTree4" filename="CollisionModels/dragon_clean-medial.sph" simulated="0" moving="0" dx="-5" dz="5" dy="-10" />
 	<Object type="OglModel" name="BigDragon4" filename="VisualModels/dragon_clean.obj" texturename="VisualModels/floor.bmp" dx="-5" dz="5" dy="-10" />
 
 

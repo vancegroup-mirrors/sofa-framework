@@ -24,19 +24,9 @@
 *******************************************************************************/
 #include <sofa/helper/io/bvh/BVHJoint.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif // _WIN32
-
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#include <GLUT/glut.h>
-#else
-#include<GL/gl.h>
-#include<GL/glu.h>
-#include<GL/glut.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glu.h>
+#include <sofa/helper/system/glut.h>
 
 #include <iostream>
 
@@ -395,6 +385,21 @@ void BVHJoint::debug(int tab)
 	{
 		children[i]->debug(tab+1);
 	}
+}
+
+int BVHJoint::getId()
+{
+	return id;
+}
+
+char* BVHJoint::getName()
+{
+	return name;
+}
+
+BVHOffset* BVHJoint::getOffset()
+{
+	return offset;
 }
 
 } // namespace bvh

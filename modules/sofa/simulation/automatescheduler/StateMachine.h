@@ -84,9 +84,9 @@ private:
 	void queueDisplay(simulation::automatescheduler::Node *);
 	void queuePeriph(simulation::automatescheduler::Node *);
   
-	void handleAutomaton(char*);
+	void handleAutomaton(const char*);
 
-	simulation::automatescheduler::Node* getNext(char *str, simulation::automatescheduler::Node *oldNode);
+	simulation::automatescheduler::Node* getNext(const char *str, simulation::automatescheduler::Node *oldNode);
 	bool isEmpty();
 };
 

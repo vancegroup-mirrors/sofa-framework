@@ -23,6 +23,7 @@
 * and F. Poyer                                                                 *
 *******************************************************************************/
 #include <sofa/simulation/tree/VisualVisitor.h>
+#include <sofa/component/visualmodel/VisualModelImpl.h>
 
 namespace sofa
 {
@@ -40,23 +41,46 @@ Visitor::Result VisualDrawVisitor::processNodeTopDown(GNode* node)
 	node->getPositionInWorld().writeOpenGlMatrix(glMatrix);
 	glMultMatrixd( glMatrix );
 
-        //cerr<<"VisualDrawVisitor::processNodeTopDown "<<node->getName()<<endl;
+	hasShader = (node->getShader()!=NULL);
+
 	this->VisualVisitor::processNodeTopDown(node);
 
 	glPopMatrix();
 	return RESULT_CONTINUE;
 }
-void VisualDrawVisitor::processVisualModel(GNode*, core::VisualModel* vm)
+void VisualDrawVisitor::processVisualModel(GNode* node, core::VisualModel* vm)
 {
     //cerr<<"VisualDrawVisitor::processVisualModel "<<vm->getName()<<endl;
+	core::objectmodel::BaseObject* obj = NULL;
+	sofa::core::Shader* shader = NULL;
+	sofa::component::visualmodel::VisualModelImpl* vmi = NULL;
+	if (hasShader)
+	{
+		obj = node->getShader();
+		shader = dynamic_cast<sofa::core::Shader*>(obj);
+		vmi =  dynamic_cast<sofa::component::visualmodel::VisualModelImpl*> (vm);
+	}
+
 	switch(pass)
 	{
 	case Std:
+	{
+		if (shader && vmi)
+			shader->start();
 		vm->draw();
+		if (shader && vmi)
+			shader->stop();
 		break;
+	}
 	case Transparent:
+	{
+		if (shader && vmi)
+			shader->start();
 		vm->drawTransparent();
+		if (shader && vmi)
+			shader->stop();
 		break;
+	}
 	case Shadow:
 		vm->drawShadow();
 		break;

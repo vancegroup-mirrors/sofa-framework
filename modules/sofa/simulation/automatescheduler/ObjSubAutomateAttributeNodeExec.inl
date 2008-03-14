@@ -35,7 +35,7 @@ namespace automatescheduler
 {
 
 template <class ObjSubAutomateAttributeNodeClass>
-ObjSubAutomateAttributeNodeExec<ObjSubAutomateAttributeNodeClass>::ObjSubAutomateAttributeNodeExec(std::vector<ObjSubAutomateAttributeNodeClass *> _execList, char *s, double x, double y)
+ObjSubAutomateAttributeNodeExec<ObjSubAutomateAttributeNodeClass>::ObjSubAutomateAttributeNodeExec(std::vector<ObjSubAutomateAttributeNodeClass *> _execList, const char *s, double x, double y)
 	: Node(s,x,y)
 {
 	execList = _execList;
@@ -48,7 +48,7 @@ void ObjSubAutomateAttributeNodeExec<ObjSubAutomateAttributeNodeClass>::addAttri
 }
 
 template <class ObjSubAutomateAttributeNodeClass>
-void ObjSubAutomateAttributeNodeExec<ObjSubAutomateAttributeNodeClass>::execute(char *)
+void ObjSubAutomateAttributeNodeExec<ObjSubAutomateAttributeNodeClass>::execute(const char *)
 {
 	attribute.execute();
 }

@@ -57,11 +57,11 @@ PMLBody::~PMLBody()
 
 void PMLBody::createSolver()
 {
-	if(solverName == "Static") solver = new StaticSolver();
-	else if(solverName == "Euler") solver = new EulerSolver();
-	else if(solverName == "RungeKutta4") solver = new RungeKutta4Solver();
+	if(solverName == "Static") solver = new StaticSolver;
+	else if(solverName == "Euler") solver = new EulerSolver;
+	else if(solverName == "RungeKutta4") solver = new RungeKutta4Solver;
 	else if(solverName == "None") return;
-	else solver = new CGImplicitSolver();
+	else solver = new CGImplicitSolver;
 
 	parentNode->addObject(solver);
 }

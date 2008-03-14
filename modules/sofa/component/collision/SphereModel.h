@@ -84,12 +84,14 @@ public:
 protected:
 	VecReal radius;
 	
-	DataField<double> defaultRadius;
+	Data<double> defaultRadius;
 
 	class Loader;
 public:
 	
-	TSphereModel(double radius = 1.0);
+	TSphereModel();
+    
+    TSphereModel(double radius);
 
 	int addSphere(const Vector3& pos, double radius);
 	void setSphere(int index, const Vector3& pos, double radius);
@@ -103,6 +105,8 @@ public:
 
         const VecReal& getR() const { return this->radius; }
 
+    virtual void init();
+    
 	// -- CollisionModel interface
 	
 	// remove ambiguity

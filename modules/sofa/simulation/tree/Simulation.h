@@ -27,6 +27,7 @@
 
 #include <sofa/simulation/tree/GNode.h>
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 
 namespace sofa
 {
@@ -39,7 +40,7 @@ namespace tree
 
 /** Main controller of the scene.
 Defines how the scene is inited at the beginning, and updated at each time step.
-Derives from BaseObject in order to model the parameters as DataFields, which makes their edition easy in the GUI.
+Derives from BaseObject in order to model the parameters as Datas, which makes their edition easy in the GUI.
 */
 	class Simulation: public virtual sofa::core::objectmodel::BaseObject
 {
@@ -63,7 +64,10 @@ public:
         
         /// Initialize the objects
         virtual void init(GNode* root);
-
+	
+	/// Find the list of nodes called "Instrument" and keep it in the vector instuments
+	void getInstruments( GNode *node);
+	
 	/// Execute one timestep. If dt is 0, the dt parameter in the graph will be used
 	virtual void animate(GNode* root, double dt=0.0);
 
@@ -75,6 +79,9 @@ public:
 
 	/// Update contexts. Required before drawing the scene if root flags are modified.
 	virtual void updateContext(GNode* root);
+
+	/// Update contexts. Required before drawing the scene if root flags are modified.
+	virtual void updateVisualContext(GNode* root,int FILTER=0);
 
 	/// Compute the bounding box of the scene.
 	virtual void computeBBox(GNode* root, double* minBBox, double* maxBBox);
@@ -103,9 +110,11 @@ public:
     virtual void exportGnuplot( GNode* root, double time );
 	 
 	 /// Number of mechanical steps within an animation step
-	 DataField<unsigned> numMechSteps;
-	 DataField<std::string> gnuplotDirectory;
+    Data<unsigned> numMechSteps;    
+    Data<std::string> gnuplotDirectory;
 
+    helper::vector< GNode* > instruments;
+    Data< int > instrumentInUse;
 };
 
 /// Set the (unique) simulation which controls the scene

@@ -32,9 +32,8 @@
 #include <sofa/helper/system/thread/CTime.h>
 
 #include <cmath>
-#include <GL/gl.h>
-#include <GL/glut.h>
-
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 namespace sofa
 {
@@ -73,7 +72,6 @@ namespace sofa
 
         TriangleOctreeModel::TriangleOctreeModel ()
       {
-	TriangleModel();
 	octreeRoot = NULL;
 	cubeSize = CUBE_SIZE;
       }
@@ -92,13 +90,7 @@ namespace sofa
             //Enable<GL_BLEND> blending;
             //glLightModeli(GL  _LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-            static const float color[4] = { 1.0f, 0.2f, 0.0f, 1.0f };
-            static const float colorStatic[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
-            if (isStatic ())
-              glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-                            colorStatic);
-            else
-              glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+	    glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, getColor4f());
             static const float emissive[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
             static const float specular[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
             glMaterialfv (GL_FRONT_AND_BACK, GL_EMISSION, emissive);
@@ -158,6 +150,7 @@ namespace sofa
       }
 void TriangleOctreeModel::computeBoundingTree(int maxDepth)
 {
+    const helper::vector<topology::Triangle>& tri = *triangles;
 	if(octreeRoot){
 		delete octreeRoot;
 		octreeRoot=NULL;	
@@ -166,7 +159,7 @@ void TriangleOctreeModel::computeBoundingTree(int maxDepth)
 	CubeModel* cubeModel = createPrevious<CubeModel>();
 	 updateFromTopology();
 	
-	if (isStatic() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
 		int size2=mstate->getX()->size();
 	pNorms.resize(size2);
 	for(int i=0;i<size2;i++){
@@ -181,9 +174,9 @@ void TriangleOctreeModel::computeBoundingTree(int maxDepth)
 		for (int i=1;i<size;i++)
 		{
 		Triangle t(this,i);
-		pNorms[elems[i].i1]+=t.n();
-		pNorms[elems[i].i2]+=t.n();
-		pNorms[elems[i].i3]+=t.n();
+		pNorms[tri[i][0]]+=t.n();
+		pNorms[tri[i][1]]+=t.n();
+		pNorms[tri[i][2]]+=t.n();
 const Vector3* pt[3];
 			pt[0] = &t.p1();
 			pt[1] = &t.p2();
@@ -214,10 +207,10 @@ const Vector3* pt[3];
 	pTri.resize(size2);
 		for(int i=0;i<size;i++)
 		{
-		   pTri[elems[i].i1].push_back(i);	
+		   pTri[tri[i][0]].push_back(i);	
 	
-		   pTri[elems[i].i2].push_back(i);
-		   pTri[elems[i].i3].push_back(i);
+		   pTri[tri[i][1]].push_back(i);
+		   pTri[tri[i][2]].push_back(i);
 		}
 	}
 }

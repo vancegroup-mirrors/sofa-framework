@@ -101,7 +101,7 @@ public:
 	Creator(Key key, bool multi=false)
 	: Key(key)
 	{
-		Factory::getInstance()->registerCreator(key, this, multi);
+		Factory::getInstance()->registerCreator(key, this, multi);		
 	}
 	Object *createInstance(Argument arg)
 	{

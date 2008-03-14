@@ -28,6 +28,9 @@
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/simulation/tree/GNode.h>
+#include <sofa/helper/io/bvh/BVHLoader.h>
+#include <sofa/component/MechanicalObject.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -87,21 +90,23 @@ public:
 		/**
 		*	this variable defines the motion axis 
 		*/
-		DataField<Vector3> axis;
+		Data<Vector3> axis;
 		/**
 		*	If true, this variable sets a rotation motion
 		*	otherwise it does nothing
 		*/
-		DataField<bool> rotation;
+		Data<bool> rotation;
 		/**
 		*	If true, this variable sets a translation motion
 		*	otherwise it does nothing
 		*/
-		DataField<bool> translation;
+		Data<bool> translation;
 		/**
 		*	This is global index to number the articulations
 		*/
-		DataField<int> articulationIndex;
+		Data<int> articulationIndex;
+
+		std::vector<double> motion;
 	};
 
 	/**
@@ -121,26 +126,28 @@ public:
 	*	All DOF's can be identified, in an univocal way, by an index
 	*	this variable will store the index of the parentDOF of the articulation center 
 	*/
-	DataField<int> parentIndex;
+	Data<int> parentIndex;
 	/**
 	*	All DOF's can be identified, in an univocal way, by an index
 	*	this variable will store the index of the childDOF of the articulation center 
 	*/
-	DataField<int> childIndex;
+	Data<int> childIndex;
 	/**
 	*	Global position for the articulation center. It's not necessary to provide it at initialization.
 	*	This will be computed in mapping using the global position of the parent DOF and the local position
 	*	of the center articulation
 	*/
-	DataField<Vector3> globalPosition;
+	Data<Vector3> globalPosition;
 	/**
 	*	It stores the local position of the center articulation in relation to the global position of the parentDOF
 	*/
-	DataField<Vector3> posOnParent;
+	Data<Vector3> posOnParent;
 	/**
 	*	It stores the local position of the center articulation in relation to the global position of the childDOF
 	*/
-	DataField<Vector3> posOnChild;
+	Data<Vector3> posOnChild;
+
+	vector<Articulation*> articulations;
 
 	Vector3 initTranslateChild(Quat objectRotation)
 	{
@@ -160,16 +167,13 @@ public:
 	vector<Articulation*> getArticulations();
 };
 
-	ArticulatedHierarchyContainer()
-	{
-	}
+	ArticulatedHierarchyContainer();
+
 	~ArticulatedHierarchyContainer(){}
 
-	void init()
-	{
-		GNode* context = dynamic_cast<GNode*>(this->getContext());
-		context->getTreeObjects<ArticulationCenter>(&articulationCenters);
-	}
+	void parse (sofa::core::objectmodel::BaseObjectDescription* arg);
+
+	void init();
 
 	vector<ArticulationCenter*> getArticulationCenters();
 	ArticulationCenter* getArticulationCenterAsChild(int index);
@@ -177,6 +181,16 @@ public:
 
 	vector<ArticulationCenter*> articulationCenters;
 	vector<ArticulationCenter*> acendantList;
+
+	bool chargedFromFile;
+	int numOfFrames;
+	double dtbvh;
+
+private:
+
+	unsigned int id;
+	sofa::helper::io::bvh::BVHJoint* joint;
+	void buildCenterArticulationsTree(sofa::helper::io::bvh::BVHJoint*, int id_buf, const char* name, simulation::tree::GNode* node);
 };
 
 } // namespace container

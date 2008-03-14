@@ -51,35 +51,36 @@ namespace sofa
 		
 		virtual void computeElementMasses( ); ///< compute the mass matrices
 		virtual void computeElementMass( ElementMass &Mass, const Vec<8,Coord> &nodes, const int elementIndice); ///< compute the mass matrix of an element
-		Real integrateMass( const Real xmin, const Real xmax, const Real ymin, const Real ymax, const Real zmin, const Real zmax, int signx0, int signy0, int signz0, int signx1, int signy1, int signz1  );
+		Real integrateMass( int signx, int signy, int signz, Real l0, Real l1, Real l2 );
 
         virtual std::string getTemplateName() const;
 
         // -- Mass interface
-        void addMDx(VecDeriv& f, const VecDeriv& dx, double factor = 1.0);
+		virtual  void addMDx(VecDeriv& f, const VecDeriv& dx, double factor = 1.0);
 
-        void accFromF(VecDeriv& a, const VecDeriv& f);
+		virtual  void accFromF(VecDeriv& a, const VecDeriv& f);
 
-        void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+		virtual  void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);
 
-        double getKineticEnergy(const VecDeriv& /*v*/)  ///< vMv/2 using dof->getV()
+		virtual double getKineticEnergy(const VecDeriv& /*v*/)  ///< vMv/2 using dof->getV()
 		{std::cerr<<"HexahedronFEMForceFieldAndMass<DataTypes>::getKineticEnergy not yet implemented\n";return 0;}
 
-        double getPotentialEnergy(const VecCoord& /*x*/)   ///< Mgx potential in a uniform gravity field, null at origin
+		virtual double getPotentialEnergy(const VecCoord& /*x*/)   ///< Mgx potential in a uniform gravity field, null at origin
 		{std::cerr<<"HexahedronFEMForceFieldAndMass<DataTypes>::getPotentialEnergy not yet implemented\n";return 0;}
 
 		virtual void addDForce(VecDeriv& df, const VecDeriv& dx);
 
+		void addGravityToV(double dt);
 
 		// visual model
 
         virtual void draw();
 
-        bool addBBox(double* minBBox, double* maxBBox);
+		virtual bool addBBox(double* minBBox, double* maxBBox);
 
-        void initTextures() { }
+		virtual void initTextures() { }
 
-        void update() { }
+		virtual void update() { }
 		
 		
 		
@@ -92,7 +93,7 @@ namespace sofa
 			  
 			  VecElementMass _elementMasses; ///< mass matrices per element
 			  
-			  DataField<Real> _density;
+			  Data<Real> _density;
 			  
 			  MassVector _particleMasses; ///< masses per particle in order to compute gravity
 	  

@@ -51,10 +51,10 @@ class ObjSubAutomateNodeExec : public simulation::automatescheduler::Node
 
 public:
 
-	ObjSubAutomateNodeExec(ObjSubAutomate *_subAutomate, char *s, double x, double y);
+	ObjSubAutomateNodeExec(ObjSubAutomate *_subAutomate, const char *s, double x, double y);
 
 	void setVisitor( myFuncPtr func );
-	void execute(char *);
+	void execute(const char *);
 };
 
 } // namespace automatescheduler

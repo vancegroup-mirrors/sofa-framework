@@ -180,7 +180,7 @@ namespace topology
 		/// Handle PointSetTopology related events, ignore others.
 		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end );
 
-		// defining operators so that PointData can be used in a DataField (see DataField class).
+		// defining operators so that PointData can be used in a Data (see Data class).
 		//        template <typename U> friend std::ostream& operator<< (std::ostream& ostream, const PointData< U >& pointData);
 		//      template <typename U> friend std::istream& operator>> (std::istream& i,             PointData< U >& pointData);
 

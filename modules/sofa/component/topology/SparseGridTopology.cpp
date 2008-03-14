@@ -65,36 +65,39 @@ namespace sofa
 	  
 	  const float SparseGridTopology::WEIGHT27[8][27] =
 	  {
-		  {1,0.5,0,0.5,0.25,0,0,0,0,0.5,0.25,0,0.25,0.125,0,0,0,0,0,0,0,0,0,0,0,0,0,}, // each weight of the jth fine vertex to the ith coarse vertex
-	  {0,0,0,0,0,0,0,0,0,0.5,0.25,0,0.25,0.125,0,0,0,0,1,0.5,0,0.5,0.25,0,0,0,0},
-	  {0,0,0,0.5,0.25,0,1,0.5,0,0,0,0,0.25,0.125,0,0.5,0.25,0,0,0,0,0,0,0,0,0,0},
-	  {0,0,0,0,0,0,0,0,0,0,0,0,0.25,0.125,0,0.5,0.25,0,0,0,0,0.5,0.25,0,1,0.5,0},
-	  {0,0.5,1,0,0.25,0.5,0,0,0,0,0.25,0.5,0,0.125,0.25,0,0,0,0,0,0,0,0,0,0,0,0},
-	  {0,0,0,0,0,0,0,0,0,0,0.25,0.5,0,0.125,0.25,0,0,0,0,0.5,1,0,0.25,0.5,0,0,0},
-	  {0,0,0,0,0.25,0.5,0,0.5,1,0,0,0,0,0.125,0.25,0,0.25,0.5,0,0,0,0,0,0,0,0,0},
-	  {0,0,0,0,0,0,0,0,0,0,0,0,0,0.125,0.25,0,0.25,0.5,0,0,0,0,0.25,0.5,0,0.5,1}
+	  // each weight of the jth fine vertex to the ith coarse vertex
+	  {1.0, 0.5, 0.0, 0.5, 0.25, 0.0, 0.0, 0.0, 0.0, 0.5, 0.25, 0.0, 0.25, 0.125, 0.0,  0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0}, 
+	  {0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.5, 0.25, 0.0, 0.25, 0.125, 0.0,  0.0, 0.0,  0.0, 1.0, 0.5, 0.0, 0.5, 0.25, 0.0, 0.0, 0.0, 0.0},
+	  {0.0, 0.0, 0.0, 0.5, 0.25, 0.0, 1.0, 0.5, 0.0, 0.0, 0.0,  0.0, 0.25, 0.125, 0.0,  0.5, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0},
+	  {0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.25, 0.125, 0.0,  0.5, 0.25, 0.0, 0.0, 0.0, 0.0, 0.5, 0.25, 0.0, 1.0, 0.5, 0.0},
+	  {0.0, 0.5, 1.0, 0.0, 0.25, 0.5, 0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.0,  0.125, 0.25, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0},
+	  {0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.0,  0.125, 0.25, 0.0, 0.0,  0.0, 0.0, 0.5, 1.0, 0.0, 0.25, 0.5, 0.0, 0.0, 0.0},
+	  {0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.0, 0.5, 1.0, 0.0, 0.0,  0.0, 0.0,  0.125, 0.25, 0.0, 0.25, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0},
+	  {0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0,  0.125, 0.25, 0.0, 0.25, 0.5, 0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.0, 0.5, 1.0}
 	  };
 	  
 	  const int SparseGridTopology::cornerIndicesFromFineToCoarse[8][8]=
 	  {
-		  { 0,9 ,3, 12 ,1 ,10 ,4 ,13}, // fine vertices forming the 0th coarse cube (with XYZ order) 
-		  { 9, 18, 12 ,21, 10 ,19 ,13, 22},
-		  { 3, 12, 6 ,15 ,4, 13 ,7 ,16},
-		  { 12, 21, 15, 24, 13, 22 ,16, 25},
-		  { 1, 10, 4 ,13 ,2, 11 ,5, 14},
-		  { 10, 19, 13, 22, 11, 20, 14 ,23},
-		  { 4, 13, 7 ,16 ,5 ,14 ,8, 17},
-		  { 13, 22, 16, 25, 14, 23 ,17 ,26} 
-
+		  // fine vertices forming the ith coarse cube (with XYZ order)
+		  {  0,  9,  3, 12,  1, 10,  4, 13},  
+		  {  9, 18, 12, 21, 10, 19, 13, 22},
+		  {  3, 12,  6, 15,  4, 13,  7, 16},
+		  { 12, 21, 15, 24, 13, 22, 16, 25},
+		  {  1, 10,  4, 13,  2, 11,  5, 14},
+		  { 10, 19, 13, 22, 11, 20, 14, 23},
+		  {  4, 13,  7, 16,  5, 14,  8, 17},
+		  { 13, 22, 16, 25, 14, 23, 17, 26} 
 	  };
 			  
 			  
-      SparseGridTopology::SparseGridTopology(): nx(dataField(&nx,0,"nx","x grid resolution")), ny(dataField(&ny,0,"ny","y grid resolution")), nz(dataField(&nz,0,"nz","z grid resolution")),
-          xmin(dataField(&xmin,0.0,"xmin","xmin grid")),ymin(dataField(&ymin,0.0,"ymin","ymin grid")),zmin(dataField(&zmin,0.0,"zmin","zmin grid")),
-          xmax(dataField(&xmax,0.0,"xmax","xmax grid")),ymax(dataField(&ymax,0.0,"ymax","ymax grid")),zmax(dataField(&zmax,0.0,"zmax","zmax grid"))
+      SparseGridTopology::SparseGridTopology()
+	    : nx(initData(&nx,0,"nx","x grid resolution")), ny(initData(&ny,0,"ny","y grid resolution")), nz(initData(&nz,0,"nz","z grid resolution")),
+          xmin(initData(&xmin,0.0,"xmin","xmin grid")), ymin(initData(&ymin,0.0,"ymin","ymin grid")), zmin(initData(&zmin,0.0,"zmin","zmin grid")),
+          xmax(initData(&xmax,0.0,"xmax","xmax grid")), ymax(initData(&ymax,0.0,"ymax","ymax grid")), zmax(initData(&zmax,0.0,"zmax","zmax grid"))
       {
 		  _alreadyInit = false;
-		  _finerSparseGrid=NULL;
+		  _finerSparseGrid = NULL;
+		  _coarserSparseGrid = NULL;
 	  }
 
 
@@ -102,14 +105,10 @@ namespace sofa
       bool SparseGridTopology::load(const char* filename)
       {
         this->filename.setValue( filename );
-		cerr<<"SparseGridTopology::load : "<<filename<<"    "<<this->filename.getValue()<<endl;
+// 		cerr<<"SparseGridTopology::load : "<<filename<<"    "<<this->filename.getValue()<<endl;
         return true;
       }
 
-
-	  
-	  
-	  	  
 
 
 	  void SparseGridTopology::init()
@@ -126,9 +125,63 @@ namespace sofa
 		  else
 			  buildAsFinest();
 		  
-		  cerr<<"SparseGridTopology::init() :   "<<this->getName()<<"    cubes size = ";
-		  cerr<<seqCubes.size()<<"       ";
-		  cerr<<_types.size()<<endl;
+		  
+		  
+		  _nodeAdjacency.resize(seqPoints.size() );
+		  for(unsigned i=0;i<seqPoints.size();++i)
+			  _nodeAdjacency[i].assign(-1);
+		  
+		  for(unsigned i=0;i<seqCubes.size();++i)
+		  {
+			  _nodeAdjacency[ seqCubes[i][0] ][RIGHT] = seqCubes[i][1];
+			  _nodeAdjacency[ seqCubes[i][0] ][UP] = seqCubes[i][2];
+			  _nodeAdjacency[ seqCubes[i][0] ][BEHIND] = seqCubes[i][4];
+			  
+			  _nodeAdjacency[ seqCubes[i][1] ][LEFT] = seqCubes[i][0];
+			  _nodeAdjacency[ seqCubes[i][1] ][UP] = seqCubes[i][3];
+			  _nodeAdjacency[ seqCubes[i][1] ][BEHIND] = seqCubes[i][5];
+			  
+			  _nodeAdjacency[ seqCubes[i][2] ][RIGHT] = seqCubes[i][3];
+			  _nodeAdjacency[ seqCubes[i][2] ][DOWN] = seqCubes[i][0];
+			  _nodeAdjacency[ seqCubes[i][2] ][BEHIND] = seqCubes[i][6];
+			  
+			  _nodeAdjacency[ seqCubes[i][3] ][LEFT] = seqCubes[i][2];
+			  _nodeAdjacency[ seqCubes[i][3] ][DOWN] = seqCubes[i][1];
+			  _nodeAdjacency[ seqCubes[i][3] ][BEHIND] = seqCubes[i][7];
+			  
+			  _nodeAdjacency[ seqCubes[i][4] ][RIGHT] = seqCubes[i][5];
+			  _nodeAdjacency[ seqCubes[i][4] ][UP] = seqCubes[i][6];
+			  _nodeAdjacency[ seqCubes[i][4] ][BEFORE] = seqCubes[i][0];
+			  
+			  _nodeAdjacency[ seqCubes[i][5] ][LEFT] = seqCubes[i][4];
+			  _nodeAdjacency[ seqCubes[i][5] ][UP] = seqCubes[i][7];
+			  _nodeAdjacency[ seqCubes[i][5] ][BEFORE] = seqCubes[i][1];
+			  
+			  _nodeAdjacency[ seqCubes[i][6] ][RIGHT] = seqCubes[i][7];
+			  _nodeAdjacency[ seqCubes[i][6] ][DOWN] = seqCubes[i][4];
+			  _nodeAdjacency[ seqCubes[i][6] ][BEFORE] = seqCubes[i][2];
+			  
+			  _nodeAdjacency[ seqCubes[i][7] ][LEFT] = seqCubes[i][6];
+			  _nodeAdjacency[ seqCubes[i][7] ][DOWN] = seqCubes[i][5];
+			  _nodeAdjacency[ seqCubes[i][7] ][BEFORE] = seqCubes[i][3];
+		  }
+		  
+		  
+// 		  _nodeCubesAdjacency.clear();
+		  _nodeCubesAdjacency.resize(seqPoints.size() );
+		  for(unsigned i=0;i<seqCubes.size();++i)
+		  {
+			  for(int j=0;j<8;++j)
+			  {
+				  _nodeCubesAdjacency[ seqCubes[i][j] ].push_back( i );
+			  }
+		  }
+		  
+// 		  cerr<<"_nodeCubesAdjacency :"<<_nodeCubesAdjacency<<endl;
+		  
+// 		  cerr<<"SparseGridTopology::init() :   "<<this->getName()<<"    cubes size = ";
+// 		  cerr<<seqCubes.size()<<"       ";
+// 		  cerr<<_types.size()<<endl;
 	  }
 
 
@@ -358,10 +411,12 @@ namespace sofa
 		  
 
         }
-        else
-          std::cerr << "SparseGridTopology: loading mesh "<<filename.getValue()<<" failed."<<std::endl;
+//         else
+//           std::cerr << "SparseGridTopology: loading mesh "<<filename.getValue()<<" failed."<<std::endl;
       }
-
+	  
+	  
+	  
     }
 
 
@@ -404,14 +459,16 @@ namespace sofa
 			int z = 2*k;
 			
 			fixed_array<int,8> fineIndices;
-			fineIndices[0] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x,y,z) ];
-			fineIndices[1] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x+1,y,z ) ];
-			fineIndices[2] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x,y+1,z ) ];
-			fineIndices[3] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x+1,y+1,z ) ];
-			fineIndices[4] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x,y,z+1 ) ];
-			fineIndices[5] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x+1,y,z+1 ) ];
-			fineIndices[6] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x,y+1,z+1 ) ];
-			fineIndices[7] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube( x+1,y+1,z+1 ) ];
+			for(int idx=0; idx<8; ++idx)
+			{
+				const int idxX = x + (idx & 1);
+				const int idxY = y + (idx & 2)/2;
+				const int idxZ = z + (idx & 4)/4;
+				if(idxX < _finerSparseGrid->getNx()-1 && idxY < _finerSparseGrid->getNy()-1 && idxZ < _finerSparseGrid->getNz()-1)
+					fineIndices[idx] = _finerSparseGrid->_indicesOfRegularCubeInSparseGrid[ _finerSparseGrid->_regularGrid.cube(idxX,idxY,idxZ) ];
+				else
+					fineIndices[idx] = -1;
+			}
 
 			bool inside = true;
 			bool outside = true;
@@ -445,7 +502,8 @@ namespace sofa
 		
 			_indicesOfRegularCubeInSparseGrid[coarseRegularIndice] = cubeCorners.size()-1;
 			
-			_hierarchicalCubeMap[cubeCorners.size()-1]=fineIndices;
+// 			_hierarchicalCubeMap[cubeCorners.size()-1]=fineIndices;
+			_hierarchicalCubeMap.push_back( fineIndices );
 		}
 		
 		
@@ -470,6 +528,9 @@ namespace sofa
 		
 		// for interpolation and restriction
 		_hierarchicalPointMap.resize(seqPoints.size());
+		_finerSparseGrid->_inverseHierarchicalPointMap.resize(_finerSparseGrid->seqPoints.size());
+		_finerSparseGrid->_inversePointMap.resize(_finerSparseGrid->seqPoints.size()); _finerSparseGrid->_inversePointMap.fill(-1);
+		_pointMap.resize(seqPoints.size()); _pointMap.fill(-1);
 		for( unsigned w=0;w<seqCubes.size();++w)
 		{
 			const fixed_array<int, 8>& child = _hierarchicalCubeMap[w];
@@ -504,11 +565,28 @@ namespace sofa
 					int fineVertexGlobalIndice = fineCorners[fineVertexLocalIndice];
 
 					if( WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice] )
+					{
 						_hierarchicalPointMap[coarseCornerGlobalIndice][fineVertexGlobalIndice] = WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice];
+// 						_hierarchicalPointMap[coarseCornerGlobalIndice].push_back( std::pair<int,float>(fineVertexGlobalIndice, WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice]) );
+					
+					
+						_finerSparseGrid->_inverseHierarchicalPointMap[fineVertexGlobalIndice][coarseCornerGlobalIndice] = WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice];
+						
+						if( WEIGHT27[coarseCornerLocalIndice][fineVertexLocalIndice] == 1.0 )
+						{
+							_finerSparseGrid->_inversePointMap[fineVertexGlobalIndice] = coarseCornerGlobalIndice;
+// 							cerr<<getPX(coarseCornerGlobalIndice)<<" "<<getPY(coarseCornerGlobalIndice)<<" "<<getPZ(coarseCornerGlobalIndice)<<" ----- ";
+// 							cerr<<_finerSparseGrid->getPX(fineVertexGlobalIndice)<<" "<<_finerSparseGrid->getPY(fineVertexGlobalIndice)<<" "<<_finerSparseGrid->getPZ(fineVertexGlobalIndice)<<endl;
+						}
+					}
 				}
 			}
 			
 		}
+		
+		
+		for( unsigned i=0;i<_finerSparseGrid->_inversePointMap.size();++i)
+			_pointMap[ _finerSparseGrid->_inversePointMap[i] ]=i;
 		
 // 		for(unsigned i=0;i<_finerSparseGrid->seqPoints.size();++i)
 // 		{
@@ -534,6 +612,25 @@ namespace sofa
 // 			}
 // 			cerr<<endl;
 // 		}
+// // 		
+// // 		// // 		afficher la _inverseHierarchicalPointMap
+		
+// 		cerr<<"_inverseHierarchicalPointMap :"<<endl;
+// 		for(unsigned i=0;i<_finerSparseGrid->_inverseHierarchicalPointMap.size();++i)
+// 		{
+// 			cerr<<"POINT "<<i<<" "<<seqPoints[i]<<" : "<<_finerSparseGrid->_inverseHierarchicalPointMap[i].size()<<" : ";
+// 			for(std::map<int,float>::iterator it = _finerSparseGrid->_inverseHierarchicalPointMap[i].begin();it != _finerSparseGrid->_inverseHierarchicalPointMap[i].end() ; ++it )
+// 			{
+// 				cerr<<(*it).first<<", "<<(*it).second<<" # ";
+// 			}
+// 			cerr<<endl;
+// 		}
+		
+// 		cerr<<"_inversePointMap :"<<endl;
+// 		for(unsigned i=0;i<_finerSparseGrid->_inversePointMap.size();++i)
+// 		{
+// 			cerr<<"POINT "<<i<<" -> "<<_finerSparseGrid->_inversePointMap[i]<<endl;
+// 		}
 		
 		
 // 		for(int o=0;o<_hierarchicalPointMap.size();++o)
@@ -547,6 +644,17 @@ namespace sofa
 		
 // 		cerr<<"seqCubes : "<<seqCubes<<endl;
 // 		cerr<<"seqPoints : "<<seqPoints<<endl;
+		
+		
+		
+		_finerSparseGrid->_coarserSparseGrid = this;
+		_finerSparseGrid->_inverseHierarchicalCubeMap.resize( _finerSparseGrid->seqCubes.size(), -1);
+		for( unsigned i=0;i<_hierarchicalCubeMap.size();++i)
+			for(int w=0;w<8;++w)
+			{
+				if(_hierarchicalCubeMap[i][w] != -1)
+					_finerSparseGrid->_inverseHierarchicalCubeMap[ _hierarchicalCubeMap[i][w] ] = i;
+			}	
 	}
 
 
@@ -578,6 +686,7 @@ namespace sofa
 			for(unsigned w=0;w<seqCubes.size();++w)
 			{
 				if(_types[w]!=BOUNDARY)continue;
+// 				if(_types[w]==OUTSIDE)continue;
 				
 				const Cube& c = getCube( w );
 				int c0 = c[0];

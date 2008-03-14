@@ -128,7 +128,7 @@ namespace sofa
 		topology::FittedRegularGridTopology* _trimgrid;
 		topology::SparseGridTopology* _sparseGrid;
         const VecElement *_indexedElements;
-        DataField< VecCoord > _initialPoints; ///< the intial positions of the points
+        Data< VecCoord > _initialPoints; ///< the intial positions of the points
 		
 
 			  Mat<8,3,int> _coef; ///< coef of each vertices to compute the strain stress matrix
@@ -136,22 +136,23 @@ namespace sofa
 		
 		  public:
 			  
-        DataField<int> f_method; ///< the computation method of the displacements
-        DataField<Real> f_poissonRatio;
-        DataField<Real> f_youngModulus;
-//         DataField<bool> f_updateStiffnessMatrix;
-        DataField<bool> f_assembling;
+	int method;
+        Data<std::string> f_method; ///< the computation method of the displacements
+        Data<Real> f_poissonRatio;
+        Data<Real> f_youngModulus;
+//         Data<bool> f_updateStiffnessMatrix;
+        Data<bool> f_assembling;
 
 
         HexahedronFEMForceField()
             : _mesh(NULL), _trimgrid(NULL)
             , _indexedElements(NULL)
-   	    , _initialPoints(dataField(&_initialPoints,"initialPoints", "Initial Position"))
-            , f_method(dataField(&f_method,0,"method","0: large displacements by QR, 1: large displacements by polar"))
-					, f_poissonRatio(dataField(&f_poissonRatio,(Real)0.45f,"poissonRatio",""))
-							, f_youngModulus(dataField(&f_youngModulus,(Real)5000,"youngModulus",""))
-//             , f_updateStiffnessMatrix(dataField(&f_updateStiffnessMatrix,false,"updateStiffnessMatrix",""))
-            , f_assembling(dataField(&f_assembling,false,"assembling",""))
+   	    , _initialPoints(initData(&_initialPoints,"initialPoints", "Initial Position"))
+            , f_method(initData(&f_method,std::string("large"),"method","\"large\" or \"polar\" displacements"))
+	    , f_poissonRatio(initData(&f_poissonRatio,(Real)0.45f,"poissonRatio",""))
+	    , f_youngModulus(initData(&f_youngModulus,(Real)5000,"youngModulus",""))
+//             , f_updateStiffnessMatrix(initData(&f_updateStiffnessMatrix,false,"updateStiffnessMatrix",""))
+            , f_assembling(initData(&f_assembling,false,"assembling",""))
         {
 			_coef[0][0]=-1;
 			_coef[1][0]=1;
@@ -187,7 +188,7 @@ namespace sofa
 
 		void setYoungModulus(Real val) { this->f_youngModulus.setValue(val); }
 
-		void setMethod(int val) { this->f_method.setValue(val); }
+		void setMethod(int val) { method = val; }
 
 // 		void setUpdateStiffnessMatrix(bool val) { this->f_updateStiffnessMatrix.setValue(val); }
 
@@ -214,7 +215,7 @@ namespace sofa
 
 		 
 		virtual void computeElementStiffness( ElementStiffness &K, const MaterialStiffness &M, const Vec<8,Coord> &nodes, const int elementIndice);
-		Mat33 integrateStiffness( const Real xmin, const Real xmax, const Real ymin, const Real ymax, const Real zmin, const Real zmax, int signx0, int signy0, int signz0, int signx1, int signy1, int signz1, const Real u, const Real v, const Real w, const Mat33& J_1  );
+		Mat33 integrateStiffness( int signx0, int signy0, int signz0, int signx1, int signy1, int signz1, const Real u, const Real v, const Real w, const Mat33& J_1  );
 
 		void computeMaterialStiffness(int i);
 
@@ -226,12 +227,12 @@ namespace sofa
         vector<Transformation> _rotations;
         void initLarge(int i, const Element&elem);
 		void computeRotationLarge( Transformation &r, Coord &edgex, Coord &edgey);
-		void accumulateForceLarge( Vector& f, const Vector & p, int i, const Element&elem  );
+		virtual void accumulateForceLarge( Vector& f, const Vector & p, int i, const Element&elem  );
 
         ////////////// polar decomposition method
 		void initPolar(int i, const Element&elem);
 		void computeRotationPolar( Transformation &r, Vec<8,Coord> &nodes);
-		void accumulateForcePolar( Vector& f, const Vector & p, int i, const Element&elem  );
+		virtual void accumulateForcePolar( Vector& f, const Vector & p, int i, const Element&elem  );
 		
 		bool _alreadyInit;
       };

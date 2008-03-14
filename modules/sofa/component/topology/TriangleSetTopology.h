@@ -25,10 +25,12 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGY_H
 #define SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGY_H
 
-#include <sofa/component/topology/EdgeSetTopology.h>
+#include <sofa/component/topology/EdgeSetTopology.h>  
 #include <vector>
 #include <map>
 #include <sofa/defaulttype/Vec.h> // typing "Vec"
+
+//#include <sofa/component/mapping/Tetra2TriangleTopologicalMapping.h>
 
 namespace sofa
 {
@@ -195,7 +197,7 @@ namespace sofa
 	  return out;
         }
 
-        /// Needed to be compliant with DataFields.
+        /// Needed to be compliant with Datas.
         inline friend std::istream& operator>>(std::istream& in, TriangleSetTopologyContainer& t)
         {
 	  unsigned int s;
@@ -239,7 +241,7 @@ namespace sofa
 		  v.push_back(value);
 		}
 	      t.m_triangleEdgeShell.push_back(v);
-	    }
+	    }  
 
             return in;
         }
@@ -332,6 +334,7 @@ namespace sofa
 	class TriangleSetTopologyModifier : public EdgeSetTopologyModifier <DataTypes> {
 
       public:
+
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
 
@@ -342,7 +345,17 @@ namespace sofa
 	 */
 	virtual bool load(const char *filename);
 
+	/*
+	template< typename DataTypes >
+	  friend class TriangleSetTopologyAlgorithms;
 
+    friend class sofa::core::componentmodel::topology::TopologicalMapping;
+
+	template< typename In, typename Out >
+	  friend class Tetra2TriangleTopologicalMapping;
+	  */
+
+	//protected:
 	/** \brief Sends a message to warn that some triangles were added in this topology.
 	 *
 	 * \sa addTrianglesProcess
@@ -382,9 +395,10 @@ namespace sofa
 	 * Important : some structures might need to be warned BEFORE the points are actually deleted, so always use method removeEdgesWarning before calling removeEdgesProcess.
 	 * \sa removeTrianglesWarning
 	 *
-	 * @param removeIsolatedItems if true isolated vertices are also removed
+	 * @param removeIsolatedEdges if true isolated edges are also removed
+	 * @param removeIsolatedPoints if true isolated vertices are also removed
 	 */
-	virtual void removeTrianglesProcess( const sofa::helper::vector<unsigned int> &indices,const bool removeIsolatedItems=false);
+	virtual void removeTrianglesProcess( const sofa::helper::vector<unsigned int> &indices, const bool removeIsolatedEdges=false, const bool removeIsolatedPoints=false);
 
 	/** \brief Add some edges to this topology.
 	 * 
@@ -403,7 +417,6 @@ namespace sofa
 	virtual void removeEdgesProcess( const sofa::helper::vector<unsigned int> &indices,const bool removeIsolatedItems=false);
 
 
-
 	/** \brief Add some points to this topology.
 	 *
 	 * Use a list of ancestors to create the new points.
@@ -418,6 +431,7 @@ namespace sofa
 				      const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs = (const sofa::helper::vector< sofa::helper::vector< double > >)0 );
 
 
+	virtual void addNewPoint( const sofa::helper::vector< double >& x){EdgeSetTopologyModifier< DataTypes >::addNewPoint(x);};
 
 	/** \brief Remove a subset of points 
 	 *
@@ -425,8 +439,9 @@ namespace sofa
 	 *
 	 * Important : some structures might need to be warned BEFORE the points are actually deleted, so always use method removePointsWarning before calling removePointsProcess.
 	 * \sa removePointsWarning
+	 * Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
 	 */
-	virtual void removePointsProcess(sofa::helper::vector<unsigned int> &indices);
+	virtual void removePointsProcess(sofa::helper::vector<unsigned int> &indices, const bool removeDOF = true);
 
 
 
@@ -437,7 +452,8 @@ namespace sofa
 	virtual void renumberPointsProcess( const sofa::helper::vector<unsigned int> &index );
 
 
-      protected:
+      //protected:
+	//public: // must actually be protected (has to be fixed)
 	void addTriangle(Triangle e);
 
       public:
@@ -452,20 +468,23 @@ namespace sofa
        * A class that performs topology algorithms on an TriangleSet.
        */
       template < class DataTypes >
-        class TriangleSetTopologyAlgorithms : public PointSetTopologyAlgorithms<DataTypes> {
+        class TriangleSetTopologyAlgorithms : public EdgeSetTopologyAlgorithms<DataTypes> {
 
       public:
 	
 	typedef typename DataTypes::Real Real;
 	
-      TriangleSetTopologyAlgorithms(sofa::core::componentmodel::topology::BaseTopology *top) : PointSetTopologyAlgorithms<DataTypes>(top){
+      TriangleSetTopologyAlgorithms(sofa::core::componentmodel::topology::BaseTopology *top) : EdgeSetTopologyAlgorithms<DataTypes>(top){
 	}
 			
 	/** \brief Remove a set  of triangles
 	    @param triangles an array of triangle indices to be removed (note that the array is not const since it needs to be sorted)
 	    *
+		@param removeIsolatedEdges if true isolated edges are also removed
+	    @param removeIsolatedPoints if true isolated vertices are also removed
+		*
 	    */
-	virtual void removeTriangles(sofa::helper::vector< unsigned int >& triangles);
+	virtual void removeTriangles(sofa::helper::vector< unsigned int >& triangles, const bool removeIsolatedEdges, const bool removeIsolatedPoints);
 
 	// Prepares the incision along the list of points (ind_edge,coord) intersected by the vector from point a to point b 
 	// and the triangular mesh
@@ -473,7 +492,9 @@ namespace sofa
 
 	// Incises along the list of points (ind_edge,coord) intersected by the vector from point a to point b 
 	// and the triangular mesh
-	bool InciseAlongPointsList(bool is_first_cut, const Vec<3,double>& a, const Vec<3,double>& b, const unsigned int ind_ta, const unsigned int ind_tb, unsigned int& b_last, sofa::helper::vector< unsigned int > &p12_last, sofa::helper::vector< unsigned int > &i123_last,
+	bool InciseAlongPointsList(bool is_first_cut, const Vec<3,double>& a, const Vec<3,double>& b, const unsigned int ind_ta, const unsigned int ind_tb, 
+		unsigned int& a_last, sofa::helper::vector< unsigned int > &a_p12_last, sofa::helper::vector< unsigned int > &a_i123_last,
+		unsigned int& b_last, sofa::helper::vector< unsigned int > &b_p12_last, sofa::helper::vector< unsigned int > &b_i123_last,
 		sofa::helper::vector< sofa::helper::vector<unsigned int> > &new_points, sofa::helper::vector< sofa::helper::vector<unsigned int> > &closest_vertices);
 
 	// Removes triangles along the list of points (ind_edge,coord) intersected by the vector from point a to point b 
@@ -482,7 +503,12 @@ namespace sofa
 
 	// Incises along the list of points (ind_edge,coord) intersected by the sequence of input segments (list of input points) and the triangular mesh
 	void InciseAlongLinesList(const sofa::helper::vector< Vec<3,double> >& input_points, const sofa::helper::vector< unsigned int > &input_triangles);
-			
+            
+            /** \brief Duplicate the given edge. Only works of at least one of its points is adjacent to a border.
+             * @returns the number of newly created points, or -1 if the incision failed.
+             */
+            virtual int InciseAlongEdge(unsigned int edge);
+            
       };
         
       /**
@@ -556,7 +582,7 @@ namespace sofa
 
       public:
 	TriangleSetTopology(component::MechanicalObject<DataTypes> *obj);
-	Field< TriangleSetTopologyContainer > *f_m_topologyContainer;
+	DataPtr< TriangleSetTopologyContainer > *f_m_topologyContainer;
 
 	virtual void init();
 	/** \brief Returns the TriangleSetTopologyContainer object of this TriangleSetTopology.

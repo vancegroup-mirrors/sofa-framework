@@ -26,9 +26,10 @@
 #define SOFA_COMPONENT_MECHANICALOBJECT_H
 
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/objectmodel/XField.h>
-#include <sofa/core/objectmodel/VField.h>
+#include <sofa/core/objectmodel/XDataPtr.h>
+#include <sofa/core/objectmodel/VDataPtr.h>
 #include <sofa/defaulttype/BaseVector.h>
+#include <sofa/defaulttype/Quat.h>
 #include <vector>
 #include <assert.h>
 #include <fstream>
@@ -61,8 +62,8 @@ public:
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
     typedef typename DataTypes::Real Real;
-	typedef typename DataTypes::SparseDeriv SparseDeriv;
-	typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
+    typedef typename DataTypes::SparseDeriv SparseDeriv;
+    typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
     typedef typename DataTypes::VecConst VecConst;
 
 protected:
@@ -119,29 +120,33 @@ public:
 
     virtual void parse ( BaseObjectDescription* arg );
 
-	XField<DataTypes>* const f_X;
-	VField<DataTypes>* const f_V;
+	XDataPtr<DataTypes>* const f_X;
+	VDataPtr<DataTypes>* const f_V;
 
-	XField<DataTypes>* const f_X0;
+	XDataPtr<DataTypes>* const f_X0;
 
-	VecCoord* getX()  { f_X->beginEdit(); return x;  }
-	VecDeriv* getV()  { f_V->beginEdit(); return v;  }
-	VecDeriv* getF()  { return f;  }
-	VecDeriv* getDx() { return dx; }
-	VecConst* getC() { return c;}
-	VecCoord* getXfree() { return xfree; }
-	VecDeriv* getVfree() { return vfree;  }
+    Data<Real> restScale;
+
+	virtual VecCoord* getX()  { f_X->beginEdit(); return x;  }
+	virtual VecDeriv* getV()  { f_V->beginEdit(); return v;  }
+	virtual VecDeriv* getF()  { return f;  }
+	virtual VecDeriv* getExternalForces()  { return externalForces;  }
+	virtual VecDeriv* getDx() { return dx; }
+	virtual VecConst* getC() { return c;}
+	virtual VecCoord* getXfree() { return xfree; }
+	virtual VecDeriv* getVfree() { return vfree;  }
  	VecCoord* getX0() { return x0;} 
 
-	const VecCoord* getX()  const { return x;  }
-	const VecCoord* getX0()  const { return x0;  }
-	const VecDeriv* getV()  const { return v;  }
-	const VecDeriv* getV0()  const { return v0;  }
-	const VecDeriv* getF()  const { return f;  }
-	const VecDeriv* getDx() const { return dx; }
-	const VecConst* getC() const { return c; }
-	const VecCoord* getXfree() const { return xfree; }
-	const VecDeriv* getVfree()  const { return vfree;  }
+	virtual const VecCoord* getX()  const { return x;  }
+	virtual const VecCoord* getX0()  const { return x0;  }
+	virtual const VecDeriv* getV()  const { return v;  }
+	virtual const VecDeriv* getV0()  const { return v0;  }
+	virtual const VecDeriv* getF()  const { return f;  }
+	virtual const VecDeriv* getExternalForces()  const { return externalForces;  }
+	virtual const VecDeriv* getDx() const { return dx; }
+	virtual const VecConst* getC() const { return c; }
+	virtual const VecCoord* getXfree() const { return xfree; }
+	virtual const VecDeriv* getVfree()  const { return vfree;  }
 
 	virtual void init();
 
@@ -190,8 +195,14 @@ public:
      */
     void computeWeightedValue( const unsigned int i, const sofa::helper::vector< unsigned int >& ancestors, const sofa::helper::vector< double >& coefs);
 
+	/** \brief Compute the values attached to a new point.
+     *
+     */
+	void computeNewPoint( const unsigned int i, const sofa::helper::vector< double >& m_x);
 
 	virtual void applyTranslation (const double dx,const double dy,const double dz);
+	
+	virtual void applyRotation (const defaulttype::Quat q);
 	
 	virtual void applyScale (const double s);
 	
@@ -215,12 +226,6 @@ public:
 	virtual void setOffset(unsigned int &);
 
 	/// @}
-
-	// new : get compliance on the constraints 
-	virtual void getCompliance(double **w);
-	// apply contact force AND compute the subsequent dX 
-	virtual void applyContactForce(double *f);
-	virtual void resetContactForce(void);
 
 	virtual void addDxToCollisionModel(void);
 
@@ -254,6 +259,8 @@ public:
 	virtual void setX(VecId v);
 
 	virtual void setXfree(VecId v);
+
+	virtual void setVfree(VecId v);
 
 	virtual void setV(VecId v);
 

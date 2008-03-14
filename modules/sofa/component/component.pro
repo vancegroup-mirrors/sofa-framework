@@ -23,21 +23,28 @@ HEADERS += MappedObject.h \
            collision/BarycentricLagrangianMultiplierContact.inl \
            collision/BarycentricPenalityContact.h \
            collision/BarycentricPenalityContact.inl \
+           collision/BarycentricStickContact.h \
+           collision/BarycentricStickContact.inl \
            collision/BruteForceDetection.h \
+           collision/ContactCorrection.h \
+           collision/ContactCorrection.inl \
            collision/ContinuousIntersection.h \
            collision/ContinuousTriangleIntersection.h \
            collision/Cube.h \
            collision/CubeModel.h \
+           collision/CuttingManager.h \
+           collision/CarvingManager.h \
            collision/DefaultCollisionGroupManager.h \
            collision/DefaultContactManager.h \
            collision/DefaultPipeline.h \
            collision/DiscreteIntersection.h \
            collision/DiscreteIntersection.inl \
-           collision/DistanceOctreeCollisionModel.h \
            collision/DistanceGridCollisionModel.h \
            collision/EdgeRemoveContact.h \
+           collision/FractureManager.h \
            collision/FrictionContact.h \
            collision/FrictionContact.inl \
+           collision/GraspingManager.h \
            collision/Line.h \
            collision/LineModel.h \
            collision/MinProximityIntersection.h \
@@ -53,6 +60,7 @@ HEADERS += MappedObject.h \
            collision/RayModel.h \
            collision/RayPickInteractor.h \
            collision/RayTriangleIntersection.h \
+           collision/SharpLineModel.h \
            collision/Sphere.h \
            collision/SphereModel.h \
            collision/SphereModel.inl \
@@ -62,6 +70,7 @@ HEADERS += MappedObject.h \
            collision/TriangleModel.h \
            collision/TriangleOctree.h \
            collision/TriangleOctreeModel.h \
+	   collision/TriangularFEMFractureManager.h \
            constraint/BoxConstraint.h \
            constraint/BoxConstraint.inl \
            constraint/FixedConstraint.h \
@@ -79,6 +88,8 @@ HEADERS += MappedObject.h \
            constraint/OscillatorConstraint.inl \
            constraint/UnilateralInteractionConstraint.h \
            constraint/UnilateralInteractionConstraint.inl \
+           constraint/LinearMovementConstraint.h \
+           constraint/LinearMovementConstraint.inl \
            container/ArticulatedHierarchyContainer.h \
            container/ArticulatedHierarchyContainer.inl \
            contextobject/CoordinateSystem.h \
@@ -98,6 +109,10 @@ HEADERS += MappedObject.h \
            forcefield/PlaneForceField.inl \
            forcefield/SphereForceField.h \
            forcefield/SphereForceField.inl \
+           forcefield/ConicalForceField.h \
+           forcefield/ConicalForceField.inl \
+           forcefield/EllipsoidForceField.h \
+           forcefield/EllipsoidForceField.inl \
            forcefield/PenalityContactForceField.h \
            forcefield/PenalityContactForceField.inl \
            forcefield/QuadBendingSprings.h \
@@ -123,9 +138,16 @@ HEADERS += MappedObject.h \
            forcefield/TetrahedralTensorMassForceField.inl \
            forcefield/TetrahedralBiquadraticSpringsForceField.h \
            forcefield/TetrahedralBiquadraticSpringsForceField.inl \
+           forcefield/TetrahedralQuadraticSpringsForceField.h \
+           forcefield/TetrahedralQuadraticSpringsForceField.inl \
+           forcefield/TetrahedralCorotationalFEMForceField.h \
+           forcefield/TetrahedralCorotationalFEMForceField.inl \
            forcefield/TriangleBendingSprings.h \
            forcefield/TriangleBendingSprings.inl \
+	     forcefield/TriangularBendingSprings.h \
+           forcefield/TriangularBendingSprings.inl \
            forcefield/TriangleFEMForceField.h \
+	     forcefield/TriangularFEMForceField.h \
            forcefield/TrianglePressureForceField.h \
            forcefield/TrianglePressureForceField.inl \
            forcefield/TriangularBiquadraticSpringsForceField.h \
@@ -142,6 +164,8 @@ HEADERS += MappedObject.h \
            interactionforcefield/ExternalForceField.inl \
            interactionforcefield/RepulsiveSpringForceField.h \
            interactionforcefield/RepulsiveSpringForceField.inl \
+           interactionforcefield/InteractionEllipsoidForceField.h \
+           interactionforcefield/InteractionEllipsoidForceField.inl \
            mapping/ArticulatedSystemMapping.h \
            mapping/ArticulatedSystemMapping.inl \
            mapping/BarycentricMapping.h \
@@ -226,9 +250,13 @@ HEADERS += MappedObject.h \
            topology/QuadSetTopology.inl \
 	     topology/HexahedronSetTopology.h \
            topology/HexahedronSetTopology.inl \
+	     topology/Tetra2TriangleTopologicalMapping.h \
+	     topology/Tetra2TriangleTopologicalMapping.inl \
            visualmodel/DrawV.h \
            visualmodel/OglModel.h \
-           visualmodel/VisualModelImpl.h 
+           visualmodel/VisualModelImpl.h \
+	   visualmodel/Light.h \
+	   visualmodel/OglShader.h
            
 SOURCES += MappedObject.cpp \
            MechanicalObject.cpp \
@@ -240,20 +268,25 @@ SOURCES += MappedObject.cpp \
            behaviormodel/eulerianfluid/Fluid3D.cpp \
            behaviormodel/eulerianfluid/Grid2D.cpp \
            behaviormodel/eulerianfluid/Grid3D.cpp \
+           collision/BarycentricStickContact.cpp \
            collision/BarycentricLagrangianMultiplierContact.cpp \
            collision/BarycentricPenalityContact.cpp \
            collision/BruteForceDetection.cpp \
+           collision/ContactCorrection.cpp \
            collision/ContinuousIntersection.cpp \
            collision/ContinuousTriangleIntersection.cpp \
            collision/CubeModel.cpp \
+           collision/CuttingManager.cpp \
+           collision/CarvingManager.cpp \
            collision/DefaultCollisionGroupManager.cpp \
            collision/DefaultContactManager.cpp \
            collision/DefaultPipeline.cpp \
            collision/DiscreteIntersection.cpp \
-           collision/DistanceOctreeCollisionModel.cpp \
            collision/DistanceGridCollisionModel.cpp \
            collision/LineModel.cpp \
            collision/EdgeRemoveContact.cpp \
+           collision/GraspingManager.cpp \
+           collision/FractureManager.cpp \
            collision/FrictionContact.cpp \
            collision/MinProximityIntersection.cpp \
            collision/NewProximityIntersection.cpp \
@@ -265,12 +298,14 @@ SOURCES += MappedObject.cpp \
            collision/RayModel.cpp \
            collision/RayPickInteractor.cpp \
            collision/RayTriangleIntersection.cpp \
+           collision/SharpLineModel.cpp \
            collision/SphereModel.cpp \
            collision/SphereTreeModel.cpp \
            collision/TestDetection.cpp \
            collision/TriangleModel.cpp \
            collision/TriangleOctree.cpp \
            collision/TriangleOctreeModel.cpp \
+	   collision/TriangularFEMFractureManager.cpp \
            constraint/BoxConstraint.cpp \
            constraint/FixedConstraint.cpp \
            constraint/FixedPlaneConstraint.cpp \
@@ -279,6 +314,7 @@ SOURCES += MappedObject.cpp \
            constraint/LagrangianMultiplierFixedConstraint.cpp \
            constraint/OscillatorConstraint.cpp \
            constraint/UnilateralInteractionConstraint.cpp \
+           constraint/LinearMovementConstraint.cpp \
            container/ArticulatedHierarchyContainer.cpp \
            contextobject/CoordinateSystem.cpp \
            contextobject/Gravity.cpp \
@@ -289,6 +325,8 @@ SOURCES += MappedObject.cpp \
            forcefield/LennardJonesForceField.cpp \
            forcefield/PlaneForceField.cpp \
            forcefield/SphereForceField.cpp \
+	   forcefield/ConicalForceField.cpp \
+           forcefield/EllipsoidForceField.cpp \
            forcefield/SPHFluidForceField.cpp \
            forcefield/SpringForceField.cpp \
            forcefield/StiffSpringForceField.cpp \
@@ -302,8 +340,12 @@ SOURCES += MappedObject.cpp \
 	   forcefield/HexahedronFEMForceFieldAndMass.cpp \
            forcefield/TetrahedralTensorMassForceField.cpp \
            forcefield/TetrahedralBiquadraticSpringsForceField.cpp \
+           forcefield/TetrahedralCorotationalFEMForceField.cpp \
+           forcefield/TetrahedralQuadraticSpringsForceField.cpp \
            forcefield/TriangleBendingSprings.cpp \
+	     forcefield/TriangularBendingSprings.cpp \
            forcefield/TriangleFEMForceField.cpp \
+           forcefield/TriangularFEMForceField.cpp \
            forcefield/TrianglePressureForceField.cpp \
            forcefield/TriangularBiquadraticSpringsForceField.cpp \
            forcefield/TriangularQuadraticSpringsForceField.cpp \
@@ -312,6 +354,7 @@ SOURCES += MappedObject.cpp \
            forcefield/WashingMachineForceField.cpp \
            interactionforcefield/ExternalForceField.cpp \
            interactionforcefield/RepulsiveSpringForceField.cpp \
+           interactionforcefield/InteractionEllipsoidForceField.cpp \
            mapping/ArticulatedSystemMapping.cpp \
            mapping/BarycentricMapping.cpp \
            mapping/BeamLinearMapping.cpp \
@@ -357,9 +400,12 @@ SOURCES += MappedObject.cpp \
 	     topology/TetrahedronSetTopology.cpp \
            topology/QuadSetTopology.cpp \
  	     topology/HexahedronSetTopology.cpp \
+	     topology/Tetra2TriangleTopologicalMapping.cpp \
            visualmodel/DrawV.cpp \
            visualmodel/OglModel.cpp \
-           visualmodel/VisualModelImpl.cpp 
+           visualmodel/VisualModelImpl.cpp \
+	   visualmodel/Light.cpp \
+	   visualmodel/OglShader.cpp
 
 
 LIBS += $$SOFA_FRAMEWORK_LIBS

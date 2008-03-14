@@ -30,6 +30,7 @@
 #include <sofa/core/CollisionModel.h>
 #include <sofa/core/objectmodel/ContextObject.h>
 #include <sofa/core/VisualModel.h>
+#include <sofa/core/Shader.h>
 #include <sofa/core/objectmodel/Context.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/core/Mapping.h>
@@ -77,7 +78,8 @@ public:
     virtual ~GNode();
 
     //virtual const char* getTypeName() const { return "GNODE"; }
-
+    void reinit();
+    
     /// Add a child node
     virtual void addChild(GNode* node);
 
@@ -107,15 +109,33 @@ public:
 
     /// Must be called after each graph modification. Do not call it directly, apply an InitVisitor instead.
     virtual void initialize();
-
+    
+    /// Called after initialization of the GNode to set the default value of the visual context.
+    virtual void setDefaultVisualContextValue();
+	
     /// Get parent node (or NULL if no hierarchy or for root node)
     virtual core::objectmodel::BaseNode* getParent();
 
     /// Get parent node (or NULL if no hierarchy or for root node)
     virtual const core::objectmodel::BaseNode* getParent() const;
 
-    /// @name Variables
+    /// @name Containers
     /// @{
+
+    /// Generic object access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, SearchDirection dir = SearchUp) const;
+
+    /// Generic object access, given a path from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, const std::string& path) const;
+
+    /// Generic list of objects access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const;
 
     /// Mechanical Degrees-of-Freedom
     virtual core::objectmodel::BaseObject* getMechanicalState() const;
@@ -126,11 +146,19 @@ public:
     /// Dynamic Topology
     virtual core::objectmodel::BaseObject* getMainTopology() const;
 
+    /// Shader
+    virtual core::objectmodel::BaseObject* getShader() const;
+
     /// @}
 
-    /// Update the context values, based on parent and local ContextObjects
+    /// Update the whole context values, based on parent and local ContextObjects
     void updateContext();
 
+    /// Update the simulation context values(gravity, time...), based on parent and local ContextObjects
+    void updateSimulationContext();
+    
+    /// Update the visual context values, based on parent and local ContextObjects
+    void updateVisualContext(int FILTER=0);
 
     /// @name Visitors and graph traversal
     /// @{
@@ -164,25 +192,14 @@ public:
     template<class Object, class Container>
     void getNodeObjects(Container* list)
     {
-        //list->insert(list->end(),this->object.begin(),this->object.end());
-        for (ObjectIterator it = this->object.begin(); it != this->object.end(); ++it)
-        {
-            Object* o = dynamic_cast<Object*>(*it);
-            if (o!=NULL)
-                list->push_back(o);
-        }
+        this->get<Object, Container>(list, Local);
     }
 
     /// List all objects of this node and sub-nodes deriving from a given class
     template<class Object, class Container>
     void getTreeObjects(Container* list)
     {
-        this->getNodeObjects<Object, Container>(list);
-        for (ChildIterator it = this->child.begin(); it != this->child.end(); ++it)
-        {
-            GNode* n = *it;
-            n->getTreeObjects<Object, Container>(list);
-        }
+        this->get<Object, Container>(list, SearchDown);
     }
 
     /// Return an object of this node deriving from a given class, or NULL if not found.
@@ -190,24 +207,13 @@ public:
     template<class Object>
     void getNodeObject(Object*& result)
     {
-        for (ObjectIterator it = this->object.begin(); it != this->object.end(); ++it)
-        {
-            Object* o = dynamic_cast<Object*>(*it);
-            if (o != NULL)
-            {
-                result = o;
-                return;
-            }
-        }
-        result = NULL;
+        result = this->get<Object>(Local);
     }
 
     template<class Object>
     Object* getNodeObject()
     {
-        Object* result;
-        this->getNodeObject(result);
-        return result;
+        return this->get<Object>(Local);
     }
 
     /// Return an object of this node and sub-nodes deriving from a given class, or NULL if not found.
@@ -215,29 +221,23 @@ public:
     template<class Object>
     void getTreeObject(Object*& result)
     {
-        this->getNodeObject(result);
-        if (result != NULL) return;
-        for (ChildIterator it = this->child.begin(); it != this->child.end(); ++it)
-        {
-            GNode* n = *it;
-            n->getTreeObject(result);
-            if (result != NULL) return;
-        }
+        result = this->get<Object>(SearchDown);
     }
 
     template<class Object>
     Object* getTreeObject()
     {
-            Object* result;
-            this->getTreeObject(result);
-            return result;
+        return this->get<Object>(SearchDown);
     }
 
+    /// Find an object given its name
+    core::objectmodel::BaseObject* getObject(const std::string& name) const;
+
     /// Find a child node given its name
-    GNode* getChild(const std::string& name);
+    GNode* getChild(const std::string& name) const;
 
     /// Get a descendant node given its name
-    GNode* getTreeNode(const std::string& name);
+    GNode* getTreeNode(const std::string& name) const;
 
     /// Propagate an event 
     virtual void propagateEvent( core::objectmodel::Event* event );
@@ -399,6 +399,7 @@ public:
     Single<core::componentmodel::behavior::BaseMechanicalMapping> mechanicalMapping;
     Single<core::componentmodel::behavior::BaseMass> mass;
     Single<core::componentmodel::topology::Topology> topology;
+    Single<sofa::core::Shader> shader;
 
 	//warning : basic topology are not yet used in the release version
     Sequence<core::componentmodel::topology::BaseTopology> basicTopology;
@@ -518,6 +519,9 @@ protected:
     /// This method bypass the actionScheduler of this node if any.
     void doExecuteVisitor(Visitor* action);
 
+    /// Called during initialization to corectly propagate the visual context to the children
+    void initVisualContext();
+    
     // VisitorScheduler can use doExecuteVisitor() method
     friend class VisitorScheduler;
 

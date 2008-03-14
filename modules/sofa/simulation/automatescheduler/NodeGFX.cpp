@@ -27,17 +27,7 @@
 #include <sofa/simulation/automatescheduler/NodeGFX.h>
 #include <sofa/simulation/automatescheduler/utils.h>
 #include <sofa/helper/gl/glfont.h>
-
-// added by Sylvere F.
-#ifdef _WIN32
-#include <windows.h>
-#endif /* _WIN32 */
-
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 
 namespace sofa
 {
@@ -50,7 +40,7 @@ namespace automatescheduler
 
 using namespace helper::gl;
 
-NodeGFX::NodeGFX(char *str, double x, double y )
+NodeGFX::NodeGFX(const char *str, double x, double y )
 {
 	STRING_CPY(str, this->str);
 	this->x = x;

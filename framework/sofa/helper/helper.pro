@@ -57,6 +57,9 @@ HEADERS += \
           rmath.h \
           static_assert.h \
           system/config.h \
+          system/gl.h \
+          system/glu.h \
+          system/glut.h \
           system/SetDirectory.h \
           system/FileRepository.h \
           system/thread/CTime.h \

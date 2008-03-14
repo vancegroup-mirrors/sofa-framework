@@ -164,6 +164,11 @@ void OdeSolverImpl::computeAcc(double t, VecId a, VecId x, VecId v)
     projectResponse(a);
 }
 
+void OdeSolverImpl::addSeparateGravity(double dt)
+{
+	MechanicalAddSeparateGravityVisitor(dt).execute( getContext() );
+}
+
 void OdeSolverImpl::computeContactForce(VecId result)
 {
     MechanicalResetForceVisitor(result).execute( getContext() );

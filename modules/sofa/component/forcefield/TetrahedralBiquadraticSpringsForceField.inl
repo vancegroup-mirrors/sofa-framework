@@ -26,11 +26,6 @@
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
 #include <sofa/helper/gl/template.h>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <sofa/component/topology/TetrahedronData.inl>
 #include <sofa/component/topology/TriangleData.inl>
 #include <sofa/component/topology/EdgeData.inl>
@@ -227,11 +222,10 @@ void TetrahedralBiquadraticSpringsForceField<DataTypes>::TBSTetrahedronDestroyFu
 
 template <class DataTypes> TetrahedralBiquadraticSpringsForceField<DataTypes>::TetrahedralBiquadraticSpringsForceField() 
 : _mesh(NULL)
-, _initialPoints(0)
 , updateMatrix(true)
-, f_poissonRatio(dataField(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
-, f_youngModulus(dataField(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
-, f_useAngularSprings(dataField(&f_useAngularSprings,true,"useAngularSprings","If Angular Springs should be used or not"))
+, f_poissonRatio(initData(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
+, f_youngModulus(initData(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
+, f_useAngularSprings(initData(&f_useAngularSprings,true,"useAngularSprings","If Angular Springs should be used or not"))
 , lambda(0)
 , mu(0)
 	{
@@ -279,12 +273,7 @@ template <class DataTypes> void TetrahedralBiquadraticSpringsForceField<DataType
 	/// prepare to store info in the edge array
 	edgeInfo.resize(container->getNumberOfEdges());
 
-    // get restPosition
-	if (_initialPoints.size() == 0)
-	{
-		const VecCoord& p = *this->mstate->getX0();
-		_initialPoints=p;
-	}
+
 	unsigned int i;
 	const std::vector<Edge> &edgeArray=container->getEdgeArray();
 	for (i=0;i<container->getNumberOfEdges();++i) {
@@ -481,6 +470,7 @@ void TetrahedralBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df,
 				m[u][u]+=val1;
 			}
 		}
+
 		if (f_useAngularSprings.getValue()==true) {
 
 			/// add triangle stifness matrix
@@ -530,6 +520,7 @@ void TetrahedralBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df,
 					}
 				}
 			}
+
 			/// add tetrahedron stifness matrix
 			unsigned int nbTetrahedra=container->getNumberOfTetrahedra();
 			const std::vector< TetrahedronEdges > &tetrahedronEdgeArray=container->getTetrahedronEdgeArray() ;
@@ -597,7 +588,6 @@ void TetrahedralBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df,
 			}
 
 		}
-
 	} 
 
 	unsigned int v0,v1;
@@ -619,8 +609,8 @@ void TetrahedralBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df,
 template<class DataTypes>
 void TetrahedralBiquadraticSpringsForceField<DataTypes>::updateLameCoefficients()
 {
-	lambda= f_youngModulus.getValue()*f_poissonRatio.getValue()/(1-f_poissonRatio.getValue()*f_poissonRatio.getValue());
-	mu = f_youngModulus.getValue()*(1-f_poissonRatio.getValue())/(1-f_poissonRatio.getValue()*f_poissonRatio.getValue());
+	lambda= f_youngModulus.getValue()*f_poissonRatio.getValue()/((1-2*f_poissonRatio.getValue())*(1+f_poissonRatio.getValue()));
+	mu = f_youngModulus.getValue()/(2*(1+f_poissonRatio.getValue()));
 //	std::cerr << "initialized Lame coef : lambda=" <<lambda<< " mu="<<mu<<std::endl;
 }
 

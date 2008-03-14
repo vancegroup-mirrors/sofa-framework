@@ -17,7 +17,7 @@
 		<!-- RigidMapping: ".." means the parent object=Dragon, "Visual" the output=the visual model -->
 		<Object type="RigidMapping" object1=".." object2="../Visual" />
 		<Node name="Surf1">
-			<Object type="SphereTree" filename="CollisionModels/dragon_clean-medial.sph" static="0"/>
+			<Object type="SphereTree" filename="CollisionModels/dragon_clean-medial.sph" simulated="1" moving="1"/>
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
@@ -26,8 +26,8 @@
 	<Node name="Floor">
 		<Object type="Mesh" filename="CollisionModels/floor.obj" />
 		<Object type="MechanicalObject" scale="0.6" dz="-2.5" dy="-1" />
-		<Object type="Triangle" name="Floor" static="1" />
-		<Object type="Line" static="1" />
+		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
+		<Object type="Line" simulated="0" moving="0" />
 		<Object type="OglModel" name="FloorV" filename="CollisionModels/floor.obj" texturename="VisualModels/floor.bmp" scale="0.6" dz="-2.5" dy="-1" />
 	</Node>
 

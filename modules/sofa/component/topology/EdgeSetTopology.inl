@@ -200,12 +200,10 @@ namespace sofa
 	    topology->propagateTopologicalChanges();
 	    this->removePointsProcess(vertexToBeRemoved);
 	  }
-	  std::cout << "EdgeSetTopology: container has now "<<container->m_edge.size()<<" edges."<<std::endl;
-	}
+	  //std::cout << "EdgeSetTopology: container has now "<<container->m_edge.size()<<" edges."<<std::endl; 
+	} 
       }
 		
-
-
 
       template<class DataTypes >
       void EdgeSetTopologyModifier< DataTypes >::addPointsProcess(const unsigned int nPoints, 
@@ -226,8 +224,10 @@ namespace sofa
 
 
       template< class DataTypes >
-      void EdgeSetTopologyModifier< DataTypes >::removePointsProcess( sofa::helper::vector<unsigned int> &indices) 
+      void EdgeSetTopologyModifier< DataTypes >::removePointsProcess( sofa::helper::vector<unsigned int> &indices, const bool removeDOF) 
       {
+	// Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
+
 	// now update the local container structures
 	EdgeSetTopology<DataTypes> *topology = dynamic_cast<EdgeSetTopology<DataTypes> *>(this->m_basicTopology);
 	assert (topology != 0);
@@ -235,11 +235,11 @@ namespace sofa
 	assert (container != 0);
 
 	// forces the construction of the edge shell array if it does not exists
-	if (container->m_edge.size()>0) 
+	//if (container->m_edge.size()>0) 
 	  container->getEdgeVertexShellArray();
 	
 	// start by calling the standard method.
-	PointSetTopologyModifier< DataTypes >::removePointsProcess( indices );
+	PointSetTopologyModifier< DataTypes >::removePointsProcess( indices, removeDOF );
 
 
 
@@ -431,6 +431,9 @@ namespace sofa
 
 	// Removing the old edges
 	modifier->removeEdgesProcess( indices );
+
+	//assert(topology->getEdgeSetTopologyContainer()->checkTopology());
+	topology->getEdgeSetTopologyContainer()->checkTopology();
       }
         
       template<class DataTypes>
@@ -446,6 +449,10 @@ namespace sofa
 	topology->propagateTopologicalChanges();
 	// now destroy the old edges.
 	modifier->removeEdgesProcess( edges );
+
+	//assert(topology->getEdgeSetTopologyContainer()->checkTopology());
+	topology->getEdgeSetTopologyContainer()->checkTopology();
+
       }
       template<class DataTypes>
       void EdgeSetTopologyAlgorithms< DataTypes >::addEdges(const sofa::helper::vector< Edge >& edges,
@@ -547,7 +554,7 @@ namespace sofa
       }
       template<class DataTypes>
       EdgeSetTopology<DataTypes>::EdgeSetTopology(MechanicalObject<DataTypes> *obj) : PointSetTopology<DataTypes>( obj,(PointSetTopology<DataTypes> *)0),
-										    f_m_topologyContainer(new Field< EdgeSetTopologyContainer >(new EdgeSetTopologyContainer(), "Edge Container"))
+										    f_m_topologyContainer(new DataPtr< EdgeSetTopologyContainer >(new EdgeSetTopologyContainer(), "Edge Container"))
 
       {
 	this->m_topologyContainer=f_m_topologyContainer->beginEdit();

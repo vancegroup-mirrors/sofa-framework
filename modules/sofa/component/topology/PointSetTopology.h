@@ -137,7 +137,7 @@ namespace sofa
 	  return out;
         }
 
-        /// Needed to be compliant with DataFields.
+        /// Needed to be compliant with Datas.
         inline friend std::istream& operator>>(std::istream& in, PointSetTopologyContainer& t)
         {
 	  unsigned int s;
@@ -229,16 +229,18 @@ namespace sofa
       PointSetTopologyModifier(core::componentmodel::topology::BaseTopology *top) : TopologyModifier(top){ 
 	}
 
+	  /** \brief Build a point set topology from a file : also modifies the MechanicalObject 
+	 *
+	 */
+	virtual bool load(const char *filename);
+
 	/** \brief Swap points i1 and i2.
 	 *
 	 */
 	virtual void swapPoints(const int i1,const int i2);
 
 
-	/** \brief Build a point set topology from a file : also modifies the MechanicalObject 
-	 *
-	 */
-	virtual bool load(const char *filename);
+	
 	/** \brief Translates the DOF : call the applyTranslation member function in the MechanicalObject
 	 *
 	 */
@@ -248,6 +250,17 @@ namespace sofa
 	 */
 	virtual void applyScale (const double s);
 
+	/*
+	template< typename DataTypes >
+	  friend class PointSetTopologyAlgorithms;
+
+	friend class sofa::core::componentmodel::topology::TopologicalMapping;
+
+    template< typename In, typename Out >
+    friend class Tetra2TriangleTopologicalMapping;
+	*/
+
+	//protected:
 	/** \brief Sends a message to warn that some points were added in this topology.
 	 *
 	 * \sa addPointsProcess
@@ -272,6 +285,10 @@ namespace sofa
 				      const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs = (const sofa::helper::vector< sofa::helper::vector< double > >)0 );
 
 
+	/** \brief Add a new point (who has no ancestors) to this topology.
+	 *
+	 */
+	virtual void addNewPoint( const sofa::helper::vector< double >& x);
 
 	/** \brief Sends a message to warn that some points are about to be deleted.
 	 *
@@ -283,14 +300,15 @@ namespace sofa
 
 	/** \brief Remove a subset of points
 	 *
-	 * Elements corresponding to these points are removed form the mechanical object's state vectors.
+	 * Elements corresponding to these points are removed from the mechanical object's state vectors.
 	 *
 	 * Important : some structures might need to be warned BEFORE the points are actually deleted, so always use method removePointsWarning before calling removePointsProcess.
 	 * \sa removePointsWarning
 	 *
 	 * Important : parameter indices is not const because it is actually sorted from the highest index to the lowest one.
+	 * Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
 	 */
-	virtual void removePointsProcess( sofa::helper::vector<unsigned int> &indices);
+	virtual void removePointsProcess( sofa::helper::vector<unsigned int> &indices, const bool removeDOF = true);
 
 
 
@@ -357,7 +375,7 @@ namespace sofa
 	/** the object where the mechanical DOFs are stored */ 
 	component::MechanicalObject<DataTypes> *object;
 
-	Field< PointSetTopologyContainer > *f_m_topologyContainer;
+	DataPtr< PointSetTopologyContainer > *f_m_topologyContainer;
       public:
 	PointSetTopology(component::MechanicalObject<DataTypes> *obj);
 

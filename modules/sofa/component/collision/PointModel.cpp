@@ -26,11 +26,7 @@
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/core/ObjectFactory.h>
 #include <vector>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 
 namespace sofa
 {
@@ -71,6 +67,81 @@ void PointModel::init()
 
 	const int npoints = mstate->getX()->size();
 	resize(npoints);
+
+	// If the CollisionDetection Method uses the filtration method based on cones
+	if (this->isFiltered())
+	{
+		topology::MeshTopology *mesh = dynamic_cast< topology::MeshTopology* > (getContext()->getTopology());
+
+		if (mesh != NULL)
+		{	
+			// Line neighborhood construction
+			const int nLines = mesh->getNbLines();
+			if (nLines != 0)
+			{
+				lineNeighbors.resize(npoints);
+
+				for (int i=0;i<npoints;i++)
+				{
+					lineNeighbors[i].clear();
+					Point p(this,i);
+
+					const Vector3& pt = p.p();
+
+					for (int j=0; j<nLines; j++)
+					{
+						topology::MeshTopology::Line idx = mesh->getLine(j);
+						Vector3 a = (*mstate->getX())[idx[0]];
+						Vector3 b = (*mstate->getX())[idx[1]];
+
+						if (a == pt)
+							lineNeighbors[i].push_back(idx[1]);
+						else if (b == pt)
+							lineNeighbors[i].push_back(idx[0]);
+					}
+				}
+			}
+
+			// Triangles neighborhood construction
+			const int nTriangles = mesh->getNbTriangles();
+			if (nTriangles != 0)
+			{
+				triangleNeighbors.resize(npoints);
+
+				for (int i=0;i<npoints;i++)
+				{
+					triangleNeighbors[i].clear();
+					Point p(this,i);
+
+					const Vector3& pt = p.p();
+
+					for (int j=0; j<nTriangles; j++)
+					{
+						topology::MeshTopology::Triangle t = mesh->getTriangle(j);
+						Vector3 a = (*mstate->getX())[t[0]];
+						Vector3 b = (*mstate->getX())[t[1]];
+						Vector3 c = (*mstate->getX())[t[2]];
+
+						if (a == pt)
+						{
+						//	std::cout << "Point " << pt << " voisin du triangle " << pt << ", " << t[1] << ", " << t[2] << std::endl;
+							triangleNeighbors[i].push_back(std::make_pair(t[1], t[2]));
+						}
+						else if (b == pt)
+						{
+						//	std::cout << "Point " << pt << " voisin du triangle " << pt << ", " << t[2] << ", " << t[0] << std::endl;
+							triangleNeighbors[i].push_back(std::make_pair(t[2], t[0]));
+						}
+						else if (c == pt)
+						{
+						//	std::cout << "Point " << pt << " voisin du triangle " << pt << ", " << t[0] << ", " << t[1] << std::endl;
+							triangleNeighbors[i].push_back(std::make_pair(t[0], t[1]));
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void PointModel::draw(int index)
@@ -83,17 +154,14 @@ void PointModel::draw(int index)
 
 void PointModel::draw()
 {
-	if (isActive() && getContext()->getShowCollisionModels())
+	if (getContext()->getShowCollisionModels())
 	{
 		if (getContext()->getShowWireFrame())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		glDisable(GL_LIGHTING);
 		glPointSize(3);
-		if (isStatic())
-			glColor3f(0.5, 0.5, 0.5);
-		else
-			glColor3f(1.0, 0.0, 0.0);
+		glColor4fv(getColor4f());
 
 		for (int i=0;i<size;i++)
 		{
@@ -106,7 +174,7 @@ void PointModel::draw()
 		if (getContext()->getShowWireFrame())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if (isActive() && getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
+	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
 		dynamic_cast<core::VisualModel*>(getPrevious())->draw();
 }
 
@@ -121,7 +189,7 @@ void PointModel::computeBoundingTree(int maxDepth)
 		updated = true;
 	}
 	if (updated) cubeModel->resize(0);
-	if (isStatic() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 
 	cubeModel->resize(size);
 	if (!empty())
@@ -147,7 +215,7 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 		resize(npoints);
 		updated = true;
 	}
-	if (isStatic() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 	
 	Vector3 minElem, maxElem;
 
@@ -172,6 +240,40 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 			cubeModel->setParentOf(i, minElem, maxElem);
 		}
 		cubeModel->computeBoundingTree(maxDepth);
+	}
+}
+
+void Point::getLineNeighbors(std::vector< Vector3> &nV) const 
+{
+	std::vector<int> v = model->lineNeighbors[index];
+
+	std::vector<int>::iterator it = v.begin();
+	std::vector<int>::iterator itEnd = v.end();
+
+	nV.clear();
+//	nV.resize(v.size());
+
+	while(it != itEnd)
+	{
+		nV.push_back((*model->mstate->getX())[*it]);
+		++it;
+	}
+}
+
+void Point::getTriangleNeighbors(std::vector< std::pair< Vector3, Vector3 > > &nV) const 
+{
+	std::vector< std::pair<int, int> > v = model->triangleNeighbors[index];
+
+	std::vector< std::pair<int, int> >::iterator it = v.begin();
+	std::vector< std::pair<int, int> >::iterator itEnd = v.end();
+
+	nV.clear();
+//	nV.resize(v.size());
+
+	while(it != itEnd)
+	{
+		nV.push_back(std::make_pair((*model->mstate->getX())[it->first], (*model->mstate->getX())[it->second]));
+		++it;
 	}
 }
 

@@ -51,7 +51,10 @@ public:
 	Line(LineModel* model, int index);
 
 	explicit Line(core::CollisionElementIterator& i);
-
+    
+    unsigned i1() const;
+    unsigned i2() const;
+    
 	const Vector3& p1() const;
 	const Vector3& p2() const;
 
@@ -60,6 +63,10 @@ public:
 
 	const Vector3& v1() const;
 	const Vector3& v2() const;
+
+	// Return respectively the Vertex composing the neighbor Rigt and Left Triangle
+	const Vector3* tRight() const;
+	const Vector3* tLeft() const;
 };
 
 class LineModel : public core::CollisionModel, public core::VisualModel
@@ -68,6 +75,8 @@ protected:
 	struct LineData
 	{
 		int i1,i2;
+		// Triangles neighborhood
+		int tRight, tLeft;
 	};
 
 	sofa::helper::vector<LineData> elems;
@@ -129,15 +138,32 @@ inline Line::Line(core::CollisionElementIterator& i)
 : core::TCollisionElementIterator<LineModel>(static_cast<LineModel*>(i.getCollisionModel()), i.getIndex())
 {
 }
+    
+inline unsigned Line::i1() const { return model->elems[index].i1; }
+inline unsigned Line::i2() const { return model->elems[index].i2; }
 
 inline const Vector3& Line::p1() const { return (*model->mstate->getX())[model->elems[index].i1]; }
 inline const Vector3& Line::p2() const { return (*model->mstate->getX())[model->elems[index].i2]; }
-
+    
 inline const Vector3& Line::p1Free() const { return (*model->mstate->getXfree())[model->elems[index].i1]; }
 inline const Vector3& Line::p2Free() const { return (*model->mstate->getXfree())[model->elems[index].i2]; }
 
 inline const Vector3& Line::v1() const { return (*model->mstate->getV())[model->elems[index].i1]; }
 inline const Vector3& Line::v2() const { return (*model->mstate->getV())[model->elems[index].i2]; }
+
+inline const Vector3* Line::tRight() const {
+	if (model->elems[index].tRight != -1)
+		return &(*model->mstate->getX())[model->elems[index].tRight]; 
+	else
+		return NULL;
+}
+
+inline const Vector3* Line::tLeft() const {
+	if (model->elems[index].tLeft != -1)
+		return &(*model->mstate->getX())[model->elems[index].tLeft]; 
+	else
+		return NULL;
+}
 
 } // namespace collision
 

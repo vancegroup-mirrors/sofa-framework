@@ -449,7 +449,9 @@ template <class BaseMapping>
 void RigidMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in ){
 
 //	printf("\n applyJT(VectConst, VectConst) in RigidMapping\n");
-	out.resize(in.size());
+
+	int outSize = out.size();
+	out.resize(in.size() + outSize); // we can accumulate in "out" constraints from several mappings
 
 	for(unsigned int i=0; i<in.size(); i++)
 	{
@@ -488,7 +490,7 @@ void RigidMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typen
 		direction.getVOrientation() = omega_n;
 
 		// for rigid model, there's only the center of mass as application point (so only one vector for each constraint)
-		out[i].push_back(InSparseDeriv(index.getValue(), direction)); // 0 = index of the center of mass
+		out[outSize+i].push_back(InSparseDeriv(index.getValue(), direction)); // 0 = index of the center of mass
 	}
 }
 

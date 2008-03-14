@@ -25,9 +25,9 @@
 #ifndef SOFA_CORE_COMPONENTMODEL_COLLISION_CONTACTMANAGER_H
 #define SOFA_CORE_COMPONENTMODEL_COLLISION_CONTACTMANAGER_H
 
+#include <sofa/core/componentmodel/collision/CollisionAlgorithm.h>
 #include <sofa/core/componentmodel/collision/Contact.h>
 #include <sofa/core/componentmodel/collision/NarrowPhaseDetection.h>
-#include <sofa/core/objectmodel/BaseObject.h>
 
 #include <vector>
 
@@ -43,17 +43,22 @@ namespace componentmodel
 namespace collision
 {
 
-class ContactManager : public virtual objectmodel::BaseObject
+class ContactManager : public virtual CollisionAlgorithm
 {
 public:
     typedef NarrowPhaseDetection::DetectionOutputMap DetectionOutputMap;
     typedef sofa::helper::vector<Contact*> ContactVector;
 
+	ContactManager()
+	: intersectionMethod(NULL)
+	{
+	}
+
     virtual ~ContactManager() { }
 
     virtual void createContacts(DetectionOutputMap& outputs) = 0;
 
-    virtual const ContactVector& getContacts() = 0;
+    virtual const ContactVector& getContacts() { return contacts; }
 
     /// virtual because subclasses might do precomputations based on intersection algorithms
     virtual void setIntersectionMethod(Intersection* v) { intersectionMethod = v;    }
@@ -62,6 +67,22 @@ public:
 protected:
     /// Current intersection method
     Intersection* intersectionMethod;
+
+	ContactVector contacts;
+
+
+	/// All intersection methods
+	std::map<Instance,Intersection*> storedIntersectionMethod;
+
+	std::map<Instance,ContactVector> storedContacts;
+
+	virtual void changeInstance(Instance inst)
+	{
+		storedIntersectionMethod[instance] = intersectionMethod;
+		intersectionMethod = storedIntersectionMethod[inst];
+		storedContacts[instance].swap(contacts);
+		contacts.swap(storedContacts[inst]);
+	}
 };
 
 } // namespace collision

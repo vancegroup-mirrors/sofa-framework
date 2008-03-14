@@ -49,7 +49,7 @@ Node::Node() : NodeGFX("Node",0,0)
 };
 
 
-Node::Node(char *s, double xx, double xy) : NodeGFX(s,xx,xy)
+Node::Node(const char *s, double xx, double xy) : NodeGFX(s,xx,xy)
 {
 	Automate::getInstance()->tabNodes.push_back(this);
 };
@@ -61,7 +61,7 @@ void Node::onEnter(StateMachine*){ };
 void Node::onExit(StateMachine*){ };
 
 
-void Node::execute(char *){ };
+void Node::execute(const char *){ };
 
 
 void Node::addOutput(Edge *e){ tabOutputs.push_back( e ); }

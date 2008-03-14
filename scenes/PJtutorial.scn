@@ -48,17 +48,17 @@
 	<Node name="Table">
                     <Object type="Mesh" filename="TUTO/tableCM.obj" />
                     <Object type="MechanicalObject" dy="-5.8" dz="12"/>
-                    <Object type="Triangle" static="1"/>
-                    <Object type="Line" static="1"/>
-                    <Object type="Point" static="1"/>
+                    <Object type="Triangle" simulated="0" moving="0"/>
+                    <Object type="Line" simulated="0" moving="0"/>
+                    <Object type="Point" simulated="0" moving="0"/>
                     <Object type="OglModel" name="Visual" filename="TUTO/tableVM.obj" color="0.77 0.24 0.01" dy="-5.8" dz="12"/>
 	</Node>	
 	<Node name="Floor">
 		<Object type="Mesh" filename="TUTO/floor.obj"/>
 		<Object type="MechanicalObject" scale="0.5" dy="-5"/>
-		<Object type="Triangle" name="Floor" static="1" />
-		<Object type="Line" name="Floor" static="1" />
-                    <Object type="Point" name="Floor" static="1" />
+		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
+		<Object type="Line" name="Floor" simulated="0" moving="0" />
+                    <Object type="Point" name="Floor" simulated="0" moving="0" />
 		<Object type="OglModel" name="FloorV" filename="TUTO/floor.obj" texturename="TUTO/texture.bmp" scale="0.5" dy="-5"/>
 	</Node>
 </Node>

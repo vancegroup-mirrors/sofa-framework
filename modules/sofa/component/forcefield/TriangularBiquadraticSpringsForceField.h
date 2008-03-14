@@ -110,14 +110,14 @@ protected:
 	EdgeData<EdgeRestInformation> edgeInfo;
 		
 	TriangleSetTopology<DataTypes> * _mesh;
-	DataField < VecCoord >  _initialPoints;										///< the intial positions of the points
+	Data < VecCoord >  _initialPoints;										///< the intial positions of the points
 
 	bool updateMatrix;
 
-    DataField<Real> f_poissonRatio;
-    DataField<Real> f_youngModulus;
-    DataField<Real> f_dampingRatio;
-	DataField<bool> f_useAngularSprings; // whether angular springs should be included
+    Data<Real> f_poissonRatio;
+    Data<Real> f_youngModulus;
+    Data<Real> f_dampingRatio;
+	Data<bool> f_useAngularSprings; // whether angular springs should be included
 
 	Real lambda;  /// first Lam� coefficient
 	Real mu;    /// second Lam� coefficient
@@ -140,6 +140,13 @@ public:
 
 	// handle topological changes
 	virtual void handleTopologyChange();
+
+	void setYoungModulus(const double modulus) {
+		f_youngModulus.setValue((Real)modulus);
+	}
+	void setPoissonRatio(const double ratio) {
+		f_poissonRatio.setValue((Real)ratio);
+	}
 
 	// -- VisualModel interface
 	void draw();

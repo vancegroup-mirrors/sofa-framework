@@ -70,9 +70,9 @@ public:
 		TOPOLOGY_TETRAHEDRONSET=3
 	} TopologyType;
 
-    DataField< VecMass > f_mass;
+    Data< VecMass > f_mass;
     /// the mass density used to compute the mass from a mesh topology and geometry
-    DataField< Real > m_massDensity;
+    Data< Real > m_massDensity;
 protected:
     //VecMass masses;
 
@@ -124,6 +124,8 @@ public:
     double getKineticEnergy(const VecDeriv& v);  ///< vMv/2 using dof->getV()
 
     double getPotentialEnergy(const VecCoord& x);   ///< Mgx potential in a uniform gravity field, null at origin
+
+	void addGravityToV(double dt/*, defaulttype::BaseVector& v*/);
 
     // -- VisualModel interface
 

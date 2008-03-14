@@ -24,7 +24,7 @@
 *******************************************************************************/
 #include "RealGUI.h"
 
-#ifdef SOFA_GUI_QTOGREVIEWER
+#ifdef SOFA_GUI_QTOGREVIEWER 
 #include "viewer/qtogre/QtOgreViewer.h"
 #endif
 
@@ -56,6 +56,10 @@
 #include <sofa/component/topology/MeshTopology.h>
 #include <sofa/component/visualmodel/VisualModelImpl.h>
 
+#include <sofa/component/collision/TriangleModel.h>
+#include <sofa/component/collision/LineModel.h>
+#include <sofa/component/collision/PointModel.h>
+#include <sofa/component/collision/SphereModel.h>
 
 #include <limits.h>
 
@@ -85,10 +89,13 @@ namespace sofa
 #include <QCursor>
 #include <QAction>
 #include <QMessageBox>
+#include <QFileDialog>
 #include <Q3FileDialog>
 #include <QTabWidget>
 #include <Q3PopupMenu>
 #include <QToolTip>
+#include <QButtonGroup>
+#include <QRadioButton>
 #else
 #include <qwidget.h>
 #include <qwidgetstack.h>
@@ -108,6 +115,8 @@ namespace sofa
 #include <qtabwidget.h>
 #include <qpopupmenu.h>
 #include <qtooltip.h>
+#include <qbuttongroup.h>
+#include <qradiobutton.h>
 #endif
 
 #include <GenGraphForm.h>
@@ -125,7 +134,7 @@ namespace sofa
 
 #ifdef QT_MODULE_QT3SUPPORT
       typedef Q3ListView QListView;
-      typedef Q3FileDialog QFileDialog;
+      //      typedef Q3FileDialog QFileDialog;
       typedef Q3DockWindow QDockWindow;
       typedef QStackedWidget QWidgetStack;
       typedef Q3TextEdit QTextEdit;
@@ -196,13 +205,39 @@ namespace sofa
       extern QApplication* application; // = NULL;
       extern RealGUI* gui;
 
+#ifdef SOFA_QT4
+/// Custom QApplication class handling FileOpen events for MacOS
+class QSOFAApplication : public QApplication
+{
+public:
+    QSOFAApplication(int argc, char ** argv)
+    : QApplication(argc,argv)
+    {
+    }
+protected:
+    bool event(QEvent *event)
+    {
+        switch (event->type())
+	{
+	case QEvent::FileOpen:
+	    static_cast<RealGUI*>(mainWidget())->fileOpen(static_cast<QFileOpenEvent *>(event)->file());
+	    return true;
+	default:
+	    return QApplication::event(event);
+	}
+    }
+};
+#else
+typedef QApplication QSOFAApplication;      
+#endif
+
       SofaGUI* RealGUI::CreateGUI ( const char* name, const std::vector<std::string>& options, sofa::simulation::tree::GNode* groot, const char* filename )
       {
 	{
 	  int argc=1;
 	  char* argv[1];
 	  argv[0] = strdup ( SofaGUI::GetProgramName() );
-	  application = new QApplication ( argc,argv );
+	  application = new QSOFAApplication ( argc,argv );
 	  free ( argv[0] );
 	}
 	// create interface
@@ -256,14 +291,10 @@ namespace sofa
 
 
       RealGUI::RealGUI ( const char* viewername, const std::vector<std::string>& /*options*/ )
-	: viewerName ( viewername ), viewer ( NULL ), currentTab ( NULL ), graphListener ( NULL ), dialog ( NULL )
+	: viewerName ( viewername ), viewer ( NULL ), currentTab ( NULL ), tabInstrument (NULL),  graphListener ( NULL ), dialog ( NULL )
       {
 
 	left_stack = new QWidgetStack ( splitter2 );
-#ifndef QT_MODULE_QT3SUPPORT
-	GUILayout->addWidget ( left_stack );
-#endif
-
 	connect ( startButton, SIGNAL ( toggled ( bool ) ), this , SLOT ( playpauseGUI ( bool ) ) );
 
 	fpsLabel = new QLabel ( "9999.9 FPS", statusBar() );
@@ -375,16 +406,6 @@ namespace sofa
 	connect ( timerStep, SIGNAL ( timeout() ), this, SLOT ( step() ) );
 	connect ( ResetSceneButton, SIGNAL ( clicked() ), this, SLOT ( resetScene() ) );
 	connect ( dtEdit, SIGNAL ( textChanged ( const QString& ) ), this, SLOT ( setDt ( const QString& ) ) );
-	connect ( showVisual, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showVisual ( bool ) ) );
-	connect ( showBehavior, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showBehavior ( bool ) ) );
-	connect ( showCollision, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showCollision ( bool ) ) );
-	connect ( showBoundingCollision, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showBoundingCollision ( bool ) ) );
-	connect ( showMapping, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showMapping ( bool ) ) );
-	connect ( showMechanicalMapping, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showMechanicalMapping ( bool ) ) );
-	connect ( showForceField, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showForceField ( bool ) ) );
-	connect ( showInteractionForceField, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showInteractionForceField ( bool ) ) );
-	connect ( showWireFrame, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showWireFrame ( bool ) ) );
-	connect ( showNormals, SIGNAL ( toggled ( bool ) ), this, SLOT ( slot_showNormals ( bool ) ) );
 	connect ( stepButton, SIGNAL ( clicked() ), this, SLOT ( step() ) );
 	connect ( ExportGraphButton, SIGNAL ( clicked() ), this, SLOT ( exportGraph() ) );
 	connect ( dumpStateCheckBox, SIGNAL ( toggled ( bool ) ), this, SLOT ( dumpState ( bool ) ) );
@@ -450,11 +471,6 @@ namespace sofa
 	map_modifyDialogOpened.clear();
 
 
-
-	int end;
-	char str [80];
-	FILE * pFile;
-
 	//*********************************************************************************************************************************
 	//List of objects
 	//Read the object.txt that contains the information about the objects which can be added to the scenes whithin a given BoundingBox and scale range
@@ -462,76 +478,14 @@ namespace sofa
 	if ( !sofa::helper::system::DataRepository.findFile ( object ) )
 	  return;
 
-
-	object = sofa::helper::system::DataRepository.getFile ( object );
-
-
-
-	float object_BoundingBox[6];
-
-
-	pFile = fopen ( object.c_str() ,"r" );
-
-	end = fscanf ( pFile, "Default BoundingBox: %f %f %f %f %f %f\n",
-		       &object_BoundingBox[0],&object_BoundingBox[1],&object_BoundingBox[2],&object_BoundingBox[3],&object_BoundingBox[4],&object_BoundingBox[5] );
-	if ( end == EOF ) return;
-
-	//The first bounding box of the list is the default bounding box
-	for ( int i=0;i<6;i++ ) list_object_BoundingBox.push_back ( object_BoundingBox[i] );
-
-	end = fscanf ( pFile, "Default Scale: %f %f\n",
-		       &object_Scale[0], &object_Scale[1] );
-	if ( end == EOF ) return;
-
+	object = sofa::helper::system::DataRepository.getFile ( object );	
 	list_object.clear();
-	bool read = true;
-	while ( true )
-	  {
-	    if ( read )
-	      {
-		end = fscanf ( pFile, "%s", str );
-		read = true;
-		if ( end == EOF ) break;
-	      }
-	    read = true;
-	    list_object.push_back ( std::string ( str ) );
-
-	    end = fscanf ( pFile, "%s", str );
-
-	    //If the user specified a bounding box, we add it in the list of the bounding box
-	    if ( !strcmp ( str,"BoundingBox:" ) )
-	      {
-		if ( end == EOF )
-		  break;
-
-		end = fscanf ( pFile, "%f %f %f %f %f %f",
-			       &object_BoundingBox[0],&object_BoundingBox[1],&object_BoundingBox[2],&object_BoundingBox[3],&object_BoundingBox[4],& object_BoundingBox[5] );
-
-		if ( end == EOF )
-		  {
-		    for ( int i=0;i<6;i++ ) list_object_BoundingBox.push_back ( list_object_BoundingBox[i] );
-		  }
-		else
-		  {
-		    for ( int i=0;i<6;i++ ) list_object_BoundingBox.push_back ( object_BoundingBox[i] );
-		  }
-
-		read = true;
-	      }
-	    else if ( list_object.size() != 0 )
-	      {
-		//If no bounding box was specified, we add the default bounding box
-		for ( int i=0;i<6;i++ ) list_object_BoundingBox.push_back ( list_object_BoundingBox[i] );
-		if ( feof ( pFile ) ) break;
-		read = false;
-	      }
-	  }
-
-	//We remove from the list the default Bounding box: each object has its own bounding box now.
-	//We do it to preserve the correspondance between the index of the list_object and the list_object_BoundingBox
-	for ( int i=0;i<6;i++ ) list_object_BoundingBox.erase ( list_object_BoundingBox.begin() );
-
-	fclose ( pFile );
+	std::ifstream end(object.c_str());
+	std::string s;
+	while( end >> s ) {
+	  list_object.push_back(s);
+	}
+	end.close();
       }
 
       void RealGUI::addViewer()
@@ -540,27 +494,25 @@ namespace sofa
 	const char* name = viewerName;
 
 	// set menu state
+	
 #ifdef SOFA_GUI_QTVIEWER
 	viewerOpenGLAction->setEnabled ( true );
 #else
 	viewerOpenGLAction->setEnabled ( false );
 	viewerOpenGLAction->setToolTip ( "enable SOFA_GUI_QTVIEWER in sofa-local.cfg to activate" );
 #endif
-	viewerOpenGLAction->setOn ( false );
 #ifdef SOFA_GUI_QGLVIEWER
 	viewerQGLViewerAction->setEnabled ( true );
 #else
 	viewerQGLViewerAction->setEnabled ( false );
 	viewerQGLViewerAction->setToolTip ( "enable SOFA_GUI_QGLVIEWER in sofa-local.cfg to activate" );
 #endif
-	viewerQGLViewerAction->setOn ( false );
 #ifdef SOFA_GUI_QTOGREVIEWER
 	viewerOGREAction->setEnabled ( true );
 #else
 	viewerOGREAction->setEnabled ( false );
 	viewerOGREAction->setToolTip ( "enable SOFA_GUI_QTOGREVIEWER in sofa-local.cfg to activate" );
 #endif
-	viewerOGREAction->setOn ( false );
 
 #ifdef SOFA_GUI_QGLVIEWER
 	if ( !name[0] || !strcmp ( name,"qglviewer" ) )
@@ -640,21 +592,32 @@ namespace sofa
 	viewer->getQWidget()->show();
 	viewer->getQWidget()->update();
 	setGUI();
+	
+	
       }
 
       void RealGUI::viewerOpenGL()
       {
-	viewerOpenGLAction->setOn ( setViewer ( "qt" ) );
+	setViewer ( "qt" );	
+	viewerOpenGLAction->setOn(true);
+	viewerQGLViewerAction->setOn(false);
+	viewerOGREAction->setOn(false);
       }
 
       void RealGUI::viewerQGLViewer()
       {
-	viewerOpenGLAction->setOn ( setViewer ( "qglviewer" ) );
+	setViewer ( "qglviewer" );
+	viewerOpenGLAction->setOn(false);
+	viewerQGLViewerAction->setOn(true);
+	viewerOGREAction->setOn(false);
       }
 
       void RealGUI::viewerOGRE()
       {
-	viewerOpenGLAction->setOn ( setViewer ( "ogre" ) );
+	setViewer ( "ogre" );
+	viewerOpenGLAction->setOn(false);
+	viewerQGLViewerAction->setOn(false);
+	viewerOGREAction->setOn(true);
       }
 
       bool RealGUI::setViewer ( const char* name )
@@ -690,10 +653,11 @@ namespace sofa
 	if ( QMessageBox::warning ( this, "Changing Viewer", "Changing viewer requires to reload the current scene.\nAre you sure you want to do that ?", QMessageBox::Yes | QMessageBox::Default, QMessageBox::No ) != QMessageBox::Yes )
 	  return false;
 
-
+	
 	std::string filename = viewer->getSceneFileName();
-	GNode* groot = new GNode; // empty scene to do the transition
-	setScene ( groot,filename.c_str(), true ); // keep the current display flags
+// 	fileOpen(filename);
+// 	GNode* groot = new GNode; // empty scene to do the transition
+// 	setScene ( groot,filename.c_str() ); // keep the current display flags
 	left_stack->removeWidget ( viewer->getQWidget() );
 	delete viewer;
 	viewer = NULL;
@@ -742,33 +706,28 @@ namespace sofa
 	      }
 #endif
 
+
 	viewerName = name;
 
 
-	if ( graphListener )
-	  graphListener->removeChild ( NULL, groot );
+// 	if ( graphListener )
+// 	  graphListener->removeChild ( NULL, groot );
 
 	addViewer();
 
 	if (filename.rfind(".simu") != std::string::npos)
-	  fileOpenSimu(filename.c_str(), true );
+	  fileOpenSimu(filename.c_str() );
 	else
-	  fileOpen ( filename.c_str(), true ); // keep the current display flags
+	  fileOpen ( filename.c_str() ); // keep the current display flags
 	return true;
       }
 
-
       void RealGUI::fileOpen ( const char* filename )
-      {
-	fileOpen ( filename, false );
-      }
-
-      void RealGUI::fileOpen ( const char* filename, bool keepParams )
       {
 	list_object_added.clear();
 	list_object_removed.clear();
 	list_object_initial.clear();
-	list_node_contactPoints.clear();
+
 
 	//Hide the dialog to add a new object in the graph
 	if ( dialog != NULL ) dialog->hide();
@@ -780,11 +739,17 @@ namespace sofa
 	map_modifyDialogOpened.clear();
 
 
-	//left_stack->removeWidget(viewer->getQWidget());
-	//graphListener->removeChild(NULL, groot);
-	//delete viewer;
-	//viewer = NULL;
-	//addViewer(filename);
+	if ( viewer->getScene() !=NULL )
+	{
+	  getSimulation()->unload ( viewer->getScene() );
+	  if ( graphListener!=NULL )
+	  {
+	    delete graphListener;
+	    graphListener = NULL;
+	  }
+	  graphView->clear();
+	}
+	
 	GNode* groot = getSimulation()->load ( filename );
 	if ( groot == NULL )
 	  {
@@ -792,7 +757,7 @@ namespace sofa
 	    return;
 	  }
 
-	setScene ( groot, filename, keepParams );
+	setScene ( groot, filename );
 	//need to create again the output streams !!
 
 	getSimulation()->gnuplotDirectory.setValue(gnuplot_directory);
@@ -833,24 +798,20 @@ namespace sofa
       }
 #endif
 
-      void RealGUI::setScene ( GNode* groot, const char* filename, bool keepParams )
+      void RealGUI::setScene ( GNode* groot, const char* filename )
       {
-	if ( viewer->getScene() !=NULL )
-	  {
-	    getSimulation()->unload ( viewer->getScene() );
-	    if ( graphListener!=NULL )
-	      {
-		delete graphListener;
-		graphListener = NULL;
-	      }
-	    graphView->clear();
-	  }
-
+	if (tabInstrument!= NULL)
+	{
+	  tabs->removePage(tabInstrument);
+	  delete tabInstrument;
+	  tabInstrument = NULL;
+	}
+	
 	setTitle ( filename );
-	//this->groot = groot;
-	//sceneFileName = filename;
 	record_simulation = false;
-	viewer->setScene ( groot, filename, keepParams );
+	viewer->setScene ( groot, filename );
+ 	viewer->resetView();
+	
 	initial_time = groot->getTime();
 
 	if (timeSlider->maxValue() == 0)
@@ -861,33 +822,9 @@ namespace sofa
 	  }
 	eventNewTime();
 
-	if ( !keepParams )
-	  {
-	    showVisual->setChecked ( groot->getShowVisualModels() );
-	    showBehavior->setChecked ( groot->getShowBehaviorModels() );
-	    showCollision->setChecked ( groot->getShowCollisionModels() );
-	    showBoundingCollision->setChecked ( groot->getShowBoundingCollisionModels() );
-	    showForceField->setChecked ( groot->getShowForceFields() );
-	    showInteractionForceField->setChecked ( groot->getShowInteractionForceFields() );
-	    showMapping->setChecked ( groot->getShowMappings() );
-	    showMechanicalMapping->setChecked ( groot->getShowMechanicalMappings() );
-	    showWireFrame->setChecked ( groot->getShowWireFrame() );
-	    showNormals->setChecked ( groot->getShowNormals() );
-	  }
-	else
-	  {
-	    groot->setShowVisualModels ( showVisual->isChecked() );
-	    groot->setShowBehaviorModels ( showBehavior->isChecked() );
-	    groot->setShowCollisionModels ( showCollision->isChecked() );
-	    groot->setShowBoundingCollisionModels ( showBoundingCollision->isChecked() );
-	    groot->setShowForceFields ( showForceField->isChecked() );
-	    groot->setShowInteractionForceFields ( showInteractionForceField->isChecked() );
-	    groot->setShowMappings ( showMapping->isChecked() );
-	    groot->setShowMechanicalMappings ( showMechanicalMapping->isChecked() );
-	    groot->setShowWireFrame ( showWireFrame->isChecked() );
-	    groot->setShowNormals ( showNormals->isChecked() );
-	    getSimulation()->updateContext ( groot );
-	  }
+
+	//getSimulation()->updateVisualContext ( groot );
+
 
 	startButton->setOn ( groot->getContext()->getAnimate() );
 	dtEdit->setText ( QString::number ( groot->getDt() ) );
@@ -900,6 +837,9 @@ namespace sofa
 	graphListener = new GraphListenerQListView ( graphView );
 	graphListener->addChild ( NULL, groot );
 
+	//Create Stats about the simulation
+        graphCreateStats(groot,NULL);
+	
 	//Create the list of the object present at the beginning of the scene
 	for ( std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it = graphListener->items.begin() ; it != graphListener->items.end() ; ++ it )
 	  {
@@ -907,8 +847,6 @@ namespace sofa
 	      {
 		list_object_initial.push_back ( current_node );
 		list_object_initial.push_back ( dynamic_cast< GNode *> ( current_node->getParent() ) );
-		if ( current_node->getName() == "contactPoints" )
-		  list_node_contactPoints.push_back ( current_node );
 	      }
 	  }
 
@@ -917,18 +855,82 @@ namespace sofa
 	  {
 	    graphListener->freeze ( groot );
 	  }
+	  
+	  simulation::tree::Simulation *s = simulation::tree::getSimulation();
+
+	  //In case instruments are present in the scene, we create a new tab, and display the listr
+	  if (s->instruments.size() != 0)
+	  {	
+	    tabInstrument = new QWidget();
+	    tabs->addTab(tabInstrument, QString("Instrument"));
+	    
+	    QVBoxLayout *layout = new QVBoxLayout( tabInstrument, 0, 1, "tabInstrument");
+	    
+ 	    QButtonGroup *list_instrument = new QButtonGroup(tabInstrument);	    
+	    list_instrument->setExclusive(true);
+	    
+#ifdef SOFA_QT4
+              connect ( list_instrument, SIGNAL ( buttonClicked(int) ), this, SLOT ( changeInstrument(int) ) );
+#else
+              connect ( list_instrument, SIGNAL ( clicked(int) ), this, SLOT ( changeInstrument(int) ) );
+#endif
+	     	    
+	    QRadioButton *button = new QRadioButton(tabInstrument);button->setText("None");
+#ifdef SOFA_QT4
+              list_instrument->addButton(button, 0);
+#else
+	    list_instrument->insert(button);
+#endif
+            layout->addWidget(button); 
+	    
+	    for (unsigned int i=0;i<s->instruments.size();i++)
+	    {
+ 	      QRadioButton *button = new QRadioButton(tabInstrument);  button->setText(QString( s->instruments[i]->getName().c_str() ) );
+#ifdef SOFA_QT4
+                list_instrument->addButton(button, i+1);
+#else
+                list_instrument->insert(button);
+#endif
+                layout->addWidget(button);  
+	      if (i==0) 
+		{
+		  button->setChecked(true); changeInstrument(1);
+		}
+	      else		
+		  s->instruments[i]->setActive(false);
+		
+	    }
+#ifdef SOFA_QT4
+              layout->addStretch(1);
+#endif
+#ifndef SOFA_QT4
+	    layout->addWidget(list_instrument);
+#endif
+	  }
       }
 
-
+      void RealGUI::changeInstrument(int id)
+      {
+          std::cout << "Activation instrument "<<id<<std::endl;
+	Simulation *s = getSimulation();
+	if (s->instrumentInUse.getValue() >= 0 && s->instrumentInUse.getValue() < (int)s->instruments.size())
+	 s->instruments[s->instrumentInUse.getValue()]->setActive(false);
+	
+	getSimulation()->instrumentInUse.setValue(id-1);
+	if (s->instrumentInUse.getValue() >= 0 && s->instrumentInUse.getValue() < (int)s->instruments.size())
+	 s->instruments[s->instrumentInUse.getValue()]->setActive(true);
+	viewer->getQWidget()->update();
+      }
+      
+      
       void RealGUI::screenshot()
       {
 
 	QString filename;
 
-	filename = QFileDialog::getSaveFileName (
+	filename = getSaveFileName ( this,
 						 viewer->screenshotName().c_str(),
 						 "Images (*.png *.bmp *.jpg)",
-						 this,
 						 "save file dialog"
 						 "Choose a filename to save under" );
 	viewer->getQWidget()->repaint();
@@ -950,7 +952,7 @@ namespace sofa
 	  }
       }
 
-      void RealGUI::fileOpenSimu ( const char* s, bool keepParams=false )
+      void RealGUI::fileOpenSimu ( const char* s )
       {
 	std::ifstream in(s);
 	if (!in.fail())
@@ -970,7 +972,7 @@ namespace sofa
 		simulation_name = s;
 		std::string::size_type pointSimu = simulation_name.rfind(".simu");
 		simulation_name.resize(pointSimu);
-		fileOpen(filename.c_str(), keepParams);
+		fileOpen(filename.c_str());
 		char buf[100];
 
 		sprintf ( buf, "Init: %s s",initT.c_str()  );
@@ -990,21 +992,34 @@ namespace sofa
 	      }
 	  }	
       }
-
+void RealGUI::fileNew()
+{
+  std::string newScene("newScene.scn");
+  if (sofa::helper::system::DataRepository.findFile (newScene))
+    fileOpen(sofa::helper::system::DataRepository.getFile ( newScene ).c_str());
+}
       void RealGUI::fileOpen()
       {
 	std::string filename = viewer->getSceneFileName();
 
+	QString s = getOpenFileName ( this, filename.empty() ?NULL:filename.c_str(),
 #ifdef SOFA_PML
-	QString s = Q3FileDialog::getOpenFileName ( filename.empty() ?NULL:filename.c_str(), "Scenes (*.scn *.simu *.pml *.lml)",  this, "open file dialog",  "Choose a file to open" );
+	    "Scenes (*.scn *.xml *.simu *.pml *.lml)",
+#else
+	    "Scenes (*.scn *.xml *.simu)",
+#endif
+	    "open file dialog",  "Choose a file to open" );
 
 	if ( s.length() >0 )
 	  {
+#ifdef SOFA_PML
 	    if ( s.endsWith ( ".pml" ) )
 	      pmlOpen ( s );
 	    else if ( s.endsWith ( ".lml" ) )
 	      lmlOpen ( s );
-	    else if (s.endsWith( ".simu") )
+	    else
+#endif
+            if (s.endsWith( ".simu") )
 	      fileOpenSimu(s);
 	    else
 	      {
@@ -1013,21 +1028,6 @@ namespace sofa
 		timeSlider->setMaxValue(0);
 	      }
 	  }
-#else
-	QString s = Q3FileDialog::getOpenFileName ( filename.empty() ?NULL:filename.c_str(), "Scenes (*.scn *.simu)", this, "open file dialog", "Choose a file to open" );
-
-	if ( s.length() >0 )
-	  {
-	    if (s.endsWith( ".simu") )
-	      fileOpenSimu(s);
-	    else
-	      {
-		fileOpen ( s);
-		timeSlider->setValue(0);
-		timeSlider->setMaxValue(0);		
-	      }
-	  }
-#endif
       }
 
       void RealGUI::fileReload()
@@ -1046,45 +1046,52 @@ namespace sofa
 	    else if ( s.endsWith ( ".lml" ) )
 	      lmlOpen ( s );
 	    else if (s.endsWith( ".simu") )
-	      fileOpenSimu(s, true);
+	      fileOpenSimu(s);
 	    else
-	      fileOpen ( s, true );
+	      fileOpen ( s );
 	  }
 #else
 	if (s.endsWith( ".simu") )
-	  fileOpenSimu(s, true);
+	  fileOpenSimu(s);
 	else
-	  fileOpen ( s, true );
+	  fileOpen ( s );
 #endif
-
-
 
       }
 
-      void RealGUI::fileSaveAs()
+      void RealGUI::fileSave()
+      {	
+	GNode *node = viewer->getScene();
+	std::string filename = viewer->getSceneFileName();
+	fileSaveAs ( node,filename.c_str() );
+      }
+      
+      
+      void RealGUI::fileSaveAs(GNode *node)
       {
+	if (node == NULL) node = viewer->getScene();
 	QString s;
 	std::string filename = viewer->getSceneFileName();
 #ifdef SOFA_PML
-	s = Q3FileDialog::getSaveFileName ( filename.empty() ?NULL:filename.c_str(), "Scenes (*.scn *.pml)",  this, "save file dialog",  "Choose where the scene will be saved" );
+	s = getSaveFileName ( this, filename.empty() ?NULL:filename.c_str(), "Scenes (*.scn *.xml *.pml)", "save file dialog",  "Choose where the scene will be saved" );
 	if ( s.length() >0 )
 	  {
 	    if ( pmlreader && s.endsWith ( ".pml" ) )
 	      pmlreader->saveAsPML ( s );
 	    else
-	      fileSaveAs ( s );
+	      fileSaveAs ( node,s );
 	  }
 #else
-	s = Q3FileDialog::getSaveFileName ( filename.empty() ?NULL:filename.c_str(), "Scenes (*.scn)", this, "save file dialog", "Choose where the scene will be saved" );
+	s = getSaveFileName ( this, filename.empty() ?NULL:filename.c_str(), "Scenes (*.scn *.xml)", "save file dialog", "Choose where the scene will be saved" );
 	if ( s.length() >0 )
-	  fileSaveAs ( s );
+	  fileSaveAs ( node,s );
 #endif
 
       }
 
-      void RealGUI::fileSaveAs ( const char* filename )
+      void RealGUI::fileSaveAs ( GNode *node, const char* filename )
       {
-	getSimulation()->printXML ( viewer->getScene(), filename );
+	getSimulation()->printXML ( node, filename );
       }
 
       void RealGUI::fileExit()
@@ -1100,7 +1107,7 @@ namespace sofa
       void RealGUI::editRecordDirectory()
       {
 	std::string filename = viewer->getSceneFileName();
-	QString s = Q3FileDialog::getExistingDirectory ( filename.empty() ?NULL:filename.c_str(),  this, "open directory dialog",  "Choose a directory" );
+	QString s = getExistingDirectory ( this, filename.empty() ?NULL:filename.c_str(), "open directory dialog",  "Choose a directory" );
 	if (s.length() > 0)
 	  {
 	    record_directory = s.ascii();
@@ -1112,7 +1119,7 @@ namespace sofa
       void RealGUI::editGnuplotDirectory()
       {
 	std::string filename = viewer->getSceneFileName();
-	QString s = Q3FileDialog::getExistingDirectory ( filename.empty() ?NULL:filename.c_str(),  this, "open directory dialog",  "Choose a directory" );
+	QString s = getExistingDirectory ( this, filename.empty() ?NULL:filename.c_str(), "open directory dialog",  "Choose a directory" );
 	if (s.length() > 0)
 	  {
 	    gnuplot_directory = s.ascii();
@@ -1122,6 +1129,42 @@ namespace sofa
 	    setExportGnuplot(exportGnuplotFilesCheckbox->isChecked());
 	  }
       }
+
+QString RealGUI::getExistingDirectory ( QWidget* parent, const QString & dir , const char * name , const QString & caption )
+{
+#ifdef SOFA_QT4
+    QFileDialog::Options options = QFileDialog::ShowDirsOnly;
+    //	options |= QFileDialog::DontUseNativeDialog;
+    options |= QFileDialog::DontUseSheet;
+    return QFileDialog::getExistingDirectory ( parent, name?QString(name):caption, dir, options );
+#else
+    return Q3FileDialog::getExistingDirectory( dir, parent, name, caption );
+#endif
+}
+
+QString RealGUI::getOpenFileName ( QWidget* parent, const QString & startWith, const QString & filter, const char * name, const QString & caption, QString * selectedFilter )
+{
+#ifdef SOFA_QT4
+    QFileDialog::Options options = 0;
+    //	options |= QFileDialog::DontUseNativeDialog;
+    options |= QFileDialog::DontUseSheet;
+    return QFileDialog::getOpenFileName ( parent, name?QString(name):caption, startWith, filter, selectedFilter, options );
+#else
+    return Q3FileDialog::getOpenFileName ( startWith, filter, parent, name, caption, selectedFilter );
+#endif
+}
+
+QString RealGUI::getSaveFileName ( QWidget* parent, const QString & startWith, const QString & filter, const char * name, const QString & caption, QString * selectedFilter )
+{
+#ifdef SOFA_QT4
+    QFileDialog::Options options = 0;
+    //	options |= QFileDialog::DontUseNativeDialog;
+    options |= QFileDialog::DontUseSheet;
+    return QFileDialog::getSaveFileName ( parent, name?QString(name):caption, startWith, filter, selectedFilter, options );
+#else
+    return Q3FileDialog::getSaveFileName ( startWith, filter, parent, name, caption, selectedFilter );
+#endif
+}
 
       void RealGUI::setTitle ( const char* windowTitle )
       {
@@ -1151,7 +1194,7 @@ namespace sofa
       void RealGUI::setGUI ( void )
       {
 	textEdit1->setText ( viewer->helpString() );
-
+/*
 #ifdef SOFA_GUI_QTOGREVIEWER
 	//Hide unused options
 	if ( !strcmp ( viewerName,"ogre" ) )
@@ -1180,7 +1223,7 @@ namespace sofa
 	    showWireFrame->show();
 	    showNormals->show();
 	  }
-#endif
+#endif*/
       }
       //###################################################################################################################
 
@@ -1228,6 +1271,7 @@ namespace sofa
 	    viewer->getQWidget()->setUpdatesEnabled ( true );
 #endif
 	    viewer->getQWidget()->update();
+	    if (currentTab == TabStats) graphCreateStats(viewer->getScene(),NULL);
 	  }
 
 
@@ -1354,7 +1398,7 @@ namespace sofa
 		sprintf ( buf, "%s_%.3f.scn",filename.c_str(), time );
 		std::string output(record_directory + buf);
 
-		fileSaveAs(output.c_str());
+		fileSaveAs(viewer->getScene(),output.c_str());
 	      }
 	  }
       }
@@ -1453,25 +1497,6 @@ namespace sofa
 	list_object_removed.clear();
 
 
-	//Remove all the nodes contactPoints except those present at initialization
-	for ( graph_iterator = graphListener->items.begin(); graph_iterator != graphListener->items.end(); graph_iterator++ )
-	  {
-	    if ( ( *graph_iterator ).first->getName() == std::string ( "contactPoints" ) && dynamic_cast< GNode *> ( ( *graph_iterator ).first ) )
-	      {
-		for ( it=list_node_contactPoints.begin(); it != list_node_contactPoints.end(); it++ )
-		  {
-		    if ( ( *graph_iterator ).first == ( *it ) ) break;
-		  }
-		if ( it != list_node_contactPoints.end() ) continue;
-		GNode *contactPointsNode = dynamic_cast< GNode *> ( ( *graph_iterator ).first );
-		GNode *parent            = dynamic_cast< GNode *> ( contactPointsNode->getParent() );
-		parent->removeChild ( contactPointsNode );
-		graphListener->removeChild ( parent, contactPointsNode );
-
-		//Deleting this pointer leads to a seg fault due to the command mapping->getContext() in the "BarycentricContactMapper.h"
-		//delete contactPointsNode;
-	      }
-	  }
 
 
 	if ( isFrozen ) graphListener->freeze ( groot );
@@ -1489,117 +1514,6 @@ namespace sofa
       }
 
 
-      //*****************************************************************************************
-      // Set what to display
-      void RealGUI::slot_showVisual ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowVisualModels ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showBehavior ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowBehaviorModels ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showCollision ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowCollisionModels ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showBoundingCollision ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowBoundingCollisionModels ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showMapping ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowMappings ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showMechanicalMapping ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowMechanicalMappings ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showForceField ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowForceFields ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showInteractionForceField ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowInteractionForceFields ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showWireFrame ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowWireFrame ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
-
-      void RealGUI::slot_showNormals ( bool value )
-      {
-	GNode* groot = getScene();
-	if ( groot )
-	  {
-	    groot->getContext()->setShowNormals ( value );
-	    getSimulation()->updateContext ( groot );
-	  }
-	viewer->getQWidget()->update();
-      }
 
       //-----------------------------------------------------------------------------------
       //Recording a simulation
@@ -1640,8 +1554,8 @@ namespace sofa
 		    ofilename << record_directory << filename << "_" << loadRecordTime->text().ascii() << ".scn";
 		    
 		    
-		    fileSaveAs(ofilename.str().c_str());
-		    fileOpen(ofilename.str().c_str(), true); //change the local directory
+		    fileSaveAs(viewer->getScene(),ofilename.str().c_str());
+		    fileOpen(ofilename.str().c_str()); //change the local directory
 		  }
 		record_simulation=true;
 		playpauseGUI(true);		
@@ -1815,7 +1729,7 @@ namespace sofa
 	    if ( sofa::helper::system::DataRepository.findFile (stepFilename) )
 	      {	  	       
 		stepFilename = sofa::helper::system::DataRepository.getFile ( stepFilename );
-		fileOpen(stepFilename.c_str(),true);
+		fileOpen(stepFilename.c_str());
 
 		if ( m_exportGnuplot )
 		  getSimulation()->exportGnuplot ( getScene(), getScene()->getTime() );
@@ -2004,6 +1918,12 @@ namespace sofa
 
       void RealGUI::keyPressEvent ( QKeyEvent * e )
       {
+	  // ignore if there are modifiers (i.e. CTRL of SHIFT)
+#ifdef SOFA_QT4
+	  if (e->modifiers()) return;
+#else
+	  if (e->state() & (Qt::KeyButtonMask)) return;
+#endif
 	switch ( e->key() )
 	  {
 
@@ -2051,6 +1971,9 @@ namespace sofa
 		graphListener->freeze ( groot );
 	      }
 	  }
+	  else if (widget == TabStats)
+	    graphCreateStats(viewer->getScene(),NULL);
+		
 	currentTab = widget;
       }
 
@@ -2075,7 +1998,7 @@ namespace sofa
       {
 	if ( dialog == NULL )
 	  {
-	    //Creation of the file dialog
+	    //Creation of the file dialog	    
 	    dialog = new AddObject ( &list_object, this );
 	    dialog->setPath ( viewer->getSceneFileName() );
 	    dialog->hide();
@@ -2084,52 +2007,67 @@ namespace sofa
 
 	//Creation of a popup menu at the mouse position
 	item_clicked=item;
+	
 	//Search in the graph if the element clicked is a node
-	node_clicked = viewer->getScene();
-	if ( node_clicked == NULL || item_clicked == NULL ) return;
+	node_clicked = NULL;
+	if ( item_clicked == NULL ) return;
 
-	//First initialize with the Root. Test if the node clicked on the graph has the same name as the root.
-	if ( node_clicked->getName() == item_clicked->text ( 0 ).ascii() )
-	  {
-	    //The node clicked has the same name as the root, but we need to verify the pointer of the node clicked
-	    node_clicked = verifyNode ( node_clicked, item_clicked );
-	    if ( node_clicked == NULL ) node_clicked = searchNode ( viewer->getScene(), item_clicked );
-
-	  }
-	else node_clicked = searchNode ( viewer->getScene(), item_clicked );
-
-
+	
+	
+	std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator graph_iterator;
+	
+	for (graph_iterator = graphListener->items.begin(); graph_iterator != graphListener->items.end(); graph_iterator++)
+	{
+	  if ( (*graph_iterator).second == item) {node_clicked = dynamic_cast< GNode* >( (*graph_iterator).first); break;} 
+	}
+	
+	
+	
 	QPopupMenu *contextMenu = new QPopupMenu ( graphView, "ContextMenu" );
+	
+	
 	//Creation of the context Menu
 	if ( node_clicked != NULL )
-	  {
-	    contextMenu->insertItem ( "Collapse", this, SLOT ( graphCollapse() ) );
-	    contextMenu->insertItem ( "Expand", this, SLOT ( graphExpand() ) );
-	    contextMenu->insertSeparator ();
-	  }
-
-	int indexMenu[3];
-
-	indexMenu[0] = contextMenu->insertItem ( "Add Node", this, SLOT ( graphAddObject() ) );
-	indexMenu[1] = contextMenu->insertItem ( "Remove Node", this, SLOT ( graphRemoveObject() ) );
-	indexMenu[2] = contextMenu->insertItem ( "Modify", this, SLOT ( graphModify() ) );
+	{
+	  contextMenu->insertItem ( "Collapse", this, SLOT ( graphCollapse() ) );
+	  contextMenu->insertItem ( "Expand", this, SLOT ( graphExpand() ) );
+	  contextMenu->insertSeparator ();
+	  /*****************************************************************************************************************/
+	  if (node_clicked->isActive())
+	    contextMenu->insertItem ( "Desactivate", this, SLOT ( graphDesactivateNode() ) );
+	  else
+	    contextMenu->insertItem ( "Activate", this, SLOT ( graphActivateNode() ) );
+	  contextMenu->insertSeparator ();
+	  /*****************************************************************************************************************/
+	  
+	  contextMenu->insertItem ( "Save Node", this, SLOT ( graphSaveObject() ) );
+	  contextMenu->insertItem ( "Add Node", this, SLOT ( graphAddObject() ) );
+	  int index_menu = contextMenu->insertItem ( "Remove Node", this, SLOT ( graphRemoveObject() ) );
+	  
+	  //If one of the elements or child of the current node is beeing modified, you cannot allow the user to erase the node
+	  if ( !isErasable ( node_clicked ) )
+	    contextMenu->setItemEnabled ( index_menu,false );
+	  
+	}
+	contextMenu->insertItem ( "Modify", this, SLOT ( graphModify() ) );
 	contextMenu->popup ( point, index );
-
-
-	//Enable the option ADD and REMOVE only for the Nodes.
-	if ( node_clicked == NULL )
-	  {
-	    contextMenu->setItemEnabled ( indexMenu[0],false );
-	    contextMenu->setItemEnabled ( indexMenu[1],false );
-	  }
-
-	//If one of the elements or child of the current node is beeing modified, you cannot allow the user to erase the node
-	else if ( !isErasable ( node_clicked ) )
-	  contextMenu->setItemEnabled ( indexMenu[1],false );
 
       }
 
+      /*****************************************************************************************************************/
+      void RealGUI::graphSaveObject()
+      {
+	bool isAnimated = startButton->isOn();
 
+	playpauseGUI ( false );
+	//Just pop up the dialog window
+	if ( node_clicked != NULL )
+	{
+	  fileSaveAs(node_clicked);
+	  item_clicked = NULL;
+	}
+	playpauseGUI ( isAnimated );
+      }
       /*****************************************************************************************************************/
       void RealGUI::graphAddObject()
       {
@@ -2173,16 +2111,16 @@ namespace sofa
 		groot->setShowWireFrame ( 0 );
 		groot->setShowNormals ( 0 );
 
-		showVisual->setChecked ( groot->getShowVisualModels() );
-		showBehavior->setChecked ( groot->getShowBehaviorModels() );
-		showCollision->setChecked ( groot->getShowCollisionModels() );
-		showBoundingCollision->setChecked ( groot->getShowBoundingCollisionModels() );
-		showForceField->setChecked ( groot->getShowForceFields() );
-		showInteractionForceField->setChecked ( groot->getShowInteractionForceFields() );
-		showMapping->setChecked ( groot->getShowMappings() );
-		showMechanicalMapping->setChecked ( groot->getShowMechanicalMappings() );
-		showWireFrame->setChecked ( groot->getShowWireFrame() );
-		showNormals->setChecked ( groot->getShowNormals() );
+// 		showVisual->setChecked ( groot->getShowVisualModels() );
+// 		showBehavior->setChecked ( groot->getShowBehaviorModels() );
+// 		showCollision->setChecked ( groot->getShowCollisionModels() );
+// 		showBoundingCollision->setChecked ( groot->getShowBoundingCollisionModels() );
+// 		showForceField->setChecked ( groot->getShowForceFields() );
+// 		showInteractionForceField->setChecked ( groot->getShowInteractionForceFields() );
+// 		showMapping->setChecked ( groot->getShowMappings() );
+// 		showMechanicalMapping->setChecked ( groot->getShowMechanicalMappings() );
+// 		showWireFrame->setChecked ( groot->getShowWireFrame() );
+// 		showNormals->setChecked ( groot->getShowNormals() );
 
 		viewer->setScene ( groot, viewer->getSceneFileName().c_str() );
 		graphListener->removeChild ( NULL, node_clicked );
@@ -2201,6 +2139,8 @@ namespace sofa
 	    item_clicked = NULL;
 	  }
 	playpauseGUI ( isAnimated );
+	
+	graphCreateStats(viewer->getScene(),NULL);
       }
 
       /*****************************************************************************************************************/
@@ -2223,9 +2163,19 @@ namespace sofa
 	      }
 
 	    //Opening of a dialog window automatically created
-
-	    ModifyObject *dialogModify = new ModifyObject ( ++current_Id_modifyDialog, node, item_clicked,this,node->getName().data() );
-
+            current_Id_modifyDialog = node;
+	    std::map< void*, QDialog* >::iterator testWindow =  map_modifyObjectWindow.find( current_Id_modifyDialog);
+	    if ( testWindow != map_modifyObjectWindow.end())
+	    {
+	     //Object already being modified: no need to open a new window 
+	      (*testWindow).second->raise();
+	      playpauseGUI ( isAnimated );
+	      return;
+	    }
+	    
+	    ModifyObject *dialogModify = new ModifyObject ( current_Id_modifyDialog, node, item_clicked,this,node->getName().data() );
+	    map_modifyObjectWindow.insert( std::make_pair(current_Id_modifyDialog, dialogModify));
+	     
 	    //If the item clicked is a node, we add it to the list of the element modified
 	    if ( dynamic_cast<GNode *> ( node ) )
 	      map_modifyDialogOpened.insert ( std::make_pair ( current_Id_modifyDialog, node ) );
@@ -2251,29 +2201,36 @@ namespace sofa
 	  }
 	playpauseGUI ( isAnimated );
       }
+      
       /*****************************************************************************************************************/
-      //Nodes in the graph can have the same name. To find the right one, we have to verify the pointer itself.
-      //We return the Nodes clicked
-      GNode *RealGUI::verifyNode ( GNode *node, Q3ListViewItem *item_clicked )
+      void RealGUI::graphDesactivateNode()
       {
-	std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator graph_iterator = graphListener->items.find ( node );
-
-	while ( graph_iterator != graphListener->items.end() )
-	  {
-	    if ( item_clicked == graph_iterator->second ) {return dynamic_cast< GNode*> ( graph_iterator->first );}
-	    graph_iterator ++;
-	  }
-	return NULL;
+	node_clicked->setActive(false);
+	viewer->getQWidget()->update();
+	node_clicked->reinit();
+	
+	graphCreateStats(viewer->getScene(),NULL);
       }
-
-
+      
+      void RealGUI::graphActivateNode()
+      {
+	node_clicked->setActive(true);
+	viewer->getQWidget()->update();
+	node_clicked->reinit();
+	
+	graphCreateStats(viewer->getScene(),NULL);
+      }
+      
+      
+      /*****************************************************************************************************************/
+      // Test if a node can be erased in the graph : the condition is that none of its children has a menu modify opened
       bool RealGUI::isErasable ( core::objectmodel::Base* element )
       {
 
 	if ( GNode *node = dynamic_cast<GNode *> ( element ) )
 	  {
 	    //we look into the list of element currently modified if the element is present.
-	    std::map< int, core::objectmodel::Base* >::iterator dialog_it;
+	    std::map< void *, core::objectmodel::Base* >::iterator dialog_it;
 	    for ( dialog_it = map_modifyDialogOpened.begin(); dialog_it !=map_modifyDialogOpened.end();dialog_it++ )
 	      {
 		if ( element == ( *dialog_it ).second ) return false;
@@ -2289,73 +2246,24 @@ namespace sofa
 	  }
 	return true;
       }
-      /*****************************************************************************************************************/
-      //Recursive search through the GNode graph.
-      GNode *RealGUI::searchNode ( GNode *node, Q3ListViewItem *item_clicked )
-      {
-	if ( node == NULL ) return NULL;
-
-	GNode *result=NULL;
-	//For each child of the node, we are looking for one who has the same name as the one clicked
-	GNode::ChildIterator it;
-	for ( it = node->child.begin(); it != node->child.end(); it++ )
-	  {
-	    //a node with the same name has been found!!
-	    result = node->getChild ( item_clicked->text ( 0 ).ascii() );
-	    if ( result != NULL )
-	      {
-		result = verifyNode ( result, item_clicked );
-		if ( result != NULL )	return result;
-	      }
-
-
-	    result = searchNode ( ( *it ), item_clicked );
-	    if ( result != NULL ) return result;
-	  }
-	//Nothing found
-	return NULL;
-      }
-
 
       /*****************************************************************************************************************/
       //Translate an object
-      void RealGUI::transformObject ( GNode *node, double dx, double dy, double dz, double scale )
+      void RealGUI::transformObject ( GNode *node, double dx, double dy, double dz,  double rx, double ry, double rz, double scale )
       {
 	if ( node == NULL ) return;
 	GNode::ObjectIterator obj_it = node->object.begin();
-	//Verify if it exists a mesh topology. In that case, we have to recursively translate the mechanical object and the visual model
-	// 	bool mesh_topology = false;
-	// 	bool mechanical_object = false;
-
-
-	// 	//Using the graph corresponding to the current node, we explorate it to find a Topology Element
-	// 	if (graphListener->items[node] == NULL) return;
-
-	// 	Q3ListViewItem *element = graphListener->items[node]->firstChild();
-	// 	while (element != NULL)
-	// 	  {
-	// 	    //We search in the element of the current node, the presence of a MeshTopology: depending on its presence, it will modify the range of the translation
-	// 	    if (element->firstChild() == NULL)
-	// 	      {
-	// 		std::string name = element->text(0);
-	// 		std::string::size_type end_name = name.rfind(' ');
-	// 		if (end_name != std::string::npos)
-	// 		    name.resize(end_name-1);
-
-	// 		if (name == "MeshTopology")
-	// 		    mesh_topology = true;
-
-	// 	      }
-	// 	    element = element->nextSibling();
-	// 	  }
-
+	const double conversionDegRad = 3.141592653/180.0;
+	Vec<3, double> rotationVector = Vec<3,double>(rx,ry,rz)*conversionDegRad;
 	//We translate the elements
+	
 	while ( obj_it != node->object.end() )
 	  {
 	    if ( dynamic_cast< sofa::component::visualmodel::VisualModelImpl* > ( *obj_it ) )
 	      {
 		sofa::component::visualmodel::VisualModelImpl *visual = dynamic_cast< sofa::component::visualmodel::VisualModelImpl* > ( *obj_it );
 		visual->applyTranslation ( dx, dy, dz );
+		visual->applyRotation(defaulttype::Quat::createFromRotationVector( rotationVector));
 		visual->applyScale ( scale );
 	      }
 
@@ -2363,13 +2271,13 @@ namespace sofa
 	      {
 		core::componentmodel::behavior::BaseMechanicalState *mechanical = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *> ( *obj_it );
 		mechanical->applyTranslation ( dx, dy, dz );
+		mechanical->applyRotation(defaulttype::Quat::createFromRotationVector( rotationVector));
 		mechanical->applyScale ( scale );
 		// 		mechanical_object = true;
 	      }
 
 	    obj_it++;
 	  }
-
 	//We don't need to go any further:
 	// 	if (mechanical_object && !mesh_topology)
 	// 	    return;
@@ -2380,20 +2288,20 @@ namespace sofa
 	GNode::ChildIterator end = node->child.end();
 	while ( it != end )
 	  {
-	    transformObject ( *it, dx, dy, dz, scale );
+	    transformObject ( *it, dx, dy, dz, rx,ry,rz,scale );
 	    it++;
 	  }
-
 
       }
 
       /*****************************************************************************************************************/
-      void RealGUI::loadObject ( std::string path, double dx, double dy, double dz, double scale )
+      void RealGUI::loadObject ( std::string path, double dx, double dy, double dz,  double rx, double ry, double rz,double scale )
       {
 	//Verify if the file exists
 	if ( !sofa::helper::system::DataRepository.findFile ( path ) )
+	{
 	  return;
-
+	}
 	path = sofa::helper::system::DataRepository.getFile ( path );
 
 	//Desactivate the animate-> no more graph modification
@@ -2459,13 +2367,14 @@ namespace sofa
 	    list_object_added.push_back ( new_node );
 	  }
 
+	//update the stats graph
+	graphCreateStats(viewer->getScene(),NULL);
 	//Apply the Transformation
-	transformObject ( new_node, dx, dy, dz, scale );
+	transformObject ( new_node, dx, dy, dz, rx,ry,rz,scale );
 
 	//Update the view
 	viewer->resetView();
 	viewer->getQWidget()->update();
-
 
 	//freeze the graph if needed and animate
 	if ( currentTab != TabGraph )
@@ -2475,7 +2384,6 @@ namespace sofa
 	item_clicked = NULL;
 	playpauseGUI ( isAnimated );
       }
-
 
       /*****************************************************************************************************************/
       //Visibility Option in grah : expand or collapse a node : easier to get access to a node, and see its properties properly
@@ -2501,7 +2409,6 @@ namespace sofa
 
       void RealGUI::graphExpand()
       {
-
 	bool isAnimated = startButton->isOn();
 	playpauseGUI ( false );
 	item_clicked->setOpen ( true );
@@ -2523,9 +2430,156 @@ namespace sofa
 	playpauseGUI ( isAnimated );
       }
       /*****************************************************************************************************************/
-      void RealGUI::modifyUnlock ( int Id )
+      void RealGUI::modifyUnlock ( void *Id )
       {
-	map_modifyDialogOpened.erase ( Id );
+	graphCreateStats(viewer->getScene(),NULL);
+	
+	map_modifyDialogOpened.erase( Id );
+	map_modifyObjectWindow.erase( Id );
+      }
+
+      /*****************************************************************************************************************/
+      // Fill the listview in the stats tab with information about the number of points/line/triangle/sphere of the collision models present in the scene
+
+      //Add the current node and its child to the stats graph.
+      bool RealGUI::graphCreateStats( GNode *node, QListViewItem *parent)
+      {	
+	bool initialization = false;
+	sofa::helper::vector< sofa::core::CollisionModel* > list_collisionModels;
+	node->get< sofa::core::CollisionModel >( &list_collisionModels);		
+	//Creation of the item in the graph
+	Q3ListViewItem *item;
+	if (parent == NULL) 	  
+	{	
+	  if (items_stats.size() != 0)
+	  {
+	    delete items_stats[0].second;
+	    items_stats.clear();	 
+	    GUI::StatsCounter->clear();	    	    
+	  }
+	  
+	  item = new Q3ListViewItem(GUI::StatsCounter);	 
+	  initialization = true; 
+	}
+	else	    
+	  item = new Q3ListViewItem(parent);	   
+
+	int index = items_stats.size();	 
+
+	items_stats.push_back(std::make_pair(node, item));
+	
+	item->setText(0,node->getName().c_str());  item->setOpen(true);
+
+	QPixmap* pix = sofa::gui::qt::getPixmap(node);
+	if (pix)
+	  item->setPixmap(0, *pix);
+
+	bool usedNode = false;
+	//Add the current Collision Models
+	usedNode = graphAddCollisionModelsStat(list_collisionModels,item);
+	
+	//Recursive call
+	for (GNode::ChildIterator it= node->child.begin(); it != node->child.end(); ++it)
+	{	  	  
+	  usedNode |= graphCreateStats((*it), item);
+	}
+	if (!usedNode) {
+	  items_stats.erase(items_stats.begin()+index);
+	  delete item; return false;}
+
+	if (initialization)
+	{
+	  graphSummary();	
+	}	  
+	return true;
+      }
+      
+      //Add a list of Collision model to the graph
+      bool RealGUI::graphAddCollisionModelsStat(sofa::helper::vector< sofa::core::CollisionModel* > &v,QListViewItem *parent)
+      {
+	bool oneAdded = false;
+	for (unsigned int i=0;i<v.size();i++)
+	{
+	  if (!v[i]->isActive()) continue;
+	  Q3ListViewItem *item = new Q3ListViewItem(parent); 
+	  item->setText(0,v[i]->getName().c_str());
+	  
+	  if      (dynamic_cast< sofa::component::collision::TriangleModel* >(v[i])) item->setText(1, "Triangle");
+	  else if (dynamic_cast< sofa::component::collision::LineModel* >(v[i]))     item->setText(1, "Line");
+	  else if (dynamic_cast< sofa::component::collision::PointModel* >(v[i]))    item->setText(1, "Point");
+	  else if (dynamic_cast< sofa::component::collision::TSphereModel<Vec3Types>* >(v[i]))  item->setText(1, "Sphere");
+	  else continue;
+	  item->setText(2,QString::number(v[i]->getSize()));	  
+	  items_stats.push_back(std::make_pair(v[i], item));	  
+	  oneAdded = true;
+	}
+	return oneAdded;
+      }
+      
+      
+      //create global stats 
+      void RealGUI::graphSummary()
+      {
+	unsigned int counter[4]={0,0,0,0};
+	for (unsigned int i=0; i < items_stats.size();i++)
+	{
+	  if (!dynamic_cast< GNode *>(items_stats[i].first))
+	  {
+	    if ( std::string(items_stats[i].second->text(1).ascii()) == "Triangle")
+	    {
+	      counter[0]+=atoi(items_stats[i].second->text(2));
+	    }
+	    else if ( std::string(items_stats[i].second->text(1).ascii()) == "Line")
+	    {
+	      counter[1]+=atoi(items_stats[i].second->text(2));
+	    }
+	    else if ( std::string(items_stats[i].second->text(1).ascii()) == "Point")
+	    {
+	      counter[2]+=atoi(items_stats[i].second->text(2));
+	    }
+	    else if ( std::string(items_stats[i].second->text(1).ascii()) == "Sphere")
+	    {
+	      counter[3]+=atoi(items_stats[i].second->text(2));
+	    }		
+	  }
+	}
+	std::string textStats("Collision Elements present: <ul>");
+	if (counter[0] != 0) 
+	{
+	  char buf[100];
+	  sprintf ( buf, "<li>Triangles: %d</li>", counter[0] );
+	  textStats += buf;
+	}
+	    
+	if (counter[1] != 0) 
+	{
+	  char buf[100];
+	  sprintf ( buf, "<li>Lines: %d</li>", counter[1] );
+	  textStats += buf;
+	}
+	    
+	if (counter[2] != 0) 
+	{
+	  char buf[100];
+	  sprintf ( buf, "<li>Points: %d</li>", counter[2] );
+	  textStats += buf;
+	}
+	    
+	if (counter[3] != 0) 
+	{
+	  char buf[100];
+	  sprintf ( buf, "<li>Spheres: %d</li>", counter[3] );
+	  textStats += buf;
+	}
+
+	textStats += "</ul>";
+	statsLabel->setText( textStats.c_str());
+	statsLabel->update();
+      }
+      
+      void RealGUI::viewExecutionGraph()
+      {
+
       }
 
     } // namespace qt

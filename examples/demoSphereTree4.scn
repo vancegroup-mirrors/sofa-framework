@@ -19,7 +19,7 @@
 			<Object type="RigidMapping" object1="../.." object2="../Visual" />
 		</Node>
 		<Node name="Surf">
-			<Object type="SphereTree" filename="CollisionModels/dragon-1500-medial.sph" static="0"  />  
+			<Object type="SphereTree" filename="CollisionModels/dragon-1500-medial.sph" simulated="1" moving="1"  />  
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
@@ -33,7 +33,7 @@
 			<Object type="RigidMapping" object1="../.." object2="../Visual" />
 		</Node>
 		<Node name="Surf">
-			<Object type="SphereTree" filename="CollisionModels/dragon-1500-medial.sph" static="0"  />  
+			<Object type="SphereTree" filename="CollisionModels/dragon-1500-medial.sph" simulated="1" moving="1"  />  
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
@@ -47,7 +47,7 @@
 			<Object type="RigidMapping" object1="../.." object2="../Visual" />
 		</Node>
 		<Node name="Surf">
-			<Object type="SphereTree" filename="CollisionModels/cow-1500.sph" static="0"  />  
+			<Object type="SphereTree" filename="CollisionModels/cow-1500.sph" simulated="1" moving="1"  />  
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
@@ -56,16 +56,16 @@
 
 	<!-- Definition of static models -->
 
-	<Object type="SphereTree" name="dragon3" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="1" dy="-1" dz="0"/>
+	<Object type="SphereTree" name="dragon3" filename="CollisionModels/dragon-1500-medial.sph" simulated="0" moving="0" dx="1" dy="-1" dz="0"/>
 	<Object type="OglModel" name="dragon3" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="1" dy="-1" dz="0"/>
 
-	<Object type="SphereTree" name="dragon4" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="0" dy="-1" dz="-1"/>
+	<Object type="SphereTree" name="dragon4" filename="CollisionModels/dragon-1500-medial.sph" simulated="0" moving="0" dx="0" dy="-1" dz="-1"/>
 	<Object type="OglModel" name="dragon4" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="0" dy="-1" dz="-1"/>
 
-	<Object type="SphereTree" name="dragon5" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="1" dy="-1" dz="1"/>
+	<Object type="SphereTree" name="dragon5" filename="CollisionModels/dragon-1500-medial.sph" simulated="0" moving="0" dx="1" dy="-1" dz="1"/>
 	<Object type="OglModel" name="dragon5" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="1" dy="-1" dz="1"/>
 
-	<Object type="SphereTree" name="dragon6" filename="CollisionModels/dragon-1500-medial.sph" static="1" dx="1" dy="-1" dz="-1"/>
+	<Object type="SphereTree" name="dragon6" filename="CollisionModels/dragon-1500-medial.sph" simulated="0" moving="0" dx="1" dy="-1" dz="-1"/>
 	<Object type="OglModel" name="dragon6" filename="VisualModels/dragon-1500.obj" texturename="VisualModels/greeny.bmp" dx="1" dy="-1" dz="-1"/>
 
 

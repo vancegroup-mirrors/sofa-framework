@@ -28,11 +28,8 @@
 #include <sofa/component/collision/SphereModel.h>
 #include <sofa/helper/io/SphereLoader.h>
 #include <sofa/component/collision/CubeModel.h>
-#if defined (__APPLE__)
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 namespace sofa
 {
@@ -44,12 +41,30 @@ namespace collision
 {
 
 template<class TDataTypes>
+TSphereModel<TDataTypes>::TSphereModel()
+: defaultRadius(initData(&defaultRadius, 1.0, "radius","TODO"))
+{
+    resize(getSize()); // make sure the CollisionModel and the MechanicalObject have the same size
+    for(unsigned int i=0;i<this->radius.size();i++)
+        this->radius[i] = -1;
+}
+
+
+template<class TDataTypes>
 TSphereModel<TDataTypes>::TSphereModel(double radius)
-: defaultRadius(dataField(&defaultRadius, radius, "radius","TODO"))
+: defaultRadius(initData(&defaultRadius, radius, "radius","TODO"))
 {
     resize(getSize()); // make sure the CollisionModel and the MechanicalObject have the same size
     for(unsigned int i=0;i<this->radius.size();i++)
         this->radius[i] = radius;
+}
+
+template<class TDataTypes>
+void TSphereModel<TDataTypes>::init()
+{
+    Inherit::init();
+    for(unsigned int i=0;i<this->radius.size();i++)
+        if (this->radius[i]==-1) this->radius[i] = defaultRadius.getValue();
 }
 
 template<class TDataTypes>
@@ -130,15 +145,12 @@ void TSphereModel<TDataTypes>::draw(int index)
 template<class TDataTypes>
 void TSphereModel<TDataTypes>::draw()
 {
-	if (isActive() && getContext()->getShowCollisionModels())
+	if (getContext()->getShowCollisionModels())
 	{
 		glEnable(GL_LIGHTING);
 		glEnable(GL_COLOR_MATERIAL);
 		//glDisable(GL_LIGHTING);
-		if (isStatic())
-			glColor3f(0.5, 0.5, 0.5);
-		else
-			glColor3f(1.0, 0.0, 0.0);
+		glColor4fv(getColor4f());
 		for (int i=0;i<size;i++)
 		{
 			draw(i);
@@ -146,7 +158,7 @@ void TSphereModel<TDataTypes>::draw()
 		glDisable(GL_LIGHTING);
 		glDisable(GL_COLOR_MATERIAL);
 	}
-	if (isActive() && getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
+	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
 		dynamic_cast<core::VisualModel*>(getPrevious())->draw();
 }
 
@@ -154,7 +166,7 @@ template<class TDataTypes>
 void TSphereModel<TDataTypes>::computeBoundingTree(int maxDepth)
 {
 	CubeModel* cubeModel = createPrevious<CubeModel>();
-	if (isStatic() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
 	
 	Vector3 minElem, maxElem;
 
@@ -180,7 +192,7 @@ template<class TDataTypes>
 void TSphereModel<TDataTypes>::computeContinuousBoundingTree(double dt, int maxDepth)
 {
 	CubeModel* cubeModel = createPrevious<CubeModel>();
-	if (isStatic() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
 	
 	Vector3 minElem, maxElem;
 

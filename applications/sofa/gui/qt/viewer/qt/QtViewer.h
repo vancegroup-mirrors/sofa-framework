@@ -77,10 +77,6 @@ namespace sofa
 		TRACKBALL_MODE = 1,
 		PAN_MODE = 2,
 		ZOOM_MODE = 3,
-
-		BTLEFT_MODE = 101,
-		BTRIGHT_MODE = 102,
-		BTMIDDLE_MODE = 103,
 	      };
 	      // Interaction
 	      enum {
@@ -96,7 +92,7 @@ namespace sofa
 	      int				_clearBuffer;
 	      bool			_lightModelTwoSides;
 	      float			_lightPosition[4];
-	      int				_navigationMode;
+
 	      Trackball		_currentTrackball;
 	      Trackball		_newTrackball;
 	      //	Quaternion		_currentQuat;
@@ -131,10 +127,8 @@ namespace sofa
 	      double lastProjectionMatrix[16];
 	      double lastModelviewMatrix[16];
 	      GLint lastViewport[4];
-	      bool    sceneBBoxIsValid;
 	      Vector3 sceneMinBBox;
 	      Vector3 sceneMaxBBox;
-	      bool initTexturesDone;
 	    public:
 
 	      /// Activate this class of viewer.
@@ -205,9 +199,6 @@ namespace sofa
 
 	      bool _mouseInteractorTranslationMode;
 	      bool _mouseInteractorRotationMode;
-	      bool _mouseInteractorMoving;
-	      int _mouseInteractorSavedPosX;
-	      int _mouseInteractorSavedPosY;
 	      int _translationMode;
 	      Quaternion _mouseInteractorCurrentQuat;
 	      Vector3 _mouseInteractorAbsolutePosition;
@@ -253,6 +244,7 @@ namespace sofa
 	      //virtual bool event ( QEvent * e );
 
 	      virtual void keyPressEvent ( QKeyEvent * e );
+	      virtual void keyReleaseEvent ( QKeyEvent * e );
 	      virtual void mousePressEvent ( QMouseEvent * e );
 	      virtual void mouseReleaseEvent ( QMouseEvent * e );
 	      virtual void mouseMoveEvent ( QMouseEvent * e );

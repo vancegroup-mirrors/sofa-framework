@@ -86,8 +86,8 @@
 	<Node name="Floor">
 		<Object type="Mesh" filename="CollisionModels/floor2.obj" />
 		<Object type="MechanicalObject" scale="0.2" dy="-5" />
-		<Object type="Triangle" name="Floor" static="1" />
-		<Object type="Line" static="1" />
+		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
+		<Object type="Line" simulated="0" moving="0" />
 		<Object type="OglModel" name="FloorV" filename="CollisionModels/floor2.obj" texturename="VisualModels/floor.bmp" scale="0.2" dy="-5" />
 	</Node>
 </Node>

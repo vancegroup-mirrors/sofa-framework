@@ -23,9 +23,9 @@ using namespace sofa::defaulttype;
 class DrawV : public core::VisualModel, public core::componentmodel::behavior::MappedModel< ExtVectorTypes< Vec<3,GLfloat>, Vec<3,GLfloat> > >
 {
 public:
-    DataField<bool> castShadow; ///< True if object cast shadows
-    DataField<bool> useAlpha; ///< True if velocity displayed using alpha blending
-    DataField<double> vscale; ///< Scaling of veloity vectors
+    Data<bool> castShadow; ///< True if object cast shadows
+    Data<bool> useAlpha; ///< True if velocity displayed using alpha blending
+    Data<double> vscale; ///< Scaling of veloity vectors
     
     DrawV();
 

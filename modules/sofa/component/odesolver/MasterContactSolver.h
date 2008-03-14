@@ -5,6 +5,13 @@
 #include <sofa/simulation/tree/MasterSolverImpl.h>
 #include <sofa/simulation/tree/GNode.h>
 #include <sofa/simulation/tree/MechanicalVisitor.h>
+#include <sofa/core/componentmodel/collision/BaseContactCorrection.h>
+#include <sofa/core/componentmodel/behavior/OdeSolver.h>
+#include <sofa/simulation/tree/OdeSolverImpl.h>
+#ifdef SOFA_GPU_CUDA
+#include <sofa/gpu/cuda/CudaLCP.h>
+#endif
+
 
 namespace sofa
 {
@@ -16,6 +23,7 @@ namespace odesolver
 {
 
 using namespace sofa::defaulttype;
+using namespace helper::system::thread;
 
 
 class MechanicalResetContactForceVisitor : public simulation::tree::MechanicalVisitor
@@ -84,26 +92,35 @@ private:
 	// unsigned int &_numContacts; // we need an offset to fill the vector _v if differents contact class are created
 };
 
-/*
-class MechanicalResetConstraintContactCpt : public simulation::tree::MechanicalVisitor
+
+class MechanicalGetContactIDVisitor : public simulation::tree::MechanicalVisitor
 {
 public:
-	MechanicalResetConstraintContactCpt()
+	MechanicalGetContactIDVisitor(long *id, unsigned int offset = 0)
+		: _id(id),_offset(offset)
 	{
 	}
 
-    virtual Result fwdConstraint(simulation::tree::GNode* node, core::componentmodel::behavior::BaseConstraint* c)
+    virtual Result fwdConstraint(simulation::tree::GNode* /*node*/, core::componentmodel::behavior::BaseConstraint* c)
 	{
-		c->resetContactCpt();
+		c->getConstraintId(_id, _offset);
 		return RESULT_CONTINUE;
 	}
+
+private:
+	long *_id;
+	unsigned int _offset;
 };
-*/
 
 
-class MasterContactSolver : public sofa::simulation::tree::MasterSolverImpl
+
+class MasterContactSolver : public sofa::simulation::tree::MasterSolverImpl//, public sofa::simulation::tree::OdeSolverImpl
 {
 public:
+	Data<bool> initial_guess;
+#ifdef SOFA_GPU_CUDA
+	Data<bool> useGPU;
+#endif
 
 	MasterContactSolver();
     // virtual const char* getTypeName() const { return "MasterSolver"; }
@@ -112,7 +129,12 @@ public:
 
 	//virtual void propagatePositionAndVelocity(double t, VecId x, VecId v);
 
+	virtual void init();
+
 private:
+	std::vector<core::componentmodel::collision::BaseContactCorrection*> contactCorrections;
+	void computeInitialGuess();
+	void keepContactForcesValue();
 
 	void build_LCP(); 	
 	double	**_W, **_A; 
@@ -120,8 +142,20 @@ private:
 	unsigned int _numConstraints;
 	double _mu;
 	simulation::tree::GNode *context;
-};
+	
+	typedef struct {
+		Vector3 n;
+		Vector3 t;
+		Vector3 s;
+		Vector3 F;
+		long id;
 
+	} contactBuf;
+
+	contactBuf *_PreviousContactList;
+	unsigned int _numPreviousContact;
+	long *_cont_id_list;
+};
 
 } // namespace odesolver
 

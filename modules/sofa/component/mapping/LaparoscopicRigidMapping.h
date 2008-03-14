@@ -30,71 +30,113 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 #include <sofa/core/VisualModel.h>
+#include <sofa/component/topology/PointSubset.h>
 #include <vector>
 
+
+
+#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/component/MechanicalObject.h>
+#include <sofa/simulation/tree/GNode.h>
+#include <sofa/defaulttype/VecTypes.h>
 namespace sofa
 {
 
-namespace component
-{
+  namespace component
+  {
 
-namespace mapping
-{
+    namespace mapping
+    {
 
-template <class BasicMapping>
-class LaparoscopicRigidMapping : public BasicMapping, public core::VisualModel
-{
-public:
-	typedef BasicMapping Inherit;
-	typedef typename Inherit::In In;
-	typedef typename Inherit::Out Out;
-	typedef typename Out::VecCoord VecCoord;
-	typedef typename Out::VecDeriv VecDeriv;
-	typedef typename Out::Coord Coord;
-	typedef typename Out::Deriv Deriv;
-	//typedef typename Coord::value_type Real;
+      template <class BasicMapping>
+	class LaparoscopicRigidMapping : public BasicMapping, public core::VisualModel
+	{
+	public:
+	  typedef BasicMapping Inherit;
+	  typedef typename Inherit::In In;
+	  typedef typename Inherit::Out Out;
+	  typedef typename Out::VecCoord VecCoord;
+	  typedef typename In::VecCoord InVecCoord;
+	  typedef typename Out::VecDeriv VecDeriv;
+	  typedef typename Out::Coord Coord;
+	  typedef typename Out::Deriv Deriv;
+	  //typedef typename Coord::value_type Real;
 	
-public:
-	DataField<defaulttype::Vector3> pivot;
-	DataField<defaulttype::Quat> rotation;
+	public:
+	  Data<defaulttype::Vector3> pivot;
+	  Data<defaulttype::Quat> rotation;
+	  Data< component::topology::PointSubset > grab_index;
 	
 	LaparoscopicRigidMapping(In* from, Out* to)
-	: Inherit(from, to)
-	, pivot(dataField(&pivot, defaulttype::Vector3(0,0,0), "pivot","TODO-pivot"))
-	, rotation(dataField(&rotation, defaulttype::Quat(0,0,0,1), "rotation", "TODO-rotation"))
-	{
-	}
+	  : Inherit(from, to)
+	    , pivot(initData(&pivot, defaulttype::Vector3(0,0,0), "pivot","TODO-pivot"))
+	    , rotation(initData(&rotation, defaulttype::Quat(0,0,0,1), "rotation", "TODO-rotation"))
+	    , grab_index(initData(&grab_index, "grab", "Index of the point to grab"))
+	    , mstate(NULL), grab_state(false)
+	    {
+	    }
 	
-	virtual ~LaparoscopicRigidMapping()
-	{
-	}
+	  virtual ~LaparoscopicRigidMapping()
+	    {
+	      processRelease();
+	    }
 	
-	//void setPivot(const defaulttype::Vector3& val) { this->pivot = val; }
-	//void setRotation(const defaulttype::Quat& val) { this->rotation = val; this->rotation.normalize(); }
 	
-	void init();
+	  //void setPivot(const defaulttype::Vector3& val) { this->pivot = val; }
+	  //void setRotation(const defaulttype::Quat& val) { this->rotation = val; this->rotation.normalize(); }
 	
-	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	  void init();
 	
-	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	  virtual void reinit(){mstate = getMechanicalState();};
 	
-	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	
+	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	
+	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
-	// -- VisualModel interface
-	void draw();
-	void initTextures() { }
-	void update() { }
+	  // -- VisualModel interface
+	  void draw();
+	  void initTextures() { }
+	  void update() { }
+          void grab();  
+	  
+	protected:
+	  void processGrab();
+	  void processRelease();
+	  //Contain the mechanical state of the tool
+	  core::componentmodel::behavior::MechanicalState< defaulttype::Vec3Types > *mstate;
+	  bool grab_state;/*
+	  component::MechanicalObject<defaulttype::Vec3Types> *mm;*/
+	  
+	  bool getShow(const core::objectmodel::BaseObject* m) const { return m->getContext()->getShowMappings(); }
 
-protected:
+	  bool getShow(const core::componentmodel::behavior::BaseMechanicalMapping* m) const { return m->getContext()->getShowMechanicalMappings(); }
+	
+	  //Find the DOFs of the laparascopic object
+	  core::componentmodel::behavior::MechanicalState< defaulttype::Vec3Types > *getMechanicalState()
+	  {	  	  
+	    sofa::simulation::tree::GNode * context = dynamic_cast< sofa::simulation::tree::GNode *>( this->getContext());
+	    if (context == NULL) return NULL;
+	    for (sofa::simulation::tree::GNode::ChildIterator it= context->child.begin(); it != context->child.end(); ++it)
+	      {
+		if (core::componentmodel::behavior::MechanicalState< defaulttype::Vec3Types > *m = dynamic_cast< core::componentmodel::behavior::MechanicalState< defaulttype::Vec3Types > *>((*it)->getMechanicalState()))		  
+		    return m;
+		  
+	      }	      
+	    return NULL;
+	  }
+	  
+	  
+	  //For a give index, give the coordinates of a point
+	  helper::vector< defaulttype::Vec3f > getGrabPoints();
+	  sofa::helper::vector<core::componentmodel::behavior::BaseForceField*> forcefields;
+	  sofa::helper::vector<simulation::tree::GNode*> nodes;
+	};
 
-	bool getShow(const core::objectmodel::BaseObject* m) const { return m->getContext()->getShowMappings(); }
+    } // namespace mapping
 
-	bool getShow(const core::componentmodel::behavior::BaseMechanicalMapping* m) const { return m->getContext()->getShowMechanicalMappings(); }
-};
-
-} // namespace mapping
-
-} // namespace component
+  } // namespace component
 
 } // namespace sofa
 

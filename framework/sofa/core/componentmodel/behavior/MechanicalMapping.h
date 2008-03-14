@@ -58,10 +58,12 @@ template <class In, class Out>
 class MechanicalMapping : public Mapping<In,Out>, public BaseMechanicalMapping
 {
 public:
+    Data<bool> f_isMechanical;
+    
     MechanicalMapping(In* from, Out* to);
-    
+
     virtual ~MechanicalMapping();
-    
+
     /// Apply the reverse mapping on force vectors.
     ///
     /// If the MechanicalMapping can be represented as a matrix J, this method computes
@@ -83,6 +85,9 @@ public:
 
     /// Get the destination (lower, mapped) model.
     virtual BaseMechanicalState* getMechTo();
+
+    /// Return false if this mapping should only be used as a regular mapping instead of a mechanical mapping.
+    virtual bool isMechanical();
 
     virtual void init();
 

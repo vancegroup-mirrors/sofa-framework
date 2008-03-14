@@ -92,12 +92,15 @@ public:
     virtual void computeDfV(VecId df);
     /// Compute the acceleration corresponding to the given state (time, position and velocity)
     virtual void computeAcc(double t, VecId a, VecId x, VecId v);
+	/// Add dt*Gravity to the velocity
+	virtual void addSeparateGravity(double dt);
 
     virtual void computeContactForce(VecId result);
     virtual void computeContactDf(VecId df);
     virtual void computeContactAcc(double t, VecId a, VecId x, VecId v);
 
-    /// @}
+
+	/// @}
 
     /// @name Matrix operations
     /// @{

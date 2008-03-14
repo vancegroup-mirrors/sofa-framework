@@ -61,9 +61,9 @@ public:
     typedef typename Coord::value_type Real;
 
     /// Value of the applied forces
-    DataField<VecDeriv> m_forces;
+    Data<VecDeriv> m_forces;
     /// Indices of the particles where the forces are applied
-    DataField< helper::vector<unsigned> > m_indices;
+    Data< helper::vector<unsigned> > m_indices;
 
     ExternalForceField();
     

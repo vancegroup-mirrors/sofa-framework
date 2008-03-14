@@ -1,4 +1,4 @@
-<Node name="root" dt="0.0025" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+<Node name="root" dt="0.0025" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0">
 	<Node name="Floor">
 		<Object type="RegularGrid"
 			nx="2" ny="1" nz="2"

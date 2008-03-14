@@ -10,6 +10,7 @@
 	</Node>
 	<Node name="articulatedObject2">
 		<Object type="MechanicalObject" name="ArticulatedObject" template="Vec1d" position="0 0 0 0"/>
+		<Object type="ContactCorrection" />
 		<Node name="6D_DOFs1"> 
 			<Object type="MechanicalObject" name="6D_Dof" template="Rigid" position="0 0 0 0 0 0 1  20 0 0 0 0 0 1  40 0 0 0 0 0 1"/>
 			<Object type="UniformMass" filename="BehaviorModels/rigid.xs3"/>
@@ -57,7 +58,7 @@
 			</Node>
 			<Object type="ArticulatedSystemMapping" object1="ArticulatedObject" object2="6D_Dof"/>
 		</Node>
-            <Object type="ArticulatedHierarchyContainer" />
+           <Object type="ArticulatedHierarchyContainer" />
 		<Node name="articulationCenters">
 			<Node name="articulationCenter1">
 				<Object type="ArticulationCenter" parentIndex="0" childIndex="1" posOnParent="10 0 0" posOnChild="-10 0 0"/>
@@ -74,7 +75,7 @@
 				</Node>
 			</Node>
 		</Node>
-	</Node>
+	</Node> 
 	<Object type="StiffSpringForceField" name="Spring" object1="articulatedObject2" object2="articulatedObject1" spring="0 0 10000.0 1.0 0.0  1 1 10000.0 1.0 0.0  2 2 10000.0 1.0 0.0  3 3 10000.0 1.0 0.0"/>
 	</Node>
 </Node>

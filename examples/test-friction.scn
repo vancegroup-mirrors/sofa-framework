@@ -151,7 +151,7 @@
 				zmin="-0.015" zmax="-0.015"
 			/>
 			<Object type="MechanicalObject" />
-			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" static="1"/>
+			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="CubeTopology" internalPoints="0"
@@ -161,7 +161,7 @@
 				zmin="-0.015" zmax="0.1"
 			/>
 			<Object type="MechanicalObject" />
-			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" static="1"/>
+			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="CubeTopology" internalPoints="0"
@@ -171,7 +171,7 @@
 				zmin="-0.015" zmax="0.1"
 			/>
 			<Object type="MechanicalObject" />
-			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" static="1"/>
+			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="CubeTopology" internalPoints="0"
@@ -181,7 +181,7 @@
 				zmin="-0.015" zmax="0.1"
 			/>
 			<Object type="MechanicalObject" />
-			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" static="1"/>
+			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" simulated="0" moving="0"/>
 		</Node>
 		<Node name="Surf">
 			<Object type="CubeTopology" internalPoints="0"
@@ -191,7 +191,7 @@
 				zmin="-0.015" zmax="0.1"
 			/>
 			<Object type="MechanicalObject" />
-			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" static="1"/>
+			<Object type="Triangle"  proximity="0.015" contactStiffness="50.0" contactFriction="0" simulated="0" moving="0"/>
 		</Node>
 
 	</Node>

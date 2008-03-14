@@ -29,6 +29,8 @@
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/CollisionElement.h>
 
+
+
 namespace sofa
 {
 
@@ -64,17 +66,23 @@ public:
     typedef CollisionElementIterator Iterator;
 
     CollisionModel()
-    : bStatic(dataField(&bStatic, false, "static", "flag indicating if an object is immobile"))
-    , bActive(dataField(&bActive, true, "active", "flag indicating if this collision model is active and should be included in collision detections"))
-    , proximity(dataField(&proximity, 0.0, "proximity", "Distance to the actual (visual) surface"))
-    , contactStiffness(dataField(&contactStiffness, 10.0, "contactStiffness", "Default contact stiffness"))
-    , contactFriction(dataField(&contactFriction, 0.01, "contactFriction", "Default contact friction (damping) coefficient"))
-    , size(0), previous(NULL), next(NULL)
+    : bActive(initData(&bActive, true, "active", "flag indicating if this collision model is active and should be included in default collision detections"))
+    , bMoving(initData(&bMoving, true, "moving", "flag indicating if this object is changing position between iterations"))
+    , bSimulated(initData(&bSimulated, true, "simulated", "flag indicating if this object is controlled by a simulation"))
+    , bSelfCollision(initData(&bSelfCollision, false, "selfCollision", "flag indication if the object can self collide"))
+    , proximity(initData(&proximity, 0.0, "proximity", "Distance to the actual (visual) surface"))
+    , contactStiffness(initData(&contactStiffness, 10.0, "contactStiffness", "Default contact stiffness"))
+    , contactFriction(initData(&contactFriction, 0.01, "contactFriction", "Default contact friction (damping) coefficient"))
+    , contactResponse(initData(&contactResponse, "contactResponse", "if set, indicate to the ContactManager that this model should use the given class of contacts. Note that this is only indicative, and in particular if both collision models specify a different class it is up to the manager to choose."))
+    , bFiltered(initData(&bFiltered, false, "filtered", "flag indicating if the model has to build its neighborhood to filter contacts"))
+    , color(initData(&color, defaulttype::Vec4f(1,0,0,1), "color", "color used to display the collision model if requested"))
+    , size(0), previous(NULL)  , next(NULL)
     {
     }
 
-    virtual ~CollisionModel() { }
-
+    
+    virtual ~CollisionModel() { }    
+    
     /// Return true if there are no elements
     bool empty() const
     {
@@ -132,17 +140,34 @@ public:
     /// \brief Return true if this CollisionModel should be used for collisions.
     ///
     /// Default to true.
-    virtual bool isActive() { return bActive.getValue(); }
+    virtual bool isActive() const { return bActive.getValue() && getContext()->isActive(); }
 
     virtual void setActive(bool val=true) { bActive.setValue(val); }
 
-    /// \brief Return true if this CollisionModel is attached to an immobile
-    /// <i>obstacle</i> object.
+    /// \brief Return true if this CollisionModel is changing position between
+    /// iterations.
+    ///
+    /// Default to true.
+    virtual bool isMoving() const { return bMoving.getValue(); }
+
+    virtual void setMoving(bool val=true) { bMoving.setValue(val); }
+
+    /// \brief Return true if this CollisionModel is attached to a simulation.
+    /// It is false for immobile or procedurally animated objects that don't
+    /// use contact forces
+    ///
+    /// Default to true.
+    virtual bool isSimulated() const { return bSimulated.getValue(); }
+
+    virtual void setSimulated(bool val=true) { bSimulated.setValue(val); }
+
+	/// \brief Return true if this CollisionModel must build its neigborhood 
+    /// basically to be used in filtered proximity detection
     ///
     /// Default to false.
-    virtual bool isStatic() { return bStatic.getValue(); }
+    virtual bool isFiltered() const { return bFiltered.getValue(); }
 
-    virtual void setStatic(bool val=true) { bStatic.setValue(val); }
+    virtual void setFiltered(bool val=true) { bFiltered.setValue(val); }
 
     /// Create or update the bounding volume hierarchy.
     virtual void computeBoundingTree(int maxDepth=0) = 0;
@@ -201,7 +226,9 @@ public:
     ///
     /// Default to false if the collision models are attached to the same
     /// context (i.e. the same node in the scenegraph).
-    virtual bool canCollideWith(CollisionModel* model) { return model->getContext() != this->getContext(); } // (B. ANDRE : Why not remplace by "true" to avoid self-collisions ?)
+    virtual bool canCollideWith(CollisionModel* model) { 
+      if (model == this) return bSelfCollision.getValue();
+      return model->getContext() != this->getContext(); } // (B. ANDRE : Why not remplace by "true" to avoid self-collisions ?)
     //virtual bool canCollideWith(CollisionModel* model) { return model != this; }
 
     /// \brief Test if two elements can collide with each other.
@@ -212,6 +239,7 @@ public:
     /// Default to canCollideWith(model2)
     virtual bool canCollideWithElement(int /*index*/, CollisionModel* model2, int /*index2*/) { return canCollideWith(model2); }
 
+    
     /// Render an collision element.
     virtual void draw(int /*index*/) {}
 
@@ -244,23 +272,41 @@ public:
 
     /// Contact stiffness
     double getContactStiffness(int /*index*/) { return contactStiffness.getValue(); }
+	void setContactStiffness(double stiffness) { contactStiffness.setValue(stiffness); }
 
     /// Contact friction (damping) coefficient
     double getContactFriction(int /*index*/) { return contactFriction.getValue(); }
-
+	void setContactFriction(double friction) { contactFriction.setValue(friction); }
+    
+    /// Contact response algorithm
+    std::string getContactResponse() { return contactResponse.getValue(); }
+    
     /// @}
 
+    /// Get a color that can be used to display this CollisionModel
+    const float* getColor4f();
+    void setColor4f(const float *c){color.setValue(defaulttype::Vec4f(c[0],c[1],c[2],c[3]));};
 protected:
 
-    DataField<bool> bStatic;
+    Data<bool> bActive;
 
-    DataField<bool> bActive;
+    Data<bool> bMoving;
 
-    DataField<double> proximity;
+    Data<bool> bSimulated;
+    
+    Data<bool> bSelfCollision;
 
-    DataField<double> contactStiffness;
+    Data<double> proximity;
 
-    DataField<double> contactFriction;
+    Data<double> contactStiffness;
+
+    Data<double> contactFriction;
+    
+    Data<std::string> contactResponse;
+
+    Data<bool> bFiltered;
+
+    Data<defaulttype::Vec4f> color;
 
     /// Number of collision elements
     int size;
@@ -282,7 +328,8 @@ protected:
                 delete previous;
             pmodel = new DerivedModel();
             pmodel->setContext(getContext());
-            pmodel->setStatic(isStatic());
+            pmodel->setMoving(isMoving());
+            pmodel->setSimulated(isSimulated());
             pmodel->proximity.setValue(proximity.getValue());
             previous = pmodel;
             pmodel->setNext(this);

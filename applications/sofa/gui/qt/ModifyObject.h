@@ -64,6 +64,7 @@ namespace sofa
 
       using sofa::helper::Quater;
       using sofa::defaulttype::Vec;
+      
 
 #ifndef QT_MODULE_QT3SUPPORT      
       typedef QListViewItem Q3ListViewItem;
@@ -75,7 +76,7 @@ namespace sofa
 	Q_OBJECT
 	  public:
 
-	ModifyObject( int Id, core::objectmodel::Base* node, Q3ListViewItem* item_clicked, QWidget* parent, const char* name= 0, bool  modal= FALSE, Qt::WFlags f= 0 );
+	ModifyObject( void *Id, core::objectmodel::Base* node, Q3ListViewItem* item_clicked, QWidget* parent, const char* name= 0, bool  modal= FALSE, Qt::WFlags f= 0 );
 	~ModifyObject()
 	  {
 	    delete buttonUpdate;
@@ -88,6 +89,7 @@ namespace sofa
 	void updateTables();              //update the tables of value at each step of the simulation
 	void saveTables();                //Save in datafield the content of a 
 	void changeValue();               //each time a field is modified
+	void changeVisualValue();               //each time a field of the Visualization tab is modified
 	void changeNumberPoint();         //used to dynamically add points in an object of type pointSubset
 	void closeNow (){emit(reject());} //called from outside to close the current widget
 	void reject   (){                 emit(dialogClosed(Id)); deleteLater();QDialog::reject();} //When closing a window, inform the parent.
@@ -95,8 +97,10 @@ namespace sofa
 
 	signals:
 	void objectUpdated();              //update done
-	void dialogClosed(int);            //the current window has been closed: we give the Id of the current window
-	void transformObject(GNode * current_node, double translationX, double translationY, double translationZ, double scale);
+	void dialogClosed(void *);            //the current window has been closed: we give the Id of the current window
+	void transformObject(GNode * current_node, double translationX, double translationY, double translationZ,
+			                           double rotationX, double rotationY, double rotationZ,
+	                                           double scale);
 
 
       protected:
@@ -108,8 +112,8 @@ namespace sofa
 	void updateHistory();
 	void updateEnergy();
 
-	bool createTable(core::objectmodel::FieldBase* field, Q3GroupBox *box=NULL, Q3Table* vectorTable=NULL, Q3Table* vectorTable2=NULL );
-	void storeTable(Q3Table* table, core::objectmodel::FieldBase* field);
+	bool createTable(core::objectmodel::BaseData* field, Q3GroupBox *box=NULL, Q3Table* vectorTable=NULL, Q3Table* vectorTable2=NULL );
+	void storeTable(Q3Table* table, core::objectmodel::BaseData* field);
 
 	void createVector(const Quater<double> &value, Q3GroupBox *box); //will be created as a Vec<4,double>
 	void createVector(const Quater<float>  &value, Q3GroupBox *box); //will be created as a Vec<4,float>
@@ -118,32 +122,42 @@ namespace sofa
 	template< int N, class T>
 	  void createVector(const Vec<N,T> &value, Q3GroupBox *box);
 	template< int N, class T>
-	  void storeVector(std::list< QObject *>::iterator &list_it, DataField< Vec<N,T> > *ff);
-	//*********************************************************
-	template< class T>
-	  bool createQtTable(DataField< sofa::helper::vector< T > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
+	  void storeVector(std::list< QObject *>::iterator &list_it, Data< Vec<N,T> > *ff);
 	template<class T>
-	  void storeQtTable( Q3Table* table, DataField< sofa::helper::vector< T > >* ff );
+	  void storeVector(std::list< QObject *>::iterator &list_it, Data< Quater<T> > *ff);
+	template< int N, class T>
+	  void storeVector(std::list< QObject *>::iterator &list_it, DataPtr< Vec<N,T> > *ff);
+	template<class T>
+	  void storeVector(std::list< QObject *>::iterator &list_it, DataPtr< Quater<T> > *ff);
+	template< int N, class T>
+	  void storeVector(std::list< QObject *>::iterator &list_it, Vec<N,T> *ff);
+	template<class T>
+	  void storeVector(std::list< QObject *>::iterator &list_it, Quater<T> *ff);
 	//*********************************************************
 	template< class T>
-	  bool createQtTable(Field< sofa::helper::vector< T > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
-	template< class T>
-	  void storeQtTable( Q3Table* table, Field< sofa::helper::vector< T > >* ff );
-	//*********************************************************
-	template< int N, class T>
-	  bool createQtTable(DataField< sofa::helper::vector< Vec<N,T> > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
-	template< int N, class T>
-	  void storeQtTable( Q3Table* table, DataField< sofa::helper::vector< Vec<N,T> > >* ff );
-	//*********************************************************
-	template< int N, class T>
-	  bool createQtTable(Field< sofa::helper::vector< Vec<N,T> > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
-	template< int N, class T>
-	  void storeQtTable( Q3Table* table, Field< sofa::helper::vector< Vec<N,T> > >* ff );
+	  bool createQtTable(Data< sofa::helper::vector< T > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
+	template<class T>
+	  void storeQtTable( Q3Table* table, Data< sofa::helper::vector< T > >* ff );
 	//*********************************************************
 	template< class T>
-	  bool createQtTable(DataField< sofa::component::topology::PointData< T > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
+	  bool createQtTable(DataPtr< sofa::helper::vector< T > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
 	template< class T>
-	  void storeQtTable( Q3Table* table, DataField< sofa::component::topology::PointData< T > >* ff );
+	  void storeQtTable( Q3Table* table, DataPtr< sofa::helper::vector< T > >* ff );
+	//*********************************************************
+	template< int N, class T>
+	  bool createQtTable(Data< sofa::helper::vector< Vec<N,T> > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
+	template< int N, class T>
+	  void storeQtTable( Q3Table* table, Data< sofa::helper::vector< Vec<N,T> > >* ff );
+	//*********************************************************
+	template< int N, class T>
+	  bool createQtTable(DataPtr< sofa::helper::vector< Vec<N,T> > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
+	template< int N, class T>
+	  void storeQtTable( Q3Table* table, DataPtr< sofa::helper::vector< Vec<N,T> > >* ff );
+	//*********************************************************
+	template< class T>
+	  bool createQtTable(Data< sofa::component::topology::PointData< T > > *ff, Q3GroupBox *box, Q3Table* vectorTable );
+	template< class T>
+	  void storeQtTable( Q3Table* table, Data< sofa::component::topology::PointData< T > >* ff );
 	//*********************************************************
 
 
@@ -154,13 +168,14 @@ namespace sofa
 	QPushButton *buttonUpdate;
 	std::list< QObject* >                         list_Object;
 	std::list< std::list< QObject* > * >          list_PointSubset;
-	std::list< std::pair< Q3Table*, core::objectmodel::FieldBase*> > list_Table;
-	int Id;
-
+	std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> > list_Table;
+	void *Id;
+	bool visualContentModified;
 	std::vector< double > history;
 	std::vector< double > energy_history[3];
 	QwtPlot *graphEnergy;
 	QwtPlotCurve *energy_curve[3];
+	unsigned int counterWidget;
       };
 
     } // namespace qt

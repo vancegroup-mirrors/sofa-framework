@@ -27,6 +27,7 @@
 #define SOFA_COMPONENT_MAPPING_ARTICULATEDSYSTEMMAPPING_INL
 
 #include <sofa/component/mapping/ArticulatedSystemMapping.h>
+#include <sofa/core/objectmodel/BaseContext.h>
 
 namespace sofa
 {
@@ -44,25 +45,21 @@ void ArticulatedSystemMapping<BasicMapping>::init()
 	context->getNodeObject(ahc);
 	articulationCenters = ahc->getArticulationCenters();
 
-	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator ac = articulationCenters.begin();
-	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator acEnd = articulationCenters.end();
-
 	OutVecCoord& xto = *this->toModel->getX();
+	InVecCoord& xfrom = *this->fromModel->getX();
 
-	for (; ac != acEnd; ac++)
-	{
-		int parent = (*ac)->parentIndex.getValue();
+	context->parent->getNodeObject(rootModel);
 
-		// The position of the articulation center can be deduced using the 6D position of the parent:
-		// only useful for visualisation of the mapping
-		(*ac)->globalPosition.setValue(xto[parent].getCenter() + 
-			xto[parent].getOrientation().rotate((*ac)->posOnParent.getValue()));
-	}
+	apply(xto, xfrom);
 }
 
 template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typename In::VecCoord& in )
 {
+    // Copy the root position if a rigid root model is present
+    if (rootModel)
+        out[0] = (*rootModel->getX())[0];
+
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator ac = articulationCenters.begin();
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator acEnd = articulationCenters.end();
 
@@ -112,8 +109,6 @@ template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
 {
 	OutVecCoord& xto = *this->toModel->getX();
-	//InVecCoord& xfree = *this->fromModel->getX();
-	//apply(xto, xfree);
 
 	out[0] = OutDeriv();
 
@@ -153,6 +148,7 @@ void ArticulatedSystemMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out
 			{
 				out[child].getVCenter() += axis*value.x();
 			}
+
 		}
 	}
 }
@@ -161,8 +157,6 @@ template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 {
 	OutVecCoord& xto = *this->toModel->getX();
-	//InVecCoord& xfree = *this->fromModel->getX();
-	//apply(xto, xfree);
 
 	OutVecDeriv fObjects6DBuf = in;
 
@@ -210,8 +204,6 @@ template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
 {
 	OutVecCoord& xto = *this->toModel->getX();
-	//InVecCoord& xfree = *this->fromModel->getX();
-	//apply(xto, xfree);
 
 	out.resize(in.size());
 
@@ -240,9 +232,11 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out
 				vector<ArticulatedHierarchyContainer::ArticulationCenter::Articulation*>::const_iterator a = articulations.begin();
 				vector<ArticulatedHierarchyContainer::ArticulationCenter::Articulation*>::const_iterator aEnd = articulations.end();
 
+				int parent = (*ac)->parentIndex.getValue();
+
 				for (; a != aEnd; a++)
 				{
-					Vector3 axis = xto[childIndex].getOrientation().rotate((*a)->axis.getValue());
+					Vector3 axis = xto[parent].getOrientation().rotate((*a)->axis.getValue());
 
 					InSparseDeriv constArt;
 					constArt.index = (*a)->articulationIndex.getValue();
@@ -253,6 +247,7 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out
 					if ((*a)->translation.getValue())
 					{
 						constArt.data = dot(axis, T.getVCenter());
+						//printf("\n weightedNormalArticulation : %f", constArt.data);
 					}
 					out[i].push_back(constArt);
 				}
@@ -264,18 +259,10 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out
 template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::draw()
 {
-	if (!getShow(this)) return;
-	glDisable (GL_LIGHTING);
-	glPointSize(10);
-	glColor4f (1,0,0,0);
-	glBegin (GL_POINTS);
-	std::vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator ac = articulationCenters.begin();
-	std::vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator acEnd = articulationCenters.end();
-	for (; ac != acEnd; ac++)
-	{
-		helper::gl::glVertexT((*ac)->globalPosition.getValue());
-	}
-	glEnd();
+	//if (!getShow(this)) return;
+	//OutVecCoord& xto = *this->toModel->getX();
+	//glDisable (GL_LIGHTING);
+	//glPointSize(2);
 }
 
 } // namespace mapping

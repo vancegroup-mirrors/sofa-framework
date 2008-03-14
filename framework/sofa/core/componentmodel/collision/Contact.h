@@ -30,6 +30,7 @@
 #include <sofa/core/objectmodel/Context.h>
 #include <sofa/helper/Factory.h>
 
+#include <sofa/core/componentmodel/behavior/InteractionForceField.h>
 #include <vector>
 
 namespace sofa
@@ -57,13 +58,19 @@ public:
 	virtual void createResponse(objectmodel::BaseContext* group) = 0;
 	
 	virtual void removeResponse() = 0;
-	
-	/// Return true if this contact should be kept alive, even if objects are no longer in collision
-	virtual bool keepAlive() { return false; }
-	
-	typedef helper::Factory< std::string, Contact, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> > Factory;
-	
-	static Contact* Create(const std::string& type, core::CollisionModel* model1, core::CollisionModel* model2, Intersection* intersectionMethod);
+
+    /// Return true if this contact should be kept alive, even if objects are no longer in collision
+    virtual bool keepAlive() { return false; }
+
+    /// Control the keepAlive flag of the contact. Note that not all contacts support this method
+    virtual void setKeepAlive(bool /* val */) {}
+    
+    virtual void getCorrespondingCollisionModels( const core::componentmodel::behavior::InteractionForceField *, 
+                                                 core::CollisionModel*& /* */, core::CollisionModel*& /* */) {};
+
+    typedef helper::Factory< std::string, Contact, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> > Factory;
+
+    static Contact* Create(const std::string& type, core::CollisionModel* model1, core::CollisionModel* model2, Intersection* intersectionMethod);
 };
 
 template<class RealContact>
@@ -75,11 +82,14 @@ void create(RealContact*& obj, std::pair<std::pair<core::CollisionModel*,core::C
 	RealCollisionModel1* model1 = dynamic_cast<RealCollisionModel1*>(arg.first.first);
 	RealCollisionModel2* model2 = dynamic_cast<RealCollisionModel2*>(arg.first.second);
 	RealIntersection* inter  = dynamic_cast<RealIntersection*>(arg.second);
-	if (model1==NULL || model2==NULL)
+    // CHANGE(Jeremie A. 2007-12-07): disable automatic swapping of the models, as it brings hard to find bugs where the order does not match the DetectionOutputs...
+    // The Intersector class is now modified so that they are swapped to an unique order at the detection phase of the pipeline.
+    /*	if (model1==NULL || model2==NULL)
 	{ // Try the other way around
 		model1 = dynamic_cast<RealCollisionModel1*>(arg.first.second);
 		model2 = dynamic_cast<RealCollisionModel2*>(arg.first.first);
 	}
+     */
 	if (model1==NULL || model2==NULL || inter==NULL) return;
 	obj = new RealContact(model1, model2, inter);
 }

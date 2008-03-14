@@ -37,11 +37,12 @@
 #include <fstream>
 #include <string.h>
 #include <math.h>
-#include <GL/glu.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glu.h>
 #ifdef WIN32
 #include <GL/glaux.h>
 #endif
-#include <GL/glut.h>
+#include <sofa/helper/system/glut.h>
 #include <qevent.h>
 #include "GenGraphForm.h"
 #include "Main.h"
@@ -60,7 +61,6 @@
 #include <sofa/simulation/automatescheduler/ThreadSimulation.h>
 
 #include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 
 
 // define this if you want video and OBJ capture to be only done once per N iteration
@@ -228,7 +228,9 @@ namespace sofa
 	    m_isControlPressed = false;
 		
 	    setManipulatedFrame( new qglviewer::ManipulatedFrame() );
-
+	    //near and far plane are better placed
+            camera()->setZNearCoefficient(0.001);
+	    camera()->setZClippingCoefficient(5);
 	  }
 
 
@@ -958,7 +960,7 @@ namespace sofa
     
 	    if (!initTexturesDone)
 	      {
-		std::cout << "-----------------------------------> initTexturesDone\n";
+//		std::cout << "-----------------------------------> initTexturesDone\n";
 		//---------------------------------------------------
 		getSimulation()->initTextures(groot);
 		//---------------------------------------------------
@@ -1339,6 +1341,7 @@ namespace sofa
 		DrawAutomate();
 	      }
 
+
 	    if (_video)
 	      {
 #ifdef CAPTURE_PERIOD
@@ -1395,6 +1398,7 @@ namespace sofa
 		  default:
 		    {
 		      SofaViewer::keyPressEvent(e);
+		      QGLViewer::keyPressEvent(e);
 		    }
 		  }
 	      }
@@ -1436,14 +1440,14 @@ namespace sofa
 	      }
 	    else if (e->state()&Qt::ControlButton)
 	      {			
-		moveLaparoscopic(e);		  
+		moveLaparoscopic(e);
 		return true;
 	      }
 	    else
-	      {
+            {
 		if (interactor!=NULL)
 		  interactor->newEvent("hide");
-	      }
+              }
 	    return false;
 	  }
 
@@ -1479,123 +1483,6 @@ namespace sofa
 
 	    //std::cout << p0[0]<<' '<<p0[1]<<' '<<p0[2] << " -> " << pz[0]<<' '<<pz[1]<<' '<<pz[2] << std::endl;
 	    interactor->newPosition(p0, q, transform);
-	  }
-
-	  void QtGLViewer::moveLaparoscopic(QMouseEvent *e)
-	  {
-	    int eventX = e->x();
-	    int eventY = e->y();
-
-	    std::vector< sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>* > instruments;
-	    groot->getTreeObjects<sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>, std::vector< sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>* > >(&instruments);
-	    //std::cout << instruments.size() << " instruments\n";	       
-	    if (!instruments.empty())
-	      {
-		sofa::core::componentmodel::behavior::MechanicalState<sofa::defaulttype::LaparoscopicRigidTypes>* instrument = instruments[0];
-		switch (e->type())
-		  {
-		  case QEvent::MouseButtonPress:
-		    // Mouse left button is pushed
-		    if (e->button() == Qt::LeftButton)
-		      {
-			_navigationMode = BTLEFT_MODE;
-			_mouseInteractorMoving = true;
-			_mouseInteractorSavedPosX = eventX;
-			_mouseInteractorSavedPosY = eventY;
-		      }
-		    // Mouse right button is pushed 
-		    else if (e->button() == Qt::RightButton)
-		      {
-			_navigationMode = BTRIGHT_MODE;
-			_mouseInteractorMoving = true;
-			_mouseInteractorSavedPosX = eventX;
-			_mouseInteractorSavedPosY = eventY;
-		      }
-		    // Mouse middle button is pushed 
-		    else if (e->button() == Qt::MidButton)
-		      {
-			_navigationMode = BTMIDDLE_MODE;
-			_mouseInteractorMoving = true;
-			_mouseInteractorSavedPosX = eventX;
-			_mouseInteractorSavedPosY = eventY;
-		      }
-		    break;
-
-		  case QEvent::MouseMove:
-		    // 
-		    break;
-
-		  case QEvent::MouseButtonRelease:
-		    // Mouse left button is released 
-		    if (e->button() == Qt::LeftButton)
-		      {
-			if (_mouseInteractorMoving)
-			  {
-			    _mouseInteractorMoving = false;
-			  }
-		      }
-		    // Mouse right button is released
-		    else if (e->button() == Qt::RightButton)
-		      {
-			if (_mouseInteractorMoving)
-			  {
-			    _mouseInteractorMoving = false;
-			  }
-		      }
-		    // Mouse middle button is released
-		    else if (e->button() == Qt::MidButton)
-		      {
-			if (_mouseInteractorMoving)
-			  {
-			    _mouseInteractorMoving = false;
-			  }
-		      }
-		    break;
-
-		  default:
-		    break;
-		  }
-		if (_mouseInteractorMoving && _navigationMode == BTLEFT_MODE)
-		  {
-		    int dx = eventX - _mouseInteractorSavedPosX;
-		    int dy = eventY - _mouseInteractorSavedPosY;
-		    if (dx || dy)
-		      {
-			(*instrument->getX())[0].getOrientation() = (*instrument->getX())[0].getOrientation() * Quat(Vector3(0,1,0),dx*0.001) * Quat(Vector3(0,0,1),dy*0.001);
-			update();
-			_mouseInteractorSavedPosX = eventX;
-			_mouseInteractorSavedPosY = eventY;
-		      }
-		  }
-		else if (_mouseInteractorMoving && _navigationMode == BTMIDDLE_MODE)
-		  {
-		    int dx = eventX - _mouseInteractorSavedPosX;
-		    int dy = eventY - _mouseInteractorSavedPosY;
-		    if (dx || dy)
-		      {
-			if (!groot || !groot->getContext()->getAnimate())
-			  update();
-			_mouseInteractorSavedPosX = eventX;
-			_mouseInteractorSavedPosY = eventY;
-		      }
-		  }
-		else if (_mouseInteractorMoving && _navigationMode == BTRIGHT_MODE)
-		  {
-		    int dx = eventX - _mouseInteractorSavedPosX;
-		    int dy = eventY - _mouseInteractorSavedPosY;
-		    if (dx || dy)
-		      {
-			(*instrument->getX())[0].getTranslation() += (dy)*0.01;
-			(*instrument->getX())[0].getOrientation() = (*instrument->getX())[0].getOrientation() * Quat(Vector3(1,0,0),dx*0.001);
-			if (!groot || !groot->getContext()->getAnimate())
-			  update();
-			_mouseInteractorSavedPosX = eventX;
-			_mouseInteractorSavedPosY = eventY;
-		      }
-		  }
-		static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::MechanicalPropagatePositionAndVelocityVisitor>();
-		static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::UpdateMappingVisitor>();
-	      }
 	  }
 
 	  // -------------------------------------------------------------------
@@ -1679,51 +1566,6 @@ namespace sofa
 	    capture.saveScreen(filename);
 	  }
 
-
-	  void QtGLViewer::setScene(sofa::simulation::tree::GNode* scene, const char* filename, bool keepParams)
-	  {
-
-	    std::ostringstream ofilename;
-	    std::string screenshot_prefix;
-
-	    sceneFileName = (filename==NULL)?"":filename;
-	
-	    if (!sceneFileName.empty())
-	      {
-		const char* begin = sceneFileName.c_str();
-		const char* end = strrchr(begin,'.');
-		if (!end) end = begin + sceneFileName.length();
-		ofilename << std::string(begin, end);
-		ofilename << "_";
-
-		screenshot_prefix = ofilename.str();
-
-		unsigned int position_scene = screenshot_prefix.rfind("scenes/");
-
-		if (position_scene != std::string::npos && position_scene < screenshot_prefix.size()-7)
-		  {
-		    screenshot_prefix.replace(position_scene, 7, "share/screenshots/");
-		  }
-	      }
-	    else
-	      screenshot_prefix = "scene_";
-
-	    capture.setPrefix(screenshot_prefix);
-	    if (scene != groot)
-	      {
-		if (interactor != NULL)
-		  interactor = NULL;
-	      }
-	    groot = scene;
-	    initTexturesDone = false;
-	    sceneBBoxIsValid = false;
-
-	    if (!keepParams) resetView();
-	    update();
-
-	  }
-
-
 	  /// Render Scene called during multiThread simulation using automate
 	  void QtGLViewer::drawFromAutomate()
 	  {
@@ -1767,13 +1609,16 @@ namespace sofa
 <li><b>A</b>: TO DRAW AXIS<br></li>\
 <li><b>B</b>: TO CHANGE THE BACKGROUND<br></li>\
 <li><b>C</b>: TO CENTER THE VIEW<br></li>\
-<li><b>S</b>: TO SAVE A SCREENSHOT<br>\
+<li><b>H</b>: TO OPEN HELP of QGLViewer<br></li>\
 <li><b>L</b>: TO DRAW SHADOWS<br></li>\
 <li><b>O</b>: TO EXPORT TO .OBJ<br>\
 The generated files scene-time.obj and scene-time.mtl are saved in the running project directory<br></li>\
+<li><b>P</b>: TO SAVE A SEQUENCE OF OBJ<br>\
+Each time the frame is updated an obj is exported<br></li>\
 <li><b>R</b>: TO DRAW THE SCENE AXIS<br></li>\
 <li><b>T</b>: TO CHANGE BETWEEN A PERSPECTIVE OR AN ORTHOGRAPHIC CAMERA<br></li>\
 The captured images are saved in the running project directory under the name format capturexxxx.bmp<br></li>\
+<li><b>S</b>: TO SAVE A SCREENSHOT<br>\
 <li><b>V</b>: TO SAVE A VIDEO<br>\
 Each time the frame is updated a screenshot is saved<br></li>\
 <li><b>Esc</b>: TO QUIT ::sofa:: <br></li></ul>");

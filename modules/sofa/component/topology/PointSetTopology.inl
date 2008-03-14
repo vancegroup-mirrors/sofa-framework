@@ -107,9 +107,6 @@ namespace sofa
 	addTopologyChange(e);
       }
 
-
-
-
       template<class DataTypes>
       void PointSetTopologyModifier<DataTypes>::addPointsProcess(const unsigned int nPoints, 
 								 const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors, 
@@ -168,6 +165,32 @@ namespace sofa
                
       }
 
+	  template<class DataTypes>
+      void PointSetTopologyModifier<DataTypes>::addNewPoint( const sofa::helper::vector< double >& x) 
+      {
+		PointSetTopology<DataTypes> *topology = dynamic_cast<PointSetTopology<DataTypes> *>(m_basicTopology);
+		assert (topology != 0);
+		PointSetTopologyContainer * container = static_cast<PointSetTopologyContainer *>(topology->getTopologyContainer());
+		assert (container != 0);
+		unsigned int prevSizeMechObj   = topology->object->getSize();
+		unsigned int prevSizeContainer = container->getDOFIndexArray().size();			
+
+		// resizing the state vectors
+		topology->object->resize( prevSizeMechObj + 1 );
+        
+		topology->object->computeNewPoint(prevSizeMechObj, x);
+		       
+		// setting the new indices
+		sofa::helper::vector<unsigned int> DOFIndex = container->getDOFIndexArray();
+		DOFIndex.resize(prevSizeContainer + 1);
+		
+		DOFIndex[prevSizeContainer] = prevSizeMechObj;		
+
+		//invalidating PointSetIndex, since it is no longer up-to-date
+		assert(container->getPointSetIndexSize()==0);
+               
+      }
+
 
 
       template<class DataTypes>
@@ -194,11 +217,12 @@ namespace sofa
 
 
       template<class DataTypes>
-      void PointSetTopologyModifier<DataTypes>::removePointsProcess( sofa::helper::vector<unsigned int> &indices) 
+      void PointSetTopologyModifier<DataTypes>::removePointsProcess( sofa::helper::vector<unsigned int> &indices, const bool removeDOF) 
       {
 	// BUG FIXED : do not sort indices here
 	//std::sort( indices.begin(), indices.end(), std::greater<unsigned int>() );
 
+    // Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
 
 	PointSetTopology<DataTypes> *topology = dynamic_cast<PointSetTopology<DataTypes> *>(m_basicTopology);
 	assert (topology != 0);
@@ -209,6 +233,8 @@ namespace sofa
 	int prevPointSetIndexArraySize = container->getPointSetIndexArray().size();
 
 	int lastIndexMech = prevSizeMechObj - 1;
+
+			  if(removeDOF){
 
 	// deleting the vertices
 	for (unsigned int i = 0; i < indices.size(); ++i)
@@ -225,14 +251,18 @@ namespace sofa
             
 	// resizing the state vectors
 	topology->object->resize( prevSizeMechObj - indices.size() );
+
+			  }else{
+				  topology->object->resize( prevSizeMechObj );
+			  }
             
 	// resizing the topology container vectors
 	if (prevDOFIndexArraySize)
 	  container->getDOFIndexArrayForModification().resize(prevDOFIndexArraySize - indices.size() );
 	if (prevPointSetIndexArraySize)
 	  container->getPointSetIndexArrayForModification().resize(prevPointSetIndexArraySize - indices.size() );
-      }
 
+		  }
 
 
       template<class DataTypes>
@@ -310,7 +340,7 @@ namespace sofa
 		
       template<class DataTypes>
       PointSetTopology<DataTypes>::PointSetTopology(MechanicalObject<DataTypes> *obj) : 
-	object(obj), f_m_topologyContainer(new Field< PointSetTopologyContainer >(new PointSetTopologyContainer(), "Point Container"))
+	object(obj), f_m_topologyContainer(new DataPtr< PointSetTopologyContainer >(new PointSetTopologyContainer(), "Point Container"))
       {
 	m_topologyContainer=f_m_topologyContainer->beginEdit(); 
 	this->m_topologyContainer->setTopology(this);
@@ -322,7 +352,7 @@ namespace sofa
       }
 
       template<class DataTypes>
-      PointSetTopology<DataTypes>::PointSetTopology(MechanicalObject<DataTypes> *obj,const PointSetTopology *) : object(obj), f_m_topologyContainer(new Field< PointSetTopologyContainer >(new PointSetTopologyContainer(), "Point Container"))
+      PointSetTopology<DataTypes>::PointSetTopology(MechanicalObject<DataTypes> *obj,const PointSetTopology *) : object(obj), f_m_topologyContainer(new DataPtr< PointSetTopologyContainer >(new PointSetTopologyContainer(), "Point Container"))
 
       {
 	m_topologyContainer=f_m_topologyContainer->beginEdit(); 
@@ -336,7 +366,9 @@ namespace sofa
 
       template<class DataTypes>
       void PointSetTopology<DataTypes>::propagateTopologicalChanges(){
+
 	sofa::simulation::tree::TopologyChangeVisitor a;
+	a.resetNbIter();
 	getContext()->executeVisitor(&a);
 	// BUGFIX (Jeremie A. 06/12/07): remove the changes we just propagated, so that we don't send then again next time
 	this->resetTopologyChangeList();

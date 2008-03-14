@@ -68,6 +68,8 @@ public:
     virtual BaseMechanicalState* getMechFrom() = 0;
     /// Get the destination (lower, mapped) model.
     virtual BaseMechanicalState* getMechTo() = 0;
+    /// Return false if this mapping should only be used as a regular mapping instead of a mechanical mapping.
+    virtual bool isMechanical() = 0;
 
     /// Propagate position from the source model to the destination model.
     ///

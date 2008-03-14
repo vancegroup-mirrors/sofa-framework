@@ -15,16 +15,8 @@
 #include <sofa/component/Joint.h>
 #include "ArticulatedBody.h"  
 
-#ifdef WIN32
-# include <windows.h>
-# include <mmsystem.h>
-#endif
-
-#ifdef __APPLE__
-#include <OpenGL/glu.h>
-#else
-#include <GL/glu.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glu.h>
 
 #include <iostream>
 using std::cout;

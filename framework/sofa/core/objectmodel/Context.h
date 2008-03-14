@@ -26,7 +26,7 @@
 #define SOFA_CORE_OBJECTMODEL_CONTEXT_H
 
 #include <sofa/core/objectmodel/BaseContext.h>
-#include <sofa/core/objectmodel/DataField.h>
+#include <sofa/core/objectmodel/Data.h>
 
 #include <iostream>
 #include <map>
@@ -41,7 +41,7 @@ namespace objectmodel
 {
 
 /**
- *  \brief Implementation of BaseContext, storing all shared parameters in DataFields.
+ *  \brief Implementation of BaseContext, storing all shared parameters in Datas.
  *
  */
 class Context : public BaseContext
@@ -53,27 +53,28 @@ public:
     typedef BaseContext::Quat Quat;
     typedef BaseContext::SpatialVector SpatialVector;
 
-    DataField<Vec3> worldGravity_;  ///< Gravity IN THE WORLD COORDINATE SYSTEM.
-    DataField<double> dt_;
-    DataField<double> time_;
-    DataField<bool> animate_;
-    DataField<bool> showCollisionModels_;
-    DataField<bool> showBoundingCollisionModels_;
-    DataField<bool> showBehaviorModels_;
-    DataField<bool> showVisualModels_;
-    DataField<bool> showMappings_;
-    DataField<bool> showMechanicalMappings_;
-    DataField<bool> showForceFields_;
-    DataField<bool> showInteractionForceFields_;
-    DataField<bool> showWireFrame_;
-    DataField<bool> showNormals_;
-    DataField<bool> multiThreadSimulation_;
+    Data<bool> is_activated;
+    Data<Vec3> worldGravity_;  ///< Gravity IN THE WORLD COORDINATE SYSTEM.
+    Data<double> dt_;
+    Data<double> time_;
+    Data<bool> animate_;
+    Data<int> showVisualModels_;
+    Data<int> showBehaviorModels_;
+    Data<int> showCollisionModels_;
+    Data<int> showBoundingCollisionModels_;
+    Data<int> showMappings_;
+    Data<int> showMechanicalMappings_;
+    Data<int> showForceFields_;
+    Data<int> showInteractionForceFields_;
+    Data<int> showWireFrame_;
+    Data<int> showNormals_;
+    Data<bool> multiThreadSimulation_;
     
     /// @name For multiresolution (UNSTABLE)
     /// @{
-    DataField<int> currentLevel_;
-    DataField<int> coarsestLevel_;
-    DataField<int> finestLevel_;
+    Data<int> currentLevel_;
+    Data<int> coarsestLevel_;
+    Data<int> finestLevel_;
     /// @}
 
 
@@ -88,6 +89,10 @@ public:
     /// @name Parameters
     /// @{
 
+    /// The Context is active
+    virtual const bool isActive() const;
+    /// State of the context
+    virtual void setActive(bool val);
     /// Gravity in the local coordinate system
     virtual Vec3 getLocalGravity() const;
     /// Gravity in the local coordinate system
@@ -224,6 +229,12 @@ public:
     /// Copy the context variables from the given instance
     void copyContext(const Context& c);
 
+    /// Copy the context variables of visualization from the given instance
+    void copySimulationContext(const Context& c);
+    
+    /// Copy the context variables of visualization from the given instance
+    void copyVisualContext(const Context& c);
+    
     friend std::ostream& operator << (std::ostream& out, const Context& c );
 
 };

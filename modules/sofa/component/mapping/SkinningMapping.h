@@ -68,9 +68,9 @@ protected:
 	class Loader;
 	void load(const char* filename);
 
-	DataField<sofa::helper::vector<unsigned int> > repartition;
-	DataField<sofa::helper::vector<double> >  coefs;
-	DataField<unsigned int> nbRefs;
+	Data<sofa::helper::vector<unsigned int> > repartition;
+	Data<sofa::helper::vector<double> >  coefs;
+	Data<unsigned int> nbRefs;
 
 	bool computeWeights;
 
@@ -78,9 +78,9 @@ public:
 	
 	SkinningMapping(In* from, Out* to)
 	: Inherit(from, to)
-	, repartition(dataField(&repartition,"repartition","repartition between input DOFs and skinned vertices"))
-	, coefs(dataField(&coefs,"coefs","weights list for the influences of the references Dofs"))
-	, nbRefs(dataField(&nbRefs,(unsigned)3,"nbRefs","nb references for skinning"))
+	, repartition(initData(&repartition,"repartition","repartition between input DOFs and skinned vertices"))
+	, coefs(initData(&coefs,"coefs","weights list for the influences of the references Dofs"))
+	, nbRefs(initData(&nbRefs,(unsigned)3,"nbRefs","nb references for skinning"))
 	, computeWeights(true)
 	{
 	}
@@ -102,6 +102,9 @@ public:
 	
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
+    void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+
+
 	// -- VisualModel interface
 	void draw();
 	void initTextures() { }
@@ -110,10 +113,14 @@ public:
 	void clear();
 
 	void setNbRefs(unsigned int nb){ nbRefs.setValue(nb); }
-
 	void setWeightCoefs(sofa::helper::vector<double> &weights);
 	void setRepartition(sofa::helper::vector<unsigned int> &rep);
 	void setComputeWeights(bool val){computeWeights=val;}
+
+    unsigned int getNbRefs(){ return nbRefs.getValue(); }
+    const sofa::helper::vector<double>& getWeightCoefs() { return coefs.getValue(); }
+    const sofa::helper::vector<unsigned int>& getRepartition() { return repartition.getValue(); }
+    bool getComputeWeights(){ return computeWeights; }
 
 protected:
 

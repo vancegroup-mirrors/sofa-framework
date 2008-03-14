@@ -1059,7 +1059,7 @@ void SimpleGUI::DisplayOBJs(bool shadowPass)
     
     if (!initTexturesDone)
     {
-        std::cout << "-----------------------------------> initTexturesDone\n";
+//         std::cout << "-----------------------------------> initTexturesDone\n";
         //---------------------------------------------------
         simulation::tree::getSimulation()->initTextures(groot);
         //---------------------------------------------------
@@ -2511,7 +2511,7 @@ void SimpleGUI::showVisual(bool value)
     if (groot)
     {
         groot->getContext()->setShowVisualModels(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2521,7 +2521,7 @@ void SimpleGUI::showBehavior(bool value)
     if (groot)
     {
         groot->getContext()->setShowBehaviorModels(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2531,7 +2531,7 @@ void SimpleGUI::showCollision(bool value)
     if (groot)
     {
         groot->getContext()->setShowCollisionModels(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2541,7 +2541,7 @@ void SimpleGUI::showBoundingCollision(bool value)
     if (groot)
     {
         groot->getContext()->setShowBoundingCollisionModels(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2551,7 +2551,7 @@ void SimpleGUI::showMapping(bool value)
     if (groot)
     {
         groot->getContext()->setShowMappings(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2561,7 +2561,7 @@ void SimpleGUI::showMechanicalMapping(bool value)
     if (groot)
     {
         groot->getContext()->setShowMechanicalMappings(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2571,7 +2571,7 @@ void SimpleGUI::showForceField(bool value)
     if (groot)
     {
         groot->getContext()->setShowForceFields(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2581,7 +2581,7 @@ void SimpleGUI::showInteractionForceField(bool value)
     if (groot)
     {
         groot->getContext()->setShowInteractionForceFields(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2591,7 +2591,7 @@ void SimpleGUI::showWireFrame(bool value)
     if (groot)
     {
         groot->getContext()->setShowWireFrame(value);
-        getSimulation()->updateContext(groot);
+	getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2601,7 +2601,7 @@ void SimpleGUI::showNormals(bool value)
     if (groot)
     {
         groot->getContext()->setShowNormals(value);
-        getSimulation()->updateContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }

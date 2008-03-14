@@ -34,18 +34,8 @@
 #include <queue>
 #include <stack>
 
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#include <GLUT/glut.h>
-#else
-#include <GL/gl.h>
-#include <GL/glut.h>
-#endif
-
-/* for debugging the collision method */
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 namespace sofa
 {
@@ -69,7 +59,7 @@ int BruteForceDetectionClass = core::RegisterObject("Collision detection using e
 using namespace core::objectmodel;
 
 BruteForceDetection::BruteForceDetection()
-: bDraw(dataField(&bDraw, false, "draw", "enable/disable display of results"))
+: bDraw(initData(&bDraw, false, "draw", "enable/disable display of results"))
 {
 }
 
@@ -80,13 +70,17 @@ void BruteForceDetection::addCollisionModel(core::CollisionModel *cm)
     for (sofa::helper::vector<core::CollisionModel*>::iterator it = collisionModels.begin(); it != collisionModels.end(); ++it)
     {
         core::CollisionModel* cm2 = *it;
-        if (cm->isStatic() && cm2->isStatic())
+        if (!cm->isSimulated() && !cm2->isSimulated())
             continue;
         if (!cm->canCollideWith(cm2))
             continue;
-        core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2);
+        bool swapModels = false;
+        core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
         if (intersector == NULL)
             continue;
+        
+        core::CollisionModel* cm1 = (swapModels?cm2:cm);
+        cm2 = (swapModels?cm:cm2);
         
         // // Here we assume multiple root elements are present in both models
         // bool collisionDetected = false;
@@ -110,15 +104,52 @@ void BruteForceDetection::addCollisionModel(core::CollisionModel *cm)
         // if (collisionDetected)
         
         // Here we assume a single root element is present in both models
-        if (intersector->canIntersect(cm->begin(), cm2->begin()))
+        if (intersector->canIntersect(cm1->begin(), cm2->begin()))
         {
-            //std::cout << "Broad phase "<<cm->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<std::endl;
-            cmPairs.push_back(std::make_pair(cm, cm2));
+            //std::cout << "Broad phase "<<cm1->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<std::endl;
+            cmPairs.push_back(std::make_pair(cm1, cm2));
         }
     }
     collisionModels.push_back(cm);
 }
 
+class MirrorIntersector : public core::componentmodel::collision::ElementIntersector
+{
+public:
+    core::componentmodel::collision::ElementIntersector* intersector;
+    
+    /// Test if 2 elements can collide. Note that this can be conservative (i.e. return true even when no collision is present)
+    virtual bool canIntersect(core::CollisionElementIterator elem1, core::CollisionElementIterator elem2)
+    {
+        return intersector->canIntersect(elem2, elem1);
+    }
+    
+    /// Begin intersection tests between two collision models. Return the number of contacts written in the contacts vector.
+    /// If the given contacts vector is NULL, then this method should allocate it.
+    virtual int beginIntersect(core::CollisionModel* model1, core::CollisionModel* model2, core::componentmodel::collision::DetectionOutputVector*& contacts)
+    {
+        return intersector->beginIntersect(model2, model1, contacts);
+    }
+    
+    /// Compute the intersection between 2 elements. Return the number of contacts written in the contacts vector.
+    virtual int intersect(core::CollisionElementIterator elem1, core::CollisionElementIterator elem2, core::componentmodel::collision::DetectionOutputVector* contacts)
+    {
+        return intersector->intersect(elem2, elem1, contacts);
+    }
+    
+    /// End intersection tests between two collision models. Return the number of contacts written in the contacts vector.
+    virtual int endIntersect(core::CollisionModel* model1, core::CollisionModel* model2, core::componentmodel::collision::DetectionOutputVector* contacts)
+    {
+        return intersector->endIntersect(model2, model1, contacts);
+    }
+    
+    virtual std::string name() const
+    {
+        return intersector->name() + std::string("<SWAP>");
+    }
+    
+};
+    
 void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*, core::CollisionModel*>& cmPair)
 {
     typedef std::pair< std::pair<core::CollisionElementIterator,core::CollisionElementIterator>, std::pair<core::CollisionElementIterator,core::CollisionElementIterator> > TestPair;
@@ -129,7 +160,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
     //int size0 = elemPairs.size();
     //std::cout << "Narrow phase "<<cm1->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<std::endl;
 
-    if (cm1->isStatic() && cm2->isStatic())
+    if (!cm1->isSimulated() && !cm2->isSimulated())
         return;
 
     if (cm1->empty() || cm2->empty())
@@ -138,9 +169,16 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
     core::CollisionModel *finalcm1 = cm1->getLast();
     core::CollisionModel *finalcm2 = cm2->getLast();
     //std::cout << "Final phase "<<gettypename(typeid(*finalcm1))<<" - "<<gettypename(typeid(*finalcm2))<<std::endl;
-    core::componentmodel::collision::ElementIntersector* finalintersector = intersectionMethod->findIntersector(finalcm1, finalcm2);
+    bool swapModels = false;
+    core::componentmodel::collision::ElementIntersector* finalintersector = intersectionMethod->findIntersector(finalcm1, finalcm2, swapModels);
     if (finalintersector == NULL)
         return;
+    if (swapModels)
+    {
+        core::CollisionModel* tmp;
+        tmp = cm1; cm1 = cm2; cm2 = tmp;
+        tmp = finalcm1; finalcm1 = finalcm2; finalcm2 = tmp;
+    }
     //std::cout << "Final intersector " << finalintersector->name() << " for "<<finalcm1->getName()<<" - "<<finalcm2->getName()<<std::endl;
     
     sofa::core::componentmodel::collision::DetectionOutputVector*& outputs = outputsMap[std::make_pair(finalcm1, finalcm2)];
@@ -183,6 +221,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
 
     //core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm1, cm2);
     core::componentmodel::collision::ElementIntersector* intersector = NULL;
+    MirrorIntersector mirror;
     cm1 = NULL; // force later init of intersector
     cm2 = NULL;
 
@@ -195,12 +234,16 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
         {
             cm1 = root.first.first.getCollisionModel();
             cm2 = root.second.first.getCollisionModel();
-            intersector = intersectionMethod->findIntersector(cm1, cm2);
+            intersector = intersectionMethod->findIntersector(cm1, cm2, swapModels);
             if (intersector == NULL)
             {
                 std::cout << "BruteForceDetection: Error finding intersector " << intersectionMethod->getName() << " for "<<gettypename(typeid(*cm1))<<" - "<<gettypename(typeid(*cm2))<<std::endl;
             }
             //else std::cout << "BruteForceDetection: intersector " << intersector->name() << " for " << intersectionMethod->getName() << " for "<<gettypename(typeid(*cm1))<<" - "<<gettypename(typeid(*cm2))<<std::endl;
+            if (swapModels)
+            {
+                mirror.intersector = intersector; intersector = &mirror;
+            }
         }
         if (intersector == NULL)
             continue;
@@ -354,7 +397,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
 void BruteForceDetection::draw()
 {
     if (!bDraw.getValue()) return;
-
+/*
     glDisable(GL_LIGHTING);
     glColor3f(1.0, 0.0, 1.0);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -363,18 +406,17 @@ void BruteForceDetection::draw()
 
     for (DetectionOutputMap::iterator it = outputsMap.begin(); it!=outputsMap.end(); it++)
     {
-        /*
-        DetectionOutputVector& outputs = it->second;
-        for (DetectionOutputVector::iterator it2 = outputs.begin(); it2!=outputs.end(); it2++)
+        core::componentmodel::collision::DetectionOutputVector& outputs = it->second;
+        for (core::componentmodel::collision::DetectionOutputVector::iterator it2 = outputs.begin(); it2!=outputs.end(); it2++)
         {
             it2->elem.first.draw();
             it2->elem.second.draw();
         }
-        */
     }
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glLineWidth(1);
     glPointSize(1);
+*/
 }
 
 } // namespace collision

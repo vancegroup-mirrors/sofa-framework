@@ -68,7 +68,7 @@ class Automate
 	static void setDrawCB(DrawCB* fn) { drawCB = fn; }
 	void execDrawCB(void);
 
-	void load(char *_automateType, bool _periphInSimulation);
+	void load(const char *_automateType, bool _periphInSimulation);
 
 	std::vector<Node*> tabNodes;
 };

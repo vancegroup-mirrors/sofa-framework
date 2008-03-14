@@ -98,7 +98,7 @@ namespace topology
 				std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
 				const unsigned int totalPointSetArraySize);
 
-			// defining operators so that pointSubset can be used in a DataField (see DataField class).
+			// defining operators so that pointSubset can be used in a Data (see Data class).
 			friend std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset);
 			friend std::istream& operator>> (std::istream& i,             PointSubset& pointSubset);
 
@@ -191,11 +191,11 @@ namespace topology
 
 
 
-        /// Needed to be compliant with DataFields.
+        /// Needed to be compliant with Datas.
         std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset);
 
 
-        /// Needed to be compliant with DataFields.
+        /// Needed to be compliant with Datas.
         std::istream& operator>>(std::istream& i, PointSubset& pointSubset);
 
     } // namespace topology

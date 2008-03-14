@@ -85,6 +85,8 @@ void NewMatSolver::solve(double dt)
 
     if (this->updateMatrix)
     {
+
+		addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
 		
 		ctime_t t0 = CTime::getTime();
 

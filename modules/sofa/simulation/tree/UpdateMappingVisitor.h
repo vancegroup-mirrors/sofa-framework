@@ -27,6 +27,7 @@
 
 #include <sofa/simulation/tree/Visitor.h>
 #include <sofa/core/BaseMapping.h>
+#include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
 
 namespace sofa
 {
@@ -41,7 +42,8 @@ class UpdateMappingVisitor : public Visitor
 {
 public:
 
-	void processMapping(GNode* node, core::BaseMapping* obj);
+    void processMapping(GNode* node, core::BaseMapping* obj);
+    void processMechanicalMapping(GNode*, core::componentmodel::behavior::BaseMechanicalMapping* obj);
 	
 	virtual Result processNodeTopDown(GNode* node);
 

@@ -99,8 +99,8 @@ protected:
 
 	bool updateMatrix;
 
-    DataField<Real> f_poissonRatio;
-    DataField<Real> f_youngModulus;
+    Data<Real> f_poissonRatio;
+    Data<Real> f_youngModulus;
 
 	Real lambda;  /// first Lame coefficient
 	Real mu;    /// second Lame coefficient
@@ -120,6 +120,13 @@ public:
 
 	virtual Real getLambda() const { return lambda;}
 	virtual Real getMu() const { return mu;}
+
+	void setYoungModulus(const double modulus) {
+		f_youngModulus.setValue((Real)modulus);
+	}
+	void setPoissonRatio(const double ratio) {
+		f_poissonRatio.setValue((Real)ratio);
+	}
 
 	// handle topological changes
 	virtual void handleTopologyChange();

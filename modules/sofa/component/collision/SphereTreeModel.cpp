@@ -27,11 +27,8 @@
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/core/ObjectFactory.h>
 #include <iostream>
-#if defined (__APPLE__)
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 using std::cerr;
 using std::endl;
@@ -58,7 +55,7 @@ int SphereTreeModelClass = core::RegisterObject("CollisionModel based on a hiera
 ;
 
 SphereTreeModel::SphereTreeModel(double radius)
-: defaultRadius(dataField(&defaultRadius, radius, "radius","TODO"))
+: defaultRadius(initData(&defaultRadius, radius, "radius","TODO"))
 {
 }
 
@@ -228,7 +225,7 @@ void SphereTreeModel::draw()
 	if ( getContext()->getShowCollisionModels())
 	{
 		glDisable(GL_LIGHTING);
-		if (isStatic())
+		if (!isSimulated())
 			glColor4f(1.0f, 1.0f, 1.0f, color);
 		else
 			glColor4f(1.0f, 1.0f, 0.0f, color);

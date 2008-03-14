@@ -96,7 +96,7 @@ StateMachine* ExecBus::getStateMachine()
 
 // getNext()
 
-Node* ExecBus::getNext(char *src, Node *oldNode)
+Node* ExecBus::getNext(const char *src, Node *oldNode)
 {
 
 #ifdef WIN32
@@ -118,7 +118,7 @@ Node* ExecBus::getNext(char *src, Node *oldNode)
 
 // isEmpty()
 
-bool ExecBus::isEmpty(char *)
+bool ExecBus::isEmpty(const char *)
 {	
 
 #ifdef WIN32

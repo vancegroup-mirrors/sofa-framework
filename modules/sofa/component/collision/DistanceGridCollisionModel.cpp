@@ -2,11 +2,7 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <fstream>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 #ifdef SOFA_HAVE_FLOWVR
 #include <flowvr/render/mesh.h>
 #endif
@@ -41,14 +37,14 @@ using namespace defaulttype;
 
 RigidDistanceGridCollisionModel::RigidDistanceGridCollisionModel()
 : modified(true)
-, filename( dataField( &filename, "filename", "load distance grid from specified file"))
-, scale( dataField( &scale, 1.0, "scale", "scaling factor for input file"))
-, box( dataField( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
-, nx( dataField( &nx, 64, "nx", "number of values on X axis") )
-, ny( dataField( &ny, 64, "ny", "number of values on Y axis") )
-, nz( dataField( &nz, 64, "nz", "number of values on Z axis") )
-, dumpfilename( dataField( &dumpfilename, "dumpfilename","write distance grid to specified file"))
-, usePoints( dataField( &usePoints, true, "usePoints", "use mesh vertices for collision detection"))
+, filename( initData( &filename, "filename", "load distance grid from specified file"))
+, scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
+, box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
+, nx( initData( &nx, 64, "nx", "number of values on X axis") )
+, ny( initData( &ny, 64, "ny", "number of values on Y axis") )
+, nz( initData( &nz, 64, "nz", "number of values on Z axis") )
+, dumpfilename( initData( &dumpfilename, "dumpfilename","write distance grid to specified file"))
+, usePoints( initData( &usePoints, true, "usePoints", "use mesh vertices for collision detection"))
 {
     rigid = NULL;
 }
@@ -132,7 +128,7 @@ void RigidDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
 {
     CubeModel* cubeModel = this->createPrevious<CubeModel>();
     
-    if (!modified && isStatic() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
+    if (!modified && !isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
     
     updateGrid();
     
@@ -186,10 +182,7 @@ void RigidDistanceGridCollisionModel::draw()
         if (getContext()->getShowWireFrame())
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_LIGHTING);
-        if (isStatic())
-            glColor3f(0.5, 0.5, 0.5);
-        else
-            glColor3f(1.0, 0.0, 0.0);
+	glColor4fv(getColor4f());
         glPointSize(3);
         for (unsigned int i=0;i<elems.size();i++)
         {
@@ -225,7 +218,7 @@ void RigidDistanceGridCollisionModel::draw(int index)
 	corners[i] = grid->getCorner(i);
     //glEnable(GL_BLEND);
     //glDepthMask(0);
-    if (isStatic())
+    if (!isSimulated())
 	glColor4f(0.25f, 0.25f, 0.25f, 0.1f);
     else
 	glColor4f(0.5f, 0.5f, 0.5f, 0.1f);
@@ -252,7 +245,7 @@ void RigidDistanceGridCollisionModel::draw(int index)
     //glEnable(GL_BLEND);
     //glDepthMask(0);
 
-    if (isStatic())
+    if (!isSimulated())
 	glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
     else
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -342,14 +335,14 @@ void RigidDistanceGridCollisionModel::draw(int index)
 ////////////////////////////////////////////////////////////////////////////////
 
 FFDDistanceGridCollisionModel::FFDDistanceGridCollisionModel()
-: filename( dataField( &filename, "filename", "load distance grid from specified file"))
-, scale( dataField( &scale, 1.0, "scale", "scaling factor for input file"))
-, box( dataField( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
-, nx( dataField( &nx, 64, "nx", "number of values on X axis") )
-, ny( dataField( &ny, 64, "ny", "number of values on Y axis") )
-, nz( dataField( &nz, 64, "nz", "number of values on Z axis") )
-, dumpfilename( dataField( &dumpfilename, "dumpfilename","write distance grid to specified file"))
-, usePoints( dataField( &usePoints, true, "usePoints", "use mesh vertices for collision detection"))
+: filename( initData( &filename, "filename", "load distance grid from specified file"))
+, scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
+, box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
+, nx( initData( &nx, 64, "nx", "number of values on X axis") )
+, ny( initData( &ny, 64, "ny", "number of values on Y axis") )
+, nz( initData( &nz, 64, "nz", "number of values on Z axis") )
+, dumpfilename( initData( &dumpfilename, "dumpfilename","write distance grid to specified file"))
+, usePoints( initData( &usePoints, true, "usePoints", "use mesh vertices for collision detection"))
 {
 	ffd = NULL;
         ffdGrid = NULL;
@@ -453,7 +446,7 @@ void FFDDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
 {
     CubeModel* cubeModel = this->createPrevious<CubeModel>();
     
-    if (isStatic() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
+    if (!isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
     
     updateGrid();
     
@@ -563,10 +556,7 @@ void FFDDistanceGridCollisionModel::draw()
         if (getContext()->getShowWireFrame())
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_LIGHTING);
-        if (isStatic())
-            glColor3f(0.5, 0.5, 0.5);
-        else
-            glColor3f(1.0, 0.0, 0.0);
+	glColor4fv(getColor4f());
         for (unsigned int i=0;i<elems.size();i++)
         {
             draw(i);
@@ -585,7 +575,7 @@ void FFDDistanceGridCollisionModel::draw(int index)
     //glEnable(GL_BLEND);
     //glDepthMask(0);
     float cscale;
-    if (isStatic())
+    if (!isSimulated())
         cscale = 0.5f;
     else
         cscale = 1.0f;

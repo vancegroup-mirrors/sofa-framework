@@ -40,6 +40,11 @@ using std::endl;
 
 void RegularGridTopology::parse(core::objectmodel::BaseObjectDescription* arg)
 {
+  float scale=1.0f;
+  if (arg->getAttribute("scale")!=NULL) {
+    scale = (float)atof(arg->getAttribute("scale"));
+  }
+  
     this->GridTopology::parse(arg);
     if (arg->getAttribute("xmin") != NULL && 
 	arg->getAttribute("ymin") != NULL && 
@@ -54,10 +59,11 @@ void RegularGridTopology::parse(core::objectmodel::BaseObjectDescription* arg)
 	const char* xmax = arg->getAttribute("xmax");
 	const char* ymax = arg->getAttribute("ymax");
 	const char* zmax = arg->getAttribute("zmax");
-	min.setValue(Vec3(atof(xmin),atof(ymin),atof(zmin)));
-	max.setValue(Vec3(atof(xmax),atof(ymax),atof(zmax)));
+	min.setValue(Vec3(atof(xmin)*scale,atof(ymin)*scale,atof(zmin)*scale));
+	max.setValue(Vec3(atof(xmax)*scale,atof(ymax)*scale,atof(zmax)*scale));
       }
     this->setPos(min.getValue()[0],max.getValue()[0],min.getValue()[1],max.getValue()[1],min.getValue()[2],max.getValue()[2]);
+    
 }
 
 SOFA_DECL_CLASS(RegularGridTopology)
@@ -69,19 +75,21 @@ int RegularGridTopologyClass = core::RegisterObject("Regular grid in 3D")
 
 RegularGridTopology::RegularGridTopology(int nx, int ny, int nz)
   : GridTopology(nx, ny, nz),
-    min(dataField(&min,Vec3(0.0f,0.0f,0.0f),"min", "Min")),
-    max(dataField(&max,Vec3(1.0f,1.0f,1.0f),"max", "Max"))
+    min(initData(&min,Vec3(0.0f,0.0f,0.0f),"min", "Min")),
+    max(initData(&max,Vec3(1.0f,1.0f,1.0f),"max", "Max"))
 {
 }
 
 RegularGridTopology::RegularGridTopology()
-  : min(dataField(&min,Vec3(0.0f,0.0f,0.0f),"min", "Min")),
-    max(dataField(&max,Vec3(1.0f,1.0f,1.0f),"max", "Max"))
+  : min(initData(&min,Vec3(0.0f,0.0f,0.0f),"min", "Min")),
+    max(initData(&max,Vec3(1.0f,1.0f,1.0f),"max", "Max"))
 {
 }
 
 void RegularGridTopology::setPos(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
 {
+	min.setValue(Vec3(xmin,ymin,zmin));
+	max.setValue(Vec3(xmax,ymax,zmax));
 	setP0(Vec3(xmin,ymin,zmin));
 	if (n.getValue()[0]>1)
 	  setDx(Vec3((xmax-xmin)/(n.getValue()[0]-1),0,0));
@@ -118,7 +126,9 @@ RegularGridTopology::Vec3 RegularGridTopology::getPoint(int x, int y, int z) con
 /// return the cube containing the given point (or -1 if not found).
 int RegularGridTopology::findCube(const Vec3& pos)
 {
-	if (n.getValue()[0]<2 || n.getValue()[1]<2 || n.getValue()[2]<2) return -1;
+	if (n.getValue()[0]<2 || n.getValue()[1]<2 || n.getValue()[2]<2) 
+		return -1;
+
 	Vec3 p = pos-p0;
 	double x = p*dx*inv_dx2;
 	double y = p*dy*inv_dy2;
@@ -126,7 +136,9 @@ int RegularGridTopology::findCube(const Vec3& pos)
 	int ix = int(x+1000000)-1000000; // Do not round toward 0...
 	int iy = int(y+1000000)-1000000;
 	int iz = int(z+1000000)-1000000;
-	if ((unsigned)ix<(unsigned)n.getValue()[0]-2 && (unsigned)iy<(unsigned)n.getValue()[1]-2 && (unsigned)iz<(unsigned)n.getValue()[2]-2)
+	if (   (unsigned)ix <= (unsigned)n.getValue()[0]-2 
+		&& (unsigned)iy <= (unsigned)n.getValue()[1]-2 
+		&& (unsigned)iz <= (unsigned)n.getValue()[2]-2 )
 	{
 		return cube(ix,iy,iz);
 	}

@@ -43,7 +43,7 @@ int DefaultContactManagerClass = core::RegisterObject("Default class to create r
 ;
 
 DefaultContactManager::DefaultContactManager()
-: response(dataField(&response, std::string("default"), "response", "contact response class"))
+: response(initData(&response, std::string("default"), "response", "contact response class"))
 {
 }
 
@@ -57,13 +57,13 @@ DefaultContactManager::~DefaultContactManager()
 
 void DefaultContactManager::clear()
 {
-	for (sofa::helper::vector<core::componentmodel::collision::Contact*>::iterator it=contactVec.begin(); it!=contactVec.end(); ++it)
+	for (sofa::helper::vector<core::componentmodel::collision::Contact*>::iterator it=contacts.begin(); it!=contacts.end(); ++it)
 	{
 		(*it)->removeResponse();
 		(*it)->cleanup();
 		delete *it;
 	}
-	contactVec.clear();
+	contacts.clear();
 	contactMap.clear();
 }
 
@@ -86,11 +86,19 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 		if (outputsIt!=outputsMap.end() && (contactIt == contactMap.end() || outputsIt->first < contactIt->first))
 		{ // new contact
 			//std::cout << "Creation new "<<contacttype<<" contact"<<std::endl;
-			 core::componentmodel::collision::Contact* contact = core::componentmodel::collision::Contact::Create(response.getValue(), outputsIt->first.first, outputsIt->first.second, intersectionMethod);
-			if (contact == NULL) std::cerr << "Contact creation failed"<<std::endl;
+                    core::CollisionModel* model1 = outputsIt->first.first;
+                    core::CollisionModel* model2 = outputsIt->first.second;
+                    std::string response1 = model1->getContactResponse();
+                    std::string response2 = model2->getContactResponse();
+                    std::string responseUsed = response.getValue();
+                    if (!response1.empty()) responseUsed = response1;
+                    else if (!response2.empty()) responseUsed = response2;
+                    core::componentmodel::collision::Contact* contact = core::componentmodel::collision::Contact::Create(responseUsed, model1, model2, intersectionMethod);
+		    if (contact == NULL) std::cerr << "Contact "<<responseUsed<<" between " << model1->getClassName()<<" and "<<model2->getClassName() << " creation failed"<<std::endl;
 			else
 			{
-				contactMap[std::make_pair(outputsIt->first.first, outputsIt->first.second)] = contact;
+				contactMap[std::make_pair(model1, model2)] = contact;
+				contact->setName(model1->getName()+std::string("-")+model2->getName());
 				contact->f_printLog.setValue(this->f_printLog.getValue());
 				contact->init();
 				contact->setDetectionOutputs(outputsIt->second);
@@ -104,6 +112,8 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 			if (contactIt->second->keepAlive())
 			{
 				contactIt->second->setDetectionOutputs(NULL);
+				++nbContact;
+				++contactIt;
 			}
 			else
 			{
@@ -125,19 +135,19 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 		}
 	}
 	// now update contactVec
-	contactVec.clear();
-	contactVec.reserve(nbContact);
+	contacts.clear();
+	contacts.reserve(nbContact);
 	contactIt = contactMap.begin();
 	while (contactIt!=contactMap.end())
 	{
-		contactVec.push_back(contactIt->second);
+		contacts.push_back(contactIt->second);
 		++contactIt;
 	}
 }
 
 void DefaultContactManager::draw()
 {
-	for (sofa::helper::vector<core::componentmodel::collision::Contact*>::iterator it = contactVec.begin(); it!=contactVec.end(); it++)
+	for (sofa::helper::vector<core::componentmodel::collision::Contact*>::iterator it = contacts.begin(); it!=contacts.end(); it++)
 	{
 		if (dynamic_cast<core::VisualModel*>(*it)!=NULL)
 			dynamic_cast<core::VisualModel*>(*it)->draw();

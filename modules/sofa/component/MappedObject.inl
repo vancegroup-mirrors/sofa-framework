@@ -36,8 +36,8 @@ namespace component
 
 template <class DataTypes>
 MappedObject<DataTypes>::MappedObject()
-: f_X( dataField(&f_X, "position", "position vector") )
-, f_V( dataField(&f_V, "velocity", "velocity vector") )
+: f_X( initData(&f_X, "position", "position vector") )
+, f_V( initData(&f_V, "velocity", "velocity vector") )
 {
 }
 
@@ -56,7 +56,7 @@ void MappedObject<DataTypes>::init()
         {
             VecCoord& x = *getX();
             int nbp = topo->getNbPoints();
-            std::cout<<"Setting "<<nbp<<" points from topology."<<std::endl;
+//             std::cout<<"Setting "<<nbp<<" points from topology."<<std::endl;
             x.resize(nbp);
             for (int i=0;i<nbp;i++)
             {

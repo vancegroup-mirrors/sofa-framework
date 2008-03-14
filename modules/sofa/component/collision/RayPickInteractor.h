@@ -23,7 +23,7 @@
 * and F. Poyer                                                                 *
 *******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_RAYPICKINTERACTOR_H
-#define SOFA_COMPONENT_COLLISION_RAYPICKINTERACTOR_H
+#define SOFA_COMPONENT_COLLISION_RAYPICKINTERACTOR_H 
 
 #include <sofa/component/collision/RayModel.h>
 #include <sofa/core/BehaviorModel.h>
@@ -76,8 +76,12 @@ protected:
 	bool is_first_cut;
 
 	unsigned int b_last_init;
-	sofa::helper::vector< unsigned int > p12_last_init;
-	sofa::helper::vector< unsigned int > i123_last_init;
+	sofa::helper::vector< unsigned int > b_p12_last_init;
+	sofa::helper::vector< unsigned int > b_i123_last_init;
+
+	unsigned int a_last_init;
+	sofa::helper::vector< unsigned int >  a_p12_last_init;
+	sofa::helper::vector< unsigned int >  a_i123_last_init;
 
 #ifdef SOFA_GPU_CUDA
 	sofa::helper::vector< std::pair<int,double> > cudaAttachedPoints;

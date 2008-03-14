@@ -46,15 +46,12 @@ namespace collision
 class NewProximityIntersection : public DiscreteIntersection
 {
 public:
-    DataField<double> alarmDistance;
-    DataField<double> contactDistance;
+    Data<double> alarmDistance;
+    Data<double> contactDistance;
 
     NewProximityIntersection();
 
     virtual void init();
-
-    /// Return the intersector class handling the given pair of collision models, or NULL if not supported.
-    virtual core::componentmodel::collision::ElementIntersector* findIntersector(core::CollisionModel* object1, core::CollisionModel* object2);
 
     /// returns true if algorithm uses proximity
     virtual bool useProximity() const { return true; }

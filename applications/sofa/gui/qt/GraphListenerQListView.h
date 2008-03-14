@@ -49,13 +49,11 @@
 
 #endif
 
- 
 #include "RealGUI.h"
 
 #include <sofa/simulation/tree/Simulation.h>
 #include <sofa/simulation/tree/MutationListener.h>
 
-#include <sofa/simulation/tree/Colors.h>
 #include "WFloatLineEdit.h"
 
 
@@ -80,6 +78,7 @@ namespace sofa
       typedef QPopupMenu Q3PopupMenu;
 #endif
 
+      QPixmap* getPixmap(core::objectmodel::Base* obj);
 
       class GraphListenerQListView : public MutationListener
       {

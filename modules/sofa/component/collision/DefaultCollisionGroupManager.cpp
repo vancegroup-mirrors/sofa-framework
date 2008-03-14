@@ -130,7 +130,11 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 					// create a new group
 					group = new simulation::tree::GNode(groupName);
 					parent->addChild(group);
-					group->updateContext();
+					
+					core::objectmodel::Context *current_context = dynamic_cast< core::objectmodel::Context *>(parent->getContext());
+					group->copyVisualContext( (*current_context));
+
+					group->updateSimulationContext();
 					group->moveChild(group1);
 					group->moveChild(group2);
 					groupSet.insert(group);
@@ -202,11 +206,11 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 	removedGroup.clear();
 	
 	// finally recreate group vector
-	groupVec.clear();
+	groups.clear();
 	for (std::set<simulation::tree::GNode*>::iterator it = groupSet.begin(); it!=groupSet.end(); ++it)
-		groupVec.push_back(*it);
-	//if (!groupVec.empty())
-	//	std::cout << groupVec.size()<<" collision groups created."<<std::endl;
+		groups.push_back(*it);
+	//if (!groups.empty())
+	//	std::cout << groups.size()<<" collision groups created."<<std::endl;
 }
 
 void DefaultCollisionGroupManager::clearGroups(core::objectmodel::BaseContext* /*scene*/)
@@ -228,7 +232,7 @@ void DefaultCollisionGroupManager::clearGroups(core::objectmodel::BaseContext* /
 	}
 
 	groupSet.clear();
-	groupVec.clear();
+	groups.clear();
 }
 
 simulation::tree::GNode* DefaultCollisionGroupManager::getIntegrationNode(core::CollisionModel* model)

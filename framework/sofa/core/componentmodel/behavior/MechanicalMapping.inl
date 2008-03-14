@@ -48,6 +48,7 @@ namespace behavior
 template <class In, class Out>
 MechanicalMapping<In,Out>::MechanicalMapping(In* from, Out* to)
 : Mapping<In,Out>(from, to)
+, f_isMechanical( initData( &f_isMechanical, true, "isMechanical", "set to false if this mapping should only be used as a regular mapping instead of a mechanical mapping" ) )
 {
 }
 	
@@ -66,6 +67,12 @@ template <class In, class Out>
 BaseMechanicalState* MechanicalMapping<In,Out>::getMechTo()
 {
 	return this->toModel;
+}
+
+template <class In, class Out>
+bool MechanicalMapping<In,Out>::isMechanical()
+{
+    return this->f_isMechanical.getValue();
 }
 
 template <class In, class Out>

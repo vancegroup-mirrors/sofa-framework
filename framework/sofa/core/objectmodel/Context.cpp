@@ -36,24 +36,25 @@ namespace objectmodel
 {
 
 Context::Context()
-: worldGravity_(dataField(&worldGravity_, Vec3(0,0,0),"gravity","Gravity in the world coordinate system"))
-, dt_(dataField(&dt_,0.01,"dt","Time step"))
-, time_(dataField(&time_,0.,"time","Current time"))
-, animate_(dataField(&animate_,false,"animate","???"))
-, showCollisionModels_(dataField(&showCollisionModels_,false,"showCollisionModels","display flag"))
-, showBoundingCollisionModels_( dataField(&showBoundingCollisionModels_,false,"showBoundingCollisionModels","display flag"))
-, showBehaviorModels_(dataField(&showBehaviorModels_,false,"showBehaviorModels","display flag"))
-, showVisualModels_(dataField(&showVisualModels_,true,"showVisualModels","display flag"))
-, showMappings_(dataField(&showMappings_,false,"showMappings","display flag"))
-, showMechanicalMappings_(dataField(&showMechanicalMappings_,false,"showMechanicalMappings","display flag"))
-, showForceFields_(dataField(&showForceFields_,false,"showForceFields","display flag"))
-, showInteractionForceFields_(dataField(&showInteractionForceFields_,false,"showInteractionForceFields","display flag"))
-, showWireFrame_(dataField(&showWireFrame_,false,"showWireFrame","display flag"))
-, showNormals_(dataField(&showNormals_,false,"showNormals","display flag"))
-, multiThreadSimulation_(dataField(&multiThreadSimulation_,false,"multiThreadSimulation","Apply multithreaded simulation"))
-, currentLevel_(dataField(&currentLevel_,0,"currentLevel","Current level of details"))
-, coarsestLevel_(dataField(&coarsestLevel_,3,"coarsestLevel","Coarsest level of details"))
-, finestLevel_(dataField(&finestLevel_,0,"finestLevel","Finest level of details"))
+  : is_activated(initData(&is_activated, true, "activated", "To Activate a node"))
+  , worldGravity_(initData(&worldGravity_, Vec3(0,0,0),"gravity","Gravity in the world coordinate system"))
+  , dt_(initData(&dt_,0.01,"dt","Time step"))
+  , time_(initData(&time_,0.,"time","Current time"))
+  , animate_(initData(&animate_,false,"animate","Animate the Simulation(applied at initialization only)"))
+  , showVisualModels_           (initData(&showVisualModels_,           -1, "showVisualModels","display Visual Models"))
+  , showBehaviorModels_         (initData(&showBehaviorModels_,         -1,"showBehaviorModels","display Behavior Models"))
+  , showCollisionModels_        (initData(&showCollisionModels_,        -1,"showCollisionModels","display Collision Models"))
+  , showBoundingCollisionModels_(initData(&showBoundingCollisionModels_,-1,"showBoundingCollisionModels","display Bounding Collision Models"))        
+  , showMappings_               (initData(&showMappings_,               -1,"showMappings","display Mappings"))
+  , showMechanicalMappings_     (initData(&showMechanicalMappings_,     -1,"showMechanicalMappings","display Mechanical Mappings"))
+  , showForceFields_            (initData(&showForceFields_,            -1,"showForceFields","display Force Fields"))
+  , showInteractionForceFields_ (initData(&showInteractionForceFields_, -1,"showInteractionForceFields","display Interaction Force Fields"))
+  , showWireFrame_              (initData(&showWireFrame_,              -1,"showWireFrame","display in WireFrame"))
+  , showNormals_                (initData(&showNormals_,                -1,"showNormals","display Normals"))
+  , multiThreadSimulation_(initData(&multiThreadSimulation_,false,"multiThreadSimulation","Apply multithreaded simulation"))
+  , currentLevel_(initData(&currentLevel_,0,"currentLevel","Current level of details"))
+  , coarsestLevel_(initData(&coarsestLevel_,3,"coarsestLevel","Coarsest level of details"))
+  , finestLevel_(initData(&finestLevel_,0,"finestLevel","Finest level of details"))
 {
     setPositionInWorld(objectmodel::BaseContext::getPositionInWorld());
     setGravityInWorld(objectmodel::BaseContext::getLocalGravity());
@@ -72,9 +73,14 @@ Context::Context()
     //setShowInteractionForceFields(objectmodel::BaseContext::getShowInteractionForceFields());
     //setShowWireFrame(objectmodel::BaseContext::getShowWireFrame());
     //setShowNormals(objectmodel::BaseContext::getShowNormals());
-    //setMultiThreadSimulation(objectmodel::BaseContext::getMultiThreadSimulation());
+    //setMultiThreadSimulation(objectmodel::BaseContext::getMultiThreadSimulation());   
 }
 
+/// The Context is active
+const bool Context::isActive() const {return is_activated.getValue();}
+
+/// State of the context
+void Context::setActive(bool val){ is_activated.setValue(val);}
 
 /// Projection from the local coordinate system to the world coordinate system.
 const Context::Frame& Context::getPositionInWorld() const
@@ -158,61 +164,71 @@ bool Context::getMultiThreadSimulation() const
 /// Display flags: Collision Models
 bool Context::getShowCollisionModels() const
 {
-    return showCollisionModels_.getValue();
+  if (showCollisionModels_.getValue() < 0) return false;
+  else return showCollisionModels_.getValue() != 0;
 }
 
 /// Display flags: Bounding Collision Models
 bool Context::getShowBoundingCollisionModels() const
 {
-    return showBoundingCollisionModels_.getValue();
+  if (showBoundingCollisionModels_.getValue() < 0) return false;
+  else return showBoundingCollisionModels_.getValue()!= 0;
 }
 
 /// Display flags: Behavior Models
 bool Context::getShowBehaviorModels() const
 {
-    return showBehaviorModels_.getValue();
+  if (showBehaviorModels_.getValue() < 0) return false;
+  else  return showBehaviorModels_.getValue()!= 0;
 }
 
 /// Display flags: Visual Models
 bool Context::getShowVisualModels() const
 {
-    return showVisualModels_.getValue();
+  if (showVisualModels_.getValue() < 0) return true;
+  else return showVisualModels_.getValue()!= 0;
 }
 
 /// Display flags: Mappings
 bool Context::getShowMappings() const
 {
-    return showMappings_.getValue();
+  if (showMappings_.getValue() < 0) return false;
+  else return showMappings_.getValue()!= 0;
 }
 
 /// Display flags: Mechanical Mappings
 bool Context::getShowMechanicalMappings() const
 {
-    return showMechanicalMappings_.getValue();
+  if (showMechanicalMappings_.getValue() < 0) return false;
+  else return showMechanicalMappings_.getValue()!= 0;
 }
 
 /// Display flags: ForceFields
 bool Context::getShowForceFields() const
 {
-    return showForceFields_.getValue();
+  if (showForceFields_.getValue() < 0) return false;
+  else return showForceFields_.getValue()!= 0;
 }
 
 /// Display flags: InteractionForceFields
 bool Context::getShowInteractionForceFields() const
 {
-    return showInteractionForceFields_.getValue();
+  if (showInteractionForceFields_.getValue() < 0) return false;
+  else return showInteractionForceFields_.getValue()!= 0;
 }
 
 /// Display flags: WireFrame
 bool Context::getShowWireFrame() const
 {
-    return showWireFrame_.getValue();
+  if (showWireFrame_.getValue() < 0) return false;
+  else return showWireFrame_.getValue()!= 0;
 }
 
 /// Display flags: Normal
 bool Context::getShowNormals() const
 {
-    return showNormals_.getValue();
+  if (showNormals_.getValue() < 0) return false;
+  else return showNormals_.getValue()!= 0;
 }
 
 
@@ -335,14 +351,19 @@ void Context::setShowNormals(bool val)
 
 bool Context::setCurrentLevel(int l)
 {
-    /// \TODO Shouldn't we test against finestLevel instead of 0?
-    if( l > coarsestLevel_.getValue() || l < 0 ) return false;
-    if( l == coarsestLevel_.getValue() )
-    {
-        currentLevel_.setValue(l);
-        return false;
-    }
+	if( l > coarsestLevel_.getValue() )
+	{
+		currentLevel_.setValue(coarsestLevel_.getValue());
+		return false;
+	}
+	else if( l < 0 /*finestLevel_.getValue()*/ )
+	{
+// 		currentLevel_.setValue(finestLevel_.getValue());
+		currentLevel_.setValue( 0 );
+		return false;
+	}
     currentLevel_.setValue(l);
+	if( l == coarsestLevel_.getValue() ) return false;
     return true;
 }
 void Context::setCoarsestLevel(int l)
@@ -362,30 +383,42 @@ void Context::copyContext(const Context& c)
     // BUGFIX 12/01/06 (Jeremie A.): Can't use operator= on the class as it will copy other data in the BaseContext class (such as name)...
     // *this = c;
 
-    worldGravity_.setValue(c.worldGravity_.getValue());  ///< Gravity IN THE WORLD COORDINATE SYSTEM.
-    dt_.setValue(c.dt_.getValue());
-    time_.setValue(c.time_.getValue());
-    animate_.setValue(c.animate_.getValue());
-    showCollisionModels_.setValue(c.showCollisionModels_.getValue());
-    showBoundingCollisionModels_.setValue(c.showBoundingCollisionModels_.getValue());
-    showBehaviorModels_.setValue(c.showBehaviorModels_.getValue());
-    showVisualModels_.setValue(c.showVisualModels_.getValue());
-    showMappings_.setValue(c.showMappings_.getValue());
-    showMechanicalMappings_.setValue(c.showMechanicalMappings_.getValue());
-    showForceFields_.setValue(c.showForceFields_.getValue());
-    showInteractionForceFields_.setValue(c.showInteractionForceFields_.getValue());
-    showWireFrame_.setValue(c.showWireFrame_.getValue());
-    showNormals_.setValue(c.showNormals_.getValue());
-    multiThreadSimulation_.setValue(c.multiThreadSimulation_.getValue());
-    
-    localFrame_ = c.localFrame_;
-    spatialVelocityInWorld_ = c.spatialVelocityInWorld_;
-    velocityBasedLinearAccelerationInWorld_ = c.velocityBasedLinearAccelerationInWorld_;
+    copySimulationContext(c);
+    copyVisualContext(c);    
+}
+
+
+void Context::copySimulationContext(const Context& c)
+{
+  worldGravity_.setValue(c.worldGravity_.getValue());  ///< Gravity IN THE WORLD COORDINATE SYSTEM.
+  dt_.setValue(c.dt_.getValue());
+  time_.setValue(c.time_.getValue());
+  animate_.setValue(c.animate_.getValue());
+  multiThreadSimulation_.setValue(c.multiThreadSimulation_.getValue());
+  
+  localFrame_ = c.localFrame_;
+  spatialVelocityInWorld_ = c.spatialVelocityInWorld_;
+  velocityBasedLinearAccelerationInWorld_ = c.velocityBasedLinearAccelerationInWorld_;
 	
 	// for multiresolution
-	finestLevel_ = c.finestLevel_;
-	coarsestLevel_ = c.coarsestLevel_;
-	currentLevel_ = c.currentLevel_;
+// 	finestLevel_ = c.finestLevel_;
+// 	coarsestLevel_ = c.coarsestLevel_;
+// 	currentLevel_ = c.currentLevel_;
+
+}
+
+void Context::copyVisualContext(const Context& c)
+{
+  showCollisionModels_.setValue(c.showCollisionModels_.getValue());
+  showBoundingCollisionModels_.setValue(c.showBoundingCollisionModels_.getValue());
+  showBehaviorModels_.setValue(c.showBehaviorModels_.getValue());
+  showVisualModels_.setValue(c.showVisualModels_.getValue());
+  showMappings_.setValue(c.showMappings_.getValue());
+  showMechanicalMappings_.setValue(c.showMechanicalMappings_.getValue());
+  showForceFields_.setValue(c.showForceFields_.getValue());
+  showInteractionForceFields_.setValue(c.showInteractionForceFields_.getValue());
+  showWireFrame_.setValue(c.showWireFrame_.getValue());
+  showNormals_.setValue(c.showNormals_.getValue());
 }
 
 std::ostream& operator << (std::ostream& out, const Context& c )

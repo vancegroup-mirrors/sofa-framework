@@ -63,7 +63,7 @@ class TestDetection : public BroadPhaseDetection, public NarrowPhaseDetection, p
 {
 private:
 	sofa::helper::vector<core::CollisionModel*> collisionModels;
-	DataField<bool> bDraw;
+	Data<bool> bDraw;
 
 public:
 

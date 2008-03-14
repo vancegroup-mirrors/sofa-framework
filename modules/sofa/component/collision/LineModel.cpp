@@ -28,11 +28,7 @@
 #include <sofa/core/CollisionElement.h>
 #include <sofa/core/ObjectFactory.h>
 #include <vector>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+#include <sofa/helper/system/gl.h>
 
 namespace sofa
 {
@@ -80,6 +76,49 @@ void LineModel::init()
 		return;
 	}
 	updateFromTopology();
+
+	// If the CollisionDetection Method uses the filtration method based on cones
+	if (this->isFiltered())
+	{
+		// Triangle neighborhood construction
+		if (mesh != NULL)
+		{
+			const int nTriangles = mesh->getNbTriangles();
+			if (nTriangles != 0)
+			{
+				for (int i=0;i<size;i++)
+				{
+					Line l(this,i);
+					elems[i].tRight = -1;
+					elems[i].tLeft = -1;
+
+					const Vector3& pt1 = l.p1();
+					const Vector3& pt2 = l.p2();
+
+					for (int j=0; j<nTriangles; j++)
+					{
+						MeshTopology::Triangle idx = mesh->getTriangle(j);
+						Vector3 a = (*mstate->getX())[idx[0]];
+						Vector3 b = (*mstate->getX())[idx[1]];
+						Vector3 c = (*mstate->getX())[idx[2]];
+
+						if ((a == pt1) && (b == pt2))
+							elems[i].tLeft = idx[2];
+						else if ((b == pt1) && (c == pt2))
+							elems[i].tLeft = idx[0];
+						else if ((c == pt1) && (a == pt2))
+							elems[i].tLeft = idx[1];
+						else if ((a == pt2) && (b == pt1))
+							elems[i].tRight = idx[2];
+						else if ((b == pt2) && (c == pt1))
+							elems[i].tRight = idx[0];
+						else if ((c == pt2) && (a == pt1))
+							elems[i].tRight = idx[1];
+					}
+				}
+			}
+		}
+	}
 }
 
 bool LineModel::updateFromTopology()
@@ -87,13 +126,13 @@ bool LineModel::updateFromTopology()
 	int revision = mesh->getRevision();
 	if (revision == meshRevision) return false;
 
-	const int npoints = mstate->getX()->size();
-	const int nlines = mesh->getNbLines();
+	const unsigned int npoints = mstate->getX()->size();
+	const unsigned int nlines = mesh->getNbLines();
 	resize(nlines);
 	int index = 0;
 	//VecCoord& x = *mstate->getX();
 	//VecDeriv& v = *mstate->getV();
-	for (int i=0; i<nlines; i++)
+	for (unsigned int i=0; i<nlines; i++)
 	{
 		MeshTopology::Line idx = mesh->getLine(i);
 		if (idx[0] >= npoints || idx[1] >= npoints)
@@ -120,16 +159,13 @@ void LineModel::draw(int index)
 
 void LineModel::draw()
 {
-	if (isActive() && getContext()->getShowCollisionModels())
+	if (getContext()->getShowCollisionModels())
 	{
 		if (getContext()->getShowWireFrame())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		glDisable(GL_LIGHTING);
-		if (isStatic())
-			glColor3f(0.5, 0.5, 0.5);
-		else
-			glColor3f(1.0, 0.0, 0.0);
+		glColor4fv(getColor4f());
 
 		for (int i=0;i<size;i++)
 		{
@@ -142,7 +178,7 @@ void LineModel::draw()
 		if (getContext()->getShowWireFrame())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if (isActive() && getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
+	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
 		dynamic_cast<core::VisualModel*>(getPrevious())->draw();
 }
 
@@ -151,7 +187,7 @@ void LineModel::computeBoundingTree(int maxDepth)
 	CubeModel* cubeModel = createPrevious<CubeModel>();
 	bool updated = updateFromTopology();
 	if (updated) cubeModel->resize(0);
-	if (isStatic() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 	
 	Vector3 minElem, maxElem;
 	
@@ -184,7 +220,7 @@ void LineModel::computeContinuousBoundingTree(double dt, int maxDepth)
 	CubeModel* cubeModel = createPrevious<CubeModel>();
 	bool updated = updateFromTopology();
 	if (updated) cubeModel->resize(0);
-	if (isStatic() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
+	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 	
 	Vector3 minElem, maxElem;
 

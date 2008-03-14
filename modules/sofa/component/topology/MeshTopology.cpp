@@ -51,10 +51,10 @@ int MeshTopologyClass = core::RegisterObject("Generic mesh topology")
 
 MeshTopology::MeshTopology()
     : nbPoints(0)
-    , seqLines(dataField(&seqLines,"lines","List of line indices")), validLines(false)
-    , seqTriangles(dataField(&seqTriangles,"triangles","List of triangle indices")), validTriangles(false)
+    , seqLines(initData(&seqLines,"lines","List of line indices")), validLines(false)
+    , seqTriangles(initData(&seqTriangles,"triangles","List of triangle indices")), validTriangles(false)
     , validQuads(false), validTetras(false), validCubes(false), revision(0)
-    , filename(dataField(&filename,"filename","Filename of the object"))
+    , filename(initData(&filename,"filename","Filename of the object"))
 {
 }
 
@@ -151,8 +151,8 @@ bool MeshTopology::load(const char* filename)
 				int i1 = facet[j];
 				int i2 = facet[(j+1)%facet.size()];
 				if (edges.count(std::make_pair(i1,i2))!=0)
-				{
-					std::cerr << "ERROR: Duplicate edge.\n";
+				{/*
+					std::cerr << "ERROR: Duplicate edge.\n";*/
 				}
 				else if (edges.count(std::make_pair(i2,i1))==0)
 				{

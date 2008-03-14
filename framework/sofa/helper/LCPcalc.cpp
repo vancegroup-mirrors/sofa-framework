@@ -932,8 +932,9 @@ struct listSortAscending {
 	}
 };
 
-int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, double &tol, int &numItMax)
+int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, double &tol, int &numItMax, bool useInitialF) 
 {
+
   ///* Allocation */
   //A = (double **)malloc( dim*sizeof(double*) );
   //for( ic = 0 ; ic < dim; ++ic ) 
@@ -959,8 +960,13 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 	double *d;
 	d = (double*)malloc(dim*sizeof(double));
 	// put the vector force to zero
-	for (i=0; i<dim; i++)
-		f[i]=0.0;
+	if (!useInitialF)
+	{
+		std::cout << "Reset F\n";
+		for (i=0; i<dim; i++)
+			f[i]=0.0;
+	}
+
 	// previous value of the force and the displacment
 	double f_1[3]; 
 	double d_1[3];
@@ -980,7 +986,8 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 		buf.index = c1;
 		sortedList.push_back(buf);
 	}
-	std::sort(sortedList.begin(), sortedList.end(), listSortAscending() );
+	
+	//std::sort(sortedList.begin(), sortedList.end(), listSortAscending() );
 
 	//for (c1=0; c1<numContacts; c1++)
 	//{
@@ -1064,7 +1071,7 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 		}
 
 		if (error < tol){
-		//	printf("\n convergence after %d iteration(s)",it);
+			//printf("Convergence after %d iteration(s)\n",it);
 			//afficheLCP(dfree,W,f,dim);
 			return 1;
 		}
@@ -1074,9 +1081,7 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 	//afficheLCP(dfree,W,f,dim);
 	return 0;
 	
-
 }
-
 
 /* Resoud un LCP écrit sous la forme U = q + M.F
  * dim : dimension du pb
@@ -1084,7 +1089,6 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
  * res[dim..2*dim-1] = F
  */
 void gaussSeidelLCP1(int dim, FemClipsReal * q, FemClipsReal ** M, FemClipsReal * res, double &tol, int &numItMax) {
-
 	int compteur;	// compteur de boucle
 	int compteur2, compteur3;	// compteur de boucle
 

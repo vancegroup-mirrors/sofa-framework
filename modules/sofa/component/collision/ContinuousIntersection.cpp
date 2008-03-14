@@ -28,7 +28,7 @@ int ContinuousIntersectionClass = core::RegisterObject("TODO-ContinuousIntersect
 
 ContinuousIntersection::ContinuousIntersection()
 {
-    intersectors.add<TriangleModel, TriangleModel, ContinuousIntersection, false>(this);
+    intersectors.add<TriangleModel, TriangleModel, ContinuousIntersection>(this);
 }
 
 bool ContinuousIntersection::testIntersection(Triangle& t1, Triangle& t2)

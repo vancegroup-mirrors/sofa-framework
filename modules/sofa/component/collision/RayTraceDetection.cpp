@@ -39,8 +39,8 @@
 #include <map>
 #include <queue>
 #include <stack>
-#include <GL/gl.h>
-#include <GL/glut.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 
 #include <sofa/helper/system/thread/CTime.h>
 
@@ -74,7 +74,7 @@ namespace sofa
       using namespace core::objectmodel;
 
         RayTraceDetection::
-	RayTraceDetection ():bDraw (dataField
+	RayTraceDetection ():bDraw (initData
 				  (&bDraw, false, "draw",
 				   "enable/disable display of results"))
       {
@@ -262,23 +262,25 @@ namespace sofa
 	     collisionModels.begin (); it != collisionModels.end (); ++it)
 	  {
 	    core::CollisionModel * cm2 = *it;
-	    if (cm->isStatic () && cm2->isStatic ())
+	    if (!cm->isSimulated() && !cm2->isSimulated())
 	      continue;
 	    if (!cm->canCollideWith (cm2))
 	      continue;
-	    core::componentmodel::collision::ElementIntersector *
-	      intersector = intersectionMethod->findIntersector (cm, cm2);
 
-	    if (intersector == NULL)
-	      continue;
-
-
+              bool swapModels = false;
+              core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
+              if (intersector == NULL)
+                  continue;
+              
+              core::CollisionModel* cm1 = (swapModels?cm2:cm);
+              cm2 = (swapModels?cm:cm2);
+              
 	   
 	    // Here we assume a single root element is present in both models
-	    if (intersector->canIntersect (cm->begin (), cm2->begin ()))
+	    if (intersector->canIntersect (cm1->begin (), cm2->begin ()))
 	      {
 
-		cmPairs.push_back (std::make_pair (cm, cm2));
+		cmPairs.push_back (std::make_pair (cm1, cm2));
 	      }
 	  }
 	collisionModels.push_back (cm);

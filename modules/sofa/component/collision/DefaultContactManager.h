@@ -42,26 +42,33 @@ namespace collision
 class DefaultContactManager : public core::componentmodel::collision::ContactManager, public core::VisualModel
 {
 protected:
-	std::map<std::pair<core::CollisionModel*,core::CollisionModel*>,core::componentmodel::collision::Contact*> contactMap;
-	ContactVector contactVec;
+	typedef std::map<std::pair<core::CollisionModel*,core::CollisionModel*>,core::componentmodel::collision::Contact*> ContactMap;
+	ContactMap contactMap;
 	
 	void clear();
 public:
-	DataField<std::string> response;
+	Data<std::string> response;
 	
 	DefaultContactManager();
 	~DefaultContactManager();
 	
 	void createContacts(DetectionOutputMap& outputs);
 	
-	const ContactVector& getContacts() { return contactVec; }
-
-	//virtual const char* getTypeName() const { return "CollisionResponse"; }
-	
 	// -- VisualModel interface
 	void draw();
 	void initTextures() { }
 	void update() { }
+
+protected:
+
+	std::map<Instance,ContactMap> storedContactMap;
+
+	virtual void changeInstance(Instance inst)
+	{
+		core::componentmodel::collision::ContactManager::changeInstance(inst);
+		storedContactMap[instance].swap(contactMap);
+		contactMap.swap(storedContactMap[inst]);
+	}
 };
 
 } // namespace collision

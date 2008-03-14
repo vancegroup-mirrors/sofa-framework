@@ -125,7 +125,7 @@ void StateMachine::queuePeriph(Node *n)
 }
 
 
-Node* StateMachine::getNext(char *str, Node *n)
+Node* StateMachine::getNext(const char *str, Node *n)
 {
 	if( n != NULL )
 	{
@@ -176,7 +176,7 @@ Node* StateMachine::getNext(char *str, Node *n)
 }
 
 
-void StateMachine::handleAutomaton(char *str)
+void StateMachine::handleAutomaton(const char *str)
 {
 	while( tabSerial.size() != 0 )
 	{

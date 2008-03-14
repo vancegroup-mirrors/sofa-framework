@@ -61,10 +61,10 @@ namespace sofa
 
       public:
       EdgesRemoved(const sofa::helper::vector<unsigned int> _eArray) : core::componentmodel::topology::TopologyChange(core::componentmodel::topology::EDGESREMOVED), removedEdgesArray(_eArray) {
-	  std::cout << "EdgeRemoved("<<removedEdgesArray.size()<<") created"<<std::endl;
+	  //std::cout << "EdgeRemoved("<<removedEdgesArray.size()<<") created"<<std::endl;
 	}
 	~EdgesRemoved() {
-	  std::cout << "EdgeRemoved("<<removedEdgesArray.size()<<") destroyed"<<std::endl;
+	  //std::cout << "EdgeRemoved("<<removedEdgesArray.size()<<") destroyed"<<std::endl;   
 	}
 
 	const sofa::helper::vector<unsigned int> &getArray() const {
@@ -122,7 +122,7 @@ namespace sofa
 	  return out;
         }
 
-        /// Needed to be compliant with DataFields.
+        /// Needed to be compliant with Datas.
         inline friend std::istream& operator>>(std::istream& in, EdgeSetTopologyContainer& t)
         {
 	  unsigned int s;
@@ -201,6 +201,18 @@ namespace sofa
 
       EdgeSetTopologyModifier(core::componentmodel::topology::BaseTopology *top) : PointSetTopologyModifier<DataTypes>(top){ 
 	}
+
+	  /*
+	template< typename DataTypes >
+	  friend class EdgeSetTopologyAlgorithms;
+
+	friend class sofa::core::componentmodel::topology::TopologicalMapping;
+
+	template< typename In, typename Out >
+	  friend class Tetra2TriangleTopologicalMapping;
+	  */
+
+	  //protected:
 	/** \brief Build an edge set topology from a file : also modifies the MechanicalObject 
 	 *
 	 */
@@ -259,6 +271,8 @@ namespace sofa
 				      const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs = (const sofa::helper::vector< sofa::helper::vector< double > >)0 );
 
 
+	virtual void addNewPoint( const sofa::helper::vector< double >& x){PointSetTopologyModifier< DataTypes >::addNewPoint(x);};
+
 
 	/** \brief Remove a subset of points 
 	 *
@@ -266,8 +280,9 @@ namespace sofa
 	 *
 	 * Important : some structures might need to be warned BEFORE the points are actually deleted, so always use method removePointsWarning before calling removePointsProcess.
 	 * \sa removePointsWarning
+	 * Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
 	 */
-	virtual void removePointsProcess( sofa::helper::vector<unsigned int> &indices);
+	virtual void removePointsProcess( sofa::helper::vector<unsigned int> &indices, const bool removeDOF = true);
 
 	/** \brief Reorder this topology.
 	 *
@@ -286,7 +301,7 @@ namespace sofa
 	virtual void splitEdgesProcess( sofa::helper::vector<unsigned int> &indices,
 					const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs = sofa::helper::vector< sofa::helper::vector< double > >(0));
 
-      protected:
+      //protected:
 	void addEdge(Edge e);
 
       public:
@@ -376,7 +391,7 @@ namespace sofa
       public:
 	EdgeSetTopology(component::MechanicalObject<DataTypes> *obj);
 		
-	Field< EdgeSetTopologyContainer > *f_m_topologyContainer;
+	DataPtr< EdgeSetTopologyContainer > *f_m_topologyContainer;
 
 	virtual void init();
 	/** \brief Returns the EdgeSetTopologyContainer object of this EdgeSetTopology.

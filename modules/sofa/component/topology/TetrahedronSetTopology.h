@@ -22,7 +22,7 @@
 * F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
 * and F. Poyer                                                                 *
 *******************************************************************************/
-#ifndef SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETTOPOLOGY_H
+#ifndef SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETTOPOLOGY_H     
 #define SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETTOPOLOGY_H
 
 #include <sofa/component/topology/TriangleSetTopology.h>
@@ -320,6 +320,17 @@ namespace sofa
 	/** returns the index (either 0, 1 ,2 or 3) of the vertex whose global index is vertexIndex. Returns -1 if none */
 	int getVertexIndexInTetrahedron(const Tetrahedron &t,unsigned int vertexIndex) const;
 
+	/** returns the index (either 0, 1 ,2, 3, 4 or 5) of the edge whose global index is edgeIndex. Returns -1 if none */
+	int getEdgeIndexInTetrahedron(const TetrahedronEdges &t,unsigned int edgeIndex) const;
+
+	/** returns the index (either 0, 1 ,2 or 3) of the triangle whose global index is triangleIndex. Returns -1 if none */
+	int getTriangleIndexInTetrahedron(const TetrahedronTriangles &t,unsigned int triangleIndex) const;
+
+
+	/** \brief Checks if the Tetrahedron Set Topology is coherent
+	 *
+	 */
+	virtual bool checkTopology() const;
 
 	TetrahedronSetTopologyContainer(core::componentmodel::topology::BaseTopology *top=NULL, 
 					const sofa::helper::vector< unsigned int > &DOFIndex = (const sofa::helper::vector< unsigned int >)0,                                                
@@ -363,7 +374,12 @@ namespace sofa
 	 */
 	virtual bool load(const char *filename);
 
+	/*
+	template< typename DataTypes >
+	  friend class TetrahedronSetTopologyAlgorithms;
+	*/  
 
+	//protected:
 	/** \brief Sends a message to warn that some tetrahedra were added in this topology.
 	 *
 	 * \sa addTetrahedraProcess
@@ -410,9 +426,10 @@ namespace sofa
 	/** \brief Remove a subset of triangles
 	 *
 	 * Important : some structures might need to be warned BEFORE the points are actually deleted, so always use method removeEdgesWarning before calling removeEdgesProcess.
-	 * @param removeIsolatedItems if true remove isolated edges and vertices 
+	 * @param removeIsolatedEdges if true isolated edges are also removed
+	 * @param removeIsolatedPoints if true isolated vertices are also removed
 	 */
-	virtual void removeTrianglesProcess(const sofa::helper::vector<unsigned int> &indices,const bool removeIsolatedItems=false);
+	virtual void removeTrianglesProcess(const sofa::helper::vector<unsigned int> &indices, const bool removeIsolatedEdges=false, const bool removeIsolatedPoints=false);
 
 	/** \brief Add some edges to this topology.
 	 * 
@@ -446,6 +463,7 @@ namespace sofa
 				      const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors = (const sofa::helper::vector< sofa::helper::vector< unsigned int > >)0, 
 				      const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs = (const sofa::helper::vector< sofa::helper::vector< double > >)0 );
 
+	virtual void addNewPoint( const sofa::helper::vector< double >& x){TriangleSetTopologyModifier< DataTypes >::addNewPoint(x);};
 
 
 	/** \brief Remove a subset of points
@@ -454,8 +472,9 @@ namespace sofa
 	 *
 	 * Important : some structures might need to be warned BEFORE the points are actually deleted, so always use method removePointsWarning before calling removePointsProcess.
 	 * \sa removePointsWarning
+	 * Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
 	 */
-	virtual void removePointsProcess( sofa::helper::vector<unsigned int> &indices);
+	virtual void removePointsProcess( sofa::helper::vector<unsigned int> &indices, const bool removeDOF = true);
 
 
 
@@ -481,12 +500,21 @@ namespace sofa
        * A class that performs topology algorithms on an TetrahedronSet.
        */
       template < class DataTypes >
-        class TetrahedronSetTopologyAlgorithms : public PointSetTopologyAlgorithms<DataTypes> {
+        class TetrahedronSetTopologyAlgorithms : public TriangleSetTopologyAlgorithms<DataTypes> {
 
       public:
+
+		  typedef typename DataTypes::Real Real;
 		
-      TetrahedronSetTopologyAlgorithms(sofa::core::componentmodel::topology::BaseTopology *top) : PointSetTopologyAlgorithms<DataTypes>(top){
+      TetrahedronSetTopologyAlgorithms(sofa::core::componentmodel::topology::BaseTopology *top) : TriangleSetTopologyAlgorithms<DataTypes>(top){
 	}
+
+	  /** \brief Remove a set  of tetrahedra
+	    @param tetrahedra an array of tetrahedron indices to be removed (note that the array is not const since it needs to be sorted)
+	    *
+	    */
+	virtual void removeTetrahedra(sofa::helper::vector< unsigned int >& tetrahedra);
+
       };
         
       /**
@@ -515,11 +543,11 @@ namespace sofa
       /** Describes a topological object that only consists as a set of points :
 	  it is a base class for all topological objects */
       template<class DataTypes>
-	class TetrahedronSetTopology : public PointSetTopology <DataTypes> {
+	class TetrahedronSetTopology : public TriangleSetTopology <DataTypes> {
 
       public:
 	TetrahedronSetTopology(component::MechanicalObject<DataTypes> *obj);
-	Field<TetrahedronSetTopologyContainer > *f_m_topologyContainer;
+	DataPtr<TetrahedronSetTopologyContainer > *f_m_topologyContainer;
 
 	virtual void init();
 	/** \brief Returns the TetrahedronSetTopologyContainer object of this TetrahedronSetTopology.

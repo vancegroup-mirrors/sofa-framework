@@ -30,11 +30,6 @@
 #include <sofa/component/mapping/BarycentricMapping.h>
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.inl>
 #include <sofa/helper/gl/template.h>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <algorithm>
 #include <iostream>
 using std::cerr;
@@ -100,7 +95,7 @@ void BarycentricMapping<BasicMapping>::calcMap(topology::RegularGridTopology* to
            Vec<3,Real> baryCoords = coefs;
            mapper->addPointInCube(cube, baryCoords.ptr());
        }
-	   if (outside>0) std::cerr << "WARNING: Barycentric mapping (in RegularGridTopology) with "<<outside<<"/"<<out.size()<<" points outside of grid. Can be unstable!"<<std::endl;
+//	   if (outside>0) std::cerr << "WARNING: Barycentric mapping (in RegularGridTopology) with "<<outside<<"/"<<out.size()<<" points outside of grid. Can be unstable!"<<std::endl;
        f_grid->setValue(*mapper);
 
     }
@@ -163,7 +158,7 @@ void BarycentricMapping<BasicMapping>::calcMap(topology::SparseGridTopology* top
 			Vec<3,Real> baryCoords = coefs;
 			mapper->addPointInCube(cube, baryCoords.ptr());
 		}
-		if (outside>0) std::cerr << "WARNING: Barycentric mapping (in SparseGridTopology) with "<<outside<<"/"<<out.size()<<" points outside of grid. Can be unstable!"<<std::endl;
+//		if (outside>0) std::cerr << "WARNING: Barycentric mapping (in SparseGridTopology) with "<<outside<<"/"<<out.size()<<" points outside of grid. Can be unstable!"<<std::endl;
 		f_sparsegrid->setValue(*mapper);
 
 	}
@@ -429,7 +424,7 @@ void BarycentricMapping<BasicMapping>::calcMap(topology::MeshTopology* topology)
                 mapper->addPointInCube(index-c0, coefs.ptr());
         }
     }
-	if (outside>0) std::cerr << "WARNING: Barycentric mapping (in MeshGridTopology) with "<<outside<<"/"<<out.size()<<" points outside of mesh. Can be unstable!"<<std::endl;
+//	if (outside>0) std::cerr << "WARNING: Barycentric mapping (in MeshGridTopology) with "<<outside<<"/"<<out.size()<<" points outside of mesh. Can be unstable!"<<std::endl;
     f_mesh->setValue(*mapper);
     }
     else
@@ -533,7 +528,7 @@ void BarycentricMapping<BasicMapping>::calcMap(topology::TriangleSetTopology<InD
             mapper->addPointInTriangle(index, coefs.ptr());
         }
     }
-	if (outside>0) std::cerr << "WARNING: Barycentric mapping (in TriangleSetTopology) with "<<outside<<"/"<<out.size()<<" points outside of mesh. Can be unstable!"<<std::endl;
+//	if (outside>0) std::cerr << "WARNING: Barycentric mapping (in TriangleSetTopology) with "<<outside<<"/"<<out.size()<<" points outside of mesh. Can be unstable!"<<std::endl;
     f_triangle->setValue(*mapper);
     }
     else
@@ -1335,25 +1330,89 @@ void TopologyBarycentricMapper<topology::SparseGridTopology,In,Out>::applyJT( ty
 //    printf("\n applyJT() in BaricentricMapping  [RegularGridMapper] ");
 	int offset = out.size();
 	out.resize(offset+in.size());
-
 	for(unsigned int i=0;i<in.size();i++)
 	{
-		for(unsigned int j=0;j<in[i].size();j++)
+            std::map<int,int> outpos;
+            int nbout = 0;
+            for(unsigned int j=0;j<in[i].size();j++)
 		{
 			const typename Out::SparseDeriv cIn = in[i][j];
 			const topology::SparseGridTopology::Cube cube = this->topology->getCube(this->map[cIn.index].in_index);
 			const OutReal fx = (OutReal)map[cIn.index].baryCoords[0];
 			const OutReal fy = (OutReal)map[cIn.index].baryCoords[1];
 			const OutReal fz = (OutReal)map[cIn.index].baryCoords[2];
-            
-			out[i+offset].push_back(typename In::SparseDeriv(cube[0], (typename In::Deriv) (cIn.data * ((1-fx) * (1-fy) * (1-fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[1], (typename In::Deriv) (cIn.data * ((  fx) * (1-fy) * (1-fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[2], (typename In::Deriv) (cIn.data * ((1-fx) * (  fy) * (1-fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[3], (typename In::Deriv) (cIn.data * ((  fx) * (  fy) * (1-fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[4], (typename In::Deriv) (cIn.data * ((1-fx) * (1-fy) * (  fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[5], (typename In::Deriv) (cIn.data * ((  fx) * (1-fy) * (  fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[6], (typename In::Deriv) (cIn.data * ((1-fx) * (  fy) * (  fz)))));
-			out[i+offset].push_back(typename In::SparseDeriv(cube[7], (typename In::Deriv) (cIn.data * ((  fx) * (  fy) * (  fz)))));
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[0],nbout)); OutReal f = ((1-fx) * (1-fy) * (1-fz));
+                    if (it.second)
+                    {
+                        out[i+offset].push_back(typename In::SparseDeriv(cube[0], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                    }
+                    else
+                        out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[1],nbout)); OutReal f = ((  fx) * (1-fy) * (1-fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[1], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[2],nbout)); OutReal f = ((1-fx) * (  fy) * (1-fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[2], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[3],nbout)); OutReal f = ((  fx) * (  fy) * (1-fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[3], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[4],nbout)); OutReal f = ((1-fx) * (1-fy) * (  fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[4], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[5],nbout)); OutReal f = ((  fx) * (1-fy) * (  fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[5], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[6],nbout)); OutReal f = ((1-fx) * (  fy) * (  fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[6], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+                {   std::pair<std::map<int,int>::iterator,bool> it = outpos.insert(std::make_pair(cube[7],nbout)); OutReal f = ((  fx) * (  fy) * (  fz));
+                        if (it.second)
+                        {
+                            out[i+offset].push_back(typename In::SparseDeriv(cube[7], (typename In::Deriv) (cIn.data * f))); ++nbout;
+                        }
+                        else
+                            out[i+offset][it.first->second].data += (typename In::Deriv) (cIn.data * f);
+                }
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[0], (typename In::Deriv) (cIn.data * ((1-fx) * (1-fy) * (1-fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[1], (typename In::Deriv) (cIn.data * ((  fx) * (1-fy) * (1-fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[2], (typename In::Deriv) (cIn.data * ((1-fx) * (  fy) * (1-fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[3], (typename In::Deriv) (cIn.data * ((  fx) * (  fy) * (1-fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[4], (typename In::Deriv) (cIn.data * ((1-fx) * (1-fy) * (  fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[5], (typename In::Deriv) (cIn.data * ((  fx) * (1-fy) * (  fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[6], (typename In::Deriv) (cIn.data * ((1-fx) * (  fy) * (  fz)))));
+			//out[i+offset].push_back(typename In::SparseDeriv(cube[7], (typename In::Deriv) (cIn.data * ((  fx) * (  fy) * (  fz)))));
 		}
 	}
 }

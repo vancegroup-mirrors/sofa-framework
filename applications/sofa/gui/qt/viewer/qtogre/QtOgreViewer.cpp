@@ -2,12 +2,8 @@
 #include "viewer/qtogre/QtOgreViewer.h"
 #include "viewer/qtogre/DotSceneLoader.h"
 #include "viewer/qtogre/OgreVisualModel.h"
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#include <GL/glu.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glu.h>
 
 #include <sofa/simulation/automatescheduler/ThreadSimulation.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
@@ -313,17 +309,17 @@ namespace sofa
 
 
 	    Display* display = qt_xdisplay(); //XOpenDisplay(NULL);
-// 	    int screen = qt_xscreen(); //DefaultScreen(display);
+ 	    int screen = qt_xscreen(); //DefaultScreen(display);
 
-	    params["parentWindowHandle"] = 
-	      Ogre::StringConverter::toString ((unsigned long)display) +
-	      // 	      ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
-	      ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
+// 	    params["parentWindowHandle"] = 
+// 	      Ogre::StringConverter::toString ((unsigned long)display) +
+// 	      // 	      ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
+// 	      ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
 
-	    // 	    params["parentWindowHandle"] = 
-	    // 	      Ogre::StringConverter::toString ((unsigned long)display) +
-	    // 	      ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
-	    // 	      ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
+	    	    params["parentWindowHandle"] = 
+	    	      Ogre::StringConverter::toString ((unsigned long)display) +
+	    	      ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
+	    	      ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
 
 
 
@@ -463,8 +459,9 @@ namespace sofa
 
 	  void QtOgreViewer::showEntireScene()
 	  {
+	    if (mSceneMgr == NULL) return;
+	    
 	    mSceneMgr->_updateSceneGraph (mCamera);
-
 	    //Verify if there is no new visual model.
 	    if (groot)
 	      {
@@ -492,14 +489,12 @@ namespace sofa
 		    number_visualModels = visualModels.size();
 		  }
 	      }
-	    
 	    //************************************************************************************************
 	    //Calculate the World Bounding Box
 	    
 	    sofa::defaulttype::Vector3 sceneMinBBox;
 	    sofa::defaulttype::Vector3 sceneMaxBBox;
 	    getSimulation()->computeBBox(groot, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
-
 	    Ogre::Vector3 size_world(sceneMaxBBox[0] - sceneMinBBox[0],sceneMaxBBox[1] - sceneMinBBox[1],sceneMaxBBox[2] - sceneMinBBox[2]);
 	    float max = ((size_world.x > size_world.y)?size_world.x:size_world.y);
 	    max = ((max > size_world.z)?max:size_world.z);
@@ -514,14 +509,15 @@ namespace sofa
 	    mCamera->setFarClipDistance(Ogre::Real( 1000.0+10.0*max));
 	    //mCamera->setNearClipDistance(Ogre::Real( 0.1*min)); //cause a crash of wrong BBox
 
-
 	    //position
 	    Ogre::Vector3 camera_position((sceneMaxBBox[0]+sceneMinBBox[0])/2.0f,(sceneMaxBBox[1]+sceneMinBBox[1])/2.0f,(sceneMaxBBox[2]+sceneMinBBox[2])/2.0f);
 
 	    mCamera->setPosition(Ogre::Vector3(camera_position.x, camera_position.y, camera_position.z));
 	    mCamera->moveRelative(Ogre::Vector3(0.0,0.0,2*std::max(size_world[0], std::max(size_world[1], size_world[2]))));
-
-	    mCamera->lookAt(camera_position);
+	    
+//  	    mCamera->setAutoTracking(true);
+// 	    mCamera->setFixedYawAxis(true);
+ 	    std::cout << camera_position << " : camera position\n";
 	    return;
 	  }
 
@@ -684,51 +680,10 @@ namespace sofa
 
 	  void QtOgreViewer::setScene(sofa::simulation::tree::GNode* scene, const char* filename, bool keepParams)
 	  {
-	    //Reset at initialization
-	    interactor = NULL;
-
-	    capture.setCounter();
-	    std::ostringstream ofilename;
-	    std::string screenshot_prefix;
-	    sceneFileName = (filename==NULL)?"":filename;
-
-	    if (!sceneFileName.empty())
-	      {
-		const char* begin = sceneFileName.c_str();
-		const char* end = strrchr(begin,'.');
-		if (!end) end = begin + sceneFileName.length();
-		ofilename << std::string(begin, end);
-		ofilename << "_";
-
-		std::string sceneNameTemp(std::string(begin, end) + std::string(".scene"));
-		std::ifstream in(sceneNameTemp.c_str());
-		if (!in.fail())
-		  {
-		    sceneName = sceneNameTemp;
-		    in.close();
-		  }
-
-		screenshot_prefix = ofilename.str();
-		std::string::size_type position_scene = screenshot_prefix.rfind("scenes/");
-		if (position_scene != std::string::npos)
-		  {
-		    screenshot_prefix.replace(position_scene, 7, "share/screenshots/");
-		  }
-
-	      }
-	    else
-	      screenshot_prefix = "scene_";
-
-	    //capture.setPrefix(ofilename.str());
-	    capture.setPrefix(screenshot_prefix);
-
-	    groot = scene;
-
+            
+            SofaViewer::setScene(scene, filename, keepParams);
 	    createScene();
-
-	    if (!keepParams) resetView();
-				
-	    update();
+            update();
 	  }
 
 
@@ -833,6 +788,8 @@ namespace sofa
 Allow or not the navigation with the mouse.<br></li>\
 <li><b>T</b>: TO CHANGE BETWEEN A PERSPECTIVE OR AN ORTHOGRAPHIC CAMERA<br></li>\
 <li><b>L</b>: TO DRAW SHADOWS<br></li>\
+<li><b>P</b>: TO SAVE A SEQUENCE OF OBJ<br>\
+Each time the frame is updated an obj is exported<br></li>\
 <li><b>R</b>: TO CHANGE THE RENDER MODE<br></li>\
 <li><b>I</b>: TO SAVE A SCREENSHOT<br>\
 The captured images are saved in the running project directory under the name format capturexxxx.bmp<br></li>\

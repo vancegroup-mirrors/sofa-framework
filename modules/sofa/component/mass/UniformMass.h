@@ -53,8 +53,8 @@ public:
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
 //protected:
-    DataField<MassType> mass;    ///< the mass of each particle
-    DataField<double> totalMass; ///< if >0 : total mass of this body
+    Data<MassType> mass;    ///< the mass of each particle
+    Data<double> totalMass; ///< if >0 : total mass of this body
 
 public:
     UniformMass();
@@ -83,6 +83,8 @@ public:
     double getPotentialEnergy(const VecCoord& x);   ///< Mgx potential in a uniform gravity field, null at origin
 
 	void addMDxToVector(defaulttype::BaseVector *resVect, const VecDeriv *dx, double mFact, unsigned int& offset);
+
+	void addGravityToV(double dt);
 
     // -- VisualModel interface
 

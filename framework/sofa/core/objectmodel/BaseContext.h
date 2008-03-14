@@ -26,6 +26,7 @@
 #define SOFA_CORE_OBJECTMODEL_BASECONTEXT_H
 
 #include <sofa/core/objectmodel/Base.h>
+#include <sofa/core/objectmodel/ClassInfo.h>
 #include <sofa/defaulttype/SolidTypes.h>
 #include <set>
 
@@ -80,8 +81,17 @@ public:
     /// all parameters and can be used when no local context is defined.
     static BaseContext* getDefault();
 
+    /// Specification of where to search for queried objects
+    enum SearchDirection { SearchUp = -1, Local = 0, SearchDown = 1, SearchRoot = 2 };
+
     /// @name Parameters
     /// @{
+
+    /// The Context is active
+    virtual const bool isActive() const;
+
+    /// State of the context
+    virtual void setActive(bool){};
 
     /// Simulation time
     virtual double getTime() const;
@@ -135,7 +145,7 @@ public:
     virtual int getFinestLevel() const;
     
     /// Multiresolution support (UNSTABLE)
-    virtual unsigned int nbLevels() const;
+//     virtual unsigned int nbLevels() const;
 
     /// @}
 
@@ -172,7 +182,7 @@ public:
     virtual void setGravityInWorld( const Vec3& )
     { }
 
-    /// @name Variables
+    /// @name Containers
     /// @{
 
     /// Mechanical Degrees-of-Freedom
@@ -183,6 +193,66 @@ public:
 
     /// Dynamic Topology
     virtual BaseObject* getMainTopology() const;
+
+    /// Global Shader 
+    virtual BaseObject* getShader() const;
+
+    /// Generic object access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const ClassInfo& class_info, SearchDirection dir = SearchUp) const;
+
+    /// Generic object access, given a path from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const ClassInfo& class_info, const std::string& path) const;
+
+    class GetObjectsCallBack
+    {
+    public:
+      virtual ~GetObjectsCallBack() {}
+	virtual void operator()(void* ptr) = 0;
+    };
+
+    /// Generic list of objects access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void getObjects(const ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const;
+
+    /// Generic object access template wrapper, possibly searching up or down from the current context
+    template<class T>
+    T* get(SearchDirection dir = SearchUp) const
+    {
+        return reinterpret_cast<T*>(this->getObject(classid(T), dir));
+    }
+
+    /// Generic object access template wrapper, given a path from the current context
+    template<class T>
+    T* get(const std::string& path) const
+    {
+        return reinterpret_cast<T*>(this->getObject(classid(T), path));
+    }
+
+    template<class T, class Container>
+    class GetObjectsCallBackT : public GetObjectsCallBack
+    {
+    public:
+	Container* dest;
+	GetObjectsCallBackT(Container* d) : dest(d) {}
+	virtual void operator()(void* ptr)
+	{
+	    dest->push_back(reinterpret_cast<T*>(ptr));
+	}
+    };
+
+    /// Generic list of objects access template wrapper, possibly searching up or down from the current context
+    template<class T, class Container>
+    void get(Container* list, SearchDirection dir = SearchUp) const
+    {
+	GetObjectsCallBackT<T,Container> cb(list);
+        this->getObjects(classid(T), cb, dir);
+    }
+
 
     /// @}
 

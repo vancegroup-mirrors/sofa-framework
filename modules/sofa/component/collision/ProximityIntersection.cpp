@@ -27,7 +27,6 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/collision/proximity.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
-#include <sofa/component/collision/RayPickInteractor.h>
 #include <iostream>
 #include <algorithm>
 
@@ -52,64 +51,56 @@ int ProximityIntersectionClass = core::RegisterObject("TODO")
 ;
 
 ProximityIntersection::ProximityIntersection()
-: useTriangleTriangle(dataField(&useTriangleTriangle, false, "useTriangleTriangle","TODO"))
-, useLineTriangle(dataField(&useLineTriangle, true, "useLineTriangle","TODO"))
-, usePointTriangle(dataField(&usePointTriangle, false, "usePointTriangle","TODO"))
-, useSphereTriangle(dataField(&useSphereTriangle, true, "useSphereTriangle","TODO"))
-, alarmDistance(dataField(&alarmDistance, 1.0, "alarmDistance","TODO"))
-, contactDistance(dataField(&contactDistance, 0.5, "contactDistance","TODO"))
+: useTriangleTriangle(initData(&useTriangleTriangle, false, "useTriangleTriangle","TODO"))
+, useLineTriangle(initData(&useLineTriangle, true, "useLineTriangle","TODO"))
+, usePointTriangle(initData(&usePointTriangle, false, "usePointTriangle","TODO"))
+, useSphereTriangle(initData(&useSphereTriangle, true, "useSphereTriangle","TODO"))
+, alarmDistance(initData(&alarmDistance, 1.0, "alarmDistance","TODO"))
+, contactDistance(initData(&contactDistance, 0.5, "contactDistance","TODO"))
 {
 }
 
 void ProximityIntersection::init()
 {
-	intersectors.add<CubeModel,     CubeModel,     ProximityIntersection,                 false>(this);
+	intersectors.add<CubeModel,     CubeModel,     ProximityIntersection>(this);
 	if (useTriangleTriangle.getValue())
 	{
-		intersectors.add<TriangleModel, TriangleModel, ProximityIntersection, false>(this);
+		intersectors.add<TriangleModel, TriangleModel, ProximityIntersection>(this);
 	}
 	else
 	{
-		intersectors.ignore<TriangleModel, TriangleModel, false>();
+		intersectors.ignore<TriangleModel, TriangleModel>();
 	}
 	if (useLineTriangle.getValue())
 	{
-		intersectors.add<LineModel, TriangleModel, ProximityIntersection, true>(this);
+		intersectors.add<TriangleModel, LineModel, ProximityIntersection>(this);
 	}
 	else
 	{
-		intersectors.ignore<LineModel, TriangleModel, true>();
+		intersectors.ignore<TriangleModel, LineModel>();
 	}
 	if (usePointTriangle.getValue())
 	{
-		intersectors.add<PointModel, TriangleModel, ProximityIntersection, true>(this);
+		intersectors.add<TriangleModel, PointModel, ProximityIntersection>(this);
 	}
 	else
 	{
-		intersectors.ignore<PointModel, TriangleModel, true>();
+		intersectors.ignore<TriangleModel, PointModel>();
 	}
 	if (useSphereTriangle.getValue())
 	{
-		intersectors.add<SphereModel, TriangleModel, ProximityIntersection, true>(this);
+		intersectors.add<TriangleModel, SphereModel, ProximityIntersection>(this);
 	}
 	else
 	{
-		intersectors.ignore<SphereModel, TriangleModel, true>();
+		intersectors.ignore<TriangleModel, SphereModel>();
 	}
-	intersectors.ignore<PointModel, PointModel, false>();
-	intersectors.ignore<LineModel, LineModel, false>();
-	intersectors.ignore<PointModel, LineModel, true>();
-	intersectors.add<RayModel, TriangleModel, ProximityIntersection, true>(this);
-	intersectors.add<RayPickInteractor, TriangleModel, ProximityIntersection, true>(this);
-}
-
-//static ProximityIntersection* proximityInstance = NULL;
-
-/// Return the intersector class handling the given pair of collision models, or NULL if not supported.
-ElementIntersector* ProximityIntersection::findIntersector(core::CollisionModel* object1, core::CollisionModel* object2)
-{
-	//proximityInstance = this;
-	return this->DiscreteIntersection::findIntersector(object1, object2);
+	intersectors.ignore<PointModel, PointModel>();
+	intersectors.ignore<LineModel, LineModel>();
+	intersectors.ignore<LineModel, PointModel>();
+    intersectors.ignore<RayModel, PointModel>();
+    intersectors.ignore<RayModel, LineModel>();
+	intersectors.add<RayModel, TriangleModel, ProximityIntersection>(this);
 }
 
 bool ProximityIntersection::testIntersection(Cube &cube1, Cube &cube2)
@@ -185,7 +176,7 @@ int ProximityIntersection::computeIntersection(Triangle& t1, Triangle& t2, Outpu
 
 }
 
-bool ProximityIntersection::testIntersection(Line& t1, Triangle& t2)
+bool ProximityIntersection::testIntersection(Triangle& t2, Line& t1)
 {
 	Vector3 P,Q,PQ;
 	static DistanceSegTri proximitySolver;
@@ -206,7 +197,7 @@ bool ProximityIntersection::testIntersection(Line& t1, Triangle& t2)
 		return false;
 }
 
-int ProximityIntersection::computeIntersection(Line& t1, Triangle& t2, OutputVector* contacts)
+int ProximityIntersection::computeIntersection(Triangle& t2, Line& t1, OutputVector* contacts)
 {
 	Vector3 P,Q,PQ;
 	static DistanceSegTri proximitySolver;
@@ -232,7 +223,7 @@ int ProximityIntersection::computeIntersection(Line& t1, Triangle& t2, OutputVec
 	detection->normal=PQ;
 	detection->value = detection->normal.norm();
 	detection->normal /= detection->value;
-	if (t2.getCollisionModel()->isStatic() && detection->normal * t2.n() < -0.95)
+	if (!t2.getCollisionModel()->isMoving() && detection->normal * t2.n() < -0.95)
 	{ // The elements are interpenetrating
 		detection->normal = -detection->normal;
 		detection->value = -detection->value;
@@ -241,7 +232,7 @@ int ProximityIntersection::computeIntersection(Line& t1, Triangle& t2, OutputVec
 	return 1;
 }
 
-bool ProximityIntersection::testIntersection(Point& t1, Triangle& t2)
+bool ProximityIntersection::testIntersection(Triangle& t2, Point& t1)
 {
 	Vector3 P,Q,PQ;
 	static DistancePointTri proximitySolver;
@@ -260,7 +251,7 @@ bool ProximityIntersection::testIntersection(Point& t1, Triangle& t2)
 		return false;
 }
 
-int ProximityIntersection::computeIntersection(Point& t1, Triangle& t2, OutputVector* contacts)
+int ProximityIntersection::computeIntersection(Triangle& t2, Point& t1, OutputVector* contacts)
 {
 	Vector3 P,Q,PQ;
 	static DistancePointTri proximitySolver;
@@ -294,7 +285,7 @@ int ProximityIntersection::computeIntersection(Point& t1, Triangle& t2, OutputVe
 
 }
 
-bool ProximityIntersection::testIntersection(Sphere& t1, Triangle& t2)
+bool ProximityIntersection::testIntersection(Triangle& t2, Sphere& t1)
 {
 	Vector3 P,Q,PQ;
 	static DistancePointTri proximitySolver;
@@ -313,7 +304,7 @@ bool ProximityIntersection::testIntersection(Sphere& t1, Triangle& t2)
 		return false;
 }
 
-int ProximityIntersection::computeIntersection(Sphere& t1, Triangle& t2, OutputVector* contacts)
+int ProximityIntersection::computeIntersection(Triangle& t2, Sphere& t1, OutputVector* contacts)
 {
 	Vector3 P,Q,PQ;
 	static DistancePointTri proximitySolver;
@@ -372,14 +363,14 @@ bool ProximityIntersection::testIntersection(Ray &t1,Triangle &t2)
 		return false;
 }
 
-int ProximityIntersection::computeIntersection(Ray &t1, Triangle &t2, OutputVector* contacts)
+int ProximityIntersection::computeIntersection(Ray &r1, Triangle &t2, OutputVector* contacts)
 {
 
-	if (fabs(t2.n() * t1.direction()) < 0.000001)
+	if (fabs(t2.n() * r1.direction()) < 0.000001)
 		return 0; // no intersection for edges parallel to the triangle
 
-	Vector3 A = t1.origin();
-	Vector3 B = A + t1.direction() * t1.l();
+	Vector3 A = r1.origin();
+	Vector3 B = A + r1.direction() * r1.l();
 
 	Vector3 P,Q,PQ;
 	static DistanceSegTri proximitySolver;
@@ -391,17 +382,17 @@ int ProximityIntersection::computeIntersection(Ray &t1, Triangle &t2, OutputVect
 	if (PQ.norm2() >= alarmDist*alarmDist)
 		return 0;
 	
-	const double contactDist = getAlarmDistance() + t1.getProximity() + t2.getProximity();
+	const double contactDist = getAlarmDistance() + r1.getProximity() + t2.getProximity();
 
 	proximitySolver.NewComputation( &t2, A,B,P,Q);
 	contacts->resize(contacts->size()+1);
 	DetectionOutput *detection = &*(contacts->end()-1);
 
-	detection->elem = std::pair<core::CollisionElementIterator, core::CollisionElementIterator>(t2, t1);
-    detection->id = t1.getIndex();
-	detection->point[0]=P;
-	detection->point[1]=Q;
-	detection->normal=t2.n();
+	detection->elem = std::pair<core::CollisionElementIterator, core::CollisionElementIterator>(r1, t2);
+    detection->id = r1.getIndex();
+	detection->point[1]=P;
+	detection->point[0]=Q;
+	detection->normal=-t2.n();
 	detection->value = (PQ).norm();
 	detection->value -= contactDist;
 	return 1;

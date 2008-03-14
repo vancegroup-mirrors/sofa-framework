@@ -28,11 +28,6 @@
 #include <sofa/helper/gl/template.h>
 #include <sofa/component/topology/TriangleData.inl>
 #include <sofa/component/topology/EdgeData.inl>
-#if defined (__APPLE__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 
 namespace sofa
 {
@@ -150,12 +145,12 @@ void TriangularQuadraticSpringsForceField<DataTypes>::TRQSTriangleDestroyFunctio
 } 
 template <class DataTypes> TriangularQuadraticSpringsForceField<DataTypes>::TriangularQuadraticSpringsForceField() 
 : _mesh(NULL)
-, _initialPoints(dataField(&_initialPoints,"initialPoints", "Initial Position"))
+, _initialPoints(initData(&_initialPoints,"initialPoints", "Initial Position"))
 , updateMatrix(true)
-, f_poissonRatio(dataField(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
-, f_youngModulus(dataField(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
-, f_dampingRatio(dataField(&f_dampingRatio,(Real)0.,"dampingRatio","Ratio damping/stiffness"))
-, f_useAngularSprings(dataField(&f_useAngularSprings,true,"useAngularSprings","If Angular Springs should be used or not"))
+, f_poissonRatio(initData(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
+, f_youngModulus(initData(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
+, f_dampingRatio(initData(&f_dampingRatio,(Real)0.,"dampingRatio","Ratio damping/stiffness"))
+, f_useAngularSprings(initData(&f_useAngularSprings,true,"useAngularSprings","If Angular Springs should be used or not"))
 , lambda(0)
 , mu(0)
 	{
@@ -371,7 +366,7 @@ void TriangularQuadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df, co
 						tinfo->gamma[i]*edgeInfo[tea[j]].dl+
 						tinfo->gamma[j]*edgeInfo[tea[i]].dl);
 
-					val2= -val1 - tinfo->stiffness[k]*edgeInfo[tea[k]].currentLength;
+					val2= -val1 - tinfo->stiffness[k]*edgeInfo[tea[k]].restLength;
 					val1/=edgeInfo[tea[k]].currentLength;
 					val2/=edgeInfo[tea[k]].currentLength*edgeInfo[tea[k]].currentLength*edgeInfo[tea[k]].currentLength;
 					valk=tinfo->gamma[k]/(edgeInfo[tea[j]].currentLength*

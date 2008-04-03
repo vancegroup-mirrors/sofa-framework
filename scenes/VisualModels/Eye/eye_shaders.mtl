@@ -1,0 +1,75 @@
+# 
+# Eye Shaders
+# 
+newmtl Transparent
+Ka 0.152941 0.152941 0.152941
+Kd 0.9 0.9 0.9
+Ks 0.9 0.9 0.9
+Tr 0.4
+illum 2
+Ns 58.3792
+#
+newmtl Red
+Ka 0.1745 0.01175 0.01175
+Kd 0.51424 0.1136 0.0136
+Ks 0.15 0.15 0.15
+illum 2
+Ns 28.3792
+#
+newmtl Blue
+Ka 0.1 0.18725 0.1745
+Kd 0.12 0.22 0.79102
+Ks 0.297254 0.30829 0.30829
+illum 2
+Ns 18.0
+#
+newmtl Brown
+Ka 0.1125 0.0275 0.024
+Kd 0.514 0.2284 0.08144
+Ks 0.393548 0.271906 0.16672
+illum 2
+Ns 38.0
+#
+newmtl White
+Ka 0.15 0.15 0.15
+Kd 0.86 0.82 0.7
+Ks 0.8 0.8 0.8
+illum 2
+Ns 70.0
+#
+newmtl Metal
+Ka 0.1 0.1 0.1
+Kd 0.5 0.5 0.5
+Ks 0.44898 0.445189 0.432723
+illum 2
+Ns 100.0
+#
+newmtl Skin
+#Ka 0.25 0.15 0.1
+#Kd 0.6 0.5 0.5
+#Ks 0.4 0.4 0.4
+#illum 2
+#Ns 10.0
+Ka 0.15 0.15 0.15
+Kd 0.86 0.82 0.7
+Ks 0.4 0.4 0.4
+illum 2
+Ns 70.0
+#
+newmtl ScarTissue
+Ka 0.2 0.2 0.2
+Kd 0.9 0.9 0.9
+Ks 0.9 0.9 0.9
+Tr 0.25
+illum 2
+Ns 1.0
+#
+newmtl Black
+Ka 0.1 0.1 0.1
+Kd 0.05 0.05 0.05
+Ks 0.0 0.0 0.0
+illum 2
+Ns 10.0
+#
+
+                         

@@ -1,0 +1,134 @@
+newmtl LensB_Transparent
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.74 0.87 0.92
+Tf 0.40 0.40 0.40
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl Red
+illum 4
+Kd 1.00 0.22 0.08
+Ka 0.60 0.60 0.60
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.77 0.77 0.77
+Ns 52.09
+newmtl White
+illum 4
+Kd 1.00 0.22 0.08
+Ka 1.00 1.00 1.00
+Tf 0.99 0.99 0.99
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl choroid_White
+illum 4
+Kd 0.53 0.11 0.04
+Ka 1.00 1.00 1.00
+Tf 0.99 0.99 0.99
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl ciliary_processes_White
+illum 4
+Kd 1.00 0.22 0.08
+Ka 0.60 0.60 0.60
+Tf 0.81 0.81 0.81
+Ni 1.00
+Ks 0.77 0.77 0.77
+Ns 52.09
+newmtl clamp3:Metal
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl clamp5:Metal
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl clamp6:Metal
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl cornea:Transparent_001
+illum 4
+Kd 0.72 0.72 0.72
+Ka 0.00 0.00 0.00
+Tf 0.40 0.40 0.40
+Ni 1.00
+Ks 0.45 0.45 0.45
+Ns 54.90
+newmtl eye_lens:initialShadingGroup
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl initialShadingGroup
+illum 4
+Kd 0.50 0.50 0.50
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+newmtl iris:Material_004
+illum 4
+Kd 0.64 0.64 0.64
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 96.08
+newmtl john_hi_obj:Texture3
+illum 4
+Kd 0.70 0.70 0.70
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+Ns 20.00
+newmtl lat_recus_muscle_White
+illum 4
+Kd 0.28 0.04 0.04
+Ka 0.85 0.94 0.98
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 0.97 0.98
+Ns 13.24
+newmtl lensA_Transparent
+illum 4
+Kd 1.00 0.23 0.10
+Ka 1.00 0.69 0.65
+Tf 0.51 0.51 0.51
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl optic_nerve_White
+illum 4
+Kd 0.15 0.23 0.50
+Ka 0.72 0.84 0.89
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00
+newmtl sclera_White
+illum 4
+Kd 1.00 1.00 1.00
+Ka 0.48 0.48 0.48
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.50 0.50 0.50
+Ns 18.00

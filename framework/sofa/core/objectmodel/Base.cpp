@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 //
 // C++ Implementation: Base
 //
@@ -41,6 +43,7 @@
 #include <cxxabi.h>
 #endif
 
+#include <string.h>
 namespace sofa
 {
 
@@ -162,7 +165,7 @@ std::string Base::decodeClassName(const std::type_info& t)
     realname = allocname = abi::__cxa_demangle(allocname, 0, 0, &status);
     if (realname==NULL)
 #endif
-        realname = allocname;
+	realname = allocname;
     int len = strlen(realname);
     char* newname = (char*)malloc(len+1);
     int start = 0;
@@ -182,6 +185,10 @@ std::string Base::decodeClassName(const std::type_info& t)
         {
             start = i+1;
         }
+		else if (c == ' ' && i >= 6 && realname[i-6] == 's' && realname[i-5] == 't' && realname[i-4] == 'r' && realname[i-3] == 'u' && realname[i-2] == 'c' && realname[i-1] == 't')
+        {
+            start = i+1;
+        }
         else if (c != ':' && c != '_' && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z'))
         {
             // write result
@@ -194,6 +201,7 @@ std::string Base::decodeClassName(const std::type_info& t)
         cprev = c;
         //std::cout << "i = "<<i<<" start = "<<start<<" dest = "<<dest<<" newname = "<<newname<<std::endl;
     }
+
     while (start < i)
     {
         newname[dest++] = realname[start++];

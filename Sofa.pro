@@ -4,8 +4,21 @@ TEMPLATE = subdirs
 include($${SOFA_DIR}/sofa.cfg) 
 
 SUBDIRS += extlibs/NewMAT
-#SUBDIRS += extlibs/SLC
+
+
 SUBDIRS += extlibs/qwt
+
+# FlowVR
+	SUBDIRS += extlibs/miniFlowVR
+contains(DEFINES,SOFA_HAVE_FLOWVR){
+	SUBDIRS -= extlibs/miniFlowVR
+}
+
+#QGLViewer
+
+contains(DEFINES,SOFA_GUI_QGLVIEWER){
+	SUBDIRS += extlibs/libQGLViewer/QGLViewer
+}
 
 # PML
 	SUBDIRS += extlibs/PML
@@ -15,12 +28,6 @@ SUBDIRS += extlibs/qwt
 	SUBDIRS -= extlibs/LML
 }
 
-# FlowVR
-	SUBDIRS += extlibs/miniFlowVR
-contains(DEFINES,SOFA_HAVE_FLOWVR){
-	SUBDIRS -= extlibs/miniFlowVR
-}
-
 SUBDIRS += framework
 SUBDIRS += modules
 SUBDIRS += applications
@@ -28,6 +35,8 @@ SUBDIRS += applications
 # Print current config
 
 message( "====== SOFA Build Configuration ======")
+
+
 win32 {
   message( "|  Platform: Windows")
 }
@@ -105,12 +114,6 @@ else {
   message( "|  GLUT GUI: DISABLED")
 }
 
-contains(DEFINES,SOFA_GUI_FLTK) {
-  message( "|  FLTK GUI: ENABLED")
-}
-else {
-  message( "|  FLTK GUI: DISABLED")
-}
 
 !contains(DEFINES,SOFA_GUI_QTVIEWER) {
 !contains(DEFINES,SOFA_GUI_QGLVIEWER) {

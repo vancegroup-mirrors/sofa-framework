@@ -1,33 +1,33 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_H
 #define SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_H
 
 #include <sofa/core/componentmodel/behavior/Constraint.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
@@ -49,11 +49,11 @@ using core::objectmodel::Data;
 using namespace sofa::core::objectmodel;
 using namespace sofa::defaulttype;
 
-/** impose a movement to given DOFs
-	The movement between 2 key times is linearly interpolated
+/** impose a motion to given DOFs (translation and rotation)
+	The motion between 2 key times is linearly interpolated
 */
 template <class DataTypes>
-class LinearMovementConstraint : public core::componentmodel::behavior::Constraint<DataTypes>, public core::VisualModel
+class LinearMovementConstraint : public core::componentmodel::behavior::Constraint<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
     typedef typename DataTypes::VecCoord VecCoord;
@@ -64,48 +64,60 @@ public:
 	typedef topology::PointSubset SetIndex;
 	typedef helper::vector<unsigned int> SetIndexArray;
 
-public:
-	Data<SetIndex> f_indices;
-	Data<helper::vector<Real> > f_keyTimes;
-	Data<VecDeriv > f_keyMovements;
+public :
+	/// indices of the DOFs the constraint is applied to
+	Data<SetIndex> m_indices;
+	/// the key frames when the motion is defined by the user
+	Data<helper::vector<Real> > m_keyTimes;
+	/// the motions corresponding to the key frames
+	Data<VecDeriv > m_keyMovements;
 
-	Deriv prevMovement;
-	double prevT, nextT;
+	/// the key times surrounding the current simulation time (for interpolation)
+	Real prevT, nextT;
+	///the motions corresponding to the surrouding key times
+	Deriv prevM, nextM;
+	///initial constrained DOFs position
+	VecCoord x0;
 
 	LinearMovementConstraint();
 
 	virtual ~LinearMovementConstraint();
 
+	///methods to add/remove some indices, keyTimes, keyMovement
 	void clearIndices();
-	void addIndice(unsigned int index);
-	void removeIndice(unsigned int index);
-	void clearTranslations();
-	void addTranslation(Real time, Deriv movement);
-	//void removeTranslation();
+	void addIndex(unsigned int index);
+	void removeIndex(unsigned int index);
+	void clearKeyMovements();
+	/**add a new key movement
+	@param time : the simulation time you want to set a movement (in sec)
+	@param movement : the corresponding motion
+	for instance, addKeyMovement(1.0, Deriv(5,0,0) ) will set a translation of 5 in x direction a time 1.0s
+	**/
+	void addKeyMovement(Real time, Deriv movement);
 
-	// -- Constraint interface
+
+	/// -- Constraint interface
 	void init();
 	void projectResponse(VecDeriv& dx);
-	virtual void projectVelocity(VecDeriv& /*dx*/){} ///< project dx to constrained space (dx models a velocity)
+	virtual void projectVelocity(VecDeriv& dx); ///< project dx to constrained space (dx models a velocity)
 	virtual void projectPosition(VecCoord& x); ///< project x to constrained space (x models a position)
 
-	//void applyConstraint(defaulttype::BaseMatrix *mat, unsigned int &offset);
-	//void applyConstraint(defaulttype::BaseVector *vect, unsigned int &offset);
-	
-	// Handle topological changes
+	/// Handle topological changes
 	virtual void handleTopologyChange();
 
-	// -- VisualModel interface
 	virtual void draw();
-	void initTextures() { }
-	void update() { }
 
-protected : 
+	/// this constraint is holonomic
+	bool isHolonomic() {return true;}
+
+protected:
+
+	sofa::core::componentmodel::topology::BaseMeshTopology* topology;
 	
-	// Define TestNewPointFunction
+	/// Define TestNewPointFunction (for topology changes)
     static bool FCTestNewPointFunction(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& );
 
-	// Define RemovalFunction
+	/// Define RemovalFunction (for topology changes)
 	static void FCRemovalFunction ( int , void*);
 
 };
@@ -118,3 +130,4 @@ protected :
 
 
 #endif
+

@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/topology/CubeTopology.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -41,14 +41,28 @@ using std::endl;
 void CubeTopology::parse(core::objectmodel::BaseObjectDescription* arg)
 {
     this->MeshTopology::parse(arg);
+    float scale=1.0f;
+    if (arg->getAttribute("scale")!=NULL) {
+        scale = (float)atof(arg->getAttribute("scale"));
+    }
     this->setSize();
-    const char* xmin = arg->getAttribute("xmin",arg->getAttribute("min","0"));
-    const char* ymin = arg->getAttribute("ymin",arg->getAttribute("min","0"));
-    const char* zmin = arg->getAttribute("zmin",arg->getAttribute("min","0"));
-    const char* xmax = arg->getAttribute("xmax",arg->getAttribute("max",arg->getAttribute("nx","1")));
-    const char* ymax = arg->getAttribute("ymax",arg->getAttribute("max",arg->getAttribute("ny","1")));
-    const char* zmax = arg->getAttribute("zmax",arg->getAttribute("max",arg->getAttribute("nz","1")));
-    this->setPos(atof(xmin),atof(xmax),atof(ymin),atof(ymax),atof(zmin),atof(zmax));
+    if (arg->getAttribute("xmin") != NULL && 
+	arg->getAttribute("ymin") != NULL && 
+	arg->getAttribute("zmin") != NULL && 
+	arg->getAttribute("xmax") != NULL && 
+	arg->getAttribute("ymax") != NULL && 
+	arg->getAttribute("zmax") != NULL )
+    {
+	const char* xmin = arg->getAttribute("xmin");
+	const char* ymin = arg->getAttribute("ymin");
+	const char* zmin = arg->getAttribute("zmin");
+	const char* xmax = arg->getAttribute("xmax");
+	const char* ymax = arg->getAttribute("ymax");
+	const char* zmax = arg->getAttribute("zmax");
+	min.setValue(Vector3((SReal)(atof(xmin)*scale), (SReal)(atof(ymin)*scale), (SReal)(atof(zmin)*scale)));
+	max.setValue(Vector3((SReal)(atof(xmax)*scale), (SReal)(atof(ymax)*scale), (SReal)(atof(zmax)*scale)));
+    }
+    this->setPos(min.getValue()[0],max.getValue()[0],min.getValue()[1],max.getValue()[1],min.getValue()[2],max.getValue()[2]);
 }
 
 SOFA_DECL_CLASS(CubeTopology)
@@ -61,6 +75,8 @@ CubeTopology::CubeTopology(int _nx, int _ny, int _nz)
 : nx(initData(&nx,_nx,"nx","x grid resolution")), ny(initData(&ny,_ny,"ny","y grid resolution")), nz(initData(&nz,_nz,"nz","z grid resolution"))
 , internalPoints(initData(&internalPoints, false, "internalPoints", "include internal points (allow a one-to-one mapping between points from RegularGridTopology and CubeTopology)"))
 , splitNormals(initData(&splitNormals, false, "splitNormals", "split corner points to have planar normals"))
+, min(initData(&min,Vector3(0.0f,0.0f,0.0f),"min", "Min"))
+, max(initData(&max,Vector3(1.0f,1.0f,1.0f),"max", "Max"))
 {
     setSize();
 }
@@ -69,6 +85,8 @@ CubeTopology::CubeTopology()
 : nx(initData(&nx,0,"nx","x grid resolution")), ny(initData(&ny,0,"ny","y grid resolution")), nz(initData(&nz,0,"nz","z grid resolution"))
 , internalPoints(initData(&internalPoints, false, "internalPoints", "include internal points (allow a one-to-one mapping between points from RegularGridTopology and CubeTopology)"))
 , splitNormals(initData(&splitNormals, false, "splitNormals", "split corner points to have planar normals"))
+, min(initData(&min,Vector3(0.0f,0.0f,0.0f),"min", "Min"))
+, max(initData(&max,Vector3(1.0f,1.0f,1.0f),"max", "Max"))
 {
 }
 
@@ -162,85 +180,87 @@ int CubeTopology::point(int x, int y, int z, Plane p) const
 	return x+nx*(y+ny*z);
 }
 
-void CubeTopology::updateLines()
+void CubeTopology::updateEdges()
 {
-    SeqLines& lines = *seqLines.beginEdit();
+    SeqEdges& edges = *seqEdges.beginEdit();
     const int nx = this->nx.getValue();
     const int ny = this->ny.getValue();
     const int nz = this->nz.getValue();
-    lines.clear();
-    lines.reserve((nx-1)*(2*ny+2*nz-4) + (ny-1)*(2*nx+2*nz-4) + (nz-1)*(2*nx+2*ny-4));
+    edges.clear();
+    edges.reserve((nx-1)*(2*ny+2*nz-4) + (ny-1)*(2*nx+2*nz-4) + (nz-1)*(2*nx+2*ny-4));
     for (int z=0; z<nz; z++)
 	for (int y=0; y<ny; y++)
 	    for (int x=0; x<nx; x++)
 	    {
 		// lines along X
 		if (x<nx-1 && (y==0 || y==ny-1 || z==0 || z==nz-1))
-		    lines.push_back(Line(point(x,y,z),point(x+1,y,z)));
+		    edges.push_back(Edge(point(x,y,z),point(x+1,y,z)));
 		// lines along Y
 		if (y<ny-1 && (x==0 || x==nx-1 || z==0 || z==nz-1))
-		    lines.push_back(Line(point(x,y,z),point(x,y+1,z)));
+		    edges.push_back(Edge(point(x,y,z),point(x,y+1,z)));
 		// lines along Z
 		if (z<nz-1 && (x==0 || x==nx-1 || y==0 || y==ny-1))
-		    lines.push_back(Line(point(x,y,z),point(x,y,z+1)));
+		    edges.push_back(Edge(point(x,y,z),point(x,y,z+1)));
 	    }
-    seqLines.endEdit();
+    seqEdges.endEdit();
 }
 
 void CubeTopology::updateQuads()
 {
-    seqQuads.clear();
+	seqQuads.beginEdit()->clear();
     const int nx = this->nx.getValue();
     const int ny = this->ny.getValue();
     const int nz = this->nz.getValue();
-    seqQuads.reserve((nx-1)*(ny-1)*(nz>1?2:1)+(nx-1)*(nz-1)*(ny>1?2:1)+(ny-1)*(nz-1)*(nx>1?2:1));
+    seqQuads.beginEdit()->reserve((nx-1)*(ny-1)*(nz>1?2:1)+(nx-1)*(nz-1)*(ny>1?2:1)+(ny-1)*(nz-1)*(nx>1?2:1));
     // quads along Z=0 plane
     for (int z=0, y=0; y<ny-1; y++)
 	for (int x=0; x<nx-1; x++)
-	    seqQuads.push_back(Quad(point(x,y,z,PLANE_Z0),point(x,y+1,z,PLANE_Z0),point(x+1,y+1,z,PLANE_Z0),point(x+1,y,z,PLANE_Z0)));
+	    seqQuads.beginEdit()->push_back(Quad(point(x,y,z,PLANE_Z0),point(x,y+1,z,PLANE_Z0),point(x+1,y+1,z,PLANE_Z0),point(x+1,y,z,PLANE_Z0)));
     // quads along Z=NZ-1 plane
     if (nz > 1)
     for (int z=nz-1, y=0; y<ny-1; y++)
 	for (int x=0; x<nx-1; x++)
-	    seqQuads.push_back(Quad(point(x,y,z,PLANE_Z1),point(x+1,y,z,PLANE_Z1),point(x+1,y+1,z,PLANE_Z1),point(x,y+1,z,PLANE_Z1)));
+	    seqQuads.beginEdit()->push_back(Quad(point(x,y,z,PLANE_Z1),point(x+1,y,z,PLANE_Z1),point(x+1,y+1,z,PLANE_Z1),point(x,y+1,z,PLANE_Z1)));
     // quads along Y=0 plane
     for (int y=0, z=0; z<nz-1; z++)
 	for (int x=0; x<nx-1; x++)
-	    seqQuads.push_back(Quad(point(x,y,z,PLANE_Y0),point(x+1,y,z,PLANE_Y0),point(x+1,y,z+1,PLANE_Y0),point(x,y,z+1,PLANE_Y0)));
+	    seqQuads.beginEdit()->push_back(Quad(point(x,y,z,PLANE_Y0),point(x+1,y,z,PLANE_Y0),point(x+1,y,z+1,PLANE_Y0),point(x,y,z+1,PLANE_Y0)));
     // quads along Y=NY-1 plane
     if (ny > 1)
     for (int y=ny-1, z=0; z<nz-1; z++)
 	for (int x=0; x<nx-1; x++)
-	    seqQuads.push_back(Quad(point(x,y,z,PLANE_Y1),point(x,y,z+1,PLANE_Y1),point(x+1,y,z+1,PLANE_Y1),point(x+1,y,z,PLANE_Y1)));
+	    seqQuads.beginEdit()->push_back(Quad(point(x,y,z,PLANE_Y1),point(x,y,z+1,PLANE_Y1),point(x+1,y,z+1,PLANE_Y1),point(x+1,y,z,PLANE_Y1)));
     // quads along X=0 plane
     for (int x=0, z=0; z<nz-1; z++)
 	for (int y=0; y<ny-1; y++)
-	    seqQuads.push_back(Quad(point(x,y,z,PLANE_X0),point(x,y,z+1,PLANE_X0),point(x,y+1,z+1,PLANE_X0),point(x,y+1,z,PLANE_X0)));
+	    seqQuads.beginEdit()->push_back(Quad(point(x,y,z,PLANE_X0),point(x,y,z+1,PLANE_X0),point(x,y+1,z+1,PLANE_X0),point(x,y+1,z,PLANE_X0)));
     // quads along X=NX-1 plane
     if (nx > 1)
     for (int x=nx-1, z=0; z<nz-1; z++)
 	for (int y=0; y<ny-1; y++)
-	    seqQuads.push_back(Quad(point(x,y,z,PLANE_X1),point(x,y+1,z,PLANE_X1),point(x,y+1,z+1,PLANE_X1),point(x,y,z+1,PLANE_X1)));
+	    seqQuads.beginEdit()->push_back(Quad(point(x,y,z,PLANE_X1),point(x,y+1,z,PLANE_X1),point(x,y+1,z+1,PLANE_X1),point(x,y,z+1,PLANE_X1)));
+    
+    seqQuads.endEdit();
 }
 
-void CubeTopology::setPos(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
+void CubeTopology::setPos(SReal xmin, SReal xmax, SReal ymin, SReal ymax, SReal zmin, SReal zmax)
 {
-    setP0(Vec3(xmin,ymin,zmin));
+    setP0(Vector3(xmin,ymin,zmin));
     if (nx.getValue()>1)
-	setDx(Vec3((xmax-xmin)/(nx.getValue()-1),0,0));
+	setDx(Vector3((xmax-xmin)/(nx.getValue()-1),0,0));
     else
-	setDx(Vec3(0,0,0));
+	setDx(Vector3(0,0,0));
     if (ny.getValue()>1)
-	setDy(Vec3(0,(ymax-ymin)/(ny.getValue()-1),0));
+	setDy(Vector3(0,(ymax-ymin)/(ny.getValue()-1),0));
     else
-	setDy(Vec3(0,0,0));
+	setDy(Vector3(0,0,0));
     if (nz.getValue()>1)
-	setDz(Vec3(0,0,(zmax-zmin)/(nz.getValue()-1)));
+	setDz(Vector3(0,0,(zmax-zmin)/(nz.getValue()-1)));
     else
-	setDz(Vec3(0,0,0));
+	setDz(Vector3(0,0,0));
 }
 
-CubeTopology::Vec3 CubeTopology::getPoint(int i) const
+Vector3 CubeTopology::getPoint(int i) const
 {
     const int nx = this->nx.getValue();
     const int ny = this->ny.getValue();
@@ -335,7 +355,7 @@ CubeTopology::Vec3 CubeTopology::getPoint(int i) const
     return getPoint(x,y,z);
 }
 
-CubeTopology::Vec3 CubeTopology::getPoint(int x, int y, int z) const
+Vector3 CubeTopology::getPoint(int x, int y, int z) const
 {
     return p0+dx*x+dy*y+dz*z;
 }

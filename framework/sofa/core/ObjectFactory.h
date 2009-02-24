@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_OBJECTFACTORY_H
 #define SOFA_CORE_OBJECTFACTORY_H
 
@@ -33,6 +35,7 @@
 #include <sofa/core/BehaviorModel.h>
 #include <sofa/core/CollisionModel.h>
 #include <sofa/core/BaseMapping.h>
+#include <sofa/core/componentmodel/topology/TopologicalMapping.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
 #include <sofa/core/componentmodel/behavior/BaseForceField.h>
 #include <sofa/core/componentmodel/behavior/InteractionForceField.h>
@@ -40,8 +43,11 @@
 #include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/componentmodel/behavior/BaseMass.h>
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
+#include <sofa/core/componentmodel/behavior/LinearSolver.h>
 #include <sofa/core/componentmodel/behavior/MasterSolver.h>
 #include <sofa/core/componentmodel/topology/Topology.h>
+#include <sofa/core/componentmodel/topology/BaseTopologyObject.h>
+#include <sofa/core/componentmodel/behavior/BaseController.h>
 
 #include <map>
 #include <iostream>
@@ -300,15 +306,26 @@ public:
         if (implements<RealObject,core::BaseMapping>())
             entry.baseClasses.insert("Mapping");
         if (implements<RealObject,core::componentmodel::behavior::BaseMechanicalMapping>())
-            entry.baseClasses.insert("MechanicalMapping");
+	  entry.baseClasses.insert("MechanicalMapping");
+	if (implements<RealObject,core::componentmodel::topology::TopologicalMapping>())
+	  entry.baseClasses.insert("TopologicalMapping");
         if (implements<RealObject,core::componentmodel::behavior::BaseMass>())
             entry.baseClasses.insert("Mass");
         if (implements<RealObject,core::componentmodel::behavior::OdeSolver>())
-            entry.baseClasses.insert("OdeSolver");
+	  entry.baseClasses.insert("OdeSolver");
+	if (implements<RealObject,core::componentmodel::behavior::LinearSolver>())
+	  entry.baseClasses.insert("Linear Solver");
         if (implements<RealObject,core::componentmodel::behavior::MasterSolver>())
             entry.baseClasses.insert("MasterSolver");
         if (implements<RealObject,core::componentmodel::topology::Topology>())
-            entry.baseClasses.insert("Topology");
+	  entry.baseClasses.insert("Topology");
+        if (implements<RealObject,core::componentmodel::topology::BaseTopologyObject>())
+	  entry.baseClasses.insert("TopologyObject");
+	if (implements<RealObject,core::componentmodel::behavior::BaseController>())
+	  entry.baseClasses.insert("Controller");
+	
+	
+	
 
         return addCreator(classname, templatename, new ObjectCreator<RealObject>);
     }

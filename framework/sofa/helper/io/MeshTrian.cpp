@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/io/MeshTrian.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <stdlib.h>
@@ -41,7 +43,7 @@ using namespace sofa::defaulttype;
 
 SOFA_DECL_CLASS(MeshTrian)
 
-Creator<Mesh::Factory,MeshTrian> MeshTrianClass("trian");
+Creator<Mesh::FactoryMesh,MeshTrian> MeshTrianClass("trian");
 
 void MeshTrian::init (std::string filename)
 {
@@ -66,9 +68,13 @@ void MeshTrian::readTrian (FILE* file)
 	fscanf(file, "%d\n", &nbp);
 
 	vertices.resize(nbp);
+	Vec3d fromFile;
 	for (int p=0;p<nbp;p++)
 	{
-		fscanf(file, "%lf %lf %lf\n", &vertices[p][0], &vertices[p][1], &vertices[p][2]);
+	  fscanf(file, "%lf %lf %lf\n", &fromFile[0], &fromFile[1], &fromFile[2]);
+	  vertices[p][0] = (SReal)fromFile[0];
+	  vertices[p][1] = (SReal)fromFile[1];
+	  vertices[p][2] = (SReal)fromFile[2];
 	}
 
 	int nbf=0;

@@ -1,11 +1,35 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_CONTINUOUSTRIANGLEINTERSECTION_H
 #define SOFA_COMPONENT_COLLISION_CONTINUOUSTRIANGLEINTERSECTION_H
 #include <sofa/component/collision/Triangle.h>
 #include <sofa/core/componentmodel/collision/DetectionOutput.h>
 #include <math.h>
 
-#define cbrt(x)     ((x) > 0.0 ? pow((double)(x), 1.0/3.0) : \
-                    ((x) < 0.0 ? -pow((double)-(x), 1.0/3.0) : 0.0))
+#define cbrt(x)     ((x) > (SReal)0.0 ? pow((SReal)(x), (SReal)1.0/(SReal)3.0) : \
+                    ((x) < (SReal)0.0 ? -pow((SReal)-(x), (SReal)1.0/(SReal)3.0) : (SReal)0.0))
 #define EPSILON 0.000001
 
 #define EQN_EPS     1e-9
@@ -26,57 +50,56 @@ class ContinuousTriangleIntersection
 {
 private:
 	Triangle &tr1, &tr2;
-	double m_tolerance, m_tolmin, m_tolmax;
+	SReal m_tolerance, m_tolmin, m_tolmax;
 
-	int intersectPointTriangle (double& t, double& u, double& v,
+	int intersectPointTriangle (SReal& t, SReal& u, SReal& v,
                                 const Vector3& p0, const Vector3& v0,
                                 const Vector3& p1, const Vector3& v1,
                                 const Vector3& p2, const Vector3& v2,
                                 const Vector3& p3, const Vector3& v3,
                                 double dt);
 
-    int intersectEdgeEdge(double& t, double& u, double& v,
+    int intersectEdgeEdge(SReal& t, SReal& u, SReal& v,
                            const Vector3& p1, const Vector3& p2,
                            const Vector3& v1, const Vector3& v2,
                            const Vector3& p3, const Vector3& p4,
                            const Vector3& v3, const Vector3& v4,
                            double dt);
 
-	int solveCubic(Vector3& s, double c[4]);
+	int solveCubic(Vector3& s, SReal c[4]);
     
-    int solveQuadratic (double& t1, 
-						double& t2, 
-						const double& a, 
-						const double& b, 
-						const double& c);
+    int solveQuadratic (SReal& t1, SReal& t2, 
+			const SReal& a, 
+			const SReal& b, 
+			const SReal& c);
     
-    bool checkValidRoots (double& validRoot,
+    bool checkValidRoots (SReal& validRoot,
                           const int& numRoots,
                           const Vector3& roots,
-                          const double& rootMin,
-                          const double& rootMax);
+                          const SReal& rootMin,
+                          const SReal& rootMax);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     /// returns true of value lies within the range
-    bool checkRange (const double& val,
-                     const double& min,
-                     const double& max)
+    bool checkRange (const SReal& val,
+                     const SReal& min,
+                     const SReal& max)
     {
         return ((val >= min) && (val <= max));
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     /// returns the smallest of the two values
-    inline double getMinVal (const double& val0, const double& val1)
+    inline SReal getMinVal (const SReal& val0, const SReal& val1)
     {
 		return (val0 < val1) ? val0 : val1;
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     /// returns the smallest of the three values
-   double getMinVal(const double &val0,
-							const double &val1,
-							const double &val2)
+   SReal getMinVal(const SReal &val0,
+							const SReal &val1,
+							const SReal &val2)
     {
         if (val0 < val1)
         {
@@ -90,11 +113,11 @@ private:
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     /// sets tolerance for boundary check [-tol, 1+tol]
-    void setTolerance(const double &tol)
+    void setTolerance(const SReal &tol)
     {
         m_tolerance = tol;
 		m_tolmin = -m_tolerance;
-		m_tolmax = 1.0+m_tolerance;
+		m_tolmax = (SReal)1.0 + m_tolerance;
     };
 
 public:

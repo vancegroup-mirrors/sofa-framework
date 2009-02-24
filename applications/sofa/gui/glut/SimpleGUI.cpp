@@ -1,33 +1,35 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This program is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU General Public License as published by the Free   *
-* Software Foundation; either version 2 of the License, or (at your option)    *
-* any later version.                                                           *
-*                                                                              *
-* This program is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     *
-* more details.                                                                *
-*                                                                              *
-* You should have received a copy of the GNU General Public License along with *
-* this program; if not, write to the Free Software Foundation, Inc., 51        *
-* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                    *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "SimpleGUI.h"
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/simulation/tree/MechanicalVisitor.h>
-#include <sofa/simulation/tree/UpdateMappingVisitor.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/simulation/common/UpdateMappingVisitor.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/helper/system/SetDirectory.h>
@@ -39,7 +41,7 @@
 
 #include <sofa/helper/gl/glfont.h>
 #include <sofa/helper/gl/RAII.h>
-#include <sofa/helper/gl/GLshader.h>
+#include <sofa/helper/gl/GLSLShader.h>
 #include <sofa/helper/io/ImageBMP.h>
 
 #include <sofa/helper/system/thread/CTime.h>
@@ -47,6 +49,10 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 
+#ifdef SOFA_HAVE_CHAI3D
+#include <sofa/simulation/common/PropagateEventVisitor.h>
+#include <sofa/core/objectmodel/GLInitializedEvent.h>
+#endif // SOFA_HAVE_CHAI3D
 
 // define this if you want video and OBJ capture to be only done once per N iteration
 //#define CAPTURE_PERIOD 5
@@ -96,7 +102,7 @@ int SimpleGUI::InitGUI(const char* /*name*/, const std::vector<std::string>& /*o
     return 0;
 }
 
-SofaGUI* SimpleGUI::CreateGUI(const char* /*name*/, const std::vector<std::string>& /*options*/, sofa::simulation::tree::GNode* groot, const char* filename)
+SofaGUI* SimpleGUI::CreateGUI(const char* /*name*/, const std::vector<std::string>& /*options*/, sofa::simulation::Node* groot, const char* filename)
 {
 
     glutInitDisplayMode ( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
@@ -136,6 +142,14 @@ SofaGUI* SimpleGUI::CreateGUI(const char* /*name*/, const std::vector<std::strin
     gui->setScene(groot, filename);
 
     gui->initializeGL();
+
+    #ifdef SOFA_HAVE_CHAI3D
+    // Tell nodes that openGl is initialized
+    // especialy the GL_MODELVIEW_MATRIX
+    sofa::core::objectmodel::GLInitializedEvent ev;
+    sofa::simulation::PropagateEventVisitor act(&ev);
+    groot->execute(act);
+    #endif // SOFA_HAVE_CHAI3D
 
     return gui;
 }
@@ -213,26 +227,7 @@ void SimpleGUI::glut_idle()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#ifdef SOFA_HAVE_GLEW
 
 // Shadow Mapping parameters
 
@@ -256,7 +251,7 @@ enum { SHADOW_MASK_SIZE = 2048 };
 GLuint g_DepthTexture;
 
 // This is our global shader object that will load the shader files
-CShader g_Shader;
+GLSLShader g_Shader;
 
 //float g_DepthOffset[2] = { 3.0f, 0.0f };
 float g_DepthOffset[2] = { 10.0f, 0.0f };
@@ -270,6 +265,7 @@ float g_mModelView[16] = {0};
 GLuint ShadowTextureMask;
 
 // End of Shadow Mapping Parameters
+#endif // SOFA_HAVE_GLEW
 
 // ---------------------------------------------------------
 // --- Constructor
@@ -413,18 +409,12 @@ void SimpleGUI::initializeGL(void)
         specref[1] = 1.0f;
         specref[2] = 1.0f;
         specref[3] = 1.0f;
-
         // Here we initialize our multi-texturing functions
-        glActiveTextureARB        = (PFNGLACTIVETEXTUREARBPROC)        glewGetProcAddress("glActiveTextureARB");
-        glMultiTexCoord2fARB    = (PFNGLMULTITEXCOORD2FARBPROC)        glewGetProcAddress("glMultiTexCoord2fARB");
-
-        // Make sure our multi-texturing extensions were loaded correctly
-        if(!glActiveTextureARB || !glMultiTexCoord2fARB)
-        {
-            // Print an error message and quit.
-            //    MessageBox(g_hWnd, "Your current setup does not support multitexturing", "Error", MB_OK);
-            //PostQuitMessage(0);
-        }
+#ifdef SOFA_HAVE_GLEW
+        glewInit();
+        if (!GLEW_ARB_multitexture)
+            std::cerr << "Error: GL_ARB_multitexture not supported\n";
+#endif
 
         _clearBuffer = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
         _lightModelTwoSides = false;
@@ -471,15 +461,17 @@ void SimpleGUI::initializeGL(void)
         glEnable(GL_LIGHT0);
         //glEnable(GL_COLOR_MATERIAL);
 
+#ifdef SOFA_HAVE_GLEW
         // Here we allocate memory for our depth texture that will store our light's view
         CreateRenderTexture(g_DepthTexture, SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT);
         CreateRenderTexture(ShadowTextureMask, SHADOW_MASK_SIZE, SHADOW_MASK_SIZE, GL_LUMINANCE, GL_LUMINANCE);
         
-        if (_glshadow = CShader::InitGLSL())
+        if (_glshadow == GLSLShader::InitGLSL())
         {
             // Here we pass in our new vertex and fragment shader files to our shader object.
 	    g_Shader.InitShaders(sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.vert"), sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.frag"));
         }else
+#endif
         {
             printf("WARNING SimpleGUI : shadows are not supported !\n");
             _shadow = false;
@@ -626,6 +618,7 @@ void SimpleGUI::CreateRenderTexture(GLuint& textureID, int sizeX, int sizeY, int
 
 void SimpleGUI::ApplyShadowMap()
 {                
+#ifdef SOFA_HAVE_GLEW
     // Let's turn our shaders on for doing shadow mapping on our world
     g_Shader.TurnOn();
 
@@ -690,6 +683,7 @@ void SimpleGUI::ApplyShadowMap()
 
     // Light expected, we need to turn our shader off since we are done
     g_Shader.TurnOff();
+#endif
 }
 
 // ---------------------------------------------------------
@@ -1075,7 +1069,11 @@ void SimpleGUI::DisplayOBJs(bool shadowPass)
         {
             DrawAxis(0.0, 0.0, 0.0, 10.0);
             if (sceneMinBBox[0] < sceneMaxBBox[0])
-                DrawBox(sceneMinBBox.ptr(), sceneMaxBBox.ptr());
+	      {
+		Vec3d minTemp=sceneMinBBox;
+		Vec3d maxTemp=sceneMaxBBox;
+		DrawBox(minTemp.ptr(), maxTemp.ptr());
+	      }
         }
     }
 
@@ -1117,7 +1115,7 @@ void SimpleGUI::DrawScene(void)
     _newQuat.buildRotationMatrix(_sceneTransform.rotation);
     calcProjection();
 
-#if 1
+#ifdef SOFA_HAVE_GLEW
     if (_shadow)
     {
         //glGetDoublev(GL_MODELVIEW_MATRIX,lastModelviewMatrix);
@@ -1502,7 +1500,7 @@ void SimpleGUI::paintGL()
         static int counter = 0;
         if ((counter++ % CAPTURE_PERIOD)==0)
 #endif
-            screenshot();
+            screenshot(2);
     }
 
     if (_waitForRender)
@@ -1835,11 +1833,19 @@ void SimpleGUI::keyPressEvent ( int k )
 	    break;
 	}
 
-//    case GLUT_KEY_Escape:
-//        {
-//            exit(0);
-//            break;
-//        }
+    case 'n':
+	// --- step
+        {
+	    step();
+	    redraw();
+	    break;
+	}
+
+    case 'q': //GLUT_KEY_Escape:
+        {
+            exit(0);
+            break;
+        }
 
     case 'c':
         {
@@ -1866,7 +1872,7 @@ void SimpleGUI::keyPressEvent ( int k )
                 std::string filename = sceneFileName;
                 Quaternion q = _newQuat;
                 Transformation t = _sceneTransform;
-                simulation::tree::GNode* newroot = getSimulation()->load(filename.c_str());
+                simulation::Node* newroot = getSimulation()->load(filename.c_str());
                 if (newroot == NULL)
                 {
                     std::cerr << "Failed to load "<<filename<<std::endl;
@@ -1994,6 +2000,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                 groot->addChild(child);
                 child->addObject(interactor);
             }
+	    interactor->init();
         }
         interactor->newEvent("show");
         switch (type)
@@ -2020,7 +2027,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             break;
         default: break;
         }
-        Vector3 p0, px, py, pz;
+        Vec3d p0, px, py, pz;
         gluUnProject(eventX, lastViewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(p0[0]), &(p0[1]), &(p0[2]));
         gluUnProject(eventX+1, lastViewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(px[0]), &(px[1]), &(px[2]));
         gluUnProject(eventX, lastViewport[3]-1-(eventY+1), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(py[0]), &(py[1]), &(py[2]));
@@ -2269,8 +2276,8 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             _mouseInteractorSavedPosY = eventY;
             }
         }
-        static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::MechanicalPropagatePositionAndVelocityVisitor>();
-        static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::UpdateMappingVisitor>();
+        static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
+        static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
         }
     }
     else
@@ -2606,9 +2613,9 @@ void SimpleGUI::showNormals(bool value)
     redraw();
 }
 
-void SimpleGUI::screenshot()
+void SimpleGUI::screenshot(int compression_level)
 {
-    capture.saveScreen();
+    capture.saveScreen(compression_level);
 }
 
 void SimpleGUI::exportOBJ(bool exportMTL)
@@ -2639,7 +2646,7 @@ void SimpleGUI::exportOBJ(bool exportMTL)
     getSimulation()->exportOBJ(groot, filename.c_str(),exportMTL);
 }
 
-void SimpleGUI::setScene(sofa::simulation::tree::GNode* scene, const char* filename)
+void SimpleGUI::setScene(sofa::simulation::Node* scene, const char* filename)
 {
     std::ostringstream ofilename;
 
@@ -2662,7 +2669,8 @@ void SimpleGUI::setScene(sofa::simulation::tree::GNode* scene, const char* filen
         if (interactor != NULL)
             interactor = NULL;
     }
-    groot = scene;
+    groot = static_cast< sofa::simulation::tree::GNode *>(scene);
+    groot->getContext()->get( interactor);
     initTexturesDone = false;
     sceneBBoxIsValid = false;
     redraw();

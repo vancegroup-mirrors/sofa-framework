@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/BruteForceDetection.h>
 #include <sofa/component/collision/Sphere.h>
 #include <sofa/component/collision/Triangle.h>
@@ -29,7 +29,7 @@
 #include <sofa/component/collision/Point.h>
 #include <sofa/helper/FnDispatcher.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <map>
 #include <queue>
 #include <stack>
@@ -67,12 +67,26 @@ void BruteForceDetection::addCollisionModel(core::CollisionModel *cm)
 {
     if (cm->empty())
         return;
+    if (cm->isSimulated() && cm->getLast()->canCollideWith(cm->getLast()))
+    { // self collision
+        //std::cout << "Test broad phase Self "<<cm->getLast()->getName()<<std::endl;
+        bool swapModels = false;
+        core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm, swapModels);
+        if (intersector != NULL)
+            if (intersector->canIntersect(cm->begin(), cm->begin()))
+            {
+                //std::cout << "Broad phase Self "<<cm->getLast()->getName()<<std::endl;
+                cmPairs.push_back(std::make_pair(cm, cm));
+            }
+    }
     for (sofa::helper::vector<core::CollisionModel*>::iterator it = collisionModels.begin(); it != collisionModels.end(); ++it)
     {
         core::CollisionModel* cm2 = *it;
         if (!cm->isSimulated() && !cm2->isSimulated())
             continue;
         if (!cm->canCollideWith(cm2))
+            continue;
+        if (!cm->getLast()->canCollideWith(cm2->getLast()))
             continue;
         bool swapModels = false;
         core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
@@ -179,7 +193,10 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
         tmp = cm1; cm1 = cm2; cm2 = tmp;
         tmp = finalcm1; finalcm1 = finalcm2; finalcm2 = tmp;
     }
-    //std::cout << "Final intersector " << finalintersector->name() << " for "<<finalcm1->getName()<<" - "<<finalcm2->getName()<<std::endl;
+    
+    const bool self = (finalcm1->getContext() == finalcm2->getContext());
+    //if (self)
+    //    std::cout << "SELF: Final intersector " << finalintersector->name() << " for "<<finalcm1->getName()<<" - "<<finalcm2->getName()<<std::endl;
     
     sofa::core::componentmodel::collision::DetectionOutputVector*& outputs = outputsMap[std::make_pair(finalcm1, finalcm2)];
 
@@ -192,10 +209,10 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
         finalcm2 = NULL;
         finalintersector = NULL;
     }
-    simulation::tree::GNode* node = dynamic_cast<simulation::tree::GNode*>(getContext());
+    simulation::Node* node = dynamic_cast<simulation::Node*>(getContext());
     if (node && !node->getLogTime()) node=NULL; // Only use node for time logging
-    simulation::tree::GNode::ctime_t t0=0, t=0;
-    simulation::tree::GNode::ctime_t ft=0;
+    simulation::Node::ctime_t t0=0, t=0;
+    simulation::Node::ctime_t ft=0;
 
     std::queue< TestPair > externalCells;
     
@@ -250,7 +267,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
         std::stack< TestPair > internalCells;
         internalCells.push(root);
         
-        simulation::tree::GNode::ctime_t it=0,it0=0;
+        simulation::Node::ctime_t it=0,it0=0;
 
         if (node) it0 = node->startTime();
         while (!internalCells.empty())
@@ -271,7 +288,8 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
                 {
                     for (core::CollisionElementIterator it2 = begin2; it2 != end2; ++it2)
                     {
-                        intersector->intersect(it1,it2,outputs);
+                        if (!self || it1.canCollideWith(it2))
+                            intersector->intersect(it1,it2,outputs);
                     }
                 }
             }
@@ -281,6 +299,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
                 {
                     for (core::CollisionElementIterator it2 = begin2; it2 != end2; ++it2)
                     {
+                        //if (self && !it1.canCollideWith(it2)) continue;
                         //if (!it1->canCollideWith(it2)) continue;
     
                         bool b = intersector->canIntersect(it1,it2);
@@ -335,7 +354,8 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
                                                     {
                                                         //if (!it1->canCollideWith(it2)) continue;
                                                         // Final collision pair
-                                                        finalintersector->intersect(it1,it2,outputs);
+                                                        if (!self || it1.canCollideWith(it2))
+                                                            finalintersector->intersect(it1,it2,outputs);
                                                     }
                                                 }
                                                 if (node) ft += node->startTime() - t0;
@@ -365,7 +385,8 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
                                     else
                                     {
                                         // No child -> final collision pair
-                                        intersector->intersect(it1,it2, outputs);
+                                        if (!self || it1.canCollideWith(it2))
+                                            intersector->intersect(it1,it2, outputs);
                                     }
                                 }
                             }

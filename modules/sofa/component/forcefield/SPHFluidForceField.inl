@@ -1,32 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_SPHFLUIDFORCEFIELD_INL
 #define SOFA_COMPONENT_FORCEFIELD_SPHFLUIDFORCEFIELD_INL
 
 #include <sofa/component/forcefield/SPHFluidForceField.h>
-#include <sofa/component/behaviormodel/eulerianfluid/SpatialGridContainer.inl>
+#include <sofa/component/container/SpatialGridContainer.inl>
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/gl/template.h>
 #include <math.h>
@@ -61,7 +61,9 @@ template<class DataTypes>
 void SPHFluidForceField<DataTypes>::init()
 {
 	this->Inherit::init();
-	grid = new Grid(particleRadius.getValue());
+	this->getContext()->get(grid); //new Grid(particleRadius.getValue());
+	if (grid==NULL)
+	    std::cout << "WARNING: SpatialGridContainer not found by SPHFluidForceField, slow O(n2) method will be used !!!" << std::endl;
 	int n = (*this->mstate->getX()).size();
 	particles.resize(n);
 	for (int i=0;i<n;i++)
@@ -123,7 +125,7 @@ void SPHFluidForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, con
 	}
 
 	// First compute the neighbors
-	// This is the only O(n2) step, and should be optimized later
+	// This is an O(n2) step, except if a hash-grid is used to optimize it
 	if (grid == NULL)
 	{
 		for (int i=0;i<n;i++)
@@ -144,12 +146,7 @@ void SPHFluidForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, con
 	}
 	else
 	{
-		grid->begin();
-		for (int i=0;i<n;i++)
-		{
-			grid->add(i, x[i]);
-		}
-		grid->end();
+		grid->updateGrid(x);
 		grid->findNeighbors(this, h);
 #ifdef SOFA_DEBUG_SPATIALGRIDCONTAINER
 		// Check grid
@@ -295,7 +292,7 @@ void SPHFluidForceField<DataTypes>::addDForce(VecDeriv& f1,  const VecDeriv& dx1
 }
 
     template <class DataTypes> 
-            double SPHFluidForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
+	double SPHFluidForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
     cerr<<"SPHFluidForceField::getPotentialEnergy-not-implemented !!!"<<endl;
     return 0;

@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONSTRAINT_OSCILLATORCONSTRAINT_INL
 #define SOFA_COMPONENT_CONSTRAINT_OSCILLATORCONSTRAINT_INL
 
@@ -42,7 +42,8 @@ using namespace sofa::defaulttype;
 
 template <class DataTypes>
 OscillatorConstraint<DataTypes>::OscillatorConstraint()
-: core::componentmodel::behavior::Constraint<DataTypes>(NULL)
+  : core::componentmodel::behavior::Constraint<DataTypes>(NULL)
+  , constraints(initData(&constraints,"oscillators","Define a sequence of oscillating particules: \n[index, mean, amplitude, pulsation, phase]"))
 {
 }
 
@@ -50,6 +51,7 @@ OscillatorConstraint<DataTypes>::OscillatorConstraint()
 template <class DataTypes>
 OscillatorConstraint<DataTypes>::OscillatorConstraint(core::componentmodel::behavior::MechanicalState<DataTypes>* mstate)
 : core::componentmodel::behavior::Constraint<DataTypes>(mstate)
+  , constraints(initData(&constraints,"oscillators","Define a sequence of oscillating particules: \n[index, Mean(x,y,z), amplitude(x,y,z), pulsation, phase]"))
 {
 }
 
@@ -61,7 +63,7 @@ OscillatorConstraint<DataTypes>::~OscillatorConstraint()
 template <class DataTypes>
 OscillatorConstraint<DataTypes>*  OscillatorConstraint<DataTypes>::addConstraint(unsigned index, const Coord& mean, const Deriv& amplitude, Real pulsation, Real phase)
 {
-	this->constraints.push_back( std::make_pair( index, Oscillator(mean,amplitude,pulsation,phase) ) );
+  this->constraints.beginEdit()->push_back( Oscillator(index,mean,amplitude,pulsation,phase) );
 	return this;
 }
 
@@ -69,10 +71,11 @@ OscillatorConstraint<DataTypes>*  OscillatorConstraint<DataTypes>::addConstraint
 template <class DataTypes>
 void OscillatorConstraint<DataTypes>::projectResponse(VecDeriv& res)
 {
+        const helper::vector< Oscillator > &oscillators = constraints.getValue();
 	//Real t = (Real) getContext()->getTime();
-	for( unsigned i=0; i<constraints.size(); ++i )
+	for( unsigned i=0; i<oscillators.size(); ++i )
 	{
-		const unsigned& index = constraints[i].first;
+          const unsigned& index = oscillators[i].index;
 		//const Deriv& a = constraints[i].second.amplitude;
 		//const Real& w = constraints[i].second.pulsation;
 		//const Real& p = constraints[i].second.phase;
@@ -85,30 +88,32 @@ void OscillatorConstraint<DataTypes>::projectResponse(VecDeriv& res)
 template <class DataTypes>
 void OscillatorConstraint<DataTypes>::projectVelocity(VecDeriv& res)
 {
+        const helper::vector< Oscillator > &oscillators = constraints.getValue();
 	Real t = (Real) getContext()->getTime();
-	for( unsigned i=0; i<constraints.size(); ++i )
+        for( unsigned i=0; i<oscillators.size(); ++i )
 	{
-		const unsigned& index = constraints[i].first;
-		const Deriv& a = constraints[i].second.amplitude;
-		const Real& w = constraints[i].second.pulsation;
-		const Real& p = constraints[i].second.phase;
+          const unsigned& index = oscillators[i].index;
+          const Deriv& a = oscillators[i].amplitude;
+          const Real& w = oscillators[i].pulsation;
+          const Real& p = oscillators[i].phase;
 		
-		res[index] = a*w*cos(w*t+p);
+	  res[index] = a*w*cos(w*t+p);
 	}
 }
 
 template <class DataTypes>
 void OscillatorConstraint<DataTypes>::projectPosition(VecCoord& res)
 {
+        const helper::vector< Oscillator > &oscillators = constraints.getValue();
 	Real t = (Real) getContext()->getTime();
 	//std::cerr<<"OscillatorConstraint<DataTypes>::projectPosition, t = "<<t<<endl;
-	for( unsigned i=0; i<constraints.size(); ++i )
+	for( unsigned i=0; i<oscillators.size(); ++i )
 	{
-		const unsigned& index = constraints[i].first;
-		const Coord& m = constraints[i].second.mean;
-		const Deriv& a = constraints[i].second.amplitude;
-		const Real& w = constraints[i].second.pulsation;
-		const Real& p = constraints[i].second.phase;
+		const unsigned& index = oscillators[i].index;
+		const Coord& m = oscillators[i].mean;
+		const Deriv& a = oscillators[i].amplitude;
+		const Real& w = oscillators[i].pulsation;
+		const Real& p = oscillators[i].phase;
 		
 		res[index] = m + a*sin(w*t+p);
 	}

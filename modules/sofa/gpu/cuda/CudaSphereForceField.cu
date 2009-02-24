@@ -1,7 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CudaCommon.h"
 #include "CudaMath.h"
+#include "cuda.h"
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 namespace sofa
 {
 namespace gpu
@@ -12,7 +37,7 @@ namespace cuda
 
 struct GPUSphere
 {
-    float3 center;
+    CudaVec3<float> center;
     float r;
     float stiffness;
     float damping;
@@ -20,15 +45,18 @@ struct GPUSphere
 
 extern "C"
 {
-void SphereForceFieldCuda3f_addForce(unsigned int size, GPUSphere* sphere, float4* penetration, void* f, const void* x, const void* v);
-void SphereForceFieldCuda3f_addDForce(unsigned int size, GPUSphere* sphere, const float4* penetration, void* f, const void* dx); //, const void* dfdx);
+void SphereForceFieldCuda3f_addForce(unsigned int size, GPUSphere* sphere, CudaVec4<float>* penetration, void* f, const void* x, const void* v);
+void SphereForceFieldCuda3f_addDForce(unsigned int size, GPUSphere* sphere, const CudaVec4<float>* penetration, void* f, const void* dx); //, const void* dfdx);
+
+void SphereForceFieldCuda3f1_addForce(unsigned int size, GPUSphere* sphere, CudaVec4<float>* penetration, void* f, const void* x, const void* v);
+void SphereForceFieldCuda3f1_addDForce(unsigned int size, GPUSphere* sphere, const CudaVec4<float>* penetration, void* f, const void* dx); //, const void* dfdx);
 }
 
 //////////////////////
 // GPU-side methods //
 //////////////////////
 
-__global__ void SphereForceFieldCuda3f_addForce_kernel(int size, GPUSphere sphere, float4* penetration, float* f, const float* x, const float* v)
+__global__ void SphereForceFieldCuda3f_addForce_kernel(int size, GPUSphere sphere, CudaVec4<float>* penetration, float* f, const float* x, const float* v)
 {
 	int index0 = umul24(blockIdx.x,BSIZE);
 	int index0_3 = umul24(blockIdx.x,BSIZE*3); //index0*3;
@@ -50,7 +78,7 @@ __global__ void SphereForceFieldCuda3f_addForce_kernel(int size, GPUSphere spher
 
 	__syncthreads();
 	
-	float3 dp = make_float3(temp[index_3  ], temp[index_3+1], temp[index_3+2]) - sphere.center;
+	CudaVec3<float> dp = CudaVec3<float>::make(temp[index_3  ], temp[index_3+1], temp[index_3+2]) - sphere.center;
 	float d2 = dot(dp,dp);
 	
 	__syncthreads();
@@ -61,15 +89,15 @@ __global__ void SphereForceFieldCuda3f_addForce_kernel(int size, GPUSphere spher
 	
 	__syncthreads();
 	
-	float3 vi = make_float3(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
-	float3 force = make_float3(0,0,0);
+	CudaVec3<float> vi = CudaVec3<float>::make(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
+	CudaVec3<float> force = CudaVec3<float>::make(0,0,0);
 
 	if (d2 < sphere.r*sphere.r)
 	{
 		float inverseLength = 1/sqrt(d2);
-		dp.x = __fdividef(dp.x, inverseLength);
-		dp.y = __fdividef(dp.y, inverseLength);
-		dp.z = __fdividef(dp.z, inverseLength);
+		dp.x *= inverseLength;
+		dp.y *= inverseLength;
+		dp.z *= inverseLength;
 		d2 = -sphere.r*inverseLength;
 		float d = sphere.r - __fdividef(1,inverseLength);
 
@@ -77,7 +105,7 @@ __global__ void SphereForceFieldCuda3f_addForce_kernel(int size, GPUSphere spher
 		float dampingIntensity = sphere.damping*d;
 		force = dp*forceIntensity - vi*dampingIntensity;
 	}
-	penetration[index] = make_float4(dp.x,dp.y,dp.z,d2);
+	penetration[index] = CudaVec4<float>::make(dp.x,dp.y,dp.z,d2);
 	
 	__syncthreads();
 	
@@ -98,7 +126,40 @@ __global__ void SphereForceFieldCuda3f_addForce_kernel(int size, GPUSphere spher
 	f[index+2*BSIZE] = temp[index+2*BSIZE];
 }
 
-__global__ void SphereForceFieldCuda3f_addDForce_kernel(int size, GPUSphere sphere, const float4* penetration, float* df, const float* dx)
+__global__ void SphereForceFieldCuda3f1_addForce_kernel(int size, GPUSphere sphere, CudaVec4<float>* penetration, CudaVec4<float>* f, const CudaVec4<float>* x, const CudaVec4<float>* v)
+{
+	int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+
+	CudaVec4<float> temp = x[index];
+	CudaVec3<float> dp = CudaVec3<float>::make(temp) - sphere.center;
+	float d2 = dot(dp,dp);
+	
+	CudaVec4<float> vi = v[index];
+	CudaVec3<float> force = CudaVec3<float>::make(0,0,0);
+
+	if (d2 < sphere.r*sphere.r)
+	{
+		float inverseLength = 1/sqrt(d2);
+		dp.x *= inverseLength;
+		dp.y *= inverseLength;
+		dp.z *= inverseLength;
+		d2 = -sphere.r*inverseLength;
+		float d = sphere.r - __fdividef(1,inverseLength);
+
+		float forceIntensity = sphere.stiffness*d;
+		float dampingIntensity = sphere.damping*d;
+		force = dp*forceIntensity - CudaVec3<float>::make(vi)*dampingIntensity;
+	}
+	penetration[index] = CudaVec4<float>::make(dp.x,dp.y,dp.z,d2);
+	
+	temp = f[index];
+        temp.x += force.x;
+        temp.y += force.y;
+        temp.z += force.z;
+	f[index] = temp;
+}
+
+__global__ void SphereForceFieldCuda3f_addDForce_kernel(int size, GPUSphere sphere, const CudaVec4<float>* penetration, float* df, const float* dx)
 {
 	int index0 = umul24(blockIdx.x,BSIZE);
 	int index0_3 = umul24(blockIdx.x,BSIZE*3); //index0*3;
@@ -119,14 +180,14 @@ __global__ void SphereForceFieldCuda3f_addDForce_kernel(int size, GPUSphere sphe
 
 	__syncthreads();
 	
-	float3 dxi = make_float3(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
-	float4 d = penetration[index];
+	CudaVec3<float> dxi = CudaVec3<float>::make(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
+	CudaVec4<float> d = penetration[index];
 	
-	float3 dforce = make_float3(0,0,0);
+	CudaVec3<float> dforce = CudaVec3<float>::make(0,0,0);
 
 	if (d.w<0)
 	{
-		float3 dp = make_float3(d.x, d.y, d.z);
+		CudaVec3<float> dp = CudaVec3<float>::make(d.x, d.y, d.z);
 		dforce = sphere.stiffness*(dot(dxi,dp)*d.w * dp - (1+d.w) * dxi);
 	}	
 	
@@ -149,25 +210,63 @@ __global__ void SphereForceFieldCuda3f_addDForce_kernel(int size, GPUSphere sphe
 	df[index+2*BSIZE] = temp[index+2*BSIZE];
 }
 
+__global__ void SphereForceFieldCuda3f1_addDForce_kernel(int size, GPUSphere sphere, const CudaVec4<float>* penetration, CudaVec4<float>* df, const CudaVec4<float>* dx)
+{
+	int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+	
+	CudaVec4<float> dxi = dx[index];
+	CudaVec4<float> d = penetration[index];
+	
+	CudaVec3<float> dforce = CudaVec3<float>::make(0,0,0);
+
+	if (d.w<0)
+	{
+		CudaVec3<float> dp = CudaVec3<float>::make(d.x, d.y, d.z);
+		dforce = sphere.stiffness*(dot(CudaVec3<float>::make(dxi),dp)*d.w * dp - (1+d.w) * CudaVec3<float>::make(dxi));
+	}
+	
+	__syncthreads();
+	
+	CudaVec4<float> dfi = df[index];
+	dfi.x += dforce.x;
+	dfi.y += dforce.y;
+	dfi.y += dforce.z;
+	df[index] = dfi;
+}
+
 //////////////////////
 // CPU-side methods //
 //////////////////////
 
-void SphereForceFieldCuda3f_addForce(unsigned int size, GPUSphere* sphere, float4* penetration, void* f, const void* x, const void* v)
+void SphereForceFieldCuda3f_addForce(unsigned int size, GPUSphere* sphere, CudaVec4<float>* penetration, void* f, const void* x, const void* v)
 {
 	dim3 threads(BSIZE,1);
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
 	SphereForceFieldCuda3f_addForce_kernel<<< grid, threads, BSIZE*3*sizeof(float) >>>(size, *sphere, penetration, (float*)f, (const float*)x, (const float*)v);
 }
 
-void SphereForceFieldCuda3f_addDForce(unsigned int size, GPUSphere* sphere, const float4* penetration, void* df, const void* dx) //, const void* dfdx)
+void SphereForceFieldCuda3f1_addForce(unsigned int size, GPUSphere* sphere, CudaVec4<float>* penetration, void* f, const void* x, const void* v)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	SphereForceFieldCuda3f1_addForce_kernel<<< grid, threads >>>(size, *sphere, penetration, (CudaVec4<float>*)f, (const CudaVec4<float>*)x, (const CudaVec4<float>*)v);
+}
+
+void SphereForceFieldCuda3f_addDForce(unsigned int size, GPUSphere* sphere, const CudaVec4<float>* penetration, void* df, const void* dx) //, const void* dfdx)
 {
 	dim3 threads(BSIZE,1);
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
 	SphereForceFieldCuda3f_addDForce_kernel<<< grid, threads, BSIZE*3*sizeof(float) >>>(size, *sphere, penetration, (float*)df, (const float*)dx);
 }
 
-#if defined(__cplusplus)
+void SphereForceFieldCuda3f1_addDForce(unsigned int size, GPUSphere* sphere, const CudaVec4<float>* penetration, void* df, const void* dx) //, const void* dfdx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	SphereForceFieldCuda3f1_addDForce_kernel<<< grid, threads >>>(size, *sphere, penetration, (CudaVec4<float>*)df, (const CudaVec4<float>*)dx);
+}
+
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

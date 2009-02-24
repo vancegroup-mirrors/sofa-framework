@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_TOPOLOGY_GRIDTOPOLOGY_H
 #define SOFA_COMPONENT_TOPOLOGY_GRIDTOPOLOGY_H
 
@@ -73,8 +73,9 @@ namespace sofa
 	
 	//int getNbPoints() const { return n.getValue()[0]*n.getValue()[1]*n.getValue()[2]; }
 	
-	virtual int getNbCubes() { return (n.getValue()[0]-1)*(n.getValue()[1]-1)*(n.getValue()[2]-1); }
+	virtual int getNbHexas() { return (n.getValue()[0]-1)*(n.getValue()[1]-1)*(n.getValue()[2]-1); }
 
+	/*
 	int getNbQuads() {
 	  if (n.getValue()[2] == 1)
 	    return (n.getValue()[0]-1)*(n.getValue()[1]-1);
@@ -83,23 +84,30 @@ namespace sofa
 	  else
 	    return (n.getValue()[1]-1)*(n.getValue()[2]-1);
 	}
+	*/
 
-	Cube getCubeCopy(int i);
-	Cube getCube(int x, int y, int z);
+	Hexa getHexaCopy(int i);
+	Hexa getHexa(int x, int y, int z);
 
+#ifndef SOFA_NEW_HEXA
+          Cube getCubeCopy(int i) { return getHexaCopy(i); }
+          Cube getCube(int x, int y, int z) { return getHexa(x,y,z); }
+#endif          
+          
 	Quad getQuadCopy(int i);
 	Quad getQuad(int x, int y, int z);
 	
 	int point(int x, int y, int z) const { return x+n.getValue()[0]*(y+n.getValue()[1]*z); }
-	int cube(int x, int y, int z) const { return x+(n.getValue()[0]-1)*(y+(n.getValue()[1]-1)*z); }
+	int hexa(int x, int y, int z) const { return x+(n.getValue()[0]-1)*(y+(n.getValue()[1]-1)*z); }
+      int cube(int x, int y, int z) const { return hexa(x,y,z); }
 	
       protected:
 	Data< Vec<3, int> > n;
 	
 	virtual void setSize();
-	virtual void updateLines();
+	virtual void updateEdges();
 	virtual void updateQuads();
-	virtual void updateCubes();
+	virtual void updateHexas();
       };
 
     } // namespace topology

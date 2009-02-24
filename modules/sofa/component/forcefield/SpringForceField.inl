@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 // Author: François Faure, INRIA-UJF, (C) 2006
 //
 // Copyright: See COPYING file that comes with this distribution
@@ -6,7 +30,7 @@
 
 #include <sofa/component/forcefield/SpringForceField.h>
 #include <sofa/core/componentmodel/behavior/PairInteractionForceField.inl>
-#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/helper/io/MassSpringLoader.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/helper/system/config.h>
@@ -26,7 +50,7 @@ using std::cerr;
 using std::endl;
 
 template<class DataTypes>
-SpringForceField<DataTypes>::SpringForceField(MechanicalState* mstate1, MechanicalState* mstate2, double _ks, double _kd)
+SpringForceField<DataTypes>::SpringForceField(MechanicalState* mstate1, MechanicalState* mstate2, SReal _ks, SReal _kd)
 : Inherit(mstate1, mstate2)
 , ks(initData(&ks,_ks,"stiffness","uniform stiffness for the all springs"))
 , kd(initData(&kd,_kd,"damping","uniform damping for the all springs"))
@@ -35,7 +59,7 @@ SpringForceField<DataTypes>::SpringForceField(MechanicalState* mstate1, Mechanic
 }
 
 template<class DataTypes>
-SpringForceField<DataTypes>::SpringForceField(double _ks, double _kd)
+SpringForceField<DataTypes>::SpringForceField(SReal _ks, SReal _kd)
 : ks(initData(&ks,_ks,"stiffness","uniform stiffness for the all springs"))
 , kd(initData(&kd,_kd,"damping","uniform damping for the all springs"))
 , springs(initData(&springs,"spring","pairs of indices, stiffness, damping, rest length"))
@@ -47,7 +71,7 @@ template<class DataTypes>
 void SpringForceField<DataTypes>::parse(core::objectmodel::BaseObjectDescription* arg)
 {
     if (arg->getAttribute("filename"))
-            this->load(arg->getAttribute("filename"));
+        this->load(arg->getAttribute("filename"));
     this->Inherit::parse(arg);
 }
 
@@ -57,7 +81,7 @@ class SpringForceField<DataTypes>::Loader : public helper::io::MassSpringLoader
 	public:
 		SpringForceField<DataTypes>* dest;
 		Loader(SpringForceField<DataTypes>* dest) : dest(dest) {}
-		virtual void addSpring(int m1, int m2, double ks, double kd, double initpos)
+		virtual void addSpring(int m1, int m2, SReal ks, SReal kd, SReal initpos)
 		{
                   helper::vector<Spring>& springs = *dest->springs.beginEdit();
                   springs.push_back(Spring(m1,m2,ks,kd,initpos));
@@ -68,12 +92,14 @@ class SpringForceField<DataTypes>::Loader : public helper::io::MassSpringLoader
 template <class DataTypes>
 bool SpringForceField<DataTypes>::load(const char *filename)
 {
+	bool ret = true;
 	if (filename && filename[0])
 	{
 		Loader loader(this);
-		return loader.load(filename);
+		ret &= loader.load(filename);
 	}
-	else return false;
+	else ret = false;
+	return ret;
 }
 
 template <class DataTypes>
@@ -83,7 +109,7 @@ void SpringForceField<DataTypes>::init()
 }
 
 template<class DataTypes>
-void SpringForceField<DataTypes>::addSpringForce(double& ener, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int /*i*/, const Spring& spring)
+void SpringForceField<DataTypes>::addSpringForce(SReal& ener, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int /*i*/, const Spring& spring)
 {
 	int a = spring.m1;
 	int b = spring.m2;

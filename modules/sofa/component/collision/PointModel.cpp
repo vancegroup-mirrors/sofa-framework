@@ -1,32 +1,47 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
+#include <sofa/helper/system/config.h>
+#include <sofa/component/collision/proximity.h>
+#include <sofa/defaulttype/Mat.h>
+#include <sofa/defaulttype/Vec.h>
+#include <sofa/core/componentmodel/collision/Intersection.inl>
+#include <iostream>
+#include <algorithm>
+
+
+
+
 #include <sofa/component/collision/PointModel.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/core/ObjectFactory.h>
 #include <vector>
 #include <sofa/helper/system/gl.h>
+#include <sofa/helper/gl/template.h>
+#include <sofa/core/componentmodel/collision/Intersection.inl>
+
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 
 namespace sofa
 {
@@ -37,15 +52,23 @@ namespace component
 namespace collision
 {
 
+using namespace sofa::defaulttype;
+using namespace sofa::core::componentmodel::collision;
+using namespace helper;
+
 SOFA_DECL_CLASS(Point)
 
 int PointModelClass = core::RegisterObject("Collision model which represents a set of points")
 .add< PointModel >()
 .addAlias("Point")
+// .addAlias("PointModel")
+.addAlias("PointMesh")
+.addAlias("PointSet")
 ;
 
 PointModel::PointModel()
 : mstate(NULL)
+, computeNormals( initData(&computeNormals, false, "computeNormals", "activate computation of normal vectors (required for some collision detection algorithms)") )
 {
 }
 
@@ -67,89 +90,22 @@ void PointModel::init()
 
 	const int npoints = mstate->getX()->size();
 	resize(npoints);
-
-	// If the CollisionDetection Method uses the filtration method based on cones
-	if (this->isFiltered())
-	{
-		topology::MeshTopology *mesh = dynamic_cast< topology::MeshTopology* > (getContext()->getTopology());
-
-		if (mesh != NULL)
-		{	
-			// Line neighborhood construction
-			const int nLines = mesh->getNbLines();
-			if (nLines != 0)
-			{
-				lineNeighbors.resize(npoints);
-
-				for (int i=0;i<npoints;i++)
-				{
-					lineNeighbors[i].clear();
-					Point p(this,i);
-
-					const Vector3& pt = p.p();
-
-					for (int j=0; j<nLines; j++)
-					{
-						topology::MeshTopology::Line idx = mesh->getLine(j);
-						Vector3 a = (*mstate->getX())[idx[0]];
-						Vector3 b = (*mstate->getX())[idx[1]];
-
-						if (a == pt)
-							lineNeighbors[i].push_back(idx[1]);
-						else if (b == pt)
-							lineNeighbors[i].push_back(idx[0]);
-					}
-				}
-			}
-
-			// Triangles neighborhood construction
-			const int nTriangles = mesh->getNbTriangles();
-			if (nTriangles != 0)
-			{
-				triangleNeighbors.resize(npoints);
-
-				for (int i=0;i<npoints;i++)
-				{
-					triangleNeighbors[i].clear();
-					Point p(this,i);
-
-					const Vector3& pt = p.p();
-
-					for (int j=0; j<nTriangles; j++)
-					{
-						topology::MeshTopology::Triangle t = mesh->getTriangle(j);
-						Vector3 a = (*mstate->getX())[t[0]];
-						Vector3 b = (*mstate->getX())[t[1]];
-						Vector3 c = (*mstate->getX())[t[2]];
-
-						if (a == pt)
-						{
-						//	std::cout << "Point " << pt << " voisin du triangle " << pt << ", " << t[1] << ", " << t[2] << std::endl;
-							triangleNeighbors[i].push_back(std::make_pair(t[1], t[2]));
-						}
-						else if (b == pt)
-						{
-						//	std::cout << "Point " << pt << " voisin du triangle " << pt << ", " << t[2] << ", " << t[0] << std::endl;
-							triangleNeighbors[i].push_back(std::make_pair(t[2], t[0]));
-						}
-						else if (c == pt)
-						{
-						//	std::cout << "Point " << pt << " voisin du triangle " << pt << ", " << t[0] << ", " << t[1] << std::endl;
-							triangleNeighbors[i].push_back(std::make_pair(t[0], t[1]));
-						}
-					}
-				}
-			}
-		}
-	}
+    if (computeNormals.getValue()) updateNormals();
 }
 
 void PointModel::draw(int index)
 {
-	Point t(this,index);
-	glBegin(GL_POINTS);
-	glVertex3dv(t.p().ptr());
-	glEnd();
+    Point t(this,index);
+    glBegin(GL_POINTS);
+    helper::gl::glVertexT(t.p());
+    glEnd();
+    if ((unsigned)index < normals.size())
+    {
+        glBegin(GL_LINES);
+        helper::gl::glVertexT(t.p());
+        helper::gl::glVertexT(t.p()+normals[index]*0.1f);
+        glEnd();
+    }
 }
 
 void PointModel::draw()
@@ -163,7 +119,14 @@ void PointModel::draw()
 		glPointSize(3);
 		glColor4fv(getColor4f());
 
-		for (int i=0;i<size;i++)
+		// Check topological modifications
+		const int npoints = mstate->getX()->size();
+		if (npoints != size)
+		{
+			resize(npoints);
+		}
+
+		for (int i = 0; i < size; i++)
 		{
 			draw(i);
 		}
@@ -174,10 +137,23 @@ void PointModel::draw()
 		if (getContext()->getShowWireFrame())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
-		dynamic_cast<core::VisualModel*>(getPrevious())->draw();
+	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
+		getPrevious()->draw();
 }
 
+bool PointModel::canCollideWithElement(int index, CollisionModel* model2, int index2)
+{
+    if (!this->bSelfCollision.getValue()) return true;
+    if (this->getContext() != model2->getContext()) return true;
+    if (model2 == this)
+    {
+        //std::cout << "point self test "<<index<<" - "<<index2<<std::endl;
+        return index < index2-2; // || index > index2+1;
+    }
+    else
+        return model2->canCollideWithElement(index2, this, index);
+}
+    
 void PointModel::computeBoundingTree(int maxDepth)
 {
 	CubeModel* cubeModel = createPrevious<CubeModel>();
@@ -191,6 +167,8 @@ void PointModel::computeBoundingTree(int maxDepth)
 	if (updated) cubeModel->resize(0);
 	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 
+    if (computeNormals.getValue()) updateNormals();
+    
 	cubeModel->resize(size);
 	if (!empty())
 	{
@@ -217,6 +195,8 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 	}
 	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 	
+    if (computeNormals.getValue()) updateNormals();
+
 	Vector3 minElem, maxElem;
 
 	cubeModel->resize(size);
@@ -242,41 +222,172 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 		cubeModel->computeBoundingTree(maxDepth);
 	}
 }
-
-void Point::getLineNeighbors(std::vector< Vector3> &nV) const 
+    
+void PointModel::updateNormals()
 {
-	std::vector<int> v = model->lineNeighbors[index];
-
-	std::vector<int>::iterator it = v.begin();
-	std::vector<int>::iterator itEnd = v.end();
-
-	nV.clear();
-//	nV.resize(v.size());
-
-	while(it != itEnd)
-	{
-		nV.push_back((*model->mstate->getX())[*it]);
-		++it;
-	}
+    const VecCoord& x = *mstate->getX();
+    int n = x.size();
+    normals.resize(n);
+    for (int i=0;i<n;++i)
+    {
+        normals[i].clear();
+    }
+    core::componentmodel::topology::BaseMeshTopology* mesh = getContext()->getMeshTopology();
+    if (mesh->getNbTetras()+mesh->getNbHexas() > 0)
+    {
+        if (mesh->getNbTetras()>0)
+        {
+            const core::componentmodel::topology::BaseMeshTopology::SeqTetras &elems = mesh->getTetras();
+            for (unsigned int i=0; i < elems.size(); ++i)
+            {
+                const core::componentmodel::topology::BaseMeshTopology::Tetra &e = elems[i];
+                const Coord& p1 = x[e[0]];
+                const Coord& p2 = x[e[1]];
+                const Coord& p3 = x[e[2]];
+                const Coord& p4 = x[e[3]];
+                Coord& n1 = normals[e[0]];
+                Coord& n2 = normals[e[1]];
+                Coord& n3 = normals[e[2]];
+                Coord& n4 = normals[e[3]];
+                Coord n;
+                n = cross(p3-p1,p2-p1); n.normalize();
+                n1 += n;
+                n2 += n;
+                n3 += n;
+                n = cross(p4-p1,p3-p1); n.normalize();
+                n1 += n;
+                n3 += n;
+                n4 += n;
+                n = cross(p2-p1,p4-p1); n.normalize();
+                n1 += n;
+                n4 += n;
+                n2 += n;
+                n = cross(p3-p2,p4-p2); n.normalize();
+                n2 += n;
+                n4 += n;
+                n3 += n;
+            }
+        }
+        /// @TODO Hexas
+    }
+    else if (mesh->getNbTriangles()+mesh->getNbQuads() > 0)
+    {
+        if (mesh->getNbTriangles()>0)
+        {
+            const core::componentmodel::topology::BaseMeshTopology::SeqTriangles &elems = mesh->getTriangles();
+            for (unsigned int i=0; i < elems.size(); ++i)
+            {
+                const core::componentmodel::topology::BaseMeshTopology::Triangle &e = elems[i];
+                const Coord& p1 = x[e[0]];
+                const Coord& p2 = x[e[1]];
+                const Coord& p3 = x[e[2]];
+                Coord& n1 = normals[e[0]];
+                Coord& n2 = normals[e[1]];
+                Coord& n3 = normals[e[2]];
+                Coord n;
+                n = cross(p2-p1,p3-p1); n.normalize();
+                n1 += n;
+                n2 += n;
+                n3 += n;
+            }
+        }
+        if (mesh->getNbQuads()>0)
+        {
+            const core::componentmodel::topology::BaseMeshTopology::SeqQuads &elems = mesh->getQuads();
+            for (unsigned int i=0; i < elems.size(); ++i)
+            {
+                const core::componentmodel::topology::BaseMeshTopology::Quad &e = elems[i];
+                const Coord& p1 = x[e[0]];
+                const Coord& p2 = x[e[1]];
+                const Coord& p3 = x[e[2]];
+                const Coord& p4 = x[e[3]];
+                Coord& n1 = normals[e[0]];
+                Coord& n2 = normals[e[1]];
+                Coord& n3 = normals[e[2]];
+                Coord& n4 = normals[e[3]];
+                Coord n;
+                n = cross(p3-p1,p4-p2); n.normalize();
+                n1 += n;
+                n2 += n;
+                n3 += n;
+                n4 += n;
+            }
+        }
+    }
+    for (int i=0;i<n;++i)
+    {
+        SReal l = normals[i].norm();
+        if (l > 1.0e-3)
+            normals[i] *= 1/l;
+        else
+            normals[i].clear();
+    }
 }
 
-void Point::getTriangleNeighbors(std::vector< std::pair< Vector3, Vector3 > > &nV) const 
+
+bool Point::testLMD(const Vector3 &PQ, double &coneFactor, double &coneExtension)
 {
-	std::vector< std::pair<int, int> > v = model->triangleNeighbors[index];
+	Vector3 pt = p();
 
-	std::vector< std::pair<int, int> >::iterator it = v.begin();
-	std::vector< std::pair<int, int> >::iterator itEnd = v.end();
+	sofa::core::componentmodel::topology::BaseMeshTopology* mesh = model->getMeshTopology();
+	helper::vector<Vector3> x = (*model->mstate->getX());
 
-	nV.clear();
-//	nV.resize(v.size());
+	const helper::vector <unsigned int>& triangleVertexShell = mesh->getTriangleVertexShell(index);
+	const helper::vector <unsigned int>& edgeVertexShell = mesh->getEdgeVertexShell(index);
 
-	while(it != itEnd)
+
+	Vector3 nMean;
+
+	for (unsigned int i=0; i<triangleVertexShell.size(); i++)
 	{
-		nV.push_back(std::make_pair((*model->mstate->getX())[it->first], (*model->mstate->getX())[it->second]));
-		++it;
+		unsigned int t = triangleVertexShell[i];
+		const fixed_array<unsigned int,3>& ptr = mesh->getTriangle(t);
+		Vector3 nCur = (x[ptr[1]]-x[ptr[0]]).cross(x[ptr[2]]-x[ptr[0]]);
+		nCur.normalize();
+		nMean += nCur;
 	}
+
+	if (triangleVertexShell.size()==0)
+	{
+		for (unsigned int i=0; i<edgeVertexShell.size(); i++)
+		{
+			unsigned int e = edgeVertexShell[i];
+			const fixed_array<unsigned int,2>& ped = mesh->getEdge(e);
+			Vector3 l = (pt - x[ped[0]]) + (pt - x[ped[1]]);
+			l.normalize();
+			nMean += l;
+		}		
+	}
+
+	if (nMean.norm()> 0.0000000001)
+		nMean.normalize();
+		
+
+	for (unsigned int i=0; i<edgeVertexShell.size(); i++)
+	{
+		unsigned int e = edgeVertexShell[i];
+		const fixed_array<unsigned int,2>& ped = mesh->getEdge(e);
+		Vector3 l = (pt - x[ped[0]]) + (pt - x[ped[1]]);
+		l.normalize();
+		double computedAngleCone = dot(nMean , l) * coneFactor;
+		if (computedAngleCone<0)
+			computedAngleCone=0.0;
+		computedAngleCone+=coneExtension;
+		if (dot(l , PQ) < -computedAngleCone*PQ.norm())
+			return false;
+	}
+	return true;
+
+
 }
 
+
+
+
+
+
+
+        
 } // namespace collision
 
 } // namespace component

@@ -1,32 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/simulation/tree/ExportDotVisitor.h>
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/Factory.h>
-#include <sofa/simulation/tree/GNode.h>
-#include <sofa/simulation/tree/Colors.h>
+#include <sofa/simulation/common/Node.h>
+#include <sofa/simulation/common/Colors.h>
 
 namespace sofa
 {
@@ -93,40 +93,40 @@ bool ExportDotVisitor::display(core::objectmodel::BaseObject* obj, const char **
 	*color = COLOR[OBJECT];
 	bool show = false;
 	bool hide = false;
-	if (dynamic_cast<core::componentmodel::behavior::BaseMechanicalState*>(obj))
-		if (showMechanicalState) { show = true; *color = COLOR[MMODEL]; } else hide = true;
-	if (dynamic_cast<core::componentmodel::behavior::BaseMass*>(obj))
-		if (showMass) { show = true; *color = COLOR[MASS]; } else hide = true;
-	if (dynamic_cast<core::componentmodel::topology::Topology *>(obj))
-		if (showTopology) { show = true; *color = COLOR[TOPOLOGY]; } else hide = true;
-	if (dynamic_cast<core::CollisionModel*>(obj))
-		if (showCollisionModel) { show = true; *color = COLOR[CMODEL]; } else hide = true;
-	if (dynamic_cast<core::componentmodel::behavior::BaseMechanicalMapping*>(obj))
-		if (showMechanicalMapping) { show = true; *color = COLOR[MMAPPING]; } else hide = true;
-	else if (dynamic_cast<core::BaseMapping*>(obj))
-		if (showMapping) { show = true; *color = COLOR[MAPPING]; } else hide = true;
-	if (dynamic_cast<core::objectmodel::ContextObject*>(obj))
-		if (showContext) { show = true; *color = COLOR[CONTEXT]; } else hide = true;
+	if (dynamic_cast<core::componentmodel::behavior::BaseMechanicalState*>(obj)){
+		if (showMechanicalState) { show = true; *color = COLOR[MMODEL]; } else hide = true;}
+	if (dynamic_cast<core::componentmodel::behavior::BaseMass*>(obj)){
+		if (showMass) { show = true; *color = COLOR[MASS]; } else hide = true;}
+	if (dynamic_cast<core::componentmodel::topology::Topology *>(obj)){
+		if (showTopology) { show = true; *color = COLOR[TOPOLOGY]; } else hide = true;}
+	if (dynamic_cast<core::CollisionModel*>(obj)){
+		if (showCollisionModel) { show = true; *color = COLOR[CMODEL]; } else hide = true;}
+	if (dynamic_cast<core::componentmodel::behavior::BaseMechanicalMapping*>(obj)){
+		if (showMechanicalMapping) { show = true; *color = COLOR[MMAPPING]; } else hide = true;}
+	else if (dynamic_cast<core::BaseMapping*>(obj)){
+		if (showMapping) { show = true; *color = COLOR[MAPPING]; } else hide = true;}
+	if (dynamic_cast<core::objectmodel::ContextObject*>(obj)){
+		if (showContext) { show = true; *color = COLOR[CONTEXT]; } else hide = true;}
 	if (dynamic_cast<core::componentmodel::collision::Pipeline*>(obj)
 		|| dynamic_cast<core::componentmodel::collision::Intersection*>(obj)
 		|| dynamic_cast<core::componentmodel::collision::Detection*>(obj)
 		|| dynamic_cast<core::componentmodel::collision::ContactManager*>(obj)
-		|| dynamic_cast<core::componentmodel::collision::CollisionGroupManager*>(obj))
-		if (showCollisionPipeline) { show = true; *color = COLOR[COLLISION]; } else hide = true;
-	if (dynamic_cast<core::componentmodel::behavior::OdeSolver*>(obj))
-		if (showSolver) { show = true; *color = COLOR[SOLVER]; } else hide = true;
+		|| dynamic_cast<core::componentmodel::collision::CollisionGroupManager*>(obj)){
+		if (showCollisionPipeline) { show = true; *color = COLOR[COLLISION]; } else hide = true;}
+	if (dynamic_cast<core::componentmodel::behavior::OdeSolver*>(obj)){
+		if (showSolver) { show = true; *color = COLOR[SOLVER]; } else hide = true;}
 	if (dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj) &&
-	    dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj)->getMechModel1()!=dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj)->getMechModel2())
-		if (showInteractionForceField) { show = true; *color = COLOR[IFFIELD]; } else hide = true;
-	else if (dynamic_cast<core::componentmodel::behavior::BaseForceField*>(obj))
-		if (showForceField) { show = true; *color = COLOR[FFIELD]; } else hide = true;
-	if (dynamic_cast<core::componentmodel::behavior::BaseConstraint*>(obj))
-		if (showConstraint) { show = true; *color = COLOR[CONSTRAINT]; } else hide = true;
-	if (dynamic_cast<core::BehaviorModel*>(obj))
-		if (showBehaviorModel) { show = true; *color = COLOR[BMODEL]; } else hide = true;
+	    dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj)->getMechModel1()!=dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj)->getMechModel2()){
+		if (showInteractionForceField) { show = true; *color = COLOR[IFFIELD]; } else hide = true;}
+	else if (dynamic_cast<core::componentmodel::behavior::BaseForceField*>(obj)){
+		if (showForceField) { show = true; *color = COLOR[FFIELD]; } else hide = true;}
+	if (dynamic_cast<core::componentmodel::behavior::BaseConstraint*>(obj)){
+		if (showConstraint) { show = true; *color = COLOR[CONSTRAINT]; } else hide = true;}
+	if (dynamic_cast<core::BehaviorModel*>(obj)){
+		if (showBehaviorModel) { show = true; *color = COLOR[BMODEL]; } else hide = true;}
 
-	if (dynamic_cast<core::VisualModel*>(obj) && !hide && !show)
-		if (showVisualModel) { show = true; *color = COLOR[VMODEL]; } else hide = true;
+	if (dynamic_cast<core::VisualModel*>(obj) && !hide && !show){
+		if (showVisualModel) { show = true; *color = COLOR[VMODEL]; } else hide = true;}
 
 	return show || !hide;
 }
@@ -267,7 +267,7 @@ void ExportDotVisitor::processObject(GNode* /*node*/, core::objectmodel::BaseObj
 	}
 }
 
-Visitor::Result ExportDotVisitor::processNodeTopDown(GNode* node)
+  simulation::Visitor::Result ExportDotVisitor::processNodeTopDown(GNode* node)
 {
 	const char* color=NULL;
 	if (display(node,&color))

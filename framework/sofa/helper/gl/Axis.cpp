@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/gl/Axis.h>
 
 #include <sofa/helper/system/gl.h>
@@ -53,18 +55,18 @@ void Axis::initDraw()
     if (quadratic!=NULL) return;
 
     Vector3 L= length;
-    double Lmin = L[0];
+    SReal Lmin = L[0];
     if (L[1]<Lmin) Lmin = L[1];
     if (L[2]<Lmin) Lmin = L[2];
-    double Lmax = L[0];
+    SReal Lmax = L[0];
     if (L[1]>Lmax) Lmax = L[1];
     if (L[2]>Lmax) Lmax = L[2];
     if (Lmax > Lmin*2 && Lmin > 0.0)
             Lmax = Lmin*2;
     if (Lmax > Lmin*2)
-            Lmin = Lmax/1.414;
-    Vector3 l(Lmin / 10, Lmin / 10, Lmin / 10);
-    Vector3 lc(Lmax / 5, Lmax / 5, Lmax / 5); // = L / 5;
+            Lmin = Lmax/(SReal)1.414;
+    Vector3 l(Lmin / (SReal)10, Lmin / (SReal)10, Lmin / (SReal)10);
+    Vector3 lc(Lmax / (SReal)5, Lmax / (SReal)5, Lmax / (SReal)5); // = L / 5;
     Vector3 Lc = lc;
 
     quadratic=gluNewQuadric();
@@ -175,7 +177,7 @@ void Axis::update(const Vector3& center, const Quaternion& orient)
     matTransOpenGL[14] = center[2];
 }
 
-Axis::Axis(double len)
+Axis::Axis(SReal len)
 {
     quadratic = NULL;
     length = Vector3(len,len,len);
@@ -210,20 +212,20 @@ Axis::Axis(const double *mat, const Vector3& len)
     update(mat);
 }
 
-Axis::Axis(const Vector3& center, const Quaternion& orient, double len)
+Axis::Axis(const Vector3& center, const Quaternion& orient, SReal len)
 {
     quadratic = NULL;
     length = Vector3(len,len,len);
     update(center, orient);
 }
-Axis::Axis(const Vector3& center, const double orient[4][4], double len)
+Axis::Axis(const Vector3& center, const double orient[4][4], SReal len)
 {
     quadratic = NULL;
     length = Vector3(len,len,len);
     update(center, orient);
 }
 
-Axis::Axis(const double *mat, double len)
+Axis::Axis(const double *mat, SReal len)
 {
     quadratic = NULL;
     length = Vector3(len,len,len);
@@ -265,21 +267,21 @@ void Axis::draw(const double *mat, const Vector3& len)
     a->draw();
 }
 
-void Axis::draw(const Vector3& center, const Quaternion& orient, double len)
+void Axis::draw(const Vector3& center, const Quaternion& orient, SReal len)
 {
     Axis* a = get(Vector3(len,len,len));
     a->update(center, orient);
     a->draw();
 }
 
-void Axis::draw(const Vector3& center, const double orient[4][4], double len)
+void Axis::draw(const Vector3& center, const double orient[4][4], SReal len)
 {
     Axis* a = get(Vector3(len,len,len));
     a->update(center, orient);
     a->draw();
 }
 
-void Axis::draw(const double *mat, double len)
+void Axis::draw(const double *mat, SReal len)
 {
     Axis* a = get(Vector3(len,len,len));
     a->update(mat);

@@ -1,35 +1,38 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This program is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU General Public License as published by the Free   *
-* Software Foundation; either version 2 of the License, or (at your option)    *
-* any later version.                                                           *
-*                                                                              *
-* This program is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     *
-* more details.                                                                *
-*                                                                              *
-* You should have received a copy of the GNU General Public License along with *
-* this program; if not, write to the Free Software Foundation, Inc., 51        *
-* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                    *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 #include <GenGraphForm.h>
 #include "RealGUI.h"
 #include "iconnode.xpm"
-#include <sofa/simulation/tree/Colors.h>
+#include "iconwarning.xpm"
+#include <sofa/simulation/common/Colors.h>
 
 
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 #include <Q3PopupMenu>
 #else
 #include <qpopupmenu.h>
@@ -43,7 +46,7 @@ namespace gui
 
 namespace qt
 {
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 typedef Q3PopupMenu QPopupMenu;
 #else
 typedef QPopupMenu Q3PopupMenu;
@@ -65,7 +68,7 @@ static int hexval(char c)
 
 QPixmap* getPixmap(core::objectmodel::Base* obj)
 {
-    using namespace sofa::simulation::tree::Colors;
+    using namespace sofa::simulation::Colors;
     unsigned int flags=0;
 
     if (dynamic_cast<core::objectmodel::BaseNode*>(obj))
@@ -106,7 +109,8 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
             flags |= 1 << MAPPING;
         if (dynamic_cast<core::componentmodel::behavior::BaseMass*>(obj))
             flags |= 1 << MASS;
-        if (dynamic_cast<core::componentmodel::topology::Topology *>(obj))
+        if (dynamic_cast<core::componentmodel::topology::Topology *>(obj) 
+	    || dynamic_cast<core::componentmodel::topology::BaseTopologyObject *>(obj) )
             flags |= 1 << TOPOLOGY;
         if (dynamic_cast<core::VisualModel*>(obj) && !flags)
             flags |= 1 << VMODEL;
@@ -213,7 +217,8 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 	      }
 
 	    //	    if (std::string(child->getName(),0,7) != "default")
-	      item->setText(0, child->getName().c_str());
+		item->setDropEnabled(true);
+	    item->setText(0, child->getName().c_str());
 	    QPixmap* pix = getPixmap(child);
 	    if (pix)
 	      item->setPixmap(0, *pix);
@@ -308,9 +313,21 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 		name += object->getName();
 // 	      }
 	    item->setText(0, name.c_str());
-	    QPixmap* pix = getPixmap(object);
-	    if (pix)
-	      item->setPixmap(0, *pix);
+
+	    if (object->getLogWarning().size() == 0)
+	      {	       
+		QPixmap* pix = getPixmap(object);
+		if (pix)
+		  item->setPixmap(0, *pix);
+		
+	      }
+	    else
+	      {
+		static QPixmap pixWarning((const char**)iconwarning_xpm);
+		item->setPixmap(0,pixWarning);
+	      }
+
+
 	    items[object] = item;
 	  }
       }
@@ -360,40 +377,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 	if (!items.count(groot)) return;
 	frozen = true;
       }
-      /*
-	void unfreeze(Q3ListViewItem* parent, GNode* node)
-	{
-	if (!items.count(node))
-	{
-	addChild(node->parent, node);
-	return;
-	}
-	Q3ListViewItem* item = items[node];
-	if (item->listView() == NULL)
-	{
-	if (parent)
-	parent->insertItem(item);
-	else
-	widget->insertItem(item);
-	}
-	for(GNode::ChildIterator it = groot->child.begin(), itend = groot->child.end(); it != itend; ++it)
-	{
-	unfreeze(item, *it);
-	}
-	for(GNode::ObjectIterator it = groot->object.begin(), itend = groot->object.end(); it != itend; ++it)
-	{
-	core::objectmodel::BaseObject* object = *it;
-	if (!items.count(object))
-	addObject(node, object);
-	else
-	{
-	Q3ListViewItem* itemObject = items[object];
-	if (itemObject->listView() == NULL)
-	item->insertItem(itemObject);
-	}
-	}
-	}
-      */
+
 
       /*****************************************************************************************************************/
       void GraphListenerQListView::unfreeze(GNode* groot)

@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/core/ObjectFactory.h>
 #include <algorithm>
@@ -67,7 +67,8 @@ void CubeModel::resize(int size)
 	// set additional indices
 	for (int i=size0;i<size;++i)
 	{
-		this->elems[i].leaf = core::CollisionElementIterator(getNext(), i);
+	    this->elems[i].children.first=core::CollisionElementIterator(getNext(), i);
+	    this->elems[i].children.second=core::CollisionElementIterator(getNext(), i+1);
 		this->parentOf[i] = i;
 	}
 }
@@ -79,6 +80,13 @@ void CubeModel::setParentOf(int childIndex, const Vector3& min, const Vector3& m
 	elems[i].maxBBox = max;
 }
 
+void CubeModel::setLeafCube(int cubeIndex, std::pair<core::CollisionElementIterator,core::CollisionElementIterator> children, const Vector3& min, const Vector3& max)
+{
+    elems[cubeIndex].minBBox = min;
+    elems[cubeIndex].maxBBox = max;
+    elems[cubeIndex].children = children;
+}
+
 int CubeModel::addCube(Cube subcellsBegin, Cube subcellsEnd)
 {
     int i = size;
@@ -87,7 +95,8 @@ int CubeModel::addCube(Cube subcellsBegin, Cube subcellsEnd)
     //elems[i].subcells = std::make_pair(subcellsBegin, subcellsEnd);
     elems[i].subcells.first = subcellsBegin;
     elems[i].subcells.second = subcellsEnd;
-    elems[i].leaf = core::CollisionElementIterator();
+    elems[i].children.first = core::CollisionElementIterator();
+    elems[i].children.second = core::CollisionElementIterator();
     updateCube(i);
     return i;
 }
@@ -192,8 +201,8 @@ void CubeModel::draw()
         glDisable(GL_BLEND);
         glDepthMask(1);
     }
-    if (getPrevious()!=NULL && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
-        dynamic_cast<core::VisualModel*>(getPrevious())->draw();
+    if (getPrevious()!=NULL)
+        getPrevious()->draw();
 }
 
 std::pair<core::CollisionElementIterator,core::CollisionElementIterator> CubeModel::getInternalChildren(int index) const
@@ -203,6 +212,8 @@ std::pair<core::CollisionElementIterator,core::CollisionElementIterator> CubeMod
 
 std::pair<core::CollisionElementIterator,core::CollisionElementIterator> CubeModel::getExternalChildren(int index) const
 {
+    return elems[index].children;
+/*
     core::CollisionElementIterator i1 = elems[index].leaf;
     if (!i1.valid())
     {
@@ -213,11 +224,12 @@ std::pair<core::CollisionElementIterator,core::CollisionElementIterator> CubeMod
         core::CollisionElementIterator i2 = i1; ++i2;
         return std::make_pair(i1,i2);
     }
+*/
 }
 
 bool CubeModel::isLeaf( int index ) const
 {
-    return elems[index].leaf.valid();
+    return elems[index].children.first.valid();
 }
 
 class CubeModel::CubeSortPredicate
@@ -342,7 +354,7 @@ void CubeModel::computeBoundingTree(int maxDepth)
         }
         // Finally update parentOf to reflect new cell order
         for (int i=0;i<size;i++)
-            parentOf[elems[i].leaf.getIndex()] = i;
+            parentOf[elems[i].children.first.getIndex()] = i;
     }
     else
     {

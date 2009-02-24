@@ -1,31 +1,35 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_VISUALMODEL_H
 #define SOFA_CORE_VISUALMODEL_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/Quat.h>
 
 namespace sofa
 {
@@ -49,6 +53,7 @@ namespace core
 class VisualModel : public virtual objectmodel::BaseObject
 {
 public:
+    /// Destructor
     virtual ~VisualModel() { }
 
     /**
@@ -57,17 +62,41 @@ public:
      *  Called once before the first frame is drawn, and if the graphical
      *  context has been recreated.
      */
-    virtual void initTextures() = 0;
+    virtual void initVisual() { initTextures(); }
 
+    /**
+     *  \brief Initialize the textures, or other graphical resources.
+     *
+     *  @deprecated Use initVisual() instead.
+     */
+    virtual void initTextures() {}
+    
+    /// The enumeration used to describe each step of the rendering.
+    enum Pass { Std,		///< Standard pass
+		Transparent,	///< Transparent pass
+		Shadow 		///< Shadow pass
+	};
+
+    /**
+     *  \brief Called before objects in the current branch are displayed
+     */
+    virtual void fwdDraw(Pass /*pass*/ = Std) {}
+    
+    /**
+     *  \brief Called after objects in the current branch are displayed
+     */
+    virtual void bwdDraw(Pass /*pass*/ = Std) {}
+    
     /**
      *  \brief Display the VisualModel object.
      */
-    virtual void draw() = 0;
+    virtual void drawVisual() {}
+    //virtual void drawVisual() = 0;
 
     /**
      *  \brief Display transparent surfaces.
      *
-     *  Objects should use this method to get a correct display order.
+     *  Transparent objects should use this method to get a correct display order.
      */
     virtual void drawTransparent()
     {
@@ -81,13 +110,20 @@ public:
      */
     virtual void drawShadow()
     {
-        draw();
+        drawVisual();
     }
 
     /**
      *  \brief used to update the model if necessary.
      */
-    virtual void update() = 0;
+    virtual void updateVisual() { update(); }
+
+    /**
+     *  \brief used to update the model if necessary.
+     *
+     *  @deprecated Use updateVisual() instead.
+     */
+    virtual void update() {}
 
     /**
      *  \brief used to add the bounding-box of this visual model to the
@@ -102,6 +138,34 @@ public:
     virtual bool addBBox(double* /*minBBox*/, double* /*maxBBox*/)
     {
         return false;
+    }
+
+    /// Translate the positions
+    ///
+    /// This method is optional, it is used when the user want to interactively change the position of an object
+    virtual void applyTranslation(const double /*dx*/, const double /*dy*/, const double /*dz*/)
+    {
+    }
+    
+    /// Rotate the positions using Euler Angles in degree
+    ///
+    /// This method is optional, it is used when the user want to interactively change the position of an object
+    virtual void applyRotation (const double /*rx*/, const double /*ry*/, const double /*rz*/)
+    {
+    }       
+    
+    /// Rotate the positions
+    ///
+    /// This method is optional, it is used when the user want to interactively change the position of an object
+    virtual void applyRotation(const defaulttype::Quat /*q*/)
+    {
+    }
+
+    /// Scale the positions
+    ///
+    /// This method is optional, it is used when the user want to interactively change the position of an object
+    virtual void applyScale(const double /*s*/)
+    {
     }
 
     /**

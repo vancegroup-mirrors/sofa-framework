@@ -1,34 +1,33 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 #ifndef SOFA_COMPONENT_FORCEFIELD_JOINTSPRINGFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_JOINTSPRINGFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/PairInteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/defaulttype/Vec.h>
 #include <vector>
 #include <sofa/defaulttype/Mat.h>
@@ -55,7 +54,7 @@ public:
 	  Use ksr vector to specify the rotational stiffnesses (on each local axe)
   */
 template<class DataTypes>
-class JointSpringForceField : public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public core::VisualModel
+class JointSpringForceField : public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
     typedef typename core::componentmodel::behavior::PairInteractionForceField<DataTypes> Inherit;
@@ -67,7 +66,7 @@ public:
 	typedef core::componentmodel::behavior::MechanicalState<DataTypes> MechanicalState;
 	enum { N=Coord::static_size };
 	typedef defaulttype::Mat<N,N,Real> Mat;
-	typedef Vec<N,Real> Vec;
+	typedef Vec<N,Real> Vector;
 
 
   class Spring
@@ -75,7 +74,7 @@ public:
     public:
       int  m1, m2;			/// the two extremities of the spring: masses m1 and m2 
       Real kd;				/// damping factor 
-      Vec  initTrans;		/// rest length of the spring 
+      Vector  initTrans;		/// rest length of the spring 
       Quat initRot;			/// rest orientation of the spring 
 	  Quat lawfulTorsion;	/// general (lawful) torsion of the springs (used to fix a bug with large rotations)
 	  Quat extraTorsion;	/// extra (illicit) torsion of the springs (used to fix a bug with large rotations)
@@ -89,7 +88,7 @@ public:
 
 	  sofa::defaulttype::Vec<6,Real> limitAngles; ///limit angles on rotation axis (default no limit)
 
-	  Vec bloquage;
+	  Vector bloquage;
 
 
 	  ///constructors
@@ -100,7 +99,7 @@ public:
 	  {
 		  freeMovements = sofa::defaulttype::Vec<6,bool>(0,0,0,1,1,1);
 		  limitAngles = sofa::defaulttype::Vec<6,Real>(-100000, 100000, -100000, 100000, -100000, 100000);
-		  initTrans = Vec(0,0,0);
+		  initTrans = Vector(0,0,0);
 		  initRot = Quat(0,0,0,1);
 	  }
 
@@ -111,7 +110,7 @@ public:
 	  {
 		  freeMovements = sofa::defaulttype::Vec<6,bool>(0,0,0,1,1,1);
 		  limitAngles = sofa::defaulttype::Vec<6,Real>(-100000, 100000, -100000, 100000, -100000, 100000);
-		  initTrans = Vec(0,0,0);
+		  initTrans = Vector(0,0,0);
 		  initRot = Quat(0,0,0,1);
 	  }
 
@@ -126,7 +125,7 @@ public:
 			if(limitAngles[2*i]==limitAngles[2*i+1])
 				freeMovements[3+i] = false;
 		  }
-		  initTrans = Vec(0,0,0);
+		  initTrans = Vector(0,0,0);
 		  initRot = Quat(0,0,0,1);
       }
       
@@ -138,7 +137,7 @@ public:
 	  Real getBlocStiffnessRotation() { return blocStiffnessRot; }
 	  sofa::defaulttype::Vec<6,Real> getLimitAngles() { return limitAngles;}
 	  sofa::defaulttype::Vec<6,bool> getFreeAxis() { return freeMovements;}
-	  Vec getInitLength() { return initTrans; }
+	  Vector getInitLength() { return initTrans; }
 	  Quat getInitOrientation() { return initRot; }
 
 	  //affectors
@@ -159,9 +158,9 @@ public:
 		  if(miny==maxy) freeMovements[4]=false;
 		  if(minz==maxz) freeMovements[5]=false;
 	  }
-	  void setInitLength( const Vec& l) { initTrans=l; }
+	  void setInitLength( const Vector& l) { initTrans=l; }
 	  void setInitOrientation( const Quat& o) { initRot=o; }
-	  void setInitOrientation( const Vec& o) { initRot=Quat::createFromRotationVector(o); }
+	  void setInitOrientation( const Vector& o) { initRot=Quat::createFromRotationVector(o); }
 	  void setFreeAxis(const sofa::defaulttype::Vec<6,bool>& axis) { freeMovements = axis; }
 	  void setFreeAxis(bool isFreeTx, bool isFreeTy, bool isFreeTz, bool isFreeRx, bool isFreeRy, bool isFreeRz)  {
 		 freeMovements = sofa::defaulttype::Vec<6,bool>(isFreeTx, isFreeTy, isFreeTz, isFreeRx, isFreeRy, isFreeRz);
@@ -173,7 +172,7 @@ public:
 	  {
 		//default joint is a free rotation joint --> translation is bloqued, rotation is free
   		s.freeMovements = sofa::defaulttype::Vec<6,bool>(false, false, false, true, true, true);
-  	    s.initTrans = Vec(0,0,0);
+  	    s.initTrans = Vector(0,0,0);
 		s.initRot = Quat(0,0,0,1);
 		s.blocStiffnessRot = 0.0;
 		//by default no angle limitation is set (bi values for initialisation)
@@ -231,7 +230,7 @@ public:
 	  {
 		  out<<"BEGIN_SPRING  "<<s.m1<<" "<<s.m2<<"  ";
 
-		  if (s.freeMovements[0]!=false || s.freeMovements[1]!=false || s.freeMovements[2]!=false || s.freeMovements[3]!=true || s.freeMovements[4]!=true || s.freeMovements[5]!=false)
+		  if (s.freeMovements[0]!=false || s.freeMovements[1]!=false || s.freeMovements[2]!=false || s.freeMovements[3]!=true || s.freeMovements[4]!=true || s.freeMovements[5]!=true)
 			  out<<"FREE_AXIS "<<s.freeMovements<<"  ";
 		  if (s.softStiffnessTrans != 0.0 || s.hardStiffnessTrans != 10000.0)
 			  out<<"KS_T "<<s.softStiffnessTrans<<" "<<s.hardStiffnessTrans<<"  ";
@@ -247,7 +246,7 @@ public:
 			  out<<"R_LIM_Y "<<s.limitAngles[2]<<" "<<s.limitAngles[3]<<"  ";
 		  if (s.limitAngles[4]!=-100000 || s.limitAngles[5] != 100000)
 			  out<<"R_LIM_Z "<<s.limitAngles[4]<<" "<<s.limitAngles[5]<<"  ";
-		  if (s.initTrans!= Vec())
+		  if (s.initTrans!= Vector())
 			  out<<"REST_T "<<s.initTrans<<"  ";
 		  if (s.initRot[3]!= 1)
 			  out<<"REST_R "<<s.initRot<<"  ";
@@ -295,14 +294,11 @@ public:
 	
 	virtual void addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2);
         
-    virtual double getPotentialEnergy(const VecCoord&, const VecCoord&) { return m_potentialEnergy; }
+	virtual double getPotentialEnergy(const VecCoord&, const VecCoord&) { return m_potentialEnergy; }
 
 	sofa::helper::vector<Spring> * getSprings() { return springs.beginEdit(); }
 	
-	// -- VisualModel interface
 	void draw();
-	void initTextures() { }
-	void update() { }
 	
 	// -- Modifiers
 	
@@ -324,7 +320,7 @@ public:
 	void addSpring(int m1, int m2, Real softKst, Real hardKst, Real softKsr, Real hardKsr, Real blocKsr, Real axmin, Real axmax, Real aymin, Real aymax, Real azmin, Real azmax, Real kd)
 	{
 		Spring s(m1,m2,softKst,hardKst,softKsr,hardKsr, blocKsr, axmin, axmax, aymin, aymax, azmin, azmax, kd);
-		s.initTrans = Vec(0,0,0);
+		s.initTrans = Vector(0,0,0);
 		s.initRot = Quat(0,0,0,1);
 
         springs.beginEdit()->push_back(s);

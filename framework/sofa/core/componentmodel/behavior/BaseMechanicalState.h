@@ -1,33 +1,37 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_BASEMECHANICALSTATE_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_BASEMECHANICALSTATE_H
 
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/defaulttype/BaseVector.h>
+#include <sofa/defaulttype/Vec.h>  
+#include <sstream>
 #include <iostream>
 
 
@@ -110,25 +114,45 @@ public:
     /// Add external forces derivatives to F
     virtual void accumulateDf() { }
 
-    /// Translate the MechanicalObject
+    /// Translate the current state
     virtual void applyTranslation(const double dx, const double dy, const double dz)=0;
     
-    /// Translate the MechanicalObject
+    
+    /// Rotate the current state    
+    /// This method is optional, it is used when the user want to interactively change the position of an object using Euler angles
+    virtual void applyRotation (const double /*rx*/, const double /*ry*/, const double /*rz*/){};
+    
+    /// Rotate the current state
     virtual void applyRotation(const defaulttype::Quat q)=0;
 
-    /// Scale the MechanicalObject
+    /// Scale the current state
     virtual void applyScale(const double s)=0;
+    
+    virtual void writeX(std::ostream &out)=0;
+    virtual void readX(std::istream &in)=0;
+    virtual double compareX(std::istream &in)=0;
+    
+    virtual void writeV(std::ostream &out)=0;
+    virtual void readV(std::istream &in)=0;
+    virtual double compareV(std::istream &in)=0;
+    
+    
+    virtual bool addBBox(double* /*minBBox*/, double* /*maxBBox*/)
+    {
+      return false;
+    }
 
     /// Identify one vector stored in MechanicalState
     class VecId
     {
     public:
-        enum { V_FIRST_DYNAMIC_INDEX = 4 }; ///< This is the first index used for dynamically allocated vectors
+        enum { V_FIRST_DYNAMIC_INDEX = 8 }; ///< This is the first index used for dynamically allocated vectors
         enum Type
         {
             V_NULL=0,
             V_COORD,
-            V_DERIV
+            V_DERIV,
+            V_CONST
         };
         Type type;
         unsigned int index;
@@ -137,21 +161,25 @@ public:
         bool isNull() const { return type==V_NULL; }
         static VecId null()     { return VecId(V_NULL,0); }
         static VecId position() { return VecId(V_COORD,0); }
-        static VecId initialPosition() { return VecId(V_COORD,1); }
+        static VecId restPosition() { return VecId(V_COORD,1); }
         static VecId velocity() { return VecId(V_DERIV,0); }
-        static VecId initialVelocity() { return VecId(V_DERIV,3); }
-        static VecId force() { return VecId(V_DERIV,1); }
-        static VecId dx() { return VecId(V_DERIV,2); }
-        /// \todo Why is this the same index as initialPosition ?
-        static VecId freePosition() { return VecId(V_COORD,1); }
-        /// \todo Why is this the same index as initialVelocity ?
-        static VecId freeVelocity() { return VecId(V_DERIV,3); }
+        static VecId restVelocity() { return VecId(V_DERIV,1); }
+        static VecId force() { return VecId(V_DERIV,3); }
+        static VecId dx() { return VecId(V_DERIV,4); }
+        static VecId freePosition() { return VecId(V_COORD,2); }
+        static VecId freeVelocity() { return VecId(V_DERIV,2); }
+        static VecId holonomicC() {return VecId(V_CONST,0);}
+        static VecId nonHolonomicC() {return VecId(V_CONST,1);}
+
         /// Test if two VecId identify the same vector
-        bool operator==(const VecId& v)
+        bool operator==(const VecId& v) const
         {
             return type == v.type && index == v.index;
         }
     };
+
+    /// Increment the index of the given VecId, so that all 'allocated' vectors in this state have a lower index
+    virtual void vAvail(VecId& v) = 0;
 
     /// Allocate a new temporary vector
     virtual void vAlloc(VecId v) = 0;
@@ -167,6 +195,52 @@ public:
     /// \li v = a + b
     /// \li v = b * f
     virtual void vOp(VecId v, VecId a = VecId::null(), VecId b = VecId::null(), double f=1.0) = 0; // {}
+
+    /// Data structure describing a set of linear operation on vectors
+    /// \see vMultiOp
+    typedef helper::vector< std::pair< VecId, helper::vector< std::pair< VecId, double > > > > VMultiOp;
+
+    /// Perform a sequence of linear vector accumulation operation $r_i = sum_j (v_j*f_{ij})$
+    ///
+    /// This is used to compute in on steps operations such as $v = v + a*dt, x = x + v*dt$.
+    /// Note that if the result vector appears inside the expression, it must be the first operand.
+    /// By default this method decompose the computation into multiple vOp calls.
+    virtual void vMultiOp(const VMultiOp& ops)
+    {
+	for(VMultiOp::const_iterator it = ops.begin(), itend = ops.end(); it != itend; ++it)
+	{
+	    VecId r = it->first;
+	    const helper::vector< std::pair< VecId, double > >& operands = it->second;
+	    int nop = operands.size();
+	    if (nop==0)
+	    {
+		vOp(r);
+	    }
+	    else if (nop==1)
+	    {
+		if (operands[0].second == 1.0)
+		    vOp(r, operands[0].first);
+		else
+		    vOp(r, VecId::null(), operands[0].first, operands[0].second);
+	    }
+	    else
+	    {
+		int i;
+		if (operands[0].second == 1.0)
+		{
+		    vOp(r, operands[0].first, operands[1].first, operands[1].second);
+		    i = 2;
+		}
+		else
+		{
+		    vOp(r, VecId::null(), operands[0].first, operands[0].second);
+		    i = 1;
+		}
+		for (;i<nop;++i)
+		    vOp(r, r, operands[i].first, operands[i].second);
+	    }
+	}
+    }
 
     /// Compute the scalar products between two vectors.
     virtual double vDot(VecId a, VecId b) = 0; //{ return 0; }
@@ -203,6 +277,14 @@ public:
     ///
     /// To reset it to the default storage use \code setDx(VecId::dx()) \endcode
     virtual void setDx(VecId v) = 0; //{}
+
+	/// Make the holonomic constraint system matrix point to either holonomic Constraints or nonHolonomic Constraints.
+	///
+	/// To reset it to the default storage or to make it point to holonomicConstraints use \code setDx(VecId::holonomicC()) \endcode
+	/// To make it point to nonNolonomicConstraints use \code setC(VecId::NonHolonomicC()) \endcode
+	virtual void setC(VecId v) = 0;
+
+
 
     /// new : get compliance on the constraints 
     virtual void getCompliance(double ** /*w*/){ }
@@ -244,6 +326,7 @@ inline std::ostream& operator<<(std::ostream& o, const BaseMechanicalState::VecI
     case BaseMechanicalState::VecId::V_NULL: o << "vNull"; break;
     case BaseMechanicalState::VecId::V_COORD: o << "vCoord"; break;
     case BaseMechanicalState::VecId::V_DERIV: o << "vDeriv"; break;
+    case BaseMechanicalState::VecId::V_CONST: o << "vConst"; break;
     default: o << "vUNKNOWN"; break;
     }
     o << '[' << v.index << ']';

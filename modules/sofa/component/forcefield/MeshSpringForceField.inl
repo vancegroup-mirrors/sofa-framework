@@ -1,9 +1,33 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_MESHSPRINGFORCEFIELD_INL
 #define SOFA_COMPONENT_FORCEFIELD_MESHSPRINGFORCEFIELD_INL
 
 #include <sofa/component/forcefield/MeshSpringForceField.h>
 #include <sofa/component/forcefield/StiffSpringForceField.inl>
-#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -18,7 +42,7 @@ namespace forcefield
 {
 
 template <class DataTypes> 
-            double MeshSpringForceField<DataTypes>::getPotentialEnergy()
+    double MeshSpringForceField<DataTypes>::getPotentialEnergy()
     {
         cerr<<"MeshSpringForceField::getPotentialEnergy-not-implemented !!!"<<endl;
         return 0;
@@ -37,7 +61,7 @@ void MeshSpringForceField<DataTypes>::addSpring(std::set<std::pair<int,int> >& s
 		if (sset.count(std::make_pair(m2,m1))>0) return;
 		sset.insert(std::make_pair(m2,m1));
 	}
-	Real l = ((*this->mstate2->getX())[m2] - (*this->mstate1->getX())[m1]).norm();
+	Real l = ((*this->mstate2->getX0())[m2] - (*this->mstate1->getX0())[m1]).norm();
         this->springs.beginEdit()->push_back(typename SpringForceField<DataTypes>::Spring(m1,m2,stiffness/l, damping/l, l));
         this->springs.endEdit();
 }
@@ -51,7 +75,7 @@ void MeshSpringForceField<DataTypes>::init()
 	
 	if (this->mstate1==this->mstate2)
 	{
-		topology::MeshTopology* topology = dynamic_cast<topology::MeshTopology*>(this->mstate1->getContext()->getTopology());
+		sofa::core::componentmodel::topology::BaseMeshTopology* topology = this->mstate1->getContext()->getMeshTopology();
 		
 				
 		if (topology != NULL)
@@ -66,7 +90,7 @@ void MeshSpringForceField<DataTypes>::init()
 				n = topology->getNbLines();
 				for (int i=0;i<n;++i)
 				{
-					topology::MeshTopology::Line e = topology->getLine(i);
+					sofa::core::componentmodel::topology::BaseMeshTopology::Line e = topology->getLine(i);
 					this->addSpring(sset, e[0], e[1], s, d);
 				}
 			}
@@ -77,7 +101,7 @@ void MeshSpringForceField<DataTypes>::init()
 				n = topology->getNbTriangles();
 				for (int i=0;i<n;++i)
 				{
-					topology::MeshTopology::Triangle e = topology->getTriangle(i);
+					sofa::core::componentmodel::topology::BaseMeshTopology::Triangle e = topology->getTriangle(i);
 					this->addSpring(sset, e[0], e[1], s, d);
 					this->addSpring(sset, e[0], e[2], s, d);
 					this->addSpring(sset, e[1], e[2], s, d);
@@ -90,7 +114,7 @@ void MeshSpringForceField<DataTypes>::init()
 				n = topology->getNbQuads();
 				for (int i=0;i<n;++i)
 				{
-					topology::MeshTopology::Quad e = topology->getQuad(i);
+					sofa::core::componentmodel::topology::BaseMeshTopology::Quad e = topology->getQuad(i);
 					this->addSpring(sset, e[0], e[1], s, d);
 					this->addSpring(sset, e[0], e[2], s, d);
 					this->addSpring(sset, e[0], e[3], s, d);
@@ -106,7 +130,7 @@ void MeshSpringForceField<DataTypes>::init()
 				n = topology->getNbTetras();
 				for (int i=0;i<n;++i)
 				{
-					topology::MeshTopology::Tetra e = topology->getTetra(i);
+					sofa::core::componentmodel::topology::BaseMeshTopology::Tetra e = topology->getTetra(i);
 					this->addSpring(sset, e[0], e[1], s, d);
 					this->addSpring(sset, e[0], e[2], s, d);
 					this->addSpring(sset, e[0], e[3], s, d);
@@ -120,11 +144,19 @@ void MeshSpringForceField<DataTypes>::init()
 			{
 				s = this->cubesStiffness.getValue();
 				d = this->cubesDamping.getValue();
+#ifdef SOFA_NEW_HEXA
+				n = topology->getNbHexas();
+				for (int i=0;i<n;++i)
+				{
+					if (!topology->isCubeActive(i)) continue;
+					sofa::core::componentmodel::topology::BaseMeshTopology::Hexa e = topology->getHexa(i);
+#else
 				n = topology->getNbCubes();
 				for (int i=0;i<n;++i)
 				{
 					if (!topology->isCubeActive(i)) continue;
-					topology::MeshTopology::Cube e = topology->getCube(i);
+					sofa::core::componentmodel::topology::BaseMeshTopology::Cube e = topology->getCube(i);
+#endif
 					for (int i=0;i<8;i++)
 						for (int j=i+1;j<8;j++)
 					{

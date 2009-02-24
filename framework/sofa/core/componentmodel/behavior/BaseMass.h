@@ -1,34 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_BASEMASS_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_BASEMASS_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
-
+#include <sofa/defaulttype/Vec.h>
 namespace sofa
 {
 
@@ -67,27 +69,32 @@ public:
     /// vMv/2
     virtual double getKineticEnergy() = 0;
 
-	/// Add Mass contribution to global Matrix assembling
-	virtual void addMToMatrix(defaulttype::BaseMatrix * /*mat*/, double /*mFact*/, unsigned int &/*offset*/) = 0;
+    /// Add Mass contribution to global Matrix assembling
+    ///
+    /// This method must be implemented by the component.
+    /// \param matrix matrix to add the result to
+    /// \param mFact coefficient for mass contributions (i.e. second-order derivatives term in the ODE)
+    /// \param offset current row/column offset
+    virtual void addMToMatrix(defaulttype::BaseMatrix * matrix, double mFact, unsigned int &offset) = 0;
 
-	/// Add Mass contribution to global Vector assembling
-	virtual void addMDxToVector(defaulttype::BaseVector * /*resVect*/, double /*mFact*/, unsigned int& /*offset*/, bool /*dxNull*/) = 0;
+    /// initialization to export kinetic and potential energy to gnuplot files format
+    virtual void initGnuplot(const std::string path)=0;	
 
-	/// initialization to export kinetic and potential energy to gnuplot files format
-	virtual void initGnuplot(const std::string path)=0;	
+    /// export kinetic and potential energy state at "time" to a gnuplot file
+    virtual void exportGnuplot(double time)=0;	
 
-	/// export kinetic and potential energy state at "time" to a gnuplot file
-	virtual void exportGnuplot(double time)=0;	
+    /// perform  v += dt*g operation. Used if mass wants to added G separately from the other forces to v.
+    virtual void addGravityToV(double dt)=0;
 
-	/// perform  v += dt*g operation. Used if mass wants to added G separately from the other forces to v.
-	virtual void addGravityToV(double dt)=0;
+    /// return the mass relative to the DOF #index
+    virtual double getElementMass(unsigned int index)=0;
 
     /// @}
 
 
-	/// Member specifying if the gravity is added separately to the DOFs velocities (in solve method), 
-	/// or if is added with the other forces(addForceMethod)
-	Data<bool> m_separateGravity;
+    /// Member specifying if the gravity is added separately to the DOFs velocities (in solve method), 
+    /// or if is added with the other forces(addForceMethod)
+    Data<bool> m_separateGravity;
 
 
 };

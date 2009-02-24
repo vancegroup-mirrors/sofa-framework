@@ -3,8 +3,8 @@
 
 #include <sofa/core/componentmodel/behavior/InteractionConstraint.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <iostream>
+
 
 namespace sofa
 {
@@ -14,9 +14,8 @@ namespace component
 
 namespace constraint
 {
-
 template<class DataTypes>
-class UnilateralInteractionConstraint : public core::componentmodel::behavior::InteractionConstraint, public core::VisualModel
+class UnilateralInteractionConstraint : public core::componentmodel::behavior::InteractionConstraint
 {
 public:
 	typedef typename DataTypes::VecCoord VecCoord;
@@ -96,14 +95,16 @@ public:
 
 	virtual void addContact(double mu, Deriv norm, Coord P, Coord Q, Real contactDistance, int m1, int m2, Coord Pfree = Coord(), Coord Qfree = Coord(), long id=0);
 
-	virtual void getConstraintValue(double* v /*, unsigned int &numContacts */);
+	virtual void getConstraintValue(defaulttype::BaseVector *);
+	virtual void getConstraintValue(double *);
 
 	virtual void getConstraintId(long* id, unsigned int &offset);
-
 	// Previous Constraint Interface
-	virtual void projectResponse(){};
-	virtual void projectVelocity(){};
-	virtual void projectPosition(){};
+	virtual void projectResponse(){}
+	virtual void projectVelocity(){}
+	virtual void projectPosition(){}
+	virtual void projectFreeVelocity(){}
+	virtual void projectFreePosition(){}
 
     /// Pre-construction check method called by ObjectFactory.
     template<class T>
@@ -142,10 +143,19 @@ public:
         }
     }
 
-	// -- VisualModel interface
-	void draw();
-	void initTextures() { }
-	void update() { }
+    virtual std::string getTemplateName() const
+    {
+      return templateName(this);
+    }
+
+    static std::string templateName(const UnilateralInteractionConstraint<DataTypes>* = NULL)
+    {
+      return DataTypes::Name();
+    }
+    void draw();
+
+	/// this constraint is NOT holonomic
+	bool isHolonomic() {return false;}
 };
 } // namespace constraint
 

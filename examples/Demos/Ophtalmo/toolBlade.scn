@@ -1,0 +1,51 @@
+<Node name="Instrument">
+	
+	<Object type="MechanicalObject" position="0 0 0 0 1" template="LaparoscopicRigid3" name="laparo"/>
+	<Object type="CuttingManager" maxDistance="0.25" minDistance="0.01" edgeDistance="0.01" />
+
+
+	<Object type="DiscreteIntersection" />
+	<Object type="BruteForceDetection" />
+	<Node name="RigidLayer">
+		<Object type="MechanicalObject" template="Rigid" name="rigid"/>
+		<Object type="UniformMass" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_centered.rigid" />
+		<Object type="LaparoscopicRigidMapping" pivot="0 0 0" />
+		<Node name="CollisionHandle">
+			<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" />
+			<Object type="Triangle" contactStiffness="10" simulated="0" moving="1" />
+			<Object type="RigidMapping" />
+		</Node>
+		<Node name="CollisionTip">
+			<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_tip_rounded.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" />
+			<Object type="Triangle" contactStiffness="5" simulated="0" moving="1" />
+			<Object type="RigidMapping" />
+		</Node>
+		<Node name="CollisionCut" showCollisionModels="1" >
+			<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_tip2.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" />
+			<Object type="SharpLineModel" minAngle="70" contactStiffness="0" contactDamping="0" simulated="0" moving="1" active="0" />
+			<Object type="RigidMapping" />
+		</Node>
+		<Node name="VisualHandle">
+			<Object type="OglModel" name="visual" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" color="0.1 0.1 0.1 1.0" />
+			<Object type="RigidMapping" object2="visual" />
+		</Node>			
+		<Node name="VisualTip">
+			<Object type="OglModel" name="visual" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_tip.obj" />
+			<Object type="RigidMapping" object2="visual" />
+		</Node>			
+	</Node>
+	
+	<!-- Dummy Object, as Cutting Manager requires a dynamic topology at initialization -->
+	
+	<Object type="MeshLoader" name="meshLoader" filename="mesh/square3.msh" />
+	<Object type="MechanicalObject" scale="10" />
+	<include href="Objects/TriangleSetTopology.xml" />
+	<Object type="Triangle"/>
+	
+</Node>

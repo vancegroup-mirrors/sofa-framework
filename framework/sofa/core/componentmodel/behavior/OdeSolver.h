@@ -1,32 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_ODESOLVER_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_ODESOLVER_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
+#include <sofa/core/componentmodel/behavior/MultiVector.h>
+#include <sofa/core/componentmodel/behavior/MultiMatrix.h>
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
 
@@ -59,7 +63,7 @@ namespace behavior
  *  (some computations can be executed in parallel).
  *
  */
-class OdeSolver : public objectmodel::BaseObject
+class OdeSolver : public virtual objectmodel::BaseObject
 {
 public:
     typedef BaseMechanicalState::VecId VecId;
@@ -74,224 +78,50 @@ public:
     /// advancing the state from time t to t+dt.
     virtual void solve (double dt) = 0;
 
-    /// @name Visitors and MultiVectors
-    /// These methods provides an abstract view of the mechanical system to animate.
-    /// They are implemented by executing Visitors in the subtree of the scene-graph below this solver.
-    /// @{
-
-    /// @name Vector operations
-    /// Most of these operations can be hidden by using the MultiVector class.
-    /// @{
-
-    /// Wait for the completion of previous operations and return the result of the last v_dot call.
-    ///
-    /// Note that currently all methods are blocking so finish simply return the result of the last v_dot call.
-    virtual double finish() = 0;
-
-    /// Allocate a temporary vector
-    virtual VecId v_alloc(VecId::Type t) = 0;
-    /// Free a previously allocated temporary vector
-    virtual void v_free(VecId v) = 0;
-
-    virtual void v_clear(VecId v) = 0; ///< v=0
-    virtual void v_eq(VecId v, VecId a) = 0; ///< v=a
-    virtual void v_peq(VecId v, VecId a, double f=1.0) = 0; ///< v+=f*a
-    virtual void v_teq(VecId v, double f) = 0; ///< v*=f
-    virtual void v_dot(VecId a, VecId b) = 0; ///< a dot b ( get result using finish )
-    virtual void v_threshold(VecId a, double threshold) = 0; ///< nullify the values below the given threshold
-    /// Propagate the given displacement through all mappings
-    virtual void propagateDx(VecId dx) = 0;
-    /// Apply projective constraints to the given vector
-    virtual void projectResponse(VecId dx, double **W=NULL) = 0;
-    virtual void addMdx(VecId res, VecId dx, double factor) = 0; ///< res += M.dx
-    virtual void integrateVelocity(VecId res, VecId x, VecId v, double dt) = 0; ///< res = x + v.dt
-    virtual void accFromF(VecId a, VecId f) = 0; ///< a = M^-1 . f
     /// Propagate the given state (time, position and velocity) through all mappings
-    virtual void propagatePositionAndVelocity(double t, VecId x, VecId v) = 0;
-
-    /// Compute the current force (given the latest propagated position and velocity)
-    virtual void computeForce(VecId result) = 0;
-    /// Compute the current force delta (given the latest propagated displacement)
-    virtual void computeDf(VecId df) = 0;
-    /// Compute the current force delta (given the latest propagated velocity)
-    virtual void computeDfV(VecId df) = 0;
-    /// Compute the acceleration corresponding to the given state (time, position and velocity)
-    virtual void computeAcc(double t, VecId a, VecId x, VecId v) = 0;
-
-    virtual void computeContactForce(VecId result) = 0;
-    virtual void computeContactDf(VecId df) = 0;
-    virtual void computeContactAcc(double t, VecId a, VecId x, VecId v) = 0;
-
-    /// @}
-
-    /// @name Matrix operations
-    /// @{
-
-    // BaseMatrix & BaseVector Computations
-	virtual void addMBK_ToMatrix(defaulttype::BaseMatrix *A, double mFact=1.0, double bFact=1.0, double kFact=1.0, unsigned int offset=0) = 0;
-	virtual void addMBKdx_ToVector(defaulttype::BaseVector *V, VecId dx, double mFact=1.0, double bFact=1.0, double kFact=1.0, unsigned int offset=0) = 0;
-    virtual void getMatrixDimension(unsigned int * const, unsigned int * const) = 0;
-    virtual void multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest=NULL, unsigned int offset=0) = 0;
-	virtual void multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *src=NULL, unsigned int offset=0) = 0;
-
-    /// @}
-
-    /// @name Debug operations
-    /// @{
-
-    /// Dump the content of the given vector.
-    virtual void print( VecId v, std::ostream& out ) = 0;
-    virtual void printWithElapsedTime( VecId v,  unsigned time, std::ostream& out=std::cerr ) = 0;
-
-    /// @}
-
-    /// @}
-
-protected:
-    /// Helper class allocating IDs to temporary vectors.
-    class VectorIndexAlloc
-    {
-    protected:
-        std::set<unsigned int> vused; ///< Currently in-use vectors
-        std::set<unsigned int> vfree; ///< Once used vectors
-        unsigned int  maxIndex; ///< Max index used
-    public:
-        VectorIndexAlloc();
-        /// Retrieve a unused ID
-        unsigned int alloc();
-        /// Free a previously retrieved ID
-        bool free(unsigned int v);
-    };
-    std::map<VecId::Type, VectorIndexAlloc > vectors; ///< Current temporary vectors
-
-    /// Helper class providing a high-level view of underlying state vectors.
     ///
-    /// It is used to convert math-like operations to call to computation methods.
-    class MultiVector
+    /// @TODO Why is this necessary in the OdeSolver API ? (Jeremie A. 03/02/2008)
+    virtual void propagatePositionAndVelocity(double t, BaseMechanicalState::VecId x, BaseMechanicalState::VecId v) = 0;
+
+	/// Given an input derivative order (0 for position, 1 for velocity, 2 for acceleration),
+	/// how much will it affect the output derivative of the given order.
+    ///
+    /// This method is used to compute the compliance for contact corrections.
+	/// For example, a backward-Euler dynamic implicit integrator would use:
+	/// Input:      x_t  v_t  a_{t+dt}
+	/// x_{t+dt}     1    dt  dt^2
+	/// v_{t+dt}     0    1   dt
+	///
+	/// If the linear system is expressed on s = a_{t+dt} dt, then the final factors are:
+	/// Input:      x_t   v_t    a_t  s
+	/// x_{t+dt}     1    dt     0    dt
+	/// v_{t+dt}     0    1      0    1
+	/// a_{t+dt}     0    0      0    1/dt
+	/// The last column is returned by the getSolutionIntegrationFactor method.
+	virtual double getIntegrationFactor(int inputDerivative, int outputDerivative) const = 0;
+
+	/// Given a solution of the linear system,
+	/// how much will it affect the output derivative of the given order.
+    ///
+	virtual double getSolutionIntegrationFactor(int outputDerivative) const = 0;
+
+
+    /// Given the solution dx of the linear system inversion, how much will it affect the velocity
+    ///
+    /// This method is used to compute the compliance for contact corrections
+    virtual double getVelocityIntegrationFactor() const
     {
-    public:
-        typedef OdeSolver::VecId VecId;
+        return getSolutionIntegrationFactor(1);
+    }
 
-    protected:
-        /// Solver who is using this vector
-        OdeSolver* parent;
+    /// Given the solution dx of the linear system inversion, how much will it affect the position
+    ///
+    /// This method is used to compute the compliance for contact corrections
+	virtual double getPositionIntegrationFactor() const
+    {
+        return getSolutionIntegrationFactor(0);
+    }
 
-        /// Identifier of this vector
-        VecId v;
-
-        /// Copy-constructor is forbidden
-        MultiVector(const MultiVector& v);
-
-    public:
-        /// Refers to a state vector with the given ID (VecId::position(), VecId::velocity(), etc).
-        MultiVector(OdeSolver* parent, VecId v) : parent(parent), v(v)
-        {}
-
-        /// Allocate a new temporary vector with the given type (VecId::V_COORD or VecId::V_DERIV).
-        MultiVector(OdeSolver* parent, VecId::Type t) : parent(parent), v(parent->v_alloc(t))
-        {}
-
-        ~MultiVector()
-        {
-            parent->v_free(v);
-        }
-
-        /// Automatic conversion to the underlying VecId
-        operator VecId()
-        {
-            return v;
-        }
-
-        /// v = 0
-        void clear()
-        {
-            parent->v_clear(v);
-        }
-
-        /// v = a
-        void eq(VecId a)
-        {
-            parent->v_eq(v, a);
-        }
-
-        /// v += a*f
-        void peq(VecId a, double f=1.0)
-        {
-            parent->v_peq(v, a, f);
-        }
-        /// v *= f
-        void teq(double f)
-        {
-            parent->v_teq(v, f);
-        }
-        /// \return v.a
-        double dot(VecId a)
-        {
-            parent->v_dot(v, a);
-            return parent->finish();
-        }
-        
-        /// nullify values below given threshold 
-        void threshold( double threshold ) 
-        {
-          parent->v_threshold(v, threshold);
-        }
-
-        /// \return sqrt(v.v)
-        double norm()
-        {
-            parent->v_dot(v, v);
-            return sqrt( parent->finish() );
-        }
-
-        /// v = a
-        void operator=(VecId a)
-        {
-            eq(a);
-        }
-
-        /// v = a
-        void operator=(const MultiVector& a)
-        {
-            eq(a.v);
-        }
-
-        /// v += a
-        void operator+=(VecId a)
-        {
-            peq(a);
-        }
-
-        /// v -= a
-        void operator-=(VecId a)
-        {
-            peq(a,-1);
-        }
-
-        /// v *= f
-        void operator*=(double f)
-        {
-            teq(f);
-        }
-
-        /// v /= f
-        void operator/=(double f)
-        {
-            teq(1.0/f);
-        }
-
-        /// return the scalar product dot(v,a)
-        double operator*(VecId a)
-        {
-            return dot(a);
-        }
-
-        friend std::ostream& operator << (std::ostream& out, const MultiVector& mv )
-        {
-            mv.parent->print(mv.v,out);
-            return out;
-        }
-    };
 };
 
 } // namespace behavior

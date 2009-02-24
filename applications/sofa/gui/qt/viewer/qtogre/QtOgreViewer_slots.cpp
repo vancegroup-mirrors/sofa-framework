@@ -1,9 +1,34 @@
-
-#include "OgreVector3.h"
-#include "viewer/qtogre/QtOgreViewer.h"
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
+//#include "OgreVector3.h"
+#include <sofa/gui/qt/viewer/qtogre/QtOgreViewer.h>
 #include <GenGraphForm.h>
 
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 #include <QFileDialog>
 #else
 #include <qfiledialog.h>
@@ -12,7 +37,6 @@
 
 namespace sofa
 {
-
   namespace gui
   {
     namespace qt
@@ -66,17 +90,6 @@ namespace sofa
 
 
 	  //*****************************************************************************************
-	  //Screenshot
-
-
-	  void QtOgreViewer::screenshot(const std::string filename)
-	  {				
-	    update();
-	    mRenderWindow->writeContentsToFile(filename);						
-	    std::cout << "Screen captured to " << filename << "\n"; 
-	  }
-
-	  //*****************************************************************************************
 	  // Resize
 	  void QtOgreViewer::setSizeW( int size )
 	  {
@@ -85,7 +98,7 @@ namespace sofa
 	      mRenderWindow->resize( size, mRenderWindow->getHeight());
 	      mRenderWindow->windowMovedOrResized();
 	    }
-
+	    QWidget::resize(size,mRenderWindow->getHeight());
 	    update();
 	  }
 
@@ -95,6 +108,7 @@ namespace sofa
 	      mRenderWindow->resize( mRenderWindow->getWidth(), size);
 	      mRenderWindow->windowMovedOrResized();
 	    }
+	    QWidget::resize(mRenderWindow->getWidth(),size);
 	    update();
 	  }
 
@@ -111,7 +125,7 @@ namespace sofa
 		    Ogre::Quaternion orientation_cam = mCamera->getOrientation();
 
 		    out << position_cam[0] << " " << position_cam[1] << " " << position_cam[2] << "\n";
-		    out << orientation_cam[0] << " " << orientation_cam[1] << " " << orientation_cam[2] << " " << orientation_cam[3] << "\n";
+		    out << orientation_cam.x << " " << orientation_cam.y << " " << orientation_cam.z << " " << orientation_cam.w << "\n";
 		    out.close();
 
 

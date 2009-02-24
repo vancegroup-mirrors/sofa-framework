@@ -1,31 +1,34 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_MAPPING_H
 #define SOFA_CORE_MAPPING_H
 
 #include <sofa/core/BaseMapping.h>
+#include <sofa/core/componentmodel/behavior/MechanicalState.h>
 
 namespace sofa
 {
@@ -54,8 +57,9 @@ protected:
     In* fromModel;
     /// Output Model
     Out* toModel;
-
+    /// Name of the Input Model
     Data< std::string > object1;
+    /// Name of the Output Model
     Data< std::string > object2;
 public:
     /// Constructor, taking input and output models as parameters.
@@ -64,7 +68,7 @@ public:
     /// setModels with non-NULL value before the intialization (i.e. before
     /// init() is called).
     Mapping(In* from=NULL, Out* to=NULL);
-
+    /// Destructor
     virtual ~Mapping();
 
     /// Specify the input and output models.
@@ -151,6 +155,24 @@ public:
 		}
 		if (arg) obj->parse(arg);
     }
+    
+    virtual std::string getTemplateName() const
+    {
+      return templateName(this);
+    }
+
+    
+    static std::string templateName(const Mapping<TIn, TOut>* = NULL)
+    {
+      if (In::Name() == std::string("MechanicalState"))
+        return std::string("MechanicalMapping[")+TIn::DataTypes::Name() + std::string(",") + TOut::DataTypes::Name() + std::string("]");
+      else 
+        return std::string("Mapping[")+TIn::DataTypes::Name() + std::string(",") + TOut::DataTypes::Name() + std::string("]");       
+    }
+
+protected:
+    /// If true, display the mapping
+    bool getShow() const { return this->getContext()->getShowMappings(); }
 };
 
 } // namespace core

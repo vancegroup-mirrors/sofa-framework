@@ -1,29 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/gl/Transformation.h>
 #include <sofa/helper/system/gl.h>
+#include <sofa/helper/gl/template.h>
 
 namespace sofa
 {
@@ -98,9 +101,9 @@ Transformation& Transformation::operator=(const Transformation& transform)
 // --------------------------------------------------------------------------------------
 void Transformation::Apply()
 {
-	glTranslated(translation[0], translation[1], translation[2]);
-	glMultMatrixd((double *) rotation);
-	glScaled(scale[0], scale[1], scale[2]);
+	helper::gl::glTranslate(translation[0], translation[1], translation[2]);
+	helper::gl::glMultMatrix((SReal *)rotation);
+	helper::gl::glScale(scale[0], scale[1], scale[2]);
 }
 
 
@@ -110,7 +113,8 @@ void Transformation::Apply()
 void Transformation::ApplyWithCentring()
 {
 	Apply();
-	glTranslated(-objectCenter[0], -objectCenter[1], -objectCenter[2]);
+	
+	helper::gl::glTranslate(-objectCenter[0], -objectCenter[1], -objectCenter[2]);
 }
 
 
@@ -119,13 +123,15 @@ void Transformation::ApplyWithCentring()
 // --------------------------------------------------------------------------------------
 void Transformation::ApplyInverse()
 {
-	double	iRotation[4][4];
+	SReal	iRotation[4][4];
 
 	InvertTransRotMatrix(rotation, iRotation);
 
-	glScaled(1.0 / scale[0], 1.0 / scale[1], 1.0 / scale[2]);
-	glMultMatrixd((double *) iRotation);
-	glTranslated(-translation[0], -translation[1], -translation[2]);
+	helper::gl::glScale((SReal)1.0 / scale[0], (SReal)1.0 / scale[1], (SReal)1.0 / scale[2]);
+	helper::gl::glMultMatrix((SReal *)rotation);
+	helper::gl::glTranslate(-translation[0], -translation[1], -translation[2]);
+	
+
 }
 
 
@@ -133,9 +139,9 @@ void Transformation::ApplyInverse()
 //--- Inversion for 4x4 matrix only containing rotations and translations
 //--- Transpose rotation matrix and mutiple by -1 translation row
 //----------------------------------------------------------------------------
-void Transformation::InvertTransRotMatrix(double matrix[4][4])
+void Transformation::InvertTransRotMatrix(SReal matrix[4][4])
 {
-	double	tmp;
+	SReal	tmp;
 
 	tmp = matrix[0][1];
 	matrix[0][1] = matrix[1][0];
@@ -160,8 +166,8 @@ void Transformation::InvertTransRotMatrix(double matrix[4][4])
 //--- Inversion for 4x4 matrix only containing rotations and translations
 //--- Transpose rotation matrix and mutiple by -1 translation row
 //----------------------------------------------------------------------------
-void Transformation::InvertTransRotMatrix(double sMatrix[4][4],
-										  double dMatrix[4][4])
+void Transformation::InvertTransRotMatrix(SReal sMatrix[4][4],
+										  SReal dMatrix[4][4])
 {
 	register int	i, j;
 

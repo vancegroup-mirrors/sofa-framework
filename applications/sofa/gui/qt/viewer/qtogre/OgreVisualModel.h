@@ -1,16 +1,50 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef OGREVISUALMODEL_H
 #define OGREVISUALMODEL_H
 
 #include <Ogre.h>
-#include "viewer/qtogre/DotSceneLoader.h"
+#include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
 
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/VisualModel.h>
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
-#include <sofa/component/topology/MeshTopology.h>
-
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/component/visualmodel/VisualModelImpl.h>
 // SOFA -> OGRE3D conversion
 
+namespace sofa
+{
+
+  namespace component
+  {
+
+    namespace visualmodel
+    {
 template<class T>
 Ogre::Vector3 conv(const sofa::defaulttype::Vec<3,T>& v)
 {
@@ -25,56 +59,32 @@ sofa::defaulttype::Vec3f conv(const Ogre::Vector3& v)
     return sofa::defaulttype::Vec3f((float)v[0], (float)v[1], (float)v[2]);
 }
 
-class OgreVisualModel : public sofa::core::VisualModel, public sofa::core::componentmodel::behavior::MappedModel<sofa::defaulttype::ExtVec3fTypes>
+class OgreVisualModel : public sofa::component::visualmodel::VisualModelImpl//, public sofa::core::componentmodel::behavior::MappedModel<sofa::defaulttype::ExtVec3fTypes>
 {
 public:
   
-  static bool lightSwitched;
-
-    typedef sofa::defaulttype::ExtVec3fTypes DataTypes;
-    typedef DataTypes::Coord Coord;
-    typedef DataTypes::Deriv Deriv;
-    typedef DataTypes::VecCoord VecCoord;
-    typedef DataTypes::VecDeriv VecDeriv;
-    
-    Data<std::string> filename;
-    Data<std::string> texturename;
+    static bool lightSwitched;
     Data<std::string> materialname;
-    Data<std::string> colorname;
        
-    float color[4];
 
     //Initial Position of a OgreVisualModel
-    Data<float> dx,dy,dz,scale,scaleTex;
-
-     sofa::defaulttype::ResizableExtVector<Coord> x;
-     sofa::defaulttype::ResizableExtVector<Coord> normals;
-     sofa::defaulttype::ResizableExtVector< sofa::defaulttype::Vec2f > texcoords;
+    float dx,dy,dz,scale;
     
-    typedef sofa::helper::fixed_array<int, 3> Triangle;
-     sofa::defaulttype::ResizableExtVector<Triangle> triangles; ///< Only used if no external topology (i.e. topology==NULL)
-
-    sofa::component::topology::MeshTopology* topology;
     int meshRevision;
 
     int getNbTriangles()
     {
-        if (topology) return topology->getNbTriangles() + 2*topology->getNbQuads();
-        else          return triangles.size();
-    }
-
-    /// This vector store which normal index is used for each vertice (as a single normal can be shared by multiple vertices, if texture coordinates are different)
-     sofa::defaulttype::ResizableExtVector<int> vertNormIdx;
-    int nbNormals;
+      sofa::core::componentmodel::topology::BaseMeshTopology* topology = dynamic_cast<sofa::core::componentmodel::topology::BaseMeshTopology*>(getContext()->getTopology());
+        if (useTopology && topology) 
+	{	  
+	  return topology->getNbTriangles() + 2*topology->getNbQuads();
+	}
+        else          return (this->triangles.size() + 2*this->quads.size());
+    }    
 
     Ogre::MeshPtr ogreMesh;
     Ogre::Entity* ogreEntity;
     Ogre::SceneNode* ogreNode;
-    
-    bool useTexture;
-    bool useNormals;
-    bool useTopology; ///< True if list of facets should be taken from the attached topology
-    bool modified;    ///< True if input vertices modified since last rendering
     
     Ogre::HardwareVertexBufferSharedPtr vBuffer;
     Ogre::HardwareIndexBufferSharedPtr iBuffer;
@@ -82,29 +92,25 @@ public:
     OgreVisualModel();
     
     std::string getOgreName();
-    
-    virtual void init();
+        
+   
+    void parse(core::objectmodel::BaseObjectDescription* );
+
+    void reinit();
     
     virtual void attach(Ogre::SceneManager* sceneMgr);
-
-    virtual VecCoord* getX() { modified = true; return &x; }
-    virtual VecDeriv* getV() { return NULL; }
-
-    virtual const VecCoord* getX()  const { return &x; }
-    virtual const VecDeriv* getV()  const { return NULL; }
 
     // GL method -> do nothing for Ogre
     virtual void draw() {}
     // GL method -> do nothing for Ogre
     virtual void initTextures() {}
 
-    virtual void update();
+    virtual void updateVisual();
     
-    void setColor(std::string color);
 
     static int counter;
 protected:
-
+    ResizableExtVector<Vec<2,float> > mirror_tex;
     void uploadVertices();
 
     void uploadIndices();
@@ -113,8 +119,11 @@ protected:
 
     void computeBounds();
 
+    void updateMaterial(Ogre::MaterialPtr &mat);
     std::string uniqueName(void);
-
+    std::string submesh_material;
 };
-
+    }
+  }
+}
 #endif

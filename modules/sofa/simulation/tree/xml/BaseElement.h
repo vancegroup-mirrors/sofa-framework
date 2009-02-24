@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_SIMULATION_TREE_XML_BASEELEMENT_H
 #define SOFA_SIMULATION_TREE_XML_BASEELEMENT_H
 
@@ -46,14 +46,6 @@ namespace tree
 namespace xml
 {
 
-//using namespace Common;
-
-template<class Node>
-void create(Node*& obj, std::pair<std::string,std::string> arg)
-{
-	obj = new Node(arg.first,arg.second);
-}
-
 class BaseElement : public core::objectmodel::BaseObjectDescription
 {
 private:
@@ -64,6 +56,7 @@ private:
 	BaseElement* parent;
 	typedef std::list<BaseElement*> ChildList;
 	ChildList children;
+        bool groupType;       //type of Node Element: only its objects have to be taken into account
 public:
 	BaseElement(const std::string& name, const std::string& type, BaseElement* newParent=NULL);
 		
@@ -104,6 +97,12 @@ public:
 
     /// Return true if this element was the root of the file
     bool isFileRoot();
+    
+    /// Return true if this element was a special group node from an included file
+    bool isGroupType(){return groupType;}
+    
+    /// Specify that the current element if a special group node from an included file
+    void setGroupType(bool b){groupType=b;}
 
 	///// Get all attribute data, read-only
 	//const std::map<std::string,std::string*>& getAttributeMap() const;
@@ -117,6 +116,9 @@ public:
 	/// Set an attribute. Override any existing value
 	virtual void setAttribute(const std::string& attr, const char* val);
 	
+        /// Verify the presence of an attribute
+        virtual bool presenceAttribute(const std::string& s);
+            
 	/// Remove an attribute. Fails if this attribute is "name" or "type"
 	virtual bool removeAttribute(const std::string& attr);
 	
@@ -225,6 +227,12 @@ public:
 	typedef helper::Factory< std::string, BaseElement, std::pair<std::string, std::string> > NodeFactory;
 	
 	static BaseElement* Create(const std::string& nodeClass, const std::string& name, const std::string& type);
+
+    template<class Node>
+    static void create(Node*& obj, std::pair<std::string,std::string> arg)
+    {
+        obj = new Node(arg.first,arg.second);
+    }
 	
 };
 

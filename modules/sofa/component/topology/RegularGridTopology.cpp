@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/topology/RegularGridTopology.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -59,8 +59,8 @@ void RegularGridTopology::parse(core::objectmodel::BaseObjectDescription* arg)
 	const char* xmax = arg->getAttribute("xmax");
 	const char* ymax = arg->getAttribute("ymax");
 	const char* zmax = arg->getAttribute("zmax");
-	min.setValue(Vec3(atof(xmin)*scale,atof(ymin)*scale,atof(zmin)*scale));
-	max.setValue(Vec3(atof(xmax)*scale,atof(ymax)*scale,atof(zmax)*scale));
+	min.setValue(Vector3((SReal)atof(xmin)*scale, (SReal)atof(ymin)*scale, (SReal)atof(zmin)*scale));
+	max.setValue(Vector3((SReal)atof(xmax)*scale, (SReal)atof(ymax)*scale, (SReal)atof(zmax)*scale));
       }
     this->setPos(min.getValue()[0],max.getValue()[0],min.getValue()[1],max.getValue()[1],min.getValue()[2],max.getValue()[2]);
     
@@ -75,34 +75,37 @@ int RegularGridTopologyClass = core::RegisterObject("Regular grid in 3D")
 
 RegularGridTopology::RegularGridTopology(int nx, int ny, int nz)
   : GridTopology(nx, ny, nz),
-    min(initData(&min,Vec3(0.0f,0.0f,0.0f),"min", "Min")),
-    max(initData(&max,Vec3(1.0f,1.0f,1.0f),"max", "Max"))
+    min(initData(&min,Vector3(0.0f,0.0f,0.0f),"min", "Min")),
+    max(initData(&max,Vector3(1.0f,1.0f,1.0f),"max", "Max")),
+    p0(initData(&p0,Vector3(0.0f,0.0f,0.0f),"p0", "p0"))
 {
 }
 
 RegularGridTopology::RegularGridTopology()
-  : min(initData(&min,Vec3(0.0f,0.0f,0.0f),"min", "Min")),
-    max(initData(&max,Vec3(1.0f,1.0f,1.0f),"max", "Max"))
+  : min(initData(&min,Vector3(0.0f,0.0f,0.0f),"min", "Min")),
+    max(initData(&max,Vector3(1.0f,1.0f,1.0f),"max", "Max")),
+    p0(initData(&p0,Vector3(0.0f,0.0f,0.0f),"p0", "p0"))
 {
 }
 
-void RegularGridTopology::setPos(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
+void RegularGridTopology::setPos(SReal xmin, SReal xmax, SReal ymin, SReal ymax, SReal zmin, SReal zmax)
 {
-	min.setValue(Vec3(xmin,ymin,zmin));
-	max.setValue(Vec3(xmax,ymax,zmax));
-	setP0(Vec3(xmin,ymin,zmin));
+	min.setValue(Vector3(xmin,ymin,zmin));
+	max.setValue(Vector3(xmax,ymax,zmax));
+	if (!p0.isSet())
+	  setP0(Vector3(xmin,ymin,zmin));
 	if (n.getValue()[0]>1)
-	  setDx(Vec3((xmax-xmin)/(n.getValue()[0]-1),0,0));
+	  setDx(Vector3((xmax-xmin)/(n.getValue()[0]-1),0,0));
 	else
-	  setDx(Vec3(0,0,0));
+	  setDx(Vector3(0,0,0));
 	if (n.getValue()[1]>1)
-	  setDy(Vec3(0,(ymax-ymin)/(n.getValue()[1]-1),0));
+	  setDy(Vector3(0,(ymax-ymin)/(n.getValue()[1]-1),0));
 	else
-	  setDy(Vec3(0,0,0));
+	  setDy(Vector3(0,0,0));
 	if (n.getValue()[2]>1)
-	  setDz(Vec3(0,0,(zmax-zmin)/(n.getValue()[2]-1)));
+	  setDz(Vector3(0,0,(zmax-zmin)/(n.getValue()[2]-1)));
 	else
-	  setDz(Vec3(0,0,0));
+	  setDz(Vector3(0,0,0));
 }
 
 unsigned RegularGridTopology::getIndex( int i, int j, int k ) const
@@ -110,7 +113,8 @@ unsigned RegularGridTopology::getIndex( int i, int j, int k ) const
 	return n.getValue()[0]* ( n.getValue()[1]*k + j ) + i;
 }
 
-RegularGridTopology::Vec3 RegularGridTopology::getPoint(int i) const
+
+Vector3 RegularGridTopology::getPoint(int i) const
 {
 	int x = i%n.getValue()[0]; i/=n.getValue()[0];
 	int y = i%n.getValue()[1]; i/=n.getValue()[1];
@@ -118,21 +122,20 @@ RegularGridTopology::Vec3 RegularGridTopology::getPoint(int i) const
 	return getPoint(x,y,z);
 }
 
-RegularGridTopology::Vec3 RegularGridTopology::getPoint(int x, int y, int z) const
+Vector3 RegularGridTopology::getPoint(int x, int y, int z) const
 {
-	return p0+dx*x+dy*y+dz*z;
+	return p0.getValue()+dx*x+dy*y+dz*z;
 }
 
 /// return the cube containing the given point (or -1 if not found).
-int RegularGridTopology::findCube(const Vec3& pos)
+int RegularGridTopology::findCube(const Vector3& pos)
 {
 	if (n.getValue()[0]<2 || n.getValue()[1]<2 || n.getValue()[2]<2) 
 		return -1;
-
-	Vec3 p = pos-p0;
-	double x = p*dx*inv_dx2;
-	double y = p*dy*inv_dy2;
-	double z = p*dz*inv_dz2;
+	Vector3 p = pos-p0.getValue();
+	SReal x = p*dx*inv_dx2;
+	SReal y = p*dy*inv_dy2;
+	SReal z = p*dz*inv_dz2;	
 	int ix = int(x+1000000)-1000000; // Do not round toward 0...
 	int iy = int(y+1000000)-1000000;
 	int iz = int(z+1000000)-1000000;
@@ -149,13 +152,13 @@ int RegularGridTopology::findCube(const Vec3& pos)
 }
 
 /// return the nearest cube (or -1 if not found).
-int RegularGridTopology::findNearestCube(const Vec3& pos)
+int RegularGridTopology::findNearestCube(const Vector3& pos)
 {
 	if (n.getValue()[0]<2 || n.getValue()[1]<2 || n.getValue()[2]<2) return -1;
-	Vec3 p = pos-p0;
-	double x = p*dx*inv_dx2;
-	double y = p*dy*inv_dy2;
-	double z = p*dz*inv_dz2;
+	Vector3 p = pos-p0.getValue();
+	SReal x = p*dx*inv_dx2;
+	SReal y = p*dy*inv_dy2;
+	SReal z = p*dz*inv_dz2;
 	int ix = int(x+1000000)-1000000; // Do not round toward 0...
 	int iy = int(y+1000000)-1000000;
 	int iz = int(z+1000000)-1000000;
@@ -167,13 +170,15 @@ int RegularGridTopology::findNearestCube(const Vec3& pos)
 
 /// return the cube containing the given point (or -1 if not found),
 /// as well as deplacements from its first corner in terms of dx, dy, dz (i.e. barycentric coordinates).
-int RegularGridTopology::findCube(const Vec3& pos, double& fx, double &fy, double &fz)
+int RegularGridTopology::findCube(const Vector3& pos, SReal& fx, SReal &fy, SReal &fz)
 {
 	if (n.getValue()[0]<2 || n.getValue()[1]<2 || n.getValue()[2]<2) return -1;
-	Vec3 p = pos-p0;
-	double x = p*dx*inv_dx2;
-	double y = p*dy*inv_dy2;
-	double z = p*dz*inv_dz2;
+	Vector3 p = pos-p0.getValue();
+		
+	SReal x = p*dx*inv_dx2;
+	SReal y = p*dy*inv_dy2;
+	SReal z = p*dz*inv_dz2;
+		
 	int ix = int(x+1000000)-1000000; // Do not round toward 0...
 	int iy = int(y+1000000)-1000000;
 	int iz = int(z+1000000)-1000000;
@@ -192,13 +197,13 @@ int RegularGridTopology::findCube(const Vec3& pos, double& fx, double &fy, doubl
 
 /// return the cube containing the given point (or -1 if not found),
 /// as well as deplacements from its first corner in terms of dx, dy, dz (i.e. barycentric coordinates).
-int RegularGridTopology::findNearestCube(const Vec3& pos, double& fx, double &fy, double &fz)
+int RegularGridTopology::findNearestCube(const Vector3& pos, SReal& fx, SReal &fy, SReal &fz)
 {
 	if (n.getValue()[0]<2 || n.getValue()[1]<2 || n.getValue()[2]<2) return -1;
-	Vec3 p = pos-p0;
-	double x = p*dx*inv_dx2;
-	double y = p*dy*inv_dy2;
-	double z = p*dz*inv_dz2;
+	Vector3 p = pos-p0.getValue();
+	SReal x = p*dx*inv_dx2;
+	SReal y = p*dy*inv_dy2;
+	SReal z = p*dz*inv_dz2;
 	int ix = int(x+1000000)-1000000; // Do not round toward 0...
 	int iy = int(y+1000000)-1000000;
 	int iz = int(z+1000000)-1000000;
@@ -210,6 +215,22 @@ int RegularGridTopology::findNearestCube(const Vec3& pos, double& fx, double &fy
 	fz = z-iz;
 	return cube(ix,iy,iz);
 }
+
+
+unsigned RegularGridTopology::getCubeIndex( int i, int j, int k ) const
+{
+	return (n.getValue()[0]-1)* ( (n.getValue()[1]-1)*k + j ) + i;
+}
+
+Vector3 RegularGridTopology::getCubeCoordinate(int i) const
+{
+	Vector3 result;
+	result[0] = (SReal)(i%(n.getValue()[0]-1)); i/=(n.getValue()[0]-1);
+	result[1] = (SReal)(i%(n.getValue()[1]-1)); i/=(n.getValue()[1]-1);
+	result[2] = (SReal)i;
+	return result;
+}
+
 
 } // namespace topology
 

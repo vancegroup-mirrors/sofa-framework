@@ -1,12 +1,27 @@
-/***************************************************************************
-								  PMLBody
-                             -------------------
-    begin             : August 17th, 2006
-    copyright         : (C) 2006 TIMC-INRIA (Michael Adam)
-    author            : Michael Adam
-    Date              : $Date: 2007/02/25 13:51:44 $
-    Version           : $Revision: 0.2 $
- ***************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 /***************************************************************************
  *                                                                         *
@@ -80,7 +95,7 @@ public :
 	BaseMechanicalState* getMechanicalState() { return mmodel; }
 	BaseMass* getMass() { return mass; }
 	Topology* getTopology() { return topology; }
-	ForceField<Vec3dTypes>* getForcefield() { return forcefield; }
+	ForceField<Vec3Types>* getForcefield() { return forcefield; }
 
 	bool hasCollisions() { return collisionsON; }
 	virtual GNode* getPointsNode()=0;
@@ -88,7 +103,7 @@ public :
 	///merge 2 bodies
 	virtual bool FusionBody(PMLBody*)=0;
 
-	virtual Vec3d getDOF(unsigned int index)=0;
+	virtual Vector3 getDOF(unsigned int index)=0;
 
 	//link between atoms indexes (physical model) and DOFs indexes (sofa)
 	map<unsigned int, unsigned int> AtomsToDOFsIndexes;
@@ -117,7 +132,7 @@ protected :
 	BaseMechanicalState * mmodel;
 	BaseMass * mass;
 	Topology * topology;
-	ForceField<Vec3dTypes> * forcefield;
+	ForceField<Vec3Types> * forcefield;
 	OdeSolver * solver;
 
 	std::string solverName;

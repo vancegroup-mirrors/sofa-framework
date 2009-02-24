@@ -1,123 +1,139 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <iostream>
 #include <fstream>
 
 #include <sofa/helper/ArgumentParser.h>
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/component/mass/UniformMass.h>
 #include <sofa/component/contextobject/Gravity.h>
 #include <sofa/component/contextobject/CoordinateSystem.h>
-#include <sofa/component/MechanicalObject.h>
 #include <sofa/core/objectmodel/Context.h>
-#include <sofa/component/visualmodel/OglModel.h>
-#include <sofa/component/constraint/FixedConstraint.h>
-#include <sofa/component/forcefield/TetrahedronFEMForceField.h>
-#include <sofa/component/mapping/BarycentricMapping.h>
 #include <sofa/component/odesolver/CGImplicitSolver.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/gui/SofaGUI.h>
 
-typedef sofa::defaulttype::Vec3Types MyTypes;
-typedef MyTypes::Deriv Vec3;
-typedef sofa::component::visualmodel::GLExtVec3fTypes OglTypes;
+#include <sofa/component/typedef/Sofa_typedef.h>
 
-typedef sofa::core::componentmodel::behavior::State<MyTypes> MyState;
-typedef sofa::core::componentmodel::behavior::MappedModel<OglTypes> OglMappedModel;
+#include <sofa/helper/system/glut.h>
 
-using sofa::core::Mapping;
-using sofa::component::mapping::BarycentricMapping; 
-
-typedef BarycentricMapping< Mapping< MyState, OglMappedModel > > MyMapping;
-
+using namespace sofa::simulation::tree;
+using sofa::component::odesolver::CGImplicitSolver;
+using sofa::component::topology::MeshTopology;
+using sofa::component::visualmodel::OglModel;
 // ---------------------------------------------------------------------
 // ---
 // ---------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-    sofa::helper::parse("This is a SOFA application.")
+    glutInit(&argc,argv);
+	sofa::helper::parse("This is a SOFA application.")
         (argc,argv);
     
     sofa::gui::SofaGUI::Init(argv[0]);
     
-    // The graph root node
-	sofa::simulation::tree::GNode* groot = new sofa::simulation::tree::GNode;
+    // The graph root node : gravity already exists in a GNode by default
+    GNode* groot = new GNode;
     groot->setName( "root" );
+    groot->setGravityInWorld( Coord3(0,-10,0) );
+
 
     // One solver for all the graph
-    sofa::component::odesolver::CGImplicitSolver* solver = new sofa::component::odesolver::CGImplicitSolver;
+    CGImplicitSolver* solver = new CGImplicitSolver;
     solver->f_printLog.setValue(false);
     groot->addObject(solver);
 
-    // Set gravity for all the graph
-    sofa::component::contextobject::Gravity* gravity =  new sofa::component::contextobject::Gravity;
-    gravity->f_gravity.setValue( Vec3(0,-10,0) );
-    groot->addObject(gravity);
-
     // Tetrahedron degrees of freedom
-    sofa::component::MechanicalObject<MyTypes>* DOF = new sofa::component::MechanicalObject<MyTypes>;
+    MechanicalObject3* DOF = new MechanicalObject3;
     groot->addObject(DOF);
     DOF->resize(4);
     DOF->setName("DOF");
-    MyTypes::VecCoord& x = *DOF->getX();
+    VecCoord3& x = *DOF->getX();
     
-    x[0] = Vec3(0,10,0);
-    x[1] = Vec3(10,0,0);
-    x[2] = Vec3(-10*0.5,0,10*0.866);
-    x[3] = Vec3(-10*0.5,0,-10*0.866);
+    x[0] = Coord3(0,10,0);
+    x[1] = Coord3(10,0,0);
+    x[2] = Coord3(-10*0.5,0,10*0.866);
+    x[3] = Coord3(-10*0.5,0,-10*0.866);
 
     // Tetrahedron uniform mass
-    sofa::component::mass::UniformMass<MyTypes,double>* mass = new sofa::component::mass::UniformMass<MyTypes,double>;
+    UniformMass3* mass = new UniformMass3;
     groot->addObject(mass);
     mass->setMass(2);
     mass->setName("mass");
   
     // Tetrahedron topology
-    sofa::component::topology::MeshTopology* topology = new sofa::component::topology::MeshTopology;
+    MeshTopology* topology = new MeshTopology;
+    topology->setName("mesh topology");
     groot->addObject( topology );
-    topology->setName("topology");
-    topology->addTetrahedron(0,1,2,3);
+    topology->addTetra(0,1,2,3);
 
     // Tetrahedron constraints
-	sofa::component::constraint::FixedConstraint<MyTypes>* constraints = new sofa::component::constraint::FixedConstraint<MyTypes>;
-    groot->addObject(constraints);
+    FixedConstraint3* constraints = new FixedConstraint3;
     constraints->setName("constraints");
+    groot->addObject(constraints);
     constraints->addConstraint(0);
 
     // Tetrahedron force field
-	sofa::component::forcefield::TetrahedronFEMForceField<MyTypes>* spring = new  sofa::component::forcefield::TetrahedronFEMForceField<MyTypes>;
-    groot->addObject(spring);
-    spring->setUpdateStiffnessMatrix(true);
-    spring->setYoungModulus(1);
+    TetrahedronFEMForceField3* fem = new  TetrahedronFEMForceField3;
+    fem->setName("FEM");
+    groot->addObject(fem);
+    fem->setMethod("polar");
+    fem->setUpdateStiffnessMatrix(true);
+    fem->setYoungModulus(6);
 
     // Tetrahedron skin
-	sofa::simulation::tree::GNode* skin = new sofa::simulation::tree::GNode;
+    GNode* skin = new GNode;
     skin->setName( "skin" );
     groot->addChild(skin);
     // The visual model
-	sofa::component::visualmodel::OglModel* visual = new sofa::component::visualmodel::OglModel();
+    OglModel* visual = new OglModel();
     visual->setName( "visual" );
-    visual->load(sofa::helper::system::DataRepository.getFile("VisualModels/liver-smooth.obj"), "", "");
+    visual->load(sofa::helper::system::DataRepository.getFile("mesh/liver-smooth.obj"), "", "");
     visual->setColor("red");
-	visual->applyScale(0.7);
-	visual->applyTranslation(1.2, 0.8, 0);
+    visual->applyScale(0.7);
+    visual->applyTranslation(1.2, 0.8, 0);
     skin->addObject(visual);
         
     // The mapping between the tetrahedron (DOF) and the liver (visual)
-    MyMapping* mapping = new MyMapping(DOF, visual);
-	mapping->setName( "mapping" );
+    BarycentricMapping3_to_Ext3* mapping = new BarycentricMapping3_to_Ext3(DOF, visual);
+    mapping->setName( "mapping" );
     skin->addObject(mapping);
 
     // Init the scene
-    sofa::simulation::tree::getSimulation()->init(groot);
+    getSimulation()->init(groot);
     groot->setAnimate(false);
     groot->setShowNormals(false);
     groot->setShowInteractionForceFields(false);
     groot->setShowMechanicalMappings(false);
-	groot->setShowCollisionModels(false);
-	groot->setShowBoundingCollisionModels(false);	
-	groot->setShowMappings(false);
-	groot->setShowForceFields(true);
-	groot->setShowWireFrame(true);
-	groot->setShowVisualModels(true);
+    groot->setShowCollisionModels(false);
+    groot->setShowBoundingCollisionModels(false);	
+    groot->setShowMappings(false);
+    groot->setShowForceFields(true);
+    groot->setShowWireFrame(true);
+    groot->setShowVisualModels(true);
 	
 
 

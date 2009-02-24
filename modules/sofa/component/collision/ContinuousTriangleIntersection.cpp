@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/ContinuousTriangleIntersection.h>
 #include <sofa/helper/rmath.h>
 
@@ -12,7 +36,7 @@ namespace collision
 
 bool ContinuousTriangleIntersection::isCollision(void)
 {
-	double t[3], u[3], v[3];
+	SReal t[3], u[3], v[3];
 	double dt = 0.01; //Scene::getInstance()->getDt();
 	//std::cout<<"Triangle 2  : " << tr2 << std::endl;
 
@@ -114,7 +138,7 @@ bool ContinuousTriangleIntersection::isCollision(void)
 
 core::componentmodel::collision::DetectionOutput* ContinuousTriangleIntersection::computeDetectionOutput (void)
 {
-	double t[3], u[3], v[3];
+	SReal t[3], u[3], v[3];
 	double dt = 0.01; //Scene::getInstance()->getDt();
 
 	for (int i = 0; i < 3; i++)
@@ -155,10 +179,10 @@ core::componentmodel::collision::DetectionOutput* ContinuousTriangleIntersection
 	return detectionOutput;
 }
 
-ContinuousTriangleIntersection::ContinuousTriangleIntersection(Triangle& t1, Triangle &t2):tr1(t1), tr2(t2),m_tolerance(1e-6)
+ContinuousTriangleIntersection::ContinuousTriangleIntersection(Triangle& t1, Triangle &t2):tr1(t1), tr2(t2),m_tolerance((SReal)(1e-6))
 {
     m_tolmin = -m_tolerance;
-    m_tolmax = 1.0+m_tolerance;
+    m_tolmax = (SReal)1.0 + m_tolerance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +200,7 @@ ContinuousTriangleIntersection::~ContinuousTriangleIntersection()
 ///          0 <= u, v <= 1 are the edge barycentric coordinates
 /// Collision point: (1-u)*(p1 + t*dt*v1) + u*(p2 + t*dt*v2) = 
 ///		  or (1-v)*(p3 + t*dt*v3) + v*(p4 + t*dt*v4)
-int ContinuousTriangleIntersection::intersectEdgeEdge (double& t, double& u, double& v,
+int ContinuousTriangleIntersection::intersectEdgeEdge (SReal& t, SReal& u, SReal& v,
 													  const Vector3& p1, const Vector3& p2, 
 													  const Vector3& v1, const Vector3& v2,
 													  const Vector3& p3, const Vector3& p4,
@@ -184,8 +208,8 @@ int ContinuousTriangleIntersection::intersectEdgeEdge (double& t, double& u, dou
 													  double dt)
 {
     Vector3 d12, d13, d34, x12, x13, x34;
-    double N1x, N1y, N1z, N2x, N2y, N2z, N3x, N3y, N3z;
-    double C[4];
+    SReal N1x, N1y, N1z, N2x, N2y, N2z, N3x, N3y, N3z;
+    SReal C[4];
     Vector3 roots(-10,-10,-10);
     int numRoots;
 
@@ -252,7 +276,7 @@ int ContinuousTriangleIntersection::intersectEdgeEdge (double& t, double& u, dou
 
     ///refer Bridson 2002 for calculating edge-edge
 
-	double det = dot(x12, x12) * dot(x34, x34) - dot(x12, x34) * dot(x12, x34);
+	SReal det = dot(x12, x12) * dot(x34, x34) - dot(x12, x34) * dot(x12, x34);
 
     if (det > -EPSILON && det < EPSILON)
     {
@@ -261,7 +285,7 @@ int ContinuousTriangleIntersection::intersectEdgeEdge (double& t, double& u, dou
         return 0;
     }
 
-    double inv_det = 1.0/det;
+    SReal inv_det = (SReal)1.0/det;
     u = inv_det*(dot(x12, x13) * dot(x34,x34) - dot(x12, x34) * dot(x13, x34));
 
     if (u < m_tolmin || u > m_tolmax)
@@ -283,7 +307,7 @@ int ContinuousTriangleIntersection::intersectEdgeEdge (double& t, double& u, dou
 ///          0 <= u, v <= 1, u+v <= 1 are the triangle barycentric coordinates
 /// Collision point: p0 + t*dt*v0 = 
 ///	             u*(p1 + t*dt*v1) + v*(p2 + t*dt*v2) + (1-u-v)*(p3 + t*dt*v3)
-int ContinuousTriangleIntersection::intersectPointTriangle (double& t, double& u, double& v,
+int ContinuousTriangleIntersection::intersectPointTriangle (SReal& t, SReal& u, SReal& v,
 														    const Vector3& p0, const Vector3& v0,
 														    const Vector3& p1, const Vector3& v1,
 															const Vector3& p2, const Vector3& v2,
@@ -291,8 +315,8 @@ int ContinuousTriangleIntersection::intersectPointTriangle (double& t, double& u
 															double dt)
 {
     Vector3 p12, v12, p13, v13, p01, v01;
-    double N1x, N1y, N1z, N2x, N2y, N2z, N3x, N3y, N3z;
-    double C[4];
+    SReal N1x, N1y, N1z, N2x, N2y, N2z, N3x, N3y, N3z;
+    SReal C[4];
     Vector3 roots(-10,-10,-10);
 
     /// Step 1: Compute the cross product p12 x p13
@@ -362,7 +386,7 @@ int ContinuousTriangleIntersection::intersectPointTriangle (double& t, double& u
     Vector3 x23 = x3 - x2;
 
     ///Ref. Bridson 2002
-	double det = dot (x13, x13) * dot(x23, x23) - dot(x13, x23) * dot(x13, x23);
+	SReal det = dot (x13, x13) * dot(x23, x23) - dot(x13, x23) * dot(x13, x23);
 
     if (det > -EPSILON && det < EPSILON)
     {
@@ -371,7 +395,7 @@ int ContinuousTriangleIntersection::intersectPointTriangle (double& t, double& u
     }
 
     ///find valid barycentric parameters
-    double inv_det = 1./det;
+    SReal inv_det = (SReal)1./det;
 	u = inv_det * ( dot (x13, x43) * dot(x23, x23) - dot(x13, x23) * dot (x23, x43) );
 
     if (u < m_tolmin || u > m_tolmax)
@@ -396,13 +420,13 @@ int ContinuousTriangleIntersection::intersectPointTriangle (double& t, double& u
 ///Solves cubic equation: c[0] + c[1]*x + c[2]*x^2 + c[3]*x^3 = 0
 ///upto three possible solution, make sure c[3] is non-zero
 ///Ref Graphics Gems I, Schwarze, Jochen, Cubic and Quartic Roots, p. 404-407
-int ContinuousTriangleIntersection::solveCubic (Vector3& s, double c[4] )
+int ContinuousTriangleIntersection::solveCubic (Vector3& s, SReal c[4] )
 {
     int   i, num;
-    double sub;
-    double A, B, C;
-    double sq_A, p, q;
-    double cb_p, D;
+    SReal sub;
+    SReal A, B, C;
+    SReal sq_A, p, q;
+    SReal cb_p, D;
 
     ///normal form: x^3 + Ax^2 + Bx + C = 0
 
@@ -414,8 +438,8 @@ int ContinuousTriangleIntersection::solveCubic (Vector3& s, double c[4] )
     ///  x^3 +px + q = 0
 
     sq_A = A * A;
-    p = 1.0/3 * (- 1.0/3 * sq_A + B);
-    q = 1.0/2 * (2.0/27 * A * sq_A - 1.0/3 * A * B + C);
+    p = (SReal)1.0/3 * ((SReal)(-1.0/3) * sq_A + B);
+    q = (SReal)1.0/2 * ((SReal)(2.0/27) * A * sq_A - (SReal)(1.0/3) * A * B + C);
 
     ///use Cardano's formula
 
@@ -429,29 +453,29 @@ int ContinuousTriangleIntersection::solveCubic (Vector3& s, double c[4] )
             s[ 0 ] = 0;
             num = 1;
         }
-        else /// one single and one Real solution
+        else /// one single and one SReal solution
         {
-            double u = cbrt(-q);
+            SReal u = cbrt(-q);
             s[ 0 ] = 2 * u;
             s[ 1 ] = - u;
             num = 2;
         }
     }
-    else if (D < 0) /// Casus irreducibilis: three real solutions
+    else if (D < 0) /// Casus irreducibilis: three SReal solutions
     {
-        double phi = 1.0/3 * acos(-q / sqrt(-cb_p));
-        double t = 2 * sqrt(-p);
+        SReal phi = (SReal)1.0/3 * acos(-q / sqrt(-cb_p));
+        SReal t = 2 * sqrt(-p);
 
         s[ 0 ] =   t * cos(phi);
-        s[ 1 ] = - t * cos(phi + R_PI / 3);
-        s[ 2 ] = - t * cos(phi - R_PI / 3);
+        s[ 1 ] = - t * cos(phi + (SReal)R_PI / 3);
+        s[ 2 ] = - t * cos(phi - (SReal)R_PI / 3);
         num = 3;
     }
-    else /// one real solution
+    else /// one SReal solution
     {
-        double sqrt_D = sqrt(D);
-        double u = cbrt(sqrt_D - q);
-        double v = - cbrt(sqrt_D + q);
+        SReal sqrt_D = sqrt(D);
+        SReal u = cbrt(sqrt_D - q);
+        SReal v = - cbrt(sqrt_D + q);
 
         s[ 0 ] = u + v;
         num = 1;
@@ -459,7 +483,7 @@ int ContinuousTriangleIntersection::solveCubic (Vector3& s, double c[4] )
 
     /// resubstitute
 
-    sub = 1.0/3 * A;
+    sub = (SReal)1.0/3 * A;
 
     for (i = 0; i < num; ++i)
         s[ i ] -= sub;
@@ -474,23 +498,23 @@ int ContinuousTriangleIntersection::solveCubic (Vector3& s, double c[4] )
 /// x1 = q/a; x2 = c/q;
 /// where q = -1/2[b + sgn(b)*sqrt(b^2 -4ac)]
 /// Ref. Numerical Recipes
-int ContinuousTriangleIntersection::solveQuadratic (double& t1, double& t2, const double& a,
-												   const double& b, const double& c)
+int ContinuousTriangleIntersection::solveQuadratic (SReal& t1, SReal& t2, const SReal& a,
+												   const SReal& b, const SReal& c)
 {
     int numRoots=0;
-    double delta = b*b - 4.0*a*c;
+    SReal delta = b*b - (SReal)4.0*a*c;
     if (delta < 0.0)
         return 0;
 
-    double sqrt_delta = sqrt(delta);
+    SReal sqrt_delta = sqrt(delta);
 
-    double sgn_b;
+    SReal sgn_b;
     if (b<0.0)
         sgn_b=-1.0;
     else
         sgn_b=1.0;
 
-    double q = -0.5*(b+sgn_b*sqrt_delta);
+    SReal q = (SReal)(-0.5)*(b+sgn_b*sqrt_delta);
 
     if (a < -EPSILON || a > EPSILON)
     {
@@ -515,11 +539,11 @@ int ContinuousTriangleIntersection::solveQuadratic (double& t1, double& t2, cons
 /// Method used internally
 /// method computes valid root within range of [rootMin, rootMax]
 /// returns the smallest root if there are more than one valid root.
-bool ContinuousTriangleIntersection::checkValidRoots(double& validRoot,
+bool ContinuousTriangleIntersection::checkValidRoots(SReal& validRoot,
 													const int& numRoots,
 													const Vector3& roots,
-													const double& rootMin,
-													const double& rootMax)
+													const SReal& rootMin,
+													const SReal& rootMax)
 {
     validRoot=-10;
     

@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MAPPING_SPHFLUIDSURFACEMAPPING_H
 #define SOFA_COMPONENT_MAPPING_SPHFLUIDSURFACEMAPPING_H
 
@@ -32,9 +32,9 @@
 #include <sofa/component/forcefield/SPHFluidForceField.h>
 #include <sofa/core/Mapping.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/MeshTopology.h>
-#include <sofa/component/mapping/ImplicitSurfaceMapping.h> // for marching cube tables
-#include <sofa/component/visualmodel/VisualModelImpl.h>
+#include <sofa/helper/MarchingCubeUtility.h> // for marching cube tables
 #include <vector>
 
 namespace sofa
@@ -46,11 +46,10 @@ namespace component
 namespace mapping
 {
 
-// TODO: move SpatialGridContainer to another namespace?
-using namespace sofa::component::behaviormodel::eulerianfluid;
+using namespace sofa::component::container;
 
 template <class InDataTypes, class OutDataTypes>
-class SPHFluidSurfaceMappingGridTypes : public SpatialGridContainerTypes<typename InDataTypes::Coord>
+class SPHFluidSurfaceMappingGridTypes : public SpatialGridTypes<InDataTypes>
 {
 public:
     typedef forcefield::SPHFluidForceField<InDataTypes> ParticleField;
@@ -94,7 +93,7 @@ public:
 };
 
 template <class In, class Out>
-class SPHFluidSurfaceMapping : public core::Mapping<In, Out>, public topology::MeshTopology, public core::VisualModel
+class SPHFluidSurfaceMapping : public core::Mapping<In, Out>, public topology::MeshTopology
 {
 public:
     typedef core::Mapping<In, Out> Inherit;
@@ -156,12 +155,7 @@ public:
 
     //void applyJT( InVecDeriv& out, const OutVecDeriv& in );
 
-    // -- VisualModel interface
     void draw();
-    void initTextures()
-    { }
-    void update()
-    { }
 
 
 protected: 
@@ -176,7 +170,7 @@ protected:
 
 	typedef SPHFluidSurfaceMappingGridTypes<typename In::DataTypes, typename Out::DataTypes> GridTypes;
 
-    typedef SpatialGridContainer<GridTypes> Grid;
+    typedef SpatialGrid<GridTypes> Grid;
     typedef typename Grid::Cell Cell;
     enum { GRIDDIM = Grid::GRIDDIM };
     enum { DX = Grid::DX };

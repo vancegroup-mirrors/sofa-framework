@@ -1,7 +1,7 @@
 /***************************************************************************
                           Load.h  -  description
                              -------------------
-    begin                : mar fév 4 2003
+    begin                : mar fï¿½v 4 2003
     copyright            : (C) 2003 by Emmanuel Promayon
     email                : Emmanuel.Promayon@imag.fr
 
@@ -25,6 +25,7 @@
 #include "Unit.h"
 
 #include "xmlio.h"
+#include <sofa/helper/system/config.h>
 
 /** Class that describes a load to be used in the simulation.
   * This load  can have different types Translation, Rotation, Force and Pressure.
@@ -38,7 +39,7 @@
   * All value events that are added to the load are then taking over by the load
   * (i.e. when the load is deleted, it will delete all its value event.
   *
-  * $Revision: 1.15 $
+  * $Revision: 51 $
   */
 class Load {
 
@@ -50,7 +51,7 @@ public:
     virtual ~Load();
 
     /// return true if the load is active at time t
-    bool isActive(const double t);
+    bool isActive(const SReal t);
 
     /** The current value at date d (default: d = 0.0).
      * eg: if we have :  
@@ -81,7 +82,7 @@ public:
         0        0.5     1.0      1.5
         </pre>
     */
-    double getValue (const double d = 0.0);
+    SReal getValue (const SReal d = 0.0);
 
     /** Insert an event from the particular load
      * the load is set to value v when time is equal to t
@@ -92,7 +93,7 @@ public:
      *  @param v the value
      *  @param d the date at which the value is applied
      */
-    void addValueEvent(const double v, const double d);
+    void addValueEvent(const SReal v, const SReal d);
 
     /// Get a the ValueEvent
     ValueEvent * getValueEvent(const unsigned int i) const;
@@ -111,23 +112,23 @@ public:
     /// get the number of target
     unsigned int numberOfTargets() const;
     /** Get a target by index
-     * @targetIndex the target index in the list
+     * @param target the target index in the list
      * @return the target or -1 if target index is out of bounds.
      */
-    int getTarget(const unsigned int target)const;
+    int getTarget(const unsigned int target) const;
     /// get the complete list
     TargetList getTargetList() const;
     /// set the complete list
     void setTargetList(const TargetList &);
 
     /// Set the direction using 3 coordinates
-    void setDirection (const double x, const double y, const double z);
+    void setDirection (const SReal x, const SReal y, const SReal z);
     
     /// Set the direction using another direction
     void setDirection(const Direction &);
     
     /// Get the direction
-    void getDirection (double & x, double & y, double & z) const;
+    void getDirection (SReal & x, SReal & y, SReal & z) const;
     
     /// get direction object (a copy)
     Direction getDirection() const;

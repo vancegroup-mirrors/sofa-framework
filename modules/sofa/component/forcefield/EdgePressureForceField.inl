@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/forcefield/EdgePressureForceField.h>
 #include <sofa/component/topology/EdgeSubsetData.inl>
 #include <sofa/helper/gl/template.h>
@@ -31,26 +55,25 @@ template <class DataTypes> EdgePressureForceField<DataTypes>::~EdgePressureForce
 }
 // Handle topological changes
 template <class DataTypes> void  EdgePressureForceField<DataTypes>::handleTopologyChange()
-{
-	sofa::core::componentmodel::topology::BaseTopology *topology = static_cast<sofa::core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
+{	
+	std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 
-	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
-
-
-	edgePressureMap.handleTopologyEvents(itBegin,itEnd,est->getEdgeSetTopologyContainer()->getNumberOfEdges());
+	edgePressureMap.handleTopologyEvents(itBegin,itEnd,_topology->getNbEdges());
 
 }
 template <class DataTypes> void EdgePressureForceField<DataTypes>::init()
 {
     //std::cerr << "initializing EdgePressureForceField" << std::endl;
     this->core::componentmodel::behavior::ForceField<DataTypes>::init();
-    
-	est= static_cast<sofa::component::topology::EdgeSetTopology<DataTypes> *>(getContext()->getMainTopology());
-	assert(est!=0);
+    	
+	_topology = this->getContext()->getMeshTopology();
+	this->getContext()->get(edgeGeo);
 
-	if (est==NULL)
+	assert(edgeGeo!=0);
+
+	if (edgeGeo==NULL)
 	{
 		std::cerr << "ERROR(EdgePressureForceField): object must have an EdgeSetTopology.\n";
 		return;
@@ -74,19 +97,18 @@ void EdgePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& /*
 	Deriv force;
 
 	typename topology::EdgeSubsetData<EdgePressureInformation>::iterator it;
-	const std::vector<Edge> &ea=est->getEdgeSetTopologyContainer()->getEdgeArray();
 
 	for(it=edgePressureMap.begin(); it!=edgePressureMap.end(); it++ )
 	{
 		force=(*it).second.force/2;
-		f[ea[(*it).first].first]+=force;
-		f[ea[(*it).first].second]+=force;
+		f[_topology->getEdge((*it).first)[0]]+=force;
+		f[_topology->getEdge((*it).first)[1]]+=force;
 
 	}
 }
 
 template <class DataTypes> 
-double EdgePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
+    double EdgePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
 {
     cerr<<"EdgePressureForceField::getPotentialEnergy-not-implemented !!!"<<endl;
     return 0;
@@ -94,14 +116,12 @@ double EdgePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x
 
 template<class DataTypes>
 void EdgePressureForceField<DataTypes>::initEdgeInformation()
-{
-	topology::EdgeSetGeometryAlgorithms<DataTypes> *esga=est->getEdgeSetGeometryAlgorithms();
-
+{	
 	typename topology::EdgeSubsetData<EdgePressureInformation>::iterator it;
 
 	for(it=edgePressureMap.begin(); it!=edgePressureMap.end(); it++ )
 	{
-	  (*it).second.length=esga->computeRestEdgeLength((*it).first);
+	  (*it).second.length=edgeGeo->computeRestEdgeLength((*it).first);
 	  (*it).second.force=pressure.getValue()*(*it).second.length;
 	}
 }
@@ -124,20 +144,18 @@ void EdgePressureForceField<DataTypes>::selectEdgesAlongPlane()
 {
 	const VecCoord& x = *this->mstate->getX0();
 	std::vector<bool> vArray;
-	unsigned int i,n;
+	unsigned int i;
 
 	vArray.resize(x.size());
 
 	for( i=0; i<x.size();++i)
 	{
 		vArray[i]=isPointInPlane(x[i]);
-	}
+	}	
 
-	const std::vector<Edge> &ea=est->getEdgeSetTopologyContainer()->getEdgeArray();
-
-	for (n=0;n<ea.size();++n) 
+	for (int n=0;n<_topology->getNbEdges();++n) 
 	{
-		if ((vArray[ea[n].first]) && (vArray[ea[n].second])) 
+		if ((vArray[_topology->getEdge(n)[0]]) && (vArray[_topology->getEdge(n)[1]])) 
 		{
 			// insert a dummy element : computation of pressure done later
 			EdgePressureInformation t;
@@ -153,7 +171,7 @@ void EdgePressureForceField<DataTypes>::selectEdgesFromString()
 	unsigned int i;
 	do {
 		const char *str=inputString.c_str();
-		for(i=0;(i<inputString.length())&&(str[i]!=',');++i);
+		for(i=0;(i<inputString.length())&&(str[i]!=',');++i) ;
 		EdgePressureInformation t;
 
 		if (i==inputString.length()) {
@@ -184,13 +202,12 @@ void EdgePressureForceField<DataTypes>::draw()
 	glBegin(GL_LINES);
 	glColor4f(0,1,0,1);
 	
-	typename topology::EdgeSubsetData<EdgePressureInformation>::iterator it;
-	const std::vector<Edge> &ea=est->getEdgeSetTopologyContainer()->getEdgeArray();
+	typename topology::EdgeSubsetData<EdgePressureInformation>::iterator it;	
 
 	for(it=edgePressureMap.begin(); it!=edgePressureMap.end(); it++ )
 	{
-		helper::gl::glVertexT(x[ea[(*it).first].first]);
-		helper::gl::glVertexT(x[ea[(*it).first].second]);
+		helper::gl::glVertexT(x[_topology->getEdge((*it).first)[0]]);
+		helper::gl::glVertexT(x[_topology->getEdge((*it).first)[1]]);
 	}
 	glEnd();
 

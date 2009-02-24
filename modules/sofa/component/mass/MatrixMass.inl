@@ -1,40 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MASS_MATRIXMASS_INL
 #define SOFA_COMPONENT_MASS_MATRIXMASS_INL
 
 #include <sofa/component/mass/MatrixMass.h>
+#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/defaulttype/DataTypeInfo.h>
+#include <sofa/component/mass/AddMToMatrixFunctor.h>
 
 #include <sofa/helper/gl/template.h>
-
-
-#include <sofa/component/topology/EdgeSetTopology.h>
-#include <sofa/component/topology/TriangleSetTopology.h>
-#include <sofa/component/topology/TetrahedronSetTopology.h>
-#include <sofa/component/topology/GridTopology.h>
-#include <sofa/component/topology/SparseGridTopology.h>
 
 namespace sofa
 {
@@ -92,7 +88,7 @@ void MatrixMass<DataTypes, MassType>::resize(int vsize)
 
 // -- Mass interface
 template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
+    void MatrixMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
 {
 	const VecMass &masses= *_usedMassMatrices;
     
@@ -118,14 +114,14 @@ void MatrixMass<DataTypes, MassType>::accFromF(VecDeriv& , const VecDeriv& )
 }
 
 template <class DataTypes, class MassType>
-double MatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv&  )
+    double MatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv&  )
 {
 	cerr<<"void MatrixMass<DataTypes, MassType>::getKineticEnergy not yet implemented\n";
 	return 0;
 }
 
 template <class DataTypes, class MassType>
-double MatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord&  )
+    double MatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord&  )
 {
 	cerr<<"void MatrixMass<DataTypes, MassType>::getPotentialEnergy not yet implemented\n";
     return 0;
@@ -179,8 +175,23 @@ void MatrixMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& x, c
 	}
 }
 
+template <class DataTypes, class MassType>
+void MatrixMass<DataTypes, MassType>::addMToMatrix(defaulttype::BaseMatrix * mat, double mFact, unsigned int &offset)
+{
+    const VecMass &masses= *_usedMassMatrices;
+    const int N = defaulttype::DataTypeInfo<Deriv>::size();
+    AddMToMatrixFunctor<Deriv,MassType> calc;
+    for (unsigned int i=0;i<masses.size();i++)
+        calc(mat, masses[i], offset + N*i, mFact);
+}
 
 
+template <class DataTypes, class MassType>
+    double MatrixMass<DataTypes, MassType>::getElementMass(unsigned int /*index*/)
+{
+	//NOT IMPLEMENTED YET
+  return (sofa::defaulttype::Vector3::value_type)(_defaultValue.getValue());
+}
 
 
 

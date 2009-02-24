@@ -1,4 +1,29 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/odesolver/EulerSolver.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/core/ObjectFactory.h>
 #include <math.h>
 #include <iostream>
@@ -50,17 +75,34 @@ void EulerSolver::solve(double dt)
     projectResponse(acc);
     
     // update state
+#ifdef SOFA_NO_VMULTIOP // unoptimized version
     if( symplectic.getValue() )
     {
-      vel.peq(acc,dt);
-      pos.peq(vel,dt);
+        vel.peq(acc,dt);
+        pos.peq(vel,dt);
     }
     else
     {
-      pos.peq(vel,dt);
-      vel.peq(acc,dt);
+        pos.peq(vel,dt);
+        vel.peq(acc,dt);
     }
-
+#else // single-operation optimization
+    {
+        simulation::MechanicalVMultiOpVisitor vmop;
+        vmop.ops.resize(2);
+        // change order of operations depending on the sympletic flag
+        int op_vel = (symplectic.getValue()?0:1);
+        int op_pos = (symplectic.getValue()?1:0);
+        vmop.ops[op_vel].first = (VecId)vel;
+        vmop.ops[op_vel].second.push_back(std::make_pair((VecId)vel,1.0));
+        vmop.ops[op_vel].second.push_back(std::make_pair((VecId)acc,dt));
+        vmop.ops[op_pos].first = (VecId)pos;
+        vmop.ops[op_pos].second.push_back(std::make_pair((VecId)pos,1.0));
+        vmop.ops[op_pos].second.push_back(std::make_pair((VecId)vel,dt));
+        vmop.execute(this->getContext());
+    }
+#endif
+    
     if( printLog )
     {
         cerr<<"EulerSolver, acceleration = "<< acc <<endl;

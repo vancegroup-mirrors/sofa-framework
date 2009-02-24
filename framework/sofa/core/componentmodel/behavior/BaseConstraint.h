@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_BASECONSTRAINT_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_BASECONSTRAINT_H
 
@@ -44,6 +46,7 @@ namespace componentmodel
 
 namespace behavior
 {
+/// @TODO  The classes applyConstraint, getConstraintValue && getConstraintId need to be commented
 
 /**
  *  \brief Component computing constraints within a simulated body.
@@ -74,6 +77,12 @@ public:
     /// Project x to constrained space (x models a position).
     virtual void projectPosition() = 0;
 
+    /// Project vFree to constrained space (vFree models a velocity).
+    virtual void projectFreeVelocity() = 0;
+
+    /// Project xFree to constrained space (xFree models a position).
+    virtual void projectFreePosition() = 0;
+
     /// @}
 
     /// @name Matrix operations
@@ -92,12 +101,16 @@ public:
 	/// Project the global Mechanical Vector to constrained space using offset parameter
     virtual void applyConstraint(defaulttype::BaseVector *, unsigned int & /*offset*/);
 
-    virtual void getConstraintValue(double * /*, unsigned int &*/) {}
+	virtual void getConstraintValue(defaulttype::BaseVector *) {};
+	virtual void getConstraintValue(double *) {};
 	virtual void getConstraintId(long * /*id*/, unsigned int & /*offset*/) {}
 
-    /// Get additionnal DOFs associated to this constraint (such as Lagrange Multiplier values)
-    /// \todo Remove it or disable it until we have a working Lagrange Multipliers implementation
-    virtual BaseMechanicalState* getDOFs() { return NULL; }
+
+	/// says if the constraint is holonomic or not
+	/// holonomic constraints can be processed using different methods such as :
+	/// projection - reducing the degrees of freedom - simple lagrange multiplier process
+	/// Non-holonomic constraints (like contact, friction...) need more specific treatments
+	virtual bool isHolonomic() {return false; }
 
 };
 

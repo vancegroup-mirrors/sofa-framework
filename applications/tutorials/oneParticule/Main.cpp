@@ -1,68 +1,88 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/ArgumentParser.h>
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/component/mass/UniformMass.h>
 #include <sofa/component/contextobject/Gravity.h>
 #include <sofa/component/contextobject/CoordinateSystem.h>
 #include <sofa/component/odesolver/EulerSolver.h>
-#include <sofa/component/MechanicalObject.h>
 #include <sofa/core/objectmodel/Context.h>
-
-#include <iostream>
-#include <fstream>
-
 #include <sofa/gui/SofaGUI.h>
-//typedef Sofa::Components::Common::Vec3Types MyTypes;
-typedef sofa::defaulttype::Vec3Types MyTypes;
-typedef MyTypes::Deriv Vec3;  
+
+#include <sofa/helper/system/glut.h>
+using namespace sofa::simulation::tree;
+using sofa::component::odesolver::EulerSolver;
 
 
+//Using double by default, if you have SOFA_FLOAT in use in you sofa-default.cfg, then it will be FLOAT.
+#include <sofa/component/typedef/Sofa_typedef.h>
 // ---------------------------------------------------------------------
 // ---
 // ---------------------------------------------------------------------
 int main(int argc, char** argv)
 {
+
+    glutInit(&argc,argv);
     sofa::helper::parse("This is a SOFA application.")
         (argc,argv);
     sofa::gui::SofaGUI::Init(argv[0]);
 
     // The graph root node
-	sofa::simulation::tree::GNode* groot = new sofa::simulation::tree::GNode;
+    GNode* groot = new GNode;
     groot->setName( "root" );
+    groot->setGravityInWorld( Coord3(0,-10,0) );
     
     // One solver for all the graph
-	sofa::component::odesolver::EulerSolver* solver = new sofa::component::odesolver::EulerSolver;
+    EulerSolver* solver = new EulerSolver;
     solver->setName("solver");
     solver->f_printLog.setValue(false);
     groot->addObject(solver);
 
-    // Set gravity for all the graph
-	sofa::component::contextobject::Gravity* gravity =  new sofa::component::contextobject::Gravity;
-    gravity->setName("gravity");
-    gravity->f_gravity.setValue( Vec3(0,-10,0) );
-    groot->addObject(gravity);
-    
     // One node to define the particle
-    sofa::simulation::tree::GNode* particule_node = new sofa::simulation::tree::GNode;
+    GNode* particule_node = new GNode;
     particule_node->setName("particle_node");
     groot->addChild( particule_node );
 
     // The particule, i.e, its degrees of freedom : a point with a velocity
-	sofa::component::MechanicalObject<MyTypes>* particle = new sofa::component::MechanicalObject<MyTypes>;
+    MechanicalObject3* particle = new MechanicalObject3;
     particle->setName("particle");
     particule_node->addObject(particle);
     particle->resize(1);
     // The point
-    (*particle->getX())[0] = Vec3(0,0,0);
+    (*particle->getX())[0] = Coord3(0,0,0);
     // The velocity
-    (*particle->getV())[0] = Vec3(0,0,0);
+    (*particle->getV())[0] = Coord3(0,0,0);
     
     // Its properties, i.e, a simple mass node
-    sofa::component::mass::UniformMass<MyTypes,double>* mass = new sofa::component::mass::UniformMass<MyTypes,double>;
+    UniformMass3* mass = new UniformMass3;
     mass->setName("mass");
     particule_node->addObject(mass);
     mass->setMass( 1 );
 
-    sofa::simulation::tree::getSimulation()->init(groot);
+    getSimulation()->init(groot);
     groot->setAnimate(false);
 
 	//=======================================

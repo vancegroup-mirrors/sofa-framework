@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/topology/GridTopology.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -66,77 +66,96 @@ void GridTopology::setSize()
 	invalidate();
 }
 
-void GridTopology::updateLines()
+void GridTopology::updateEdges()
 {
-	SeqLines& lines = *seqLines.beginEdit();
-	lines.clear();
-	lines.reserve((n.getValue()[0]-1)*n.getValue()[1]*n.getValue()[2]+n.getValue()[0]*(n.getValue()[1]-1)*n.getValue()[2]+n.getValue()[0]*n.getValue()[1]*(n.getValue()[2]-1));
+	SeqEdges& edges = *seqEdges.beginEdit();
+	edges.clear();
+	edges.reserve((n.getValue()[0]-1)*n.getValue()[1]*n.getValue()[2]+n.getValue()[0]*(n.getValue()[1]-1)*n.getValue()[2]+n.getValue()[0]*n.getValue()[1]*(n.getValue()[2]-1));
 	// lines along X
 	for (int z=0; z<n.getValue()[2]; z++)
 		for (int y=0; y<n.getValue()[1]; y++)
 			for (int x=0; x<n.getValue()[0]-1; x++)
-				lines.push_back(Line(point(x,y,z),point(x+1,y,z)));
+				edges.push_back(Edge(point(x,y,z),point(x+1,y,z)));
 	// lines along Y
 	for (int z=0; z<n.getValue()[2]; z++)
 		for (int y=0; y<n.getValue()[1]-1; y++)
 			for (int x=0; x<n.getValue()[0]; x++)
-				lines.push_back(Line(point(x,y,z),point(x,y+1,z)));
+				edges.push_back(Edge(point(x,y,z),point(x,y+1,z)));
 	// lines along Z
 	for (int z=0; z<n.getValue()[2]-1; z++)
 		for (int y=0; y<n.getValue()[1]; y++)
 			for (int x=0; x<n.getValue()[0]; x++)
-				lines.push_back(Line(point(x,y,z),point(x,y,z+1)));
-	seqLines.endEdit();
+				edges.push_back(Edge(point(x,y,z),point(x,y,z+1)));
+	seqEdges.endEdit();
 }
 
 void GridTopology::updateQuads()
 {
-	seqQuads.clear();
-	seqQuads.reserve((n.getValue()[0]-1)*(n.getValue()[1]-1)*n.getValue()[2]+(n.getValue()[0]-1)*n.getValue()[1]*(n.getValue()[2]-1)+n.getValue()[0]*(n.getValue()[1]-1)*(n.getValue()[2]-1));
+	SeqQuads& quads = *seqQuads.beginEdit();
+	quads.clear();
+	quads.reserve((n.getValue()[0]-1)*(n.getValue()[1]-1)*n.getValue()[2]+(n.getValue()[0]-1)*n.getValue()[1]*(n.getValue()[2]-1)+n.getValue()[0]*(n.getValue()[1]-1)*(n.getValue()[2]-1));
 	// quads along XY plane
 	for (int z=0; z<n.getValue()[2]; z++)
 		for (int y=0; y<n.getValue()[1]-1; y++)
 			for (int x=0; x<n.getValue()[0]-1; x++)
-				seqQuads.push_back(Quad(point(x,y,z),point(x+1,y,z),point(x+1,y+1,z),point(x,y+1,z)));
+				quads.push_back(Quad(point(x,y,z),point(x+1,y,z),point(x+1,y+1,z),point(x,y+1,z)));
 	// quads along XZ plane
 	for (int z=0; z<n.getValue()[2]-1; z++)
 		for (int y=0; y<n.getValue()[1]; y++)
 			for (int x=0; x<n.getValue()[0]-1; x++)
-				seqQuads.push_back(Quad(point(x,y,z),point(x+1,y,z),point(x+1,y,z+1),point(x,y,z+1)));
+				quads.push_back(Quad(point(x,y,z),point(x+1,y,z),point(x+1,y,z+1),point(x,y,z+1)));
 	// quads along YZ plane
 	for (int z=0; z<n.getValue()[2]-1; z++)
 		for (int y=0; y<n.getValue()[1]-1; y++)
 			for (int x=0; x<n.getValue()[0]; x++)
-				seqQuads.push_back(Quad(point(x,y,z),point(x,y+1,z),point(x,y+1,z+1),point(x,y,z+1)));
+				quads.push_back(Quad(point(x,y,z),point(x,y+1,z),point(x,y+1,z+1),point(x,y,z+1)));
+	
+	seqQuads.endEdit();
 }
 
-void GridTopology::updateCubes()
+void GridTopology::updateHexas()
 {
-	seqCubes.clear();
-	seqCubes.reserve((n.getValue()[0]-1)*(n.getValue()[1]-1)*(n.getValue()[2]-1));
+	SeqHexas& hexas = *seqHexas.beginEdit();
+	hexas.clear();
+	hexas.reserve((n.getValue()[0]-1)*(n.getValue()[1]-1)*(n.getValue()[2]-1));
 	for (int z=0; z<n.getValue()[2]-1; z++)
 		for (int y=0; y<n.getValue()[1]-1; y++)
 			for (int x=0; x<n.getValue()[0]-1; x++)
-				seqCubes.push_back(Cube(point(x  ,y  ,z  ),point(x+1,y  ,z  ),
+#ifdef SOFA_NEW_HEXA
+				hexas.push_back(Hexa(point(x  ,y  ,z  ),point(x+1,y  ,z  ),
+				                              point(x+1,y+1,z  ),point(x  ,y+1,z  ),
+				                              point(x  ,y  ,z+1),point(x+1,y  ,z+1),
+				                              point(x+1,y+1,z+1),point(x  ,y+1,z+1)));
+#else
+				hexas.push_back(Hexa(point(x  ,y  ,z  ),point(x+1,y  ,z  ),
 				                              point(x  ,y+1,z  ),point(x+1,y+1,z  ),
 				                              point(x  ,y  ,z+1),point(x+1,y  ,z+1),
 				                              point(x  ,y+1,z+1),point(x+1,y+1,z+1)));
+#endif
+	seqHexas.endEdit();		
 }
 
-GridTopology::Cube GridTopology::getCubeCopy(int i)
+GridTopology::Hexa GridTopology::getHexaCopy(int i)
 {
 	int x = i%(n.getValue()[0]-1); i/=(n.getValue()[0]-1);
 	int y = i%(n.getValue()[1]-1); i/=(n.getValue()[1]-1);
 	int z = i;
-	return getCube(x,y,z);
+	return getHexa(x,y,z);
 }
 
-GridTopology::Cube GridTopology::getCube(int x, int y, int z)
+GridTopology::Hexa GridTopology::getHexa(int x, int y, int z)
 {
-	return Cube(point(x  ,y  ,z  ),point(x+1,y  ,z  ),
+#ifdef SOFA_NEW_HEXA
+	return Hexa(point(x  ,y  ,z  ),point(x+1,y  ,z  ),
+	                  point(x+1,y+1,z  ),point(x  ,y+1,z  ),
+	                  point(x  ,y  ,z+1),point(x+1,y  ,z+1),
+	                  point(x+1,y+1,z+1),point(x  ,y+1,z+1));
+#else
+	return Hexa(point(x  ,y  ,z  ),point(x+1,y  ,z  ),
 	                  point(x  ,y+1,z  ),point(x+1,y+1,z  ),
 	                  point(x  ,y  ,z+1),point(x+1,y  ,z+1),
 	                  point(x  ,y+1,z+1),point(x+1,y+1,z+1));
+#endif
 }
 
 GridTopology::Quad GridTopology::getQuadCopy(int i)
@@ -167,23 +186,17 @@ GridTopology::Quad GridTopology::getQuadCopy(int i)
 	}
 }
 
-GridTopology::Quad GridTopology::getQuad(int x, int y, int /*z*/)
+GridTopology::Quad GridTopology::getQuad(int x, int y, int z)
 {
-/*
-	if (x == -1)
-		return make_array(point(1, y, z),point(1, y+1, z),
-			point(1, y+1, z+1),point(1, y, z+1));
-
-	else if (y == -1)
-		return make_array(point(x, 1, z),point(x+1, 1, z),
-			point(x+1, 1, z+1),point(x, 1, z+1));
-
-	else
-		return make_array(point(x, y, 1),point(x+1, y, 1),
-			point(x+1, y+1, 1),point(x, y+1, 1));
-*/
-	return Quad(point(x, y, 1),point(x+1, y, 1),
-			point(x+1, y+1, 1),point(x, y+1, 1));
+    if (n.getValue()[2] == 1)
+	return Quad(point(x, y, 1), point(x+1, y, 1),
+                    point(x+1, y+1, 1), point(x, y+1, 1));
+    else if (n.getValue()[1] == 1)
+	return Quad(point(x, 1, z), point(x+1, 1, z),
+                    point(x+1, 1, z+1), point(x, 1, z+1));
+    else
+        return Quad(point(1, y, z),point(1, y+1, z),
+                    point(1, y+1, z+1),point(1, y, z+1));
 }
 
 } // namespace topology

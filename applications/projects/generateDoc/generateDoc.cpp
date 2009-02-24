@@ -1,10 +1,36 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "generateDoc.h"
 
 #include <fstream>
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/objectmodel/Context.h>
-#include <sofa/simulation/tree/Colors.h>
+#include <sofa/simulation/common/Colors.h>
 
 namespace projects
 {
@@ -158,7 +184,7 @@ bool generateFactoryPHPDoc(const std::string& filename, const std::string& url)
     out << "<?php } if ($show) echo '</a>'; ?>";
     for (const char** c = baseClasses; *c; ++c)
     {
-	out << " <span class=\"class-base-name\" style=\"background-color: " << sofa::simulation::tree::Colors::getColor(*c) << ";\">";
+	out << " <span class=\"class-base-name\" style=\"background-color: " << sofa::simulation::Colors::getColor(*c) << ";\">";
 	out << "<?php if ($show != '"<<xmlencode(*c)<<"') echo '<a href=\""<<url<<"?show="<<xmlencode(*c)<<"'.($desc?'&desc='.$desc:'').'\">'; ?>";
 	out << *c;
 	out << "<?php if ($show != '"<<xmlencode(*c)<<"') echo '</a>'; ?>";
@@ -197,7 +223,7 @@ bool generateFactoryPHPDoc(const std::string& filename, const std::string& url)
 	out << "<tr class=\"sofa-class\">";
 	out << "<td class=\"sofa-base\" valign=\"top\">";
 	for (std::set<std::string>::iterator it = entry->baseClasses.begin(), itend = entry->baseClasses.end(); it != itend; ++it)
-	    out << "<span class=\"class-base\" style=\"background-color: " << sofa::simulation::tree::Colors::getColor((*it).c_str()) << ";\" alt=\"" << xmlencode(*it) << "\" title=\"" << xmlencode(*it) << "\">&nbsp;</span>";
+	    out << "<span class=\"class-base\" style=\"background-color: " << sofa::simulation::Colors::getColor((*it).c_str()) << ";\" alt=\"" << xmlencode(*it) << "\" title=\"" << xmlencode(*it) << "\">&nbsp;</span>";
 	out << "</td>";
 	
         out << "<td class=\"sofa-name\" valign=\"top\"><?php if ($base) echo '<a href=\""<<url<<"?show="<<xmlencode(entry->className)<<"'.($desc?'&desc='.$desc:'').'\" class=\"class-name\">'; else echo '<span class=\"class-name\">'; ?>" << xmlencode(entry->className) <<"<?php if ($base) echo '</a>'; else echo '</span>'; ?>\n";

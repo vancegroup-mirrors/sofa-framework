@@ -1,12 +1,27 @@
-/***************************************************************************
-								  LMLReader
-                             -------------------
-    begin             : August 9th, 2006
-    copyright         : (C) 2006 TIMC-INRIA (Michael Adam)
-    author            : Michael Adam
-    Date              : $Date: 2006/08/09 8:58:16 $
-    Version           : $Revision: 0.1 $
- ***************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 /***************************************************************************
  *                                                                         *
@@ -29,13 +44,15 @@
 
 #include "sofa/component/collision/DefaultPipeline.h"
 #include "sofa/component/collision/DefaultContactManager.h"
-#include "sofa/component/collision/MinProximityIntersection.h"
+#include "sofa/component/collision/NewProximityIntersection.h"
+#include "sofa/component/collision/DefaultCollisionGroupManager.h"
 #include "sofa/component/collision/BruteForceDetection.h"
-#include "sofa/simulation/tree/VisualVisitor.h"
+#include "sofa/simulation/common/VisualVisitor.h"
 #include "sofa/simulation/tree/Simulation.h"
 
 using namespace sofa::component::collision;
 using namespace sofa::simulation::tree;
+using namespace sofa::simulation;
 
 namespace sofa
 {
@@ -109,24 +126,26 @@ void PMLReader::BuildStructure(GNode* root){
 	if (collisionsExist){
 		DefaultPipeline * ps = new DefaultPipeline;
 		BruteForceDetection * bfd = new BruteForceDetection;
-		MinProximityIntersection * mpi = new MinProximityIntersection;
+		NewProximityIntersection * mpi = new NewProximityIntersection;
 		//computes the distance contact from the bounding box
 		VisualComputeBBoxVisitor act;
 		getSimulation()->init(root);
 		root->execute(act);
-		double dx=(act.maxBBox[0]-act.minBBox[0]);
-		double dy=(act.maxBBox[1]-act.minBBox[1]);
-		double dz=(act.maxBBox[2]-act.minBBox[2]);
-		double dmax = sqrt(dx*dx + dy*dy + dz*dz);
+		SReal dx=(act.maxBBox[0]-act.minBBox[0]);
+		SReal dy=(act.maxBBox[1]-act.minBBox[1]);
+		SReal dz=(act.maxBBox[2]-act.minBBox[2]);
+		SReal dmax = sqrt(dx*dx + dy*dy + dz*dz);
 		//maybe the ratio should be changed...
 		mpi->setAlarmDistance(dmax/30);
 		mpi->setContactDistance(dmax/40);
 		DefaultContactManager * contactManager = new DefaultContactManager;
+		DefaultCollisionGroupManager * cgm = new DefaultCollisionGroupManager;
 
 		root->addObject(ps);
 		root->addObject(bfd);
 		root->addObject(mpi);
 		root->addObject(contactManager);
+		root->addObject(cgm);
 	}
 
 	//if there is 2 bodies with the same type and some nodes in common, we merge them
@@ -242,7 +261,7 @@ void PMLReader::saveAsPML(const char * filename)
 		while(itm != (*itb)->AtomsToDOFsIndexes.end() )
 		{
 			atom = (Atom*) atoms->getStructureByIndex( (*itm).first );
-			Vec3d pos = (*itb)->getDOF((*itm).second);
+			Vector3 pos = (*itb)->getDOF((*itm).second);
 			atom->setPosition(pos[0], pos[1], pos[2]);
 
 			itm++;
@@ -256,9 +275,9 @@ void PMLReader::saveAsPML(const char * filename)
 
 
 //return a point position giving a physical model atom index
-Vec3d PMLReader::getAtomPos(unsigned int atomindex)
+Vector3 PMLReader::getAtomPos(unsigned int atomindex)
 {
-	Vec3d pos;
+  Vector3 pos;
 	std::vector<PMLBody*>::iterator itb = bodiesList.begin();
 
 	while (itb != bodiesList.end())
@@ -274,7 +293,7 @@ Vec3d PMLReader::getAtomPos(unsigned int atomindex)
 		}
 		itb++;
 	}
-	return Vec3d();
+	return Vector3();
 }
 
 
@@ -295,7 +314,7 @@ void PMLReader::updatePML()
 				while(itm != (*itb)->AtomsToDOFsIndexes.end() )
 				{
 					atom = (Atom*) atoms->getStructureByIndex( (*itm).first );
-					Vec3d pos = (*itb)->getDOF((*itm).second);
+					Vector3 pos = (*itb)->getDOF((*itm).second);
 					atom->setPosition(pos[0], pos[1], pos[2]);
 
 					itm++;

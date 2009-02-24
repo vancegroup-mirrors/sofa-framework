@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 /** @file SphereTreeModel.h
  *  @brief Definition of the class SphereTreeModel and SingleSphere;
  *
@@ -36,9 +36,8 @@
 #define SOFA_COMPONENT_COLLISION_SPHERETREEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/MechanicalObject.h>
-#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <vector>
 #include <iostream>
@@ -93,7 +92,11 @@ public:
 	
 };
 
-class SphereTreeModel : public component::MechanicalObject<Vec3Types>, public core::CollisionModel, public core::VisualModel
+/** @class SphereTreeModel
+    @brief A Sphere Tree based collision object: No tool to generation .sph file are provided by Sofa. 
+      Tools can be found at http://isg.cs.tcd.ie/spheretree/ . If you manage to integrate an automatic generation tool to provide .sph files from .obj, don't hesitate to share it to the Sofa's comunity.
+ */
+class SphereTreeModel : public component::MechanicalObject<Vec3Types>, public core::CollisionModel
 {
 public:
 	typedef component::MechanicalObject<Vec3Types> Inherit;
@@ -108,10 +111,10 @@ public:
 		
 	/** @brief Add a new sphere to the tree. It actually increases the size of the DOF's of the
 	model setting the radius and the center*/
-	int addSphere(const Vector3& pos, double radius);
+	int addSphere(const Vector3& pos, SReal radius);
 
 	/** @brief */ 
-	void setSphere(int index, const Vector3& pos, double radius);
+	void setSphere(int index, const Vector3& pos, SReal radius);
 
 	/** @brief Load SphereTree Model. The file is generated offline using a medial axis approximation
 		Windows executables to obtain the file are available at cesarmendoza_serrano@yahoo.fr*/
@@ -155,10 +158,7 @@ public:
 	/** @brief It returns true is the element iterator is a leaf of the spheretree collision model*/
 	virtual bool isLeaf( int index ) const;
 
-	// -- VisualModel interface	
 	void draw();
-	void initTextures() { }
-	void update() { }
 
 protected:
 
@@ -166,9 +166,7 @@ protected:
 	sofa::helper::vector<double> radius;	
 
 	/** @brief default radius */
-	Data<double> defaultRadius;	
-
-	virtual void init( void );
+	Data<double> defaultRadius;		
 
 };
 
@@ -198,7 +196,7 @@ inline const Vector3& SingleSphere::v() const
 
 inline void SingleSphere::setCenter( double x, double y, double z ) 
 {
-	(*model->getX())[index] = Vector3(x,y,z);
+	(*model->getX())[index] = Vector3((SReal)x, (SReal)y, (SReal)z);
 }
 
 inline double SingleSphere::r() const

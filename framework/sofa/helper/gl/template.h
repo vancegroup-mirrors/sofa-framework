@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_HELPER_GL_TEMPLATE_H
 #define SOFA_HELPER_GL_TEMPLATE_H
 
@@ -81,15 +83,114 @@ inline void glVertexT(const Coord& c)
 template<>
 inline void glVertexT<double>(const double& c)
 {
-  glVertex3d(c,0,0);
+  glVertex3d(c,0.0,0.0);
 }
 
 template<>
 inline void glVertexT<float>(const float& c)
 {
-  glVertex3d(c,0,0);
+  glVertex3f(c,0.0f,0.0f);
 }
 
+
+
+
+template<int N>
+inline void glNormalNv(const float* p)
+{
+    glNormal3f(p[0],p[1],p[2]);
+}
+
+template<>
+inline void glNormalNv<2>(const float* p)
+{
+    glNormal3f(p[0],p[1],0.0f);
+}
+
+template<>
+inline void glNormalNv<1>(const float* p)
+{
+    glNormal3f(p[0],0.0f,0.0f);
+}
+
+template<int N>
+inline void glNormalNv(const double* p)
+{
+    glNormal3d(p[0],p[1],p[2]);
+}
+
+template<>
+inline void glNormalNv<2>(const double* p)
+{
+    glNormal3d(p[0],p[1],0.0);
+}
+
+template<>
+inline void glNormalNv<1>(const double* p)
+{
+    glNormal3d(p[0],0.0,0.0);
+}
+
+template<class Coord>
+inline void glNormalT(const Coord& c)
+{
+    glNormalNv<Coord::static_size>(c.ptr());
+}
+
+template<>
+inline void glNormalT<double>(const double& c)
+{
+    glNormal3d(c,0.0,0.0);
+}
+
+template<>
+inline void glNormalT<float>(const float& c)
+{
+    glNormal3f(c,0.0f,0.0f);
+}
+////////
+inline void glTranslate(const float& c1, const float& c2, const float& c3)
+{
+	 glTranslatef(c1, c2, c3);
+}
+
+inline void glTranslate(const double& c1, const double& c2, const double& c3)
+{
+	 glTranslated(c1, c2, c3);
+}
+
+inline void glScale(const float& c1, const float& c2, const float& c3)
+{
+	 glScalef(c1, c2, c3);
+}
+
+inline void glScale(const double& c1, const double& c2, const double& c3)
+{
+	 glScaled(c1, c2, c3);
+}
+
+inline void glRotate(const GLfloat &value, const float& c1, const float& c2, const float& c3)
+{
+	glRotatef(value, c1, c2, c3);
+}
+
+inline void glRotate(const GLdouble &value, const double& c1, const double& c2, const double& c3)
+{
+	glRotated(value, c1, c2, c3);
+}
+
+inline void glMultMatrix(const float* p)
+{
+	glMultMatrixf(p);
+}
+
+inline void glMultMatrix(const double* p)
+{
+	glMultMatrixd(p);
+}
+
+
+    
 } // namespace gl
 
 } // namespace helper

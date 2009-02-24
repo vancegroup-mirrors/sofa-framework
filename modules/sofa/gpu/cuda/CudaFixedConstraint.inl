@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_GPU_CUDA_CUDAFIXEDCONSTRAINT_INL
 #define SOFA_GPU_CUDA_CUDAFIXEDCONSTRAINT_INL
 
@@ -17,6 +41,9 @@ extern "C"
 {
 void FixedConstraintCuda3f_projectResponseContiguous(unsigned int size, void* dx);
 void FixedConstraintCuda3f_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+void FixedConstraintCuda3f1_projectResponseContiguous(unsigned int size, void* dx);
+void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+
 }
 
 } // namespace cuda
@@ -31,28 +58,31 @@ namespace constraint
 
 using namespace gpu::cuda;
 
-template <>
-void FixedConstraint<CudaVec3fTypes>::init()
+template<class TCoord, class TDeriv, class TReal>
+void FixedConstraintInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::init(Main* m)
 {
-	this->core::componentmodel::behavior::Constraint<CudaVec3fTypes>::init();
-	const SetIndex& indices = f_indices.getValue();
-	data.minIndex = -1;
-	data.maxIndex = -1;
-	data.cudaIndices.clear();
+    Data& data = m->data;
+    data.minIndex = -1;
+    data.maxIndex = -1;
+    data.cudaIndices.clear();
+    m->core::componentmodel::behavior::Constraint<DataTypes>::init();
+	const SetIndex& indices = m->f_indices.getValue();
 	if (!indices.empty())
 	{
 		// put indices in a set to sort them and remove duplicates
 		std::set<int> sortedIndices;
-		for (SetIndex::const_iterator it = indices.begin(); it!=indices.end(); it++)
+		for (typename SetIndex::const_iterator it = indices.begin(); it!=indices.end(); it++)
 			sortedIndices.insert(*it);
 		// check if the indices are contiguous
 		if (*sortedIndices.begin() + (int)sortedIndices.size()-1 == *sortedIndices.rbegin())
 		{
 			data.minIndex = *sortedIndices.begin();
 			data.maxIndex = *sortedIndices.rbegin();
+			//std::cout << "CudaFixedConstraint: "<<sortedIndices.size()<<" contiguous fixed indices, "<<data.minIndex<<" - "<<data.maxIndex<<std::endl;
 		}
 		else
 		{
+		    //std::cout << "CudaFixedConstraint: "<<sortedIndices.size()<<" non-contiguous fixed indices"<<std::endl;
 			data.cudaIndices.reserve(sortedIndices.size());
 			for (std::set<int>::const_iterator it = sortedIndices.begin(); it!=sortedIndices.end(); it++)
 				data.cudaIndices.push_back(*it);
@@ -60,12 +90,13 @@ void FixedConstraint<CudaVec3fTypes>::init()
 	}
 }
 
-template <>
-void FixedConstraint<gpu::cuda::CudaVec3fTypes>::addConstraint(unsigned int index)
+template<class TCoord, class TDeriv, class TReal>
+void FixedConstraintInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::addConstraint(Main* m, unsigned int index)
 {
+    Data& data = m->data;
     //std::cout << "CudaFixedConstraint::addConstraint("<<index<<")\n";
-    f_indices.beginEdit()->push_back(index);
-    f_indices.endEdit();
+    m->f_indices.beginEdit()->push_back(index);
+    m->f_indices.endEdit();
     if (data.cudaIndices.empty())
     {
         if (data.minIndex == -1)
@@ -74,6 +105,10 @@ void FixedConstraint<gpu::cuda::CudaVec3fTypes>::addConstraint(unsigned int inde
             data.minIndex = index;
             data.maxIndex = index;
         }
+	else if ((int)index >= data.minIndex && (int)index <= data.maxIndex)
+	{
+	    // point already fixed
+	}
         else if (data.minIndex == (int)index+1)
         {
             data.minIndex = index;
@@ -92,7 +127,7 @@ void FixedConstraint<gpu::cuda::CudaVec3fTypes>::addConstraint(unsigned int inde
             data.cudaIndices.push_back(index);
             data.minIndex = -1;
             data.maxIndex = -1;
-            //std::cout << "CudaFixedConstraint: new indices array size "<<data.cudaIndices.size()<<"\n";
+            std::cout << "CudaFixedConstraint: new indices array size "<<data.cudaIndices.size()<<"\n";
         }
     }
     else
@@ -102,11 +137,12 @@ void FixedConstraint<gpu::cuda::CudaVec3fTypes>::addConstraint(unsigned int inde
     }
 }
 
-template <>
-void FixedConstraint<gpu::cuda::CudaVec3fTypes>::removeConstraint(unsigned int index)
+template<class TCoord, class TDeriv, class TReal>
+void FixedConstraintInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::removeConstraint(Main* m, unsigned int index)
 {
-    removeValue(*f_indices.beginEdit(),index);
-    f_indices.endEdit();
+    Data& data = m->data;
+    removeValue(*m->f_indices.beginEdit(),index);
+    m->f_indices.endEdit();
     if (data.cudaIndices.empty())
     {
         if (data.minIndex <= (int)index && (int)index <= data.maxIndex)
@@ -150,15 +186,48 @@ void FixedConstraint<gpu::cuda::CudaVec3fTypes>::removeConstraint(unsigned int i
     }
 }
 
-// -- Constraint interface
+
 template <>
-void FixedConstraint<gpu::cuda::CudaVec3fTypes>::projectResponse(VecDeriv& dx)
+void FixedConstraintInternalData<gpu::cuda::CudaVec3fTypes>::projectResponse(Main* m, VecDeriv& dx)
 {
-	if (data.minIndex >= 0)
-		FixedConstraintCuda3f_projectResponseContiguous(data.maxIndex-data.minIndex+1, ((float*)dx.deviceWrite())+3*data.minIndex);
-	else
-		FixedConstraintCuda3f_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
+    Data& data = m->data;
+    if (m->f_fixAll.getValue())
+	FixedConstraintCuda3f_projectResponseContiguous(dx.size(), ((float*)dx.deviceWrite()));
+    else if (data.minIndex >= 0)
+	FixedConstraintCuda3f_projectResponseContiguous(data.maxIndex-data.minIndex+1, ((float*)dx.deviceWrite())+3*data.minIndex);
+    else
+	FixedConstraintCuda3f_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
 }
+
+template <>
+void FixedConstraintInternalData<gpu::cuda::CudaVec3f1Types>::projectResponse(Main* m, VecDeriv& dx)
+{
+    Data& data = m->data;
+    if (m->f_fixAll.getValue())
+	FixedConstraintCuda3f1_projectResponseContiguous(dx.size(), ((float*)dx.deviceWrite()));
+    else if (data.minIndex >= 0)
+	FixedConstraintCuda3f1_projectResponseContiguous(data.maxIndex-data.minIndex+1, ((float*)dx.deviceWrite())+4*data.minIndex);
+    else
+	FixedConstraintCuda3f1_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
+}
+
+
+// I know using macros is bad design but this is the only way not to repeat the code for all CUDA types
+#define CudaFixedConstraint_ImplMethods(T) \
+    template<> void FixedConstraint< T >::init() \
+    { data.init(this); } \
+    template<> void FixedConstraint< T >::addConstraint(unsigned int index) \
+    { data.addConstraint(this, index); } \
+    template<> void FixedConstraint< T >::removeConstraint(unsigned int index) \
+    { data.removeConstraint(this, index); } \
+    template<> void FixedConstraint< T >::projectResponse(VecDeriv& dx) \
+    { data.projectResponse(this, dx); }
+
+CudaFixedConstraint_ImplMethods(gpu::cuda::CudaVec3fTypes);
+CudaFixedConstraint_ImplMethods(gpu::cuda::CudaVec3f1Types);
+
+
+#undef CudaFixedConstraint_ImplMethods
 
 } // namespace constraint
 

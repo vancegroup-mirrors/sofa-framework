@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_FRICTIONCONTACT_INL
 #define SOFA_COMPONENT_COLLISION_FRICTIONCONTACT_INL
 
@@ -25,6 +49,9 @@ template < class TCollisionModel1, class TCollisionModel2 >
 FrictionContact<TCollisionModel1,TCollisionModel2>::FrictionContact(CollisionModel1* model1, CollisionModel2* model2, Intersection* intersectionMethod)
 : model1(model1), model2(model2), intersectionMethod(intersectionMethod), c(NULL), parent(NULL)
 {
+    mapper1.setCollisionModel(model1);
+    mapper2.setCollisionModel(model2);
+
 	mu = 0.6;
 }
 
@@ -60,7 +87,7 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 {
     TOutputVector& outputs = *static_cast<TOutputVector*>(o);
 	// We need to remove duplicate contacts
-	const double minDist2 = 0.0001f;
+	const double minDist2 = 0.00000001f;
 	std::vector<DetectionOutput*> contacts;
 	contacts.reserve(outputs.size());
 
@@ -89,9 +116,9 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 
 	if (c==NULL){
 		// Get the mechanical model from mapper1 to fill the constraint vector
-		MechanicalState1* mmodel1 = mapper1.createMapping(model1);
+		MechanicalState1* mmodel1 = mapper1.createMapping();
 		// Get the mechanical model from mapper2 to fill the constraints vector	
-		MechanicalState2* mmodel2 = mapper2.createMapping(model2);
+		MechanicalState2* mmodel2 = mapper2.createMapping();
 		c = new constraint::UnilateralInteractionConstraint<Vec3Types>(mmodel1, mmodel2);
 	}
 
@@ -100,27 +127,30 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 	mapper1.resize(size);
 	mapper2.resize(size);
 	int i = 0;
+	const double d0 = intersectionMethod->getContactDistance() + model1->getProximity() + model2->getProximity(); // - 0.001;
 	for (std::vector<DetectionOutput*>::const_iterator it = contacts.begin(); it!=contacts.end(); it++, i++)
 	{
 		DetectionOutput* o = *it;
 		CollisionElement1 elem1(o->elem.first);
 		CollisionElement2 elem2(o->elem.second);
 		int index1 = elem1.getIndex();
-		int index2 = elem2.getIndex();
-		
+                int index2 = elem2.getIndex();
+                typename DataTypes1::Real r1 = 0.0;
+                typename DataTypes2::Real r2 = 0.0;
 		//double constraintValue = ((o->point[1] - o->point[0]) * o->normal) - intersectionMethod->getContactDistance();
 
 		// Create mapping for first point
-		index1 = mapper1.addPoint(o->point[0], index1);
+		index1 = mapper1.addPoint(o->point[0], index1, r1);
 		// Create mapping for second point
-		index2 = mapper2.addPoint(o->point[1], index2);
+		index2 = mapper2.addPoint(o->point[1], index2, r2);
 		// Checks if friction is considered
 		if (mu < 0.0 || mu > 1.0)
 			cerr << endl << "Error: mu has to take values between 0.0 and 1.0" << endl;
 
-		// Polynome de Cantor de N² sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
+		double distance = d0 + r1 + r2;
+		// Polynome de Cantor de Nï¿½ sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
 		long index = cantorPolynomia(cantorPolynomia(index1, index2),id);
-		c->addContact(mu, o->normal, o->point[1], o->point[0], intersectionMethod->getContactDistance(), index1, index2, o->freePoint[1], o->freePoint[0], index);
+		c->addContact(mu, o->normal, o->point[1], o->point[0], distance, index1, index2, o->freePoint[1], o->freePoint[0], index);
 	}
 	// Update mappings
 	mapper1.update();

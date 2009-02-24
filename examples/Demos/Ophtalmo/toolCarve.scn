@@ -1,0 +1,26 @@
+<Node name="Instrument">
+	<Object type="MechanicalObject" name="DOFs" position="0 0 0 0 1" template="LaparoscopicRigid3"/>
+	<Object type="CarvingManager" />
+	<Object type="MinProximityIntersection" alarmDistance="0.001" contactDistance="0.001" />
+	<Object type="BruteForceDetection" />
+	<Node name="RigidLayer">
+		<Object type="MechanicalObject" template="Rigid" />
+		<Object type="UniformMass" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_centered.rigid" />
+		<Object type="LaparoscopicRigidMapping" pivot="0 0 0" rotation="0 0.707 0 0.707"/>
+		<Node name="CollisionHandle">
+			<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Carve_instrument.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" />
+			<Object type="Triangle" contactStiffness="10" simulated="0" moving="1" />
+			<Object type="RigidMapping" />
+		</Node>
+		<Node name="CollisionTip">
+			<Object type="SphereModel" position="0.0348 0 -0.62 0.0348 0 -0.61 0.0348 0 -0.60" radius="0.03" contactStiffness="0" simulated="0" moving="1" active="0" />
+			<Object type="RigidMapping" />
+		</Node>
+		<Node name="Visual">
+			<Object type="OglModel" name="visual" filename="Demos/Ophtalmo/data/mesh/Carve_instrument.obj" color="0.1 0.1 0.1 1.0" />
+			<Object type="RigidMapping" object2="visual" />
+		</Node>
+	</Node>
+</Node>

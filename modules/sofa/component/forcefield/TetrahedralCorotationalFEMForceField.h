@@ -1,33 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
-#ifndef SOFA_COMPONENT_FORCEFIELD_TETRAHEDRONFEMFORCEFIELD_H
-#define SOFA_COMPONENT_FORCEFIELD_TETRAHEDRONFEMFORCEFIELD_H
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
+#ifndef SOFA_COMPONENT_FORCEFIELD_TETRAHEDRALCOROTATIONALFEMFORCEFIELD_H
+#define SOFA_COMPONENT_FORCEFIELD_TETRAHEDRALCOROTATIONALFEMFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/component/MechanicalObject.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/topology/TetrahedronData.h>
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/Vec.h>
@@ -65,7 +64,7 @@ using namespace sofa::component::topology;
 /** Compute Finite Element forces based on tetrahedral elements.
 */
 template<class DataTypes>
-class TetrahedralCorotationalFEMForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public core::VisualModel
+class TetrahedralCorotationalFEMForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
     typedef typename DataTypes::VecCoord VecCoord;
@@ -77,10 +76,10 @@ public:
     typedef typename Coord::value_type Real;
 
 
-    enum { SMALL = 0,   ///< Symbol of small displacements tetrahedron solver
-           LARGE = 1,   ///< Symbol of large displacements tetrahedron solver
-           POLAR = 2 }; ///< Symbol of polar displacements tetrahedron solver
-	
+    enum { SMALL = 0, ///< Symbol of small displacements tetrahedron solver
+           LARGE = 1, ///< Symbol of large displacements tetrahedron solver
+           POLAR = 2  ///< Symbol of polar displacements tetrahedron solver
+    };
 protected:
 
     /// @name Per element (tetrahedron) data
@@ -109,9 +108,9 @@ protected:
 	public:
 	    /// material stiffness matrices of each tetrahedron
 		MaterialStiffness materialMatrix;
-		///< the strain-displacement matrices vector
+		/// the strain-displacement matrices vector
 		StrainDisplacement strainDisplacementMatrix;
-		// large displacement method
+		/// large displacement method
 		helper::fixed_array<Coord,4> rotatedInitialElements;
 		Transformation rotation;
 		/// polar method
@@ -135,8 +134,8 @@ protected:
     /// @}
 
     double m_potentialEnergy;
-
-	TetrahedronSetTopology<DataTypes> * _mesh;
+	
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
 
 public:
    int method;
@@ -153,8 +152,7 @@ public:
     DataPtr<bool> f_assembling;
 
     TetrahedralCorotationalFEMForceField()
-    : _mesh(NULL)
-    , f_method(initData(&f_method,std::string("large"),"method","\"small\", \"large\" (by QR) or \"polar\" displacements"))
+    : f_method(initData(&f_method,std::string("large"),"method","\"small\", \"large\" (by QR) or \"polar\" displacements"))
     ,  _poissonRatio((Real)0.45f)
     , f_poissonRatio(initDataPtr(&f_poissonRatio,&_poissonRatio,"poissonRatio","FEM Poisson Ratio"))
     ,  _youngModulus((Real)5000)
@@ -176,9 +174,7 @@ public:
 
     void setUpdateStiffnessMatrix(bool val) { this->f_updateStiffnessMatrix.setValue(val); }
 
-    void setComputeGlobalMatrix(bool val) { this->f_assembling.setValue(val); }
-
-	TetrahedronSetTopology<DataTypes> *getTetrahedralTopology() const {return _mesh;}
+    void setComputeGlobalMatrix(bool val) { this->f_assembling.setValue(val); }	
 
 	virtual void init();
     virtual void reinit();
@@ -189,15 +185,12 @@ public:
 
     virtual double getPotentialEnergy(const VecCoord& x);
 
-    virtual void addKToMatrix(sofa::defaulttype::BaseMatrix *, double, unsigned int &);
+    virtual void addKToMatrix(sofa::defaulttype::BaseMatrix *, SReal, unsigned int &);
 
 	// handle topological changes
 	virtual void handleTopologyChange();
 
-    // -- VisualModel interface
     void draw();
-    void initTextures() { }
-    void update() { }
 
   protected:
 

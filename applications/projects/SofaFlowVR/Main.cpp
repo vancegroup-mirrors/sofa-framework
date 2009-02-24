@@ -1,3 +1,29 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <iostream>
 #include <fstream>
 #include <stack>
@@ -7,33 +33,37 @@
 //#include <flowvr/interact/chunkwriter.h>
 
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/simulation/tree/Action.h>
-#include <sofa/simulation/tree/ParallelActionScheduler.h>
+#include <sofa/simulation/common/Visitor.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/defaulttype/Mat.h>
+#include <sofa/helper/ArgumentParser.h>
 #include <sofa/helper/BackTrace.h>
 #include <sofa/helper/system/thread/CTime.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/core/objectmodel/Event.h>
-#include <sofa/simulation/tree/AnimateBeginEvent.h>
-#include <sofa/simulation/tree/AnimateEndEvent.h>
-#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/simulation/common/AnimateBeginEvent.h>
+#include <sofa/simulation/common/AnimateEndEvent.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 
-#include <sofa/simulation/tree/GNode.h>
-#include <sofa/simulation/tree/InitAction.h>
-#include <sofa/simulation/tree/DeleteAction.h>
+#include <sofa/simulation/common/Node.h>
+#include <sofa/simulation/common/InitVisitor.h>
+#include <sofa/simulation/tree/DeleteVisitor.h>
 #include <sofa/component/MechanicalObject.h>
 #include <sofa/component/collision/PointModel.h>
 #include <sofa/component/collision/MinProximityIntersection.h>
 #include <sofa/component/collision/BruteForceDetection.h>
+#include <sofa/component/init.h>
 
 #include <sofa/component/visualmodel/VisualModelImpl.h>
 #include <sofa/component/visualmodel/OglModel.h>
 
-#include <sofa/gui/SofaGUI.h>
+#ifdef SOFA_GPU_CUDA
+#include <sofa/gpu/cuda/CudaDistanceGridCollisionModel.h>
+#endif
 
-#include <sofa/helper/system/gl.h>
+#include <sofa/gui/SofaGUI.h>
+#include <sofa/helper/system/gl.h> 
 #include <sofa/helper/system/glut.h>
   
 using sofa::helper::system::thread::CTime;
@@ -80,6 +110,7 @@ namespace SofaFlowVR
 //using namespace Sofa::Abstract;
 //using namespace Sofa::Components;
 using namespace sofa::defaulttype;
+using namespace sofa::simulation;
 
 class FlowVRModule;
 
@@ -364,7 +395,7 @@ public:
     // To do it we need to create an additionnal PointModel collision model, as well as a Detection and Intersection class
     sofa::simulation::tree::GNode * newPointsNode;
     typedef sofa::simulation::tree::GNode::Sequence<sofa::core::CollisionModel>::iterator CMIterator;
-    sofa::component::MechanicalObject<Vec3dTypes> * newPoints;
+    sofa::component::MechanicalObject<Vec3Types> * newPoints;
     sofa::component::collision::PointModel * newPointsCM;
     sofa::component::collision::MinProximityIntersection * intersection;
     sofa::component::collision::BruteForceDetection * detection;
@@ -390,7 +421,7 @@ public:
     {
 	if (newPointsNode != NULL)
 	{
-	    newPointsNode->execute<sofa::simulation::tree::DeleteAction>();
+	    newPointsNode->execute<sofa::simulation::tree::DeleteVisitor>();
 	    delete newPointsNode;
 	}
     }
@@ -409,7 +440,7 @@ public:
 	if (computeV.getValue())
 	{
 	    newPointsNode = new sofa::simulation::tree::GNode("newPoints");
-	    newPointsNode->addObject ( newPoints = new sofa::component::MechanicalObject<Vec3dTypes> );
+	    newPointsNode->addObject ( newPoints = new sofa::component::MechanicalObject<Vec3Types> );
 	    newPointsNode->addObject ( newPointsCM = new sofa::component::collision::PointModel );
 
 	    newPointsNode->addObject ( intersection = new sofa::component::collision::MinProximityIntersection );
@@ -419,7 +450,7 @@ public:
 	    newPointsNode->addObject ( detection = new sofa::component::collision::BruteForceDetection );
 	    detection->setIntersectionMethod(intersection);
 	    
-	    newPointsNode->execute<sofa::simulation::tree::InitAction>();
+	    newPointsNode->execute<sofa::simulation::InitVisitor>();
 	}
     }
     
@@ -427,7 +458,7 @@ public:
     {
         //std::cout << "Received FlowVRBeginIteration"<<std::endl;
         flowvr::Message points, facets;
-	double time = getContext()->getTime();
+// 	double time = getContext()->getTime();
         
         module->get(pInPoints, points);
         module->get(pInFacets, facets);
@@ -458,140 +489,145 @@ public:
             const float scale = mod->f_scale.getValue();
             
             BaseObject* mmodel = getContext()->getMechanicalState();
-            sofa::core::componentmodel::behavior::MechanicalState<Vec3fTypes>* mmodel3f;
-            sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>* mmodel3d;
-            if ((mmodel3f = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<Vec3fTypes>*>(mmodel))!=NULL)
-            {
-                //std::cout << "Copying "<<nbv<<" vertices to mmodel3f"<<std::endl;
-                mmodel3f->resize(nbv);
-                Vec3fTypes::VecCoord& x = *mmodel3f->getX();
-                if (matrixLastIt==-20)
-                {
-                    for (unsigned int i=0;i<nbv;i++)
-		    {
-                        x[i] = vertices[i]*scale;
-                        x[i] += trans;
-		    }
-                }
-                else
-                {
-		    float scale2 = 1.0;
-		    if (matrix[3][3] != 0) scale2 = 1/matrix[3][3];
-                    for (unsigned int i=0;i<nbv;i++)
-                    {
-		        Vec3f v = vertices[i]*scale;
-                        v += trans;
-                        Vec4f tv = matrix * Vec4f(v[0],v[1],v[2],1.0f);
-                        x[i] = Vec3f(tv[0],tv[1],tv[2])*scale2;
-                    }
-                }
-            }
-            else if ((mmodel3d = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>*>(mmodel))!=NULL)
-            {
-		bool doComputeV = (computeV.getValue() && newPoints != NULL && motionLastTime != -1000);
+#ifndef SOFA_FLOAT
+	    sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>* mmodel3d;
+	    if ((mmodel3d = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>*>(mmodel))!=NULL)
+	    {
+	      bool doComputeV = (computeV.getValue() && newPoints != NULL && motionLastTime != -1000);
 		
-		sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>* mm;
-                if (doComputeV)
-		{
+	      sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>* mm;
+	      if (doComputeV)
+	      {
 		    //std::cout << "Copying "<<nbv<<" vertices and estimate velocity"<<std::endl;
-		    mm = newPoints; // put new data in newPoints state
-		}
-		else
-		{
+		mm = newPoints; // put new data in newPoints state
+	      }
+	      else
+	      {
 		    //std::cout << "Copying "<<nbv<<" vertices to mmodel3d"<<std::endl;
-		    mm = mmodel3d;
-		}
-                mm->resize(nbv);
-                Vec3dTypes::VecCoord& x = *mm->getX();
+		mm = mmodel3d;
+	      }
+	      mm->resize(nbv);
+	      Vec3dTypes::VecCoord& x = *mm->getX();
 
-                if (matrixLastIt==-20)
-                {
-                    for (unsigned int i=0;i<nbv;i++)
-		    {
-		      x[i] = vertices[i]*scale;
-		      x[i] += trans;
-                    }
-                }
-                else
-                {
-		    float scale2 = 1.0;
-		    if (matrix[3][3] != 0) scale2 = 1/matrix[3][3];
-		    for (unsigned int i=0;i<nbv;i++)
-                    {
-		        Vec3f v = vertices[i]*scale;
-                        v += trans;
-                        Vec4f tv = matrix * Vec4f(v[0],v[1],v[2],1.0f);
-                        x[i] = Vec3d(tv[0],tv[1],tv[2])*scale2;
-                    }
-                }
-#if 0
-                if (doComputeV)
+	      if (matrixLastIt==-20)
+	      {
+		for (unsigned int i=0;i<nbv;i++)
 		{
-		    sofa::simulation::tree::GNode* node = dynamic_cast<sofa::simulation::tree::GNode*>(getContext());
-		    Vec3dTypes::VecDeriv& v = *newPoints->getV();
-		    const double dmax = maxVDist.getValue();
-		    newPointsDist.resize(nbv);
-                    for (unsigned int i=0;i<nbv;i++)
-                    {
-			v[i] = Vec3dTypes::Deriv();
-			newPointsDist[i] = dmax;
-		    }
-		    intersection->setAlarmDistance(dmax); // make sure the distance is up-to-date
-		    intersection->setContactDistance(0);
-		    newPointsCM->computeBoundingTree( 6 ); // compute a bbox tree of depth 6
-		    //std::cout << "computeV: "<<newPointsCM->end().getIndex()<<" points"<<std::endl;
-		    detection->beginNarrowPhase();
-		    for (CMIterator it = node->collisionModel.begin(), itend = node->collisionModel.end(); it != itend ; ++it)
-		    {
-			sofa::core::CollisionModel* cm2 = *it;
-			std::cout << "computeV: narrow phase detection with "<<cm2->getClassName()<<std::endl;
-			detection->addCollisionPair(std::make_pair(newPointsCM->getFirst(), cm2->getFirst()));
-			//detection->addCollisionPair(std::make_pair(cm2, newPointsCM));
-		    }
-		    {
-			sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap& contactMap = detection->getDetectionOutputs();
-			int ncollisions = 0;
-			for (sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap::iterator it1 = contactMap.begin(); it1 != contactMap.end(); ++it1)
-			{
-				sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputVector& contacts = it1->second;
-				if (contacts.empty()) continue;
-				int newPointsCMIndex = (contacts[0].elem.second.getCollisionModel()==newPointsCM)?1:0;
-				for (sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputVector::iterator it2 = contacts.begin(); it2 != contacts.end(); ++it2)
-				{
-				    sofa::core::componentmodel::collision::DetectionOutput* detection = &*it2;
-				    ++ncollisions;
-				    int index = (&(detection->elem.first))[newPointsCMIndex].getIndex();
-				    double d = detection->distance;
-				    if ((unsigned)index >= nbv)
-				    {
-					std::cerr << "computeV: invalid point index "<<index<<std::endl;
-				    }
-				    else if (d < newPointsDist[index])
-				    {
-					newPointsDist[index] = d;
-					v[index] = detection->point[newPointsCMIndex] - detection->point[1-newPointsCMIndex];
-				    }
-				}
-			}
-			std::cout << "computeV: "<<ncollisions<<" collisions detected"<<std::endl;
-		    }
-		    // then we finalize the results
-		    const double vscale = (time > motionLastTime) ? 1.0/(time-motionLastTime) : 1.0;
-                    for (unsigned int i=0;i<nbv;i++)
-                    {
-			v[i] *= vscale;
-		    }
-		    mmodel3d->resize(nbv);
-		    Vec3dTypes::VecCoord& x2 = *mmodel3d->getX();
-		    Vec3dTypes::VecDeriv& v2 = *mmodel3d->getV();
-		    x2.swap(x);
-		    v2.swap(v);
+		  x[i] = vertices[i]*scale;
+		  x[i] += trans;
 		}
+	      }
+	      else
+	      {
+		float scale2 = 1.0;
+		if (matrix[3][3] != 0) scale2 = 1/matrix[3][3];
+		for (unsigned int i=0;i<nbv;i++)
+		{
+		  Vec3f v = vertices[i]*scale;
+		  v += trans;
+		  Vec4f tv = matrix * Vec4f(v[0],v[1],v[2],1.0f);
+		  x[i] = Vec3d(tv[0],tv[1],tv[2])*scale2;
+		}
+	      }
+#if 0
+	      if (doComputeV)
+	      {
+	      sofa::simulation::tree::GNode* node = dynamic_cast<sofa::simulation::tree::GNode*>(getContext());
+	      Vec3dTypes::VecDeriv& v = *newPoints->getV();
+	      const double dmax = maxVDist.getValue();
+	      newPointsDist.resize(nbv);
+	      for (unsigned int i=0;i<nbv;i++)
+	      {
+	      v[i] = Vec3dTypes::Deriv();
+	      newPointsDist[i] = dmax;
+	    }
+	      intersection->setAlarmDistance(dmax); // make sure the distance is up-to-date
+	      intersection->setContactDistance(0);
+	      newPointsCM->computeBoundingTree( 6 ); // compute a bbox tree of depth 6
+		    //std::cout << "computeV: "<<newPointsCM->end().getIndex()<<" points"<<std::endl;
+	      detection->beginNarrowPhase();
+	      for (CMIterator it = node->collisionModel.begin(), itend = node->collisionModel.end(); it != itend ; ++it)
+	      {
+	      sofa::core::CollisionModel* cm2 = *it;
+	      std::cout << "computeV: narrow phase detection with "<<cm2->getClassName()<<std::endl;
+			       detection->addCollisionPair(std::make_pair(newPointsCM->getFirst(), cm2->getFirst()));
+			//detection->addCollisionPair(std::make_pair(cm2, newPointsCM));
+	    }
+			   {
+			       sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap& contactMap = detection->getDetectionOutputs();
+			       int ncollisions = 0;
+			       for (sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap::iterator it1 = contactMap.begin(); it1 != contactMap.end(); ++it1)
+			   {
+			       sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputVector& contacts = it1->second;
+			       if (contacts.empty()) continue;
+			       int newPointsCMIndex = (contacts[0].elem.second.getCollisionModel()==newPointsCM)?1:0;
+			       for (sofa::core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputVector::iterator it2 = contacts.begin(); it2 != contacts.end(); ++it2)
+			   {
+			       sofa::core::componentmodel::collision::DetectionOutput* detection = &*it2;
+			       ++ncollisions;
+			       int index = (&(detection->elem.first))[newPointsCMIndex].getIndex();
+			       double d = detection->distance;
+			       if ((unsigned)index >= nbv)
+			   {
+			       std::cerr << "computeV: invalid point index "<<index<<std::endl;
+	    }
+			       else if (d < newPointsDist[index])
+			   {
+			       newPointsDist[index] = d;
+			       v[index] = detection->point[newPointsCMIndex] - detection->point[1-newPointsCMIndex];
+	    }
+	    }
+	    }
+			       std::cout << "computeV: "<<ncollisions<<" collisions detected"<<std::endl;
+	    }
+		    // then we finalize the results
+			       const double vscale = (time > motionLastTime) ? 1.0/(time-motionLastTime) : 1.0;
+			       for (unsigned int i=0;i<nbv;i++)
+			   {
+			       v[i] *= vscale;
+	    }
+			       mmodel3d->resize(nbv);
+			       Vec3dTypes::VecCoord& x2 = *mmodel3d->getX();
+			       Vec3dTypes::VecDeriv& v2 = *mmodel3d->getV();
+			       x2.swap(x);
+			       v2.swap(v);
+	    }
 #endif
-		motionLastTime = time;
-            }
-        }
-        
+			       motionLastTime = time;
+	    }
+	
+#endif
+#ifndef SOFA_DOUBLE
+	    sofa::core::componentmodel::behavior::MechanicalState<Vec3fTypes>* mmodel3f;
+            
+	    if ((mmodel3f = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<Vec3fTypes>*>(mmodel))!=NULL)
+	    {
+                //std::cout << "Copying "<<nbv<<" vertices to mmodel3f"<<std::endl;
+	      mmodel3f->resize(nbv);
+	      Vec3fTypes::VecCoord& x = *mmodel3f->getX();
+	      if (matrixLastIt==-20)
+	      {
+		for (unsigned int i=0;i<nbv;i++)
+		{
+		  x[i] = vertices[i]*scale;
+		  x[i] += trans;
+		}
+	      }
+	      else
+	      {
+		float scale2 = 1.0;
+		if (matrix[3][3] != 0) scale2 = 1/matrix[3][3];
+		for (unsigned int i=0;i<nbv;i++)
+		{
+		  Vec3f v = vertices[i]*scale;
+		  v += trans;
+		  Vec4f tv = matrix * Vec4f(v[0],v[1],v[2],1.0f);
+		  x[i] = Vec3f(tv[0],tv[1],tv[2])*scale2;
+		}
+	      }
+	    }
+#endif
+	}
         int facetsIt = -1;
         facets.stamps.read(pInFacets->stamps->it,facetsIt);
         if (facetsIt != facetsLastIt)
@@ -611,8 +647,8 @@ public:
                 }
             }
             BaseObject* topology = getContext()->getTopology();
-            sofa::component::topology::MeshTopology* mesh;
-            if ((mesh = dynamic_cast<sofa::component::topology::MeshTopology*>(topology))!=NULL)
+            sofa::core::componentmodel::topology::BaseMeshTopology* mesh;
+            if ((mesh = dynamic_cast<sofa::core::componentmodel::topology::BaseMeshTopology*>(topology))!=NULL)
             {
                 mesh->clear();
                 if (valid)
@@ -665,11 +701,14 @@ public:
     SofaFlowVRAllocator(flowvr::Buffer& data) : bRead(data) {}
 };
 
-using sofa::component::collision::DistanceGrid;
+//using sofa::component::collision::DistanceGrid;
 
+template<class DistanceGridModel, class DistanceGrid>
 class FlowVRInputDistanceGrid : public FlowVRObject
 {
 public:
+ 
+  
 
     flowvr::InputPort* pInDistance;
     flowvr::InputPort* pInMatrix;
@@ -687,7 +726,7 @@ public:
     DistanceGrid* emptyGrid;
     //flowvr::Message curDistance, lastDistance;
 
-    sofa::component::collision::RigidDistanceGridCollisionModel* grid;
+    DistanceGridModel* grid;
     //sofa::core::componentmodel::behavior::MechanicalState<RigidTypes>* rigid;
 
     FlowVRInputDistanceGrid()
@@ -739,7 +778,7 @@ public:
                 //rigid = grid->getRigidModel();
                 
                 // just create a dummy distance grid for now
-                emptyGrid = new DistanceGrid(2,2,2,DistanceGrid::Coord(0,0,-100),DistanceGrid::Coord(0.001f,0.001f,-99.999f));
+                emptyGrid = new DistanceGrid(2,2,2,typename DistanceGrid::Coord(0,0,-100),typename DistanceGrid::Coord(0.001f,0.001f,-99.999f));
                 for (int i=0;i<emptyGrid->size();i++)
                     (*emptyGrid)[i] = emptyGrid->maxDist();
                 grid->resize(1);
@@ -777,7 +816,7 @@ public:
                 for(int j=0;j<3;j++)
                     for(int i=0;i<3;i++)
                         newmscale += matrix[j][i]*matrix[j][i];
-                newmscale = rsqrt(newmscale/3);
+                newmscale = sqrt(newmscale/3);
                 for(int j=0;j<3;j++)
                     for(int i=0;i<3;i++)
                         matrix[j][i] /= newmscale;
@@ -840,17 +879,17 @@ public:
             }
             else
             {
-                DistanceGrid::Coord pmin = trans + p0*scale;
-                DistanceGrid::Coord pmax = pmin + Vec3f(dp[0]*(nx-1),dp[1]*(ny-1),dp[2]*(ny-2))*scale;
-                DistanceGrid::Coord bbmin = pmin + Vec3f(dp[0]*bbox[0],dp[1]*bbox[1],dp[2]*bbox[2])*scale;
-                DistanceGrid::Coord bbmax = pmin + Vec3f(dp[0]*bbox[3],dp[1]*bbox[4],dp[2]*bbox[5])*scale;
+                typename DistanceGrid::Coord pmin = trans + p0*scale;
+                typename DistanceGrid::Coord pmax = pmin + Vec3f(dp[0]*(nx-1),dp[1]*(ny-1),dp[2]*(ny-2))*scale;
+                typename DistanceGrid::Coord bbmin = pmin + Vec3f(dp[0]*bbox[0],dp[1]*bbox[1],dp[2]*bbox[2])*scale;
+                typename DistanceGrid::Coord bbmax = pmin + Vec3f(dp[0]*bbox[3],dp[1]*bbox[4],dp[2]*bbox[5])*scale;
                 
-                if (scale==1.0f)
+                /*if (scale==1.0f)
                 {
                     curDistGrid->release();
-                    curDistGrid = new DistanceGrid(nx,ny,nz, pmin, pmax, new SofaFlowVRAllocator<DistanceGrid::Real>(distance.data));
+                    curDistGrid = new DistanceGrid(nx,ny,nz, pmin, pmax, new SofaFlowVRAllocator<typename DistanceGrid::Real>(distance.data));
                 }
-                else
+                else*/
                 {
                     curDistGrid->release();
                     curDistGrid = new DistanceGrid(nx,ny,nz, pmin, pmax);
@@ -887,9 +926,11 @@ public:
 
 SOFA_DECL_CLASS(FlowVRInputDistanceGrid)
 int FlowVRInputDistanceGridClass = sofa::core::RegisterObject("Import a distance field from a FlowVR InputPort")
-.add< FlowVRInputDistanceGrid >()
+.add< FlowVRInputDistanceGrid<sofa::component::collision::RigidDistanceGridCollisionModel,sofa::component::collision::DistanceGrid> >()
+#ifdef SOFA_GPU_CUDA
+.add< FlowVRInputDistanceGrid<sofa::gpu::cuda::CudaRigidDistanceGridCollisionModel,sofa::gpu::cuda::CudaDistanceGrid> >()
+#endif
 ;
-
 
 class FlowVRRenderEvent : public FlowVREvent
 {
@@ -1302,7 +1343,7 @@ public:
         //normModified = true;
     }
 
-    void computeMesh(sofa::component::topology::MeshTopology* topology)
+    void computeMesh(sofa::core::componentmodel::topology::BaseMeshTopology* topology)
     {
         Inherit::computeMesh(topology);
         meshModified = true;
@@ -1316,7 +1357,7 @@ public:
             idP = addPrimitive(scene, getName().c_str());
 
             std::string predefs;
-            bool useSpecular = material.useSpecular && material.shininess > 0.0001 && (material.specular[0] > 0.0001 || material.specular[1] > 0.0001 || material.specular[2] > 0.0001);
+            bool useSpecular = material.getValue().useSpecular && material.getValue().shininess > 0.0001 && (material.getValue().specular[0] > 0.0001 || material.getValue().specular[1] > 0.0001 || material.getValue().specular[2] > 0.0001);
             if (useSpecular)
                 predefs += "#define SPECULAR 1\n";
 
@@ -1354,11 +1395,11 @@ public:
             ftl::Vec4f ambient  ( 0.3f, 0.3f, 0.3f, 1.0f);
             ftl::Vec3f diffuse  ( 0.6f, 0.6f, 0.6f);
             ftl::Vec4f specular ( 0.9f, 0.9f, 0.9f, 16.0f);
-            if (material.useAmbient) for (int i=0;i<3;i++) ambient[i] = (float)material.ambient[i] * 0.5f;
-            ambient[3] = material.diffuse[3]; // alpha
-            if (material.useDiffuse) for (int i=0;i<3;i++) diffuse[i] = (float)material.diffuse[i];
-            if (material.useSpecular) for (int i=0;i<3;i++) specular[i] = (float)material.specular[i];
-            specular[3] = material.shininess;
+            if (material.getValue().useAmbient) for (int i=0;i<3;i++) ambient[i] = (float)material.getValue().ambient[i] * 0.5f;
+            ambient[3] = material.getValue().diffuse[3]; // alpha
+            if (material.getValue().useDiffuse) for (int i=0;i<3;i++) diffuse[i] = (float)material.getValue().diffuse[i];
+            if (material.getValue().useSpecular) for (int i=0;i<3;i++) specular[i] = (float)material.getValue().specular[i];
+            specular[3] = material.getValue().shininess;
             //scene->addParam(idP, flowvr::render::ChunkPrimParam::PARAMVSHADER, "color", color); //ftl::Vec4f(1, 1, 1, 0.5));
             scene->addParam(idP, flowvr::render::ChunkPrimParam::PARAMPSHADER, "mat_ambient" , ambient );
             scene->addParam(idP, flowvr::render::ChunkPrimParam::PARAMPSHADER, "mat_diffuse" , diffuse );
@@ -1541,7 +1582,7 @@ public:
                     int i1 = quads[i][0];
                     int i2 = quads[i][1];
                     int i3 = quads[i][2];
-                    int i4 = quads[i][4];
+                    int i4 = quads[i][3];
                     
                     const Coord& v1 = x[i1];
                     const Coord& v2 = x[i2];
@@ -1708,43 +1749,121 @@ int FlowVRRenderMeshClass = sofa::core::RegisterObject("FlowVRRender Visual Mode
 
 } // namespace SofaFlowVR
 
-// ---------------------------------------------------------------------
-// --- MAIN
-// ---------------------------------------------------------------------
+
+#ifndef WIN32
+#include <dlfcn.h>
+bool loadPlugin(const char* filename)
+{
+  void *handle;
+  handle=dlopen(filename, RTLD_LAZY);
+  if (!handle)
+  { 
+    std::cerr<<"Error loading plugin "<<filename<<": "<<dlerror()<<std::endl; 
+    return false;
+  } 
+  std::cerr<<"Plugin "<<filename<<" loaded."<<std::endl;
+  return true;
+}
+#else
+bool loadPlugin(const char* filename)
+{
+	std::cerr << "Plugin loading not supported on this platform.\n";
+	return false;
+}
+#endif
+
+
 int main(int argc, char** argv)
 {
-
-    glutInit(&argc,argv); 
-
     sofa::helper::BackTrace::autodump();
 
-    std::string fileName = "/home/allardj/work/sig07et/data/test1.scn";
-    //int nbIter = 500;
+    glutInit(&argc,argv);
 
-    if (argc>1)
-        fileName = argv[1];
+	sofa::gui::SofaGUI::SetProgramName(argv[0]);
+	std::string fileName ;
+	bool        startAnim = false;
+	bool        printFactory = false;
+	std::string gui = sofa::gui::SofaGUI::GetGUIName();
+	std::vector<std::string> plugins;
+	std::vector<std::string> files; 
+	
+	std::string gui_help = "choose the UI (";
+	gui_help += sofa::gui::SofaGUI::ListSupportedGUI('|');
+	gui_help += ")";
 
-    //sofa::core::ObjectFactory::ClassEntry* classOglModel;
-    sofa::core::ObjectFactory::ClassEntry* classVisualModel;
+	sofa::helper::parse(&files, "This is a SOFA application. Here are the command line arguments")
+//	.option(&fileName,'f',"file","scene file")
+	.option(&startAnim,'s',"start","start the animation loop")
+	.option(&printFactory,'p',"factory","print factory logs")
+	//.option(&nogui,'g',"nogui","use no gui, run a number of iterations and exit")
+	.option(&gui,'g',"gui",gui_help.c_str())
+	.option(&plugins,'l',"load","load given plugins")
+	(argc,argv);
 
-    sofa::gui::SofaGUI::Init(argv[0]);
+    sofa::component::init();
 
-    //sofa::core::ObjectFactory::AddAlias("OglModel", "FlowVRRenderMesh", true, &classOglModel); 
-    sofa::core::ObjectFactory::AddAlias("VisualModel", "FlowVRRenderMesh", true, &classVisualModel); 
+	if (!files.empty()) fileName = files[0];
 
-    GNode* groot = NULL; 
+	for (unsigned int i=0;i<plugins.size();i++)
+		loadPlugin(plugins[i].c_str());
 
-    if (!fileName.empty())
+	if (printFactory)
+	{
+		std::cout << "////////// FACTORY //////////" << std::endl;
+		sofa::helper::printFactoryLog();
+		std::cout << "//////// END FACTORY ////////" << std::endl;  
+	}
+
+	if (int err=sofa::gui::SofaGUI::Init(argv[0],gui.c_str()))
+		return err;
+
+	sofa::simulation::tree::GNode* groot = NULL; 
+
+    if (fileName.empty())
     {
-        groot = Simulation::load(fileName.c_str());
+        fileName = "liver.scn"; 
+        sofa::helper::system::DataRepository.findFile(fileName);
     }
+
+    sofa::core::ObjectFactory::ClassEntry* classVisualModel;
+    sofa::core::ObjectFactory::AddAlias("VisualModel", "FlowVRRenderMesh", true, &classVisualModel); 
+    groot = sofa::simulation::tree::getSimulation()->load(fileName.c_str());
 
     if (groot==NULL)
     {
-        groot = new GNode;
+        groot = new sofa::simulation::tree::GNode;
+        //return 1; 
     }
 
-    sofa::gui::SofaGUI::MainLoop(groot,fileName.c_str());
+    if (startAnim)
+        groot->setAnimate(true);
 
-    return 0;
+    
+
+	//=======================================
+	// Run the main loop
+  
+	if (gui=="batch")
+	{
+		if (groot==NULL)
+		{
+			std::cerr<<"Could not load file "<<fileName<<std::endl;
+			return 1;
+		}
+		for (int i=0;true;i++)
+		{
+			sofa::simulation::tree::getSimulation()->animate(groot);
+		}
+		std::cout << "FlowVR has sent stop" << std::endl;
+	}
+	else
+	{
+		if (int err=sofa::gui::SofaGUI::MainLoop(groot,fileName.c_str()))
+			return err;
+		groot = (GNode *)sofa::gui::SofaGUI::CurrentSimulation();
+	}
+
+	if (groot!=NULL)
+		sofa::simulation::tree::getSimulation()->unload(groot);
+	return 0;
 }

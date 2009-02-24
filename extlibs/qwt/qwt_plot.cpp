@@ -521,7 +521,7 @@ void QwtPlot::updateTabOrder()
     if ( focusData() == NULL )
         return;
 
-    while ( focusData()->next() != d_data->canvas );
+    while ( focusData()->next() != d_data->canvas ) ;
     while ( (w = focusData()->next()) != d_data->canvas )
 #endif
     {

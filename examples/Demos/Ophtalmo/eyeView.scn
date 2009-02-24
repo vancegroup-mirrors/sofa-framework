@@ -1,0 +1,179 @@
+<Node name="root" dt="0.05" gravity="0 -9 0" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="1" showBoundingTree="0">
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="CollisionResponse" contact="default" response="default" />
+	<Object type="NewProximityIntersection" name="Proximity" alarmDistance="0.05" contactDistance="0.05" />
+	<Object type="CollisionGroup" />
+	
+	<Object type="LightManager" />
+	<Object type="SpotLight" name="light1" color="1 1 1" position="0 5 30" direction="0 0 -1" cutoff="45" />
+
+	<Object type="ClipPlane" normal="1 0 0" />
+
+	<Node name ="group">
+		<Object type="EulerImplicit" />
+		<Object type="CGLinearSolver" iterations="25" tolerance="1e-10" threshold="1e-6"/>
+<!--		<Node name="articulatedObject1">
+			<Object type="MechanicalObject" name="ArticulatedObject" template="Vec1d" position="0.0 0"/>
+			<Object type="FixedConstraint" indices="0 1"/>
+		</Node> -->
+		<Node name="articulatedObject2">
+<!--			<Object type="MechanicalObject" name="ArticulatedObject" template="Vec1d" position="0.0 0"/> -->
+			<Node name="6D_DOFs1"> 
+				<Object type="MechanicalObject" name="6D_Dof" template="Rigid" position="0 0 0 0 0 0 1  0 0 0 0 0 0 1 "/>
+
+				<!-- Visual models of the eye that move with the eye ball rotation -->
+				<Node name="Iris_">
+					<Object type="OglModel" name="Iris"  filename="Demos/Ophtalmo/data/mesh/iris.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/iris.bmp" castshadow="0" />
+					<Object type="RigidMapping" object1="6D_DOFs1" object2="Iris" index="1"/>
+				</Node>
+				<Node name="Sclera_">
+					<Object type="OglModel" name="Sclera" filename="Demos/Ophtalmo/data/mesh/sclera.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/sclera.bmp" castshadow="0" />
+					<Object type="RigidMapping" object1="6D_DOFs1" object2="Sclera" index="1"/>
+				</Node>
+	
+				<Node name="Choroid_">
+					<Object type="OglModel" name="Choroid" filename="Demos/Ophtalmo/data/mesh/choroid.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/choroid.bmp" castshadow="0"/>
+					<Object type="RigidMapping" object1="6D_DOFs1" object2="Choroid" index="1"/>
+				</Node> -->
+				
+				<Node name="Ciliary_">
+					<Object type="OglModel" name="Ciliary"  filename="Demos/Ophtalmo/data/mesh/ciliary_processes.obj" texturename="Demos/Ophtalmo/data/textures/ciliary.bmp" castshadow="0"/>
+					<Object type="RigidMapping" object1="6D_DOFs1" object2="Ciliary" index="1"/>
+				</Node>
+				<Node name="Cornea_">
+				<Object type="ClipPlane" normal="1 0 0" active="false" />
+					<Object type="OglModel" name="Cornea"  filename="Demos/Ophtalmo/data/mesh/cornea.obj"  normals="0" castshadow="0" />
+					<Object type="RigidMapping" object1="6D_DOFs1" object2="Cornea" index="1"/>
+				</Node>
+				<Node name="Capsule">
+					<Object type="OglModel" name="Capsule"  filename="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" castshadow="0" />
+					<Object type="RigidMapping" object1="6D_DOFs1" object2="Capsule" index="1"/>
+				</Node>
+<!--				
+				<Node name="Capsule">
+					<Object type="MeshTopology" filename="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" scale="1.0"/>
+					<Object type="MechanicalObject" name="Collision"/>
+					<Object type="RigidMapping" index="1"/>
+					<Object type="Triangle" contactStiffness="50" color="0.25 0.25 0.25 1" />
+				<Node name="LensCapsuleVM">
+					<Object type="OglModel" name="LensCapsuleVM" color="1 0 0 0.5"/>
+					<Object type="IdentityMapping" object1="../.." object2="LensCapsuleVM" />
+				</Node>
+				</Node> -->
+				
+				<Node name ="Ellipsoid_">
+					<Object type="MechanicalObject" name="Ellipsoid" template="Rigid" position="-0.025 5.016 -3.636 0 0 0 1" />-0.025 5.016 -3.636
+					<Object type="RigidRigidMapping" object1="6D_DOFs1" object2="Ellipsoid" index="1"/>
+				</Node>			
+				
+				<!--<Object type="ArticulatedSystemMapping" object1="../../.." object2="6D_Dof"/>-->
+			</Node>
+			
+				
+			<Object type="ArticulatedHierarchyContainer" />
+			<Node name="articulationCenters">
+				<Node name="articulationCenter1">
+					<Object type="ArticulationCenter" parentIndex="0" childIndex="1" posOnParent="-0.025 5.016 -5.636" posOnChild="-0.025 5.016 -5.636"/>
+					<Node name="articulations">
+						<Object type="Articulation" translation="0" rotation="1" rotationAxis="1 0 0" articulationIndex="0"/>
+						<Object type="Articulation" translation="0" rotation="1" rotationAxis="0 1 0" articulationIndex="1"/>
+					</Node>
+				</Node>
+			</Node>
+<!--
+			<Node name="LensCapsule">
+				<Object type="MechanicalObject" name="LensCapsuleBM" />
+				<Object type="TriangleSetTopology" filename="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" scale="1.0"/>
+				<Object type="TriangularFEMForceField" name="FEM" youngModulus="50000" poissonRatio="0.45" method="large"/>
+				<Object type="TriangularBendingSprings" name="FEM-Bend" stiffness="100000" damping="100"/>
+				<Object type="UniformMass" totalmass="0.005" />
+
+				<Node name="LensCapsuleCM">
+					<Object type="TriangleSet" contactStiffness="50" color="0.25 0.25 0.25 1" />
+				</Node>
+		
+				<Node name="LensCapsuleVM">
+					<Object type="OglModel" name="LensCapsuleVM" color="1 0 0 0.5"/>
+					<Object type="IdentityMapping" object1="../.." object2="LensCapsuleVM" />
+				</Node>
+			</Node>
+-->
+			<Node name="Lens">
+				<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/eye_lens_3.msh" />
+				<Object type="MechanicalObject" />
+				<include href="Objects/TetrahedronSetTopology.xml" />
+				<Object type="ClipPlane" normal="1 0 0" active="false" />
+			<Node>
+				<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="50000" poissonRatio="0.45" method="large" />
+			</Node>
+				<Object type="UniformMass" totalmass="0.01" />
+		<Object type="EllipsoidForceField" name="EllipsoidForceFieldOnLens" stiffness="-5000" damping="0.1" center="-0.025 5.016 -3.636" vradius="1.45 1.45 0.4"  color="1 0 0 1" />
+
+				<Node name="LensCM">
+					<include href="Objects/TriangleSetTopology.xml" />
+             
+
+			<Object type="Tetra2TriangleTopologicalMapping" object1="../../Container" object2="Container"/>
+				<Object type="TriangleSet" contactStiffness="1000" contactFriction="0" />
+				</Node>
+		
+				<Node name="LensVM">
+					<Object type="OglModel" name="LensVM"  color="0.65 0.55 0.45 0.3" />       
+					<Object type="IdentityMapping" object1="../.." object2="LensVM" />
+				</Node>
+			</Node> 
+			
+			<!-- Attache de la membrane -->
+<!--
+          		<Object type="StiffSpringForceField" name="ExternalSprings4" filename="BehaviorModels/linkLens_with_hole.xs3" object1="articulatedObject2\6D_DOFs1\Points" object2="LensCapsule" />
+			<Object type="InteractionEllipsoidForceField" name="InteractionEllipsoidForceFieldOnCapsule" object1="LensCapsule" object2="articulatedObject2\6D_DOFs1\Ellipsoid_" object2_dof_index="0" stiffness="-5000" damping="100.0" center="0.0 0.0 0.0" vradius="1.6 1.6 0.55" color="1 1 0 1" /> 
+			<Object type="InteractionEllipsoidForceField" name="InteractionEllipsoidForceFieldOnLens" object1="Lens" object2="articulatedObject2\6D_DOFs1\Ellipsoid_" object2_dof_index="0" stiffness="-5000" damping="100.0" center="0.0 0.0 0.0" vradius="1.5 1.5 0.45" color="1 0 0 1" /> -->
+
+		</Node>
+		<!-- angular stiffness for eyeball motion -->
+<!--		<Object type="StiffSpringForceField" name="Spring" object1="articulatedObject2" object2="articulatedObject1" spring="0 0 500000.0 100000.0 0.0  1 1 500000.0 100000.0 0.0 "/> -->
+	</Node>
+
+	<Node name="CompleteEyeAnatomicalModel">
+		<Object type="OglModel" name="Muscle1"      filename="Demos/Ophtalmo/data/mesh/inf_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle2"      filename="Demos/Ophtalmo/data/mesh/lat_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle3"      filename="Demos/Ophtalmo/data/mesh/med_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle4"      filename="Demos/Ophtalmo/data/mesh/super_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle5"      filename="Demos/Ophtalmo/data/mesh/infer_obl_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle6"      filename="Demos/Ophtalmo/data/mesh/super_obl_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Clamps"       filename="Demos/Ophtalmo/data/mesh/clamps.obj" />
+	</Node>
+<!--
+	<Node name="CompleteEyeAnatomicalMode_Cornea">
+		<Object type="OglShader" frag="PerPixelSpotLighting_cornea.frag" vert="PerPixelSpotLighting.vert" />
+		<Object type="OglModel" name="Cornea"       filename="Demos/Ophtalmo/data/mesh/cornea.obj" castshadow="0" /> 
+	</Node>
+	
+	<Node name="CompleteEyeAnatomicalModel_Iris_Sclera">
+		<Object type="OglShader" frag="PerPixelSpotLighting_sclera_iris.frag" vert="PerPixelSpotLighting.vert" />
+		<Object type="OglModel" name="Sclera"       filename="Demos/Ophtalmo/data/mesh/sclera.obj"  texturename="Demos/Ophtalmo/data/textures/sclera.bmp" castshadow="0" />
+		<Object type="OglModel" name="Iris"         filename="Demos/Ophtalmo/data/mesh/iris.obj" texturename="Demos/Ophtalmo/data/textures/iris.bmp" castshadow="0" />
+	</Node>
+-->	
+	<Node name="CompleteEyeAnatomicalModel_Skin">
+		<Object type="ClipPlane" normal="0 0 -1" position="0 0 -5" active="true" id="1" />
+<!--		<Object type="OglShader" frag="PerPixelSpotLighting_skin.frag" vert="PerPixelSpotLighting.vert" />  -->
+		<Object type="OglModel" name="Skin"         filename="Demos/Ophtalmo/data/mesh/john_hi_obj.obj" texturename="Demos/Ophtalmo/data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" normals="0" /> 
+	</Node>
+	<Node name="CompleteEyeAnatomicalModel_SkinTrans">
+	<Object type="ClipPlane" normal="-1 0 0" position="-7.5 0 0" active="true" />
+		<Object type="ClipPlane" normal="0 0 -1" position="0 0 -10" active="true" id="1" />
+<!--		<Object type="OglShader" frag="PerPixelSpotLighting_skin.frag" vert="PerPixelSpotLighting.vert" />  -->
+		<Object type="OglModel" name="Skin"         filename="Demos/Ophtalmo/data/mesh/john_hi_obj.obj" texturename="Demos/Ophtalmo/data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" color="1 1 1 0.5" normals="0" /> 
+	</Node>
+	<Node>
+				<Object type="ClipPlane" normal="1 0 0" active="false" />
+	<include name="Instrument1 Remover"    href="toolCarve.scn" pivot="0.7 4.3 -2.7" DOFs__position="0.1 0.120252 -0.587495 -0.109791 0.792676" />
+	<include name="Instrument2 Blade"    href="toolBlade.scn" pivot="0.7 4.3 -2.7" />
+	<include name="Instrument3 Pince"    href="toolPince.scn" pivot="0.7 4.3 -2.7" />
+	</Node>
+</Node>
+
+
+

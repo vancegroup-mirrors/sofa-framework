@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MAPPING_RIGIDRIGIDMAPPING_INL
 #define SOFA_COMPONENT_MAPPING_RIGIDRIGIDMAPPING_INL
 
@@ -35,7 +35,7 @@
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.inl>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/helper/gl/Axis.h>
-#include <string>
+#include <string.h>
 #include <iostream>
         
 using std::cerr;
@@ -57,16 +57,16 @@ using namespace sofa::defaulttype;
 template <class BasicMapping>
 class RigidRigidMapping<BasicMapping>::Loader : public helper::io::MassSpringLoader, public helper::io::SphereLoader
 {
-public:
+  public:
     RigidRigidMapping<BasicMapping>* dest;
     Loader(RigidRigidMapping<BasicMapping>* dest) : dest(dest) {}
-    virtual void addMass(double px, double py, double pz, double, double, double, double, double, bool, bool)
+    virtual void addMass(SReal px, SReal py, SReal pz, SReal, SReal, SReal, SReal, SReal, bool, bool)
     {
         Coord c;
         Out::DataTypes::set(c,px,py,pz);
         dest->points.beginEdit()->push_back(c); //Coord((Real)px,(Real)py,(Real)pz));
     }
-    virtual void addSphere(double px, double py, double pz, double)
+    virtual void addSphere(SReal px, SReal py, SReal pz, SReal)
     {
         Coord c;
         Out::DataTypes::set(c,px,py,pz);
@@ -217,7 +217,7 @@ void RigidRigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const 
 template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childForces, const typename In::VecDeriv& parentForces )
 {
-	Vec v,omega;
+	Vector v,omega;
 	childForces.resize(points.getValue().size());
 	unsigned int cptchildForces;
 	unsigned int val;
@@ -273,7 +273,7 @@ void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childForce
 template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForces, const typename Out::VecDeriv& childForces )
 {
-	Vec v,omega;
+	Vector v,omega;
 	unsigned int val;
 	unsigned int cpt;
 	switch(repartition.getValue().size())
@@ -285,7 +285,7 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 			//      [ -OM^t ]
 			// -OM^t = OM^
 			
-			Vec f = childForces[i].getVCenter();
+			Vector f = childForces[i].getVCenter();
 			v += f;
 			omega += childForces[i].getVOrientation() + cross(f,-pointsR0[i].getCenter());
 		}
@@ -296,10 +296,10 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 		val = repartition.getValue()[0];
 		cpt=0;
 		for(unsigned int ito=0;ito<parentForces.size();ito++){
-			v=Vec();
-			omega=Vec();
+			v=Vector();
+			omega=Vector();
 			for(unsigned int i=0;i<val;i++){
-				Vec f = childForces[cpt].getVCenter();
+				Vector f = childForces[cpt].getVCenter();
 				v += f;
 				omega += childForces[cpt].getVOrientation() + cross(f,-pointsR0[cpt].getCenter());
 				cpt++;
@@ -315,10 +315,10 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 		}
 		cpt=0;
 		for(unsigned int ito=0;ito<parentForces.size();ito++){
-			v=Vec();
-			omega=Vec();
+			v=Vector();
+			omega=Vector();
 			for(unsigned int i=0;i<repartition.getValue()[ito];i++){
-				Vec f = childForces[cpt].getVCenter();
+				Vector f = childForces[cpt].getVCenter();
 				v += f;
 				omega += childForces[cpt].getVOrientation() + cross(f,-pointsR0[cpt].getCenter());
 				cpt++;
@@ -340,7 +340,7 @@ void RigidRigidMapping<BasicMapping>::draw()
 	const typename Out::VecCoord& x = *this->toModel->getX();
 	for (unsigned int i=0; i<x.size(); i++)
 	{
-		helper::gl::Axis::draw(x[i].getCenter(), x[i].getOrientation(), 0.7);
+		helper::gl::Axis::draw(x[i].getCenter(), x[i].getOrientation(), axisLength.getValue());
 	}
 	glEnd();
 }

@@ -1,0 +1,92 @@
+<Node name="Instrument">
+	<Object type="MechanicalObject" name="DOFs" position="0 0 0 0 1" template="LaparoscopicRigid3"/>
+	<Node name="RigidLayer">
+		<Object type="MechanicalObject" template="Rigid" />
+		<Object type="UniformMass" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_centered.rigid" />
+		<Object type="LaparoscopicRigidMapping" pivot="0 0 0" rotation="0 0.707 0 0.707"/>
+	<Node name="articulatedObject">
+		<Object type="MechanicalObject" name="ArticulatedObject" template="Vec1d" position="-0.1 0.1"/>
+                <Object type="GraspingManager" openAngle="-0.1" />
+		<Node name="Pince"> 
+			<Object type="MechanicalObject" name="6D_Dof" template="Rigid" position="0 0 0 0 0 0 1  0 0 0 0 0 0 1  0 0 0 0 0 0 1"/>
+			<Object type="UniformMass" filename="BehaviorModels/rigid.xs3"/>
+			<Node name="Manche">
+				<Node name="Visu">
+					<Object type="OglModel" name="Visual" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" />
+					<Object type="RigidMapping" object1="../.." object2="Visual" index="0"/>
+				</Node>
+				<!--
+				<Node name="Collis">
+					<Object type="Mesh" filename="mesh/smCube27.obj" />
+					<Object type="MechanicalObject" name="Collision"/>
+					<Object type="Triangle" />
+					<Object type="RigidMapping" object1="../.." object2="Collision" index="0"/>
+				</Node> -->
+			</Node>
+			<Node name="mors_droit" >
+				<Node name="Visu">
+					<Object type="OglModel" name="Visual" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_right.obj" />
+					<Object type="RigidMapping" object1="../.." object2="Visual" index="1"/>
+				</Node>
+				
+				<Node name="Collis">
+					<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_right.obj" />
+					<Object type="Mesh" />
+					<Object type="MechanicalObject" name="Collision"/>
+					<Object type="Triangle" />
+					<Object type="RigidMapping" object1="../.." object2="Collision" index="1"/>
+				</Node>
+				
+				<Node name="Grasp">
+					<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_right_inside.obj" />
+					<Object type="Mesh" />
+					<Object type="MechanicalObject" name="Collision" dx="-0.005" />
+					<Object type="Triangle" name="stick" contactResponse="stick" active="false"/>
+					<Object type="RigidMapping" object1="../.." object2="Collision" index="1"/>
+				</Node>
+			</Node>
+			<Node name="mors_gauche">
+				<Node name="Visu">
+					<Object type="OglModel" name="Visual" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_left.obj" />
+					<Object type="RigidMapping" object1="../.." object2="Visual" index="2"/>
+				</Node>
+				
+				<Node name="Collis">
+					<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_left.obj" />
+					<Object type="Mesh" />
+					<Object type="MechanicalObject" name="Collision"/>
+					<Object type="Triangle" />
+					<Object type="RigidMapping" object1="../.." object2="Collision" index="2"/>
+				</Node>
+
+				<Node name="Grasp">
+					<Object type="MeshLoader" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_left_inside.obj" />
+					<Object type="Mesh" />
+					<Object type="MechanicalObject" name="Collision" dx="0.005" />
+					<Object type="Triangle" name="stick" contactResponse="stick" active="false" />
+					<Object type="RigidMapping" object1="../.." object2="Collision" index="2"/>
+				</Node>
+			</Node>
+			<Object type="ArticulatedSystemMapping" object1="ArticulatedObject" object2="6D_Dof"/>
+		</Node>
+            <Object type="ArticulatedHierarchyContainer" />
+		<Node name="articulationCenters">
+			<Node name="articulationCenter1">
+				<Object type="ArticulationCenter" parentIndex="0" childIndex="1" posOnParent="0.003 0.0 -0.7584" posOnChild="0 0 -0.7584"/>
+				<Node name="articulations">
+					<Object type="Articulation" translation="0" rotation="1" rotationAxis="0 1 0" articulationIndex="0"/>
+				</Node>
+			</Node>
+			<Node name="articulationCenter2">
+				<Object type="ArticulationCenter" parentIndex="0" childIndex="2" posOnParent="-0.003 0.0 -0.7584" posOnChild="0 0 -0.7584"/>
+				<Node name="articulations">
+					<Object type="Articulation" translation="0" rotation="1" rotationAxis="0 1 0" articulationIndex="1"/>
+				</Node>
+			</Node>
+		</Node>
+	</Node>
+	</Node>
+</Node>
+
+
+

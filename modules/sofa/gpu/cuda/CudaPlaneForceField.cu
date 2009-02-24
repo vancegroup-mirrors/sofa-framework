@@ -1,7 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CudaCommon.h"
 #include "CudaMath.h"
+#include "cuda.h"
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 namespace sofa
 {
 namespace gpu
@@ -10,25 +35,35 @@ namespace cuda
 {
 #endif
 
-struct GPUPlane
+template<class real>
+class GPUPlane
 {
-    float3 normal;
-    float d;
-    float stiffness;
-    float damping;
+public:
+    CudaVec3<real> normal;
+    real d;
+    real stiffness;
+    real damping;
 };
+
+typedef GPUPlane<float> GPUPlane3f;
+typedef GPUPlane<double> GPUPlane3d;
 
 extern "C"
 {
-void PlaneForceFieldCuda3f_addForce(unsigned int size, GPUPlane* plane, float* penetration, void* f, const void* x, const void* v);
-void PlaneForceFieldCuda3f_addDForce(unsigned int size, GPUPlane* plane, const float* penetration, void* f, const void* dx); //, const void* dfdx);
+void PlaneForceFieldCuda3f_addForce(unsigned int size, GPUPlane3f* plane, float* penetration, void* f, const void* x, const void* v);
+void PlaneForceFieldCuda3f_addDForce(unsigned int size, GPUPlane3f* plane, const float* penetration, void* f, const void* dx); //, const void* dfdx);
+
+void PlaneForceFieldCuda3f1_addForce(unsigned int size, GPUPlane3f* plane, float* penetration, void* f, const void* x, const void* v);
+void PlaneForceFieldCuda3f1_addDForce(unsigned int size, GPUPlane3f* plane, const float* penetration, void* f, const void* dx); //, const void* dfdx);
+
 }
 
 //////////////////////
 // GPU-side methods //
 //////////////////////
 
-__global__ void PlaneForceFieldCuda3f_addForce_kernel(int size, GPUPlane plane, float* penetration, float* f, const float* x, const float* v)
+template<class real>
+__global__ void PlaneForceFieldCuda3t_addForce_kernel(int size, GPUPlane<real> plane, real* penetration, real* f, const real* x, const real* v)
 {
 	int index0 = umul24(blockIdx.x,BSIZE);
 	int index0_3 = umul24(blockIdx.x,BSIZE*3); //index0*3;
@@ -42,7 +77,7 @@ __global__ void PlaneForceFieldCuda3f_addForce_kernel(int size, GPUPlane plane, 
 	int index_3 = umul24(index,3); //index*3;
 
 	//! Dynamically allocated shared memory to reorder global memory access
-	extern  __shared__  float temp[];
+	extern  __shared__  real temp[];
 
 	temp[index        ] = x[index        ];
 	temp[index+  BSIZE] = x[index+  BSIZE];
@@ -50,8 +85,8 @@ __global__ void PlaneForceFieldCuda3f_addForce_kernel(int size, GPUPlane plane, 
 
 	__syncthreads();
 	
-	float3 xi = make_float3(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
-	float d = dot(xi,plane.normal)-plane.d;
+	CudaVec3<real> xi = CudaVec3<real>::make(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
+	real d = dot(xi,plane.normal)-plane.d;
 	
 	penetration[index] = d;
 	
@@ -63,13 +98,13 @@ __global__ void PlaneForceFieldCuda3f_addForce_kernel(int size, GPUPlane plane, 
 	
 	__syncthreads();
 	
-	float3 vi = make_float3(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
-	float3 force = make_float3(0,0,0);
+	CudaVec3<real> vi = CudaVec3<real>::make(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
+	CudaVec3<real> force = CudaVec3<real>::make(0,0,0);
 	
 	if (d<0)
 	{
-		float forceIntensity = -plane.stiffness*d;
-		float dampingIntensity = -plane.damping*d;
+		real forceIntensity = -plane.stiffness*d;
+		real dampingIntensity = -plane.damping*d;
 		force = plane.normal*forceIntensity - vi*dampingIntensity;
 	}	
 	
@@ -92,7 +127,35 @@ __global__ void PlaneForceFieldCuda3f_addForce_kernel(int size, GPUPlane plane, 
 	f[index+2*BSIZE] = temp[index+2*BSIZE];
 }
 
-__global__ void PlaneForceFieldCuda3f_addDForce_kernel(int size, GPUPlane plane, const float* penetration, float* df, const float* dx)
+template<class real>
+__global__ void PlaneForceFieldCuda3t1_addForce_kernel(int size, GPUPlane<real> plane, real* penetration, CudaVec4<real>* f, const CudaVec4<real>* x, const CudaVec4<real>* v)
+{
+	int index = umul24(blockIdx.x,BSIZE) + threadIdx.x;
+
+	CudaVec4<real> xi = x[index];
+	real d = dot(CudaVec3<real>::make(xi),plane.normal)-plane.d;
+	
+	penetration[index] = d;
+	
+	CudaVec4<real> vi = v[index];
+	CudaVec3<real> force = CudaVec3<real>::make(0,0,0);
+	
+	if (d<0)
+	{
+		real forceIntensity = -plane.stiffness*d;
+		real dampingIntensity = -plane.damping*d;
+		force = plane.normal*forceIntensity - CudaVec3<real>::make(vi)*dampingIntensity;
+	}
+
+	CudaVec4<real> temp = f[index];
+        temp.x += force.x;
+        temp.y += force.y;
+        temp.z += force.z;
+	f[index] = temp;
+}
+
+template<class real>
+__global__ void PlaneForceFieldCuda3t_addDForce_kernel(int size, GPUPlane<real> plane, const real* penetration, real* df, const real* dx)
 {
 	int index0 = umul24(blockIdx.x,BSIZE);
 	int index0_3 = umul24(blockIdx.x,BSIZE*3); //index0*3;
@@ -105,7 +168,7 @@ __global__ void PlaneForceFieldCuda3f_addDForce_kernel(int size, GPUPlane plane,
 	int index_3 = umul24(index,3); //index*3;
 
 	//! Dynamically allocated shared memory to reorder global memory access
-	extern  __shared__  float temp[];
+	extern  __shared__  real temp[];
 
 	temp[index        ] = dx[index        ];
 	temp[index+  BSIZE] = dx[index+  BSIZE];
@@ -113,10 +176,10 @@ __global__ void PlaneForceFieldCuda3f_addDForce_kernel(int size, GPUPlane plane,
 
 	__syncthreads();
 	
-	float3 dxi = make_float3(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
-	float d = penetration[index];
+	CudaVec3<real> dxi = CudaVec3<real>::make(temp[index_3  ], temp[index_3+1], temp[index_3+2]);
+	real d = penetration[index];
 	
-	float3 dforce = make_float3(0,0,0);
+	CudaVec3<real> dforce = CudaVec3<real>::make(0,0,0);
 
 	if (d<0)
 	{
@@ -142,25 +205,61 @@ __global__ void PlaneForceFieldCuda3f_addDForce_kernel(int size, GPUPlane plane,
 	df[index+2*BSIZE] = temp[index+2*BSIZE];
 }
 
+template<class real>
+__global__ void PlaneForceFieldCuda3t1_addDForce_kernel(int size, GPUPlane<real> plane, const real* penetration, CudaVec4<real>* df, const CudaVec4<real>* dx)
+{
+	int index = umul24(blockIdx.x,BSIZE) + threadIdx.x;
+	
+	CudaVec4<real> dxi = dx[index];
+	real d = penetration[index];
+	
+	CudaVec3<real> dforce = CudaVec3<real>::make(0,0,0);
+
+	if (d<0)
+	{
+		dforce = plane.normal * (-plane.stiffness * dot(CudaVec3<real>::make(dxi), plane.normal));
+	}
+	CudaVec4<real> dfi = df[index];
+	dfi.x += dforce.x;
+	dfi.y += dforce.y;
+	dfi.y += dforce.z;
+	df[index] = dfi;
+}
+
 //////////////////////
 // CPU-side methods //
 //////////////////////
 
-void PlaneForceFieldCuda3f_addForce(unsigned int size, GPUPlane* plane, float* penetration, void* f, const void* x, const void* v)
+void PlaneForceFieldCuda3f_addForce(unsigned int size, GPUPlane3f* plane, float* penetration, void* f, const void* x, const void* v)
 {
 	dim3 threads(BSIZE,1);
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
-	PlaneForceFieldCuda3f_addForce_kernel<<< grid, threads, BSIZE*3*sizeof(float) >>>(size, *plane, penetration, (float*)f, (const float*)x, (const float*)v);
+	PlaneForceFieldCuda3t_addForce_kernel<float><<< grid, threads, BSIZE*3*sizeof(float) >>>(size, *plane, penetration, (float*)f, (const float*)x, (const float*)v);
 }
 
-void PlaneForceFieldCuda3f_addDForce(unsigned int size, GPUPlane* plane, const float* penetration, void* df, const void* dx) //, const void* dfdx)
+void PlaneForceFieldCuda3f1_addForce(unsigned int size, GPUPlane3f* plane, float* penetration, void* f, const void* x, const void* v)
 {
 	dim3 threads(BSIZE,1);
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
-	PlaneForceFieldCuda3f_addDForce_kernel<<< grid, threads, BSIZE*3*sizeof(float) >>>(size, *plane, penetration, (float*)df, (const float*)dx);
+	PlaneForceFieldCuda3t1_addForce_kernel<float><<< grid, threads >>>(size, *plane, penetration, (CudaVec4<float>*)f, (const CudaVec4<float>*)x, (const CudaVec4<float>*)v);
 }
 
-#if defined(__cplusplus)
+void PlaneForceFieldCuda3f_addDForce(unsigned int size, GPUPlane3f* plane, const float* penetration, void* df, const void* dx) //, const void* dfdx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	PlaneForceFieldCuda3t_addDForce_kernel<float><<< grid, threads, BSIZE*3*sizeof(float) >>>(size, *plane, penetration, (float*)df, (const float*)dx);
+}
+
+void PlaneForceFieldCuda3f1_addDForce(unsigned int size, GPUPlane3f* plane, const float* penetration, void* df, const void* dx) //, const void* dfdx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	PlaneForceFieldCuda3t1_addDForce_kernel<float><<< grid, threads >>>(size, *plane, penetration, (CudaVec4<float>*)df, (const CudaVec4<float>*)dx);
+}
+
+
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

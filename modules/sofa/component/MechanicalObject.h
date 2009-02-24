@@ -1,31 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MECHANICALOBJECT_H
 #define SOFA_COMPONENT_MECHANICALOBJECT_H
 
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/core/objectmodel/XDataPtr.h>
 #include <sofa/core/objectmodel/VDataPtr.h>
 #include <sofa/defaulttype/BaseVector.h>
@@ -43,6 +44,7 @@ namespace component
 
 using namespace core::componentmodel::behavior;
 using namespace core::objectmodel;
+using sofa::defaulttype::Vector3;
 
 /// This class can be overridden if needed for additionnal storage within template specializations.
 template<class DataTypes>
@@ -57,6 +59,7 @@ class MechanicalObject : public MechanicalState<DataTypes>
 public:
     typedef MechanicalState<DataTypes> Inherited;
     typedef typename Inherited::VecId VecId;
+    typedef typename Inherited::VMultiOp VMultiOp;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
     typedef typename DataTypes::Coord Coord;
@@ -65,7 +68,7 @@ public:
     typedef typename DataTypes::SparseDeriv SparseDeriv;
     typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
     typedef typename DataTypes::VecConst VecConst;
-
+    
 protected:
 	VecCoord* x;
 	VecDeriv* v;
@@ -87,22 +90,28 @@ protected:
 	sofa::helper::vector<unsigned int> constraintId;
 
 	bool initialized;
-	double translation[3];
-	double scale;
+	Data< Vector3 > translation;
+	Data< Vector3> rotation;
+	Data< SReal > scale;
+	Data< std::string > filename;
 
 	/// @name Integration-related data
 	/// @{
 
 	sofa::helper::vector< VecCoord * > vectorsCoord;
 	sofa::helper::vector< VecDeriv * > vectorsDeriv;
+	sofa::helper::vector< VecConst * > vectorsConst;
 	int vsize; ///< Number of elements to allocate in vectors
 
 	void setVecCoord(unsigned int index, VecCoord* v);
 	void setVecDeriv(unsigned int index, VecDeriv* v);
+	void setVecConst(unsigned int index, VecConst* v);
 
 	/// @}
 
 	MechanicalObjectInternalData<DataTypes> data;
+
+	friend class MechanicalObjectInternalData<DataTypes>;
         
         std::ofstream* m_gnuplotFileX;
         std::ofstream* m_gnuplotFileV;
@@ -122,20 +131,27 @@ public:
 
 	XDataPtr<DataTypes>* const f_X;
 	VDataPtr<DataTypes>* const f_V;
+	VDataPtr<DataTypes>* const f_F;
+	VDataPtr<DataTypes>* const f_Dx;
+	XDataPtr<DataTypes>* const f_Xfree;
+	VDataPtr<DataTypes>* const f_Vfree;
 
 	XDataPtr<DataTypes>* const f_X0;
 
-    Data<Real> restScale;
+	Data<SReal> restScale;
+	
+	Data<bool> debugViewIndices;
+	Data<float> debugViewIndicesScale;
 
 	virtual VecCoord* getX()  { f_X->beginEdit(); return x;  }
 	virtual VecDeriv* getV()  { f_V->beginEdit(); return v;  }
-	virtual VecDeriv* getF()  { return f;  }
+	virtual VecDeriv* getF()  { f_F->beginEdit(); return f;  }
 	virtual VecDeriv* getExternalForces()  { return externalForces;  }
-	virtual VecDeriv* getDx() { return dx; }
+	virtual VecDeriv* getDx() { f_Dx->beginEdit(); return dx; }
 	virtual VecConst* getC() { return c;}
-	virtual VecCoord* getXfree() { return xfree; }
-	virtual VecDeriv* getVfree() { return vfree;  }
- 	VecCoord* getX0() { return x0;} 
+	virtual VecCoord* getXfree() { f_Xfree->beginEdit(); return xfree; }
+	virtual VecDeriv* getVfree() { f_Vfree->beginEdit(); return vfree;  }
+	VecCoord* getX0() { f_X0->beginEdit(); return x0;}
 
 	virtual const VecCoord* getX()  const { return x;  }
 	virtual const VecCoord* getX0()  const { return x0;  }
@@ -147,24 +163,38 @@ public:
 	virtual const VecConst* getC() const { return c; }
 	virtual const VecCoord* getXfree() const { return xfree; }
 	virtual const VecDeriv* getVfree()  const { return vfree;  }
+	
+// 	SReal getScale(){return scale.getValue();};
 
 	virtual void init();
+	virtual void reinit();
+	
+	virtual void storeResetState();
 
 	virtual void reset();
 	
+	virtual void writeX(std::ostream& out);
+	virtual void readX(std::istream& in);
+	virtual double compareX(std::istream& in);
+	virtual void writeV(std::ostream& out);
+	virtual void readV(std::istream& in);
+	virtual double compareV(std::istream& in);
+
 	virtual void writeState( std::ostream& out );
 
         virtual void initGnuplot(const std::string path);
-        virtual void exportGnuplot(double time);
+        virtual void exportGnuplot(Real time);
 
     virtual void resize( int vsize);
+    
+    virtual bool addBBox(double* minBBox, double* maxBBox);
 
     int getSize() const {
         return vsize;
     }
-    double getPX(int i) const { double x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return x; }
-    double getPY(int i) const { double x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return y; }
-    double getPZ(int i) const { double x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return z; }
+    double getPX(int i) const { Real x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return (SReal)x; }
+    double getPY(int i) const { Real x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return (SReal)y; }
+    double getPZ(int i) const { Real x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return (SReal)z; }
 
     /** \brief Overwrite values at index outputIndex by the ones at inputIndex.
      *
@@ -200,8 +230,14 @@ public:
      */
 	void computeNewPoint( const unsigned int i, const sofa::helper::vector< double >& m_x);
 
+	// Force the position of a point (and force its velocity to zero value)
+	void forcePointPosition( const unsigned int i, const sofa::helper::vector< double >& m_x);
+
 	virtual void applyTranslation (const double dx,const double dy,const double dz);
 	
+        // rotation using Euler Angles in degree
+        virtual void applyRotation (const double rx, const double ry, const double rz);
+            
 	virtual void applyRotation (const defaulttype::Quat q);
 	
 	virtual void applyScale (const double s);
@@ -227,6 +263,9 @@ public:
 
 	/// @}
 
+        void setFilename(std::string s){filename.setValue(s);};
+        std::string getFilename(){return filename.getValue();};      
+        
 	virtual void addDxToCollisionModel(void);
 
 	void setConstraintId(unsigned int);
@@ -236,21 +275,30 @@ public:
 	/// @name Integration related methods
 	/// @{
 
-	virtual void beginIntegration(double dt);
+	virtual void beginIntegration(Real dt);
 
-	virtual void endIntegration(double dt);
+	virtual void endIntegration(Real dt);
 
 	virtual void accumulateForce();
 
 	VecCoord* getVecCoord(unsigned int index);
+	const VecCoord* getVecCoord(unsigned int index) const;
 
 	VecDeriv* getVecDeriv(unsigned int index);
+	const VecDeriv* getVecDeriv(unsigned int index) const;
+
+	VecConst* getVecConst(unsigned int index);
+	const VecConst* getVecConst(unsigned int index) const;
+
+	virtual void vAvail(VecId& v);
 
 	virtual void vAlloc(VecId v);
 
 	virtual void vFree(VecId v);
 
 	virtual void vOp(VecId v, VecId a = VecId::null(), VecId b = VecId::null(), double f=1.0);
+
+	virtual void vMultiOp(const VMultiOp& ops);
 
         virtual void vThreshold( VecId a, double threshold );
 
@@ -268,6 +316,8 @@ public:
 
 	virtual void setDx(VecId v);
 
+	virtual void setC(VecId v);
+
 	virtual void resetForce();
 
 	virtual void resetConstraint();
@@ -278,7 +328,17 @@ public:
 	/// @{
 	virtual void printDOF( VecId, std::ostream& =std::cerr );
 	virtual unsigned printDOFWithElapsedTime(VecId, unsigned =0, unsigned =0, std::ostream& =std::cerr );
+	//
+	void draw();
 	/// @}
+
+	// handle state changes
+	virtual void handleStateChange();
+
+protected:
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+	
+	
 };
 
 } // namespace component

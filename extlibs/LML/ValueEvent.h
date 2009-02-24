@@ -1,7 +1,7 @@
 /***************************************************************************
                           ValueEvent.h  -  description
                              -------------------
-    begin                : mar fév 4 2003
+    begin                : mar fï¿½v 4 2003
     copyright            : (C) 2003 by TIMC
     email                : Emmanuel.Promayon@imag.fr
  ***************************************************************************/
@@ -19,10 +19,11 @@
 #define VALUEEVENT_H
 
 #include "xmlio.h"
+#include <sofa/helper/system/config.h>
 
 /** a valueEvent of a load is composed of a value and a date
  *
- * $Revision: 1.8 $
+ * $Revision: 44 $
  */
 class ValueEvent {
 
@@ -37,7 +38,7 @@ public:
     ~ValueEvent() {};
 
     /// return true if the event is active at time t
-    bool isActive(const double t) const;
+    bool isActive(const SReal t) const;
 
     /// return the scalar value of the event
     double getValue() ;

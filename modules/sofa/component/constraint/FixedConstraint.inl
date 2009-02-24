@@ -1,37 +1,39 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONSTRAINT_FIXEDCONSTRAINT_INL
 #define SOFA_COMPONENT_CONSTRAINT_FIXEDCONSTRAINT_INL
 
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/core/componentmodel/behavior/Constraint.inl>
 #include <sofa/component/constraint/FixedConstraint.h>
+#include <sofa/component/topology/PointSubset.h>
+
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <iostream>
 
-#include <sofa/component/topology/PointSubset.h>
 
 using std::cerr;
 using std::endl;
@@ -79,7 +81,7 @@ template <class DataTypes>
 FixedConstraint<DataTypes>::FixedConstraint()
 : core::componentmodel::behavior::Constraint<DataTypes>(NULL)
 , f_indices( initData(&f_indices,"indices","Indices of the fixed points") )
-, f_fixAll( initData(&f_fixAll,"fixAll","filter all the DOF to implement a fixed object") )
+, f_fixAll( initData(&f_fixAll,false,"fixAll","filter all the DOF to implement a fixed object") )
 {
     // default to indice 0
     f_indices.beginEdit()->push_back(0);
@@ -89,9 +91,7 @@ FixedConstraint<DataTypes>::FixedConstraint()
 
 // Handle topological changes
 template <class DataTypes> void FixedConstraint<DataTypes>::handleTopologyChange()
-{
-	sofa::core::componentmodel::topology::BaseTopology *topology = static_cast<sofa::core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
-
+{	
 	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
 	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
 
@@ -133,6 +133,8 @@ void FixedConstraint<DataTypes>::init()
 {
     this->core::componentmodel::behavior::Constraint<DataTypes>::init();
 
+	topology = getContext()->getMeshTopology();
+
 	// Initialize functions and parameters
 	topology::PointSubset my_subset = f_indices.getValue();
 
@@ -167,54 +169,33 @@ void FixedConstraint<DataTypes>::projectResponse(VecDeriv& res)
 template <class DataTypes>
 void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseMatrix *mat, unsigned int &offset)
 {
-    std::cout << "applyConstraint in Matrix with offset = " << offset << std::endl;
+    //std::cout << "applyConstraint in Matrix with offset = " << offset << std::endl;
+    const unsigned int N = Deriv::size();
     const SetIndexArray & indices = f_indices.getValue().getArray();
 
     for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
     {
-        // Reset Fixed Row
-        for (int i=0; i<mat->colSize(); i++)
-        {
-            mat->element(i, 3 * (*it) + offset) = 0.0;
-            mat->element(i, 3 * (*it) + offset + 1) = 0.0;
-            mat->element(i, 3 * (*it) + offset + 2) = 0.0;
-        }
-
-        // Reset Fixed Col
-        for (int i=0; i<mat->rowSize(); i++)
-        {
-            mat->element(3 * (*it) + offset, i) = 0.0;
-            mat->element(3 * (*it) + offset + 1, i) = 0.0;
-            mat->element(3 * (*it) + offset + 2, i) = 0.0;
-        }
-
+        // Reset Fixed Row and Col
+        for (unsigned int c=0;c<N;++c)
+            mat->clearRowCol(offset + N * (*it) + c);
         // Set Fixed Vertex
-        mat->element(3 * (*it) + offset, 3 * (*it) + offset) = 1.0;
-        mat->element(3 * (*it) + offset, 3 * (*it) + offset + 1) = 0.0;
-        mat->element(3 * (*it) + offset, 3 * (*it) + offset + 2) = 0.0;
-
-        mat->element(3 * (*it) + offset + 1, 3 * (*it) + offset) = 0.0;
-        mat->element(3 * (*it) + offset + 1, 3 * (*it) + offset + 1) = 1.0;
-        mat->element(3 * (*it) + offset + 1, 3 * (*it) + offset + 2) = 0.0;
-
-        mat->element(3 * (*it) + offset + 2, 3 * (*it) + offset) = 0.0;
-        mat->element(3 * (*it) + offset + 2, 3 * (*it) + offset + 1) = 0.0;
-        mat->element(3 * (*it) + offset + 2, 3 * (*it) + offset + 2) = 1.0;
+        for (unsigned int c=0;c<N;++c)
+            mat->set(offset + N * (*it) + c, offset + N * (*it) + c, 1.0);
     }
 }
 
 template <class DataTypes>
 void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseVector *vect, unsigned int &offset)
 {
-	std::cout << "applyConstraint in Vector with offset = " << offset << std::endl;
+    //std::cout << "applyConstraint in Vector with offset = " << offset << std::endl;
+    const unsigned int N = Deriv::size();
 
-	const SetIndexArray & indices = f_indices.getValue().getArray();
-	for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-	{
-		vect->element(3 * (*it) + offset) = 0.0;
-		vect->element(3 * (*it) + offset + 1) = 0.0;
-		vect->element(3 * (*it) + offset + 2) = 0.0;
-	}
+    const SetIndexArray & indices = f_indices.getValue().getArray();
+    for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    {
+        for (unsigned int c=0;c<N;++c)
+            vect->clear(offset + N * (*it) + c);
+    }
 }
 
 
@@ -245,14 +226,20 @@ void FixedConstraint<DataTypes>::draw()
 }
 
 // Specialization for rigids
+#ifndef SOFA_FLOAT
 template <>
-void FixedConstraint<Rigid3dTypes >::draw();
+    void FixedConstraint<Rigid3dTypes >::draw();
 template <>
-void FixedConstraint<Rigid3fTypes >::draw();
+    void FixedConstraint<Rigid2dTypes >::draw();
+#endif
+#ifndef SOFA_DOUBLE
 template <>
-void FixedConstraint<Rigid2dTypes >::draw();
+    void FixedConstraint<Rigid3fTypes >::draw();
 template <>
-void FixedConstraint<Rigid2fTypes >::draw();
+    void FixedConstraint<Rigid2fTypes >::draw();
+#endif
+
+
 
 } // namespace constraint
 

@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MASS_DIAGONALMASS_H
 #define SOFA_COMPONENT_MASS_DIAGONALMASS_H
 
@@ -32,10 +32,15 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/core/componentmodel/behavior/Mass.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/component/topology/PointData.h>
 #include <sofa/helper/vector.h>
+
+#include <sofa/component/topology/EdgeSetGeometryAlgorithms.h>
+#include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
+#include <sofa/component/topology/TetrahedronSetGeometryAlgorithms.h>
+#include <sofa/component/topology/QuadSetGeometryAlgorithms.h>
+#include <sofa/component/topology/HexahedronSetGeometryAlgorithms.h>
 
 namespace sofa
 {
@@ -49,7 +54,7 @@ namespace mass
 // template<class Vec> void readVec1(Vec& vec, const char* str);
 
 template <class DataTypes, class MassType>
-class DiagonalMass : public core::componentmodel::behavior::Mass<DataTypes>, public core::VisualModel
+class DiagonalMass : public core::componentmodel::behavior::Mass<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
     typedef core::componentmodel::behavior::Mass<DataTypes> Inherited;
@@ -67,20 +72,36 @@ public:
 		TOPOLOGY_UNKNOWN=0,
 		TOPOLOGY_EDGESET=1,
 		TOPOLOGY_TRIANGLESET=2,
-		TOPOLOGY_TETRAHEDRONSET=3
+		TOPOLOGY_TETRAHEDRONSET=3,
+		TOPOLOGY_QUADSET=4,
+		TOPOLOGY_HEXAHEDRONSET=5
 	} TopologyType;
 
     Data< VecMass > f_mass;
     /// the mass density used to compute the mass from a mesh topology and geometry
     Data< Real > m_massDensity;
+
+	/// to display the center of gravity of the system
+	Data< bool > showCenterOfGravity;
+	Data< float > showAxisSize;
+
 protected:
     //VecMass masses;
 
     class Loader;
 	/// The type of topology to build the mass from the topology
-	TopologyType topologyType;
+	TopologyType topologyType;	
 
 public:
+
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+
+	sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo; 	
+	sofa::component::topology::TriangleSetGeometryAlgorithms<DataTypes>* triangleGeo; 
+	sofa::component::topology::QuadSetGeometryAlgorithms<DataTypes>* quadGeo; 
+	sofa::component::topology::TetrahedronSetGeometryAlgorithms<DataTypes>* tetraGeo; 
+	sofa::component::topology::HexahedronSetGeometryAlgorithms<DataTypes>* hexaGeo; 
+
     DiagonalMass();
 
     ~DiagonalMass();
@@ -91,6 +112,7 @@ public:
 
     void clear();
 
+    virtual void reinit();
     virtual void init();
     virtual void parse(core::objectmodel::BaseObjectDescription* arg);
 
@@ -125,19 +147,16 @@ public:
 
     double getPotentialEnergy(const VecCoord& x);   ///< Mgx potential in a uniform gravity field, null at origin
 
-	void addGravityToV(double dt/*, defaulttype::BaseVector& v*/);
+    void addGravityToV(double dt/*, defaulttype::BaseVector& v*/);
 
-    // -- VisualModel interface
+    /// Add Mass contribution to global Matrix assembling
+    void addMToMatrix(defaulttype::BaseMatrix * mat, double mFact, unsigned int &offset);
+
+    double getElementMass(unsigned int index);
 
     void draw();
 
     bool addBBox(double* minBBox, double* maxBBox);
-
-    void initTextures()
-    { }
-
-    void update()
-    { }
 };
 
 } // namespace mass

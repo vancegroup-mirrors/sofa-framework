@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_TOPOLOGY_TOPOLOGICALMAPPING_H
 #define SOFA_CORE_COMPONENTMODEL_TOPOLOGY_TOPOLOGICALMAPPING_H
 
@@ -30,9 +32,7 @@
 #include <string>
 #include <iostream>
 #include <sofa/core/objectmodel/BaseObject.h>
-#include <sofa/core/BehaviorModel.h>
-
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 
 namespace sofa
 {
@@ -45,12 +45,6 @@ namespace componentmodel
 
 namespace topology
 {
-
-	using namespace sofa::core;
-	using namespace sofa::defaulttype;
-
-	class Tetra2TriangleTopologicalMapping;
-	
 
 /**
  *  \brief This Interface is a new kind of Mapping, called TopologicalMapping, which converts an INPUT TOPOLOGY to an OUTPUT TOPOLOGY (both topologies are of type BaseTopology)
@@ -67,14 +61,29 @@ namespace topology
 class TopologicalMapping : public virtual objectmodel::BaseObject
 {
 public:
+	/// Input Topology
+	typedef BaseMeshTopology In;
+	/// Output Topology
+	typedef BaseMeshTopology Out;
+
+	TopologicalMapping(In* from, Out* to)
+	: fromModel(from), toModel(to)
+	{}
 
 	virtual ~TopologicalMapping() { }
 	
+    /// Specify the input and output topologies.
+//	void setModels(In* from, Out* to)
+	//{
+	//	fromModel = from;
+	//	toModel = to;
+	//}
+
 	/// Accessor to the INPUT topology of the TopologicalMapping :
-	virtual objectmodel::BaseObject* getFrom() = 0;
-	
+	In* getFrom() {return fromModel;}
+
 	/// Accessor to the OUTPUT topology of the TopologicalMapping :
-	virtual objectmodel::BaseObject* getTo() = 0;
+	Out* getTo() {return toModel;}
 
 	/// Method called at each topological changes propagation which comes from the INPUT topology to adapt the OUTPUT topology :
 	virtual void updateTopologicalMapping() = 0;
@@ -83,7 +92,29 @@ public:
 	const std::map<unsigned int, unsigned int>& getGlob2LocMap(){ return Glob2LocMap;}
 	const sofa::helper::vector<unsigned int>& getLoc2GlobVec(){ return Loc2GlobVec;}
 
+	virtual unsigned int getGlobIndex(unsigned int ind)
+	{ 	
+		if(ind<Loc2GlobVec.size()){
+			return Loc2GlobVec[ind];
+		}else{
+			return 0;
+		}
+	}
+
+	virtual unsigned int getFromIndex(unsigned int /*ind*/)
+	{
+		return 0;
+	}
+
+	const std::map<unsigned int, sofa::helper::vector<unsigned int> >& getIn2OutMap(){ return In2OutMap;}
+
+
 protected:
+
+	/// Input source BaseTopology
+	In* fromModel;
+	/// Output target BaseTopology
+	Out* toModel;
 
 	// Two index maps :
 
@@ -95,7 +126,7 @@ protected:
 	// the corresponding index (local index) of the same element in the OUTPUT topology :
 	std::map<unsigned int, unsigned int> Glob2LocMap;
 
-
+	std::map<unsigned int, sofa::helper::vector<unsigned int> > In2OutMap;
 };
 
 } // namespace topology

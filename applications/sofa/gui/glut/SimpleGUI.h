@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This program is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU General Public License as published by the Free   *
-* Software Foundation; either version 2 of the License, or (at your option)    *
-* any later version.                                                           *
-*                                                                              *
-* This program is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     *
-* more details.                                                                *
-*                                                                              *
-* You should have received a copy of the GNU General Public License along with *
-* this program; if not, write to the Free Software Foundation, Inc., 51        *
-* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                    *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_GUI_SIMPLE_SIMPLEGUI_H
 #define SOFA_GUI_SIMPLE_SIMPLEGUI_H
 
@@ -36,26 +38,15 @@
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/helper/system/thread/CTime.h>
 #include <sofa/component/collision/RayPickInteractor.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glu.h>
+#include <sofa/helper/system/glut.h>
 
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
-
-#ifdef __APPLE__
-# include <OpenGL/glu.h>
-# include <GLUT/glut.h>
-#else //__APPLE__
-# ifndef GLAPIENTRY
-#  define GLAPIENTRY
-# endif
-# include <GL/glu.h>
-# ifdef _MSC_VER
-#  include <GL/glaux.h>
-# endif
-# include <GL/glut.h>
-#endif //__APPLE__
 
 namespace sofa
 {
@@ -97,7 +88,7 @@ public:
     /// @{
 
     static int InitGUI(const char* name, const std::vector<std::string>& options);
-    static SofaGUI* CreateGUI(const char* name, const std::vector<std::string>& options, sofa::simulation::tree::GNode* groot = NULL, const char* filename = NULL);
+    static SofaGUI* CreateGUI(const char* name, const std::vector<std::string>& options, sofa::simulation::Node* groot = NULL, const char* filename = NULL);
 
     /// @}
 
@@ -205,7 +196,7 @@ public:
     void showInteractionForceField(bool);
     void showWireFrame(bool);
     void showNormals(bool);
-    void screenshot();
+    void screenshot(int compression_level = -1);
     void exportOBJ(bool exportMTL=true);
     void dumpState(bool);
     void displayComputationTime(bool);
@@ -234,7 +225,7 @@ protected:
     void StoreLightMatrices();
 
 public:
-    void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL);
+    void setScene(sofa::simulation::Node* scene, const char* filename=NULL);
     sofa::simulation::tree::GNode* getScene()
     {
         return groot;

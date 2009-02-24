@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_DEFAULTTYPE_VECTYPES_H
 #define SOFA_DEFAULTTYPE_VECTYPES_H
 
@@ -72,35 +74,52 @@ public:
 	//! All the Constraints applied to a state Vector
 	typedef	vector<SparseVecDeriv> VecConst;
 	
-	static void set(Coord& c, double x, double y, double z)
+    template<typename T>
+	static void set(Coord& c, T x, T y, T z)
 	{
 	
 		if (c.size() > 0)
-			c[0] = (typename Coord::value_type)x;
+			c[0] = (Real)x;
 		if (c.size() > 1)
-			c[1] = (typename Coord::value_type)y;
+			c[1] = (Real)y;
 		if (c.size() > 2)
-			c[2] = (typename Coord::value_type)z;
+			c[2] = (Real)z;
 	}
 	
-	static void get(double& x, double& y, double& z, const Coord& c)
+    template<typename T>
+	static void get(T& x, T& y, T& z, const Coord& c)
 	{
-		x = (c.size() > 0) ? (double) c[0] : 0.0;
-		y = (c.size() > 1) ? (double) c[1] : 0.0;
-		z = (c.size() > 2) ? (double) c[2] : 0.0;
+	  x = (c.size() > 0) ? (T) c[0] : (T) 0.0;
+	  y = (c.size() > 1) ? (T) c[1] : (T) 0.0;
+	  z = (c.size() > 2) ? (T) c[2] : (T) 0.0;
 	}
 	
-	static void add(Coord& c, double x, double y, double z)
+    template<typename T>
+	static void add(Coord& c, T x, T y, T z)
 	{
 		if (c.size() > 0)
-			c[0] += (typename Coord::value_type)x;
+			c[0] += (Real)x;
 		if (c.size() > 1)
-			c[1] += (typename Coord::value_type)y;
+			c[1] += (Real)y;
 		if (c.size() > 2)
-			c[2] += (typename Coord::value_type)z;
+			c[2] += (Real)z;
 	}
 	
 	static const char* Name();
+
+	static Coord interpolate(const helper::vector< Coord > &ancestors, const helper::vector< Real > &coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Coord c;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			c += ancestors[i] * coefs[i];
+		}
+
+		return c;
+	}
 };
 
 /// Custom vector allocator class allowing data to be allocated at a specific location (such as for transmission through DMA, PCI-Express, Shared Memory, Network)
@@ -295,36 +314,52 @@ public:
 	//! All the Constraints applied to a state Vector
 	typedef	vector<SparseVecDeriv> VecConst;
 	
-	
-	static void set(Coord& c, double x, double y, double z)
+    template<typename T>
+	static void set(Coord& c, T x, T y, T z)
 	{
 	
 		if (c.size() > 0)
-			c[0] = (typename Coord::value_type)x;
+			c[0] = (Real)x;
 		if (c.size() > 1)
-			c[1] = (typename Coord::value_type)y;
+			c[1] = (Real)y;
 		if (c.size() > 2)
-			c[2] = (typename Coord::value_type)z;
+			c[2] = (Real)z;
 	}
 	
-	static void get(double& x, double& y, double& z, const Coord& c)
+    template<typename T>
+	static void get(T& x, T& y, T& z, const Coord& c)
 	{
-		x = (c.size() > 0) ? (double) c[0] : 0.0;
-		y = (c.size() > 1) ? (double) c[1] : 0.0;
-		z = (c.size() > 2) ? (double) c[2] : 0.0;
+	  x = (c.size() > 0) ? (T) c[0] : (T) 0.0;
+	  y = (c.size() > 1) ? (T) c[1] : (T) 0.0;
+	  z = (c.size() > 2) ? (T) c[2] : (T) 0.0;
 	}
 	
-	static void add(Coord& c, double x, double y, double z)
+    template<typename T>
+	static void add(Coord& c, T x, T y, T z)
 	{
 		if (c.size() > 0)
-			c[0] += (typename Coord::value_type)x;
+			c[0] += (Real)x;
 		if (c.size() > 1)
-			c[1] += (typename Coord::value_type)y;
+			c[1] += (Real)y;
 		if (c.size() > 2)
-			c[2] += (typename Coord::value_type)z;
+			c[2] += (Real)z;
 	}
 	
 	static const char* Name();
+
+	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Coord c;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			c += ancestors[i] * coefs[i];
+		}
+
+		return c;
+	}
 };
 
 //
@@ -335,8 +370,6 @@ public:
 typedef StdVectorTypes<Vec3d,Vec3d,double> Vec3dTypes;
 /// 3D DOFs, single precision
 typedef StdVectorTypes<Vec3f,Vec3f,float> Vec3fTypes;
-/// 3D DOFs, double precision (default)
-typedef Vec3dTypes Vec3Types;
 
 template<> inline const char* Vec3dTypes::Name() { return "Vec3d"; }
 template<> inline const char* Vec3fTypes::Name() { return "Vec3f"; }
@@ -345,8 +378,6 @@ template<> inline const char* Vec3fTypes::Name() { return "Vec3f"; }
 typedef ExtVectorTypes<Vec3d,Vec3d,double> ExtVec3dTypes;
 /// 3D external DOFs, single precision
 typedef ExtVectorTypes<Vec3f,Vec3f,float> ExtVec3fTypes;
-/// 3D external DOFs, double precision (default)
-typedef ExtVec3dTypes ExtVec3Types;
 
 template<> inline const char* ExtVec3dTypes::Name() { return "ExtVec3d"; }
 template<> inline const char* ExtVec3fTypes::Name() { return "ExtVec3f"; }
@@ -359,8 +390,6 @@ template<> inline const char* ExtVec3fTypes::Name() { return "ExtVec3f"; }
 typedef StdVectorTypes<Vec2d,Vec2d,double> Vec2dTypes;
 /// 2D DOFs, single precision
 typedef StdVectorTypes<Vec2f,Vec2f,float> Vec2fTypes;
-/// 2D DOFs, double precision (default)
-typedef Vec2dTypes Vec2Types;
 
 template<> inline const char* Vec2dTypes::Name() { return "Vec2d"; }
 template<> inline const char* Vec2fTypes::Name() { return "Vec2f"; }
@@ -369,8 +398,6 @@ template<> inline const char* Vec2fTypes::Name() { return "Vec2f"; }
 typedef ExtVectorTypes<Vec2d,Vec2d,double> ExtVec2dTypes;
 /// 2D external DOFs, single precision
 typedef ExtVectorTypes<Vec2f,Vec2f,float> ExtVec2fTypes;
-/// 2D external DOFs, double precision (default)
-typedef ExtVec2dTypes ExtVec2Types;
 
 template<> inline const char* ExtVec2dTypes::Name() { return "ExtVec2d"; }
 template<> inline const char* ExtVec2fTypes::Name() { return "ExtVec2f"; }
@@ -383,8 +410,6 @@ template<> inline const char* ExtVec2fTypes::Name() { return "ExtVec2f"; }
 typedef StdVectorTypes<Vec1d,Vec1d,double> Vec1dTypes;
 /// 1D DOFs, single precision
 typedef StdVectorTypes<Vec1f,Vec1f,float> Vec1fTypes;
-/// 1D DOFs, double precision (default)
-typedef Vec1dTypes Vec1Types;
 
 template<> inline const char* Vec1dTypes::Name() { return "Vec1d"; }
 template<> inline const char* Vec1fTypes::Name() { return "Vec1f"; }
@@ -393,8 +418,6 @@ template<> inline const char* Vec1fTypes::Name() { return "Vec1f"; }
 typedef ExtVectorTypes<Vec1d,Vec1d,double> ExtVec1dTypes;
 /// 1D external DOFs, single precision
 typedef ExtVectorTypes<Vec1f,Vec1f,float> ExtVec1fTypes;
-/// 1D external DOFs, double precision (default)
-typedef ExtVec1dTypes ExtVec1Types;
 
 template<> inline const char* ExtVec1dTypes::Name() { return "ExtVec1d"; }
 template<> inline const char* ExtVec1fTypes::Name() { return "ExtVec1f"; }
@@ -407,8 +430,6 @@ template<> inline const char* ExtVec1fTypes::Name() { return "ExtVec1f"; }
 typedef StdVectorTypes<Vec6d,Vec6d,double> Vec6dTypes;
 /// 6D DOFs, single precision
 typedef StdVectorTypes<Vec6f,Vec6f,float> Vec6fTypes;
-/// 6D DOFs, double precision (default)
-typedef Vec6dTypes Vec6Types;
 
 template<> inline const char* Vec6dTypes::Name() { return "Vec6d"; }
 template<> inline const char* Vec6fTypes::Name() { return "Vec6f"; }
@@ -417,12 +438,45 @@ template<> inline const char* Vec6fTypes::Name() { return "Vec6f"; }
 typedef ExtVectorTypes<Vec6d,Vec6d,double> ExtVec6dTypes;
 /// 6D external DOFs, single precision
 typedef ExtVectorTypes<Vec6f,Vec6f,float> ExtVec6fTypes;
-/// 6D external DOFs, double precision (default)
-typedef ExtVec6dTypes ExtVec6Types;
 
 template<> inline const char* ExtVec6dTypes::Name() { return "ExtVec6d"; }
 template<> inline const char* ExtVec6fTypes::Name() { return "ExtVec6f"; }
 
+#ifdef SOFA_FLOAT
+/// 6D DOFs, double precision (default)
+typedef Vec6fTypes Vec6Types;
+/// 3D DOFs, double precision (default)
+typedef Vec3fTypes Vec3Types;
+/// 2D DOFs, double precision (default)
+typedef Vec2fTypes Vec2Types;
+/// 1D DOFs, double precision (default)
+typedef Vec1fTypes Vec1Types;
+/// 6D external DOFs, double precision (default)
+typedef ExtVec6fTypes ExtVec6Types;
+/// 3D external DOFs, double precision (default)
+typedef ExtVec3fTypes ExtVec3Types;
+/// 2D external DOFs, double precision (default)
+typedef ExtVec2fTypes ExtVec2Types;
+/// 1D external DOFs, double precision (default)
+typedef ExtVec1fTypes ExtVec1Types;
+#else
+/// 6D DOFs, double precision (default)
+typedef Vec6dTypes Vec6Types;
+/// 3D DOFs, double precision (default)
+typedef Vec3dTypes Vec3Types;
+/// 2D DOFs, double precision (default)
+typedef Vec2dTypes Vec2Types;
+/// 1D DOFs, double precision (default)
+typedef Vec1dTypes Vec1Types;
+/// 6D external DOFs, double precision (default)
+typedef ExtVec6dTypes ExtVec6Types;
+/// 3D external DOFs, double precision (default)
+typedef ExtVec3dTypes ExtVec3Types;
+/// 2D external DOFs, double precision (default)
+typedef ExtVec2dTypes ExtVec2Types;
+/// 1D external DOFs, double precision (default)
+typedef ExtVec1dTypes ExtVec1Types;
+#endif
 } // namespace defaulttype
 
 namespace core

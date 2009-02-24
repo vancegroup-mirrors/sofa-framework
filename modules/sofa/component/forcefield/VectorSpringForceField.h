@@ -1,14 +1,41 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_VECTORSPRINGFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_VECTORSPRINGFORCEFIELD_H
 
 #include <sofa/component/forcefield/SpringForceField.h>
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/component/topology/EdgeData.h>
 #include <sofa/component/topology/TopologyChangedEvent.h>
+
+#include <sofa/component/topology/EdgeSetGeometryAlgorithms.h>
+#include <sofa/component/topology/EdgeSetTopologyModifier.h>
+
 
 namespace sofa
 {
@@ -20,11 +47,12 @@ namespace forcefield
 {
 
 using namespace sofa::defaulttype;
+using sofa::core::objectmodel::Event;
 
 template<class DataTypes>
 class VectorSpringForceField
-: public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public core::VisualModel
-//: public core::componentmodel::behavior::ForceField<DataTypes>, public core::VisualModel
+: public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public virtual core::objectmodel::BaseObject
+//: public core::componentmodel::behavior::ForceField<DataTypes>
 {
 public:
     typedef typename core::componentmodel::behavior::PairInteractionForceField<DataTypes> Inherit;
@@ -54,8 +82,7 @@ protected:
     double m_potentialEnergy;
     /// true if the springs are initialized from the topology
     bool useTopology;
-    /// the EdgeSet topology used to get the list of edges
-    sofa::component::topology::EdgeSetTopology<DataTypes> *topology;
+    
     /// indices in case we don't use the topology
     sofa::helper::vector<topology::Edge> edgeArray;
     /// where the springs information are stored
@@ -78,6 +105,11 @@ protected:
 
 public:
 
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+	sofa::component::topology::EdgeSetTopologyContainer* edgeCont; 
+	sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo; 
+	sofa::component::topology::EdgeSetTopologyModifier* edgeMod; 
+
     VectorSpringForceField(MechanicalState* _object=NULL);
 
     VectorSpringForceField(MechanicalState* _object1, MechanicalState* _object2);
@@ -96,7 +128,7 @@ public:
     virtual void addForce(VecDeriv& f1, VecDeriv& f2, const VecCoord& x1, const VecCoord& x2, const VecDeriv& v1, const VecDeriv& v2);
     //virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
 
-    virtual void addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2);
+    virtual void addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2, double kFactor, double bFactor);
     //virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
 
     //virtual double getPotentialEnergy(const VecCoord& )
@@ -115,10 +147,8 @@ public:
     {
         return springArray;
     }
-    // -- VisualModel interface
+
     void draw();
-    void initTextures() {}
-    void update() {}
 
     // -- Modifiers
 
@@ -128,7 +158,7 @@ public:
         if (reserve) springArray.reserve(reserve);
     }
 
-    void addSpring(int m1, int m2, double ks, double kd, Coord restVector);
+    void addSpring(int m1, int m2, SReal ks, SReal kd, Coord restVector);
 
     /// forward declaration of the loader class used to read spring information from file
     class Loader;

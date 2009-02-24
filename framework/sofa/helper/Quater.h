@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_HELPER_QUATER_H
 #define SOFA_HELPER_QUATER_H
 
@@ -81,7 +83,7 @@ public:
                 _q[3]=1.0;
         }
 
-        void fromMatrix(const defaulttype::Mat3x3d &m);
+        void fromMatrix(const defaulttype::Matrix3 &m);
 
         template<class Mat33>
         void toMatrix(Mat33 &m) const
@@ -131,13 +133,16 @@ public:
 		Quater<Real> operator+(const Quater<Real> &q1) const;
 
 		Quater<Real> operator*(const Quater<Real> &q1) const;
+
+    Quater<Real> operator*(const Real &r) const;
+
         /// Given two Quaters, multiply them together to get a third quaternion.
         //template <class T>
         //friend Quater<T> operator*(const Quater<T>& q1, const Quater<T>& q2);
 
-        Quater quatVectMult(const defaulttype::Vec3d& vect);
+        Quater quatVectMult(const defaulttype::Vec<3,Real>& vect);
 
-        Quater vectQuatMult(const defaulttype::Vec3d& vect);
+        Quater vectQuatMult(const defaulttype::Vec<3,Real>& vect);
 
         Real& operator[](int index)
         {
@@ -169,7 +174,7 @@ public:
         // This function computes a quaternion based on an axis (defined by
         // the given vector) and an angle about which to rotate.  The angle is
         // expressed in radians.
-        Quater axisToQuat(defaulttype::Vec3d a, Real phi);
+        Quater axisToQuat(defaulttype::Vec<3,Real> a, Real phi);
 
         /// Create using rotation vector (axis*angle) given in parent coordinates
         template<class V>
@@ -184,7 +189,20 @@ public:
                         return Quater( a[0]*s*nor, a[1]*s*nor,a[2]*s*nor, (Real)cos(phi/2) );
                 }
         }
-         
+	
+	/// Create a quaternion from Euler
+	static Quater createQuaterFromEuler( defaulttype::Vec<3,Real> v) {
+	  Real quat[4];      Real a0 = v.elems[0];
+	  Real a1 = v.elems[1];
+	  Real a2 = v.elems[2];
+	  quat[3] = cos(a0/2)*cos(a1/2)*cos(a2/2) + sin(a0/2)*sin(a1/2)*sin(a2/2);
+	  quat[0] = sin(a0/2)*cos(a1/2)*cos(a2/2) - cos(a0/2)*sin(a1/2)*sin(a2/2);
+	  quat[1] = cos(a0/2)*sin(a1/2)*cos(a2/2) + sin(a0/2)*cos(a1/2)*sin(a2/2);
+	  quat[2] = cos(a0/2)*cos(a1/2)*sin(a2/2) - sin(a0/2)*sin(a1/2)*cos(a2/2);
+	  Quater quatResult( quat[0], quat[1], quat[2], quat[3] );     
+	  return quatResult;
+	}
+	
         /// Create using the entries of a rotation vector (axis*angle) given in parent coordinates
         template<class T>
         static Quater createFromRotationVector(T a0, T a1, T a2 )
@@ -194,8 +212,8 @@ public:
                 return Quater(0,0,0,1);
             else {
                 Real nor = 1/phi;
-                Real s = (Real)sin(phi/2);
-                return Quater( a0*s*nor, a1*s*nor,a2*s*nor, (Real)cos(phi/2) );
+                Real s = (Real)sin(phi/2.0);
+                return Quater( a0*s*nor, a1*s*nor,a2*s*nor, (Real)cos(phi/2.0) );
             }
         }
        /// Create using rotation vector (axis*angle) given in parent coordinates

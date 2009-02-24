@@ -1,32 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 // Author: François Faure, INRIA-UJF, (C) 2006
 //
 // Copyright: See COPYING file that comes with this distribution
 #include <sofa/component/odesolver/CGImplicitSolver.h>
-//#include "Sofa/Core/IntegrationGroup.h"
+#include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/core/ObjectFactory.h>
 #include <math.h>
 #include <iostream>
@@ -54,6 +54,7 @@ CGImplicitSolver::CGImplicitSolver()
         , f_rayleighStiffness( initData(&f_rayleighStiffness,0.1,"rayleighStiffness","Rayleigh damping coefficient related to stiffness") )
         , f_rayleighMass( initData(&f_rayleighMass,0.1,"rayleighMass","Rayleigh damping coefficient related to mass"))
         , f_velocityDamping( initData(&f_velocityDamping,0.,"vdamping","Velocity decay coefficient (no decay if null)") )
+        , f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
 {
     //     maxCGIter = 25;
     //     smallDenominatorThreshold = 1e-5;
@@ -83,19 +84,20 @@ void CGImplicitSolver::solve(double dt)
     MultiVector x(this, VecId::V_DERIV);
 
     double h = dt;
-    bool printLog = f_printLog.getValue();
+    const bool printLog = f_printLog.getValue();
+    const bool verbose  = f_verbose.getValue();
 
-	addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
+    addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
 
-    projectResponse(vel);          // initial velocities are projected to the constrained space
+    //projectResponse(vel);          // initial velocities are projected to the constrained space
 
     // compute the right-hand term of the equation system
     computeForce(b);             // b = f0
+
     //propagateDx(vel);            // dx = v
     //computeDf(f);                // f = df/dx v
     computeDfV(f);                // f = df/dx v
     b.peq(f,h+f_rayleighStiffness.getValue());      // b = f0 + (h+rs)df/dx v
-
 
     if (f_rayleighMass.getValue() != 0.0)
     {
@@ -106,8 +108,11 @@ void CGImplicitSolver::solve(double dt)
         addMdx(b,vel,-f_rayleighMass.getValue()); // no need to propagate vel as dx again
     }
 
-
     b.teq(h);                           // b = h(f0 + (h+rs)df/dx v - rd M v)
+
+    if( verbose )
+	cerr<<"CGImplicitSolver, f0 = "<< b <<endl;
+
     projectResponse(b);          // b is projected to the constrained space
 
     double normb2 = b.dot(b);
@@ -117,18 +122,21 @@ void CGImplicitSolver::solve(double dt)
     // -- solve the system using a conjugate gradient solution
     double rho, rho_1=0, alpha, beta;
 
+    if( verbose )
+	cerr<<"CGImplicitSolver, projected f0 = "<< b <<endl;
+
     v_clear( x );
     //v_eq(r,b); // initial residual
     MultiVector& r = b; // b is never used after this point
 
-    /*if( printLog )
+    if( verbose )
     {
         cerr<<"CGImplicitSolver, dt = "<< dt <<endl;
         cerr<<"CGImplicitSolver, initial x = "<< pos <<endl;
         cerr<<"CGImplicitSolver, initial v = "<< vel <<endl;
-        cerr<<"CGImplicitSolver, f0 = "<< b <<endl;
-        cerr<<"CGImplicitSolver, r0 = "<< r <<endl;
-    }*/
+        cerr<<"CGImplicitSolver, r0 = f0 = "<< b <<endl;
+        //cerr<<"CGImplicitSolver, r0 = "<< r <<endl;
+    }
 
     unsigned nb_iter;
     const char* endcond = "iterations";
@@ -161,26 +169,26 @@ void CGImplicitSolver::solve(double dt)
             v_op(p,r,p,beta); // p = p*beta + r
         }
 
-        /*if( printLog )
+        if( verbose )
         {
             cerr<<"p : "<<p<<endl;
-        }*/
+        }
         
         // matrix-vector product
         propagateDx(p);          // dx = p
         computeDf(q);            // q = df/dx p
         
-        /*if( printLog )
+        if( verbose )
         {
             cerr<<"q = df/dx p : "<<q<<endl;
-        }*/
+        }
         
         q *= -h*(h+f_rayleighStiffness.getValue());  // q = -h(h+rs) df/dx p
         
-        /*if( printLog )
+        if( verbose )
         {
             cerr<<"q = -h(h+rs) df/dx p : "<<q<<endl;
-        }*/
+        }
         //
         // 		cerr<<"-h(h+rs) df/dx p : "<<q<<endl;
         // 		cerr<<"f_rayleighMass.getValue() : "<<f_rayleighMass.getValue()<<endl;
@@ -198,18 +206,18 @@ void CGImplicitSolver::solve(double dt)
             //q.peq(q2,(1+h*f_rayleighMass.getValue())); // q = Mp -h(h+rs) df/dx p +hr Mp  =  (M + dt(rd M + rs K) + dt2 K) dx
             addMdx(q,VecId(),(1+h*f_rayleighMass.getValue())); // no need to propagate p as dx again
         }
-        /*if( printLog )
+        if( verbose )
         {
             cerr<<"q = Mp -h(h+rs) df/dx p +hr Mp  =  "<<q<<endl;
-        }*/
+        }
 
         // filter the product to take the constraints into account
         //
         projectResponse(q);     // q is projected to the constrained space
-        /*if( printLog )
+        if( verbose )
         {
             cerr<<"q after constraint projection : "<<q<<endl;
-        }*/
+        }
 
         double den = p.dot(q);
 
@@ -217,37 +225,68 @@ void CGImplicitSolver::solve(double dt)
         if( fabs(den)<f_smallDenominatorThreshold.getValue() )
         {
             endcond = "threshold";
-            if( printLog )
+            if( verbose )
             {
-                //                 cerr<<"CGImplicitSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<endl;
+                cerr<<"CGImplicitSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<endl;
             }
             break;
         }
         alpha = rho/den;
+#ifdef SOFA_NO_VMULTIOP // unoptimized version
         x.peq(p,alpha);                 // x = x + alpha p
         r.peq(q,-alpha);                // r = r - alpha q
-        /*if( printLog ){
+#else // single-operation optimization
+        {
+            simulation::MechanicalVMultiOpVisitor vmop;
+            vmop.ops.resize(2);
+            vmop.ops[0].first = (VecId)x;
+            vmop.ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+            vmop.ops[0].second.push_back(std::make_pair((VecId)p,alpha));
+            vmop.ops[1].first = (VecId)r;
+            vmop.ops[1].second.push_back(std::make_pair((VecId)r,1.0));
+            vmop.ops[1].second.push_back(std::make_pair((VecId)q,-alpha));
+            vmop.execute(this->getContext());
+        }
+#endif
+        if( verbose ){
             cerr<<"den = "<<den<<", alpha = "<<alpha<<endl;
             cerr<<"x : "<<x<<endl;
             cerr<<"r : "<<r<<endl;
-        }*/
+        }
 
         rho_1 = rho;
     }
     // x is the solution of the system
 
     // apply the solution
+#ifdef SOFA_NO_VMULTIOP // unoptimized version
     vel.peq( x );                       // vel = vel + x
     pos.peq( vel, h );                  // pos = pos + h vel
+#else // single-operation optimization
+    {
+        simulation::MechanicalVMultiOpVisitor vmop;
+        vmop.ops.resize(2);
+        vmop.ops[0].first = (VecId)vel;
+        vmop.ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
+        vmop.ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+        vmop.ops[1].first = (VecId)pos;
+        vmop.ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
+        vmop.ops[1].second.push_back(std::make_pair((VecId)vel,h));
+        vmop.execute(this->getContext());
+    }
+#endif
     if (f_velocityDamping.getValue()!=0.0)
         vel *= exp(-h*f_velocityDamping.getValue());
-
+    
     if( printLog )
     {
         cerr<<"CGImplicitSolver::solve, nbiter = "<<nb_iter<<" stop because of "<<endcond<<endl;
-        //cerr<<"CGImplicitSolver::solve, solution = "<<x<<endl;
-        //cerr<<"CGImplicitSolver, final x = "<< pos <<endl;
-        //cerr<<"CGImplicitSolver, final v = "<< vel <<endl;
+    }
+    if( verbose )
+    {
+        cerr<<"CGImplicitSolver::solve, solution = "<<x<<endl;
+        cerr<<"CGImplicitSolver, final x = "<< pos <<endl;
+        cerr<<"CGImplicitSolver, final v = "<< vel <<endl;
     }
 }
 

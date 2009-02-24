@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_ELLIPSOIDFORCEFIELD_INL
 #define SOFA_COMPONENT_FORCEFIELD_ELLIPSOIDFORCEFIELD_INL
 
@@ -19,26 +43,26 @@ namespace component
 namespace forcefield
 {
 
-// v = sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1
-// dv/dxj = xj/rj² * 1/sqrt(x0²/r0²+x1²/r1²+x2²/r2²)
+// v = sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1
+// dv/dxj = xj/rj^2 * 1/sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)
 
 // f  = -stiffness * v * (dv/dp) / norm(dv/dp)
 
-// fi = -stiffness * (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1) * (xi/ri²) / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
+// fi = -stiffness * (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1) * (xi/ri^2) / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
 
-// dfi/dxj = -stiffness * [ d(sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)/dxj *   (xi/ri²) / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
-//                          +  (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)     * d(xi/ri²)/dxj / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
-//                          +  (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)     *  (xi/ri²) * d(1/sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4))/dxj ]
-// dfi/dxj = -stiffness * [ xj/rj² * 1/sqrt(x0²/r0²+x1²/r1²+x2²/r2²) * (xi/ri²) / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
-//                          +  (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)       * (i==j)/ri² / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
-//                          +  (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)       * (xi/ri²) * (-1/2*2xj/rj^4*1/(x0²/r0^4+x1²/r1^4+x2²/r2^4) ]
-// dfi/dxj = -stiffness * [ xj/rj² * 1/sqrt(x0²/r0²+x1²/r1²+x2²/r2²) * (xi/ri²) / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
-//                          +  (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)       * (i==j)/ri² / sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4)
-//                          +  (sqrt(x0²/r0²+x1²/r1²+x2²/r2²)-1)       * (xi/ri²) * (-xj/rj^4*1/(x0²/r0^4+x1²/r1^4+x2²/r2^4) ]
+// dfi/dxj = -stiffness * [ d(sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)/dxj *   (xi/ri^2) / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
+//                          +  (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)     * d(xi/ri^2)/dxj / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
+//                          +  (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)     *  (xi/ri^2) * d(1/sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4))/dxj ]
+// dfi/dxj = -stiffness * [ xj/rj^2 * 1/sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2) * (xi/ri^2) / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
+//                          +  (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)       * (i==j)/ri^2 / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
+//                          +  (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)       * (xi/ri^2) * (-1/2*2xj/rj^4*1/(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4) ]
+// dfi/dxj = -stiffness * [ xj/rj^2 * 1/sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2) * (xi/ri^2) / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
+//                          +  (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)       * (i==j)/ri^2 / sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4)
+//                          +  (sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2)-1)       * (xi/ri^2) * (-xj/rj^4*1/(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4) ]
 
-// dfi/dxj = -stiffness * [ (xj/rj²) * (xi/ri²) * 1/(sqrt(x0²/r0²+x1²/r1²+x2²/r2²) * sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4))
-//                          +  v       * (i==j) / (ri²*sqrt(x0²/r0^4+x1²/r1^4+x2²/r2^4))
-//                          +  v       * (xi/ri²) * (xj/rj²) * 1/(rj²*(x0²/r0^4+x1²/r1^4+x2²/r2^4) ]
+// dfi/dxj = -stiffness * [ (xj/rj^2) * (xi/ri^2) * 1/(sqrt(x0^2/r0^2+x1^2/r1^2+x2^2/r2^2) * sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4))
+//                          +  v       * (i==j) / (ri^2*sqrt(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4))
+//                          +  v       * (xi/ri^2) * (xj/rj^2) * 1/(rj^2*(x0^2/r0^4+x1^2/r1^4+x2^2/r2^4) ]
 
 
 template<class DataTypes>
@@ -91,7 +115,7 @@ void EllipsoidForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, 
 }
 
 template<class DataTypes>
-void EllipsoidForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1)
+void EllipsoidForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
 {
     df1.resize(dx1.size());
     const sofa::helper::vector<Contact>& contacts = this->contacts.getValue();
@@ -101,12 +125,13 @@ void EllipsoidForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx
         assert((unsigned)c.index<dx1.size());
         Deriv du = dx1[c.index];
         Deriv dforce = c.m * du;
+	dforce *= kFactor;
         df1[c.index] += dforce;
     }
 }
 
 template <class DataTypes> 
-double EllipsoidForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
+    double EllipsoidForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
     std::cerr<<"EllipsoidForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
     return 0;
@@ -118,9 +143,9 @@ void EllipsoidForceField<DataTypes>::draw()
     if (!getContext()->getShowForceFields()) return;
     if (!bDraw.getValue()) return;
 
-    double cx=0, cy=0, cz=0;
+    Real cx=0, cy=0, cz=0;
     DataTypes::get(cx, cy, cz, center.getValue());
-    double rx=1, ry=1, rz=1;
+    Real rx=1, ry=1, rz=1;
     DataTypes::get(rx, ry, rz, vradius.getValue());
     glEnable(GL_CULL_FACE);
     glEnable(GL_LIGHTING);

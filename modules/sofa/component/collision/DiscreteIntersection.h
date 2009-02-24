@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_DISCRETEINTERSECTION_H
 #define SOFA_COMPONENT_COLLISION_DISCRETEINTERSECTION_H
 
@@ -35,6 +35,7 @@
 #include <sofa/component/collision/RayModel.h>
 #include <sofa/component/collision/SphereTreeModel.h>
 #include <sofa/component/collision/DistanceGridCollisionModel.h>
+#include <sofa/component/collision/TetrahedronModel.h>
 
 namespace sofa
 {
@@ -44,7 +45,6 @@ namespace component
 
 namespace collision
 {
-
 class DiscreteIntersection : public core::componentmodel::collision::Intersection
 {
 public:
@@ -95,6 +95,8 @@ public:
     //bool testIntersection(Triangle&, Triangle&);
     bool testIntersection(Triangle&, Line&);
     bool testIntersection(Ray&, Triangle&);
+    bool testIntersection(Ray&, Tetrahedron&);
+    bool testIntersection(Tetrahedron&, Point&);
     bool testIntersection(RigidDistanceGridCollisionElement&, RigidDistanceGridCollisionElement&);
     bool testIntersection(RigidDistanceGridCollisionElement&, Point&);
     template<class Sphere>
@@ -121,6 +123,8 @@ public:
     //int computeIntersection(Triangle&, Triangle&, OutputVector*);
     int computeIntersection(Triangle&, Line&, OutputVector*);
     int computeIntersection(Ray&, Triangle&, OutputVector*);
+    int computeIntersection(Ray&, Tetrahedron&, OutputVector*);
+    int computeIntersection(Tetrahedron&, Point&, OutputVector*);
     int computeIntersection(RigidDistanceGridCollisionElement&, RigidDistanceGridCollisionElement&, OutputVector*);
     int computeIntersection(RigidDistanceGridCollisionElement&, Point&, OutputVector*);
     template<class Sphere>

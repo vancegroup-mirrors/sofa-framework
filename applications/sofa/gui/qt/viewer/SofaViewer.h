@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This program is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU General Public License as published by the Free   *
-* Software Foundation; either version 2 of the License, or (at your option)    *
-* any later version.                                                           *
-*                                                                              *
-* This program is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     *
-* more details.                                                                *
-*                                                                              *
-* You should have received a copy of the GNU General Public License along with *
-* this program; if not, write to the Free Software Foundation, Inc., 51        *
-* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                    *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_VIEWER_H
 #define SOFA_VIEWER_H
 
@@ -30,7 +32,7 @@
 
 
 
-#ifdef QT_MODULE_QT3SUPPORT 
+#ifdef SOFA_QT4 
 #include <QEvent>
 #include <QMouseEvent> 
 #include <QKeyEvent>
@@ -38,7 +40,7 @@
 #include <qevent.h>
 #endif
 
-#include <sofa/simulation/automatescheduler/Automate.h>
+
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
@@ -46,12 +48,13 @@
 #include <sofa/component/collision/RayPickInteractor.h>
 
 //instruments handling
+#include <sofa/component/controller/Controller.h>
 #include <sofa/defaulttype/LaparoscopicRigidTypes.h>
-#include <sofa/simulation/tree/GrabVisitor.h>
-#include <sofa/simulation/tree/MechanicalVisitor.h>
-#include <sofa/simulation/tree/UpdateMappingVisitor.h>
+//#include <sofa/simulation/common/GrabVisitor.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/simulation/common/UpdateMappingVisitor.h>
 #include <sofa/simulation/tree/Simulation.h>
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 #include <QEvent>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -79,16 +82,17 @@ namespace sofa
 	};
 
 	enum {CAMERA_PERSPECTIVE, CAMERA_ORTHOGRAPHIC};
-	//      using namespace sofa::simulation::automatescheduler;
       
-	class SofaViewer : public sofa::simulation::automatescheduler::Automate::DrawCB
+	class SofaViewer
+
+
 	  {
 
 	  public:
 	    SofaViewer ()
-	      : groot(NULL), m_isControlPressed(false), _video(false), _shadow(false), _axis(false), camera_type(CAMERA_PERSPECTIVE)
+	      : groot(NULL), m_isControlPressed(false), _video(false), _shadow(false), _gl_shadow(false), _axis(false), camera_type(CAMERA_PERSPECTIVE)
 	    {}
-	    ~SofaViewer(){}
+	    virtual ~SofaViewer(){}
 
 	    virtual QWidget* getQWidget()=0;
 
@@ -100,7 +104,8 @@ namespace sofa
 	    virtual void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool /*keepParams*/=false)
             {
 //               if (interactor != NULL) delete interactor;
-              interactor = NULL;
+              //interactor = NULL;
+              scene->getContext()->get( interactor);
               std::ostringstream ofilename;
               std::string screenshot_prefix;
 
@@ -115,7 +120,7 @@ namespace sofa
 
                 screenshot_prefix = ofilename.str();
 
-                unsigned int position_scene = screenshot_prefix.rfind("scenes/");
+		std::string::size_type position_scene = screenshot_prefix.rfind("scenes/");
 
                 if (position_scene != std::string::npos && position_scene < screenshot_prefix.size()-7)
                 {
@@ -141,7 +146,10 @@ namespace sofa
 	    //Fonctions needed to take a screenshot
 	    virtual const std::string screenshotName(){ return capture.findFilename().c_str();};
 	    virtual void        setPrefix(const std::string filename){capture.setPrefix(filename);};	
-	    virtual void        screenshot(const std::string filename)=0;
+	    virtual void        screenshot(const std::string filename, int compression_level = -1)
+	    {	      
+	      capture.saveScreen(filename, compression_level);
+	    }
 
 	  protected:
 
@@ -161,7 +169,7 @@ namespace sofa
 		case Qt::Key_L:
 		  // --- draw shadows
 		  {
-		    _shadow = !_shadow;
+		    if (_gl_shadow) _shadow = !_shadow;
 		    break;
 		  }		
 		case Qt::Key_R:
@@ -200,11 +208,6 @@ namespace sofa
 		  {
 		    m_isControlPressed = true;
 		    //cerr<<"QtViewer::keyPressEvent, CONTROL pressed"<<endl;
-		    break;
-		  }
-		case Qt::Key_Escape:
-		  {
-		    exit(0);
 		    break;
 		  }
 		default:
@@ -269,6 +272,7 @@ namespace sofa
 			  groot->addChild(child);
 			  child->addObject(interactor);
 			}
+		      interactor->init();
 		    }
 		  interactor->newEvent("show");
 		  switch (e->type())
@@ -307,7 +311,7 @@ namespace sofa
 			int index_instrument = simulation::tree::getSimulation()->instrumentInUse.getValue();
 			if (index_instrument < 0 || index_instrument > (int)simulation::tree::getSimulation()->instruments.size()) return;
 	      
-			simulation::tree::GNode *instrument = simulation::tree::getSimulation()->instruments[index_instrument];
+			simulation::Node *instrument = simulation::tree::getSimulation()->instruments[index_instrument];
 			if (instrument == NULL) return;
 	      
 			int eventX = e->x();
@@ -375,7 +379,7 @@ namespace sofa
 							if (_mouseInteractorMoving)
 							{
 								_mouseInteractorMoving = false;
-								static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::GrabVisitor>();
+								//static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::GrabVisitor>();
 							}
 						}
 						break;
@@ -418,8 +422,99 @@ namespace sofa
 					}
 				}
 			  
-				static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::MechanicalPropagatePositionAndVelocityVisitor>();
-				static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::tree::UpdateMappingVisitor>();
+				static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
+				static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
+				getQWidget()->update();
+			}
+			else
+			{
+				std::vector< component::controller::Controller* > bc;
+				instrument->getTreeObjects<component::controller::Controller, std::vector< component::controller::Controller* > >(&bc);
+
+				if (!bc.empty())
+				{	
+					switch (e->type())
+					{
+						case QEvent::MouseButtonPress:
+							// Mouse left button is pushed
+							if (e->button() == Qt::LeftButton)
+							{
+								sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::LeftPressed, eventX, eventY);
+								if (groot)
+									groot->propagateEvent(&mouseEvent);
+							}
+							// Mouse right button is pushed 
+							else if (e->button() == Qt::RightButton)
+							{
+								sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::RightPressed, eventX, eventY);
+								if (groot)
+									groot->propagateEvent(&mouseEvent);
+							}
+							// Mouse middle button is pushed 
+							else if (e->button() == Qt::MidButton)
+							{
+
+							}
+							break;
+
+						case QEvent::MouseMove:
+							{
+								if (e->state()&(Qt::LeftButton|Qt::RightButton))
+								{
+									sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Move, eventX, eventY);
+									if (groot)
+										groot->propagateEvent(&mouseEvent);
+								}
+							}
+							break;
+
+						case QEvent::MouseButtonRelease:
+							// Mouse left button is released 
+							if (e->button() == Qt::LeftButton)
+							{
+								sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::LeftReleased, eventX, eventY);
+								if (groot)
+									groot->propagateEvent(&mouseEvent);
+							}
+							// Mouse right button is released
+							else if (e->button() == Qt::RightButton)
+							{
+								sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::RightReleased, eventX, eventY);
+								if (groot)
+									groot->propagateEvent(&mouseEvent);
+							}
+							// Mouse middle button is released
+							else if (e->button() == Qt::MidButton)
+							{
+
+							}
+							break;
+
+						default:
+							break;
+					}
+
+					getQWidget()->update();
+				}
+			}
+		}
+
+		void moveLaparoscopic(QWheelEvent *e)
+		{
+			int index_instrument = simulation::tree::getSimulation()->instrumentInUse.getValue();
+			if (index_instrument < 0 || index_instrument > (int)simulation::tree::getSimulation()->instruments.size()) return;
+	      
+			simulation::Node *instrument = simulation::tree::getSimulation()->instruments[index_instrument];
+			if (instrument == NULL) return;
+	      
+			std::vector< component::controller::Controller* > bc;
+			instrument->getTreeObjects<component::controller::Controller, std::vector< component::controller::Controller* > >(&bc);
+
+			if (!bc.empty())
+			{	
+				sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Wheel, e->delta());
+				if (groot)
+					groot->propagateEvent(&mouseEvent);
 				getQWidget()->update();
 			}
 		}
@@ -433,6 +528,7 @@ namespace sofa
 	    bool m_isControlPressed;
 	    bool _video;
 	    bool _shadow;
+	    bool _gl_shadow;
 	    bool _axis;
 	    int  camera_type;
             int _background;

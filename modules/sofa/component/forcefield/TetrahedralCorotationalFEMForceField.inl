@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_TETRAHEDRONFEMFORCEFIELD_INL
 #define SOFA_COMPONENT_FORCEFIELD_TETRAHEDRONFEMFORCEFIELD_INL
 
@@ -62,11 +62,8 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::CFTetrahedronCreationFunct
 {
 	TetrahedralCorotationalFEMForceField<DataTypes> *ff= (TetrahedralCorotationalFEMForceField<DataTypes> *)param;
 	if (ff) {
-		TetrahedronSetTopology<DataTypes> *_mesh=ff->getTetrahedralTopology();
-		assert(_mesh!=0);
-		TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-		const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-		const Tetrahedron &t=tetrahedronArray[tetrahedronIndex];
+
+		const Tetrahedron &t=ff->_topology->getTetra(tetrahedronIndex);
 		Index a = t[0];
 		Index b = t[1];
 		Index c = t[2];
@@ -95,22 +92,14 @@ template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::parse(core::objectmodel::BaseObjectDescription* arg)
 {
     this->core::componentmodel::behavior::ForceField<DataTypes>::parse(arg);
-    if (f_method == "small")
-        this->setMethod(SMALL);
-    else if (f_method == "large")
-        this->setMethod(LARGE);
-    else if (f_method == "polar")
-        this->setMethod(POLAR);
-
+   
     this->setComputeGlobalMatrix(std::string(arg->getAttribute("computeGlobalMatrix","false"))=="true");
 }
 
 template <class DataTypes> void TetrahedralCorotationalFEMForceField<DataTypes>::handleTopologyChange()
 {
-	sofa::core::componentmodel::topology::BaseTopology *topology = static_cast<sofa::core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
-
-	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
+	std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 
 	tetrahedronInfo.handleTopologyEvents(itBegin,itEnd);
@@ -120,12 +109,18 @@ template <class DataTypes> void TetrahedralCorotationalFEMForceField<DataTypes>:
 template <class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::init()
 {
-	this->core::componentmodel::behavior::ForceField<DataTypes>::init();
-	_mesh =0;
-	if (getContext()->getMainTopology()!=0)
-		_mesh= dynamic_cast<TetrahedronSetTopology<DataTypes>*>(getContext()->getMainTopology());
+    	f_poissonRatio.beginEdit();
+    	f_youngModulus.beginEdit();
+    	f_localStiffnessFactor.beginEdit();
+    	f_updateStiffnessMatrix.beginEdit();
+    	f_assembling.beginEdit();
 
-	if ((_mesh==0) || (_mesh->getTetrahedronSetTopologyContainer()->getNumberOfTetrahedra()==0))
+
+	this->core::componentmodel::behavior::ForceField<DataTypes>::init();
+
+	_topology = getContext()->getMeshTopology();
+
+	if (_topology->getNbTetras()==0)
 	{
 		std::cerr << "ERROR(TetrahedralCorotationalFEMForceField): object must have a Tetrahedral Set Topology.\n";
 		return;
@@ -139,15 +134,18 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::init()
 template <class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::reinit()
 {
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	unsigned int i;
 
-	tetrahedronInfo.resize(container->getNumberOfTetrahedra());
+  if (f_method.getValue() == "small")
+    this->setMethod(SMALL);
+  else if (f_method.getValue() == "polar")
+    this->setMethod(POLAR);
+  else this->setMethod(LARGE);  	
 
-	const std::vector<Tetrahedron> &tetrahedronArray=container->getTetrahedronArray();
-	for (i=0;i<container->getNumberOfTetrahedra();++i) {
+	tetrahedronInfo.resize(_topology->getNbTetras());
+	
+	for (int i=0;i<_topology->getNbTetras();++i) {
 		CFTetrahedronCreationFunction(i, (void*) this, tetrahedronInfo[i],
-			tetrahedronArray[i],  (const std::vector< unsigned int > )0,
+			_topology->getTetra(i),  (const std::vector< unsigned int > )0,
 			(const std::vector< double >)0);
 	}
 
@@ -162,14 +160,11 @@ template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, const VecCoord& p, const VecDeriv& /*v*/)
 {
 
-	unsigned int i;
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-
 	switch(method)
 	{
 	case SMALL :
 		{
-			for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+			for(int i = 0 ; i<_topology->getNbTetras();++i)
 			{
 				accumulateForceSmall( f, p, i );
 			}
@@ -177,7 +172,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, con
 		}
 	case LARGE :
 		{
-			for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+			for(int i = 0 ; i<_topology->getNbTetras();++i)
 			{
 				accumulateForceLarge( f, p, i );
 			}
@@ -185,7 +180,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, con
 		}
 	case POLAR :
 		{
-			for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+			for(int i = 0 ; i<_topology->getNbTetras();++i)
 			{
 				accumulateForcePolar( f, p, i );
 			}
@@ -196,18 +191,14 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, con
 
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, const VecDeriv& x)
-{
-	unsigned int i;
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-
+{		
 	switch(method)
 	{
 	case SMALL :
 	{
-		for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+		for(int i = 0 ; i<_topology->getNbTetras();++i)
 		{
-			const Tetrahedron &t=tetrahedronArray[i];
+			const Tetrahedron &t=_topology->getTetra(i);
 			Index a = t[0];
 			Index b = t[1];
 			Index c = t[2];
@@ -219,9 +210,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 	}
 	case LARGE :
 	{
-		for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+		for(int i = 0 ; i<_topology->getNbTetras();++i)
 		{
-			const Tetrahedron &t=tetrahedronArray[i];
+			const Tetrahedron &t=_topology->getTetra(i);
 			Index a = t[0];
 			Index b = t[1];
 			Index c = t[2];
@@ -233,9 +224,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 	}
 	case POLAR :
 	{
-		for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+		for(int i = 0 ; i<_topology->getNbTetras();++i)
 		{
-			const Tetrahedron &t=tetrahedronArray[i];
+			const Tetrahedron &t=_topology->getTetra(i);
 			Index a = t[0];
 			Index b = t[1];
 			Index c = t[2];
@@ -249,7 +240,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 }
 
 template <class DataTypes> 
-double TetrahedralCorotationalFEMForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
+    double TetrahedralCorotationalFEMForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
     cerr<<"TetrahedralCorotationalFEMForceField::getPotentialEnergy-not-implemented !!!"<<endl;
     return 0;
@@ -367,9 +358,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeStiffnessMatrix( St
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(int i, Index&a, Index&b, Index&c, Index&d)
 {
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
+
 	const VecReal& localStiffnessFactor = _localStiffnessFactor;
-	const Real youngModulus = (localStiffnessFactor.empty() ? 1.0f : localStiffnessFactor[i*localStiffnessFactor.size()/container->getNumberOfTetrahedra()])*_youngModulus;
+	const Real youngModulus = (localStiffnessFactor.empty() ? 1.0f : localStiffnessFactor[i*localStiffnessFactor.size()/_topology->getNbTetras()])*_youngModulus;
 	const Real poissonRatio = _poissonRatio;
 
 	tetrahedronInfo[i].materialMatrix[0][0] = tetrahedronInfo[i].materialMatrix[1][1] = tetrahedronInfo[i].materialMatrix[2][2] = 1;
@@ -399,7 +390,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(i
 	_materialsStiffnesses[i][3][3] = _materialsStiffnesses[i][4][4] = _materialsStiffnesses[i][5][5] =	mu2;*/
 
 	// divide by 36 times volumes of the element
-    const VecCoord *X0=_mesh->getDOF()->getX0();
+    const VecCoord *X0=this->mstate->getX0();
 
 	Coord A = (*X0)[b] - (*X0)[a];
 	Coord B = (*X0)[c] - (*X0)[a];
@@ -519,7 +510,7 @@ inline void TetrahedralCorotationalFEMForceField<DataTypes>::computeForce( Displ
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::initSmall(int i, Index&a, Index&b, Index&c, Index&d)
 {
-	const VecCoord *X0=_mesh->getDOF()->getX0();
+	const VecCoord *X0=this->mstate->getX0();
 
 	computeStrainDisplacement(tetrahedronInfo[i].strainDisplacementMatrix, (*X0)[a], (*X0)[b], (*X0)[c], (*X0)[d] );
 }
@@ -528,10 +519,9 @@ template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall( Vector& f, const Vector & p,Index elementIndex )
 {
     //std::cerr<<"TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall"<<std::endl;
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-	const Tetrahedron &t=tetrahedronArray[elementIndex];
-	const VecCoord *X0=_mesh->getDOF()->getX0();
+
+	const Tetrahedron &t=_topology->getTetra(elementIndex);
+	const VecCoord *X0=this->mstate->getX0();
 
 
 	Index a = t[0];
@@ -701,7 +691,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::initLarge(int i, Index&a, 
 	// first vector on first edge
 	// second vector in the plane of the two first edges
 	// third vector orthogonal to first and second
-	const VecCoord *X0=_mesh->getDOF()->getX0();
+	const VecCoord *X0=this->mstate->getX0();
 
 	Transformation R_0_1;
 	computeRotationLarge( R_0_1, (*X0), a, b, c);
@@ -728,9 +718,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::initLarge(int i, Index&a, 
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceLarge( Vector& f, const Vector & p, Index elementIndex )
 {
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-	const Tetrahedron &t=tetrahedronArray[elementIndex];
+	const Tetrahedron &t=_topology->getTetra(elementIndex);
 	
 	// Rotation matrix (deformed and displaced Tetrahedron/world)
 	Transformation R_0_2;
@@ -904,7 +892,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::applyStiffnessLarge( Vecto
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::initPolar(int i, Index& a, Index&b, Index&c, Index&d)
 {
-	const VecCoord *X0=_mesh->getDOF()->getX0();
+	const VecCoord *X0=this->mstate->getX0();
 
 	Transformation A;
 	A[0] = (*X0)[b]-(*X0)[a];
@@ -927,9 +915,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::initPolar(int i, Index& a,
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForcePolar( Vector& f, const Vector & p, Index elementIndex )
 {
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-	const Tetrahedron &t=tetrahedronArray[elementIndex];
+	const Tetrahedron &t=_topology->getTetra(elementIndex);
 		
 	Transformation A;
 	A[0] = p[t[1]]-p[t[0]];
@@ -1040,17 +1026,13 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::draw()
 	if (getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-
 	glDisable(GL_LIGHTING);
 
 	glBegin(GL_TRIANGLES);
-
-	unsigned int i;
-	for(i = 0 ; i<container->getNumberOfTetrahedra();++i)
+	
+	for(int i = 0 ; i<_topology->getNbTetras();++i)
 	{
-		const Tetrahedron &t=tetrahedronArray[i];
+		const Tetrahedron &t=_topology->getTetra(i);
 
 		Index a = t[0];
 		Index b = t[1];
@@ -1090,10 +1072,10 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::draw()
 
 
 template<class DataTypes>
-void TetrahedralCorotationalFEMForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *mat, double /*k*/, unsigned int &offset)
+    void TetrahedralCorotationalFEMForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal /*k*/, unsigned int &offset)
 {
 	// Build Matrix Block for this ForceField
-	unsigned int i,j,n1, n2, row, column, ROW, COLUMN , IT;
+	unsigned int i,j,n1, n2, row, column, ROW, COLUMN;
 
 	Transformation Rot;
 	StiffnessMatrix JKJt,tmp;
@@ -1105,13 +1087,10 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addKToMatrix(sofa::default
 	Rot[1][0]=Rot[1][2]=0;
 	Rot[2][0]=Rot[2][1]=0;
 
-	TetrahedronSetTopologyContainer *container=_mesh->getTetrahedronSetTopologyContainer();
-	const std::vector< Tetrahedron > &tetrahedronArray=container->getTetrahedronArray() ;
-
-	for(IT=0 ; IT != container->getNumberOfTetrahedra() ; ++IT)
+	for(int IT=0 ; IT != _topology->getNbTetras() ; ++IT)
 	{
 		computeStiffnessMatrix(JKJt,tmp,tetrahedronInfo[IT].materialMatrix,tetrahedronInfo[IT].strainDisplacementMatrix,Rot);
-		const Tetrahedron &t=tetrahedronArray[IT];
+		const Tetrahedron &t=_topology->getTetra(IT);
 
 		// find index of node 1
 		for (n1=0; n1<4; n1++)
@@ -1131,7 +1110,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addKToMatrix(sofa::default
 					{
 						COLUMN = offset+3*noeud2+j;
 						column = 3*n2+j;
-						mat->element(ROW, COLUMN) += tmp[row][column];
+						mat->add(ROW, COLUMN, tmp[row][column]);
 					}
 				}
 			}

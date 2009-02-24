@@ -1,34 +1,34 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_DISCRETEINTERSECTION_INL
 #define SOFA_COMPONENT_COLLISION_DISCRETEINTERSECTION_INL
 #include <sofa/helper/system/config.h>
 #include <sofa/component/collision/DiscreteIntersection.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
-#include <sofa/component/collision/ProximityIntersection.h>
+//#include <sofa/component/collision/ProximityIntersection.h>
 #include <sofa/component/collision/proximity.h>
 #include <iostream>
 #include <algorithm>
@@ -335,7 +335,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     const Matrix3& r1 = e1.getRotation();
 
     const double d0 = e1.getProximity() + e2.getProximity() + this->getContactDistance() + e2.r();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
 
     Vector3 p2 = e2.center();
     DistanceGrid::Coord p1;
@@ -353,7 +353,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 	return 0;
     }
 
-    float d = grid1->interp(p1);
+    SReal d = grid1->interp(p1);
     if (d >= margin) return 0;
 
     Vector3 grad = grid1->grad(p1); // note that there are some redundant computations between interp() and grad()
@@ -388,10 +388,10 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     FFDDistanceGridCollisionModel::DeformedCube& c1 = e1.getCollisionModel()->getDeformCube(e1.getIndex());
 
     const double d0 = e1.getProximity() + e2.getProximity() + getContactDistance() + e2.r();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
 
     c1.updateFaces();
-    const DistanceGrid::Real cubesize = c1.invDP.norm();
+    const SReal cubesize = c1.invDP.norm();
     Vector3 p2 = e2.center();
     DistanceGrid::Coord p1 = p2;
 
@@ -400,15 +400,15 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
 
     // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
     int iter;
-    DistanceGrid::Real err1 = 1000.0f;
+    SReal err1 = 1000.0f;
     for(iter=0; iter<5; ++iter)
     {
         DistanceGrid::Coord pdeform = c1.deform(b);
         DistanceGrid::Coord diff = p1-pdeform;
-        DistanceGrid::Real err = diff.norm();
+        SReal err = diff.norm();
         if (iter>3)
             std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-        DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+        SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
         if (b[0] < -berr || b[0] > 1+berr
             || b[1] < -berr || b[1] > 1+berr
             || b[2] < -berr || b[2] > 1+berr)
@@ -420,7 +420,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 && b[2] > 0.001f && b[2] < 0.999f)
             {
                 DistanceGrid::Coord pinit = c1.initpos(b);
-                DistanceGrid::Real d = grid1->interp(pinit);
+                SReal d = grid1->interp(pinit);
                 if (d < margin)
                 {
                     DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -445,7 +445,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
             break;
         }
         err1 = err;
-        DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+        SReal d = grid1->interp(c1.initpos(b));
         if (d*0.5f - err > margin)
             break; // the point is too far from the object
         // we are solving for deform(b+db)-deform(b) = p1-deform(b)

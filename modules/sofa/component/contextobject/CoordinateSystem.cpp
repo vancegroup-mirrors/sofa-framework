@@ -1,34 +1,33 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 // Author: Fran�is Faure, INRIA-UJF, (C) 2006
 //
 // Copyright: See COPYING file that comes with this distribution
 
 #include <sofa/component/contextobject/CoordinateSystem.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec.h>
 #include <sofa/simulation/tree/GNode.h>
 #include <iostream>
 #include <sofa/helper/system/gl.h>
@@ -46,7 +45,9 @@ namespace contextobject
 {
 
 CoordinateSystem::CoordinateSystem()
-: positionInParent_( Frame::identity() )
+  : origin(initData(&origin,defaulttype::Vec3f(),"origin", "Position of the local frame"))
+    , orientation(initData(&orientation,defaulttype::Vec3f(),"orientation", "Orientation of the local frame"))
+    , positionInParent_( Frame::identity() )
 //, velocity_( Vec(0,0,0), Vec(0,0,0) )
 {}
 
@@ -113,8 +114,8 @@ void CoordinateSystem::apply()
 {
     //cerr<<"CoordinateSystem::apply(), frame = "<<   getName() <<", t="<<getContext()->getTime() << endl;
     core::objectmodel::BaseContext* context = getContext();
-    cerr<<"CoordinateSystem::apply, current position = "<<context->getPositionInWorld()<<endl;
-    cerr<<"CoordinateSystem::apply, transform = "<<this->getTransform()<<endl;
+    //cerr<<"CoordinateSystem::apply, current position = "<<context->getPositionInWorld()<<endl;
+    //cerr<<"CoordinateSystem::apply, transform = "<<this->getTransform()<<endl;
 
     // store parent position and velocity
     Frame parentToWorld = context->getPositionInWorld();
@@ -141,7 +142,7 @@ void CoordinateSystem::apply()
     context->setVelocityBasedLinearAccelerationInWorld( newLinearAcceleration );
     context->setPositionInWorld( newLocalToWorld );
     context->setVelocityInWorld( newSpatialVelocity );
-    cerr<<"CoordinateSystem::apply, new position = "<<context->getPositionInWorld()<<endl;
+    //cerr<<"CoordinateSystem::apply, new position = "<<context->getPositionInWorld()<<endl;
 
 }
 
@@ -149,7 +150,7 @@ void CoordinateSystem::apply()
 
 void CoordinateSystem::draw()
 {
-
+/*
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
     glBegin( GL_LINES );
@@ -164,34 +165,26 @@ void CoordinateSystem::draw()
     glVertex3f( 0.f,0.f,1.f );
     glEnd();
     glPopAttrib();
+    */
 }
 
 using namespace sofa::defaulttype; 
 
-void CoordinateSystem::parse(core::objectmodel::BaseObjectDescription* arg)
+
+
+void CoordinateSystem::reinit()
 {
-    typedef CoordinateSystem::Frame Frame;
-    typedef CoordinateSystem::Vec Vec;
-    typedef CoordinateSystem::Rot Rot;
-    
-    this->core::objectmodel::ContextObject::parse(arg);
-    
-    float x, y, z ;
-    Vec vec;
-    Vec rot;
-    if (arg->getAttribute("origin"))
-    {
-        sscanf(arg->getAttribute("origin"),"%f%f%f",&x,&y,&z);
-        vec = Vec(x,y,z);
-    }
-    if (arg->getAttribute("orientation"))
-    {
-        sscanf(arg->getAttribute("orientation"),"%f%f%f",&x,&y,&z);
-        rot = Vec(x,y,z);
-    }
-    setTransform( Frame( vec, Rot::createFromRotationVector( rot ) ));
+  typedef CoordinateSystem::Frame Frame;
+  typedef CoordinateSystem::Vec Vec;
+  typedef CoordinateSystem::Rot Rot;
+  setTransform( Frame( origin.getValue(), Rot::createFromRotationVector( orientation.getValue() ) ));
 }
 
+
+void CoordinateSystem::init()
+{
+  reinit();
+}
 SOFA_DECL_CLASS(CoordinateSystem)
 
 int CoordinateSystemClass = core::RegisterObject("Translation and orientation of the local reference frame with respect to its parent")

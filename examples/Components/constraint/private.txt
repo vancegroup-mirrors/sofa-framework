@@ -1,0 +1,6 @@
+# This file contains a list of files or directories that should not be copied to the public repository, because they are confidential, or we don't have redistribution rights, or they are too unstable / undocumented
+
+BeamConstraint.scn
+SlidingConstraint.scn
+BilateralInteractionConstraint.scn
+FrictionContact.scn

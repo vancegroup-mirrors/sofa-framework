@@ -1,9 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_SPRINGEDGEDATAFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_SPRINGEDGEDATAFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/topology/EdgeData.h>
 #include <sofa/component/topology/EdgeData.inl>
 #include <sofa/defaulttype/Vec.h>
@@ -24,7 +47,7 @@ using namespace sofa::defaulttype;
 //using namespace sofa::core::objectmodel;
 
 template<class DataTypes>
-class SpringEdgeDataForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public core::VisualModel
+class SpringEdgeDataForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public  virtual core::objectmodel::BaseObject
 {
 public:
 	typedef typename DataTypes::VecCoord VecCoord;
@@ -69,7 +92,7 @@ protected:
 	DataField<double> m_viscosity;
 
 	//void addSpringForce(double& potentialEnergy, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int i, const Spring& spring);
-	void addSpring(int m1, int m2, double ks, double kd, double initlen);
+	z	void addSpring(int m1, int m2, SReal ks, SReal kd, SReal initlen);
 
 	void resizeArray(unsigned int n);
 
@@ -102,10 +125,7 @@ public:
 	const component::topology::EdgeData<Spring> &getSpringArray() const{
 		return springArray;
 	}
-	// -- VisualModel interface
 	void draw();
-	void initTextures() { }
-	void update() { }
 	
 	// -- Modifiers
 	

@@ -22,6 +22,8 @@ CONFIG += qt
 CONFIG += QwtPlot
 CONFIG     += QwtWidgets
 
+QT += sql xml network
+
 VERSION      = 5.0.2
 
 MOC_DIR           = moc

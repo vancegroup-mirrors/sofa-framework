@@ -1,14 +1,124 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/LCPcalc.h>
 #include <vector>
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <fstream>
+#include <cstring>
 
 namespace sofa
 {
 
 namespace helper
 {
+
+using namespace std;
+
+
+LCP::LCP(unsigned int mxC) : maxConst(mxC), tol(0.00001), numItMax(1000), useInitialF(true), mu(0.0), dim(0)
+{
+	W = new double*[maxConst];
+	for (int i = 0; i < maxConst; i++)
+	{
+		W[i] = new double[maxConst];
+		memset(W[i], 0, maxConst * sizeof(double));
+	}
+	dfree = new double[maxConst];
+	f = new double[2 * maxConst + 1];
+
+	memset(dfree, 0, maxConst * sizeof(double));
+	memset(f, 0, (2 * maxConst + 1) * sizeof(double));
+}
+/*
+LCP& LCP::operator=(LCP& lcp)
+{
+	if(this == &lcp) return *this; //self assignment
+
+	if(maxConst != lcp.maxConst)
+	{
+		maxConst = lcp.maxConst;
+
+		delete [] dfree;
+		for (unsigned int i = 0; i < maxConst; i++)
+		{
+			delete [] W[i];
+		}
+		delete [] W;
+
+		W = new double*[maxConst];
+		for (unsigned int i = 0; i < maxConst; i++)
+		{
+			W[i] = new double[maxConst];
+		}
+		dfree = new double[maxConst];
+		f = new double[2 * maxConst + 1];
+	}
+
+	dim = lcp.dim;
+	mu = lcp.mu;
+	tol = lcp.tol;
+	numItMax = lcp.numItMax;
+	useInitialF = lcp.useInitialF;
+	nbConst = lcp.nbConst;
+
+	for (unsigned int i = 0; i < maxConst; i++)
+		memcpy(W[i], lcp.W[i], maxConst * sizeof(double));
+	memcpy(dfree, lcp.dfree, maxConst * sizeof(double));
+	memcpy(f, lcp.f, maxConst * sizeof(double));
+
+	return *this;
+}
+*/
+
+LCP::~LCP()
+{
+	delete [] dfree;
+	for (int i = 0; i < maxConst; i++)
+	{
+		delete [] W[i];
+	}
+	delete [] W;
+}
+
+
+void LCP::reset(void)
+{
+
+	for (int i = 0; i < maxConst; i++)
+	{
+		memset(W[i], 0, maxConst * sizeof(double));
+	}
+
+	memset(dfree, 0, maxConst * sizeof(double));
+}
+
+
 
 //#include "mex.h"
 /* Resoud un LCP écrit sous la forme U = q + M.F
@@ -18,7 +128,7 @@ namespace helper
  */
 int resoudreLCP(int dim, double * q, double ** M, double * res) {
 
-	// déclaration des variables	
+	// déclaration des variables
 	int compteur;	// compteur de boucle
 	int compteur2;	// compteur de boucle
 	double ** mat;	// matrice de travail
@@ -212,7 +322,7 @@ void afficheSyst(double *q,double **M, int *base, double **mat, int dim)
 
 /* Siconos-Numerics version 1.2.0, Copyright INRIA 2005-2006.
  * Siconos is a program dedicated to modeling, simulation and control
- * of non smooth dynamical systems.	
+ * of non smooth dynamical systems.
  * Siconos is a free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -226,10 +336,10 @@ void afficheSyst(double *q,double **M, int *base, double **mat, int dim)
  * along with Siconos; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * Contact: Vincent ACARY vincent.acary@inrialpes.fr 
+ * Contact: Vincent ACARY vincent.acary@inrialpes.fr
 */
 
-/*!\file lcp_lexicolemke.c 
+/*!\file lcp_lexicolemke.c
  *
  * This subroutine allows the resolution of LCP (Linear Complementary Problem).\n
  * Try \f$(z,w)\f$ such that:\n
@@ -247,37 +357,37 @@ void afficheSyst(double *q,double **M, int *base, double **mat, int dim)
 
 
 /*!\fn  void lcp_lexicolemke( int *nn , double *vec , double *q , double *zlem , double *wlem , int *info , int *iparamLCP , double *dparamLCP )
- 
+
   lcp_lexicolemke is a direct solver for LCP based on pivoting method principle for degenrate problem.\n
-  Choice of pivot variable is performed via lexicographic ordering 
+  Choice of pivot variable is performed via lexicographic ordering
   Ref: "The Linear Complementary Problem" Cottle, Pang, Stone (1992)\n
- 
- 
+
+
   \param nn      On enter, an integer which represents the dimension of the system.
   \param vec     On enter, a (\f$nn\times nn\f$)-vector of doubles which contains the components of the matrix with a fortran storage.
   \param q       On enter, a nn-vector of doubles which contains the components of the right hand side vector.
   \param zlem    On return, a nn-vector of doubles which contains the solution of the problem.
-  \param wlem    On return, a nn-vector of doubles which contains the solution of the problem. 
+  \param wlem    On return, a nn-vector of doubles which contains the solution of the problem.
   \param info    On return, an integer which returns the termination value:\n
                  0 : convergence\n
                  1 : iter = itermax\n
                  2 : negative diagonal term\n
- 
+
   \param iparamLCP  On enter/return, a vetor of integers:\n
                  - iparamLCP[0] = itermax On enter, the maximum number of pivots allowed.
                  - iparamLCP[1] = ispeak  On enter, the output log identifiant:\n
                         0 : no output\n
-                        >0: active screen output\n 
+                        >0: active screen output\n
                  - iparamLCP[2] = it_end  On return, the number of pivots performed by the algorithm.
 
   \param dparamLCP  On enter/return, a vetor of doubles (not used).\n
 
- 
- 
+
+
   \author Mathieu Renouf
- 
+
  */
-//void lcp_lexicolemke( int *nn , double *vec , double *q , double *zlem , double *wlem , int *info , int *iparamLCP , double *dparamLCP ){ 
+//void lcp_lexicolemke( int *nn , double *vec , double *q , double *zlem , double *wlem , int *info , int *iparamLCP , double *dparamLCP ){
 //void lcp_lexicolemke( int dim , double *vec , double *q , double *zlem )
 
 int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
@@ -300,24 +410,24 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
  /*input*/
 
   itermax = dim2;
-  ispeak  = 0;  
+  ispeak  = 0;
 
   /*output*/
 
-	  
+
   basis = (int *)malloc( dim*sizeof(int) );
 
   /* Allocation */
   A = (double **)malloc( dim*sizeof(double*) );
-  for( ic = 0 ; ic < dim; ++ic ) 
+  for( ic = 0 ; ic < dim; ++ic )
 	  A[ic] = (double *)malloc( dim2*sizeof(double) );
 
   for( ic = 0 ; ic < dim; ++ic )
     for( jc = 0 ; jc < dim2; ++jc )
       A[ic][jc] = 0.0;
-    
+
   /* construction of A matrix such as
-   * A = [ q | Id | -d | -M ] with d = (1,...1) 
+   * A = [ q | Id | -d | -M ] with d = (1,...1)
    */
 
   for( ic = 0 ; ic < dim; ++ic )
@@ -328,15 +438,15 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
 
   for( ic = 0 ; ic < dim; ++ic ) A[ic][ic+1 ] =  1.0;
   for( ic = 0 ; ic < dim; ++ic ) A[ic][dim+1] = -1.0;
-  
+
   /* End of construction of A */
-  
+
   /* STEP 0
-   * qs = min{ q[i], i=1,...,NC } 
+   * qs = min{ q[i], i=1,...,NC }
    */
 
   qs = q[0];
-  
+
   for( ic = 1 ; ic < dim ; ++ic ){
     if( q[ic] < qs ) qs = q[ic];
   }
@@ -345,7 +455,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
 
   ITER=0;
   if( qs >= 0 ){
-    
+
     /* TRIVIAL CASE
      * z = 0 and w = q is solution of LCP(q,M)
      */
@@ -357,7 +467,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
     }
 
 	Ifound=1;
-    
+
   }
   else{
 
@@ -380,7 +490,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
       else if( zb == z0 ){
 	for( jc = 0 ; jc < dim ; ++jc ){
 	  dblock = A[block][1+jc] - A[ic][1+jc];
-	  if( dblock < 0 ){ 
+	  if( dblock < 0 ){
 		  break;
 	  }
 	  else if( dblock > 0 ){
@@ -390,20 +500,20 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
 	}
       }
     }
-    
+
     /* Stop research of argmin lexico */
-    
+
     pivot = A[block][drive];
     tovip = 1.0/pivot;
-    
+
     /* Pivot < block , drive > */
 
     A[block][drive] = 1;
     for( ic = 0       ; ic < drive ; ++ic ) A[block][ic] = A[block][ic]*tovip;
     for( ic = drive+1 ; ic < dim2  ; ++ic ) A[block][ic] = A[block][ic]*tovip;
-    
+
     /* */
-    
+
     for( ic = 0 ; ic < block ; ++ic ){
       tmp = A[ic][drive];
       for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
@@ -411,14 +521,14 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
     for( ic = block+1 ; ic < dim ; ++ic ){
       tmp = A[ic][drive];
       for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
-    } 
+    }
 
     nobasis = basis[block];
     basis[block] = drive;
 
     while( ITER < itermax && !Ifound ){
-      
-      ++ITER;    
+
+      ++ITER;
 
       if( nobasis < dim + 1 )      drive = nobasis + (dim+1);
       else if( nobasis > dim + 1 ) drive = nobasis - (dim+1);
@@ -452,7 +562,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
       if( block == -1 ) break;
 
       if( basis[block] == dim+1 ) Ifound = 1;
-      
+
       /* Pivot < block , drive > */
 
       pivot = A[block][drive];
@@ -461,9 +571,9 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
 
       for( ic = 0       ; ic < drive ; ++ic ) A[block][ic] = A[block][ic]*tovip;
       for( ic = drive+1 ; ic < dim2  ; ++ic ) A[block][ic] = A[block][ic]*tovip;
-      
+
       /* */
-    
+
       for( ic = 0 ; ic < block ; ++ic ){
 	tmp = A[ic][drive];
 	for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
@@ -471,16 +581,16 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
       for( ic = block+1 ; ic < dim ; ++ic ){
 	tmp = A[ic][drive];
 	for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
-      } 
+      }
 
       nobasis = basis[block];
       basis[block] = drive;
 
     }
-    
+
     for( ic = 0 ; ic < dim; ++ic ){
       drive = basis[ic];
-      if( drive < dim + 1 ){ 
+      if( drive < dim + 1 ){
 	res[drive-1] = 0.0;
 	//wlem[drive-1] = A[ic][0];
       }
@@ -499,14 +609,14 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
 
   free(basis);
 
-  
+
   for( i = 0 ; i < dim ; ++i ) free(A[i]);
-  free(A);	
- 
+  free(A);
+
 
 
   // for compatibility with previous LCP solver
-  for( i = 0 ; i < dim ; ++i ) 
+  for( i = 0 ; i < dim ; ++i )
 	  res[i+dim] = res[i];
 
 
@@ -517,6 +627,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double * res) {
   return 0;
 
 }
+
 /******************************** WITHOUT ALLOCATION of A ************************************/
 int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) {
 
@@ -536,18 +647,18 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
  /*input*/
 
   itermax = dim2;
-  ispeak  = 0;  
+  ispeak  = 0;
 
   /*output*/
-	  
+
   basis = (int *)malloc( dim*sizeof(int) );
 
   for( ic = 0 ; ic < dim; ++ic )
     for( jc = 0 ; jc < dim2; ++jc )
       A[ic][jc] = 0.0;
-    
+
   /* construction of A matrix such as
-   * A = [ q | Id | -d | -M ] with d = (1,...1) 
+   * A = [ q | Id | -d | -M ] with d = (1,...1)
    */
 
   for( ic = 0 ; ic < dim; ++ic )
@@ -558,15 +669,15 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
 
   for( ic = 0 ; ic < dim; ++ic ) A[ic][ic+1 ] =  1.0;
   for( ic = 0 ; ic < dim; ++ic ) A[ic][dim+1] = -1.0;
-  
+
   /* End of construction of A */
-  
+
   /* STEP 0
-   * qs = min{ q[i], i=1,...,NC } 
+   * qs = min{ q[i], i=1,...,NC }
    */
 
   qs = q[0];
-  
+
   for( ic = 1 ; ic < dim ; ++ic ){
     if( q[ic] < qs ) qs = q[ic];
   }
@@ -575,7 +686,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
 
   ITER=0;
   if( qs >= 0 ){
-    
+
     /* TRIVIAL CASE
      * z = 0 and w = q is solution of LCP(q,M)
      */
@@ -587,7 +698,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
     }
 
 	Ifound=1;
-    
+
   }
   else{
 
@@ -610,7 +721,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
       else if( zb == z0 ){
 	for( jc = 0 ; jc < dim ; ++jc ){
 	  dblock = A[block][1+jc] - A[ic][1+jc];
-	  if( dblock < 0 ){ 
+	  if( dblock < 0 ){
 		  break;
 	  }
 	  else if( dblock > 0 ){
@@ -620,20 +731,20 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
 	}
       }
     }
-    
+
     /* Stop research of argmin lexico */
-    
+
     pivot = A[block][drive];
     tovip = 1.0/pivot;
-    
+
     /* Pivot < block , drive > */
 
     A[block][drive] = 1;
     for( ic = 0       ; ic < drive ; ++ic ) A[block][ic] = A[block][ic]*tovip;
     for( ic = drive+1 ; ic < dim2  ; ++ic ) A[block][ic] = A[block][ic]*tovip;
-    
+
     /* */
-    
+
     for( ic = 0 ; ic < block ; ++ic ){
       tmp = A[ic][drive];
       for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
@@ -641,14 +752,14 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
     for( ic = block+1 ; ic < dim ; ++ic ){
       tmp = A[ic][drive];
       for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
-    } 
+    }
 
     nobasis = basis[block];
     basis[block] = drive;
 
     while( ITER < itermax && !Ifound ){
-      
-      ++ITER;    
+
+      ++ITER;
 
       if( nobasis < dim + 1 )      drive = nobasis + (dim+1);
       else if( nobasis > dim + 1 ) drive = nobasis - (dim+1);
@@ -682,7 +793,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
       if( block == -1 ) break;
 
       if( basis[block] == dim+1 ) Ifound = 1;
-      
+
       /* Pivot < block , drive > */
 
       pivot = A[block][drive];
@@ -691,9 +802,9 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
 
       for( ic = 0       ; ic < drive ; ++ic ) A[block][ic] = A[block][ic]*tovip;
       for( ic = drive+1 ; ic < dim2  ; ++ic ) A[block][ic] = A[block][ic]*tovip;
-      
+
       /* */
-    
+
       for( ic = 0 ; ic < block ; ++ic ){
 	tmp = A[ic][drive];
 	for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
@@ -701,16 +812,16 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
       for( ic = block+1 ; ic < dim ; ++ic ){
 	tmp = A[ic][drive];
 	for( jc = 0 ; jc < dim2 ; ++jc ) A[ic][jc] -=  tmp*A[block][jc];
-      } 
+      }
 
       nobasis = basis[block];
       basis[block] = drive;
 
     }
-    
+
     for( ic = 0 ; ic < dim; ++ic ){
       drive = basis[ic];
-      if( drive < dim + 1 ){ 
+      if( drive < dim + 1 ){
 	res[drive-1] = 0.0;
 	//wlem[drive-1] = A[ic][0];
       }
@@ -731,12 +842,12 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
 
   /*
   for( i = 0 ; i < dim ; ++i ) free(A[i]);
-  free(A);	
+  free(A);
   */
 
 
   // for compatibility with previous LCP solver
-  for( i = 0 ; i < dim ; ++i ) 
+  for( i = 0 ; i < dim ; ++i )
 	  res[i+dim] = res[i];
 
 
@@ -749,7 +860,7 @@ int lcp_lexicolemke(int dim, double * q, double ** M, double **A, double * res) 
 }
 /********************************************************************************************/
 void afficheLCP(double *q, double **M, int dim)
-{	
+{
 	int compteur, compteur2;
 	// affichage de la matrice du LCP
 	printf("M = [");
@@ -768,9 +879,10 @@ void afficheLCP(double *q, double **M, int dim)
 	}
 	printf("      ]\n\n");
 }
+
 /********************************************************************************************/
 void afficheLCP(double *q, double **M, double *f, int dim)
-{	
+{
 	int compteur, compteur2;
 	// affichage de la matrice du LCP
 	printf("\n M = [");
@@ -803,7 +915,7 @@ void afficheLCP(double *q, double **M, double *f, int dim)
 // special class to obtain the inverse of a symetric matrix 3x3
 void LocalBlock33::compute(double &w11, double &w12, double &w13, double &w22, double &w23, double &w33)
 {
-	w[0]=w11; w[1]=w12; w[2] = w13; w[3]=w22; w[4]=w23; w[5]=w33; 
+	w[0]=w11; w[1]=w12; w[2] = w13; w[3]=w22; w[4]=w23; w[5]=w33;
 	det = w11*w22*w33-w11*w23*w23-w12*w12*w33+2*w12*w13*w23-w13*w13*w22;
 	wInv[0] = (w22*w33-w23*w23)/det;
 	wInv[1] = -(w12*w33-w13*w23)/det;
@@ -832,8 +944,8 @@ void LocalBlock33::slipState(double &mu, double &dn, double &dt, double &ds, dou
 	for (int iteration=0; iteration<10000; iteration++)
 	{
 		// we set the previous value of the force
-		f_1[0]=fn; f_1[1]=ft; f_1[2]=fs; 
-		
+		f_1[0]=fn; f_1[1]=ft; f_1[2]=fs;
+
 		// evaluation of the current normal position
 		d[0] = w[0]*fn + w[1]*ft + w[2]*fs + dn;
 		// evaluation of the new contact force
@@ -842,7 +954,7 @@ void LocalBlock33::slipState(double &mu, double &dn, double &dt, double &ds, dou
 		// evaluation of the current tangent positions
 		d[1] = w[1]*fn + w[3]*ft + w[4]*fs + dt;
 		d[2] = w[2]*fn + w[4]*ft + w[5]*fs + ds;
-		
+
 		// envaluation of the new fricton forces
 		ft -= 2*d[1]/(w[3]+w[5]);
 		fs -= 2*d[2]/(w[3]+w[5]);
@@ -857,7 +969,7 @@ void LocalBlock33::slipState(double &mu, double &dn, double &dt, double &ds, dou
 			//mexPrintf("\n convergence of slipState after %d iteration(s)",iteration);
 			return;
 		}
-		
+
 	}
 //	mexPrintf("\n No convergence in slipState function: error =%f",normError(fn,ft,fs,f_1[0],f_1[1],f_1[2]));
 //	printf("\n No convergence in slipState function");
@@ -868,8 +980,8 @@ void LocalBlock33::GS_State(double &mu, double &dn, double &dt, double &ds, doub
 {
 	double d[3];
 	double normFt;
-	f_1[0]=fn; f_1[1]=ft; f_1[2]=fs; 
-		
+	f_1[0]=fn; f_1[1]=ft; f_1[2]=fs;
+
 	// evaluation of the current normal position
 	d[0] = w[0]*fn + w[1]*ft + w[2]*fs + dn;
 	// evaluation of the new contact force
@@ -884,7 +996,7 @@ void LocalBlock33::GS_State(double &mu, double &dn, double &dt, double &ds, doub
 	// evaluation of the current tangent positions
 	d[1] = w[1]*fn + w[3]*ft + w[4]*fs + dt;
 	d[2] = w[2]*fn + w[4]*ft + w[5]*fs + ds;
-	
+
 	// envaluation of the new fricton forces
 	ft -= 2*d[1]/(w[3]+w[5]);
 	fs -= 2*d[2]/(w[3]+w[5]);
@@ -911,7 +1023,7 @@ void LocalBlock33::GS_State(double &mu, double &dn, double &dt, double &ds, doub
 
  // if (nlhs>0)
  // {
-	//double *prF; 
+	//double *prF;
 	//plhs[0]=mxCreateDoubleMatrix(3,1,mxREAL);
 	//prF = mxGetPr(plhs[0]);
 	//for(i=0; i<3; i++)
@@ -932,18 +1044,8 @@ struct listSortAscending {
 	}
 };
 
-int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, double &tol, int &numItMax, bool useInitialF) 
+int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double mu, double tol, int numItMax, bool useInitialF)
 {
-
-  ///* Allocation */
-  //A = (double **)malloc( dim*sizeof(double*) );
-  //for( ic = 0 ; ic < dim; ++ic ) 
-	 // A[ic] = (double *)malloc( dim2*sizeof(double) );
-
-  //for( ic = 0 ; ic < dim; ++ic )
-  //  for( jc = 0 ; jc < dim2; ++jc )
-  //    A[ic][jc] = 0.0;
-   
 	double test = dim/3;
 	double zero = 0.0;
 	int numContacts =  (int) floor(test);
@@ -961,14 +1063,10 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 	d = (double*)malloc(dim*sizeof(double));
 	// put the vector force to zero
 	if (!useInitialF)
-	{
-		std::cout << "Reset F\n";
-		for (i=0; i<dim; i++)
-			f[i]=0.0;
-	}
+		memset(f, 0, dim*sizeof(double));
 
 	// previous value of the force and the displacment
-	double f_1[3]; 
+	double f_1[3];
 	double d_1[3];
 
 	// allocation of the inverted system 3x3
@@ -976,7 +1074,7 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 	W33 = (LocalBlock33 **) malloc (dim*sizeof(LocalBlock33));
 	for (c1=0; c1<numContacts; c1++)
 		W33[c1] = new LocalBlock33();
-
+	/*
 	std::vector<listElem> sortedList;
 	listElem buf;
 	sortedList.clear();
@@ -986,13 +1084,7 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 		buf.index = c1;
 		sortedList.push_back(buf);
 	}
-	
-	//std::sort(sortedList.begin(), sortedList.end(), listSortAscending() );
-
-	//for (c1=0; c1<numContacts; c1++)
-	//{
-	//	mexPrintf("\n contact[%d] : dfree : %f", sortedList[c1].index, sortedList[c1].value);
-	//}
+	*/
 
 	//////////////
 	// Beginning of iterative computations
@@ -1006,16 +1098,16 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 		for (c1=0; c1<numContacts; c1++)
 		{
 			// index of contact
-			int index1 = sortedList[c1].index;
+			int index1 = c1;
 
 			// put the previous value of the contact force in a buffer and put the current value to 0
 			f_1[0] = f[3*index1]; f_1[1] = f[3*index1+1]; f_1[2] = f[3*index1+2];
 			set3Dof(f,index1,zero,zero,zero); //		f[3*index] = 0.0; f[3*index+1] = 0.0; f[3*index+2] = 0.0;
-			
-			// computation of actual d due to contribution of other contacts			
+
+			// computation of actual d due to contribution of other contacts
 			dn=dfree[3*index1];dt=dfree[3*index1+1]; ds=dfree[3*index1+2];
 			for (i=0; i<dim; i++){
-				dn += W[3*index1  ][i]*f[i] ;
+				dn += W[3*index1  ][i]*f[i];
 				dt += W[3*index1+1][i]*f[i];
 				ds += W[3*index1+2][i]*f[i];
 			}
@@ -1028,67 +1120,166 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double &mu, d
 				W33[index1]->compute(W[3*index1][3*index1],W[3*index1][3*index1+1],W[3*index1][3*index1+2],
 											W[3*index1+1][3*index1+1], W[3*index1+1][3*index1+2],W[3*index1+2][3*index1+2]);
 			}
-		
+
+
 			fn=f_1[0]; ft=f_1[1]; fs=f_1[2];
 			W33[index1]->GS_State(mu,dn,dt,ds,fn,ft,fs);
 			error += absError(dn,dt,ds,d_1[0],d_1[1],d_1[2]);
 
-			
 
-			// there is a contact! 
-			//if ( (dn+EPSILON_LCP) < 0)
-			//{
-			//	// we compute the system only if the contact is active (at least one time during the iterations)
-			//	if(W33[index1]->computed==false)
-			//	{
-			//		W33[index1]->compute(W[3*index1][3*index1],W[3*index1][3*index1+1],W[3*index1][3*index1+2],
-			//									W[3*index1+1][3*index1+1], W[3*index1+1][3*index1+2],W[3*index1+2][3*index1+2]);
-			//	}
-			//	W33[index1]->stickState(dn,dt,ds,fn,ft,fs);
+			set3Dof(f,index1,fn,ft,fs);
 
-			//	if(sqrt(ft*ft+fs*fs)> mu*fn)
-			//	{
-			//		fn=f_1[0]; ft=f_1[1]; fs=f_1[2];
-			//		W33[index1]->slipState(mu,dn,dt,ds,fn,ft,fs);
-			//	}
-			//	else 
-			//	{
-			//		dn=0.0; dt=0.0; ds=0.0;
-			//	}
-			//	////error += normError(fn,ft,fs,f_1[0],f_1[1],f_1[2]);
-			//	error += absError(dn,dt,ds,d_1[0],d_1[1],d_1[2]);
-
-			//}
-			//else
-			//{
-			//	fn=0.0; ft=0.0; fs=0.0;
-			//	//if (f_1[0]>0)
-			//	//	error += normError(f_1[0],f_1[1],f_1[2],fn,ft,fs);
-			//	error += absError(dn,dt,ds,d_1[0],d_1[1],d_1[2]);
-
-			//}
-			set3Dof(f,index1,fn,ft,fs); 
 		}
 
 		if (error < tol){
-			//printf("Convergence after %d iteration(s)\n",it);
+			free(d);
+			for (int i = 0; i < numContacts; i++)
+				delete W33[i];
+			free(W33);
+			//printf("Convergence after %d iteration(s) with tolerance : %f and error : %f with dim : %d\n",it, tol, error, dim);
 			//afficheLCP(dfree,W,f,dim);
 			return 1;
 		}
 	}
+	free(d);
+	for (int i = 0; i < numContacts; i++)
+		delete W33[i];
+	free(W33);
 
-	printf("\n No convergence in nlcp_gaussseidel function : error =%f", error);
+	//printf("\n No convergence in nlcp_gaussseidel function : error =%f after %d iterations", error, it);
 	//afficheLCP(dfree,W,f,dim);
 	return 0;
-	
+
 }
+
+int nlcp_gaussseidelTimed(int dim, double *dfree, double**W, double *f, double mu, double tol, int numItMax, bool useInitialF, double timeout)
+{
+	double test = dim/3;
+	double zero = 0.0;
+	int numContacts =  (int) floor(test);
+	test = dim/3 - numContacts;
+
+	ctime_t t0 = CTime::getTime()/CTime::getTicksPerSec();
+
+	if (test>0.01){
+		printf("\n WARNING dim should be dividable by 3 in nlcp_gaussseidel");
+		return 0;
+	}
+	// iterators
+	int it,c1,i;
+
+	// memory allocation of vector d
+	double *d;
+	d = (double*)malloc(dim*sizeof(double));
+	// put the vector force to zero
+	if (!useInitialF)
+		memset(f, 0, dim*sizeof(double));
+
+	// previous value of the force and the displacment
+	double f_1[3];
+	double d_1[3];
+
+	// allocation of the inverted system 3x3
+	LocalBlock33 **W33;
+	W33 = (LocalBlock33 **) malloc (dim*sizeof(LocalBlock33));
+	for (c1=0; c1<numContacts; c1++)
+		W33[c1] = new LocalBlock33();
+	/*
+	std::vector<listElem> sortedList;
+	listElem buf;
+	sortedList.clear();
+	for (c1=0; c1<numContacts; c1++)
+	{
+		buf.value = dfree[3*c1];
+		buf.index = c1;
+		sortedList.push_back(buf);
+	}
+	*/
+
+	//////////////
+	// Beginning of iterative computations
+	//////////////
+	double error = 0;
+	double dn, dt, ds, fn, ft, fs;
+
+	for (it=0; it<numItMax; it++)
+	{
+		error =0;
+		for (c1=0; c1<numContacts; c1++)
+		{
+			// index of contact
+			int index1 = c1;
+
+			// put the previous value of the contact force in a buffer and put the current value to 0
+			f_1[0] = f[3*index1]; f_1[1] = f[3*index1+1]; f_1[2] = f[3*index1+2];
+			set3Dof(f,index1,zero,zero,zero); //		f[3*index] = 0.0; f[3*index+1] = 0.0; f[3*index+2] = 0.0;
+
+			// computation of actual d due to contribution of other contacts
+			dn=dfree[3*index1];dt=dfree[3*index1+1]; ds=dfree[3*index1+2];
+			for (i=0; i<dim; i++){
+				dn += W[3*index1  ][i]*f[i];
+				dt += W[3*index1+1][i]*f[i];
+				ds += W[3*index1+2][i]*f[i];
+			}
+			d_1[0] = dn + W[3*index1  ][3*index1  ]*f_1[0]+W[3*index1  ][3*index1+1]*f_1[1]+W[3*index1  ][3*index1+2]*f_1[2];
+			d_1[1] = dt + W[3*index1+1][3*index1  ]*f_1[0]+W[3*index1+1][3*index1+1]*f_1[1]+W[3*index1+1][3*index1+2]*f_1[2];
+			d_1[2] = ds + W[3*index1+2][3*index1  ]*f_1[0]+W[3*index1+2][3*index1+1]*f_1[1]+W[3*index1+2][3*index1+2]*f_1[2];
+
+			if(W33[index1]->computed==false)
+			{
+				W33[index1]->compute(W[3*index1][3*index1],W[3*index1][3*index1+1],W[3*index1][3*index1+2],
+											W[3*index1+1][3*index1+1], W[3*index1+1][3*index1+2],W[3*index1+2][3*index1+2]);
+			}
+
+
+			fn=f_1[0]; ft=f_1[1]; fs=f_1[2];
+			W33[index1]->GS_State(mu,dn,dt,ds,fn,ft,fs);
+			error += absError(dn,dt,ds,d_1[0],d_1[1],d_1[2]);
+
+
+			set3Dof(f,index1,fn,ft,fs);
+
+			ctime_t t1 = CTime::getTime()/CTime::getTicksPerSec();
+			if((t1-t0) > timeout)
+			{
+				free(d);
+				for (int i = 0; i < numContacts; i++)
+					delete W33[i];
+				free(W33);
+				//printf("Convergence after %d iteration(s) with tolerance : %f and error : %f with dim : %d\n",it, tol, error, dim);
+				//afficheLCP(dfree,W,f,dim);
+				return 1;
+			}
+		}
+
+		if (error < tol){
+			free(d);
+			for (int i = 0; i < numContacts; i++)
+				delete W33[i];
+			free(W33);
+			//printf("Convergence after %d iteration(s) with tolerance : %f and error : %f with dim : %d\n",it, tol, error, dim);
+			//afficheLCP(dfree,W,f,dim);
+			return 1;
+		}
+	}
+	free(d);
+	for (int i = 0; i < numContacts; i++)
+		delete W33[i];
+	free(W33);
+
+	//printf("\n No convergence in nlcp_gaussseidel function : error =%f after %d iterations", error, it);
+	//afficheLCP(dfree,W,f,dim);
+	return 0;
+
+}
+
 
 /* Resoud un LCP écrit sous la forme U = q + M.F
  * dim : dimension du pb
  * res[0..dim-1] = U
  * res[dim..2*dim-1] = F
  */
-void gaussSeidelLCP1(int dim, FemClipsReal * q, FemClipsReal ** M, FemClipsReal * res, double &tol, int &numItMax) {
+void gaussSeidelLCP1(int dim, FemClipsReal * q, FemClipsReal ** M, FemClipsReal * res, double tol, int numItMax) {
 	int compteur;	// compteur de boucle
 	int compteur2, compteur3;	// compteur de boucle
 
@@ -1129,6 +1320,7 @@ void gaussSeidelLCP1(int dim, FemClipsReal * q, FemClipsReal ** M, FemClipsReal 
 		//	std::cout << "convergence in gaussSeidelLCP1 with " << compteur << " iterations\n";
 			break;
 		}
+
 	}
 
 	for (compteur=0; compteur<dim; compteur++)

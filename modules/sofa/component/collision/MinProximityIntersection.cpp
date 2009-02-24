@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/system/config.h>
 #include <sofa/component/collision/MinProximityIntersection.h>
 #include <sofa/core/ObjectFactory.h>
@@ -32,6 +32,7 @@
 //#include <sofa/component/collision/RayPickInteractor.h>
 #include <iostream>
 #include <algorithm>
+#include <sofa/helper/gl/template.h>
 
 #define DYNAMIC_CONE_ANGLE_COMPUTATION
 
@@ -59,8 +60,6 @@ MinProximityIntersection::MinProximityIntersection()
 , usePointPoint(initData(&usePointPoint, true, "usePointPoint","activate Point-Point intersection tests"))
 , alarmDistance(initData(&alarmDistance, 1.0, "alarmDistance","Proximity detection distance"))
 , contactDistance(initData(&contactDistance, 0.5, "contactDistance","Distance below which a contact is created"))
-, filterIntersection(initData(&filterIntersection, false, "filterIntersection","Intersections are filtered according to their orientation"))
-, angleCone(initData(&angleCone, 0.0, "angleCone","Filtering cone extension angle"))
 {
 }
 
@@ -90,7 +89,7 @@ void MinProximityIntersection::init()
 	}
     intersectors.ignore<RayModel, PointModel>();
     intersectors.ignore<RayModel, LineModel>();
-	intersectors.add<RayModel, TriangleModel, MinProximityIntersection>(this);
+	//intersectors.add<RayModel, TriangleModel, MinProximityIntersection>(this);
 }
 
 bool MinProximityIntersection::testIntersection(Cube &cube1, Cube &cube2)
@@ -137,7 +136,7 @@ bool MinProximityIntersection::testIntersection(Line& e1, Line& e2)
 	double alpha = 0.5;
 	double beta = 0.5;
 
-	if (det < -0.000000000001 || det > 0.000000000001)
+	if (det < -1.0e-18 || det > 1.0e-18)
 	{
 		alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
 		beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
@@ -149,18 +148,7 @@ bool MinProximityIntersection::testIntersection(Line& e1, Line& e2)
 	Vector3 PQ = AC + CD * beta - AB * alpha;
 
 	if (PQ.norm2() < alarmDist*alarmDist)
-	{
-		if (filterIntersection.getValue())
-		{
-			if (!testValidity(e1, PQ))
-				return false;
-
-			Vector3 QP = -PQ;
-			return testValidity(e2, QP);
-		}
-		else
-			return true;
-	}
+		return true;
 	else
 		return false;
 }
@@ -185,7 +173,7 @@ int MinProximityIntersection::computeIntersection(Line& e1, Line& e2, OutputVect
 	double alpha = 0.5;
 	double beta = 0.5;
 
-	if (det < -0.000000000001 || det > 0.000000000001)
+    if (det < -1.0e-15 || det > 1.0e-15)
 	{
 		alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
 		beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
@@ -201,17 +189,6 @@ int MinProximityIntersection::computeIntersection(Line& e1, Line& e2, OutputVect
 
 	if (PQ.norm2() >= alarmDist*alarmDist)
 		return 0;
-
-	if (filterIntersection.getValue())
-	{
-		if (!testValidity(e1, PQ))
-			return 0;
-
-		Vector3 QP = -PQ;
-		
-		if (!testValidity(e2, QP))
-			return 0;
-	}
 
 #ifdef DETECTIONOUTPUT_FREEMOTION
 
@@ -288,18 +265,7 @@ bool MinProximityIntersection::testIntersection(Triangle& e2, Point& e1)
 	const Vector3 PQ = AB * alpha + AC * beta - AP;
 
 	if (PQ.norm2() < alarmDist*alarmDist)
-	{
-		if (filterIntersection.getValue())
-		{
-			if (!testValidity(e1, PQ))
-				return false;
-
-			Vector3 QP = -PQ;
-			return testValidity(e2, QP);
-		}
-		else
-			return true;
-	}
+		return true;
 	else
 		return false;
 }
@@ -344,16 +310,6 @@ int MinProximityIntersection::computeIntersection(Triangle& e2, Point& e1, Outpu
 		return 0;
 
 	Vector3 PQ = Q-P;
-	if (filterIntersection.getValue())
-	{
-		if (!testValidity(e1, PQ))
-			return 0;
-
-		Vector3 QP = -PQ;
-		
-		if (!testValidity(e2, QP))
-			return 0;
-	}
 
 
 #ifdef DETECTIONOUTPUT_FREEMOTION
@@ -412,18 +368,7 @@ bool MinProximityIntersection::testIntersection(Line& e2, Point& e1)
 	PQ = Q-P;
 
 	if (PQ.norm2() < alarmDist*alarmDist)
-	{
-		if (filterIntersection.getValue())
-		{
-			if (!testValidity(e1, PQ))
-				return false;
-
-			Vector3 QP = -PQ;
-			return testValidity(e2, QP);
-		}
-		else
-			return true;
-	}
+		return true;
 	else
 		return false;
 }
@@ -457,16 +402,6 @@ int MinProximityIntersection::computeIntersection(Line& e2, Point& e1, OutputVec
 		return 0;
 
 	Vector3 PQ = Q-P;
-	if (filterIntersection.getValue())
-	{
-		if (!testValidity(e1, PQ))
-			return 0;
-
-		Vector3 QP = -PQ;
-		
-		if (!testValidity(e2, QP))
-			return 0;
-	}
 
 #ifdef DETECTIONOUTPUT_FREEMOTION
 
@@ -504,18 +439,7 @@ bool MinProximityIntersection::testIntersection(Point& e1, Point& e2)
 	Vector3 PQ = e2.p()-e1.p();
 
 	if (PQ.norm2() < alarmDist*alarmDist)
-	{
-		if (filterIntersection.getValue())
-		{
-			if (!testValidity(e1, PQ))
-				return false;
-
-			Vector3 QP = -PQ;
-			return testValidity(e2, QP);
-		}
-		else
-			return true;
-	}
+		return true;
 	else
 		return false;
 }
@@ -539,17 +463,6 @@ int MinProximityIntersection::computeIntersection(Point& e1, Point& e2, OutputVe
 
 	if (PQ.norm2() >= alarmDist*alarmDist)
 		return 0;
-
-	if (filterIntersection.getValue())
-	{
-		if (!testValidity(e1, PQ))
-			return 0;
-
-		Vector3 QP = -PQ;
-		
-		if (!testValidity(e2, QP))
-			return 0;
-	}
 
 	const double contactDist = getContactDistance() + e1.getProximity() + e2.getProximity();
 
@@ -784,7 +697,7 @@ int MinProximityIntersection::computeIntersection(Sphere& e1, Point& e2, OutputV
 	detection->value -= contactDist;
 	return 1;
 }
-
+/*
 bool MinProximityIntersection::testIntersection(Ray &t1,Triangle &t2)
 {
 	Vector3 P,Q,PQ;
@@ -847,182 +760,11 @@ int MinProximityIntersection::computeIntersection(Ray &t1, Triangle &t2, OutputV
 	detection->value -= contactDist;
 	return 1;
 }
-
-
-bool MinProximityIntersection::testValidity(Point &p, const Vector3 &PQ)
+*/
+void MinProximityIntersection::draw()
 {
-	Vector3 pt = p.p();
-
-#ifdef DYNAMIC_CONE_ANGLE_COMPUTATION
-
-	std::vector< std::pair <Vector3, Vector3> > neighborsTri;
-	p.getTriangleNeighbors(neighborsTri);
-
-	Vector3 nMean;
-	nMean.clear();
-
-	for (unsigned int i=0; i<neighborsTri.size(); i++)
-	{
-		Vector3 nCur = cross((neighborsTri[i].first) - pt, (neighborsTri[i].second) - pt);
-		nCur.normalize();
-		nMean += nCur;
-	}
-
-	nMean.normalize();
-
-	std::vector<Vector3> neighborsPt;
-	p.getLineNeighbors(neighborsPt);
-
-	for (unsigned int i=0; i<neighborsPt.size(); i++)
-	{
-		Vector3 l = pt - neighborsPt[i];
-		l.normalize();
-		double computedAngleCone = (nMean * l) / 2;
-		if (computedAngleCone<0)
-			computedAngleCone=0.0;
-		//std::cout << "Point computedAngleCone = " << computedAngleCone << std::endl;
-
-		if (l * PQ < -computedAngleCone*PQ.norm())
-		{
-			return false;
-		}
-	}
-	
-#else
-	
-	std::vector<Vector3> neighborsPt;
-	p.getLineNeighbors(neighborsPt);
-	
-	for (unsigned int i=0; i<neighborsPt.size(); i++)
-	{
-		Vector3 l = pt - neighborsPt[i];
-		if (l * PQ < -angleCone.getValue()*PQ.norm()*l.norm())
-		{
-			return false;
-		}
-	}
-
-//	return true;
-	
-	std::vector< std::pair <Vector3, Vector3> > neighborsTri;
-	p.getTriangleNeighbors(neighborsTri);
-
-	Vector3 nMean;
-	nMean.clear();
-
-	for (unsigned int i=0; i<neighborsTri.size(); i++)
-	{
-		Vector3 nCur = cross((neighborsTri[i].first) - pt, (neighborsTri[i].second) - pt);
-		nCur.normalize();
-		nMean += nCur;
-	}
-
-	nMean.normalize();
-
-#endif
-
-	return ((nMean*PQ) >= 0.0);
-}
-	
-bool MinProximityIntersection::testValidity(Line &l, const Vector3 &PQ)
-{
-	Vector3 nMean;
-	nMean.clear();
-
-	const Vector3 &pt1 = l.p1();
-	const Vector3 &pt2 = l.p2();
-
-	Vector3 AB = pt2 - pt1;
-
-#ifdef DYNAMIC_CONE_ANGLE_COMPUTATION
-
-	Vector3 n1, n2;
-	AB.normalize();
-	
-	// Right triangle
-	const Vector3* tRight = l.tRight();
-	if (tRight != NULL)
-	{
-		n1 = cross((*tRight)-pt1, pt2-pt1);
-		nMean += n1;
-	}
-
-	// Left triangle
-	const Vector3* tLeft = l.tLeft();
-	if (tLeft != NULL)
-	{
-		n2 = cross(pt2-pt1,(*tLeft)-pt1);
-		nMean += n2;
-	}
-
-	nMean.normalize();
-
-	if (tRight != NULL)
-	{
-		n1.normalize();
-		double computedAngleCone = (nMean * cross(n1, AB)) / 2;
-		if (computedAngleCone<0)
-			computedAngleCone=0.0;
-		//std::cout << "Right computedAngleCone = " << computedAngleCone << std::endl;
-
-		if (cross(n1, AB)*PQ < -computedAngleCone*PQ.norm()*cross(n1, AB).norm())
-			return false;
-	}
-
-	if (tLeft != NULL)
-	{
-		n2.normalize();
-		double computedAngleCone = (nMean * cross(AB, n2)) / 2;
-		if (computedAngleCone<0)
-			computedAngleCone=0.0;
-		//std::cout << "Left computedAngleCone = " << computedAngleCone << std::endl;
-
-		if (cross(AB, n2)*PQ < -computedAngleCone*PQ.norm()*cross(AB, n2).norm())
-			return false;
-	}
-
-#else
-
-	// Right triangle
-	const Vector3* tRight = l.tRight();
-	if (tRight != NULL)
-	{
-		Vector3 n1 = cross((*tRight)-pt1, pt2-pt1);
-		nMean += n1;
-
-		if (cross(n1, AB)*PQ < -angleCone.getValue()*PQ.norm()*cross(n1, AB).norm())
-		{
-			return false;
-		}
-	}
-
-	// Left triangle
-	const Vector3* tLeft = l.tLeft();
-	if (tLeft != NULL)
-	{
-		Vector3 n2 = cross(pt2-pt1,(*tLeft)-pt1);
-		nMean += n2;
-
-		if (cross(AB, n2)*PQ < -angleCone.getValue()*PQ.norm()*cross(AB, n2).norm())
-		{
-			return false;
-		}
-	}
-
-#endif
-
-	return ((nMean*PQ) >= 0);
-}
-
-bool MinProximityIntersection::testValidity(Triangle &t, const Vector3 &PQ)
-{
-	const Vector3& pt1 = t.p1();
-	const Vector3& pt2 = t.p2();
-	const Vector3& pt3 = t.p3();
-
-	Vector3 n = cross(pt2-pt1,pt3-pt1);
-	
-	return ( (n*PQ) >= 0.0);
+	if (!getContext()->getShowCollisionModels())
+		return;
 }
 
 

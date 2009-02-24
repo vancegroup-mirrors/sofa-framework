@@ -1,32 +1,33 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONSTRAINT_FIXEDPLANECONSTRAINT_INL
 #define SOFA_COMPONENT_CONSTRAINT_FIXEDPLANECONSTRAINT_INL
 
 #include <sofa/core/componentmodel/behavior/Constraint.inl>
 #include <sofa/component/constraint/FixedPlaneConstraint.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
@@ -43,8 +44,7 @@ using namespace sofa::defaulttype;
 
 template <class DataTypes>
 FixedPlaneConstraint<DataTypes>::FixedPlaneConstraint()
-: 
- indices( initData(&indices,"indices","Indices of the fixed points"))
+: indices( initData(&indices,"indices","Indices of the fixed points"))
 , direction( initData(&direction,"direction","normal direction of the plane")) 
 , dmin( initData(&dmin,(Real)0,"dmin","Minimum plane distance from the origin")) 
 , dmax( initData(&dmax,(Real)0,"dmax","Maximum plane distance from the origin") )
@@ -127,6 +127,9 @@ template <class DataTypes>
 void FixedPlaneConstraint<DataTypes>::init()
 {	
 	this->core::componentmodel::behavior::Constraint<DataTypes>::init();
+
+	topology = getContext()->getMeshTopology();
+
 	/// test that dmin or dmax are different from zero
 	if (dmin.getValue()!=dmax.getValue())
 		selectVerticesFromPlanes=true;
@@ -147,11 +150,7 @@ void FixedPlaneConstraint<DataTypes>::init()
 
 // Handle topological changes
 template <class DataTypes> void FixedPlaneConstraint<DataTypes>::handleTopologyChange()
-{
-	sofa::core::componentmodel::topology::BaseTopology *topology = static_cast<sofa::core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
-
-
-
+{	
 	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
 	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
 

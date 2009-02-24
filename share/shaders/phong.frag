@@ -23,8 +23,8 @@ void main()
 	float RealSunDepth = ( SunCoord.z - SunZNear )/( SunZFar-SunZNear );
 	vec2 coord = SunCoord.xy/SunCoord.w*.5 + .5;
 	float SunDepth = texture2D( ShadowMap, coord  ).r;
-	if( coord.x<0. || coord.x>1. ) SunDepth=RealSunDepth;
-	if( coord.y<0. || coord.y>1. ) SunDepth=RealSunDepth;
+	if( coord.x<0 || coord.x>1. ) SunDepth=RealSunDepth;
+	if( coord.y<0 || coord.y>1. ) SunDepth=RealSunDepth;
 	if( SunDepth == 1. ) SunDepth=RealSunDepth;
 
 	

@@ -1,9 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_VOXELGRID_H
 #define SOFA_COMPONENT_COLLISION_VOXELGRID_H
 
 #include <sofa/core/componentmodel/collision/BroadPhaseDetection.h>
 #include <sofa/component/collision/NarrowPhaseDetection.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/simulation/tree/GNode.h>
 #include <vector>
@@ -43,8 +66,7 @@ public:
 	void setMinMax(const Vector3 &minimum, const Vector3& maximum);
 };
 
-// inherit of VisualModel for debugging, then we can see the voxel grid
-class VoxelGrid : public BroadPhaseDetection, public NarrowPhaseDetection, public core::VisualModel
+class VoxelGrid : public BroadPhaseDetection, public NarrowPhaseDetection
 {
 private:
 	Vector3 nbSubDiv;
@@ -70,10 +92,7 @@ public:
 	 // Create a voxel grid define by minx, miny, minz, maxx, maxy, maxz and the number of subdivision on x, y, z
 	void createVoxelGrid (const Vector3 &min, const Vector3 &max, const Vector3 &nbSubdivision);
 	
-	/* for debugging, VisualModel */
 	void draw();
-	void initTextures() { }
-	void update() { }
 	
 	void add(core::CollisionModel *cm, int phase);
 

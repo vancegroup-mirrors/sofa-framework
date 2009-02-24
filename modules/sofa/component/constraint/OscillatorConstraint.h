@@ -1,33 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONSTRAINT_OSCILLATORCONSTRAINT_H
 #define SOFA_COMPONENT_CONSTRAINT_OSCILLATORCONSTRAINT_H
 
 #include <sofa/core/componentmodel/behavior/Constraint.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/helper/vector.h>
 
 
@@ -44,7 +43,7 @@ namespace constraint
 	where \f$ x_m, A , \omega t , \phi \f$ are the mean value, the amplitude, the pulsation and the phase, respectively.
 	*/
 template <class DataTypes>
-class OscillatorConstraint : public core::componentmodel::behavior::Constraint<DataTypes>, public core::VisualModel
+class OscillatorConstraint : public core::componentmodel::behavior::Constraint<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
 	typedef typename DataTypes::VecCoord VecCoord;
@@ -55,14 +54,29 @@ public:
 
 protected:
 	struct Oscillator {
+                unsigned int index;
 		Coord mean;
 		Deriv amplitude;
 		Real pulsation;
 		Real phase;
-		Oscillator( const Coord& m, const Deriv& a, const Real& w, const Real& p )
-			: mean(m), amplitude(a), pulsation(w), phase(p) {}
+                
+                Oscillator(){}
+              
+		Oscillator( unsigned int i, const Coord& m, const Deriv& a, const Real& w, const Real& p )
+			: index(i), mean(m), amplitude(a), pulsation(w), phase(p) {}
+  
+                inline friend std::istream& operator >> ( std::istream& in, Oscillator& o ){
+                  in>>o.index>>o.mean>>o.amplitude>>o.pulsation>>o.phase;
+                  return in;
+                }
+
+                inline friend std::ostream& operator << ( std::ostream& out, const Oscillator& o ){
+                  out << o.index<< " " <<o.mean<< " " <<o.amplitude<< " " <<o.pulsation<< " " <<o.phase<<"\n";
+                  return out;
+                }              
 	};
-	helper::vector< std::pair<unsigned,Oscillator> > constraints; ///< constrained particles
+        
+	Data< helper::vector< Oscillator > > constraints; ///< constrained particles
 
 
 public:
@@ -79,12 +93,10 @@ public:
 	virtual void projectVelocity(VecDeriv& /*dx*/); ///< project dx to constrained space (dx models a velocity)
 	virtual void projectPosition(VecCoord& /*x*/); ///< project x to constrained space (x models a position)
 	
-	// -- Visual interface
 	void draw(){}
-	
-	void initTextures() { }
-	
-	void update() { }
+
+	/// this constraint is holonomic
+	bool isHolonomic() {return true;}
 };
 
 } // namespace constraint

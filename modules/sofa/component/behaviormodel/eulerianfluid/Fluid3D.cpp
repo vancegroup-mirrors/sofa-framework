@@ -1,32 +1,32 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/behaviormodel/eulerianfluid/Fluid3D.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/core/ObjectFactory.h>
 #include <iostream>
-
+#include <string.h>
 namespace sofa
 {
 
@@ -73,6 +73,10 @@ Fluid3D::~Fluid3D()
 
 void Fluid3D::init()
 {
+    f_nx.beginEdit();
+    f_ny.beginEdit();
+    f_nz.beginEdit();
+    f_cellwidth.beginEdit();
     fluid->clear(nx,ny,nz);
     fnext->clear(nx,ny,nz);
     ftemp->clear(nx,ny,nz);
@@ -98,7 +102,7 @@ void Fluid3D::updatePosition(double dt)
     Grid3D* p = fluid; fluid=fnext; fnext=p;
 }
 
-void Fluid3D::draw()
+void Fluid3D::drawVisual()
 {
     glPushMatrix();
     vec3 center = f_center.getValue();
@@ -244,7 +248,7 @@ void Fluid3D::exportOBJ(std::string name, std::ostream* out, std::ostream* /*mtl
 	nindex+=points.size();
 }
 
-void Fluid3D::update()
+void Fluid3D::updateVisual()
 {
     points.clear();
     facets.clear();
@@ -397,7 +401,7 @@ void Fluid3D::update()
                 if (data[i         ]>iso) mk|= 64;
                 if (data[i-dx      ]>iso) mk|= 128;
 
-                tri = component::mapping::MarchingCubeTriTable[mk];
+                tri = helper::MarchingCubeTriTable[mk];
                 while (*tri>=0)
                 {
                     int* b = base+3*i;
@@ -442,8 +446,8 @@ void Fluid3D::update()
 bool Fluid3D::addBBox(double* minBBox, double* maxBBox)
 {
     vec3 center = f_center.getValue();
-    double size[3] = { (nx-1)*cellwidth, (ny-1)*cellwidth, (nz-1)*cellwidth };
-    double pos[3] = { center[0]-size[0]/2, center[1]-size[1]/2, center[2]-size[2]/2 };
+    SReal size[3] = { (nx-1)*cellwidth, (ny-1)*cellwidth, (nz-1)*cellwidth };
+    SReal pos[3] = { center[0]-size[0]/2, center[1]-size[1]/2, center[2]-size[2]/2 };
     for (int c=0;c<3;c++)
     {
         if (minBBox[c] > pos[c]        ) minBBox[c] = pos[c];

@@ -1,16 +1,44 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CudaDistanceGridCollisionModel.h"
 #include "CudaSphereModel.h"
 #include "CudaPointModel.h"
 #include <sofa/component/collision/NewProximityIntersection.inl>
 #include <sofa/component/collision/DiscreteIntersection.inl>
-#include <sofa/component/collision/RayPickInteractor.h>
+#include <sofa/component/collision/RayPickInteractor.inl>
 #include <sofa/component/collision/RayContact.h>
 #include "CudaContactMapper.h"
 #include <sofa/component/collision/BarycentricPenalityContact.inl>
+#include <sofa/component/collision/BarycentricContactMapper.inl>
 #include <sofa/component/forcefield/PenalityContactForceField.h>
 #include "CudaPenalityContactForceField.h"
+#include "CudaSpringForceField.h"
+#include <sofa/component/forcefield/VectorSpringForceField.h>
 #include <fstream>
 #include <sofa/helper/system/gl.h>
+#include <sofa/helper/Factory.inl>
 
 namespace sofa
 {
@@ -30,9 +58,9 @@ void BarycentricPenalityContact<CudaPointModel,CudaRigidDistanceGridCollisionMod
     //const bool printLog = this->f_printLog.getValue();
     if (ff==NULL)
     {
-        MechanicalState1* mstate1 = mapper1.createMapping(model1);
-        MechanicalState2* mstate2 = mapper2.createMapping(model2);
-        ff = new ResponseForceField(mstate1,mstate2);
+        MechanicalState1* mstate1 = mapper1.createMapping("contactPointsCUDA");
+        MechanicalState2* mstate2 = mapper2.createMapping("contactPointsCUDA");
+	ff = new ResponseForceField(mstate1,mstate2);ff->setName( getName());
     }
     
     mapper1.setPoints1(&outputs);
@@ -66,7 +94,7 @@ void BarycentricPenalityContact<CudaPointModel,CudaRigidDistanceGridCollisionMod
 #else
     double distance = d0; // + mapper1.radius(elem1) + mapper2.radius(elem2);
     double stiffness = (model1->getContactStiffness(0) * model1->getContactStiffness(0)); ///distance;
-    ff->setContacts((float)distance, (float)stiffness, &outputs);
+    ff->setContacts((float)distance, (float)stiffness, &outputs, true);
 #endif
     // Update mappings
     mapper1.update();
@@ -80,9 +108,9 @@ void BarycentricPenalityContact<CudaSphereModel,CudaRigidDistanceGridCollisionMo
     //const bool printLog = this->f_printLog.getValue();
     if (ff==NULL)
     {
-        MechanicalState1* mstate1 = mapper1.createMapping(model1);
-        MechanicalState2* mstate2 = mapper2.createMapping(model2);
-        ff = new ResponseForceField(mstate1,mstate2);
+        MechanicalState1* mstate1 = mapper1.createMapping("contactPointsCUDA");
+        MechanicalState2* mstate2 = mapper2.createMapping("contactPointsCUDA");
+        ff = new ResponseForceField(mstate1,mstate2); ff->setName( getName());
     }
     
     mapper1.setPoints1(&outputs);
@@ -116,12 +144,26 @@ void BarycentricPenalityContact<CudaSphereModel,CudaRigidDistanceGridCollisionMo
 #else
     double distance = d0; // + mapper1.radius(elem1) + mapper2.radius(elem2);
     double stiffness = (model1->getContactStiffness(0) * model1->getContactStiffness(0)); ///distance;
-    ff->setContacts((float)distance, (float)stiffness, &outputs);
+    ff->setContacts((float)distance, (float)stiffness, &outputs, true);
 #endif
     // Update mappings
     mapper1.update();
     mapper2.update();
 }
+
+//ContactMapperCreator< ContactMapper<CudaSphereModel> > CudaSphereContactMapperClass("default",true);
+ContactMapperCreator< ContactMapper<CudaSphereModel, CudaVec3fTypes> > CudaSphereCudaContactMapperClass("default",true);
+
+template<>
+void DefaultPickingManager<CudaVec3fTypes,forcefield::StiffSpringForceField<CudaVec3fTypes> >::addContact(forcefield::StiffSpringForceField<CudaVec3fTypes>* ff, int index1, int index2, double stiffness, double mu_v, double length, const Vector3& /*p1*/, const Vector3& /*p2*/)
+{
+    ff->addSpring(index1, index2, stiffness, mu_v, length);
+}
+    
+template class DefaultPickingManager< CudaVec3fTypes, forcefield::StiffSpringForceField<CudaVec3fTypes> >;
+
+
+helper::Creator<BasePickingManager::PickingManagerFactory, DefaultPickingManager< CudaVec3fTypes, forcefield::StiffSpringForceField<CudaVec3fTypes> > > PickingVectorSpringCudaClass ("VectorSpringCUDA",true);
 
 } //namespace collision
 

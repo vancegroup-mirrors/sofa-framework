@@ -1,6 +1,0 @@
-set terminal png medium size 640,480  xff0000 x00ff00 
-set output "massSpring_trajectory.png"
-plot "massSpring_x_euler.txt" u 5:6 t "Euler", "massSpring_x_eulerSym.txt" u 5:6 t "symplectic Euler"
-set term x11
-replot
-

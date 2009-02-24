@@ -9,7 +9,7 @@ CONFIG += $$CONFIGPROJECTGUI
 LIBS += $$SOFA_GUI_LIBS
 LIBS += $$SOFA_LIBS
 
-SOURCES = Main.cpp 
+SOURCES = Main.cpp
 HEADERS = 
 
 RC_FILE = sofa.rc

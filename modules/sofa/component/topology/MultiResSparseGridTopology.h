@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_TOPOLOGY_MULTIRESSPARSEGRIDTOPOLOGY_H
 #define SOFA_COMPONENT_TOPOLOGY_MULTIRESSPARSEGRIDTOPOLOGY_H
 
@@ -24,7 +48,6 @@ namespace topology
 
 using namespace sofa::defaulttype;
 using helper::vector;
-typedef defaulttype::Vec3f Vec3;
 
 class MultiResSparseGridTopology : public core::componentmodel::topology::Topology
 {
@@ -46,7 +69,7 @@ public:
          
         This is a sparse voxel grid:
 
-        -vertexMap contains all vertices without repeating. It consists of Index3D(int i,j,k), vertex(SbVec3f,int)
+        -vertexMap contains all vertices without repeating. It consists of Index3D(int i,j,k), vertex(SbVector3f,int)
 
         -voxelsMap contains all voxels with the indices of each one. It consists of Index3D which represent the voxel center,
         and of int[8] which leads to the 8 vertices of that voxel in vertices array or in the map
@@ -60,7 +83,7 @@ public:
                 ///to represent vertices of voxels
                 struct Vertex
                 {
-                        //Vec3 vertexPosition;
+                        //Vector3 vertexPosition;
                         int index;
                         /*            Vertex(float x=0, float y=0, float z=0)
                                     {
@@ -108,7 +131,7 @@ public:
                 /// Grid's scale
                 float scale;
                 /// array of vertices
-                vector<Vec3> vertices;
+                vector<Vector3> vertices;
                 /// contains centers of the voxels of the surface
                 vector<Index3D> surfaceSparseGrid;
                 /// number and array of the 6 faces corresponding to each voxels
@@ -162,11 +185,11 @@ public:
                         return numSurfaceIndices;
                 }
                 /// returns the array of vertices
-                vector< Vec3>& getVertices()
+                vector< Vector3>& getVertices()
                 {
                         return vertices;
                 }
-                const vector<Vec3>& getVertices() const
+                const vector<Vector3>& getVertices() const
                 {
                         return vertices;
                 }
@@ -311,8 +334,6 @@ public:
 
 
         typedef GridTopology::Cube Cube;
-        typedef Vec3d Vec3;
-
         MultiResSparseGridTopology();
         MultiResSparseGridTopology(const char* filevoxel, int resol,float scale);
 
@@ -326,13 +347,13 @@ public:
         int dimx,dimy,dimz,px,py,pz;
 
         /// get the postion of the voxel i
-        double getPX(int i) const ;
-        double getPY(int i) const ;
-        double getPZ(int i) const ;
+        SReal getPX(int i) const ;
+        SReal getPY(int i) const ;
+        SReal getPZ(int i) const ;
 
         ///  get the vertex's psotion with its indice or its index
-        Vec3 getPoint(int i) const ;
-        //Vec3 getPoint(int ,int ,int );
+        Vector3 getPoint(int i) const ;
+        //Vector3 getPoint(int ,int ,int );
 
         /// ??????
         bool hasPos() const;
@@ -345,55 +366,55 @@ public:
         /// get the cube of the voxel i for the mapping
         GridTopology::Cube getCube (int i);
         /// get the indice of the cube at the coordinates pos and the barycentric coordinates
-        int findCube(const Vec3& pos, double& fx, double &fy, double &fz) const;
+        int findCube(const Vector3& pos, SReal& fx, SReal &fy, SReal &fz) const;
         /// get the indice of the nearest cube of the coordinates pos and the barycentric coordinates
-        int findNearestCube(const Vec3& pos, double& fx, double &fy, double &fz) const;
+        int findNearestCube(const Vector3& pos, SReal& fx, SReal &fy, SReal &fz) const;
         /// set the position (not used)
-        void setP0(const Vec3& val)
+        void setP0(const Vector3& val)
         {
                 p0 = val;
         }
         /// set the interval between voxels
-        void setDx(const Vec3& val)
+        void setDx(const Vector3& val)
         {
                 dx = val;
                 inv_dx2 = 1/(dx*dx);
         }
-        void setDy(const Vec3& val)
+        void setDy(const Vector3& val)
         {
                 dy = val;
                 inv_dy2 = 1/(dy*dy);
         }
-        void setDz(const Vec3& val)
+        void setDz(const Vector3& val)
         {
                 dz = val;
                 inv_dz2 = 1/(dz*dz);
         }
         /// get the position (not used)
-        const Vec3& getP0() const
+        const Vector3& getP0() const
         {
                 return p0;
         }
         /// get the interval between voxels
-        const Vec3& getDx() const
+        const Vector3& getDx() const
         {
                 return dx;
         }
-        const Vec3& getDy() const
+        const Vector3& getDy() const
         {
                 return dy;
         }
-        const Vec3& getDz() const
+        const Vector3& getDz() const
         {
                 return dz;
         }
 
 protected:
         /// Position of point 0
-        Vec3 p0;
+        Vector3 p0;
         /// Distance between points in the grid. Must be perpendicular to each other
-        Vec3 dx,dy,dz;
-        double inv_dx2, inv_dy2, inv_dz2;
+        Vector3 dx,dy,dz;
+        SReal inv_dx2, inv_dy2, inv_dz2;
 
 };
 

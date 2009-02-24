@@ -1,61 +1,60 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 /** A sample program. Laure Heigeas, Francois Faure, 2007. */
-// scene data structure
-#include <sofa/simulation/tree/Simulation.h>
+// scene data structure 
+#include <sofa/simulation/tree/Simulation.h> 
 #include <sofa/component/contextobject/Gravity.h>
 #include <sofa/component/odesolver/CGImplicitSolver.h>
 #include <sofa/component/odesolver/EulerSolver.h>
 #include <sofa/component/odesolver/StaticSolver.h>
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/component/mass/UniformMass.h>
-#include <sofa/component/constraint/FixedConstraint.h>
-#include <sofa/component/forcefield/StiffSpringForceField.h>
-#include <sofa/component/mapping/BarycentricMapping.h>
 #include <sofa/component/visualmodel/OglModel.h>
-#include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/component/mapping/RigidMapping.h>
-// gui
-#include <sofa/gui/SofaGUI.h>
+// gui 
+#include <sofa/gui/SofaGUI.h> 
 
-using sofa::simulation::tree::GNode;
-typedef sofa::component::odesolver::EulerSolver OdeSolver;
-using sofa::component::contextobject::Gravity;
+#include <sofa/component/typedef/Sofa_typedef.h>
 
-// deformable body
-typedef sofa::defaulttype::Vec3Types ParticleTypes;
-typedef ParticleTypes::Deriv Vec3;
-typedef sofa::core::componentmodel::behavior::MechanicalState<ParticleTypes> ParticleStates;
-typedef sofa::component::MechanicalObject<ParticleTypes> ParticleDOFs;
-typedef sofa::component::mass::UniformMass<ParticleTypes,double> ParticleMasses;
-typedef sofa::component::constraint::FixedConstraint<ParticleTypes> ParticleFixedConstraint;
-typedef sofa::component::forcefield::StiffSpringForceField<ParticleTypes> ParticleStiffSpringForceField;
-typedef sofa::component::visualmodel::GLExtVec3fTypes OglTypes;
-typedef sofa::core::componentmodel::behavior::MappedModel<OglTypes> OglMappedModel;
-
-// rigid body
-typedef sofa::defaulttype::StdRigidTypes<3,double> RigidTypes;
-typedef RigidTypes::Coord RigidCoord;
-typedef RigidTypes::Quat Quaternion;
-typedef sofa::defaulttype::RigidMass<3,double> RigidMass;
-typedef sofa::component::mass::UniformMass<RigidTypes,RigidMass> RigidUniformMasses;
-typedef sofa::core::componentmodel::behavior::MechanicalState<RigidTypes> RigidStates;
-typedef sofa::component::MechanicalObject<RigidTypes> RigidDOFs;
-typedef sofa::core::componentmodel::behavior::MechanicalMapping<RigidStates, ParticleStates >  RigidToParticleMechanicalMapping;
-typedef sofa::component::mapping::RigidMapping< RigidToParticleMechanicalMapping >  RigidToParticleRigidMechanicalMapping;
-
-int main(int, char** argv) 
+using namespace sofa::simulation::tree;
+using sofa::component::odesolver::EulerSolver;
+   
+int main(int, char** argv)    
 {
     sofa::gui::SofaGUI::Init(argv[0]);
-    //=========================== Build the scene
-    double endPos = 1.;
+    //=========================== Build the scene 
+    double endPos = 1.;  
     double attach = -1.;
     double splength = 1.;
 
     //-------------------- The graph root node
-    GNode* groot = new sofa::simulation::tree::GNode;
+    GNode* groot = new GNode;
     groot->setName( "root" );
+    groot->setGravityInWorld( Coord3(0,-10,0) );
 
     // One solver for all the graph
-    OdeSolver* solver = new OdeSolver;
+    EulerSolver* solver = new EulerSolver;
     groot->addObject(solver);
     solver->setName("S");
 
@@ -65,32 +64,34 @@ int main(int, char** argv)
     deformableBody->setName( "deformableBody" );
 
     // degrees of freedom
-    ParticleDOFs* DOF = new ParticleDOFs;
+    MechanicalObject3* DOF = new MechanicalObject3;
     deformableBody->addObject(DOF);
     DOF->resize(2);
     DOF->setName("Dof1");
-    ParticleTypes::VecCoord& x = *DOF->getX();
-    x[0] = Vec3(0,0,0);
-    x[1] = Vec3(endPos,0,0);
+    VecCoord3& x = *DOF->getX();
+    x[0] = Coord3(0,0,0);
+    x[1] = Coord3(endPos,0,0);
 
     // mass
-    ParticleMasses* mass = new ParticleMasses;
+    //    ParticleMasses* mass = new ParticleMasses;
+    UniformMass3* mass = new UniformMass3; 
     deformableBody->addObject(mass);
     mass->setMass(1);
     mass->setName("M1");
 
     // Fixed point 
-    ParticleFixedConstraint* constraints = new ParticleFixedConstraint;
+    FixedConstraint3* constraints = new FixedConstraint3;
     deformableBody->addObject(constraints);
     constraints->setName("C");
     constraints->addConstraint(0);
 
+    
     // force field
-    ParticleStiffSpringForceField* spring = new ParticleStiffSpringForceField;
+    StiffSpringForceField3* spring = new StiffSpringForceField3;
     deformableBody->addObject(spring);
     spring->setName("F1");
     spring->addSpring( 1,0, 10., 1, splength );
-
+    
 
     //-------------------- Rigid body
     GNode* rigidBody = new GNode;
@@ -98,53 +99,50 @@ int main(int, char** argv)
     rigidBody->setName( "rigidBody" );
 
     // degrees of freedom
-    RigidDOFs* rigidDOF = new RigidDOFs;
+    MechanicalObjectRigid3* rigidDOF = new MechanicalObjectRigid3;
     rigidBody->addObject(rigidDOF);
     rigidDOF->resize(1);
     rigidDOF->setName("Dof2");
-    RigidTypes::VecCoord& rigid_x = *rigidDOF->getX();
-    rigid_x[0] = RigidCoord( Vec3(endPos-attach+splength,0,0), Quaternion::identity() );
+    VecCoordRigid3& rigid_x = *rigidDOF->getX();
+    rigid_x[0] = CoordRigid3( Coord3(endPos-attach+splength,0,0),
+			       Quat3::identity() );
 
     // mass
-    RigidUniformMasses* rigidMass = new RigidUniformMasses;
+    UniformMassRigid3* rigidMass = new UniformMassRigid3;
     rigidBody->addObject(rigidMass);
-    rigidMass->setName("M2");
-
-
+    rigidMass->setName("M2"); 
+    
+ 
     //-------------------- the particles attached to the rigid body
     GNode* rigidParticles = new GNode;
     rigidParticles->setName( "rigidParticles" );
     rigidBody->addChild(rigidParticles);
 
     // degrees of freedom of the skin
-    ParticleDOFs* rigidParticleDOF = new ParticleDOFs;
+    MechanicalObject3* rigidParticleDOF = new MechanicalObject3;
     rigidParticles->addObject(rigidParticleDOF);
     rigidParticleDOF->resize(1);
     rigidParticleDOF->setName("Dof3");
-    ParticleTypes::VecCoord& rp_x = *rigidParticleDOF->getX();
-    rp_x[0] = Vec3(attach,0,0);
+    VecCoord3& rp_x = *rigidParticleDOF->getX();
+    rp_x[0] = Coord3(attach,0,0);
 
     // mapping from the rigid body DOF to the skin DOF, to rigidly attach the skin to the body
-    RigidToParticleRigidMechanicalMapping* rigidMapping = new RigidToParticleRigidMechanicalMapping(rigidDOF,rigidParticleDOF);
+    RigidMechanicalMappingRigid3_to_3* rigidMapping = new RigidMechanicalMappingRigid3_to_3(rigidDOF,rigidParticleDOF);
     rigidParticles->addObject( rigidMapping );
     rigidMapping->setName("Map23");
 
 
     // ---------------- Interaction force between the deformable and the rigid body
-    ParticleStiffSpringForceField* iff = new ParticleStiffSpringForceField( DOF, rigidParticleDOF );
+    StiffSpringForceField3* iff = new StiffSpringForceField3( DOF, rigidParticleDOF );
     groot->addObject(iff);
     iff->setName("F13");
     iff->addSpring( 1,0, 10., 1., splength );
 
-    // Set gravity for the whole graph
-    Gravity* gravity =  new Gravity;
-    groot->addObject(gravity);
-    gravity->f_gravity.setValue( Vec3(0,-10,0) );
 
 
 
     //=========================== Init the scene
-    sofa::simulation::tree::getSimulation()->init(groot);
+    getSimulation()->init(groot);
     groot->setAnimate(false);
     groot->setShowNormals(false);
     groot->setShowInteractionForceFields(true);
@@ -155,6 +153,7 @@ int main(int, char** argv)
     groot->setShowForceFields(true);
     groot->setShowWireFrame(false);
     groot->setShowVisualModels(true);
+    groot->setShowBehaviorModels(true);
 
 
 

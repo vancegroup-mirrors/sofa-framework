@@ -1,9 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_TRIANGLEPRESSUREFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_TRIANGLEPRESSUREFORCEFIELD_H
 
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/topology/TriangleSubsetData.h>
 
 
@@ -21,7 +44,7 @@ using namespace sofa::defaulttype;
 using namespace sofa::component::topology;
 
 template<class DataTypes>
-class TrianglePressureForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public core::VisualModel 
+class TrianglePressureForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
     typedef typename DataTypes::VecCoord VecCoord;
@@ -46,7 +69,7 @@ protected:
 
    TriangleSubsetData<TrianglePressureInformation> trianglePressureMap;
 
-    topology::TriangleSetTopology<DataTypes>* tst;
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
 
     Data<Deriv> pressure;
 
@@ -61,8 +84,7 @@ protected:
 public:
 
 	TrianglePressureForceField():
-    tst(0)
-	, pressure(initData(&pressure, "pressure", "Pressure force per unit area"))
+    pressure(initData(&pressure, "pressure", "Pressure force per unit area"))
 	, triangleList(initData(&triangleList,std::string(),"triangleList", "Indices of triangles separated with commas where a pressure is applied"))
 	, normal(initData(&normal,"normal", "Normal direction for the plane selection of triangles"))
 	, dmin(initData(&dmin,(Real)0.0, "dmin", "Minimum distance from the origin along the normal direction"))
@@ -82,10 +104,7 @@ public:
 	virtual void handleTopologyChange();
 
 
-    // -- VisualModel interface
     void draw();
-    void initTextures() { };
-    void update() { };
 
 	void setDminAndDmax(const double _dmin, const double _dmax) { 
 		dmin.setValue((Real)_dmin);dmax.setValue((Real)_dmax);}

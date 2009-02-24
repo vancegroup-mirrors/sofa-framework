@@ -1,34 +1,35 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COLLISIONMODEL_H
 #define SOFA_CORE_COLLISIONMODEL_H
 
 #include <vector>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/CollisionElement.h>
-
 
 
 namespace sofa
@@ -64,7 +65,9 @@ class CollisionModel : public virtual objectmodel::BaseObject
 public:
 
     typedef CollisionElementIterator Iterator;
+    typedef componentmodel::topology::BaseMeshTopology Topology;
 
+    /// Constructor
     CollisionModel()
     : bActive(initData(&bActive, true, "active", "flag indicating if this collision model is active and should be included in default collision detections"))
     , bMoving(initData(&bMoving, true, "moving", "flag indicating if this object is changing position between iterations"))
@@ -73,14 +76,18 @@ public:
     , proximity(initData(&proximity, 0.0, "proximity", "Distance to the actual (visual) surface"))
     , contactStiffness(initData(&contactStiffness, 10.0, "contactStiffness", "Default contact stiffness"))
     , contactFriction(initData(&contactFriction, 0.01, "contactFriction", "Default contact friction (damping) coefficient"))
-    , contactResponse(initData(&contactResponse, "contactResponse", "if set, indicate to the ContactManager that this model should use the given class of contacts. Note that this is only indicative, and in particular if both collision models specify a different class it is up to the manager to choose."))
-    , bFiltered(initData(&bFiltered, false, "filtered", "flag indicating if the model has to build its neighborhood to filter contacts"))
+    , contactResponse(initData(&contactResponse, "contactResponse", "if set, indicate to the ContactManager that this model should use the given class of contacts.\nNote that this is only indicative, and in particular if both collision models specify a different class it is up to the manager to choose."))
+    , group(initData(&group, 0, "group", "If not zero, ID of a group containing this model. No collision can occur between collision models of the same group (allowing the same object to have multiple collision models)"))
     , color(initData(&color, defaulttype::Vec4f(1,0,0,1), "color", "color used to display the collision model if requested"))
-    , size(0), previous(NULL)  , next(NULL)
+    , size(0), previous(NULL)  , next(NULL), numberOfContacts(0)
     {
     }
 
-    
+    virtual void bwdInit()
+    {
+      getColor4f(); //init the color to default value
+    }
+    /// Destructor
     virtual ~CollisionModel() { }    
     
     /// Return true if there are no elements
@@ -94,6 +101,18 @@ public:
     {
         return size;
     }
+
+	/// Get the number of contacts attached to the collision model
+	int getNumberOfContacts() const
+	{
+		return numberOfContacts;
+	}
+
+	/// Set the number of contacts attached to the collision model
+	void setNumberOfContacts(int i)
+	{
+		numberOfContacts = i;
+	}
 
     /// Set the number of elements.
     virtual void resize(int s)
@@ -142,6 +161,7 @@ public:
     /// Default to true.
     virtual bool isActive() const { return bActive.getValue() && getContext()->isActive(); }
 
+    /// \brief Set true if this CollisionModel should be used for collisions.
     virtual void setActive(bool val=true) { bActive.setValue(val); }
 
     /// \brief Return true if this CollisionModel is changing position between
@@ -150,6 +170,8 @@ public:
     /// Default to true.
     virtual bool isMoving() const { return bMoving.getValue(); }
 
+    /// \brief Set true if this CollisionModel is changing position between
+    /// iterations.
     virtual void setMoving(bool val=true) { bMoving.setValue(val); }
 
     /// \brief Return true if this CollisionModel is attached to a simulation.
@@ -159,15 +181,8 @@ public:
     /// Default to true.
     virtual bool isSimulated() const { return bSimulated.getValue(); }
 
+    /// \brief Set true if this CollisionModel is attached to a simulation.
     virtual void setSimulated(bool val=true) { bSimulated.setValue(val); }
-
-	/// \brief Return true if this CollisionModel must build its neigborhood 
-    /// basically to be used in filtered proximity detection
-    ///
-    /// Default to false.
-    virtual bool isFiltered() const { return bFiltered.getValue(); }
-
-    virtual void setFiltered(bool val=true) { bFiltered.setValue(val); }
 
     /// Create or update the bounding volume hierarchy.
     virtual void computeBoundingTree(int maxDepth=0) = 0;
@@ -226,9 +241,14 @@ public:
     ///
     /// Default to false if the collision models are attached to the same
     /// context (i.e. the same node in the scenegraph).
-    virtual bool canCollideWith(CollisionModel* model) { 
-      if (model == this) return bSelfCollision.getValue();
-      return model->getContext() != this->getContext(); } // (B. ANDRE : Why not remplace by "true" to avoid self-collisions ?)
+    virtual bool canCollideWith(CollisionModel* model)
+    {
+	if (model != this && this->group.getValue() != 0 && this->group.getValue() == model->group.getValue())
+	    return false;
+        else if (model->getContext() != this->getContext())
+            return true;
+        else return bSelfCollision.getValue();
+    }
     //virtual bool canCollideWith(CollisionModel* model) { return model != this; }
 
     /// \brief Test if two elements can collide with each other.
@@ -236,12 +256,16 @@ public:
     /// This method should be implemented by models supporting
     /// self-collisions to prune tests between adjacent elements.
     ///
-    /// Default to canCollideWith(model2)
-    virtual bool canCollideWithElement(int /*index*/, CollisionModel* model2, int /*index2*/) { return canCollideWith(model2); }
+    /// Default to true. Note that this method assumes that canCollideWith(model2)
+    /// was already used to test if the collision models can collide.
+    virtual bool canCollideWithElement(int /*index*/, CollisionModel* /*model2*/, int /*index2*/) { return true; }
 
     
     /// Render an collision element.
     virtual void draw(int /*index*/) {}
+    
+    /// Render the whole collision model.
+    virtual void draw() {}
 
     /// Return the first (i.e. root) CollisionModel in the hierarchy.
     CollisionModel* getFirst()
@@ -264,48 +288,82 @@ public:
     }
 
 
+    /// Helper method to get or create the previous model in the hierarchy.
+    template<class DerivedModel>
+	DerivedModel* createPrevious()
+    {
+      DerivedModel* pmodel = dynamic_cast<DerivedModel*>(previous);
+      if (pmodel == NULL)
+      {
+	if (previous != NULL)
+	  delete previous;
+	pmodel = new DerivedModel();
+	pmodel->setContext(getContext());
+	pmodel->setMoving(isMoving());
+	pmodel->setSimulated(isSimulated());
+	pmodel->proximity.setValue(proximity.getValue());
+	pmodel->group.setValue(group.getValue());
+	previous = pmodel;
+	pmodel->setNext(this);
+      }
+      return pmodel;
+    }
+    
     /// @name Experimental methods
     /// @{
 
-    /// Distance to the actual (visual) surface
+    /// Get distance to the actual (visual) surface
     double getProximity() { return proximity.getValue(); }
 
-    /// Contact stiffness
+    /// Get contact stiffness
     double getContactStiffness(int /*index*/) { return contactStiffness.getValue(); }
+    /// Set contact stiffness
 	void setContactStiffness(double stiffness) { contactStiffness.setValue(stiffness); }
 
-    /// Contact friction (damping) coefficient
+    /// Get contact friction (damping) coefficient
     double getContactFriction(int /*index*/) { return contactFriction.getValue(); }
+    /// Set contact friction (damping) coefficient
 	void setContactFriction(double friction) { contactFriction.setValue(friction); }
     
     /// Contact response algorithm
     std::string getContactResponse() { return contactResponse.getValue(); }
     
     /// @}
+    
+    /// Topology associated to the collision model
+    virtual Topology* getTopology() { return getContext()->getMeshTopology(); }
+
+	/// BaseMeshTopology associated to the collision model
+	virtual sofa::core::componentmodel::topology::BaseMeshTopology* getMeshTopology() { return getContext()->getMeshTopology(); }
 
     /// Get a color that can be used to display this CollisionModel
     const float* getColor4f();
+    /// Set a color that can be used to display this CollisionModel
     void setColor4f(const float *c){color.setValue(defaulttype::Vec4f(c[0],c[1],c[2],c[3]));};
 protected:
-
+    /// flag indicating if this collision model is active and should be included in default
+    /// collision detections
     Data<bool> bActive;
-
+    ///flag indicating if this object is changing position between iterations
     Data<bool> bMoving;
-
+    /// flag indicating if this object is controlled by a simulation
     Data<bool> bSimulated;
-    
+    /// flag indication if the object can self collide
     Data<bool> bSelfCollision;
-
+    /// Distance to the actual (visual) surface
     Data<double> proximity;
-
+    /// Default contact stiffness
     Data<double> contactStiffness;
-
+    /// Default contact friction (damping) coefficient
     Data<double> contactFriction;
-    
+    /// contactResponse", "if set, indicate to the ContactManager that this model should use the
+    /// given class of contacts.\nNote that this is only indicative, and in particular if both
+    /// collision models specify a different class it is up to the manager to choose.
     Data<std::string> contactResponse;
-
-    Data<bool> bFiltered;
-
+    /// If not zero, ID of a group containing this model. No collision can occur between collision
+    /// models of the same group (allowing the same object to have multiple collision models
+    Data<int> group;
+    /// color used to display the collision model if requested
     Data<defaulttype::Vec4f> color;
 
     /// Number of collision elements
@@ -317,25 +375,9 @@ protected:
     /// Pointer to the next (finer / lower / child level) CollisionModel in the hierarchy.
     CollisionModel* next;
 
-    /// Helper method to get or create the previous model in the hierarchy.
-    template<class DerivedModel>
-    DerivedModel* createPrevious()
-    {
-        DerivedModel* pmodel = dynamic_cast<DerivedModel*>(previous);
-        if (pmodel == NULL)
-        {
-            if (previous != NULL)
-                delete previous;
-            pmodel = new DerivedModel();
-            pmodel->setContext(getContext());
-            pmodel->setMoving(isMoving());
-            pmodel->setSimulated(isSimulated());
-            pmodel->proximity.setValue(proximity.getValue());
-            previous = pmodel;
-            pmodel->setNext(this);
-        }
-        return pmodel;
-    }
+	/// number of contacts attached to the collision model
+	int numberOfContacts;
+
 };
 
 } // namespace core

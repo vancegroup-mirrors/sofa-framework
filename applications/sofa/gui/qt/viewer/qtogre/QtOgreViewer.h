@@ -1,3 +1,29 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef __sofaOgreWidget_H__
 #define __sofaOgreWidget_H__
 
@@ -11,11 +37,9 @@
 #include <sofa/helper/system/SetDirectory.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/simulation/automatescheduler/Node.h>
-#include <sofa/simulation/automatescheduler/ExecBus.h>
-#include <sofa/simulation/automatescheduler/Automate.h>
 
-#ifdef QT_MODULE_QT3SUPPORT
+
+#ifdef SOFA_QT4
 #include <QPaintEvent>
 #include <QWidget>
 #else
@@ -28,7 +52,6 @@
 
 using namespace sofa::helper::system::thread;
 using namespace sofa::simulation::tree;
-using namespace sofa::simulation::automatescheduler;
 
 #if defined(SOFA_GPU_CUDA)
 #include <sofa/gpu/cuda/mycuda.h>
@@ -60,7 +83,7 @@ namespace sofa
 	namespace qtogre
 	{
 
-	  class QtOgreViewer : public QWidget, public sofa::gui::qt::viewer::SofaViewer//public Automate::DrawCB
+	  class QtOgreViewer : public QWidget, public sofa::gui::qt::viewer::SofaViewer
 	    {
 	      Q_OBJECT
 		public:
@@ -95,10 +118,6 @@ namespace sofa
 						    virtual void update(void);*/
 	      void showEntireScene(void);
 
-
-	      // Display scene from the automate
-	      void drawFromAutomate(void);
-	      static void	automateDisplayVM(void);
 
 	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename, bool keepParams=false);
 
@@ -187,11 +206,14 @@ namespace sofa
 	      QPoint m_mousePressPos;
 	      QPoint m_mousePos;
 	      bool m_background;
+	      bool pickDone;
+
 	      Ogre::Vector3 m_mTranslateVector;
 	      Ogre::Radian m_mRotX, m_mRotY;
 	      Ogre::Real m_mMoveSpeed;
 	      Ogre::Degree m_mRotateSpeed;
-
+	      Ogre::SceneNode* zeroNode;
+	      Ogre::SceneNode*  camNode;
 	      bool _waitForRender;
 
 	      //Initial Bounding Box
@@ -228,7 +250,6 @@ namespace sofa
 
 		mCamera->yaw(m_mRotX);
 		mCamera->pitch(m_mRotY);
-		mCamera->moveRelative(m_mTranslateVector);
 
 		//Reset to zero
 		m_mRotX = m_mRotY = Ogre::Degree(0);
@@ -239,7 +260,6 @@ namespace sofa
 	      public slots:	      
 	      virtual void resetView();
 	      virtual void saveView();  
-	      virtual void screenshot(const std::string filename); 
 	      virtual void setSizeW(int); 
 	      virtual void setSizeH(int);
 

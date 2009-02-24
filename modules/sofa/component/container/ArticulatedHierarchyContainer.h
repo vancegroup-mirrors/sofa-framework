@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONTAINER_ARTICULATEDHIERARCHYCONTAINER_H
 #define SOFA_COMPONENT_CONTAINER_ARTICULATEDHIERARCHYCONTAINER_H
 
@@ -146,8 +146,23 @@ public:
 	*	It stores the local position of the center articulation in relation to the global position of the childDOF
 	*/
 	Data<Vector3> posOnChild;
+	/**
+	*	It tells if the articulations of the articulation center are processed one by one or globally:
+	*   0 - (default         ) articulation are treated one by one, the axis of the second articulation is updated by the potential rotation of the first articulation
+							   potential problems could arise when rotation exceed 90° (known problem of euler angles)
+	*   1 - (Attach on Parent) the axis of the articulations are linked to the parent - rotations are treated by successive increases -
+	*   2 - (Attach on Child ) the axis of the articulations are linked to the child (estimate position from the previous time step) - rotations are treated by successive increases -
+	*/
+	Data<int> articulationProcess;
 
+	
 	vector<Articulation*> articulations;
+	
+	Vector3 posOnChildGlobal(Quat localToGlobal)
+	{
+		Vector3 result = localToGlobal.rotate(posOnChild.getValue());
+		return result;
+	}
 
 	Vector3 initTranslateChild(Quat objectRotation)
 	{
@@ -164,17 +179,39 @@ public:
 		return AP2 - AP1;
 	}
 
+	Vector3 correctPosChild(Vector3 object1Pos, Quat object1Rot, Vector3 object2Pos, Quat object2Rot)
+	{
+		Vector3 result;
+		Vector3 PAParent = posOnParent.getValue() - Vector3(0,0,0);
+		Vector3 PAChild = posOnChild.getValue() - Vector3(0,0,0);
+		Vector3 A1 = object1Pos + object1Rot.rotate(PAParent);
+		Vector3 A2 = object2Pos + object2Rot.rotate(PAChild);
+		
+		result = A1 - A2;
+
+		return result;
+
+	}
+
 	vector<Articulation*> getArticulations();
-};
+	
+	Quat OrientationArticulationCenter;
+	Vector3 DisplacementArticulationCenter;
+	Vector3 Disp_Rotation;
+	
+	
+}; // end ArticulationCenter
 
 	ArticulatedHierarchyContainer();
 
 	~ArticulatedHierarchyContainer(){}
 
-	void parse (sofa::core::objectmodel::BaseObjectDescription* arg);
+	
 
 	void init();
 
+	void setFilename(std::string f){filename.setValue(f);}
+	
 	vector<ArticulationCenter*> getArticulationCenters();
 	ArticulationCenter* getArticulationCenterAsChild(int index);
 	vector<ArticulationCenter*> getAcendantList(int index);
@@ -186,8 +223,11 @@ public:
 	int numOfFrames;
 	double dtbvh;
 
+  protected:
+    Data<std::string> filename;
 private:
 
+	
 	unsigned int id;
 	sofa::helper::io::bvh::BVHJoint* joint;
 	void buildCenterArticulationsTree(sofa::helper::io::bvh::BVHJoint*, int id_buf, const char* name, simulation::tree::GNode* node);

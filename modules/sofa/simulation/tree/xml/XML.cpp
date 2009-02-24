@@ -1,36 +1,35 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <string>
 #include <typeinfo>
 #include <stdlib.h>
-#include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <sofa/simulation/tree/xml/XML.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
-
+#include <string.h>
 /* For loading the scene */
 
 
@@ -85,6 +84,8 @@ BaseElement* includeNode  (xmlNodePtr root,const char *basefilename);
 BaseElement* attributeNode(xmlNodePtr root,const char *basefilename);
 
 
+int numDefault=0;
+
 BaseElement* createNode(xmlNodePtr root, const char *basefilename, bool isRoot = false)
 {
 	//if (!xmlStrcmp(root->name,(const xmlChar*)"text")) return NULL;
@@ -110,12 +111,10 @@ BaseElement* createNode(xmlNodePtr root, const char *basefilename, bool isRoot =
 	else
 	{
 		name = "default";
-		static int num = 0;
+// 		static int num = 0;
 		char buf[16];
-		// added by Sylvere F.
-		sprintf(buf, "%d", num);
-		// snprintf(buf,sizeof(buf),"%d",num);
-		++num;
+		sprintf(buf, "%d", numDefault);
+		++numDefault;
 		name += buf;
 	}
 	if (ptype != NULL)
@@ -155,13 +154,22 @@ BaseElement* createNode(xmlNodePtr root, const char *basefilename, bool isRoot =
 	{
 		BaseElement* childnode = createNode(child, basefilename);
 		if (childnode != NULL)
-		{
+		{ 
+                    //  if the current node is an included node, with the special name Group, we only add the objects.
+                    if (childnode->isGroupType())
+                    {
+                     BaseElement::child_iterator<> it(childnode->begin());
+                     for(;it!=childnode->end();++it) {node->addChild(it); childnode->removeChild(it);}                     
+                    }
+                    else
+                    {                                                               
 			if (!node->addChild(childnode))
 			{
 				std::cerr << "Node "<<childnode->getClass()<<" name "<<childnode->getName()<<" type "<<childnode->getType()
 					<<" cannot be a child of node "<<node->getClass()<<" name "<<node->getName()<<" type "<<node->getType()<<std::endl;
 				delete childnode;
 			}
+                    }                     
 		}
 	}
 	return node;
@@ -183,24 +191,13 @@ static void dumpNode(BaseElement* node, std::string prefix0="==", std::string pr
 	}
 }
 
-BaseElement* load(const char *filename)
+BaseElement* processXMLLoading(const char *filename, const xmlDocPtr &doc)
 {
-     //
-     // this initialize the library and check potential ABI mismatches
-     // between the version it was compiled for and the actual shared
-     // library used.
-     //
-    LIBXML_TEST_VERSION
-
-	xmlDocPtr doc; // the resulting document tree 
 	xmlNodePtr root;
-
-    xmlSubstituteEntitiesDefault(1);
-
-    doc = xmlParseFile(filename);
-    if (doc == NULL) {
-		std::cerr << "Failed to open " << filename << std::endl;
-		return NULL;
+	
+	if (doc == NULL) {
+			std::cerr << "Failed to open " << filename << std::endl;
+			return NULL;
     }
 	
 	root = xmlDocGetRootElement(doc);
@@ -230,6 +227,43 @@ BaseElement* load(const char *filename)
         //dumpNode(graph);
 
 	return graph;
+}
+
+BaseElement* loadFromMemory(const char *filename, const char *data, unsigned int size )
+{
+    //
+    // this initialize the library and check potential ABI mismatches
+    // between the version it was compiled for and the actual shared
+    // library used.
+    //
+   LIBXML_TEST_VERSION
+   
+	xmlDocPtr doc; // the resulting document tree 
+	
+   xmlSubstituteEntitiesDefault(1);
+   
+   doc = xmlParseMemory(data,size);
+   
+   return processXMLLoading(filename, doc);
+}
+
+BaseElement* loadFromFile(const char *filename)
+{
+     //
+     // this initialize the library and check potential ABI mismatches
+     // between the version it was compiled for and the actual shared
+     // library used.
+     //
+    LIBXML_TEST_VERSION
+
+	xmlDocPtr doc; // the resulting document tree 
+
+    xmlSubstituteEntitiesDefault(1);
+
+    doc = xmlParseFile(filename);
+    
+    return processXMLLoading(filename, doc);
+    
 }
 
 
@@ -266,21 +300,26 @@ BaseElement* includeNode(xmlNodePtr root,const char *basefilename)
   }
   BaseElement* result = createNode(newroot, filename.c_str(), true);
   if (result)
-  {
+  {    
+    
+    if (result->getName() == "Group") result->setGroupType(true);   
 			// Copy attributes
     for (xmlAttrPtr attr = root->properties; attr!=NULL; attr = attr->next)
     {
       if (attr->children==NULL) continue;
       if (!xmlStrcmp(attr->name,(const xmlChar*)"href")) continue;
       if (!xmlStrcmp(attr->name,(const xmlChar*)"name"))
-      {
-					// only set the name of the root node
-	result->setName((const char*)attr->children->content);
+      { 
+        if(!xmlStrcmp(attr->children->content,(const xmlChar*)"Group")) result->setGroupType(true);
+        else  result->setGroupType(false);
+        
+        if (!result->isGroupType()) result->setName((const char*)attr->children->content);   
       }
       else
-      {
+      {    
 	const char* attrname = (const char*)attr->name;
-	const char* value = (const char*)attr->children->content;
+ 
+   	const char* value = (const char*)attr->children->content;
 	if (const char* sep = strstr(attrname,"__"))
 	{ // replace attribute in nodes with a given name
 	  std::string nodename(attrname, sep);

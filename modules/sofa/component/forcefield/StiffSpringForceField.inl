@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 // Author: François Faure, INRIA-UJF, (C) 2006
 //
 // Copyright: See COPYING file that comes with this distribution
@@ -72,12 +96,13 @@ namespace sofa
             }
 
             template<class DataTypes>
-            void StiffSpringForceField<DataTypes>::addSpringDForce(VecDeriv& f1, const VecDeriv& dx1, VecDeriv& f2, const VecDeriv& dx2, int i, const Spring& spring)
+            void StiffSpringForceField<DataTypes>::addSpringDForce(VecDeriv& f1, const VecDeriv& dx1, VecDeriv& f2, const VecDeriv& dx2, int i, const Spring& spring, double kFactor, double /*bFactor*/)
             {
                 const int a = spring.m1;
                 const int b = spring.m2;
                 const Coord d = dx2[b]-dx1[a];
-                const Deriv dforce = this->dfdx[i]*d;
+                Deriv dforce = this->dfdx[i]*d;
+		dforce *= kFactor;
                 f1[a]+=dforce;
                 f2[b]-=dforce;
                 //cerr<<"StiffSpringForceField<DataTypes>::addSpringDForce, a="<<a<<", b="<<b<<", dforce ="<<dforce<<endl;
@@ -91,16 +116,16 @@ namespace sofa
                 f1.resize(x1.size());
                 f2.resize(x2.size());
                 m_potentialEnergy = 0;
-                /*        cerr<<"StiffSpringForceField<DataTypes>::addForce()"<<endl;*/
+                        //cerr<<"StiffSpringForceField<DataTypes>::addForce()"<<endl;
                 for (unsigned int i=0; i<springs.size(); i++)
                 {
-                    /*            cerr<<"StiffSpringForceField<DataTypes>::addForce() between "<<springs[i].m1<<" and "<<springs[i].m2<<endl;*/
+                    //cerr<<"StiffSpringForceField<DataTypes>::addForce() between "<<springs[i].m1<<" and "<<springs[i].m2<<endl;
                     this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, i, springs[i]);
                 }
             }
 
             template<class DataTypes>
-            void StiffSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2)
+            void StiffSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2, double kFactor, double bFactor)
             {
                 df1.resize(dx1.size());
                 df2.resize(dx2.size());
@@ -109,7 +134,7 @@ namespace sofa
                 const helper::vector<Spring>& springs = this->springs.getValue();
                 for (unsigned int i=0; i<springs.size(); i++)
                 {
-                    this->addSpringDForce(df1,dx1,df2,dx2, i, springs[i]);
+                    this->addSpringDForce(df1,dx1,df2,dx2, i, springs[i], kFactor, bFactor);
                 }
                 //cerr<<"StiffSpringForceField<DataTypes>::addDForce, df1 = "<<f1<<endl;
                 //cerr<<"StiffSpringForceField<DataTypes>::addDForce, df2 = "<<f2<<endl;

@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/FrictionContact.inl>
 
 namespace sofa
@@ -22,21 +46,19 @@ Creator<Contact::Factory, FrictionContact<PointModel, PointModel> > PointPointFr
 Creator<Contact::Factory, FrictionContact<LineModel, SphereModel> > LineSphereFrictionContactClass("FrictionContact",true);
 Creator<Contact::Factory, FrictionContact<LineModel, PointModel> > LinePointFrictionContactClass("FrictionContact",true);
 Creator<Contact::Factory, FrictionContact<LineModel, LineModel> > LineLineFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleMeshModel, SphereModel> > TriangleMeshSphereFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleMeshModel, PointModel> > TriangleMeshPointFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleMeshModel, LineModel> > TriangleMeshLineFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleMeshModel, TriangleMeshModel> > TriangleMeshTriangleMeshFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleMeshModel, TriangleSetModel> > TriangleMeshTriangleSetFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleSetModel, SphereModel> > TriangleSetSphereFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleSetModel, PointModel> > TriangleSetPointFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleSetModel, LineModel> > TriangleSetLineFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleSetModel, TriangleMeshModel> > TriangleSetTriangleMeshFrictionContactClass("FrictionContact",true);
-Creator<Contact::Factory, FrictionContact<TriangleSetModel, TriangleSetModel> > TriangleSetTriangleSetFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TriangleModel, SphereModel> > TriangleSphereFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TriangleModel, PointModel> > TrianglePointFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TriangleModel, LineModel> > TriangleLineFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TriangleModel, TriangleModel> > TriangleTriangleFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TetrahedronModel, SphereModel> > TetrahedronSphereFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TetrahedronModel, PointModel> > TetrahedronPointFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TetrahedronModel, LineModel> > TetrahedronLineFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TetrahedronModel, TriangleModel> > TetrahedronTriangleFrictionContactClass("FrictionContact",true);
+Creator<Contact::Factory, FrictionContact<TetrahedronModel, TetrahedronModel> > TetrahedronTetrahedronFrictionContactClass("FrictionContact",true);
 Creator<Contact::Factory, FrictionContact<SphereModel, SphereModel> > SphereSphereFrictionContactClass("FrictionContact",true);
 Creator<Contact::Factory, FrictionContact<SphereModel, PointModel> > SpherePointFrictionContactClass("FrictionContact",true);
 Creator<Contact::Factory, FrictionContact<SphereTreeModel, SphereTreeModel> > SphereTreeSphereTreeFrictionContactClass("FrictionContact", true);
-Creator<Contact::Factory, FrictionContact<SphereTreeModel, TriangleSetModel> > SphereTreeTriangleSetFrictionContactClass("FrictionContact", true);
-Creator<Contact::Factory, FrictionContact<SphereTreeModel, TriangleMeshModel> > SphereTreeTriangleMeshFrictionContactClass("FrictionContact", true);
+Creator<Contact::Factory, FrictionContact<SphereTreeModel, TriangleModel> > SphereTreeTriangleFrictionContactClass("FrictionContact", true);
 
 
 } // namespace collision

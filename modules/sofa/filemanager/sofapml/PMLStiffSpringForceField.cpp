@@ -1,12 +1,27 @@
-/***************************************************************************
-								PMLStiffSpringForceField
-                             -------------------
-    begin             : September 11th, 2006
-    copyright         : (C) 2006 TIMC-INRIA (Michael Adam)
-    author            : Michael Adam
-    Date              : $Date: 2006/09/11 16:11:44 $
-    Version           : $Revision: 0.1 $
- ***************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 /***************************************************************************
  *                                                                         *
@@ -74,8 +89,8 @@ PMLStiffSpringForceField::~PMLStiffSpringForceField()
 	if(mmodel) delete mmodel; 
 	if(Sforcefield) delete Sforcefield;
 	if(tmodel) delete tmodel; 
-	if(pmodel) delete pmodel; 
-	if(lmodel) delete lmodel; 
+	//if(pmodel) delete pmodel; 
+	//if(lmodel) delete lmodel; 
 }
 
 //read the mass parameter
@@ -86,7 +101,7 @@ void PMLStiffSpringForceField::initMass(string m)
 		pos = m.find(' ', 0);
 		if(pos != 0) {
 			string s=m.substr(0,pos);
-			double d=atof(s.c_str());
+			SReal d=atof(s.c_str());
 			massList.push_back(d);
 			m.erase(0,pos);
 		}else
@@ -101,7 +116,7 @@ void PMLStiffSpringForceField::initDensity(string m)
 		pos = m.find(' ', 0);
 		if(pos != 0) {
 			string s=m.substr(0,pos);
-			double d=atof(s.c_str());
+			SReal d=atof(s.c_str());
 			density.push_back(d);
 			m.erase(0,pos);
 		}else
@@ -112,9 +127,9 @@ void PMLStiffSpringForceField::initDensity(string m)
 
 // extract hexahedron edges to a list of lines
 // used by createTopology method
-MeshTopology::Line * PMLStiffSpringForceField::hexaToLines(Cell* pCell)
+BaseMeshTopology::Line * PMLStiffSpringForceField::hexaToLines(Cell* pCell)
 {
-   MeshTopology::Line *lines = new MeshTopology::Line[16];
+   BaseMeshTopology::Line *lines = new BaseMeshTopology::Line[16];
    Atom *pAtom;
    int index[8];
 
@@ -145,9 +160,9 @@ MeshTopology::Line * PMLStiffSpringForceField::hexaToLines(Cell* pCell)
 
 // extract tetrahedron edges to a list of lines
 // used by createTopology method
-MeshTopology::Line * PMLStiffSpringForceField::tetraToLines(Cell* pCell)
+BaseMeshTopology::Line * PMLStiffSpringForceField::tetraToLines(Cell* pCell)
 {
-   MeshTopology::Line *lines = new MeshTopology::Line[6];
+   BaseMeshTopology::Line *lines = new BaseMeshTopology::Line[6];
    Atom *pAtom;
    int index[8];
 
@@ -169,9 +184,9 @@ MeshTopology::Line * PMLStiffSpringForceField::tetraToLines(Cell* pCell)
 
 // extract triangle edges to a list of lines
 // used by createTopology method
-MeshTopology::Line * PMLStiffSpringForceField::triangleToLines(Cell* pCell)
+BaseMeshTopology::Line * PMLStiffSpringForceField::triangleToLines(Cell* pCell)
 {
-   MeshTopology::Line *lines = new MeshTopology::Line[3];
+   BaseMeshTopology::Line *lines = new BaseMeshTopology::Line[3];
    Atom *pAtom;
    int index[3];
 
@@ -192,9 +207,9 @@ MeshTopology::Line * PMLStiffSpringForceField::triangleToLines(Cell* pCell)
 
 // extract quad edges to a list of lines
 // used by createTopology method
-MeshTopology::Line * PMLStiffSpringForceField::quadToLines(Cell* pCell)
+BaseMeshTopology::Line * PMLStiffSpringForceField::quadToLines(Cell* pCell)
 {
-  MeshTopology::Line *lines = new MeshTopology::Line[4];
+  BaseMeshTopology::Line *lines = new BaseMeshTopology::Line[4];
    Atom *pAtom;
    int index[4];
 
@@ -212,26 +227,26 @@ MeshTopology::Line * PMLStiffSpringForceField::quadToLines(Cell* pCell)
 
 
 
-Vec3d PMLStiffSpringForceField::getDOF(unsigned int index)
+Vector3 PMLStiffSpringForceField::getDOF(unsigned int index)
 {
-	return (*((MechanicalState<Vec3dTypes>*)mmodel)->getX())[index];
+	return (*((MechanicalState<Vec3Types>*)mmodel)->getX())[index];
 }
 
 //creation of the mechanical model
 //each pml atom constituing the body correspond to a DOF
 void PMLStiffSpringForceField::createMechanicalState(StructuralComponent* body)
 {
-	mmodel = new MechanicalObject<Vec3dTypes>;
+	mmodel = new MechanicalObject<Vec3Types>;
 	StructuralComponent* atoms = body->getAtoms();
 	mmodel->resize(atoms->getNumberOfStructures());
 	Atom* pAtom;
 
-	double pos[3];
+	SReal pos[3];
 	for (unsigned int i(0) ; i<atoms->getNumberOfStructures() ; i++) {
 		pAtom = (Atom*) (atoms->getStructure(i));
 		pAtom->getPosition(pos);
 		AtomsToDOFsIndexes.insert(std::pair <unsigned int, unsigned int>(pAtom->getIndex(),i));
-		(*((MechanicalState<Vec3dTypes>*)mmodel)->getX())[i] = Vec3d(pos[0],pos[1],pos[2]);
+		(*((MechanicalState<Vec3Types>*)mmodel)->getX())[i] = Vector3(pos[0],pos[1],pos[2]);
 	}
 
 	parentNode->addObject(mmodel);
@@ -245,11 +260,11 @@ void PMLStiffSpringForceField::createMechanicalState(StructuralComponent* body)
 void PMLStiffSpringForceField::createTopology(StructuralComponent* body)
 {
 	topology = new MeshTopology();
-	((MeshTopology*)topology)->clear();
+	((BaseMeshTopology*)topology)->clear();
 
 	unsigned int p, nbCells = body->getNumberOfCells();
-	MeshTopology::Line * lines;
-	MeshTopology::Quad * quad;
+	BaseMeshTopology::Line * lines;
+	BaseMeshTopology::Quad * quad;
 	Cell * pCell;
 
 	//for each pml cell, build 1 or 5 tetrahedrons
@@ -260,32 +275,32 @@ void PMLStiffSpringForceField::createTopology(StructuralComponent* body)
 			case StructureProperties::HEXAHEDRON :
 				lines = hexaToLines(pCell);
 				for (p=0 ; p<16 ; p++) 
-					((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).push_back(lines[p]);
+					((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(lines[p]);
 				break;
 			case StructureProperties::TETRAHEDRON :
 				lines = hexaToLines(pCell);
 				for (p=0 ; p<6 ; p++) 
-					((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).push_back(lines[p]);
+					((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(lines[p]);
 				break;
 			case StructureProperties::TRIANGLE :
 				lines = triangleToLines(pCell);
 				for (p=0 ; p<3 ; p++)
-					((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).push_back(lines[p]);
+					((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(lines[p]);
 				break;
 			case StructureProperties::QUAD :
 				lines = quadToLines(pCell);
 				for (p=0 ; p<4 ; p++)
-					((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).push_back(lines[p]);
-				quad = new MeshTopology::Quad;
+					((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(lines[p]);
+				quad = new BaseMeshTopology::Quad;
 				for (p=0 ; p<4 ; p++)
 					(*quad)[p] = AtomsToDOFsIndexes[pCell->getStructure(p)->getIndex()];
-				((MeshTopology::SeqQuads&)((MeshTopology*)topology)->getQuads()).push_back(*quad);
+				((BaseMeshTopology::SeqQuads&)((BaseMeshTopology*)topology)->getQuads()).push_back(*quad);
 				break;
 			case StructureProperties::LINE :
-				lines = new MeshTopology::Line;
+				lines = new BaseMeshTopology::Line;
 				(*lines)[0] = AtomsToDOFsIndexes[pCell->getStructure(0)->getIndex()];
 				(*lines)[1] = AtomsToDOFsIndexes[pCell->getStructure(1)->getIndex()];
-				((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).push_back(*lines);
+				((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(*lines);
 				break;
 			
 			default : break;
@@ -293,19 +308,19 @@ void PMLStiffSpringForceField::createTopology(StructuralComponent* body)
 	}
 
 	//ELIMINATE DOUBLONS
-	std::vector<MeshTopology::Line>::iterator it1 = ((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).begin();
-	std::vector<MeshTopology::Line>::iterator it2, tmp;
+	std::vector<BaseMeshTopology::Line>::iterator it1 = ((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).begin();
+	std::vector<BaseMeshTopology::Line>::iterator it2, tmp;
 
-	while(it1 != ((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).end() )
+	while(it1 != ((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).end() )
 	{
 		it2=it1;
 		it2++;
-		while(it2 != ((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).end() )
+		while(it2 != ((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).end() )
 		{
 			if ( ((*it1)[0] == (*it2)[0] && (*it1)[1] == (*it2)[1]) || ((*it1)[0] == (*it2)[1] && (*it1)[1] == (*it2)[0]) ) {
 				tmp = it2;
 				tmp--;
-				((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).erase(it2);
+				((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).erase(it2);
 				it2=tmp;
 			}
 			
@@ -327,34 +342,34 @@ void PMLStiffSpringForceField::createMass(StructuralComponent* body)
 		//...normally density is!
 		if (density.size() != 0) {
 			//BUILDING WITH DENSITY PROPERTY
-			if (density.size() > 1 && density.size() != ((MechanicalState<Vec3dTypes>*)mmodel)->getX()->size()) {
+			if (density.size() > 1 && density.size() != ((MechanicalState<Vec3Types>*)mmodel)->getX()->size()) {
 				cerr<<"WARNING building "<<name<<" object : density property not properly defined."<<endl;
 				return;
 			}
 			else {
 				//init the mass list
-				for (unsigned int i=0 ; i<((MechanicalState<Vec3dTypes>*)mmodel)->getX()->size() ; i++)
+				for (unsigned int i=0 ; i<((MechanicalState<Vec3Types>*)mmodel)->getX()->size() ; i++)
 					massList.push_back(0.0);
 
-				double m;
+				SReal m;
 				Cell * pCell;
 				Atom * pAtom;
 
 				//for each atom of each cell...
 				for (unsigned int cid(0) ; cid<body->getNumberOfCells(); cid++) {
 					pCell = body->getCell(cid);
-					double volumeCell = pCell->volume();
+					SReal volumeCell = pCell->volume();
 					for (unsigned int j(0) ; j< pCell->getNumberOfStructures() ; j++) {
 						pAtom = (Atom*)(pCell->getStructure(j));
-						double dens = density.size()>1?density[AtomsToDOFsIndexes[pAtom->getIndex()]]:density[0];
+						SReal dens = density.size()>1?density[AtomsToDOFsIndexes[pAtom->getIndex()]]:density[0];
 						//mass of atom += atom density * cell volume / nb atoms in cell
 						m = dens * volumeCell / pCell->getNumberOfStructures();
 						massList[AtomsToDOFsIndexes[pAtom->getIndex()]] += m;
 					}
 				}
-				mass = new DiagonalMass<Vec3dTypes,double>;
+				mass = new DiagonalMass<Vec3Types,SReal>;
 				for (unsigned int im=0 ; im<massList.size() ; im++) {
-					((DiagonalMass<Vec3dTypes,double>*)mass)->addMass( massList[im] );
+					((DiagonalMass<Vec3Types,SReal>*)mass)->addMass( massList[im] );
 				}
 			}
 		}
@@ -362,15 +377,15 @@ void PMLStiffSpringForceField::createMass(StructuralComponent* body)
 	else {
 		//if there is 1 value --> uniform mass for all the model
 		if (massList.size() == 1){
-			mass = new UniformMass<Vec3dTypes,double>;
-			((UniformMass<Vec3dTypes,double>*)mass)->setMass( massList[0] );
+			mass = new UniformMass<Vec3Types,SReal>;
+			((UniformMass<Vec3Types,SReal>*)mass)->setMass( massList[0] );
 		}
 		else {
 			//if there nbDofs values --> diagonal mass (one value for each dof)
-			if (massList.size() == ((MechanicalState<Vec3dTypes>*)mmodel)->getX()->size()) {
-				mass = new DiagonalMass<Vec3dTypes,double>;
+			if (massList.size() == ((MechanicalState<Vec3Types>*)mmodel)->getX()->size()) {
+				mass = new DiagonalMass<Vec3Types,SReal>;
 				for (unsigned int i=0 ; i<massList.size() ; i++) {
-					((DiagonalMass<Vec3dTypes,double>*)mass)->addMass( massList[i] );
+					((DiagonalMass<Vec3Types,SReal>*)mass)->addMass( massList[i] );
 				}
 			}
 			else 	//else we don't build mass...
@@ -393,8 +408,8 @@ void PMLStiffSpringForceField::createVisualModel(StructuralComponent* body)
 
 	Cell * pCell;
 	Atom * pAtom;
-	MeshTopology::Quad * quad;
-	MeshTopology::Triangle * triangle;
+	BaseMeshTopology::Quad * quad;
+	BaseMeshTopology::Triangle * triangle;
 
 	for (unsigned int i=0 ; i< extFacets->getNumberOfStructures() ; i++)
 	{
@@ -402,21 +417,21 @@ void PMLStiffSpringForceField::createVisualModel(StructuralComponent* body)
 		switch(pCell->getProperties()->getType())
 		{
 			case StructureProperties::QUAD :
-				quad = new MeshTopology::Quad;
+				quad = new BaseMeshTopology::Quad;
 				for (unsigned int j(0) ; j<4 ; j++) {
 					pAtom = (Atom*)(pCell->getStructure(j));
 					(*quad)[j] = AtomsToDOFsIndexes[pAtom->getIndex()];
 				}
-				((MeshTopology::SeqQuads&)((MeshTopology*)topology)->getQuads()).push_back(*quad);
+				((BaseMeshTopology::SeqQuads&)((BaseMeshTopology*)topology)->getQuads()).push_back(*quad);
 				break;
 
 			case StructureProperties::TRIANGLE :
-				triangle = new MeshTopology::Triangle;
+				triangle = new BaseMeshTopology::Triangle;
 				for (unsigned int j(0) ; j<3 ; j++) {
 					pAtom = (Atom*)(pCell->getStructure(j));
 					(*triangle)[j] = AtomsToDOFsIndexes[pAtom->getIndex()];
 				}
-				((MeshTopology::SeqTriangles&)((MeshTopology*)topology)->getTriangles()).push_back(*triangle);
+				((BaseMeshTopology::SeqTriangles&)((BaseMeshTopology*)topology)->getTriangles()).push_back(*triangle);
 				break;			
 				
 				default : break;
@@ -429,7 +444,7 @@ void PMLStiffSpringForceField::createVisualModel(StructuralComponent* body)
 	double * color = body->getColor();
 	vmodel->setColor((float)color[0], (float)color[1], (float)color[2], (float)color[3]);
 	vmodel->load("","","");
-	BaseMapping * mapping = new IdentityMapping< Mapping< State<Vec3dTypes>, MappedModel< ExtVectorTypes< Vec<3,GLfloat>, Vec<3,GLfloat> > > > >((MechanicalState<Vec3dTypes>*)mmodel, vmodel);
+	BaseMapping * mapping = new IdentityMapping< Mapping< State<Vec3Types>, MappedModel< ExtVectorTypes< Vec<3,GLfloat>, Vec<3,GLfloat> > > > >((MechanicalState<Vec3Types>*)mmodel, vmodel);
 	parentNode->addObject(mapping);
 	parentNode->addObject(vmodel);
 
@@ -439,7 +454,7 @@ void PMLStiffSpringForceField::createVisualModel(StructuralComponent* body)
 //create a TetrahedronFEMForceField
 void PMLStiffSpringForceField::createForceField()
 {
-	Sforcefield = new MeshSpringForceField<Vec3dTypes>;
+	Sforcefield = new MeshSpringForceField<Vec3Types>;
 	if (kd==0.0)kd=5.0;
 	if (ks==0.0)ks=500.0;
 	Sforcefield->setLinesDamping(kd);
@@ -452,16 +467,16 @@ void PMLStiffSpringForceField::createCollisionModel()
 {
 	if (collisionsON) {
 		tmodel = new TriangleModel;
-		lmodel = new LineModel;
-		pmodel = new PointModel;
+		//lmodel = new LineModel;
+		//pmodel = new PointModel;
 	
 		parentNode->addObject( tmodel);
-		parentNode->addObject( lmodel );
-		parentNode->addObject( pmodel );
+		//parentNode->addObject( lmodel );
+		//parentNode->addObject( pmodel );
 
 		tmodel->init();
-		lmodel->init();
-		pmodel->init();
+		//lmodel->init();
+		//pmodel->init();
 	}
 }
 
@@ -474,16 +489,16 @@ bool PMLStiffSpringForceField::FusionBody(PMLBody* body)
 	//-----  Fusion Mechanical Model
 	map<unsigned int, unsigned int>::iterator it = femBody->AtomsToDOFsIndexes.begin();
 	map<unsigned int, unsigned int>::iterator itt;
-	unsigned int X1size = ((MechanicalState<Vec3dTypes>*)mmodel)->getX()->size();
+	unsigned int X1size = ((MechanicalState<Vec3Types>*)mmodel)->getX()->size();
 	while (it !=  femBody->AtomsToDOFsIndexes.end()) 
 	{
 		//if femBody's index doesn't exist in current list, we insert it
 		if ( (itt = this->AtomsToDOFsIndexes.find( (*it).first)) == this->AtomsToDOFsIndexes.end() ){
-			int cpt = ((MechanicalState<Vec3dTypes>*)mmodel)->getX()->size();
+			int cpt = ((MechanicalState<Vec3Types>*)mmodel)->getX()->size();
 			mmodel->resize( cpt+1);
 			this->AtomsToDOFsIndexes.insert(std::pair<unsigned int, unsigned int>((*it).first, cpt ));
 			oldToNewIndex.insert(std::pair<unsigned int, unsigned int>((*it).second, cpt ));
-			(*((MechanicalState<Vec3dTypes>*)mmodel)->getX())[cpt] = (*((MechanicalState<Vec3dTypes>*)(femBody->getMechanicalState()))->getX())[(*it).second];
+			(*((MechanicalState<Vec3Types>*)mmodel)->getX())[cpt] = (*((MechanicalState<Vec3Types>*)(femBody->getMechanicalState()))->getX())[(*it).second];
 		}
 		else
 			oldToNewIndex.insert(std::pair<unsigned int, unsigned int>((*it).second, (*itt).second) );
@@ -492,61 +507,65 @@ bool PMLStiffSpringForceField::FusionBody(PMLBody* body)
 	}
 
 	//------   Fusion Topology
-	MeshTopology * femTopo = (MeshTopology * ) (femBody->getTopology());
+	BaseMeshTopology * femTopo = (BaseMeshTopology * ) (femBody->getTopology());
 
 	//fusion lines
 	for (int i=0 ; i < femTopo->getNbLines() ; i++)  {
-		MeshTopology::Line line = femTopo->getLine(i);
+		BaseMeshTopology::Line line = femTopo->getLine(i);
 		for (unsigned int j(0) ; j<2 ; j++) {
 			line[j] = oldToNewIndex[line[j] ];
 		}
-		((MeshTopology::SeqLines&)((MeshTopology*)topology)->getLines()).push_back(line);
+		((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(line);
 	}
 	//fusion triangles
 	for (int i=0 ; i < femTopo->getNbTriangles() ; i++)  {
-		MeshTopology::Triangle tri = femTopo->getTriangle(i);
+		BaseMeshTopology::Triangle tri = femTopo->getTriangle(i);
 		for (unsigned int j(0) ; j<3 ; j++) {
 			tri[j] = oldToNewIndex[tri[j] ];
 		}
-		((MeshTopology::SeqTriangles&)((MeshTopology*)topology)->getTriangles()).push_back(tri);
+		((BaseMeshTopology::SeqTriangles&)((BaseMeshTopology*)topology)->getTriangles()).push_back(tri);
 	}
 	//fusion quads
 	for (int i=0 ; i < femTopo->getNbQuads() ; i++)  {
-		MeshTopology::Quad qua = femTopo->getQuad(i);
+		BaseMeshTopology::Quad qua = femTopo->getQuad(i);
 		for (unsigned int j(0) ; j<4 ; j++) {
 			qua[j] = oldToNewIndex[qua[j] ];
 		}
-		((MeshTopology::SeqQuads&)((MeshTopology*)topology)->getQuads()).push_back(qua);
+		((BaseMeshTopology::SeqQuads&)((BaseMeshTopology*)topology)->getQuads()).push_back(qua);
 	}
 
 
 	//-------  Fusion Mass
 	parentNode->removeObject(mass);
 	if (mass) delete mass;
-	mass = new DiagonalMass<Vec3dTypes,double>;
+	mass = new DiagonalMass<Vec3Types,SReal>;
 	parentNode->addObject(mass);
-	double m1,m2;
+	SReal m1,m2;
 
-	for (unsigned int i=0 ; i< ((MechanicalState<Vec3dTypes>*)mmodel)->getX()->size(); i++) {
-		m1 = m2 = 0.0;
-		if (massList.size() >0)
-		if (massList.size() == 1 && i < X1size)
-			m1 = massList[0];
-		else if (i < massList.size())
-			m1 = massList[i];
+	for (unsigned int i=0 ; i< ((MechanicalState<Vec3Types>*)mmodel)->getX()->size(); i++) {
+	  m1 = m2 = 0.0;
+	  if (massList.size() >0)
+	    {
+	      if (massList.size() == 1 && i < X1size)
+		m1 = massList[0];
+	      else if (i < massList.size())
+		m1 = massList[i];
+	    }
 
-		if (femBody->massList.size() >0)
-		if (femBody->massList.size() == 1 ) {
-			for (unsigned int j=0 ; j<oldToNewIndex.size() ; j++)
-				if (oldToNewIndex[j] == i)
-					m2 = femBody->massList[0];
-		} else {
-			for (unsigned int j=0 ; j<oldToNewIndex.size() ; j++)
-				if (oldToNewIndex[j] == i)
-					m2 = femBody->massList[j];
-		}
+	  if (femBody->massList.size() >0)
+	    {
+	      if (femBody->massList.size() == 1 ) {
+		for (unsigned int j=0 ; j<oldToNewIndex.size() ; j++)
+		  if (oldToNewIndex[j] == i)
+		    m2 = femBody->massList[0];
+	      } else {
+		for (unsigned int j=0 ; j<oldToNewIndex.size() ; j++)
+		  if (oldToNewIndex[j] == i)
+		    m2 = femBody->massList[j];
+	      }
+	    }
 
-		((DiagonalMass<Vec3dTypes,double>*)mass)->addMass( m1+m2 );
+	  ((DiagonalMass<Vec3Types,SReal>*)mass)->addMass( m1+m2 );
 		cout<<"masse noeud "<<i<<" : "<<m1+m2<<endl;
 	}
 
@@ -554,8 +573,8 @@ bool PMLStiffSpringForceField::FusionBody(PMLBody* body)
 	//------  Fusion Collision Model
 	if (!collisionsON && femBody->collisionsON) {
 		tmodel = femBody->getTriangleModel();
-		lmodel = femBody->getLineModel();
-		pmodel = femBody->getPointModel();
+		//lmodel = femBody->getLineModel();
+		//pmodel = femBody->getPointModel();
 	}
 
 	return true;

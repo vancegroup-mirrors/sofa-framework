@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/io/ImagePNG.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <iostream>
@@ -49,7 +51,11 @@ SOFA_DECL_CLASS(ImagePNG)
 
 #ifdef SOFA_HAVE_PNG
 
-Creator<Image::Factory,ImagePNG> ImagePNGClass("png");
+// Set the compression level. The valid values for "COMPRESSION_LEVEL" range from [0,9]
+// The value 0 implies no compression and 9 implies maximal compression
+// The value -1 implies default compression (level 6)
+
+Creator<Image::FactoryImage,ImagePNG> ImagePNGClass("png");
 
 bool ImagePNG::load(std::string filename)
 {
@@ -158,7 +164,7 @@ bool ImagePNG::load(std::string filename)
 	return true;
 }
 
-bool ImagePNG::save(std::string filename)
+bool ImagePNG::save(std::string filename, int compression_level)
 {
 	
 	FILE *file;
@@ -225,7 +231,13 @@ bool ImagePNG::save(std::string filename)
 				 bit_depth, color_type, PNG_INTERLACE_NONE,
 				 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	/* set the zlib compression level */
-	//png_set_compression_level(PNG_writer, Z_BEST_COMPRESSION);
+	if (compression_level!=-1)
+	{
+		if (compression_level>=0 && compression_level<=9)
+			png_set_compression_level(PNG_writer, compression_level);
+		else
+			std::cerr << "ERROR: compression level must be a value between 0 and 9" << std::endl;
+	}
 	
 	png_byte** PNG_rows = (png_byte**)malloc(height * sizeof(png_byte*));
 	

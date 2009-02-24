@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_INTERACTIONFORCEFIELD_PLANEFORCEFIELD_INL
 #define SOFA_COMPONENT_INTERACTIONFORCEFIELD_PLANEFORCEFIELD_INL
 
@@ -71,14 +71,15 @@ void PlaneForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, cons
 }
 
 template<class DataTypes>
-void PlaneForceField<DataTypes>::addDForce(VecDeriv& f1, const VecDeriv& dx1)
+void PlaneForceField<DataTypes>::addDForce(VecDeriv& f1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
 {
 	f1.resize(dx1.size());
+	const Real fact = (Real)(-this->stiffness.getValue()*kFactor);
 	for (unsigned int i=0; i<this->contacts.size(); i++)
 	{
 		unsigned int p = this->contacts[i];
 		assert(p<dx1.size());
-		f1[p] += planeNormal.getValue() * (-this->stiffness.getValue() * (dx1[p]*planeNormal.getValue()));
+		f1[p] += planeNormal.getValue() * (fact * (dx1[p]*planeNormal.getValue()));
 	}
 }
 
@@ -98,7 +99,7 @@ void PlaneForceField<DataTypes>::updateStiffness( const VecCoord& x )
 
 
 template <class DataTypes> 
-double PlaneForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
+    double PlaneForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
     std::cerr<<"PlaneForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
     return 0;
@@ -123,20 +124,17 @@ template<class DataTypes>
 void PlaneForceField<DataTypes>::draw()
 {
 	if (!getContext()->getShowForceFields()) return;
-	if (!bDraw.getValue()) return;
-	draw2();
+	drawPlane();
 }
 
 
 template<class DataTypes>
-void PlaneForceField<DataTypes>::draw2(float size)
+void PlaneForceField<DataTypes>::drawPlane(float size)
 {
-    if (!getContext()->getShowForceFields()) return;
-
     const VecCoord& p1 = *this->mstate->getX();
     
     defaulttype::Vec3d normal; normal = planeNormal.getValue();
-    
+	
     // find a first vector inside the plane
     defaulttype::Vec3d v1;
     if( 0.0 != normal[0] ) v1 = defaulttype::Vec3d(-normal[1]/normal[0], 1.0, 0.0);
@@ -190,7 +188,7 @@ void PlaneForceField<DataTypes>::draw2(float size)
 }
 
 template <class DataTypes>
-bool PlaneForceField<DataTypes>::addBBox(double* minBBox, double* maxBBox)
+    bool PlaneForceField<DataTypes>::addBBox(double* minBBox, double* maxBBox)
 {
     if (!bDraw.getValue()) return false;
     

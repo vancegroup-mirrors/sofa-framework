@@ -1,5 +1,0 @@
-*~
-.svn*
-#*
-OBJ*
-Makefile*

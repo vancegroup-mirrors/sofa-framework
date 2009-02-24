@@ -1,32 +1,31 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_SPHEREMODEL_H
 #define SOFA_COMPONENT_COLLISION_SPHEREMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/MechanicalObject.h>
 #include <sofa/defaulttype/Vec3Types.h>
 
@@ -69,41 +68,41 @@ public:
 };
 
 template<class TDataTypes>
-class TSphereModel : public component::MechanicalObject<TDataTypes>, public core::CollisionModel, public core::VisualModel
+class TSphereModel : public component::MechanicalObject<TDataTypes>, public core::CollisionModel
 {
 public:
 	typedef TDataTypes InDataTypes;
 	typedef component::MechanicalObject<InDataTypes> Inherit;
         typedef typename InDataTypes::Real Real;
 	typedef typename InDataTypes::VecReal VecReal;
-
+	    
 	typedef TDataTypes DataTypes;
 	typedef TSphere<DataTypes> Element;
 	friend class TSphere<DataTypes>;
 
 protected:
-	VecReal radius;
+	Data< VecReal > radius;
 	
-	Data<double> defaultRadius;
-
+	Data< SReal > defaultRadius;
 	class Loader;
 public:
 	
 	TSphereModel();
     
-    TSphereModel(double radius);
+	TSphereModel(SReal radius);
 
-	int addSphere(const Vector3& pos, double radius);
-	void setSphere(int index, const Vector3& pos, double radius);
+	int addSphere(const Vector3& pos, SReal radius);
+	void setSphere(int index, const Vector3& pos, SReal radius);
 
 	virtual bool load(const char* filename);
-	void applyScale (const double s);
+	void applyScale (const SReal s);
 
         sofa::core::componentmodel::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return this; }
 
-	Real getRadius(int i) const { return this->radius[i]; }
+	Real getRadius(int i) const { return this->radius.getValue()[i]; }
+	void setRadius(int i, Real r) { (*this->radius.beginEdit())[i] = r; }
 
-        const VecReal& getR() const { return this->radius; }
+        const VecReal& getR() const { return this->radius.getValue(); }
 
     virtual void init();
     
@@ -120,13 +119,7 @@ public:
 	
 	void draw(int index);
 	
-	// -- VisualModel interface
-	
 	void draw();
-	
-	void initTextures() { }
-	
-	void update() { }
 };
 
 template<class TDataTypes>

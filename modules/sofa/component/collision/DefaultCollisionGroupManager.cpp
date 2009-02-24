@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/DefaultCollisionGroupManager.h>
 #include <sofa/core/CollisionModel.h>
 #include <sofa/helper/system/config.h>
@@ -32,9 +32,11 @@
 #include <sofa/component/odesolver/RungeKutta4Solver.h>
 #include <sofa/component/odesolver/CGImplicitSolver.h>
 #include <sofa/component/odesolver/StaticSolver.h>
+#include <sofa/component/odesolver/EulerImplicitSolver.h>
+#include <sofa/component/linearsolver/CGLinearSolver.h>
 #include <sofa/core/ObjectFactory.h>
 #include <string.h>
-
+#include <sofa/simulation/tree/GNode.h>
 
 
 namespace sofa
@@ -51,21 +53,23 @@ using namespace sofa::helper;
 using namespace core::componentmodel::behavior;
 using namespace core::componentmodel::collision;
 
-SOFA_DECL_CLASS(DefaultCollisionGroupManager)
+SOFA_DECL_CLASS(DefaultCollisionGroupManager);
 
 int DefaultCollisionGroupManagerClass = core::RegisterObject("Responsible for gathering colliding objects in the same group, for consistent time integration")
 .add< DefaultCollisionGroupManager >()
 .addAlias("CollisionGroup")
 ;
 
+typedef std::pair<OdeSolver*,LinearSolver*> SolverSet;
+
 class SolverMerger
 {
 public:
-	static core::componentmodel::behavior::OdeSolver* merge(core::componentmodel::behavior::OdeSolver* solver1, core::componentmodel::behavior::OdeSolver* solver2);
+	static SolverSet merge(core::componentmodel::behavior::OdeSolver* solver1, core::componentmodel::behavior::OdeSolver* solver2);
 
 protected:
 	
-	FnDispatcher<core::componentmodel::behavior::OdeSolver, core::componentmodel::behavior::OdeSolver*> solverDispatcher;
+	FnDispatcher<core::componentmodel::behavior::OdeSolver, SolverSet> solverDispatcher;
 
 	SolverMerger ();
 };
@@ -76,6 +80,10 @@ DefaultCollisionGroupManager::DefaultCollisionGroupManager()
 
 DefaultCollisionGroupManager::~DefaultCollisionGroupManager()
 {
+}
+
+simulation::tree::GNode* DefaultCollisionGroupManager::buildCollisionGroup() {
+	return new simulation::tree::GNode;
 }
 
 void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* scene, const sofa::helper::vector<Contact*>& contacts)
@@ -117,8 +125,8 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 		{
 			// we can merge the groups
 			// if solvers are compatible...
-			OdeSolver* solver = SolverMerger::merge(group1->solver[0], group2->solver[0]);
-			if (solver!=NULL)
+			SolverSet solver = SolverMerger::merge(group1->solver[0], group2->solver[0]);
+			if (solver.first!=NULL)
 			{
 				simulation::tree::GNode* parent = group1->parent;
 				bool group1IsColl = groupSet.find(group1)!=groupSet.end();
@@ -128,8 +136,9 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 					char groupName[32];
 					snprintf(groupName,sizeof(groupName),"collision%d",groupIndex++);
 					// create a new group
-					group = new simulation::tree::GNode(groupName);
-					parent->addChild(group);
+					group = buildCollisionGroup();
+					group->setName(groupName);
+					parent->addChild(group); 
 					
 					core::objectmodel::Context *current_context = dynamic_cast< core::objectmodel::Context *>(parent->getContext());
 					group->copyVisualContext( (*current_context));
@@ -150,8 +159,16 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 					else
 					{
 						// merge groups and remove group2
-						OdeSolver* solver2 = group2->solver[0];
-						group2->removeObject(solver2);
+					    SolverSet solver2;
+					    solver2.first = group2->solver[0];
+					    group2->removeObject(solver2.first);
+					    if (!group2->linearSolver.empty())
+					    {
+						solver2.second = group2->linearSolver[0];
+						group2->removeObject(solver2.second);
+					    }
+					    else
+						solver2.second = NULL;
 						while(!group2->object.empty())
 							group->moveObject(*group2->object.begin());
 						while(!group2->child.empty())
@@ -159,7 +176,8 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 						parent->removeChild(group2);
 						groupSet.erase(group2);
 						mergedGroups[group2] = group;
-						delete solver2;
+						delete solver2.first;
+						if (solver2.second) delete solver2.second;
 						// BUGFIX(2007-06-23 Jeremie A): we can't remove group2 yet, to make sure the keys in mergedGroups are unique.
 						removedGroup.push_back(group2);
 						//delete group2;
@@ -177,7 +195,15 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 					group->removeObject(solver2);
 					delete solver2;
 				}
-				group->addObject(solver);
+                                if (!group->linearSolver.empty())
+				{
+					LinearSolver* solver2 = group->linearSolver[0];
+					group->removeObject(solver2);
+					delete solver2;
+				}
+				group->addObject(solver.first);
+				if (solver.second)
+				    group->addObject(solver.second);
 			}
 		}
 		contactGroup.push_back(group);
@@ -255,61 +281,113 @@ simulation::tree::GNode* DefaultCollisionGroupManager::getIntegrationNode(core::
 namespace SolverMergers
 {
 
-	// First the easy cases...
-		
-	OdeSolver* createSolverEulerEuler(odesolver::EulerSolver& solver1, odesolver::EulerSolver& /*solver2*/)
-	{
-		return new odesolver::EulerSolver(solver1);
-	}
-	
-	OdeSolver* createSolverRungeKutta4RungeKutta4(odesolver::RungeKutta4Solver& solver1, odesolver::RungeKutta4Solver& /*solver2*/)
-	{
-		return new odesolver::RungeKutta4Solver(solver1);
-	}
-	
-	OdeSolver* createSolverCGImplicitCGImplicit(odesolver::CGImplicitSolver& solver1, odesolver::CGImplicitSolver& solver2)
-	{
-		odesolver::CGImplicitSolver* solver = new odesolver::CGImplicitSolver();
-		solver->f_maxIter.setValue( solver1.f_maxIter.getValue() > solver2.f_maxIter.getValue() ? solver1.f_maxIter.getValue() : solver2.f_maxIter.getValue() );
-		solver->f_tolerance.setValue( solver1.f_tolerance.getValue() < solver2.f_tolerance.getValue() ? solver1.f_tolerance.getValue() : solver2.f_tolerance.getValue());
-		solver->f_smallDenominatorThreshold.setValue( solver1.f_smallDenominatorThreshold.getValue() < solver2.f_smallDenominatorThreshold.getValue() ? solver1.f_smallDenominatorThreshold.getValue() : solver2.f_smallDenominatorThreshold.getValue());
-		
-		solver->f_rayleighStiffness.setValue( solver1.f_rayleighStiffness.getValue() < solver2.f_rayleighStiffness.getValue() ? solver1.f_rayleighStiffness.getValue() : solver2.f_rayleighStiffness.getValue() );
-		
-		solver->f_rayleighMass.setValue( solver1.f_rayleighMass.getValue() < solver2.f_rayleighMass.getValue() ? solver1.f_rayleighMass.getValue() : solver2.f_rayleighMass.getValue() );
-		solver->f_velocityDamping.setValue( solver1.f_velocityDamping.getValue() > solver2.f_velocityDamping.getValue() ? solver1.f_velocityDamping.getValue() : solver2.f_velocityDamping.getValue());
-		return solver;
-	}
-	
-	// Then the other, with the policy of taking the more precise solver
-	
-	OdeSolver* createSolverRungeKutta4Euler(odesolver::RungeKutta4Solver& solver1, odesolver::EulerSolver& /*solver2*/)
-	{
-		return new odesolver::RungeKutta4Solver(solver1);
-	}
-	
-	OdeSolver* createSolverCGImplicitEuler(odesolver::CGImplicitSolver& solver1, odesolver::EulerSolver& /*solver2*/)
-	{
-		return new odesolver::CGImplicitSolver(solver1);
-	}
-	
-	OdeSolver* createSolverCGImplicitRungeKutta4(odesolver::CGImplicitSolver& solver1, odesolver::RungeKutta4Solver& /*solver2*/)
-	{
-		return new odesolver::CGImplicitSolver(solver1);
-	}
+// First the easy cases...
 
-	OdeSolver* createSolverStaticSolver(odesolver::StaticSolver& solver1, odesolver::StaticSolver& /*solver2*/)
-	{
-		return new odesolver::StaticSolver(solver1);
-	}
+SolverSet createSolverEulerEuler(odesolver::EulerSolver& solver1, odesolver::EulerSolver& /*solver2*/)
+{
+    return SolverSet(new odesolver::EulerSolver(solver1), NULL);
+}
 
+SolverSet createSolverRungeKutta4RungeKutta4(odesolver::RungeKutta4Solver& solver1, odesolver::RungeKutta4Solver& /*solver2*/)
+{
+    return SolverSet(new odesolver::RungeKutta4Solver(solver1), NULL);
+}
+
+SolverSet createSolverCGImplicitCGImplicit(odesolver::CGImplicitSolver& solver1, odesolver::CGImplicitSolver& solver2)
+{
+    odesolver::CGImplicitSolver* solver = new odesolver::CGImplicitSolver;
+    solver->f_maxIter.setValue( solver1.f_maxIter.getValue() > solver2.f_maxIter.getValue() ? solver1.f_maxIter.getValue() : solver2.f_maxIter.getValue() );
+    solver->f_tolerance.setValue( solver1.f_tolerance.getValue() < solver2.f_tolerance.getValue() ? solver1.f_tolerance.getValue() : solver2.f_tolerance.getValue());
+    solver->f_smallDenominatorThreshold.setValue( solver1.f_smallDenominatorThreshold.getValue() < solver2.f_smallDenominatorThreshold.getValue() ? solver1.f_smallDenominatorThreshold.getValue() : solver2.f_smallDenominatorThreshold.getValue());
+    
+    solver->f_rayleighStiffness.setValue( solver1.f_rayleighStiffness.getValue() < solver2.f_rayleighStiffness.getValue() ? solver1.f_rayleighStiffness.getValue() : solver2.f_rayleighStiffness.getValue() );
+    
+    solver->f_rayleighMass.setValue( solver1.f_rayleighMass.getValue() < solver2.f_rayleighMass.getValue() ? solver1.f_rayleighMass.getValue() : solver2.f_rayleighMass.getValue() );
+    solver->f_velocityDamping.setValue( solver1.f_velocityDamping.getValue() > solver2.f_velocityDamping.getValue() ? solver1.f_velocityDamping.getValue() : solver2.f_velocityDamping.getValue());
+    return SolverSet(solver, NULL);
+}
+
+typedef linearsolver::CGLinearSolver<simulation::GraphScatteredMatrix,simulation::GraphScatteredVector> DefaultCGLinearSolver;
+
+LinearSolver* createLinearSolver(OdeSolver* solver1, OdeSolver* solver2)
+{
+    DefaultCGLinearSolver* lsolver = new DefaultCGLinearSolver;
+    DefaultCGLinearSolver* lsolver1 = NULL; if (solver1!=NULL) solver1->getContext()->get(lsolver1, core::objectmodel::BaseContext::SearchDown);
+    DefaultCGLinearSolver* lsolver2 = NULL; if (solver2!=NULL) solver2->getContext()->get(lsolver2, core::objectmodel::BaseContext::SearchDown);
+    unsigned int maxIter = 0;
+    double tolerance = 1.0e10;
+    double smallDenominatorThreshold = 1.0e10;
+    if (lsolver1)
+    {
+	if (lsolver1->f_maxIter.getValue() > maxIter) maxIter = lsolver1->f_maxIter.getValue();
+	if (lsolver1->f_tolerance.getValue() < tolerance) tolerance = lsolver1->f_tolerance.getValue();
+	if (lsolver1->f_smallDenominatorThreshold.getValue() > smallDenominatorThreshold) smallDenominatorThreshold = lsolver1->f_smallDenominatorThreshold.getValue();
+    }
+    if (lsolver2)
+    {
+	if (lsolver2->f_maxIter.getValue() > maxIter) maxIter = lsolver2->f_maxIter.getValue();
+	if (lsolver2->f_tolerance.getValue() < tolerance) tolerance = lsolver2->f_tolerance.getValue();
+	if (lsolver2->f_smallDenominatorThreshold.getValue() > smallDenominatorThreshold) smallDenominatorThreshold = lsolver2->f_smallDenominatorThreshold.getValue();
+    }
+    if (maxIter > 0) lsolver->f_maxIter.setValue( maxIter );
+    if (tolerance < 1.0e10) lsolver->f_tolerance.setValue( tolerance );
+    if (smallDenominatorThreshold < 1.0e10) lsolver->f_smallDenominatorThreshold.setValue( smallDenominatorThreshold );
+    return lsolver;
+}
+
+SolverSet createSolverEulerImplicitEulerImplicit(odesolver::EulerImplicitSolver& solver1, odesolver::EulerImplicitSolver& solver2)
+{
+    odesolver::EulerImplicitSolver* solver = new odesolver::EulerImplicitSolver;
+    solver->f_rayleighStiffness.setValue( solver1.f_rayleighStiffness.getValue() < solver2.f_rayleighStiffness.getValue() ? solver1.f_rayleighStiffness.getValue() : solver2.f_rayleighStiffness.getValue() );
+    
+    solver->f_rayleighMass.setValue( solver1.f_rayleighMass.getValue() < solver2.f_rayleighMass.getValue() ? solver1.f_rayleighMass.getValue() : solver2.f_rayleighMass.getValue() );
+    solver->f_velocityDamping.setValue( solver1.f_velocityDamping.getValue() > solver2.f_velocityDamping.getValue() ? solver1.f_velocityDamping.getValue() : solver2.f_velocityDamping.getValue());
+    return SolverSet(solver, createLinearSolver(&solver1, &solver2));
+}
+
+SolverSet createSolverStaticSolver(odesolver::StaticSolver& solver1, odesolver::StaticSolver& solver2)
+{
+    return SolverSet(new odesolver::StaticSolver(solver1), createLinearSolver(&solver1, &solver2));
+}
+
+// Then the other, with the policy of taking the more precise solver
+
+SolverSet createSolverRungeKutta4Euler(odesolver::RungeKutta4Solver& solver1, odesolver::EulerSolver& /*solver2*/)
+{
+    return SolverSet(new odesolver::RungeKutta4Solver(solver1), NULL);
+}
+
+SolverSet createSolverCGImplicitEuler(odesolver::CGImplicitSolver& solver1, odesolver::EulerSolver& /*solver2*/)
+{
+    return SolverSet(new odesolver::CGImplicitSolver(solver1), NULL);
+}
+
+SolverSet createSolverCGImplicitRungeKutta4(odesolver::CGImplicitSolver& solver1, odesolver::RungeKutta4Solver& /*solver2*/)
+{
+    return SolverSet(new odesolver::CGImplicitSolver(solver1), NULL);
+}
+
+SolverSet createSolverEulerImplicitEuler(odesolver::EulerImplicitSolver& solver1, odesolver::EulerSolver& /*solver2*/)
+{
+    return SolverSet(new odesolver::EulerImplicitSolver(solver1), createLinearSolver(&solver1, NULL));
+}
+
+SolverSet createSolverEulerImplicitRungeKutta4(odesolver::EulerImplicitSolver& solver1, odesolver::RungeKutta4Solver& /*solver2*/)
+{
+    return SolverSet(new odesolver::EulerImplicitSolver(solver1), createLinearSolver(&solver1, NULL));
+}
+
+SolverSet createSolverEulerImplicitCGImplicit(odesolver::EulerImplicitSolver& solver1, odesolver::CGImplicitSolver& /*solver2*/)
+{
+    return SolverSet(new odesolver::EulerImplicitSolver(solver1), createLinearSolver(&solver1, NULL));
+}
 
 } // namespace SolverMergers
 
 
 using namespace SolverMergers;
 
-core::componentmodel::behavior::OdeSolver* SolverMerger::merge(core::componentmodel::behavior::OdeSolver* solver1, core::componentmodel::behavior::OdeSolver* solver2)
+SolverSet SolverMerger::merge(core::componentmodel::behavior::OdeSolver* solver1, core::componentmodel::behavior::OdeSolver* solver2)
 {
 	static SolverMerger instance;
 	return instance.solverDispatcher.go(*solver1, *solver2);
@@ -320,9 +398,13 @@ SolverMerger::SolverMerger()
 	solverDispatcher.add<odesolver::EulerSolver,odesolver::EulerSolver,createSolverEulerEuler,false>();
 	solverDispatcher.add<odesolver::RungeKutta4Solver,odesolver::RungeKutta4Solver,createSolverRungeKutta4RungeKutta4,false>();
 	solverDispatcher.add<odesolver::CGImplicitSolver,odesolver::CGImplicitSolver,createSolverCGImplicitCGImplicit,false>();
+	solverDispatcher.add<odesolver::EulerImplicitSolver,odesolver::EulerImplicitSolver,createSolverEulerImplicitEulerImplicit,false>();
 	solverDispatcher.add<odesolver::RungeKutta4Solver,odesolver::EulerSolver,createSolverRungeKutta4Euler,true>();
 	solverDispatcher.add<odesolver::CGImplicitSolver,odesolver::EulerSolver,createSolverCGImplicitEuler,true>();
 	solverDispatcher.add<odesolver::CGImplicitSolver,odesolver::RungeKutta4Solver,createSolverCGImplicitRungeKutta4,true>();
+	solverDispatcher.add<odesolver::EulerImplicitSolver,odesolver::EulerSolver,createSolverEulerImplicitEuler,true>();
+	solverDispatcher.add<odesolver::EulerImplicitSolver,odesolver::RungeKutta4Solver,createSolverEulerImplicitRungeKutta4,true>();
+	solverDispatcher.add<odesolver::EulerImplicitSolver,odesolver::CGImplicitSolver,createSolverEulerImplicitCGImplicit,true>();
 	solverDispatcher.add<odesolver::StaticSolver,odesolver::StaticSolver,createSolverStaticSolver,true>();
 }
 

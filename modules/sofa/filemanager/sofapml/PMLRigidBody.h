@@ -1,12 +1,27 @@
-/***************************************************************************
-								PMLRigidBody
-                             -------------------
-    begin             : August 18th, 2006
-    copyright         : (C) 2006 TIMC-INRIA (Michael Adam)
-    author            : Michael Adam
-    Date              : $Date: 2006/02/25 13:51:44 $
-    Version           : $Revision: 0.2 $
- ***************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 /***************************************************************************
  *                                                                         *
@@ -65,7 +80,7 @@ public :
 	///merge the body with current object
 	bool FusionBody(PMLBody*);
 
-	Vec3d getDOF(unsigned int index);
+	Vector3 getDOF(unsigned int index);
 
 	GNode* getPointsNode() {return VisualNode;}
 
@@ -101,19 +116,19 @@ private :
 	///GNode containing the collision models
 	GNode * CollisionNode;
 	///barycenter coordinates of the solid
-	Vec3d bary;
+	Vector3 bary;
 
 	//members for the mass (only one of the 2 vectors is filled)
-	std::vector<double> massList;
-	std::vector<double> inertiaMatrix;
+	std::vector<SReal> massList;
+	std::vector<SReal> inertiaMatrix;
 	 
 	//members coding for the position 
-	Vec3d transPos;
+	Vector3 transPos;
 	Quat rotPos;
 
 	//members coding for the velocity
-	Vec3d transVel;
-	Vec3d rotVel;
+	Vector3 transVel;
+	Vector3 rotVel;
 
 };
 

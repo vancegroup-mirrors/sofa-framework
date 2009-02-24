@@ -27,7 +27,6 @@ HEADERS += \
           gl/Cylinder.h \
           gl/Capture.h \
           gl/glfont.h \
-          gl/GLshader.h \
           gl/RAII.h \
           gl/template.h \
           gl/Texture.h \
@@ -51,6 +50,7 @@ HEADERS += \
           LCPcalc.h \
           LCPSolver.h \
           LCPSolver.inl \
+          MarchingCubeUtility.h \
           PolarDecompose.h \
           Quater.h \
           Quater.inl \
@@ -64,10 +64,11 @@ HEADERS += \
           system/FileRepository.h \
           system/thread/CTime.h \
           system/thread/debug.h \
+          system/PipeProcess.h \
           vector.h \
 	  polygon_cube_intersection/vec.h \
 	  polygon_cube_intersection/polygon_cube_intersection.h
-          
+
 SOURCES += \
           ArgumentParser.cpp \
           BackTrace.cpp \
@@ -76,7 +77,6 @@ SOURCES += \
           gl/Cylinder.cpp \
           gl/Capture.cpp \
           gl/glfont.cpp \
-          gl/GLshader.cpp \
           gl/Texture.cpp \
           gl/Trackball.cpp \
           gl/Transformation.cpp \
@@ -93,11 +93,25 @@ SOURCES += \
 	  io/bvh/BVHJoint.cpp \
 	  io/bvh/BVHLoader.cpp \
 	  io/bvh/BVHMotion.cpp \
-          LCPcalc.cpp \
+          LCPcalc.cpp \         
+          MarchingCubeUtility.cpp \
           Quater.cpp \
           system/SetDirectory.cpp \
           system/FileRepository.cpp \
           system/thread/CTime.cpp \
           system/thread/debug.cpp \
+          system/PipeProcess.cpp \
 	  polygon_cube_intersection/polygon_cube_intersection.cpp \
-	  polygon_cube_intersection/fast_polygon_cube_intersection.cpp 
+	  polygon_cube_intersection/fast_polygon_cube_intersection.cpp
+
+
+contains(DEFINES,SOFA_HAVE_GLEW){
+
+    HEADERS += \
+          gl/GLSLShader.h
+
+    SOURCES += \
+          gl/GLSLShader.cpp
+
+}
+

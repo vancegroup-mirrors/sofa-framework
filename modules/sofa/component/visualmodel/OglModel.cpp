@@ -1,33 +1,35 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/visualmodel/OglModel.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/system/glut.h>
 #include <sofa/helper/gl/RAII.h>
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sstream>
 
 namespace sofa
@@ -49,7 +51,8 @@ int OglModelClass = core::RegisterObject("Generic visual model for OpenGL displa
 
 
 OglModel::OglModel()
-: tex(NULL)
+: premultipliedAlpha(initData(&premultipliedAlpha, (bool) false, "premultipliedAlpha", "is alpha premultiplied ?"))
+, tex(NULL)
 {
 }
 
@@ -59,17 +62,8 @@ OglModel::~OglModel()
 }
 
 void OglModel::internalDraw()
-{
-    /*if (getContext()->getMainTopology())
-    {
-        int nbp = getContext()->get<core::componentmodel::behavior::BaseMechanicalState>()->getSize();
-        int nbv = vertices.size();
-        if (nbp != nbv)
-        {
-            std::cerr << "nbp mismatch: "<<nbp<<" "<<nbv<<std::endl;
-        }
-    }*/
-    //std::cerr<<" OglModel::draw()"<<std::endl;
+{   
+    //std::cerr<<" OglModel::internalDraw()"<<std::endl; 
     if (!getContext()->getShowVisualModels()) return;
     if (getContext()->getShowWireFrame())
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -84,15 +78,18 @@ void OglModel::internalDraw()
     Vec4f specular = material.getValue().useSpecular?material.getValue().specular:Vec4f();
     Vec4f emissive = material.getValue().useEmissive?material.getValue().emissive:Vec4f();
     float shininess = material.getValue().useShininess?material.getValue().shininess:45;
+
+    if (shininess == 0.0f)
+    {
+	specular.clear();
+	shininess = 1;
+    }
     
     if (isTransparent()) {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthMask(GL_FALSE);
-	emissive[3] = diffuse[3];
-	ambient[3] = 0;
-//	diffuse[3] = 0;
-//	specular[3] = 0;
+	emissive[3] = 0; //diffuse[3];
+	ambient[3] = 0; //diffuse[3];
+	//diffuse[3] = 0;
+	specular[3] = 0;
     }
     glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT, ambient.ptr());
     glMaterialfv (GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse.ptr());
@@ -103,6 +100,7 @@ void OglModel::internalDraw()
     glVertexPointer (3, GL_FLOAT, 0, vertices.getData());
     glNormalPointer (GL_FLOAT, 0, vnormals.getData());
     glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
     if (tex)
     {
         glEnable(GL_TEXTURE_2D);
@@ -110,14 +108,43 @@ void OglModel::internalDraw()
         glTexCoordPointer(2, GL_FLOAT, 0, vtexcoords.getData());
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     }
+    
+    if (isTransparent()) 
+	{
+        glEnable(GL_BLEND);
+        glDepthMask(GL_FALSE);
+        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+
+		for (unsigned int i=0; i<xforms.size(); i++)
+		{
+			float matrix[16];
+			xforms[i].writeOpenGlMatrix(matrix);
+			glPushMatrix();
+			glMultMatrixf(matrix);
+
+			if (!triangles.empty())
+				glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, triangles.getData());
+			if (!quads.empty())
+				glDrawElements(GL_QUADS, quads.size() * 4, GL_UNSIGNED_INT, quads.getData());
+
+			glPopMatrix();
+		}
+		if (premultipliedAlpha.getValue())
+			glBlendFunc(GL_ONE, GL_ONE);
+		else 
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    }
 
     for (unsigned int i=0; i<xforms.size(); i++)
     {
-        float matrix[16];
+        //std::cerr<<"OglModel::internalDraw() 4, quads.size() = "<<quads.size()<<endl;
+		float matrix[16];
         xforms[i].writeOpenGlMatrix(matrix);
+		//for( int k=0; k<16; k++ ) std::cerr<<matrix[k]<<" "; std::cerr<<endl;
         glPushMatrix();
         glMultMatrixf(matrix);
 
+    //glutWireCube( 3 );
         if (!triangles.empty())
             glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, triangles.getData());
         if (!quads.empty())
@@ -175,6 +202,14 @@ bool OglModel::loadTexture(const std::string& filename)
         return false;
     tex = new helper::gl::Texture(img);
     return true;
+}
+
+void OglModel::initVisual()
+{
+    if (tex)
+    {
+        tex->init();
+    }
 }
 
 void OglModel::initTextures()

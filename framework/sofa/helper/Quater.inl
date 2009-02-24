@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_HELPER_QUATER_INL
 #define SOFA_HELPER_QUATER_INL
 
@@ -142,7 +144,18 @@ Quater<Real> Quater<Real>::operator*(const Quater<Real>& q1) const
 }
 
 template<class Real>
-Quater<Real> Quater<Real>::quatVectMult(const defaulttype::Vec3d& vect)
+Quater<Real> Quater<Real>::operator*(const Real& r) const
+{
+  Quater<Real>  ret;
+  ret[0] = _q[0] * r;
+  ret[1] = _q[1] * r;
+  ret[2] = _q[2] * r;
+  ret[3] = _q[3] * r;
+  return ret;
+}
+
+template<class Real>
+Quater<Real> Quater<Real>::quatVectMult(const defaulttype::Vec<3,Real>& vect)
 {
 	Quater<Real>	ret;
 
@@ -155,11 +168,11 @@ Quater<Real> Quater<Real>::quatVectMult(const defaulttype::Vec3d& vect)
 }
 
 template<class Real>
-Quater<Real> Quater<Real>::vectQuatMult(const defaulttype::Vec3d& vect)
+Quater<Real> Quater<Real>::vectQuatMult(const defaulttype::Vec<3,Real>& vect)
 {
 	Quater<Real>	ret;
 
-	ret[3] = (Real) (-(vect[0] * _q[0] + vect[1] * _q[1] + vect[2] * _q[2]));
+	ret[3] = (Real) (-(vect[0] * _q[0] + vect[1] * _q[1] + vect[2] * _q[2])); 
 	ret[0] = (Real) (vect[0] * _q[3] + vect[1] * _q[2] - vect[2] * _q[1]);
 	ret[1] = (Real) (vect[1] * _q[3] + vect[2] * _q[0] - vect[0] * _q[2]);
 	ret[2] = (Real) (vect[2] * _q[3] + vect[0] * _q[1] - vect[1] * _q[0]);
@@ -207,14 +220,17 @@ void Quater<Real>::normalize()
 	Real	mag;
 
 	mag = (_q[0] * _q[0] + _q[1] * _q[1] + _q[2] * _q[2] + _q[3] * _q[3]);
-	for (i = 0; i < 4; i++)
-	{
-		_q[i] /= sqrt(mag);
-	}
+  if( mag != 0)
+  {
+	  for (i = 0; i < 4; i++)
+	  {
+	  	_q[i] /= sqrt(mag);
+	  }
+  }
 }
 
 template<class Real>
-void Quater<Real>::fromMatrix(const defaulttype::Mat3x3d &m)
+void Quater<Real>::fromMatrix(const defaulttype::Matrix3 &m)
 {
   Real tr, s;
 
@@ -391,7 +407,7 @@ void Quater<Real>::writeOpenGlMatrix(float *m) const
 
 /// Given an axis and angle, compute quaternion.
 template<class Real>
-Quater<Real> Quater<Real>::axisToQuat(defaulttype::Vec3d a, Real phi)
+Quater<Real> Quater<Real>::axisToQuat(defaulttype::Vec<3,Real> a, Real phi)
 {
     a = a / a.norm();
     _q[0] = (Real)a.x();

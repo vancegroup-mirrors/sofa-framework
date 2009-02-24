@@ -1,3 +1,29 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 /******* COPYRIGHT ************************************************
 *                                                                 *
 *                         FlowVR Render                           *
@@ -49,6 +75,10 @@ int main(int argc, char** argv)
   float dilate = 0.0f;
   int tesselate = 0;
   bool sphere = false;
+  bool dist = false;
+  int res = 16;
+  int rx=0,ry=0,rz=0;
+  float border = 0.25f;
   ftl::CmdLine cmd("Usage: meshconv [options] mesh.input [mesh.output]");
   cmd.opt("normalize",'n',"transform points so that the center is at <0,0,0> and the max coodinate is 1",&normalize);
   cmd.opt("flip",'f',"flip normals",&flip);
@@ -60,8 +90,14 @@ int main(int argc, char** argv)
   cmd.opt("rotate",'r',"rotate the mesh using euler angles in degree",&rotation);
   cmd.opt("scale",'s',"scale the mesh using 3 coefficients",&scale);
   cmd.opt("dilate",'d',"dilate (i.e. displace vertices of the given distance along their normals)",&dilate);
-    cmd.opt("tesselate",'a',"tesselate (split each edge in 2 resursivly n times)",&tesselate);
-    cmd.opt("sphere",'S',"consider the mesh as a sphere for tesselation",&sphere);
+  cmd.opt("tesselate",'a',"tesselate (split each edge in 2 resursivly n times)",&tesselate);
+  cmd.opt("sphere",'S',"consider the mesh as a sphere for tesselation",&sphere);
+  cmd.opt("dist",'D',"compute distance field",&dist);
+  cmd.opt("res",'R',"resolution of distance field",&res);
+  cmd.opt("rx",'X',"X resolution of distance field",&rx);
+  cmd.opt("ry",'Y',"Y resolution of distance field",&ry);
+  cmd.opt("rz",'Z',"Z resolution of distance field",&rz);
+  cmd.opt("border",'B',"distance field border size relative to the object's BBox size (or negative for exact size)",&border);
   bool error=false;
   if (!cmd.parse(argc,argv,&error))
     return error?1:0;
@@ -117,6 +153,10 @@ int main(int argc, char** argv)
       obj.PP(i) = p;
     }
   }
+    
+    Mat4x4f xform;
+    bool hasXForm = false;
+    xform.identity();
 
   if (rotation != Vec3f(0,0,0))
   {
@@ -128,11 +168,14 @@ int main(int argc, char** argv)
     qz.fromDegreeAngAxis(rotation[2],Vec3f(0,0,1));
     Quat q = qx*qy*qz;
     q.toMatrix(&mat);
+    std::cout << "mat = "<<mat<<std::endl;
     for (int i=0;i<obj.nbp();i++)
     {
       obj.PP(i) = mat*obj.getPP(i);
       obj.PN(i) = mat*obj.getPN(i);
     }
+      hasXForm = true;
+      xform = mat;
   }
 
   if (translation != Vec3f(0,0,0))
@@ -142,6 +185,18 @@ int main(int argc, char** argv)
     {
       obj.PP(i) = obj.getPP(i) + translation;
     }
+      hasXForm = true;
+      xform[0][3] = translation[0];
+      xform[1][3] = translation[1];
+      xform[2][3] = translation[2];
+  }
+    
+  if (obj.distmap && hasXForm)
+  {
+      //Mat4x4f m; m.invert(xform);
+      std::cout << "distmap mat = "<<xform <<" * " << obj.distmap->mat<<" = ";
+    obj.distmap->mat = xform * obj.distmap->mat;
+      std::cout << obj.distmap->mat<<std::endl;
   }
 
   std::cout << "Mesh bbox="<<obj.calcBBox()<<std::endl;
@@ -155,7 +210,7 @@ int main(int argc, char** argv)
   {
     bool closed = obj.isClosed();
     std::cout << "Mesh is "<<(closed?"":"NOT ")<<"closed."<<std::endl;
-    if (!closed)
+    if (closemesh && !closed)
     {
       obj.calcFlip();
       std::cout << "Closing mesh..."<<std::endl;
@@ -167,11 +222,32 @@ int main(int argc, char** argv)
   if (dilate != 0.0f)
 	obj.dilate(dilate);
     
-    if (tesselate > 0)
+    if (tesselate > 0 || sphere)
     {
         std::cout << "Tesselating mesh..."<<std::endl;
         tesselateMesh(obj, tesselate, sphere);
     }
+    
+    if (dist)
+    {
+        if (!rx) rx = res;
+        if (!ry) ry = res;
+        if (!rz) rz = res;
+        std::cout << "Flipping mesh..."<<std::endl;
+        obj.calcFlip();
+        obj.calcEdges();
+        bool closed = obj.isClosed();
+        std::cout << "Mesh is "<<(closed?"":"NOT ")<<"closed."<<std::endl;
+        if (!closed)
+        {
+            std::cout << "Closing mesh..."<<std::endl;
+            obj.close();
+            std::cout << "Mesh is "<<(obj.isClosed()?"":"NOT ")<<"closed."<<std::endl;
+        }
+        std::cout << "Computing "<<rx<<'x'<<ry<<'x'<<rz<<" DistMap..."<<std::endl;
+        obj.calcDistMap(rx,ry,rz,(border<0 ? -border : obj.calcBBox().size()*border));
+    }
+    
     
   if (wnormals)
     obj.setAttrib(Mesh::MESH_POINTS_NORMAL,true);

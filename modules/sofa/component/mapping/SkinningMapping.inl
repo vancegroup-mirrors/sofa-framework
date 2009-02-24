@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_INL
 #define SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_INL
 
@@ -56,16 +56,16 @@ using namespace sofa::defaulttype;
 template <class BasicMapping>
 class SkinningMapping<BasicMapping>::Loader : public helper::io::MassSpringLoader, public helper::io::SphereLoader
 {
-public:
+  public:
     SkinningMapping<BasicMapping>* dest;
     Loader(SkinningMapping<BasicMapping>* dest) : dest(dest) {}
-    virtual void addMass(double /*px*/, double /*py*/, double /*pz*/, double, double, double, double, double, bool, bool)
+    virtual void addMass(SReal /*px*/, SReal /*py*/, SReal /*pz*/, SReal, SReal, SReal, SReal, SReal, bool, bool)
     {
         /*Coord c;
         Out::DataTypes::set(c,px,py,pz);
         dest->initPos.push_back(c); //Coord((Real)px,(Real)py,(Real)pz));*/
     }
-    virtual void addSphere(double /*px*/, double /*py*/, double /*pz*/, double)
+    virtual void addSphere(SReal /*px*/, SReal /*py*/, SReal /*pz*/, SReal)
     {
         /*Coord c;
         Out::DataTypes::set(c,px,py,pz);
@@ -168,7 +168,7 @@ void SkinningMapping<BasicMapping>::init()
 				m_coefs[nbRefs.getValue()*i+m] = minDists[m]*minDists[m];
 				m_reps[nbRefs.getValue()*i+m] = minInds[m];
 
-				initPos[nbRefs.getValue()*i+m].getCenter() = (posTo - xfrom[minInds[m]].getCenter());
+				initPos[nbRefs.getValue()*i+m].getCenter() = xfrom[minInds[m]].getOrientation().inverseRotate(posTo - xfrom[minInds[m]].getCenter());
 				initPos[nbRefs.getValue()*i+m].getOrientation() = xfrom[minInds[m]].getOrientation();
 			}
 		}
@@ -189,7 +189,7 @@ void SkinningMapping<BasicMapping>::init()
 		for (unsigned int i=0;i<xto.size();i++){
 			posTo = xto[i];
 			for (unsigned int m=0;m<nbRefs.getValue();m++){
-				initPos[nbRefs.getValue()*i+m].getCenter() = (posTo - xfrom[m_reps[nbRefs.getValue()*i+m]].getCenter());
+				initPos[nbRefs.getValue()*i+m].getCenter() = xfrom[m_reps[nbRefs.getValue()*i+m]].getOrientation().inverseRotate(posTo - xfrom[m_reps[nbRefs.getValue()*i+m]].getCenter());
 				initPos[nbRefs.getValue()*i+m].getOrientation() = xfrom[m_reps[nbRefs.getValue()*i+m]].getOrientation();
 			}
 		}
@@ -243,7 +243,7 @@ void SkinningMapping<BasicMapping>::apply( typename Out::VecCoord& out, const ty
 			relativeRot.toMatrix(rotation);
 			rotatedPoints[nbRefs.getValue()*i+m] = rotation * (initPos[nbRefs.getValue()*i+m].getCenter());
 
-			out[i] += rotatedPoints[nbRefs.getValue()*i+m] * m_coefs[nbRefs.getValue()*i+m];
+			out[i] += initPos[nbRefs.getValue()*i+m].getOrientation().rotate(rotatedPoints[nbRefs.getValue()*i+m] * m_coefs[nbRefs.getValue()*i+m]);
 			out[i] += translation * m_coefs[nbRefs.getValue()*i+m];
 		}
 	}
@@ -299,7 +299,7 @@ void SkinningMapping<BasicMapping>::applyJT( typename In::VecConst& out, const t
     const sofa::helper::vector<unsigned int>& m_reps = repartition.getValue();
     const sofa::helper::vector<double>& m_coefs = coefs.getValue();
     const unsigned int nbr = nbRefs.getValue();
-    const unsigned int nbi = this->fromModel->getSize();
+	const unsigned int nbi = this->fromModel->getX()->size();
     Deriv omega;
     typename In::VecDeriv v;
     sofa::helper::vector<bool> flags;
@@ -336,7 +336,7 @@ void SkinningMapping<BasicMapping>::applyJT( typename In::VecConst& out, const t
 template <class BasicMapping>
 void SkinningMapping<BasicMapping>::draw()
 {
-	if (!getShow(this)) return;
+    if (!this->getShow()) return;
 	glDisable (GL_LIGHTING);
 	glPointSize(1);
 	glColor4f (1,1,0,1);

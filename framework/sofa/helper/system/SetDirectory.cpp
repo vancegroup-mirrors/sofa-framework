@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/system/SetDirectory.h>
 
 #ifndef WIN32
@@ -51,7 +53,7 @@ SetDirectory::SetDirectory(const char* filename)
     directory = GetParentDir(filename);
     if (!directory.empty())
     {
-        //std::cout << ">chdir("<<directory<<")"<<std::endl;
+//         std::cout << ">chdir("<<directory<<")"<<std::endl;
 	previousDir = GetCurrentDir();
 #ifndef WIN32
         chdir(directory.c_str());
@@ -66,7 +68,7 @@ SetDirectory::SetDirectory(const std::string& filename)
     directory = GetParentDir(filename.c_str());
     if (!directory.empty())
     {
-        //std::cout << ">chdir("<<directory<<")"<<std::endl;
+//         std::cout << ">chdir("<<directory<<")"<<std::endl;
 	previousDir = GetCurrentDir();
 #ifndef WIN32
         chdir(directory.c_str());
@@ -80,7 +82,7 @@ SetDirectory::~SetDirectory()
 {
     if (!directory.empty() && !previousDir.empty())
     {
-        //std::cout << "<chdir("<<previousDir<<")"<<std::endl;
+//         std::cout << "<chdir("<<directory<<")"<<std::endl;
 #ifndef WIN32
         chdir(previousDir.c_str());
 #else
@@ -129,6 +131,16 @@ std::string SetDirectory::GetFileName(const char* filename)
     std::string::size_type pos = s.find_last_of("/\\");
     if (pos == std::string::npos)
         return s; // no directory
+    else
+        return s.substr(pos+1);
+}
+
+std::string SetDirectory::GetExtension(const char* filename)
+{
+    std::string s = filename;
+    std::string::size_type pos = s.find_last_of('.');
+    if (pos == std::string::npos)
+        return ""; // no extension
     else
         return s.substr(pos+1);
 }

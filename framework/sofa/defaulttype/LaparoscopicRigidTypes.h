@@ -1,32 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_DEFAULTTYPE_LAPAROSCOPICRIGIDTYPES_H
 #define SOFA_DEFAULTTYPE_LAPAROSCOPICRIGIDTYPES_H
 
+
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/DataTypeInfo.h>
+#include <sofa/defaulttype/Vec.h>
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/componentmodel/behavior/Mass.h>
 #include <sofa/helper/vector.h>
@@ -43,18 +47,19 @@ using sofa::helper::vector;
 class LaparoscopicRigid3Types
 {
 public:
-	typedef Vec3d Vec3;
-	typedef Vec3::value_type Real;
+	
+	typedef SReal Real;
 	
 	class Deriv
 	{
 	private:
 		Real vTranslation;
-		Vec3 vOrientation;
-	public:
+		Vector3 vOrientation;
+	  public:
+		typedef Real value_type;
 		friend class Coord;
 		
-		Deriv (const Real &velTranslation, const Vec3 &velOrient)
+		Deriv (const Real &velTranslation, const Vector3 &velOrient)
 		: vTranslation(velTranslation), vOrientation(velOrient) {}
 		Deriv () { clear(); }
 		
@@ -74,13 +79,13 @@ public:
 		    return d;
 		}
 		
-		void operator*=(double a)
+		void operator*=(Real a)
 		{
 			vTranslation *= a;
 			vOrientation *= a;
 		}
 		
-		Deriv operator*(double a) const
+		Deriv operator*(Real a) const
 		{
 			Deriv r = *this;
 			r*=a;
@@ -93,7 +98,7 @@ public:
 		}
 		
 		/// dot product
-		double operator*(const Deriv& a) const
+		Real operator*(const Deriv& a) const
 		{
 			return vTranslation*a.vTranslation
 					+vOrientation[0]*a.vOrientation[0]+vOrientation[1]*a.vOrientation[1]
@@ -101,9 +106,9 @@ public:
 		}
 		
 		Real& getVTranslation (void) { return vTranslation; }
-		Vec3& getVOrientation (void) { return vOrientation; }
+		Vector3& getVOrientation (void) { return vOrientation; }
 		const Real& getVTranslation (void) const { return vTranslation; }
-		const Vec3& getVOrientation (void) const { return vOrientation; }
+		const Vector3& getVOrientation (void) const { return vOrientation; }
 		inline friend std::ostream& operator << (std::ostream& out, const Deriv& v ){
 		    out<<v.getVTranslation();
 		    out<<" "<<v.getVOrientation();
@@ -118,10 +123,12 @@ public:
 	
 	class Coord
 	{
+	  
 	private:
 		Real translation;
 		Quat orientation;
 	public:
+		typedef Real value_type;
 		Coord (const Real &posTranslation, const Quat &orient)
 		: translation(posTranslation), orientation(orient) {}
 		Coord () { clear(); }
@@ -134,7 +141,7 @@ public:
 			orientation.normalize();
 			Quat qDot = orientation.vectQuatMult(a.getVOrientation());
 			for (int i = 0; i < 4; i++)
-				orientation[i] += qDot[i] * 0.5;
+				orientation[i] += qDot[i] * (SReal)0.5;
 			orientation.normalize();
 		}
 		
@@ -145,7 +152,7 @@ public:
 			c.orientation.normalize();
 			Quat qDot = c.orientation.vectQuatMult(a.getVOrientation());
 			for (int i = 0; i < 4; i++)
-				c.orientation[i] += qDot[i] * 0.5;
+				c.orientation[i] += qDot[i] * (SReal)0.5;
 			c.orientation.normalize();
 			return c;
 		}
@@ -158,14 +165,14 @@ public:
 			//orientation.normalize();
 		}
 		
-		void operator*=(double a)
+		void operator*=(Real a)
 		{
 // 			std::cout << "*="<<std::endl;
 			translation *= a;
 			//orientation *= a;
 		}
 		
-		Coord operator*(double a) const
+		Coord operator*(Real a) const
 		{
 			Coord r = *this;
 			r*=a;
@@ -173,7 +180,7 @@ public:
 		}
 		
 		/// dot product (FF: WHAT????  )
-		double operator*(const Coord& a) const
+		Real operator*(const Coord& a) const
 		{
 			return translation*a.translation
 				+orientation[0]*a.orientation[0]+orientation[1]*a.orientation[1]
@@ -215,7 +222,7 @@ public:
 		    return r;
 		}
 		/// compute the projection of a vector from the parent frame to the child
-		Vec3 vectorToChild( const Vec3& v ) const {
+		Vector3 vectorToChild( const Vector3& v ) const {
 		    return orientation.inverseRotate(v);
 		}
 	};
@@ -242,50 +249,74 @@ public:
 	typedef vector<Deriv> VecDeriv;
 	typedef vector<Real> VecReal;
 
-	static void set(Coord& c, double x, double, double)
+    template<typename T>
+	static void set(Coord& c, T x, T, T)
 	{
-		c.getTranslation() = x;
-		//c.getTranslation()[1] = y;
-		//c.getTranslation()[2] = z;
+	    c.getTranslation() = (Real)x;
 	}
 	
-	static void get(double& x, double&, double&, const Coord& c)
+    template<typename T>
+	static void get(T& x, T&, T&, const Coord& c)
 	{
-		x = c.getTranslation();
-		//y = c.getTranslation();
-		//z = c.getTranslation()[2];
+	    x = (T)c.getTranslation();
 	}
 	
-	static void add(Coord& c, double x, double, double)
+    template<typename T>
+	static void add(Coord& c, T x, T, T)
 	{
-		c.getTranslation() += x;
-		//c.getTranslation()[1] += y;
-		//c.getTranslation()[2] += z;
+	    c.getTranslation() += (Real)x;
 	}
 	
-	static void set(Deriv& c, double x, double, double)
+    template<typename T>
+	static void set(Deriv& c, T x, T, T)
 	{
-		c.getVTranslation() = x;
-		//c.getVTranslation()[1] = y;
-		//c.getVTranslation()[2] = z;
+	    c.getVTranslation() = (Real)x;
 	}
 	
-	static void get(double& x, double& y, double& z, const Deriv& c)
+    template<typename T>
+	static void get(T& x, T& y, T& z, const Deriv& c)
 	{
-		x = c.getVTranslation();
-		y = 0; //c.getVTranslation()[1];
-		z = 0; //c.getVTranslation()[2];
+	    x = (T)c.getVTranslation();
+	    y = (T)0;
+	    z = (T)0;
 	}
 	
-	static void add(Deriv& c, double x, double, double)
+    template<typename T>
+	static void add(Deriv& c, T x, T, T)
 	{
-		c.getVTranslation() += x;
-		//c.getVTranslation()[1] += y;
-		//c.getVTranslation()[2] += z;
+	    c.getVTranslation() += (T)x;
 	}
 	static const char* Name()
 	{
 	   return "LaparoscopicRigid3";
+	}
+
+	static Coord interpolate(const helper::vector< Coord > &ancestors, const helper::vector< Real > &coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Coord c;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			c += ancestors[i] * coefs[i];
+		}
+
+		return c;
+	}
+
+	static Deriv interpolate(const helper::vector< Deriv > &ancestors, const helper::vector< Real > &coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Deriv d;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			d += ancestors[i] * coefs[i];
+		}
+
+		return d;
 	}
 };
 
@@ -326,9 +357,9 @@ public:
 	static void setValue(LaparoscopicRigidTypes::Coord &type, unsigned int index, const T& value ) 
 	{ 
 		if (index < 1)
-			type.getTranslation() = static_cast<double>(value);
+		  type.getTranslation() = static_cast<LaparoscopicRigidTypes::Coord::value_type>(value);
 		else
-			type.getOrientation()[index-1] = static_cast<double>(value);
+		  type.getOrientation()[index-1] = static_cast<LaparoscopicRigidTypes::Coord::value_type>(value);
 	}
 };
 
@@ -351,9 +382,9 @@ public:
 	static void setValue(LaparoscopicRigidTypes::Deriv &type, unsigned int index, const T& value ) 
 	{ 
 		if (index < 1)
-			type.getVTranslation() = static_cast<double>(value);
+		  type.getVTranslation() = static_cast<LaparoscopicRigidTypes::Deriv::value_type>(value);
 		else
-			type.getVOrientation()[index-1] = static_cast<double>(value);
+		  type.getVOrientation()[index-1] = static_cast<LaparoscopicRigidTypes::Deriv::value_type>(value);
 	}
 };
 
@@ -372,22 +403,22 @@ namespace behavior {
 	inline defaulttype::LaparoscopicRigid3Types::Deriv inertiaForce<
 	defaulttype::LaparoscopicRigid3Types::Coord,
 	defaulttype::LaparoscopicRigid3Types::Deriv,
-	objectmodel::BaseContext::Vec3,
+	defaulttype::Vector3,
 	defaulttype::Rigid3Mass,
 	objectmodel::BaseContext::SpatialVector
 	>
 	(
 	const objectmodel::BaseContext::SpatialVector& vframe,
-	const objectmodel::BaseContext::Vec3& aframe,
+	const defaulttype::Vector3& aframe,
 	const defaulttype::Rigid3Mass& mass,
 	const defaulttype::LaparoscopicRigid3Types::Coord& x,
 	const defaulttype::LaparoscopicRigid3Types::Deriv& v )
 	{
-		defaulttype::Rigid3Types::Vec3 omega( vframe.lineVec[0], vframe.lineVec[1], vframe.lineVec[2] );
-		defaulttype::Rigid3Types::Vec3 origin, finertia, zero(0,0,0);
+		defaulttype::Vector3 omega( vframe.lineVec[0], vframe.lineVec[1], vframe.lineVec[2] );
+		defaulttype::Vector3 origin, finertia, zero(0,0,0);
 		origin[0] = x.getTranslation();
 		
-		finertia = -( aframe + omega.cross( omega.cross(origin) + defaulttype::Rigid3Types::Vec3(v.getVTranslation()*2,0,0) ))*mass.mass;
+		finertia = -( aframe + omega.cross( omega.cross(origin) + defaulttype::Vector3(v.getVTranslation()*2,0,0) ))*mass.mass;
 		return defaulttype::LaparoscopicRigid3Types::Deriv( finertia[0], zero );
 		/// \todo replace zero by Jomega.cross(omega)
 	}

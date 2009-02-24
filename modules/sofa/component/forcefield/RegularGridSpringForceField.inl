@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_REGULARGRIDSPRINGFORCEFIELD_INL
 #define SOFA_COMPONENT_FORCEFIELD_REGULARGRIDSPRINGFORCEFIELD_INL
 
@@ -32,11 +56,7 @@ void RegularGridSpringForceField<DataTypes>::init()
 	}
 	if (this->mstate1==this->mstate2)
 	{
-		topology = dynamic_cast<topology::RegularGridTopology*>(this->mstate1->getContext()->getTopology());
-		if (topology != NULL)
-		{
-			trimmedTopology = dynamic_cast<topology::FittedRegularGridTopology*>(topology);
-		}
+		topology = dynamic_cast<topology::RegularGridTopology*>(this->mstate1->getContext()->getMeshTopology());
 	}
 	this->StiffSpringForceField<DataTypes>::init();
 }
@@ -78,12 +98,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y  ,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y  ,z-1) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z-1))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x+1,y,z);
 							this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring);
@@ -96,12 +110,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x  ,y,z-1) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z-1))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y+1,z);
                                                         this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring);
@@ -114,12 +122,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x  ,y-1,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y-1,z))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y,z+1);
                                                         this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring);
@@ -143,10 +145,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y,z-1))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y+1,z);
                                                         this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring1);
@@ -167,10 +165,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y,z+1);
                                                         this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring1);
@@ -191,10 +185,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x,y+1,z+1);
                                                         this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring1);
@@ -229,9 +219,6 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y,z))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y+1,z+1);
                                                         this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, index++, spring1);
@@ -251,10 +238,10 @@ void RegularGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2
 }
 
 template<class DataTypes>
-void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2)
+void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2, double kFactor, double bFactor)
 {
 	// Calc any custom springs
-	this->StiffSpringForceField<DataTypes>::addDForce(df1, df2, dx1, dx2);
+    this->StiffSpringForceField<DataTypes>::addDForce(df1, df2, dx1, dx2, kFactor, bFactor);
 	// Compute topological springs
         const helper::vector<Spring>& springs = this->springs.getValue();
         if (this->mstate1==this->mstate2)
@@ -276,15 +263,9 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y  ,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y  ,z-1) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z-1))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x+1,y,z);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring); 
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring, kFactor, bFactor);
 						}
 				// lines along Y
 				spring.initpos = topology->getDy().norm();
@@ -294,15 +275,9 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x  ,y,z-1) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z-1))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y+1,z);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring, kFactor, bFactor);
 						}
 				// lines along Z
 				spring.initpos = topology->getDz().norm();
@@ -312,15 +287,9 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x  ,y-1,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y-1,z))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring, kFactor, bFactor);
 						}
 				
 			}
@@ -341,16 +310,12 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y,z-1))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y+1,z);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1, kFactor, bFactor);
 							spring2.m1 = topology->point(x+1,y,z);
 							spring2.m2 = topology->point(x,y+1,z);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2, kFactor, bFactor);
 						}
 				// quads along XZ plane
 				// lines (x,y,z) -> (x+1,y,z+1)
@@ -365,16 +330,12 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1, kFactor, bFactor);
 							spring2.m1 = topology->point(x+1,y,z);
 							spring2.m2 = topology->point(x,y,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2, kFactor, bFactor);
 						}
 				// quads along YZ plane
 				// lines (x,y,z) -> (x,y+1,z+1)
@@ -389,16 +350,12 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x,y+1,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1, kFactor, bFactor);
 							spring2.m1 = topology->point(x,y+1,z);
 							spring2.m2 = topology->point(x,y,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2, kFactor, bFactor);
 						}
 			}
 			if (this->cubesStiffness.getValue() != 0.0 || this->cubesDamping.getValue() != 0.0)
@@ -427,21 +384,18 @@ void RegularGridSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& 
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y,z))
-								continue;
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y+1,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring1, kFactor, bFactor);
 							spring2.m1 = topology->point(x+1,y,z);
 							spring2.m2 = topology->point(x,y+1,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring2, kFactor, bFactor);
 							spring3.m1 = topology->point(x,y+1,z);
 							spring3.m2 = topology->point(x+1,y,z+1);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring3);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring3, kFactor, bFactor);
 							spring4.m1 = topology->point(x,y,z+1);
 							spring4.m2 = topology->point(x+1,y+1,z);
-							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring4);
+							this->addSpringDForce(df1,dx1,df2,dx2, index++, spring4, kFactor, bFactor);
 						}
 			}
 		}
@@ -483,12 +437,6 @@ void RegularGridSpringForceField<DataTypes>::draw()
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx-1; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x,y  ,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z  ) &&
-							    !trimmedTopology->isCubeActive(x,y  ,z-1) &&
-							    !trimmedTopology->isCubeActive(x,y-1,z-1))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x+1,y,z);
 							helper::gl::glVertexT(p1[spring.m1]);
@@ -502,12 +450,6 @@ void RegularGridSpringForceField<DataTypes>::draw()
 					for (int y=0; y<ny-1; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z  ) &&
-							    !trimmedTopology->isCubeActive(x  ,y,z-1) &&
-							    !trimmedTopology->isCubeActive(x-1,y,z-1))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y+1,z);
 							helper::gl::glVertexT(p1[spring.m1]);
@@ -521,12 +463,6 @@ void RegularGridSpringForceField<DataTypes>::draw()
 					for (int y=0; y<ny; y++)
 						for (int x=0; x<nx; x++)
 						{
-							if (trimmedTopology != NULL &&
-							    !trimmedTopology->isCubeActive(x  ,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y  ,z) &&
-							    !trimmedTopology->isCubeActive(x  ,y-1,z) &&
-							    !trimmedTopology->isCubeActive(x-1,y-1,z))
-								continue;
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y,z+1);
 							helper::gl::glVertexT(p1[spring.m1]);

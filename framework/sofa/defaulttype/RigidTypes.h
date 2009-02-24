@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_DEFAULTTYPE_RIGIDTYPES_H
 #define SOFA_DEFAULTTYPE_RIGIDTYPES_H
 
@@ -115,19 +117,27 @@ public:
         return d;
     }
 
-    void operator*=(double a)
+    template<typename real2>
+    void operator*=(real2 a)
     {
         vCenter *= a;
         vOrientation *= a;
     }
 
+    RigidDeriv<3,real> operator*(float a) const
+    {
+        RigidDeriv r = *this;
+        r*=a;
+        return r;
+    }
+    
     RigidDeriv<3,real> operator*(double a) const
     {
         RigidDeriv r = *this;
         r*=a;
         return r;
     }
-
+    
     RigidDeriv<3,real> operator - () const 
     {
         return RigidDeriv(-vCenter, -vOrientation);
@@ -140,7 +150,7 @@ public:
 
 
     /// dot product, mostly used to compute residuals as sqrt(x*x)
-    double operator*(const RigidDeriv<3,real>& a) const
+    Real operator*(const RigidDeriv<3,real>& a) const
     {
         return vCenter[0]*a.vCenter[0]+vCenter[1]*a.vCenter[1]+vCenter[2]*a.vCenter[2]
             +vOrientation[0]*a.vOrientation[0]+vOrientation[1]*a.vOrientation[1]
@@ -170,7 +180,12 @@ public:
         return in;
     }
 
-	static unsigned int size(){return 6;};
+    enum { static_size = 3 };
+    
+    real* ptr() { return vCenter.ptr(); }
+    const real* ptr() const { return vCenter.ptr(); }
+    
+	static unsigned int size(){return 6;}
 
 	/// Access to i-th element.
     real& operator[](int i)
@@ -253,41 +268,62 @@ public:
         return c;
     }
 
-	RigidCoord<3,real> operator -(const RigidCoord<3,real>& a) const
+    RigidCoord<3,real> operator -(const RigidCoord<3,real>& a) const
     {
         return RigidCoord<3,real>(this->center - a.getCenter(), a.orientation.inverse() * this->orientation);
     }
     
     void operator +=(const RigidCoord<3,real>& a)
     {
-        //std::cout << "+="<<std::endl;
         center += a.getCenter();
-        //orientation += a.getOrientation();
-        //orientation.normalize();
+	//	orientation += a.getOrientation();
+	//	orientation.normalize();
     }
     
-    void operator*=(double a)
+    template<typename real2>
+    void operator*=(real2 a)
     {
         //std::cout << "*="<<std::endl;
         center *= a;
         //orientation *= a;
     }
     
-    RigidCoord<3,real> operator*(double a) const
+    template<typename real2>
+    RigidCoord<3,real> operator*(real2 a) const
     {
         RigidCoord r = *this;
         r*=a;
         return r;
     }
     
+
+
+
+
     /// dot product, mostly used to compute residuals as sqrt(x*x)
-    double operator*(const RigidCoord<3,real>& a) const
+    Real operator*(const RigidCoord<3,real>& a) const
     {
         return center[0]*a.center[0]+center[1]*a.center[1]+center[2]*a.center[2]
             +orientation[0]*a.orientation[0]+orientation[1]*a.orientation[1]
             +orientation[2]*a.orientation[2]+orientation[3]*a.orientation[3];
     }
-    
+
+    /// Squared norm
+    real norm2() const
+    {
+        real r = (this->center).elems[0]*(this->center).elems[0];
+        for (int i=1;i<3;i++)
+            r += (this->center).elems[i]*(this->center).elems[i];
+        return r;
+    }
+
+    /// Euclidean norm
+    real norm() const
+    {
+        return helper::rsqrt(norm2());
+    }
+
+
     Vec3& getCenter () { return center; }
     Quat& getOrientation () { return orientation; }
     const Vec3& getCenter () const { return center; }
@@ -370,7 +406,10 @@ public:
 	}
 	enum { static_size = 3 };
 
-	static unsigned int size(){return 7;};
+    real* ptr() { return center.ptr(); }
+    const real* ptr() const { return center.ptr(); }
+
+	static unsigned int size(){return 7;}
 
 	/// Access to i-th element.
     real& operator[](int i)
@@ -415,6 +454,11 @@ public:
         mass = m;
         recalc();
     }
+	// operator to cast to const Real
+	operator const Real() const
+	{
+		return mass;
+	}
     void recalc()
     {
         inertiaMassMatrix = inertiaMatrix * mass;
@@ -495,42 +539,48 @@ public:
     typedef vector<Deriv> VecDeriv;
     typedef vector<Real> VecReal;
 
-    static void set(Coord& c, double x, double y, double z)
+    template<typename T>
+    static void set(Coord& c, T x, T y, T z)
     {
         c.getCenter()[0] = (Real)x;
         c.getCenter()[1] = (Real)y;
         c.getCenter()[2] = (Real)z;
     }
     
-    static void get(double& x, double& y, double& z, const Coord& c)
+    template<typename T>
+    static void get(T& x, T& y, T& z, const Coord& c)
     {
-        x = c.getCenter()[0];
-        y = c.getCenter()[1];
-        z = c.getCenter()[2];
+        x = (T)c.getCenter()[0];
+        y = (T)c.getCenter()[1];
+        z = (T)c.getCenter()[2];
     }
     
-    static void add(Coord& c, double x, double y, double z)
+    template<typename T>
+    static void add(Coord& c, T x, T y, T z)
     {
         c.getCenter()[0] += (Real)x;
         c.getCenter()[1] += (Real)y;
         c.getCenter()[2] += (Real)z;
     }
     
-    static void set(Deriv& c, double x, double y, double z)
+    template<typename T>
+    static void set(Deriv& c, T x, T y, T z)
     {
         c.getVCenter()[0] = (Real)x;
         c.getVCenter()[1] = (Real)y;
         c.getVCenter()[2] = (Real)z;
     }
     
-    static void get(double& x, double& y, double& z, const Deriv& c)
+    template<typename T>
+    static void get(T& x, T& y, T& z, const Deriv& c)
     {
-        x = c.getVCenter()[0];
-        y = c.getVCenter()[1];
-        z = c.getVCenter()[2];
+        x = (T)c.getVCenter()[0];
+        y = (T)c.getVCenter()[1];
+        z = (T)c.getVCenter()[2];
     }
     
-    static void add(Deriv& c, double x, double y, double z)
+    template<typename T>
+    static void add(Deriv& c, T x, T y, T z)
     {
         c.getVCenter()[0] += (Real)x;
         c.getVCenter()[1] += (Real)y;
@@ -538,23 +588,84 @@ public:
     }
     
     static const char* Name();
+
+	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Coord c;
+
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			// Position interpolation.
+			c.getCenter() += ancestors[i].getCenter() * coefs[i];
+
+			// Angle extraction from the orientation quaternion.
+			helper::Quater<Real> q = ancestors[i].getOrientation();
+			Real angle = acos(q[3]) * 2;
+
+			// Axis extraction from the orientation quaternion.
+			defaulttype::Vec<3,Real> v(q[0], q[1], q[2]);
+			Real norm = v.norm();
+			if (norm > 0.0005)
+			{
+				v.normalize();
+
+				// The scale factor is applied to the angle
+				angle *= coefs[i];
+
+				// Corresponding quaternion is computed, then added to the interpolated point orientation.
+				q.axisToQuat(v, angle);
+				q.normalize();
+
+				c.getOrientation() += q;
+			}			
+		}
+		
+		c.getOrientation().normalize();
+		
+		return c;
+	}
+
+	static Deriv interpolate(const helper::vector< Deriv > & ancestors, const helper::vector< Real > & coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Deriv d;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			d += ancestors[i] * coefs[i];
+		}
+
+		return d;
+	}
 };
 
 typedef StdRigidTypes<3,double> Rigid3dTypes;
 typedef StdRigidTypes<3,float> Rigid3fTypes;
-typedef Rigid3dTypes Rigid3Types;
-typedef Rigid3Types RigidTypes;
 
 typedef RigidMass<3,double> Rigid3dMass;
 typedef RigidMass<3,float> Rigid3fMass;
-typedef Rigid3dMass Rigid3Mass;
 //typedef Rigid3Mass RigidMass;
 
 /// Note: Many scenes use Rigid as template for 3D double-precision rigid type. Changing it to Rigid3d would break backward compatibility.
+#ifdef SOFA_FLOAT
+template<> inline const char* Rigid3dTypes::Name() { return "Rigid3d"; }
+template<> inline const char* Rigid3fTypes::Name() { return "Rigid"; }
+#else
 template<> inline const char* Rigid3dTypes::Name() { return "Rigid"; }
 template<> inline const char* Rigid3fTypes::Name() { return "Rigid3f"; }
+#endif
 
-
+#ifdef SOFA_FLOAT
+typedef Rigid3fTypes Rigid3Types;
+typedef Rigid3fMass Rigid3Mass;
+#else
+typedef Rigid3dTypes Rigid3Types;
+typedef Rigid3dMass Rigid3Mass;
+#endif
+typedef Rigid3Types RigidTypes;
 //=============================================================================
 // 2D Rigids
 //=============================================================================
@@ -592,26 +703,34 @@ public:
         return d;
     }
 
-    void operator*=(double a)
+    template<typename real2>
+    void operator*=(real2 a)
     {
-        vCenter *= (Real)a;
+        vCenter *= a;
         vOrientation *= (Real)a;
     }
 
+    RigidDeriv<2,real> operator*(float a) const
+    {
+        RigidDeriv<2,real> r = *this;
+        r *= a;
+        return r;
+    }
+    
     RigidDeriv<2,real> operator*(double a) const
     {
         RigidDeriv<2,real> r = *this;
-        r *= (Real)a;
+        r *= a;
         return r;
     }
-
+    
     RigidDeriv<2,real> operator - () const
     {
         return RigidDeriv<2,real>(-vCenter, -vOrientation);
     }
 
     /// dot product, mostly used to compute residuals as sqrt(x*x)
-    double operator*(const RigidDeriv<2,real>& a) const
+    Real operator*(const RigidDeriv<2,real>& a) const
     {
         return vCenter[0]*a.vCenter[0]+vCenter[1]*a.vCenter[1]
             +vOrientation*a.vOrientation;
@@ -634,7 +753,12 @@ public:
         return in;
     }
 
-	static unsigned int size(){return 3;};
+    enum { static_size = 2 };
+    
+    real* ptr() { return vCenter.ptr(); }
+    const real* ptr() const { return vCenter.ptr(); }
+
+	static unsigned int size(){return 3;}
 
 	/// Access to i-th element.
     real& operator[](int i)
@@ -686,6 +810,11 @@ public:
         return c;
     }
 
+    RigidCoord<2,real> operator -(const RigidCoord<2,real>& a) const
+    {
+        return RigidCoord<2,real>(this->center - a.getCenter(), this->orientation - a.orientation);
+    }
+
     void operator +=(const RigidCoord<2,real>& a)
     {
 //         std::cout << "+="<<std::endl;
@@ -693,25 +822,39 @@ public:
         orientation += a.getOrientation();
     }
 
-    void operator*=(double a)
+    template<typename real2>
+    void operator*=(real2 a)
     {
 //         std::cout << "*="<<std::endl;
-        center *= (Real)a;
+        center *= a;
         orientation *= (Real)a;
     }
 
-    RigidCoord<2,real> operator*(double a) const
+    template<typename real2>
+    RigidCoord<2,real> operator*(real2 a) const
     {
         RigidCoord<2,real> r = *this;
-        r *= (Real)a;
+        r *= a;
         return r;
     }
 
     /// dot product, mostly used to compute residuals as sqrt(x*x)
-    double operator*(const RigidCoord<2,real>& a) const
+    Real operator*(const RigidCoord<2,real>& a) const
     {
         return center[0]*a.center[0]+center[1]*a.center[1]
             +orientation*a.orientation;
+    }
+
+    /// Squared norm
+    real norm2() const
+    {
+        return center[0]*center[0]+center[1]*center[1];
+    }
+
+    /// Euclidean norm
+    real norm() const
+    {
+        return helper::rsqrt(norm2());
     }
 
     Vec2& getCenter () { return center; }
@@ -744,7 +887,7 @@ public:
     void multRight( const RigidCoord<2,real>& c )
     {
         center += /*orientation.*/rotate(c.getCenter());
-        orientation = orientation * c.getOrientation();
+        orientation = orientation + c.getOrientation();
     }
 
     /// compute the product with another frame on the right
@@ -752,7 +895,7 @@ public:
     {
         RigidCoord<2,real> r;
         r.center = center + /*orientation.*/rotate( c.center );
-        r.orientation = orientation * c.getOrientation();
+        r.orientation = orientation + c.getOrientation();
         return r;
     }
 
@@ -826,9 +969,13 @@ public:
     {
         return 3;
     }
-    enum { static_size = 3 };
 
-	static unsigned int size(){return 3;};
+    enum { static_size = 2 };
+    
+    real* ptr() { return center.ptr(); }
+    const real* ptr() const { return center.ptr(); }
+
+	static unsigned int size(){return 3;}
 
 	/// Access to i-th element.
     real& operator[](int i)
@@ -872,6 +1019,11 @@ public:
         mass = m;
         recalc();
     }
+	// operator to cast to const Real
+	operator const Real() const
+	{
+		return mass;
+	}
     /// Mass for a circle
     RigidMass(Real m, Real radius)
     {
@@ -953,57 +1105,96 @@ public:
     
     typedef	vector<SparseVecDeriv> VecConst;
     
-    static void set(Coord& c, double x, double y, double)
+    template<typename T>
+    static void set(Coord& c, T x, T y, T)
     {
         c.getCenter()[0] = (Real)x;
         c.getCenter()[1] = (Real)y;
     }
 
-    static void get(double& x, double& y, double& z, const Coord& c)
+    template<typename T>
+    static void get(T& x, T& y, T& z, const Coord& c)
     {
-        x = c.getCenter()[0];
-        y = c.getCenter()[1];
-        z = 0;
+        x = (T)c.getCenter()[0];
+        y = (T)c.getCenter()[1];
+        z = (T)0;
     }
 
-    static void add(Coord& c, double x, double y, double)
+    template<typename T>
+    static void add(Coord& c, T x, T y, T)
     {
         c.getCenter()[0] += (Real)x;
         c.getCenter()[1] += (Real)y;
     }
 
-    static void set(Deriv& c, double x, double y, double)
+    template<typename T>
+    static void set(Deriv& c, T x, T y, T)
     {
         c.getVCenter()[0] = (Real)x;
         c.getVCenter()[1] = (Real)y;
     }
 
-    static void get(double& x, double& y, double& z, const Deriv& c)
+    template<typename T>
+    static void get(T& x, T& y, T& z, const Deriv& c)
     {
-        x = c.getVCenter()[0];
-        y = c.getVCenter()[1];
-        z = 0;
+        x = (T)c.getVCenter()[0];
+        y = (T)c.getVCenter()[1];
+        z = (T)0;
     }
 
-    static void add(Deriv& c, double x, double y, double)
+    template<typename T>
+    static void add(Deriv& c, T x, T y, T)
     {
         c.getVCenter()[0] += (Real)x;
         c.getVCenter()[1] += (Real)y;
     }
 
+	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Coord c;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			c += ancestors[i] * coefs[i];
+		}
+
+		return c;
+	}
+
+	static Deriv interpolate(const helper::vector< Deriv > & ancestors, const helper::vector< Real > & coefs)
+	{
+		assert(ancestors.size() == coefs.size());
+			
+		Deriv d;
+		
+		for (unsigned int i = 0; i < ancestors.size(); i++)
+		{
+			d += ancestors[i] * coefs[i];
+		}
+
+		return d;
+	}
+
 };
 
 typedef StdRigidTypes<2,double> Rigid2dTypes;
 typedef StdRigidTypes<2,float> Rigid2fTypes;
-typedef Rigid2dTypes Rigid2Types;
 
 typedef RigidMass<2,double> Rigid2dMass;
 typedef RigidMass<2,float> Rigid2fMass;
-typedef Rigid2dMass Rigid2Mass;
 
 template<> inline const char* Rigid2dTypes::Name() { return "Rigid2d"; }
 template<> inline const char* Rigid2fTypes::Name() { return "Rigid2f"; }
 
+#ifdef SOFA_FLOAT
+typedef Rigid2fTypes Rigid2Types;
+typedef Rigid2fMass Rigid2Mass;
+#else
+typedef Rigid2dTypes Rigid2Types;
+typedef Rigid2dMass Rigid2Mass;
+#endif
 } // namespace defaulttype
 
 namespace core
@@ -1086,13 +1277,13 @@ namespace objectmodel
 /// \cond TEMPLATE_OVERRIDES
 
 template<>
-inline std::string BaseData::typeName< defaulttype::Quat >(const defaulttype::Quat *) { return "Quat"; }
+inline std::string BaseData::typeName< defaulttype::Quatd >(const defaulttype::Quatd *) { return "Quatd"; }
 
 template<>
-inline std::string BaseData::typeName< std::vector< defaulttype::Quat > >(const std::vector< defaulttype::Quat > *) { return "vector<Quat>"; }
+inline std::string BaseData::typeName< std::vector< defaulttype::Quatd > >(const std::vector< defaulttype::Quatd > *) { return "vector<Quatd>"; }
 
 template<>
-inline std::string BaseData::typeName< helper::vector< defaulttype::Quat > >(const helper::vector< defaulttype::Quat > *) { return "vector<Quat>"; }
+inline std::string BaseData::typeName< helper::vector< defaulttype::Quatd > >(const helper::vector< defaulttype::Quatd > *) { return "vector<Quatd>"; }
 
 template<>
 inline std::string BaseData::typeName< defaulttype::Quatf >(const defaulttype::Quatf *) { return "Quatf"; }

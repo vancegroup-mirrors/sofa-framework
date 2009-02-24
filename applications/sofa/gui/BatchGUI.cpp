@@ -1,3 +1,29 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "BatchGUI.h"
 #include <sofa/simulation/tree/Simulation.h>
 
@@ -40,13 +66,13 @@ int BatchGUI::closeGUI()
     return 0;
 }
 
-void BatchGUI::setScene(sofa::simulation::tree::GNode* groot, const char* filename)
+void BatchGUI::setScene(sofa::simulation::Node* groot, const char* filename)
 {
     this->groot = groot;
     this->filename = (filename?filename:"");
 }
 
-sofa::simulation::tree::GNode* BatchGUI::currentSimulation()
+sofa::simulation::Node* BatchGUI::currentSimulation()
 {
     return groot;
 }
@@ -59,7 +85,7 @@ int BatchGUI::InitGUI(const char* /*name*/, const std::vector<std::string>& /*op
     return 0;
 }
 
-SofaGUI* BatchGUI::CreateGUI(const char* /*name*/, const std::vector<std::string>& /*options*/, sofa::simulation::tree::GNode* groot, const char* filename)
+SofaGUI* BatchGUI::CreateGUI(const char* /*name*/, const std::vector<std::string>& /*options*/, sofa::simulation::Node* groot, const char* filename)
 {
     BatchGUI* gui = new BatchGUI();
     gui->setScene(groot, filename);

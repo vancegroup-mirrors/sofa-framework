@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_OBJECTMODEL_BASE_H
 #define SOFA_CORE_OBJECTMODEL_BASE_H
 
@@ -179,7 +181,7 @@ public:
     }
     /// Helper method used to initialize a field containing a value of type T
     template<class T>
-    Data<T> initData( Data<T>* field, const char* name, const char* help )
+    Data<T> initData( Data<T>* field, const char* name, const char* help, bool isDisplayed=true )
     {
         std::string ln(name);
         if( ln.size()>0 && findField(ln)!=m_fieldVec.size() )
@@ -189,12 +191,12 @@ public:
         }
         //field = tmp;
 	m_fieldVec.push_back( std::make_pair(ln,field));
-        return Data<T>(help);
+	return Data<T>(help,isDisplayed);
     }
     
     /// Helper method used to initialize a field containing a value of type T
     template<class T>
-    Data<T> initData( Data<T>* field, const T& value, const char* name, const char* help )
+	Data<T> initData( Data<T>* field, const T& value, const char* name, const char* help, bool isDisplayed=true  )
     {
         std::string ln(name);
         if( ln.size()>0 && findField(ln)!=m_fieldVec.size()  )
@@ -204,12 +206,12 @@ public:
         }
         //field = tmp;
 	m_fieldVec.push_back( std::make_pair(ln,field));
-        return Data<T>(value,help);
+        return Data<T>(value,help,isDisplayed);
     }
     
     /// Helper method used to initialize a field pointing to a value of type T
     template<class T>
-    DataPtr<T> initDataPtr( DataPtr<T>* field, T* ptr, const char* name, const char* help )
+	DataPtr<T> initDataPtr( DataPtr<T>* field, T* ptr, const char* name, const char* help, bool isDisplayed=true  )
     {
         std::string ln(name);
         if( ln.size()>0 && findField(ln)!=m_fieldVec.size() )
@@ -219,7 +221,7 @@ public:
         }
         //field = tmp;
 	m_fieldVec.push_back( std::make_pair(ln,field));
-        return DataPtr<T>(ptr,help);
+	return DataPtr<T>(ptr,help,isDisplayed);
     }
 
 

@@ -17,14 +17,14 @@ macx : {
 #	QMAKE_POST_LINK = cp -r ../../../share/* ../../../bin/runSofa$$SUFFIX.app/Contents/Resources/.
 }
 
-# The following is a workaround to get KDevelop to detect the name of the program to start
 unix {
+        # The following is a workaround to get KDevelop to detect the name of the program to start
 	!macx: QMAKE_POST_LINK = ln -sf runSofa$$SUFFIX $$DESTDIR/runSofa-latest
 }
 
-# The following create enables to start runSofa from the command line as well as graphically
 macx {
-	QMAKE_POST_LINK = ln -sf runSofa.app/Contents/MacOS/runSofa$$SUFFIX $$DESTDIR/runSofa$$SUFFIX
+        # The following create enables to start the program from the command line as well as graphically
+	QMAKE_POST_LINK = ln -sf "$$TARGET".app/Contents/MacOS/"$$TARGET" $$DESTDIR/"$$TARGET" ;
 }
 
 !macx : RC_FILE = sofa.rc

@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MASS_UNIFORMMASS_INL
 #define SOFA_COMPONENT_MASS_UNIFORMMASS_INL
 
@@ -30,8 +30,11 @@
 #include <sofa/core/objectmodel/Context.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
-//#include <sofa/defaulttype/SolidTypes.h>
+#include <sofa/defaulttype/DataTypeInfo.h>
+#include <sofa/component/mass/AddMToMatrixFunctor.h>
 #include <iostream>
+#include <string.h> 
+
 using std::cerr;
 using std::endl;
 
@@ -51,6 +54,8 @@ template <class DataTypes, class MassType>
 UniformMass<DataTypes, MassType>::UniformMass()
 : mass( initData(&mass, MassType(1.0f), "mass", "Mass of each particle") )
 , totalMass( initData(&totalMass, 0.0, "totalmass", "Sum of the particles' masses") )
+, showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
+, showAxisSize( initData(&showAxisSize, 1.0f, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
 {}
 
 template <class DataTypes, class MassType>
@@ -72,7 +77,7 @@ void UniformMass<DataTypes, MassType>::setTotalMass(double m)
 template <class DataTypes, class MassType>
 void UniformMass<DataTypes, MassType>::init()
 {
-    this->core::componentmodel::behavior::Mass<DataTypes>::init();
+	this->core::componentmodel::behavior::Mass<DataTypes>::init();
     if (this->totalMass.getValue()>0 && this->mstate!=NULL)
     {
         MassType* m = this->mass.beginEdit();
@@ -83,7 +88,7 @@ void UniformMass<DataTypes, MassType>::init()
 
 // -- Mass interface
 template <class DataTypes, class MassType>
-void UniformMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
+    void UniformMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
 {
     MassType m = mass.getValue();
     if (factor != 1.0)
@@ -106,7 +111,7 @@ void UniformMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f)
 
 
 template <class DataTypes, class MassType>
-void UniformMass<DataTypes, MassType>::addMDxToVector(defaulttype::BaseVector * /*resVect*/, const VecDeriv* /*dx*/, double /*mFact*/, unsigned int& /*offset*/)
+    void UniformMass<DataTypes, MassType>::addMDxToVector(defaulttype::BaseVector * /*resVect*/, const VecDeriv* /*dx*/, SReal /*mFact*/, unsigned int& /*offset*/)
 {
 
 }
@@ -116,11 +121,12 @@ void UniformMass<DataTypes, MassType>::addGravityToV(double dt)
 {
 	if (this->mstate){
 		VecDeriv& v = *this->mstate->getV();
-		const double* g = this->getContext()->getLocalGravity().ptr();
+		const SReal* g = this->getContext()->getLocalGravity().ptr();
 		Deriv theGravity;
 		DataTypes::set( theGravity, g[0], g[1], g[2]);
-		Deriv hg = theGravity * dt;
-
+		Deriv hg = theGravity * (Real)dt;
+		if (this->f_printLog.getValue())
+		    std::cerr << "UniformMass::addGravityToV hg = "<<theGravity<<"*"<<dt<<"="<<hg<<std::endl;
 		for (unsigned int i=0;i<v.size();i++)   {
 			v[i] += hg;
 		}
@@ -139,13 +145,14 @@ void UniformMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& /*x
 		return;
 
     // weight
-    const double* g = this->getContext()->getLocalGravity().ptr();
+    const SReal* g = this->getContext()->getLocalGravity().ptr();
     Deriv theGravity;
     DataTypes::set
         ( theGravity, g[0], g[1], g[2]);
     const MassType& m = mass.getValue();
     Deriv mg = theGravity * m;
-	//cerr<<"UniformMass<DataTypes, MassType>::addForce, mg = "<<mass<<" * "<<theGravity<<" = "<<mg<<endl;
+    if (this->f_printLog.getValue())
+	cerr<<"UniformMass::addForce, mg = "<<mass<<" * "<<theGravity<<" = "<<mg<<endl;
 
 #ifdef SOFA_SUPPORT_MOVING_FRAMES
     // velocity-based stuff
@@ -178,7 +185,7 @@ void UniformMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& /*x
 }
 
 template <class DataTypes, class MassType>
-        double UniformMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v )
+    double UniformMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v )
 {
     double e=0;
     const MassType& m = mass.getValue();
@@ -191,7 +198,7 @@ template <class DataTypes, class MassType>
 }
 
 template <class DataTypes, class MassType>
-        double UniformMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x )
+    double UniformMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x )
 {
     double e = 0;
     const MassType& m = mass.getValue();
@@ -212,6 +219,25 @@ template <class DataTypes, class MassType>
     return e;
 }
 
+/// Add Mass contribution to global Matrix assembling
+template <class DataTypes, class MassType>
+void UniformMass<DataTypes, MassType>::addMToMatrix(defaulttype::BaseMatrix * mat, double mFact, unsigned int &offset)
+{
+    const MassType& m = mass.getValue();
+    const int N = defaulttype::DataTypeInfo<Deriv>::size();
+    const unsigned int size = this->mstate->getSize();
+    AddMToMatrixFunctor<Deriv,MassType> calc;
+    for (unsigned int i=0;i<size;i++)
+        calc(mat, m, offset + N*i, mFact);
+}
+
+
+template <class DataTypes, class MassType>
+    double UniformMass<DataTypes, MassType>::getElementMass(unsigned int )
+{
+  return (double)(mass.getValue());
+}
+
 
 template <class DataTypes, class MassType>
 void UniformMass<DataTypes, MassType>::draw()
@@ -219,6 +245,8 @@ void UniformMass<DataTypes, MassType>::draw()
     if (!getContext()->getShowBehaviorModels())
         return;
     const VecCoord& x = *this->mstate->getX();
+    //cerr<<"UniformMass<DataTypes, MassType>::draw() "<<x<<endl;
+	Coord gravityCenter;
     glDisable (GL_LIGHTING);
     glPointSize(2);
     glColor4f (1,1,1,1);
@@ -226,18 +254,32 @@ void UniformMass<DataTypes, MassType>::draw()
     for (unsigned int i=0; i<x.size(); i++)
     {
         helper::gl::glVertexT(x[i]);
+		gravityCenter += x[i];
     }
     glEnd();
+
+	if(showCenterOfGravity.getValue()){
+		glBegin (GL_LINES);
+		glColor4f (1,1,0,1);
+		gravityCenter /= x.size();
+		for(unsigned int i=0 ; i<Coord::static_size ; i++){
+			Coord v;
+			v[i] = showAxisSize.getValue();
+			helper::gl::glVertexT(gravityCenter-v);
+			helper::gl::glVertexT(gravityCenter+v);
+		}
+		glEnd();
+	}
 }
 
 template <class DataTypes, class MassType>
-bool UniformMass<DataTypes, MassType>::addBBox(double* minBBox, double* maxBBox)
+    bool UniformMass<DataTypes, MassType>::addBBox(double* minBBox, double* maxBBox)
 {
 	const VecCoord& x = *this->mstate->getX();
 	for (unsigned int i=0; i<x.size(); i++)
 	{
 		//const Coord& p = x[i];
-		double p[3] = {0.0, 0.0, 0.0};
+		Real p[3] = {0.0, 0.0, 0.0};
 		DataTypes::get(p[0],p[1],p[2],x[i]);
 		for (int c=0;c<3;c++)
 		{
@@ -266,35 +308,37 @@ void UniformMass<DataTypes, MassType>::parse(core::objectmodel::BaseObjectDescri
 
 
 //Specialization for rigids
+#ifndef SOFA_FLOAT
 
 template<>
-void UniformMass<Rigid3dTypes, Rigid3dMass>::parse(core::objectmodel::BaseObjectDescription* arg);
+    void UniformMass<Rigid3dTypes, Rigid3dMass>::parse(core::objectmodel::BaseObjectDescription* arg);
+template <>
+    void UniformMass<Rigid3dTypes, Rigid3dMass>::draw();
+template <>
+    void UniformMass<Rigid2dTypes, Rigid2dMass>::draw();
+template <>
+    double UniformMass<Rigid3dTypes,Rigid3dMass>::getPotentialEnergy( const VecCoord& x );
+template <>
+    double UniformMass<Rigid2dTypes,Rigid2dMass>::getPotentialEnergy( const VecCoord& x );
+template <>
+    void UniformMass<Vec6dTypes,double>::draw();
+#endif
+#ifndef SOFA_DOUBLE
 template<>
-void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObjectDescription* arg);
-
+    void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObjectDescription* arg);
 template <>
-void UniformMass<Rigid3dTypes, Rigid3dMass>::draw();
+    void UniformMass<Rigid3fTypes, Rigid3fMass>::draw();
 template <>
-void UniformMass<Rigid3fTypes, Rigid3fMass>::draw();
+    void UniformMass<Rigid2fTypes, Rigid2fMass>::draw();
 template <>
-void UniformMass<Rigid2dTypes, Rigid2dMass>::draw();
+    double UniformMass<Rigid3fTypes,Rigid3fMass>::getPotentialEnergy( const VecCoord& x );
 template <>
-void UniformMass<Rigid2fTypes, Rigid2fMass>::draw();
-
+    double UniformMass<Rigid2fTypes,Rigid2fMass>::getPotentialEnergy( const VecCoord& x );
 template <>
-double UniformMass<Rigid3dTypes,Rigid3dMass>::getPotentialEnergy( const VecCoord& x );
-template <>
-double UniformMass<Rigid3fTypes,Rigid3fMass>::getPotentialEnergy( const VecCoord& x );
-template <>
-double UniformMass<Rigid2dTypes,Rigid2dMass>::getPotentialEnergy( const VecCoord& x );
-template <>
-double UniformMass<Rigid2fTypes,Rigid2fMass>::getPotentialEnergy( const VecCoord& x );
+    void UniformMass<Vec6fTypes,float>::draw();
+#endif
 
 
-template <>
-void UniformMass<Vec6fTypes,float>::draw();
-template <>
-void UniformMass<Vec6dTypes,double>::draw();
 
 } // namespace mass
 

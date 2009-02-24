@@ -1,33 +1,34 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/forcefield/TriangularBiquadraticSpringsForceField.h>
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
 #include <sofa/helper/gl/template.h>
 #include <sofa/component/topology/TriangleData.inl>
 #include <sofa/component/topology/EdgeData.inl>
+#include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
 
 
 namespace sofa
@@ -47,6 +48,12 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
+using core::componentmodel::topology::BaseMeshTopology;
+
+typedef BaseMeshTopology::Triangle			Triangle;
+typedef BaseMeshTopology::TriangleEdges		TriangleEdges;
+
+
 template< class DataTypes>
 void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSEdgeCreationFunction(int edgeIndex, void* param, EdgeRestInformation &ei,
 							const Edge& ,  const sofa::helper::vector< unsigned int > &,
@@ -54,12 +61,12 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSEdgeCreationFunction
 {
 	TriangularBiquadraticSpringsForceField<DataTypes> *ff= (TriangularBiquadraticSpringsForceField<DataTypes> *)param;
 	if (ff) {
-		TriangleSetTopology<DataTypes> *_mesh=ff->getTriangularTopology();
-		assert(_mesh!=0);
-		TriangleSetGeometryAlgorithms<DataTypes> *ga=_mesh->getTriangleSetGeometryAlgorithms();
+		
+		sofa::component::topology::TriangleSetGeometryAlgorithms<DataTypes>* triangleGeo; 
+		ff->getContext()->get(triangleGeo);			
 
 		// store the rest length of the edge created 
-		ei.restSquareLength=ga->computeRestSquareEdgeLength(edgeIndex);
+		ei.restSquareLength=triangleGeo->computeRestSquareEdgeLength(edgeIndex);
 		ei.stiffness=0;
 	}
 }
@@ -75,11 +82,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSTriangleCreationFunc
 {
 	TriangularBiquadraticSpringsForceField<DataTypes> *ff= (TriangularBiquadraticSpringsForceField<DataTypes> *)param;
 	if (ff) {
-		TriangleSetTopology<DataTypes> *_mesh=ff->getTriangularTopology();
-		assert(_mesh!=0);
-		TriangleSetTopologyContainer *container=_mesh->getTriangleSetTopologyContainer();
-		//const sofa::helper::vector<Edge> &edgeArray=container->getEdgeArray();
-		const sofa::helper::vector< TriangleEdges > &triangleEdgeArray=container->getTriangleEdgeArray() ;
+
 		unsigned int j,k,l;
 
 		EdgeData<typename TriangularBiquadraticSpringsForceField<DataTypes>::EdgeRestInformation> &edgeInfo=ff->getEdgeInfo();
@@ -88,7 +91,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSTriangleCreationFunc
 		typename DataTypes::Real mu=ff->getMu();
 
 		/// describe the jth edge index of triangle no i 
-		const TriangleEdges &te= triangleEdgeArray[triangleIndex];
+		const TriangleEdges &te= ff->_topology->getEdgeTriangleShell(triangleIndex);
 		// store square rest length
 		for(j=0;j<3;++j) {
 			restSquareLength[j]=edgeInfo[te[j]].restSquareLength;
@@ -125,16 +128,13 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSTriangleDestroyFunct
 {
 	TriangularBiquadraticSpringsForceField<DataTypes> *ff= (TriangularBiquadraticSpringsForceField<DataTypes> *)param;
 	if (ff) {
-		TriangleSetTopology<DataTypes> *_mesh=ff->getTriangularTopology();
-		assert(_mesh!=0);
-		TriangleSetTopologyContainer *container=_mesh->getTriangleSetTopologyContainer();
-		const sofa::helper::vector< TriangleEdges > &triangleEdgeArray=container->getTriangleEdgeArray() ;
+		
 		unsigned int j;
 		
 		EdgeData<typename TriangularBiquadraticSpringsForceField<DataTypes>::EdgeRestInformation> &edgeInfo=ff->getEdgeInfo();
 
 		/// describe the jth edge index of triangle no i 
-		const TriangleEdges &te= triangleEdgeArray[triangleIndex];
+		const TriangleEdges &te= ff->_topology->getEdgeTriangleShell(triangleIndex);
 		// store square rest length
 		for(j=0;j<3;++j) {
 			edgeInfo[te[j]].stiffness -= tinfo.stiffness[j]; 
@@ -143,8 +143,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSTriangleDestroyFunct
 	}
 } 
 template <class DataTypes> TriangularBiquadraticSpringsForceField<DataTypes>::TriangularBiquadraticSpringsForceField() 
-: _mesh(NULL)
-, _initialPoints(initData(&_initialPoints,"initialPoints", "Initial Position"))
+: _initialPoints(initData(&_initialPoints,"initialPoints", "Initial Position"))
 , updateMatrix(true)
 , f_poissonRatio(initData(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
 , f_youngModulus(initData(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
@@ -157,10 +156,8 @@ template <class DataTypes> TriangularBiquadraticSpringsForceField<DataTypes>::Tr
 
 template <class DataTypes> void TriangularBiquadraticSpringsForceField<DataTypes>::handleTopologyChange()
 {
-	sofa::core::componentmodel::topology::BaseTopology *topology = static_cast<sofa::core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
-
-	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
+	std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 	edgeInfo.handleTopologyEvents(itBegin,itEnd);
 	triangleInfo.handleTopologyEvents(itBegin,itEnd);
@@ -175,23 +172,20 @@ template <class DataTypes> void TriangularBiquadraticSpringsForceField<DataTypes
 {
 	std::cerr << "initializing TriangularBiquadraticSpringsForceField" << std::endl;
 	this->Inherited::init();
-	_mesh =0;
-	if (getContext()->getMainTopology()!=0)
-	_mesh= dynamic_cast<TriangleSetTopology<DataTypes>*>(getContext()->getMainTopology());
 
-	if ((_mesh==0) || (_mesh->getTriangleSetTopologyContainer()->getNumberOfTriangles()==0))
+	_topology = getContext()->getMeshTopology();
+
+	if (_topology->getNbTriangles()==0)
 	{
 		std::cerr << "ERROR(TriangularBiquadraticSpringsForceField): object must have a Triangular Set Topology.\n";
 		return;
 	}
 	updateLameCoefficients();
 
-	TriangleSetTopologyContainer *container=_mesh->getTriangleSetTopologyContainer();
-
 	/// prepare to store info in the triangle array
-	triangleInfo.resize(container->getNumberOfTriangles());
+	triangleInfo.resize(_topology->getNbTriangles());
 	/// prepare to store info in the edge array
-	edgeInfo.resize(container->getNumberOfEdges());
+	edgeInfo.resize(_topology->getNbEdges());
 
     // get restPosition
 	if (_initialPoints.getValue().size() == 0)
@@ -199,17 +193,15 @@ template <class DataTypes> void TriangularBiquadraticSpringsForceField<DataTypes
 	  VecCoord& p = *this->mstate->getX0();
 	  _initialPoints.setValue(p);
 	}
-	unsigned int i;
-	const sofa::helper::vector<Edge> &edgeArray=container->getEdgeArray();
-	for (i=0;i<container->getNumberOfEdges();++i) {
+	int i;
+	for (i=0;i<_topology->getNbEdges();++i) {
 		TRBSEdgeCreationFunction(i, (void*) this, edgeInfo[i],
-			edgeArray[i],  (const sofa::helper::vector< unsigned int > )0,
+			_topology->getEdge(i),  (const sofa::helper::vector< unsigned int > )0,
 			(const sofa::helper::vector< double >)0);
 	}
-	const sofa::helper::vector<Triangle> &triangleArray=container->getTriangleArray();
-	for (i=0;i<container->getNumberOfTriangles();++i) {
+	for (i=0;i<_topology->getNbTriangles();++i) {
 		TRBSTriangleCreationFunction(i, (void*) this, triangleInfo[i],
-			triangleArray[i],  (const sofa::helper::vector< unsigned int > )0,
+			_topology->getTriangle(i),  (const sofa::helper::vector< unsigned int > )0,
 			(const sofa::helper::vector< double >)0);
 	}
 
@@ -225,7 +217,7 @@ template <class DataTypes> void TriangularBiquadraticSpringsForceField<DataTypes
 
 
 template <class DataTypes> 
-double TriangularBiquadraticSpringsForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
+    double TriangularBiquadraticSpringsForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
 {
 	std::cerr<<"TriangularBiquadraticSpringsForceField::getPotentialEnergy-not-implemented !!!"<<endl;
     return 0;
@@ -233,14 +225,9 @@ double TriangularBiquadraticSpringsForceField<DataTypes>::getPotentialEnergy(con
 template <class DataTypes> 
 void TriangularBiquadraticSpringsForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v)
 {
-	unsigned int i,j,k,l,v0,v1;
-	TriangleSetTopologyContainer *container=_mesh->getTriangleSetTopologyContainer();
-	unsigned int nbEdges=container->getNumberOfEdges();
-	unsigned int nbTriangles=container->getNumberOfTriangles();
-	const sofa::helper::vector<Edge> &edgeArray=container->getEdgeArray();
-	const sofa::helper::vector< TriangleEdges > &triangleEdgeArray=container->getTriangleEdgeArray() ;
-	const sofa::helper::vector< Triangle> &triangleArray=container->getTriangleArray() ;
-
+	unsigned int j,k,l,v0,v1;	
+	int nbEdges=_topology->getNbEdges();
+	int nbTriangles=_topology->getNbTriangles();
 
 	Real val,L;
 	TriangleRestInformation *tinfo;
@@ -253,11 +240,11 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addForce(VecDeriv& f, co
 	Real _dampingRatio=f_dampingRatio.getValue();
 
 
-	for(i=0; i<nbEdges; i++ )
+	for(int i=0; i<nbEdges; i++ )
 	{
 		einfo=&edgeInfo[i];
-		v0=edgeArray[i].first;
-		v1=edgeArray[i].second;
+		v0=_topology->getEdge(i)[0];
+		v1=_topology->getEdge(i)[1];
 		dp=x[v0]-x[v1];
 		dv=v[v0]-v[v1];
 		L=einfo->currentSquareLength=dp.norm2();
@@ -269,13 +256,13 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addForce(VecDeriv& f, co
 		f[v0]-=force;
 	}
 	if (f_useAngularSprings.getValue()==true) {
-		for(i=0; i<nbTriangles; i++ )
+		for(int i=0; i<nbTriangles; i++ )
 		{
 			tinfo=&triangleInfo[i];
 			/// describe the jth edge index of triangle no i 
-			const TriangleEdges &tea= triangleEdgeArray[i];
+			const TriangleEdges &tea= _topology->getEdgeTriangleShell(i);
 			/// describe the jth vertex index of triangle no i 
-			const Triangle &ta= triangleArray[i];
+			const Triangle &ta= _topology->getTriangle(i);
 
 			// store points
 			for(j=0;j<3;++j) {
@@ -298,13 +285,8 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addForce(VecDeriv& f, co
 template <class DataTypes> 
 void TriangularBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df, const VecDeriv& dx)
 {
-	unsigned int i,j,k,l;
-	TriangleSetTopologyContainer *container=_mesh->getTriangleSetTopologyContainer();
-	//unsigned int nbEdges=container->getNumberOfEdges();
-	unsigned int nbTriangles=container->getNumberOfTriangles();
-	//const sofa::helper::vector<Edge> &edgeArray=container->getEdgeArray();
-	const sofa::helper::vector< TriangleEdges > &triangleEdgeArray=container->getTriangleEdgeArray() ;
-	const sofa::helper::vector< Triangle> &triangleArray=container->getTriangleArray() ;
+	unsigned int i,j,k;
+	int nbTriangles=_topology->getNbTriangles();	
 
 	TriangleRestInformation *tinfo;
 
@@ -324,13 +306,13 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df, 
 	
 	//	std::cerr <<"updating matrix"<<std::endl;
 		updateMatrix=false;
-		for(l=0; l<nbTriangles; l++ )
+		for(int l=0; l<nbTriangles; l++ )
 		{
 			tinfo=&triangleInfo[l];
 			/// describe the jth edge index of triangle no i 
-			const TriangleEdges &tea= triangleEdgeArray[l];
+			const TriangleEdges &tea= _topology->getEdgeTriangleShell(l);
 			/// describe the jth vertex index of triangle no i 
-			const Triangle &ta= triangleArray[l];
+			const Triangle &ta= _topology->getTriangle(l);
 
 			// store points
 			for(k=0;k<3;++k) {
@@ -381,11 +363,11 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df, 
 
 	} 
 
-	for(l=0; l<nbTriangles; l++ )
+	for(int l=0; l<nbTriangles; l++ )
 		{
 			tinfo=&triangleInfo[l];
 			/// describe the jth vertex index of triangle no l
-			const Triangle &ta= triangleArray[l];
+			const Triangle &ta= _topology->getTriangle(l);
 
 			// store points
 			for(k=0;k<3;++k) {
@@ -412,7 +394,6 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::updateLameCoefficients()
 template<class DataTypes>
 void TriangularBiquadraticSpringsForceField<DataTypes>::draw()
 {
-	unsigned int i;
 	if (!getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
 
@@ -420,19 +401,16 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::draw()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	VecCoord& x = *this->mstate->getX();
-	TriangleSetTopologyContainer *container=_mesh->getTriangleSetTopologyContainer();
-	unsigned int nbTriangles=container->getNumberOfTriangles();
-	const sofa::helper::vector< Triangle> &triangleArray=container->getTriangleArray() ;
-
+	int nbTriangles=_topology->getNbTriangles();
 
 	glDisable(GL_LIGHTING);
 
 	glBegin(GL_TRIANGLES);
-	for(i=0;i<nbTriangles; ++i)
+	for(int i=0;i<nbTriangles; ++i)
 	{
-		int a = triangleArray[i][0];
-		int b = triangleArray[i][1];
-		int c = triangleArray[i][2];
+		int a = _topology->getTriangle(i)[0];
+		int b = _topology->getTriangle(i)[1];
+		int c = _topology->getTriangle(i)[2];
 
 		glColor4f(0,1,0,1);
 		helper::gl::glVertexT(x[a]);

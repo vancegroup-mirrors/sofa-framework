@@ -15,3 +15,44 @@ material Sofa/Default
   		}
 	}
 }
+
+material Sofa/RockFloor
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5 0.5 0.5 1.0
+			diffuse 1.0 1.0 1.0 1.0
+			specular 0.0 0.0 0.0 0.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			texture_unit
+			{
+				texture rock.png 
+				filtering trilinear
+			}
+		}
+	}
+}
+
+
+material Sofa/Plastic
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.5 0.5 0.5 1.0
+			diffuse 1.0 1.0 1.0 1.0
+			specular 1.0 1.0 1.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			texture_unit
+			{
+				texture Plastic.png
+
+                  		env_map spherical
+				filtering trilinear
+			}
+		}
+	}
+}

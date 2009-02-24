@@ -1,30 +1,57 @@
-
-#include "viewer/qtogre/OgreVisualModel.h"
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
+#include <sofa/gui/qt/viewer/qtogre/OgreVisualModel.h>
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/helper/io/Mesh.h>
 #include <sofa/simulation/tree/GNode.h>
 
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
+#include <sofa/core/BaseMapping.h>
+
 #include <iostream>
 
+namespace sofa
+{
+
+  namespace component
+  {
+
+    namespace visualmodel
+    {
+      
 SOFA_DECL_CLASS(OgreVisualModel)
 
 int OgreVisualModel::counter; //static counter to get unique name for entities
 
 OgreVisualModel::OgreVisualModel()
-: filename(initData(&filename, "filename", "mesh file"))
-, texturename(initData(&texturename, "texturename", "texture image file"))
-, materialname(initData(&materialname, "materialname", "material name"))
-, colorname(initData(&colorname, "color" , "color"))
-, dx(initData(&dx, 0.0f, "dx" , "Initial coordinate in X"))
-, dy(initData(&dy, 0.0f, "dy" , "Initial coordinate in Y"))
-, dz(initData(&dz, 0.0f, "dz" , "Initial coordinate in Z"))
-, scale(initData(&scale, 1.0f, "scale" , "scale"))
-, scaleTex(initData(&scaleTex, 1.0f, "scaleTex" , "scale of the texture")) //TODO
-, topology(NULL)
-, nbNormals(0)
+	: materialname(initData(&materialname, "materialname", "material name")),scale(1.0)
 , ogreMesh(NULL), ogreEntity(NULL), ogreNode(NULL)
-, useTexture(true), useNormals(true), modified(false)
 {	
 }
 
@@ -39,182 +66,51 @@ std::string OgreVisualModel::uniqueName(void)
 
 std::string OgreVisualModel::getOgreName()
 {
-    return "SOFA"+static_cast<sofa::simulation::tree::GNode*>(getContext())->getPathName()+"/"+getName();
+  return "SOFA"+static_cast<sofa::simulation::tree::GNode*>(getContext())->getPathName()+"/"+getName();
 }
 
-bool OgreVisualModel::lightSwitched;
-
-void OgreVisualModel::init()
+void OgreVisualModel::parse(core::objectmodel::BaseObjectDescription* arg)
 {
-  lightSwitched = false;
-  using sofa::helper::vector;
-  using sofa::defaulttype::Vector3;
-
-  if (filename.getValue() == "")
-    {
-      topology = dynamic_cast<sofa::component::topology::MeshTopology*>(getContext()->getTopology());
-      if (topology != NULL)
-        {
-
-	  int nbVOut = topology->getNbPoints();
-	  // Then we can create the final arrays
-
-	  x.resize(nbVOut);
-	  normals.resize(nbVOut);
-	  vertNormIdx.resize(nbVOut);
-	  for (int i = 0; i < nbVOut; i++)
-            {
-	      x[i][0] = topology->getPX(i)*scale.getValue()+dx.getValue();
-	      x[i][1] = topology->getPY(i)*scale.getValue()+dy.getValue();
-	      x[i][2] = topology->getPZ(i)*scale.getValue()+dz.getValue();
-	      vertNormIdx[i] = i;
-            }
-
-	  // Then we create the triangles
-	  int nbTIn = topology->getNbTriangles();
-	  int nbQIn = topology->getNbQuads();
-	  int nbTriangles = nbTIn + 2*nbQIn;
-	  triangles.resize(nbTriangles);
-            
-	  for (int i = 0; i < nbTIn; i++)
-            {
-	      sofa::component::topology::MeshTopology::Triangle e = topology->getTriangle(i);
-	      triangles[i][0] = e[0];
-	      triangles[i][1] = e[1];
-	      triangles[i][2] = e[2];
-            }
-	  for (int i = 0; i < nbQIn; i++)
-            {
-	      sofa::component::topology::MeshTopology::Quad e = topology->getQuad(i);
-	      triangles[nbTIn+2*i  ][0] = e[0];
-	      triangles[nbTIn+2*i  ][1] = e[1];
-	      triangles[nbTIn+2*i  ][2] = e[2];
-	      triangles[nbTIn+2*i+1][0] = e[0];
-	      triangles[nbTIn+2*i+1][1] = e[2];
-	      triangles[nbTIn+2*i+1][2] = e[3];
-            }
-        }
-    }
-  else
-    {
-      sofa::helper::io::Mesh *objLoader = NULL;
-      objLoader = sofa::helper::io::Mesh::Create(filename.getValue());
-      if (objLoader != NULL)
-        {
-	  vector< vector< vector<int> > > &facetsImport = objLoader->getFacets();
-	  vector<Vector3> &verticesImport = objLoader->getVertices();
-	  vector<Vector3> &normalsImport = objLoader->getNormals();
-	  vector<Vector3> &texCoordsImport = objLoader->getTexCoords();
-            
-	  std::cout << "Vertices Import size : " << verticesImport.size() << " (" << normalsImport.size() << " normals, " << texCoordsImport.size() << " texcoords)." << std::endl;
-            
-	  int nbVIn = verticesImport.size();
-	  int nbTriangles = 0;
-	  // First we compute for each point how many pair of normal/texcoord indices are used
-	  // The map store the final index of each combinaison
-	  vector< std::map< std::pair<int,int>, int > > vertTexNormMap;
-	  vertTexNormMap.resize(nbVIn);
-	  for (unsigned int i = 0; i < facetsImport.size(); i++)
-            {
-	      vector<vector <int> > vertNormTexIndex = facetsImport[i];
-	      if (vertNormTexIndex[0].size() < 3) continue; // ignore lines
-	      const vector<int>& verts = vertNormTexIndex[0];
-	      const vector<int>& texs = vertNormTexIndex[1];
-	      const vector<int>& norms = vertNormTexIndex[2];
-	      nbTriangles += verts.size()-2;
-	      for (unsigned int j = 0; j < verts.size(); j++)
-                {
-		  vertTexNormMap[verts[j]][std::make_pair((useTexture?texs[j]:-1), (useNormals?norms[j]:-1))] = 0;
-                }
-            }
-            
-	  // Then we can compute how many vertices are created
-	  int nbVOut = 0;
-	  for (int i = 0; i < nbVIn; i++)
-            {
-	      int s = vertTexNormMap[i].size();
-	      nbVOut += s;
-            }
-            
-	  // Then we can create the final arrays
-	  x.resize(nbVOut);
-	  normals.resize(nbVOut);
-	  vertNormIdx.resize(nbVOut);
-	  if (useTexture)
-	    texcoords.resize(nbVOut);
-            
-	  nbNormals = 0;
-
-	  Coord initial_position(dx.getValue(), dy.getValue(), dz.getValue());
-	  for (int i = 0, j = 0; i < nbVIn; i++)
-            {
-	      std::map<int, int> normMap;
-	      for (std::map<std::pair<int, int>, int>::iterator it = vertTexNormMap[i].begin();
-		   it != vertTexNormMap[i].end(); ++it)
-                {
-		  x[j] = verticesImport[i]*scale.getValue() + initial_position;
-		  int t = it->first.first;
-		  int n = it->first.second;
-		  if ((unsigned)n < normalsImport.size())
-		    normals[j] = normalsImport[n];
-		  //n = -1;
-		  if (useTexture && (unsigned)t < texCoordsImport.size())
-		    texcoords[j] = texCoordsImport[t];
-		  if (normMap.count(n))
-		    vertNormIdx[j] = normMap[n];
-		  else
-		    vertNormIdx[j] = normMap[n] = nbNormals++;
-		  it->second = j++;
-                }
-            }
-            
-	  std::cout << "Vertices Export size : " << nbVOut << " (" << nbNormals << " normals)." << std::endl;
-	  std::cout << "Facets Import size : " << facetsImport.size() << std::endl;
-	  std::cout << "Facets Export size : " << nbTriangles << " triangles." << std::endl;
-            
-	  // Then we create the triangles
-	  triangles.resize(nbTriangles);
-	  int t = 0;
-	  for (unsigned int i = 0; i < facetsImport.size(); i++)
-            {
-	      vector<vector <int> > vertNormTexIndex = facetsImport[i];
-	      if (vertNormTexIndex[0].size() < 3) continue; // ignore lines
-	      vector<int> verts = vertNormTexIndex[0];
-	      vector<int> texs = vertNormTexIndex[1];
-	      vector<int> norms = vertNormTexIndex[2];
-	      vector<int> idxs;
-	      idxs.resize(verts.size());
-	      for (unsigned int j = 0; j < verts.size(); j++)
-		idxs[j] = vertTexNormMap[verts[j]][std::make_pair((useTexture?texs[j]:-1), (useNormals?norms[j]:-1))];
-                
-	      for (unsigned int j = 2; j < verts.size(); j++)
-                {
-		  triangles[t][0] = idxs[0];
-		  triangles[t][1] = idxs[j-1];
-		  triangles[t][2] = idxs[j];
-		  ++t;
-                }
-            }
-        }
-    }
-
-  computeNormals();
+  
+  if (arg->getAttribute("scale")!=NULL) {
+    //obj->applyScale(atof(arg->getAttribute("scale","1.0")));
+    scale=atof(arg->getAttribute("scale","1.0"));
+  }
+//   if (arg->getAttribute("rx")!=NULL) {
+//     //obj->applyRotation(Quat(Vector3(1,0,0), atof(arg->getAttribute("rx","0.0"))*R_PI/180));
+//   }
+//   if (arg->getAttribute("ry")!=NULL) {
+//     //obj->applyRotation(Quat(Vector3(0,1,0), atof(arg->getAttribute("ry","0.0"))*R_PI/180));
+//   }
+//   if (arg->getAttribute("rz")!=NULL) {
+//     //obj->applyRotation(Quat(Vector3(0,0,1), atof(arg->getAttribute("rz","0.0"))*R_PI/180));
+//   }
+    
+  if (arg->getAttribute("dx")!=NULL || arg->getAttribute("dy")!=NULL || arg->getAttribute("dz")!=NULL) {
+    //obj->applyTranslation(atof(arg->getAttribute("dx","0.0")),atof(arg->getAttribute("dy","0.0")),atof(arg->getAttribute("dz","0.0")));
+    dx=atof(arg->getAttribute("dx","0.0"));
+    dy=atof(arg->getAttribute("dy","0.0"));
+    dz=atof(arg->getAttribute("dz","0.0"));
+  }
+  
+  VisualModelImpl::parse(arg);  
 }
+bool OgreVisualModel::lightSwitched;
 
 void OgreVisualModel::attach(Ogre::SceneManager* sceneMgr)
 {
   // Attach the mesh to an entity and a scene node
-
   // Create OGRE Mesh
   ogreMesh = Ogre::MeshManager::getSingleton().getByName(getOgreName()+".mesh");
   if (!ogreMesh.isNull()) setName(uniqueName());
   ogreMesh = Ogre::MeshManager::getSingleton().createManual(getOgreName()+".mesh", "General"); 
 
+  if (3*this->vertices.size() > sceneMgr->getShadowIndexBufferSize()) 
+    sceneMgr->setShadowIndexBufferSize(3*this->vertices.size());
 
   Ogre::SubMesh *submesh = ogreMesh->createSubMesh();
   Ogre::VertexData* vertexData = ogreMesh->sharedVertexData = new Ogre::VertexData();
   Ogre::VertexDeclaration* vertexDecl = vertexData->vertexDeclaration;
-
   size_t currOffset[2] = {0, 0};
   // positions
   vertexDecl->addElement(0, currOffset[0], Ogre::VET_FLOAT3, Ogre::VES_POSITION);
@@ -222,79 +118,60 @@ void OgreVisualModel::attach(Ogre::SceneManager* sceneMgr)
   // normals
   vertexDecl->addElement(0, currOffset[0], Ogre::VET_FLOAT3, Ogre::VES_NORMAL);
   currOffset[0] += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-  if (useTexture)
+  if (!this->texturename.getValue().empty())
     {
       // two dimensional texture coordinates
       vertexDecl->addElement(1, currOffset[1], Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES, 0);
       currOffset[1] += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
     }
   // allocate the vertex buffer
-  vertexData->vertexCount = x.size();
+  vertexData->vertexCount = this->vertices.size();
   vBuffer = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(vertexDecl->getVertexSize(0), (vertexData->vertexCount>0?vertexData->vertexCount:1), Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, false);
   Ogre::VertexBufferBinding* binding = vertexData->vertexBufferBinding;
   binding->setBinding(0, vBuffer);
     
-
   uploadVertices();
-    
   // Upload tex coordinates
-  if (useTexture)
+  if (!this->texturename.getValue().empty())
     {
       Ogre::HardwareVertexBufferSharedPtr vBuffer2 = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(vertexDecl->getVertexSize(1), (vertexData->vertexCount>0?vertexData->vertexCount:1), Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
       Ogre::VertexBufferBinding* binding = vertexData->vertexBufferBinding;
       binding->setBinding(1, vBuffer2);
-      vBuffer2->writeData(0, texcoords.size() * sizeof(texcoords[0]), texcoords.getData());
+      //texture coordinates are inverted with Ogre
+      for (unsigned int i=0;i<this->vtexcoords.size();++i) this->vtexcoords[i][1] =1- this->vtexcoords[i][1];
+      vBuffer2->writeData(0, this->vtexcoords.size() * sizeof(this->vtexcoords[0]), this->vtexcoords.getData());
     }
-    
   submesh->useSharedVertices = true;
   // allocate index buffer
   submesh->indexData->indexCount = 3 * getNbTriangles();
-  iBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer((x.size() < 0x10000) ? Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT, (submesh->indexData->indexCount>0?submesh->indexData->indexCount:1), Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
+  iBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer((this->vertices.size() < 0x10000) ? Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT, (submesh->indexData->indexCount>0?submesh->indexData->indexCount:1), Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
   submesh->indexData->indexBuffer = iBuffer;
-    
   uploadIndices();
-    
   computeBounds();
-    
 
   //Apply the good material/texture/colour
-
-  if (materialname.getValue() != "") {
-    submesh->setMaterialName(materialname.getValue());
+  submesh_material = std::string("Sofa/") + uniqueName();
+  Ogre::MaterialPtr mat;
+  if (!materialname.getValue().empty()) {    
+    Ogre::MaterialPtr mat_mem = Ogre::MaterialManager::getSingleton().getByName(materialname.getValue());
+    mat = mat_mem->clone(submesh_material);
   }
   else
-    {	
-      if (colorname.getValue() == "" && texturename.getValue() == "" ) //Nothing specified => using default material
-	submesh->setMaterialName(std::string("Sofa/Default"));
-      else
-	{
-	  //Creation of a new material
-	  Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(std::string("Sofa/") + getOgreName());//NULL
-	  if (mat.isNull())
-	    mat = Ogre::MaterialManager::getSingleton().create(std::string("Sofa/") + getOgreName(), 
-							 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME); 
-
+    {		
+	  mat = Ogre::MaterialManager::getSingleton().create(submesh_material, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME); 
 	  //Two side polygon!
 	  mat->getTechnique(0)->getPass(0)->setCullingMode(Ogre::CULL_NONE);
-
-	  if (colorname.getValue() != "") //A color has been specified
-	    { 
-	      setColor(colorname.getValue());
-	      mat->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(color[0],color[1],color[2],color[3]));
-	      mat->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(color[0],color[1],color[2],color[3]));
-	    }
-
-	  if (texturename.getValue() != "") //A texture has been specified
+	  
+	  if (!this->texturename.getValue().empty()) //A texture has been specified
 	    {
 	      Ogre::TextureUnitState *ogre_texture = mat->getTechnique(0)->getPass(0)->createTextureUnitState(getOgreName()+std::string("_texture")); 
-	      ogre_texture->setTextureName(texturename.getValue());
-		  if (scaleTex.getValue() != 0)
-			ogre_texture->setTextureScale(Ogre::Real(1.0/scaleTex.getValue()), Ogre::Real(1.0/scaleTex.getValue()));
+	      ogre_texture->setTextureName(this->texturename.getValue());
+// 		  if (scaleTex.getValue() != 0)
+// 			ogre_texture->setTextureScale(Ogre::Real(this->scaleTex.getValue()), Ogre::Real(this->scaleTex.getValue()));
 	    }
-	  submesh->setMaterialName(mat->getName());
-	}
     }       
-
+    submesh->setMaterialName(submesh_material);
+    updateMaterial(mat);
 
 // unsigned short src, dest;
 //  if (!ogreMesh->suggestTangentVectorBuildParams(Ogre::VES_TANGENT,src, dest))
@@ -302,120 +179,117 @@ void OgreVisualModel::attach(Ogre::SceneManager* sceneMgr)
 //   ogreMesh->buildTangentVectors(Ogre::VES_TANGENT,src, dest);
 // }
 
-
   // this line makes clear the mesh is loaded (avoids memory leaks)
 
   ogreMesh->load();
 
   ogreEntity = sceneMgr->createEntity( getOgreName(), getOgreName()+".mesh" );
-
-  ogreEntity->setNormaliseNormals(true);
+  
+  ogreEntity->setNormaliseNormals(true); 
 
   ogreNode = sceneMgr->getRootSceneNode()->createChildSceneNode();
-
+  
   ogreNode->attachObject(ogreEntity);
 
   ogreNode->setInitialState();
-    
+  
   //ogreNode->showBoundingBox(true);
 }
 
-void OgreVisualModel::update()
+
+void OgreVisualModel::reinit()
+{
+ Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(submesh_material);
+ if (!mat.isNull())
+ {
+   updateMaterial(mat);
+ }
+ updateVisual();
+}
+
+void OgreVisualModel::updateMaterial(Ogre::MaterialPtr &mat)
+{  
+    if (this->material.getValue().useDiffuse)
+      mat->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(this->material.getValue().diffuse[0],this->material.getValue().diffuse[1],this->material.getValue().diffuse[2],this->material.getValue().diffuse[3]));
+    else
+      mat->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
+    
+    if (this->material.getValue().useAmbient)
+      mat->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(this->material.getValue().ambient[0],this->material.getValue().ambient[1],this->material.getValue().ambient[2],this->material.getValue().ambient[3]));
+    else
+      mat->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
+    
+    if (this->material.getValue().useEmissive)
+      mat->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(this->material.getValue().emissive[0],this->material.getValue().emissive[1],this->material.getValue().emissive[2],this->material.getValue().emissive[3]));
+    else
+      mat->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
+    
+    if (this->material.getValue().useSpecular)
+      mat->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(this->material.getValue().specular[0],this->material.getValue().specular[1],this->material.getValue().specular[2],this->material.getValue().specular[3]));
+    else
+      mat->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
+    
+    if (this->material.getValue().useShininess)
+      mat->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(this->material.getValue().shininess));
+    else
+      mat->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
+    mat->compile();
+}
+
+void OgreVisualModel::updateVisual()
 {
   if (ogreMesh.isNull()) return;
+  sofa::core::componentmodel::topology::BaseMeshTopology* topology = dynamic_cast<sofa::core::componentmodel::topology::BaseMeshTopology*>(getContext()->getTopology());
   if (topology && topology->getRevision() != meshRevision)
     uploadIndices();
 
-  uploadVertices(); 
-  if (modified || lightSwitched )
-    { 
+
+  if (this->modified//  || lightSwitched
+      )
+  { 
+      uploadVertices(); 
       computeNormals();
-      computeBounds();             
-      modified = false;
+      computeBounds();   
+      lightSwitched = false;
     }
-}
-
-
-static int hexval(char c)
-{
-	if (c>='0' && c<='9') return c-'0';
-	else if (c>='a' && c<='f') return (c-'a')+10;
-	else if (c>='A' && c<='F') return (c-'A')+10;
-	else return 0;
-}
-
-void OgreVisualModel::setColor(std::string color)
-{
-	if (color.empty()) return;
-	float r = 1.0f;
-	float g = 1.0f;
-	float b = 1.0f;
-	float a = 1.0f;
-	if (color[0]>='0' && color[0]<='9')
-	{
-		sscanf(color.c_str(),"%f %f %f %f", &r, &g, &b, &a);
-	}
-	else if (color[0]=='#' && color.length()>=7)
-	{
-		r = (hexval(color[1])*16+hexval(color[2]))/255.0f;
-		g = (hexval(color[3])*16+hexval(color[4]))/255.0f;
-		b = (hexval(color[5])*16+hexval(color[6]))/255.0f;
-		if (color.length()>=9)
-			a = (hexval(color[7])*16+hexval(color[8]))/255.0f;
-	}
-	else if (color[0]=='#' && color.length()>=4)
-	{
-		r = (hexval(color[1])*17)/255.0f;
-		g = (hexval(color[2])*17)/255.0f;
-		b = (hexval(color[3])*17)/255.0f;
-		if (color.length()>=5)
-			a = (hexval(color[4])*17)/255.0f;
-	}
-	else if (color == "white")    { r = 1.0f; g = 1.0f; b = 1.0f; }
-	else if (color == "black")    { r = 0.0f; g = 0.0f; b = 0.0f; }
-	else if (color == "red")      { r = 1.0f; g = 0.0f; b = 0.0f; }
-	else if (color == "green")    { r = 0.0f; g = 1.0f; b = 0.0f; }
-	else if (color == "blue")     { r = 0.0f; g = 0.0f; b = 1.0f; }
-	else if (color == "cyan")     { r = 0.0f; g = 1.0f; b = 1.0f; }
-	else if (color == "magenta")  { r = 1.0f; g = 0.0f; b = 1.0f; }
-	else if (color == "yellow")   { r = 1.0f; g = 1.0f; b = 0.0f; }
-	else if (color == "gray")     { r = 0.5f; g = 0.5f; b = 0.5f; }
-	else
-	{
-		std::cerr << "Unknown color "<<color<<std::endl;
-		return;
-	}
-	this->color[0] = r; this->color[1] = g; this->color[2] = b; this->color[3] = a;
 }
 
 
 void OgreVisualModel::uploadVertices()
 {
+  this->modified = false;
   Ogre::VertexData* vertexData = ogreMesh->sharedVertexData;
   Ogre::VertexDeclaration* vertexDecl = vertexData->vertexDeclaration;
-
+  
   if (!ogreMesh->isPreparedForShadowVolumes())
     {
-      if (x.size() > vertexData->vertexCount)
+      if (this->vertices.size() > vertexData->vertexCount)
         {
-
 	  // need to resize hardware buffers
-	  if (x.size() >= 2* vertexData->vertexCount)
-	    vertexData->vertexCount = x.size();
+	  if (this->vertices.size() >= 2* vertexData->vertexCount)
+	    vertexData->vertexCount = this->vertices.size();
 	  else
 	    vertexData->vertexCount *= 2;
-	  vBuffer = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(vertexDecl->getVertexSize(0), (vertexData->vertexCount>0?vertexData->vertexCount:1), Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, false);
+	  
+	  vBuffer = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(vertexDecl->getVertexSize(0), (vertexData->vertexCount>0?vertexData->vertexCount:1),	      
+	      Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, false);
+	  
 	  Ogre::VertexBufferBinding* binding = vertexData->vertexBufferBinding;
+	  
 	  binding->setBinding(0, vBuffer);
         }
-
+	if (this->vnormals.size() == 0) computeNormals();
       Coord* pVertex = static_cast<Coord*>(vBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
-      for (unsigned int i=0; i < x.size(); i++)
+      for (unsigned int i=0; i < this->vertices.size(); i++)
         {
-	  *(pVertex++) = x[i];
-	  *(pVertex++) = normals[i];
+	  *(pVertex++) = this->vertices[i];
+ 	  if (this->vnormals.size() <= i)  ; //*(pVertex++) = (Real)0;
+ 	  else 	                           
+	    *(pVertex++) = this->vnormals[i];
         }
-      vBuffer->unlock();
+      dx = dy = dz = 0;
+      scale = 1;
+      vBuffer->unlock();      
     }
   else
     {      
@@ -427,11 +301,11 @@ void OgreVisualModel::uploadVertices()
       const Ogre::VertexElement* normElem = ogreMesh->sharedVertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL);
       Ogre::HardwareVertexBufferSharedPtr vBufferNorm = ogreMesh->sharedVertexData->vertexBufferBinding->getBuffer(normElem->getSource());
 
-      if (x.size() > vertexData->vertexCount)
+      if (this->vertices.size() > vertexData->vertexCount)
 	{
 	  // need to resize hardware buffers
-	  if (x.size() >= 2* vertexData->vertexCount)
-	    vertexData->vertexCount = x.size();
+	  if (this->vertices.size() >= 2* vertexData->vertexCount)
+	    vertexData->vertexCount = this->vertices.size();
 	  else
 	    vertexData->vertexCount *= 2;
 	  vBufferPos = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(vertexDecl->getVertexSize(posElem->getSource()), 2*(vertexData->vertexCount>0?vertexData->vertexCount:1), Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, false);
@@ -443,11 +317,11 @@ void OgreVisualModel::uploadVertices()
 
       Coord* pVertex = static_cast<Coord*>(vBufferPos->lock(Ogre::HardwareBuffer::HBL_DISCARD));
       // Two copies of each position must be sent
-      memcpy(pVertex, x.getData(), x.size()*sizeof(Coord));
-      memcpy(pVertex+x.size(), x.getData(), x.size()*sizeof(Coord));
+      memcpy(pVertex, this->vertices.getData(), this->vertices.size()*sizeof(Coord));
+      memcpy(pVertex+this->vertices.size(), this->vertices.getData(), this->vertices.size()*sizeof(Coord));
       vBufferPos->unlock();
       Coord* pNormal = static_cast<Coord*>(vBufferNorm->lock(Ogre::HardwareBuffer::HBL_DISCARD));
-      memcpy(pNormal, normals.getData(), normals.size()*sizeof(Coord));
+      memcpy(pNormal, this->vnormals.getData(), this->vnormals.size()*sizeof(Coord));
       vBufferNorm->unlock();
         
       // We must recompute normals
@@ -458,8 +332,7 @@ void OgreVisualModel::uploadVertices()
 
 void OgreVisualModel::uploadIndices()
 {
-
-    unsigned int nindices = 3*getNbTriangles();
+  unsigned int nindices = 3*getNbTriangles();
     if (iBuffer->getNumIndexes() < nindices)
     {
         unsigned int nalloc;
@@ -472,28 +345,29 @@ void OgreVisualModel::uploadIndices()
         ogreMesh->getSubMesh(0)->indexData->indexBuffer = iBuffer;
     }
     ogreMesh->getSubMesh(0)->indexData->indexCount = 3 * getNbTriangles();
-    
-    if (topology)
-    {
-        const sofa::component::topology::MeshTopology::SeqTriangles& triangles = topology->getTriangles();
-        const sofa::component::topology::MeshTopology::SeqQuads& quads = topology->getQuads();
+    sofa::core::componentmodel::topology::BaseMeshTopology* topology = dynamic_cast<sofa::core::componentmodel::topology::BaseMeshTopology*>(getContext()->getTopology());
+  
+    if (this->useTopology && topology)
+    {      
+      const sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles& triangles = topology->getTriangles();
+        const sofa::core::componentmodel::topology::BaseMeshTopology::SeqQuads& quads = topology->getQuads();
         if (iBuffer->getType() == Ogre::HardwareIndexBuffer::IT_32BIT)
         {
             unsigned int* pIndices = static_cast<unsigned int*>(iBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
             for (unsigned int i=0; i < triangles.size(); ++i)
             {
                 *(pIndices++) = static_cast<unsigned int>(triangles[i][0]);
-                *(pIndices++) = static_cast<unsigned int>(triangles[i][1]);
-                *(pIndices++) = static_cast<unsigned int>(triangles[i][2]);
+		*(pIndices++) = static_cast<unsigned int>(triangles[i][1]);
+		*(pIndices++) = static_cast<unsigned int>(triangles[i][2]);
             }
             for (unsigned int i = 0; i < quads.size() ; i++)
             {
-                *(pIndices++) = static_cast<unsigned int>(quads[i][0]);
-                *(pIndices++) = static_cast<unsigned int>(quads[i][1]);
-                *(pIndices++) = static_cast<unsigned int>(quads[i][2]);
-                *(pIndices++) = static_cast<unsigned int>(quads[i][0]);
-                *(pIndices++) = static_cast<unsigned int>(quads[i][2]);
-                *(pIndices++) = static_cast<unsigned int>(quads[i][3]);
+	      *(pIndices++) = static_cast<unsigned int>(quads[i][0]);
+	      *(pIndices++) = static_cast<unsigned int>(quads[i][1]);
+	      *(pIndices++) = static_cast<unsigned int>(quads[i][2]);
+	      *(pIndices++) = static_cast<unsigned int>(quads[i][0]);
+	      *(pIndices++) = static_cast<unsigned int>(quads[i][2]);
+	      *(pIndices++) = static_cast<unsigned int>(quads[i][3]);
             }
             iBuffer->unlock();
         }
@@ -502,105 +376,120 @@ void OgreVisualModel::uploadIndices()
             unsigned short* pIndices = static_cast<unsigned short*>(iBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
             for (unsigned int i=0; i < triangles.size(); ++i)
             {
-                *(pIndices++) = static_cast<unsigned short>(triangles[i][0]);
-                *(pIndices++) = static_cast<unsigned short>(triangles[i][1]);
-                *(pIndices++) = static_cast<unsigned short>(triangles[i][2]);
+	      *(pIndices++) = static_cast<unsigned short>(triangles[i][0]);
+	      *(pIndices++) = static_cast<unsigned short>(triangles[i][1]);
+	      *(pIndices++) = static_cast<unsigned short>(triangles[i][2]);
             }
             for (unsigned int i = 0; i < quads.size() ; i++)
             {
-                *(pIndices++) = static_cast<unsigned short>(quads[i][0]);
-                *(pIndices++) = static_cast<unsigned short>(quads[i][1]);
-                *(pIndices++) = static_cast<unsigned short>(quads[i][2]);
-                *(pIndices++) = static_cast<unsigned short>(quads[i][0]);
-                *(pIndices++) = static_cast<unsigned short>(quads[i][2]);
-                *(pIndices++) = static_cast<unsigned short>(quads[i][3]);
+	      *(pIndices++) = static_cast<unsigned short>(quads[i][0]);
+	      *(pIndices++) = static_cast<unsigned short>(quads[i][1]);
+	      *(pIndices++) = static_cast<unsigned short>(quads[i][2]);
+	      *(pIndices++) = static_cast<unsigned short>(quads[i][0]);
+	      *(pIndices++) = static_cast<unsigned short>(quads[i][2]);
+	      *(pIndices++) = static_cast<unsigned short>(quads[i][3]);
             }
             iBuffer->unlock();
         }
-        meshRevision = topology->getRevision();
+	meshRevision = topology->getRevision();
     }
     else
     {
         if (iBuffer->getType() == Ogre::HardwareIndexBuffer::IT_32BIT)
         {
-	  iBuffer->writeData(0, triangles.size() * sizeof(Triangle), triangles.getData());
+	  iBuffer->writeData(0, this->triangles.size() * sizeof(Triangle), this->triangles.getData());
         }
         else
         {
+	  
             unsigned short* pIndices = static_cast<unsigned short*>(iBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD));
             for (unsigned int i=0; i < triangles.size(); ++i)
             {
-                *(pIndices++) = static_cast<unsigned short>(triangles[i][0]);
-                *(pIndices++) = static_cast<unsigned short>(triangles[i][1]);
-                *(pIndices++) = static_cast<unsigned short>(triangles[i][2]);
+	      *(pIndices++) = static_cast<unsigned short>(triangles[i][0]);
+	      *(pIndices++) = static_cast<unsigned short>(triangles[i][1]);
+	      *(pIndices++) = static_cast<unsigned short>(triangles[i][2]);
+            }         
+	    for (unsigned int i = 0; i < quads.size() ; i++)
+            {
+	      *(pIndices++) = static_cast<unsigned short>(this->quads[i][0]);
+	      *(pIndices++) = static_cast<unsigned short>(this->quads[i][1]);
+	      *(pIndices++) = static_cast<unsigned short>(this->quads[i][2]);
+	      *(pIndices++) = static_cast<unsigned short>(this->quads[i][0]);
+	      *(pIndices++) = static_cast<unsigned short>(this->quads[i][2]);
+	      *(pIndices++) = static_cast<unsigned short>(this->quads[i][3]);
             }
             iBuffer->unlock();
         }
+	
     }
+    
 }
 
 void OgreVisualModel::computeNormals()
 {
-      if (vertNormIdx.size() != x.size())
+      if (this->vertNormIdx.size() != this->vertices.size())
       {
           // x has been resized
-          vertNormIdx.resize(x.size());
-          for (unsigned int i = 0; i < x.size(); i++)
-              vertNormIdx[i] = i;
+	this->vertNormIdx.resize(this->vertices.size());
+	for (unsigned int i = 0; i < this->vertices.size(); i++)
+              this->vertNormIdx[i] = i;
       }
-      if (x.size() == 0) return; //nothing to do
-
- //      normals.resize(x.size());
-//       for (unsigned int i = 0; i < normals.size(); i++)
-//           normals[i].clear();
-    
-      if (topology)
+      if (this->vertices.size() == 0) return; //nothing to do
+      this->vnormals.resize(this->vertices.size());
+       for (unsigned int i = 0; i < this->vnormals.size(); i++)
+           this->vnormals[i].clear();
+      if (this->useTopology)
       {
-          const sofa::component::topology::MeshTopology::SeqTriangles& triangles = topology->getTriangles();
-          const sofa::component::topology::MeshTopology::SeqQuads& quads = topology->getQuads();
+	
+	  sofa::core::componentmodel::topology::BaseMeshTopology* topology = dynamic_cast<sofa::core::componentmodel::topology::BaseMeshTopology*>(getContext()->getTopology());
+	  if (topology != NULL)
+	  {
+          const sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles& triangles = topology->getTriangles();
+          const sofa::core::componentmodel::topology::BaseMeshTopology::SeqQuads& quads = topology->getQuads();
           for (unsigned int i = 0; i < triangles.size() ; i++)
           {
-              const Coord & v1 = x[triangles[i][0]];
-              const Coord & v2 = x[triangles[i][1]];
-              const Coord & v3 = x[triangles[i][2]];
+	    const Coord & v1 = this->vertices[triangles[i][0]];
+	    const Coord & v2 = this->vertices[triangles[i][1]];
+	    const Coord & v3 = this->vertices[triangles[i][2]];
               Coord n = cross(v2-v1, v3-v1);
               n.normalize();
-              normals[vertNormIdx[triangles[i][0]]] += n;
-              normals[vertNormIdx[triangles[i][1]]] += n;
-              normals[vertNormIdx[triangles[i][2]]] += n;
+	      this->vnormals[vertNormIdx[triangles[i][0]]] += n;
+	      this->vnormals[vertNormIdx[triangles[i][1]]] += n;
+	      this->vnormals[vertNormIdx[triangles[i][2]]] += n;
           }
           for (unsigned int i = 0; i < quads.size() ; i++)
           {
-              const Coord & v1 = x[quads[i][0]];
-              const Coord & v2 = x[quads[i][1]];
-              const Coord & v3 = x[quads[i][3]];
+	    const Coord & v1 = this->vertices[quads[i][0]];
+	    const Coord & v2 = this->vertices[quads[i][1]];
+	    const Coord & v3 = this->vertices[quads[i][3]];
               Coord n = cross(v2-v1, v3-v1);
               n.normalize();
-              normals[vertNormIdx[quads[i][0]]] += n;
-              normals[vertNormIdx[quads[i][1]]] += n;
-              normals[vertNormIdx[quads[i][2]]] += n;
-              normals[vertNormIdx[quads[i][3]]] += n;
+	      this->vnormals[vertNormIdx[quads[i][0]]] += n;
+	      this->vnormals[vertNormIdx[quads[i][1]]] += n;
+	      this->vnormals[vertNormIdx[quads[i][2]]] += n;
+	      this->vnormals[vertNormIdx[quads[i][3]]] += n;
           }
+	  }
       }
       else
-      {
+      {	  
           for (unsigned int i = 0; i < triangles.size() ; i++)
           {
-              const Coord & v1 = x[triangles[i][0]];
-              const Coord & v2 = x[triangles[i][1]];
-              const Coord & v3 = x[triangles[i][2]];
+	    const Coord & v1 = this->vertices[triangles[i][0]];
+	    const Coord & v2 = this->vertices[triangles[i][1]];
+	    const Coord & v3 = this->vertices[triangles[i][2]];
               Coord n = cross(v2-v1, v3-v1);
               n.normalize();
-              normals[vertNormIdx[triangles[i][0]]] += n;
-              normals[vertNormIdx[triangles[i][1]]] += n;
-              normals[vertNormIdx[triangles[i][2]]] += n;
+	      this->vnormals[vertNormIdx[triangles[i][0]]] += n;
+	      this->vnormals[vertNormIdx[triangles[i][1]]] += n;
+	      this->vnormals[vertNormIdx[triangles[i][2]]] += n;
           }
       }
-      for (int i = normals.size()-1; i >=0 ; i--)
+      for (int i = this->vnormals.size()-1; i >=0 ; i--)
       {
-          Coord n = normals[vertNormIdx[i]];
+	Coord n = this->vnormals[vertNormIdx[i]];
           n.normalize();
-          normals[i] = n;
+	  this->vnormals[i] = n;
       }
 }
 
@@ -608,14 +497,14 @@ void OgreVisualModel::computeBounds()
 {
     Ogre::Vector3 bbmin, bbmax;
     float r2max = 0;
-    if (x.size()>0)
+    if (this->vertices.size()>0)
     {
-        bbmin = conv(x[0]);
+      bbmin = conv(this->vertices[0]);
         bbmax = bbmin;
-        r2max = x[0].norm2();
-        for (unsigned int i=1; i<x.size(); i++)
+	r2max = this->vertices[0].norm2();
+	for (unsigned int i=1; i<this->vertices.size(); i++)
         {
-            Ogre::Vector3 p = conv(x[i]);
+	  Ogre::Vector3 p = conv(this->vertices[i]);
             bbmin.makeFloor(p);
             bbmax.makeCeil(p);
             float r2 = p.squaredLength();
@@ -636,3 +525,6 @@ void OgreVisualModel::computeBounds()
 int OgreVisualModelClass = sofa::core::RegisterObject("OGRE 3D Visual Model")
 .add < OgreVisualModel >()
 ;
+    }
+  }
+}

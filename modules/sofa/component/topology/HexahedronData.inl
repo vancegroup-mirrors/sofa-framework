@@ -1,11 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONDATA_INL
 #define SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONDATA_INL
 
-#include <sofa/component/topology/HexahedronSetTopology.h>
-#include <sofa/helper/vector.h>
-#include <vector>
-#include <iostream>
-
+#include <sofa/component/topology/HexahedronData.h>
+#include <sofa/component/topology/HexahedronSetTopologyChange.h>
 
 namespace sofa
 {
@@ -16,81 +37,89 @@ namespace component
 namespace topology
 {
 
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // ////////////////////////////////////////implementation//////////////////////////////////////////////////////
-        // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////implementation//////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	template <typename T, typename Alloc>
+	void HexahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
+														std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	{
+		while( changeIt != end )
+		{
+			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
-
-        template <typename T, typename Alloc>
-        void HexahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
-        {
-			while( changeIt != end )
+			switch( changeType ) 
 			{
-				core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			case core::componentmodel::topology::HEXAHEDRAADDED:
+			{
+				const HexahedraAdded *ta=static_cast< const HexahedraAdded * >( *changeIt );
+				add( ta->getNbAddedHexahedra(), ta->hexahedronArray, ta->ancestorsList, ta->coefs );
+				break;
+			}
+			case core::componentmodel::topology::HEXAHEDRAREMOVED:
+			{
+				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const HexahedraRemoved *>( *changeIt ) )->getArray();
+				remove( tab );
+				break;
+			}
+			default:
+				// Ignore events that are not Hexahedron or Point related.
+				break;
+			}; // switch( changeType )
 
-				// Since we are using identifier, we can safely use C type casts.
-
-				switch( changeType ) {
-				case core::componentmodel::topology::HEXAHEDRAADDED:
-					{
-						const HexahedraAdded *ta=dynamic_cast< const HexahedraAdded * >( *changeIt );
-						add( ta->getNbAddedHexahedra(), ta->triangleArray, ta->ancestorsList, ta->coefs );
-						break;
-					}
-
-                    case core::componentmodel::topology::HEXAHEDRAREMOVED:
-                        {
-                            const sofa::helper::vector<unsigned int> &tab = ( dynamic_cast< const HexahedraRemoved *>( *changeIt ) )->getArray();
-                            remove( tab );
-                            break;
-                        }
-
-                   default:
-                        // Ignore events that are not Hexahedron or Point related.
-                        break;
-                }; // switch( changeType )
-
-                ++changeIt;
-            } // while( changeIt != last; )
-        }
+			++changeIt;
+		} // while( changeIt != last; )
+	}
 
 
+	template <typename T, typename Alloc>
+	void HexahedronData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 
+	{
+		T tmp = (*this)[i1];
+		(*this)[i1] = (*this)[i2];
+		(*this)[i2] = tmp;
+	}
 
-        template <typename T, typename Alloc>
-        void HexahedronData<T,Alloc>::add( unsigned int nbHexahedra, const sofa::helper::vector< Hexahedron >& triangle, const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors, const sofa::helper::vector< sofa::helper::vector< double > >& coefs ) {
-            // Using default values
-            unsigned int size = m_data.size();
-            for (unsigned int i = 0; i < nbHexahedra; ++i)
-            {
-                T t;
-				if (ancestors== (const sofa::helper::vector< sofa::helper::vector< unsigned int > >)0)
-                m_createFunc( size + i, m_createParam, t, triangle[i], (const sofa::helper::vector< unsigned int >)0, (const sofa::helper::vector< double  >)0 );
-				else
-                m_createFunc( size + i, m_createParam, t, triangle[i], ancestors[i], coefs[i] );
-                m_data.push_back( t );
-            }
-        }
+	template <typename T, typename Alloc>
+	void HexahedronData<T,Alloc>::add( unsigned int nbHexahedra, 
+										const sofa::helper::vector< Hexahedron >& hexahedron, 
+										const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors, 
+										const sofa::helper::vector< sofa::helper::vector< double > >& coefs ) 
+	{
+		// Using default values
+		unsigned int i0 = this->size();
+		this->resize(i0+nbHexahedra);
+		for (unsigned int i = 0; i < nbHexahedra; ++i)
+		{
+			T& t = (*this)[i0+i];
+			if (ancestors.empty() || coefs.empty())
+			{
+				const sofa::helper::vector< unsigned int > empty_vecint;
+				const sofa::helper::vector< double > empty_vecdouble;
+				m_createFunc(i0+i, m_createParam, t, hexahedron[i], empty_vecint, empty_vecdouble);
+			}
+			else
+				m_createFunc(i0+i, m_createParam, t, hexahedron[i], ancestors[i], coefs[i] );
+		}
+	}
 
+	template <typename T, typename Alloc>
+	void HexahedronData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index ) 
+	{
+		unsigned int last = this->size() -1;
 
+		for (unsigned int i = 0; i < index.size(); ++i)
+		{
+			m_destroyFunc( index[i], m_destroyParam, (*this)[index[i]] );
+			swap( index[i], last );
+			--last;
+		}
 
-        template <typename T, typename Alloc>
-        void HexahedronData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index ) {
-            unsigned int last = m_data.size() -1;
+		resize( this->size() - index.size() );
+	}
 
-            for (unsigned int i = 0; i < index.size(); ++i)
-            {
-                swap( index[i], last );
-                m_destroyFunc( index[i], m_destroyParam, (*this)[last] );
-                --last;
-            }
-
-            m_data.resize( m_data.size() - index.size() );
-        }
-
-
-
-    } // namespace topology
+} // namespace topology
 
 } // namespace component
 

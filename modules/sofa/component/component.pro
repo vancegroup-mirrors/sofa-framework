@@ -3,104 +3,109 @@ TEMPLATE = lib
 include($${SOFA_DIR}/sofa.cfg)
 TARGET = sofacomponent$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
- 
-HEADERS += MappedObject.h \
+
+HEADERS += init.h \
+	   MeshLoader.h \
+           MappedObject.h \
            MappedObject.inl \
            MechanicalObject.h \
            MechanicalObject.inl \
-           FreeJoint.h \
-           Joint.h \
-           RevoluteJoint.h \
-           ArticulatedBody.h \
            behaviormodel/eulerianfluid/Fluid2D.h \
            behaviormodel/eulerianfluid/Fluid3D.h \
            behaviormodel/eulerianfluid/Grid2D.h \
            behaviormodel/eulerianfluid/Grid3D.h \
-           behaviormodel/eulerianfluid/SpatialGridContainer.h \
-           behaviormodel/eulerianfluid/SpatialGridContainer.inl \
            collision/BarycentricContactMapper.h \
-           collision/BarycentricLagrangianMultiplierContact.h \
-           collision/BarycentricLagrangianMultiplierContact.inl \
+           collision/BarycentricContactMapper.inl \
            collision/BarycentricPenalityContact.h \
            collision/BarycentricPenalityContact.inl \
-           collision/BarycentricStickContact.h \
-           collision/BarycentricStickContact.inl \
            collision/BruteForceDetection.h \
-           collision/ContactCorrection.h \
-           collision/ContactCorrection.inl \
+           collision/CarvingManager.h \
            collision/ContinuousIntersection.h \
            collision/ContinuousTriangleIntersection.h \
            collision/Cube.h \
            collision/CubeModel.h \
-           collision/CuttingManager.h \
-           collision/CarvingManager.h \
+           collision/TopologicalChangeManager.h \
            collision/DefaultCollisionGroupManager.h \
            collision/DefaultContactManager.h \
            collision/DefaultPipeline.h \
            collision/DiscreteIntersection.h \
            collision/DiscreteIntersection.inl \
            collision/DistanceGridCollisionModel.h \
-           collision/EdgeRemoveContact.h \
-           collision/FractureManager.h \
            collision/FrictionContact.h \
            collision/FrictionContact.inl \
-           collision/GraspingManager.h \
            collision/Line.h \
            collision/LineModel.h \
+           collision/LocalMinDistance.h \
            collision/MinProximityIntersection.h \
            collision/NewProximityIntersection.h \
            collision/NewProximityIntersection.inl \
-           collision/RayTraceDetection.h \
            collision/Point.h \
            collision/PointModel.h \
            collision/proximity.h \
-           collision/ProximityIntersection.h \
            collision/Ray.h \
            collision/RayContact.h \
            collision/RayModel.h \
            collision/RayPickInteractor.h \
+           collision/RayPickInteractor.inl \
            collision/RayTriangleIntersection.h \
-           collision/SharpLineModel.h \
+           collision/SpatialGridPointModel.h \
            collision/Sphere.h \
            collision/SphereModel.h \
            collision/SphereModel.inl \
            collision/SphereTreeModel.h \
-           collision/TestDetection.h \
+           collision/TetrahedronModel.h \
            collision/Triangle.h \
            collision/TriangleModel.h \
+           collision/RayTraceDetection.h \
            collision/TriangleOctree.h \
            collision/TriangleOctreeModel.h \
-	   collision/TriangularFEMFractureManager.h \
+           constraint/AttachConstraint.h \
+           constraint/AttachConstraint.inl \
            constraint/BoxConstraint.h \
            constraint/BoxConstraint.inl \
            constraint/FixedConstraint.h \
            constraint/FixedConstraint.inl \
            constraint/FixedPlaneConstraint.h \
            constraint/FixedPlaneConstraint.inl \
-           constraint/LagrangianMultiplierAttachConstraint.h \
-           constraint/LagrangianMultiplierAttachConstraint.inl \
-           constraint/LagrangianMultiplierConstraint.h \
-           constraint/LagrangianMultiplierContactConstraint.h \
-           constraint/LagrangianMultiplierContactConstraint.inl \
-           constraint/LagrangianMultiplierFixedConstraint.h \
-           constraint/LagrangianMultiplierFixedConstraint.inl \
            constraint/OscillatorConstraint.h \
            constraint/OscillatorConstraint.inl \
+           constraint/LinearSolverConstraintCorrection.h \
+           constraint/LinearSolverConstraintCorrection.inl \
+           constraint/ParabolicConstraint.h \
+           constraint/ParabolicConstraint.inl \
+           constraint/PrecomputedConstraintCorrection.h \
+           constraint/PrecomputedConstraintCorrection.inl \
+           constraint/UncoupledConstraintCorrection.h \
+           constraint/UncoupledConstraintCorrection.inl \
            constraint/UnilateralInteractionConstraint.h \
            constraint/UnilateralInteractionConstraint.inl \
            constraint/LinearMovementConstraint.h \
            constraint/LinearMovementConstraint.inl \
            container/ArticulatedHierarchyContainer.h \
            container/ArticulatedHierarchyContainer.inl \
+           container/SpatialGridContainer.h \
+           container/SpatialGridContainer.inl \
            contextobject/CoordinateSystem.h \
            contextobject/Gravity.h \
-           contextobject/GuidedCoordinateSystem.h \
+           controller/ArticulatedHierarchyController.h \
+           controller/ArticulatedHierarchyBVHController.h \
+           controller/Controller.h \
+           controller/EdgeSetController.h \
+           controller/EdgeSetController.inl \
+           controller/MechanicalStateController.h \
+           controller/MechanicalStateController.inl \
            forcefield/BeamFEMForceField.h \
            forcefield/BeamFEMForceField.inl \
+           forcefield/BoxStiffSpringForceField.h \
+           forcefield/BoxStiffSpringForceField.inl \
            forcefield/ConstantForceField.h \
            forcefield/ConstantForceField.inl \
+           forcefield/BoxConstantForceField.h \
+           forcefield/BoxConstantForceField.inl \
            forcefield/EdgePressureForceField.h \
            forcefield/EdgePressureForceField.inl \
+           forcefield/FrameSpringForceField.h \
+           forcefield/FrameSpringForceField.inl \
            forcefield/LennardJonesForceField.h \
            forcefield/LennardJonesForceField.inl \
            forcefield/SPHFluidForceField.h \
@@ -117,6 +122,8 @@ HEADERS += MappedObject.h \
            forcefield/PenalityContactForceField.inl \
            forcefield/QuadBendingSprings.h \
            forcefield/QuadBendingSprings.inl \
+           forcefield/QuadularBendingSprings.h \
+           forcefield/QuadularBendingSprings.inl \
            forcefield/SpringForceField.h \
            forcefield/SpringForceField.inl \
            forcefield/StiffSpringForceField.h \
@@ -132,22 +139,19 @@ HEADERS += MappedObject.h \
            forcefield/TetrahedronFEMForceField.inl \
            forcefield/HexahedronFEMForceField.h \
            forcefield/HexahedronFEMForceField.inl \
-	   forcefield/HexahedronFEMForceFieldAndMass.h \
-	   forcefield/HexahedronFEMForceFieldAndMass.inl \
+           forcefield/HexahedralFEMForceField.h \
+           forcefield/HexahedralFEMForceField.inl \
            forcefield/TetrahedralTensorMassForceField.h \
            forcefield/TetrahedralTensorMassForceField.inl \
-           forcefield/TetrahedralBiquadraticSpringsForceField.h \
-           forcefield/TetrahedralBiquadraticSpringsForceField.inl \
-           forcefield/TetrahedralQuadraticSpringsForceField.h \
-           forcefield/TetrahedralQuadraticSpringsForceField.inl \
            forcefield/TetrahedralCorotationalFEMForceField.h \
            forcefield/TetrahedralCorotationalFEMForceField.inl \
            forcefield/TriangleBendingSprings.h \
            forcefield/TriangleBendingSprings.inl \
-	     forcefield/TriangularBendingSprings.h \
+           forcefield/TriangularBendingSprings.h \
            forcefield/TriangularBendingSprings.inl \
            forcefield/TriangleFEMForceField.h \
-	     forcefield/TriangularFEMForceField.h \
+           forcefield/TriangularFEMForceField.h \
+           forcefield/TriangularAnisotropicFEMForceField.h \
            forcefield/TrianglePressureForceField.h \
            forcefield/TrianglePressureForceField.inl \
            forcefield/TriangularBiquadraticSpringsForceField.h \
@@ -158,20 +162,27 @@ HEADERS += MappedObject.h \
            forcefield/TriangularTensorMassForceField.inl \
            forcefield/VectorSpringForceField.h \
            forcefield/VectorSpringForceField.inl \
-           forcefield/WashingMachineForceField.h \
-           forcefield/WashingMachineForceField.inl \
-           interactionforcefield/ExternalForceField.h \
-           interactionforcefield/ExternalForceField.inl \
            interactionforcefield/RepulsiveSpringForceField.h \
            interactionforcefield/RepulsiveSpringForceField.inl \
            interactionforcefield/InteractionEllipsoidForceField.h \
            interactionforcefield/InteractionEllipsoidForceField.inl \
+           linearsolver/CGLinearSolver.h \
+           linearsolver/LULinearSolver.h \
+           linearsolver/BTDLinearSolver.h \
+           linearsolver/FullVector.h \
+           linearsolver/SparseMatrix.h \
+           linearsolver/NewMatVector.h \
+           linearsolver/NewMatMatrix.h \
            mapping/ArticulatedSystemMapping.h \
            mapping/ArticulatedSystemMapping.inl \
            mapping/BarycentricMapping.h \
            mapping/BarycentricMapping.inl \
            mapping/BeamLinearMapping.h \
            mapping/BeamLinearMapping.inl \
+           mapping/CenterOfMassMapping.h \
+           mapping/CenterOfMassMapping.inl \
+           mapping/CurveMapping.h \
+           mapping/CurveMapping.inl \
            mapping/IdentityMapping.h \
            mapping/IdentityMapping.inl \
            mapping/ImplicitSurfaceMapping.h \
@@ -190,93 +201,135 @@ HEADERS += MappedObject.h \
            mapping/SPHFluidSurfaceMapping.inl \
            mapping/SubsetMapping.h \
            mapping/SubsetMapping.inl \
-           mapping/SurfaceIdentityMapping.h \
+           mapping/TubularMapping.h \
+           mapping/TubularMapping.inl \
+           mapping/VoidMapping.h \
+           mass/AddMToMatrixFunctor.h \
            mass/DiagonalMass.h \
            mass/DiagonalMass.inl \
            mass/MatrixMass.h \
            mass/MatrixMass.inl \
            mass/UniformMass.h \
            mass/UniformMass.inl \
+           misc/CompareState.h \
+           misc/Monitor.h \
+           misc/Monitor.inl \
+           misc/ParticleSink.h \
+           misc/ParticleSource.h \
            misc/ReadState.h \
            misc/ReadState.inl \
            misc/WriteState.h \
            misc/WriteState.inl \
            mastersolver/DefaultMasterSolver.h \
-           odesolver/BiCGStabImplicitSolver.h \
+           mastersolver/MultiStepMasterSolver.h \
+           mastersolver/MasterContactSolver.h \
+           odesolver/CentralDifferenceSolver.h \
            odesolver/CGImplicitSolver.h \
-           odesolver/ComplianceArticulatedSystemSolver.h \
-           odesolver/ComplianceCGImplicitSolver.h \
-           odesolver/ComplianceEulerSolver.h \
            odesolver/DampVelocitySolver.h \
-           odesolver/MasterContactSolver.h \
            odesolver/EulerSolver.h \
-           odesolver/NewMatSolver.h \
+           odesolver/EulerImplicitSolver.h \
            odesolver/RungeKutta2Solver.h \
            odesolver/RungeKutta4Solver.h \
            odesolver/StaticSolver.h \
            topology/CubeTopology.h \
+           topology/CylinderGridTopology.h \
+           topology/Edge2QuadTopologicalMapping.h \
            topology/EdgeData.h \
            topology/EdgeData.inl \
+           topology/EdgeSetGeometryAlgorithms.h \
+           topology/EdgeSetTopologyAlgorithms.h \
+           topology/EdgeSetTopologyChange.h \
+           topology/EdgeSetTopologyContainer.h \
+           topology/EdgeSetTopologyModifier.h \
+           topology/EdgeSetGeometryAlgorithms.inl \
+           topology/EdgeSetTopologyAlgorithms.inl \
            topology/EdgeSubsetData.h \
            topology/EdgeSubsetData.inl \
-           topology/EdgeSetTopology.h \
-           topology/EdgeSetTopology.inl \
-           topology/FittedRegularGridTopology.h \
            topology/GridTopology.h \
+           topology/Hexa2QuadTopologicalMapping.h \
+     	   topology/HexahedronData.h \
+           topology/HexahedronData.inl \
+           topology/HexahedronSetGeometryAlgorithms.h \
+           topology/HexahedronSetTopologyAlgorithms.h \
+           topology/HexahedronSetTopologyChange.h \
+           topology/HexahedronSetTopologyContainer.h \
+           topology/HexahedronSetTopologyModifier.h \
+           topology/HexahedronSetGeometryAlgorithms.inl \
+           topology/HexahedronSetTopologyAlgorithms.inl \
+           topology/ManifoldEdgeSetGeometryAlgorithms.h \
+           topology/ManifoldEdgeSetTopologyAlgorithms.h \
+           topology/ManifoldEdgeSetTopologyContainer.h \
+           topology/ManifoldEdgeSetTopologyModifier.h \
+           topology/ManifoldEdgeSetGeometryAlgorithms.inl \
+           topology/ManifoldEdgeSetTopologyAlgorithms.inl \
            topology/MeshTopology.h \
            topology/PointData.h \
            topology/PointData.inl \
-           topology/PointSetTopology.h \
-           topology/PointSetTopology.inl \
+           topology/PointSetGeometryAlgorithms.h \
+           topology/PointSetTopologyAlgorithms.h \
+           topology/PointSetTopologyChange.h \
+           topology/PointSetTopologyContainer.h \
+           topology/PointSetTopologyModifier.h \
+           topology/PointSetGeometryAlgorithms.inl \
+           topology/PointSetTopologyAlgorithms.inl \
            topology/PointSubset.h \
+           topology/Quad2TriangleTopologicalMapping.h \
+           topology/QuadData.h \
+           topology/QuadData.inl \
+           topology/QuadSetGeometryAlgorithms.h \
+           topology/QuadSetTopologyAlgorithms.h \
+           topology/QuadSetTopologyChange.h \
+           topology/QuadSetTopologyContainer.h \
+           topology/QuadSetTopologyModifier.h \
+           topology/QuadSetGeometryAlgorithms.inl \
+           topology/QuadSetTopologyAlgorithms.inl \
            topology/RegularGridTopology.h \
            topology/SparseGridTopology.h \
-           topology/TopologyChangedEvent.h \
+           topology/Tetra2TriangleTopologicalMapping.h \
            topology/TetrahedronData.h \
            topology/TetrahedronData.inl \
+           topology/TetrahedronSetGeometryAlgorithms.h \
+           topology/TetrahedronSetTopologyAlgorithms.h \
+           topology/TetrahedronSetTopologyChange.h \
+           topology/TetrahedronSetTopologyContainer.h \
+           topology/TetrahedronSetTopologyModifier.h \
+           topology/TetrahedronSetGeometryAlgorithms.inl \
+           topology/TetrahedronSetTopologyAlgorithms.inl \
+           topology/TopologyChangedEvent.h \
+           topology/Triangle2EdgeTopologicalMapping.h \
            topology/TriangleData.h \
            topology/TriangleData.inl \
+           topology/TriangleSetGeometryAlgorithms.h \
+           topology/TriangleSetTopologyAlgorithms.h \
+           topology/TriangleSetTopologyChange.h \
+           topology/TriangleSetTopologyContainer.h \
+           topology/TriangleSetTopologyModifier.h \
+           topology/TriangleSetGeometryAlgorithms.inl \
+           topology/TriangleSetTopologyAlgorithms.inl \
            topology/TriangleSubsetData.h \
            topology/TriangleSubsetData.inl \
-     	   topology/HexahedronData.h \
-           topology/HexahedronData.inl \
-	   topology/QuadData.h \
-           topology/QuadData.inl \
-           topology/TriangleSetTopology.h \
-           topology/TriangleSetTopology.inl \
-	   topology/TetrahedronSetTopology.h \
-           topology/TetrahedronSetTopology.inl \
-           topology/QuadSetTopology.h \
-           topology/QuadSetTopology.inl \
-	     topology/HexahedronSetTopology.h \
-           topology/HexahedronSetTopology.inl \
-	     topology/Tetra2TriangleTopologicalMapping.h \
-	     topology/Tetra2TriangleTopologicalMapping.inl \
+           visualmodel/ClipPlane.h \
            visualmodel/DrawV.h \
            visualmodel/OglModel.h \
            visualmodel/VisualModelImpl.h \
-	   visualmodel/Light.h \
-	   visualmodel/OglShader.h
-           
-SOURCES += MappedObject.cpp \
+           visualmodel/Light.h \
+           visualmodel/LightManager.h
+
+SOURCES += init.cpp \
+	   MeshLoader.cpp \
+           MappedObject.cpp \
            MechanicalObject.cpp \
-           ArticulatedBody.cpp \
-           FreeJoint.cpp \
-           Joint.cpp \
-           RevoluteJoint.cpp \
            behaviormodel/eulerianfluid/Fluid2D.cpp \
            behaviormodel/eulerianfluid/Fluid3D.cpp \
            behaviormodel/eulerianfluid/Grid2D.cpp \
            behaviormodel/eulerianfluid/Grid3D.cpp \
-           collision/BarycentricStickContact.cpp \
-           collision/BarycentricLagrangianMultiplierContact.cpp \
+           collision/BarycentricContactMapper.cpp \
            collision/BarycentricPenalityContact.cpp \
            collision/BruteForceDetection.cpp \
-           collision/ContactCorrection.cpp \
            collision/ContinuousIntersection.cpp \
            collision/ContinuousTriangleIntersection.cpp \
            collision/CubeModel.cpp \
-           collision/CuttingManager.cpp \
+           collision/TopologicalChangeManager.cpp \
            collision/CarvingManager.cpp \
            collision/DefaultCollisionGroupManager.cpp \
            collision/DefaultContactManager.cpp \
@@ -284,80 +337,89 @@ SOURCES += MappedObject.cpp \
            collision/DiscreteIntersection.cpp \
            collision/DistanceGridCollisionModel.cpp \
            collision/LineModel.cpp \
-           collision/EdgeRemoveContact.cpp \
-           collision/GraspingManager.cpp \
-           collision/FractureManager.cpp \
            collision/FrictionContact.cpp \
+           collision/LocalMinDistance.cpp \
            collision/MinProximityIntersection.cpp \
            collision/NewProximityIntersection.cpp \
-           collision/RayTraceDetection.cpp \
            collision/PointModel.cpp \
            collision/proximity.cpp \
-           collision/ProximityIntersection.cpp \
            collision/RayContact.cpp \
            collision/RayModel.cpp \
            collision/RayPickInteractor.cpp \
            collision/RayTriangleIntersection.cpp \
-           collision/SharpLineModel.cpp \
+           collision/SpatialGridPointModel.cpp \
            collision/SphereModel.cpp \
            collision/SphereTreeModel.cpp \
-           collision/TestDetection.cpp \
+           collision/TetrahedronModel.cpp \
            collision/TriangleModel.cpp \
+           collision/RayTraceDetection.cpp \
            collision/TriangleOctree.cpp \
            collision/TriangleOctreeModel.cpp \
-	   collision/TriangularFEMFractureManager.cpp \
+           constraint/AttachConstraint.cpp \
            constraint/BoxConstraint.cpp \
            constraint/FixedConstraint.cpp \
            constraint/FixedPlaneConstraint.cpp \
-           constraint/LagrangianMultiplierAttachConstraint.cpp \
-           constraint/LagrangianMultiplierContactConstraint.cpp \
-           constraint/LagrangianMultiplierFixedConstraint.cpp \
            constraint/OscillatorConstraint.cpp \
+           constraint/LinearSolverConstraintCorrection.cpp \
+           constraint/ParabolicConstraint.cpp \
+           constraint/PrecomputedConstraintCorrection.cpp \
+           constraint/UncoupledConstraintCorrection.cpp \
            constraint/UnilateralInteractionConstraint.cpp \
            constraint/LinearMovementConstraint.cpp \
            container/ArticulatedHierarchyContainer.cpp \
+           container/SpatialGridContainer.cpp \
            contextobject/CoordinateSystem.cpp \
            contextobject/Gravity.cpp \
-           contextobject/GuidedCoordinateSystem.cpp \
+           controller/ArticulatedHierarchyController.cpp \
+           controller/ArticulatedHierarchyBVHController.cpp \
+           controller/Controller.cpp \
+           controller/EdgeSetController.cpp \
+           controller/MechanicalStateController.cpp \
            forcefield/BeamFEMForceField.cpp \
+           forcefield/BoxStiffSpringForceField.cpp \
            forcefield/ConstantForceField.cpp \
+           forcefield/BoxConstantForceField.cpp \
            forcefield/EdgePressureForceField.cpp \
            forcefield/LennardJonesForceField.cpp \
            forcefield/PlaneForceField.cpp \
            forcefield/SphereForceField.cpp \
-	   forcefield/ConicalForceField.cpp \
+           forcefield/ConicalForceField.cpp \
            forcefield/EllipsoidForceField.cpp \
+           forcefield/FrameSpringForceField.cpp \
            forcefield/SPHFluidForceField.cpp \
            forcefield/SpringForceField.cpp \
            forcefield/StiffSpringForceField.cpp \
            forcefield/JointSpringForceField.cpp \
            forcefield/PenalityContactForceField.cpp \
            forcefield/MeshSpringForceField.cpp \
+           forcefield/QuadularBendingSprings.cpp \
            forcefield/QuadBendingSprings.cpp \
            forcefield/RegularGridSpringForceField.cpp \
            forcefield/TetrahedronFEMForceField.cpp \
            forcefield/HexahedronFEMForceField.cpp \
-	   forcefield/HexahedronFEMForceFieldAndMass.cpp \
+           forcefield/HexahedralFEMForceField.cpp \
            forcefield/TetrahedralTensorMassForceField.cpp \
-           forcefield/TetrahedralBiquadraticSpringsForceField.cpp \
            forcefield/TetrahedralCorotationalFEMForceField.cpp \
-           forcefield/TetrahedralQuadraticSpringsForceField.cpp \
            forcefield/TriangleBendingSprings.cpp \
-	     forcefield/TriangularBendingSprings.cpp \
+           forcefield/TriangularBendingSprings.cpp \
            forcefield/TriangleFEMForceField.cpp \
            forcefield/TriangularFEMForceField.cpp \
+           forcefield/TriangularAnisotropicFEMForceField.cpp \
            forcefield/TrianglePressureForceField.cpp \
            forcefield/TriangularBiquadraticSpringsForceField.cpp \
            forcefield/TriangularQuadraticSpringsForceField.cpp \
            forcefield/TriangularTensorMassForceField.cpp \
            forcefield/VectorSpringForceField.cpp \
-           forcefield/WashingMachineForceField.cpp \
-           interactionforcefield/ExternalForceField.cpp \
            interactionforcefield/RepulsiveSpringForceField.cpp \
            interactionforcefield/InteractionEllipsoidForceField.cpp \
+           linearsolver/CGLinearSolver.cpp \
+           linearsolver/LULinearSolver.cpp \
+           linearsolver/BTDLinearSolver.cpp \
            mapping/ArticulatedSystemMapping.cpp \
            mapping/BarycentricMapping.cpp \
            mapping/BeamLinearMapping.cpp \
+           mapping/CenterOfMassMapping.cpp \
+           mapping/CurveMapping.cpp \
            mapping/IdentityMapping.cpp \
            mapping/ImplicitSurfaceMapping.cpp \
            mapping/LaparoscopicRigidMapping.cpp \
@@ -367,71 +429,137 @@ SOURCES += MappedObject.cpp \
            mapping/SkinningMapping.cpp \
            mapping/SPHFluidSurfaceMapping.cpp \
            mapping/SubsetMapping.cpp \
-           mapping/SurfaceIdentityMapping.cpp \
+           mapping/TubularMapping.cpp \
+           mapping/VoidMapping.cpp \
            mass/DiagonalMass.cpp \
            mass/MatrixMass.cpp \
            mass/UniformMass.cpp \
+           misc/CompareState.cpp \
+           misc/Monitor.cpp \
+           misc/ParticleSink.cpp \
+           misc/ParticleSource.cpp \
            misc/ReadState.cpp \
            misc/WriteState.cpp \
            mastersolver/DefaultMasterSolver.cpp \
+           mastersolver/MultiStepMasterSolver.cpp \
+           mastersolver/MasterContactSolver.cpp \
+           odesolver/CentralDifferenceSolver.cpp \
            odesolver/CGImplicitSolver.cpp \
            odesolver/EulerSolver.cpp \
-           odesolver/ComplianceArticulatedSystemSolver.cpp \
-           odesolver/ComplianceCGImplicitSolver.cpp \
-           odesolver/ComplianceEulerSolver.cpp \
+           odesolver/EulerImplicitSolver.cpp \
            odesolver/DampVelocitySolver.cpp \
-           odesolver/MasterContactSolver.cpp \
-           odesolver/NewMatSolver.cpp \
            odesolver/RungeKutta2Solver.cpp \
            odesolver/RungeKutta4Solver.cpp \
            odesolver/StaticSolver.cpp \
-           odesolver/BiCGStabImplicitSolver.cpp \
            topology/CubeTopology.cpp \
-           topology/EdgeSetTopology.cpp \
-           topology/FittedRegularGridTopology.cpp \
+           topology/CylinderGridTopology.cpp \
+           topology/Edge2QuadTopologicalMapping.cpp \
+           topology/EdgeSetGeometryAlgorithms.cpp \
+           topology/EdgeSetTopologyAlgorithms.cpp \
+           topology/EdgeSetTopologyContainer.cpp \
+           topology/EdgeSetTopologyModifier.cpp \
            topology/GridTopology.cpp \
+           topology/Hexa2QuadTopologicalMapping.cpp \
+           topology/HexahedronSetGeometryAlgorithms.cpp \
+           topology/HexahedronSetTopologyAlgorithms.cpp \
+           topology/HexahedronSetTopologyContainer.cpp \
+           topology/HexahedronSetTopologyModifier.cpp \
+           topology/ManifoldEdgeSetGeometryAlgorithms.cpp \
+           topology/ManifoldEdgeSetTopologyAlgorithms.cpp \
+           topology/ManifoldEdgeSetTopologyContainer.cpp \
+           topology/ManifoldEdgeSetTopologyModifier.cpp \
            topology/MeshTopology.cpp \
            topology/PointData.cpp \
-           topology/PointSetTopology.cpp \
+           topology/PointSetGeometryAlgorithms.cpp \
+           topology/PointSetTopologyAlgorithms.cpp \
+           topology/PointSetTopologyContainer.cpp \
+           topology/PointSetTopologyModifier.cpp \
            topology/PointSubset.cpp \
+           topology/Quad2TriangleTopologicalMapping.cpp \
+           topology/QuadSetGeometryAlgorithms.cpp \
+           topology/QuadSetTopologyAlgorithms.cpp \
+           topology/QuadSetTopologyContainer.cpp \
+           topology/QuadSetTopologyModifier.cpp \
            topology/RegularGridTopology.cpp \
            topology/SparseGridTopology.cpp \
-           topology/TriangleSetTopology.cpp \
-	     topology/TetrahedronSetTopology.cpp \
-           topology/QuadSetTopology.cpp \
- 	     topology/HexahedronSetTopology.cpp \
-	     topology/Tetra2TriangleTopologicalMapping.cpp \
+           topology/Tetra2TriangleTopologicalMapping.cpp \
+           topology/TetrahedronSetGeometryAlgorithms.cpp \
+           topology/TetrahedronSetTopologyAlgorithms.cpp \
+           topology/TetrahedronSetTopologyContainer.cpp \
+           topology/TetrahedronSetTopologyModifier.cpp \
+           topology/Triangle2EdgeTopologicalMapping.cpp \
+           topology/TriangleSetGeometryAlgorithms.cpp \
+           topology/TriangleSetTopologyAlgorithms.cpp \
+           topology/TriangleSetTopologyContainer.cpp \
+           topology/TriangleSetTopologyModifier.cpp \
+           visualmodel/ClipPlane.cpp \
            visualmodel/DrawV.cpp \
            visualmodel/OglModel.cpp \
            visualmodel/VisualModelImpl.cpp \
-	   visualmodel/Light.cpp \
-	   visualmodel/OglShader.cpp
+           visualmodel/Light.cpp \
+           visualmodel/LightManager.cpp
 
+
+contains(DEFINES,SOFA_HAVE_GLEW){
+
+    HEADERS += \
+           visualmodel/OglShader.h \
+           visualmodel/OglTexture.h \
+           visualmodel/OglVariable.h \
+           visualmodel/OglShaderMacro.h \
+           visualmodel/OglTetrahedralModel.h \
+           visualmodel/OglTetrahedralModel.inl
+
+    SOURCES += \
+           visualmodel/OglShader.cpp \
+           visualmodel/OglTexture.cpp \
+           visualmodel/OglVariable.cpp \
+           visualmodel/OglShaderMacro.cpp \
+           visualmodel/OglTetrahedralModel.cpp
+
+}
+
+
+contains(DEFINES,SOFA_TEST_FRICTION){
+
+    HEADERS += forcefield/PenalityContactFrictionForceField.h \
+           forcefield/PenalityContactFrictionForceField.inl
+
+    SOURCES += forcefield/PenalityContactFrictionForceField.cpp \
+
+}
+
+contains(DEFINES,SOFA_HAVE_MKL){
+
+    HEADERS += \
+	linearsolver/MKLMatrix.h \
+	linearsolver/MKLVector.h
+
+}
+
+contains(DEFINES,SOFA_HAVE_SENSABLE){
+
+    HEADERS +=  controller/OmniDriver.h \
+           	controller/ForceFeedback.h \
+           	controller/NullForceFeedback.h \
+           	controller/EnslavementForceFeedback.h \
+		controller/LCPForceFeedback.h
+
+    SOURCES +=  controller/OmniDriver.cpp \
+           	controller/NullForceFeedback.cpp \
+           	controller/EnslavementForceFeedback.cpp \
+		controller/LCPForceFeedback.cpp
+
+}
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
-LIBS += -lsofasimulation$$LIBSUFFIX 
+LIBS += -lsofasimulation$$LIBSUFFIX
+LIBS += -lsofatree$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS 
 
-macx: LIBS += -framework GLUT 
+macx : LIBS += -framework GLUT 
 
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-contains(DEFINES,SOFA_TEST_FRICTION) {
-
-HEADERS += forcefield/PenalityContactFrictionForceField.h \
-           forcefield/PenalityContactFrictionForceField.inl
-
-SOURCES += forcefield/PenalityContactFrictionForceField.cpp \
-
-}
-
-contains(DEFINES,SOFA_HAVE_MKL) {
-
-HEADERS += \
-	odesolver/MKLSolver.h
-	
-SOURCES += \
-	odesolver/MKLSolver.cpp
-
-}
+include(component-local.cfg) 

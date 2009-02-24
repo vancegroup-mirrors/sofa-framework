@@ -1,29 +1,31 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/DefaultContactManager.h>
 #include <sofa/core/ObjectFactory.h>
+using std::cerr;
+using std::endl;
 
 
 namespace sofa
@@ -69,6 +71,8 @@ void DefaultContactManager::clear()
 
 void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 {
+	 //cerr<<"DefaultContactManager::createContacts"<<endl;
+	 
 	//outputsMap.clear();
 	//for (sofa::helper::vector<core::componentmodel::collision::DetectionOutput*>::const_iterator it = outputs.begin(); it!=outputs.end(); ++it)
 	//{
@@ -143,14 +147,30 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 		contacts.push_back(contactIt->second);
 		++contactIt;
 	}
+	// compute number of contacts attached to each collision model
+	std::map<core::CollisionModel*,int> nbContactsMap;
+	for (unsigned int i=0;i<contacts.size();++i)
+	{
+		std::pair< core::CollisionModel*, core::CollisionModel* > cms = contacts[i]->getCollisionModels();
+		nbContactsMap[cms.first]++;
+		if (cms.second != cms.first)
+			nbContactsMap[cms.second]++;
+	}
+	sofa::helper::vector<core::CollisionModel*> collisionModels;
+	simulation::Node* context = dynamic_cast<simulation::Node*>(getContext());
+	context->getTreeObjects<core::CollisionModel>(&collisionModels);
+	for (unsigned int i=0;i<collisionModels.size();++i)
+	{
+		collisionModels[i]->setNumberOfContacts(nbContactsMap[collisionModels[i]]);
+	}
 }
 
 void DefaultContactManager::draw()
 {
 	for (sofa::helper::vector<core::componentmodel::collision::Contact*>::iterator it = contacts.begin(); it!=contacts.end(); it++)
 	{
-		if (dynamic_cast<core::VisualModel*>(*it)!=NULL)
-			dynamic_cast<core::VisualModel*>(*it)->draw();
+		if ((*it)!=NULL)
+			(*it)->draw();
 	}
 }
 

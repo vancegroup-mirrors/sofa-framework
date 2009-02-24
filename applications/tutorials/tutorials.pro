@@ -8,6 +8,7 @@ SUBDIRS -= ordered
 SUBDIRS += oneParticule
 SUBDIRS += oneTetrahedron
 SUBDIRS += mixedPendulum
+SUBDIRS += chainHybrid
 
 !include(tutorials-local.cfg) {
 }

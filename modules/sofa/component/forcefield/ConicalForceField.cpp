@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 //
 // C++ Implementation: ConicalForceField
 //
@@ -24,28 +48,25 @@ namespace forcefield
 
 using namespace sofa::defaulttype;
 
-template class ConicalForceField<Vec3dTypes>;
-template class ConicalForceField<Vec3fTypes>;
-//template class ConicalForceField<Vec2dTypes>;
-//template class ConicalForceField<Vec2fTypes>;
-//template class ConicalForceField<Vec1dTypes>;
-//template class ConicalForceField<Vec1fTypes>;
-//template class ConicalForceField<Vec6dTypes>;
-//template class ConicalForceField<Vec6fTypes>;
-
 
 SOFA_DECL_CLASS(ConicalForceField)
 
 int ConicalForceFieldClass = core::RegisterObject("Repulsion applied by a cone toward the exterior")
+#ifndef SOFA_FLOAT
 .add< ConicalForceField<Vec3dTypes> >()
+#endif
+#ifndef SOFA_DOUBLE
 .add< ConicalForceField<Vec3fTypes> >()
-//.add< ConicalForceField<Vec2dTypes> >()
-//.add< ConicalForceField<Vec2fTypes> >()
-//.add< ConicalForceField<Vec1dTypes> >()
-//.add< ConicalForceField<Vec1fTypes> >()
-//.add< ConicalForceField<Vec6dTypes> >()
-//.add< ConicalForceField<Vec6fTypes> >()
+#endif
 ;
+
+#ifndef SOFA_FLOAT
+template class ConicalForceField<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+template class ConicalForceField<Vec3fTypes>;
+#endif
+
 
 } // namespace forcefield
 

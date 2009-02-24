@@ -1,12 +1,27 @@
-/***************************************************************************
-								  LMLReader
-                             -------------------
-    begin             : August 9th, 2006
-    copyright         : (C) 2006 TIMC-INRIA (Michael Adam)
-    author            : Michael Adam
-    Date              : $Date: 2006/08/09 8:58:16 $
-    Version           : $Revision: 0.1 $
- ***************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 /***************************************************************************
  *                                                                         *
@@ -19,7 +34,7 @@
 
 #include "LMLReader.h"
 
-#include <XMLLoads.h>
+#include <Loads.h>
 
 #include "LMLForce.h"
 #include "LMLConstraint.h"
@@ -63,8 +78,8 @@ void LMLReader::BuildStructure(const char* filename, PMLReader * pmlreader)
 
 	if(loadsList) delete loadsList;
 	//read the file
-	XMLLoads data(lmlFile);
-	loadsList = data.getLoads();
+	loadsList = new Loads(lmlFile);
+	//loadsList = data.getLoads();
 	this->BuildStructure(pmlreader);
 }
 
@@ -87,7 +102,7 @@ void LMLReader::BuildStructure(PMLReader * pmlreader)
 	while(it!=pmlreader->bodiesList.end()) 
 	{
 		//find forces and constraints in the loads list
-		LMLConstraint<Vec3dTypes> *constraints = new LMLConstraint<Vec3dTypes>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3dTypes>*)(*it)->getMechanicalState());
+		LMLConstraint<Vec3Types> *constraints = new LMLConstraint<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
 		if (constraints->getTargets().size() >0)
 			if( (*it)->isTypeOf() == "rigid"){
 				delete constraints;
@@ -102,7 +117,7 @@ void LMLReader::BuildStructure(PMLReader * pmlreader)
 		else
 			delete constraints;
 
-		LMLForce<Vec3dTypes> *forces = new LMLForce<Vec3dTypes>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3dTypes>*)(*it)->getMechanicalState());
+		LMLForce<Vec3Types> *forces = new LMLForce<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
 		if (forces->getTargets().size() >0)
 			(*it)->getPointsNode()->addObject(forces);
 		else
@@ -128,7 +143,7 @@ void LMLReader::updateStructure(Loads * loads, PMLReader * pmlreader)
 				pointsNode->removeObject ( pointsNode->constraint[i] );
 			//delete ?
 		}
-		LMLConstraint<Vec3dTypes> *constraints = new LMLConstraint<Vec3dTypes>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3dTypes>*)(*it)->getMechanicalState());
+		LMLConstraint<Vec3Types> *constraints = new LMLConstraint<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
 		if (constraints->getTargets().size() >0){
 			if( (*it)->isTypeOf() == "rigid"){
 				delete constraints;
@@ -149,7 +164,7 @@ void LMLReader::updateStructure(Loads * loads, PMLReader * pmlreader)
 				pointsNode->removeObject ( pointsNode->forceField[i] );
 			//delete ?
 		}
-		LMLForce<Vec3dTypes> *forces = new LMLForce<Vec3dTypes>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3dTypes>*)(*it)->getMechanicalState());
+		LMLForce<Vec3Types> *forces = new LMLForce<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
 		if (forces->getTargets().size() >0)
 			(*it)->getPointsNode()->addObject(forces);
 		else

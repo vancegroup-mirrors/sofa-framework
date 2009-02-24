@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_TRIANGLEFEMFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_TRIANGLEFEMFORCEFIELD_H
 
@@ -30,9 +30,7 @@
 #endif
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/core/VisualModel.h>
-#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
 
@@ -64,7 +62,7 @@ using namespace sofa::defaulttype;
 
 
 template<class DataTypes>
-    class TriangleFEMForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public core::VisualModel
+class TriangleFEMForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
   typedef core::componentmodel::behavior::ForceField<DataTypes> Inherited;
@@ -74,9 +72,9 @@ public:
     typedef typename DataTypes::Deriv    Deriv   ;
     typedef typename Coord::value_type   Real    ;
 
-    typedef topology::MeshTopology::index_type Index;
-    typedef topology::MeshTopology::Triangle Element;
-    typedef topology::MeshTopology::SeqTriangles VecElement;
+    typedef sofa::core::componentmodel::topology::BaseMeshTopology::index_type Index;
+    typedef sofa::core::componentmodel::topology::BaseMeshTopology::Triangle Element;
+    typedef sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles VecElement;
 
     static const int SMALL = 1;										///< Symbol of small displacements triangle solver
     static const int LARGE = 0;										///< Symbol of large displacements triangle solver
@@ -97,7 +95,7 @@ protected:
     typedef Mat<3, 3, Real > Transformation;						///< matrix for rigid transformations like rotations
 
 
-    topology::MeshTopology* _mesh;
+    sofa::core::componentmodel::topology::BaseMeshTopology* _mesh;
     const VecElement *_indexedElements;
     Data< VecCoord > _initialPoints; ///< the intial positions of the points
 //     int _method; ///< the computation method of the displacements
@@ -123,14 +121,7 @@ public:
     virtual double getPotentialEnergy(const VecCoord& x);
 
 
-    // -- VisualModel interface
     void draw();
-    void initTextures()
-    { }
-    ;
-    void update()
-    { }
-    ;
 
 	int method;
 	Data<std::string> f_method;

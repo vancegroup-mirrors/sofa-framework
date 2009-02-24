@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/io/MassSpringLoader.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/defaulttype/Vec.h>
@@ -29,6 +31,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <string.h>
 
 namespace sofa
 {
@@ -44,7 +47,7 @@ using namespace sofa::defaulttype;
 static void skipToEOL(FILE* f)
 {
 	int	ch;
-	while ((ch = fgetc(f)) != EOF && ch != '\n');
+	while ((ch = fgetc(f)) != EOF && ch != '\n') ;
 }
 
 bool MassSpringLoader::load(const char *filename)
@@ -99,9 +102,9 @@ bool MassSpringLoader::load(const char *filename)
 		setNumSprings(totalNumSprings);
 	}
 
-// 	std::cout << "Model contains "<< totalNumMasses <<" masses and "<< totalNumSprings <<" springs"<<std::endl;
+//  	std::cout << "Model contains "<< totalNumMasses <<" masses and "<< totalNumSprings <<" springs"<<std::endl;
 	
-	std::vector<Vec3d> masses;
+	std::vector<Vector3> masses;
 	if (totalNumMasses>0)
 		masses.reserve(totalNumMasses);
 	
@@ -125,8 +128,8 @@ bool MassSpringLoader::load(const char *filename)
 				mass = -mass;
 				fixed = true;
 			}
-			addMass(px,py,pz,vx,vy,vz,mass,elastic,fixed,surface);
-			masses.push_back(Vec3d(px,py,pz));
+			addMass((SReal)px,(SReal)py,(SReal)pz,(SReal)vx,(SReal)vy,(SReal)vz,(SReal)mass,(SReal)elastic,fixed,surface);
+			masses.push_back(Vector3(px,py,pz));
 		}
 		else if (!strcmp(cmd,"lspg"))	// linear springs connector
 		{
@@ -159,22 +162,22 @@ bool MassSpringLoader::load(const char *filename)
 
 				//paul-----------------------------------------
 				if (vector_spring)
-					addVectorSpring(m1,m2,ks,kd,initpos,restx,resty,restz);
+				  addVectorSpring(m1,m2,(SReal)ks,(SReal)kd,(SReal)initpos,(SReal)restx,(SReal)resty,(SReal)restz);
 				else
-					addSpring(m1,m2,ks,kd,initpos);
+				  addSpring(m1,m2,(SReal)ks,(SReal)kd,(SReal)initpos);
 			}
 		}
 		else if (!strcmp(cmd,"grav"))
 		{
 			double gx,gy,gz;
 			fscanf(file, "%lf %lf %lf\n", &gx, &gy, &gz);
-			setGravity(gx,gy,gz);
+			setGravity((SReal)gx,(SReal)gy,(SReal)gz);
 		}
 		else if (!strcmp(cmd,"visc"))
 		{
 			double viscosity;
 			fscanf(file, "%lf\n", &viscosity);
-			setViscosity(viscosity);
+			setViscosity((SReal)viscosity);
 		}
 		else if (!strcmp(cmd,"step"))
 		{

@@ -1,8 +1,33 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CudaCommon.h"
 #include "CudaMath.h"
 #include <stdio.h>
+#include "cuda.h"
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 namespace sofa
 {
 namespace gpu
@@ -19,24 +44,25 @@ void CudaCollisionDetection_runTests(unsigned int nbTests, unsigned int maxPoint
 struct /*__align__(16)*/ GPUContact
 {
     int p1;
-    float3 p2;
+    CudaVec3<float> p2;
     float distance;
-    float3 normal;
+    CudaVec3<float> normal;
 };
 
 struct GPUTest
 {
     GPUContact* result;
-    const float3* points;
+    const CudaVec3<float>* points;
     const float* radius;
     const float* grid;
-    matrix3 rotation;
-    float3 translation;
+    //matrix3<float> rotation;
+    CudaVec3<float> rotation_x,rotation_y,rotation_z;
+    CudaVec3<float> translation;
     float margin;
     int nbPoints;
     int gridnx, gridny, gridnz;
-    float3 gridbbmin, gridbbmax;
-    float3 gridp0, gridinvdp;
+    CudaVec3<float> gridbbmin, gridbbmax;
+    CudaVec3<float> gridp0, gridinvdp;
 };
 
 //////////////////////
@@ -56,18 +82,19 @@ __global__ void CudaCollisionDetection_runTests_kernel(const GPUTest* tests, int
     //! Dynamically allocated shared memory to compact results
     extern  __shared__  int scan[];
 
-    float3 p;
+    CudaVec3<float> p;
     float distance;
-    float3 grad = make_float3(0,0,0);
-    //float3 normal;
+    CudaVec3<float> grad = CudaVec3<float>::make(0,0,0);
+    //CudaVec3<float> normal;
     int n = 0;
     if (threadIdx.x < curTest.nbPoints)
     {
         p = curTest.points[threadIdx.x];
-        p = curTest.rotation * p;
+        //p = curTest.rotation * p;
+        p = CudaVec3<float>::make(dot(curTest.rotation_x, p), dot(curTest.rotation_y, p), dot(curTest.rotation_z, p));
         p += curTest.translation;
         
-        float3 coefs = mul(p-curTest.gridp0, curTest.gridinvdp);
+        CudaVec3<float> coefs = mul(p-curTest.gridp0, curTest.gridinvdp);
         int x = __float2int_rd(coefs.x);
         int y = __float2int_rd(coefs.y);
         int z = __float2int_rd(coefs.z);
@@ -114,7 +141,7 @@ __global__ void CudaCollisionDetection_runTests_kernel(const GPUTest* tests, int
                 p -= grad*distance;
                 //distance -= r;
                 distance = r;
-                //grad = make_float3(0,1,1);
+                //grad = CudaVec3<float>::make(0,1,1);
             }
         }
     }
@@ -135,7 +162,7 @@ __global__ void CudaCollisionDetection_runTests_kernel(const GPUTest* tests, int
         c.p2 = p;
         c.distance = distance;
         c.normal = -grad;
-        //c.normal = normal; //make_float3(-grad.x,-grad.y,-grad.z); //-grad;
+        //c.normal = normal; //CudaVec3<float>::make(-grad.x,-grad.y,-grad.z); //-grad;
         curTest.result[scan[threadIdx.x]-1] = c;
         //curTest.result[scan[threadIdx.x]-1].p1 = threadIdx.x;
         //curTest.result[scan[threadIdx.x]-1].p2 = p;
@@ -153,7 +180,7 @@ __global__ void CudaCollisionDetection_runTests_kernel(const GPUTest* tests, int
 
 void CudaCollisionDetection_runTests(unsigned int nbTests, unsigned int maxPoints, const void* tests, void* nresults)
 {
-    printf("sizeof(GPUTest)=%d\nsizeof(GPUContact)=%d\nsizeof(matrix3)=%d\n",sizeof(GPUTest),sizeof(GPUContact),sizeof(matrix3));
+    printf("sizeof(GPUTest)=%d\nsizeof(GPUContact)=%d\nsizeof(matrix3<float>)=%d\n",sizeof(GPUTest),sizeof(GPUContact),sizeof(matrix3<float>));
     const GPUTest* gputests = (const GPUTest*)tests;
     // round up to 16
     //maxPoints = (maxPoints+15)&-16;
@@ -163,7 +190,7 @@ void CudaCollisionDetection_runTests(unsigned int nbTests, unsigned int maxPoint
     
 }
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

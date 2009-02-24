@@ -1,10 +1,35 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CarvingManager.h"
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/componentmodel/collision/DetectionOutput.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
-#include <sofa/simulation/tree/AnimateBeginEvent.h>
-#include <sofa/simulation/tree/AnimateEndEvent.h>
+#include <sofa/simulation/common/AnimateBeginEvent.h>
+#include <sofa/simulation/common/AnimateEndEvent.h>
+#include <sofa/core/componentmodel/topology/TopologicalMapping.h>
 #include <sofa/helper/gl/template.h>
 
 namespace sofa
@@ -26,11 +51,12 @@ int CarvingManagerClass = core::RegisterObject("Manager handling carving operati
 CarvingManager::CarvingManager()
 : f_modelTool( initData(&f_modelTool, "modelTool", "SharpLineModel path"))
 , f_modelSurface( initData(&f_modelSurface, "modelSurface", "TriangleSetModel path"))
-, active( initData(&active, false, "active", "Activate this object. Note that this can be dynamically controlled by using a key") )
+, active( initData(&active, false, "active", "Activate this object.\nNote that this can be dynamically controlled by using a key") )
 , keyEvent( initData(&keyEvent, '1', "key", "key to press to activate this object until the key is released") )
 , keySwitchEvent( initData(&keySwitchEvent, '4', "keySwitch", "key to activate this object until the key is pressed again") )
 , modelTool(NULL)
 , modelSurface(NULL)
+, topoMapping(NULL)
 , intersectionMethod(NULL)
 , detectionNP(NULL)
 {
@@ -43,6 +69,9 @@ CarvingManager::~CarvingManager()
 
 void CarvingManager::init()
 {
+	_topology = this->getContext()->getMeshTopology();
+	this->getContext()->get(tetraMod);
+
     if (f_modelTool.getValue().empty())
         modelTool = getContext()->get<ToolModel>(core::objectmodel::BaseContext::SearchDown);
     else
@@ -51,24 +80,23 @@ void CarvingManager::init()
     {
         // we look for a TriangleSetModel relying on a TetrahedronSetTopology.
         //modelSurface = getContext()->get<TriangleSetModel>(core::objectmodel::BaseContext::SearchDown);
-        std::vector<TriangleSetModel*> models;
-        getContext()->get<TriangleSetModel>(&models, core::objectmodel::BaseContext::SearchRoot);
+        std::vector<TriangleModel*> models;
+        getContext()->get<TriangleModel>(&models, core::objectmodel::BaseContext::SearchRoot);
         for (unsigned int i=0;i<models.size();++i)
         {
-            TriangleSetModel* m = models[i];
-            sofa::core::componentmodel::topology::BaseTopology* bt = m->getTopology();
-            if (bt == NULL) continue;
-            sofa::core::componentmodel::topology::TopologyContainer *container=bt->getTopologyContainer();
-            //sofa::component::topology::TriangleSetTopologyContainer *tstc= dynamic_cast<sofa::component::topology::TriangleSetTopologyContainer *>(container);
-            sofa::component::topology::TetrahedronSetTopologyContainer *testc= dynamic_cast<sofa::component::topology::TetrahedronSetTopologyContainer *>(container);
-            //if (tstc == NULL) continue;
-            if (testc == NULL) continue;
+            TriangleModel* m = models[i];
+            m->getContext()->get(topoMapping);
+            if (topoMapping == NULL) continue;
+            
             modelSurface = m; // we found a good object
             break;
         }
     }
     else
-        modelSurface = getContext()->get<TriangleSetModel>(f_modelSurface.getValue());
+    {
+        modelSurface = getContext()->get<TriangleModel>(f_modelSurface.getValue());
+        modelSurface->getContext()->get(topoMapping);
+    }
     intersectionMethod = getContext()->get<core::componentmodel::collision::Intersection>();
     detectionNP = getContext()->get<core::componentmodel::collision::NarrowPhaseDetection>();
     bool error = false;
@@ -87,10 +115,16 @@ void CarvingManager::reset()
 void CarvingManager::doCarve()
 {
     if (modelTool==NULL || modelSurface==NULL || intersectionMethod == NULL || detectionNP == NULL) return;
-    sofa::component::topology::TetrahedronSetTopology<DataTypes>* topo = dynamic_cast<sofa::component::topology::TetrahedronSetTopology<DataTypes> *>(modelSurface->getTopology());
-    if (topo == NULL) return;
-    sofa::component::topology::TetrahedronSetTopologyContainer *tstc= topo->getTetrahedronSetTopologyContainer();
-    if (tstc == NULL) return;
+
+	if (topoMapping == NULL){
+		_topology = modelSurface->getContext()->getMeshTopology();		
+		modelSurface->getContext()->get(tetraMod);   
+	}else{
+		_topology = topoMapping->getFrom()->getContext()->getMeshTopology();		
+		topoMapping->getFrom()->getContext()->get(tetraMod);	    
+	}
+    
+    if (tetraMod == NULL) return;
     
     // do collision detection
     //std::cout << "CarvingManager: build bounding trees" << std::endl;
@@ -146,8 +180,11 @@ void CarvingManager::doCarve()
         const ContactVector::value_type& c = (*contacts)[j];
         int triangleIdx = (c.elem.first.getCollisionModel()==modelSurface ? c.elem.first.getIndex():c.elem.second.getIndex());
         // convert from local collision model indices to global topology ones
-        triangleIdx = modelSurface->getLoc2GlobVec()[triangleIdx];
-        const sofa::helper::vector< unsigned int >& tetras = tstc->getTetrahedronTriangleShell(triangleIdx);
+        if (topoMapping)
+        {
+			triangleIdx = topoMapping->getGlobIndex(triangleIdx);
+        }
+        const sofa::helper::vector< unsigned int >& tetras = _topology->getTetraTriangleShell(triangleIdx);
         elemsToRemove.insert(tetras.begin(), tetras.end());
     }
     if (!elemsToRemove.empty())
@@ -156,7 +193,7 @@ void CarvingManager::doCarve()
         sofa::helper::vector< unsigned int > tetrahedra;
         for (std::set<unsigned>::const_iterator it = elemsToRemove.begin(), itend = elemsToRemove.end(); it != itend; ++it)
             tetrahedra.push_back(*it);
-        topo->getTetrahedronSetTopologyAlgorithms()->removeTetrahedra(tetrahedra);
+        tetraMod->removeTetrahedra(tetrahedra);
     }
     detectionNP->setInstance(NULL);
     //std::cout << "CarvingManager: carve done" << std::endl;
@@ -166,6 +203,7 @@ void CarvingManager::handleEvent(sofa::core::objectmodel::Event* event)
 {
     if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
     {
+    	std::cout << "GET KEY "<<ev->getKey()<<std::endl;
         if (ev->getKey() == keyEvent.getValue())
         {
             active.setValue(true);
@@ -182,7 +220,7 @@ void CarvingManager::handleEvent(sofa::core::objectmodel::Event* event)
             active.setValue(false);
         }
     }
-    else if (/* simulation::tree::AnimateEndEvent* ev = */ dynamic_cast<simulation::tree::AnimateEndEvent*>(event))
+    else if (/* simulation::AnimateEndEvent* ev = */ dynamic_cast<simulation::AnimateEndEvent*>(event))
     {
         if (active.getValue())
             doCarve();

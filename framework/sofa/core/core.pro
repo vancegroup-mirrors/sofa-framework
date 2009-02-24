@@ -8,7 +8,9 @@ HEADERS += \
           BehaviorModel.h \
           CollisionElement.h \
           CollisionModel.h \
+          componentmodel/behavior/BaseController.h \
           componentmodel/behavior/BaseConstraint.h \
+          componentmodel/behavior/BaseConstraintCorrection.h \
           componentmodel/behavior/BaseForceField.h \
           componentmodel/behavior/BaseMass.h \
           componentmodel/behavior/BaseMechanicalMapping.h \
@@ -19,19 +21,25 @@ HEADERS += \
           componentmodel/behavior/ForceField.inl \
           componentmodel/behavior/InteractionForceField.h \
           componentmodel/behavior/InteractionConstraint.h \
+          componentmodel/behavior/LinearSolver.h \
           componentmodel/behavior/PairInteractionForceField.h \
           componentmodel/behavior/PairInteractionForceField.inl \
-		  componentmodel/behavior/MixedInteractionForceField.h \
-		  componentmodel/behavior/MixedInteractionForceField.inl \
-		  componentmodel/behavior/MappedModel.h \
+	  componentmodel/behavior/MixedInteractionForceField.h \
+	  componentmodel/behavior/MixedInteractionForceField.inl \
+          componentmodel/behavior/PairInteractionConstraint.h \
+          componentmodel/behavior/PairInteractionConstraint.inl \
+	  componentmodel/behavior/MixedInteractionConstraint.h \
+	  componentmodel/behavior/MixedInteractionConstraint.inl \
+	  componentmodel/behavior/MappedModel.h \
           componentmodel/behavior/Mass.h \
           componentmodel/behavior/Mass.inl \
           componentmodel/behavior/MasterSolver.h \
           componentmodel/behavior/MechanicalMapping.h \
           componentmodel/behavior/MechanicalMapping.inl \
           componentmodel/behavior/MechanicalState.h \
+          componentmodel/behavior/MultiVector.h \
+          componentmodel/behavior/MultiMatrix.h \
           componentmodel/behavior/OdeSolver.h \
-          componentmodel/collision/BaseContactCorrection.h \
           componentmodel/collision/BroadPhaseDetection.h \
           componentmodel/collision/CollisionAlgorithm.h \
           componentmodel/collision/CollisionGroupManager.h \
@@ -43,7 +51,9 @@ HEADERS += \
           componentmodel/collision/Intersection.inl \
           componentmodel/collision/NarrowPhaseDetection.h \
           componentmodel/collision/Pipeline.h \
+          componentmodel/topology/BaseMeshTopology.h \
           componentmodel/topology/BaseTopology.h \
+          componentmodel/topology/BaseTopologyObject.h \
           componentmodel/topology/TopologicalMapping.h \
           componentmodel/topology/Topology.h \
           Mapping.h \
@@ -58,24 +68,30 @@ HEADERS += \
           objectmodel/ContextObject.h \
           objectmodel/Data.h \
           objectmodel/DetachNodeEvent.h \
-          objectmodel/Event.h \   
-          objectmodel/MouseEvent.h \
+          objectmodel/Event.h \
           objectmodel/DataPtr.h \
           objectmodel/BaseData.h \
+	  objectmodel/JoystickEvent.h \
           objectmodel/KeypressedEvent.h \
 	  objectmodel/KeyreleasedEvent.h \
+	  objectmodel/MouseEvent.h \
+	  objectmodel/OmniEvent.h \
+	  objectmodel/GLInitializedEvent.h \
           objectmodel/VDataPtr.h \
           objectmodel/XDataPtr.h \
           VisualModel.h \
           ObjectFactory.h
- 
+
 SOURCES +=  \
           CollisionModel.cpp \
+          componentmodel/behavior/LinearSolver.cpp \
           componentmodel/behavior/MasterSolver.cpp \
+          componentmodel/behavior/MultiMatrix.cpp \
           componentmodel/behavior/OdeSolver.cpp \
           componentmodel/collision/Contact.cpp \
           componentmodel/collision/Intersection.cpp \
           componentmodel/collision/Pipeline.cpp \
+          componentmodel/topology/BaseMeshTopology.cpp \
           componentmodel/topology/BaseTopology.cpp \
           objectmodel/Base.cpp \
           objectmodel/BaseContext.cpp \
@@ -84,24 +100,31 @@ SOURCES +=  \
           objectmodel/ClassInfo.cpp \
           objectmodel/Context.cpp \
           objectmodel/DetachNodeEvent.cpp \
-          objectmodel/Event.cpp \      
-          objectmodel/MouseEvent.cpp \
+          objectmodel/Event.cpp \
           objectmodel/DataPtr.cpp \
+	  objectmodel/JoystickEvent.cpp \
           objectmodel/KeypressedEvent.cpp \
           objectmodel/KeyreleasedEvent.cpp \
+	  objectmodel/MouseEvent.cpp \
+  	  objectmodel/OmniEvent.cpp \
           ObjectFactory.cpp \
-          Mapping.cpp \
+          Mapping.cpp \	   
           componentmodel/behavior/BaseConstraint.cpp \
           componentmodel/behavior/BaseForceField.cpp \
           componentmodel/behavior/ForceField.cpp \
           componentmodel/behavior/Mass.cpp \
+          componentmodel/behavior/Constraint.cpp \
           componentmodel/behavior/MechanicalMapping.cpp \
           componentmodel/behavior/PairInteractionForceField.cpp \
-		 componentmodel/behavior/MixedInteractionForceField.cpp 
+          componentmodel/behavior/MixedInteractionForceField.cpp \
+          componentmodel/behavior/PairInteractionConstraint.cpp \
+          componentmodel/behavior/MixedInteractionConstraint.cpp 
 
 SOFA_DIR = ../../..
 TEMPLATE = lib
-include($${SOFA_DIR}/sofa.cfg)
+include($${SOFA_DIR}/sofa.cfg){   
+
+}
 TARGET = sofacore$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
 LIBS += -lsofahelper$$LIBSUFFIX -lsofadefaulttype$$LIBSUFFIX

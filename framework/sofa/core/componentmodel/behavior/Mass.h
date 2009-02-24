@@ -1,34 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_MASS_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_MASS_H
 
 #include <sofa/core/componentmodel/behavior/BaseMass.h>
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-
+#include <sofa/defaulttype/Vec.h>
 namespace sofa
 {
 
@@ -89,7 +91,7 @@ public:
     virtual void accFromF(VecDeriv& a, const VecDeriv& f) = 0;
 
     /// Mass forces (gravity) often have null derivative
-    virtual void addDForce(VecDeriv& /*df*/, const VecDeriv& /*dx*/)
+    virtual void addDForce(VecDeriv& /*df*/, const VecDeriv& /*dx*/, double /*kFactor*/, double /*bFactor*/)
     {}
 
     /// vMv/2 using dof->getV()
@@ -105,29 +107,47 @@ public:
     /// This method must be implemented by the component.
     virtual double getKineticEnergy( const VecDeriv& v )=0;
 
+    /// Accumulate the contribution of M, B, and/or K matrices multiplied
+    /// by the dx vector with the given coefficients.
+    ///
+    /// This method computes
+    /// $ df += mFactor M dx + bFactor B dx + kFactor K dx $
+    /// For masses, it calls both addMdx and addDForce (which is often empty).
+    ///
+    /// \param mFact coefficient for mass contributions (i.e. second-order derivatives term in the ODE)
+    /// \param bFact coefficient for damping contributions (i.e. first derivatives term in the ODE)
+    /// \param kFact coefficient for stiffness contributions (i.e. DOFs term in the ODE)
+    virtual void addMBKdx(double mFactor, double bFactor, double kFactor);
 
-	/// Mat += mFact * M
-	///
-	/// This method must be implemented by the component. Offset parameter gives the current Matrix block starting point.
-	virtual void addMToMatrix(defaulttype::BaseMatrix * /*mat*/, double /*mFact*/, unsigned int &/*offset*/) {};
-	
-	/// This method retrieves dx vector and call the internal
-    /// addMDxToVector(defaulttype::BaseVector *,const VecDeriv&, double, unsigned int&) method implemented by the component.
-	virtual void addMDxToVector(defaulttype::BaseVector * resVect, double mFact, unsigned int& offset, bool dxNull);
+    /// Accumulate the contribution of M, B, and/or K matrices multiplied
+    /// by the v vector with the given coefficients.
+    ///
+    /// This method computes
+    /// $ df += mFactor M v + bFactor B v + kFactor K v $
+    /// For masses, it calls both addMdx and addDForce (which is often empty).
+    ///
+    /// \param mFact coefficient for mass contributions (i.e. second-order derivatives term in the ODE)
+    /// \param bFact coefficient for damping contributions (i.e. first derivatives term in the ODE)
+    /// \param kFact coefficient for stiffness contributions (i.e. DOFs term in the ODE)
+    virtual void addMBKv(double mFactor, double bFactor, double kFactor);
 
-	/// V += mFact * M * dx
-	///
-	/// This method must be implemented by the component. Offset parameter gives the current Vector starting point.
-	virtual void addMDxToVector(defaulttype::BaseVector * /*resVect*/, const VecDeriv * /*dx*/, double /*mFact*/, unsigned int& /*offset*/) {};
+    /// Compute the system matrix corresponding to m M + b B + k K
+    ///
+    /// \param matrix matrix to add the result to
+    /// \param mFact coefficient for mass contributions (i.e. second-order derivatives term in the ODE)
+    /// \param bFact coefficient for damping contributions (i.e. first derivatives term in the ODE)
+    /// \param kFact coefficient for stiffness contributions (i.e. DOFs term in the ODE)
+    /// \param offset current row/column offset
+    virtual void addMBKToMatrix(sofa::defaulttype::BaseMatrix * matrix, double mFact, double bFact, double kFact, unsigned int &offset);
 
-	/// initialization to export kinetic and potential energy to gnuplot files format
-	virtual void initGnuplot(const std::string path);	
+    /// initialization to export kinetic and potential energy to gnuplot files format
+    virtual void initGnuplot(const std::string path);	
 
-	/// export kinetic and potential energy state at "time" to a gnuplot file
-	virtual void exportGnuplot(double time);	
+    /// export kinetic and potential energy state at "time" to a gnuplot file
+    virtual void exportGnuplot(double time);	
 
-	/// perform  v += dt*g operation. Used if mass wants to added G separately from the other forces to v.
-	virtual void addGravityToV(double dt)=0;
+    /// perform  v += dt*g operation. Used if mass wants to added G separately from the other forces to v.
+    virtual void addGravityToV(double dt)=0;
 
 
 protected:

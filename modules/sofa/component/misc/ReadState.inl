@@ -1,9 +1,33 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MISC_READSTATE_INL
 #define SOFA_COMPONENT_MISC_READSTATE_INL
 
-#include "ReadState.h"
-#include <sofa/simulation/tree/MechanicalVisitor.h>
-#include <sofa/simulation/tree/UpdateMappingVisitor.h>
+#include <sofa/component/misc/ReadState.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/simulation/common/UpdateMappingVisitor.h>
 
 #include <sstream>
 
@@ -16,10 +40,10 @@ namespace component
 namespace misc
 {
 
-template<class DataTypes>
-ReadState<DataTypes>::ReadState()
+ReadState::ReadState()
 : f_filename( initData(&f_filename, "filename", "output file name"))
-, f_interval( initData(&f_interval, 0.0, "interval", "time duration between outputs"))
+, f_interval( initData(&f_interval, 0.0, "interval", "time duration between inputs"))
+, f_shift( initData(&f_shift, 0.0, "shift", "shift between times in the file and times when they will be read"))
 , mmodel(NULL)
 , infile(NULL)
 , nextTime(0)
@@ -27,23 +51,21 @@ ReadState<DataTypes>::ReadState()
     this->f_listening.setValue(true);
 }
 
-template<class DataTypes>
-ReadState<DataTypes>::~ReadState()
+ReadState::~ReadState()
 {
     if (infile)
         delete infile;
 }
 
-template<class DataTypes>
-void ReadState<DataTypes>::init()
+void ReadState::init()
 {
-    mmodel = dynamic_cast<core::componentmodel::behavior::MechanicalState<DataTypes>*>(this->getContext()->getMechanicalState());
+//     mmodel = dynamic_cast<core::componentmodel::behavior::MechanicalState<DataTypes>*>(this->getContext()->getMechanicalState());
     reset();
 }
 
-template<class DataTypes>
-void ReadState<DataTypes>::reset()
+void ReadState::reset()
 {
+    mmodel = dynamic_cast< sofa::core::componentmodel::behavior::BaseMechanicalState* >(this->getContext()->getMechanicalState());
     if (infile)
         delete infile;
     const std::string& filename = f_filename.getValue();
@@ -60,53 +82,81 @@ void ReadState<DataTypes>::reset()
     nextTime = 0;
 }
 
-template<class DataTypes>
-void ReadState<DataTypes>::handleEvent(sofa::core::objectmodel::Event* event)
+void ReadState::handleEvent(sofa::core::objectmodel::Event* event)
 {
-    if (/* simulation::tree::AnimateBeginEvent* ev = */ dynamic_cast<simulation::tree::AnimateBeginEvent*>(event))
+    if (/* simulation::AnimateBeginEvent* ev = */ dynamic_cast<simulation::AnimateBeginEvent*>(event))
     {
-        bool updated = false;
-        if (infile && mmodel)
-        {
-            double time = getContext()->getTime();
-            while (nextTime <= time && !infile->eof())
-            {
-                std::string line, cmd;
-                getline(*infile, line);
+      processReadState();
+    }
+    if (/* simulation::AnimateEndEvent* ev = */ dynamic_cast<simulation::AnimateEndEvent*>(event))
+    {
+    }
+}
+
+
+
+    void ReadState::setTime(double time)
+{
+ if (time < nextTime) {reset(); nextTime=0.0;}
+}
+
+    void ReadState::processReadState(double time)
+{
+ if (time == lastTime) return;
+ setTime(time);
+ processReadState(); 
+}
+
+    void ReadState::processReadState()
+{
+  bool updated = false;
+  
+  if (infile && mmodel)
+  {
+    double time = getContext()->getTime() + f_shift.getValue();
+    lastTime = time;
+    std::vector<std::string> validLines;
+    std::string line, cmd;
+    while (nextTime <= time && !infile->eof())
+    {
+      getline(*infile, line);
                 //std::cout << "line= "<<line<<std::endl;
-                std::istringstream str(line);
-                str >> cmd;
-                //std::cout << "cmd= "<<cmd<<std::endl;
-                if (cmd == "T=")
-                    str >> nextTime;
-                else if (cmd == "X=")
-                {
-                    str >> (*mmodel->getX());
-                    updated = true;
-                }
-                else if (cmd == "V=")
-                {
-                    str >> (*mmodel->getV());
-                    updated = true;
-                }
-                else
-                {
-                    std::cerr << "ERROR: Unknown command " << cmd << " in file "<<f_filename.getValue()<<std::endl;
-                }
-            }
-        }
-        if (updated)
-        {
-            //std::cout<<"update from file"<<std::endl;
-            sofa::simulation::tree::MechanicalPropagatePositionAndVelocityVisitor action1;
-            this->getContext()->executeVisitor(&action1);
-            sofa::simulation::tree::UpdateMappingVisitor action2;
-            this->getContext()->executeVisitor(&action2);
-        }
+      std::istringstream str(line);
+      str >> cmd;
+      if (cmd == "T=")
+      {
+        str >> nextTime;
+	if (nextTime <= time) validLines.clear();
+      }
+
+      if (nextTime <= time) validLines.push_back(line);
     }
-    if (/* simulation::tree::AnimateEndEvent* ev = */ dynamic_cast<simulation::tree::AnimateEndEvent*>(event))
+
+    for (std::vector<std::string>::iterator it=validLines.begin();it!=validLines.end();++it)
     {
+    std::istringstream str(*it);
+    cmd.clear();
+    str >> cmd;
+    if (cmd == "X=")
+    {
+	mmodel->readX(str);
+        updated = true;
     }
+    else if (cmd == "V=")
+    {
+	mmodel->readV(str);
+        updated = true;
+    }
+    }
+  }
+  if (updated)
+  {
+            //std::cout<<"update from file"<<std::endl;
+    sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor action1;
+    this->getContext()->executeVisitor(&action1);
+    sofa::simulation::UpdateMappingVisitor action2;
+    this->getContext()->executeVisitor(&action2);
+  }
 }
 
 } // namespace misc

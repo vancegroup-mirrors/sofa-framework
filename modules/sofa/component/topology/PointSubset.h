@@ -1,14 +1,37 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_TOPOLOGY_POINTSUBSET_H
 #define SOFA_COMPONENT_TOPOLOGY_POINTSUBSET_H
 
-#include <sofa/core/componentmodel/topology/BaseTopology.h>
 #include <sofa/helper/vector.h>
-#include <vector>
+#include <list>
 #include <iostream>
-
 
 namespace sofa
 {
+	namespace core{ namespace componentmodel{ namespace topology{ class TopologyChange; }}}
 
 namespace component
 {
@@ -16,189 +39,190 @@ namespace component
 namespace topology
 {
 
-/** \brief Basic test function for a new element in the point subset : do not accept any new point by returning false
-         *
-         */
-        inline bool ps_testNewPointFunc(int , void* , 
-                                    const sofa::helper::vector< unsigned int > &,
-                                    const sofa::helper::vector< double       > &)
-        {
-           return false;
-        }
+	/** \brief Basic test function for a new element in the point subset : do not accept any new point by returning false
+	*
+	*/
+	inline bool ps_testNewPointFunc(int , void* , 
+									const sofa::helper::vector< unsigned int > &,
+									const sofa::helper::vector< double       > &)
+	{
+		return false;
+	}
 
-        /** \brief Basic removal function for a point in the array  : do nothing.
-         *
-         */
-        inline void ps_removeFunc(int , void* )
-        {
-            return;
-        }
+	/** \brief Basic removal function for a point in the array  : do nothing.
+	*
+	*/
+	inline void ps_removeFunc(int , void* )
+	{
+		return;
+	}
 
-        /** \brief A class for storing indices of points as to define a subset of the DOFs. Automatically manages topology changes.
-         *
-         * This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
-         * happen (non exhaustive list: points added, removed, fused, renumbered).
-         */
-        class PointSubset {
+	/** \brief A class for storing indices of points as to define a subset of the DOFs. Automatically manages topology changes.
+	*
+	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
+	* happen (non exhaustive list: points added, removed, fused, renumbered).
+	*/
+	class PointSubset 
+	{
+	public:
+		// forwardinging Commonvector methods and typdefs
+		typedef  helper::vector<unsigned int>::value_type                value_type;
+		typedef  helper::vector<unsigned int>::pointer                   pointer;
+		typedef  helper::vector<unsigned int>::reference                 reference;
+		typedef  helper::vector<unsigned int>::const_reference           const_reference;
+		typedef  helper::vector<unsigned int>::size_type                 size_type;
+		typedef  helper::vector<unsigned int>::difference_type          difference_type;
+		typedef  helper::vector<unsigned int>::iterator                  iterator;
+		typedef  helper::vector<unsigned int>::const_iterator            const_iterator;
+		typedef  helper::vector<unsigned int>::reverse_iterator          reverse_iterator;
+		typedef  helper::vector<unsigned int>::const_reverse_iterator    const_reverse_iterator;
 
-        private:
-            /// Actual point subset stored.
-            helper::vector< unsigned int > m_subset;
+	public:
+		/// Optionnaly takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
+		PointSubset( bool (*testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&)=ps_testNewPointFunc, 
+					void* testParam  = (void*)NULL, 
+					void (*removeFunc)(int, void*) = ps_removeFunc, 
+					void* removeParam = (void*)NULL ) 
+		: m_testNewPointFunc(testNewPointFunc), 
+		m_removalFunc(removeFunc), m_testParam(testParam), m_removeParam(removeParam), lastPointIndex(0)
+		{}
 
-            /// test function, called when new points are created.
-            bool (*m_testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&);
+		/// Handle PointSetTopology related events, ignore others.
+		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
+								std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
+								const unsigned int totalPointSetArraySize);
 
-            /// Removal function, called when points in the subset are removed 
-            void (*m_removalFunc)(int, void*);
+		// defining operators so that pointSubset can be used in a Data (see Data class).
+		friend std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset);
+		friend std::istream& operator>> (std::istream& i,             PointSubset& pointSubset);
 
-            /** Parameter to be passed to test function.
-             *
-             * Warning : construction and destruction of this object is not of the responsibility of pointSubset.
-             */
-            void* m_testParam;
+		void setTestFunction(bool (*testNewPointFunc )(int, void*, const sofa::helper::vector< unsigned int > &, 
+														const sofa::helper::vector< double >& )) 
+		{
+			m_testNewPointFunc=testNewPointFunc;
+		}
 
-            /** Parameter to be passed to removal function.
-             *
-             * Warning : construction and destruction of this object is not of the responsibility of pointSubset.
-             */
-            void* m_removeParam;
-            /// to handle properly the removal of items, the container must know the index of the last element
-			unsigned int lastPointIndex;
+		void setRemovalFunction( void (*removeFunc)(int, void*) ) 
+		{
+			m_removalFunc=removeFunc;
+		}
 
-        private:
-            /// Swaps values at indices i1 and i2.
-            void swap( unsigned int i1, unsigned int i2 );
+		void setRemovalParameter( void* removeParam ) 
+		{
+			m_removeParam=removeParam;
+		}
 
-            /// Add some values. Values are added at the end of the vector.
-            void add( unsigned int nbPoints, 
-                      const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors = (sofa::helper::vector< sofa::helper::vector< unsigned int > >)0,
-                      const sofa::helper::vector< sofa::helper::vector< double       > >& coefs     = (sofa::helper::vector< sofa::helper::vector< double       > >)0);
+		void setTestParameter( void* testParam ) 
+		{
+			m_testParam=testParam;
+		}
 
-            /// Remove the values corresponding to the points removed.
+		const helper::vector< unsigned int > & getArray() const { return m_subset; }
 
-            void remove( const sofa::helper::vector<unsigned int> &index );
+		iterator begin() { return m_subset.begin(); }
 
-            /// Reorder the values.
-            void renumber( const sofa::helper::vector<unsigned int> &index );
+		iterator end() {return m_subset.end(); }
 
-			void setTotalPointSetArraySize(const unsigned int s) {
-				lastPointIndex=s-1;
-			}
+		const_iterator begin() const { return m_subset.begin(); }
 
-        public:
-            /// Optionnaly takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
-            PointSubset( bool (*testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&)=ps_testNewPointFunc, void* testParam  = (void*)NULL, 
-                       void (*removeFunc)(int, void*) = ps_removeFunc, void* removeParam = (void*)NULL ) 
-                : m_testNewPointFunc(testNewPointFunc), m_removalFunc(removeFunc) 
-				,m_testParam(testParam), m_removeParam(removeParam),lastPointIndex(0)
-            {}
+		const_iterator end() const { return m_subset.end(); }
 
-            /// Handle PointSetTopology related events, ignore others.
-            void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-				std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
-				const unsigned int totalPointSetArraySize);
+		reverse_iterator rbegin() { return m_subset.rbegin(); }
 
-			// defining operators so that pointSubset can be used in a Data (see Data class).
-			friend std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset);
-			friend std::istream& operator>> (std::istream& i,             PointSubset& pointSubset);
+		reverse_iterator rend() { return m_subset.rend(); }
 
-			void setTestFunction(bool (*testNewPointFunc )(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& )) {
-				m_testNewPointFunc=testNewPointFunc;
-			}
-			void setRemovalFunction( void (*removeFunc)(int, void*) ) {
-				m_removalFunc=removeFunc;
-			}
-			void setRemovalParameter( void* removeParam ) {
-				m_removeParam=removeParam;
-			}
-			void setTestParameter( void* testParam ) {
-				m_testParam=testParam;
-			}
+		const_reverse_iterator rbegin() const { return m_subset.rbegin(); }
 
-            // forwardinging Commonvector methods and typdefs
-			typedef  helper::vector<unsigned int>::value_type                value_type;
-			typedef  helper::vector<unsigned int>::pointer                   pointer;
-			typedef  helper::vector<unsigned int>::reference                 reference;
-			typedef  helper::vector<unsigned int>::const_reference           const_reference;
-            typedef  helper::vector<unsigned int>::size_type                 size_type;
-            typedef  helper::vector<unsigned int>::difference_type          difference_type;
-            typedef  helper::vector<unsigned int>::iterator                  iterator;
-            typedef  helper::vector<unsigned int>::const_iterator            const_iterator;
-            typedef  helper::vector<unsigned int>::reverse_iterator          reverse_iterator;
-            typedef  helper::vector<unsigned int>::const_reverse_iterator    const_reverse_iterator;
+		const_reverse_iterator rend() const { return m_subset.rend(); }
 
+		size_type size() const { return m_subset.size(); }
 
-			const helper::vector< unsigned int > & getArray() const {
-				return m_subset;
-			}
+		size_type max_size() const { return m_subset.max_size(); }
 
-            iterator begin() { return m_subset.begin(); }
+		size_type capacity() const { return m_subset.capacity(); }
 
-            iterator end() {return m_subset.end(); }
+		bool empty() const { return m_subset.empty(); }
 
-            const_iterator begin() const { return m_subset.begin(); }
+		reference operator[]( size_type n ) { return m_subset[n]; }
 
-            const_iterator end() const { return m_subset.end(); }
+		const_reference operator[]( size_type i ) const { return m_subset[i]; }
 
-            reverse_iterator rbegin() { return m_subset.rbegin(); }
+		//        PointSubset& operator=( const sofa::helper::vector<unsigned int> & vector ) { m_subset( vector ); return *this; }
 
-            reverse_iterator rend() { return m_subset.rend(); }
+		//        PointSubset& operator=( const PointSubset& pointSubset ) { m_subset( pointSubset.m_subset ); return *this; }
 
-            const_reverse_iterator rbegin() const { return m_subset.rbegin(); }
+		void reserve( size_t n ) { m_subset.reserve( n ); }
 
-            const_reverse_iterator rend() const { return m_subset.rend(); }
+		reference front() { return m_subset.front(); }
 
-            size_type size() const { return m_subset.size(); }
+		const_reference front() const { return m_subset.front(); }
 
-            size_type max_size() const { return m_subset.max_size(); }
+		reference back() { return m_subset.back(); }
 
-            size_type capacity() const { return m_subset.capacity(); }
+		const_reference back() const { return m_subset.back(); }
 
-            bool empty() const { return m_subset.empty(); }
+		void push_back( const unsigned int  t ) { m_subset.push_back( t ); }
 
-            reference operator[]( size_type n )       { return m_subset[n]; }
+		void pop_back() { m_subset.pop_back(); }
 
-            const_reference operator[]( size_type i ) const { return m_subset[i]; }
+		void swap( helper::vector<unsigned int> &vector ) { m_subset.swap( vector ); }
 
-    //        PointSubset& operator=( const sofa::helper::vector<unsigned int> & vector ) { m_subset( vector ); return *this; }
+		void swap( PointSubset &pointSubset) { m_subset.swap( pointSubset.m_subset ); }
 
-    //        PointSubset& operator=( const PointSubset& pointSubset ) { m_subset( pointSubset.m_subset ); return *this; }
+		void clear() { m_subset.clear(); }
 
-            void reserve( size_t n ) { m_subset.reserve( n ); }
+		void resize( size_t n ) { m_subset.resize( n ); }
 
-            reference front() { return m_subset.front(); }
+	private:
+		/// Swaps values at indices i1 and i2.
+		void swap( unsigned int i1, unsigned int i2 );
 
-            const_reference front() const { return m_subset.front(); }
+		/// Add some values. Values are added at the end of the vector.
+		void add( unsigned int nbPoints, 
+				const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+				const sofa::helper::vector< sofa::helper::vector< double       > >& coefs);
 
-            reference back() { return m_subset.back(); }
+		/// Remove the values corresponding to the points removed.
+		void remove( const sofa::helper::vector<unsigned int> &index );
 
-            const_reference back() const { return m_subset.back(); }
+		/// Reorder the values.
+		void renumber( const sofa::helper::vector<unsigned int> &index );
 
-            void push_back( const unsigned int  t ) { m_subset.push_back( t ); }
+		void setTotalPointSetArraySize(const unsigned int s) { lastPointIndex=s-1; }
 
-            void pop_back() { m_subset.pop_back(); }
+	private:
+		/// Actual point subset stored.
+		helper::vector< unsigned int > m_subset;
 
-            void swap( helper::vector<unsigned int> &vector ) { m_subset.swap( vector ); }
+		/// test function, called when new points are created.
+		bool (*m_testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&);
 
-            void swap( PointSubset &pointSubset) { m_subset.swap( pointSubset.m_subset ); }
+		/// Removal function, called when points in the subset are removed 
+		void (*m_removalFunc)(int, void*);
 
-            void clear() { m_subset.clear(); }
+		/** Parameter to be passed to test function.
+		*
+		* Warning : construction and destruction of this object is not of the responsibility of pointSubset.
+		*/
+		void* m_testParam;
 
-            void resize( size_t n ) { m_subset.resize( n ); }
+		/** Parameter to be passed to removal function.
+		*
+		* Warning : construction and destruction of this object is not of the responsibility of pointSubset.
+		*/
+		void* m_removeParam;
 
-            
-        };
+		/// to handle properly the removal of items, the container must know the index of the last element
+		unsigned int lastPointIndex;
+	};
 
+	/// Needed to be compliant with Datas.
+	std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset);
 
+	/// Needed to be compliant with Datas.
+	std::istream& operator>>(std::istream& i, PointSubset& pointSubset);
 
-        /// Needed to be compliant with Datas.
-        std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset);
-
-
-        /// Needed to be compliant with Datas.
-        std::istream& operator>>(std::istream& i, PointSubset& pointSubset);
-
-    } // namespace topology
+} // namespace topology
 
 } // namespace component
 

@@ -1,32 +1,35 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_MIXEDINTERACTIONFORCEFIELD_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_MIXEDINTERACTIONFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/InteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/defaulttype/Vec.h>
 
 namespace sofa
 {
@@ -60,7 +63,7 @@ public:
     typedef typename DataTypes2::VecDeriv VecDeriv2;
     typedef typename DataTypes2::Coord Coord2;
     typedef typename DataTypes2::Deriv Deriv2;
-
+    
     MixedInteractionForceField(MechanicalState<DataTypes1> *mm1 = NULL, MechanicalState<DataTypes2> *mm2 = NULL);
 
     virtual ~MixedInteractionForceField();
@@ -97,22 +100,22 @@ public:
     /// explicitly (i.e. using its value at the beginning of the timestep).
     ///
     /// If the ForceField can be represented as a matrix, this method computes
-    /// $ df += K dx $
+    /// $ df += kFactor K dx + bFactor B dx $
     ///
     /// This method retrieves the force and dx vector from the two MechanicalState
-    /// and call the internal addDForce(VecDeriv&,VecDeriv&,const VecDeriv&,const VecDeriv&) method
-    /// implemented by the component.
-    virtual void addDForce();
+    /// and call the internal addDForce(VecDeriv1&,VecDeriv2&,const VecDeriv1&,const VecDeriv2&,double,double)
+    /// method implemented by the component.
+    virtual void addDForce(double kFactor, double bFactor);
 
     /// Same as addDForce(), except the velocity vector should be used instead of dx.
     ///
     /// If the ForceField can be represented as a matrix, this method computes
-    /// $ df += K V $
+    /// $ df += kFactor K v + bFactor B v $
     ///
     /// This method retrieves the force and velocity vector from the two MechanicalState
-    /// and call the internal addDForce(VecDeriv&,VecDeriv&,const VecDeriv&,const VecDeriv&) method
-    /// implemented by the component.
-    virtual void addDForceV();
+    /// and call the internal addDForce(VecDeriv1&,VecDeriv2&,const VecDeriv1&,const VecDeriv2&,double,double)
+    /// method implemented by the component.
+    virtual void addDForceV(double kFactor, double bFactor);
 
     /// Get the potential energy associated to this ForceField.
     ///
@@ -146,8 +149,30 @@ public:
     /// $ df += K dx $
     ///
     /// This method must be implemented by the component, and is usually called
-    /// by the generic ForceField::addDForce() method.
-    virtual void addDForce(VecDeriv1& df1, VecDeriv2& df2, const VecDeriv1& dx1, const VecDeriv2& dx2) = 0;
+    /// by the generic MixedInteractionForceField::addDForce() method.
+    ///
+    /// @deprecated to more efficiently accumulate contributions from all terms
+    ///   of the system equation, a new addDForce method allowing to pass two
+    ///   coefficients for the stiffness and damping terms should now be used.
+    virtual void addDForce(VecDeriv1& df1, VecDeriv2& df2, const VecDeriv1& dx1, const VecDeriv2& dx2);
+
+    /// Compute the force derivative given a small displacement from the
+    /// position and velocity used in the previous call to addForce().
+    ///
+    /// The derivative should be directly derived from the computations
+    /// done by addForce. Any forces neglected in addDForce will be integrated
+    /// explicitly (i.e. using its value at the beginning of the timestep).
+    ///
+    /// If the ForceField can be represented as a matrix, this method computes
+    /// $ df += kFactor K dx + bFactor B dx $
+    ///
+    /// This method must be implemented by the component, and is usually called
+    /// by the generic MixedInteractionForceField::addDForce() method.
+    ///
+    /// To support old components that implement the deprecated addForce method
+    /// without scalar coefficients, it defaults to using a temporaty vector to
+    /// compute $ K dx $ and then manually scaling all values by kFactor.
+    virtual void addDForce(VecDeriv1& df1, VecDeriv2& df2, const VecDeriv1& dx1, const VecDeriv2& dx2, double kFactor, double bFactor);
 
     /// Get the potential energy associated to this ForceField.
     ///
@@ -194,7 +219,7 @@ public:
 
     static std::string templateName(const MixedInteractionForceField<DataTypes1,DataTypes2>* = NULL)
     {
-        return DataTypes1::Name();
+        return DataTypes1::Name()+std::string(",")+DataTypes2::Name();
     }
 
 protected:

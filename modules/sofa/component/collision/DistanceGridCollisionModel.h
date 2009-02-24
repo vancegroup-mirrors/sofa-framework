@@ -1,8 +1,31 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_DISTANCEGRIDCOLLISIONMODEL_H
 #define SOFA_COMPONENT_COLLISION_DISTANCEGRIDCOLLISIONMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/MechanicalObject.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/defaulttype/RigidTypes.h>
@@ -25,15 +48,14 @@ using namespace sofa::helper;
 class DistanceGrid
 {
 public:
-    typedef float Real;
-    static Real maxDist() { return (Real)1e10; }
-    typedef Vec3f Coord;
-    typedef defaulttype::ExtVector<Real> VecReal;
+    static SReal maxDist() { return (SReal)1e10; }
+    typedef Vector3 Coord;
+    typedef defaulttype::ExtVector<SReal> VecSReal;
     typedef defaulttype::ExtVector<Coord> VecCoord;
 
     DistanceGrid(int nx, int ny, int nz, Coord pmin, Coord pmax);
 
-    DistanceGrid(int nx, int ny, int nz, Coord pmin, Coord pmax, defaulttype::ExtVectorAllocator<Real>* alloc);
+    DistanceGrid(int nx, int ny, int nz, Coord pmin, Coord pmax, defaulttype::ExtVectorAllocator<SReal>* alloc);
 
 protected:
     ~DistanceGrid();
@@ -59,7 +81,7 @@ public:
 
     /// Compute distance field for a cube of the given half-size.
     /// Also create a mesh of points using np points per axis
-    void calcCubeDistance(Real dim=1, int np=5);
+    void calcCubeDistance(SReal dim=1, int np=5);
 
     /// Update bbox
     void computeBBox();
@@ -76,7 +98,7 @@ public:
     void setBBMin(const Coord& val) { bbmin = val; }
     void setBBMax(const Coord& val) { bbmax = val; }
     Coord getBBCorner(int i) const { return Coord((i&1)?bbmax[0]:bbmin[0],(i&2)?bbmax[1]:bbmin[1],(i&4)?bbmax[2]:bbmin[2]); }
-    bool inBBox(const Coord& p, Real margin=0.0f) const
+    bool inBBox(const Coord& p, SReal margin=0.0f) const
     {
 	for (int c=0;c<3;++c)
 	    if (p[c] < bbmin[c]-margin || p[c] > bbmax[c]+margin) return false;
@@ -88,7 +110,7 @@ public:
     Coord getCorner(int i) const { return Coord((i&1)?pmax[0]:pmin[0],(i&2)?pmax[1]:pmin[1],(i&4)?pmax[2]:pmin[2]); }
 
     bool isCube() const { return cubeDim != 0; }
-    Real getCubeDim() const { return cubeDim; }
+    SReal getCubeDim() const { return cubeDim; }
 
     bool inGrid(const Coord& p) const
     {
@@ -154,15 +176,15 @@ public:
 	return pmin+Coord(x*cellWidth[0], y*cellWidth[1], z*cellWidth[2]);
     }
 
-    Real operator[](int index) const { return dists[index]; }
-    Real& operator[](int index) { return dists[index]; }
+    SReal operator[](int index) const { return dists[index]; }
+    SReal& operator[](int index) { return dists[index]; }
 
-    static Real interp(Real coef, Real a, Real b)
+    static SReal interp(SReal coef, SReal a, SReal b)
     {
 	return a+coef*(b-a);
     }
 
-    Real interp(int index, const Coord& coefs) const
+    SReal interp(int index, const Coord& coefs) const
     {
         return interp(coefs[2],interp(coefs[1],interp(coefs[0],dists[index          ],dists[index+1        ]),
                                                interp(coefs[0],dists[index  +nx     ],dists[index+1+nx     ])),
@@ -170,7 +192,7 @@ public:
                                                interp(coefs[0],dists[index  +nx+nxny],dists[index+1+nx+nxny])));
     }
 
-    Real interp(const Coord& p) const
+    SReal interp(const Coord& p) const
     {
 	Coord coefs;
 	int i = index(p, coefs);
@@ -191,14 +213,14 @@ public:
         //           + (dist[1][1][0]-dist[0][1][0]) * (  y) * (1-z)
         //           + (dist[1][0][1]-dist[0][0][1]) * (1-y) * (  z)
         //           + (dist[1][1][1]-dist[0][1][1]) * (  y) * (  z)
-        const Real dist000 = dists[index          ];
-        const Real dist100 = dists[index+1        ];
-        const Real dist010 = dists[index  +nx     ];
-        const Real dist110 = dists[index+1+nx     ];
-        const Real dist001 = dists[index     +nxny];
-        const Real dist101 = dists[index+1   +nxny];
-        const Real dist011 = dists[index  +nx+nxny];
-        const Real dist111 = dists[index+1+nx+nxny];
+        const SReal dist000 = dists[index          ];
+        const SReal dist100 = dists[index+1        ];
+        const SReal dist010 = dists[index  +nx     ];
+        const SReal dist110 = dists[index+1+nx     ];
+        const SReal dist001 = dists[index     +nxny];
+        const SReal dist101 = dists[index+1   +nxny];
+        const SReal dist011 = dists[index  +nx+nxny];
+        const SReal dist111 = dists[index+1+nx+nxny];
         return Coord(
             interp(coefs[2],interp(coefs[1],dist100-dist000,dist110-dist010),interp(coefs[1],dist101-dist001,dist111-dist011)), //*invCellWidth[0],
             interp(coefs[2],interp(coefs[0],dist010-dist000,dist110-dist100),interp(coefs[0],dist011-dist001,dist111-dist101)), //*invCellWidth[1],
@@ -212,9 +234,9 @@ public:
 	return grad(i, coefs);
     }
 
-    Real eval(const Coord& x) const
+    SReal eval(const Coord& x) const
     {
-	Real d;
+	SReal d;
 	if (inGrid(x))
 	{
 	    d = interp(x);
@@ -228,9 +250,9 @@ public:
 	return d;
     }
 
-    Real quickeval(const Coord& x) const
+    SReal quickeval(const Coord& x) const
     {
-	Real d;
+	SReal d;
 	if (inGrid(x))
 	{
 	    d = dists[index(x)] - cellWidth[0]; // we underestimate the distance
@@ -244,35 +266,35 @@ public:
 	return d;
     }
 
-    Real eval2(const Coord& x) const
+    SReal eval2(const Coord& x) const
     {
-	Real d2;
+	SReal d2;
 	if (inGrid(x))
 	{
-	    Real d = interp(x);
+	    SReal d = interp(x);
 	    d2 = d*d;
 	}
 	else
 	{
 	    Coord xclamp = clamp(x);
-	    Real d = interp(xclamp);
+	    SReal d = interp(xclamp);
 	    d2 = ((x-xclamp).norm2() + d*d); // we underestimate the distance
 	}
 	return d2;
     }
 
-    Real quickeval2(const Coord& x) const
+    SReal quickeval2(const Coord& x) const
     {
-	Real d2;
+	SReal d2;
 	if (inGrid(x))
 	{
-	    Real d = dists[index(x)] - cellWidth[0]; // we underestimate the distance
+	    SReal d = dists[index(x)] - cellWidth[0]; // we underestimate the distance
 	    d2 = d*d;
 	}
 	else
 	{
 	    Coord xclamp = clamp(x);
-	    Real d = dists[index(xclamp)] - cellWidth[0]; // we underestimate the distance
+	    SReal d = dists[index(xclamp)] - cellWidth[0]; // we underestimate the distance
 	    d2 = ((x-xclamp).norm2() + d*d);
 	}
 	return d2;
@@ -282,13 +304,13 @@ public:
 
 protected:
     int nbRef;
-    VecReal dists;
+    VecSReal dists;
     const int nx,ny,nz, nxny, nxnynz;
     const Coord pmin, pmax;
     const Coord cellWidth, invCellWidth;
     Coord bbmin, bbmax; ///< bounding box of the object, smaller than the grid
 
-    Real cubeDim; ///< Cube dimension (!=0 if this is actually a cube
+    SReal cubeDim; ///< Cube dimension (!=0 if this is actually a cube
 
     // Fast Marching Method Update
     enum Status { FMM_FRONT0 = 0, FMM_FAR = -1, FMM_KNOWN_OUT = -2, FMM_KNOWN_IN = -3 };
@@ -389,6 +411,7 @@ class RigidDistanceGridCollisionModel;
 class RigidDistanceGridCollisionElement : public core::TCollisionElementIterator<RigidDistanceGridCollisionModel>
 {
 public:
+  
     RigidDistanceGridCollisionElement(RigidDistanceGridCollisionModel* model, int index);
 
     explicit RigidDistanceGridCollisionElement(core::CollisionElementIterator& i);
@@ -414,7 +437,7 @@ public:
     void setNewState(double dt, DistanceGrid* grid, const Matrix3& rotation, const Vector3& translation);
 };
 
-class RigidDistanceGridCollisionModel : public core::CollisionModel, public core::VisualModel
+class RigidDistanceGridCollisionModel : public core::CollisionModel
 {
 protected:
 
@@ -522,13 +545,7 @@ public:
 
     void draw(int index);
 
-    // -- VisualModel interface
-
     void draw();
-
-    void initTextures() { }
-
-    void update() { }
 };
 
 inline RigidDistanceGridCollisionElement::RigidDistanceGridCollisionElement(RigidDistanceGridCollisionModel* model, int index)
@@ -566,6 +583,7 @@ class FFDDistanceGridCollisionModel;
 class FFDDistanceGridCollisionElement : public core::TCollisionElementIterator<FFDDistanceGridCollisionModel>
 {
 public:
+  
     FFDDistanceGridCollisionElement(FFDDistanceGridCollisionModel* model, int index);
 
     explicit FFDDistanceGridCollisionElement(core::CollisionElementIterator& i);
@@ -575,10 +593,10 @@ public:
     void setGrid(DistanceGrid* surf);
 };
 
-class FFDDistanceGridCollisionModel : public core::CollisionModel, public core::VisualModel
+class FFDDistanceGridCollisionModel : public core::CollisionModel
 {
 public:
-    typedef DistanceGrid::Real GReal;
+    typedef SReal GSReal;
     typedef DistanceGrid::Coord GCoord;
     class DeformedCube
     {
@@ -602,7 +620,7 @@ public:
               C101 = 1+0+4,
               C011 = 0+2+4,
               C111 = 1+2+4};
-        typedef Vec<4,GReal> Plane; ///< plane equation as defined by Plane.(x y z 1) = 0
+        typedef Vec<4,GSReal> Plane; ///< plane equation as defined by Plane.(x y z 1) = 0
         Plane faces[6]; ///< planes corresponding to the six faces (FX0,FX1,FY0,FY1,FZ0,FZ1)
         enum {FX0 = 0+0,
               FX1 = 0+1,
@@ -628,7 +646,7 @@ public:
         void updateDeform();
         
         GCoord center; ///< current center;
-        GReal radius; ///< radius of enclosing sphere
+        GSReal radius; ///< radius of enclosing sphere
         vector<GCoord> deformedPoints; ///< deformed points
         bool pointsUpdated; ///< true the deformedPoints vector has been updated with the latest positions
         void updatePoints(); ///< Update the deformedPoints position if not done yet (i.e. if pointsUpdated==false)
@@ -654,7 +672,7 @@ public:
             return corners[C000] + Dx*b[0] + (Dy + Dxy*b[0])*b[1] + (Dz + Dxz*b[0] + (Dyz + Dxyz*b[0])*b[1])*b[2];
         }
 
-        static GReal interp(GReal coef, GReal a, GReal b)
+        static GSReal interp(GSReal coef, GSReal a, GSReal b)
         {
             return a+coef*(b-a);
         }
@@ -694,8 +712,8 @@ public:
             GCoord b;
             for (int i=0;i<3;i++)
             {
-                GReal b0 = faces[2*i+0]*Plane(p,1);
-                GReal b1 = faces[2*i+1]*Plane(p,1);
+                GSReal b0 = faces[2*i+0]*Plane(p,1);
+                GSReal b1 = faces[2*i+1]*Plane(p,1);
                 b[i] = b0 / (b0 + b1);
             }
             return b;
@@ -750,7 +768,7 @@ public:
     // alias used by ContactMapper
 
     core::componentmodel::behavior::MechanicalState<DataTypes>* getMechanicalState() { return ffd; }
-    topology::RegularGridTopology* getTopology() { return ffdGrid; }
+    topology::RegularGridTopology* getMeshTopology() { return ffdGrid; }
 
     void init();
 
@@ -775,13 +793,7 @@ public:
 
     void draw(int index);
 
-    // -- VisualModel interface
-
     void draw();
-
-    void initTextures() { }
-
-    void update() { }
 };
 
 inline FFDDistanceGridCollisionElement::FFDDistanceGridCollisionElement(FFDDistanceGridCollisionModel* model, int index)

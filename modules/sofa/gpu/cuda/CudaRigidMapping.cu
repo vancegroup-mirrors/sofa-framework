@@ -1,7 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CudaCommon.h"
 #include "CudaMath.h"
+#include "cuda.h"
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 namespace sofa
 {
 namespace gpu
@@ -12,8 +37,8 @@ namespace cuda
 
 extern "C"
 {
-void RigidMappingCuda3f_apply(unsigned int size, const matrix3& rotation, const float3& translation, void* out, void* rotated, const void* in);
-void RigidMappingCuda3f_applyJ(unsigned int size, const float3& v, const float3& omega, void* out, const void* rotated);
+void RigidMappingCuda3f_apply(unsigned int size, const matrix3<float>& rotation, const CudaVec3<float>& translation, void* out, void* rotated, const void* in);
+void RigidMappingCuda3f_applyJ(unsigned int size, const CudaVec3<float>& v, const CudaVec3<float>& omega, void* out, const void* rotated);
 void RigidMappingCuda3f_applyJT(unsigned int size, void* out, const void* rotated, const void* in);
 }
 
@@ -21,7 +46,7 @@ void RigidMappingCuda3f_applyJT(unsigned int size, void* out, const void* rotate
 // GPU-side methods //
 //////////////////////
 
-__global__ void RigidMappingCuda3f_apply_kernel(unsigned int size, matrix3 rotation, float3 translation, float* out, float* rotated, const float* in)
+__global__ void RigidMappingCuda3f_apply_kernel(unsigned int size, CudaVec3<float> rotation_x, CudaVec3<float> rotation_y, CudaVec3<float> rotation_z, CudaVec3<float> translation, float* out, float* rotated, const float* in)
 {
     int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     int index1 = threadIdx.x;
@@ -41,14 +66,14 @@ __global__ void RigidMappingCuda3f_apply_kernel(unsigned int size, matrix3 rotat
     __syncthreads();
 
     int index3 = umul24(3,index1);
-    float3 p = make_float3(temp[index3  ],temp[index3+1],temp[index3+2]);
+    CudaVec3<float> p = CudaVec3<float>::make(temp[index3  ],temp[index3+1],temp[index3+2]);
 
     // rotated
-    p = rotation*p;
+    //p = rotation*p;
     
-    temp[index3  ] = dot(rotation.x,p);
-    temp[index3+1] = dot(rotation.y,p);
-    temp[index3+2] = dot(rotation.z,p);
+    temp[index3  ] = dot(rotation_x,p);
+    temp[index3+1] = dot(rotation_y,p);
+    temp[index3+2] = dot(rotation_z,p);
     
     __syncthreads();
     
@@ -69,7 +94,7 @@ __global__ void RigidMappingCuda3f_apply_kernel(unsigned int size, matrix3 rotat
     out[index1+2*BSIZE] = temp[index1+2*BSIZE];
 }
 
-__global__ void RigidMappingCuda3f_applyJ_kernel(unsigned int size, float3 v, float3 omega, float* out, const float* rotated)
+__global__ void RigidMappingCuda3f_applyJ_kernel(unsigned int size, CudaVec3<float> v, CudaVec3<float> omega, float* out, const float* rotated)
 {
     int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     int index1 = threadIdx.x;
@@ -88,7 +113,7 @@ __global__ void RigidMappingCuda3f_applyJ_kernel(unsigned int size, float3 v, fl
     __syncthreads();
 
     int index3 = umul24(3,index1);
-    float3 p = v - cross(make_float3(temp[index3  ],temp[index3+1],temp[index3+2]),omega);
+    CudaVec3<float> p = v - cross(CudaVec3<float>::make(temp[index3  ],temp[index3+1],temp[index3+2]),omega);
 
     temp[index3  ] = p.x;
     temp[index3+1] = p.y;
@@ -123,17 +148,17 @@ __global__ void RigidMappingCuda3f_applyJT_kernel(unsigned int size, float* out,
     __syncthreads();
 
     int index3 = umul24(3,index1);
-    float3 r;
+    CudaVec3<float> r;
     if (index0+index1 < size)
     {
-        r = cross(make_float3(temp[index3  +3*BSIZE],temp[index3+1+3*BSIZE],temp[index3+2+3*BSIZE]),make_float3(temp[index3  ],temp[index3+1],temp[index3+2]));
+        r = cross(CudaVec3<float>::make(temp[index3  +3*BSIZE],temp[index3+1+3*BSIZE],temp[index3+2+3*BSIZE]),CudaVec3<float>::make(temp[index3  ],temp[index3+1],temp[index3+2]));
     }
     else
     {
         temp[index3  ] = 0;
         temp[index3+1] = 0;
         temp[index3+2] = 0;
-        r = make_float3(0,0,0);
+        r = CudaVec3<float>::make(0,0,0);
     }
 
     temp[index3  +3*BSIZE] = r.x;
@@ -174,14 +199,14 @@ __global__ void RigidMappingCuda3f_applyJT_kernel(unsigned int size, float* out,
 // CPU-side methods //
 //////////////////////
 
-void RigidMappingCuda3f_apply(unsigned int size, const matrix3& rotation, const float3& translation, void* out, void* rotated, const void* in)
+void RigidMappingCuda3f_apply(unsigned int size, const matrix3<float>& rotation, const CudaVec3<float>& translation, void* out, void* rotated, const void* in)
 {
     dim3 threads(BSIZE,1);
     dim3 grid((size+BSIZE-1)/BSIZE,1);
-    RigidMappingCuda3f_apply_kernel<<< grid, threads, BSIZE*3*sizeof(float) >>>(size, rotation, translation, (float*)out, (float*)rotated, (const float*)in);
+    RigidMappingCuda3f_apply_kernel<<< grid, threads, BSIZE*3*sizeof(float) >>>(size, rotation.x, rotation.y, rotation.z, translation, (float*)out, (float*)rotated, (const float*)in);
 }
 
-void RigidMappingCuda3f_applyJ(unsigned int size, const float3& v, const float3& omega, void* out, const void* rotated)
+void RigidMappingCuda3f_applyJ(unsigned int size, const CudaVec3<float>& v, const CudaVec3<float>& omega, void* out, const void* rotated)
 {
     dim3 threads(BSIZE,1);
     dim3 grid((size+BSIZE-1)/BSIZE,1);
@@ -195,7 +220,7 @@ void RigidMappingCuda3f_applyJT(unsigned int size, void* out, const void* rotate
     RigidMappingCuda3f_applyJT_kernel<<< grid, threads, BSIZE*6*sizeof(float) >>>(size, (float*)out, (const float*)rotated, (const float*)in);
 }
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

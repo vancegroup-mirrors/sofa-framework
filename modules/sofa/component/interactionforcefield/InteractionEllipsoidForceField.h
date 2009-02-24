@@ -1,9 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_INTERACTION_ELLIPSOIDFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_INTERACTION_ELLIPSOIDFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/MixedInteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/core/objectmodel/Data.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
@@ -27,7 +50,7 @@ public:
 };
 
 template<class DataTypes1, class DataTypes2>
-class InteractionEllipsoidForceField : public core::componentmodel::behavior::MixedInteractionForceField<DataTypes1, DataTypes2>, public core::VisualModel
+class InteractionEllipsoidForceField : public core::componentmodel::behavior::MixedInteractionForceField<DataTypes1, DataTypes2>, public virtual core::objectmodel::BaseObject
 {
 public:
 	typedef core::componentmodel::behavior::MixedInteractionForceField<DataTypes1, DataTypes2> Inherit;
@@ -42,17 +65,15 @@ public:
 	typedef typename DataTypes2::Deriv Deriv2;
 	typedef typename Coord2::value_type Real2;
 
-
 	enum { N=Coord1::static_size };
 	typedef defaulttype::Mat<N,N,Real1> Mat;
-	
 protected:
     class Contact
     {
     public:
         int index;
 		Deriv1 pos;
-		Vec3d bras_levier;
+		Vec<3,SReal> bras_levier;
         Mat m;
 	Contact( int index=0, const Mat& m=Mat())
 	  : index(index), m(m)
@@ -100,7 +121,7 @@ public:
     {
 		_update_pos_relative = true;
 		vars.center =center.getValue();
-		printf("\n vars.center : %f %f %f",vars.center.x(),vars.center.y(),vars.center.z());
+// 		printf("\n vars.center : %f %f %f",vars.center.x(),vars.center.y(),vars.center.z());
 		_orientation.clear();
     }
 
@@ -124,10 +145,7 @@ public:
 
 	void reinit() {_update_pos_relative = true;}
 
-    // -- VisualModel interface
     void draw();
-    void initTextures() { }
-    void update() { }
 
 protected:
 	struct TempVars {
@@ -150,5 +168,6 @@ protected:
 } // namespace component
 
 } // namespace sofa
+
 
 #endif

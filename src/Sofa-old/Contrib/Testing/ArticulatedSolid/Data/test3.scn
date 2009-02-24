@@ -1,9 +1,0 @@
-<Scene dt="0.1" showArticulatedSolids="1" showCollisionModels="1" showBehaviorModels="1" showMappings="1" showForceFields="1">
-	<Group name="LeGroupe">
-		<Solver type="Euler"/>
-  <ArticulatedSolid type="ArticulatedSolidf" jointType="revolute" jointCenter="0 0 0" massCenter="0 1 0" inertia="0.33 0.01 0.01 0 0 0" >
-        <VisualModel type="OglModel" name="Visual" filename="VisualModels/dragon.obj" color="gray" />
-	<Mapping type="RigidMapping" object1=".." object2="Visual" />
-  </ArticulatedSolid>
-  </Group>
-</Scene>

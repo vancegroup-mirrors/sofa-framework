@@ -1,14 +1,38 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifdef SOFA_HAVE_GLEW
 #include <GL/glew.h>
 #endif
-#ifdef SOFA_HAVE_FLOWVR
+//#ifdef SOFA_HAVE_FLOWVR
 #include <flowvr/render/mesh.h>
-#endif
+//#endif
 #include "CudaDistanceGridCollisionModel.h"
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <fstream>
-#include <sofa/helper/system/gl.h>
+#include <sofa/helper/gl/template.h>
 
 namespace sofa
 {
@@ -112,7 +136,7 @@ CudaDistanceGrid* CudaDistanceGrid::load(const std::string& filename, double sca
         grid->computeBBox();
         return grid;
     }
-#ifdef SOFA_HAVE_FLOWVR
+//#ifdef SOFA_HAVE_FLOWVR
     else if (filename.length()>6 && filename.substr(filename.length()-6) == ".fmesh")
     {
         flowvr::render::Mesh mesh;
@@ -170,7 +194,7 @@ CudaDistanceGrid* CudaDistanceGrid::load(const std::string& filename, double sca
         std::cout << "Distance grid creation DONE."<<std::endl;
         return grid;
     }
-#endif
+//#endif
     else if (filename.length()>4 && filename.substr(filename.length()-4) == ".obj")
     {
         sofa::helper::io::Mesh* mesh = sofa::helper::io::Mesh::Create(filename);
@@ -234,10 +258,10 @@ CudaDistanceGrid* CudaDistanceGrid::load(const std::string& filename, double sca
         {
 	    const sofa::helper::vector<int>& pts = facets[i][0];
             if (pts.size() == 4)
-                grid->meshQuads[nbq++] = sofa::component::topology::MeshTopology::Quad(pts[0],pts[1],pts[2],pts[3]);
+                grid->meshQuads[nbq++] = sofa::core::componentmodel::topology::BaseMeshTopology::Quad(pts[0],pts[1],pts[2],pts[3]);
             else if (pts.size() >= 3)
                 for (unsigned int j=2; j<pts.size(); j++)
-                    grid->meshTriangles[nbt++] = sofa::component::topology::MeshTopology::Triangle(pts[0],pts[j-1],pts[j]);
+                    grid->meshTriangles[nbt++] = sofa::core::componentmodel::topology::BaseMeshTopology::Triangle(pts[0],pts[j-1],pts[j]);
         }
         std::cout << "Computing distance field."<<std::endl;
         grid->calcDistance();
@@ -581,8 +605,8 @@ void CudaRigidDistanceGridCollisionModel::draw()
         if (getContext()->getShowWireFrame())
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    if (getPrevious()!=NULL && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
-        dynamic_cast<core::VisualModel*>(getPrevious())->draw();
+    if (getPrevious()!=NULL)
+        getPrevious()->draw();
 }
 
 void CudaRigidDistanceGridCollisionModel::draw(int index)
@@ -593,12 +617,12 @@ void CudaRigidDistanceGridCollisionModel::draw(int index)
         // float m[16];
         // (*rigid->getX())[index].writeOpenGlMatrix( m );
         // glMultMatrixf(m);
-        Mat4x4d m;
+        Matrix4 m;
         m.identity();
         m = elems[index].rotation;
         m.transpose();
-        m[3] = Vec4d(elems[index].translation,1.0);
-        glMultMatrixd(m.ptr());
+        m[3] = Vector4(elems[index].translation,1.0);
+        helper::gl::glMultMatrix(m.ptr());
     }
 
     CudaDistanceGrid* grid = getGrid(index);

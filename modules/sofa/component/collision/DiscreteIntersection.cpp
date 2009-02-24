@@ -1,34 +1,34 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/FnDispatcher.inl>
 #include <sofa/component/collision/DiscreteIntersection.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
 //#include <sofa/component/collision/RayPickInteractor.h>
-#include <sofa/component/collision/ProximityIntersection.h>
+//#include <sofa/component/collision/ProximityIntersection.h>
 #include <sofa/component/collision/proximity.h>
 #include <iostream>
 #include <algorithm>
@@ -64,6 +64,7 @@ DiscreteIntersection::DiscreteIntersection()
 	//intersectors.add<SphereModel,     TriangleModel,     DiscreteIntersection>  (this);
 	intersectors.add<TriangleModel,     LineModel,       DiscreteIntersection>  (this);
 	//intersectors.add<TriangleModel,   TriangleModel,     DiscreteIntersection> (this);
+	intersectors.add<TetrahedronModel, PointModel,       DiscreteIntersection>  (this);
 	intersectors.add<RigidDistanceGridCollisionModel, PointModel,                      DiscreteIntersection>  (this);
 	intersectors.add<RigidDistanceGridCollisionModel, SphereModel,                     DiscreteIntersection>  (this);
 	intersectors.add<RigidDistanceGridCollisionModel, TriangleModel,                   DiscreteIntersection>  (this);
@@ -79,6 +80,7 @@ DiscreteIntersection::DiscreteIntersection()
     intersectors.ignore<RayModel, PointModel>();
     intersectors.ignore<RayModel, LineModel>();
     intersectors.add<RayModel, TriangleModel,                   DiscreteIntersection>  (this);
+    intersectors.add<RayModel, TetrahedronModel,                DiscreteIntersection>  (this);
 	intersectors.add<RayModel, RigidDistanceGridCollisionModel, DiscreteIntersection>  (this);
 	intersectors.add<RayModel, FFDDistanceGridCollisionModel,   DiscreteIntersection>  (this);
 }
@@ -211,6 +213,129 @@ int DiscreteIntersection::computeIntersection(Ray& e1, Triangle& e2, OutputVecto
 	return 1;
 }
 
+bool DiscreteIntersection::testIntersection(Ray&, Tetrahedron&)
+{
+    return true;
+}
+
+int DiscreteIntersection::computeIntersection(Ray& e1, Tetrahedron& e2, OutputVector* contacts)
+{
+    Vector3 P = e1.origin();
+    Vector3 PQ = e1.direction();
+    Vector3 b0 = e2.getBary(P);
+    Vector3 bdir = e2.getDBary(PQ);
+    //std::cout << "b0 = "<<b0<<" \tbdir = "<<bdir<<std::endl;
+    double l0 = 0;
+    double l1 = e1.l();
+    for (int c=0;c<3;++c)
+    {
+	if (b0[c] < 0 && bdir[c] < 0) return 0; // no intersection
+	//if (b0[c] > 1 && bdir[c] > 0) return 0; // no intersection
+	if (bdir[c] < -1.0e-10)
+	{
+	    double l = -b0[c]/bdir[c];
+	    if (l < l1) l1 = l;
+	}
+	else if (bdir[c] > 1.0e-10)
+	{
+	    double l = -b0[c]/bdir[c];
+	    if (l > l0) l0 = l;
+	}
+    }
+    // 4th plane : bx+by+bz = 1
+    {
+	double bd = bdir[0]+bdir[1]+bdir[2];
+	if (bd > 1.0e-10)
+	{
+	    double l = (1-(b0[0]+b0[1]+b0[2]))/bd;
+	    if (l < l1) l1 = l;
+	}
+	else if (bd < -1.0e-10)
+	{
+	    double l = (1-(b0[0]+b0[1]+b0[2]))/bd;
+	    if (l > l0) l0 = l;
+	}
+    }
+    if (l0 > l1) return 0; // empty intersection
+    double l = l0; //(l0+l1)/2;
+    Vector3 X = P+PQ*l;
+
+    //std::cout << "tetra "<<e2.getIndex()<<": b0 = "<<b0<<" \tbdir = "<<bdir<<std::endl;
+    //std::cout << "l0 = "<<l0<<" \tl1 = "<<l1<<" \tX = "<<X<<" \tbX = "<<e2.getBary(X)<<" \t?=? "<<(b0+bdir*l)<<std::endl;
+    //std::cout << "b1 = "<<e2.getBary(e2.p1())<<" \nb2 = "<<e2.getBary(e2.p2())<<" \nb3 = "<<e2.getBary(e2.p3())<<" \nb4 = "<<e2.getBary(e2.p4())<<std::endl;
+    
+    contacts->resize(contacts->size()+1);
+    DetectionOutput *detection = &*(contacts->end()-1);
+    detection->point[0] = X;
+    detection->point[1] = X;
+    PQ.normalize();
+    detection->normal = PQ;
+    detection->value = 0;
+    detection->elem.first = e1;
+    detection->elem.second = e2;
+    detection->id = e1.getIndex();
+    return 1;
+}
+
+bool DiscreteIntersection::testIntersection(Tetrahedron&, Point&)
+{
+    return true;
+}
+
+int DiscreteIntersection::computeIntersection(Tetrahedron& e1, Point& e2, OutputVector* contacts)
+{
+    Vector3 n = e2.n();
+    if (n == Vector3()) return 0; // no normal on point -> either an internal points or normal is not available
+
+    if (e1.getCollisionModel()->getMechanicalState() == e2.getCollisionModel()->getMechanicalState())
+    { // self-collisions: make sure the point is not one of the vertices of the tetrahedron
+	int i = e2.getIndex();
+	if (i == e1.p1Index() || i == e1.p2Index() || i == e1.p3Index() || i == e1.p4Index())
+	    return 0;
+    }
+
+    Vector3 P = e2.p();
+    Vector3 b0 = e1.getBary(P);
+    if (b0[0] < 0 || b0[1] < 0 || b0[2] < 0 || (b0[0]+b0[1]+b0[2]) > 1)
+	return 1; // out of tetrahedron
+
+    // Find the point on the surface of the tetrahedron in the direction of -n
+    Vector3 bdir = e1.getDBary(-n);
+    //std::cout << "b0 = "<<b0<<" \tbdir = "<<bdir<<std::endl;
+    double l1 = 1.0e10;
+    for (int c=0;c<3;++c)
+    {
+	if (bdir[c] < -1.0e-10)
+	{
+	    double l = -b0[c]/bdir[c];
+	    if (l < l1) l1 = l;
+	}
+    }
+    // 4th plane : bx+by+bz = 1
+    {
+	double bd = bdir[0]+bdir[1]+bdir[2];
+	if (bd > 1.0e-10)
+	{
+	    double l = (1-(b0[0]+b0[1]+b0[2]))/bd;
+	    if (l < l1) l1 = l;
+	}
+    }
+    if (l1 >= 1.0e9) l1 = 0;
+    double l = l1;
+    Vector3 X = P-n*l;
+    
+    contacts->resize(contacts->size()+1);
+    DetectionOutput *detection = &*(contacts->end()-1);
+    detection->point[0] = X;
+    detection->point[1] = P;
+    detection->normal = -n;
+    detection->value = -l;
+    detection->elem.first = e1;
+    detection->elem.second = e2;
+    detection->id = e2.getIndex();
+    return 1;
+}
+
 bool DiscreteIntersection::testIntersection(RigidDistanceGridCollisionElement&, RigidDistanceGridCollisionElement&)
 {
     return true;
@@ -229,7 +354,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     const Vector3& t2 = e2.getTranslation();
     const Matrix3& r2 = e2.getRotation();
     
-    const DistanceGrid::Real margin = 0.001f; //e1.getProximity() + e2.getProximity();
+    const SReal margin = 0.001f; //e1.getProximity() + e2.getProximity();
     
     // transform from grid1 to grid2
     Vec3f translation;
@@ -256,11 +381,11 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 
     if (grid2->isCube() && grid1->isCube())
     {
-	const DistanceGrid::Real cubeDim1 = grid1->getCubeDim();
-	const DistanceGrid::Real cubeDim2 = grid2->getCubeDim();
+	const SReal cubeDim1 = grid1->getCubeDim();
+	const SReal cubeDim2 = grid2->getCubeDim();
 	// current distance found
 	// we allow only 10% penetration
-	DistanceGrid::Real dist = (DistanceGrid::Real)((cubeDim1 + cubeDim2) * 0.1);
+	SReal dist = (SReal)((cubeDim1 + cubeDim2) * 0.1);
 	// a nearly perpendicular pair would be visible by an entry close to 1 in the rotation matrix
 	for (int f2 = 0; f2 < 3; f2++)
 	{
@@ -270,7 +395,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 		{ // found a match
 		    // translation is the position of cube1 center in cube2 space
 		    // so the pair of faces are close if |translation[f2]| is close dim1+dim2
-		    DistanceGrid::Real d = rabs(rabs(translation[f2])-(cubeDim1+cubeDim2));
+		    SReal d = rabs(rabs(translation[f2])-(cubeDim1+cubeDim2));
 		    // we should favor normals that are perpendicular to the relative velocity
 		    // however we don't have this information currently, so for now we favor the horizontal face
 		    if (rabs(r2[f2][2]) > 0.99 && d < (cubeDim1 + cubeDim2) * 0.1) d = 0;
@@ -313,8 +438,8 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     {
         if (grid2->isCube() && grid1->isCube())
         {
-            const DistanceGrid::Real cubeDim2 = grid2->getCubeDim();
-            const DistanceGrid::Real cubeDim2Margin = cubeDim2+margin;
+            const SReal cubeDim2 = grid2->getCubeDim();
+            const SReal cubeDim2Margin = cubeDim2+margin;
 
 	    if (face_e2 != FACE_NONE)
 	    { // stacked cubes
@@ -370,7 +495,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 		    normal[1] = rabs(p2[1]) - cubeDim2;
 		    normal[2] = rabs(p2[2]) - cubeDim2;
 		    
-		    DistanceGrid::Real d;
+		    SReal d;
 		    // find the smallest penetration
 		    int axis;
 		    if (normal[0] > normal[1])
@@ -380,7 +505,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 			if (normal[1] > normal[2]) axis = 1;
 			else                       axis = 2;
 		    
-		    DistanceGrid::Real sign = (p2[axis]<0)?-1.0f:1.0f;
+		    SReal sign = (p2[axis]<0)?-1.0f:1.0f;
 		    d = normal[axis];
 		    p2[axis] = sign*cubeDim2;
 		    Vector3 gnormal = r2.col(axis) * -sign;
@@ -424,7 +549,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 		    continue;
 		}
                 
-                float d = grid2->interp(p2);
+                SReal d = grid2->interp(p2);
                 if (d >= margin) continue;
                 
                 Vector3 grad = grid2->grad(p2); // note that there are some redundant computations between interp() and grad()
@@ -454,8 +579,8 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     {
         if (grid1->isCube() && grid2->isCube())
         {
-            const DistanceGrid::Real cubeDim1 = grid1->getCubeDim();
-            const DistanceGrid::Real cubeDim1Margin = cubeDim1+margin;
+            const SReal cubeDim1 = grid1->getCubeDim();
+            const SReal cubeDim1Margin = cubeDim1+margin;
 
 	    if (face_e1 != FACE_NONE)
 	    { // stacked cubes
@@ -510,7 +635,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 		    normal[1] = rabs(p1[1]) - cubeDim1;
 		    normal[2] = rabs(p1[2]) - cubeDim1;
 		    
-		    DistanceGrid::Real d;
+		    SReal d;
 		    // find the smallest penetration
 		    int axis;
 		    if (normal[0] > normal[1])
@@ -520,7 +645,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 			if (normal[1] > normal[2]) axis = 1;
 			else                       axis = 2;
 		    
-		    DistanceGrid::Real sign = (p1[axis]<0)?-1.0f:1.0f;
+		    SReal sign = (p1[axis]<0)?-1.0f:1.0f;
 		    d = normal[axis];
 		    p1[axis] = sign*cubeDim1;
 		    Vector3 gnormal = r1.col(axis) * sign;
@@ -594,7 +719,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
                 p1normal[1] = (cubeDim1Margin - rabs(p1[1]))/(0.000001+rabs(p2normal[1]));
                 p1normal[2] = (cubeDim1Margin - rabs(p1[2]))/(0.000001+rabs(p2normal[2]));
                 
-                DistanceGrid::Real d;
+                SReal d;
                 Vector3 normal;
                 // find the smallest penetration
                 int axis;
@@ -664,7 +789,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 		    continue;
 		}
                 
-                float d = grid1->interp(p1);
+                SReal d = grid1->interp(p1);
                 if (d >= margin) continue;
                 
                 Vector3 grad = grid1->grad(p1); // note that there are some redundant computations between interp() and grad()
@@ -702,7 +827,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     const Matrix3& r1 = e1.getRotation();
 
     const double d0 = e1.getProximity() + e2.getProximity() + getContactDistance();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
 
     Vector3 p2 = e2.p();
     DistanceGrid::Coord p1;
@@ -720,7 +845,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 	return 0;
     }
 
-    float d = grid1->interp(p1);
+    SReal d = grid1->interp(p1);
     if (d >= margin) return 0;
 
     Vector3 grad = grid1->grad(p1); // note that there are some redundant computations between interp() and grad()
@@ -756,7 +881,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
     const Matrix3& r1 = e1.getRotation();
 
     const double d0 = e1.getProximity() + e2.getProximity() + getContactDistance();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
 
     if (f2&TriangleModel::FLAG_P1)
     {
@@ -777,7 +902,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 	    }
 	    else
 	    {
-		float d = grid1->interp(p1);
+		SReal d = grid1->interp(p1);
 		if (d >= margin) return 0;
 		
 		Vector3 grad = grid1->grad(p1); // note that there are some redundant computations between interp() and grad()
@@ -818,7 +943,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 	    }
 	    else
 	    {
-		float d = grid1->interp(p1);
+		SReal d = grid1->interp(p1);
 		if (d >= margin) return 0;
 		
 		Vector3 grad = grid1->grad(p1); // note that there are some redundant computations between interp() and grad()
@@ -859,7 +984,7 @@ int DiscreteIntersection::computeIntersection(RigidDistanceGridCollisionElement&
 	    }
 	    else
 	    {
-		float d = grid1->interp(p1);
+		SReal d = grid1->interp(p1);
 		if (d >= margin) return 0;
 		
 		Vector3 grad = grid1->grad(p1); // note that there are some redundant computations between interp() and grad()
@@ -976,13 +1101,14 @@ int DiscreteIntersection::computeIntersection(Ray& e2, RigidDistanceGridCollisio
         Vector3 p = rayOrigin + rayDirection*l0;
         double dist = grid1->interp(p);
         double epsilon = grid1->getCellWidth().norm()*0.1f;
-        while (l0 < l1 && (dist > 0 || dist < -epsilon))
+        while (l0 < l1 && (dist > epsilon || dist < -epsilon))
         {
             l0 += dist;
             p = rayOrigin + rayDirection*l0;
             dist = grid1->interp(p);
+	    //std::cout << "p="<<p<<" dist="<<dist<<" l0="<<l0<<" l1="<<l1<<" epsilon="<<epsilon<<std::endl;
         }
-        if (dist < 0)
+        if (dist < epsilon)
         { // intersection found
             
             contacts->resize(contacts->size()+1);
@@ -1019,7 +1145,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     const Matrix3& r2 = e2.getRotation();
     
     const double d0 = e1.getProximity() + e2.getProximity();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
     
     // transform from grid1 to grid2
     Vec3f translation;
@@ -1033,7 +1159,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     else rotation.identity();
     
     const DistanceGrid::Coord center2 = translation + rotation*c1.center;
-    const DistanceGrid::Real radius2 = c1.radius*c1.radius;
+    const SReal radius2 = c1.radius*c1.radius;
     const DistanceGrid::VecCoord& x2 = grid2->meshPts;
     const int i0 = x2.size();
     // first points of e1 against distance field of e2
@@ -1055,7 +1181,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
 		    continue;
 		}
                 
-                float d = grid2->interp(p2);
+                SReal d = grid2->interp(p2);
                 if (d >= margin) continue;
                 
                 Vector3 grad = grid2->grad(p2); // note that there are some redundant computations between interp() and grad()
@@ -1082,7 +1208,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     
     if (!x2.empty() && e2.getCollisionModel()->usePoints.getValue())
     {
-        const DistanceGrid::Real cubesize = c1.invDP.norm();
+        const SReal cubesize = c1.invDP.norm();
         for (unsigned int i=0; i<x2.size(); i++)
         {
             DistanceGrid::Coord p2 = x2[i];
@@ -1096,13 +1222,13 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 
                 // refine the estimate until we are very close to the p1 or we are sure p1 cannot intersect with the object
                 int iter;
-                DistanceGrid::Real err1 = 1000.0f;
+                SReal err1 = 1000.0f;
                 for(iter=0; iter<5; ++iter)
                 {
                     DistanceGrid::Coord pdeform = c1.deform(b);
                     DistanceGrid::Coord diff = p1-pdeform;
-                    DistanceGrid::Real err = diff.norm();
-                    DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+                    SReal err = diff.norm();
+                    SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
                     if (b[0] < -berr || b[0] > 1+berr
                      || b[1] < -berr || b[1] > 1+berr
                      || b[2] < -berr || b[2] > 1+berr)
@@ -1116,7 +1242,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                          && b[2] > 0.001f && b[2] < 0.999f)
                         {
                             DistanceGrid::Coord pinit = c1.initpos(b);
-                            DistanceGrid::Real d = grid1->interp(pinit);
+                            SReal d = grid1->interp(pinit);
                             if (d < margin)
                             {
                                 DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1141,7 +1267,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                         break;
                     }
                     err1 = err;
-                    DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+                    SReal d = grid1->interp(c1.initpos(b));
                     if (d*0.5f - err > margin)
                         break; // the point is too far from the object
                     // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1180,7 +1306,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     if (!usePoints1 && !usePoints2) return 0; // no tests possible
     
     const double d0 = e1.getProximity() + e2.getProximity();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
     
     if ((c2.center - c1.center).norm2() > (c1.radius+c2.radius)*(c1.radius+c2.radius))
         return 0; // the two enclosing spheres are not colliding
@@ -1190,7 +1316,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     {
         c1.updatePoints();
         c2.updateFaces();
-        const DistanceGrid::Real cubesize = c2.invDP.norm();
+        const SReal cubesize = c2.invDP.norm();
         const sofa::helper::vector<DistanceGrid::Coord>& x1 = c1.deformedPoints;
         for (unsigned int i=0; i<x1.size(); i++)
         {
@@ -1201,13 +1327,13 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
 
             // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
             int iter;
-            DistanceGrid::Real err1 = 1000.0f;
+            SReal err1 = 1000.0f;
             for(iter=0; iter<5; ++iter)
             {
                 DistanceGrid::Coord pdeform = c2.deform(b);
                 DistanceGrid::Coord diff = p2-pdeform;
-                DistanceGrid::Real err = diff.norm();
-                DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+                SReal err = diff.norm();
+                SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
                 if (b[0] < -berr || b[0] > 1+berr
                  || b[1] < -berr || b[1] > 1+berr
                  || b[2] < -berr || b[2] > 1+berr)
@@ -1221,7 +1347,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                      && b[2] > 0.001f && b[2] < 0.999f)
                     {
                         DistanceGrid::Coord pinit = c2.initpos(b);
-                        DistanceGrid::Real d = grid2->interp(pinit);
+                        SReal d = grid2->interp(pinit);
                         if (d < margin)
                         {
                             DistanceGrid::Coord grad = grid2->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1246,7 +1372,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                     break;
                 }
                 err1 = err;
-                DistanceGrid::Real d = grid2->interp(c2.initpos(b));
+                SReal d = grid2->interp(c2.initpos(b));
                 if (d*0.5f - err > margin)
                     break; // the point is too far from the object
                 // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1266,7 +1392,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     {
         c2.updatePoints();
         c1.updateFaces();
-        const DistanceGrid::Real cubesize = c1.invDP.norm();
+        const SReal cubesize = c1.invDP.norm();
         const sofa::helper::vector<DistanceGrid::Coord>& x2 = c2.deformedPoints;
         for (unsigned int i=0; i<x2.size(); i++)
         {
@@ -1277,15 +1403,15 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
 
             // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
             int iter;
-            DistanceGrid::Real err1 = 1000.0f;
+            SReal err1 = 1000.0f;
             for(iter=0; iter<5; ++iter)
             {
                 DistanceGrid::Coord pdeform = c1.deform(b);
                 DistanceGrid::Coord diff = p1-pdeform;
-                DistanceGrid::Real err = diff.norm();
+                SReal err = diff.norm();
                 if (iter>3)
                     std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-                DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+                SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
                 if (b[0] < -berr || b[0] > 1+berr
                  || b[1] < -berr || b[1] > 1+berr
                  || b[2] < -berr || b[2] > 1+berr)
@@ -1297,7 +1423,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                      && b[2] > 0.001f && b[2] < 0.999f)
                     {
                         DistanceGrid::Coord pinit = c1.initpos(b);
-                        DistanceGrid::Real d = grid1->interp(pinit);
+                        SReal d = grid1->interp(pinit);
                         if (d < margin)
                         {
                             DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1322,7 +1448,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                     break;
                 }
                 err1 = err;
-                DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+                SReal d = grid1->interp(c1.initpos(b));
                 if (d*0.5f - err > margin)
                     break; // the point is too far from the object
                 // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1353,10 +1479,10 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     FFDDistanceGridCollisionModel::DeformedCube& c1 = e1.getCollisionModel()->getDeformCube(e1.getIndex());
 
     const double d0 = e1.getProximity() + e2.getProximity() + getContactDistance();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
 
     c1.updateFaces();
-    const DistanceGrid::Real cubesize = c1.invDP.norm();
+    const SReal cubesize = c1.invDP.norm();
     int nc = 0;
     
     Vector3 p2 = e2.p();
@@ -1367,15 +1493,15 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
 
     // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
     int iter;
-    DistanceGrid::Real err1 = 1000.0f;
+    SReal err1 = 1000.0f;
     for(iter=0; iter<5; ++iter)
     {
         DistanceGrid::Coord pdeform = c1.deform(b);
         DistanceGrid::Coord diff = p1-pdeform;
-        DistanceGrid::Real err = diff.norm();
+        SReal err = diff.norm();
         if (iter>3)
             std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-        DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+        SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
         if (b[0] < -berr || b[0] > 1+berr
             || b[1] < -berr || b[1] > 1+berr
             || b[2] < -berr || b[2] > 1+berr)
@@ -1387,7 +1513,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 && b[2] > 0.001f && b[2] < 0.999f)
             {
                 DistanceGrid::Coord pinit = c1.initpos(b);
-                DistanceGrid::Real d = grid1->interp(pinit);
+                SReal d = grid1->interp(pinit);
                 if (d < margin)
                 {
                     DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1412,7 +1538,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
             break;
         }
         err1 = err;
-        DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+        SReal d = grid1->interp(c1.initpos(b));
         if (d*0.5f - err > margin)
             break; // the point is too far from the object
         // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1444,10 +1570,10 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     FFDDistanceGridCollisionModel::DeformedCube& c1 = e1.getCollisionModel()->getDeformCube(e1.getIndex());
 
     const double d0 = e1.getProximity() + e2.getProximity() + getContactDistance();
-    const DistanceGrid::Real margin = 0.001f + (DistanceGrid::Real)d0;
+    const SReal margin = 0.001f + (SReal)d0;
 
     c1.updateFaces();
-    const DistanceGrid::Real cubesize = c1.invDP.norm();
+    const SReal cubesize = c1.invDP.norm();
     int nc = 0;
 
     if (f2&TriangleModel::FLAG_P1)
@@ -1460,15 +1586,15 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     
         // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
         int iter;
-        DistanceGrid::Real err1 = 1000.0f;
+        SReal err1 = 1000.0f;
         for(iter=0; iter<5; ++iter)
         {
             DistanceGrid::Coord pdeform = c1.deform(b);
             DistanceGrid::Coord diff = p1-pdeform;
-            DistanceGrid::Real err = diff.norm();
+            SReal err = diff.norm();
             if (iter>3)
                 std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-            DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+            SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
             if (b[0] < -berr || b[0] > 1+berr
                 || b[1] < -berr || b[1] > 1+berr
                 || b[2] < -berr || b[2] > 1+berr)
@@ -1480,7 +1606,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                     && b[2] > 0.001f && b[2] < 0.999f)
                 {
                     DistanceGrid::Coord pinit = c1.initpos(b);
-                    DistanceGrid::Real d = grid1->interp(pinit);
+                    SReal d = grid1->interp(pinit);
                     if (d < margin)
                     {
                         DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1505,7 +1631,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 break;
             }
             err1 = err;
-            DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+            SReal d = grid1->interp(c1.initpos(b));
             if (d*0.5f - err > margin)
                 break; // the point is too far from the object
             // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1531,15 +1657,15 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     
         // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
         int iter;
-        DistanceGrid::Real err1 = 1000.0f;
+        SReal err1 = 1000.0f;
         for(iter=0; iter<5; ++iter)
         {
             DistanceGrid::Coord pdeform = c1.deform(b);
             DistanceGrid::Coord diff = p1-pdeform;
-            DistanceGrid::Real err = diff.norm();
+            SReal err = diff.norm();
             if (iter>3)
                 std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-            DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+            SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
             if (b[0] < -berr || b[0] > 1+berr
                 || b[1] < -berr || b[1] > 1+berr
                 || b[2] < -berr || b[2] > 1+berr)
@@ -1551,7 +1677,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                     && b[2] > 0.001f && b[2] < 0.999f)
                 {
                     DistanceGrid::Coord pinit = c1.initpos(b);
-                    DistanceGrid::Real d = grid1->interp(pinit);
+                    SReal d = grid1->interp(pinit);
                     if (d < margin)
                     {
                         DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1576,7 +1702,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 break;
             }
             err1 = err;
-            DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+            SReal d = grid1->interp(c1.initpos(b));
             if (d*0.5f - err > margin)
                 break; // the point is too far from the object
             // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1602,15 +1728,15 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
     
         // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
         int iter;
-        DistanceGrid::Real err1 = 1000.0f;
+        SReal err1 = 1000.0f;
         for(iter=0; iter<5; ++iter)
         {
             DistanceGrid::Coord pdeform = c1.deform(b);
             DistanceGrid::Coord diff = p1-pdeform;
-            DistanceGrid::Real err = diff.norm();
+            SReal err = diff.norm();
             if (iter>3)
                 std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-            DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+            SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
             if (b[0] < -berr || b[0] > 1+berr
                 || b[1] < -berr || b[1] > 1+berr
                 || b[2] < -berr || b[2] > 1+berr)
@@ -1622,7 +1748,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                     && b[2] > 0.001f && b[2] < 0.999f)
                 {
                     DistanceGrid::Coord pinit = c1.initpos(b);
-                    DistanceGrid::Real d = grid1->interp(pinit);
+                    SReal d = grid1->interp(pinit);
                     if (d < margin)
                     {
                         DistanceGrid::Coord grad = grid1->grad(pinit); // note that there are some redundant computations between interp() and grad()
@@ -1647,7 +1773,7 @@ int DiscreteIntersection::computeIntersection(FFDDistanceGridCollisionElement& e
                 break;
             }
             err1 = err;
-            DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+            SReal d = grid1->interp(c1.initpos(b));
             if (d*0.5f - err > margin)
                 break; // the point is too far from the object
             // we are solving for deform(b+db)-deform(b) = p1-deform(b)
@@ -1700,7 +1826,7 @@ int DiscreteIntersection::computeIntersection(Ray& e2, FFDDistanceGridCollisionE
     
     c1.updateFaces();
     DistanceGrid::Coord p1;
-    const DistanceGrid::Real cubesize = c1.invDP.norm();
+    const SReal cubesize = c1.invDP.norm();
     for(int i=0;i<100;i++)
     {
         rayPos = l0 + (l1-l0)*(i*0.01);
@@ -1709,16 +1835,16 @@ int DiscreteIntersection::computeIntersection(Ray& e2, FFDDistanceGridCollisionE
         DistanceGrid::Coord b = c1.undeform0(p1);
         // refine the estimate until we are very close to the p2 or we are sure p2 cannot intersect with the object
         int iter;
-        DistanceGrid::Real err1 = 1000.0f;
+        SReal err1 = 1000.0f;
         bool found = false;
         for(iter=0; iter<5; ++iter)
         {
             DistanceGrid::Coord pdeform = c1.deform(b);
             DistanceGrid::Coord diff = p1-pdeform;
-            DistanceGrid::Real err = diff.norm();
+            SReal err = diff.norm();
             //if (iter>3)
             //    std::cout << "Iter"<<iter<<": "<<err1<<" -> "<<err<<" b = "<<b<<" diff = "<<diff<<" d = "<<grid1->interp(c1.initpos(b))<<"\n";
-            DistanceGrid::Real berr = err*cubesize; if (berr>0.5f) berr=0.5f;
+            SReal berr = err*cubesize; if (berr>0.5f) berr=0.5f;
             if (b[0] < -berr || b[0] > 1+berr
                 || b[1] < -berr || b[1] > 1+berr
                 || b[2] < -berr || b[2] > 1+berr)
@@ -1738,7 +1864,7 @@ int DiscreteIntersection::computeIntersection(Ray& e2, FFDDistanceGridCollisionE
         }
         if (found)
         {
-            DistanceGrid::Real d = grid1->interp(c1.initpos(b));
+            SReal d = grid1->interp(c1.initpos(b));
             if (d < 0)
             { // intersection found
                 

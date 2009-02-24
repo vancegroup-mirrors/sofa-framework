@@ -1,6 +1,30 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/forcefield/TrianglePressureForceField.h>
 #include <sofa/component/topology/TriangleSubsetData.inl>
-#include <sofa/component/topology/TetrahedronSetTopology.h>
+#include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
 #include <sofa/helper/gl/template.h>
 #include <vector>
 #include <set>
@@ -30,14 +54,11 @@ template <class DataTypes> TrianglePressureForceField<DataTypes>::~TrianglePress
 // Handle topological changes
 template <class DataTypes> void  TrianglePressureForceField<DataTypes>::handleTopologyChange()
 {
-	sofa::core::componentmodel::topology::BaseTopology *topology = static_cast<sofa::core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
+	std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 
-	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
-
-
-	trianglePressureMap.handleTopologyEvents(itBegin,itEnd,tst->getTriangleSetTopologyContainer()->getNumberOfTriangles());
+	trianglePressureMap.handleTopologyEvents(itBegin,itEnd,_topology->getNbTriangles());
 
 }
 template <class DataTypes> void TrianglePressureForceField<DataTypes>::init()
@@ -45,14 +66,7 @@ template <class DataTypes> void TrianglePressureForceField<DataTypes>::init()
     //std::cerr << "initializing TrianglePressureForceField" << std::endl;
     this->core::componentmodel::behavior::ForceField<DataTypes>::init();
 
-	tst= static_cast<sofa::component::topology::TriangleSetTopology<DataTypes> *>(getContext()->getMainTopology());
-	assert(tst!=0);
-
-	if (tst==NULL)
-	{
-		std::cerr << "ERROR(TrianglePressureForceField): object must have an TriangleSetTopology.\n";
-		return;
-	}
+	_topology = getContext()->getMeshTopology();
 
 	if (dmin.getValue()!=dmax.getValue()) {
 		selectTrianglesAlongPlane();
@@ -72,20 +86,19 @@ void TrianglePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord
 	Deriv force;
 
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
-	const std::vector<Triangle> &ta=tst->getTriangleSetTopologyContainer()->getTriangleArray();
 
 	for(it=trianglePressureMap.begin(); it!=trianglePressureMap.end(); it++ )
 	{
 		force=(*it).second.force/3;
-		f[ta[(*it).first][0]]+=force;
-		f[ta[(*it).first][1]]+=force;
-		f[ta[(*it).first][2]]+=force;
+		f[_topology->getTriangle((*it).first)[0]]+=force;
+		f[_topology->getTriangle((*it).first)[1]]+=force;
+		f[_topology->getTriangle((*it).first)[2]]+=force;
 
 	}
 }
 
 template <class DataTypes> 
-double TrianglePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
+    double TrianglePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
 {
     cerr<<"TrianglePressureForceField::getPotentialEnergy-not-implemented !!!"<<endl;
     return 0;
@@ -94,13 +107,14 @@ double TrianglePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord&
 template<class DataTypes>
 void TrianglePressureForceField<DataTypes>::initTriangleInformation()
 {
-	topology::TriangleSetGeometryAlgorithms<DataTypes> *esga=tst->getTriangleSetGeometryAlgorithms();
+	sofa::component::topology::TriangleSetGeometryAlgorithms<DataTypes>* triangleGeo; 
+	this->getContext()->get(triangleGeo);	
 
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
 
 	for(it=trianglePressureMap.begin(); it!=trianglePressureMap.end(); it++ )
 	{
-	  (*it).second.area=esga->computeRestTriangleArea((*it).first);
+	  (*it).second.area=triangleGeo->computeRestTriangleArea((*it).first);
 	  (*it).second.force=pressure.getValue()*(*it).second.area;
 	}
 }
@@ -123,7 +137,7 @@ void TrianglePressureForceField<DataTypes>::selectTrianglesAlongPlane()
 {
 	const VecCoord& x = *this->mstate->getX0();
 	std::vector<bool> vArray;
-	unsigned int i,n;
+	unsigned int i;
 
 	vArray.resize(x.size());
 
@@ -132,11 +146,9 @@ void TrianglePressureForceField<DataTypes>::selectTrianglesAlongPlane()
 		vArray[i]=isPointInPlane(x[i]);
 	}
 
-	const std::vector<Triangle> &ta=tst->getTriangleSetTopologyContainer()->getTriangleArray();
-
-	for (n=0;n<ta.size();++n) 
+	for (int n=0;n<_topology->getNbTriangles();++n) 
 	{
-		if ((vArray[ta[n][0]]) && (vArray[ta[n][1]])&& (vArray[ta[n][2]]) ) 
+		if ((vArray[_topology->getTriangle(n)[0]]) && (vArray[_topology->getTriangle(n)[1]])&& (vArray[_topology->getTriangle(n)[2]]) ) 
 		{
 			// insert a dummy element : computation of pressure done later
 			TrianglePressureInformation t;
@@ -152,7 +164,7 @@ void TrianglePressureForceField<DataTypes>::selectTrianglesFromString()
 	unsigned int i;
 	do {
 		const char *str=inputString.c_str();
-		for(i=0;(i<inputString.length())&&(str[i]!=',');++i);
+		for(i=0;(i<inputString.length())&&(str[i]!=',');++i) ;
 		TrianglePressureInformation t;
 
 		if (i==inputString.length()) {
@@ -184,13 +196,12 @@ void TrianglePressureForceField<DataTypes>::draw()
 	glColor4f(0,1,0,1);
 	
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
-	const std::vector<Triangle> &ta=tst->getTriangleSetTopologyContainer()->getTriangleArray();
 
 	for(it=trianglePressureMap.begin(); it!=trianglePressureMap.end(); it++ )
 	{
-		helper::gl::glVertexT(x[ta[(*it).first][0]]);
-		helper::gl::glVertexT(x[ta[(*it).first][1]]);
-		helper::gl::glVertexT(x[ta[(*it).first][2]]);
+		helper::gl::glVertexT(x[_topology->getTriangle((*it).first)[0]]);
+		helper::gl::glVertexT(x[_topology->getTriangle((*it).first)[1]]);
+		helper::gl::glVertexT(x[_topology->getTriangle((*it).first)[2]]);
 	}
 	glEnd();
 

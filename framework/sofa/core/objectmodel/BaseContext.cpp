@@ -1,32 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
+#include <sofa/core/componentmodel/behavior/BaseMass.h>
 #include <sofa/core/componentmodel/topology/Topology.h>
 #include <sofa/core/componentmodel/topology/BaseTopology.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/core/Shader.h>
 #include <iostream>
 using std::cerr;
@@ -58,19 +62,19 @@ BaseContext* BaseContext::getDefault()
 ////////////////
 
 /// The Context is active
-const bool BaseContext::isActive() const { return true;};
+bool BaseContext::isActive() const { return true;};
 
 /// Gravity in the local coordinate system
 BaseContext::Vec3 BaseContext::getLocalGravity() const
 {
-    static const Vec3 G(0,-9.81,0);
+    static const Vec3 G((SReal)0,(SReal)-9.81,(SReal)0);
     return G;
 }
 
 /// Gravity in the world coordinate system
 const BaseContext::Vec3& BaseContext::getGravityInWorld() const
 {
-    static const Vec3 G(0,-9.81,0);
+    static const Vec3 G((SReal)0,(SReal)-9.81,(SReal)0);
     return G;
 }
 
@@ -113,7 +117,7 @@ bool BaseContext::getShowBoundingCollisionModels() const
 /// Display flags: Behavior Models
 bool BaseContext::getShowBehaviorModels() const
 {
-    return false;
+    return true;
 }
 
 /// Display flags: Visual Models
@@ -236,16 +240,24 @@ BaseObject* BaseContext::getMechanicalState() const
     return this->get<sofa::core::componentmodel::behavior::BaseMechanicalState>();
 }
 
+/// Mass
+BaseObject* BaseContext::getMass() const
+{
+	return this->get<sofa::core::componentmodel::behavior::BaseMass>();
+}
+
+
 /// Topology
-BaseObject* BaseContext::getTopology() const
+core::componentmodel::topology::Topology* BaseContext::getTopology() const
 {
     return this->get<sofa::core::componentmodel::topology::Topology>();
 }
-/// Topology
-BaseObject* BaseContext::getMainTopology() const
+/// Mesh Topology (unified interface for both static and dynamic topologies)
+core::componentmodel::topology::BaseMeshTopology* BaseContext::getMeshTopology() const
 {
-    return this->get<sofa::core::componentmodel::topology::BaseTopology>();
+    return this->get<sofa::core::componentmodel::topology::BaseMeshTopology>();
 }
+
 /// Shader
 BaseObject* BaseContext::getShader() const
 {
@@ -259,9 +271,10 @@ void BaseContext::propagateEvent( Event* )
     cerr<<"WARNING !!! BaseContext::propagateEvent not overloaded, does nothing"<<endl;
 }
 
-void BaseContext::executeVisitor( simulation::tree::Visitor* )
+void BaseContext::executeVisitor( simulation::Visitor* )
 {
     cerr<<"WARNING !!! BaseContext::executeVisitor not overloaded, does nothing"<<endl;
+	//assert(false);
 }
 
 

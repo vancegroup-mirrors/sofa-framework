@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef LMLFORCE_INL
 #define LMLFORCE_INL
 
@@ -24,7 +48,7 @@ LMLForce<DataTypes>::LMLForce(Loads* loadsList, const map<unsigned int, unsigned
 	mmodel = mm;
 	loads = new Loads();
 	Load * load;
-	double dirX, dirY, dirZ;
+	SReal dirX, dirY, dirZ;
 	Deriv ve;
 	this->setName("loads");
 
@@ -71,16 +95,16 @@ template<class DataTypes>
 void LMLForce<DataTypes>::addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& /*v*/)
 {
 	//for each points, update the force vector f
-	double time = getContext()->getTime();
+	SReal time = getContext()->getTime();
 	f.resize(x.size());
 	Load * load;
 	std::vector<unsigned int>::iterator it1 = targets.begin();
 	VecDerivIterator it2 = forces.begin();
-	double dirX, dirY, dirZ;
+	SReal dirX, dirY, dirZ;
 
 	for (unsigned int i=0 ; i<loads->numberOfLoads() ; i++) {
 		load = loads->getLoad(i);
-		double val = load->getValue(time);
+		SReal val = load->getValue(time);
 		for (unsigned int j=0 ; j<load->numberOfTargets() ; j++) {
 			if ( atomToDOFIndexes.find(load->getTarget(j)) != atomToDOFIndexes.end() ) {
 				// if force value == 0, then there's no force !

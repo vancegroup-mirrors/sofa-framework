@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_MAPPING_RIGIDRIGIDMAPPING_H
 #define SOFA_COMPONENT_MAPPING_RIGIDRIGIDMAPPING_H
 
@@ -30,7 +30,6 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/core/VisualModel.h>
 #include <vector>
 
 using namespace sofa::defaulttype;
@@ -45,7 +44,7 @@ namespace mapping
 {
 
 template <class BasicMapping>
-class RigidRigidMapping : public BasicMapping, public core::VisualModel
+class RigidRigidMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
 {
 public:
 	typedef BasicMapping Inherit;
@@ -61,7 +60,7 @@ public:
 	typedef typename Coord::value_type Real;
 	enum { N=Coord::static_size };
 	typedef defaulttype::Mat<N,N,Real> Mat;
-	typedef Vec<N,Real> Vec;
+	typedef Vec<N,Real> Vector ;
 	
 protected:
 	Data < VecCoord > points;
@@ -74,13 +73,16 @@ protected:
 public:
 	Data<unsigned> index;
 	Data< std::string > filename;
-
+	//axis length for display
+	Data<double> axisLength;
+	
 	RigidRigidMapping(In* from, Out* to)
 	  : Inherit(from, to),	  
 	  points(initData(&points, "initialPoints", "Initial position of the points")),
 	  repartition(initData(&repartition,"repartition","number of dest dofs per entry dof")),
 	  index(initData(&index,(unsigned)0,"index","input DOF index")),
-	  filename(initData(&filename,"filename","Filename"))
+	  filename(initData(&filename,"filename","Filename")),
+	  axisLength(initData( &axisLength, 0.7, "axisLength", "axis length for display"))
 	{
 	}
 	
@@ -107,12 +109,11 @@ public:
 
 	//void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 
-	// -- VisualModel interface
 	void draw();
-	void initTextures() { }
-	void update() { }
 
 	void clear();
+
+	sofa::helper::vector<unsigned int> getRepartition() {return repartition.getValue(); }
 
 	void setRepartition(unsigned int value);
 	void setRepartition(sofa::helper::vector<unsigned int> values);

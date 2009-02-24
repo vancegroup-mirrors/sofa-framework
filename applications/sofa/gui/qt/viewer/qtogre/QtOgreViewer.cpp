@@ -1,11 +1,37 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <OgreConfigFile.h>
-#include "viewer/qtogre/QtOgreViewer.h"
-#include "viewer/qtogre/DotSceneLoader.h"
-#include "viewer/qtogre/OgreVisualModel.h"
+#include <sofa/gui/qt/viewer/qtogre/QtOgreViewer.h>
+#include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
+#include <sofa/gui/qt/viewer/qtogre/OgreVisualModel.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
 
-#include <sofa/simulation/automatescheduler/ThreadSimulation.h>
+
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/ObjectFactory.h>
@@ -16,6 +42,7 @@
 #include <X11/Xlib.h>
 #endif
 
+//#define SHOW_CONFIGDIALOG 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #include <CoreFoundation/CoreFoundation.h>
 // This function will locate the path to our application on OS X,
@@ -61,6 +88,7 @@ namespace sofa
 	  SOFA_LINK_CLASS(OgreVisualModel) 
 
 	  using sofa::simulation::tree::Simulation;
+	  using sofa::component::visualmodel::OgreVisualModel;
 
 	  static bool enabled = false;
 	  sofa::core::ObjectFactory::ClassEntry* classOglModel;
@@ -101,7 +129,7 @@ namespace sofa
 	    : QWidget( parent, name )
 	  { 
 			  
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 	    setUpdatesEnabled(false);
 	    setWindowFlags(Qt::WindowStaysOnTopHint);
 #else
@@ -121,7 +149,9 @@ namespace sofa
 	    mRenderWindow = NULL;
 	    mSceneMgr = NULL;
 	    mVp = NULL;
-	    shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
+
+	    shadow = Ogre::SHADOWTYPE_NONE;
+// 	    shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
 
 	    //*************************************************************************
 	    // Interface Init
@@ -146,6 +176,7 @@ namespace sofa
 	    _mouseInteractorSavedPosY = 0;
 	    number_visualModels=0;				
 	    _video = false;
+	    pickDone=false;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 	    mResourcePath = macBundlePath() + "/Contents/Resources/";
@@ -155,8 +186,7 @@ namespace sofa
 
 	    //Default files
 	    sofa::helper::system::FileRepository repository;
-
-	    sceneName = "default.scene";
+	    sceneName = sofa::helper::system::DataRepository.getFile("config/default.scene");
 
 #if defined(SOFA_GPU_CUDA)
 	    mycudaInit(0);
@@ -166,6 +196,7 @@ namespace sofa
 
 	  void QtOgreViewer::setup()
 	  {
+
 	    setupResources();
 
 	    setupConfiguration();
@@ -205,35 +236,19 @@ namespace sofa
 
 #endif
 	    mRoot = new Ogre::Root(pluginsPath, ogrePath, ogreLog);
-	    std::string default_scene = sofa::helper::system::DataRepository.getFile("default.scene");
-	
-	    std::ostringstream ofilename;
-	    if (default_scene == "default.scene")
-	      {
-		std::string::size_type position_scene = ogrePath.rfind("share/config/");
-		const char* begin = ogrePath.c_str();					
-		const char* end = begin + position_scene;
-		ofilename << std::string(begin, end);
-
-	      }
-	    else
-	      {
-		std::string::size_type position_scene = default_scene.rfind("scenes/");
-		const char* begin = default_scene.c_str();					
-		const char* end = begin + position_scene;
-		ofilename << std::string(begin, end);
-	      }
-
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(ofilename.str() +"scenes","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(ofilename.str() +"share/textures","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(ofilename.str() +"share/materials","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(ofilename.str() +"share/shaders","FileSystem","General");
+	    Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
+	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/textures","FileSystem","General");
+	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials","FileSystem","General");
+	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/shaders","FileSystem","General");
 	  }
 
 
 
 	  void QtOgreViewer::setupConfiguration(void)
 	  {
+#ifdef SHOW_CONFIGDIALOG
+	    mRoot->showConfigDialog();
+#else
 	    //Rendering Device - will pick first available render device
 	    Ogre::RenderSystemList::iterator pRend = mRoot->getAvailableRenderers()->begin();		
 	    Ogre::RenderSystem* mRenderSystem = *pRend;
@@ -250,7 +265,7 @@ namespace sofa
 	    mRenderSystem->setConfigOption("VSync", "No");		
 
 	    mRenderSystem->validateConfigOptions(); 
-
+#endif
 	    mRoot->initialise(false, "SOFA - OGRE");
 	  }
 
@@ -270,17 +285,17 @@ namespace sofa
 		  static int counter = 0;
 		  if ((counter++ % CAPTURE_PERIOD)==0)
 #endif
-		    screenshot(capture.findFilename());
+		    screenshot(capture.findFilename(), 2);
 		}
 
 	      moveCamera();
 
 	      mRenderWindow->update();
-	      OgreVisualModel::lightSwitched = false;
+// 	      OgreVisualModel::lightSwitched = false;
 
 	      mRoot->_fireFrameEnded();
 	      if (_waitForRender) _waitForRender = false;
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 	      setUpdatesEnabled(false);
 #endif
 	    }
@@ -349,7 +364,7 @@ namespace sofa
 	    // TODO
 #endif
 
-#ifdef QT_MODULE_QT3SUPPORT
+#ifdef SOFA_QT4
 	    startTimer(500);
 #endif
 	  }
@@ -371,11 +386,21 @@ namespace sofa
 	    }
 
 	    DotSceneLoader loader;
+	    std::string::size_type pos_point = this->sceneFileName.rfind(".");
+	    if (pos_point != std::string::npos)
+	    {
+	      std::string file_temp = this->sceneFileName;
+	      file_temp.resize(pos_point); file_temp += ".scene";
+	      if ( sofa::helper::system::DataRepository.findFile(file_temp))
+		sceneName = sofa::helper::system::DataRepository.getFile(file_temp);
+	    }
+
 	    loader.parseDotScene(sceneName, "General", NULL); //mSceneMgr);
 	    mSceneMgr = loader.getSceneManager();	
 
 
-	    mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_ADDITIVE);
+	    mSceneMgr->setShadowTechnique(SHADOWTYPE_NONE);
+// 	    mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_ADDITIVE);
 	    if (groot)
 	      {
 		// This could be done as an action, but it is shorter to do it this way
@@ -397,15 +422,19 @@ namespace sofa
 		// Create the camera
 		mCamera = mSceneMgr->createCamera("sofa_camera");
 		// Position it at 50 in Z direction	
-		mCamera->setPosition(Ogre::Vector3(50,100,50));
+		mCamera->setPosition(Ogre::Vector3(0,0,0));
 		// Look back along -Z		
-		mCamera->lookAt(Ogre::Vector3(0,-10,0));
+		mCamera->lookAt(Ogre::Vector3(0,0,1));
 		mCamera->setNearClipDistance(loader.environment.nearClipDistance);
 		mCamera->setFarClipDistance(loader.environment.farClipDistance);
 	      }
 	    //Always yaw around the camera Y axis.
-	    mCamera->setFixedYawAxis(false);
+// 	    mCamera->setFixedYawAxis(true);
+	    camNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+	    camNode->attachObject(mCamera);
 
+	    zeroNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+	    mCamera->setAutoTracking(true, zeroNode);
 	    // Create one viewport, entire window
 	    if (mVp)
 	      {
@@ -443,7 +472,7 @@ namespace sofa
 		rect->setRenderQueueGroup(Ogre::RENDER_QUEUE_BACKGROUND);
 	
 		Ogre::AxisAlignedBox aabInf;
-		aabInf.setInfinite();
+//		aabInf.setInfinite();
 		rect->setBoundingBox(aabInf);
 
 		// Attach background to the scene
@@ -506,18 +535,20 @@ namespace sofa
 	    if (min <= 1) min = 1.0;
 // 	    if (max <= min) max = 1000.0*min;
 
-	    mCamera->setFarClipDistance(Ogre::Real( 1000.0+10.0*max));
+	    mCamera->setFarClipDistance(Ogre::Real( 100.0*max));
 	    //mCamera->setNearClipDistance(Ogre::Real( 0.1*min)); //cause a crash of wrong BBox
 
 	    //position
 	    Ogre::Vector3 camera_position((sceneMaxBBox[0]+sceneMinBBox[0])/2.0f,(sceneMaxBBox[1]+sceneMinBBox[1])/2.0f,(sceneMaxBBox[2]+sceneMinBBox[2])/2.0f);
 
-	    mCamera->setPosition(Ogre::Vector3(camera_position.x, camera_position.y, camera_position.z));
-	    mCamera->moveRelative(Ogre::Vector3(0.0,0.0,2*std::max(size_world[0], std::max(size_world[1], size_world[2]))));
+	    zeroNode->setPosition(camera_position);
+	    mCamera->setPosition(camera_position);
+	    mCamera->moveRelative(Ogre::Vector3(0.0,0.0,2*std::max(size_world[0], // std::max(
+											   size_world[1]// , size_world[2])
+						)));
 	    
 //  	    mCamera->setAutoTracking(true);
 // 	    mCamera->setFixedYawAxis(true);
- 	    std::cout << camera_position << " : camera position\n";
 	    return;
 	  }
 
@@ -565,11 +596,13 @@ namespace sofa
 		      switch(shadow)
 			{		    
 			case Ogre::SHADOWTYPE_NONE:
+			  pickDone=true;
 			  shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
 			  OgreVisualModel::lightSwitched = true;
 			  break;
 			case Ogre::SHADOWTYPE_STENCIL_ADDITIVE:
 			default:
+			  OgreVisualModel::lightSwitched = false;
 			  shadow = Ogre::SHADOWTYPE_NONE;
 			  break;
 			}
@@ -597,7 +630,8 @@ namespace sofa
 		    }
 		  default:
 		    {
-		      SofaViewer::keyPressEvent(e);
+		      SofaViewer::keyPressEvent(e);		      
+		      e->ignore();
 		    }
 		  }
 	      }
@@ -648,31 +682,40 @@ namespace sofa
 
 	    if (!updateInteractor(evt))
 	      {
-		if( m_mouseLeftPressed )
-		  {
-		    m_mRotX = Ogre::Degree( -(evt->globalX() - m_mousePos.x()) * 0.045);
-		    m_mRotY = Ogre::Degree( -(evt->globalY() - m_mousePos.y()) * 0.045);
+		Ogre::Vector3 pos_cam= mCamera->getPosition();
+		const float dist = (zeroNode->getPosition()-pos_cam).length();	 
+		const float factor = 0.001f;  
+		if( m_mouseRightPressed )
+		  {		    			
+		    Ogre::Vector3 d(-(evt->globalX() - m_mousePos.x()) * dist*factor,(evt->globalY() - m_mousePos.y())* dist*factor,0);
+		    mCamera->moveRelative(d);
+		    pos_cam = mCamera->getPosition()-pos_cam;
+		    zeroNode->translate(pos_cam);
 		  }
 		if( m_mouseMiddlePressed )
 		  {
-		    m_mTranslateVector.z += (evt->globalY() - m_mousePos.y()) * 0.045;
+		    m_mTranslateVector.z -= (evt->globalY() - m_mousePos.y()) * 0.065;
+		    mCamera->moveRelative(m_mTranslateVector);
 		  }
-		if( m_mouseRightPressed )
-		  {
-		    m_mTranslateVector.x +=  (evt->globalX() - m_mousePos.x()) * 0.045/3.0;
-		    m_mTranslateVector.y += -(evt->globalY() - m_mousePos.y()) * 0.045/3.0;
+		if( m_mouseLeftPressed )
+		  {	 
+		    m_mTranslateVector.x -=  (evt->globalX() - m_mousePos.x()) * dist*factor*5.0;
+		    m_mTranslateVector.y -= -(evt->globalY() - m_mousePos.y()) * dist*factor*5.0;
+		    mCamera->moveRelative(m_mTranslateVector);
+		    float new_dist = (zeroNode->getPosition()-mCamera->getPosition()).length();
+		    mCamera->moveRelative(Ogre::Vector3(0,0,dist-new_dist));
 		  }
 
 		m_mousePos = evt->globalPos(); 
-		if (m_mouseLeftPressed || m_mouseMiddlePressed ||  m_mouseRightPressed ) update();
-		  
+		if (m_mouseLeftPressed || m_mouseMiddlePressed ||  m_mouseRightPressed ) update();		  
 	      }
 	  }
 
 
 	  void QtOgreViewer::wheelEvent(QWheelEvent* evt)
 	  {
-	    m_mTranslateVector.z +=  evt->delta()* 0.009;
+	    m_mTranslateVector.z +=  evt->delta()* 0.04;
+	    mCamera->moveRelative(m_mTranslateVector);
 	    update();
 	  }
 
@@ -684,25 +727,6 @@ namespace sofa
             SofaViewer::setScene(scene, filename, keepParams);
 	    createScene();
             update();
-	  }
-
-
-	  /// Render Scene called during multiThread simulation using automate
-	  void QtOgreViewer::drawFromAutomate()
-	  {
-	    update();
-	  }
-
-	  void QtOgreViewer::automateDisplayVM(void)
-	  {
-	    std::vector<core::VisualModel *>::iterator it = simulation::automatescheduler::ThreadSimulation::getInstance()->vmodels.begin();
-	    std::vector<core::VisualModel *>::iterator itEnd = simulation::automatescheduler::ThreadSimulation::getInstance()->vmodels.end();
-
-	    while (it != itEnd)
-	      {
-		(*it)->draw();
-		++it;
-	      }
 	  }
 
 
@@ -718,7 +742,7 @@ namespace sofa
 
 	  void QtOgreViewer::moveRayPickInteractor(int eventX, int eventY)
 	  {
-	    sofa::defaulttype::Vector3  p0, px, py, pz;
+	    sofa::defaulttype::Vec3d  p0, px, py, pz;
 	    GLint viewPort[4] = {0,0,width(), height()};
 	    Ogre::Matrix4 modelViewMatrix = mCamera->getViewMatrix().transpose();
 	    Ogre::Matrix4 projectionMatrix = mCamera->getProjectionMatrix(); 
@@ -731,21 +755,24 @@ namespace sofa
 		modelViewMatrix[3][0], modelViewMatrix[3][1], modelViewMatrix[3][2], modelViewMatrix[3][3],
 	      };
 
+
 	    double projectionMatrixGL[16] =
 	      {
 		projectionMatrix[0][0], projectionMatrix[0][1], projectionMatrix[0][2], projectionMatrix[0][3],
 		projectionMatrix[1][0], projectionMatrix[1][1], projectionMatrix[1][2], projectionMatrix[1][3],
-		projectionMatrix[2][0], projectionMatrix[2][1], projectionMatrix[2][2], -1.0,
+		projectionMatrix[2][0], projectionMatrix[2][1], projectionMatrix[2][2], -1,
 		projectionMatrix[3][0], projectionMatrix[3][1], projectionMatrix[3][2], projectionMatrix[3][3],
 	      };
-
 
 	    gluUnProject(eventX, viewPort[3]-1-(eventY),  0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(p0[0]), &(p0[1]), &(p0[2]));
 	    gluUnProject(eventX+1, viewPort[3]-1-(eventY),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px[0]), &(px[1]), &(px[2]));
 	    gluUnProject(eventX, viewPort[3]-1-(eventY+1),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py[0]), &(py[1]), &(py[2]));
 	    gluUnProject(eventX, viewPort[3]-1-(eventY),  1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(pz[0]), &(pz[1]), &(pz[2]));
 
-	    pz*=-1;
+
+ 	    if ( pickDone)
+ 	      pz*=-1;
+
 	    px -= p0;
 	    py -= p0;
 	    pz -= p0;
@@ -784,8 +811,6 @@ namespace sofa
 <li><b>Shift & Left Button</b>: TO PICK OBJECTS<br></li>\
 <li><b>C</b>: TO CENTER THE VIEW<br></li>\
 <li><b>B</b>: TO CHANGE THE BACKGROUND<br></li>\
-<li><b>C</b>: TO SWITCH INTERACTION MODE: press the KEY C.<br>\
-Allow or not the navigation with the mouse.<br></li>\
 <li><b>T</b>: TO CHANGE BETWEEN A PERSPECTIVE OR AN ORTHOGRAPHIC CAMERA<br></li>\
 <li><b>L</b>: TO DRAW SHADOWS<br></li>\
 <li><b>P</b>: TO SAVE A SEQUENCE OF OBJ<br>\

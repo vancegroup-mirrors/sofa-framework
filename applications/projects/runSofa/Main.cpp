@@ -1,7 +1,34 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <iostream>
 #include <fstream>
 #include <sofa/helper/ArgumentParser.h>
 #include <sofa/simulation/tree/Simulation.h>
+#include <sofa/component/init.h>
 #include <sofa/helper/Factory.h>
 #include <sofa/helper/BackTrace.h>
 #include <sofa/helper/system/FileRepository.h>
@@ -62,6 +89,8 @@ int main(int argc, char** argv)
 	.option(&plugins,'l',"load","load given plugins")
 	(argc,argv);
 
+    sofa::component::init();
+
 	if (!files.empty()) fileName = files[0];
 
 	for (unsigned int i=0;i<plugins.size();i++)
@@ -81,11 +110,13 @@ int main(int argc, char** argv)
 
     if (fileName.empty())
     {
-        fileName = "liver.scn"; 
+        fileName = "Demos/liver.scn"; 
         sofa::helper::system::DataRepository.findFile(fileName);
     }
 
-    groot = sofa::simulation::tree::getSimulation()->load(fileName.c_str());
+    std::string in_filename(fileName);
+    if (in_filename.rfind(".simu") == std::string::npos)
+      groot = dynamic_cast<sofa::simulation::tree::GNode*>( sofa::simulation::tree::getSimulation()->load(fileName.c_str()));
 
     if (groot==NULL)
     {
@@ -119,7 +150,7 @@ int main(int argc, char** argv)
 	{
 		if (int err=sofa::gui::SofaGUI::MainLoop(groot,fileName.c_str()))
 			return err;
-		groot = sofa::gui::SofaGUI::CurrentSimulation();
+		groot = dynamic_cast<sofa::simulation::tree::GNode*>( sofa::gui::SofaGUI::CurrentSimulation() );
 	}
 
 	if (groot!=NULL)

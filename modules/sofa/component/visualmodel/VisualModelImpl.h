@@ -1,41 +1,37 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_VISUALMODEL_VISUALMODELIMPL_H
 #define SOFA_COMPONENT_VISUALMODEL_VISUALMODELIMPL_H
 
 #include <string>
 #include <sofa/core/VisualModel.h>
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/component/topology/MeshTopology.h>
-#include <sofa/component/topology/TriangleSetTopology.h>
-#include <sofa/component/topology/QuadSetTopology.h>
-#include <sofa/component/topology/TetrahedronSetTopology.h>
-#include <sofa/component/topology/HexahedronSetTopology.h>
 #include <sofa/helper/io/Mesh.h>
 
 #include <map>
@@ -94,6 +90,16 @@ public:
     VecCoord* getVecX()  { return getX(); }
 };
 
+/**
+ *  \brief Abstract class which implements partially VisualModel.
+ *
+ *  This class implemented all non-hardware (i.e OpenGL or DirectX)
+ *  specific functions for rendering. It takes a 3D model (basically a .OBJ model)
+ *  and apply transformations on it.
+ *  At the moment, it is only implemented by OglModel for OpenGL systems.
+ *
+ */
+
 class VisualModelImpl : public core::VisualModel, public ExtVec3fMappedModel, public RigidMappedModel
 {
 protected:
@@ -118,6 +124,8 @@ protected:
     bool useNormals; ///< True if normals should be read from file
     bool castShadow; ///< True if object cast shadows
 
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+
 /*     Data< ResizableExtVector<Coord> > vertices; */
     DataPtr< ResizableExtVector<Coord> > field_vertices;
     ResizableExtVector<Coord> vertices;
@@ -132,9 +140,6 @@ protected:
     DataPtr< ResizableExtVector<Quad> > field_quads;
     ResizableExtVector<Quad> quads;
 
-	sofa::helper::vector<unsigned int> Loc2GlobVec;
-	std::map<unsigned int, unsigned int> Glob2LocMap;
-
     /// If vertices have multiple normals/texcoords, then we need to separate them
     /// This vector store which input position is used for each vertice
     /// If it is empty then each vertex correspond to one position
@@ -144,7 +149,12 @@ protected:
     /// If it is empty then each vertex correspond to one normal
     ResizableExtVector<int> vertNormIdx;
 
+    float scaleTex;
+    Data< std::string > filename;
     Data< std::string > texturename;
+    Data< Vector3 > translation;
+    Data< Vector3 > rotation;
+    Data< SReal > scale;
 
     Vec3f bbox[2];
 
@@ -162,7 +172,7 @@ public:
 
     bool isTransparent();
 
-    void draw();
+    void drawVisual();
     void drawTransparent();
     void drawShadow();
 
@@ -170,14 +180,19 @@ public:
 
     bool load(const std::string& filename, const std::string& loader, const std::string& textureName);
 
-    void applyTranslation(double dx, double dy, double dz);
-    void applyRotation(Quat q);
-    void applyScale(double s);
-    void applyUVTranslation(double dU, double dV);
-    void applyUVScale(double su, double sv);
+    void applyTranslation(const double dx, const double dy, const double dz);
+    //Apply Rotation from Euler angles (in degree!)
+    void applyRotation (const double rx, const double ry, const double rz);
+    void applyRotation(const Quat q);
+    void applyScale(const double s);
+    void applyUVTranslation(const double dU, const double dV);
+    void applyUVScale(const double su, const double sv);
 
     void flipFaces();
 
+    void setFilename(std::string s){filename.setValue(s);}
+    std::string getFilename(){return filename.getValue();}
+    
     void setColor(float r, float g, float b, float a);
     void setColor(std::string color);
 
@@ -187,20 +202,27 @@ public:
     void setCastShadow(bool val) { castShadow = val;  }
     bool getCastShadow() const   { return castShadow; }
 
+    void setMesh(helper::io::Mesh &m, bool tex=false);
+    bool isUsingTopology() const {return useTopology;};
+
+	ResizableExtVector<Coord> * getVertices() {return &vertices;}
+	void setVertices(ResizableExtVector<Coord> * x){vertices = *x;}
+	ResizableExtVector<Triangle> * getTriangles() {return &triangles;}
+	void setTriangles(ResizableExtVector<Triangle> * t){triangles = *t;}
+
     virtual void computePositions();
-    virtual void computeMesh(sofa::component::topology::MeshTopology* topology);
-    virtual void computeMeshFromTopology(sofa::core::componentmodel::topology::BaseTopology* topology);
+    virtual void computeMesh();
     virtual void computeNormals();
     virtual void computeBBox();
 
-    virtual void update();
+    virtual void updateVisual();
 
     // handle topological changes
     virtual void handleTopologyChange();
-	
+
     void init();
 
-    void initTextures();
+    void initVisual();
 
     bool addBBox(double* minBBox, double* maxBBox);
 
@@ -214,6 +236,16 @@ public:
     /// The number of vertices position, normal, and texture coordinates already written is given as parameters
     /// This method should update them
     virtual void exportOBJ(std::string name, std::ostream* out, std::ostream* mtl, int& vindex, int& nindex, int& tindex);
+
+    virtual std::string getTemplateName() const
+    {
+        return ExtVec3fMappedModel::getTemplateName();
+    }
+
+    static std::string templateName(const VisualModelImpl* p = NULL)
+    {
+        return ExtVec3fMappedModel::templateName(p);
+    }
 };
 
 //typedef Vec<3,GLfloat> GLVec3f;

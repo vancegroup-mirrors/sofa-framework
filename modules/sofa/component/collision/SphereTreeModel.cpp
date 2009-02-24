@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/SphereTreeModel.h>
 #include <sofa/helper/io/SphereLoader.h>
 #include <sofa/component/collision/CubeModel.h>
@@ -29,6 +29,7 @@
 #include <iostream>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
+#include <sofa/helper/system/FileRepository.h>
 
 using std::cerr;
 using std::endl;
@@ -59,10 +60,6 @@ SphereTreeModel::SphereTreeModel(double radius)
 {
 }
 
-void SphereTreeModel::init( void ) {
-//	TODO
-}
-
 
 void SphereTreeModel::resize(int size)
 {   // Correcting sizes
@@ -82,7 +79,7 @@ void SphereTreeModel::resize(int size)
 	}
 }
 
-int SphereTreeModel::addSphere(const Vector3& pos, double radius)
+int SphereTreeModel::addSphere(const Vector3& pos, SReal radius)
 {
 	int i = size;
 	resize(i+1);
@@ -90,7 +87,7 @@ int SphereTreeModel::addSphere(const Vector3& pos, double radius)
 	return i;
 }
 
-void SphereTreeModel::setSphere(int i, const Vector3& pos, double r)
+void SphereTreeModel::setSphere(int i, const Vector3& pos, SReal r)
 {
 	if ((unsigned)i >= (unsigned) size) return;
 	(*this->getX())[i] = pos;
@@ -106,7 +103,14 @@ bool SphereTreeModel::load(const char* filename)
 bool SphereTreeModel::loadSphereTree( const char *fileName )
 {	
   std::ifstream inFile;
-  inFile.open(fileName);
+  
+  std::string fileInRepository(fileName);
+  if ( !sofa::helper::system::DataRepository.findFile ( fileInRepository ) )
+    return false;
+
+  fileInRepository = sofa::helper::system::DataRepository.getFile ( fileInRepository);	
+  
+  inFile.open(fileInRepository.c_str());
   if (inFile.fail()) 
   {
     std::cerr << "Fail to open file sph" << std::endl;
@@ -201,7 +205,7 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
   return true; 
 }
 
-void SphereTreeModel::applyScale(double s)
+void SphereTreeModel::applyScale(const double s)
 {
 	Inherit::applyScale(s);
 	std::cout << "Applying scale " << s << " to " << size << " spheres" << std::endl;
@@ -263,8 +267,8 @@ void SphereTreeModel::draw()
 			//}
 
 	}
-	if (isActive() && getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
-		dynamic_cast<core::VisualModel*>(getPrevious())->draw();
+	if (isActive() && getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
+		getPrevious()->draw();
 }
 
 void SphereTreeModel::computeBoundingTree(int /*maxDepth*/)

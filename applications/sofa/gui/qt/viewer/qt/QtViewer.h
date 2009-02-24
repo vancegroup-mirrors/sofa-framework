@@ -1,31 +1,34 @@
-
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This program is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU General Public License as published by the Free   *
-* Software Foundation; either version 2 of the License, or (at your option)    *
-* any later version.                                                           *
-*                                                                              *
-* This program is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     *
-* more details.                                                                *
-*                                                                              *
-* You should have received a copy of the GNU General Public License along with *
-* this program; if not, write to the Free Software Foundation, Inc., 51        *
-* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                    *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_GUI_QT_QTVIEWER_H
 #define SOFA_GUI_QT_QTVIEWER_H
 
+#include <sofa/helper/system/config.h>
+#include <sofa/helper/system/gl.h>
 #include <qgl.h>
 #include <qtimer.h>
 #include <math.h>
@@ -121,7 +124,8 @@ namespace sofa
 
 	      //GLuint			_logoTexture;
 	      Texture			*texLogo;
-	      bool			_automateDisplayed;
+
+
 	      ctime_t			_beginTime;
 
 	      double lastProjectionMatrix[16];
@@ -152,7 +156,6 @@ namespace sofa
 	      public slots:
 	      void resetView();
 	      virtual void saveView();
-	      virtual void screenshot(const std::string filename); 
 	      virtual void setSizeW(int);
 	      virtual void setSizeH(int);
 			
@@ -180,7 +183,7 @@ namespace sofa
 		  return groot;
 		}
 
-	      void			SwitchToAutomateView();
+
 	      //void			reshape(int width, int height);
 	      int GetWidth()
 	      {
@@ -212,9 +215,7 @@ namespace sofa
 	      static bool _mouseTrans;
 	      static bool _mouseRotate;
 
-	      // Display scene from the automate
-	      void drawFromAutomate();
-	      static void	automateDisplayVM(void);
+
 	      QString helpString();
 	    private:
 
@@ -222,7 +223,7 @@ namespace sofa
 	      void	PrintString(void* font, char* string);
 	      void	Display3DText(float x, float y, float z, char* string);
 	      void	DrawAxis(double xpos, double ypos, double zpos, double arrowSize);
-	      void	DrawBox(double* minBBox, double* maxBBox, double r=0.0);
+	      void	DrawBox(SReal* minBBox, SReal* maxBBox, SReal r=0.0);
 	      void	DrawXYPlane(double zo, double xmin, double xmax, double ymin,
 				    double ymax, double step);
 	      void	DrawYZPlane(double xo, double ymin, double ymax, double zmin,
@@ -236,7 +237,8 @@ namespace sofa
 	      void	DisplayOBJs(bool shadowPass = false);
 	      void	DisplayMenu(void);
 	      void	DrawScene();
-	      void	DrawAutomate();
+
+
 	      void	ApplySceneTransformation(int x, int y);
 	      //int		handle(int event);	// required by FLTK
 

@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_CORE_COMPONENTMODEL_COLLISION_CONTACT_H
 #define SOFA_CORE_COMPONENTMODEL_COLLISION_CONTACT_H
 
@@ -44,20 +46,37 @@ namespace componentmodel
 
 namespace collision
 {
-
+/**
+ * @brief contact response component handling the response between a pair of models
+ * 
+ * - Dynamically created by the ContactManager
+ *
+ *   -# Persistent between iterations
+ *
+ *   -# New id data in DetectionOutput allow to keep an history of a contact
+ *
+ * - In most cases : create and initialize the real response component
+ *
+ *   -#InteractionForceField, Constraint, ...
+ *
+ * - Contact object dynamically appears in the scenegraph
+ */
 class Contact : public virtual objectmodel::BaseObject
 {
 public:
-
-	virtual ~Contact() { }
 	
-	virtual std::pair< core::CollisionModel*, core::CollisionModel* > getCollisionModels() = 0;
-	
-	virtual void setDetectionOutputs(DetectionOutputVector* outputs) = 0;
-	
-	virtual void createResponse(objectmodel::BaseContext* group) = 0;
-	
-	virtual void removeResponse() = 0;
+    ///Destructor
+    virtual ~Contact() { }
+    
+    /// Get the pair of collision models which are in contact
+    virtual std::pair< core::CollisionModel*, core::CollisionModel* > getCollisionModels() = 0;
+    
+    /// Set the generic description of a contact point
+    virtual void setDetectionOutputs(DetectionOutputVector* outputs) = 0;
+    
+    virtual void createResponse(objectmodel::BaseContext* group) = 0;
+    
+    virtual void removeResponse() = 0;
 
     /// Return true if this contact should be kept alive, even if objects are no longer in collision
     virtual bool keepAlive() { return false; }
@@ -70,29 +89,31 @@ public:
 
     typedef helper::Factory< std::string, Contact, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> > Factory;
 
+    /// Create a new contact given 2 collision elements and an intersection method
     static Contact* Create(const std::string& type, core::CollisionModel* model1, core::CollisionModel* model2, Intersection* intersectionMethod);
-};
 
-template<class RealContact>
-void create(RealContact*& obj, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> arg)
-{
-	typedef typename RealContact::CollisionModel1 RealCollisionModel1;
-	typedef typename RealContact::CollisionModel2 RealCollisionModel2;
-	typedef typename RealContact::Intersection RealIntersection;
-	RealCollisionModel1* model1 = dynamic_cast<RealCollisionModel1*>(arg.first.first);
-	RealCollisionModel2* model2 = dynamic_cast<RealCollisionModel2*>(arg.first.second);
-	RealIntersection* inter  = dynamic_cast<RealIntersection*>(arg.second);
-    // CHANGE(Jeremie A. 2007-12-07): disable automatic swapping of the models, as it brings hard to find bugs where the order does not match the DetectionOutputs...
-    // The Intersector class is now modified so that they are swapped to an unique order at the detection phase of the pipeline.
-    /*	if (model1==NULL || model2==NULL)
-	{ // Try the other way around
-		model1 = dynamic_cast<RealCollisionModel1*>(arg.first.second);
-		model2 = dynamic_cast<RealCollisionModel2*>(arg.first.first);
-	}
-     */
-	if (model1==NULL || model2==NULL || inter==NULL) return;
-	obj = new RealContact(model1, model2, inter);
-}
+    template<class RealContact>
+    static void create(RealContact*& obj, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> arg)
+    {
+        typedef typename RealContact::CollisionModel1 RealCollisionModel1;
+        typedef typename RealContact::CollisionModel2 RealCollisionModel2;
+        typedef typename RealContact::Intersection RealIntersection;
+        RealCollisionModel1* model1 = dynamic_cast<RealCollisionModel1*>(arg.first.first);
+        RealCollisionModel2* model2 = dynamic_cast<RealCollisionModel2*>(arg.first.second);
+        RealIntersection* inter  = dynamic_cast<RealIntersection*>(arg.second);
+        // CHANGE(Jeremie A. 2007-12-07): disable automatic swapping of the models, as it brings hard to find bugs where the order does not match the DetectionOutputs...
+        // The Intersector class is now modified so that they are swapped to an unique order at the detection phase of the pipeline.
+        /* if (model1==NULL || model2==NULL)
+        { // Try the other way around
+            model1 = dynamic_cast<RealCollisionModel1*>(arg.first.second);
+            model2 = dynamic_cast<RealCollisionModel2*>(arg.first.first);
+        }
+        */
+        if (model1==NULL || model2==NULL || inter==NULL) return;
+        obj = new RealContact(model1, model2, inter);
+    }
+
+};
 
 } // namespace collision
 

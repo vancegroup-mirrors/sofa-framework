@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef LMLCONSTRAINT_INL
 #define LMLCONSTRAINT_INL
 
@@ -22,7 +46,7 @@ LMLConstraint<DataTypes>::LMLConstraint(Loads* loadsList, const map<unsigned int
 	mmodel = mm;
 	loads = new Loads();
 	Load * load;
-	double dirX, dirY, dirZ;
+	SReal dirX, dirY, dirZ;
 	this->setName("loads");
 
 	//for each load, we search which ones are translations applied on the body nodes
@@ -49,7 +73,8 @@ LMLConstraint<DataTypes>::LMLConstraint(Loads* loadsList, const map<unsigned int
 						addConstraint(result->second, Deriv(dirX-(*mm->getX())[result->second].x(),dirY-(*mm->getX())[result->second].y(),dirZ-(*mm->getX())[result->second].z()) );
 					else
 						addConstraint(result->second, Deriv(dirX,dirY,dirZ) );
-					if (load->getDirection().isXNull() && load->getValue(0) != 0) // fix targets on the X axe
+                    // fix targets on the X axe
+					if (load->getDirection().isXNull() && load->getValue(0) != 0)
 						fixDOF(result->second, 0);
 					if (load->getDirection().isYNull() && load->getValue(0) != 0) // fix targets on the Y axe
 						fixDOF(result->second, 1);
@@ -115,14 +140,14 @@ void LMLConstraint<DataTypes>::projectResponse(VecDeriv& dx)
 {
 	//VecCoord& x = *this->mmodel->getX();
 	//dx.resize(x.size());
-	double time = this->getContext()->getTime();
-	double prevTime = time - this->getContext()->getDt();
+	SReal time = this->getContext()->getTime();
+	SReal prevTime = time - this->getContext()->getDt();
 
 	std::vector<unsigned int>::iterator it1=targets.begin();
 	VecDerivIterator it2=translations.begin();
 	VecDerivIterator it3=directionsNULLs.begin();
 	Load * load;
-	double valTime, prevValTime;
+	SReal valTime, prevValTime;
 
 	for (unsigned int i=0 ; i<loads->numberOfLoads() ; i++) {
 		load = loads->getLoad(i);
@@ -167,7 +192,7 @@ void LMLConstraint<DataTypes>::projectResponse(VecDeriv& dx)
 template<class DataTypes>
 void LMLConstraint<DataTypes>::projectPosition(VecCoord& x)
 {
-	double time = getContext()->getTime();
+	SReal time = getContext()->getTime();
 
 	std::vector<unsigned int>::iterator it1=targets.begin();
 	VecDerivIterator it2=translations.begin();

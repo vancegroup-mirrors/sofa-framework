@@ -1,7 +1,32 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "CudaCommon.h"
 #include "CudaMath.h"
+#include "cuda.h"
 
-#if defined(__cplusplus)
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 namespace sofa
 {
 namespace gpu
@@ -14,38 +39,62 @@ extern "C"
 {
 void FixedConstraintCuda3f_projectResponseContiguous(unsigned int size, void* dx);
 void FixedConstraintCuda3f_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+void FixedConstraintCuda3f1_projectResponseContiguous(unsigned int size, void* dx);
+void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+
+
 }
 
 //////////////////////
 // GPU-side methods //
 //////////////////////
 
-__global__ void FixedConstraintCuda1f_projectResponseContiguous_kernel(int size, float* dx)
+template<class real>
+__global__ void FixedConstraintCuda1t_projectResponseContiguous_kernel(int size, real* dx)
 {
-	int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
-	if (index < size)
-		dx[index] = 0.0f;
+    int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+    if (index < size)
+	dx[index] = 0.0f;
 }
 
-__global__ void FixedConstraintCuda3f_projectResponseContiguous_kernel(int size, float3* dx)
+template<class real>
+__global__ void FixedConstraintCuda3t_projectResponseContiguous_kernel(int size, CudaVec3<real>* dx)
 {
-	int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
-	if (index < size)
-		dx[index] = make_float3(0.0f,0.0f,0.0f);
+    int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+    if (index < size)
+	dx[index] = CudaVec3<real>::make(0.0f,0.0f,0.0f);
 }
 
-__global__ void FixedConstraintCuda1f_projectResponseIndexed_kernel(int size, const int* indices, float* dx)
+template<class real>
+__global__ void FixedConstraintCuda3t1_projectResponseContiguous_kernel(int size, CudaVec4<real>* dx)
 {
-	int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
-	if (index < size)
-		dx[indices[index]] = 0.0f;
+    int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+    if (index < size)
+	dx[index] = CudaVec4<real>::make(0.0f,0.0f,0.0f,0.0f);
 }
 
-__global__ void FixedConstraintCuda3f_projectResponseIndexed_kernel(int size, const int* indices, float3* dx)
+template<class real>
+__global__ void FixedConstraintCuda1t_projectResponseIndexed_kernel(int size, const int* indices, real* dx)
 {
-	int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
-	if (index < size)
-		dx[indices[index]] = make_float3(0.0f,0.0f,0.0f);
+    int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+    if (index < size)
+	dx[indices[index]] = 0.0f;
+}
+
+template<class real>
+__global__ void FixedConstraintCuda3t_projectResponseIndexed_kernel(int size, const int* indices, CudaVec3<real>* dx)
+{
+    int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+    if (index < size)
+	dx[indices[index]] = CudaVec3<real>::make(0.0f,0.0f,0.0f);
+}
+
+template<class real>
+__global__ void FixedConstraintCuda3t1_projectResponseIndexed_kernel(int size, const int* indices, CudaVec4<real>* dx)
+{
+    int index = umul24(blockIdx.x,BSIZE)+threadIdx.x;
+    if (index < size)
+	dx[indices[index]] = CudaVec4<real>::make(0.0f,0.0f,0.0f,0.0f);
 }
 
 //////////////////////
@@ -56,20 +105,38 @@ void FixedConstraintCuda3f_projectResponseContiguous(unsigned int size, void* dx
 {
 	dim3 threads(BSIZE,1);
 	//dim3 grid((size+BSIZE-1)/BSIZE,1);
-	//FixedConstraintCuda3f_projectResponseContiguous<<< grid, threads >>>(size, (float3*)dx);
+	//FixedConstraintCuda3t_projectResponseContiguous_kernel<float><<< grid, threads >>>(size, (CudaVec3<float>*)dx);
 	//dim3 grid((3*size+BSIZE-1)/BSIZE,1);
-	//FixedConstraintCuda1f_projectResponseContiguous_kernel<<< grid, threads >>>(3*size, (float*)dx);
+	//FixedConstraintCuda1t_projectResponseContiguous_kernel<float><<< grid, threads >>>(3*size, (float*)dx);
 	cudaMemset(dx, 0, size*3*sizeof(float));
+}
+
+void FixedConstraintCuda3f1_projectResponseContiguous(unsigned int size, void* dx)
+{
+	dim3 threads(BSIZE,1);
+	//dim3 grid((size+BSIZE-1)/BSIZE,1);
+	//FixedConstraintCuda3t1_projectResponseContiguous_kernel<float><<< grid, threads >>>(size, (CudaVec4<float>*)dx);
+	//dim3 grid((4*size+BSIZE-1)/BSIZE,1);
+	//FixedConstraintCuda1t_projectResponseContiguous_kernel<float><<< grid, threads >>>(4*size, (float*)dx);
+	cudaMemset(dx, 0, size*4*sizeof(float));
 }
 
 void FixedConstraintCuda3f_projectResponseIndexed(unsigned int size, const void* indices, void* dx)
 {
 	dim3 threads(BSIZE,1);
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
-	FixedConstraintCuda3f_projectResponseIndexed_kernel<<< grid, threads >>>(size, (const int*)indices, (float3*)dx);
+	FixedConstraintCuda3t_projectResponseIndexed_kernel<float><<< grid, threads >>>(size, (const int*)indices, (CudaVec3<float>*)dx);
 }
 
-#if defined(__cplusplus)
+void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void* indices, void* dx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	FixedConstraintCuda3t1_projectResponseIndexed_kernel<float><<< grid, threads >>>(size, (const int*)indices, (CudaVec4<float>*)dx);
+}
+
+
+#if defined(__cplusplus) && CUDA_VERSION != 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

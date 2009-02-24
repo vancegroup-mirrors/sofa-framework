@@ -1,33 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/io/MeshOBJ.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
 #include <stdlib.h>
 #include <iostream>
-#include <string>
+#include <stdio.h>
+#include <string.h>
 
 namespace sofa
 {
@@ -42,7 +45,7 @@ using namespace sofa::defaulttype;
 
 SOFA_DECL_CLASS(MeshOBJ)
 
-Creator<Mesh::Factory,MeshOBJ> MeshOBJClass("obj");
+Creator<Mesh::FactoryMesh,MeshOBJ> MeshOBJClass("obj");
 
 void MeshOBJ::init (std::string filename)
 {
@@ -67,9 +70,9 @@ void MeshOBJ::readOBJ (FILE* file, const char* filename)
 	vector<int>vIndices, nIndices, tIndices;
 	int vtn[3];
 	char buf[128], matName[1024];
-	Vector3 result;
-	Vector3 texCoord;
-	Vector3 normal;
+	Vec3d result;
+	Vec3d texCoord;
+	Vec3d normal;
 	const char *token;
 
 	std::string face, tmp;
@@ -92,21 +95,21 @@ void MeshOBJ::readOBJ (FILE* file, const char* filename)
 						/* eat up rest of line */
 						fgets(buf, sizeof(buf), file);
 						sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
-						vertices.push_back(result);
+						vertices.push_back(Vector3(result[0],result[1], result[2]));
 						break;
 					case 'n':
 						/* normal */
   						/* eat up rest of line */
 						fgets(buf, sizeof(buf), file);
 						sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
-						normals.push_back(result);
+						normals.push_back(Vector3(result[0],result[1], result[2]));
 						break;
 					case 't':
 						/* texcoord */
 						/* eat up rest of line */
 						fgets(buf, sizeof(buf), file);
 						sscanf (buf, "%lf %lf", &result[0], &result[1]);
-						texCoords.push_back(result);
+						texCoords.push_back(Vector3(result[0],result[1], result[2]));						
 						break;
 					default:
 						printf("readObj : Unknown token \"%s\".\n", buf);
@@ -138,9 +141,9 @@ void MeshOBJ::readOBJ (FILE* file, const char* filename)
 					{
 						if (it->name == matName)
 						{
- 							std::cout << "Using material "<<it->name<<std::endl;
+//  							std::cout << "Using material "<<it->name<<std::endl;
 							(*it).activated = true;
-							material.setValue(*it);							
+							material = *it;
 						}
 					}
 				}

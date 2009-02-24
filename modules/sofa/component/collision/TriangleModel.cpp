@@ -1,27 +1,27 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/component/collision/TriangleModel.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/component/collision/Triangle.h>
@@ -30,8 +30,13 @@
 #include <sofa/core/CollisionElement.h>
 #include <sofa/core/ObjectFactory.h>
 #include <vector>
-#include <sofa/helper/system/gl.h>
+#include <sofa/helper/gl/template.h>
 #include <iostream>
+
+#include <sofa/component/topology/PointSetTopologyChange.h>
+#include <sofa/component/topology/TriangleSetTopologyChange.h>
+
+
 using std::cerr;
 using std::endl;
 
@@ -46,31 +51,21 @@ namespace collision
 
 SOFA_DECL_CLASS(Triangle)
     
-int TriangleMeshModelClass = core::RegisterObject("collision model using a triangular mesh, as described in MeshTopology")
-.add< TriangleMeshModel >()
-.addAlias("TriangleModel")
+int TriangleModelClass = core::RegisterObject("collision model using a triangular mesh, as described in BaseMeshTopology")
+.add< TriangleModel >()
+.addAlias("TriangleMeshModel")
+.addAlias("TriangleSetModel")
+.addAlias("TriangleMesh")
+.addAlias("TriangleSet")
 .addAlias("Triangle")
 ;
 
-int TriangleSetModelClass = core::RegisterObject("collision model using a triangular mesh, as described in TriangleSetTopology")
-.add< TriangleSetModel >()
-.addAlias("TriangleSet")
-;
-    
 TriangleModel::TriangleModel()
 : mstate(NULL)
+, computeNormals(initData(&computeNormals, true, "computeNormals", "set to false to disable computation of triangles normal"))
+, meshRevision(-1)
 {
     triangles = &mytriangles;
-}
-
-TriangleMeshModel::TriangleMeshModel()
-: meshRevision(-1), mesh(NULL)
-{
-}
-
-TriangleSetModel::TriangleSetModel()
-: mesh(NULL)
-{
 }
     
 void TriangleModel::resize(int size)
@@ -81,6 +76,8 @@ void TriangleModel::resize(int size)
 
 void TriangleModel::init()
 {
+	_topology = this->getContext()->getMeshTopology();
+
     this->CollisionModel::init();
     mstate = dynamic_cast< core::componentmodel::behavior::MechanicalState<Vec3Types>* > (getContext()->getMechanicalState());
 
@@ -89,69 +86,18 @@ void TriangleModel::init()
         std::cerr << "ERROR: TriangleModel requires a Vec3 Mechanical Model.\n";
         return;
     }
-}
-    
-void TriangleMeshModel::init()
-{
-    TriangleModel::init();
-    mesh = dynamic_cast<Topology *>(getContext()->getTopology());
-    if (!mesh) {
-        std::cerr << "ERROR: TriangleMeshModel requires a MeshTopology.\n";
+
+	 if (!_topology) {
+        std::cerr << "ERROR: TriangleModel requires a BaseMeshTopology.\n";
         return;
     }
-    updateFromTopology();
-    updateNormals();
-}
-
-void TriangleSetModel::init()
-{
-    TriangleModel::init();
-    Loc2GlobVec.clear();
-    Glob2LocMap.clear();
-    mesh = dynamic_cast<Topology *>(getContext()->getMainTopology());
-    if (!mesh) {
-        std::cerr << "ERROR: TriangleSetModel requires a TriangleSetTopology.\n";
-        return;
-    }
-    sofa::core::componentmodel::topology::BaseTopology* bt = mesh;
     
-    sofa::core::componentmodel::topology::TopologyContainer *container=bt->getTopologyContainer();
-
-    sofa::component::topology::TetrahedronSetTopologyContainer *testc= dynamic_cast<sofa::component::topology::TetrahedronSetTopologyContainer *>(container);
-    if (testc) {
-
-		//std::cout << "INFO_print : Col - init TETRA " << std::endl;
-        const sofa::helper::vector<sofa::component::topology::Triangle> &triangleArray=testc->getTriangleArray();
-        
-        unsigned int nb_visible_triangles = 0;
-
-        for (unsigned int i=0; i<triangleArray.size(); ++i) {
-                if (testc->getTetrahedronTriangleShell(i).size()==1) {
-                    mytriangles.push_back(triangleArray[i]);
-                        Loc2GlobVec.push_back(i);
-                        Glob2LocMap[i]=Loc2GlobVec.size()-1;
-
-                        nb_visible_triangles+=1;
-                }
-        }
-        triangles = & mytriangles;
-        resize(nb_visible_triangles);
-
-    } else {
-
-        //std::cout << "INFO_print : Col - init TRIANGLE " << std::endl;
-        sofa::component::topology::TriangleSetTopologyContainer *tstc= mesh->getTriangleSetTopologyContainer();
-
-        const sofa::helper::vector<sofa::component::topology::Triangle> &ta=tstc->getTriangleArray();
-        
-        triangles = &ta;
-        
-        resize(ta.size());
-    }
-
-    updateFlags();
-    updateNormals();
+	//std::cout << "INFO_print : Col - init TRIANGLE " << std::endl;	
+	triangles = &_topology->getTriangles();
+	resize(_topology->getNbTriangles());
+	
     updateFromTopology();
+    updateNormals();
 }
 
 void TriangleModel::updateNormals()
@@ -170,28 +116,23 @@ void TriangleModel::updateNormals()
 
 void TriangleModel::updateFromTopology()
 {
-    needsUpdate = false;
-}
-
-void TriangleMeshModel::updateFromTopology()
-{    
+//    needsUpdate = false;
     const unsigned npoints = mstate->getX()->size();
-    const unsigned ntris = mesh->getNbTriangles();
-    const unsigned nquads = mesh->getNbQuads();
+    const unsigned ntris = _topology->getNbTriangles();
+    const unsigned nquads = _topology->getNbQuads();
     const unsigned newsize = ntris+2*nquads;
-    needsUpdate=true;
 
-    int revision = mesh->getRevision();
+    int revision = _topology->getRevision();
     if (revision == meshRevision && newsize==(unsigned)size) {
-        needsUpdate=false;
         return;
     }
+    needsUpdate=true;
 
     resize(newsize);
 
     if (newsize == ntris)
     { // no need to copy the triangle indices
-        triangles = & mesh->getTriangles();
+        triangles = & _topology->getTriangles();
     }
     else
     {
@@ -200,7 +141,7 @@ void TriangleMeshModel::updateFromTopology()
         int index = 0;
         for (unsigned i=0; i<ntris; i++)
         {
-            topology::MeshTopology::Triangle idx = mesh->getTriangle(i);
+            topology::BaseMeshTopology::Triangle idx = _topology->getTriangle(i);
             if (idx[0] >= npoints || idx[1] >= npoints || idx[2] >= npoints)
             {
                 std::cerr << "ERROR: Out of range index in triangle "<<i<<": "<<idx[0]<<" "<<idx[1]<<" "<<idx[2]<<" ( total points="<<npoints<<")\n";
@@ -213,7 +154,7 @@ void TriangleMeshModel::updateFromTopology()
         }
         for (unsigned i=0; i<nquads; i++)
         {
-            topology::MeshTopology::Quad idx = mesh->getQuad(i);
+            topology::BaseMeshTopology::Quad idx = _topology->getQuad(i);
             if (idx[0] >= npoints || idx[1] >= npoints || idx[2] >= npoints || idx[3] >= npoints)
             {
                 std::cerr << "ERROR: Out of range index in quad "<<i<<": "<<idx[0]<<" "<<idx[1]<<" "<<idx[2]<<" "<<idx[3]<<" ( total points="<<npoints<<")\n";
@@ -277,121 +218,35 @@ void TriangleModel::updateFlags(int ntri)
         elems[i].flags = f;
     }
 }
-
-void TriangleSetModel::updateFromTopology()
-{
-}
     
-void TriangleSetModel::handleTopologyChange()
+void TriangleModel::handleTopologyChange()
 {
 	bool debug_mode = false;
 
     if (triangles != &mytriangles)
     {
         // We use the same triangle array as the topology -> only resize and recompute flags
-        resize(mesh->getTriangleSetTopologyContainer()->getNumberOfTriangles());
+        resize(_topology->getNbTriangles());
         needsUpdate = true;
         updateFlags();
         updateNormals(); // not strictly necessary but useful if we display the model before the next collision iteration
 		
 		return;
     }
-	
-    sofa::core::componentmodel::topology::BaseTopology* bt = mesh;
-    if (bt) {
 
-        std::list<const sofa::core::componentmodel::topology::TopologyChange *>::const_iterator itBegin=bt->firstChange();
-        std::list<const sofa::core::componentmodel::topology::TopologyChange *>::const_iterator itEnd=bt->lastChange();
+	sofa::core::componentmodel::topology::TopologyModifier* topoMod; 
+	this->getContext()->get(topoMod);     
+	    
+    if (topoMod) { // dynamic topology
+
+        std::list<const sofa::core::componentmodel::topology::TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+        std::list<const sofa::core::componentmodel::topology::TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 
 		while( itBegin != itEnd )
 		{
 			core::componentmodel::topology::TopologyChangeType changeType = (*itBegin)->getChangeType();
-			// Since we are using identifier, we can safely use C type casts.
-
-			sofa::core::componentmodel::topology::TopologyContainer *container=bt->getTopologyContainer();
-
-			sofa::component::topology::TriangleSetTopologyContainer *tstc= dynamic_cast<sofa::component::topology::TriangleSetTopologyContainer *>(container);
-			sofa::component::topology::TetrahedronSetTopologyContainer *testc= dynamic_cast<sofa::component::topology::TetrahedronSetTopologyContainer *>(container);
-
-			if(debug_mode && (changeType == core::componentmodel::topology::TETRAHEDRAREMOVED) || (((!testc) && changeType == core::componentmodel::topology::TRIANGLESREMOVED))){
-
-				unsigned int my_size = 0;
-				if(testc){
-					my_size = testc->getTetrahedronTriangleShellArray().size();
-				}else{
-					if(tstc){
-						my_size = tstc->getTriangleArray().size();
-					}
-				}
-				
-				// TEST 1
-				for(unsigned int i_check= 0; i_check <Loc2GlobVec.size(); ++i_check){
-
-					if(i_check!=Glob2LocMap[Loc2GlobVec[i_check]]){
-						std::cout << "INFO_print : Col - Glob2LocMap fails at i_check = "<< i_check << std::endl;
-					}
-
-				}
-
-				// TEST 2
-				std::map<unsigned int, unsigned int>::iterator iter_check = Glob2LocMap.begin();
-				while(iter_check != Glob2LocMap.end()){
-
-					unsigned int my_glob = iter_check->first;					
-					iter_check++;
-
-					if(my_glob!=Loc2GlobVec[Glob2LocMap[my_glob]]){
-						std::cout << "INFO_print : Col - Loc2GlobVec fails at my_glob = "<< my_glob << std::endl;
-					}
-
-					if(my_glob>=my_size){
-						std::cout << "INFO_print : Col - Glob2LocMap gives too big my_glob = "<< my_glob << std::endl;
-					}
-				}
-				
-				// TEST 3
-				if(testc){
-
-					const sofa::helper::vector< sofa::helper::vector<unsigned int> > &tvsa=tstc->getTriangleVertexShellArray();
-					unsigned int last = tvsa.size() -1;
-					//std::cout << "INFO_print : Col - last point = "<< last << std::endl;
-
-					for(unsigned int j_check= 0; j_check < my_size; ++j_check){
-
-						if(testc->getTetrahedronTriangleShell(j_check).size()==1){
-
-							std::map<unsigned int, unsigned int>::iterator iter_j = Glob2LocMap.find(j_check);
-							if(iter_j == Glob2LocMap.end() ) {
-								std::cout << "INFO_print : Col - Glob2LocMap should have the visible triangle j_check = "<< j_check << std::endl;
-							}else{
-
-								if(mytriangles[Glob2LocMap[j_check]][0] > last){
-									std::cout << "INFO_print : Col !!! POINT 0 OUT for j_check = " << j_check << " , triangle = "<< Glob2LocMap[j_check] << " , point = " << mytriangles[Glob2LocMap[j_check]][0] << std::endl;
-								}
-								if(mytriangles[Glob2LocMap[j_check]][1] > last){
-									std::cout << "INFO_print : Col !!! POINT 1 OUT for j_check = " << j_check << " , triangle = "<< Glob2LocMap[j_check] << " , point = " << mytriangles[Glob2LocMap[j_check]][1] << std::endl;
-								}
-								if(mytriangles[Glob2LocMap[j_check]][2] > last){
-									std::cout << "INFO_print : Col !!! POINT 2 OUT for j_check = " << j_check << " , triangle = "<< Glob2LocMap[j_check] << " , point = " << mytriangles[Glob2LocMap[j_check]][2] << std::endl;
-								}
-							}
-							
-						}else{
-
-							std::map<unsigned int, unsigned int>::iterator iter_j = Glob2LocMap.find(j_check);
-							if(iter_j != Glob2LocMap.end() ) {
-								std::cout << "INFO_print : Col - Glob2LocMap should NOT have the INvisible triangle j_check = "<< j_check << std::endl;
-							}
-						}
-					}
-				}
-
-				// TEST_END
-
-			}
-
-			///
+			
 			switch( changeType ) {
 
 				
@@ -407,17 +262,11 @@ void TriangleSetModel::handleTopologyChange()
 					{
 						//std::cout << "INFO_print : Col - TRIANGLESADDED" << std::endl;
 						TriangleInfo t;
-						const sofa::component::topology::TrianglesAdded *ta=dynamic_cast< const sofa::component::topology::TrianglesAdded * >( *itBegin );
-						for (unsigned int i=0;i<ta->getNbAddedTriangles();++i) {
-							mytriangles.push_back(ta->triangleArray[i]);
-
-							unsigned int ind_triangle = Loc2GlobVec.size();
-                                                        
-							Loc2GlobVec.push_back(ind_triangle);
-							Glob2LocMap[ind_triangle]=ind_triangle;
-
+						const sofa::component::topology::TrianglesAdded *ta=static_cast< const sofa::component::topology::TrianglesAdded * >( *itBegin );
+						for (unsigned int i=0;i<ta->getNbAddedTriangles();++i) {							
+							mytriangles.push_back(ta->triangleArray[i]);                                                     
 						}
-						resize( mytriangles.size());						
+						resize( mytriangles.size());								
 						needsUpdate=true;
 												
 						break;
@@ -427,183 +276,62 @@ void TriangleSetModel::handleTopologyChange()
 					{
 						//std::cout << "INFO_print : Col - TRIANGLESREMOVED" << std::endl;
 						unsigned int last;
-						unsigned int ind_last;
-							
-						if(testc){
-							last= (testc->getTetrahedronTriangleShellArray()).size() - 1;
-						}else{
-							if(tstc){
-								last= (tstc->getTriangleArray()).size() - 1;
-							}else{
-								last= elems.size() -1;
-							}
-						}
+						unsigned int ind_last;							
+												
+						last= _topology->getNbPoints() - 1;											
 
-						//if(!testc){
-
-						const sofa::helper::vector<unsigned int> &tab = ( dynamic_cast< const sofa::component::topology::TrianglesRemoved *>( *itBegin ) )->getArray();
+						const sofa::helper::vector<unsigned int> &tab = ( static_cast< const sofa::component::topology::TrianglesRemoved *>( *itBegin ) )->getArray();
 						
-                                      TriangleInfo tmp;
-                                      topology::Triangle tmp2;
-						unsigned int ind_tmp;
-
-						unsigned int ind_real_last;
+                        TriangleInfo tmp;
+                        topology::Triangle tmp2;						
 
 						for (unsigned int i = 0; i <tab.size(); ++i)
 						{
 
-							unsigned int k = tab[i];
-							unsigned int ind_k;		
+							unsigned int ind_k = tab[i];														
 
-							std::map<unsigned int, unsigned int>::iterator iter_1 = Glob2LocMap.find(k);
-							if(iter_1 != Glob2LocMap.end() ) {
-
-								ind_k = Glob2LocMap[k];
-								ind_real_last = ind_k;
-								
-								std::map<unsigned int, unsigned int>::iterator iter_2 = Glob2LocMap.find(last);
-								if(iter_2 != Glob2LocMap.end()) {
-
-									//std::cout << "FOUND" << std::endl;
-
-									ind_real_last = Glob2LocMap[last]; 
-
-									tmp = elems[ind_k];
-									elems[ind_k] = elems[ind_real_last];
-									elems[ind_real_last] = tmp;
+							tmp = elems[ind_k];
+							elems[ind_k] = elems[last];
+							elems[last] = tmp;
                                       
-                                      tmp2 = mytriangles[ind_k];
-                                      mytriangles[ind_k] = mytriangles[ind_real_last];
-                                      mytriangles[ind_real_last] = tmp2;
-                                      
-								}
+                            tmp2 = mytriangles[ind_k];
+                            mytriangles[ind_k] = mytriangles[last];
+                            mytriangles[last] = tmp2;
+                                      								
+							ind_last = elems.size() - 1;
 
-								ind_last = elems.size() - 1;
+							if(last != ind_last){
 
-								if(ind_real_last != ind_last){
-
-									tmp = elems[ind_real_last];
-									elems[ind_real_last] = elems[ind_last];
-									elems[ind_last] = tmp;
-                                      
-                                      tmp2 = mytriangles[ind_real_last];
-                                      mytriangles[ind_real_last] = mytriangles[ind_last];
-                                      mytriangles[ind_last] = tmp2;
-                                                                            
-									Glob2LocMap.erase(Glob2LocMap.find(Loc2GlobVec[ind_last]));
-									Glob2LocMap[Loc2GlobVec[ind_last]] = ind_real_last;
-									Glob2LocMap.erase(Glob2LocMap.find(Loc2GlobVec[ind_real_last]));
-									Glob2LocMap[Loc2GlobVec[ind_real_last]] = ind_last;
-
-									ind_tmp = Loc2GlobVec[ind_real_last];
-									Loc2GlobVec[ind_real_last] = Loc2GlobVec[ind_last];
-									Loc2GlobVec[ind_last] = ind_tmp;
-
-								}
-
-                                                                mytriangles.resize( elems.size() - 1 );
-								resize( elems.size() - 1 );
-								Glob2LocMap.erase(Glob2LocMap.find(Loc2GlobVec[ind_last]));
-								Loc2GlobVec.resize( Loc2GlobVec.size() - 1 );
-
-							}else{								
-
-								std::cout << "INFO_print : Col - Glob2LocMap should have the visible triangle " << tab[i] << std::endl;
+								tmp = elems[last];
+								elems[last] = elems[ind_last];
+								elems[ind_last] = tmp;
+                                  
+                                  tmp2 = mytriangles[last];
+                                  mytriangles[last] = mytriangles[ind_last];
+                                  mytriangles[ind_last] = tmp2;                                                                            									
 							}
+
+							mytriangles.resize( elems.size() - 1 );
+							resize( elems.size() - 1 );							
 
 							--last;
 						}
 
 						needsUpdate=true;
-											
-						//}
 						
 						break;
-					}
+					}				
 
-				case core::componentmodel::topology::TETRAHEDRAREMOVED:
-					{
-						//std::cout << "INFO_print : Col - TETRAHEDRAREMOVED" << std::endl;
-						if (testc) {
-
-							const sofa::helper::vector<sofa::component::topology::Tetrahedron> &tetrahedronArray=testc->getTetrahedronArray();
-
-							const sofa::helper::vector<unsigned int> &tab = ( dynamic_cast< const sofa::component::topology::TetrahedraRemoved *>( *itBegin ) )->getArray();
-
-							for (unsigned int i = 0; i < tab.size(); ++i)
-							{
-
-								for (unsigned int j = 0; j < 4; ++j)
-								{									
-									unsigned int k = (testc->getTetrahedronTriangles(tab[i]))[j];
-
-									if (testc->getTetrahedronTriangleShell(k).size()==1) { // remove as visible the triangle indexed by k
-
-
-									}else{ // testc->getTetrahedronTriangleShell(k).size()==2 // add as visible the triangle indexed by k
-
-										unsigned int ind_test;
-										if(tab[i] == testc->getTetrahedronTriangleShell(k)[0]){
-
-											ind_test = testc->getTetrahedronTriangleShell(k)[1];
-
-										}else{ // tab[i] == testc->getTetrahedronTriangleShell(k)[1] 
-
-											ind_test = testc->getTetrahedronTriangleShell(k)[0];
-										}
-
-										bool is_present = false;
-										unsigned int k0 = 0;
-										while((!is_present) && k0 < i){
-											is_present = (ind_test == tab[k0]);
-											k0+=1;
-										}
-										if(!is_present){
-                                                                                        topology::Triangle t;
-
-											const sofa::component::topology::Tetrahedron &te=tetrahedronArray[ind_test];
-											int h = testc->getTriangleIndexInTetrahedron(testc->getTetrahedronTriangles(ind_test),k);
-											
-											if (h%2) {
-												t[0]=(int)(te[(h+1)%4]); t[1]=(int)(te[(h+2)%4]); t[2]=(int)(te[(h+3)%4]);
-											} else {
-												t[0]=(int)(te[(h+1)%4]); t[2]=(int)(te[(h+2)%4]); t[1]=(int)(te[(h+3)%4]);
-											}
-									
-											// sort t such that t[0] is the smallest one 
-											while ((t[0]>t[1]) || (t[0]>t[2])) {
-												int val=t[0]; t[0]=t[1];t[1]=t[2];t[2]=val;
-											}
-											
-											unsigned int prev_size = mytriangles.size();
-
-											mytriangles.push_back(t);
-
-											Loc2GlobVec.push_back(k);
-											Glob2LocMap[k]=Loc2GlobVec.size()-1;
-
-                                                                                        mytriangles.resize( prev_size + 1 );
-											resize( prev_size + 1 );
-										}
-									}
-								}
-							}
-						}
-
-						needsUpdate=true;
-																		
-						break;
-					}
+				
 				case core::componentmodel::topology::POINTSREMOVED:
 					{
 							//std::cout << "INFO_print : Col - POINTSREMOVED" << std::endl;
-							if (tstc) {
-
-								const sofa::helper::vector< sofa::helper::vector<unsigned int> > &tvsa=tstc->getTriangleVertexShellArray();
-								unsigned int last = tvsa.size() -1;
+							if (_topology->getNbTriangles()>0) {
+								
+								unsigned int last = _topology->getNbPoints() -1;
 
 								unsigned int i,j;
-								const sofa::helper::vector<unsigned int> tab = ( dynamic_cast< const sofa::component::topology::PointsRemoved * >( *itBegin ) )->getArray();
+								const sofa::helper::vector<unsigned int> tab = ( static_cast< const sofa::component::topology::PointsRemoved * >( *itBegin ) )->getArray();
 								
 								sofa::helper::vector<unsigned int> lastIndexVec;
 								for(unsigned int i_init = 0; i_init < tab.size(); ++i_init){
@@ -627,26 +355,20 @@ void TriangleSetModel::handleTopologyChange()
 
 									}
 
-									const sofa::helper::vector<unsigned int> &shell=tvsa[lastIndexVec[i]];
+									const sofa::helper::vector<unsigned int> &shell=_topology->getTriangleVertexShell(lastIndexVec[i]);
 									for (j=0;j<shell.size();++j) {
+										
+										unsigned int ind_j =shell[j];
 
-										std::map<unsigned int, unsigned int>::iterator iter = Glob2LocMap.find(shell[j]);
-										if(iter != Glob2LocMap.end() ) {
-
-											unsigned int ind_j =Glob2LocMap[shell[j]];
-
-											if ((unsigned)mytriangles[ind_j][0]==lastIndexVec[i])
-												mytriangles[ind_j][0]=tab[i];
-											else if ((unsigned)mytriangles[ind_j][1]==lastIndexVec[i])
-												mytriangles[ind_j][1]=tab[i];
-											else if ((unsigned)mytriangles[ind_j][2]==lastIndexVec[i])
-												mytriangles[ind_j][2]=tab[i];
-										}else{
-											//std::cout << "INFO_print : Col - triangle NOT FOUND in the map !!! global index = "  << shell[j] << std::endl;
-										}
+										if ((unsigned)mytriangles[ind_j][0]==last)
+											mytriangles[ind_j][0]=tab[i];
+										else if ((unsigned)mytriangles[ind_j][1]==last)
+											mytriangles[ind_j][1]=tab[i];
+										else if ((unsigned)mytriangles[ind_j][2]==last)
+											mytriangles[ind_j][2]=tab[i];									
 									}
 
-									if (debug_mode && testc) {
+									if (debug_mode) {
 
 										for (unsigned int j_loc=0;j_loc<mytriangles.size();++j_loc) {
 
@@ -671,13 +393,7 @@ void TriangleSetModel::handleTopologyChange()
 
 											if(is_forgotten){
 
-												unsigned int ind_forgotten = Loc2GlobVec[j];
-												std::map<unsigned int, unsigned int>::iterator iter = Glob2LocMap.find(ind_forgotten);
-
-												if(iter == Glob2LocMap.end() ) {
-													std::cout << "INFO_print : Col - triangle is forgotten in MAP !!! global index = "  << ind_forgotten << std::endl;
-													//Glob2LocMap[ind_forgotten] = j;
-												}
+												unsigned int ind_forgotten = j;												
 
 												bool is_in_shell = false;
 												for (unsigned int j_glob=0;j_glob<shell.size();++j_glob) {
@@ -695,14 +411,41 @@ void TriangleSetModel::handleTopologyChange()
 
 									--last;
 								}
-
-								///								
+														
 							}		
 						
 						needsUpdate=true;
 					
 						break;
 					}
+
+					// Case "POINTSRENUMBERING" added to propagate the treatment to the Visual Model
+
+					case core::componentmodel::topology::POINTSRENUMBERING:
+					{	
+							//std::cout << "INFO_print : Vis - POINTSRENUMBERING" << std::endl;
+
+							if (_topology->getNbTriangles()>0) {																
+
+								unsigned int i;
+
+								const sofa::helper::vector<unsigned int> tab = ( static_cast< const sofa::component::topology::PointsRenumbering * >( *itBegin ) )->getinv_IndexArray();
+
+								for ( i = 0; i < mytriangles.size(); ++i)
+								{									
+									mytriangles[i][0]  = tab[mytriangles[i][0]];
+									mytriangles[i][1]  = tab[mytriangles[i][1]];
+									mytriangles[i][2]  = tab[mytriangles[i][2]];										
+								}								
+								
+							}
+
+						//}						
+						
+						break;
+						
+					}
+
 				default:
 					// Ignore events that are not Triangle  related.
 					break;
@@ -723,10 +466,10 @@ void TriangleModel::draw(int index)
 {
     Triangle t(this,index);
     glBegin(GL_TRIANGLES);
-    glNormal3dv(t.n().ptr());
-    glVertex3dv(t.p1().ptr());
-    glVertex3dv(t.p2().ptr());
-    glVertex3dv(t.p3().ptr());
+    helper::gl::glNormalT(t.n());
+    helper::gl::glVertexT(t.p1());
+    helper::gl::glVertexT(t.p2());
+    helper::gl::glVertexT(t.p3());
     glEnd();
 }
 
@@ -758,8 +501,8 @@ void TriangleModel::draw()
 		if (getContext()->getShowWireFrame())
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels() && dynamic_cast<core::VisualModel*>(getPrevious())!=NULL)
-		dynamic_cast<core::VisualModel*>(getPrevious())->draw();
+	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
+		getPrevious()->draw();
 }
 
 void TriangleModel::computeBoundingTree(int maxDepth)
@@ -771,6 +514,65 @@ void TriangleModel::computeBoundingTree(int maxDepth)
 	
 	needsUpdate=false;
 	Vector3 minElem, maxElem;
+	const VecCoord& x = *this->mstate->getX();
+
+	const bool calcNormals = computeNormals.getValue();
+
+    if (maxDepth == 0)
+    { // no hierarchy
+	if (empty())
+	    cubeModel->resize(0);
+	else
+	{
+	    cubeModel->resize(1);
+	    minElem = x[0];
+	    maxElem = x[0];
+	    for (unsigned i=1;i<x.size();i++)
+	    {
+		const Vector3& pt1 = x[i];
+		if (pt1[0] > maxElem[0]) maxElem[0] = pt1[0];
+		else if (pt1[0] < minElem[0]) minElem[0] = pt1[0];
+		if (pt1[1] > maxElem[1]) maxElem[1] = pt1[1];
+		else if (pt1[1] < minElem[1]) minElem[1] = pt1[1];
+		if (pt1[2] > maxElem[2]) maxElem[2] = pt1[2];
+		else if (pt1[2] < minElem[2]) minElem[2] = pt1[2];
+	    }
+	    if (calcNormals)
+	    for (int i=0;i<size;i++)
+	    {
+		Triangle t(this,i);
+		const Vector3& pt1 = x[t.p1Index()];
+		const Vector3& pt2 = x[t.p2Index()];
+		const Vector3& pt3 = x[t.p3Index()];
+		
+		/*for (int c = 0; c < 3; c++)
+		{
+		    if (i==0)
+		    {
+			minElem[c] = pt1[c];
+			maxElem[c] = pt1[c];
+		    }
+		    else
+		    {
+			if (pt1[c] > maxElem[c]) maxElem[c] = pt1[c];
+			else if (pt1[c] < minElem[c]) minElem[c] = pt1[c];
+		    }
+		    if (pt2[c] > maxElem[c]) maxElem[c] = pt2[c];
+		    else if (pt2[c] < minElem[c]) minElem[c] = pt2[c];
+		    if (pt3[c] > maxElem[c]) maxElem[c] = pt3[c];
+		    else if (pt3[c] < minElem[c]) minElem[c] = pt3[c];
+		}*/
+		
+		// Also recompute normal vector
+		t.n() = cross(pt2-pt1,pt3-pt1);
+		t.n().normalize();
+		
+	    }
+	    cubeModel->setLeafCube(0, std::make_pair(this->begin(),this->end()), minElem, maxElem); // define the bounding box of the current triangle
+	}
+    }
+    else
+    {
 
         cubeModel->resize(size);  // size = number of triangles
 	if (!empty())
@@ -778,9 +580,9 @@ void TriangleModel::computeBoundingTree(int maxDepth)
 		for (int i=0;i<size;i++)
 		{
 			Triangle t(this,i);
-			const Vector3& pt1 = t.p1();
-			const Vector3& pt2 = t.p2();
-			const Vector3& pt3 = t.p3();
+		const Vector3& pt1 = x[t.p1Index()];
+		const Vector3& pt2 = x[t.p2Index()];
+		const Vector3& pt3 = x[t.p3Index()];
 		
 			for (int c = 0; c < 3; c++)
 			{
@@ -791,15 +593,17 @@ void TriangleModel::computeBoundingTree(int maxDepth)
 				     if (pt3[c] > maxElem[c]) maxElem[c] = pt3[c];
 				else if (pt3[c] < minElem[c]) minElem[c] = pt3[c];
 			}
-		
+			if (calcNormals)
+			{
 			// Also recompute normal vector
 			t.n() = cross(pt2-pt1,pt3-pt1);
 			t.n().normalize();
-
+			}
                         cubeModel->setParentOf(i, minElem, maxElem); // define the bounding box of the current triangle
 		}
 		cubeModel->computeBoundingTree(maxDepth);
 	}
+    }
 }
 
 void TriangleModel::computeContinuousBoundingTree(double dt, int maxDepth)

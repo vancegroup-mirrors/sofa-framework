@@ -8,7 +8,8 @@ include($${SOFA_DIR}/sofa.cfg)
 TARGET = load$$LIBSUFFIX
 TEMPLATE = lib
 CONFIG += $$CONFIGLIBRARIES
-
+LIBS *= $$SOFA_EXT_LIBS
+LIBS -= -lload$$LIBSUFFIX
 
 # --------------- Sources --------------------
 SOURCES += Force.cpp \
@@ -30,6 +31,7 @@ HEADERS += Direction.h \
            ForceUnit.h \
            Load.h \
            Loads.h \
+	   LoadsVersion.h \
            Pressure.h \
            PressureUnit.h \
            Rotation.h \

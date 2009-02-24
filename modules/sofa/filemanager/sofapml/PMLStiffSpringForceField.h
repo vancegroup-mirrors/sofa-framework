@@ -1,12 +1,27 @@
-/***************************************************************************
-								PMLStiffSpringForceField
-                             -------------------
-    begin             : September 11th, 2006
-    copyright         : (C) 2006 TIMC-INRIA (Michael Adam)
-    author            : Michael Adam
-    Date              : $Date: 2006/02/25 13:51:44 $
-    Version           : $Revision: 0.2 $
- ***************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 
 /***************************************************************************
  *                                                                         *
@@ -31,11 +46,11 @@
 #include "PMLBody.h"
 
 #include <StructuralComponent.h>
-#include "sofa/component/topology/MeshTopology.h"
-#include "sofa/component/collision/TriangleModel.h"
-#include "sofa/component/collision/LineModel.h"
-#include "sofa/component/collision/PointModel.h"
-#include "sofa/component/forcefield/MeshSpringForceField.h"
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/component/collision/TriangleModel.h>
+#include <sofa/component/forcefield/MeshSpringForceField.h>
+
 
 #include <map>
 
@@ -66,13 +81,13 @@ public :
 
 	///accessors
 	TriangleModel * getTriangleModel() { return tmodel; }
-	LineModel * getLineModel() { return lmodel; }
-	PointModel * getPointModel() { return pmodel; }
+	//LineModel * getLineModel() { return lmodel; }
+	//PointModel * getPointModel() { return pmodel; }
 
 	///merge a body with current object
 	bool FusionBody(PMLBody*);
 
-	Vec3d getDOF(unsigned int index);
+	Vector3 getDOF(unsigned int index);
 	GNode* getPointsNode() {return parentNode;}
 
 private :
@@ -86,28 +101,28 @@ private :
 	void createCollisionModel();
 
 	// extract edges to a list of lines
-	MeshTopology::Line * hexaToLines(Cell* pCell);
-	MeshTopology::Line * tetraToLines(Cell* pCell);
-	MeshTopology::Line * triangleToLines(Cell* pCell);
-	MeshTopology::Line * quadToLines(Cell* pCell);
+	BaseMeshTopology::Line * hexaToLines(Cell* pCell);
+	BaseMeshTopology::Line * tetraToLines(Cell* pCell);
+	BaseMeshTopology::Line * triangleToLines(Cell* pCell);
+	BaseMeshTopology::Line * quadToLines(Cell* pCell);
 
 	//initialization of properties
 	void initMass(string m);
 	void initDensity(string m);
 
 	//structure
-	MeshSpringForceField<Vec3dTypes> *Sforcefield;
+	MeshSpringForceField<Vec3Types> *Sforcefield;
 	TriangleModel * tmodel;
-	LineModel * lmodel;
-	PointModel * pmodel;
+	//LineModel * lmodel;
+	//PointModel * pmodel;
 
 	//members for the mass (only one of the 2 vectors is filled)
-	std::vector<double> massList;
-	std::vector<double> density;
+	std::vector<SReal> massList;
+	std::vector<SReal> density;
 
 	//properties
-	double  ks;			// spring stiffness
-	double  kd;			// damping factor
+	SReal  ks;			// spring stiffness
+	SReal  kd;			// damping factor
 
 };
 

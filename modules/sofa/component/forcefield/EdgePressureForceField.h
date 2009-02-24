@@ -1,11 +1,34 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_H
 
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/core/VisualModel.h>
 #include <sofa/component/topology/EdgeSubsetData.h>
-
+#include <sofa/component/topology/EdgeSetGeometryAlgorithms.h>
 
 
 namespace sofa
@@ -21,7 +44,7 @@ using namespace sofa::defaulttype;
 using namespace sofa::component::topology;
 
 template<class DataTypes>
-class EdgePressureForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public core::VisualModel 
+class EdgePressureForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
     typedef typename DataTypes::VecCoord VecCoord;
@@ -46,8 +69,8 @@ protected:
 
    EdgeSubsetData<EdgePressureInformation> edgePressureMap;
 
-
-    topology::EdgeSetTopology<DataTypes>* est;
+	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+	sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo; 
 
     Data<Deriv> pressure;
 
@@ -62,9 +85,8 @@ protected:
 public:
 
 	EdgePressureForceField():
-    est(0)
-	, pressure(initData(&pressure, "pressure", "Pressure force per unit area"))
-	, edgeList(initData(&edgeList,std::string(0),"edgeList", "Indices of edges separated with commas where a pressure is applied"))
+	pressure(initData(&pressure, "pressure", "Pressure force per unit area"))
+	, edgeList(initData(&edgeList,std::string(""),"edgeList", "Indices of edges separated with commas where a pressure is applied"))
 	, normal(initData(&normal,"normal", "Normal direction for the plane selection of edges"))
 	, dmin(initData(&dmin,(Real)0.0, "dmin", "Minimum distance from the origin along the normal direction"))
 	, dmax(initData(&dmax,(Real)0.0, "dmax", "Maximum distance from the origin along the normal direction"))
@@ -82,10 +104,7 @@ public:
 	// Handle topological changes
 	virtual void handleTopologyChange();
 
-    // -- VisualModel interface
     void draw();
-    void initTextures() { };
-    void update() { };
 
 	void setDminAndDmax(const double _dmin, const double _dmax) { 
 		dmin.setValue((Real)_dmin);dmax.setValue((Real)_dmax);}

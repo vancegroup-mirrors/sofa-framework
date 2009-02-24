@@ -9,10 +9,14 @@ CONFIG += $$CONFIGLIBRARIES
 #CONFIG -= dynamiclib
 #CONFIG += staticlib
 LIBS += $$SOFA_FRAMEWORK_LIBS
+LIBS += -lsofasimulation$$LIBSUFFIX
+LIBS += -lsofatree$$LIBSUFFIX
+LIBS += -lsofacomponent$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS
 
 HEADERS += mycuda.h \
            CudaTypes.h \
+	   CudaTypesBase.h \
            CudaCommon.h \
            CudaMath.h \
            CudaMechanicalObject.h \
@@ -29,6 +33,8 @@ HEADERS += mycuda.h \
            CudaPlaneForceField.inl \
            CudaSphereForceField.h \
            CudaSphereForceField.inl \
+           CudaEllipsoidForceField.h \
+           CudaEllipsoidForceField.inl \
            CudaIdentityMapping.h \
            CudaIdentityMapping.inl \
            CudaBarycentricMapping.h \
@@ -44,7 +50,13 @@ HEADERS += mycuda.h \
            CudaSphereModel.h \
            CudaPenalityContactForceField.h \
            CudaPenalityContactForceField.inl \
-	   CudaLCP.h
+           CudaSpatialGridContainer.h \
+           CudaSpatialGridContainer.inl \
+           CudaVisualModel.h \
+           CudaVisualModel.inl \
+           CudaTetrahedralVisualModel.h \
+           CudaTetrahedralVisualModel.inl \
+           CudaTestForceField.h
 
 SOURCES += mycuda.cpp \
            CudaMechanicalObject.cpp \
@@ -54,6 +66,7 @@ SOURCES += mycuda.cpp \
            CudaTetrahedronFEMForceField.cpp \
            CudaPlaneForceField.cpp \
            CudaSphereForceField.cpp \
+           CudaEllipsoidForceField.cpp \
            CudaIdentityMapping.cpp \
            CudaBarycentricMapping.cpp \
            CudaRigidMapping.cpp \
@@ -63,7 +76,9 @@ SOURCES += mycuda.cpp \
            CudaCollisionDetection.cpp \
            CudaPointModel.cpp \
            CudaPenalityContactForceField.cpp \
-	   CudaLCP.cpp
+           CudaVisualModel.cpp \
+           CudaTetrahedralVisualModel.cpp \
+           CudaTestForceField.cpp
 
 CUDA_SOURCES += mycuda.cu \
            CudaMechanicalObject.cu \
@@ -73,10 +88,13 @@ CUDA_SOURCES += mycuda.cu \
            CudaTetrahedronFEMForceField.cu \
            CudaPlaneForceField.cu \
            CudaSphereForceField.cu \
+           CudaEllipsoidForceField.cu \
            CudaBarycentricMapping.cu \
            CudaRigidMapping.cu \
            CudaSubsetMapping.cu \
            CudaCollisionDetection.cu \
            CudaContactMapper.cu \
            CudaPenalityContactForceField.cu \
-	   CudaLCP.cu
+           CudaVisualModel.cu \
+           CudaTestForceField.cu
+

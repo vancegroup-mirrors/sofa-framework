@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_FORCEFIELD_SPHEREFORCEFIELD_INL
 #define SOFA_COMPONENT_FORCEFIELD_SPHEREFORCEFIELD_INL
 
@@ -66,18 +90,18 @@ void SphereForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, con
 }
 
 template<class DataTypes>
-void SphereForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1)
+void SphereForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
 {
     df1.resize(dx1.size());
+    const Real fact = (Real)(-this->stiffness.getValue()*kFactor);
     for (unsigned int i=0; i<this->contacts.getValue().size(); i++)
     {
-        const Contact& c = (*this->contacts.beginEdit())[i];
+        const Contact& c = (this->contacts.getValue())[i];
         assert((unsigned)c.index<dx1.size());
         Deriv du = dx1[c.index];
-        Deriv dforce; dforce = -this->stiffness.getValue()*(c.normal * ((du*c.normal)*c.fact) + du * (1 - c.fact));
+        Deriv dforce; dforce = fact*(c.normal * ((du*c.normal)*c.fact) + du * (1 - c.fact));
         df1[c.index] += dforce;
     }
-    this->contacts.endEdit();
 }
 
 template<class DataTypes>
@@ -105,7 +129,7 @@ void SphereForceField<DataTypes>::updateStiffness( const VecCoord& x )
 }
 
 template <class DataTypes> 
-double SphereForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
+    double SphereForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
     std::cerr<<"SphereForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
     return 0;

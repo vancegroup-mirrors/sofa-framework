@@ -1,27 +1,29 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This library is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU Lesser General Public License as published by the *
-* Free Software Foundation; either version 2.1 of the License, or (at your     *
-* option) any later version.                                                   *
-*                                                                              *
-* This library is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  *
-* for more details.                                                            *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this library; if not, write to the Free Software Foundation,      *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.           *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                              SOFA :: Framework                              *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <sofa/helper/io/ImageBMP.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <iostream>
@@ -39,7 +41,7 @@ namespace io
 
 SOFA_DECL_CLASS(ImageBMP)
 
-Creator<Image::Factory,ImageBMP> ImageBMPClass("bmp");
+Creator<Image::FactoryImage,ImageBMP> ImageBMPClass("bmp");
 
 bool ImageBMP::load(std::string filename)
 {
@@ -53,8 +55,6 @@ bool ImageBMP::load(std::string filename)
 	short int biPlanes;
 	short int biBitCount;
 	long int biSizeImage;
-	int i;
-	unsigned char temp;
 	FILE *file;
 	/* make sure the file is there and open it read-only (binary) */
 	if ((file = fopen(filename.c_str(), "rb")) == NULL)
@@ -120,7 +120,7 @@ bool ImageBMP::load(std::string filename)
 	/* calculate the size of the image in bytes */
 	biSizeImage = width * height * nc;
 	// std::cout << "Size of the image data: " << biSizeImage << std::endl;
-    std::cout << "ImageBMP "<<filename<<" "<<width<<"x"<<height<<"x"<<nbBits<<" = "<<biSizeImage<<" bytes"<<std::endl;
+//     std::cout << "ImageBMP "<<filename<<" "<<width<<"x"<<height<<"x"<<nbBits<<" = "<<biSizeImage<<" bytes"<<std::endl;
 	data = (unsigned char*) malloc(biSizeImage);
 	/* seek to the actual data */
 	fseek(file, bfOffBits, SEEK_SET);
@@ -151,9 +151,12 @@ bool ImageBMP::load(std::string filename)
 			}
 		}
 	}
-    if (nc == 24 || nc == 32)
+
+    if (nc == 3 || nc == 4)
     {
-        /* swap red and blue (bgr -> rgb) */
+	int i;
+	unsigned char temp;
+        // swap red and blue (bgr -> rgb)
         for (i = 0; i < width*height*nc; i += nc)
         {
                 temp = data[i];
@@ -161,6 +164,7 @@ bool ImageBMP::load(std::string filename)
                 data[i + 2] = temp;
         }
     }
+
 	fclose(file);
 	return true;
 }
@@ -175,7 +179,7 @@ static bool fwriteDW(FILE* file, unsigned long data)
   return fwrite(&data,sizeof(data),1,file)!=0;
 }
 
-bool ImageBMP::save(std::string filename)
+bool ImageBMP::save(std::string filename, int)
 {
     FILE *file;
 	/* make sure the file is there and open it read-only (binary) */

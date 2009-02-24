@@ -1,33 +1,36 @@
-/*******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 1       *
-*                (c) 2006-2007 MGH, INRIA, USTL, UJF, CNRS                     *
-*                                                                              *
-* This program is free software; you can redistribute it and/or modify it      *
-* under the terms of the GNU General Public License as published by the Free   *
-* Software Foundation; either version 2 of the License, or (at your option)    *
-* any later version.                                                           *
-*                                                                              *
-* This program is distributed in the hope that it will be useful, but WITHOUT  *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     *
-* more details.                                                                *
-*                                                                              *
-* You should have received a copy of the GNU General Public License along with *
-* this program; if not, write to the Free Software Foundation, Inc., 51        *
-* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                    *
-*                                                                              *
-* Contact information: contact@sofa-framework.org                              *
-*                                                                              *
-* Authors: J. Allard, P-J. Bensoussan, S. Cotin, C. Duriez, H. Delingette,     *
-* F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza, M. Nesme, P. Neumann,        *
-* and F. Poyer                                                                 *
-*******************************************************************************/
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
+*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU General Public License as published by the Free  *
+* Software Foundation; either version 2 of the License, or (at your option)   *
+* any later version.                                                          *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for    *
+* more details.                                                               *
+*                                                                             *
+* You should have received a copy of the GNU General Public License along     *
+* with this program; if not, write to the Free Software Foundation, Inc., 51  *
+* Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.                   *
+*******************************************************************************
+*                            SOFA :: Applications                             *
+*                                                                             *
+* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include "viewer/qgl/QtGLViewer.h"
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/system/FileRepository.h>
+#include <sofa/helper/system/thread/CTime.h>
 #include <sofa/simulation/tree/Simulation.h>
-#include <sofa/simulation/tree/MechanicalVisitor.h>
-#include <sofa/simulation/tree/UpdateMappingVisitor.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/simulation/common/UpdateMappingVisitor.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/ObjectFactory.h>
@@ -39,9 +42,6 @@
 #include <math.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
-#ifdef WIN32
-#include <GL/glaux.h>
-#endif
 #include <sofa/helper/system/glut.h>
 #include <qevent.h>
 #include "GenGraphForm.h"
@@ -49,16 +49,11 @@
 
 #include <sofa/helper/gl/glfont.h>
 #include <sofa/helper/gl/RAII.h>
-#include <sofa/helper/gl/GLshader.h>
+#ifdef SOFA_HAVE_GLEW
+#include <sofa/helper/gl/GLSLShader.h>
+#endif
 #include <sofa/helper/io/ImageBMP.h>
 
-#include <sofa/simulation/automatescheduler/Automate.h>
-#include <sofa/simulation/automatescheduler/CPU.h>
-#include <sofa/simulation/automatescheduler/Node.h>
-#include <sofa/simulation/automatescheduler/Edge.h>
-#include <sofa/helper/system/thread/CTime.h>
-#include <sofa/simulation/automatescheduler/ExecBus.h>
-#include <sofa/simulation/automatescheduler/ThreadSimulation.h>
 
 #include <sofa/defaulttype/RigidTypes.h>
 
@@ -87,11 +82,13 @@ namespace sofa
 	  using namespace sofa::defaulttype;
 	  using namespace sofa::helper::gl;
 	  using sofa::simulation::tree::getSimulation;
+
 	  //extern UserInterface*	GUI;
 	  //extern OBJmodel*		cubeModel;
 	  // Quaternion QtGLViewer::_newQuat;
 
 
+#ifdef SOFA_HAVE_GLEW
 	  // Shadow Mapping parameters
 
 	  // These store our width and height for the shadow texture
@@ -114,7 +111,7 @@ namespace sofa
 	  GLuint g_DepthTexture;
 
 	  // This is our global shader object that will load the shader files
-	  CShader g_Shader;
+	  GLSLShader g_Shader;
 
 	  //float g_DepthOffset[2] = { 3.0f, 0.0f };
 	  float g_DepthOffset[2] = { 10.0f, 0.0f };
@@ -128,6 +125,7 @@ namespace sofa
 	  GLuint ShadowTextureMask;
 
 	  // End of Shadow Mapping Parameters
+#endif // SOFA_HAVE_GLEW
 
 	  static bool enabled = false;
 	  sofa::core::ObjectFactory::ClassEntry* classVisualModel;
@@ -181,6 +179,7 @@ namespace sofa
 	    _axis = false;
 	    _background = 0;
 	    _shadow = false;
+	    _gl_shadow = false;
 	    _numOBJmodels = 0;
 	    _materialMode = 0;
 	    _facetNormal = GL_FALSE;
@@ -189,7 +188,6 @@ namespace sofa
 	    sceneBBoxIsValid = false;
 	    texLogo = NULL;
 
-	    _automateDisplayed = false;
 
 	    /*_surfaceModel = NULL;
 	      _springMassView = NULL;
@@ -296,16 +294,23 @@ namespace sofa
 		specref[3] = 1.0f;
 
 		// Here we initialize our multi-texturing functions
-		glActiveTextureARB		= (PFNGLACTIVETEXTUREARBPROC)		glewGetProcAddress("glActiveTextureARB");
-		glMultiTexCoord2fARB	= (PFNGLMULTITEXCOORD2FARBPROC)		glewGetProcAddress("glMultiTexCoord2fARB");
-
-		// Make sure our multi-texturing extensions were loaded correctly	    if(!glActiveTextureARB || !glMultiTexCoord2fARB)
-		{
-		  // Print an error message and quit.
-		  //	MessageBox(g_hWnd, "Your current setup does not support multitexturing", "Error", MB_OK);
-		  //PostQuitMessage(0);
-		}
-
+#ifdef SOFA_HAVE_GLEW
+                  glewInit();
+                  if (!GLEW_ARB_multitexture)
+                      std::cerr << "Error: GL_ARB_multitexture not supported\n";
+#else
+                  glActiveTextureARB        = (PFNGLACTIVETEXTUREARBPROC)        glewGetProcAddress("glActiveTextureARB");
+                  glMultiTexCoord2fARB    = (PFNGLMULTITEXCOORD2FARBPROC)        glewGetProcAddress("glMultiTexCoord2fARB");
+                  
+                  // Make sure our multi-texturing extensions were loaded correctly
+                  if(!glActiveTextureARB || !glMultiTexCoord2fARB)
+                  {
+                      // Print an error message and quit.
+                      //    MessageBox(g_hWnd, "Your current setup does not support multitexturing", "Error", MB_OK);
+                      //PostQuitMessage(0);
+                  }
+#endif
+                  
 		_clearBuffer = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
 		_lightModelTwoSides = false;
 
@@ -351,19 +356,23 @@ namespace sofa
 		glEnable(GL_LIGHT0);
 		//glEnable(GL_COLOR_MATERIAL);
 
+#ifdef SOFA_HAVE_GLEW
 		// Here we allocate memory for our depth texture that will store our light's view
 		CreateRenderTexture(g_DepthTexture, SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT);
 		CreateRenderTexture(ShadowTextureMask, SHADOW_MASK_SIZE, SHADOW_MASK_SIZE, GL_LUMINANCE, GL_LUMINANCE);
 		
-		if (_shadow )
-		  {
-		    if ( !CShader::InitGLSL() ) { printf("WARNING QtGLViewer : shadows are not supported !\n"); _shadow=false;}
-		    else
-		      {
-			// Here we pass in our new vertex and fragment shader files to our shader object.
-			g_Shader.InitShaders(sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.vert"), sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.frag"));
-		      }
-		  }
+		if ( GLSLShader::InitGLSL() )
+		{
+		    // Here we pass in our new vertex and fragment shader files to our shader object.
+		    g_Shader.InitShaders(sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.vert"), sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.frag"));
+		    _gl_shadow = true;
+		}
+		else
+#endif
+		{
+		    printf("WARNING QtGLViewer : shadows are not supported !\n");
+		    _gl_shadow=false;
+		}
 
 		// change status so we only do this stuff once
 		initialized = true;
@@ -526,7 +535,8 @@ namespace sofa
 	  //////////////////////////////// APPLY SHADOW MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
 	  void QtGLViewer::ApplyShadowMap()
-	  {				
+	  {
+#ifdef SOFA_HAVE_GLEW
 	    // Let's turn our shaders on for doing shadow mapping on our world
 	    g_Shader.TurnOn();
 
@@ -587,6 +597,7 @@ namespace sofa
 
 	    // Light expected, we need to turn our shader off since we are done
 	    g_Shader.TurnOff();
+#endif // SOFA_HAVE_GLEW
 	  }
 
 	  // ---------------------------------------------------------
@@ -706,7 +717,7 @@ namespace sofa
 	  // --- 
 	  // --- 
 	  // ---------------------------------------------------
-	  void QtGLViewer::DrawBox(double* minBBox, double* maxBBox, double r)
+	  void QtGLViewer::DrawBox(Real* minBBox, Real* maxBBox, Real r)
 	  {
 	    //std::cout << "box = < " << minBBox[0] << ' ' << minBBox[1] << ' ' << minBBox[2] << " >-< " << maxBBox[0] << ' ' << maxBBox[1] << ' ' << maxBBox[2] << " >"<< std::endl;
 	    if (r==0.0)
@@ -967,7 +978,6 @@ namespace sofa
 		initTexturesDone = true;
 	      }
     
-	    if (!groot->getMultiThreadSimulation())
 	      {
 		if (shadowPass)
 		  getSimulation()->drawShadows(groot);
@@ -980,8 +990,6 @@ namespace sofa
 		      DrawBox(sceneMinBBox.ptr(), sceneMaxBBox.ptr());
 		  }
 	      }
-	    else
-	      automateDisplayVM();
 
 	    // glDisable(GL_COLOR_MATERIAL);
 	  }
@@ -1025,9 +1033,9 @@ namespace sofa
 	    lastViewport[3]=-lastViewport[3];
 	
 
-#if 1
+#ifdef SOFA_HAVE_GLEW
 	    if (_shadow)
-	      {
+	    {
 		//glGetDoublev(GL_MODELVIEW_MATRIX,lastModelviewMatrix);
 
 		// Update the light matrices for it's current position
@@ -1203,10 +1211,10 @@ namespace sofa
 		  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 	
-	      }
+	    }
 	    else
 #endif
-	      {
+	    {
 		if (_background==0)
 		  DrawLogo();
 		
@@ -1215,7 +1223,7 @@ namespace sofa
 
 
 		if (_renderingMode == GL_RENDER)
-		  {
+		{
 		    // 		// Initialize lighting
 		    glPushMatrix();
 		    glLoadIdentity();
@@ -1230,8 +1238,8 @@ namespace sofa
 		    DisplayOBJs();
 
 		    DisplayMenu();		// always needs to be the last object being drawn
-		  }
-	      }
+		}
+	    }
 	  }
 
 	  void QtGLViewer::viewAll()
@@ -1249,35 +1257,6 @@ namespace sofa
 	    camera()->showEntireScene();
 	  }
 
-	  void QtGLViewer::DrawAutomate(void)
-	  {
-
-	    std::cout << "DrawAutomate\n";
-
-
-	    glMatrixMode(GL_PROJECTION);
-	    glPushMatrix();
-	    glLoadIdentity();
-	    glOrtho(-0.5, 12.5, -10, 10, -1.0, 1.0);
-	    glMatrixMode(GL_MODELVIEW);
-	    glLoadIdentity();
-
-	    for(int i = 0; i < (int) Automate::getInstance()->tabNodes.size(); i++)
-	      {
-		for(int j = 0; j < (int) Automate::getInstance()->tabNodes[i]->tabOutputs.size(); j++)
-		  {
-		    Automate::getInstance()->tabNodes[i]->tabOutputs[j]->draw();
-		  }
-
-		Automate::getInstance()->tabNodes[i]->draw();
-	      }
-
-	    glMatrixMode(GL_PROJECTION);
-	    glPopMatrix();
-	    glMatrixMode(GL_MODELVIEW);
-
-	    update();
-	  }
 
 
 	  // ---------------------------------------------------------
@@ -1291,10 +1270,10 @@ namespace sofa
 
 	    QGLViewer::resizeGL( width,  height);
 	    camera()->setScreenWidthAndHeight(_W,_H);
-
+  
+	    this->resize(width, height);
 	    emit( resizeW( _W ) );
 	    emit( resizeH( _H ) );
-	
 	  }
 
 
@@ -1331,15 +1310,8 @@ namespace sofa
 	    glClearDepth(1.0);
 	    glClear(_clearBuffer);
 
-	    if (!_automateDisplayed)
-	      {
 		// draw the scene
 		DrawScene();
-	      }
-	    else
-	      {
-		DrawAutomate();
-	      }
 
 
 	    if (_video)
@@ -1348,7 +1320,7 @@ namespace sofa
 		static int counter = 0;
 		if ((counter++ % CAPTURE_PERIOD)==0)
 #endif
-		  screenshot(capture.findFilename());
+		  screenshot(capture.findFilename(), 2);
 	      }
 
 	    if (_waitForRender)
@@ -1398,7 +1370,8 @@ namespace sofa
 		  default:
 		    {
 		      SofaViewer::keyPressEvent(e);
-		      QGLViewer::keyPressEvent(e);
+		      QGLViewer::keyPressEvent(e);		      
+		      e->ignore();
 		    }
 		  }
 	      }
@@ -1430,7 +1403,6 @@ namespace sofa
 	      QGLViewer::mouseMoveEvent(e);
 	  }
 
-
 	  bool QtGLViewer::mouseEvent(QMouseEvent * e)
 	  {
 	    if(e->state()&Qt::ShiftButton)
@@ -1451,9 +1423,17 @@ namespace sofa
 	    return false;
 	  }
 
+	void QtGLViewer::wheelEvent(QWheelEvent* e)
+	{	
+		if (e->state()&Qt::ControlButton)
+			moveLaparoscopic(e);
+		else
+			QGLViewer::wheelEvent(e);		
+	}
+
 	  void QtGLViewer::moveRayPickInteractor(int eventX, int eventY)
 	  {
-	    Vector3 p0, px, py, pz;
+	    Vec3d p0, px, py, pz;
 	    gluUnProject(eventX, lastViewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(p0[0]), &(p0[1]), &(p0[2]));
 	    gluUnProject(eventX+1, lastViewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(px[0]), &(px[1]), &(px[2]));
 	    gluUnProject(eventX, lastViewport[3]-1-(eventY+1), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(py[0]), &(py[1]), &(py[2]));
@@ -1525,25 +1505,6 @@ namespace sofa
 	  }
 
 
-	  // -------------------------------------------------------------------
-	  // ---
-	  // -------------------------------------------------------------------
-	  void QtGLViewer::SwitchToAutomateView()
-	  {
-	    qglviewer::Vec pos;
-	    pos[0] = -10.0;
-	    pos[1] = 0.0;
-	    pos[2] = -50.0;
-	    camera()->setPosition(pos);
-	    qglviewer::Quaternion q;
-	    q[0] = 0.0;
-	    q[1] = 0.0;
-	    q[2] = 0.0;
-	    q[3] = 0.0;
-	    camera()->setOrientation(q);
-	  }
-
-
 	  void QtGLViewer::saveView()
 	  {
 	    if (!sceneFileName.empty())
@@ -1560,29 +1521,6 @@ namespace sofa
 	      }
 	  }
 
-
-	  void QtGLViewer::screenshot(const std::string filename)
-	  {
-	    capture.saveScreen(filename);
-	  }
-
-	  /// Render Scene called during multiThread simulation using automate
-	  void QtGLViewer::drawFromAutomate()
-	  {
-	    update();
-	  }
-
-	  void QtGLViewer::automateDisplayVM(void)
-	  {
-	    std::vector<core::VisualModel *>::iterator it = simulation::automatescheduler::ThreadSimulation::getInstance()->vmodels.begin();
-	    std::vector<core::VisualModel *>::iterator itEnd = simulation::automatescheduler::ThreadSimulation::getInstance()->vmodels.end();
-
-	    while (it != itEnd)
-	      {
-		(*it)->draw();
-		++it;
-	      }
-	  }
 
 	  void QtGLViewer::setSizeW( int size )
 	  {

@@ -7,7 +7,7 @@ find modules -name .svn  -prune -o -name OBJ -prune -o \( -type f -a ! -name '*~
 rm -f ../sofa-applications-${1:-VERSION}.files
 find applications examples share -name .svn  -prune -o -name OBJ -prune -o \( -type f -a ! -name '*~' -a ! -name '*.bak' -a ! -name Makefile \) -print > ../sofa-applications-${1:-VERSION}.files
 
-if which zzzip >/dev/null 2>/dev/null; then
+if which zip >/dev/null 2>/dev/null; then
     echo ZIP
     rm -f ../sofa-framework-${1:-VERSION}.zip
     zip -9 ../sofa-framework-${1:-VERSION}.zip -@ < ../sofa-framework-${1:-VERSION}.files

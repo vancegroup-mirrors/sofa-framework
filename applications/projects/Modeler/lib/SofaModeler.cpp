@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -26,17 +26,19 @@
 ******************************************************************************/
 #include "SofaModeler.h"
 #include <sofa/helper/system/FileRepository.h>
-#include <sofa/helper/system/SetDirectory.h>
+#include <sofa/helper/system/SetDirectory.h> 
+#include <sofa/simulation/tree/TreeSimulation.h>
 
-
+#define MAX_RECENTLY_OPENED 10
 
 
 #include <map>
 #include <set>
-#include <cctype>
+#include <cstdio>
 
 
-// #define TEST_CREATION_COMPONENT
+//Automatically create and destroy all the components available: easy way to verify the default constructor and destructor
+//#define TEST_CREATION_COMPONENT
 
 #ifdef SOFA_QT4
 #include <QToolBox>
@@ -44,18 +46,22 @@
 #include <QGridLayout> 
 #include <QTextEdit>
 #include <Q3TextBrowser>
-#include <QComboBox>
 #include <QLabel>
 #include <QApplication>
-#include <QMenuBar>
+#include <QMenuBar> 
+#include <QMessageBox>
+#include <QDir>
+#include <QStatusBar>
 #else
 #include <qtoolbox.h>
 #include <qlayout.h>
 #include <qtextedit.h>
 #include <qtextbrowser.h>
-#include <qcombobox.h>
 #include <qapplication.h>
 #include <qmenubar.h>
+#include <qmessagebox.h> 
+#include <qdir.h>
+#include <qstatusbar.h>
 #endif
 
 namespace sofa
@@ -74,27 +80,82 @@ namespace sofa
 
       SofaModeler::SofaModeler()
       {
+
 	count='0';
+	displayComponents=0;
+	isPasteReady=false;
+	editPasteAction->setEnabled(false);
 	QWidget *GraphSupport = new QWidget((QWidget*)splitter2);
 	QGridLayout* GraphLayout = new QGridLayout(GraphSupport, 1,1,5,2,"GraphLayout");
 
-
 #ifdef SOFA_QT4	
 	fileMenu->removeAction(Action);
+
+	//Temporary: desactivate with Qt4 the filter
+	//LabelSearch->hide();
+	//SearchEdit->hide();
 #endif
 	connect(GNodeButton, SIGNAL(pressed()), this, SLOT( releaseButton()));
 
+	//----------------------------------------------------------------------
+	//Add plugin manager window. ->load external libs
+	pluginManager = new SofaPluginManager;
+	pluginManager->hide();
+	this->connect(pluginManager->buttonClose, SIGNAL(clicked() ),  this, SLOT( updateComponentList() )); 
+
+	int menuIndex=4;
+	//----------------------------------------------------------------------
+	//Add menu runSofa
+	Q3PopupMenu *runSofaMenu = new Q3PopupMenu(this);       
+	this->menubar->insertItem(tr(QString("&RunSofa")), runSofaMenu, menuIndex++);
+
+	runInSofaAction->addTo(runSofaMenu);
+
+	runSofaMenu->insertItem("Change Sofa Binary...", this, SLOT( changeSofaBinary()));
+	sofaBinary=std::string();
+
+	Q3PopupMenu *runSofaGUI = new Q3PopupMenu(this);
+	runSofaMenu->insertItem(QIconSet(), tr("Viewer"), runSofaGUI);
+	
+	//Set the different available GUI
+	std::vector<std::string> listGUI = sofa::gui::SofaGUI::ListSupportedGUI();
+	//Insert default GUI
+	{
+	    QAction *act= new QAction(this, QString("default")+QString("Action"));
+	    act->setText( "default");
+	    act->setToggleAction( true );act->setOn(true);
+	    act->addTo( runSofaGUI);
+	    listActionGUI.push_back(act);
+	    connect(act, SIGNAL( activated()), this, SLOT( GUIChanged() ));
+	}
+	//Add content of GUI Factory
+	for (unsigned int i=0;i<listGUI.size();++i)
+	  {
+	    QAction *act= new QAction(this, QString(listGUI[i].c_str())+QString("Action"));
+	    act->setText( QString(listGUI[i].c_str()));
+	    act->setToggleAction( true );
+	    act->addTo( runSofaGUI);
+	    listActionGUI.push_back(act);
+	    connect(act, SIGNAL( activated()), this, SLOT( GUIChanged() ));
+	  }
+	
+
+	//----------------------------------------------------------------------
 	//Add menu Preset
 	preset = new Q3PopupMenu(this);
-	this->menubar->insertItem(tr(QString("&Preset")), preset, 4);
+	this->menubar->insertItem(tr(QString("&Preset")), preset, menuIndex++);
+	
+	//----------------------------------------------------------------------
+	//Add menu Window: to quickly find an opened simulation
 	windowMenu = new Q3PopupMenu(this);
-	this->menubar->insertItem(tr(QString("&Scenes")), windowMenu, 5);
+	this->menubar->insertItem(tr(QString("&Scenes")), windowMenu, menuIndex++);
 	
 	connect(windowMenu, SIGNAL(activated(int)), this, SLOT( changeCurrentScene(int)));
 
 	examplePath = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/examples/" );
-	presetPath = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/applications/projects/Modeler/preset/" );
-	std::string presetFile = presetPath + std::string("preset.ini" );
+	binPath = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/bin/" );
+	presetPath = examplePath + std::string("Objects/");
+	std::string presetFile = std::string("config/preset.ini" );
 
  	presetFile = sofa::helper::system::DataRepository.getFile ( presetFile );	
 
@@ -145,148 +206,7 @@ namespace sofa
 
 
 	//Construction of the left part of the GUI: list of all objects sorted by base class
-	std::set< std::string > setType;
-	std::multimap< std::string, ClassInfo* > inventory;
-	std::vector< ClassInfo* > entries;
-	sofa::core::ObjectFactory::getInstance()->getAllEntries(entries);
-	for (unsigned int i=0;i<entries.size();++i)
-	  {
-#ifdef	    TEST_CREATION_COMPONENT
-	    sofa::core::objectmodel::BaseObject *object;
-	    if (entries[i]->creatorMap.find(entries[i]->defaultTemplate) != entries[i]->creatorMap.end())
-	      {
-		object = entries[i]->creatorMap.find(entries[i]->defaultTemplate)->second->createInstance(NULL, NULL);
-	      }
-	    else
-	      {
-		object = entries[i]->creatorList.begin()->second->createInstance(NULL, NULL);
-	      }	   
- 	    delete object;
-#endif
-	    std::set< std::string >::iterator it;
-	    for (it = entries[i]->baseClasses.begin(); it!= entries[i]->baseClasses.end();it++)
-	      {
-		setType.insert((*it));
-		inventory.insert(std::make_pair((*it), entries[i]));
-	      }
-	    if (entries[i]->baseClasses.size() == 0)
-	      {
-		setType.insert("_Undefined_");
-		inventory.insert(std::make_pair("_Undefined_", entries[i]));
-	      }
-
-	  }
-	
-	std::set< std::string >::iterator it;
-	std::multimap< std::string,ClassInfo* >::iterator itMap;
-
-	for (it = setType.begin(); it != setType.end();it++)
-	  {
-	    itMap = inventory.find( (*it) );
-	    unsigned int numRows = inventory.count( (*it) );
-	    QString s=QString(it->c_str()) + QString("Widget");
-	    QWidget* gridWidget = new QWidget(SofaComponents, s);
-	    QGridLayout* gridLayout = new QGridLayout( gridWidget, numRows+1,1);
-	    gridLayout->addItem(new QSpacerItem(1,1,QSizePolicy::Minimum, QSizePolicy::Expanding ), 0,0);
-
-	    //Insert all the components belonging to the same family
-	    SofaComponents->addItem( gridWidget ,it->c_str() );
-	    unsigned int counterElem=1;
-	    for (unsigned int i=0;i< inventory.count( (*it) ); ++i)
-	      {
-		ClassInfo* entry = itMap->second;
-		//We must remove the mass from the ForceField list
-		if ( *it == "ForceField")
-		  {	    
-		    std::set< std::string >::iterator baseClassIt;
-		    bool isMass=false;
-		    for (baseClassIt = entry->baseClasses.begin(); baseClassIt!= entry->baseClasses.end() && !isMass;baseClassIt++)
-		      {
-			isMass= (*baseClassIt == "Mass");
-		      }		   
-		    if (isMass) { itMap++;continue;}
-		  }
-
-		//We must remove the topological container from the Topology
-		if ( *it == "Topology")
-		  {	    
-		    std::set< std::string >::iterator baseClassIt;
-		    bool isMass=false;
-		    for (baseClassIt = entry->baseClasses.begin(); baseClassIt!= entry->baseClasses.end() && !isMass;baseClassIt++)
-		      {
-			isMass= (*baseClassIt == "TopologyObject");
-		      }		   
-		    if (isMass) { itMap++;continue;}
-		  }
-
-
-
-		QPushButton *button = new QPushButton(gridWidget, QString(entry->className.c_str()));
-		connect(button, SIGNAL(pressed()), this, SLOT( newComponent()));
-		connect(button, SIGNAL(pressed()), this, SLOT( releaseButton()));
-		gridLayout->addWidget(button, counterElem,0);
-		button->setFlat(false);
-
-		//Count the number of template usable: Mapping and MechanicalMapping must be separated
-		std::vector< std::string > templateCombo;
-		{
-		  std::list< std::pair< std::string, ClassCreator*> >::iterator itTemplate;
-		  for (itTemplate=entry->creatorList.begin(); itTemplate!= entry->creatorList.end();itTemplate++)
-		    {
-		      if (*it == "Mapping")
-			{
-			  std::string mechanical = itTemplate->first;
-			  mechanical.resize(10+7); 
-			  if (mechanical == "MechanicalMapping") continue;
-			}
-		      else if ( *it == "MechanicalMapping")
-			{
-			  std::string nonmechanical = itTemplate->first;
-			  nonmechanical.resize(7); 
-			  if (nonmechanical == "Mapping") continue;
-			}
-		      templateCombo.push_back(itTemplate->first);
-		    }
-		}
-
-
-		//Template: Add in a combo box the list of the templates
-		QComboBox *combo=NULL;
- 		if ( entry->creatorList.size() > 1 )
-		  {
-		    combo = new QComboBox(gridWidget);
-
-		    for (unsigned int t=0;t<templateCombo.size();++t)		      
-		      combo->insertItem(QString(templateCombo[t].c_str()));			
-		    if (templateCombo.size() == 1) //Mapping with only one template possible
-		      {
-			combo->hide();
-			gridLayout->addWidget(new QLabel(QString(templateCombo[0].c_str()), gridWidget), counterElem, 1);
-		      }
-		    else
-		      {
-			gridLayout->addWidget(combo, counterElem,1);
-			if (templateCombo.size() == 0){combo->hide(); button->hide(); counterElem--;}
-		      }
-
-		  }
-		else
-		  {
-		    if (!entry->creatorList.begin()->first.empty())
-		      {
-			QLabel *templateDescription = new QLabel(QString(entry->creatorList.begin()->first.c_str()), gridWidget);
-			gridLayout->addWidget(templateDescription, counterElem,1);
-		      }
-		  }
-		button->setText(QString(entry->className.c_str()));
-
-		mapComponents.insert(std::make_pair(button, std::make_pair(entry, combo)));
-		itMap++;
-
-		//connect(button, SIGNAL(pressed() ), this, SLOT( newComponent() ));
-		counterElem++;
-	      }
-	  }
+	updateComponentList();
 
 	connect( this->infoItem, SIGNAL(linkClicked( const QString &)), this, SLOT(fileOpen(const QString &)));
 
@@ -296,7 +216,10 @@ namespace sofa
 	GraphLayout->addWidget(sceneTab,0,0);	
 	connect( sceneTab, SIGNAL(currentChanged( QWidget*)), this, SLOT( changeCurrentScene( QWidget*)));
 	
-	//newTab();
+
+
+	changeLibraryLabel(0);
+	connect(SofaComponents, SIGNAL(currentChanged(int)), this, SLOT(changeLibraryLabel(int)));
 	//Recently Opened Files
 	std::string scenes ( "config/Modeler.ini" );
 	if ( !sofa::helper::system::DataRepository.findFile ( scenes ) )
@@ -314,25 +237,34 @@ namespace sofa
 
 	const QRect screen = QApplication::desktop()->availableGeometry(QApplication::desktop()->primaryScreen());
  	this->move(  ( screen.width()- this->width()  ) / 2,  ( screen.height() - this->height()) / 2  );
+	
+	GraphSupport->resize(300,550);
       };
 
+
+
+
+      void SofaModeler::closeEvent( QCloseEvent *e)
+      {
+	const int numTab=sceneTab->count();
+	for (int i=0;i<numTab;++i) closeTab(); 
+
+	e->accept();
+      }
 
       void SofaModeler::fileNew( GNode* root)
       {
 	if (!root) graph->setFilename("");
 	changeNameWindow("");
 
-	GNode *current_root=graph->getRoot();
-	if (current_root) graph->clearGraph();
-
 	//no parent, adding root: if root is NULL, then an empty GNode will be created
-	root = graph->addGNode(NULL, root);
+	root = graph->setRoot( root, false);
 	sceneTab->setCurrentPage( sceneTab->count()-1);
       }
 
       void SofaModeler::fileOpen()
       {
-	QString s = getOpenFileName ( this, QString(examplePath.c_str()),"Scenes (*.scn *.xml *.simu *.pscn)", "open file dialog",  "Choose a file to open" );
+	QString s = getOpenFileName ( this, QString(examplePath.c_str()),"Scenes (*.scn *.xml);;Simulation (*.simu);;Php Scenes (*.pscn);;All (*)", "open file dialog",  "Choose a file to open" );
 	if (s.length() >0)
 	  {
 	    fileOpen(s);
@@ -363,91 +295,106 @@ namespace sofa
 
       void SofaModeler::createTab()
       {
-		QWidget *newtab = new QWidget();
-	    tabGraph = newtab;
-	    QVBoxLayout *currentTabLayout = new QVBoxLayout(newtab, 0,1, QString("ModelerScene"));	
-	    sceneTab->addTab(newtab, QString("New Scene"));
-		GraphModeler* modelerGraph = new GraphModeler(newtab,"Modeler");
-	    mapGraph.insert(std::make_pair(newtab, modelerGraph));
-		mapGraph[newtab] = modelerGraph;
-		graph = modelerGraph;
-		
-	    graph->setAcceptDrops(true);
-	    currentTabLayout->addWidget(graph,0,0);
-	    
-	    graph->setLibrary(mapComponents);
-	    graph->setPreset(preset);
-	    fileNew();
-	    
+	QWidget *newtab = new QWidget();
+	tabGraph = newtab;
+	QVBoxLayout *currentTabLayout = new QVBoxLayout(newtab, 0,1, QString("ModelerScene"));	
+	sceneTab->addTab(newtab, QString("New Scene"));
+	GraphModeler* modelerGraph = new GraphModeler(newtab,"Modeler");
+	mapGraph.insert(std::make_pair(newtab, modelerGraph));
+	mapGraph[newtab] = modelerGraph;
+	graph = modelerGraph;
+	
+	graph->setAcceptDrops(true);
+	currentTabLayout->addWidget(graph,0,0);
+	
+	graph->setLibrary(mapComponents);
+	graph->setPreset(preset);
+	fileNew();
+	
 #ifdef SOFA_QT4
-	    connect(graph, SIGNAL(currentChanged(Q3ListViewItem *)), this, SLOT(changeInformation(Q3ListViewItem *)));
+	connect(graph, SIGNAL(currentChanged(Q3ListViewItem *)), this, SLOT(changeInformation(Q3ListViewItem *)));
 #else
-	    connect(graph, SIGNAL(currentChanged(QListViewItem *)), this, SLOT(changeInformation(QListViewItem *)));
+	connect(graph, SIGNAL(currentChanged(QListViewItem *)), this, SLOT(changeInformation(QListViewItem *)));
 #endif
-	    connect(graph, SIGNAL( fileOpen(std::string)), this, SLOT(fileOpen(std::string)));
+	connect(graph, SIGNAL( fileOpen(const QString&)), this, SLOT(fileOpen(const QString&)));
+	connect(graph, SIGNAL( undo(bool)), this, SLOT(updateUndo(bool)));
+ 	connect(graph, SIGNAL( redo(bool)), this, SLOT(updateRedo(bool)));
       }
 
-	  void SofaModeler::closeTab()
+      void SofaModeler::closeTab()
+      {
+	if (sceneTab->count() == 0) return;	
+
+	QWidget* curTab = tabGraph;			  
+	//If the scene has been launch in Sofa
+	if (mapSofa.size() && 
+	    mapSofa.find(curTab) != mapSofa.end())
 	  {
-		  if (sceneTab->count() == 0) return;	
-
-		  QWidget* curTab = tabGraph;			  
-		  //If the scene has been launch in Sofa
-		  if (mapSofa.size() && 
-			  mapSofa.find(curTab) != mapSofa.end())
-		  {
-			  mapSofa[curTab]->fileExit();
-			  mapSofa .erase(curTab);
-		  }
-
-		  //Find the scene in the window menu
-		  std::map< int, QWidget* >::const_iterator it;		  
-		  for (it = mapWindow.begin();it!=mapWindow.end();it++)
-		  {
-			  if (it->second == curTab) break;
-		  }
-		  windowMenu->removeItem(it->first);
-		  mapWindow.erase(it->first);
-
-		  //Closing the Modify Dialog opened
-		  GraphModeler *mod = graph;		  		  
-		  if (dynamic_cast< GraphModeler* >(mod)) 
-		  {
-				mod->closeDialogs();
-				mod->close();
-		  }
-
-
-		  sceneTab->removePage(curTab);
-		  mapGraph.erase(curTab);
-		  curTab->close();
-
-
+	    typedef std::multimap< const QWidget*, Q3Process* >::iterator multimapIterator;
+	    std::pair< multimapIterator,multimapIterator > range;
+	    range=mapSofa.equal_range(curTab);
+	    for (multimapIterator it=range.first; it!=range.second;it++)
+	      {
+		removeTemporaryFiles(it->second);
+		it->second->kill();
+	      }
+ 	    mapSofa.erase(range.first, range.second);
 	  }
+
+	//Find the scene in the window menu
+	std::map< int, QWidget* >::const_iterator it;		  
+	for (it = mapWindow.begin();it!=mapWindow.end();it++)
+	  {
+	    if (it->second == curTab) break;
+	  }
+	windowMenu->removeItem(it->first);
+	mapWindow.erase(it->first);
+
+	//Closing the Modify Dialog opened
+	GraphModeler *mod = graph;		  		  
+	if (dynamic_cast< GraphModeler* >(mod)) 
+	  {
+	    mod->closeDialogs();
+	    mod->close();
+	  }
+
+
+	sceneTab->removePage(curTab);
+	mapGraph.erase(curTab);
+	curTab->close();
+      }
 
       void SofaModeler::fileOpen(std::string filename)
       {
-	createTab();
-	GNode *root = NULL;
-	xml::BaseElement* newXML=NULL;
-	if (!filename.empty())
-	  {
-	    sofa::helper::system::SetDirectory chdir ( filename );
-	    newXML = xml::loadFromFile ( filename.c_str() );
-	    if (newXML == NULL) return;
-	    if (!newXML->init()) std::cerr<< "Objects initialization failed.\n";
-	    root = dynamic_cast<GNode*> ( newXML->getObject() );
+	if ( sofa::helper::system::DataRepository.findFile ( filename ) )
+	  {	
+	    filename =  sofa::helper::system::DataRepository.getFile ( filename );
+
+	    GNode *root = NULL;
+	    xml::BaseElement* newXML=NULL;
+	    if (!filename.empty())
+	      {
+		sofa::helper::system::SetDirectory chdir ( filename );
+		newXML = xml::loadFromFile ( filename.c_str() );
+		if (newXML == NULL) return;
+		if (!newXML->init()) std::cerr<< "Objects initialization failed.\n";
+		root = dynamic_cast<GNode*> ( newXML->getObject() );
+	      }	    
+	    if (root)
+	      {
+		createTab();
+		fileNew(root);
+		sceneTab->setCurrentPage( sceneTab->count()-1);
+
+		graph->setFilename(filename);
+		sceneTab->setTabLabel(tabGraph, QString(sofa::helper::system::SetDirectory::GetFileName(filename.c_str()).c_str()));
+		sceneTab->setTabToolTip(tabGraph, QString(filename.c_str()));
+
+		changeNameWindow(graph->getFilename());
+
+		mapWindow.insert(std::make_pair(windowMenu->insertItem( graph->getFilename().c_str()), tabGraph));
+	      }
 	  }
-	fileNew(root);
-	sceneTab->setCurrentPage( sceneTab->count()-1);
-
-	graph->setFilename(filename);
-	sceneTab->setTabLabel(tabGraph, QString(sofa::helper::system::SetDirectory::GetFileName(filename.c_str()).c_str()));
-	sceneTab->setTabToolTip(tabGraph, QString(filename.c_str()));
-
-	changeNameWindow(graph->getFilename());
-
-	mapWindow.insert(std::make_pair(windowMenu->insertItem( graph->getFilename().c_str()), tabGraph));
       }
 
       void SofaModeler::fileRecentlyOpened(int id)
@@ -490,7 +437,7 @@ namespace sofa
 	    
 	    recentlyOpened->insertItem(QString(fileLoaded.c_str()));
 	  }
-	for (unsigned int i=0;i<list_files.size() && i<5;++i)
+	for (unsigned int i=0;i<list_files.size() && i<MAX_RECENTLY_OPENED;++i)
 	  {
 	    recentlyOpened->insertItem(QString(list_files[i].c_str()));
 	    out << list_files[i] << "\n";
@@ -502,28 +449,37 @@ namespace sofa
 
       void SofaModeler::fileSave()
       {
+	if (sceneTab->count() == 0) return;
 	if (graph->getFilename().empty()) fileSaveAs();
 	else 	                          fileSave(graph->getFilename());
       }
 
       void SofaModeler::fileSave(std::string filename)
       {
-	changeNameWindow(filename);
-	getSimulation()->printXML(graph->getRoot(), filename.c_str());
+	simulation::tree::getSimulation()->printXML(graph->getRoot(), filename.c_str(), true);
       }
 
      
       void SofaModeler::fileSaveAs()
       {	
-	QString s = sofa::gui::qt::getSaveFileName ( this, QString(examplePath.c_str()), "Scenes (*.scn *.xml)", "save file dialog", "Choose where the scene will be saved" );
+	if (sceneTab->count() == 0) return;
+	std::string path;
+	if (graph->getFilename().empty()) path=examplePath.c_str();
+	else path=sofa::helper::system::SetDirectory::GetParentDir(graph->getFilename().c_str());
+	QString s = sofa::gui::qt::getSaveFileName ( this, QString(path.c_str()), "Scenes (*.scn *.xml)", "save file dialog", "Choose where the scene will be saved" );
 	if ( s.length() >0 )
 	  {
 	    fileSave ( s.ascii() );
+//  	    if (graph->getFilename().empty())
+//  	      {
+		std::string filename = s.ascii();
+		graph->setFilename(filename);
+		changeNameWindow(filename);
+		sceneTab->setTabLabel(tabGraph, QString(sofa::helper::system::SetDirectory::GetFileName(filename.c_str()).c_str()));
+		sceneTab->setTabToolTip(tabGraph, QString(filename.c_str()));
+		examplePath = sofa::helper::system::SetDirectory::GetParentDir(filename.c_str());
+//  	      }
 
-	    std::string filename = s.ascii();
-	    sceneTab->setTabLabel(tabGraph, QString(sofa::helper::system::SetDirectory::GetFileName(filename.c_str()).c_str()));
-	    sceneTab->setTabToolTip(tabGraph, QString(filename.c_str()));
-	    examplePath = sofa::helper::system::SetDirectory::GetParentDir(filename.c_str());
 	  }
       }
 
@@ -541,92 +497,101 @@ namespace sofa
 	else std::cerr<<"Preset : " << presetFile << " Not found\n";
       }
 
-	void SofaModeler::changeInformation(Q3ListViewItem *item)
-	{
-	  if (!item) return;
-	  if (item->childCount() != 0) return;
-	  std::string nameObject = item->text(0).ascii();
-	  std::string::size_type end_name = nameObject.find(" ");
-	  if (end_name != std::string::npos) nameObject.resize(end_name);
-	  ClassInfo *currentComponent = getInfoFromName(nameObject);
-	  if (currentComponent) changeComponent(currentComponent);
-	}
+      void SofaModeler::changeInformation(Q3ListViewItem *item)
+      {
+	if (!item) return;
+	if (item->childCount() != 0) return;
+	std::string nameObject = item->text(0).ascii();
+	std::string::size_type end_name = nameObject.find(" ");
+	if (end_name != std::string::npos) nameObject.resize(end_name);
+	ClassInfo *currentComponent = getInfoFromName(nameObject);
+	if (currentComponent) changeComponent(currentComponent);
+      }
+
+      void SofaModeler::changeLibraryLabel(int index)
+      {
+	Library->setItemLabel(0, QString("Sofa Components[") + QString::number(displayComponents) + QString("] : ")+SofaComponents->itemLabel(index));
+      }
+
+      void SofaModeler::newComponent()
+      {
+	const QObject* sender = this->sender();
+	//Change the frontal description of the object
+	if ( mapComponents.find(sender) == mapComponents.end()) return;
+	ClassInfo *currentComponent = mapComponents.find(sender)->second.first;
+	changeComponent(currentComponent);
+
+	Q3TextDrag *dragging = new Q3TextDrag(QString(currentComponent->className.c_str()), (QWidget *)sender);
+	QComboBox *box = (QComboBox *) mapComponents.find(sender)->second.second;
+	QString textDragged;
+	if (box)  
+	  {
+	    textDragged = box->currentText();
+	  }
+	dragging->setText(textDragged);
+	dragging->dragCopy();
+
+      }
 
 
-
- 	void SofaModeler::newComponent()
-	{
-	  const QObject* sender = this->sender();
-	  //Change the frontal description of the object
-	  if ( mapComponents.find(sender) == mapComponents.end()) return;
-	  ClassInfo *currentComponent = mapComponents.find(sender)->second.first;
- 	  changeComponent(currentComponent);
-
-	  Q3TextDrag *dragging = new Q3TextDrag(QString(currentComponent->className.c_str()), (QWidget *)sender);
-	  QComboBox *box = (QComboBox *) mapComponents.find(sender)->second.second;
-	  QString textDragged;
-	  if (box)  
-	    {
-	      textDragged = box->currentText();
-	    }
-
-	  dragging->setText(textDragged);
-	  dragging->dragCopy();
-
-	}
-
-
-	void SofaModeler::changeComponent(ClassInfo *currentComponent)
-	{
-	  std::string text;
-	  text  = std::string("<H2>")  + currentComponent->className + std::string(": ");
+      void SofaModeler::changeComponent(ClassInfo *currentComponent)
+      {
+	std::string text;
+	text  = std::string("<H2>")  + currentComponent->className + std::string(": ");
 	  
-	  std::vector< std::string > possiblePaths;
-	  for (std::set< std::string >::iterator it=currentComponent->baseClasses.begin(); it!=currentComponent->baseClasses.end() ;it++)
-	    {
-	      if (it != currentComponent->baseClasses.begin()) text += std::string(", ");
-	      text += (*it);
-	      std::string baseClassName( *it );
-	      for (unsigned int i=0;i<baseClassName.size();++i)
-		{
-		  if (isupper(baseClassName[i])) baseClassName[i] = tolower(baseClassName[i]);
-		}
-	      if (baseClassName == "odesolver")            baseClassName="solver";
-	      if (baseClassName == "mastersolver")         baseClassName="solver";
-	      if (baseClassName == "topologicalmapping")   baseClassName="topology";
-	      if (baseClassName == "topologyobject")       baseClassName="topology";
-	      if (baseClassName == "collisionmodel")       baseClassName="collision";
-	      std::string path=std::string("Components/") + baseClassName + std::string("/") + currentComponent->className + std::string(".scn");
+	std::vector< std::string > possiblePaths;
+	for (std::set< std::string >::iterator it=currentComponent->baseClasses.begin(); it!=currentComponent->baseClasses.end() ;it++)
+	  {
+	    if (it != currentComponent->baseClasses.begin()) text += std::string(", ");
+	    text += (*it);
+	    std::string baseClassName( *it );
+	    for (unsigned int i=0;i<baseClassName.size();++i)
+	      {
+		if (isupper(baseClassName[i])) baseClassName[i] = tolower(baseClassName[i]);
+	      }
+	    if (baseClassName == "odesolver")            baseClassName="solver";
+	    if (baseClassName == "mastersolver")         baseClassName="solver";
+	    if (baseClassName == "topologicalmapping")   baseClassName="topology";
+	    if (baseClassName == "topologyobject")       baseClassName="topology";
+	    if (baseClassName == "collisionmodel")       baseClassName="collision";
+	    std::string path=std::string("Components/") + baseClassName + std::string("/") + currentComponent->className + std::string(".scn");
 
 
-	      if ( sofa::helper::system::DataRepository.findFile ( path ) )
-		possiblePaths.push_back(sofa::helper::system::DataRepository.getFile ( path ));
-	    }
-	  if (possiblePaths.size() == 0)
-	    {
-	      std::string path=std::string("Components/misc/") + currentComponent->className + std::string(".scn");
+	    if ( sofa::helper::system::DataRepository.findFile ( path ) )
+	      possiblePaths.push_back(sofa::helper::system::DataRepository.getFile ( path ));
+	  }
+	if (possiblePaths.size() == 0)
+	  {
+	    std::string path=std::string("Components/misc/") + currentComponent->className + std::string(".scn");
 
-	      if ( sofa::helper::system::DataRepository.findFile ( path ) )
-		possiblePaths.push_back(sofa::helper::system::DataRepository.getFile ( path ));	      
-	    }
+	    if ( sofa::helper::system::DataRepository.findFile ( path ) )
+	      possiblePaths.push_back(sofa::helper::system::DataRepository.getFile ( path ));	      
+	  }
 
-	  text += std::string("</H2>");
 
-	  text += std::string("<ul>");
+	std::string nameSpace = sofa::core::objectmodel::Base::decodeNamespaceName(currentComponent->creatorList.begin()->second->type());
+	
 
-	  text += std::string("<li><b>Description: </b>") + currentComponent->description + std::string("</li>");
-	  if (!currentComponent->authors.empty())
-	    text += std::string("<li><b>Authors: </b>")+currentComponent->authors +std::string("</li>");
-	  if (!currentComponent->license.empty())
-	    text += std::string("<li><b>License: </b>") + currentComponent->license + std::string("</li>");
-	  if (possiblePaths.size() != 0)	    
-	    text += std::string("<li><b>Example: </b><a href=\"")+possiblePaths[0]+std::string("\">") + possiblePaths[0] + std::string("</a></li>");
+	text += std::string("</H2>");
 
-	  text += std::string("</ul>");
+	text += std::string("<ul>");
 
-	  infoItem->setText(text.c_str());
+	text += std::string("<li><b>Description: </b>") + currentComponent->description + std::string("</li>");
 
-	}
+
+	if (!nameSpace.empty())
+	  text += std::string("<li><b>NameSpace: </b>")+nameSpace +std::string("</li>");
+	if (!currentComponent->authors.empty())
+	  text += std::string("<li><b>Authors: </b>")+currentComponent->authors +std::string("</li>");
+	if (!currentComponent->license.empty())
+	  text += std::string("<li><b>License: </b>") + currentComponent->license + std::string("</li>");
+	if (possiblePaths.size() != 0)	    
+	  text += std::string("<li><b>Example: </b><a href=\"")+possiblePaths[0]+std::string("\">") + possiblePaths[0] + std::string("</a></li>");
+
+	text += std::string("</ul>");
+
+	infoItem->setText(text.c_str());
+      }
 
 
       void SofaModeler::newGNode()
@@ -642,7 +607,16 @@ namespace sofa
 	tabGraph=currentGraph;
 	graph = mapGraph[currentGraph];
 	if (graph)
-	  changeNameWindow(graph->getFilename());
+	  {
+	    changeNameWindow(graph->getFilename());
+	    editUndoAction->setEnabled(graph->isUndoEnabled());
+ 	    editRedoAction->setEnabled(graph->isRedoEnabled());
+	  }
+	else
+	  {
+	    editUndoAction->setEnabled(false);
+ 	    editRedoAction->setEnabled(false);
+	  }
       }
 
 
@@ -675,53 +649,31 @@ namespace sofa
 	return NULL;
       }
 
-      void SofaModeler::keyPressEvent ( QKeyEvent *)
-      {
-	  // ignore if there are modifiers (i.e. CTRL of SHIFT)
-
-
-//#ifdef SOFA_QT4
-//	  if (e->modifiers()) return;
-//#else
-//	  if (e->state() & (Qt::KeyButtonMask)) return;
-//#endif
-//	  switch ( e->key() )
-//	  {
-//	  default:
-//		  {
-//			  e->ignore();
-//			  break;
-//		  }
-//	  }
-
-
-      }
-
       void SofaModeler::dropEvent(QDropEvent* event)
       {	
-	  QPushButton *push = (QPushButton *)event->source();
-	  if (push) push->setDown(false);
+	QPushButton *push = (QPushButton *)event->source();
+	if (push) push->setDown(false);
 
-	  QString text;
-	  Q3TextDrag::decode(event, text);
-	  std::string filename(text.ascii());
-	  std::string test = filename; test.resize(4);
-	  if (test == "file")
-	    {
+	QString text;
+	Q3TextDrag::decode(event, text);
+	std::string filename(text.ascii());
+	std::string test = filename; test.resize(4);
+	if (test == "file")
+	  {
 #ifdef WIN32
-	      filename = filename.substr(8); //removing file:///
+	    filename = filename.substr(8); //removing file:///
 #else
-	      filename = filename.substr(7); //removing file://
+	    filename = filename.substr(7); //removing file://
 #endif
 	    
-	  if (filename[filename.size()-1] == '\n')
-	    {
-	      filename.resize(filename.size()-1);
-	      filename[filename.size()-1]='\0';
-	    }
+	    if (filename[filename.size()-1] == '\n')
+	      {
+		filename.resize(filename.size()-1);
+		filename[filename.size()-1]='\0';
+	      }
 
-	      fileOpen(filename);
-	    }
+	    fileOpen(filename);
+	  }
       }
 
       void SofaModeler::runInSofa()
@@ -733,29 +685,431 @@ namespace sofa
 	sofa::gui::SofaGUI::Init("Modeler");
 	
 	//Saving the scene in a temporary file ==> doesn't modify the current GNode of the simulation
-	std::string filename=presetPath+std::string("temp") + (count++) + std::string(".scn");
-	getSimulation()->printXML(root,filename.c_str());
-	
+	std::string path;
+	if (graph->getFilename().empty()) path=presetPath;
+	else path = sofa::helper::system::SetDirectory::GetParentDir(graph->getFilename().c_str())+std::string("/");
+
+	std::string filename=path + std::string("temp") + (count++) + std::string(".scn");
+	simulation::tree::getSimulation()->printXML(root,filename.c_str(),true);
+
+
 	if (count > '9') count = '0';
+
+	QString messageLaunch;
 	//=======================================
-	// Run the GUI
-	std::string gui = sofa::gui::SofaGUI::GetGUIName();
-	std::vector<std::string> plugins;
+	// Run Sofa
+	if (sofaBinary.empty())
+	  {
+// 	    changeSofaBinary();
+// 	    if (sofaBinary.empty()) return; //No binary found
+
+            //Set the default parameter: Sofa won't start if they are wrong
+#ifdef WIN32
+	    sofaBinary = binPath + "runSofa.exe";
+#else
+	    sofaBinary = binPath + "runSofa";
+#endif
+	  }
+	QStringList argv;
+	argv << QString(sofaBinary.c_str()) << QString(filename.c_str());
+	messageLaunch = QString("Use command: ") 
+	  + QString(sofaBinary.c_str()) 
+	  + QString(" ");
+
+	//Setting the GUI
+	for (unsigned int i=0;i<listActionGUI.size();++i)
+	  {
+	    if (listActionGUI[i]->isOn()) 
+	      {
+		if (std::string(listActionGUI[i]->text().ascii()) != "default")
+		  {
+		    argv << "-g" << listActionGUI[i]->text();
+		    messageLaunch += QString("-g ") + QString(listActionGUI[i]->text());
+		  }
+		break;
+	      }
+	  }
 	
-	if (sofa::gui::SofaGUI::Init("Modeler",gui.c_str())) return ;
-	sofa::gui::qt::RealGUI *guiSofa = new sofa::gui::qt::RealGUI(gui.c_str());
+	statusBar()->message(messageLaunch,5000);
 	
-	guiSofa->fileOpen(filename);
-	guiSofa->show();
-	guiSofa->setFocus();
-	mapSofa.insert(std::make_pair(tabGraph, guiSofa));
+	Q3Process *p = new Q3Process(argv, this);
+	p->setName(filename.c_str());
+	connect(p, SIGNAL(processExited()), this, SLOT(sofaExited()));
+	QDir dir(QString(sofa::helper::system::SetDirectory::GetParentDir(graph->getFilename().c_str()).c_str()));
+	p->setWorkingDirectory(dir);
+	p->setCommunication(0);
+        p->start();
+	mapSofa.insert(std::make_pair(tabGraph, p));
+
+	//Maybe switch to a multimap as several sofa can be launch from the same tab
       }
+
+
+      void SofaModeler::sofaExited()
+      {	
+	Q3Process *p = ((Q3Process*) sender());
+	removeTemporaryFiles(p);
+	if (p->normalExit()) return;
+	typedef std::multimap< const QWidget*, Q3Process* >::iterator multimapIterator;
+	for (multimapIterator it=mapSofa.begin(); it!=mapSofa.end();it++)
+	  {
+	    if (it->second == p)
+	      {
+		const QString caption("Problem");
+		const QString warning("Error running Sofa");
+		QMessageBox::critical( this, caption,warning, QMessageBox::Ok | QMessageBox::Escape, QMessageBox::NoButton );
+		return;
+	      }
+	  }
+      }
+
+      void SofaModeler::removeTemporaryFiles(Q3Process *p)
+      {		
+	std::string filename(p->name());
+        std::string copyBuffer(presetPath+"copyBuffer.scn");
+	//Delete Temporary file
+	::remove(filename.c_str());
+	filename += ".view";
+	//Remove eventual .view file
+	::remove(filename.c_str()); 
+        //Remove eventual copy buffer
+        ::remove(copyBuffer.c_str());
+      }
+
 
       void SofaModeler::releaseButton()
       {
 	QPushButton *push = (QPushButton *)sender();
 	if (push) push->setDown(false);       
       }
+      /// When the user enter the Modeler, grabbing something: determine the acceptance or not
+      void SofaModeler::dragEnterEvent( QDragEnterEvent* event)
+      {
+	QString text;
+	Q3TextDrag::decode(event, text);
+ 	if (text.isEmpty()) event->ignore();
+	else
+	  {
+	    std::string filename(text.ascii());
+	    std::string test = filename; test.resize(4);
+	    if (test == "file")  event->accept();
+	    else event->ignore();
+	  }
+      }
+
+      /// When the user move the mouse around, with something grabbed
+      void SofaModeler::dragMoveEvent( QDragMoveEvent* event)
+      {	  
+	QString text;
+	Q3TextDrag::decode(event, text);
+ 	if (text.isEmpty()) event->ignore();
+	else
+	  {
+	    std::string filename(text.ascii());
+	    std::string test = filename; test.resize(4);
+	    if (test == "file")  event->accept();
+	    else event->ignore();
+	  }
+      }
+
+      /// Quick Filter of te components 
+      void SofaModeler::searchText(const QString& text)
+      {       
+	unsigned int displayed=0;
+
+	std::multimap< QWidget*, std::pair< QPushButton*, QComboBox*> >::iterator itMap;
+	for (int p=0;p<(int)pages.size();++p)
+	  {
+	    QWidget* page=pages[p].begin()->first;
+	    const unsigned int numComponents=pages[p].size();
+	    unsigned int counterHiddenComponents=0;
+	    for (itMap=pages[p].begin();itMap!=pages[p].end();itMap++)
+	      {
+		QPushButton* button= itMap->second.first;
+		QComboBox* combo= itMap->second.second;
+		if (!button->text().contains(text,false))
+		  {
+		    counterHiddenComponents++;
+		    button->hide();
+		    if (combo) combo->hide();
+		  }
+		else
+		  {		    
+		    displayed++;
+		    button->show();
+		    if (combo) combo->show();		  
+		  }
+	      }
+
+
+
+	    int idx=SofaComponents->indexOf(page);
+	    if (counterHiddenComponents == numComponents) 
+	      {
+		//Hide the page
+		if (idx >= 0)
+		  {
+#ifdef SOFA_QT4
+		    SofaComponents->removeItem(idx);
+#else
+		    SofaComponents->removeItem(page);
+#endif
+		  }
+	      }
+	    else 
+	      {
+		if (idx < 0)
+		  {		    
+		    SofaComponents->insertItem(p,page,page->name());
+		  }
+	      }
+	  }
+	
+	displayComponents = displayed;
+	changeLibraryLabel(SofaComponents->currentIndex());
+
+	SofaComponents->update();
+      }
+
+
+      /*****************************************************************************************************************/
+      //runSofa Options
+      void SofaModeler::changeSofaBinary()
+      {
+
+	QString s = getOpenFileName ( this, QString(binPath.c_str()),
+#ifdef WIN32
+				      "All Files(*.exe)", 
+#else
+				      "All Files(*)", 
+#endif
+				      "open sofa binary",  "Choose a binary to use" );
+	if (s.length() >0)
+	  {
+	    sofaBinary=s.ascii();
+	    binPath=sofa::helper::system::SetDirectory::GetParentDir(sofaBinary.c_str());
+	  }
+	else
+	  {
+	    sofaBinary.clear();
+	  }
+      }
+
+      void SofaModeler::GUIChanged()
+      {
+	QAction *act=(QAction*) sender();
+	for (unsigned int i=0;i<listActionGUI.size();++i)
+	  {
+	    listActionGUI[i]->setOn(listActionGUI[i] == act);
+	  }
+      }
+
+      /*****************************************************************************************************************/
+      //Cut/Copy Paste management
+      void SofaModeler::editCut()
+      {	
+	if (graph) 
+	  {	   
+	    isPasteReady=graph->editCut(presetPath+"copyBuffer.scn");
+	    editPasteAction->setEnabled(isPasteReady);
+	  }
+      }
+      void SofaModeler::editCopy()
+      {
+	if (graph) 
+	  {	   
+	    isPasteReady=graph->editCopy(presetPath+"copyBuffer.scn");
+	    editPasteAction->setEnabled(isPasteReady);
+	  }
+      }
+      void SofaModeler::editPaste()
+      {
+	if (graph)
+	  {
+	    graph->editPaste(presetPath+"copyBuffer.scn");
+	  }
+      }
+
+	  void SofaModeler::showPluginManager()
+	  {
+		  pluginManager->show();
+	  }
+
+
+	  void SofaModeler::updateComponentList()
+	  {
+		  //clear the current component list
+			for (int p=0;p<(int)pages.size();++p)
+			{
+				QWidget* page=pages[p].begin()->first;
+				int idx=SofaComponents->indexOf(page);
+					//Hide the page
+				if (idx >= 0){
+#ifdef SOFA_QT4
+					SofaComponents->removeItem(idx);
+#else
+					SofaComponents->removeItem(page);
+#endif
+				}
+			}
+	
+		  
+		//create the new one
+		std::set< std::string > setType;
+		std::multimap< std::string, ClassInfo* > inventory;
+		std::vector< ClassInfo* > entries;
+		sofa::core::ObjectFactory::getInstance()->getAllEntries(entries);
+
+		for (unsigned int i=0;i<entries.size();++i)
+		{
+#ifdef	    TEST_CREATION_COMPONENT
+			sofa::core::objectmodel::BaseObject *object;
+			std::cout << "Creating " << entries[i]->className << "\n";
+			if (entries[i]->creatorMap.find(entries[i]->defaultTemplate) != entries[i]->creatorMap.end())
+			{
+				object = entries[i]->creatorMap.find(entries[i]->defaultTemplate)->second->createInstance(NULL, NULL);
+			}
+			else
+			{
+				object = entries[i]->creatorList.begin()->second->createInstance(NULL, NULL);
+			}	   
+			std::cout << "Deleting " << entries[i]->className << "\n";
+ 			delete object;
+#endif
+			std::set< std::string >::iterator it;
+			for (it = entries[i]->baseClasses.begin(); it!= entries[i]->baseClasses.end();it++)
+			{
+				setType.insert((*it));
+				inventory.insert(std::make_pair((*it), entries[i]));
+			}
+			if (entries[i]->baseClasses.size() == 0)
+			{
+				setType.insert("_Miscellaneous");
+				inventory.insert(std::make_pair("_Miscellaneous", entries[i]));
+			}
+		}
+	  
+	
+		std::set< std::string >::iterator it;
+		std::multimap< std::string,ClassInfo* >::iterator itMap;
+
+		for (it = setType.begin(); it != setType.end();it++)
+		{
+			itMap = inventory.find( (*it) );
+			unsigned int numRows = inventory.count( (*it) );
+			QString s=QString(it->c_str());
+
+
+			std::multimap< QWidget*, std::pair< QPushButton*, QComboBox*> > pageMap;
+			QWidget* gridWidget = new QWidget(SofaComponents, s);
+		    
+			QGridLayout* gridLayout = new QGridLayout( gridWidget, numRows+1,1);
+
+			//Insert all the components belonging to the same family
+			SofaComponents->addItem( gridWidget ,it->c_str() );
+			unsigned int counterElem=1;
+			for (unsigned int i=0;i< inventory.count( (*it) ); ++i)
+			{
+				ClassInfo* entry = itMap->second;
+				//We must remove the mass from the ForceField list
+				if ( *it == "ForceField")
+				{	    
+					std::set< std::string >::iterator baseClassIt;
+					bool isMass=false;
+					for (baseClassIt = entry->baseClasses.begin(); baseClassIt!= entry->baseClasses.end() && !isMass;baseClassIt++)
+					{
+						isMass= (*baseClassIt == "Mass");
+					}		   
+					if (isMass) { itMap++;continue;}
+				}
+					
+				//We must remove the topological container from the Topology
+				if ( *it == "Topology")
+				{	    
+					std::set< std::string >::iterator baseClassIt;
+					bool isMass=false;
+					for (baseClassIt = entry->baseClasses.begin(); baseClassIt!= entry->baseClasses.end() && !isMass;baseClassIt++)
+					{
+						isMass= (*baseClassIt == "TopologyObject");
+					}		   
+					if (isMass) { itMap++;continue;}
+				}
+				
+
+
+				//Count the number of template usable: Mapping and MechanicalMapping must be separated
+				std::vector< std::string > templateCombo;
+				{
+					std::list< std::pair< std::string, ClassCreator*> >::iterator itTemplate;
+					for (itTemplate=entry->creatorList.begin(); itTemplate!= entry->creatorList.end();itTemplate++)
+					{
+						if (*it == "Mapping")
+						{
+							std::string mechanical = itTemplate->first;
+							mechanical.resize(10+7); 
+							if (mechanical == "MechanicalMapping") continue;
+						}
+						else if ( *it == "MechanicalMapping")
+						{
+							std::string nonmechanical = itTemplate->first;
+							nonmechanical.resize(7); 
+							if (nonmechanical == "Mapping") continue;
+						}
+						templateCombo.push_back(itTemplate->first);
+					}
+				}
+				
+				if (templateCombo.size() == 0 && entry->creatorList.size() > 1) 
+				{ itMap++; continue;}
+
+				displayComponents++;
+				QPushButton *button = new QPushButton(gridWidget, QString(entry->className.c_str()));
+				connect(button, SIGNAL(pressed()), this, SLOT( newComponent()));
+				connect(button, SIGNAL(pressed()), this, SLOT( releaseButton()));
+				gridLayout->addWidget(button, counterElem,0);
+				button->setFlat(false);
+				
+				//Template: Add in a combo box the list of the templates
+				QComboBox *combo=NULL;
+ 				if ( entry->creatorList.size() > 1 )
+				{
+					combo = new QComboBox(gridWidget);
+
+					for (unsigned int t=0;t<templateCombo.size();++t)		      
+						combo->insertItem(QString(templateCombo[t].c_str()));
+
+					gridLayout->addWidget(combo, counterElem,1);			
+				}
+				else
+				{
+					if (!entry->creatorList.begin()->first.empty())
+					{
+						combo = new QComboBox(gridWidget);
+						combo->insertItem(QString(entry->creatorList.begin()->first.c_str()));
+						gridLayout->addWidget(combo, counterElem,1);
+					}
+				}
+				
+				button->setText(QString(entry->className.c_str()));
+
+				mapComponents.insert(std::make_pair(button, std::make_pair(entry, combo)));
+				pageMap.insert(std::make_pair(gridWidget,std::make_pair(button, combo)));
+				itMap++;
+
+				//connect(button, SIGNAL(pressed() ), this, SLOT( newComponent() ));
+				counterElem++;
+			}
+			gridLayout->addItem(new QSpacerItem(1,1,QSizePolicy::Minimum, QSizePolicy::Expanding ), counterElem,0);
+
+			pages.push_back(pageMap);
+		}
+
+		//update the graph library
+		std::map<  const QWidget*, GraphModeler*>::iterator itgraph;
+		for (itgraph = mapGraph.begin(); itgraph!=mapGraph.end() ; itgraph++)
+			itgraph->second->setLibrary(mapComponents);
+	  }
+
     }
   }
 }

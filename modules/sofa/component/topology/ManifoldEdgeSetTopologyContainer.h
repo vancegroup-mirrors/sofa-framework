@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -47,7 +47,7 @@ namespace topology
 
 	/** a class that stores a set of edges and provides access to the adjacency between points and edges.
 	  this topology is constraint by the manifold property : each vertex is adjacent either to one vertex or to two vertices. */
-	class ManifoldEdgeSetTopologyContainer : public EdgeSetTopologyContainer 
+	class SOFA_COMPONENT_CONTAINER_API ManifoldEdgeSetTopologyContainer : public EdgeSetTopologyContainer 
 	{
 		friend class ManifoldEdgeSetTopologyModifier;
 		
@@ -73,27 +73,6 @@ namespace topology
 		*/
 		virtual int getNumberConnectedComponents(sofa::helper::vector<unsigned int>& components); 
 
-		inline friend std::ostream& operator<< (std::ostream& out, const ManifoldEdgeSetTopologyContainer& t)
-		{
-			out << t.m_edge.size();
-			for (unsigned int i=0; i<t.m_edge.size(); i++)
-				out << " " << t.m_edge[i][0] << " " << t.m_edge[i][1] ;
-
-			return out;
-		}
-
-		/// Needed to be compliant with Datas.
-		inline friend std::istream& operator>>(std::istream& in, ManifoldEdgeSetTopologyContainer& t)
-		{
-			unsigned int s;
-			in >> s;
-			for (unsigned int i=0; i<s; i++)
-			{
-				Edge T; in >> T;
-				t.m_edge.push_back(T);
-			}
-			return in;
-		}
 	protected:
 		/** \brief Creates the EdgeSetIndex.
 		*

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -166,12 +166,36 @@ void EulerKaapiSolver::computeAcc (double t, VecId a, VecId x, VecId v)
 	if (symplectic.getValue ())
 	  {
 	    vel.peq (acc, dt);
+#ifdef SOFA_HAVE_LAPACK
+	    if (constraintVel.getValue())
+	      {
+		solveConstraint(VecId::velocity());
+	      }
+#endif
 	    pos.peq (vel, dt);
+#ifdef SOFA_HAVE_LAPACK
+	    if (constraintPos.getValue())
+	      {
+		solveConstraint(VecId::position(),!constraintVel.getValue());
+	      }
+#endif
 	  }
 	else
 	  {
 	    pos.peq (vel, dt);
+#ifdef SOFA_HAVE_LAPACK
+	    if (constraintPos.getValue())
+	      {
+		solveConstraint(VecId::position(),!constraintVel.getValue());
+	      }
+#endif
 	    vel.peq (acc, dt);
+#ifdef SOFA_HAVE_LAPACK
+	    if (constraintVel.getValue())
+	      {
+		solveConstraint(VecId::velocity());
+	      }
+#endif
 	  }
 
 	if (printLog)

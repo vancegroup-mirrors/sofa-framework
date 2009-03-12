@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,6 +29,9 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/core/objectmodel/Data.h>
 #include <sofa/helper/vector.h>
+#include <sofa/component/component.h>
+#include <sofa/component/topology/PointSubset.h>
+
 
 namespace sofa
 {
@@ -50,13 +53,18 @@ public:
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
-	typedef helper::vector<unsigned> VecIndex;
+	typedef topology::PointSubset VecIndex;
 public:
 	
 	Data< VecIndex > points;
         Data< VecDeriv > forces;
+        Data< Deriv > force;
+		Data< double > arrowSizeCoef; // for drawing. The sign changes the direction, 0 doesn't draw arrow
 	
         ConstantForceField();
+		
+		/// Set a force to a given particle
+		void setForce( unsigned i, const Deriv& f );
 	
         /// Add the forces
         virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);

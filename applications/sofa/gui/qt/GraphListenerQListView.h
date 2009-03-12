@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -53,7 +53,7 @@
 #endif
 
 
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/tree/MutationListener.h>
 
 #include "WFloatLineEdit.h"
@@ -68,7 +68,7 @@ namespace sofa
     namespace qt
     {
       using sofa::simulation::tree::GNode;
-      using sofa::simulation::tree::Simulation;
+      using sofa::simulation::Simulation;
       using sofa::simulation::tree::MutationListener;
 
 #ifdef SOFA_QT4

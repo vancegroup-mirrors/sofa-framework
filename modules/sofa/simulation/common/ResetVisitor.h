@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,32 +36,34 @@ namespace sofa
 namespace simulation
 {
 
-class ResetVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API ResetVisitor : public Visitor
 {
 public:
 	ResetVisitor() {}
-	
+
 	void processObject(core::objectmodel::BaseObject* obj);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 	virtual void processNodeBottomUp(simulation::Node* node);
 
 	/// Specify whether this action can be parallelized.
 	virtual bool isThreadSafe() const { return true; }
+        virtual const char* getClassName() const { return "ResetVisitor"; }
 };
 
-class StoreResetStateVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API StoreResetStateVisitor : public Visitor
 {
 public:
 	StoreResetStateVisitor() {}
-	
+
 	void processObject(core::objectmodel::BaseObject* obj);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 	virtual void processNodeBottomUp(simulation::Node* node);
 
 	/// Specify whether this action can be parallelized.
 	virtual bool isThreadSafe() const { return true; }
+        virtual const char* getClassName() const { return "StoreResetStateVisitor"; }
 };
 
 } // namespace simulation

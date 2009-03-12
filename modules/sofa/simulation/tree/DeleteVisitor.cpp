@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,31 +34,6 @@ namespace simulation
 namespace tree
 {
 
-simulation::Visitor::Result CleanupVisitor::processNodeTopDown(GNode* node)
-{
-    // some object will modify the graph during cleanup (removing other nodes or objects)
-    // so we cannot assume that the list of object will stay constant
-    
-    std::set<sofa::core::objectmodel::BaseObject*> done; // list of objects we already processed
-    bool stop = false;
-    while (!stop)
-    {
-        stop = true;
-        for (GNode::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
-            if (done.insert(*it).second)
-            {
-                (*it)->cleanup();
-                stop = false;
-                break; // we have to restart as objects could have been removed anywhere
-            }
-    }
-    return RESULT_CONTINUE;
-}
-
-void CleanupVisitor::processNodeBottomUp(GNode* /*node*/)
-{
-}
-
 simulation::Visitor::Result DeleteVisitor::processNodeTopDown(GNode* /*node*/)
 {
     return RESULT_CONTINUE;
@@ -69,7 +44,7 @@ void DeleteVisitor::processNodeBottomUp(GNode* node)
 	while (!node->child.empty())
 	{
 		GNode* child = *node->child.begin();
-		node->removeChild(child);
+		node->removeChild((Node*)child);
 		delete child;
 	}
 	while (!node->object.empty())

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_GPU_CUDA_CUDAMECHANICALOBJECT_H
 
 #include "CudaTypes.h"
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 
 namespace sofa
 {
@@ -61,6 +61,7 @@ public:
     typedef typename DataTypes::Deriv Deriv;
     typedef typename DataTypes::Real Real;
 
+
     typedef gpu::cuda::CudaKernelsMechanicalObject<DataTypes> Kernels;
 
     /// Temporary storate for dot product operation
@@ -85,6 +86,12 @@ public:
 CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec3fTypes);
 CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec3f1Types);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec3dTypes);
+CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec3d1Types);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 #undef CudaMechanicalObject_DeclMethods
 

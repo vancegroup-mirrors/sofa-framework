@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,6 +38,7 @@ namespace gpu
 namespace cuda
 {
 
+SOFA_LINK_CLASS(CudaBoxROI)
 SOFA_LINK_CLASS(CudaFixedConstraint)
 SOFA_LINK_CLASS(CudaMechanicalObject)
 SOFA_LINK_CLASS(CudaSpringForceField)
@@ -54,7 +55,12 @@ SOFA_LINK_CLASS(CudaTetrahedronFEMForceField)
 SOFA_LINK_CLASS(CudaCollision)
 SOFA_LINK_CLASS(CudaCollisionDetection)
 SOFA_LINK_CLASS(CudaPointModel)
+SOFA_LINK_CLASS(CudaSphereModel)
 SOFA_LINK_CLASS(CudaTestForceField)
+SOFA_LINK_CLASS(CudaTetrahedronTLEDForceField)
+SOFA_LINK_CLASS(CudaHexahedronTLEDForceField)
+SOFA_LINK_CLASS(CudaTetrahedronSuperTLEDForceField)
+SOFA_LINK_CLASS(CudaSetTopology)
 SOFA_LINK_CLASS(CudaVisualModel)
 SOFA_LINK_CLASS(CudaOglTetrahedralModel)
 
@@ -66,9 +72,9 @@ MycudaVerboseLevel mycudaVerboseLevel = LOG_INFO;
 //MycudaVerboseLevel mycudaVerboseLevel = LOG_TRACE;
 }
 
-void mycudaLogError(int err, const char* src)
+void mycudaLogError(const char* err, const char* src)
 {
-	std::cerr << "CUDA: Error "<<err<<" returned from "<<src<<".\n";
+        std::cerr << "CUDA error: "<< err <<" returned from "<< src <<".\n";
 	exit(1);
 }
 

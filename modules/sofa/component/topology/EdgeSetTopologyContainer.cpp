@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,7 +38,7 @@
 #include <boost/graph/cuthill_mckee_ordering.hpp>
 #include <boost/graph/bandwidth.hpp>
 
-#include <sofa/component/MeshLoader.h>
+#include <sofa/component/container/MeshLoader.h>
 
 namespace sofa
 {
@@ -49,29 +49,33 @@ namespace component
 namespace topology
 {
 
-	using namespace std;
-	using namespace sofa::defaulttype;
-        SOFA_DECL_CLASS(EdgeSetTopologyContainer)
-        int EdgeSetTopologyContainerClass = core::RegisterObject("Edge set topology container")
-	  .add< EdgeSetTopologyContainer >()
-	  ;
+using namespace std;
+using namespace sofa::defaulttype;
+SOFA_DECL_CLASS(EdgeSetTopologyContainer)
+int EdgeSetTopologyContainerClass = core::RegisterObject("Edge set topology container")
+.add< EdgeSetTopologyContainer >()
+;
 
-	EdgeSetTopologyContainer::EdgeSetTopologyContainer()
-	: PointSetTopologyContainer( )
-	{}
+EdgeSetTopologyContainer::EdgeSetTopologyContainer()
+: PointSetTopologyContainer( )
+, d_edge(initDataPtr(&d_edge, &m_edge, "edges", "List of edge indices"))
+{
+}
 
 EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< Edge > &edges )
 : PointSetTopologyContainer( )
 , m_edge( edges )
+, d_edge(initDataPtr(&d_edge, &m_edge, "edges", "List of edge indices"))
 {
     for (unsigned int i=0; i<m_edge.size(); ++i)
     {
         for(unsigned int j=0; j<2; ++j)
         {
             int a = m_edge[i][j];
-            if (a >= (int)nbPoints) nbPoints = a+1;
+            if (a >= (int)getNbPoints()) nbPoints.setValue(a+1);
         }
     }
+    serr << "Constructor" << sendl;
 }
 
 	void EdgeSetTopologyContainer::init()
@@ -82,15 +86,21 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 	void EdgeSetTopologyContainer::loadFromMeshLoader(sofa::component::MeshLoader* loader)
 	{
 		// load points
+                if (!m_edge.empty()) return;
 		PointSetTopologyContainer::loadFromMeshLoader(loader);
-		m_edge = loader->getEdges();
+		d_edge.beginEdit();
+		loader->getEdges(m_edge);
+		d_edge.endEdit();
 	}
 
 	void EdgeSetTopologyContainer::addEdge(int a, int b)
 	{
+          serr << "ADD EDGE" << sendl;
+		d_edge.beginEdit();
 		m_edge.push_back(Edge(a,b));
-		if (a >= (int)nbPoints) nbPoints = a+1;
-		if (b >= (int)nbPoints) nbPoints = b+1;
+		d_edge.endEdit();
+                if (a >= getNbPoints()) nbPoints.setValue(a+1);
+                if (b >= getNbPoints()) nbPoints.setValue(b+1);
 	}
 
 	void EdgeSetTopologyContainer::createEdgeVertexShellArray()
@@ -98,7 +108,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		if(!hasEdges())	// this method should only be called when edges exist
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [EdgeSetTopologyContainer::createEdgeVertexShellArray] edge array is empty." << endl;
+			sout << "Warning. [EdgeSetTopologyContainer::createEdgeVertexShellArray] edge array is empty." << endl;
 	#endif
 			createEdgeSetArray();
 		}
@@ -108,8 +118,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 			clearEdgeVertexShell();
 		}
 
-		m_edgeVertexShell.resize( getNbPoints() );
-
+                m_edgeVertexShell.resize( getNbPoints() );
 		for (unsigned int edge=0; edge<m_edge.size(); ++edge)
 		{
 			// adding edge in the edge shell of both points
@@ -121,7 +130,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 	void EdgeSetTopologyContainer::createEdgeSetArray()
 	{
 	#ifndef NDEBUG
-		cout << "Error. [EdgeSetTopologyContainer::createEdgeSetArray] This method must be implemented by a child topology." << endl;
+		sout << "Error. [EdgeSetTopologyContainer::createEdgeSetArray] This method must be implemented by a child topology." << endl;
 	#endif
 	}
 
@@ -130,7 +139,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		if(!hasEdges() && getNbPoints()>0)
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [EdgeSetTopologyContainer::getEdgeArray] creating edge array." << endl;
+			sout << "Warning. [EdgeSetTopologyContainer::getEdgeArray] creating edge array." << endl;
 	#endif
 			createEdgeSetArray();
 		}
@@ -143,7 +152,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		if(!hasEdges()) // this method should only be called when edges exist
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [EdgeSetTopologyContainer::getEdgeIndex] edge array is empty." << endl;
+			sout << "Warning. [EdgeSetTopologyContainer::getEdgeIndex] edge array is empty." << endl;
 	#endif
 			createEdgeSetArray();
 		}
@@ -190,6 +199,9 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		
 		if(hasEdgeVertexShell()) 
 		{
+		  std::set<int> edgeSet;
+		  std::set<int>::iterator it;
+		  
 			for (unsigned int i=0; i<m_edgeVertexShell.size(); ++i) 
 			{
 				const sofa::helper::vector<unsigned int> &es = m_edgeVertexShell[i];
@@ -199,10 +211,22 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 					bool check_edge_vertex_shell = (m_edge[ es[j] ][0] == i) ||  (m_edge[ es[j] ][1] == i);
 					if(! check_edge_vertex_shell)
 					{
-						std::cout << "*** CHECK FAILED : check_edge_vertex_shell, i = " << i << " , j = " << j << std::endl;
+					  std::cout << "*** CHECK FAILED : check_edge_vertex_shell, i = " << i << " , j = " << j << std::endl;
 						ret = false;
 					}
+
+					it=edgeSet.find(es[j]);
+					if (it == edgeSet.end())
+					{
+					  edgeSet.insert (es[j]);
+					}
 				}
+			}
+			
+			if (edgeSet.size() != m_edge.size())
+			{
+			  std::cout << "*** CHECK FAILED : check_edge_vertex_shell, edge are missing in m_edgeVertexShell" << std::endl;
+			  ret = false;
 			}
 		}
 
@@ -222,7 +246,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		if(!hasEdgeVertexShell())
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [EdgeSetTopologyContainer::getEdgeVertexShellArray] edge vertex shell array is empty." << endl;
+			sout << "Warning. [EdgeSetTopologyContainer::getEdgeVertexShellArray] edge vertex shell array is empty." << endl;
 	#endif
 			createEdgeVertexShellArray();
 		}
@@ -235,14 +259,14 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [EdgeSetTopologyContainer::getEdgeVertexShell] edge vertex shell array is empty." << endl;
+			sout << "Warning. [EdgeSetTopologyContainer::getEdgeVertexShell] edge vertex shell array is empty." << endl;
 	#endif
 			createEdgeVertexShellArray();
 		}
 
 	#ifndef NDEBUG
 		if(m_edgeVertexShell.size() <= i)
-			cout << "Error. [EdgeSetTopologyContainer::getEdgeVertexShell] edge vertex shell array out of bounds: "
+			sout << "Error. [EdgeSetTopologyContainer::getEdgeVertexShell] edge vertex shell array out of bounds: "
 				 << i << " >= " << m_edgeVertexShell.size() << endl;
 	#endif
 
@@ -254,7 +278,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 		if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [EdgeSetTopologyContainer::getEdgeVertexShellForModification] edge vertex shell array is empty." << endl;
+			sout << "Warning. [EdgeSetTopologyContainer::getEdgeVertexShellForModification] edge vertex shell array is empty." << endl;
 	#endif
 			createEdgeVertexShellArray();
 		}
@@ -274,7 +298,9 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 
 	void EdgeSetTopologyContainer::clearEdges()
 	{
+		d_edge.beginEdit();
 		m_edge.clear();
+		d_edge.endEdit();
 	}
 
 	void EdgeSetTopologyContainer::clearEdgeVertexShell()

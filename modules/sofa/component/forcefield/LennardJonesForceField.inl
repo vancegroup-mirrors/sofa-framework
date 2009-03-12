@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,13 +26,14 @@
 #define SOFA_COMPONENT_FORCEFIELD_LENNARDJONESFORCEFIELD_INL
 
 #include <sofa/component/forcefield/LennardJonesForceField.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/gl/template.h>
 #include <math.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -48,24 +49,24 @@ template<class DataTypes>
 void LennardJonesForceField<DataTypes>::init()
 {
     this->Inherit::init();
-    
+
     assert( this->mstate );
-    
+
     a = (p0.getValue() * (Real)pow(d0.getValue(),alpha.getValue())) / (1-alpha.getValue()/beta.getValue());
     b = (p0.getValue() * (Real)pow(d0.getValue(),beta.getValue())) / (beta.getValue()/alpha.getValue()-1);
-	std::cout << "Lennard-Jones initialized: alpha="<<alpha.getValue()<<" beta="<<beta.getValue()<<" d0="<<d0.getValue()<<" p0="<<p0.getValue()<<" a="<<a<<" b="<<b<<std::endl;
+	sout << "Lennard-Jones initialized: alpha="<<alpha.getValue()<<" beta="<<beta.getValue()<<" d0="<<d0.getValue()<<" p0="<<p0.getValue()<<" a="<<a<<" b="<<b<<sendl;
     // Validity check: compute force and potential at d0
     Real f0 = a*alpha.getValue()*(Real)pow(d0.getValue(),-alpha.getValue()-1)-b*beta.getValue()*(Real)pow(d0.getValue(),-beta.getValue()-1);
     if (fabs(f0)>0.001)
-	std::cerr << "Lennard-Jones initialization failed: f0="<<f0<<std::endl;
+	serr << "Lennard-Jones initialization failed: f0="<<f0<<sendl;
     Real cp0 = (a*(Real)pow(d0.getValue(),-alpha.getValue())-b*(Real)pow(d0.getValue(),-beta.getValue()));
     if (fabs(cp0/p0.getValue()-1)>0.001)
-		std::cerr << "Lennard-Jones initialization failed: cp0="<<cp0<<std::endl;
+		serr << "Lennard-Jones initialization failed: cp0="<<cp0<<sendl;
     // Debug
     for (Real d = 0; d<dmax.getValue(); d+= dmax.getValue()/60)
     {
 	Real f = a*alpha.getValue()*(Real)pow(d,-alpha.getValue()-1)-b*beta.getValue()*(Real)pow(d,-beta.getValue()-1);
-	std::cout << "f("<<d<<")="<<f<<std::endl;
+	sout << "f("<<d<<")="<<f<<sendl;
     }
 }
 
@@ -88,7 +89,7 @@ void LennardJonesForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p
 			const Real fa = a*alpha.getValue()*(Real)pow(d,-alpha.getValue()-1);
 			const Real fb = b*beta.getValue()*(Real)pow(d,-beta.getValue()-1);
 			Real forceIntensity = fa - fb;
-			//std::cout << ia<<"-"<<ib<<" d="<<d<<" f="<<forceIntensity<<std::endl;
+			//sout << ia<<"-"<<ib<<" d="<<d<<" f="<<forceIntensity<<sendl;
 			DForce df;
 			df.a = ia;
 			df.b = ib;
@@ -125,16 +126,16 @@ void LennardJonesForceField<DataTypes>::addDForce(VecDeriv& f1, const VecDeriv& 
 		const unsigned int ib = df.b;
 		const Deriv u = p1[ib]-p1[ia];
 		const Deriv du = dx1[ib]-dx1[ia];
-		const Deriv dforce = u * (df.df * (du*u)); 
+		const Deriv dforce = u * (df.df * (du*u));
 		f1[ia] += dforce;
 		f1[ib] -= dforce;
 	}
 }
 
-template <class DataTypes> 
+template <class DataTypes>
     double LennardJonesForceField<DataTypes>::getPotentialEnergy(const VecCoord& )
 {
-    cerr<<"LennardJonesForceField::getPotentialEnergy-not-implemented !!!"<<endl;
+    serr<<"LennardJonesForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 
@@ -144,20 +145,27 @@ void LennardJonesForceField<DataTypes>::draw()
 {
 	if (!getContext()->getShowForceFields()) return;
 	const VecCoord& p1 = *this->mstate->getX();
-	glDisable(GL_LIGHTING);
-	glBegin(GL_LINES);
+
+	std::vector< defaulttype::Vector3 > points[2];
+
 	const Real d02 = this->d0.getValue()*this->d0.getValue();
 	for (unsigned int i=0; i<this->dforces.size(); i++)
 	{
 		const DForce& df = this->dforces[i];
 		if ((p1[df.b]-p1[df.a]).norm2() < d02)
-			glColor4f(1,1,1,1);
+		  {
+		    points[0].push_back(p1[df.a]);
+		    points[0].push_back(p1[df.b]);
+		  }
 		else
-			glColor4f(0,0,1,1);
-		helper::gl::glVertexT(p1[df.a]);
-		helper::gl::glVertexT(p1[df.b]);
+		  {
+		    points[1].push_back(p1[df.a]);
+		    points[1].push_back(p1[df.b]);
+		  }
 	}
-	glEnd();
+	simulation::getSimulation()->DrawUtility.drawLines(points[0], 1, defaulttype::Vec<4,float>(1,1,1,1));
+	simulation::getSimulation()->DrawUtility.drawLines(points[1], 1, defaulttype::Vec<4,float>(0,0,1,1));
+
 }
 
 } // namespace forcefield

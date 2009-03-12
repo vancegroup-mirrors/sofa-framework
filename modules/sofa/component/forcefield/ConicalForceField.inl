@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -101,7 +101,7 @@ void ConicalForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, co
 				pp_prime = p_prime - p;
 				d = pp_prime.norm();
 				dir = pp_prime/pp_prime.norm();
-				//std::cout << t << " " << alpha << std::endl;
+				//sout << t << " " << alpha << sendl;
 			}
 			//top of the cone
 			else
@@ -134,7 +134,7 @@ void ConicalForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1)
 		const Contact& c = (*this->contacts.beginEdit())[i];
 		assert((unsigned)c.index<dx1.size());
 		Deriv du = dx1[c.index];
-		Deriv dforce; dforce = -this->stiffness.getValue()*(c.normal * ((du*c.normal)));
+		Deriv dforce; dforce = (c.normal * ((du*c.normal)))*(-this->stiffness.getValue());
 		df1[c.index] += dforce;
 	}
     this->contacts.endEdit();
@@ -143,13 +143,13 @@ void ConicalForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1)
 template<class DataTypes>
 void ConicalForceField<DataTypes>::updateStiffness( const VecCoord&  )
 {
-    std::cerr<<"SphereForceField::updateStiffness-not-implemented !!!"<<std::endl;
+    serr<<"SphereForceField::updateStiffness-not-implemented !!!"<<sendl;
 }
 
 template <class DataTypes> 
     double ConicalForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
-    std::cerr<<"ConicalForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"ConicalForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 

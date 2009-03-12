@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -198,8 +198,11 @@ int main(int argc, char** argv)
     obj.distmap->mat = xform * obj.distmap->mat;
       std::cout << obj.distmap->mat<<std::endl;
   }
-
-  std::cout << "Mesh bbox="<<obj.calcBBox()<<std::endl;
+  {
+      BBox bb = obj.calcBBox();
+      std::cout << "Mesh bbox = "<<bb<<std::endl;
+      std::cout << "Mesh center and radius = "<<(bb.a+bb.b)*0.5<<"  "<<(bb.b-bb.a)*0.5 << std::endl;
+  }
   if (flip)
   {
     std::cout << "Flipping mesh..."<<std::endl;

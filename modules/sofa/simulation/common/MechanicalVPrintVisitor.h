@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,7 +37,7 @@ namespace simulation
 
 
 /** Print a vector */
-class MechanicalVPrintVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API MechanicalVPrintVisitor : public Visitor
 {
 public:
     typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
@@ -45,6 +45,7 @@ public:
     MechanicalVPrintVisitor( VecId v, std::ostream& =std::cerr );
     virtual Result processNodeTopDown(simulation::Node* node);
 
+    virtual const char* getClassName() const { return "MechanicalVPrintVisitor"; }
 protected:
     VecId v_;
     std::ostream& out_;
@@ -52,7 +53,7 @@ protected:
 
 
 /** Print a vector with an elapsed time, useful to compare convergence in odeSolver in function of time */
-class MechanicalVPrintWithElapsedTimeVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API MechanicalVPrintWithElapsedTimeVisitor : public Visitor
 {
 	typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
 protected:
@@ -63,6 +64,7 @@ protected:
 public:
 	MechanicalVPrintWithElapsedTimeVisitor( VecId v, unsigned time, std::ostream& =std::cerr );
 	virtual Result processNodeTopDown(simulation::Node* node);
+        virtual const char* getClassName() const { return "MechanicalVPrintWithElapsedTimeVisitor"; }
 };
 
 } // namespace simulation

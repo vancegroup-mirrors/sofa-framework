@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,15 +27,14 @@
 
 #include <sofa/component/topology/EdgeData.inl>
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
-#include <sofa/component/StiffnessContainer.h>
-#include <sofa/component/PoissonContainer.h>
-#include <sofa/component/LengthContainer.h>
-#include <sofa/component/RadiusContainer.h>
-#include "NewMAT/newmat.h"
+#include <sofa/component/container/StiffnessContainer.h>
+#include <sofa/component/container/PoissonContainer.h>
+#include <sofa/component/container/LengthContainer.h>
+#include <sofa/component/container/RadiusContainer.h>
 
 
 
@@ -69,27 +68,27 @@ public:
     typedef topology::Edge Element;
     typedef sofa::helper::vector<topology::Edge> VecElement;
 
-    
+
 protected:
     //component::MechanicalObject<DataTypes>* object;
 
     typedef Vec<12, Real> Displacement;        ///< the displacement vector
-    
+
     //typedef Mat<6, 6, Real> MaterialStiffness;    ///< the matrix of material stiffness
     //typedef vector<MaterialStiffness> VecMaterialStiffness;         ///< a vector of material stiffness matrices
     //VecMaterialStiffness _materialsStiffnesses;                    ///< the material stiffness matrices vector
-    
+
     //typedef Mat<12, 6, Real> StrainDisplacement;    ///< the strain-displacement matrix
     //typedef vector<StrainDisplacement> VecStrainDisplacement;        ///< a vector of strain-displacement matrices
     //VecStrainDisplacement _strainDisplacements;                       ///< the strain-displacement matrices vector
-    
+
      typedef Mat<3, 3, Real> Transformation; ///< matrix for rigid transformations like rotations
-    
+
 
     typedef Mat<12, 12, Real> StiffnessMatrix;
     //typedef topology::EdgeData<StiffnessMatrix> VecStiffnessMatrices;         ///< a vector of stiffness matrices
     //VecStiffnessMatrices _stiffnessMatrices;                    ///< the material stiffness matrices vector
-    
+
     struct BeamInfo {
         // 	static const double FLEXIBILITY=1.00000; // was 1.00001
 	double _E0,_E; //Young
@@ -106,7 +105,7 @@ protected:
         StiffnessMatrix _k_loc;
 	//new: k_loc is the stiffness in the local frame... to compute Ke we only change lambda
 	//NewMAT::Matrix  _k_loc;
-        
+
 	// _eigenvalue_loc are 4 diagonal matrices (6x6) representing the eigenvalues of each
 	// 6x6 block of _k_loc. _eigenvalue_loc[1] = _eigenvalue_loc[2] since _k_loc[1] = _k_loc[2]
 	//NewMAT::DiagonalMatrix  _eigenvalue_loc[4], _inv_eigenvalue_loc[4];
@@ -120,43 +119,56 @@ protected:
 	//NewMAT::ColumnVector _u_init;
 	//actual deformation of the beam on the local frame
 	//NewMAT::ColumnVector _u_actual;
-	
+
 	//NewMAT::Matrix _Ke;
 
 	Quat quat;
-        
+
 	//void localStiffness();
 	void init(double E, double L, double nu, double r);
+	/// Output stream
+	inline friend std::ostream& operator<< ( std::ostream& os, const BeamInfo& /*bi*/ )
+	{
+	return os;
+	}
+	
+	/// Input stream
+	inline friend std::istream& operator>> ( std::istream& in, BeamInfo& /*bi*/ )
+	{
+	return in;
+	}
     };
-        
+
     //just for draw forces
     VecDeriv _forces;
-    
+
     topology::EdgeData<BeamInfo> beamsData;
 
     const VecElement *_indexedElements;
-    Data< VecCoord > _initialPoints; ///< the intial positions of the points
+    unsigned int maxPoints;
     int _method; ///< the computation method of the displacements
     Data<Real> _poissonRatio;
     Data<Real> _youngModulus;
     Data<bool> _timoshenko;
     Data<Real> _radius;
-    bool _updateStiffnessMatrix; 
-    bool _assembling; 
-    
+    bool _updateStiffnessMatrix;
+    bool _assembling;
+
     StiffnessContainer* stiffnessContainer;
     LengthContainer* lengthContainer;
     PoissonContainer* poissonContainer;
     RadiusContainer* radiusContainer;
 
-    Quat& beamQuat(int i) { return beamsData[i].quat; }
-
+    Quat& beamQuat(int i) 
+    { 
+	helper::vector<BeamInfo>& bd = *(beamsData.beginEdit());
+	return bd[i].quat;
+    }
 	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
 
 public:
     BeamFEMForceField()
     : _indexedElements(NULL)
-    , _initialPoints(initData(&_initialPoints, "initialPoints", "Initial Position"))
     , _method(0)
     , _poissonRatio(initData(&_poissonRatio,(Real)0.49f,"poissonRatio","Potion Ratio"))
     , _youngModulus(initData(&_youngModulus,(Real)5000,"youngModulus","Young Modulus"))
@@ -165,45 +177,45 @@ public:
     , _updateStiffnessMatrix(true)
     , _assembling(false)
     {
-	
+
     }
 
     void setUpdateStiffnessMatrix(bool val) { this->_updateStiffnessMatrix = val; }
 
     void setComputeGlobalMatrix(bool val) { this->_assembling= val; }
-    
+
 //    component::MechanicalObject<DataTypes>* getObject() { return object; }
 
     virtual void init();
     virtual void reinit();
     virtual void reinitBeam(unsigned int i);
     virtual void handleTopologyChange();
-    
+
     virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
-    
+
     virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
-    
+
     virtual double getPotentialEnergy(const VecCoord&) { return 0; }
 
     void addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset);
-    
+
     void draw();
 
 	void setBeam(unsigned int i, double E, double L, double nu, double r);
 	void initBeams(unsigned int size);
 
 protected:
-    
+
 	//void computeStrainDisplacement( StrainDisplacement &J, Coord a, Coord b, Coord c, Coord d );
 	Real peudo_determinant_for_coef ( const Mat<2, 3, Real>&  M );
-	
+
 	//void computeStiffnessMatrix( StiffnessMatrix& S,StiffnessMatrix& SR,const MaterialStiffness &K, const StrainDisplacement &J, const Transformation& Rot );
-	
+
 	//void computeMaterialStiffness(int i, Index&a, Index&b);
 	void computeStiffness(int i, Index a, Index b);
-	
+
 	//void computeForce( Displacement &F, const Displacement &Depl, const MaterialStiffness &K, const StrainDisplacement &J );
-	
+
 	////////////// large displacements method
 	//vector<fixed_array<Coord,4> > _rotatedInitialElements;   ///< The initials positions in its frame
 	//VecReal _initialLength;
@@ -216,12 +228,22 @@ protected:
 	void applyStiffnessLarge( VecDeriv& f, const VecDeriv& x, int i, Index a, Index b );
 
 	//sofa::helper::vector< sofa::helper::vector <Real> > subMatrix(unsigned int fr, unsigned int lr, unsigned int fc, unsigned int lc);
-    
+
     static void BeamFEMEdgeCreationFunction(int edgeIndex, void* param, BeamInfo &ei,
                                             const topology::Edge& ,  const sofa::helper::vector< unsigned int > &,
                                             const sofa::helper::vector< double >&);
-    
+
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_BEAMFEMFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API BeamFEMForceField<defaulttype::Rigid3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API BeamFEMForceField<defaulttype::Rigid3fTypes>;
+#endif
+#endif
 
 } // namespace forcefield
 

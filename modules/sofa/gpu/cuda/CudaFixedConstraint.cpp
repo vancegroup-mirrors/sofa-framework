@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -24,7 +24,6 @@
 ******************************************************************************/
 #include "CudaTypes.h"
 #include "CudaFixedConstraint.inl"
-#include <sofa/component/constraint/BoxConstraint.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/defaulttype/RigidTypes.h>
@@ -43,11 +42,10 @@ SOFA_DECL_CLASS(CudaFixedConstraint)
 int FixedConstraintCudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
 .add< component::constraint::FixedConstraint<CudaVec3fTypes> >()
 .add< component::constraint::FixedConstraint<CudaVec3f1Types> >()
-;
-
-int BoxConstraintCudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
-.add< component::constraint::BoxConstraint<CudaVec3fTypes> >()
-.add< component::constraint::BoxConstraint<CudaVec3f1Types> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::constraint::FixedConstraint<CudaVec3dTypes> >()
+.add< component::constraint::FixedConstraint<CudaVec3d1Types> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
 ;
 
 } // namespace cuda

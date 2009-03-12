@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -46,8 +46,8 @@ namespace mass
 using namespace sofa::defaulttype;
 using namespace sofa::core::componentmodel::behavior;
 
-using std::cerr;
-using std::endl;
+
+
 
 
 
@@ -110,20 +110,20 @@ template <class DataTypes, class MassType>
 template <class DataTypes, class MassType>
 void MatrixMass<DataTypes, MassType>::accFromF(VecDeriv& , const VecDeriv& )
 {
-	cerr<<"void MatrixMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f) not yet implemented (need the matrix assembly and inversion)\n";
+	serr<<"void MatrixMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f) not yet implemented (need the matrix assembly and inversion)"<<sendl;
 }
 
 template <class DataTypes, class MassType>
     double MatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv&  )
 {
-	cerr<<"void MatrixMass<DataTypes, MassType>::getKineticEnergy not yet implemented\n";
+	serr<<"void MatrixMass<DataTypes, MassType>::getKineticEnergy not yet implemented"<<sendl;
 	return 0;
 }
 
 template <class DataTypes, class MassType>
     double MatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord&  )
 {
-	cerr<<"void MatrixMass<DataTypes, MassType>::getPotentialEnergy not yet implemented\n";
+	serr<<"void MatrixMass<DataTypes, MassType>::getPotentialEnergy not yet implemented"<<sendl;
     return 0;
 }
 

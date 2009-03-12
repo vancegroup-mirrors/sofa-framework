@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_LINEARSOLVER_FULLMATRIX_H
 
 #include <sofa/defaulttype/BaseMatrix.h>
-#include <sofa/simulation/common/MatrixLinearSolver.h>
+#include <sofa/component/linearsolver/MatrixLinearSolver.h>
 #include "FullVector.h"
 
 #include <map>
@@ -89,28 +89,28 @@ public:
     : data(NULL), nRow(0), nCol(0), pitch(0), allocsize(0)
     {
     }
-    
+
     FullMatrix(int nbRow, int nbCol)
     : data(new T[nbRow*nbCol]), nRow(nbRow), nCol(nbCol), pitch(nbCol), allocsize(nbRow*nbCol)
     {
     }
-    
+
     FullMatrix(Real* p, int nbRow, int nbCol)
     : data(p), nRow(nbRow), nCol(nbCol), pitch(nbCol), allocsize(-nbRow*nbCol)
     {
     }
-    
+
     FullMatrix(Real* p, int nbRow, int nbCol, int pitch)
     : data(p), nRow(nbRow), nCol(nbCol), pitch(pitch), allocsize(-nbRow*pitch)
     {
     }
-    
+
     ~FullMatrix()
     {
         if (allocsize>0)
             delete data;
     }
-    
+
     Real* ptr() { return data; }
     const Real* ptr() const { return data; }
 
@@ -127,7 +127,7 @@ public:
     {
         return data+i*pitch;
     }
-    
+
 
     //const Line operator[](Index i) const
     //{
@@ -137,7 +137,7 @@ public:
     {
         return data+i*pitch;
     }
-    
+
     void resize(int nbRow, int nbCol)
     {
 #ifdef FULLMATRIX_VERBOSE
@@ -171,12 +171,12 @@ public:
         clear();
     }
 
-    int rowSize(void) const
+    unsigned int rowSize(void) const
     {
         return nRow;
     }
 
-    int colSize(void) const
+    unsigned int colSize(void) const
     {
         return nCol;
     }
@@ -312,8 +312,8 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const FullMatrix<T>& v )
     {
-        int nx = v.Ncols();
-        int ny = v.Nrows();
+        int nx = v.colSize();
+        int ny = v.rowSize();
         out << "[";
         for (int y=0;y<ny;++y)
         {
@@ -343,7 +343,7 @@ public:
     : ldata(NULL), lallocsize(0)
     {
     }
-    
+
     void resize(int nbRow, int nbCol)
     {
         if (nbRow == this->nRow && nbCol == this->nCol)
@@ -362,12 +362,15 @@ public:
                 ldata[i] = this->data + i*this->pitch;
         }
     }
-    
+
     T** lptr() { return ldata; }
     const T** lptr() const { return ldata; }
     //operator T**() { return ldata; }
     //operator const T**() const { return ldata; }
-};        
+};
+
+
+
 } // namespace linearsolver
 
 } // namespace component

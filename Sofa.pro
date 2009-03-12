@@ -3,10 +3,14 @@ TEMPLATE = subdirs
 
 include($${SOFA_DIR}/sofa.cfg) 
 
-SUBDIRS += extlibs/NewMAT
+SUBDIRS += extlibs/newmat
 
 
 SUBDIRS += extlibs/qwt
+
+contains(DEFINES,SOFA_XML_PARSER_TINYXML){
+  SUBDIRS += extlibs/tinyxml
+}
 
 # FlowVR
 	SUBDIRS += extlibs/miniFlowVR
@@ -14,10 +18,21 @@ contains(DEFINES,SOFA_HAVE_FLOWVR){
 	SUBDIRS -= extlibs/miniFlowVR
 }
 
+#CSParse
+
+contains(DEFINES,SOFA_HAVE_CSPARSE){
+	SUBDIRS += extlibs/csparse
+}
+
+
 #QGLViewer
 
 contains(DEFINES,SOFA_GUI_QGLVIEWER){
 	SUBDIRS += extlibs/libQGLViewer/QGLViewer
+}
+
+contains(DEFINES,SOFA_HAVE_COLLADADOM){
+	SUBDIRS += extlibs/colladadom/dom/colladadom.pro
 }
 
 # PML
@@ -78,6 +93,27 @@ else {
   message( "|  RDTSC timer: DISABLED")
 }
 
+contains(DEFINES,SOFA_HAVE_BOOST) {
+  message( "|  BOOST libraries: ENABLED")
+}
+else {
+  message( "|  BOOST libraries: DISABLED")
+}
+
+contains(DEFINES,SOFA_XML_PARSER_TINYXML) {
+  message( "|  TinyXML parser: ENABLED")
+}
+else {
+  message( "|  TinyXML parser: DISABLED")
+}
+
+contains(DEFINES,SOFA_XML_PARSER_LIBXML) {
+  message( "|  LibXML parser: ENABLED")
+}
+else {
+  message( "|  LibXML parser: DISABLED")
+}
+
 contains(DEFINES,SOFA_HAVE_PNG) {
   message( "|  PNG support: ENABLED")
 }
@@ -104,6 +140,28 @@ contains(DEFINES,SOFA_PML) {
 }
 else {
   message( "|  PML/LML support: DISABLED")
+}
+
+
+contains(DEFINES,SOFA_HAVE_CSPARSE) {
+  message( "|  CSPARSE library : ENABLED")
+}
+else {
+  message( "|  CSPARSE library : DISABLED")
+}
+
+contains(DEFINES,SOFA_HAVE_METIS) {
+  message( "|  METIS library : ENABLED")
+}
+else {
+  message( "|  METIS library : DISABLED")
+}
+
+contains(DEFINES,SOFA_HAVE_TAUCS) {
+  message( "|  TAUCS library : ENABLED")
+}
+else {
+  message( "|  TAUCS library : DISABLED")
 }
 
 

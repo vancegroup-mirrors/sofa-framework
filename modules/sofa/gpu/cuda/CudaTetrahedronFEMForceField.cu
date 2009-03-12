@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,7 +29,7 @@
 
 //#define umul24(x,y) ((x)*(y))
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 namespace sofa
 {
 namespace gpu
@@ -46,6 +46,19 @@ void TetrahedronFEMForceFieldCuda3f_addDForce(unsigned int nbElem, unsigned int 
 void TetrahedronFEMForceFieldCuda3f1_addForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, void* state, void* eforce, const void* velems, void* f, const void* x, const void* v);
 void TetrahedronFEMForceFieldCuda3f1_addDForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, const void* state, void* eforce, const void* velems, void* df, const void* dx, double factor);
 
+void TetrahedronFEMForceFieldCuda3f_getRotations(unsigned int nbElem, unsigned int nbVertex, const void* initState, const void* state, const void* rotationIdx, void* rotations);
+
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void TetrahedronFEMForceFieldCuda3d_addForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, void* state, void* eforce, const void* velems, void* f, const void* x, const void* v);
+void TetrahedronFEMForceFieldCuda3d_addDForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, const void* state, void* eforce, const void* velems, void* df, const void* dx, double factor);
+
+void TetrahedronFEMForceFieldCuda3d1_addForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, void* state, void* eforce, const void* velems, void* f, const void* x, const void* v);
+void TetrahedronFEMForceFieldCuda3d1_addDForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, const void* state, void* eforce, const void* velems, void* df, const void* dx, double factor);
+
+void TetrahedronFEMForceFieldCuda3d_getRotations(unsigned int nbElem, unsigned int nbVertex, const void* initState, const void* state, const void* rotationIdx, void* rotations);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 }
 
 template<class real>
@@ -71,19 +84,6 @@ public:
         /// unused value to align to 64 bytes
         //real dummy[BSIZE];
 };
-
-template<class real>
-class __align__(16) GPUElementState
-{
-public:
-    /// transposed rotation matrix
-    matrix3<real> Rt;
-    /// current internal strain
-    CudaVec3<real> S0,S1;
-    /// unused value to align to 64 bytes
-    real dummy;
-};
-
 
 template<class real>
 class GPUElementForce
@@ -470,7 +470,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcForce_kernel(int nbElem, cons
         CudaVec3<real> S0  = JtRtX0*e_mu2_bx2;
         S0 += (JtRtX0.x+JtRtX0.y+JtRtX0.z)*e->gamma_bx2[index1];
         CudaVec3<real> S1  = JtRtX1*(e_mu2_bx2*0.5f);
-        
+
         // Jd = ( 0   0   0   0   0  cy )
         //      ( 0   0   0   0  cy   0 )
         //      ( 0   0   cy  0   0   0 )
@@ -522,7 +522,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcForce_kernel(int nbElem, cons
     real v = 0;
     bool read = true; //(index1&4)<3;
     index1 += (index1>>4) - (index1>>2); // remove one for each 4-values before this thread, but add an extra one each 16 threads (so each 12 input cells, to align to 13)
-    
+
     if (read) v = temp[index1]; index1 += (BSIZE+(BSIZE>>4)-(BSIZE>>2));
     *out = v; out += BSIZE;
     if (read) v = temp[index1]; index1 += (BSIZE+(BSIZE>>4)-(BSIZE>>2));
@@ -559,7 +559,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcForce_kernel(int nbElem, cons
 }
 
 template<typename real>
-__global__ void TetrahedronFEMForceFieldCuda3t_addForce_kernel(int nbVertex, unsigned int nbElemPerVertex, const CudaVec4<real>* eforce, /* const GPUElement<real>* elems, GPUElementState<real>* state, */ const int* velems, real* f)
+__global__ void TetrahedronFEMForceFieldCuda3t_addForce_kernel(int nbVertex, unsigned int nbElemPerVertex, const CudaVec4<real>* eforce, const int* velems, real* f)
 {
     int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     int index1 = threadIdx.x;
@@ -598,7 +598,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_addForce_kernel(int nbVertex, uns
 }
 
 template<typename real>
-__global__ void TetrahedronFEMForceFieldCuda3t1_addForce_kernel(int nbVertex, unsigned int nbElemPerVertex, const CudaVec4<real>* eforce, /* const GPUElement<real>* elems, GPUElementState<real>* state, */ const int* velems, CudaVec4<real>* f)
+__global__ void TetrahedronFEMForceFieldCuda3t1_addForce_kernel(int nbVertex, unsigned int nbElemPerVertex, const CudaVec4<real>* eforce, const int* velems, CudaVec4<real>* f)
 {
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
@@ -695,7 +695,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcDForce_kernel(int nbElem, con
         //       ( cy  0   0 )
         CudaVec3<real> D = CudaTetrahedronFEMForceFieldInputTextures<real,TIn>::getDX(e->id[index1], x); //((const CudaVec3<real>*)x)[e.id];
         D = Rt * (D-A);
-        
+
         real e_cy = e->cy[index1];
         //JtRtX0.x += 0;
         //JtRtX0.y += 0;
@@ -722,7 +722,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcDForce_kernel(int nbElem, con
 
 	S0 *= factor;
 	S1 *= factor;
-        
+
         // Jd = ( 0   0   0   0   0  cy )
         //      ( 0   0   0   0  cy   0 )
         //      ( 0   0   cy  0   0   0 )
@@ -772,7 +772,7 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcDForce_kernel(int nbElem, con
     real v = 0;
     bool read = true; //(index1&4)<3;
     index1 += (index1>>4) - (index1>>2); // remove one for each 4-values before this thread, but add an extra one each 16 threads (so each 12 input cells, to align to 13)
-    
+
     if (read) v = temp[index1]; index1 += (BSIZE+(BSIZE>>4)-(BSIZE>>2));
     *out = v; out += BSIZE;
     if (read) v = temp[index1]; index1 += (BSIZE+(BSIZE>>4)-(BSIZE>>2));
@@ -805,6 +805,43 @@ __global__ void TetrahedronFEMForceFieldCuda3t_calcDForce_kernel(int nbElem, con
     *out = v; out += BSIZE;
     if (read) v = temp[index1]; index1 += (BSIZE+(BSIZE>>4)-(BSIZE>>2));
     *out = v; out += BSIZE;
+}
+
+
+template<typename real>
+__global__ void TetrahedronFEMForceFieldCuda3t_getRotations_kernel(int nbVertex, const real* initState, const real* state, const int* rotationIdx, real* rotations)
+{
+    int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
+    int index1 = threadIdx.x;
+    int index = index0+index1;
+
+    const int elemIdx = rotationIdx[index];
+    const int stateIdx = ((elemIdx / BSIZE) * (9*BSIZE)) + (elemIdx % BSIZE);
+
+    matrix3<real> initRt, curRt, R;
+
+    initRt.readAoS(initState + stateIdx);
+    curRt.readAoS(state + stateIdx);
+
+    // R = transpose(curRt) * initRt
+    R = curRt.mulT(initRt);
+
+    //R.x.x = dot (curR.x, initR.x); R.x.y = dot (curR.x, initR.y); R.x.z = dot (curR.x, initR.z);
+    //R.y.x = dot (curR.y, initR.x); R.y.y = dot (curR.y, initR.y); R.y.z = dot (curR.y, initR.z);
+    //R.z.x = dot (curR.z, initR.x); R.z.y = dot (curR.z, initR.y); R.z.z = dot (curR.z, initR.z);
+
+    rotations += 9*index;
+    rotations[0] = R.x.x;
+    rotations[1] = R.x.y;
+    rotations[2] = R.x.z;
+
+    rotations[3] = R.y.x;
+    rotations[4] = R.y.y;
+    rotations[5] = R.y.z;
+
+    rotations[6] = R.z.x;
+    rotations[7] = R.z.y;
+    rotations[8] = R.z.z;
 }
 
 //////////////////////
@@ -859,9 +896,74 @@ void TetrahedronFEMForceFieldCuda3f1_addDForce(unsigned int nbElem, unsigned int
     TetrahedronFEMForceFieldCuda3t1_addForce_kernel<float><<< grid2, threads2 >>>(nbVertex, nbElemPerVertex, (const CudaVec4<float>*)eforce, (const int*)velems, (CudaVec4<float>*)df);
 }
 
+void TetrahedronFEMForceFieldCuda3f_getRotations(unsigned int nbElem, unsigned int nbVertex, const void* initState, const void* state, const void* rotationIdx, void* rotations)
+{
+    dim3 threads(BSIZE,1);
+    dim3 grid((nbVertex+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_getRotations_kernel<float><<< grid, threads >>>(nbVertex, (const float*)initState, (const float*)state, (const int*)rotationIdx, (float*)rotations);
+}
 
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void TetrahedronFEMForceFieldCuda3d_addForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, void* state, void* eforce, const void* velems, void* f, const void* x, const void* v)
+{
+    CudaTetrahedronFEMForceFieldInputTextures<double,CudaVec3<double> >::setX(x);
+    CudaTetrahedronFEMForceFieldTempTextures<double,CudaVec4<double> >::setElementForce(eforce);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_calcForce_kernel<double, CudaVec3<double> ><<< grid1, threads1, BSIZE*13*sizeof(double)>>>(nbElem, (const GPUElement<double>*)elems, (double*)state, (double*)eforce, (const CudaVec3<double>*)x);
+    dim3 threads2(BSIZE,1);
+    dim3 grid2((nbVertex+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_addForce_kernel<double><<< grid2, threads2, BSIZE*3*sizeof(double) >>>(nbVertex, nbElemPerVertex, (const CudaVec4<double>*)eforce, (const int*)velems, (double*)f);
+}
+
+void TetrahedronFEMForceFieldCuda3d_addDForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, const void* state, void* eforce, const void* velems, void* df, const void* dx, double factor)
+{
+    CudaTetrahedronFEMForceFieldInputTextures<double,CudaVec3<double> >::setDX(dx);
+    CudaTetrahedronFEMForceFieldTempTextures<double,CudaVec4<double> >::setElementForce(eforce);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_calcDForce_kernel<double, CudaVec3<double> ><<< grid1, threads1, BSIZE*13*sizeof(double)>>>(nbElem, (const GPUElement<double>*)elems, (const double*)state, (double*)eforce, (const CudaVec3<double>*)dx, (double) factor);
+    dim3 threads2(BSIZE,1);
+    dim3 grid2((nbVertex+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_addForce_kernel<double><<< grid2, threads2, BSIZE*3*sizeof(double) >>>(nbVertex, nbElemPerVertex, (const CudaVec4<double>*)eforce, (const int*)velems, (double*)df);
+}
+
+void TetrahedronFEMForceFieldCuda3d1_addForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, void* state, void* eforce, const void* velems, void* f, const void* x, const void* v)
+{
+    CudaTetrahedronFEMForceFieldInputTextures<double,CudaVec4<double> >::setX(x);
+    CudaTetrahedronFEMForceFieldTempTextures<double,CudaVec4<double> >::setElementForce(eforce);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_calcForce_kernel<double, CudaVec4<double> ><<< grid1, threads1, BSIZE*13*sizeof(double)>>>(nbElem, (const GPUElement<double>*)elems, (double*)state, (double*)eforce, (const CudaVec4<double>*)x);
+    dim3 threads2(BSIZE,1);
+    dim3 grid2((nbVertex+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t1_addForce_kernel<double><<< grid2, threads2 >>>(nbVertex, nbElemPerVertex, (const CudaVec4<double>*)eforce, (const int*)velems, (CudaVec4<double>*)f);
+}
+
+void TetrahedronFEMForceFieldCuda3d1_addDForce(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* elems, const void* state, void* eforce, const void* velems, void* df, const void* dx, double factor)
+{
+    CudaTetrahedronFEMForceFieldInputTextures<double,CudaVec4<double> >::setDX(dx);
+    CudaTetrahedronFEMForceFieldTempTextures<double,CudaVec4<double> >::setElementForce(eforce);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_calcDForce_kernel<double, CudaVec4<double> ><<< grid1, threads1, BSIZE*13*sizeof(double)>>>(nbElem, (const GPUElement<double>*)elems, (const double*)state, (double*)eforce, (const CudaVec4<double>*)dx, (double) factor);
+    dim3 threads2(BSIZE,1);
+    dim3 grid2((nbVertex+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t1_addForce_kernel<double><<< grid2, threads2 >>>(nbVertex, nbElemPerVertex, (const CudaVec4<double>*)eforce, (const int*)velems, (CudaVec4<double>*)df);
+}
+
+void TetrahedronFEMForceFieldCuda3d_getRotations(unsigned int nbElem, unsigned int nbVertex, const void* initState, const void* state, const void* rotationIdx, void* rotations)
+{
+    dim3 threads(BSIZE,1);
+    dim3 grid((nbVertex+BSIZE-1)/BSIZE,1);
+    TetrahedronFEMForceFieldCuda3t_getRotations_kernel<double><<< grid, threads >>>(nbVertex, (const double*)initState, (const double*)state, (const int*)rotationIdx, (double*)rotations);
+}
+
+#endif // SOFA_GPU_CUDA_DOUBLE
+
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

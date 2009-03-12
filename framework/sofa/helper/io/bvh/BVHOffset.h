@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,8 @@
 #ifndef SOFA_HELPER_IO_BVH_BVHOFFSET_H
 #define SOFA_HELPER_IO_BVH_BVHOFFSET_H
 
+#include <sofa/helper/helper.h>
+
 namespace sofa
 {
 
@@ -39,7 +41,7 @@ namespace io
 namespace bvh
 {
 
-class BVHOffset
+class SOFA_HELPER_API BVHOffset
 {
 public:
 	BVHOffset(double _x, double _y, double _z)

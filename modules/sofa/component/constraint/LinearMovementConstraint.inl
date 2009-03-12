@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,8 +35,8 @@
 
 #include <sofa/component/topology/PointSubset.h>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -185,7 +185,7 @@ template <class DataTypes>
 void LinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 {
 	Real cT = (Real) this->getContext()->getTime(); 
-	if(cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin()){
+	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin()){
 		const SetIndexArray & indices = m_indices.getValue().getArray();
 
 		bool finished=false;
@@ -241,7 +241,7 @@ void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
 	}
 
 	//if we found 2 keyTimes, we have to interpolate a position (linear interpolation)
-	if(cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin() && nextT!=prevT){
+	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin() && nextT!=prevT){
 		const SetIndexArray & indices = m_indices.getValue().getArray();
 
 		Real dt = (cT - prevT) / (nextT - prevT);
@@ -259,8 +259,7 @@ void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
 template <class DataTypes>
 void LinearMovementConstraint<DataTypes>::draw()
 {
-    if (!getContext()->
-            getShowBehaviorModels()) return;
+    if (!getContext()->getShowBehaviorModels() || m_keyTimes.getValue().size() == 0 ) return;
     glDisable (GL_LIGHTING);
     glPointSize(10);
     glColor4f (1,0.5,0.5,1);

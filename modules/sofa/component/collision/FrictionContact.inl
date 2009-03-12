@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -40,10 +40,10 @@ namespace collision
 
 using namespace sofa::defaulttype;
 using namespace core::componentmodel::collision;
-using simulation::tree::GNode;
-using std::cout;
-using std::cerr;
-using std::endl;
+using simulation::Node;
+
+
+
 
 template < class TCollisionModel1, class TCollisionModel2 >
 FrictionContact<TCollisionModel1,TCollisionModel2>::FrictionContact(CollisionModel1* model1, CollisionModel2* model2, Intersection* intersectionMethod)
@@ -52,17 +52,12 @@ FrictionContact<TCollisionModel1,TCollisionModel2>::FrictionContact(CollisionMod
     mapper1.setCollisionModel(model1);
     mapper2.setCollisionModel(model2);
 
-	mu = 0.6;
+	mu = 0.1;
 }
 
 template < class TCollisionModel1, class TCollisionModel2 >
 FrictionContact<TCollisionModel1,TCollisionModel2>::~FrictionContact()
 {
-	if (c!=NULL)
-	{
-		if (parent!=NULL) parent->removeObject(c);
-		delete c;
-	}
 }
 template < class TCollisionModel1, class TCollisionModel2 >
 void FrictionContact<TCollisionModel1,TCollisionModel2>::cleanup()
@@ -70,7 +65,7 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::cleanup()
 	if (c!=NULL)
 	{
 		c->cleanup();
-		if (parent!=NULL) 
+		if (parent!=NULL)
 			parent->removeObject(c);
 		delete c;
 		parent = NULL;
@@ -96,7 +91,7 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 	for (int cpt=0; cpt<SIZE; cpt++)
 	{
 		DetectionOutput* o = &outputs[cpt];
-		
+
 		bool found = false;
 		for (unsigned int i=0; i<contacts.size() && !found; i++)
 		{
@@ -107,19 +102,20 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 
 		if (!found)
 			contacts.push_back(o);
-	}  
+	}
 
 	if (contacts.size()<outputs.size())
 	{
-		//std::cout << "Removed " << (outputs.size()-contacts.size()) <<" / " << outputs.size() << " collision points." << std::endl;
+		//sout << "Removed " << (outputs.size()-contacts.size()) <<" / " << outputs.size() << " collision points." << sendl;
 	}
 
 	if (c==NULL){
 		// Get the mechanical model from mapper1 to fill the constraint vector
 		MechanicalState1* mmodel1 = mapper1.createMapping();
-		// Get the mechanical model from mapper2 to fill the constraints vector	
+		// Get the mechanical model from mapper2 to fill the constraints vector
 		MechanicalState2* mmodel2 = mapper2.createMapping();
 		c = new constraint::UnilateralInteractionConstraint<Vec3Types>(mmodel1, mmodel2);
+		c->setName( getName() );
 	}
 
 	int size = contacts.size();
@@ -145,7 +141,7 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 		index2 = mapper2.addPoint(o->point[1], index2, r2);
 		// Checks if friction is considered
 		if (mu < 0.0 || mu > 1.0)
-			cerr << endl << "Error: mu has to take values between 0.0 and 1.0" << endl;
+			serr << endl << "Error: mu has to take values between 0.0 and 1.0" << endl;
 
 		double distance = d0 + r1 + r2;
 		// Polynome de Cantor de N� sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
@@ -160,35 +156,43 @@ void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(Out
 template < class TCollisionModel1, class TCollisionModel2 >
 void FrictionContact<TCollisionModel1,TCollisionModel2>::setDetectionOutputs(OutputVector*)
 {
-	cerr << endl << "ERROR: FrictionContact requires DETECTIONOUTPUT_FREEMOTION to be defined in DetectionOutput.h" << endl;
+	serr << endl << "ERROR: FrictionContact requires DETECTIONOUTPUT_FREEMOTION to be defined in DetectionOutput.h" << endl;
 }
 #endif
 
 template < class TCollisionModel1, class TCollisionModel2 >
 void FrictionContact<TCollisionModel1,TCollisionModel2>::createResponse(core::objectmodel::BaseContext* group)
 {
-	if (c!=NULL)
-	{
-		if (parent!=NULL) parent->removeObject(c);
-		parent = group;
-		if (parent!=NULL)
-		{
-			parent->addObject(c);
-		}
-	}
+    if (c!=NULL)
+    {
+        if (parent!=NULL)
+        {
+            parent->removeObject(this);
+            parent->removeObject(c);
+        }
+        parent = group;
+        if (parent!=NULL)
+        {
+            //sout << "Attaching contact response to "<<parent->getName()<<sendl;
+            parent->addObject(this);
+            parent->addObject(c);
+        }
+    }
 }
 
 template < class TCollisionModel1, class TCollisionModel2 >
 void FrictionContact<TCollisionModel1,TCollisionModel2>::removeResponse()
 {
-	if (c!=NULL)
-	{
-		if (parent!=NULL)
-		{
-			parent->removeObject(c);
-		}
-		parent = NULL;
-	}
+    if (c!=NULL)
+    {
+        if (parent!=NULL)
+        {
+            //sout << "Removing contact response from "<<parent->getName()<<sendl;
+            parent->removeObject(this);
+            parent->removeObject(c);
+        }
+        parent = NULL;
+    }
 }
 
 } // namespace collision

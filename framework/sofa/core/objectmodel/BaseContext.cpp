@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -218,6 +218,14 @@ void* BaseContext::getObject(const ClassInfo& /*class_info*/, SearchDirection /*
 {
     return NULL;
 }
+    
+/// Generic object access, given a set of required tags, possibly searching up or down from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void* BaseContext::getObject(const ClassInfo& /*class_info*/, const TagSet& /*tags*/, SearchDirection /*dir*/) const
+{
+    return NULL;
+}
 
 /// Generic object access, given a path from the current context
 ///
@@ -233,7 +241,14 @@ void* BaseContext::getObject(const ClassInfo& /*class_info*/, const std::string&
 void BaseContext::getObjects(const ClassInfo& /*class_info*/, GetObjectsCallBack& /*container*/, SearchDirection /*dir*/) const
 {
 }
-
+    
+/// Generic list of objects access, given a set of required tags, possibly searching up or down from the current context
+///
+/// Note that the template wrapper method should generally be used to have the correct return type,
+void BaseContext::getObjects(const ClassInfo& /*class_info*/, GetObjectsCallBack& /*container*/, const TagSet& /*tags*/, SearchDirection /*dir*/) const
+{
+}
+    
 /// Mechanical Degrees-of-Freedom
 BaseObject* BaseContext::getMechanicalState() const
 {
@@ -268,14 +283,27 @@ BaseObject* BaseContext::getShader() const
 /// Propagate an event 
 void BaseContext::propagateEvent( Event* )
 {
-    cerr<<"WARNING !!! BaseContext::propagateEvent not overloaded, does nothing"<<endl;
+    serr<<"WARNING !!! BaseContext::propagateEvent not overloaded, does nothing"<<sendl;
 }
 
 void BaseContext::executeVisitor( simulation::Visitor* )
 {
-    cerr<<"WARNING !!! BaseContext::executeVisitor not overloaded, does nothing"<<endl;
+    serr<<"WARNING !!! BaseContext::executeVisitor not overloaded, does nothing"<<sendl;
 	//assert(false);
 }
+
+std::ostream& operator << (std::ostream& out, const BaseContext& c )
+{
+  out<<std::endl<<"local gravity = "<<c.getLocalGravity();
+  out<<std::endl<<"transform from local to world = "<<c.getPositionInWorld();
+  //out<<std::endl<<"transform from world to local = "<<c.getWorldToLocal();
+  out<<std::endl<<"spatial velocity = "<<c.getVelocityInWorld();
+  out<<std::endl<<"acceleration of the origin = "<<c.getVelocityBasedLinearAccelerationInWorld();
+  out<<std::endl<<"showBehaviorModels = "<<c.getShowBehaviorModels();
+  return out;
+}
+
+
 
 
 } // namespace objectmodel

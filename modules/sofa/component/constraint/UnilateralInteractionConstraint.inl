@@ -1,3 +1,27 @@
+/******************************************************************************
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
+*                                                                             *
+* This library is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This library is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this library; if not, write to the Free Software Foundation,     *
+* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+*******************************************************************************
+*                               SOFA :: Modules                               *
+*                                                                             *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONSTRAINT_UNILATERALINTERACTIONCONSTRAINT_INL
 #define SOFA_COMPONENT_CONSTRAINT_UNILATERALINTERACTIONCONSTRAINT_INL
 
@@ -12,7 +36,7 @@ namespace component
 
 namespace constraint
 {
-
+	
 template<class DataTypes>
 void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv norm, Coord P, Coord Q, Real contactDistance, int m1, int m2, Coord Pfree, Coord Qfree, long id)
 {
@@ -23,6 +47,11 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
     int i = contacts.size();
     contacts.resize(i+1);
     Contact& c = contacts[i];
+
+	//sout<<"delta : "<<delta<<" - deltaFree : "<<deltaFree <<sendl;
+	//sout<<"P : "<<P<<" - PFree : "<<Pfree <<sendl;
+	//sout<<"Q : "<<Q<<" - QFree : "<<Qfree <<sendl;
+
 
 // for visu
     c.P = P;
@@ -81,11 +110,14 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
         c.dfree_s = 0;
         //printf("\n dt = %f, c.dfree = %f, deltaFree=%f, delta = %f", dt, c.dfree, deltaFree, delta);
     }
+
+
+	//sout<<"R_nts = ["<<c.norm<<" ; "<<c.t<<" ; "<<c.s<<" ];"<<sendl;
 }
 
 
 template<class DataTypes>
-void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &contactId, double &mu)
+void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &contactId)
 {
 	assert(this->object1);
 	assert(this->object2);
@@ -97,7 +129,7 @@ void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &c
 	{
 		Contact& c = contacts[i];
 
-		mu = c.mu;
+		//mu = c.mu;
 		//c.mu = mu;
 		c.id = contactId++;
 
@@ -105,38 +137,41 @@ void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &c
 		SparseVecDeriv svd2;
 
 		this->object1->setConstraintId(c.id);
-		svd1.push_back(SparseDeriv(c.m1, -c.norm));
+		svd1.insert(c.m1, -c.norm);
 		c1.push_back(svd1);
 
 		this->object2->setConstraintId(c.id);
-		svd2.push_back(SparseDeriv(c.m2, c.norm));
+		svd2.insert(c.m2, c.norm);
 		c2.push_back(svd2);
 		
 		if (c.mu > 0.0)
 		{
 			contactId += 2;
 			this->object1->setConstraintId(c.id+1);
-			svd1[0] = SparseDeriv(c.m1, -c.t);
+			svd1.set(c.m1, -c.t);
 			c1.push_back(svd1);
 
 			this->object1->setConstraintId(c.id+2);
-			svd1[0] = SparseDeriv(c.m1, -c.s);
+			svd1.set(c.m1, -c.s);
 			c1.push_back(svd1);
 
 			this->object2->setConstraintId(c.id+1);
-			svd2[0] = SparseDeriv(c.m2, c.t);
+			svd2.set(c.m2, c.t);
 			c2.push_back(svd2);
 
 			this->object2->setConstraintId(c.id+2);
-			svd2[0] = SparseDeriv(c.m2, c.s);
+			svd2.set(c.m2, c.s);
 			c2.push_back(svd2);
 		}
 	}
 }
 
 template<class DataTypes>
-void UnilateralInteractionConstraint<DataTypes>::getConstraintValue(defaulttype::BaseVector * v)
+void UnilateralInteractionConstraint<DataTypes>::getConstraintValue(defaulttype::BaseVector * v, bool freeMotion)
 {
+	if (!freeMotion)
+		sout<<"WARNING Not Implemented for resolution non based on freeMotion"<<sendl;
+		
 	for (unsigned int i=0; i<contacts.size(); i++)
 	{
 		Contact& c = contacts[i]; // get each contact detected
@@ -145,21 +180,6 @@ void UnilateralInteractionConstraint<DataTypes>::getConstraintValue(defaulttype:
 		{
 			v->set(c.id+1,c.dfree_t); // dfree_t & dfree_s are added to v to compute the friction 
 			v->set(c.id+2,c.dfree_s);
-		}
-	}
-}
-
-template<class DataTypes>
-void UnilateralInteractionConstraint<DataTypes>::getConstraintValue(double * v)
-{
-	for (unsigned int i=0; i<contacts.size(); i++)
-	{
-		Contact& c = contacts[i]; // get each contact detected
-		v[c.id] = c.dfree; 
-		if (c.mu > 0.0)
-		{
-			v[c.id+1] = c.dfree_t; // dfree_t & dfree_s are added to v to compute the friction 
-			v[c.id+2] = c.dfree_s;
 		}
 	}
 }

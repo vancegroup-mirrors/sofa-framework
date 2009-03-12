@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -63,8 +63,9 @@ protected:
     /// Flag indicating if this vector was dynamically allocated
     bool dynamic;
 
+private:
     /// Copy-constructor is forbidden
-    MultiVector(const MultiVector<Parent>& v);
+	MultiVector(const MultiVector<Parent>&){}
 
 public:
     /// Refers to a state vector with the given ID (VecId::position(), VecId::velocity(), etc).
@@ -103,11 +104,19 @@ public:
     {
         parent->v_peq(v, a, f);
     }
+
     /// v *= f
     void teq(double f)
     {
         parent->v_teq(v, f);
     }
+
+    /// v = a+b*f
+    void eq(VecId a, VecId b, double f=1.0)
+    {
+        parent->v_op(v, a, b, f);
+    }
+
     /// \return v.a
     double dot(VecId a)
     {

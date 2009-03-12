@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,54 +36,51 @@ namespace collision
 
 RayTriangleIntersection::RayTriangleIntersection(){
 }
+
 RayTriangleIntersection::~RayTriangleIntersection(){
 }
-bool
-RayTriangleIntersection::NewComputation(Triangle *triP, const Vector3 &origin, const Vector3 &direction,   double &t,  double &u, double &v)
 
-        {
-            t = 0; u = 0; v = 0;
+bool RayTriangleIntersection::NewComputation(const sofa::defaulttype::Vector3 &p1, const sofa::defaulttype::Vector3 &p2, const sofa::defaulttype::Vector3 &p3, const Vector3 &origin, const Vector3 &direction,   double &t,  double &u, double &v)
+{
+    t = 0; u = 0; v = 0;
 
-            Vector3 edge1 = triP->p2() - triP->p1();
-            Vector3 edge2 = triP->p3() - triP->p1();
+    Vector3 edge1 = p2 - p1;
+    Vector3 edge2 = p3 - p1;
 
-            Vector3 tvec, pvec, qvec;
-            double det, inv_det;
+    Vector3 tvec, pvec, qvec;
+    double det, inv_det;
 
-            pvec = direction.cross(edge2);
+    pvec = direction.cross(edge2);
 
-            det = dot(edge1, pvec);
-	if(det==0.0){
-		
-		return false;
-		
+    det = dot(edge1, pvec);
+    if(det<=1.0e-20 && det >=-1.0e-20) {
+        return false;
+    }
+
+    inv_det = 1.0 / det;
+
+    tvec = origin - p1;
+
+    u = dot(tvec, pvec) * inv_det;
+    if (u < -0.0000001 || u > 1.0000001)
+        return false;
+
+    qvec = tvec.cross(edge1);
+
+    v = dot(direction, qvec) * inv_det;
+    if (v < -0.0000001 || (u + v) > 1.0000001)
+        return false;
+
+    t = dot(edge2, qvec) * inv_det;
+
+    if (t < 0.0000001 || t!=t || v!=v || u!=u)
+        return false;
+
+    return true;
 }
-// 	    if (fabs(triP->n()*direction) < 0.0000)
-//                 return false;
 
-            inv_det = 1.0 / det;
+} // namespace collision
 
-            tvec = origin - triP->p1();
+} // namespace component
 
-            u = dot(tvec, pvec) * inv_det;
-            if (u < 0.000001||u >0.999999900000)
-                return false;
-
-            qvec = tvec.cross(edge1);
-
-            v = dot(direction, qvec) * inv_det;
-            if (v < 0.00001|| (u +v) > 0.999999900000)
-                return false;
-
-            t = dot(edge2, qvec) * inv_det;
-
-            if (t <=0.000001||t!=t||v!=v||u!=u)
-                return false;	
-	    
-            return true;
-        }
-
-}
-}
-}
-	
+} // namespace sofa

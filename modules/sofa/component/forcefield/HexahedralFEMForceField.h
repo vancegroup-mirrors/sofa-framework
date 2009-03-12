@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,239 +26,225 @@
 #define SOFA_COMPONENT_FORCEFIELD_HEXAHEDRALFEMFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
-#include <sofa/component/topology/SparseGridTopology.h>
+
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
 
+#include <sofa/component/topology/HexahedronSetTopologyContainer.h>
 #include <sofa/component/topology/HexahedronData.h>
 
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace forcefield
-    {
+namespace forcefield
+{
 
-      using namespace sofa::defaulttype;
-      using sofa::helper::vector;
+using namespace sofa::defaulttype;
+using sofa::helper::vector;
 
-	  using namespace sofa::component::topology;
+using namespace sofa::component::topology;
 
-      /** Compute Finite Element forces based on hexahedral elements.
-       *
-       * Corotational hexahedron from 
-       * @Article{NMPCPF05,
-       *   author       = "Nesme, Matthieu and Marchal, Maud and Promayon, Emmanuel and Chabanas, Matthieu and Payan, Yohan and Faure, Fran\c{c}ois",
-       *   title        = "Physically Realistic Interactive Simulation for Biological Soft Tissues",
-       *   journal      = "Recent Research Developments in Biomechanics",
-       *   volume       = "2",
-       *   year         = "2005",
-       *   keywords     = "surgical simulation physical animation truth cube",
-       *   url          = "http://www-evasion.imag.fr/Publications/2005/NMPCPF05"
-       * }
-       *
-       * indices ordering (same as in HexahedronSetTopology):
-       *
-       *     Y  7---------6
-       *     ^ /         /|
-       *     |/    Z    / |
-       *     3----^----2  |
-       *     |   /     |  |
-       *     |  4------|--5
-       *     | /       | /
-       *     |/        |/
-       *     0---------1-->X
-      */
-      template<class DataTypes>
-      class HexahedralFEMForceField : virtual public core::componentmodel::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
-      {
-      public:
-        typedef typename DataTypes::VecCoord VecCoord;
-        typedef typename DataTypes::VecDeriv VecDeriv;
-        typedef VecCoord Vector;
-        typedef typename DataTypes::Coord Coord;
-        typedef typename DataTypes::Deriv Deriv;
-        typedef typename Coord::value_type Real;
+/** Compute Finite Element forces based on hexahedral elements.
+*
+* Corotational hexahedron from 
+* @Article{NMPCPF05,
+*   author       = "Nesme, Matthieu and Marchal, Maud and Promayon, Emmanuel and Chabanas, Matthieu and Payan, Yohan and Faure, Fran\c{c}ois",
+*   title        = "Physically Realistic Interactive Simulation for Biological Soft Tissues",
+*   journal      = "Recent Research Developments in Biomechanics",
+*   volume       = "2",
+*   year         = "2005",
+*   keywords     = "surgical simulation physical animation truth cube",
+*   url          = "http://www-evasion.imag.fr/Publications/2005/NMPCPF05"
+* }
+*
+* indices ordering (same as in HexahedronSetTopology):
+*
+*     Y  7---------6
+*     ^ /         /|
+*     |/    Z    / |
+*     3----^----2  |
+*     |   /     |  |
+*     |  4------|--5
+*     | /       | /
+*     |/        |/
+*     0---------1-->X
+*/
+template<class DataTypes>
+class HexahedralFEMForceField : virtual public core::componentmodel::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
+{
+public:
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef VecCoord Vector;
+	typedef typename DataTypes::Coord Coord;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef typename Coord::value_type Real;
 
-        typedef core::componentmodel::topology::BaseMeshTopology::index_type Index;
-#ifdef SOFA_NEW_HEXA
-		typedef core::componentmodel::topology::BaseMeshTopology::Hexa Element;
-		typedef core::componentmodel::topology::BaseMeshTopology::SeqHexas VecElement;
-#else
-		typedef core::componentmodel::topology::BaseMeshTopology::Cube Element;
-		typedef core::componentmodel::topology::BaseMeshTopology::SeqCubes VecElement;
-#endif
-        static const int LARGE = 0;   ///< Symbol of large displacements hexahedron solver
-        static const int POLAR = 1;   ///< Symbol of polar displacements hexahedron solver
+	typedef core::componentmodel::topology::BaseMeshTopology::index_type Index;
+	typedef core::componentmodel::topology::BaseMeshTopology::Hexa Element;
+	typedef core::componentmodel::topology::BaseMeshTopology::SeqHexas VecElement;
 
-      protected:
-        //component::MechanicalObject<DataTypes>* object;
+	static const int LARGE = 0;   ///< Symbol of large displacements hexahedron solver
+	static const int POLAR = 1;   ///< Symbol of polar displacements hexahedron solver
 
-        typedef Vec<24, Real> Displacement;		///< the displacement vector
+protected:
+	typedef Vec<24, Real> Displacement;		///< the displacement vector
 
-        typedef Mat<6, 6, Real> MaterialStiffness;	///< the matrix of material stiffness
-        typedef vector<MaterialStiffness> VecMaterialStiffness;         ///< a vector of material stiffness matrices
-        //VecMaterialStiffness _materialsStiffnesses;					///< the material stiffness matrices vector
+	typedef Mat<6, 6, Real> MaterialStiffness;	///< the matrix of material stiffness
+	typedef vector<MaterialStiffness> VecMaterialStiffness;  ///< a vector of material stiffness matrices
 
-		typedef Mat<24, 24, Real> ElementStiffness;
-		typedef vector<ElementStiffness> VecElementStiffness;
-		//VecElementStiffness _elementStiffnesses;
-		
-		typedef Mat<3, 3, Real> Mat33;
-		typedef Mat33 Transformation; ///< matrix for rigid transformations like rotations
+	typedef Mat<24, 24, Real> ElementStiffness;
+	typedef vector<ElementStiffness> VecElementStiffness;
 
-		/// the information stored for each hexahedron
-		class HexahedronInformation
-		{
-		public:
-			/// material stiffness matrices of each hexahedron
-			MaterialStiffness materialMatrix;
-			///< the strain-displacement matrices vector
-			//StrainDisplacement strainDisplacementMatrix;
-			// large displacement method
-			helper::fixed_array<Coord,8> rotatedInitialElements;
+	typedef Mat<3, 3, Real> Mat33;
+	typedef Mat33 Transformation; ///< matrix for rigid transformations like rotations
 
-			Transformation rotation;
-			ElementStiffness stiffness;
-			/// polar method
-			//Transformation initialTransformation;
+	typedef std::pair<int,Real> Col_Value;
+	typedef vector< Col_Value > CompressedValue;
+	typedef vector< CompressedValue > CompressedMatrix;
 
-			HexahedronInformation() {
-			}
-		};
-		/// container that stotes all requires information for each hexahedron
-		HexahedronData<HexahedronInformation> hexahedronInfo;
-
-
-        typedef std::pair<int,Real> Col_Value;
-        typedef vector< Col_Value > CompressedValue;
-        typedef vector< CompressedValue > CompressedMatrix;
-        //CompressedMatrix _stiffnesses;
-        double m_potentialEnergy;
-
-		sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
-
-		//topology::SparseGridTopology* _sparseGrid;
-        
-		//const VecElement *_indexedElements;
-        //Data< VecCoord > _initialPoints; ///< the intial positions of the points
-		
-
-		Mat<8,3,int> _coef; ///< coef of each vertices to compute the strain stress matrix
-
+	/// the information stored for each hexahedron
+	class HexahedronInformation
+	{
 	public:
-			  
-		int method;
-        Data<std::string> f_method; ///< the computation method of the displacements
-        Data<Real> f_poissonRatio;
-        Data<Real> f_youngModulus;
-//         Data<bool> f_updateStiffnessMatrix;
-        Data<bool> f_assembling;
+		/// material stiffness matrices of each hexahedron
+		MaterialStiffness materialMatrix;
 
+		// large displacement method
+		helper::fixed_array<Coord,8> rotatedInitialElements;
 
-        HexahedralFEMForceField()
-            : f_method(initData(&f_method,std::string("large"),"method","\"large\" or \"polar\" displacements"))
-	    , f_poissonRatio(initData(&f_poissonRatio,(Real)0.45f,"poissonRatio",""))
-	    , f_youngModulus(initData(&f_youngModulus,(Real)5000,"youngModulus",""))
-//             , f_updateStiffnessMatrix(initData(&f_updateStiffnessMatrix,false,"updateStiffnessMatrix",""))
-            , f_assembling(initData(&f_assembling,false,"assembling",""))
-        {
-			_coef[0][0]=-1;
-			_coef[1][0]=1;
-			_coef[2][0]=1;
-			_coef[3][0]=-1;
-			_coef[4][0]=-1;
-			_coef[5][0]=1;
-			_coef[6][0]=1;
-			_coef[7][0]=-1;
-			_coef[0][1]=-1;
-			_coef[1][1]=-1;
-			_coef[2][1]=1;
-			_coef[3][1]=1;
-			_coef[4][1]=-1;
-			_coef[5][1]=-1;
-			_coef[6][1]=1;
-			_coef[7][1]=1;
-			_coef[0][2]=-1;
-			_coef[1][2]=-1;
-			_coef[2][2]=-1;
-			_coef[3][2]=-1;
-			_coef[4][2]=1;
-			_coef[5][2]=1;
-			_coef[6][2]=1;
-			_coef[7][2]=1;
-			
-			_alreadyInit=false;
+		Transformation rotation;
+		ElementStiffness stiffness;
+
+		HexahedronInformation() {}
+
+		/// Output stream
+		inline friend std::ostream& operator<< ( std::ostream& os, const HexahedronInformation& /*hi*/ )
+		{
+			return os;
 		}
 
-        void parse(core::objectmodel::BaseObjectDescription* arg);
+		/// Input stream
+		inline friend std::istream& operator>> ( std::istream& in, HexahedronInformation& /*hi*/ )
+		{
+			return in;
+		}
+	};
 
-		void setPoissonRatio(Real val) { this->f_poissonRatio.setValue(val); }
+public:
+	HexahedralFEMForceField()
+		: f_method(initData(&f_method,std::string("large"),"method","\"large\" or \"polar\" displacements"))
+		, f_poissonRatio(initData(&f_poissonRatio,(Real)0.45f,"poissonRatio",""))
+		, f_youngModulus(initData(&f_youngModulus,(Real)5000,"youngModulus",""))
+	{
+		_coef[0][0]=-1;
+		_coef[1][0]=1;
+		_coef[2][0]=1;
+		_coef[3][0]=-1;
+		_coef[4][0]=-1;
+		_coef[5][0]=1;
+		_coef[6][0]=1;
+		_coef[7][0]=-1;
+		_coef[0][1]=-1;
+		_coef[1][1]=-1;
+		_coef[2][1]=1;
+		_coef[3][1]=1;
+		_coef[4][1]=-1;
+		_coef[5][1]=-1;
+		_coef[6][1]=1;
+		_coef[7][1]=1;
+		_coef[0][2]=-1;
+		_coef[1][2]=-1;
+		_coef[2][2]=-1;
+		_coef[3][2]=-1;
+		_coef[4][2]=1;
+		_coef[5][2]=1;
+		_coef[6][2]=1;
+		_coef[7][2]=1;
+	}
 
-		void setYoungModulus(Real val) { this->f_youngModulus.setValue(val); }
+	void parse(core::objectmodel::BaseObjectDescription* arg);
 
-		void setMethod(int val) { method = val; }
+	void setPoissonRatio(Real val) { this->f_poissonRatio.setValue(val); }
 
-// 		void setUpdateStiffnessMatrix(bool val) { this->f_updateStiffnessMatrix.setValue(val); }
+	void setYoungModulus(Real val) { this->f_youngModulus.setValue(val); }
 
-		void setComputeGlobalMatrix(bool val) { this->f_assembling.setValue(val); }
+	void setMethod(int val) { method = val; }
 
-        //	component::MechanicalObject<DataTypes>* getObject() { return object; }
+	virtual void init();
+	virtual void reinit();		
 
-        virtual void init();
-		virtual void reinit();		
+	virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
 
-        virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+	virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
 
-        virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
+	virtual double getPotentialEnergy(const VecCoord& x);
 
-        virtual double getPotentialEnergy(const VecCoord& x);
+	// handle topological changes
+	virtual void handleTopologyChange();
 
-		// handle topological changes
-		virtual void handleTopologyChange();
+	void draw();
 
-        void draw();
+protected:
 
-      protected:
+	virtual void computeElementStiffness( ElementStiffness &K, const MaterialStiffness &M, const Vec<8,Coord> &nodes);
+	Mat33 integrateStiffness( int signx0, int signy0, int signz0, int signx1, int signy1, int signz1, const Real u, const Real v, const Real w, const Mat33& J_1  );
 
-		 
-		virtual void computeElementStiffness( ElementStiffness &K, const MaterialStiffness &M, const Vec<8,Coord> &nodes, const int elementIndice);
-		Mat33 integrateStiffness( int signx0, int signy0, int signz0, int signx1, int signy1, int signz1, const Real u, const Real v, const Real w, const Mat33& J_1  );
+	/// compute the hookean material matrix
+	void computeMaterialStiffness(MaterialStiffness &m, double youngModulus, double poissonRatio);
 
-		void computeMaterialStiffness(int i);
-
-		void computeForce( Displacement &F, const Displacement &Depl, const ElementStiffness &K );
+	void computeForce( Displacement &F, const Displacement &Depl, const ElementStiffness &K );
 
 
-        ////////////// large displacements method
-        //vector<helper::fixed_array<Coord,8> > _rotatedInitialElements;   ///< The initials positions in its frame
-        //vector<Transformation> _rotations;
-        void initLarge(int i);
-		void computeRotationLarge( Transformation &r, Coord &edgex, Coord &edgey);
-		virtual void accumulateForceLarge( Vector& f, const Vector & p, int i);
+	////////////// large displacements method
+	void initLarge(const int i);
+	void computeRotationLarge( Transformation &r, Coord &edgex, Coord &edgey);
+	virtual void accumulateForceLarge( Vector& f, const Vector & p, const int i);
 
-        ////////////// polar decomposition method
-		void initPolar(int i);
-		void computeRotationPolar( Transformation &r, Vec<8,Coord> &nodes);
-		virtual void accumulateForcePolar( Vector& f, const Vector & p, int i);
-		
-		bool _alreadyInit;
+	////////////// polar decomposition method
+	void initPolar(const int i);
+	void computeRotationPolar( Transformation &r, Vec<8,Coord> &nodes);
+	virtual void accumulateForcePolar( Vector& f, const Vector & p, const int i);
 
-		/// the callback function called when a hexahedron is created
-		static void FHexahedronCreationFunction (int , void* , 
-							HexahedronInformation &,
-							const Hexahedron& , const helper::vector< unsigned int > &, const helper::vector< double >&);
+	/// the callback function called when a hexahedron is created
+	static void FHexahedronCreationFunction (int , void* , 
+		HexahedronInformation &,
+		const Hexahedron& , 
+		const helper::vector< unsigned int > &, 
+		const helper::vector< double >&);
 
-      };
+public:
+	int method;
+	Data<std::string> f_method; ///< the computation method of the displacements
+	Data<Real> f_poissonRatio;
+	Data<Real> f_youngModulus;
 
-    } // namespace forcefield
+protected:
+	/// container that stotes all requires information for each hexahedron
+	HexahedronData<HexahedronInformation> hexahedronInfo;
 
-  } // namespace component
+	HexahedronSetTopologyContainer* _topology;
+
+	Mat<8,3,int> _coef; ///< coef of each vertices to compute the strain stress matrix
+};
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_HEXAHEDRALFEMFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedralFEMForceField<defaulttype::Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedralFEMForceField<defaulttype::Vec3fTypes>;
+#endif
+#endif
+
+} // namespace forcefield
+
+} // namespace component
 
 } // namespace sofa
 

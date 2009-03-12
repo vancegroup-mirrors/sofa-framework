@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -385,6 +385,7 @@ CudaCollisionDetection::SphereRigidTest::SphereRigidTest( CudaSphereModel* model
 /// Returns how many tests are required
 int CudaCollisionDetection::SphereRigidTest::init()
 {
+
     results.clear();
     if (!model1->isActive() || !model2->isActive()) return 0;
     const CudaVector<Vec3f>& p1 = *model1->getMechanicalState()->getX();
@@ -397,14 +398,18 @@ int CudaCollisionDetection::SphereRigidTest::init()
             results.addTest(std::make_pair(0, e2.getIndex()), p1.size());
     }
     return results.nbTests();
+
+  return 0;
 }
 
 /// Fill the info to send to the graphics card
 void CudaCollisionDetection::SphereRigidTest::fillInfo(GPUTest* tests)
 {
+
     if (results.nbTests()==0) return;
     GPUContact* gresults = (GPUContact*)results.results.deviceWrite();
     const CudaVector<Vec3f>& p1 = *model1->getMechanicalState()->getX();
+
     for (unsigned int i=0;i<results.nbTests();i++)
     {
         const GPUOutputVector::TestEntry& e = results.rtest(i);
@@ -427,7 +432,9 @@ void CudaCollisionDetection::SphereRigidTest::fillInfo(GPUTest* tests)
         test.margin = 0; //model1->getRadius(0);
         test.rotation.transpose(Mat3x3f(elem2.getRotation()));
         test.translation = test.rotation*(-elem2.getTranslation());
-    }
+    
+	}
+  
 }
 
 /*

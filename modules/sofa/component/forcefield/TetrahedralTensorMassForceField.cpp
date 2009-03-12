@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -45,9 +45,9 @@ namespace forcefield
 
 using namespace sofa::defaulttype;
 
-using std::cerr;
-using std::cout;
-using std::endl;
+
+
+
 
 SOFA_DECL_CLASS(TetrahedralTensorMassForceField)
 
@@ -65,10 +65,10 @@ int TetrahedralTensorMassForceFieldClass = core::RegisterObject("Linear Elastic 
 ;
 
 #ifndef SOFA_FLOAT
-template class TetrahedralTensorMassForceField<Vec3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TetrahedralTensorMassForceField<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class TetrahedralTensorMassForceField<Vec3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TetrahedralTensorMassForceField<Vec3fTypes>;
 #endif
 
 

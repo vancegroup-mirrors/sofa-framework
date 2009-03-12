@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -41,6 +41,15 @@ namespace behavior
 {
 
 OdeSolver::OdeSolver()
+#ifdef SOFA_HAVE_LAPACK
+	:
+	constraintAcc( initData( &constraintAcc, false, "constraintAcc", "Constraint the acceleration")),
+	  constraintVel( initData( &constraintVel, false, "constraintVel", "Constraint the velocity")),
+	  constraintPos( initData( &constraintPos, false, "constraintPos", "Constraint the position")),
+	  constraintResolution( initData( &constraintResolution, false, "constraintResolution", "Using Gauss-Seidel to solve the constraint.\nOtherwise, use direct LU resolution.")),
+	  numIterations( initData( &numIterations, (unsigned int)25, "numIterations", "Number of iterations for Gauss-Seidel when solving the Constraints")),
+	  maxError( initData( &maxError, 0.0000001, "maxError", "Max error for Gauss-Seidel algorithm when solving the constraints"))
+#endif
 {}
 
 OdeSolver::~OdeSolver()

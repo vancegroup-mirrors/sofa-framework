@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -64,7 +64,7 @@ bool ContinuousIntersection::testIntersection(Triangle& t1, Triangle& t2)
 int ContinuousIntersection::computeIntersection(Triangle& t1, Triangle& t2, OutputVector* contacts)
 {
     ContinuousTriangleIntersection intersectionT(t1, t2);
-    //std::cout<<"Distance correction between Triangle - Triangle"<<std::endl;
+    //sout<<"Distance correction between Triangle - Triangle"<<sendl;
     core::componentmodel::collision::DetectionOutput* c = intersectionT.computeDetectionOutput(); // new DetectionOutput();
     if (c == NULL)
         return 0;

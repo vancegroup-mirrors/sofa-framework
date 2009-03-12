@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -74,6 +74,10 @@ public:
     /// Specify the input and output models.
     virtual void setModels(In* from, Out* to);
 
+    /// Set the path to the objects mapped in the scene graph by default object1="../.." and object2=".."
+    void setPathObject1(std::string &o){object1.setValue(o);}
+    void setPathObject2(std::string &o){object2.setValue(o);}
+    
     /// Return the pointer to the input model.
     In* getFromModel();
     /// Return the pointer to the output model.
@@ -122,13 +126,13 @@ public:
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
         if (arg->findObject(arg->getAttribute("object1","../..")) == NULL)
-            std::cerr << "Cannot create "<<className(obj)<<" as object1 is missing.\n";
+	  context->serr << "Cannot create "<<className(obj)<<" as object1 is missing."<<context->sendl;
         if (arg->findObject(arg->getAttribute("object2","..")) == NULL)
-            std::cerr << "Cannot create "<<className(obj)<<" as object2 is missing.\n";
+	  context->serr << "Cannot create "<<className(obj)<<" as object2 is missing."<<context->sendl;
         if (dynamic_cast<In*>(arg->findObject(arg->getAttribute("object1","../.."))) == NULL)
-            return false;
+	  return false;
         if (dynamic_cast<Out*>(arg->findObject(arg->getAttribute("object2",".."))) == NULL)
-            return false;
+	  return false;
         return BaseMapping::canCreate(obj, context, arg);
     }
 
@@ -143,17 +147,20 @@ public:
             (arg?dynamic_cast<In*>(arg->findObject(arg->getAttribute("object1","../.."))):NULL),
             (arg?dynamic_cast<Out*>(arg->findObject(arg->getAttribute("object2",".."))):NULL));
         if (context) context->addObject(obj);
-		if ((arg) && (arg->getAttribute("object1")))
+        if (arg)
+        {       
+		if (arg->getAttribute("object1"))
 		{
 			obj->object1.setValue( arg->getAttribute("object1") );
 			arg->removeAttribute("object1");
 		}
-		if ((arg) && (arg->getAttribute("object2")))
+		if (arg->getAttribute("object2"))
 		{
 			obj->object2.setValue( arg->getAttribute("object2") );
 			arg->removeAttribute("object2");
 		}
-		if (arg) obj->parse(arg);
+		obj->parse(arg);
+        }              
     }
     
     virtual std::string getTemplateName() const
@@ -164,10 +171,10 @@ public:
     
     static std::string templateName(const Mapping<TIn, TOut>* = NULL)
     {
-      if (In::Name() == std::string("MechanicalState"))
-        return std::string("MechanicalMapping[")+TIn::DataTypes::Name() + std::string(",") + TOut::DataTypes::Name() + std::string("]");
-      else 
-        return std::string("Mapping[")+TIn::DataTypes::Name() + std::string(",") + TOut::DataTypes::Name() + std::string("]");       
+      //if (In::Name() == std::string("MechanicalState"))
+      //  return std::string("MechanicalMapping<")+TIn::DataTypes::Name() + std::string(",") + TOut::DataTypes::Name() + std::string(">");
+      //else 
+        return std::string("Mapping<")+TIn::DataTypes::Name() + std::string(",") + TOut::DataTypes::Name() + std::string(">");
     }
 
 protected:

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Implementation: ArticulatedHierarchyBVHController
 //
-// Description: 
+// Description:
 //
 //
 // Author: The SOFA team </www.sofa-framework.org>, (C) 2008
@@ -48,14 +48,14 @@ namespace controller
 
 void ArticulatedHierarchyBVHController::init()
 {
-	sofa::simulation::tree::GNode* curNode = dynamic_cast<sofa::simulation::tree::GNode*>(this->getContext());
+	sofa::simulation::Node* curNode = dynamic_cast<sofa::simulation::Node*>(this->getContext());
 	if (curNode)
 	{
 		curNode->getTreeObjects<ArticulatedHierarchyContainer::ArticulationCenter, ArtCenterVec >(&m_artCenterVec);
 		curNode->getTreeObject(ahc);
 		frame = 0;
 		n=0;
-	}	
+	}
 }
 
 void ArticulatedHierarchyBVHController::reset()
@@ -75,7 +75,7 @@ void ArticulatedHierarchyBVHController::applyController(void)
 	{
 		ArtCenterVecIt artCenterIt = m_artCenterVec.begin();
 		ArtCenterVecIt artCenterItEnd = m_artCenterVec.end();
-		
+
 		while ((artCenterIt != artCenterItEnd))
 		{
 			ArtVecIt it = (*artCenterIt)->articulations.begin();
@@ -84,13 +84,13 @@ void ArticulatedHierarchyBVHController::applyController(void)
 			{
 				std::vector< MechanicalState<sofa::defaulttype::Vec1dTypes>* > articulatedObjects;
 
-				sofa::simulation::tree::GNode* curNode = dynamic_cast<sofa::simulation::tree::GNode*>(this->getContext());
+				sofa::simulation::Node* curNode = dynamic_cast<sofa::simulation::Node*>(this->getContext());
 				if (curNode)
 					curNode->getTreeObjects<MechanicalState<sofa::defaulttype::Vec1dTypes>, std::vector< MechanicalState<sofa::defaulttype::Vec1dTypes>* > >(&articulatedObjects);
 
 					if (!articulatedObjects.empty())
 					{
-						// Reference potential initial articulations value for interaction springs 
+						// Reference potential initial articulations value for interaction springs
 						// and Current articulation value at the coresponding artculation
 
 						std::vector< MechanicalState<sofa::defaulttype::Vec1dTypes>* >::iterator articulatedObjIt = articulatedObjects.begin();
@@ -132,7 +132,7 @@ void ArticulatedHierarchyBVHController::applyController(void)
 
 SOFA_DECL_CLASS(ArticulatedHierarchyBVHController)
 
-// Register in the Factory	
+// Register in the Factory
 int ArticulatedHierarchyBVHControllerClass = core::RegisterObject("")
 .add< ArticulatedHierarchyBVHController >()
 ;

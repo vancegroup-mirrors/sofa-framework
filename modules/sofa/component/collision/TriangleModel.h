@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,8 @@
 #define SOFA_COMPONENT_COLLISION_TRIANGLEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/component/topology/TriangleData.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 
@@ -73,7 +74,7 @@ public:
     int flags() const;
 };
 
-class TriangleModel : public core::CollisionModel
+class SOFA_COMPONENT_COLLISION_API TriangleModel : public core::CollisionModel
 {
 public:
     typedef Vec3Types InDataTypes;
@@ -100,25 +101,38 @@ protected:
     struct TriangleInfo
     {
         //int i1,i2,i3;
-        int flags;
+        //int flags;
         Vector3 normal;
+
+        /// Output stream
+        inline friend std::ostream& operator<< ( std::ostream& os, const TriangleInfo& ti )
+        {
+            return os << ti.normal;
+        }
+        
+        /// Input stream
+        inline friend std::istream& operator>> ( std::istream& in, TriangleInfo& ti )
+        {
+            return in >> ti.normal;
+        }
     };
 
-    sofa::helper::vector<TriangleInfo> elems;
-	const sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles* triangles;
+    topology::TriangleData<TriangleInfo> elems;
+    const sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles* triangles;
 
     sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles mytriangles;
-	
+
     bool needsUpdate;
     virtual void updateFromTopology();
     virtual void updateFlags(int ntri=-1);
+    int getTriangleFlags(int i);
     virtual void updateNormals();
 
     core::componentmodel::behavior::MechanicalState<Vec3Types>* mstate;
     Data<bool> computeNormals;
     int meshRevision;
 
-	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+    sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
 
 public:
 
@@ -138,11 +152,13 @@ public:
 
     void draw();
 
-	virtual void handleTopologyChange();
+    virtual void handleTopologyChange();
 
     core::componentmodel::behavior::MechanicalState<Vec3Types>* getMechanicalState() { return mstate; }
-    
-    void buildOctree();	
+    const core::componentmodel::behavior::MechanicalState<Vec3Types>* getMechanicalState() const { return mstate; }
+
+    const VecCoord& getX() const { return *(getMechanicalState()->getX()); }
+    const sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles& getTriangles() const { return *triangles; }
 };
 
 inline Triangle::Triangle(TriangleModel* model, int index)
@@ -169,10 +185,10 @@ inline const Vector3& Triangle::v1() const { return (*model->mstate->getV())[(*(
 inline const Vector3& Triangle::v2() const { return (*model->mstate->getV())[(*(model->triangles))[index][1]]; }
 inline const Vector3& Triangle::v3() const { return (*model->mstate->getV())[(*(model->triangles))[index][2]]; }
 
-inline const Vector3& Triangle::n() const { return model->elems[index].normal; }
-inline       Vector3& Triangle::n()       { return model->elems[index].normal; }
+inline const Vector3& Triangle::n() const { return model->elems.getValue()[index].normal; }
+inline       Vector3& Triangle::n()       { return (*model->elems.beginEdit())[index].normal; }
 
-inline int            Triangle::flags() const { return model->elems[index].flags; }
+inline int            Triangle::flags() const { return model->getTriangleFlags(index); }
     
 } // namespace collision
 

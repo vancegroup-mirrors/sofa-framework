@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -95,7 +95,7 @@ void EllipsoidForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, 
             //grad /= gnorm; //.normalize();
             Real forceIntensity = -stiffabs*v/gnorm;
             Real dampingIntensity = this->damping.getValue()*helper::rabs(v);
-            Deriv force = forceIntensity*grad - v1[i]*dampingIntensity;
+            Deriv force = grad*forceIntensity - v1[i]*dampingIntensity;
             f1[i]+=force;
             Contact c;
             c.index = i;
@@ -133,7 +133,7 @@ void EllipsoidForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx
 template <class DataTypes> 
     double EllipsoidForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
-    std::cerr<<"EllipsoidForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"EllipsoidForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 

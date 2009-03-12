@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,7 @@
 #define SOFA_HELPER_GL_TEMPLATE_H
 
 #include <sofa/helper/system/gl.h>
+#include <sofa/helper/helper.h>
 
 namespace sofa
 {
@@ -93,7 +94,66 @@ inline void glVertexT<float>(const float& c)
 }
 
 
+////////////////////////////////////////
 
+
+template<int N>
+		inline void glTexCoordNv(const float* p)
+{
+	glTexCoord3f(p[0],p[1],p[2]);
+}
+
+template<>
+		inline void glTexCoordNv<2>(const float* p)
+{
+	glTexCoord2f(p[0],p[1]);
+}
+
+template<>
+inline void glTexCoordNv<1>(const float* p)
+{
+	glTexCoord2f(p[0],0.0f);
+}
+
+template<int N>
+		inline void glTexCoordNv(const double* p)
+{
+	glTexCoord3d(p[0],p[1],p[2]);
+}
+
+template<>
+		inline void glTexCoordNv<2>(const double* p)
+{
+	glTexCoord2d(p[0],p[1]);
+}
+
+template<>
+		inline void glTexCoordNv<1>(const double* p)
+{
+	glTexCoord2d(p[0],0.0);
+}
+
+template<class Coord>
+		inline void glTexCoordT(const Coord& c)
+{
+	glTexCoordNv<Coord::static_size>(c.ptr());
+}
+
+template<>
+		inline void glTexCoordT<double>(const double& c)
+{
+	glTexCoord3d(c,0.0,0.0);
+}
+
+template<>
+		inline void glTexCoordT<float>(const float& c)
+{
+	glTexCoord3f(c,0.0f,0.0f);
+}
+
+
+
+///////////////////////////////////////
 
 template<int N>
 inline void glNormalNv(const float* p)
@@ -158,6 +218,66 @@ inline void glTranslate(const double& c1, const double& c2, const double& c3)
 {
 	 glTranslated(c1, c2, c3);
 }
+
+template<int N>
+inline void glTranslateNv(const float* p)
+{
+	glTranslatef(p[0],p[1],p[2]);
+}
+
+template<>
+		inline void glTranslateNv<2>(const float* p)
+{
+	glTranslatef(p[0],p[1],0.0f);
+}
+
+template<>
+		inline void glTranslateNv<1>(const float* p)
+{
+	glTranslatef(p[0],0.0f,0.0f);
+}
+
+template<int N>
+		inline void glTranslateNv(const double* p)
+{
+	glTranslated(p[0],p[1],p[2]);
+}
+
+template<>
+		inline void glTranslateNv<2>(const double* p)
+{
+	glTranslated(p[0],p[1],0.0);
+}
+
+template<>
+		inline void glTranslateNv<1>(const double* p)
+{
+	glTranslated(p[0],0.0,0.0);
+}
+
+template<class Coord>
+		inline void glTranslateT(const Coord& c)
+{
+	glTranslateNv<Coord::static_size>(c.ptr());
+}
+
+template<>
+inline void glTranslateT<double>(const double& c)
+{
+	glTranslated(c,0.0,0.0);
+}
+
+template<>
+inline void glTranslateT<float>(const float& c)
+{
+	glTranslatef(c,0.0f,0.0f);
+}
+
+
+////////////
+
+
+
 
 inline void glScale(const float& c1, const float& c2, const float& c3)
 {

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_COLLISION_LINEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/component/collision/PointModel.h>
@@ -68,7 +68,7 @@ public:
 //	const Vector3* tLeft() const;
 };
 
-class LineModel : public core::CollisionModel
+class SOFA_COMPONENT_COLLISION_API LineModel : public core::CollisionModel
 {
 protected:
 	struct LineData

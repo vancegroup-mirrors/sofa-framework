@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,7 +29,7 @@
 
 //#define umul24(x,y) ((x)*(y))
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 namespace sofa
 {
 namespace gpu
@@ -48,6 +48,17 @@ void CudaVisualModelCuda3f1_calcTNormals(unsigned int nbElem, unsigned int nbVer
 void CudaVisualModelCuda3f1_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
 void CudaVisualModelCuda3f1_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void CudaVisualModelCuda3d_calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x);
+
+void CudaVisualModelCuda3d1_calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d1_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d1_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 }
 
 //////////////////////
@@ -438,8 +449,57 @@ void CudaVisualModelCuda3f1_calcVNormals(unsigned int nbElem, unsigned int nbVer
 }
 
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+void CudaVisualModelCuda3d_calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+{
+    CudaCudaVisualModelTextures<double,CudaVec3<double> >::setX(x);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    CudaVisualModelCuda3t_calcTNormals_kernel<double, CudaVec3<double> ><<< grid1, threads1 >>>(nbElem, (const int*)elems, (double*)fnormals, (const CudaVec3<double>*)x);
+}
+
+void CudaVisualModelCuda3d_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+{
+    CudaCudaVisualModelTextures<double,CudaVec3<double> >::setX(x);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    CudaVisualModelCuda3t_calcQNormals_kernel<double, CudaVec3<double> ><<< grid1, threads1 >>>(nbElem, (const int4*)elems, (double*)fnormals, (const CudaVec3<double>*)x);
+}
+
+void CudaVisualModelCuda3d_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x)
+{
+    dim3 threads2(BSIZE,1);
+    dim3 grid2((nbVertex+BSIZE-1)/BSIZE,1);
+    CudaVisualModelCuda3t_calcVNormals_kernel<double, CudaVec3<double> ><<< grid2, threads2 >>>(nbVertex, nbElemPerVertex, (const int*)velems, (double*)vnormals, (const CudaVec3<double>*)fnormals);
+}
+
+void CudaVisualModelCuda3d1_calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+{
+    CudaCudaVisualModelTextures<double,CudaVec4<double> >::setX(x);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    CudaVisualModelCuda3t1_calcTNormals_kernel<double, CudaVec4<double> ><<< grid1, threads1 >>>(nbElem, (const int*)elems, (CudaVec4<double>*)fnormals, (const CudaVec4<double>*)x);
+}
+
+void CudaVisualModelCuda3d1_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+{
+    CudaCudaVisualModelTextures<double,CudaVec4<double> >::setX(x);
+    dim3 threads1(BSIZE,1);
+    dim3 grid1((nbElem+BSIZE-1)/BSIZE,1);
+    CudaVisualModelCuda3t1_calcQNormals_kernel<double, CudaVec4<double> ><<< grid1, threads1 >>>(nbElem, (const int4*)elems, (CudaVec4<double>*)fnormals, (const CudaVec4<double>*)x);
+}
+
+void CudaVisualModelCuda3d1_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x)
+{
+    dim3 threads2(BSIZE,1);
+    dim3 grid2((nbVertex+BSIZE-1)/BSIZE,1);
+    CudaVisualModelCuda3t1_calcVNormals_kernel<double, CudaVec4<double> ><<< grid2, threads2 >>>(nbVertex, nbElemPerVertex, (const int*)velems, (CudaVec4<double>*)vnormals, (const CudaVec4<double>*)fnormals);
+}
+
+#endif // SOFA_GPU_CUDA_DOUBLE
+
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

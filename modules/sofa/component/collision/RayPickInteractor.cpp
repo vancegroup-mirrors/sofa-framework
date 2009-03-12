@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,8 +32,9 @@
 #include <sofa/component/mapping/BarycentricMapping.h>
 #include <sofa/component/mapping/RigidMapping.h>
 #include <sofa/component/mapping/SkinningMapping.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/helper/Factory.inl>
 #include <sofa/helper/system/gl.h>
 
@@ -102,13 +103,17 @@ BasePickingManager::~BasePickingManager()
 }
 
 
-
+#define RayPickInteractor_CONTACT_STIFFNESS 100.0
 RayPickInteractor::RayPickInteractor()
-:  state(DISABLED), button(0)
+: useCollisions(initData(&useCollisions,true,"useCollisions","Use Collision Pipeline for picking"))
+, state(DISABLED), button(0)
 {
     transform.identity();
-    this->contactStiffness.setValue(100);
+    this->contactStiffness.setValue(RayPickInteractor_CONTACT_STIFFNESS);
+    this->f_isMechanical.setValue(false);
+    //this->f_printLog.setValue(true);
 }
+#undef RayPickInteractor_CONTACT_STIFFNESS
 
 RayPickInteractor::~RayPickInteractor()
 {
@@ -117,10 +122,11 @@ RayPickInteractor::~RayPickInteractor()
 void RayPickInteractor::init()
 {
     this->RayModel::init();
+    this->VoidMapping::init();
     this->getContext()->get<BasePickingManager,helper::vector<BasePickingManager*> >(&pickManagers,core::objectmodel::BaseContext::SearchRoot);
     if (pickManagers.empty())
     {
-	std::cout << "RayPickInteractor: creating default pick managers." << std::endl;
+	sout << "RayPickInteractor: creating default pick managers." << sendl;
 	BasePickingManager::CreateAll(pickManagers, this->getContext());
     }
 }
@@ -147,10 +153,11 @@ void RayPickInteractor::pickBody()
 	for (int r=0; r<getNbRay(); r++)
 	{
 		Ray ray = getRay(r);
-		double dist = 0;
-		core::componentmodel::collision::DetectionOutput* collision = findFirstCollision(ray,&dist);
-		if (collision==NULL)
+		//double dist = 0;
+		PickPoints collision;
+		if (!findFirstCollision(ray, collision, true))
 			continue;
+		/*
 		core::CollisionElementIterator elem1 = collision->elem.first;
 		core::CollisionElementIterator elem2 = collision->elem.second;
 		Vector3 p1 = collision->point[0];
@@ -162,44 +169,49 @@ void RayPickInteractor::pickBody()
 			p2 = collision->point[0];
 			p1 = collision->point[1];
 		}
+		*/
 		bool processed = false;
 		for (unsigned int i=0;!processed && i<pickManagers.size();++i)
 		{
-		    if (pickManagers[i]->attach(button, elem1, elem2, dist, p1, p2))
+		    if (pickManagers[i]->attach(button, collision)) //elem1, elem2, dist, p1, p2))
 			processed = true;
 		}
-		if (!processed) // default cases not yet handled by external managers
-		switch(button)
+		if (!processed && collision.model2) // default cases not yet handled by external managers
 		{
-		case 0:	// attach body
-		break;
-
-		case 1: // element removal
-			{
-
-				sofa::core::componentmodel::topology::TopologyModifier* topoMod; 
-				elem2.getCollisionModel()->getContext()->get(topoMod);	
-
-				if(topoMod){ // dynamic topology
-					// Handle Removing of topological element (from any type of topology)
-					topo_changeManager.removeItemsFromCollisionModel(elem2);
-				}
-			}
+		    core::CollisionElementIterator elem2( collision.model2, collision.elem2);
+		    Vector3 p2 = collision.p2;
+		    switch(button)
+		    {
+		    case 0:	// attach body
 			break;
-
-		case 2: // incision
-			{
-				sofa::core::componentmodel::topology::TopologyModifier* topoMod; 
-				elem2.getCollisionModel()->getContext()->get(topoMod);	
-
-				if(topoMod){ // dynamic topology
-					// Handle Cutting, using global variables to register the two last input points
-					bool attach = topo_changeManager.incisionCollisionModel(elem2, p2, state == FIRST_INPUT, state == IS_CUT);
-					if(attach)
-						state = ATTACHED;
-				}
+			
+		    case 1: // element removal
+		    {
+			
+			sofa::core::componentmodel::topology::TopologyModifier* topoMod; 
+			elem2.getCollisionModel()->getContext()->get(topoMod);	
+			
+			if(topoMod){ // dynamic topology
+			    // Handle Removing of topological element (from any type of topology)
+			    topo_changeManager.removeItemsFromCollisionModel(elem2);
 			}
-			break;
+		    }
+		    break;
+		    
+		    case 2: // incision
+		    {
+			sofa::core::componentmodel::topology::TopologyModifier* topoMod; 
+			elem2.getCollisionModel()->getContext()->get(topoMod);	
+			
+			if(topoMod){ // dynamic topology
+			    // Handle Cutting, using global variables to register the two last input points
+			    bool attach = topo_changeManager.incisionCollisionModel(elem2, p2, state == FIRST_INPUT, state == IS_CUT);
+			    if(attach)
+				state = ATTACHED;
+			}
+		    }
+		    break;
+		    }
 		}
 	}
 
@@ -214,32 +226,32 @@ void RayPickInteractor::pickBody()
 
 	if (oldState != state)
 	{
-		std::cout << "Interactor State: ";
+		sout << "Interactor State: ";
 		switch (state)
 		{
 		case DISABLED:
-			std::cout << "DISABLED";
+			sout << "DISABLED";
 			break;
 		case PRESENT:
-			std::cout << "PRESENT";
+			sout << "PRESENT";
 			break;
 		case ACTIVE:
-			std::cout << "ACTIVE";
+			sout << "ACTIVE";
 			break;
 		case ATTACHED:
-			std::cout << "ATTACHED";
+			sout << "ATTACHED";
 			break;
 		case FIRST_INPUT:
-			std::cout << "FIRST_INPUT"; // first input point for incision in a triangular mesh
+			sout << "FIRST_INPUT"; // first input point for incision in a triangular mesh
 			break;
 		case SECOND_INPUT:
-			std::cout << "SECOND_INPUT"; // second input point for incision in a triangular mesh
+			sout << "SECOND_INPUT"; // second input point for incision in a triangular mesh
 			break;
 		case IS_CUT:
-			std::cout << "IS_CUT"; 
+			sout << "IS_CUT"; 
 			break;
 		}
-		std::cout << std::endl;
+		sout << sendl;
 	}
 }
 
@@ -259,12 +271,12 @@ void RayPickInteractor::updatePosition(double /*dt*/)
 	}
 	else if (state != DISABLED && getNbRay()==0)
 	{ // we need to enable our interactor
-		std::cout << "ADD RAY"<<std::endl;
+		sout << "ADD RAY"<<sendl;
 		setNbRay(1);
 		getRay(0).l() = 10000;
 	}
 
-	if ((state == ACTIVE || state == FIRST_INPUT || state == IS_CUT) && !contacts.empty()) // state FIRST_INPUT controls the first input point for incision in a triangular mesh
+	if ((state == ACTIVE || state == FIRST_INPUT || state == IS_CUT) && (!useCollisions.getValue() || !contacts.empty())) // state FIRST_INPUT controls the first input point for incision in a triangular mesh
 	{ 
 		pickBody();
 	} 
@@ -290,6 +302,12 @@ void RayPickInteractor::updatePosition(double /*dt*/)
 void RayPickInteractor::newPosition(const Vector3& /*translation*/, const Quat& /*rotation*/, const Mat4x4d& transformation)
 {
     transform = transformation;
+}
+
+void RayPickInteractor::setRayRadius(double r0, double r1)
+{
+    rayRadius0 = r0;
+    rayRadius1 = r1;
 }
 
 void RayPickInteractor::newEvent(const std::string& command)
@@ -353,42 +371,45 @@ void RayPickInteractor::newEvent(const std::string& command)
 
     if (oldState != state)
     {
-        std::cout << "Interactor State: ";
+        sout << "Interactor State: ";
         switch (state)
         {
         case DISABLED:
-            std::cout << "DISABLED";
+            sout << "DISABLED";
             break;
         case PRESENT:
-            std::cout << "PRESENT";
+            sout << "PRESENT";
             break;
         case ACTIVE:
-            std::cout << "ACTIVE, button = "<<button;
+            sout << "ACTIVE, button = "<<button;
             break;
         case ATTACHED:
-            std::cout << "ATTACHED";
+            sout << "ATTACHED";
             break;
 		case FIRST_INPUT:
-            std::cout << "FIRST_INPUT, button = "<<button; // First input point for incision
+            sout << "FIRST_INPUT, button = "<<button; // First input point for incision
             break;
         case SECOND_INPUT:
-            std::cout << "SECOND_INPUT, button = "<<button; // Second input point for incision
+            sout << "SECOND_INPUT, button = "<<button; // Second input point for incision
             break;
 		case IS_CUT:
-            std::cout << "IS_CUT";
+            sout << "IS_CUT";
             break;
         }
-        std::cout << std::endl;
+        sout << sendl;
     }
 }
 
-core::componentmodel::collision::DetectionOutput* RayPickInteractor::findFirstCollision(const Ray& ray, double* dist)
+bool RayPickInteractor::findFirstCollision(const Ray& ray, PickPoints& result, bool create)
 {
-    core::componentmodel::collision::DetectionOutput* result = NULL;
+    //core::componentmodel::collision::DetectionOutput* result = NULL;
+    result = PickPoints();
     const Vector3& origin = ray.origin();
     const Vector3& direction = ray.direction();
     double l = ray.l();
-    double mindist = 0;
+    //double mindist = 0;
+    if (useCollisions.getValue())
+    {
     for (std::set<BaseRayContact*>::iterator it = contacts.begin(); it!=contacts.end(); ++it)
     {
         const sofa::helper::vector<core::componentmodel::collision::DetectionOutput*>& collisions = (*it)->getDetectionOutputs();
@@ -402,10 +423,15 @@ core::componentmodel::collision::DetectionOutput* RayPickInteractor::findFirstCo
                 double d = (collision->point[1] - origin)*direction;
                 if (d<0.0 || d>l)
                     continue;
-                if (result==NULL || d<mindist)
+                if (result.model1==NULL || d<result.dist)
                 {
-                    result = collision;
-                    mindist = d;
+		    result.model1 = collision->elem.second.getCollisionModel();
+		    result.elem1 = collision->elem.second.getIndex();
+		    result.model2 = collision->elem.first.getCollisionModel();
+		    result.elem2 = collision->elem.first.getIndex();
+		    result.p1 = collision->point[1];
+		    result.p2 = collision->point[0];
+                    result.dist = d;
                 }
             }
             else
@@ -416,17 +442,76 @@ core::componentmodel::collision::DetectionOutput* RayPickInteractor::findFirstCo
                     double d = (collision->point[0] - origin)*direction;
                     if (d<0.0 || d>l)
                         continue;
-                    if (result==NULL || d<mindist)
+                    if (result.model1==NULL || d<result.dist)
                     {
-                        result = collision;
-                        mindist = d;
+			result.model1 = collision->elem.first.getCollisionModel();
+			result.elem1 = collision->elem.first.getIndex();
+			result.model2 = collision->elem.second.getCollisionModel();
+			result.elem2 = collision->elem.second.getIndex();
+			result.p1 = collision->point[0];
+			result.p2 = collision->point[1];
+			result.dist = d;
                     }
                 }
         }
     }
-    if (dist!=NULL && result!=NULL)
-        *dist = mindist;
-    return result;
+    }
+    else if (!create)
+    {
+	if ((unsigned)ray.getIndex() < pickPoints.size() && pickPoints[ray.getIndex()])
+	    result = *pickPoints[ray.getIndex()];
+	else
+	    result = PickPoints();
+    }
+    else
+    {
+	if (pickPoints.size() != (unsigned int)getNbRay())
+	{
+	    for (unsigned int i=getNbRay(); i < pickPoints.size(); ++i)
+	    {
+		if (pickPoints[i])
+		{
+		    //delete pickPoints[i]->model1;
+		    delete pickPoints[i];
+		}
+	    }
+	    //while (pickPoints.size() < (unsigned int) getNbRay())
+	    //pickPoints.push_back(NULL);
+	    pickPoints.resize(getNbRay());
+	}
+	if (pickPoints[ray.getIndex()])
+	{
+	    //delete pickPoints[ray.getIndex()]->model1;
+	    delete pickPoints[ray.getIndex()];
+	    pickPoints[ray.getIndex()] = NULL;
+	}
+	// Look for particles hit by this ray
+	simulation::MechanicalPickParticlesVisitor picker(origin, direction, rayRadius0*1000, 0);
+	core::objectmodel::BaseNode* n = dynamic_cast<core::objectmodel::BaseNode*>(this->getContext());
+	while (n && n->getParent()) n = n->getParent();
+	if (n)
+	{
+	    sout << "Picking particles in states below " << n->getName() << sendl;
+	    picker.execute(n->getContext());
+	}
+	else
+	    serr << "ERROR: root node not found." << sendl;
+	if (!picker.particles.empty())
+	{
+	    result.model1 = this;
+	    result.elem1 = ray.getIndex();
+	    result.dist = picker.particles.begin()->first;
+	    result.p1 = origin + direction*result.dist;
+	    result.model2 = NULL;
+	    result.mstate2 = picker.particles.begin()->second.first;
+	    result.elem2 = picker.particles.begin()->second.second;
+	    result.p2[0] = result.mstate2->getPX(result.elem2);
+	    result.p2[1] = result.mstate2->getPY(result.elem2);
+	    result.p2[2] = result.mstate2->getPZ(result.elem2);
+	    pickPoints[ray.getIndex()] = new PickPoints(result);
+	}
+    }
+    return result.model1 != NULL;
 }
 
 void RayPickInteractor::draw()
@@ -435,8 +520,8 @@ void RayPickInteractor::draw()
         this->RayModel::draw();
     if (state==PRESENT)
         glColor4f(0,1,0,1);
-    else if (state==ATTACHED)
-        glColor4f(1,1,1,1);
+    //else if (state==ATTACHED)
+    //    glColor4f(1,1,1,1);
     else
         return;
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -444,13 +529,23 @@ void RayPickInteractor::draw()
     for (int r = 0; r < getNbRay(); r++)
     {
         Ray ray = getRay(r);
-        double dist = 0;
-        core::componentmodel::collision::DetectionOutput* collision = findFirstCollision(ray,&dist);
-        if (collision==NULL)
+        PickPoints collision;
+        if (!findFirstCollision(ray, collision, state!=ATTACHED))
             continue;
-        core::CollisionElementIterator elem = collision->elem.first;
-        if (elem.getIndex() < elem.getCollisionModel()->getSize())
-            elem.draw();
+	if (collision.model2)
+	{
+	    core::CollisionElementIterator elem(collision.model2, collision.elem2);
+	    if (elem.getIndex() < elem.getCollisionModel()->getSize())
+		elem.draw();
+	}
+	else
+	{
+	    glPointSize(7);
+	    glBegin(GL_POINTS);
+	    glVertex3dv(collision.p2.ptr());
+	    glEnd();
+	    glPointSize(1);
+	}
     }
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glColor4f(1,1,1,1);

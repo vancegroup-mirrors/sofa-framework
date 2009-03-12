@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_COLLISION_CUBEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/defaulttype/Vec3Types.h>
 
 namespace sofa
@@ -56,36 +56,37 @@ public:
 	const std::pair<Cube,Cube>& subcells() const;
 };
 
-class CubeModel : public core::CollisionModel
+class SOFA_COMPONENT_COLLISION_API CubeModel : public core::CollisionModel
 {
 protected:
-	
+
 	struct CubeData
 	{
 		Vector3 minBBox, maxBBox;
 		std::pair<Cube,Cube> subcells;
 	    std::pair<core::CollisionElementIterator,core::CollisionElementIterator> children; ///< Note that children is only meaningfull if subcells in empty
 	};
-	
+
 	class CubeSortPredicate;
-	
+
 	sofa::helper::vector<CubeData> elems;
 	sofa::helper::vector<int> parentOf; ///< Given the index of a child leaf element, store the index of the parent cube
-	
+
 public:
 	typedef core::CollisionElementIterator ChildIterator;
 	typedef Vec3Types DataTypes;
 	typedef Cube Element;
 	friend class Cube;
-	
+
 	CubeModel();
 
 	virtual void resize(int size);
 
 	void setParentOf(int childIndex, const Vector3& min, const Vector3& max);
+    void setLeafCube(int cubeIndex, int childIndex);
     void setLeafCube(int cubeIndex, std::pair<core::CollisionElementIterator,core::CollisionElementIterator> children, const Vector3& min, const Vector3& max);
 
-	
+
 	unsigned int getNumberCells(){ return elems.size();};
 
 	void getBoundingTree ( sofa::helper::vector< std::pair< Vector3, Vector3> > &bounding )
@@ -110,7 +111,7 @@ public:
 	// -- CollisionModel interface
 
 	virtual void computeBoundingTree(int maxDepth=0);
-	
+
 	virtual std::pair<core::CollisionElementIterator,core::CollisionElementIterator> getInternalChildren(int index) const;
 
 	virtual std::pair<core::CollisionElementIterator,core::CollisionElementIterator> getExternalChildren(int index) const;

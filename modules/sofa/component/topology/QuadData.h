@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -68,7 +68,7 @@ namespace topology
 	* happen (non exhaustive list: Quads added, removed, fused, renumbered).
 	*/
 	template< class T, class Alloc = std::allocator<T> > 
-	class QuadData : public sofa::helper::vector<T, Alloc> 
+	class QuadData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
 	public:
 		/// size_type
@@ -77,36 +77,82 @@ namespace topology
 		typedef typename sofa::helper::vector<T,Alloc>::reference reference;
 		/// const reference to a value (read only)
 		typedef typename sofa::helper::vector<T,Alloc>::const_reference const_reference;
+		/// const iterator 
+		typedef typename sofa::helper::vector<T,Alloc>::const_iterator const_iterator;
 
 	public:
 		/// Constructor
-		QuadData(size_type n, const T& value): sofa::helper::vector<T,Alloc>(n,value) {}
-		/// Constructor
-		QuadData(int n, const T& value): sofa::helper::vector<T,Alloc>(n,value) {}
-		/// Constructor
-		QuadData(long n, const T& value): sofa::helper::vector<T,Alloc>(n,value) {}
-		/// Constructor
-		explicit QuadData(size_type n): sofa::helper::vector<T,Alloc>(n) {}
-		/// Constructor
-		QuadData(const sofa::helper::vector<T, Alloc>& x): sofa::helper::vector<T,Alloc>(x) {}
+		QuadData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+			  void (*createFunc) (int, void*, T&, const Quad &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,
+				void* createParam  = (void*)NULL,
+				void (*destroyFunc)(int, void*, T&) = qd_basicDestroyFunc,
+				void* destroyParam = (void*)NULL )
+		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(data), 
+		m_createFunc(createFunc), m_destroyFunc(destroyFunc), 
+		m_createParam(createParam), m_destroyParam(destroyParam)
+		{}
 
+		/// Constructor
+		QuadData(size_type n, const T& value) : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n, value);
+			this->endEdit();
+		}
+		/// Constructor
+		QuadData(int n, const T& value) : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n, value);
+			this->endEdit();
+		}
+		/// Constructor
+		QuadData(long n, const T& value): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n, value);
+			this->endEdit();
+		}
+		/// Constructor
+		explicit QuadData(size_type n): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n);
+			this->endEdit();
+		}
+		/// Constructor
+		QuadData(const sofa::helper::vector<T, Alloc>& x): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			(*data) = x;
+			this->endEdit();
+		}
 
 #ifdef __STL_MEMBER_TEMPLATES
 		/// Constructor
 		template <class InputIterator>
-		QuadData(InputIterator first, InputIterator last): sofa::helper::vector<T,Alloc>(first,last){}
+		QuadData(InputIterator first, InputIterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->assign(first, last);
+			this->endEdit();
+		}
 #else /* __STL_MEMBER_TEMPLATES */
 		/// Constructor
-		QuadData(typename QuadData<T>::const_iterator first, typename QuadData<T,Alloc>::const_iterator last): sofa::helper::vector<T,Alloc>(first,last){}
+		QuadData(const_iterator first, const_iterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->assign(first, last);
+			this->endEdit();
+		}
 #endif /* __STL_MEMBER_TEMPLATES */
-
 
 		/// Optionnaly takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
 		QuadData( void (*createFunc) (int, void*, T&, const Quad& ,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,  
 				void* createParam  = (void*)NULL, 
 				void (*destroyFunc)(int, void*, T&                                     ) = qd_basicDestroyFunc, 
 				void* destroyParam = (void*)NULL ) 
-		: sofa::helper::vector<T,Alloc>(), 
+		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false), 
 		m_createFunc(createFunc), m_destroyFunc(destroyFunc)
 		//,  m_createHexahedronFunc(0), m_destroyHexahedronFunc(0)
 		,m_createParam(createParam), m_destroyParam(destroyParam)

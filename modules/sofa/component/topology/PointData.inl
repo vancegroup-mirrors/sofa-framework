@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -61,8 +61,9 @@ namespace topology
 			 {
 				 if (m_createTetrahedronFunc) 
 				 {
-					 const TetrahedraAdded *ea=static_cast< const TetrahedraAdded* >( *changeIt );
-					 (*m_createTetrahedronFunc)(ea->tetrahedronIndexArray,m_createParam,*this);
+					const TetrahedraAdded *ea=static_cast< const TetrahedraAdded* >( *changeIt );
+					(*m_createTetrahedronFunc)(ea->tetrahedronIndexArray,m_createParam, *(this->beginEdit() ) );
+					this->endEdit();
 				 }
 				 break;
 			 }
@@ -70,8 +71,9 @@ namespace topology
 			 {
 				 if (m_destroyTetrahedronFunc) 
 				 {
-					 const TetrahedraRemoved *er=static_cast< const TetrahedraRemoved * >( *changeIt );
-					 (*m_destroyTetrahedronFunc)(er->getArray(),m_createParam,*this);
+					const TetrahedraRemoved *er=static_cast< const TetrahedraRemoved * >( *changeIt );
+					(*m_destroyTetrahedronFunc)(er->getArray(),m_createParam,*(this->beginEdit() ) );
+					this->endEdit();
 				 }
 				 break;
 			 }		
@@ -79,8 +81,9 @@ namespace topology
 			 {
 				 if (m_createTriangleFunc) 
 				 {
-					 const TrianglesAdded *ea=static_cast< const TrianglesAdded* >( *changeIt );
-					 (*m_createTriangleFunc)(ea->triangleIndexArray,m_createParam,*this);
+					const TrianglesAdded *ea=static_cast< const TrianglesAdded* >( *changeIt );
+					(*m_createTriangleFunc)(ea->triangleIndexArray,m_createParam,*(this->beginEdit() ) );
+					this->endEdit();
 				 }
 				 break;
 			 }
@@ -88,8 +91,9 @@ namespace topology
 			 {
 				 if (m_destroyTriangleFunc) 
 				 {
-					 const TrianglesRemoved *er=static_cast< const TrianglesRemoved * >( *changeIt );
-					 (*m_destroyTriangleFunc)(er->getArray(),m_createParam,*this);
+					const TrianglesRemoved *er=static_cast< const TrianglesRemoved * >( *changeIt );
+					(*m_destroyTriangleFunc)(er->getArray(),m_createParam, *(this->beginEdit() ) );
+					this->endEdit();
 				 }
 				 break;
 			 }						 
@@ -97,8 +101,9 @@ namespace topology
 			 {
 				 if (m_createEdgeFunc) 
 				 {
-					 const EdgesAdded *ea=static_cast< const EdgesAdded* >( *changeIt );
-					 (*m_createEdgeFunc)(ea->edgeIndexArray,m_createParam,*this);
+					const EdgesAdded *ea=static_cast< const EdgesAdded* >( *changeIt );
+					(*m_createEdgeFunc)(ea->edgeIndexArray,m_createParam,*(this->beginEdit() ) );
+					this->endEdit();
 				 }
 				 break;
 			 }
@@ -106,8 +111,9 @@ namespace topology
 			 {
 				 if (m_destroyEdgeFunc) 
 				 {
-					 const EdgesRemoved *er=static_cast< const EdgesRemoved * >( *changeIt );
-					 (*m_destroyEdgeFunc)(er->getArray(),m_createParam,*this);
+					const EdgesRemoved *er=static_cast< const EdgesRemoved * >( *changeIt );
+					(*m_destroyEdgeFunc)(er->getArray(),m_createParam,*(this->beginEdit() ) );
+					this->endEdit();
 				 }
 				 break;
 			 }
@@ -134,7 +140,8 @@ namespace topology
 			 }
 			 case core::componentmodel::topology::POINTSRENUMBERING:
 			 {
-				 const sofa::helper::vector<unsigned int> &tab = ( static_cast< const PointsRenumbering * >( *changeIt ) )->getinv_IndexArray();
+
+				 const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRenumbering * >( *changeIt ) )->getIndexArray(); 
 				 renumber( tab );
 				 break;
 			 }
@@ -150,9 +157,13 @@ namespace topology
 	template <typename T, typename Alloc>
 	void PointData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 
 	{
-		T tmp = (*this)[i1];
-		(*this)[i1] = (*this)[i2];
-		(*this)[i2] = tmp;
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+		T tmp = data[i1];
+		data[i1] = data[i2];
+		data[i2] = tmp;
+
+		this->endEdit();
 	}
 
 	template <typename T, typename Alloc>
@@ -160,13 +171,15 @@ namespace topology
 								const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors, 
 								const sofa::helper::vector< sofa::helper::vector< double > >& coefs) 
 	{
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
 		// Using default values
-		unsigned int i0 = this->size();
-		this->resize(i0+nbPoints);
+		unsigned int i0 = data.size();
+		data.resize(i0+nbPoints);
 
 		for (unsigned int i = 0; i < nbPoints; ++i)
 		{
-			T& t = (*this)[i0+i];
+			T& t = data[i0+i];
 			if (ancestors.empty() || coefs.empty())
 			{
 				const sofa::helper::vector< unsigned int > empty_vecint;
@@ -176,6 +189,8 @@ namespace topology
 			else
 				m_createFunc( i0+i, m_createParam, t, ancestors[i], coefs[i] );
 		}
+
+		this->endEdit();
 	}
 
 
@@ -183,27 +198,35 @@ namespace topology
 	template <typename T, typename Alloc>
 	void PointData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index ) 
 	{
-		unsigned int last = this->size() -1;
+		unsigned int last = this->getValue().size() -1;
+
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
 
 		for (unsigned int i = 0; i < index.size(); ++i)
 		{
-			m_destroyFunc( index[i], m_destroyParam, (*this)[index[i]] );
+			m_destroyFunc( index[i], m_destroyParam, data[index[i]] );
 			swap( index[i], last );
 			--last;
 		}
 
-		resize( this->size() - index.size() );
+		data.resize( data.size() - index.size() );
+		this->endEdit();
 	}
 
 
 	template <typename T, typename Alloc>
 	void PointData<T,Alloc>::renumber( const sofa::helper::vector<unsigned int> &index ) 
 	{
-		sofa::helper::vector< T,Alloc > copy = (*this); // not very efficient memory-wise, but I can see no better solution...
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+		sofa::helper::vector< T,Alloc > copy = this->getValue(); // not very efficient memory-wise, but I can see no better solution...
 		for (unsigned int i = 0; i < index.size(); ++i)
 		{
-			(*this)[i] = copy[ index[i] ];
+			data[i] = copy[ index[i] ];
+
 		}
+
+		this->endEdit();
 	}
 
 } // namespace topology

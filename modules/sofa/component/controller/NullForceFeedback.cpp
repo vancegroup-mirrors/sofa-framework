@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,10 +38,10 @@ void NullForceFeedback::init()
 {
 	this->ForceFeedback::init();
 	OmniDriver* driver = context->get<OmniDriver>(); 
-	cout << "init NullForceFeedback" << driver << " done " << std::endl;
+	sout << "init NullForceFeedback" << driver << " done " << sendl;
 };
 
-void NullForceFeedback::computeForce(double x, double y, double z, double u, double v, double w, double q, double& fx, double& fy, double& fz)
+void NullForceFeedback::computeForce(double /*x*/, double /*y*/, double /*z*/, double /*u*/, double /*v*/, double /*w*/, double /*q*/, double& fx, double& fy, double& fz)
 {
 	fx = fy = fz = 0.0;
 };

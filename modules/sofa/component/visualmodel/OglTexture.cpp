@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 
 namespace sofa
 {
-namespace component 
+namespace component
 {
 
 namespace visualmodel
@@ -48,12 +48,12 @@ OglTexture::OglTexture()
 :textureUnit(initData(&textureUnit, 1, "textureUnit", "Set the texture unit"))
 ,enabled(initData(&enabled, (bool) true, "enabled", "enabled ?"))
 {
-	
+
 }
 
 OglTexture::~OglTexture()
 {
-	
+
 }
 
 void OglTexture::setActiveTexture(unsigned short unit)
@@ -71,16 +71,16 @@ void OglTexture::initVisual()
 	GLint maxTextureUnits;
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTextureUnits);
 	MAX_NUMBER_OF_TEXTURE_UNIT = maxTextureUnits;
-	
+
 	if (textureUnit.getValue() > MAX_NUMBER_OF_TEXTURE_UNIT)
 	{
-		std::cerr << "Unit Texture too high ; set it at the unit texture n°1" << std::endl;
+		serr << "Unit Texture too high ; set it at the unit texture n°1" << sendl;
 		textureUnit.setValue(1);
 	}
-	
+
 	/*if (textureUnit.getValue() < 1)
 		{
-			std::cerr << "Unit Texture 0 not permitted ; set it at the unit texture n°1" << std::endl;
+			serr << "Unit Texture 0 not permitted ; set it at the unit texture n°1" << sendl;
 			textureUnit.setValue(1);
 		}*/
 }
@@ -89,10 +89,10 @@ void OglTexture::reinit()
 {
 	if (textureUnit.getValue() > MAX_NUMBER_OF_TEXTURE_UNIT)
 	{
-		std::cerr << "Unit Texture too high ; set it at the unit texture n°1" << std::endl;
+		serr << "Unit Texture too high ; set it at the unit texture n°1" << sendl;
 		textureUnit.setValue(1);
 	}
-	
+
 }
 void OglTexture::fwdDraw(Pass)
 {
@@ -120,69 +120,75 @@ OglTexture2D::OglTexture2D()
 :texture2DFilename(initData(&texture2DFilename, (std::string) "", "texture2DFilename", "Texture2D Filename"))
 ,repeat(initData(&repeat, (bool) false, "repeat", "Repeat Texture ?"))
 {
-	
+
 }
 
 
 OglTexture2D::~OglTexture2D()
 {
-  if (!texture2D)delete texture2D;  
+  if (!texture2D)delete texture2D;
 }
 
 void OglTexture2D::parse(core::objectmodel::BaseObjectDescription* arg)
 {
 	helper::system::FileRepository fp;
-	if (arg->getAttribute("texture2DFilename")) 
+	if (arg->getAttribute("texture2DFilename"))
 	{
 		texture2DFilename.setValue( arg->getAttribute("texture2DFilename") );
-	} 
+	}
 	img = helper::io::Image::Create(texture2DFilename.getValue());
 
-	if (arg->getAttribute("id")) 
+	if (arg->getAttribute("id"))
 	{
 		id.setValue( arg->getAttribute("id") );
-	} 
-	
-	if (arg->getAttribute("textureUnit")) 
+	}
+
+	if (arg->getAttribute("textureUnit"))
 	{
 		textureUnit.setValue( atoi(arg->getAttribute("textureUnit") ) );
-	} 
+	}
+
+	if (arg->getAttribute("repeat"))
+	{
+		repeat.setValue( ( arg->getAttribute("repeat") != NULL ) );
+	}
 }
 
 void OglTexture2D::initVisual()
 {
 	OglTexture::initVisual();
-	
+
 	if (!img)
 	{
-		std::cerr << "OglTexture2D: Error : OglTexture2D file " << texture2DFilename.getValue() << " not found." << std::endl;
+		serr << "OglTexture2D: Error : OglTexture2D file " << texture2DFilename.getValue() << " not found." << sendl;
 		return;
 	}
-	
+
 	texture2D = new helper::gl::Texture(img);
-	
+
 	texture2D->init();
 	setActiveTexture(textureUnit.getValue());
-	
+
 	bind();
-	
-	if (!repeat.getValue())
+
+	if (repeat.getValue())
+	{
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT );
+
+	}
+	else
 	{
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP );
 	}
-	else
-	{
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT );
-	}
-	
+
 	unbind();
-	
-	shader->setTexture(id.getValue().c_str(), textureUnit.getValue());
-	
+
+	shader->setTexture(indexShader.getValue(), id.getValue().c_str(), textureUnit.getValue());
+
 	setActiveTexture(0);
 }
 
@@ -201,12 +207,12 @@ void OglTexture2D::unbind()
 
 void OglTexture2D::forwardDraw()
 {
-	
+
 }
 
 void OglTexture2D::backwardDraw()
 {
-	
+
 }
 
 

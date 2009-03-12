@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -48,6 +48,7 @@
 #include "sofa/core/componentmodel/behavior/MechanicalState.h"
 #include "sofa/defaulttype/Vec3Types.h"
 #include <sofa/simulation/tree/GNode.h>
+#include "sofapml.h"
 
 namespace sofa
 {
@@ -64,7 +65,7 @@ using namespace sofa::simulation::tree;
 class PMLReader;
 
 
-class LMLReader {
+class SOFA_BUILD_FILEMANAGER_PML_API LMLReader {
 public :
 	LMLReader(char* filename=NULL);
 

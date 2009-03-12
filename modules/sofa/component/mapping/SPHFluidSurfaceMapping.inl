@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,9 +27,10 @@
 
 #include <sofa/component/mapping/SPHFluidSurfaceMapping.h>
 #include <sofa/component/container/SpatialGridContainer.inl>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/core/Mapping.inl>
 #include <sofa/helper/rmath.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <sofa/helper/gl/template.h>
 #include <map>
 #include <list>
@@ -52,7 +53,7 @@ template <class In, class Out>
 void SPHFluidSurfaceMapping<In,Out>::init()
 {
 	this->Inherit::init();
-	simulation::tree::GNode* node = dynamic_cast<simulation::tree::GNode*>(this->getFrom()->getContext());
+	simulation::Node* node = dynamic_cast<simulation::Node*>(this->getFrom()->getContext());
 	if (node)
 	{
 		//the following line produces a compilation error with GCC 3.3 :(
@@ -120,7 +121,7 @@ void SPHFluidSurfaceMapping<In,Out>::createFaces(OutVecCoord& out, const Cell** 
 
 	static const int edgecell[12] = { 0, 1, 2, 0, 4, 5, 6, 4, 0, 1, 3, 2 };
 	static const int edgepts [12] = { 0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 2 };
-	
+
 	int mk;
 	if (cells[0]->data.val > isoval) mk = 1; else mk=0;
 	if (cells[1]->data.val > isoval) mk|= 2;
@@ -130,7 +131,7 @@ void SPHFluidSurfaceMapping<In,Out>::createFaces(OutVecCoord& out, const Cell** 
 	if (cells[5]->data.val > isoval) mk|= 32;
 	if (cells[7]->data.val > isoval) mk|= 64;
 	if (cells[6]->data.val > isoval) mk|= 128;
-	
+
 	const int* tri=helper::MarchingCubeTriTable[mk];
 	while (*tri>=0)
 	{
@@ -138,9 +139,9 @@ void SPHFluidSurfaceMapping<In,Out>::createFaces(OutVecCoord& out, const Cell** 
 		            cells[edgecell[tri[1]]]->data.p[edgepts[tri[1]]],
 		            cells[edgecell[tri[2]]]->data.p[edgepts[tri[2]]], out.size())<0)
 		{
-			std::cerr << "  mk=0x"<<std::hex<<mk<<std::dec<<" p1="<<tri[0]<<" p2="<<tri[1]<<" p3="<<tri[2]<<std::endl;
-			for (int e=0;e<12;e++) std::cerr << "  e"<<e<<"="<<cells[edgecell[e]]->data.p[edgepts[e]];
-			std::cerr<<std::endl;
+			serr << "  mk=0x"<<std::hex<<mk<<std::dec<<" p1="<<tri[0]<<" p2="<<tri[1]<<" p3="<<tri[2]<<sendl;
+			for (int e=0;e<12;e++) serr << "  e"<<e<<"="<<cells[edgecell[e]]->data.p[edgepts[e]];
+			serr<<sendl;
 		}
 		tri+=3;
 	}
@@ -166,11 +167,11 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 	grid->computeField(sph, r);
 
 	//////// MARCHING CUBE ////////
-	
+
 	const OutReal isoval = (OutReal) getIsoValue();
 	typename Grid::iterator end = grid->gridEnd();
 	typename Grid::iterator it;
-	
+
 	// Create points
 	for (it = grid->gridBegin();it!=end;++it)
 	{
@@ -244,7 +245,7 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 			createPoints(out, x0+x, y0+y, z0+z, c, cx1, cy1, cz1, isoval);
 		}
 	}
-	
+
 	// Create faces
 	for (it = grid->gridBegin();it!=end;++it)
 	{
@@ -339,7 +340,7 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 		}
 	}
 
-	//std::cout << out.size() << " points, "<<seqTriangles.size()<<" faces."<<std::endl;
+	//sout << out.size() << " points, "<<seqTriangles.size()<<" faces."<<sendl;
 }
 
 template <class In, class Out>
@@ -353,14 +354,12 @@ void SPHFluidSurfaceMapping<In,Out>::draw()
 	if (!getContext()->getShowMappings()) return;
 	if (!grid) return;
 		grid->draw();
-	
+
 	float scale = (float)mStep.getValue();
 	typename Grid::iterator end = grid->gridEnd();
 	typename Grid::iterator it;
-	
-	glPointSize(3);
-	glColor4f(1,1,1,1);
-	glBegin(GL_POINTS);
+
+	std::vector< Vector3 > points1;
 	for (it = grid->gridBegin();it!=end;++it)
 	{
 		typename Grid::Key p0 = it->first;
@@ -377,29 +376,25 @@ void SPHFluidSurfaceMapping<In,Out>::draw()
 				for (x=0; x<GRIDDIM; x++)
 				{
 					if (c->data.val > mIsoValue.getValue())
-						glVertex3f((x0+x)*scale,(y0+y)*scale,(z0+z)*scale);
+					  points1.push_back(defaulttype::Vector3((x0+x)*scale,(y0+y)*scale,(z0+z)*scale));
 					c+=DX;
 				}
 			}
 		}
 	}
-	glEnd();
-	glPointSize(1);
-	
-	glPointSize(5);
-	glColor4f(0.5f,1,0.5f,1);
-	glBegin(GL_POINTS);
+	simulation::getSimulation()->DrawUtility.drawPoints(points1, 3, Vec<4,float>(1,1,1,1));
+
+
+	std::vector< Vector3 > points2;
 	const OutVecCoord& out = *this->toModel->getX();
 	for (unsigned int i=0; i<out.size(); ++i)
 	{
-		helper::gl::glVertexT(out[i]);
+	  points2.push_back(out[i]);
 	}
-	glEnd();
-	glPointSize(1);
-	
-	//glLineSize(3);
-	glColor4f(0,1,0,1);
-	glBegin(GL_LINES);
+	simulation::getSimulation()->DrawUtility.drawPoints(points2, 5, Vec<4,float>(0.5,1,0.5,1));
+
+
+	std::vector< Vector3 > points3;
 	for (it = grid->gridBegin();it!=end;++it)
 	{
 		typename Grid::Key p0 = it->first;
@@ -417,26 +412,25 @@ void SPHFluidSurfaceMapping<In,Out>::draw()
 				{
 					if (c->data.p[0]>0)
 					{
-						glVertex3f((x0+x)*scale,(y0+y)*scale,(z0+z)*scale);
-						glVertex3f((x0+x+1)*scale,(y0+y)*scale,(z0+z)*scale);
+					  points3.push_back(defaulttype::Vector3((x0+x)*scale,(y0+y)*scale,(z0+z)*scale));
+					  points3.push_back(defaulttype::Vector3((x0+x+1)*scale,(y0+y)*scale,(z0+z)*scale));
 					}
 					if (c->data.p[1]>0)
 					{
-						glVertex3f((x0+x)*scale,(y0+y)*scale,(z0+z)*scale);
-						glVertex3f((x0+x)*scale,(y0+y+1)*scale,(z0+z)*scale);
+					  points3.push_back(defaulttype::Vector3((x0+x)*scale,(y0+y)*scale,(z0+z)*scale));
+					  points3.push_back(defaulttype::Vector3((x0+x)*scale,(y0+y+1)*scale,(z0+z)*scale));
 					}
 					if (c->data.p[2]>0)
 					{
-						glVertex3f((x0+x)*scale,(y0+y)*scale,(z0+z)*scale);
-						glVertex3f((x0+x)*scale,(y0+y)*scale,(z0+z+1)*scale);
+					  points3.push_back(defaulttype::Vector3((x0+x)*scale,(y0+y)*scale,(z0+z)*scale));
+					  points3.push_back(defaulttype::Vector3((x0+x)*scale,(y0+y)*scale,(z0+z+1)*scale));
 					}
 					c+=DX;
 				}
 			}
 		}
 	}
-	glEnd();
-	//glLineSize(1);
+	simulation::getSimulation()->DrawUtility.drawLines(points3, 1, Vec<4,float>(0,1,0,1));
 }
 
 } // namespace mapping

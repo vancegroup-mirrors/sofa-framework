@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -40,6 +40,7 @@
 #include <sofa/core/componentmodel/behavior/BaseForceField.h>
 #include <sofa/core/componentmodel/behavior/InteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/BaseConstraint.h>
+#include <sofa/core/componentmodel/behavior/BaseLMConstraint.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/componentmodel/behavior/BaseMass.h>
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
@@ -71,7 +72,7 @@ namespace core
  *  \see RegisterObject for how new classes should be registered.
  *
  */
-class ObjectFactory
+class SOFA_CORE_API ObjectFactory
 {
 public:
 
@@ -120,6 +121,9 @@ public:
     /// Get an entry given a class name (or alias)
     ClassEntry* getEntry(std::string classname);
 
+    /// Test if a creator exists for a given classname
+    bool hasCreator(std::string classname);
+
     /// Fill the given vector with all the registered classes
     void getAllEntries(std::vector<ClassEntry*>& result);
 
@@ -159,6 +163,12 @@ public:
     static void ResetAlias(std::string name, ClassEntry* previous)
     {
         getInstance()->resetAlias(name, previous);
+    }
+
+    /// \copydoc hasCreator
+    static bool HasCreator(std::string classname)
+    {
+        return getInstance()->hasCreator(classname);
     }
 
     /// Dump the content of the factory to a text stream.
@@ -213,7 +223,7 @@ public:
  *  \endcode
  *
  */
-class RegisterObject
+class SOFA_CORE_API RegisterObject
 {
 protected:
     /// Class entry being constructed
@@ -244,7 +254,7 @@ public:
     /// that is, if T is derived from U
     /// taken from Modern C++ Design
     template <class T, class U>
-    class Conversion
+    class SOFA_CORE_API Conversion
     {
         typedef char Small;
         class Big {char dummy[2];};
@@ -265,9 +275,9 @@ public:
         //RealClass* p1=NULL;
         //BaseClass* p2=NULL;
         //if (res)
-        //    std::cout << "class "<<RealClass::typeName(p1)<<" implements "<<BaseClass::typeName(p2)<<std::endl;
+        //    sout << "class "<<RealClass::typeName(p1)<<" implements "<<BaseClass::typeName(p2)<<sendl;
         //else
-        //    std::cout << "class "<<RealClass::typeName(p1)<<" does not implement "<<BaseClass::typeName(p2)<<std::endl;
+        //    sout << "class "<<RealClass::typeName(p1)<<" does not implement "<<BaseClass::typeName(p2)<<sendl;
         return res;
     }
 
@@ -301,6 +311,8 @@ public:
             entry.baseClasses.insert("ForceField");
         if (implements<RealObject,core::componentmodel::behavior::InteractionForceField>())
             entry.baseClasses.insert("InteractionForceField");
+        if (implements<RealObject,core::componentmodel::behavior::BaseLMConstraint>())
+            entry.baseClasses.insert("Constraint");
         if (implements<RealObject,core::componentmodel::behavior::BaseConstraint>())
             entry.baseClasses.insert("Constraint");
         if (implements<RealObject,core::BaseMapping>())
@@ -314,7 +326,7 @@ public:
         if (implements<RealObject,core::componentmodel::behavior::OdeSolver>())
 	  entry.baseClasses.insert("OdeSolver");
 	if (implements<RealObject,core::componentmodel::behavior::LinearSolver>())
-	  entry.baseClasses.insert("Linear Solver");
+	  entry.baseClasses.insert("LinearSolver");
         if (implements<RealObject,core::componentmodel::behavior::MasterSolver>())
             entry.baseClasses.insert("MasterSolver");
         if (implements<RealObject,core::componentmodel::topology::Topology>())
@@ -323,9 +335,9 @@ public:
 	  entry.baseClasses.insert("TopologyObject");
 	if (implements<RealObject,core::componentmodel::behavior::BaseController>())
 	  entry.baseClasses.insert("Controller");
-	
-	
-	
+
+
+
 
         return addCreator(classname, templatename, new ObjectCreator<RealObject>);
     }

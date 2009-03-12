@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,15 @@
 #define SOFA_SIMULATION_TREE_XML_XML_H
 
 #include <sofa/simulation/tree/xml/Element.h>
-#include <libxml/parser.h>
+
+#ifdef SOFA_XML_PARSER_TINYXML
+	#include <tinyxml.h>
+#endif
+#ifdef SOFA_XML_PARSER_LIBXML
+	#include <libxml/parser.h>
+	#include <libxml/tree.h>
+#endif
+
 
 namespace sofa
 {
@@ -40,16 +48,21 @@ namespace tree
 namespace xml
 {
 
-BaseElement* processXMLLoading(const char *filename, const xmlDocPtr &doc);    
+#ifdef SOFA_XML_PARSER_TINYXML
+SOFA_SIMULATION_TREE_API BaseElement* processXMLLoading(const char *filename, const TiXmlDocument &doc);
+#endif
+#ifdef SOFA_XML_PARSER_LIBXML
+SOFA_SIMULATION_TREE_API BaseElement* processXMLLoading(const char *filename, const xmlDocPtr &doc);
+#endif
 
-BaseElement* loadFromFile(const char *filename);
+SOFA_SIMULATION_TREE_API BaseElement* loadFromFile(const char *filename);
 
-BaseElement* loadFromMemory(const char *filename, const char *data, unsigned int size );
+SOFA_SIMULATION_TREE_API BaseElement* loadFromMemory(const char *filename, const char *data, unsigned int size );
 
 
-bool save(const char *filename, BaseElement* root);
+SOFA_SIMULATION_TREE_API bool save(const char *filename, BaseElement* root);
 
-extern int numDefault;
+extern int SOFA_SIMULATION_TREE_API numDefault;
 
 } // namespace xml
 

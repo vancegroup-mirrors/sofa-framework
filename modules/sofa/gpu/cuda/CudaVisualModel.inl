@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -47,6 +47,17 @@ void CudaVisualModelCuda3f1_calcTNormals(unsigned int nbElem, unsigned int nbVer
 void CudaVisualModelCuda3f1_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
 void CudaVisualModelCuda3f1_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void CudaVisualModelCuda3d_calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x);
+
+void CudaVisualModelCuda3d1_calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d1_calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x);
+void CudaVisualModelCuda3d1_calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 } // extern "C"
 
@@ -74,6 +85,33 @@ public:
     {   CudaVisualModelCuda3f1_calcVNormals(nbElem, nbVertex, nbElemPerVertex, velems, vnormals, fnormals, x); }
 };
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+template<>
+class CudaKernelsCudaVisualModel<CudaVec3dTypes>
+{
+public:
+    static void calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+    {   CudaVisualModelCuda3d_calcTNormals(nbElem, nbVertex, elems, fnormals, x); }
+    static void calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+    {   CudaVisualModelCuda3d_calcQNormals(nbElem, nbVertex, elems, fnormals, x); }
+    static void calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x)
+    {   CudaVisualModelCuda3d_calcVNormals(nbElem, nbVertex, nbElemPerVertex, velems, vnormals, fnormals, x); }
+};
+
+template<>
+class CudaKernelsCudaVisualModel<CudaVec3d1Types>
+{
+public:
+    static void calcTNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+    {   CudaVisualModelCuda3d1_calcTNormals(nbElem, nbVertex, elems, fnormals, x); }
+    static void calcQNormals(unsigned int nbElem, unsigned int nbVertex, const void* elems, void* fnormals, const void* x)
+    {   CudaVisualModelCuda3d1_calcQNormals(nbElem, nbVertex, elems, fnormals, x); }
+    static void calcVNormals(unsigned int nbElem, unsigned int nbVertex, unsigned int nbElemPerVertex, const void* velems, void* vnormals, const void* fnormals, const void* x)
+    {   CudaVisualModelCuda3d1_calcVNormals(nbElem, nbVertex, nbElemPerVertex, velems, vnormals, fnormals, x); }
+};
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 } // namespace cuda
 
@@ -147,7 +185,7 @@ void CudaVisualModel< TDataTypes >::updateTopology()
     int nbv = 0;
     if (!nelems.empty())
 	nbv = nelems.rbegin()->first + 1;
-    std::cout << "CUDA CudaVisualModel: "<<triangles.size()<<" triangles, "<<quads.size()<<" quads, "<<nbv<<"/"<<state->getX()->size()<<" attached points, max "<<nmax<<" elements per point."<<std::endl;
+    sout << "CUDA CudaVisualModel: "<<triangles.size()<<" triangles, "<<quads.size()<<" quads, "<<nbv<<"/"<<state->getX()->size()<<" attached points, max "<<nmax<<" elements per point."<<sendl;
     initV(triangles.size()+quads.size(), nbv, nmax);
     
     nelems.clear();

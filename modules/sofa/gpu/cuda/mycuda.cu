@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,11 @@
 #include <sofa/helper/system/gl.h>
 #endif
 #include <cuda_gl_interop.h>
+
+#include <sofa/helper/BackTrace.h>
+
+//#define NO_CUDA
+
 #if defined(__cplusplus)
 namespace sofa
 {
@@ -37,11 +42,94 @@ namespace cuda
 {
 #endif
 
+#ifdef NO_CUDA
+
+bool cudaCheck(cudaError_t, const char*)
+{
+    return true;
+}
+
+bool cudaInitCalled = false;
+
+int mycudaInit(int)
+{
+    cudaInitCalled = true;
+    return 0;
+}
+
+void mycudaMalloc(void **devPtr, size_t)
+{
+    *devPtr = NULL;
+}
+
+void mycudaMallocPitch(void **devPtr, size_t*, size_t, size_t)
+{
+    *devPtr = NULL;
+}
+
+void mycudaFree(void *)
+{
+}
+
+void mycudaMallocHost(void **hostPtr, size_t size)
+{
+    *hostPtr = malloc(size);
+}
+
+void mycudaFreeHost(void *hostPtr)
+{
+    free(hostPtr);
+}
+
+void mycudaMemcpyHostToDevice(void *, const void *, size_t)
+{
+}
+
+void mycudaMemcpyDeviceToDevice(void *, const void *, size_t)
+{
+}
+
+void mycudaMemcpyDeviceToHost(void *, const void *, size_t)
+{
+}
+
+void mycudaMemcpyHostToDevice2D(void *, size_t, const void *, size_t, size_t, size_t)
+{
+}
+
+void mycudaMemcpyDeviceToDevice2D(void *, size_t, const void *, size_t, size_t, size_t )
+{
+}
+
+void mycudaMemcpyDeviceToHost2D(void *, size_t, const void *, size_t, size_t, size_t)
+{
+}
+
+void mycudaGLRegisterBufferObject(int)
+{
+}
+
+void mycudaGLUnregisterBufferObject(int)
+{
+}
+
+void mycudaGLMapBufferObject(void** ptr, int)
+{
+    *ptr = NULL;
+}
+
+void mycudaGLUnmapBufferObject(int)
+{
+}
+
+#else
+
 bool cudaCheck(cudaError_t err, const char* src="?")
 {
 	if (err == cudaSuccess) return true;
 	//fprintf(stderr, "CUDA: Error %d returned from %s.\n",(int)err,src);
-	mycudaLogError(err, src);
+	mycudaLogError(cudaGetErrorString(err), src);
+	sofa::helper::BackTrace::dump();
         return false;
 }
 
@@ -51,18 +139,27 @@ int mycudaInit(int device)
 {
 	int deviceCount = 0;
 	cudaInitCalled = true;
-	cudaCheck(cudaGetDeviceCount(&deviceCount));
+	cudaCheck(cudaGetDeviceCount(&deviceCount),"cudaGetDeviceCount");
 	myprintf("CUDA: %d device(s) found.\n", deviceCount);
 	for (int i=0;i<deviceCount;i++)
 	{
-		cudaDeviceProp dev;
+		cudaDeviceProp dev
+#ifdef cudaDevicePropDontCare
+		    = cudaDevicePropDontCare
+#endif
+		    ;
 		//memset(&dev,0,sizeof(dev));
 		//dev.name=NULL;
 		//dev.bytes=0;
 		//dev.major=0;
 		//dev.minor=0;
-		cudaCheck(cudaGetDeviceProperties(&dev,i));
-#if CUDA_VERSION >= 2000
+		cudaCheck(cudaGetDeviceProperties(&dev,i),"cudaGetDeviceProperties");
+#if CUDA_VERSION >= 2010
+		myprintf("CUDA:  %d : \"%s\", %d MB, %d cores at %.3f GHz, revision %d.%d",i,dev.name, dev.totalGlobalMem/(1024*1024), dev.multiProcessorCount*8, dev.clockRate * 1e-6f, dev.major, dev.minor);
+		if (dev.kernelExecTimeoutEnabled)
+		    myprintf(" timeout %d s", dev.kernelExecTimeoutEnabled);
+		myprintf("\n");
+#elif CUDA_VERSION >= 2000
 		myprintf("CUDA:  %d : \"%s\", %d MB, %d cores at %.3f GHz, revision %d.%d\n",i,dev.name, dev.totalGlobalMem/(1024*1024), dev.multiProcessorCount*8, dev.clockRate * 1e-6f, dev.major, dev.minor);
 #else //if CUDA_VERSION >= 1000
 		myprintf("CUDA:  %d : \"%s\", %d MB, cores at %.3f GHz, revision %d.%d\n",i,dev.name, dev.totalGlobalMem/(1024*1024), dev.clockRate * 1e-6f, dev.major, dev.minor);
@@ -177,6 +274,8 @@ void mycudaGLUnmapBufferObject(int id)
 {
     cudaCheck(cudaGLUnmapBufferObject((GLuint)id),"cudaGLUnmapBufferObject");
 }
+
+#endif
 
 #if defined(__cplusplus)
 } // namespace cuda

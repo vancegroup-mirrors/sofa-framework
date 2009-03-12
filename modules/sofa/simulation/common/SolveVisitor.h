@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -39,13 +39,13 @@ namespace sofa
   {
 
     /** Used by the master solver: send the solve signal to the others solvers
-    
+
      */
-    class SolveVisitor : public Visitor
+    class SOFA_SIMULATION_COMMON_API SolveVisitor : public Visitor
     {
-	
+
     public:
-    SolveVisitor(double _dt):dt(_dt) {}             
+    SolveVisitor(double _dt, bool free = false):dt(_dt), freeMotion(free) {}
       void processSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* b);
       virtual Result processNodeTopDown(simulation::Node* node);
 
@@ -55,11 +55,13 @@ namespace sofa
       /// Return a category name for this action.
       /// Only used for debugging / profiling purposes
       virtual const char* getCategoryName() const { return "behavior update position"; }
+        virtual const char* getClassName() const { return "SolveVisitor"; }
 
       void setDt(double _dt){dt = _dt;}
       double getDt(){return dt;}
     protected:
       double dt;
+	  bool freeMotion;
     };
 
   } // namespace simulation

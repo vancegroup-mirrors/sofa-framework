@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,10 +32,11 @@
 #include <sofa/component/topology/TopologyChangedEvent.h>
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/system/gl.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <assert.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -54,16 +55,17 @@ void VectorSpringForceField<DataTypes>::springCreationFunction(int /*index*/,
     const sofa::helper::vector< double >& coefs)
 {
     VectorSpringForceField<DataTypes> *ff= static_cast<VectorSpringForceField<DataTypes> *>(param);
-    if (ff) {		
-        
-        
+    if (ff) {
+
+
         //EdgeSetGeometryAlgorithms<DataTypes> *ga=topology->getEdgeSetGeometryAlgorithms();
         //t.restLength=ga->computeRestEdgeLength(index);
         const typename DataTypes::VecCoord& x0 = *ff->getObject1()->getX0();
         t.restVector = x0[e[1]] - x0[e[0]];
         if (ancestors.size()>0) {
             t.kd=t.ks=0;
-            const topology::EdgeData<Spring> &sa=ff->getSpringArray();
+//            const topology::EdgeData<Spring> &sa=ff->getSpringArray();
+            const helper::vector<Spring> &sa=ff->getSpringArray().getValue();
             unsigned int i;
             for (i=0;i<ancestors.size();++i) {
                 t.kd+=(typename DataTypes::Real)(sa[i].kd*coefs[i]);
@@ -73,7 +75,7 @@ void VectorSpringForceField<DataTypes>::springCreationFunction(int /*index*/,
             t.kd=ff->getStiffness();
             t.ks=ff->getViscosity();
         }
-        
+
     }
 }
 
@@ -107,23 +109,27 @@ bool VectorSpringForceField<DataTypes>::load(const char *filename)
 }
 
 template <class DataTypes>
-void VectorSpringForceField<DataTypes>::resizeArray(unsigned int n) 
+void VectorSpringForceField<DataTypes>::resizeArray(unsigned int n)
 {
-    springArray.resize(n);
+    helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+    springArrayData.resize(n);
+    springArray.endEdit();
 }
 
 template <class DataTypes>
     void VectorSpringForceField<DataTypes>::addSpring(int m1, int m2, SReal ks, SReal kd, Coord restVector)
 {
+    helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+
     if (useTopology && _topology)
     {
         int e=_topology->getEdgeIndex((unsigned int)m1,(unsigned int)m2);
         if (e>=0)
-            springArray[e]=Spring((Real)ks,(Real)kd,restVector);
+            springArrayData[e]=Spring((Real)ks,(Real)kd,restVector);
     }
     else
     {
-        springArray.push_back(Spring((Real)ks, (Real)kd, restVector));
+        springArrayData.push_back(Spring((Real)ks, (Real)kd, restVector));
         edgeArray.push_back(topology::Edge(m1,m2));
     }
 }
@@ -155,14 +161,21 @@ VectorSpringForceField<DataTypes>::VectorSpringForceField(MechanicalState* _obje
 template <class DataTypes>
 void VectorSpringForceField<DataTypes>::init()
 {
-	_topology = this->getContext()->getMeshTopology();	
-	this->getContext()->get(edgeGeo);	
-	this->getContext()->get(edgeMod);	
+	_topology = this->getContext()->getMeshTopology();
+	this->getContext()->get(edgeGeo);
+	this->getContext()->get(edgeMod);
 
 	this->Inherit::init();
+}
 
-	if (springArray.empty())
-	{		
+template <class DataTypes>
+void VectorSpringForceField<DataTypes>::bwdInit()
+{
+	this->Inherit::bwdInit();
+	helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+
+	if (springArrayData.empty())
+	{
 		if (!m_filename.getValue().empty())
 		{
 			// load the springs from a file
@@ -177,38 +190,44 @@ void VectorSpringForceField<DataTypes>::init()
 			createDefaultSprings();
 			f_listening.setValue(true);
 		}
-		else 
+		else
 		{
 			int n = this->mstate1->getSize();
-			springArray.resize(n);
+			sout << "VectorSpringForceField: linking "<<n<<" pairs of points." << sendl;
+			springArrayData.resize(n);
 			edgeArray.resize(n);
     		for (int i=0;i<n;++i)
     		{
     			edgeArray[i][0] = i;
     			edgeArray[i][1] = i;
-				springArray[i].ks=(Real)m_stiffness.getValue();
-    			springArray[i].kd=(Real)m_viscosity.getValue();
-        		springArray[i].restVector = Coord();
+				springArrayData[i].ks=(Real)m_stiffness.getValue();
+    			springArrayData[i].kd=(Real)m_viscosity.getValue();
+        		springArrayData[i].restVector = Coord();
     		}
 		}
+		springArray.endEdit();
 	}
 }
 
 template <class DataTypes>
-void VectorSpringForceField<DataTypes>::createDefaultSprings() 
-{   
-    std::cout << "Creating "<< _topology->getNbEdges() <<" Vector Springs from EdgeSetTopology"<<std::endl;
-    springArray.resize(_topology->getNbEdges());
+void VectorSpringForceField<DataTypes>::createDefaultSprings()
+{
+    sout << "Creating "<< _topology->getNbEdges() <<" Vector Springs from EdgeSetTopology"<<sendl;
+    
+    helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+
+    springArrayData.resize(_topology->getNbEdges());
     //EdgeLengthArrayInterface<Real,DataTypes> elai(springArray);
     //edgeGEO->computeEdgeLength(elai);
     const VecCoord& x0 = *this->mstate1->getX0();
     int i;
     for (i=0;i<_topology->getNbEdges();++i) {
-        springArray[i].ks=(Real)m_stiffness.getValue();
-        springArray[i].kd=(Real)m_viscosity.getValue();
-        springArray[i].restVector = x0[_topology->getEdge(i)[1]]-x0[_topology->getEdge(i)[0]];
+        springArrayData[i].ks=(Real)m_stiffness.getValue();
+        springArrayData[i].kd=(Real)m_viscosity.getValue();
+        springArrayData[i].restVector = x0[_topology->getEdge(i)[1]]-x0[_topology->getEdge(i)[0]];
     }
 
+    springArray.endEdit();
 }
 template<class DataTypes>
 void VectorSpringForceField<DataTypes>::handleEvent( Event* e )
@@ -220,7 +239,7 @@ void VectorSpringForceField<DataTypes>::handleEvent( Event* e )
             /// handle ctrl+d key
             if (ke->getKey()=='D') {
                 if (_topology->getNbEdges()>12) {
-                    
+
                     sofa::helper::vector<unsigned int> edgeArray;
                     edgeArray.push_back(12);
                     edgeMod->removeEdges(edgeArray);
@@ -229,7 +248,7 @@ void VectorSpringForceField<DataTypes>::handleEvent( Event* e )
             }
         } else {
             sofa::component::topology::TopologyChangedEvent *tce=dynamic_cast<sofa::component::topology::TopologyChangedEvent *>(e);
-            /// test that the event is a change of topology and that it 
+            /// test that the event is a change of topology and that it
             if ((tce) && edgeMod /*&& (tce->getMeshTopology()== _topology )*/) {
                 std::list<const sofa::core::componentmodel::topology::TopologyChange *>::const_iterator itBegin=_topology->firstChange();
                 std::list<const sofa::core::componentmodel::topology::TopologyChange *>::const_iterator itEnd=_topology->lastChange();
@@ -246,19 +265,21 @@ void VectorSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2, con
 {
     //assert(this->mstate);
     m_potentialEnergy = 0;
-   
+
     Coord u;
 
     f1.resize(x1.size());
     f2.resize(x2.size());
 
-	if(useTopology){	
+    helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+
+	if(useTopology){
 
 		Deriv relativeVelocity,force;
 		for (int i=0; i<_topology->getNbEdges(); i++)
 		{
 			const topology::Edge &e=_topology->getEdge(i);
-			const Spring &s=springArray[i];
+			const Spring &s=springArrayData[i];
 			// paul---------------------------------------------------------------
 			Deriv current_direction = x2[e[1]]-x1[e[0]];
 			Deriv squash_vector = current_direction - s.restVector;
@@ -275,7 +296,7 @@ void VectorSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2, con
 		for (unsigned int i=0; i<edgeArray.size(); i++)
 		{
 			const topology::Edge &e=edgeArray[i];
-			const Spring &s=springArray[i];
+			const Spring &s=springArrayData[i];
 			// paul---------------------------------------------------------------
 			Deriv current_direction = x2[e[1]]-x1[e[0]];
 			Deriv squash_vector = current_direction - s.restVector;
@@ -286,6 +307,7 @@ void VectorSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2, con
 			f2[e[1]]-=force;
 		}
 	}
+	springArray.endEdit();
 }
 
 template<class DataTypes>
@@ -297,12 +319,14 @@ void VectorSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, 
     df1.resize(dx1.size());
     df2.resize(dx2.size());
 
+    helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+
 	if(useTopology){
 
 		for (int i=0; i<_topology->getNbEdges(); i++)
 		{
 			const topology::Edge &e=_topology->getEdge(i);
-			const Spring &s=springArray[i];
+			const Spring &s=springArrayData[i];
 			d = dx2[e[1]]-dx1[e[0]];
 			dforce = d*(s.ks*kFactor);
 			df1[e[0]]+=dforce;
@@ -314,14 +338,14 @@ void VectorSpringForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, 
 		for (unsigned int i=0; i<edgeArray.size(); i++)
 		{
 			const topology::Edge &e=edgeArray[i];
-			const Spring &s=springArray[i];
+			const Spring &s=springArrayData[i];
 			d = dx2[e[1]]-dx1[e[0]];
 			dforce = d*(s.ks*kFactor);
 			df1[e[0]]+=dforce;
 			df2[e[1]]-=dforce;
 		}
 	}
-
+	springArray.endEdit();
 }
 
 template<class DataTypes>
@@ -333,37 +357,30 @@ void VectorSpringForceField<DataTypes>::draw()
     const VecCoord& x1 = *this->mstate1->getX();
     const VecCoord& x2 = *this->mstate2->getX();
 
-    glDisable(GL_LIGHTING);
-    
-    glBegin(GL_LINES);
 
-	if(useTopology){
-		for (unsigned int i=0; i<springArray.size(); i++)
-		{
-			const topology::Edge &e=_topology->getEdge(i);
-			//const Spring &s=springArray[i];
+    std::vector< Vector3 > points;
+    if(useTopology){
+      for (unsigned int i=0; i<springArray.getValue().size(); i++)
+	{
+	  const topology::Edge &e=_topology->getEdge(i);
+	  //const Spring &s=springArray[i];
 
-			glColor4f(0,1,1,0.5f);
-
-			glVertex3d(x1[e[0]][0],x1[e[0]][1],x1[e[0]][2]);
-			glVertex3d(x2[e[1]][0],x2[e[1]][1],x2[e[1]][2]);
-		}
-
-	}else{
-
-		for (unsigned int i=0; i<springArray.size(); i++)
-		{
-			const topology::Edge &e=edgeArray[i];
-			//const Spring &s=springArray[i];
-
-			glColor4f(0,1,1,0.5f);
-
-			glVertex3d(x1[e[0]][0],x1[e[0]][1],x1[e[0]][2]);
-			glVertex3d(x2[e[1]][0],x2[e[1]][1],x2[e[1]][2]);
-		}
+	  points.push_back(Vector3(x1[e[0]]));
+	  points.push_back(Vector3(x2[e[1]]));
 	}
 
-    glEnd();
+    }else{
+
+      for (unsigned int i=0; i<springArray.getValue().size(); i++)
+	{
+	  const topology::Edge &e=edgeArray[i];
+	  //const Spring &s=springArray[i];
+
+	  points.push_back(Vector3(x1[e[0]]));
+	  points.push_back(Vector3(x2[e[1]]));
+	}
+    }
+    simulation::getSimulation()->DrawUtility.drawLines(points, 3, Vec<4,float>(0,1,1,1));
 }
 
 } // namespace forcefield

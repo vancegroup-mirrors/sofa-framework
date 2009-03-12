@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -51,6 +51,8 @@ namespace misc
       {
 	totalError_X=0.0;
 	totalError_V=0.0;
+        dofError_X=0.0;
+        dofError_V=0.0;
       }
 
 
@@ -68,14 +70,14 @@ namespace misc
 
 //-------------------------------- processCompareState------------------------------------
       void CompareState::processCompareState()
-      {  
+      {
 	if (infile && mmodel)
 	  {
-	    double time = getContext()->getTime() + f_shift.getValue();
-	    lastTime = time;
+	    double time = getContext()->getTime() /*+ f_shift.getValue()*/;
+	    lastTime = time+0.00001;
 	    std::vector<std::string> validLines;
 	    std::string line, cmd;
-	    while (nextTime <= time && !infile->eof())
+	    while (nextTime <= lastTime && !infile->eof())
 	      {
 		getline(*infile, line);
                	std::istringstream str(line);
@@ -84,23 +86,27 @@ namespace misc
 		  {
 		    str >> nextTime;
 		    if (nextTime <= time) validLines.clear();
-		  }
+                  }
 
 		if (nextTime <= time) validLines.push_back(line);
 	      }
-
 	    for (std::vector<std::string>::iterator it=validLines.begin();it!=validLines.end();++it)
 	      {
 		std::istringstream str(*it);
 		cmd.clear();
 		str >> cmd;
+                double currentError=0;
 		if (cmd == "X=")
-		  {		    
- 		    totalError_X += mmodel->compareX(str);
+		  {
+                    currentError = mmodel->compareX(str);
+ 		    totalError_X +=currentError;
+                    dofError_X +=currentError/(double)this->mmodel->getSize();
 		  }
 		else if (cmd == "V=")
 		  {
- 		    totalError_V += mmodel->compareV(str);
+                    currentError = mmodel->compareV(str);
+                    totalError_V +=currentError;
+                    dofError_V += currentError/(double)this->mmodel->getSize();
 		  }
 	      }
 	  }
@@ -117,48 +123,50 @@ simulation::Visitor::Result CompareStateCreator::processNodeTopDown( simulation:
 {
     using namespace sofa::defaulttype;
     sofa::core::componentmodel::behavior::BaseMechanicalState * mstate = dynamic_cast<sofa::core::componentmodel::behavior::BaseMechanicalState *>( gnode->getMechanicalState());
-    if (!mstate)   return simulation::Visitor::RESULT_CONTINUE; 
+    if (!mstate)   return simulation::Visitor::RESULT_CONTINUE;
     //We have a mechanical state
     addCompareState(mstate, gnode);
-    return simulation::Visitor::RESULT_CONTINUE; 
+    return simulation::Visitor::RESULT_CONTINUE;
 }
 
-  
-  
+
+
 void CompareStateCreator::addCompareState(sofa::core::componentmodel::behavior::BaseMechanicalState *ms, simulation::Node* gnode)
 {
-    
-    sofa::core::objectmodel::BaseContext* context = gnode->getContext();    
+
+    sofa::core::objectmodel::BaseContext* context = gnode->getContext();
     sofa::core::BaseMapping *mapping; context->get(mapping);
     if (createInMapping || mapping== NULL)
     {
-        sofa::component::misc::CompareState *rs; context->get(rs);
-        if (  rs == NULL ) 
+        sofa::component::misc::CompareState *rs; context->get(rs, core::objectmodel::BaseContext::Local);
+        if (  rs == NULL )
         {
             rs = new sofa::component::misc::CompareState(); gnode->addObject(rs);
         }
-      
+
         std::ostringstream ofilename;
         ofilename << sceneName << "_" << counterCompareState << "_" << ms->getName()  << "_mstate.txt" ;
-      
-        rs->f_filename.setValue(ofilename.str());  rs->f_listening.setValue(false); //Desactivated only called by extern functions      
+
+        rs->f_filename.setValue(ofilename.str());  rs->f_listening.setValue(false); //Desactivated only called by extern functions
         if (init) rs->init();
-        
+
         ++counterCompareState;
     }
 }
-    
-      
-  
+
+
+
 //Create a Compare State component each time a mechanical state is found
 simulation::Visitor::Result CompareStateResult::processNodeTopDown( simulation::Node* gnode)
 {
     sofa::component::misc::CompareState *cv;
     gnode->get(cv);
-    if (!cv)   return simulation::Visitor::RESULT_CONTINUE; 
+    if (!cv)   return simulation::Visitor::RESULT_CONTINUE;
     //We have a mechanical state
-    error += cv->getError();
-    return simulation::Visitor::RESULT_CONTINUE; 
+    error += cv->getTotalError();
+    errorByDof += cv->getErrorByDof();
+    numCompareState++;
+    return simulation::Visitor::RESULT_CONTINUE;
 }
 
 

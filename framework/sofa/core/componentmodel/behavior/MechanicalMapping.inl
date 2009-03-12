@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -99,6 +99,14 @@ void MechanicalMapping<In,Out>::propagateV()
 }
 
 template <class In, class Out>
+void MechanicalMapping<In,Out>::propagateA()
+{
+    if (this->fromModel!=NULL && this->toModel->getDx()!=NULL && this->fromModel->getV()!=NULL &&  this->fromModel->getDx()!=NULL )
+		computeAccFromMapping(*this->toModel->getDx(), *this->fromModel->getV(), *this->fromModel->getDx());
+}
+
+
+template <class In, class Out>
 void MechanicalMapping<In,Out>::propagateDx()
 {
     if (this->fromModel!=NULL && this->toModel->getDx()!=NULL && this->fromModel->getDx()!=NULL)
@@ -116,9 +124,9 @@ void MechanicalMapping<In,Out>::propagateXfree()
 template <class In, class Out>
 void MechanicalMapping<In,Out>::accumulateForce()
 {
-/*    if( this->fromModel==NULL ) cerr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<endl;
-    else if( this->toModel==NULL ) cerr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<endl;
-    else cerr<<"MechanicalMapping<In,Out>::accumulateForce() OK"<<endl;*/
+/*    if( this->fromModel==NULL ) serr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<sendl;
+    else if( this->toModel==NULL ) serr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<sendl;
+    else serr<<"MechanicalMapping<In,Out>::accumulateForce() OK"<<sendl;*/
     if (this->fromModel!=NULL && this->toModel->getF()!=NULL && this->fromModel->getF()!=NULL)
 		applyJT(*this->fromModel->getF(), *this->toModel->getF());
 }

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,11 +26,11 @@
 #define SOFA_COMPONENT_ODESOLVER_OMNISOLVER_H
 
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
-#include <sofa/simulation/common/OdeSolverImpl.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/component/odesolver/OdeSolverImpl.h>
+#include <sofa/simulation/common/Node.h>
 #include <sofa/component/linearsolver/NewMatMatrix.h>
 #include <sofa/component/linearsolver/NewMatVector.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/component/container/ArticulatedHierarchyContainer.h>
@@ -60,26 +60,28 @@ using core::objectmodel::Data;
 
 /** Holds data retrieved from HDAPI. */
 typedef struct {
-	int nupdates;
-	HDboolean m_buttonState1;       /* Has the device button has been pressed. */
-	HDboolean m_buttonState2;       /* Has the device button has been pressed. */
-	hduVector3Dd m_devicePosition; /* Current device coordinates. */
-	HDErrorInfo m_error;
-	Vec3d pos;
-	Quat quat;
-	bool ready;
-	bool stop;
+        int nupdates;
+        HDboolean m_buttonState1;       /* Has the device button has been pressed. */
+        HDboolean m_buttonState2;       /* Has the device button has been pressed. */
+        hduVector3Dd m_devicePosition; /* Current device coordinates. */
+        HDErrorInfo m_error;
+        Vec3d pos;
+        Quat quat;
+        bool ready;
+        bool stop;
 } DeviceData;
 
 typedef struct {
-	ForceFeedback* forceFeedback;
-	simulation::tree::GNode *context;
-	Mat3x3d rotation;
-	Vec3d translation;
-	double scale;
-	double forceScale;
-	DeviceData servoDeviceData;
-	DeviceData deviceData;
+        ForceFeedback* forceFeedback;
+        simulation::Node *context;
+        Mat3x3d rotation;
+        Vec3d translation;
+        double scale;
+        double forceScale;
+        DeviceData servoDeviceData;
+        DeviceData deviceData;
+
+        bool permanent_feedback;
 } OmniData;
 
 /**
@@ -89,22 +91,23 @@ class OmniDriver : public core::componentmodel::behavior::BaseController
 {
 
 public:
-	Data<double> scale;
-	Data<double> forceScale;
-	Data<Vec3d> position;
-	Data<Vec3d> orientation;
+        Data<double> scale;
+        Data<double> forceScale;
+        Data<Vec3d> position;
+        Data<Vec3d> orientation;
+        Data<bool> permanent;
 
-	simulation::tree::GNode *context; //->propagateEvent()
-	//ForceFeedback* forceFeedback;
-	OmniData* data;
-	void init();
-	void reinit();
-	void setForceFeedback(ForceFeedback* ff);
-	OmniDriver();
-	~OmniDriver();
-	void cleanup();
+        simulation::Node *context; //->propagateEvent()
+        //ForceFeedback* forceFeedback;
+        OmniData* data;
+        void init();
+        void reinit();
+        void setForceFeedback(ForceFeedback* ff);
+        OmniDriver();
+        ~OmniDriver();
+        void cleanup();
 private:
-	void handleEvent(core::objectmodel::Event *);
+        void handleEvent(core::objectmodel::Event *);
 };
 
 } // namespace controller

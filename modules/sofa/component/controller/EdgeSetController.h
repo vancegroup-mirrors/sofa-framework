@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Interface: EdgeSetController
 //
-// Description: 
+// Description:
 //
 //
 // Author: Pierre-Jean Bensoussan, Digital Trainers (2008)
@@ -46,11 +46,12 @@ namespace sofa
 
 namespace component
 {
-	namespace topology{
+	namespace topology
+	{
 		template <class T>
-		class EdgeSetGeometryAlgorithms; 
-		
-		class EdgeSetTopologyModifier; 
+		class EdgeSetGeometryAlgorithms;
+
+		class EdgeSetTopologyModifier;
 	}
 
 namespace controller
@@ -62,7 +63,7 @@ namespace controller
  * Provides a Mouse & Keyboard user control on an EdgeSet Topology.
  */
 template<class DataTypes>
-class EdgeSetController : public MechanicalStateController<DataTypes>
+class EdgeSetController : public MechanicalStateController<DataTypes>, public virtual core::objectmodel::BaseObject
 {
 public:
 	typedef typename DataTypes::VecCoord VecCoord;
@@ -86,7 +87,7 @@ public:
 	/**
 	 * @brief SceneGraph callback initialization method.
 	 */
-	void init();
+	virtual void init();
 
 	/**
 	 * @name Controller Interface
@@ -96,15 +97,18 @@ public:
 	/**
 	 * @brief Mouse event callback.
 	 */
-	void onMouseEvent(core::objectmodel::MouseEvent *);
+	virtual void onMouseEvent(core::objectmodel::MouseEvent *);
 
-	void onKeyPressedEvent(core::objectmodel::KeypressedEvent *);
+	/**
+	 * @brief Keyboard key pressed event callback.
+	 */
+	virtual void onKeyPressedEvent(core::objectmodel::KeypressedEvent *);
 
 
 	/**
 	 * @brief Begin Animation event callback.
 	 */
-	void onBeginAnimationStep();
+	virtual void onBeginAnimationStep();
 
 	//@}
 
@@ -113,45 +117,80 @@ public:
 	 */
 	//@{
 
+	virtual std::string getTemplateName() const
+    {
+      return templateName(this);
+    }
+
+    static std::string templateName(const EdgeSetController<DataTypes>* = NULL)
+    {
+      return DataTypes::Name();
+    }
 
 	//@}
 
 	/**
 	 * @brief Apply the controller modifications to the controlled MechanicalState.
 	 */
-	void applyController(void);
+	virtual void applyController(void);
 
 	/**
 	 * @brief
 	 */
-	void modifyTopology(void);
-
-        virtual std::string getTemplateName() const
-        {
-          return templateName(this);
-        }
-
-        static std::string templateName(const EdgeSetController<DataTypes>* = NULL)
-        {
-          return DataTypes::Name();
-        }
+	virtual void modifyTopology(void);
+ 
 	/**
 	 * @brief
 	 */
-	void draw();
+	virtual void draw();
 
 protected:
-	Real step; ///<
+	Data<Real> step;
+	Data<Real> minLength; ///< deternine the minimun length of the edge set 
+	Data<Real> maxLength; ///< deternine the maximum length of the edge set
+	Data<Real> maxDepl; ///< determine the maximum deplacement in a time step
+	Data<Real> speed;
+	Data<bool> reversed;
+	Data<int>  startingIndex;   ///< index of the edge where a topological change occurs
+	Real depl;
 
 	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
-	sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo; 
-	sofa::component::topology::EdgeSetTopologyModifier* edgeMod; 
+	sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo;
+	sofa::component::topology::EdgeSetTopologyModifier* edgeMod;
+	Coord refPos;
+	helper::vector<Real> vertexT;
 
+	virtual void computeVertexT();
 
+	virtual Coord getNewRestPos(const Coord& pos, Real /*t*/, Real dt)
+	{
+		sofa::defaulttype::Vec<3,Real> vectrans(dt * this->mainDirection[0], dt * this->mainDirection[1], dt * this->mainDirection[2]);
+		vectrans = pos.getOrientation().rotate(vectrans);
+		return Coord(pos.getCenter() + vectrans, pos.getOrientation());
+	}
 
-	Real edge0RestedLength;
-
+	Real edgeTLength;
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONTROLLER_EDGESETCONTROLLER_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec3dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec2dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec6dTypes>;
+extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Rigid3dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Rigid2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec3fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec2fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Vec6fTypes>;
+extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Rigid3fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace controller
 

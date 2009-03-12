@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -65,29 +65,47 @@ BruteForceDetection::BruteForceDetection()
 
 void BruteForceDetection::addCollisionModel(core::CollisionModel *cm)
 {
+	//sout<<"--------- add Collision Model : "<<cm->getLast()->getName()<<" -------"<<sendl;
     if (cm->empty())
         return;
     if (cm->isSimulated() && cm->getLast()->canCollideWith(cm->getLast()))
     { // self collision
-        //std::cout << "Test broad phase Self "<<cm->getLast()->getName()<<std::endl;
+        //sout << "Test broad phase Self "<<cm->getLast()->getName()<<sendl;
         bool swapModels = false;
         core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm, swapModels);
         if (intersector != NULL)
             if (intersector->canIntersect(cm->begin(), cm->begin()))
             {
-                //std::cout << "Broad phase Self "<<cm->getLast()->getName()<<std::endl;
+                //sout << "Broad phase Self "<<cm->getLast()->getName()<<sendl;
                 cmPairs.push_back(std::make_pair(cm, cm));
             }
+
     }
     for (sofa::helper::vector<core::CollisionModel*>::iterator it = collisionModels.begin(); it != collisionModels.end(); ++it)
     {
+		
         core::CollisionModel* cm2 = *it;
+		
+		//sout<<"make pair with Collision Model ? :"<<cm2->getLast()->getName();
+		
         if (!cm->isSimulated() && !cm2->isSimulated())
+		{
+			//sout<<" - No : case 1"<<sendl;
             continue;
+		}
+		/*
         if (!cm->canCollideWith(cm2))
-            continue;
+		{
+			sout<<" - No : case 2"<<sendl;
+			continue;
+		}	
+		*/
         if (!cm->getLast()->canCollideWith(cm2->getLast()))
+		{
+			//sout<<" - No : case 3"<<sendl;
             continue;
+		}
+		//sout<<" - Yes !"<<sendl;
         bool swapModels = false;
         core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
         if (intersector == NULL)
@@ -120,7 +138,7 @@ void BruteForceDetection::addCollisionModel(core::CollisionModel *cm)
         // Here we assume a single root element is present in both models
         if (intersector->canIntersect(cm1->begin(), cm2->begin()))
         {
-            //std::cout << "Broad phase "<<cm1->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<std::endl;
+            //sout << "Broad phase "<<cm1->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<sendl;
             cmPairs.push_back(std::make_pair(cm1, cm2));
         }
     }
@@ -172,7 +190,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
     core::CollisionModel *cm2 = cmPair.second; //->getNext();
     
     //int size0 = elemPairs.size();
-    //std::cout << "Narrow phase "<<cm1->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<std::endl;
+    //sout << "Narrow phase "<<cm1->getLast()->getName()<<" - "<<cm2->getLast()->getName()<<sendl;
 
     if (!cm1->isSimulated() && !cm2->isSimulated())
         return;
@@ -182,7 +200,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
 
     core::CollisionModel *finalcm1 = cm1->getLast();
     core::CollisionModel *finalcm2 = cm2->getLast();
-    //std::cout << "Final phase "<<gettypename(typeid(*finalcm1))<<" - "<<gettypename(typeid(*finalcm2))<<std::endl;
+    //sout << "Final phase "<<gettypename(typeid(*finalcm1))<<" - "<<gettypename(typeid(*finalcm2))<<sendl;
     bool swapModels = false;
     core::componentmodel::collision::ElementIntersector* finalintersector = intersectionMethod->findIntersector(finalcm1, finalcm2, swapModels);
     if (finalintersector == NULL)
@@ -196,7 +214,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
     
     const bool self = (finalcm1->getContext() == finalcm2->getContext());
     //if (self)
-    //    std::cout << "SELF: Final intersector " << finalintersector->name() << " for "<<finalcm1->getName()<<" - "<<finalcm2->getName()<<std::endl;
+    //    sout << "SELF: Final intersector " << finalintersector->name() << " for "<<finalcm1->getName()<<" - "<<finalcm2->getName()<<sendl;
     
     sofa::core::componentmodel::collision::DetectionOutputVector*& outputs = outputsMap[std::make_pair(finalcm1, finalcm2)];
 
@@ -254,9 +272,9 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
             intersector = intersectionMethod->findIntersector(cm1, cm2, swapModels);
             if (intersector == NULL)
             {
-                std::cout << "BruteForceDetection: Error finding intersector " << intersectionMethod->getName() << " for "<<gettypename(typeid(*cm1))<<" - "<<gettypename(typeid(*cm2))<<std::endl;
+                sout << "BruteForceDetection: Error finding intersector " << intersectionMethod->getName() << " for "<<gettypename(typeid(*cm1))<<" - "<<gettypename(typeid(*cm2))<<sendl;
             }
-            //else std::cout << "BruteForceDetection: intersector " << intersector->name() << " for " << intersectionMethod->getName() << " for "<<gettypename(typeid(*cm1))<<" - "<<gettypename(typeid(*cm2))<<std::endl;
+            //else sout << "BruteForceDetection: intersector " << intersector->name() << " for " << intersectionMethod->getName() << " for "<<gettypename(typeid(*cm1))<<" - "<<gettypename(typeid(*cm2))<<sendl;
             if (swapModels)
             {
                 mirror.intersector = intersector; intersector = &mirror;
@@ -412,7 +430,7 @@ void BruteForceDetection::addCollisionPair(const std::pair<core::CollisionModel*
         t += ft;
         node->addTime(t, "collision", intersectionMethod, this);
     }
-    //std::cout << "Narrow phase "<<cm1->getLast()->getName()<<"("<<gettypename(typeid(*cm1->getLast()))<<") - "<<cm2->getLast()->getName()<<"("<<gettypename(typeid(*cm2->getLast()))<<"): "<<elemPairs.size()-size0<<" contacts."<<std::endl;
+    //sout << "Narrow phase "<<cm1->getLast()->getName()<<"("<<gettypename(typeid(*cm1->getLast()))<<") - "<<cm2->getLast()->getName()<<"("<<gettypename(typeid(*cm2->getLast()))<<"): "<<elemPairs.size()-size0<<" contacts."<<sendl;
 }
 
 void BruteForceDetection::draw()

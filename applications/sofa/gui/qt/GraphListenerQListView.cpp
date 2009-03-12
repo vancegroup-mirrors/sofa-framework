@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -62,7 +62,7 @@ static int hexval(char c)
 {
     if (c>='0' && c<='9') return c-'0';
     else if (c>='a' && c<='f') return (c-'a')+10;
-    else if (c>='A' && c<='F') return (c-'A')+10; 
+    else if (c>='A' && c<='F') return (c-'A')+10;
     else return 0;
 }
 
@@ -87,7 +87,8 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
             flags |= 1 << CMODEL;
         if (dynamic_cast<core::componentmodel::behavior::BaseMechanicalState*>(obj))
             flags |= 1 << MMODEL;
-        if (dynamic_cast<core::componentmodel::behavior::BaseConstraint*>(obj))
+        if (dynamic_cast<core::componentmodel::behavior::BaseConstraint*>(obj) ||
+            dynamic_cast<core::componentmodel::behavior::BaseLMConstraint*>(obj))
             flags |= 1 << CONSTRAINT;
         if (dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj) &&
             dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj)->getMechModel1()!=dynamic_cast<core::componentmodel::behavior::InteractionForceField*>(obj)->getMechModel2())
@@ -109,7 +110,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
             flags |= 1 << MAPPING;
         if (dynamic_cast<core::componentmodel::behavior::BaseMass*>(obj))
             flags |= 1 << MASS;
-        if (dynamic_cast<core::componentmodel::topology::Topology *>(obj) 
+        if (dynamic_cast<core::componentmodel::topology::Topology *>(obj)
 	    || dynamic_cast<core::componentmodel::topology::BaseTopologyObject *>(obj) )
             flags |= 1 << TOPOLOGY;
         if (dynamic_cast<core::VisualModel*>(obj) && !flags)
@@ -219,9 +220,18 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 	    //	    if (std::string(child->getName(),0,7) != "default")
 		item->setDropEnabled(true);
 	    item->setText(0, child->getName().c_str());
-	    QPixmap* pix = getPixmap(child);
-	    if (pix)
-	      item->setPixmap(0, *pix);
+            if (child->sendl.getWarnings().empty())
+              {
+                QPixmap* pix = getPixmap(child);
+                if (pix)
+                  item->setPixmap(0, *pix);
+              }
+            else
+              {
+                static QPixmap pixWarning((const char**)iconwarning_xpm);
+                item->setPixmap(0,pixWarning);
+              }
+
 	    item->setOpen(true);
 	    items[child] = item;
 	  }
@@ -314,12 +324,12 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 // 	      }
 	    item->setText(0, name.c_str());
 
-	    if (object->getLogWarning().size() == 0)
-	      {	       
+	    if (object->sendl.getWarnings().empty())
+	      {
 		QPixmap* pix = getPixmap(object);
 		if (pix)
 		  item->setPixmap(0, *pix);
-		
+
 	      }
 	    else
 	      {
@@ -370,8 +380,8 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 	    itemParent->insertItem(itemObject);
 	  }
       }
-		
-      /*****************************************************************************************************************/		
+
+      /*****************************************************************************************************************/
       void GraphListenerQListView::freeze(GNode* groot)
       {
 	if (!items.count(groot)) return;

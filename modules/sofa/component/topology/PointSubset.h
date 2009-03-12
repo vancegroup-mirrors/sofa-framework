@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_POINTSUBSET_H
 
 #include <sofa/helper/vector.h>
+#include <sofa/component/component.h>
 #include <list>
 #include <iostream>
 
@@ -62,7 +63,7 @@ namespace topology
 	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
 	* happen (non exhaustive list: points added, removed, fused, renumbered).
 	*/
-	class PointSubset 
+	class SOFA_COMPONENT_TOPOLOGY_API PointSubset 
 	{
 	public:
 		// forwardinging Commonvector methods and typdefs
@@ -93,8 +94,8 @@ namespace topology
 								const unsigned int totalPointSetArraySize);
 
 		// defining operators so that pointSubset can be used in a Data (see Data class).
-		friend std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset);
-		friend std::istream& operator>> (std::istream& i,             PointSubset& pointSubset);
+		friend SOFA_COMPONENT_TOPOLOGY_API std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset);
+		friend SOFA_COMPONENT_TOPOLOGY_API std::istream& operator>> (std::istream& i,             PointSubset& pointSubset);
 
 		void setTestFunction(bool (*testNewPointFunc )(int, void*, const sofa::helper::vector< unsigned int > &, 
 														const sofa::helper::vector< double >& )) 
@@ -217,10 +218,10 @@ namespace topology
 	};
 
 	/// Needed to be compliant with Datas.
-	std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset);
+	SOFA_COMPONENT_TOPOLOGY_API std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset);
 
 	/// Needed to be compliant with Datas.
-	std::istream& operator>>(std::istream& i, PointSubset& pointSubset);
+	SOFA_COMPONENT_TOPOLOGY_API std::istream& operator>>(std::istream& i, PointSubset& pointSubset);
 
 } // namespace topology
 

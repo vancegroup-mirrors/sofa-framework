@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -46,7 +46,7 @@ Context::Context()
   , showVisualModels_           (initData(&showVisualModels_,           -1, "showVisualModels","display Visual Models"))
   , showBehaviorModels_         (initData(&showBehaviorModels_,         -1,"showBehaviorModels","display Behavior Models"))
   , showCollisionModels_        (initData(&showCollisionModels_,        -1,"showCollisionModels","display Collision Models"))
-  , showBoundingCollisionModels_(initData(&showBoundingCollisionModels_,-1,"showBoundingCollisionModels","display Bounding Collision Models"))        
+  , showBoundingCollisionModels_(initData(&showBoundingCollisionModels_,-1,"showBoundingCollisionModels","display Bounding Collision Models"))
   , showMappings_               (initData(&showMappings_,               -1,"showMappings","display Mappings"))
   , showMechanicalMappings_     (initData(&showMechanicalMappings_,     -1,"showMechanicalMappings","display Mechanical Mappings"))
   , showForceFields_            (initData(&showForceFields_,            -1,"showForceFields","display Force Fields"))
@@ -62,6 +62,20 @@ Context::Context()
     setGravityInWorld(objectmodel::BaseContext::getLocalGravity());
     setVelocityInWorld(objectmodel::BaseContext::getVelocityInWorld());
     setVelocityBasedLinearAccelerationInWorld(objectmodel::BaseContext::getVelocityBasedLinearAccelerationInWorld());
+
+    addAlias(&showVisualModels_,           "showAll"); addAlias(&showVisualModels_,           "showVisual");
+
+    addAlias(&showBehaviorModels_,         "showAll"); addAlias(&showBehaviorModels_,         "showBehavior");
+    addAlias(&showForceFields_,            "showAll"); addAlias(&showForceFields_,            "showBehavior");
+    addAlias(&showInteractionForceFields_, "showAll"); addAlias(&showInteractionForceFields_, "showBehavior");
+
+
+    addAlias(&showCollisionModels_,        "showAll"); addAlias(&showCollisionModels_,        "showCollision");
+    addAlias(&showBoundingCollisionModels_,"showAll"); addAlias(&showBoundingCollisionModels_,"showCollision");
+
+    addAlias(&showMappings_,               "showAll"); addAlias(&showMappings_,               "showMapping");
+    addAlias(&showMechanicalMappings_,     "showAll"); addAlias(&showMechanicalMappings_,     "showMapping");
+
     //setDt(objectmodel::BaseContext::getDt());
     //setTime(objectmodel::BaseContext::getTime());
     //setAnimate(objectmodel::BaseContext::getAnimate());
@@ -75,7 +89,7 @@ Context::Context()
     //setShowInteractionForceFields(objectmodel::BaseContext::getShowInteractionForceFields());
     //setShowWireFrame(objectmodel::BaseContext::getShowWireFrame());
     //setShowNormals(objectmodel::BaseContext::getShowNormals());
-    //setMultiThreadSimulation(objectmodel::BaseContext::getMultiThreadSimulation());   
+    //setMultiThreadSimulation(objectmodel::BaseContext::getMultiThreadSimulation());
 }
 
 /// The Context is active
@@ -386,7 +400,7 @@ void Context::copyContext(const Context& c)
     // *this = c;
 
     copySimulationContext(c);
-    copyVisualContext(c);    
+    copyVisualContext(c);
 }
 
 
@@ -397,11 +411,11 @@ void Context::copySimulationContext(const Context& c)
   time_.setValue(c.time_.getValue());
   animate_.setValue(c.animate_.getValue());
   multiThreadSimulation_.setValue(c.multiThreadSimulation_.getValue());
-  
+
   localFrame_ = c.localFrame_;
   spatialVelocityInWorld_ = c.spatialVelocityInWorld_;
   velocityBasedLinearAccelerationInWorld_ = c.velocityBasedLinearAccelerationInWorld_;
-	
+
 	// for multiresolution
 // 	finestLevel_ = c.finestLevel_;
 // 	coarsestLevel_ = c.coarsestLevel_;
@@ -423,16 +437,20 @@ void Context::copyVisualContext(const Context& c)
   showNormals_.setValue(c.showNormals_.getValue());
 }
 
-std::ostream& operator << (std::ostream& out, const Context& c )
-{
-    out<<std::endl<<"local gravity = "<<c.getLocalGravity();
-    out<<std::endl<<"transform from local to world = "<<c.getPositionInWorld();
-    //out<<std::endl<<"transform from world to local = "<<c.getWorldToLocal();
-    out<<std::endl<<"spatial velocity = "<<c.getVelocityInWorld();
-    out<<std::endl<<"acceleration of the origin = "<<c.getVelocityBasedLinearAccelerationInWorld();
-    return out;
-}
 
+void Context::fusionVisualContext(const Context& c)
+{
+  showCollisionModels_.setValue(showCollisionModels_.getValue() || c.showCollisionModels_.getValue());
+  showBoundingCollisionModels_.setValue(showBoundingCollisionModels_.getValue() || c.showBoundingCollisionModels_.getValue());
+  showBehaviorModels_.setValue(showBehaviorModels_.getValue() || c.showBehaviorModels_.getValue());
+  showVisualModels_.setValue(showVisualModels_.getValue() || c.showVisualModels_.getValue());
+  showMappings_.setValue(showMappings_.getValue() || c.showMappings_.getValue());
+  showMechanicalMappings_.setValue(showMechanicalMappings_.getValue() || c.showMechanicalMappings_.getValue());
+  showForceFields_.setValue(showForceFields_.getValue() || c.showForceFields_.getValue());
+  showInteractionForceFields_.setValue(showInteractionForceFields_.getValue() || c.showInteractionForceFields_.getValue());
+  showWireFrame_.setValue(showWireFrame_.getValue() || c.showWireFrame_.getValue());
+  showNormals_.setValue(showNormals_.getValue() || c.showNormals_.getValue());
+}
 
 
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -58,33 +58,33 @@ int ConstantForceFieldClass = core::RegisterObject("Constant forces applied to g
 #endif
 ;
 #ifndef SOFA_FLOAT
-template class ConstantForceField<Vec3dTypes>;
-template class ConstantForceField<Vec2dTypes>;
-template class ConstantForceField<Vec1dTypes>;
-template class ConstantForceField<Vec6dTypes>;
-template class ConstantForceField<Rigid3dTypes>;
-template class ConstantForceField<Rigid2dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec2dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec1dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec6dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Rigid3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Rigid2dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class ConstantForceField<Vec3fTypes>;
-template class ConstantForceField<Vec2fTypes>;
-template class ConstantForceField<Vec1fTypes>;
-template class ConstantForceField<Vec6fTypes>;
-template class ConstantForceField<Rigid3fTypes>;
-template class ConstantForceField<Rigid2fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec2fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec1fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Vec6fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Rigid3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API ConstantForceField<Rigid2fTypes>;
 #endif
 
 #ifndef SOFA_FLOAT
   template <>
   double ConstantForceField<Rigid3dTypes>::getPotentialEnergy(const VecCoord& )
   {
-    std::cerr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
   } 
   template <>
   double ConstantForceField<Rigid2dTypes>::getPotentialEnergy(const VecCoord& )
   {
-    std::cerr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
   }
 #endif
@@ -93,14 +93,14 @@ template class ConstantForceField<Rigid2fTypes>;
   template <>
   double ConstantForceField<Rigid3fTypes>::getPotentialEnergy(const VecCoord& )
   {
-    std::cerr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
   }
 
   template <>
   double ConstantForceField<Rigid2fTypes>::getPotentialEnergy(const VecCoord& )
   {
-    std::cerr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"ConstantForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
   }
 #endif

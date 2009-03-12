@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -58,23 +58,8 @@ bool DataElement::initNode()
 {
     AttributeElement *p = dynamic_cast< AttributeElement *>( getParentElement());
     std::string info;
-    getAttribute( "type", "");
-    info = getAttribute( "name", "");
-    
-    if (info.find("default") == std::string::npos)
-    {
-      p->setValue(info);
-      return true;
-    }
-       
-    for (AttributeMap::iterator it = attributes.begin(), itend = attributes.end(); it != itend; ++it)
-    {     
-      if (!it->second.isAccessed()) 
-      {
-	p->setValue(it->second);  
-      }
-    }
-    
+    info = getAttribute( "value", "");
+    p->setValue(info);
     return true;
 }
 

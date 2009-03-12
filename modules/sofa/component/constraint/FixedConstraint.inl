@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,14 +29,16 @@
 #include <sofa/core/componentmodel/behavior/Constraint.inl>
 #include <sofa/component/constraint/FixedConstraint.h>
 #include <sofa/component/topology/PointSubset.h>
-
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <iostream>
 
 
-using std::cerr;
-using std::endl;
+#include <sofa/helper/gl/BasicShapes.h>
+
+
+
 
 namespace sofa
 {
@@ -75,13 +77,14 @@ void FixedConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
 		fc->removeConstraint((unsigned int) pointIndex);
 	}
 	return;
-} 
+}
 
 template <class DataTypes>
 FixedConstraint<DataTypes>::FixedConstraint()
 : core::componentmodel::behavior::Constraint<DataTypes>(NULL)
 , f_indices( initData(&f_indices,"indices","Indices of the fixed points") )
 , f_fixAll( initData(&f_fixAll,false,"fixAll","filter all the DOF to implement a fixed object") )
+, _drawSize( initData(&_drawSize,0.0,"drawSize","0 -> point based rendering, >0 -> radius of spheres") )
 {
     // default to indice 0
     f_indices.beginEdit()->push_back(0);
@@ -91,7 +94,7 @@ FixedConstraint<DataTypes>::FixedConstraint()
 
 // Handle topological changes
 template <class DataTypes> void FixedConstraint<DataTypes>::handleTopologyChange()
-{	
+{
 	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
 	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
 
@@ -150,7 +153,7 @@ template <class DataTypes>
 void FixedConstraint<DataTypes>::projectResponse(VecDeriv& res)
 {
     const SetIndexArray & indices = f_indices.getValue().getArray();
-  //std::cerr<<"FixedConstraint<DataTypes>::projectResponse, res.size()="<<res.size()<<endl;
+  //serr<<"FixedConstraint<DataTypes>::projectResponse, res.size()="<<res.size()<<sendl;
   	if( f_fixAll.getValue()==true ) {  // fix everyting
 		for( unsigned i=0; i<res.size(); i++ )
 			res[i] = Deriv();
@@ -169,7 +172,7 @@ void FixedConstraint<DataTypes>::projectResponse(VecDeriv& res)
 template <class DataTypes>
 void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseMatrix *mat, unsigned int &offset)
 {
-    //std::cout << "applyConstraint in Matrix with offset = " << offset << std::endl;
+    //sout << "applyConstraint in Matrix with offset = " << offset << sendl;
     const unsigned int N = Deriv::size();
     const SetIndexArray & indices = f_indices.getValue().getArray();
 
@@ -187,7 +190,7 @@ void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseMatrix *mat, u
 template <class DataTypes>
 void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseVector *vect, unsigned int &offset)
 {
-    //std::cout << "applyConstraint in Vector with offset = " << offset << std::endl;
+    //sout << "applyConstraint in Vector with offset = " << offset << sendl;
     const unsigned int N = Deriv::size();
 
     const SetIndexArray & indices = f_indices.getValue().getArray();
@@ -198,6 +201,18 @@ void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseVector *vect, 
     }
 }
 
+// Matrix Integration interface
+template <class DataTypes>
+void FixedConstraint<DataTypes>::applyInvMassConstraint(defaulttype::BaseVector *vec, unsigned int &offset)
+{
+    //sout << "applyConstraint in Matrix with offset = " << offset << sendl;
+//     const unsigned int N = Deriv::size();
+    const SetIndexArray & indices = f_indices.getValue().getArray();
+    for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    {
+      vec->clear(offset +  (*it));
+    }
+}
 
 template <class DataTypes>
 void FixedConstraint<DataTypes>::draw()
@@ -205,24 +220,59 @@ void FixedConstraint<DataTypes>::draw()
     if (!getContext()->
             getShowBehaviorModels()) return;
     const VecCoord& x = *this->mstate->getX();
-    //std::cerr<<"FixedConstraint<DataTypes>::draw(), x.size() = "<<x.size()<<endl;
-    glDisable (GL_LIGHTING);
-    glPointSize(10);
-    glColor4f (1,0.5,0.5,1);
-    glBegin (GL_POINTS);
-	const SetIndexArray & indices = f_indices.getValue().getArray();
-    //std::cerr<<"FixedConstraint<DataTypes>::draw(), indices = "<<indices<<endl;
-    if( f_fixAll.getValue()==true ) for (unsigned i=0; i<x.size(); i++ )
-		{
-        gl::glVertexT(x[i]);
-		}
-    else for (SetIndexArray::const_iterator it = indices.begin();
-        it != indices.end();
-        ++it)
-		{
-        gl::glVertexT(x[*it]);
-		}
-    glEnd();
+    //serr<<"FixedConstraint<DataTypes>::draw(), x.size() = "<<x.size()<<sendl;
+
+
+
+
+    const SetIndexArray & indices = f_indices.getValue().getArray();
+
+    if( _drawSize.getValue() == 0) // old classical drawing by points
+      {
+	std::vector< Vector3 > points;
+	Vector3 point;
+	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
+	//serr<<"FixedConstraint<DataTypes>::draw(), indices = "<<indices<<sendl;
+	if( f_fixAll.getValue()==true )
+	  for (unsigned i=0; i<x.size(); i++ )
+	    {
+	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[i][s];
+	      points.push_back(point);
+	    }
+	else
+	  for (SetIndexArray::const_iterator it = indices.begin();
+	       it != indices.end();
+	       ++it)
+	    {
+	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[*it][s];
+	      points.push_back(point);
+	    }
+	simulation::getSimulation()->DrawUtility.drawPoints(points, 10, Vec<4,float>(1,0.5,0.5,1));
+      }
+    else // new drawing by spheres
+      {
+	std::vector< Vector3 > points;
+	Vector3 point;
+	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
+	glColor4f (1.0f,0.35f,0.35f,1.0f);
+	if( f_fixAll.getValue()==true )
+	  for (unsigned i=0; i<x.size(); i++ )
+	    {
+	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[i][s];
+	      points.push_back(point);
+	    }
+    	else
+	  for (SetIndexArray::const_iterator it = indices.begin();
+	       it != indices.end();
+	       ++it)
+	    {
+	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[*it][s];
+	      points.push_back(point);
+	    }
+	simulation::getSimulation()->DrawUtility.drawSpheres(points, (float)_drawSize.getValue(), Vec<4,float>(1.0f,0.35f,0.35f,1.0f));
+
+      }
+
 }
 
 // Specialization for rigids

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,6 +35,7 @@
 //
 #include "Node.h"
 #include <sofa/simulation/common/PropagateEventVisitor.h>
+#include <sofa/simulation/common/UpdateMappingEndEvent.h>
 #include <sofa/simulation/common/AnimateVisitor.h>
 #include <sofa/simulation/common/DesactivatedNodeVisitor.h>
 #include <sofa/simulation/common/InitVisitor.h>
@@ -54,6 +55,7 @@ namespace sofa
 
 namespace simulation
 {
+using core::objectmodel::BaseNode;
 using core::objectmodel::BaseObject;
 using helper::system::thread::CTime;
 
@@ -96,7 +98,6 @@ void Node::animate( double dt )
     //cerr<<"Node::animate, start execute"<<endl;
     execute(vis);
     //cerr<<"Node::animate, end execute"<<endl;
-    execute<simulation::UpdateMappingVisitor>();
 }
 
 void Node::glDraw()
@@ -107,7 +108,20 @@ void Node::glDraw()
 
 
 
+void Node::addChild(Node* )
+{
+  serr << "addChild NOT IMPLEMENTED" << sendl;
+}
 
+void Node::removeChild(Node* )
+{
+  serr << "removeChild NOT IMPLEMENTED" << sendl;
+}
+
+void Node::moveChild(Node* )
+{
+  serr << "moveChild NOT IMPLEMENTED" << sendl;
+}
 
 /// Add an object. Detect the implemented interfaces and add the object to the corresponding lists.
 bool Node::addObject(BaseObject* obj)
@@ -178,8 +192,10 @@ void Node::doAddObject(BaseObject* obj)
     if (!isInteractionForceField)
         forceField.add(dynamic_cast< core::componentmodel::behavior::BaseForceField* >(obj));
     inserted+= constraint.add(dynamic_cast< core::componentmodel::behavior::BaseConstraint* >(obj));
+    inserted+= LMConstraint.add(dynamic_cast< core::componentmodel::behavior::BaseLMConstraint* >(obj));
     inserted+= behaviorModel.add(dynamic_cast< core::BehaviorModel* >(obj));
     inserted+= visualModel.add(dynamic_cast< core::VisualModel* >(obj));
+    inserted+= visualManager.add(dynamic_cast< core::VisualManager* >(obj));
     inserted+= collisionModel.add(dynamic_cast< core::CollisionModel* >(obj));
     inserted+= contextObject.add(dynamic_cast< core::objectmodel::ContextObject* >(obj));
     inserted+= collisionPipeline.add(dynamic_cast< core::componentmodel::collision::Pipeline* >(obj));
@@ -214,14 +230,18 @@ void Node::doRemoveObject(BaseObject* obj)
     forceField.remove(dynamic_cast< core::componentmodel::behavior::BaseForceField* >(obj));
     interactionForceField.remove(dynamic_cast< core::componentmodel::behavior::InteractionForceField* >(obj));
     constraint.remove(dynamic_cast< core::componentmodel::behavior::BaseConstraint* >(obj));
+    LMConstraint.remove(dynamic_cast< core::componentmodel::behavior::BaseLMConstraint* >(obj));
     mapping.remove(dynamic_cast< core::BaseMapping* >(obj));
     behaviorModel.remove(dynamic_cast< core::BehaviorModel* >(obj));
     visualModel.remove(dynamic_cast< core::VisualModel* >(obj));
+    visualManager.remove(dynamic_cast< core::VisualManager* >(obj));
     collisionModel.remove(dynamic_cast< core::CollisionModel* >(obj));
     contextObject.remove(dynamic_cast<core::objectmodel::ContextObject* >(obj));
     collisionPipeline.remove(dynamic_cast< core::componentmodel::collision::Pipeline* >(obj));
 
     actionScheduler.remove(dynamic_cast< VisitorScheduler* >(obj));
+
+    unsorted.remove(obj);
     // Remove references to this object in time log tables
     if (!objectTime.empty())
     {
@@ -414,58 +434,20 @@ void Node::initialize()
 
 void Node::updateContext()
 {
-    //if( debug_ ) cerr<<"Node::updateContext, node = "<<getName()<<", incoming context = "<< *this->getContext() << endl;
 
-    // Apply local modifications to the context
-    if (getLogTime())
-    {
-        for ( unsigned i=0; i<contextObject.size(); ++i )
-        {
-            contextObject[i]->init();
-            contextObject[i]->apply();
-            //cerr<<"Node::updateContext, modified by node = "<<contextObject[i]->getName()<< endl;
-        }
-    }
-    else
-    {
         for ( unsigned i=0; i<contextObject.size(); ++i )
         {
             contextObject[i]->init();
             contextObject[i]->apply();
             //cerr<<"Node::updateContext, modified by node = "<<contextObject[i]->getName()<<endl;
         }
-    }
-//	if( !mechanicalModel.empty() ) {
-//		mechanicalModel->updateContext(&context_);
-//	}
-
-
-    // project the gravity to the local coordinate system
-    /*        getContext()->setGravity( getContext()->getLocalFrame().backProjectVector(getContext()->getWorldGravity()) );*/
 
     if ( debug_ ) std::cerr<<"Node::updateContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
 }
 
 void Node::updateSimulationContext()
 {
-    // Apply local modifications to the context
-    if (getLogTime())
-    {
-        for ( unsigned i=0; i<contextObject.size(); ++i )
-        {
-            contextObject[i]->init();
-            contextObject[i]->apply();
-        }
-    }
-    else
-    {
-        for ( unsigned i=0; i<contextObject.size(); ++i )
-        {
-            contextObject[i]->init();
-            contextObject[i]->apply();
-        }
-    }
-    if ( debug_ ) std::cerr<<"Node::updateSimulationContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
+    updateContext();
 }
 
 void Node::updateVisualContext(int/* FILTER*/)
@@ -560,6 +542,9 @@ void Node::printComponents()
         cerr<<(*i)->getName()<<" ";
     cerr<<endl<<"Constraint: ";
     for ( Sequence<BaseConstraint>::iterator i=constraint.begin(), iend=constraint.end(); i!=iend; i++ )
+        cerr<<(*i)->getName()<<" ";
+    cerr<<endl<<"LMConstraint: ";
+    for ( Sequence<BaseLMConstraint>::iterator i=LMConstraint.begin(), iend=LMConstraint.end(); i!=iend; i++ )
         cerr<<(*i)->getName()<<" ";
     cerr<<endl<<"BehaviorModel: ";
     for ( Sequence<BehaviorModel>::iterator i=behaviorModel.begin(), iend=behaviorModel.end(); i!=iend; i++ )

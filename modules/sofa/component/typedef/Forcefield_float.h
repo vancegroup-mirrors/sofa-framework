@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -30,7 +30,6 @@
 #include <sofa/defaulttype/Mat.h>
 
 #include <sofa/component/forcefield/BeamFEMForceField.h>
-#include <sofa/component/forcefield/BoxConstantForceField.h>
 #include <sofa/component/forcefield/BoxStiffSpringForceField.h>
 #include <sofa/component/forcefield/ConstantForceField.h>
 #include <sofa/component/forcefield/EdgePressureForceField.h>
@@ -64,16 +63,6 @@ typedef sofa::component::forcefield::BeamFEMForceField<sofa::defaulttype::Rigid3
 //---------------------
 //Deformable
 typedef sofa::component::forcefield::BoxStiffSpringForceField<sofa::defaulttype::Vec3fTypes> BoxStiffSpringForceField3f;
-
-//BoxConstantForceField
-//---------------------
-//Deformable
-typedef sofa::component::forcefield::BoxConstantForceField<sofa::defaulttype::Vec1fTypes> BoxConstantForceField1f;
-typedef sofa::component::forcefield::BoxConstantForceField<sofa::defaulttype::Vec2fTypes> BoxConstantForceField2f;
-typedef sofa::component::forcefield::BoxConstantForceField<sofa::defaulttype::Vec3fTypes> BoxConstantForceField3f;
-typedef sofa::component::forcefield::BoxConstantForceField<sofa::defaulttype::Vec6fTypes> BoxConstantForceField6f;
-typedef sofa::component::forcefield::BoxConstantForceField<sofa::defaulttype::Rigid2fTypes> BoxConstantForceFieldRigid2f;
-typedef sofa::component::forcefield::BoxConstantForceField<sofa::defaulttype::Rigid3fTypes> BoxConstantForceFieldRigid3f;
 
 //ConicalForceField
 //---------------------
@@ -209,12 +198,6 @@ typedef sofa::component::forcefield::VectorSpringForceField<sofa::defaulttype::V
 #ifdef SOFA_FLOAT
 typedef BeamFEMForceFieldRigid3f                          BeamFEMForceFieldRigid3;                         
 typedef BoxStiffSpringForceField3f 			  BoxStiffSpringForceField3;
-typedef BoxConstantForceField1f 			  BoxConstantForceField1;
-typedef BoxConstantForceField2f 			  BoxConstantForceField2;
-typedef BoxConstantForceField3f 			  BoxConstantForceField3;
-typedef BoxConstantForceField6f 			  BoxConstantForceField6;
-typedef BoxConstantForceFieldRigid2f 			  BoxConstantForceFieldRigid2;
-typedef BoxConstantForceFieldRigid3f 			  BoxConstantForceFieldRigid3;
 typedef ConicalForceField3f 				  ConicalForceField3;
 typedef ConstantForceField1f 				  ConstantForceField1;
 typedef ConstantForceField2f 				  ConstantForceField2;

@@ -1,7 +1,7 @@
 <Node name="root" dt="0.05" gravity="0 -9 0" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="1" showBoundingTree="0">
 	<Object type="CollisionPipeline" verbose="0" />
 	<Object type="BruteForceDetection" name="N2" />
-	<Object type="CollisionResponse" contact="default" response="default" />
+	<Object type="CollisionResponse" response="default" />
 	<Object type="NewProximityIntersection" name="Proximity" alarmDistance="0.05" contactDistance="0.05" />
 	<Object type="CollisionGroup" />
 	
@@ -24,30 +24,30 @@
 
 				<!-- Visual models of the eye that move with the eye ball rotation -->
 				<Node name="Iris_">
-					<Object type="OglModel" name="Iris"  filename="Demos/Ophtalmo/data/mesh/iris.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/iris.bmp" castshadow="0" />
+					<Object type="OglModel" name="Iris"  fileMesh="Demos/Ophtalmo/data/mesh/iris.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/iris.bmp" castshadow="0" />
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Iris" index="1"/>
 				</Node>
 				<Node name="Sclera_">
-					<Object type="OglModel" name="Sclera" filename="Demos/Ophtalmo/data/mesh/sclera.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/sclera.bmp" castshadow="0" />
+					<Object type="OglModel" name="Sclera" fileMesh="Demos/Ophtalmo/data/mesh/sclera.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/sclera.bmp" castshadow="0" />
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Sclera" index="1"/>
 				</Node>
 	
 				<Node name="Choroid_">
-					<Object type="OglModel" name="Choroid" filename="Demos/Ophtalmo/data/mesh/choroid.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/choroid.bmp" castshadow="0"/>
+					<Object type="OglModel" name="Choroid" fileMesh="Demos/Ophtalmo/data/mesh/choroid.obj" normals="0" texturename="Demos/Ophtalmo/data/textures/choroid.bmp" castshadow="0"/>
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Choroid" index="1"/>
 				</Node> -->
 				
 				<Node name="Ciliary_">
-					<Object type="OglModel" name="Ciliary"  filename="Demos/Ophtalmo/data/mesh/ciliary_processes.obj" texturename="Demos/Ophtalmo/data/textures/ciliary.bmp" castshadow="0"/>
+					<Object type="OglModel" name="Ciliary"  fileMesh="Demos/Ophtalmo/data/mesh/ciliary_processes.obj" texturename="Demos/Ophtalmo/data/textures/ciliary.bmp" castshadow="0"/>
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Ciliary" index="1"/>
 				</Node>
 				<Node name="Cornea_">
 				<Object type="ClipPlane" normal="1 0 0" active="false" />
-					<Object type="OglModel" name="Cornea"  filename="Demos/Ophtalmo/data/mesh/cornea.obj"  normals="0" castshadow="0" />
+					<Object type="OglModel" name="Cornea"  fileMesh="Demos/Ophtalmo/data/mesh/cornea.obj"  normals="0" castshadow="0" />
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Cornea" index="1"/>
 				</Node>
 				<Node name="Capsule">
-					<Object type="OglModel" name="Capsule"  filename="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" castshadow="0" />
+					<Object type="OglModel" name="Capsule"  fileMesh="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" castshadow="0" />
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Capsule" index="1"/>
 				</Node>
 <!--				
@@ -84,7 +84,7 @@
 <!--
 			<Node name="LensCapsule">
 				<Object type="MechanicalObject" name="LensCapsuleBM" />
-				<Object type="TriangleSetTopology" filename="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" scale="1.0"/>
+				<Object type="TriangleSetTopology" fileTopology="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" scale="1.0"/>
 				<Object type="TriangularFEMForceField" name="FEM" youngModulus="50000" poissonRatio="0.45" method="large"/>
 				<Object type="TriangularBendingSprings" name="FEM-Bend" stiffness="100000" damping="100"/>
 				<Object type="UniformMass" totalmass="0.005" />
@@ -136,36 +136,36 @@
 	</Node>
 
 	<Node name="CompleteEyeAnatomicalModel">
-		<Object type="OglModel" name="Muscle1"      filename="Demos/Ophtalmo/data/mesh/inf_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
-		<Object type="OglModel" name="Muscle2"      filename="Demos/Ophtalmo/data/mesh/lat_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
-		<Object type="OglModel" name="Muscle3"      filename="Demos/Ophtalmo/data/mesh/med_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
-		<Object type="OglModel" name="Muscle4"      filename="Demos/Ophtalmo/data/mesh/super_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
-		<Object type="OglModel" name="Muscle5"      filename="Demos/Ophtalmo/data/mesh/infer_obl_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
-		<Object type="OglModel" name="Muscle6"      filename="Demos/Ophtalmo/data/mesh/super_obl_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
-		<Object type="OglModel" name="Clamps"       filename="Demos/Ophtalmo/data/mesh/clamps.obj" />
+		<Object type="OglModel" name="Muscle1"      fileMesh="Demos/Ophtalmo/data/mesh/inf_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle2"      fileMesh="Demos/Ophtalmo/data/mesh/lat_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle3"      fileMesh="Demos/Ophtalmo/data/mesh/med_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle4"      fileMesh="Demos/Ophtalmo/data/mesh/super_recus_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle5"      fileMesh="Demos/Ophtalmo/data/mesh/infer_obl_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle6"      fileMesh="Demos/Ophtalmo/data/mesh/super_obl_muscle.obj" texturename="Demos/Ophtalmo/data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Clamps"       fileMesh="Demos/Ophtalmo/data/mesh/clamps.obj" />
 	</Node>
 <!--
 	<Node name="CompleteEyeAnatomicalMode_Cornea">
 		<Object type="OglShader" frag="PerPixelSpotLighting_cornea.frag" vert="PerPixelSpotLighting.vert" />
-		<Object type="OglModel" name="Cornea"       filename="Demos/Ophtalmo/data/mesh/cornea.obj" castshadow="0" /> 
+		<Object type="OglModel" name="Cornea"       fileMesh="Demos/Ophtalmo/data/mesh/cornea.obj" castshadow="0" /> 
 	</Node>
 	
 	<Node name="CompleteEyeAnatomicalModel_Iris_Sclera">
 		<Object type="OglShader" frag="PerPixelSpotLighting_sclera_iris.frag" vert="PerPixelSpotLighting.vert" />
-		<Object type="OglModel" name="Sclera"       filename="Demos/Ophtalmo/data/mesh/sclera.obj"  texturename="Demos/Ophtalmo/data/textures/sclera.bmp" castshadow="0" />
-		<Object type="OglModel" name="Iris"         filename="Demos/Ophtalmo/data/mesh/iris.obj" texturename="Demos/Ophtalmo/data/textures/iris.bmp" castshadow="0" />
+		<Object type="OglModel" name="Sclera"       fileMesh="Demos/Ophtalmo/data/mesh/sclera.obj"  texturename="Demos/Ophtalmo/data/textures/sclera.bmp" castshadow="0" />
+		<Object type="OglModel" name="Iris"         fileMesh="Demos/Ophtalmo/data/mesh/iris.obj" texturename="Demos/Ophtalmo/data/textures/iris.bmp" castshadow="0" />
 	</Node>
 -->	
 	<Node name="CompleteEyeAnatomicalModel_Skin">
 		<Object type="ClipPlane" normal="0 0 -1" position="0 0 -5" active="true" id="1" />
 <!--		<Object type="OglShader" frag="PerPixelSpotLighting_skin.frag" vert="PerPixelSpotLighting.vert" />  -->
-		<Object type="OglModel" name="Skin"         filename="Demos/Ophtalmo/data/mesh/john_hi_obj.obj" texturename="Demos/Ophtalmo/data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" normals="0" /> 
+		<Object type="OglModel" name="Skin"         fileMesh="Demos/Ophtalmo/data/mesh/john_hi_obj.obj" texturename="Demos/Ophtalmo/data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" normals="0" /> 
 	</Node>
 	<Node name="CompleteEyeAnatomicalModel_SkinTrans">
 	<Object type="ClipPlane" normal="-1 0 0" position="-7.5 0 0" active="true" />
 		<Object type="ClipPlane" normal="0 0 -1" position="0 0 -10" active="true" id="1" />
 <!--		<Object type="OglShader" frag="PerPixelSpotLighting_skin.frag" vert="PerPixelSpotLighting.vert" />  -->
-		<Object type="OglModel" name="Skin"         filename="Demos/Ophtalmo/data/mesh/john_hi_obj.obj" texturename="Demos/Ophtalmo/data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" color="1 1 1 0.5" normals="0" /> 
+		<Object type="OglModel" name="Skin"         fileMesh="Demos/Ophtalmo/data/mesh/john_hi_obj.obj" texturename="Demos/Ophtalmo/data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" color="1 1 1 0.5" normals="0" /> 
 	</Node>
 	<Node>
 				<Object type="ClipPlane" normal="1 0 0" active="false" />

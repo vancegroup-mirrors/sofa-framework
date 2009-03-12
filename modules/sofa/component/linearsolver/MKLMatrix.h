@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -60,12 +60,12 @@ public:
 	//	(*impl) = 0.0;
 	};
 
-	virtual int rowSize(void)
+	virtual unsigned  int rowSize(void)
 	{
 		return impl->rows;
 	};
 
-	virtual int colSize(void)
+	virtual unsigned int colSize(void)
 	{
 		return impl->columns;
 	};
@@ -88,7 +88,7 @@ public:
 		// b is overwritten by the linear system solution
 		dgesv(&n,&nrhs,impl->m,&lda,ipiv,rHTerm->impl->v,&ldb,&info);
 	};
-	
+
 
 private:
 	Dynamic_Matrix<double> *impl;

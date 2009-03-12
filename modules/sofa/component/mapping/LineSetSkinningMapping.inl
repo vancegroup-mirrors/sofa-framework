@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -289,11 +289,13 @@ void LineSetSkinningMapping<BasicMapping>::applyJT( typename In::VecConst& out, 
 
 	for(unsigned int i=0; i<in.size(); i++)
 	{
-		for (unsigned int j=0;j<in[i].size();j++)
-		{
-			const OutSparseDeriv cIn = in[i][j];
-			int verticeIndex = cIn.index;
-			const OutDeriv d = (OutDeriv) cIn.data;
+                OutConstraintIterator itOut;
+                for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+                {
+                        unsigned int indexIn = itOut->first;
+                        OutDeriv data = (OutDeriv) itOut->second;
+			int verticeIndex = indexIn;
+			const OutDeriv d = data;
 			//printf(" normale : %f %f %f",d.x(), d.y(), d.z());
 			for(unsigned int lineInfluencedIndex=0; lineInfluencedIndex<linesInfluencedByVertice[verticeIndex].size(); lineInfluencedIndex++)
 			{
@@ -303,7 +305,7 @@ void LineSetSkinningMapping<BasicMapping>::applyJT( typename In::VecConst& out, 
 				direction.getVCenter() = d * iline.weight;
 				//printf("\n Weighted normale : %f %f %f",direction.getVCenter().x(), direction.getVCenter().y(), direction.getVCenter().z());
 				direction.getVOrientation() = IP.cross(d) * iline.weight;
-				out[i].push_back(InSparseDeriv(t->getLine(iline.lineIndex)[0], direction));
+				out[i].insert(t->getLine(iline.lineIndex)[0], direction);
 			}
 		}
 	}

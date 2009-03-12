@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,40 +34,43 @@ namespace sofa
 namespace simulation
 {
 
-class UpdateContextVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API UpdateContextVisitor : public Visitor
 {
 public:
 	UpdateContextVisitor():Visitor(), startingNode(NULL)
-	{	  
+	{
 	}
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "context"; }
+        virtual const char* getClassName() const { return "UpdateContextVisitor"; }
 
 	/// Specify whether this action can be parallelized.
 	virtual bool isThreadSafe() const { return true; }
-  protected: 
+  protected:
     Node* startingNode;
 };
 
-class UpdateSimulationContextVisitor : public UpdateContextVisitor
+class SOFA_SIMULATION_COMMON_API UpdateSimulationContextVisitor : public UpdateContextVisitor
 {
-  public:	
+  public:
     virtual Result processNodeTopDown(simulation::Node* node);
+    virtual const char* getClassName() const { return "UpdateSimulationContextVisitor"; }
 };
 
-class UpdateVisualContextVisitor : public UpdateContextVisitor
+class SOFA_SIMULATION_COMMON_API UpdateVisualContextVisitor : public UpdateContextVisitor
 {
-  
-  public:	
+
+  public:
     int filter;
     UpdateVisualContextVisitor(int FILTER=10):filter(FILTER)
     {};
     virtual Result processNodeTopDown(simulation::Node* node);
-    
+        virtual const char* getClassName() const { return "UpdateVisualContextVisitor"; }
+
 };
 
 } // namespace simulation

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -36,15 +36,21 @@
 #include <QEvent>
 #include <QMouseEvent> 
 #include <QKeyEvent>
+#include <QTabWidget>
 #else
 #include <qevent.h>
+#include <qtabwidget.h>
 #endif
+#include <sofa/helper/system/FileRepository.h>
+#include <sofa/helper/system/SetDirectory.h> 
+
 
 
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/objectmodel/MouseEvent.h>
+#include <sofa/core/componentmodel/collision/Pipeline.h>
 #include <sofa/component/collision/RayPickInteractor.h>
 
 //instruments handling
@@ -53,7 +59,7 @@
 //#include <sofa/simulation/common/GrabVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 #ifdef SOFA_QT4
 #include <QEvent>
 #include <QMouseEvent>
@@ -90,50 +96,30 @@ namespace sofa
 
 	  public:
 	    SofaViewer ()
-	      : groot(NULL), m_isControlPressed(false), _video(false), _shadow(false), _gl_shadow(false), _axis(false), camera_type(CAMERA_PERSPECTIVE)
+			  : groot(NULL), m_isControlPressed(false), _video(false), _shadow(false), _gl_shadow(false), _axis(false), camera_type(CAMERA_PERSPECTIVE), backgroundColour(Vector3()),backgroundImage("textures/SOFA_logo.bmp"), ambientColour(Vector3())
 	    {}
 	    virtual ~SofaViewer(){}
 
 	    virtual QWidget* getQWidget()=0;
 
-	    virtual sofa::simulation::tree::GNode* getScene()        {  return groot;}
+	    virtual sofa::simulation::Node* getScene()        {  return groot;}
 	    virtual const std::string&             getSceneFileName(){  return sceneFileName;}
 	    virtual void                           setSceneFileName(const std::string &f){sceneFileName = f;};
 
 	    virtual void setup() {}
-	    virtual void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool /*keepParams*/=false)
+	    virtual void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool /*keepParams*/=false)
             {
 //               if (interactor != NULL) delete interactor;
               //interactor = NULL;
-              scene->getContext()->get( interactor);
-              std::ostringstream ofilename;
-              std::string screenshot_prefix;
 
-              sceneFileName = (filename==NULL)?"":filename;
-              if (!sceneFileName.empty())
-              {
-                const char* begin = sceneFileName.c_str();
-                const char* end = strrchr(begin,'.');
-                if (!end) end = begin + sceneFileName.length();
-                ofilename << std::string(begin, end);
-                ofilename << "_";
-
-                screenshot_prefix = ofilename.str();
-
-		std::string::size_type position_scene = screenshot_prefix.rfind("scenes/");
-
-                if (position_scene != std::string::npos && position_scene < screenshot_prefix.size()-7)
-                {
-                  screenshot_prefix.replace(position_scene, 7, "share/screenshots/");
-                }
-              }
-              else
-                screenshot_prefix = "scene_";
-              capture.setPrefix(screenshot_prefix);
-
+              if (scene) scene->getContext()->get( interactor);
+              std::string file = filename ? sofa::helper::system::SetDirectory::GetFileName(filename) : std::string();
+              std::string screenshotPrefix=sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/share/screenshots/" ) + file + std::string("_");
+              capture.setPrefix(screenshotPrefix);
+              sceneFileName = filename ? filename : std::string("default.scn");
               groot = scene;
               initTexturesDone = false;
-              sceneBBoxIsValid = true;
+              sceneBBoxIsValid = false;
                //if (!keepParams) resetView();
             }
             
@@ -150,7 +136,34 @@ namespace sofa
 	    {	      
 	      capture.saveScreen(filename, compression_level);
 	    }
-
+	    
+	    virtual void getView(float* /*pos*/, float* /*ori*/) const {};
+	    virtual void setView(float* /*pos*/, float* /*ori*/) {};
+	    virtual void moveView(float* /*pos*/, float* /*ori*/) {};
+	    
+	    
+	    virtual void removeViewerTab(QTabWidget *){};
+	    virtual void configureViewerTab(QTabWidget *){};
+	    
+	    virtual void setBackgroundColour(float r, float g, float b)
+	    {
+	      _background=2;
+	      backgroundColour[0]=r;
+	      backgroundColour[1]=g;
+	      backgroundColour[2]=b;
+	    }
+		
+		virtual void setBackgroundImage(std::string imageFileName)
+		{
+			_background=0;
+			backgroundImage = imageFileName;
+		}
+	    
+		std::string getBackgroundImage()
+		{
+			return backgroundImage;
+		}
+		
 	  protected:
 
 
@@ -268,8 +281,11 @@ namespace sofa
 		      interactor->setName("mouse");
 		      if (groot)
 			{
-			  simulation::tree::GNode* child = new simulation::tree::GNode("mouse");
+			    if (!groot->get<core::componentmodel::collision::Pipeline>(core::objectmodel::BaseContext::SearchRoot))
+				interactor->useCollisions.setValue(false);
+			  simulation::Node* child = simulation::getSimulation()->newNode("mouse");
 			  groot->addChild(child);
+
 			  child->addObject(interactor);
 			}
 		      interactor->init();
@@ -308,10 +324,10 @@ namespace sofa
 
 	    void moveLaparoscopic( QMouseEvent *e)
 	    {
-			int index_instrument = simulation::tree::getSimulation()->instrumentInUse.getValue();
-			if (index_instrument < 0 || index_instrument > (int)simulation::tree::getSimulation()->instruments.size()) return;
+			int index_instrument = simulation::getSimulation()->instrumentInUse.getValue();
+			if (index_instrument < 0 || index_instrument > (int)simulation::getSimulation()->instruments.size()) return;
 	      
-			simulation::Node *instrument = simulation::tree::getSimulation()->instruments[index_instrument];
+			simulation::Node *instrument = simulation::getSimulation()->instruments[index_instrument];
 			if (instrument == NULL) return;
 	      
 			int eventX = e->x();
@@ -379,7 +395,7 @@ namespace sofa
 							if (_mouseInteractorMoving)
 							{
 								_mouseInteractorMoving = false;
-								//static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::GrabVisitor>();
+								//static_cast<sofa::simulation::Node*>(instrument->getContext())->execute<sofa::simulation::GrabVisitor>();
 							}
 						}
 						break;
@@ -422,8 +438,8 @@ namespace sofa
 					}
 				}
 			  
-				static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
-				static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
+				static_cast<sofa::simulation::Node*>(instrument->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
+				static_cast<sofa::simulation::Node*>(instrument->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
 				getQWidget()->update();
 			}
 			else
@@ -453,13 +469,15 @@ namespace sofa
 							// Mouse middle button is pushed 
 							else if (e->button() == Qt::MidButton)
 							{
-
+								sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::MiddlePressed, eventX, eventY);
+								if (groot)
+									groot->propagateEvent(&mouseEvent);
 							}
 							break;
 
 						case QEvent::MouseMove:
 							{
-								if (e->state()&(Qt::LeftButton|Qt::RightButton))
+								if (e->state()&(Qt::LeftButton|Qt::RightButton|Qt::MidButton))
 								{
 									sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Move, eventX, eventY);
 									if (groot)
@@ -486,7 +504,9 @@ namespace sofa
 							// Mouse middle button is released
 							else if (e->button() == Qt::MidButton)
 							{
-
+								sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::MiddleReleased, eventX, eventY);
+								if (groot)
+									groot->propagateEvent(&mouseEvent);
 							}
 							break;
 
@@ -501,10 +521,10 @@ namespace sofa
 
 		void moveLaparoscopic(QWheelEvent *e)
 		{
-			int index_instrument = simulation::tree::getSimulation()->instrumentInUse.getValue();
-			if (index_instrument < 0 || index_instrument > (int)simulation::tree::getSimulation()->instruments.size()) return;
+			int index_instrument = simulation::getSimulation()->instrumentInUse.getValue();
+			if (index_instrument < 0 || index_instrument > (int)simulation::getSimulation()->instruments.size()) return;
 	      
-			simulation::Node *instrument = simulation::tree::getSimulation()->instruments[index_instrument];
+			simulation::Node *instrument = simulation::getSimulation()->instruments[index_instrument];
 			if (instrument == NULL) return;
 	      
 			std::vector< component::controller::Controller* > bc;
@@ -522,7 +542,7 @@ namespace sofa
 	    virtual void moveRayPickInteractor(int , int ){};
 	    
 	    sofa::helper::gl::Capture capture;
-	    sofa::simulation::tree::GNode* groot;
+	    sofa::simulation::Node* groot;
 	    std::string sceneFileName;
 
 	    bool m_isControlPressed;
@@ -534,6 +554,10 @@ namespace sofa
             int _background;
             bool initTexturesDone;
             bool sceneBBoxIsValid;
+
+	    Vector3 backgroundColour;
+		std::string backgroundImage;
+	    Vector3 ambientColour;
 	    sofa::component::collision::RayPickInteractor* interactor;
 
 	    //instruments handling

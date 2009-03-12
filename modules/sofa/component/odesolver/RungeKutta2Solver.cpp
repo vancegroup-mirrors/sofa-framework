@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,8 +27,8 @@
 #include <sofa/core/ObjectFactory.h>
 #include <math.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+
 
 
 namespace sofa
@@ -77,14 +77,18 @@ void RungeKutta2Solver::solve(double dt)
     newV.peq(acc, dt/2.); // newV = vel + acc dt/2
 #else // single-operation optimization
     {
-        simulation::MechanicalVMultiOpVisitor vmop;
-        vmop.ops.resize(2);
-        vmop.ops[0].first = (VecId)newX;
-        vmop.ops[0].second.push_back(std::make_pair((VecId)pos,1.0));
-        vmop.ops[0].second.push_back(std::make_pair((VecId)vel,dt/2));
-        vmop.ops[1].first = (VecId)newV;
-        vmop.ops[1].second.push_back(std::make_pair((VecId)vel,1.0));
-        vmop.ops[1].second.push_back(std::make_pair((VecId)acc,dt/2));
+
+        typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+	VMultiOp ops;
+        ops.resize(2);
+        ops[0].first = (VecId)newX;
+        ops[0].second.push_back(std::make_pair((VecId)pos,1.0));
+        ops[0].second.push_back(std::make_pair((VecId)vel,dt/2));
+        ops[1].first = (VecId)newV;
+        ops[1].second.push_back(std::make_pair((VecId)vel,1.0));
+        ops[1].second.push_back(std::make_pair((VecId)acc,dt/2));
+
+        simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.execute(this->getContext());
     }
 #endif
@@ -98,17 +102,24 @@ void RungeKutta2Solver::solve(double dt)
     vel.peq(acc,dt);
 #else // single-operation optimization
     {
-        simulation::MechanicalVMultiOpVisitor vmop;
-        vmop.ops.resize(2);
-        vmop.ops[0].first = (VecId)pos;
-        vmop.ops[0].second.push_back(std::make_pair((VecId)pos,1.0));
-        vmop.ops[0].second.push_back(std::make_pair((VecId)newV,dt));
-        vmop.ops[1].first = (VecId)vel;
-        vmop.ops[1].second.push_back(std::make_pair((VecId)vel,1.0));
-        vmop.ops[1].second.push_back(std::make_pair((VecId)acc,dt));
+        typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+	VMultiOp ops;
+        ops.resize(2);
+        ops[0].first = (VecId)pos;
+        ops[0].second.push_back(std::make_pair((VecId)pos,1.0));
+        ops[0].second.push_back(std::make_pair((VecId)newV,dt));
+        ops[1].first = (VecId)vel;
+        ops[1].second.push_back(std::make_pair((VecId)vel,1.0));
+        ops[1].second.push_back(std::make_pair((VecId)acc,dt));
+        simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.execute(this->getContext());
     }
 #endif
+
+#ifdef SOFA_HAVE_LAPACK
+    applyConstraints();
+#endif
+
 }
 
 

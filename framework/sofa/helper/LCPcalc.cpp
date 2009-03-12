@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -888,7 +888,7 @@ void afficheLCP(double *q, double **M, double *f, int dim)
 	printf("\n M = [");
 	for(compteur=0;compteur<dim;compteur++) {
 		for(compteur2=0;compteur2<dim;compteur2++) {
-			printf("\t%.5f",M[compteur][compteur2]);
+			printf("\t%.9f",M[compteur][compteur2]);
 		}
 		printf("\n");
 	}
@@ -897,14 +897,14 @@ void afficheLCP(double *q, double **M, double *f, int dim)
 	// affichage de q
 	printf("q = [");
 	for(compteur=0;compteur<dim;compteur++) {
-		printf("\t%.5f\n",q[compteur]);
+		printf("\t%.9f\n",q[compteur]);
 	}
 	printf("      ];\n\n");
 
 	// affichage de f
 	printf("f = [");
 	for(compteur=0;compteur<dim;compteur++) {
-		printf("\t%.5f\n",f[compteur]);
+		printf("\t%.9f\n",f[compteur]);
 	}
 	printf("      ];\n\n");
 
@@ -976,6 +976,61 @@ void LocalBlock33::slipState(double &mu, double &dn, double &dt, double &ds, dou
 
 }
 
+// computation of a new state using a simple gauss-seidel loop // pseudo-potential (new: dn, dt, ds already take into account current value of fn, ft and fs)
+void LocalBlock33::New_GS_State(double &mu, double &dn, double &dt, double &ds, double &fn, double &ft, double &fs)
+{
+	
+	double d[3];
+	double normFt;
+	f_1[0]=fn; f_1[1]=ft; f_1[2]=fs;
+
+	// evaluation of the current normal position
+	d[0] = dn;
+	// evaluation of the new contact force
+	fn -= d[0]/w[0];
+	
+	if (fn < 0){
+		fn=0; ft=0; fs=0;
+		// if the force was previously not null -> update the state	
+		if (f_1[0]>0) 
+		{
+			double df[3];
+			df[0] = fn-f_1[0];  df[1] = ft-f_1[1];  df[2] = fs-f_1[2];  
+			
+			dn += w[0]*df[0] + w[1]*df[1] + w[2]*df[2];
+			dt += w[1]*df[0] + w[3]*df[1] + w[4]*df[2];
+			ds += w[2]*df[0] + w[4]*df[1] + w[5]*df[2];	
+		}
+		return;
+	}
+	
+	
+	// evaluation of the current tangent positions
+	d[1] = w[1]*(fn-f_1[0]) + dt;
+	d[2] = w[2]*(fn-f_1[0]) + ds;
+
+	// envaluation of the new fricton forces
+	ft -= 2*d[1]/(w[3]+w[5]);
+	fs -= 2*d[2]/(w[3]+w[5]);
+
+	normFt=sqrt(ft*ft+fs*fs);
+
+	if (normFt > mu*fn){
+		ft *=mu*fn/normFt;
+		fs *=mu*fn/normFt;
+	}
+	
+	double df[3];
+	df[0] = fn-f_1[0];  df[1] = ft-f_1[1];  df[2] = fs-f_1[2];  
+
+	dn += w[0]*df[0] + w[1]*df[1] + w[2]*df[2];
+	dt += w[1]*df[0] + w[3]*df[1] + w[4]*df[2];
+	ds += w[2]*df[0] + w[4]*df[1] + w[5]*df[2];
+
+
+
+}	
+
 void LocalBlock33::GS_State(double &mu, double &dn, double &dt, double &ds, double &fn, double &ft, double &fs)
 {
 	double d[3];
@@ -1006,6 +1061,58 @@ void LocalBlock33::GS_State(double &mu, double &dn, double &dt, double &ds, doub
 	if (normFt > mu*fn){
 		ft *=mu*fn/normFt;
 		fs *=mu*fn/normFt;
+	}
+
+	dn += w[0]*fn + w[1]*ft + w[2]*fs;
+	dt += w[1]*fn + w[3]*ft + w[4]*fs;
+	ds += w[2]*fn + w[4]*ft + w[5]*fs;
+
+}
+
+
+void LocalBlock33::BiPotential(double &mu, double &dn, double &dt, double &ds, double &fn, double &ft, double &fs)
+{
+	double d[3];
+	double normFt;
+	f_1[0]=fn; f_1[1]=ft; f_1[2]=fs;
+///////////
+// evaluation of a new contact force based on bi-potential approach
+///////////
+
+	// evaluation of the current position///
+	d[0] = w[0]*fn + w[1]*ft + w[2]*fs + dn;
+	d[1] = w[1]*fn + w[3]*ft + w[4]*fs + dt;
+	d[2] = w[2]*fn + w[4]*ft + w[5]*fs + ds;	
+	
+	// evaluate a unique compliance for both normal and tangential direction //
+	double rho = (w[0] + w[3] + w[5]) / 3;
+	
+	// evaluation of the bi-potential
+	double v[3];
+	v[0] = d[0] + mu * sqrt(d[1]*d[1] + d[2]*d[2]);
+	v[1] = d[1];
+	v[2] = d[2];
+	
+	// evaluation of the new contact force
+	fn -= v[0]/rho;
+	ft -= v[1]/rho;
+	fs -= v[2]/rho;
+	
+	
+	// projection of the contact force on the Coulomb's friction cone
+
+	if (fn < 0){
+		fn=0; ft=0; fs=0;
+		return;
+	}
+
+	normFt=sqrt(ft*ft+fs*fs); 
+	if (normFt > mu*fn){
+		double proj = (normFt - mu * fn) / (1 + mu*mu);
+		
+		fn += mu * proj ;
+		ft -= proj * ft/normFt;
+		fs -= proj * fs/normFt;
 	}
 
 	dn += w[0]*fn + w[1]*ft + w[2]*fs;
@@ -1124,6 +1231,9 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double mu, do
 
 			fn=f_1[0]; ft=f_1[1]; fs=f_1[2];
 			W33[index1]->GS_State(mu,dn,dt,ds,fn,ft,fs);
+			
+			//W33[index1]->BiPotential(mu,dn,dt,ds,fn,ft,fs);
+
 			error += absError(dn,dt,ds,d_1[0],d_1[1],d_1[2]);
 
 
@@ -1131,7 +1241,7 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double mu, do
 
 		}
 
-		if (error < tol){
+		if (error < tol*(numContacts+1)){
 			free(d);
 			for (int i = 0; i < numContacts; i++)
 				delete W33[i];
@@ -1146,7 +1256,7 @@ int nlcp_gaussseidel(int dim, double *dfree, double**W, double *f, double mu, do
 		delete W33[i];
 	free(W33);
 
-	//printf("\n No convergence in nlcp_gaussseidel function : error =%f after %d iterations", error, it);
+	std::cerr<<"\n No convergence in  nlcp_gaussseidel function : error ="<<error <<" after"<< it<<" iterations"<<std::endl;
 	//afficheLCP(dfree,W,f,dim);
 	return 0;
 

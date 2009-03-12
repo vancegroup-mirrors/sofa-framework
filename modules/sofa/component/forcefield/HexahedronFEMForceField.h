@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,11 +26,11 @@
 #define SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/SparseGridTopology.h>
 #include <sofa/helper/vector.h>
-#include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Mat.h>
 
 namespace sofa
@@ -111,7 +111,6 @@ namespace sofa
 		Data<VecElementStiffness> _elementStiffnesses;
 						
 		typedef Mat<3, 3, Real> Mat33;
-		typedef Mat33 Transformation; ///< matrix for rigid transformations like rotations
 
 
         typedef std::pair<int,Real> Col_Value;
@@ -134,6 +133,9 @@ namespace sofa
 
 public:
 			  
+	
+	typedef Mat33 Transformation; ///< matrix for rigid transformations like rotations
+	
 	int method;
         Data<std::string> f_method; ///< the computation method of the displacements
         Data<Real> f_poissonRatio;
@@ -213,6 +215,8 @@ public:
         virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
 
 	virtual double getPotentialEnergy(const VecCoord& x);
+	
+	const Transformation& getRotation(const unsigned elemidx);
 
         void addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset);
 
@@ -243,9 +247,18 @@ public:
 		virtual void accumulateForcePolar( Vector& f, const Vector & p, int i, const Element&elem  );
 		
 
-		
 		bool _alreadyInit;
       };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceField<defaulttype::Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceField<defaulttype::Vec3fTypes>;
+#endif
+#endif
 
     } // namespace forcefield
 

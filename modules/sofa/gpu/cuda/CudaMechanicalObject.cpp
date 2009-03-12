@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -24,9 +24,8 @@
 ******************************************************************************/
 #include "CudaTypes.h"
 #include "CudaMechanicalObject.inl"
-#include <sofa/component/collision/SphereModel.inl>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/component/MappedObject.inl>
+#include <sofa/component/container/MappedObject.inl>
 
 namespace sofa
 {
@@ -39,6 +38,11 @@ namespace component
 template class MechanicalObject<CudaVec3fTypes>;
 template class MechanicalObject<CudaVec3f1Types>;
 template class MechanicalObject<CudaRigid3fTypes>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+template class MechanicalObject<CudaVec3dTypes>;
+template class MechanicalObject<CudaVec3d1Types>;
+template class MechanicalObject<CudaRigid3dTypes>;
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 } // namespace component
 
@@ -54,17 +58,22 @@ int MechanicalObjectCudaClass = core::RegisterObject("Supports GPU-side computat
 .add< component::MechanicalObject<CudaVec3fTypes> >()
 .add< component::MechanicalObject<CudaVec3f1Types> >()
 .add< component::MechanicalObject<CudaRigid3fTypes> >()
-;
-
-int CudaSphereModelClass = core::RegisterObject("Supports GPU-side computations using CUDA")
-.add< component::collision::TSphereModel<CudaVec3fTypes> >()
-//.add< component::collision::TSphereModel<CudaVec3f1Types> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::MechanicalObject<CudaVec3dTypes> >()
+.add< component::MechanicalObject<CudaVec3d1Types> >()
+.add< component::MechanicalObject<CudaRigid3dTypes> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
 ;
 
 int MappedObjectCudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
 .add< component::MappedObject<CudaVec3fTypes> >()
 .add< component::MappedObject<CudaVec3f1Types> >()
 .add< component::MappedObject<CudaRigid3fTypes> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::MappedObject<CudaVec3dTypes> >()
+.add< component::MappedObject<CudaVec3d1Types> >()
+.add< component::MappedObject<CudaRigid3dTypes> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
 ;
 
 } // namespace cuda

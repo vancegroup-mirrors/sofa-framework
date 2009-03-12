@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,7 +31,7 @@
 #include <iostream>
 #include <typeinfo>
 
-#include <sofa/helper/system/config.h>
+#include <sofa/helper/helper.h>
 
 namespace sofa
 {
@@ -40,13 +40,13 @@ namespace helper
 {
 
 /// Decode the type's name to a more readable form if possible
-std::string gettypename(const std::type_info& t);
+std::string SOFA_HELPER_API gettypename(const std::type_info& t);
 
 /// Log classes registered in the factory
-void logFactoryRegister(std::string baseclass, std::string classname, std::string key, bool multi);
+void SOFA_HELPER_API logFactoryRegister(std::string baseclass, std::string classname, std::string key, bool multi);
 
 /// Print factory log
-void printFactoryLog(std::ostream& out = std::cout);
+void SOFA_HELPER_API printFactoryLog(std::ostream& out = std::cout);
 
 template <class Object, class Argument>
 class BaseCreator
@@ -82,12 +82,25 @@ public:
 	}
 	
 	Object* createObject(Key key, Argument arg);
+	Object* createAnyObject(Argument arg);
+	
+	bool hasKey(Key key);
 	
 	static Factory<Key, Object, Argument>* getInstance();
 	
 	static Object* CreateObject(Key key, Argument arg)
 	{
 		return getInstance()->createObject(key, arg);
+	}
+	
+	static Object* CreateAnyObject(Argument arg)
+	{
+		return getInstance()->createAnyObject(arg);
+	}
+
+	static bool HasKey(Key key)
+	{
+		return getInstance()->hasKey(key);
 	}
 
     typedef typename std::multimap<Key, Creator*>::iterator iterator;

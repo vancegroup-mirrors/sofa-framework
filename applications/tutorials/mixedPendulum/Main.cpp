@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -26,7 +26,7 @@
 ******************************************************************************/
 /** A sample program. Laure Heigeas, Francois Faure, 2007. */
 // scene data structure 
-#include <sofa/simulation/tree/Simulation.h> 
+#include <sofa/simulation/tree/TreeSimulation.h> 
 #include <sofa/component/contextobject/Gravity.h>
 #include <sofa/component/odesolver/CGImplicitSolver.h>
 #include <sofa/component/odesolver/EulerSolver.h>
@@ -38,7 +38,8 @@
 #include <sofa/component/typedef/Sofa_typedef.h>
 
 using namespace sofa::simulation::tree;
-using sofa::component::odesolver::EulerSolver;
+//typedef sofa::component::odesolver::EulerSolver Solver;
+typedef sofa::component::odesolver::CGImplicitSolver Solver;
    
 int main(int, char** argv)    
 {
@@ -54,14 +55,12 @@ int main(int, char** argv)
     groot->setGravityInWorld( Coord3(0,-10,0) );
 
     // One solver for all the graph
-    EulerSolver* solver = new EulerSolver;
+    Solver* solver = new Solver;
     groot->addObject(solver);
     solver->setName("S");
 
     //-------------------- Deformable body
-    GNode* deformableBody = new GNode;
-    groot->addChild(deformableBody);
-    deformableBody->setName( "deformableBody" );
+    GNode* deformableBody = new GNode("deformableBody", groot);
 
     // degrees of freedom
     MechanicalObject3* DOF = new MechanicalObject3;
@@ -90,13 +89,11 @@ int main(int, char** argv)
     StiffSpringForceField3* spring = new StiffSpringForceField3;
     deformableBody->addObject(spring);
     spring->setName("F1");
-    spring->addSpring( 1,0, 10., 1, splength );
+    spring->addSpring( 1,0, 100., 1, splength );
     
 
     //-------------------- Rigid body
-    GNode* rigidBody = new GNode;
-    groot->addChild(rigidBody);
-    rigidBody->setName( "rigidBody" );
+    GNode* rigidBody = new GNode("rigidBody",groot);
 
     // degrees of freedom
     MechanicalObjectRigid3* rigidDOF = new MechanicalObjectRigid3;
@@ -111,12 +108,21 @@ int main(int, char** argv)
     UniformMassRigid3* rigidMass = new UniformMassRigid3;
     rigidBody->addObject(rigidMass);
     rigidMass->setName("M2"); 
+	UniformMassRigid3::MassType* m = rigidMass->mass.beginEdit();
+	m->mass=0.3;
+	UniformMassRigid3::MassType::Mat3x3 inertia;
+	inertia.fill(0.0);
+	float in = 0.1f;
+	inertia[0][0] = in;
+	inertia[1][1] = in;
+	inertia[2][2] = in;
+	m->inertiaMatrix = inertia;
+	m->recalc();
+    rigidMass->mass.endEdit();
     
  
     //-------------------- the particles attached to the rigid body
-    GNode* rigidParticles = new GNode;
-    rigidParticles->setName( "rigidParticles" );
-    rigidBody->addChild(rigidParticles);
+    GNode* rigidParticles = new GNode("rigidParticles",groot);
 
     // degrees of freedom of the skin
     MechanicalObject3* rigidParticleDOF = new MechanicalObject3;
@@ -136,7 +142,7 @@ int main(int, char** argv)
     StiffSpringForceField3* iff = new StiffSpringForceField3( DOF, rigidParticleDOF );
     groot->addObject(iff);
     iff->setName("F13");
-    iff->addSpring( 1,0, 10., 1., splength );
+    iff->addSpring( 1,0, 100., 1., splength );
 
 
 

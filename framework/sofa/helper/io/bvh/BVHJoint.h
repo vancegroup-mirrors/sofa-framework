@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,6 +32,7 @@
 #include <sofa/helper/io/bvh/BVHMotion.h>
 #include <cstdio>
 #include <string.h>
+#include <sofa/helper/helper.h>
 
 namespace sofa
 {
@@ -52,7 +53,7 @@ namespace bvh
 *		A Motion that contains a set of key positions. Each of them contains the channels value that must be set at the current timestep.
 *		The EndOfSite Flag is set to true if the Joint is a Leaf.
 */
-class BVHJoint
+class SOFA_HELPER_API BVHJoint
 {
 public:
 	BVHJoint(const char *_name, bool _endSite=false, BVHJoint *_parent=NULL);
@@ -106,6 +107,7 @@ public:
 	char* getName();
 	BVHOffset* getOffset();
 
+static int lastId;
 
 private:
 	BVHOffset *offset;
@@ -118,8 +120,7 @@ private:
 	char name[128];
 	bool endSite;
 	int id;
-	static int lastId;
-	
+		
 	// Transformation matrix in the global frame
 	double matrix[16];
 };

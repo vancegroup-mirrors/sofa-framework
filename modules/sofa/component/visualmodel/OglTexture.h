@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -50,7 +50,7 @@ namespace visualmodel
  *  At the moment, only texture2D is supported.
  */
 
-class OglTexture :  public core::VisualModel, public OglShaderElement
+class SOFA_COMPONENT_VISUALMODEL_API OglTexture :  public core::VisualModel, public OglShaderElement
 {
 
 protected:
@@ -85,7 +85,7 @@ protected:
     virtual void backwardDraw() = 0;
 };
 
-class OglTexture2D : public OglTexture
+class SOFA_COMPONENT_VISUALMODEL_API OglTexture2D : public OglTexture
 {
 private:
 	Data<std::string> texture2DFilename;

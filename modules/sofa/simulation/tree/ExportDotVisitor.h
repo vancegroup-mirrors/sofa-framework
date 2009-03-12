@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -39,7 +39,7 @@ namespace simulation
 namespace tree
 {
 
-class ExportDotVisitor : public GNodeVisitor
+class SOFA_SIMULATION_TREE_API ExportDotVisitor : public GNodeVisitor
 {
 public:
 	std::ostream* out;
@@ -68,12 +68,13 @@ public:
 
 	ExportDotVisitor(std::ostream* out);
 	~ExportDotVisitor();
-	
+
 	void processObject(GNode* node, core::objectmodel::BaseObject* obj);
-	
+
 	virtual Result processNodeTopDown(GNode* node);
 	virtual void processNodeBottomUp(GNode* node);
 
+        virtual const char* getClassName() const { return "ExportDotVisitor"; }
 
 protected:
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -46,7 +46,7 @@ namespace visualmodel
  *
  */
 
-class OglShaderMacro : public OglShaderElement {
+class SOFA_COMPONENT_VISUALMODEL_API OglShaderMacro : public OglShaderElement {
 protected:
 
 public:
@@ -57,7 +57,7 @@ public:
 };
 
 
-class OglShaderDefineMacro : public OglShaderMacro {
+class SOFA_COMPONENT_VISUALMODEL_API OglShaderDefineMacro : public OglShaderMacro {
 protected:
 	Data<std::string> value;
 public:

@@ -49,7 +49,8 @@
 			ymin="7" ymax="7"
 			zmin="-12" zmax="12" />
 			/>
-			<Object type="SphereModel" template="CudaVec3f" radius="1.0" contactStiffness="1" />
+			<Object type="CudaSphereModel" radius="1.0" contactStiffness="1" />
+			<MechanicalObject template="CudaVec3f"/>
 			<Object type="SubsetMapping" />
 		</Node>
 		<!--
@@ -66,7 +67,7 @@
 		-->
 	</Node>
 	<Node name="Sphere">
-		<Object type="OglModel" name="Visual" filename="mesh/sphere.obj" scale="3.95" dx="0" dy="1" dz="3" color="blue"/>
+		<Object type="OglModel" name="Visual" fileMesh="mesh/sphere.obj" scale="3.95" dx="0" dy="1" dz="3" color="blue"/>
 	</Node>
 </Node>
 

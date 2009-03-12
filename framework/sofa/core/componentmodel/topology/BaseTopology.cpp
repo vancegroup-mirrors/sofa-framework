@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -40,7 +40,7 @@ namespace topology
 	// GeometryAlgorithms implementation
 
 	void GeometryAlgorithms::init()
-	{		
+	{
 	}
 
 	// TopologyAlgorithms implementation
@@ -50,7 +50,7 @@ namespace topology
 		this->getContext()->get(m_topologyContainer);
 	}
 
-	void TopologyAlgorithms::addTopologyChange(const TopologyChange *topologyChange) 
+	void TopologyAlgorithms::addTopologyChange(const TopologyChange *topologyChange)
 	{
 		m_topologyContainer->addTopologyChange(topologyChange);
 	}
@@ -67,7 +67,7 @@ namespace topology
 		m_topologyContainer->addTopologyChange(topologyChange);
 	}
 
-	void TopologyModifier::addStateChange(const TopologyChange *topologyChange) 
+	void TopologyModifier::addStateChange(const TopologyChange *topologyChange)
 	{
 		m_topologyContainer->addStateChange(topologyChange);
 	}
@@ -81,32 +81,34 @@ namespace topology
 
 	void TopologyContainer::init()
 	{
+          core::componentmodel::topology::BaseMeshTopology::init();
+          core::componentmodel::topology::BaseTopologyObject::init();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::lastChange() const 
+	std::list<const TopologyChange *>::const_iterator TopologyContainer::lastChange() const
 	{
 		return m_changeList.end();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::firstChange() const 
+	std::list<const TopologyChange *>::const_iterator TopologyContainer::firstChange() const
 	{
 		return m_changeList.begin();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::lastStateChange() const 
+	std::list<const TopologyChange *>::const_iterator TopologyContainer::lastStateChange() const
 	{
 		return m_stateChangeList.end();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::firstStateChange() const 
+	std::list<const TopologyChange *>::const_iterator TopologyContainer::firstStateChange() const
 	{
 		return m_stateChangeList.begin();
 	}
 
 	void TopologyContainer::resetTopologyChangeList()
 	{
-		for (std::list<const TopologyChange *>::iterator it=m_changeList.begin(); 
-			it!=m_changeList.end(); ++it) 
+		for (std::list<const TopologyChange *>::iterator it=m_changeList.begin();
+			it!=m_changeList.end(); ++it)
 		{
 			delete (*it);
 		}
@@ -117,7 +119,7 @@ namespace topology
 	void TopologyContainer::resetStateChangeList()
 	{
 		for (std::list<const TopologyChange *>::iterator it=m_stateChangeList.begin();
-			it!=m_stateChangeList.end();++it) 
+			it!=m_stateChangeList.end();++it)
 		{
 			delete (*it);
 		}

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,7 +31,7 @@
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/core/objectmodel/BaseContext.h>
-#include <sofa/core/componentmodel/behavior/Mass.h>
+//#include <sofa/core/componentmodel/behavior/Mass.h>
 #include <sofa/helper/vector.h>
 #include <sofa/helper/rmath.h>
 #include <iostream>
@@ -69,6 +69,8 @@ class RigidDeriv<3, real>
 public:
 	typedef real value_type;
     typedef real Real;
+    typedef Vec<3,Real> Pos;
+    typedef Vec<3,Real> Rot;
     typedef Vec<3,Real> Vec3;
     typedef helper::Quater<Real> Quat;
 
@@ -124,25 +126,32 @@ public:
         vOrientation *= a;
     }
 
+    template<typename real2>
+    void operator/=(real2 a)
+    {
+        vCenter /= a;
+        vOrientation /= a;
+    }
+
     RigidDeriv<3,real> operator*(float a) const
     {
         RigidDeriv r = *this;
         r*=a;
         return r;
     }
-    
+
     RigidDeriv<3,real> operator*(double a) const
     {
         RigidDeriv r = *this;
         r*=a;
         return r;
     }
-    
-    RigidDeriv<3,real> operator - () const 
+
+    RigidDeriv<3,real> operator - () const
     {
         return RigidDeriv(-vCenter, -vOrientation);
     }
-		 
+
 	RigidDeriv<3,real> operator - (const RigidDeriv<3,real>& a) const
 	{
 		return RigidDeriv<3,real>(this->vCenter - a.vCenter, this->vOrientation-a.vOrientation);
@@ -161,14 +170,14 @@ public:
     Vec3& getVOrientation (void) { return vOrientation; }
     const Vec3& getVCenter (void) const { return vCenter; }
     const Vec3& getVOrientation (void) const { return vOrientation; }
-    
+
 	 Vec3& getLinear () { return vCenter; }
 	 const Vec3& getLinear () const { return vCenter; }
 	 Vec3& getAngular () { return vOrientation; }
 	 const Vec3& getAngular () const { return vOrientation; }
-	
 
-	 
+
+
 	 /// write to an output stream
     inline friend std::ostream& operator << ( std::ostream& out, const RigidDeriv<3,real>& v ){
         out<<v.vCenter<<" "<<v.vOrientation;
@@ -181,10 +190,10 @@ public:
     }
 
     enum { static_size = 3 };
-    
+
     real* ptr() { return vCenter.ptr(); }
     const real* ptr() const { return vCenter.ptr(); }
-    
+
 	static unsigned int size(){return 6;}
 
 	/// Access to i-th element.
@@ -212,6 +221,8 @@ class RigidCoord<3,real>
 public:
   typedef real value_type;
     typedef real Real;
+    typedef Vec<3,Real> Pos;
+    typedef helper::Quater<Real> Rot;
     typedef Vec<3,Real> Vec3;
     typedef helper::Quater<Real> Quat;
 
@@ -222,23 +233,23 @@ public:
     RigidCoord (const Vec3 &posCenter, const Quat &orient)
     : center(posCenter), orientation(orient) {}
     RigidCoord () { clear(); }
-    
+
     template<typename real2>
     RigidCoord(const RigidCoord<3,real2>& c)
     : center(c.getCenter()), orientation(c.getOrientation())
     {
     }
-    
-    
+
+
     void clear() { center.clear(); orientation.clear(); }
-    
+
     template<typename real2>
     void operator =(const RigidCoord<3,real2>& c)
     {
         center = c.getCenter();
         orientation = c.getOrientation();
     }
-    
+
     //template<typename real2>
     //void operator =(const RigidCoord<3,real2>& c)
     //{
@@ -255,7 +266,7 @@ public:
             orientation[i] += qDot[i] * 0.5f;
         orientation.normalize();
     }
-    
+
     RigidCoord<3,real> operator + (const RigidDeriv<3,real>& a) const
     {
         RigidCoord c = *this;
@@ -272,14 +283,19 @@ public:
     {
         return RigidCoord<3,real>(this->center - a.getCenter(), a.orientation.inverse() * this->orientation);
     }
-    
+
+    RigidCoord<3,real> operator +(const RigidCoord<3,real>& a) const
+    {
+        return RigidCoord<3,real>(this->center + a.getCenter(), a.orientation * this->orientation);
+    }
+
     void operator +=(const RigidCoord<3,real>& a)
     {
         center += a.getCenter();
 	//	orientation += a.getOrientation();
 	//	orientation.normalize();
     }
-    
+
     template<typename real2>
     void operator*=(real2 a)
     {
@@ -287,7 +303,15 @@ public:
         center *= a;
         //orientation *= a;
     }
-    
+
+    template<typename real2>
+    void operator/=(real2 a)
+    {
+        //std::cout << "/="<<std::endl;
+        center /= a;
+        //orientation /= a;
+    }
+
     template<typename real2>
     RigidCoord<3,real> operator*(real2 a) const
     {
@@ -295,7 +319,7 @@ public:
         r*=a;
         return r;
     }
-    
+
 
 
 
@@ -328,19 +352,19 @@ public:
     Quat& getOrientation () { return orientation; }
     const Vec3& getCenter () const { return center; }
     const Quat& getOrientation () const { return orientation; }
-    
+
     static RigidCoord<3,real> identity() {
         RigidCoord c;
         return c;
     }
-    
+
     /// Apply a transformation with respect to itself
     void multRight( const RigidCoord<3,real>& c )
     {
         center += orientation.rotate(c.getCenter());
         orientation = orientation * c.getOrientation();
     }
-    
+
     /// compute the product with another frame on the right
     RigidCoord<3,real> mult( const RigidCoord<3,real>& c ) const {
         RigidCoord r;
@@ -348,7 +372,7 @@ public:
         r.orientation = orientation * c.getOrientation();
         return r;
     }
-    
+
     /// Set from the given matrix
     template<class Mat>
     void fromMatrix(const Mat& m) const
@@ -359,7 +383,7 @@ public:
         Mat3x3d rot; rot = m;
         orientation.fromMatrix(rot);
     }
-    
+
     /// Write to the given matrix
     template<class Mat>
     void toMatrix( Mat& m) const
@@ -370,13 +394,13 @@ public:
         m[1][3] = center[1];
         m[2][3] = center[2];
     }
-    
+
     template<class Mat>
     void writeRotationMatrix( Mat& m) const
     {
         orientation.toMatrix(m);
     }
-    
+
     /// Write the OpenGL transformation matrix
     void writeOpenGlMatrix( float m[16] ) const {
         orientation.writeOpenGlMatrix(m);
@@ -384,12 +408,12 @@ public:
         m[13] = (float)center[1];
         m[14] = (float)center[2];
     }
-    
+
     /// compute the projection of a vector from the parent frame to the child
     Vec3 vectorToChild( const Vec3& v ) const {
         return orientation.inverseRotate(v);
     }
-    
+
     /// write to an output stream
     inline friend std::ostream& operator << ( std::ostream& out, const RigidCoord<3,real>& v ){
         out<<v.center<<" "<<v.orientation;
@@ -465,7 +489,7 @@ public:
         invInertiaMatrix.invert(inertiaMatrix);
         invInertiaMassMatrix.invert(inertiaMassMatrix);
     }
-    
+
     inline friend std::ostream& operator << (std::ostream& out, const RigidMass<3, real>& m )
     {
         out<<m.mass;
@@ -485,6 +509,12 @@ public:
         mass *= fact;
         inertiaMassMatrix *= fact;
         invInertiaMassMatrix /= fact;
+    }
+    void operator /=(Real fact)
+    {
+        mass /= fact;
+        inertiaMassMatrix /= fact;
+        invInertiaMassMatrix *= fact;
     }
 };
 
@@ -517,24 +547,54 @@ public:
     typedef typename Coord::Vec3 Vec3;
     typedef typename Coord::Quat Quat;
 
-    template <class T>
-    class SparseData
-    {
-    public:
-        SparseData(unsigned int _index, const T& _data): index(_index), data(_data){};
-        unsigned int index;
-        T data;
-    };
+    typedef typename Coord::Pos CPos;
+    typedef typename Coord::Rot CRot;
+	static const CPos& getCPos(const Coord& c) { return c.getCenter(); }
+	static void setCPos(Coord& c, const CPos& v) { c.getCenter() = v; }
+	static const CRot& getCRot(const Coord& c) { return c.getOrientation(); }
+	static void setCRot(Coord& c, const CRot& v) { c.getOrientation() = v; }
 
-    typedef SparseData<Coord> SparseCoord;
-    typedef SparseData<Deriv> SparseDeriv;
+    typedef typename Deriv::Pos DPos;
+    typedef typename Deriv::Rot DRot;
+	static const DPos& getDPos(const Deriv& d) { return d.getVCenter(); }
+	static void setDPos(Deriv& d, const DPos& v) { d.getVCenter() = v; }
+	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
+	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
 
-    typedef vector<SparseCoord> SparseVecCoord;
-    typedef vector<SparseDeriv> SparseVecDeriv;
+        /// Data Structure to store lines of the matrix L.
+        template <class T>
+          class SparseConstraint
+          {
+          public:
+            SparseConstraint(){};
+            void insert( unsigned int index, const T &value)
+            {
+              data[index] += value;
+            }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+            T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
+
+            std::map< unsigned int, T > &getData() {return data;};
+            const std::map< unsigned int, T > &getData() const {return data;};
+          protected:
+            std::map< unsigned int, T > data;
+          };
+
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
     //! All the Constraints applied to a state Vector
     typedef	vector<SparseVecDeriv> VecConst;
-    
+
     typedef vector<Coord> VecCoord;
     typedef vector<Deriv> VecDeriv;
     typedef vector<Real> VecReal;
@@ -546,7 +606,7 @@ public:
         c.getCenter()[1] = (Real)y;
         c.getCenter()[2] = (Real)z;
     }
-    
+
     template<typename T>
     static void get(T& x, T& y, T& z, const Coord& c)
     {
@@ -554,7 +614,7 @@ public:
         y = (T)c.getCenter()[1];
         z = (T)c.getCenter()[2];
     }
-    
+
     template<typename T>
     static void add(Coord& c, T x, T y, T z)
     {
@@ -562,7 +622,7 @@ public:
         c.getCenter()[1] += (Real)y;
         c.getCenter()[2] += (Real)z;
     }
-    
+
     template<typename T>
     static void set(Deriv& c, T x, T y, T z)
     {
@@ -570,7 +630,7 @@ public:
         c.getVCenter()[1] = (Real)y;
         c.getVCenter()[2] = (Real)z;
     }
-    
+
     template<typename T>
     static void get(T& x, T& y, T& z, const Deriv& c)
     {
@@ -578,7 +638,7 @@ public:
         y = (T)c.getVCenter()[1];
         z = (T)c.getVCenter()[2];
     }
-    
+
     template<typename T>
     static void add(Deriv& c, T x, T y, T z)
     {
@@ -586,13 +646,13 @@ public:
         c.getVCenter()[1] += (Real)y;
         c.getVCenter()[2] += (Real)z;
     }
-    
+
     static const char* Name();
 
 	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Coord c;
 
 		for (unsigned int i = 0; i < ancestors.size(); i++)
@@ -619,20 +679,20 @@ public:
 				q.normalize();
 
 				c.getOrientation() += q;
-			}			
+			}
 		}
-		
+
 		c.getOrientation().normalize();
-		
+
 		return c;
 	}
 
 	static Deriv interpolate(const helper::vector< Deriv > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Deriv d;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			d += ancestors[i] * coefs[i];
@@ -676,6 +736,8 @@ class RigidDeriv<2,real>
 public:
 	typedef real value_type;
     typedef real Real;
+    typedef Vec<2,Real> Pos;
+    typedef Real Rot;
     typedef Vec<2,Real> Vec2;
 private:
     Vec2 vCenter;
@@ -710,20 +772,27 @@ public:
         vOrientation *= (Real)a;
     }
 
+    template<typename real2>
+    void operator/=(real2 a)
+    {
+        vCenter /= a;
+        vOrientation /= (Real)a;
+    }
+
     RigidDeriv<2,real> operator*(float a) const
     {
         RigidDeriv<2,real> r = *this;
         r *= a;
         return r;
     }
-    
+
     RigidDeriv<2,real> operator*(double a) const
     {
         RigidDeriv<2,real> r = *this;
         r *= a;
         return r;
     }
-    
+
     RigidDeriv<2,real> operator - () const
     {
         return RigidDeriv<2,real>(-vCenter, -vOrientation);
@@ -754,7 +823,7 @@ public:
     }
 
     enum { static_size = 2 };
-    
+
     real* ptr() { return vCenter.ptr(); }
     const real* ptr() const { return vCenter.ptr(); }
 
@@ -785,6 +854,8 @@ class RigidCoord<2,real>
 public:
 	typedef real value_type;
     typedef real Real;
+    typedef Vec<2,Real> Pos;
+    typedef Real Rot;
     typedef Vec<2,Real> Vec2;
 private:
     Vec2 center;
@@ -815,6 +886,11 @@ public:
         return RigidCoord<2,real>(this->center - a.getCenter(), this->orientation - a.orientation);
     }
 
+    RigidCoord<2,real> operator +(const RigidCoord<2,real>& a) const
+    {
+        return RigidCoord<2,real>(this->center + a.getCenter(), this->orientation + a.orientation);
+    }
+
     void operator +=(const RigidCoord<2,real>& a)
     {
 //         std::cout << "+="<<std::endl;
@@ -828,6 +904,14 @@ public:
 //         std::cout << "*="<<std::endl;
         center *= a;
         orientation *= (Real)a;
+    }
+
+    template<typename real2>
+    void operator/=(real2 a)
+    {
+//         std::cout << "/="<<std::endl;
+        center /= a;
+        orientation /= (Real)a;
     }
 
     template<typename real2>
@@ -971,7 +1055,7 @@ public:
     }
 
     enum { static_size = 2 };
-    
+
     real* ptr() { return center.ptr(); }
     const real* ptr() const { return center.ptr(); }
 
@@ -1067,6 +1151,12 @@ public:
         inertiaMassMatrix *= fact;
         invInertiaMassMatrix /= fact;
     }
+    void operator /=(Real fact)
+    {
+        mass /= fact;
+        inertiaMassMatrix /= fact;
+        invInertiaMassMatrix *= fact;
+    }
 };
 
 /** Degrees of freedom of 2D rigid bodies.
@@ -1077,34 +1167,62 @@ class StdRigidTypes<2, real>
 public:
     typedef real Real;
     typedef Vec<2,real> Vec2;
-    
+
     typedef RigidDeriv<2,Real> Deriv;
     typedef RigidCoord<2,Real> Coord;
-    
+
+    typedef typename Coord::Pos CPos;
+    typedef typename Coord::Rot CRot;
+	static const CPos& getCPos(const Coord& c) { return c.getCenter(); }
+	static void setCPos(Coord& c, const CPos& v) { c.getCenter() = v; }
+	static const CRot& getCRot(const Coord& c) { return c.getOrientation(); }
+	static void setCRot(Coord& c, const CRot& v) { c.getOrientation() = v; }
+
+    typedef typename Deriv::Pos DPos;
+    typedef typename Deriv::Rot DRot;
+	static const DPos& getDPos(const Deriv& d) { return d.getVCenter(); }
+	static void setDPos(Deriv& d, const DPos& v) { d.getVCenter() = v; }
+	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
+	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
+
     static const char* Name();
 
     typedef vector<Coord> VecCoord;
     typedef vector<Deriv> VecDeriv;
-    
-    
-    template <class T>
-    class SparseData
-    {
-    public:
-        SparseData(unsigned int _index, const T& _data): index(_index), data(_data){};
-        unsigned int index;
-        T data;
-    };
 
-    typedef SparseData<Coord> SparseCoord;
-    typedef SparseData<Deriv> SparseDeriv;
+    template <class T>
+      class SparseConstraint
+      {
+      public:
+        SparseConstraint(){};
+        void insert( unsigned int index, const T &value)
+        {
+          data[index] += value;
+        }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+        T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
+
+        std::map< unsigned int, T > &getData() {return data;};
+        const std::map< unsigned int, T > &getData() const {return data;};
+      protected:
+        std::map< unsigned int, T > data;
+      };
+
+    typedef SparseConstraint<Coord> SparseVecCoord;
+    typedef SparseConstraint<Deriv> SparseVecDeriv;
     typedef vector<Real> VecReal;
 
-    typedef vector<SparseCoord> SparseVecCoord;
-    typedef vector<SparseDeriv> SparseVecDeriv;
-    
     typedef	vector<SparseVecDeriv> VecConst;
-    
+
     template<typename T>
     static void set(Coord& c, T x, T y, T)
     {
@@ -1152,9 +1270,9 @@ public:
 	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Coord c;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			c += ancestors[i] * coefs[i];
@@ -1166,9 +1284,9 @@ public:
 	static Deriv interpolate(const helper::vector< Deriv > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Deriv d;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			d += ancestors[i] * coefs[i];
@@ -1272,7 +1390,7 @@ const defaulttype::RigidDeriv<3, float>& v
 namespace objectmodel
 {
 
-// Specialization of Field::getValueTypeString() method to display smaller 
+// Specialization of Field::getValueTypeString() method to display smaller
 // The next line hides all those methods from the doxygen documentation
 /// \cond TEMPLATE_OVERRIDES
 

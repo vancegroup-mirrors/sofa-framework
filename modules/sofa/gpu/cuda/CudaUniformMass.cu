@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #include "CudaMath.h"
 #include "cuda.h"
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 namespace sofa
 {
 namespace gpu
@@ -45,6 +45,17 @@ void UniformMassCuda3f1_addMDx(unsigned int size, float mass, void* res, const v
 void UniformMassCuda3f1_accFromF(unsigned int size, float mass, void* a, const void* f);
 void UniformMassCuda3f1_addForce(unsigned int size, const float *mg, void* f);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void UniformMassCuda3d_addMDx(unsigned int size, double mass, void* res, const void* dx);
+void UniformMassCuda3d_accFromF(unsigned int size, double mass, void* a, const void* f);
+void UniformMassCuda3d_addForce(unsigned int size, const double *mg, void* f);
+
+void UniformMassCuda3d1_addMDx(unsigned int size, double mass, void* res, const void* dx);
+void UniformMassCuda3d1_accFromF(unsigned int size, double mass, void* a, const void* f);
+void UniformMassCuda3d1_addForce(unsigned int size, const double *mg, void* f);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 }
 
@@ -239,8 +250,61 @@ void UniformMassCuda3f1_addForce(unsigned int size, const float *mg, void* f)
 	UniformMassCuda3t1_addForce_kernel<float><<< grid, threads >>>(size, CudaVec3<float>::make(mg[0],mg[1],mg[2]), (CudaVec4<float>*)f);
 }
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+void UniformMassCuda3d_addMDx(unsigned int size, double mass, void* res, const void* dx)
+{
+	dim3 threads(BSIZE,1);
+	//dim3 grid((size+BSIZE-1)/BSIZE,1);
+	//UniformMassCuda3t_addMDx_kernel<double><<< grid, threads >>>(size, mass, (CudaVec3<double>*)res, (const CudaVec3<double>*)dx);
+	dim3 grid((3*size+BSIZE-1)/BSIZE,1);
+	UniformMassCuda1t_addMDx_kernel<double><<< grid, threads >>>(3*size, mass, (double*)res, (const double*)dx);
+}
+
+void UniformMassCuda3d1_addMDx(unsigned int size, double mass, void* res, const void* dx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	UniformMassCuda3t1_addMDx_kernel<double><<< grid, threads >>>(size, mass, (CudaVec4<double>*)res, (const CudaVec4<double>*)dx);
+	//dim3 grid((4*size+BSIZE-1)/BSIZE,1);
+	//UniformMassCuda1t_addMDx_kernel<double><<< grid, threads >>>(4*size, mass, (double*)res, (const double*)dx);
+}
+
+void UniformMassCuda3d_accFromF(unsigned int size, double mass, void* a, const void* f)
+{
+	dim3 threads(BSIZE,1);
+	//dim3 grid((size+BSIZE-1)/BSIZE,1);
+	//UniformMassCuda3t_accFromF_kernel<double><<< grid, threads >>>(size, 1.0f/mass, (CudaVec3<double>*)a, (const CudaVec3<double>*)f);
+	dim3 grid((3*size+BSIZE-1)/BSIZE,1);
+	UniformMassCuda1t_accFromF_kernel<double><<< grid, threads >>>(3*size, 1.0f/mass, (double*)a, (const double*)f);
+}
+
+void UniformMassCuda3d1_accFromF(unsigned int size, double mass, void* a, const void* f)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	UniformMassCuda3t1_accFromF_kernel<double><<< grid, threads >>>(size, 1.0f/mass, (CudaVec4<double>*)a, (const CudaVec4<double>*)f);
+	//dim3 grid((4*size+BSIZE-1)/BSIZE,1);
+	//UniformMassCuda1t_accFromF_kernel<double><<< grid, threads >>>(4*size, 1.0f/mass, (double*)a, (const double*)f);
+}
+
+void UniformMassCuda3d_addForce(unsigned int size, const double *mg, void* f)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	UniformMassCuda3t_addForce_kernel<double><<< grid, threads, BSIZE*3*sizeof(double) >>>(size, CudaVec3<double>::make(mg[0],mg[1],mg[2]), (double*)f);
+}
+
+void UniformMassCuda3d1_addForce(unsigned int size, const double *mg, void* f)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	UniformMassCuda3t1_addForce_kernel<double><<< grid, threads >>>(size, CudaVec3<double>::make(mg[0],mg[1],mg[2]), (CudaVec4<double>*)f);
+}
+
+#endif // SOFA_GPU_CUDA_DOUBLE
+
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

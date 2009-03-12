@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -46,7 +46,7 @@ namespace gpu
 namespace cuda
 {
 
-  
+
 template<class T>
 class CudaVector
 {
@@ -137,7 +137,7 @@ public:
         if ( s <= allocSize ) return;
         allocSize = ( s>2*allocSize ) ?s:2*allocSize;
         // always allocate multiples of BSIZE values
-		  allocSize = ( allocSize+WARP_SIZE-1 ) &-WARP_SIZE;
+		  allocSize = ( allocSize+WARP_SIZE-1 ) & (size_type)(-(long)WARP_SIZE);
 
 	if (bufferObject)
 	{
@@ -470,17 +470,17 @@ public:
         CudaMatrix()
         : sizeX ( 0 ), sizeY( 0 ), pitch(0), hostAllocSize ( 0 ), deviceAllocSize ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )
         {}
-        
-        CudaMatrix(size_t x, size_t y )
+
+		  CudaMatrix(size_t x, size_t y, size_t size)
         : sizeX ( 0 ), sizeY ( 0 ), pitch(0), hostAllocSize ( 0 ), deviceAllocSize ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )	{
-                resize (x,y,0);
+                resize (x,y,size);
         }
-        
+
         CudaMatrix(const CudaMatrix<T>& v )
         : sizeX ( 0 ), sizeY ( 0 ), pitch(0), hostAllocSize ( 0 ), deviceAllocSize ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )	{
                 *this = v;
         }
-        
+
         void clear() {
                 sizeY = 0;
                 sizeY = 0;
@@ -488,63 +488,78 @@ public:
                 deviceIsValid = true;
                 hostIsValid = true;
         }
-        
+
         ~CudaMatrix() {
                 if (hostPointer!=NULL) mycudaFreeHost(hostPointer);
                 if (devicePointer!=NULL) mycudaFree(devicePointer);
         }
-        
+
         size_type getSizeX() const {
                 return sizeX;
         }
-        
+
         size_type getSizeY() const {
                 return sizeY;
         }
-        
+
         size_type getPitch() const {
                 return pitch;
         }
         bool empty() const {
                 return sizeX==0 || sizeY==0;
         }
-        
-        void fastResize(size_type x,size_type y,size_type WARP_SIZE=BSIZE) {
-                size_type s = x*y;
-                
-                if (s > hostAllocSize) {
-                        hostAllocSize = ( s>2*hostAllocSize ) ? s : 2*hostAllocSize;
-                        // always allocate multiples of BSIZE values
-								hostAllocSize = ( hostAllocSize+WARP_SIZE-1 )/WARP_SIZE * WARP_SIZE;
-                        T* prevHostPointer = hostPointer;
-                        
-                        if ( prevHostPointer != NULL ) mycudaFreeHost ( prevHostPointer );
-                        void* newHostPointer = NULL;
-                        mycudaMallocHost ( &newHostPointer, hostAllocSize*sizeof ( T ) );
-                        hostPointer = (T*)newHostPointer;
-                }
-                
-                if (WARP_SIZE==0) pitch = x*sizeof(T);
-                else pitch = ((x+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE*sizeof(T);
-                int ypitch;
-                if (WARP_SIZE==0) ypitch = y;
-                else ypitch = ((y+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
-                if (ypitch*pitch > deviceAllocSize) {
-                        void* prevDevicePointer = devicePointer;
-                        if (prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
-                                
-                        mycudaMallocPitch(&devicePointer, &pitch, pitch, ypitch);
-                        deviceAllocSize = ypitch*pitch;
-                }
-                
-                sizeX = x;
-                sizeY = y;
-                deviceIsValid = true;
-                hostIsValid = true;
+
+        void fastResize(size_type x,size_type y,size_type WARP_SIZE) {
+			size_type s = x*y;
+
+			if (s > hostAllocSize) {
+				hostAllocSize = ( s>2*hostAllocSize || s > 1024*1024 ) ? s : 2*hostAllocSize;
+				// always allocate multiples of BSIZE values
+						//hostAllocSize = ( hostAllocSize+WARP_SIZE-1 )/WARP_SIZE * WARP_SIZE;
+				T* prevHostPointer = hostPointer;
+
+				if ( prevHostPointer != NULL ) mycudaFreeHost ( prevHostPointer );
+				void* newHostPointer = NULL;
+				mycudaMallocHost ( &newHostPointer, hostAllocSize*sizeof ( T ) );
+				hostPointer = (T*)newHostPointer;
+			}
+
+
+			if (WARP_SIZE==0) pitch = x*sizeof(T);
+			else pitch = ((x+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE*sizeof(T);
+
+			size_type ypitch = y;
+			if (WARP_SIZE==0) ypitch = y;
+			else ypitch = ((y+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
+
+			if ( ypitch*pitch > deviceAllocSize ) {
+				if (ypitch < 2 * ((deviceAllocSize+pitch-1) / pitch) && ypitch < 1024) {
+					ypitch = 2 * ((deviceAllocSize+pitch-1) / pitch);
+				}
+
+				void* prevDevicePointer = devicePointer;
+				if (prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
+
+				mycudaMallocPitch(&devicePointer, &pitch, pitch, ypitch);
+				deviceAllocSize = ypitch*pitch;
+			}
+				 /*
+				 if (y*x > deviceAllocSize) {
+					 void* prevDevicePointer = devicePointer;
+					 if (prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
+
+					 mycudaMallocPitch(&devicePointer, &pitch, x*sizeof(T), y);
+					 deviceAllocSize = y*x;
+				 }
+				 */
+			sizeX = x;
+			sizeY = y;
+			deviceIsValid = true;
+			hostIsValid = true;
         }
 
 		  void resize (size_type x,size_type y,size_t WARP_SIZE=BSIZE) {
-			  fastResize(x,y,WARP_SIZE);		
+			  fastResize(x,y,WARP_SIZE);
         }
 
         void swap ( CudaMatrix<T>& v ) {
@@ -560,33 +575,33 @@ public:
                 VSWAP ( bool     , hostIsValid );
 #undef VSWAP
         }
-        
+
         const void* deviceRead ( int x=0, int y=0 ) const {
                 copyToDevice();
                 return (const T*)(( ( const char* ) devicePointer ) +(y*pitch+x*sizeof(T)));
         }
-        
+
         void* deviceWrite ( int x=0, int y=0 )	{
                 copyToDevice();
                 hostIsValid = false;
                 return (T*)(( ( const char* ) devicePointer ) +(y*pitch+x*sizeof(T)));
         }
-        
+
         const T* hostRead ( int x=0, int y=0 ) const {
                 copyToHost();
                 return hostPointer+(y*sizeX+x);
         }
-        
+
         T* hostWrite ( int x=0, int y=0 ) {
                 copyToHost();
                 deviceIsValid = false;
                 return hostPointer+(y*sizeX+x);
         }
-        
+
         bool isHostValid() const {
                 return hostIsValid;
         }
-        
+
         bool isDeviceValid() const	{
                 return deviceIsValid;
         }
@@ -595,27 +610,27 @@ public:
                 checkIndex (x,y);
                 return hostRead(x,y);
         }
-        
+
         T& operator() (size_type x,size_type y)	{
                 checkIndex (x,y);
                 return hostWrite(x,y);
-        }					
-        
+        }
+
         const T* operator[] (size_type y) const	{
                 checkIndex (0,y);
                 return hostRead(0,y);
         }
-                        
+
         T* operator[] (size_type y)	{
                 checkIndex (0,y);
                 return hostWrite(0,y);
         }
-                        
+
         const T& getCached (size_type x,size_type y) const {
                 checkIndex (x,y);
                 return hostPointer[y*sizeX+x];
         }
-        
+
 protected:
         void copyToHost() const
         {
@@ -661,20 +676,43 @@ public:
         typedef CudaVector<Deriv> VecDeriv;
         typedef CudaVector<Real> VecReal;
 
+    typedef Coord CPos;
+    static const CPos& getCPos(const Coord& c) { return c; }
+    static void setCPos(Coord& c, const CPos& v) { c = v; }
+    typedef Deriv DPos;
+    static const DPos& getDPos(const Deriv& d) { return d; }
+    static void setDPos(Deriv& d, const DPos& v) { d = v; }
+
+        /// Data Structure to store lines of the matrix L.
         template <class T>
-        class SparseData
+        class SparseConstraint
         {
-                public:
-                        SparseData ( unsigned int _index, const T& _data ) : index ( _index ), data ( _data ) {};
-                        unsigned int index;
-                        T data;
+          public:
+          SparseConstraint(){};
+          void insert( unsigned int index, const T &value)
+          {
+            data[index] += value;
+          }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+          T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
+
+          std::map< unsigned int, T > &getData() {return data;};
+          const std::map< unsigned int, T > &getData() const {return data;};
+        protected:
+          std::map< unsigned int, T > data;
         };
 
-        typedef SparseData<Coord> SparseCoord;
-        typedef SparseData<Deriv> SparseDeriv;
-
-        typedef CudaVector<SparseCoord> SparseVecCoord;
-        typedef CudaVector<SparseDeriv> SparseVecDeriv;
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
         //! All the Constraints applied to a state Vector
         typedef    sofa::helper::vector<SparseVecDeriv> VecConst;
@@ -713,9 +751,9 @@ public:
 		static C interpolate(const helper::vector< C > & ancestors, const helper::vector< Real > & coefs)
 		{
 			assert(ancestors.size() == coefs.size());
-				
+
 			C coord;
-			
+
 			for (unsigned int i = 0; i < ancestors.size(); i++)
 			{
 				coord += ancestors[i] * coefs[i];
@@ -797,6 +835,18 @@ public:
             r += (real)(this->elems[i]*v[i]);
         return r;
     }
+
+
+    /// Dot product.
+    template<class real2>
+    inline friend real operator*(const Vec<N,real2>& v1, const Vec3r1<real>& v2)
+    {
+        real r = (real)(v1[0]*v2[0]);
+        for (int i=1;i<N;i++)
+            r += (real)(v1[i]*v2[i]);
+        return r;
+    }
+
 
     /// Dot product.
     real operator*(const Vec3r1& v) const
@@ -961,20 +1011,52 @@ public:
     typedef CudaVector<Deriv> VecDeriv;
     typedef CudaVector<Real> VecReal;
 
-    template <class T>
-    class SparseData
-    {
-    public:
-        SparseData ( unsigned int _index, const T& _data ) : index ( _index ), data ( _data ) {};
-        unsigned int index;
-        T data;
-    };
 
-    typedef SparseData<Coord> SparseCoord;
-    typedef SparseData<Deriv> SparseDeriv;
+    typedef typename Coord::Pos CPos;
+    typedef typename Coord::Rot CRot;
+	static const CPos& getCPos(const Coord& c) { return c.getCenter(); }
+	static void setCPos(Coord& c, const CPos& v) { c.getCenter() = v; }
+	static const CRot& getCRot(const Coord& c) { return c.getOrientation(); }
+	static void setCRot(Coord& c, const CRot& v) { c.getOrientation() = v; }
 
-    typedef CudaVector<SparseCoord> SparseVecCoord;
-    typedef CudaVector<SparseDeriv> SparseVecDeriv;
+    typedef typename Deriv::Pos DPos;
+    typedef typename Deriv::Rot DRot;
+	static const DPos& getDPos(const Deriv& d) { return d.getVCenter(); }
+	static void setDPos(Deriv& d, const DPos& v) { d.getVCenter() = v; }
+	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
+	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
+
+        /// Data Structure to store lines of the matrix L.
+        template <class T>
+        class SparseConstraint
+        {
+          public:
+          SparseConstraint(){};
+          void insert( unsigned int index, const T &value)
+          {
+            data[index] += value;
+          }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+          T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
+
+          std::map< unsigned int, T > &getData() {return data;};
+          const std::map< unsigned int, T > &getData() const {return data;};
+        protected:
+          std::map< unsigned int, T > data;
+        };
+
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
+
 
     //! All the Constraints applied to a state Vector
     typedef    sofa::helper::vector<SparseVecDeriv> VecConst;
@@ -1048,7 +1130,7 @@ public:
 	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Coord c;
 
 		for (unsigned int i = 0; i < ancestors.size(); i++)
@@ -1075,20 +1157,20 @@ public:
 				q.normalize();
 
 				c.getOrientation() += q;
-			}			
+			}
 		}
-		
+
 		c.getOrientation().normalize();
-		
+
 		return c;
 	}
 
 	static Deriv interpolate(const helper::vector< Deriv > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Deriv d;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			d += ancestors[i] * coefs[i];
@@ -1110,10 +1192,75 @@ inline const char* CudaRigid3fTypes::Name()
 }
 
 
+// support for double precision
+//#define SOFA_GPU_CUDA_DOUBLE
+
+#ifdef SOFA_GPU_CUDA_DOUBLE
+using sofa::defaulttype::Vec3d;
+using sofa::defaulttype::Vec2d;
+typedef Vec3r1<double> Vec3d1;
+
+typedef CudaVectorTypes<Vec3d,Vec3d,double> CudaVec3dTypes;
+//typedef CudaVec3dTypes CudaVec3Types;
+
+template<>
+inline const char* CudaVec3dTypes::Name()
+{
+    return "CudaVec3d";
+}
+
+typedef CudaVectorTypes<Vec2d,Vec2d,double> CudaVec2dTypes;
+//typedef CudaVec2dTypes CudaVec2Types;
+
+template<>
+inline const char* CudaVec2dTypes::Name()
+{
+    return "CudaVec2d";
+}
+
+typedef CudaVectorTypes<Vec3d1,Vec3d1,double> CudaVec3d1Types;
+
+template<>
+inline const char* CudaVec3d1Types::Name()
+{
+    return "CudaVec3d1";
+}
+
+typedef CudaRigidTypes<3,double> CudaRigid3dTypes;
+//typedef CudaRigid3dTypes CudaRigid3Types;
+
+template<>
+inline const char* CudaRigid3dTypes::Name()
+{
+    return "CudaRigid3d";
+}
+#endif
+
+
+
+template<class real, class real2>
+  inline real operator*(const sofa::defaulttype::Vec<3,real>& v1, const sofa::gpu::cuda::Vec3r1<real2>& v2)
+    {
+        real r = (real)(v1[0]*v2[0]);
+        for (int i=1;i<3;i++)
+            r += (real)(v1[i]*v2[i]);
+        return r;
+    }
+
+template<class real, class real2>
+  inline real operator*(const sofa::gpu::cuda::Vec3r1<real>& v1, const sofa::defaulttype::Vec<3,real2>& v2)
+    {
+        real r = (real)(v1[0]*v2[0]);
+        for (int i=1;i<3;i++)
+            r += (real)(v1[i]*v2[i]);
+        return r;
+    }
+
 } // namespace cuda
 
 } // namespace gpu
 
 } // namespace sofa
+
 
 #endif

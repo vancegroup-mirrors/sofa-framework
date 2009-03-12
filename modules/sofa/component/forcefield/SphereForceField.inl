@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -67,7 +67,17 @@ void SphereForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, con
     const Real r2 = r*r;
     this->contacts.beginEdit()->clear();
     f1.resize(p1.size());
-    for (unsigned int i=0; i<p1.size(); i++)
+
+    unsigned int ibegin = 0;
+    unsigned int iend = p1.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
+    for (unsigned int i=ibegin; i<iend; i++)
     {
         Coord dp = p1[i] - center;
         Real norm2 = dp.norm2();
@@ -90,6 +100,23 @@ void SphereForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, con
 }
 
 template<class DataTypes>
+void SphereForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix * mat, SReal kFactor, unsigned int &offset)
+{
+	const Real fact = (Real)(-this->stiffness.getValue()*kFactor);
+	for (unsigned int i=0; i<this->contacts.getValue().size(); i++)
+	{
+		const Contact& c = (this->contacts.getValue())[i];
+		unsigned int p = c.index;
+		for (int l=0;l<Deriv::static_size;++l)
+			for (int k=0;k<Deriv::static_size;++k)
+			{
+				SReal coef = (c.normal[l] * c.normal[k] * c.fact + (l==k ? (1 - c.fact) : (SReal)0.0)) * fact;
+				mat->add(offset + p*Deriv::static_size + l, offset + p*Deriv::static_size + k, coef);
+			}
+	}
+}
+
+template<class DataTypes>
 void SphereForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
 {
     df1.resize(dx1.size());
@@ -99,7 +126,7 @@ void SphereForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1, 
         const Contact& c = (this->contacts.getValue())[i];
         assert((unsigned)c.index<dx1.size());
         Deriv du = dx1[c.index];
-        Deriv dforce; dforce = fact*(c.normal * ((du*c.normal)*c.fact) + du * (1 - c.fact));
+        Deriv dforce; dforce = (c.normal * ((du*c.normal)*c.fact) + du * (1 - c.fact)) * fact;
         df1[c.index] += dforce;
     }
 }
@@ -111,7 +138,17 @@ void SphereForceField<DataTypes>::updateStiffness( const VecCoord& x )
     const Real r = sphereRadius.getValue();
     const Real r2 = r*r;
     this->contacts.beginEdit()->clear();
-    for (unsigned int i=0; i<x.size(); i++)
+
+    unsigned int ibegin = 0;
+    unsigned int iend = x.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
+    for (unsigned int i=ibegin; i<iend; i++)
     {
         Coord dp = x[i] - center;
         Real norm2 = dp.norm2();
@@ -128,10 +165,10 @@ void SphereForceField<DataTypes>::updateStiffness( const VecCoord& x )
     this->contacts.endEdit();
 }
 
-template <class DataTypes> 
+template <class DataTypes>
     double SphereForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
-    std::cerr<<"SphereForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"SphereForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 

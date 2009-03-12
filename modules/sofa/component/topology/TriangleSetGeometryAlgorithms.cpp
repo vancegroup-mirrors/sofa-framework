@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,6 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_TOPOLOGY_TRIANGLESETGEOMETRYALGORITHMS_CPP
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.inl>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -57,16 +58,57 @@ namespace topology
 	;
 
 	#ifndef SOFA_FLOAT
-	template class TriangleSetGeometryAlgorithms<Vec3dTypes>;
-	template class TriangleSetGeometryAlgorithms<Vec2dTypes>;
-	template class TriangleSetGeometryAlgorithms<Vec1dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetGeometryAlgorithms<Vec3dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetGeometryAlgorithms<Vec2dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetGeometryAlgorithms<Vec1dTypes>;
 	#endif
 
 	#ifndef SOFA_DOUBLE
-	template class TriangleSetGeometryAlgorithms<Vec3fTypes>;
-	template class TriangleSetGeometryAlgorithms<Vec2fTypes>;
-	template class TriangleSetGeometryAlgorithms<Vec1fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetGeometryAlgorithms<Vec3fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetGeometryAlgorithms<Vec2fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetGeometryAlgorithms<Vec1fTypes>;
 	#endif
+	
+
+    void SOFA_COMPONENT_TOPOLOGY_API snapping_test_triangle(double epsilon, double alpha0, double alpha1, double alpha2,
+								bool& is_snap_0, bool& is_snap_1, bool& is_snap_2)
+	{
+		is_snap_0=false;
+		is_snap_1=false;
+		is_snap_2=false;
+
+		if(alpha0>=alpha1 && alpha0>=alpha2)
+		{
+			is_snap_0=(alpha1+alpha2<epsilon);
+		}
+		else
+		{
+			if(alpha1>=alpha0 && alpha1>=alpha2)
+			{
+				is_snap_1=(alpha0+alpha2<epsilon);
+			}
+			else // alpha2>=alpha0 && alpha2>=alpha1
+			{ 
+				is_snap_2=(alpha0+alpha1<epsilon);
+			}
+		}
+	}
+
+    void SOFA_COMPONENT_TOPOLOGY_API snapping_test_edge(double epsilon,	double alpha0, double alpha1, 
+							bool& is_snap_0, bool& is_snap_1)
+	{
+		is_snap_0=false;
+		is_snap_1=false;
+			
+		if(alpha0>=alpha1)
+		{
+			is_snap_0=(alpha1<epsilon);
+		}
+		else // alpha1>=alpha0
+		{ 
+			is_snap_1=(alpha0<epsilon);
+		}
+	}
 	
 } // namespace topology
 

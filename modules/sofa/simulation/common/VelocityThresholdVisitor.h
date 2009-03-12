@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,15 +37,15 @@ namespace simulation
 
 
 using namespace sofa::defaulttype;
-class VelocityThresholdVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API VelocityThresholdVisitor : public Visitor
 {
 public:
     typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
 
     virtual Visitor::Result processNodeTopDown(simulation::Node* node);
-    
+
     VelocityThresholdVisitor( VecId v, double threshold );
-    
+
 
 
     /// Return a category name for this action.
@@ -54,7 +54,8 @@ public:
     {
         return "threshold";
     }
-    
+    virtual const char* getClassName() const { return "VelocityThresholdVisitor"; }
+
   protected:
     VecId vid; ///< Id of the vector to process
     double threshold; ///< All the entries below this threshold will be set to 0.

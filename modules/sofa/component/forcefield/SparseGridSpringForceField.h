@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -48,7 +48,7 @@ public:
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
-	
+
 protected:
 
 	DataField< Real > linesStiffness;
@@ -62,31 +62,35 @@ protected:
 	typedef topology::MultiResSparseGridTopology::SparseGrid Voxels;
 	typedef topology::MultiResSparseGridTopology::SparseGrid::Index3D Index3D;
 
- 
+
 public:
 	SparseGridSpringForceField(core::componentmodel::behavior::MechanicalState<DataTypes>* object1, core::componentmodel::behavior::MechanicalState<DataTypes>* object2)
 	: StiffSpringForceField<DataTypes>(object1, object2),
-	  linesStiffness  (dataField(&linesStiffness,Real(0),"linesStiffness","Lines Stiffness"))
-	  , linesDamping  (dataField(&linesDamping  ,Real(0),"linesDamping"  ,"Lines Damping"))
-	  , quadsStiffness(dataField(&quadsStiffness,Real(0),"quadsStiffness","Quads Stiffness"))
-	  , quadsDamping  (dataField(&quadsDamping  ,Real(0),"quadsDamping"  ,"Quads Damping"))
-	  , cubesStiffness(dataField(&cubesStiffness,Real(0),"cubesStiffness","Cubes Stiffness"))
-	  , cubesDamping  (dataField(&cubesDamping  ,Real(0),"cubesDamping"  ,"Cubes Damping"))
+	  linesStiffness  (dataField(&linesStiffness,Real(100),"linesStiffness","Lines Stiffness"))
+	  , linesDamping  (dataField(&linesDamping  ,Real(5),"linesDamping"  ,"Lines Damping"))
+	  , quadsStiffness(dataField(&quadsStiffness,Real(100),"quadsStiffness","Quads Stiffness"))
+	  , quadsDamping  (dataField(&quadsDamping  ,Real(5),"quadsDamping"  ,"Quads Damping"))
+	  , cubesStiffness(dataField(&cubesStiffness,Real(100),"cubesStiffness","Cubes Stiffness"))
+	  , cubesDamping  (dataField(&cubesDamping  ,Real(5),"cubesDamping"  ,"Cubes Damping"))
 	{
+          addAlias(&linesStiffness,    "stiffness");addAlias(&linesDamping,    "damping");
+          addAlias(&quadsStiffness,    "stiffness");addAlias(&quadsDamping,    "damping");
+          addAlias(&cubesStiffness,    "stiffness");addAlias(&cubesDamping,    "damping");
 	}
-	
+
 	SparseGridSpringForceField()
-	: 
-	  linesStiffness  (dataField(&linesStiffness,Real(0),"linesStiffness","Lines Stiffness"))
-	  , linesDamping  (dataField(&linesDamping  ,Real(0),"linesDamping"  ,"Lines Damping"))
-	  , quadsStiffness(dataField(&quadsStiffness,Real(0),"quadsStiffness","Quads Stiffness"))
-	  , quadsDamping  (dataField(&quadsDamping  ,Real(0),"quadsDamping"  ,"Quads Damping"))
-	  , cubesStiffness(dataField(&cubesStiffness,Real(0),"cubesStiffness","Cubes Stiffness"))
-	  , cubesDamping  (dataField(&cubesDamping  ,Real(0),"cubesDamping"  ,"Cubes Damping"))
+	:
+	  linesStiffness  (dataField(&linesStiffness,Real(100),"linesStiffness","Lines Stiffness"))
+	  , linesDamping  (dataField(&linesDamping  ,Real(5),"linesDamping"  ,"Lines Damping"))
+	  , quadsStiffness(dataField(&quadsStiffness,Real(100),"quadsStiffness","Quads Stiffness"))
+	  , quadsDamping  (dataField(&quadsDamping  ,Real(5),"quadsDamping"  ,"Quads Damping"))
+	  , cubesStiffness(dataField(&cubesStiffness,Real(100),"cubesStiffness","Cubes Stiffness"))
+	  , cubesDamping  (dataField(&cubesDamping  ,Real(5),"cubesDamping"  ,"Cubes Damping"))
 	{
+          addAlias(&linesStiffness,    "stiffness");addAlias(&linesDamping,    "damping");
+          addAlias(&quadsStiffness,    "stiffness");addAlias(&quadsDamping,    "damping");
+          addAlias(&cubesStiffness,    "stiffness");addAlias(&cubesDamping,    "damping");
 	}
-	
-    virtual void parse(core::objectmodel::BaseObjectDescription* arg);
 
 	Real getStiffness() const { return linesStiffness.getValue(); }
 	Real getLinesStiffness() const { return linesStiffness.getValue(); }
@@ -111,7 +115,7 @@ public:
 		cubesStiffness.setValue(val);
 	}
 
-	
+
 	Real getDamping() const { return linesDamping.getValue(); }
 	Real getLinesDamping() const { return linesDamping.getValue(); }
 	Real getQuadsDamping() const { return quadsDamping.getValue(); }
@@ -134,9 +138,9 @@ public:
 	{
 		cubesDamping.setValue(val);
 	}
-	
+
 	virtual void addForce(VecDeriv& f1, VecDeriv& f2, const VecCoord& x1, const VecCoord& x2, const VecDeriv& v1, const VecDeriv& v2);
-	
+
 	virtual void addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2, double kFactor, double bFactor);
 
 	virtual void draw();

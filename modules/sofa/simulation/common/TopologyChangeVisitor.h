@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_SIMULATION_TREE_TOPOLOGYCHANGEACTION_H
 
 #include <sofa/simulation/common/Visitor.h>
+#include <sofa/core/componentmodel/topology/Topology.h>
 
 namespace sofa
 {
@@ -34,19 +35,20 @@ namespace simulation
 {
 
 
-class TopologyChangeVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API TopologyChangeVisitor : public Visitor
 {
 
 public:
-		TopologyChangeVisitor()
-		: nbIter(0)
+		TopologyChangeVisitor(core::componentmodel::topology::Topology* source)
+		: /*root(NULL),*/ source(source)
 		{}
 
 		virtual ~TopologyChangeVisitor(){}
 
 		virtual void processTopologyChange(core::objectmodel::BaseObject* obj);
-		
+
 		virtual Result processNodeTopDown(simulation::Node* node);
+		virtual void processNodeBottomUp(simulation::Node* node);
 
 		/// Specify whether this action can be parallelized.
 		virtual bool isThreadSafe() const { return true; }
@@ -54,16 +56,13 @@ public:
 		/// Return a category name for this action.
 		/// Only used for debugging / profiling purposes
 		virtual const char* getCategoryName() const { return "topologyChange"; }
+        virtual const char* getClassName() const { return "TopologyChangeVisitor"; }
 
-		const unsigned int& getNbIter() { return nbIter;}
-
-		void resetNbIter() { nbIter=0;}
-		
-		void incrNbIter() { ++nbIter;}
-
-	protected:
+protected:
 		/// Flag to know the number of iterations of the overloaded method processNodeTopDown
-		unsigned int nbIter;
+		//simulation::Node* root;
+
+    core::componentmodel::topology::Topology* source;
 };
 
 

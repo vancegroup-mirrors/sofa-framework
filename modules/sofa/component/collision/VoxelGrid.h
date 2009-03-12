@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 #include <sofa/core/componentmodel/collision/BroadPhaseDetection.h>
 #include <sofa/component/collision/NarrowPhaseDetection.h>
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <vector>
 
 
@@ -61,7 +61,7 @@ public:
 	void add(VoxelGrid* grid, core::CollisionElementIterator collElem, sofa::helper::vector<core::CollisionElementIterator> &vectCollis, int phase);
 	void eraseAll(int timeStampMethod);
 	GridCell();
-	
+
 	void draw(int timeStampMethod);
 	void setMinMax(const Vector3 &minimum, const Vector3& maximum);
 };
@@ -74,8 +74,8 @@ private:
 	bool bDraw;
 	Vector3 minVect, maxVect, step;
 	void posToIdx (const Vector3& pos, Vector3 &indices);
-	simulation::tree::GNode* timeLogger;
-	simulation::tree::GNode::ctime_t timeInter;
+	simulation::Node* timeLogger;
+	simulation::Node::ctime_t timeInter;
 	friend class GridCell;
 public:
 	VoxelGrid (Vector3 minVect = Vector3(-20.0, -20.0, -20.0), Vector3 maxVect = Vector3(-20.0, -20.0, -20.0), Vector3 nbSubdivision = Vector3(5.0, 5.0, 5.0), bool draw=false)
@@ -86,14 +86,14 @@ public:
 		timeLogger = NULL;
 		timeInter = 0;
 	}
-	
+
 	~VoxelGrid () {}
-	
+
 	 // Create a voxel grid define by minx, miny, minz, maxx, maxy, maxz and the number of subdivision on x, y, z
 	void createVoxelGrid (const Vector3 &min, const Vector3 &max, const Vector3 &nbSubdivision);
-	
+
 	void draw();
-	
+
 	void add(core::CollisionModel *cm, int phase);
 
 	void addCollisionModel(core::CollisionModel *cm);
@@ -101,12 +101,12 @@ public:
 	void add (core::CollisionModel *cm);
 
 	void clearBroadPhase()
-	{ 
+	{
 		BroadPhaseDetection::clearBroadPhase();
 		timeStamp++;
 	}
 	void clearNarrowPhase()
-	{ 
+	{
 		NarrowPhaseDetection::clearNarrowPhase();
 		timeStamp++;
 	}

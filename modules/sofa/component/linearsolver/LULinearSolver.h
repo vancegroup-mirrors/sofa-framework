@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_LINEARSOLVER_LULINEARSOLVER_H
 
 #include <sofa/core/componentmodel/behavior/LinearSolver.h>
-#include <sofa/simulation/common/MatrixLinearSolver.h>
+#include <sofa/component/linearsolver/MatrixLinearSolver.h>
 #include <sofa/component/linearsolver/SparseMatrix.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <math.h>
@@ -42,26 +42,26 @@ namespace linearsolver
 
 /// Linear system solver using the default (LU factorization) algorithm
 template<class Matrix, class Vector>
-class LULinearSolver : public sofa::simulation::MatrixLinearSolver<Matrix,Vector>, public virtual sofa::core::objectmodel::BaseObject
+class LULinearSolver : public sofa::component::linearsolver::MatrixLinearSolver<Matrix,Vector>, public virtual sofa::core::objectmodel::BaseObject
 {
 public:
     Data<bool> f_verbose;
     typename Matrix::LUSolver* solver;
     typename Matrix::InvMatrixType Minv;
     bool computedMinv;
-    
+
     LULinearSolver()
     : f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
     , solver(NULL), computedMinv(false)
     {
     }
-    
+
     ~LULinearSolver()
     {
         if (solver != NULL)
             delete solver;
     }
-    
+
     /// Invert M
     void invert (Matrix& M)
     {
@@ -70,32 +70,32 @@ public:
         solver = M.makeLUSolver();
         computedMinv = false;
     }
-    
+
     /// Solve Mx=b
     void solve (Matrix& M, Vector& x, Vector& b)
     {
-        using std::cerr;
-        using std::endl;
         
+        
+
         const bool verbose  = f_verbose.getValue();
-        
+
         if( verbose )
         {
-            cerr<<"LULinearSolver, b = "<< b <<endl;
-            cerr<<"LULinearSolver, M = "<< M <<endl;
+            serr<<"LULinearSolver, b = "<< b <<sendl;
+            serr<<"LULinearSolver, M = "<< M <<sendl;
         }
         if (solver)
             M.solve(&x,&b, solver);
         else
             M.solve(&x,&b);
-        
+
         // x is the solution of the system
         if( verbose )
         {
-            cerr<<"LULinearSolver::solve, solution = "<<x<<endl;
+            serr<<"LULinearSolver::solve, solution = "<<x<<sendl;
         }
     }
-    
+
     void computeMinv()
     {
         if (!computedMinv)
@@ -113,29 +113,29 @@ public:
             {
                 double err = I.element(i,j)-((i==j)?1.0:0.0);
                 if (fabs(err) > 1.0e-6)
-                    std::cerr << "ERROR: I("<<i<<","<<j<<") error "<<err<<std::endl;
+                    serr << "ERROR: I("<<i<<","<<j<<") error "<<err<<sendl;
             }*/
     }
-    
+
     double getMinvElement(int i, int j)
     {
         return Minv.element(i,j);
     }
-    
+
     template<class RMatrix, class JMatrix>
     bool addJMInvJt(RMatrix& result, JMatrix& J, double fact)
     {
-        const int Jrows = J.rowSize();
-        const int Jcols = J.colSize();
+        const unsigned int Jrows = J.rowSize();
+        const unsigned int Jcols = J.colSize();
         if (Jcols != this->systemMatrix->rowSize())
         {
-            std::cerr << "LULinearSolver::addJMInvJt ERROR: incompatible J matrix size." << std::endl;
+            serr << "LULinearSolver::addJMInvJt ERROR: incompatible J matrix size." << sendl;
             return false;
         }
-        
+
         if (!Jrows) return false;
         computeMinv();
-        
+
         const typename JMatrix::LineConstIterator jitend = J.end();
         for (typename JMatrix::LineConstIterator jit1 = J.begin(); jit1 != jitend; ++jit1)
         {
@@ -156,7 +156,7 @@ public:
                     }
                 }
                 acc *= fact;
-                //std::cout << "W("<<row1<<","<<row2<<") += "<<acc<<" * "<<fact<<std::endl;
+                //sout << "W("<<row1<<","<<row2<<") += "<<acc<<" * "<<fact<<sendl;
                 result.add(row1,row2,acc);
                 if (row1!=row2)
                     result.add(row2,row1,acc);
@@ -164,7 +164,7 @@ public:
         }
         return true;
     }
-    
+
     /// Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
     ///
     /// @param result the variable where the result will be added
@@ -207,7 +207,7 @@ public:
         }
         return false;
     }
-    
+
 };
 
 } // namespace linearsolver

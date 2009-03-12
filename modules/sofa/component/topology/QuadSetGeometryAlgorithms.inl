@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_QUADSETGEOMETRYALGORITHMS_INL 
 
 #include <sofa/component/topology/QuadSetGeometryAlgorithms.h>
+#include <sofa/component/topology/CommonAlgorithms.h>
 
 namespace sofa
 {
@@ -38,20 +39,66 @@ namespace topology
     using namespace sofa::defaulttype;
 
 	template< class DataTypes>
-	typename DataTypes::Real QuadSetGeometryAlgorithms< DataTypes >::computeQuadArea( const unsigned int i) const 
+	void QuadSetGeometryAlgorithms< DataTypes >::computeQuadAABB(const QuadID i, Coord& minCoord, Coord& maxCoord) const
 	{
 		const Quad &t = this->m_topology->getQuad(i);
-		const VecCoord& p = *(this->object->getX());
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
+
+		for(unsigned int i=0; i<3; ++i)
+		{
+			minCoord[i] = std::min(std::min(p[t[0]][i], p[t[3]][i]), std::min(p[t[1]][i], p[t[2]][i]));
+			maxCoord[i] = std::max(std::max(p[t[0]][i], p[t[3]][i]), std::max(p[t[1]][i], p[t[2]][i]));
+		}
+	}
+
+	template<class DataTypes>
+	typename DataTypes::Coord QuadSetGeometryAlgorithms<DataTypes>::computeQuadCenter(const QuadID i) const
+	{
+		const Quad &t = this->m_topology->getQuad(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
+
+		return (p[t[0]] + p[t[1]] + p[t[2]] + p[t[3]]) * (Real) 0.25;
+	}
+
+	template< class DataTypes>
+	void QuadSetGeometryAlgorithms< DataTypes >::getQuadVertexCoordinates(const QuadID i, Coord pnt[4]) const
+	{
+		const Quad &t = this->m_topology->getQuad(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
+
+		for(unsigned int i=0; i<4; ++i)
+		{
+			pnt[i] = p[t[i]];
+		}
+	}
+
+	template< class DataTypes>
+	void QuadSetGeometryAlgorithms< DataTypes >::getRestQuadVertexCoordinates(const QuadID i, Coord pnt[4]) const
+	{
+		const Quad &t = this->m_topology->getQuad(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX0());
+
+		for(unsigned int i=0; i<4; ++i)
+		{
+			pnt[i] = p[t[i]];
+		}
+	}
+
+	template< class DataTypes>
+	typename DataTypes::Real QuadSetGeometryAlgorithms< DataTypes >::computeQuadArea( const QuadID i) const 
+	{
+		const Quad &t = this->m_topology->getQuad(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
 		Real area = (Real)((areaProduct(p[t[1]]-p[t[0]],p[t[2]]-p[t[0]])
 						  + areaProduct(p[t[3]]-p[t[2]],p[t[0]]-p[t[2]])) * (Real) 0.5);
 		return area;
 	}
 
 	template< class DataTypes>
-	typename DataTypes::Real QuadSetGeometryAlgorithms< DataTypes >::computeRestQuadArea( const unsigned int i) const 
+	typename DataTypes::Real QuadSetGeometryAlgorithms< DataTypes >::computeRestQuadArea( const QuadID i) const 
 	{
 		const Quad &t = this->m_topology->getQuad(i);
-		const VecCoord& p = *(this->object->getX0());
+		const typename DataTypes::VecCoord& p = *(this->object->getX0());
 		Real area = (Real)((areaProduct(p[t[1]]-p[t[0]],p[t[2]]-p[t[0]])
 						  + areaProduct(p[t[3]]-p[t[2]],p[t[0]]-p[t[2]])) * (Real) 0.5);
 		return area;
@@ -74,7 +121,7 @@ namespace topology
 
 	// Computes the normal vector of a quad indexed by ind_q (not normed)
 	template<class DataTypes>
-	Vec<3,double> QuadSetGeometryAlgorithms< DataTypes >::computeQuadNormal(const unsigned int ind_q)
+	Vec<3,double> QuadSetGeometryAlgorithms< DataTypes >::computeQuadNormal(const QuadID ind_q) const
 	{
 		// HYP :  The quad indexed by ind_q is planar
 
@@ -103,9 +150,9 @@ namespace topology
 
 	// Test if a quad indexed by ind_quad (and incident to the vertex indexed by ind_p) is included or not in the plane defined by (ind_p, plane_vect)
 	template<class DataTypes>
-	bool QuadSetGeometryAlgorithms< DataTypes >::is_quad_in_plane(const unsigned int ind_q, 
+	bool QuadSetGeometryAlgorithms< DataTypes >::isQuadInPlane(const QuadID ind_q, 
 																const unsigned int ind_p,  
-																const Vec<3,Real>&plane_vect)
+																const Vec<3,Real>&plane_vect) const
 	{
 		const Quad &q = this->m_topology->getQuad(ind_q);
 
@@ -159,9 +206,57 @@ namespace topology
 		return((p1-p0)*( plane_vect)>=0.0 && (p2-p0)*( plane_vect)>=0.0 && (p3-p0)*( plane_vect)>=0.0);
 	}
 
+	template<class DataTypes>
+	bool QuadSetGeometryAlgorithms< DataTypes >::isPointInQuad(const QuadID ind_q, const sofa::defaulttype::Vec<3,Real>& p) const
+	{
+		const double ZERO = 1e-6;
+		const Quad &q = this->m_topology->getQuad(ind_q);
+		const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
+
+		Vec<3,Real> ptest = p;
+		Vec<3,Real> p0(vect_c[q[0]][0], vect_c[q[0]][1], vect_c[q[0]][2]);
+		Vec<3,Real> p1(vect_c[q[1]][0], vect_c[q[1]][1], vect_c[q[1]][2]);
+		Vec<3,Real> p2(vect_c[q[2]][0], vect_c[q[2]][1], vect_c[q[2]][2]);
+		Vec<3,Real> p3(vect_c[q[3]][0], vect_c[q[3]][1], vect_c[q[3]][2]);
+		
+		Vec<3,Real> v_normal = (p2-p0).cross(p1-p0);
+		Real norm_v_normal = v_normal*(v_normal);
+		if(norm_v_normal > ZERO)
+		{
+			if(fabs((ptest-p0)*(v_normal)) < ZERO) // p is in the plane defined by the triangle (p0,p1,p2)
+			{
+
+				Vec<3,Real> n_01 = (p1-p0).cross(v_normal);
+				Vec<3,Real> n_12 = (p2-p1).cross(v_normal);
+				Vec<3,Real> n_20 = (p0-p2).cross(v_normal);
+
+				if(((ptest-p0)*(n_01) > -ZERO) && ((ptest-p1)*(n_12) > -ZERO) && ((ptest-p2)*(n_20) > -ZERO))
+					return true;
+			}
+		}
+
+		v_normal = (p3-p0).cross(p2-p0);
+		norm_v_normal = v_normal*(v_normal);
+		if(norm_v_normal > ZERO)
+		{
+			if(fabs((ptest-p0)*(v_normal)) < ZERO) // p is in the plane defined by the triangle (p0,p3,p2)
+			{
+
+				Vec<3,Real> n_01 = (p2-p0).cross(v_normal);
+				Vec<3,Real> n_12 = (p3-p2).cross(v_normal);
+				Vec<3,Real> n_20 = (p0-p3).cross(v_normal);
+
+				if(((ptest-p0)*(n_01) > -ZERO) && ((ptest-p2)*(n_12) > -ZERO) && ((ptest-p3)*(n_20) > -ZERO))
+					return true;
+			}
+
+		}
+		return false;
+	}
+
 	/// Write the current mesh into a msh file
 	template <typename DataTypes>
-	void QuadSetGeometryAlgorithms<DataTypes>::writeMSHfile(const char *filename) 	               
+	void QuadSetGeometryAlgorithms<DataTypes>::writeMSHfile(const char *filename) const              
 	{
 		std::ofstream myfile; 	                 
 		myfile.open (filename); 
@@ -199,30 +294,55 @@ namespace topology
 		myfile.close(); 	 
 	}
 
-	/// Cross product for 3-elements vectors.
-	template< class Real>
-	Real areaProduct(const Vec<3,Real>& a, const Vec<3,Real>& b)
+	template<class Coord>
+	bool is_point_in_quad(const Coord& p,
+		                  const Coord& a, const Coord& b,
+						  const Coord& c, const Coord& d)
 	{
-		return Vec<3,Real>(a.y()*b.z() - a.z()*b.y(),
-			a.z()*b.x() - a.x()*b.z(),
-			a.x()*b.y() - a.y()*b.x()).norm();
-	}
+		const double ZERO = 1e-6;
 
-	/// area from 2-elements vectors.
-	template< class Real>
-	Real areaProduct(const defaulttype::Vec<2,Real>& a, const defaulttype::Vec<2,Real>& b )
-	{
-		return a[0]*b[1] - a[1]*b[0];
-	}
+		Coord ptest = p;
+		Coord p0 = a;
+		Coord p1 = b;
+		Coord p2 = c;
+		Coord p3 = d;
 
-	/// area for 1-elements vectors.
-	template< class Real>
-	Real areaProduct(const defaulttype::Vec<1,Real>& , const defaulttype::Vec<1,Real>&  )
-	{
-	//	assert(false);
-		return (Real)0;
-	}
+		Coord v_normal = (p2-p0).cross(p1-p0);
 
+		double norm_v_normal = v_normal*(v_normal);
+		if(norm_v_normal > ZERO)
+		{
+			if(fabs((ptest-p0)*(v_normal)) < ZERO) // p is in the plane defined by the triangle (p0,p1,p2)
+			{
+
+				Coord n_01 = (p1-p0).cross(v_normal);
+				Coord n_12 = (p2-p1).cross(v_normal);
+				Coord n_20 = (p0-p2).cross(v_normal);
+
+				if(((ptest-p0)*(n_01) > -ZERO) && ((ptest-p1)*(n_12) > -ZERO) && ((ptest-p2)*(n_20) > -ZERO))
+					return true;
+			}
+		}
+
+		v_normal = (p3-p0).cross(p2-p0);
+		norm_v_normal = v_normal*(v_normal);
+		if(norm_v_normal > ZERO)
+		{
+			if(fabs((ptest-p0)*(v_normal)) < ZERO) // p is in the plane defined by the triangle (p0,p2,p3)
+			{
+
+				Coord n_01 = (p2-p0).cross(v_normal);
+				Coord n_12 = (p3-p2).cross(v_normal);
+				Coord n_20 = (p0-p3).cross(v_normal);
+
+				if(((ptest-p0)*(n_01) > -ZERO) && ((ptest-p2)*(n_12) > -ZERO) && ((ptest-p3)*(n_20) > -ZERO))
+					return true;
+			}
+
+		}
+
+		return false;
+	}
 } // namespace topology
 
 } // namespace component

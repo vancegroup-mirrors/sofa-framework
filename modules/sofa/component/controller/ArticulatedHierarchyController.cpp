@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Implementation: ArticulatedHierarchyController
 //
-// Description: 
+// Description:
 //
 //
 // Author: Pierre-Jean Bensoussan, Digital Trainers (2008)
@@ -45,7 +45,7 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
 
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 
 #include <cctype>
 
@@ -81,10 +81,10 @@ void ArticulatedHierarchyController::init()
 	activeArticulations.resize(bindingKeys.getValue().size());
 	propagationChain = false;
 
-	sofa::simulation::tree::GNode* curNode = dynamic_cast<sofa::simulation::tree::GNode*>(this->getContext());
+	sofa::simulation::Node* curNode = dynamic_cast<sofa::simulation::Node*>(this->getContext());
 	if (curNode)
 		curNode->getTreeObjects<ArticulatedHierarchyContainer::ArticulationCenter, ArtCenterVec >(&m_artCenterVec);
-	
+
 	resetControler();
 }
 
@@ -153,7 +153,7 @@ void ArticulatedHierarchyController::buildArray(std::vector< int > &artIndices, 
 		{
 			ArtVecIt artIt = (*artCenterIt)->articulations.begin();
 			ArtVecIt artItEnd = (*artCenterIt)->articulations.end();
-			
+
 			while (artIt != artItEnd)
 			{
 				if (((*artIt)->rotation.getValue() == artRef->rotation.getValue())
@@ -168,7 +168,7 @@ void ArticulatedHierarchyController::buildArray(std::vector< int > &artIndices, 
 				++artIt;
 			}
 		}
-		
+
 		if (childFound) break;
 		++artCenterIt;
 	}
@@ -184,9 +184,9 @@ void ArticulatedHierarchyController::dumpActiveArticulations(void) const
 	while (it != itEnd)
 	{
 		if (*it)
-			std::cout << "-------------> Articulation " << articulationsIndices.getValue()[i] << " active\n";
+		  std::cout << "-------------> Articulation " << articulationsIndices.getValue()[i] << " active"<<std::endl;
 		else
-			std::cout << "-------------> Articulation " << articulationsIndices.getValue()[i] << " inactive\n";
+		  std::cout << "-------------> Articulation " << articulationsIndices.getValue()[i] << " inactive"<<std::endl;
 
 		++it;
 		i++;
@@ -197,7 +197,7 @@ void ArticulatedHierarchyController::dumpActiveArticulations(void) const
 
 void ArticulatedHierarchyController::dumpArticulationsAndBindingKeys(void) const
 {
-	std::cout << "ARTICULATIONS_KEYBOARD_CONTROLER : Controled Articulations & Binding Keys\n";
+  std::cout << "ARTICULATIONS_KEYBOARD_CONTROLER : Controled Articulations & Binding Keys"<<std::endl;
 
 	vector<int>::const_iterator articulationsIndicesIt = articulationsIndices.getValue().begin();
 	vector<int>::const_iterator articulationsIndicesItEnd = articulationsIndices.getValue().end();
@@ -207,7 +207,7 @@ void ArticulatedHierarchyController::dumpArticulationsAndBindingKeys(void) const
 
 	while (articulationsIndicesIt != articulationsIndicesItEnd)
 	{
-		std::cout << "Articulation " << *articulationsIndicesIt << " controlled with key " << *bindinKeysIt << std::endl;
+ 	        std::cout << "Articulation " << *articulationsIndicesIt << " controlled with key " << *bindinKeysIt << std::endl;
 		++articulationsIndicesIt;
 		++bindinKeysIt;
 		if (bindinKeysIt == bindinKeysItEnd)
@@ -375,13 +375,13 @@ void ArticulatedHierarchyController::applyController(void)
 						{
 							std::vector< MechanicalState<sofa::defaulttype::Vec1dTypes>* > articulatedObjects;
 
-							sofa::simulation::tree::GNode* curNode = dynamic_cast<sofa::simulation::tree::GNode*>(this->getContext());
+							sofa::simulation::Node* curNode = dynamic_cast<sofa::simulation::Node*>(this->getContext());
 							if (curNode)
 								curNode->getTreeObjects<MechanicalState<sofa::defaulttype::Vec1dTypes>, std::vector< MechanicalState<sofa::defaulttype::Vec1dTypes>* > >(&articulatedObjects);
 
 							if (!articulatedObjects.empty())
 							{
-								// Reference potential initial articulations value for interaction springs 
+								// Reference potential initial articulations value for interaction springs
 								// and Current articulation value at the coresponding artculation
 
 								std::vector< MechanicalState<sofa::defaulttype::Vec1dTypes>* >::iterator articulatedObjIt = articulatedObjects.begin();
@@ -407,15 +407,15 @@ void ArticulatedHierarchyController::applyController(void)
 					articulationIndex = articulationPropagationChain[j];
 			}
 
-			static_cast<sofa::simulation::tree::GNode*>(this->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
-			static_cast<sofa::simulation::tree::GNode*>(this->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
+			static_cast<sofa::simulation::Node*>(this->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
+			static_cast<sofa::simulation::Node*>(this->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
 		}
 	}
 }
 
 SOFA_DECL_CLASS(ArticulatedHierarchyController)
 
-// Register in the Factory	
+// Register in the Factory
 int ArticulatedHierarchyControllerClass = core::RegisterObject("")
 .add< ArticulatedHierarchyController >()
 ;

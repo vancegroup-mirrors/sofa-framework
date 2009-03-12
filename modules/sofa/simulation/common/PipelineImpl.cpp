@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -67,7 +67,7 @@ void PipelineImpl::init()
 
 	if (intersectionMethod==NULL)
 	{
-		std::cerr << "WARNING(Pipeline): no intersectionMethod defined. Using DiscreteIntersection.\n";
+		serr <<"no intersectionMethod defined. Using DiscreteIntersection" << sendl;
 		sofa::core::objectmodel::BaseObjectDescription discreteIntersectionDesc("Default Intersection","DiscreteIntersection");
 		intersectionMethod = dynamic_cast<Intersection*>(sofa::core::ObjectFactory::CreateObject(getContext(), &discreteIntersectionDesc));
 		//intersectionMethod = new sofa::component::collision::DiscreteIntersection;

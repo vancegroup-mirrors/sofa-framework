@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,6 +33,7 @@
 #include <sofa/simulation/common/AnimateEndEvent.h>
 #include <sofa/defaulttype/DataTypeInfo.h>
 #include <sofa/simulation/common/Visitor.h>
+#include <sofa/component/component.h>
 
 #include <fstream>
 
@@ -51,7 +52,7 @@ namespace misc
  * Stop to write the state if the kinematic energy reach a given threshold (stopAt)
  * The energy will be measured at each period determined by keperiod
 */
-class WriteState: public core::objectmodel::BaseObject
+class SOFA_COMPONENT_MISC_API WriteState: public core::objectmodel::BaseObject
 {
 public:
     Data < std::string > f_filename;
@@ -73,7 +74,7 @@ protected:
     bool kineticEnergyThresholdReached;
     double timeToTestEnergyIncrease;
     double savedKineticEnergy;
-    
+
 public:
     WriteState();
 
@@ -82,7 +83,7 @@ public:
     virtual void init();
 
     virtual void reset();
-   
+
     virtual void handleEvent(sofa::core::objectmodel::Event* event);
 
 
@@ -95,39 +96,45 @@ public:
             return false;
         return BaseObject::canCreate(obj, context, arg);
     }
-    
+
 };
 
 ///Create WriteState component in the graph each time needed
-class WriteStateCreator: public Visitor
+class SOFA_COMPONENT_MISC_API WriteStateCreator: public Visitor
 {
 public:
-    WriteStateCreator() : sceneName(""), counterWriteState(0), createInMapping(false) {}
-    WriteStateCreator(std::string &n, int c=0) { sceneName=n; counterWriteState=c; }
+    WriteStateCreator(): sceneName(""), recordX(true),recordV(true), createInMapping(false), counterWriteState(0){};
+    WriteStateCreator(std::string &n, bool _recordX, bool _recordV, bool _createInMapping, int c=0) :
+    sceneName(n),recordX(_recordX),recordV(_recordV),createInMapping(_createInMapping),counterWriteState(c) { };
     virtual Result processNodeTopDown( simulation::Node*  );
-    
+
     void setSceneName(std::string &n) { sceneName = n; }
-    void setCounter(int c) { counterWriteState = c; }
+    void setRecordX(bool b) {recordX=b;}
+    void setRecordV(bool b) {recordV=b;}
     void setCreateInMapping(bool b) { createInMapping=b; }
-protected:    
-    void addWriteState(sofa::core::componentmodel::behavior::BaseMechanicalState*ms, simulation::Node* gnode);
-    
+    void setCounter(int c) { counterWriteState = c; }
+protected:
     std::string sceneName;
-    int counterWriteState; //avoid to have two same files if two mechanical objects has the same name
+    bool recordX,recordV;
     bool createInMapping;
+
+    int counterWriteState; //avoid to have two same files if two mechanical objects has the same name
+
+    void addWriteState(sofa::core::componentmodel::behavior::BaseMechanicalState*ms, simulation::Node* gnode);
+
 };
 
-class WriteStateActivator: public simulation::Visitor
+class SOFA_COMPONENT_MISC_API WriteStateActivator: public simulation::Visitor
 {
 public:
     WriteStateActivator( bool active) : state(active) {}
     virtual Result processNodeTopDown( simulation::Node*  );
-    
+
     bool getState() const { return state; }
     void setState(bool active) { state=active; }
-protected:    
+protected:
     void changeStateWriter(sofa::component::misc::WriteState *ws);
-    
+
     bool state;
 };
 

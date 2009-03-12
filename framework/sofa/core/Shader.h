@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,7 +27,7 @@
 //
 // C++ Interface: Shader
 //
-// Description: 
+// Description:
 //
 //
 // Author: The SOFA team </www.sofa-framework.org>, (C) 2007
@@ -48,10 +48,10 @@ namespace core
 /**
  *  \brief A basic interface to define a Shader for different system (OpenGL, DirectX, ...).
  *
- *  
+ *
  *
  */
-class Shader : public virtual objectmodel::BaseObject 
+class Shader : public virtual objectmodel::BaseObject
 {
 public:
 	/// Destructor
@@ -60,15 +60,18 @@ public:
 	virtual void start() = 0;
 	/// Stop the shader
 	virtual void stop() = 0;
+	///Tells if it must be activated automatically(value false : the visitor will switch the shader)
+	///or manually (value true : useful when another component wants to use it for itself only)
+	virtual bool isActive() = 0;
 };
 
 /**
  *  \brief A basic interface to define an element to be used with a Shader.
  *
- *  
+ *
  *
  */
-class ShaderElement: public virtual objectmodel::BaseObject 
+class ShaderElement: public virtual objectmodel::BaseObject
 {
 public:
 	/// Destructor

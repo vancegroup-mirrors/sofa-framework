@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,8 @@
 #define SOFA_COMPONENT_COLLISION_DEFAULTCONTACTMANAGER_H
 
 #include <sofa/core/componentmodel/collision/ContactManager.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
+#include <sofa/component/component.h>
 #include <vector>
 
 
@@ -39,22 +40,32 @@ namespace component
 namespace collision
 {
 
-class DefaultContactManager : public core::componentmodel::collision::ContactManager
+class SOFA_COMPONENT_COLLISION_API DefaultContactManager : public core::componentmodel::collision::ContactManager
 {
 protected:
 	typedef std::map<std::pair<core::CollisionModel*,core::CollisionModel*>,core::componentmodel::collision::Contact*> ContactMap;
 	ContactMap contactMap;
-	
+
 	void clear();
 public:
 	Data<std::string> response;
-	
+
 	DefaultContactManager();
 	~DefaultContactManager();
-	
+
 	void createContacts(DetectionOutputMap& outputs);
-	
+
 	void draw();
+
+	virtual std::string getContactResponse(core::CollisionModel* model1, core::CollisionModel* model2);
+
+	/// virtual methods used for cleaning the pipeline after a dynamic graph node deletion.
+	/** 
+	 * Contacts can be attached to a deleted node and their deletion is a problem for the pipeline.
+	 * @param c is the list of deleted contacts.
+	 */
+	virtual void removeContacts(const ContactVector &/*c*/);
+
 
 protected:
 

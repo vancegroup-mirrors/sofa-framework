@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,6 +34,8 @@
 #include <sofa/component/topology/RegularGridTopology.h>
 
 #include <sofa/helper/io/Mesh.h>
+#include <sofa/component/container/VoxelGridLoader.h>
+
 namespace sofa
 {
 
@@ -50,7 +52,7 @@ namespace sofa
 			  Valid cells are tagged by a Type BOUNDARY or INSIDE
 			WARNING: the corresponding node in the XML file has to be placed BEFORE the MechanicalObject node, in order to excute its init() before the MechanicalObject one in order to be able to give dofs
 			   */
-			class SparseGridTopology : public MeshTopology
+			class SOFA_COMPONENT_CONTAINER_API SparseGridTopology : public MeshTopology
 			{
 				public:
 					
@@ -69,9 +71,9 @@ namespace sofa
 					
 					bool load(const char* filename);
 					virtual void init();
-					void buildAsFinest(); ///< building from a mesh file
-					void buildFromFiner(); ///< building by condensating a finer sparse grid (used if setFinerSparseGrid has initializated _finerSparseGrid before calling init() )
-					void buildVirtualFinerLevels(); ///< building eventual virtual finer levels (cf _nbVirtualFinerLevels)
+					virtual void buildAsFinest(); ///< building from a mesh file
+					virtual void buildFromFiner(); ///< building by condensating a finer sparse grid (used if setFinerSparseGrid has initializated _finerSparseGrid before calling init() )
+					virtual void buildVirtualFinerLevels(); ///< building eventual virtual finer levels (cf _nbVirtualFinerLevels)
 					
 					typedef std::map<Vector3,int> MapBetweenCornerPositionAndIndice;///< a vertex indice for a given vertex position in space
 					
@@ -123,7 +125,7 @@ namespace sofa
 					void setZmin(SReal val) { _min.setValue(Vector3(_min.getValue()[0],_min.getValue()[1],val)             ); }
 
 					
-					void setMax(Vector3 val) {_min.setValue(val);}
+					void setMax(Vector3 val) {_max.setValue(val);}
 					
 					void setXmax(SReal val) { _max.setValue(Vector3(val             ,_max.getValue()[1],_max.getValue()[2])); }
 					void setYmax(SReal val) { _max.setValue(Vector3(_max.getValue()[0],val             ,_max.getValue()[2])); }
@@ -156,6 +158,11 @@ namespace sofa
 					/// return the type of the i-th cube 
 					virtual Type getType( int i );
 					
+					/// return the stiffness coefficient of the i-th cube
+					virtual float getStiffnessCoef(int elementIdx);
+					/// return the mass coefficient of the i-th cube
+					virtual float getMassCoef(int elementIdx);
+					
 					SparseGridTopology* getFinerSparseGrid() const {return _finerSparseGrid;}
 					void setFinerSparseGrid( SparseGridTopology* fsp ){_finerSparseGrid=fsp;}
 					SparseGridTopology* getCoarserSparseGrid() const {return _coarserSparseGrid;}
@@ -167,7 +174,7 @@ namespace sofa
 					vector< int > _indicesOfRegularCubeInSparseGrid; ///< to redirect an indice of a cube in the regular grid to its indice in the sparse grid
 					vector< int > _indicesOfCubeinRegularGrid; ///< to redirect an indice of a cube in the sparse grid to its indice in the regular grid
 					
-					Vector3 getPointPos( int i ){ return Vector3( seqPoints[i][0],seqPoints[i][1],seqPoints[i][2] ); }
+					Vector3 getPointPos( int i ){ return Vector3( seqPoints.getValue()[i][0],seqPoints.getValue()[i][1],seqPoints.getValue()[i][2] ); }
 					
 					void getMesh( sofa::helper::io::Mesh &m);
 					
@@ -182,12 +189,13 @@ namespace sofa
 					   
 					bool getVoxel(unsigned int index) const
 					{
-					  const int i = index%8;
-					  unsigned char c = dataVoxels.getValue()[index>>3];
-					  return ((c&((int)(pow(2.0f, i)))) >> i) == 1;
+					  return dataVoxels.getValue()[index]==1;
 					}; 
 					
-					
+
+					Data< vector< unsigned char > >     dataVoxels;	
+					Data<bool> _fillWeighted; // is quantity of matter inside a cell taken into account?
+
 				protected:
 					bool isVirtual;
 					/// cutting number in all directions
@@ -201,15 +209,18 @@ namespace sofa
 					Data< unsigned int >    marchingCubeStep;
 					Data< unsigned int >    convolutionSize;
 					
+					
 					virtual void updateEdges();
 					virtual void updateQuads();
 					virtual void updateHexas();
 					
 					MarchingCubeUtility                 marchingCubes;
-					Data< vector< unsigned char > >     dataVoxels;	
 					bool                                _usingMC;
 				
 					sofa::helper::vector<Type> _types; ///< BOUNDARY or FULL filled cells
+					
+					helper::vector< float > _stiffnessCoefs; ///< a stiffness coefficient per hexa (BOUNDARY=.5, FULL=1)
+					helper::vector< float > _massCoefs; ///< a stiffness coefficient per hexa (BOUNDARY=.5, FULL=1)
 					
 					/// start from a seed cell (i,j,k) the OUTSIDE filling is propagated to neighboor cells until meet a BOUNDARY cell (this function is called from all border cells of the RegularGrid)
 					void propagateFrom( const int i, const int j, const int k,  
@@ -242,10 +253,11 @@ namespace sofa
 					*/
 					void buildFromVoxelFile(const std::string& filename);
 					void buildFromRawVoxelFile(const std::string& filename);
+					void buildFromVoxelGridLoader(VoxelGridLoader * loader);
 					
 					template< class T>
 					void constructCollisionModels(const sofa::helper::vector< sofa::core::componentmodel::topology::BaseMeshTopology * > &list_mesh,
-								      const sofa::helper::vector< sofa::helper::vector< Vec<3,T> >* >            &list_X) const;
+								      const sofa::helper::vector< sofa::helper::vector< Vec<3,T> >* >            &list_X) ;
 					
 					SparseGridTopology* _finerSparseGrid; ///< an eventual finer sparse grid that can be used to built this coarser sparse grid
 					SparseGridTopology* _coarserSparseGrid; ///< an eventual coarser sparse grid
@@ -253,13 +265,11 @@ namespace sofa
 					void setVoxel(int index, unsigned char value){
 					  if (value)
 					  {
-					    (*dataVoxels.beginEdit())[index>>3] |= (int) pow(2.0f, (int)(index%8));
+              (*dataVoxels.beginEdit())[index] = 1;
 					  }
 					  else
 					  {
-					    const int i = index%8;
-					    const int mask = (int) pow(2.0f, i);
-					    if (((*dataVoxels.beginEdit())[index>>3]&mask)>>i) (*dataVoxels.beginEdit())[index>>3] -= mask;
+              (*dataVoxels.beginEdit())[index] = 0;
 					  }
 					   };
 					   
@@ -309,7 +319,7 @@ namespace sofa
 					
 				public :
 				  
-#ifdef SOFA_NEW_HEXA	      
+#ifdef SOFA_NEW_HEXA
 					virtual const SeqHexas& getHexas()
 					{
 					  if( !_alreadyInit ) init();
@@ -320,8 +330,8 @@ namespace sofa
 					{
 					  if( !_alreadyInit ) init();
 					  return sofa::component::topology::MeshTopology::getHexas();
-					}	    
-#endif	      
+					}
+#endif
 					virtual int getNbPoints() const
 					{
 					  if( !_alreadyInit ) const_cast<SparseGridTopology*>(this)->init();

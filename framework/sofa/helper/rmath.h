@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,7 +27,7 @@
 #ifndef SOFA_HELPER_RMATH_H
 #define SOFA_HELPER_RMATH_H
 
-#include <sofa/helper/system/config.h>
+#include <sofa/helper/helper.h>
 #include <math.h>
 
 namespace sofa
@@ -170,6 +170,13 @@ inline void shft3(double &a, double &b, double &c, const double d)
     b=c;
     c=d;
 }
+
+template<class T>
+inline const T round(const T& x)
+{
+	return (x<0?ceil(x-0.5):floor(x+0.5));
+}
+
 
 
 //inline void printerror( const char* msg )

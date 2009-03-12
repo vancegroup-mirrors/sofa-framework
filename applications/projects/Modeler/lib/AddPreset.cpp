@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <sofa/gui/qt/FileManagement.h> //static functions to manage opening/ saving of files
 #include <sofa/helper/system/SetDirectory.h>
+#include <sofa/helper/system/FileRepository.h>
 
 #ifdef SOFA_QT4
 #include <Q3FileDialog>   
@@ -67,11 +68,18 @@ namespace sofa
 #endif
 
   
-      AddPreset::AddPreset(  QWidget* parent , const char* name, bool *elementPresent, bool , Qt::WFlags ):	DialogAddPreset(parent, name)
+      AddPreset::AddPreset(  QWidget* parent , const char* name,bool , Qt::WFlags ):	DialogAddPreset(parent, name)
       {
 	this->setCaption(QString(sofa::helper::system::SetDirectory::GetFileName(name).c_str()));
 	clear();
 
+	//Make the connection between this widget and the parent
+	connect( this, SIGNAL(loadPreset(GNode*,std::string,std::string*, std::string*,std::string*,std::string)), 
+		 parent, SLOT(loadPreset(GNode*,std::string,std::string*, std::string*,std::string*,std::string)));
+      }
+
+      void AddPreset::setElementPresent(bool *elementPresent)
+      {
 	if (elementPresent != NULL)
 	  {
 	    if (!elementPresent[0]) 
@@ -111,11 +119,7 @@ namespace sofa
 		openFileButton2->show();
 	      }
 	  }
-	//Make the connection between this widget and the parent
-	connect( this, SIGNAL(loadPreset(GNode*,std::string,std::string*, std::string*,std::string*,std::string)), 
-		 parent, SLOT(loadPreset(GNode*,std::string,std::string*, std::string*,std::string*,std::string)));
       }
-
       //Clear the dialoag
       void AddPreset::clear()
       {
@@ -144,7 +148,12 @@ namespace sofa
 	std::string scale;
 
 	std::string filenames[3];
-	filenames[0] = openFilePath0->text().ascii();
+	//In case of static objects
+	if (openFileText0->isVisible())
+	  filenames[0] = openFilePath0->text().ascii();
+	else
+	  filenames[0]=openFilePath2->text().ascii();
+
 	filenames[1] = openFilePath1->text().ascii();
 	filenames[2] = openFilePath2->text().ascii();
 	
@@ -168,17 +177,33 @@ namespace sofa
       //Open a file Dialog and set the path of the selected path in the text field.
       void AddPreset::fileOpen()
       {
-	QString s  = getOpenFileName(this, QString(fileName.c_str()), "Mesh File (*.msh *.mesh *.obj *.sph *.xs3 *.bvh *.rigid)", "open file dialog",  "Choose a file to open" );
-    
+	QString s  = getOpenFileName(this, QString(fileName.c_str()), "Mesh File (*.msh *.mesh *.obj *.sph *.xs3 *.bvh *.rigid);;All (*)", "open file dialog",  "Choose a file to open" );
+	const std::string SofaPath (sofa::helper::system::DataRepository.getFirstPath().c_str());
+
 	if (s.isNull() ) return;
 	fileName=std::string (s.ascii());
-	
+
+
+	std::string::size_type loc = fileName.find( SofaPath, 0 );
+	if (loc==0) fileName = fileName.substr(SofaPath.size()+1);
+	else
+	  {
+	    loc = fileName.find( relative, 0 );
+	    fileName = fileName.substr(relative.size()+1);
+	  }
+
 	if (sender() == openFileButton0)
-	  openFilePath0->setText(QString(fileName.c_str()));
+	  {
+	    openFilePath0->setText(QString(fileName.c_str()));
+	  }
 	else if (sender() == openFileButton1)
-	  openFilePath1->setText(QString(fileName.c_str()));
+	  {
+	    openFilePath1->setText(QString(fileName.c_str()));
+	  }
 	else if (sender() == openFileButton2)
-	  openFilePath2->setText(QString(fileName.c_str()));
+	  {
+	    openFilePath2->setText(QString(fileName.c_str()));
+	  }
       }
 
     } // namespace qt

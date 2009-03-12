@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -45,7 +45,7 @@ namespace helper
 template <typename TKey, class TObject, typename TArgument>
 TObject* Factory<TKey, TObject, TArgument>::createObject(Key key, Argument arg)
 {
-  
+
 	Object* object;
 	Creator* creator;
 	typename std::multimap<Key, Creator*>::iterator it = registry.lower_bound(key);
@@ -61,8 +61,36 @@ TObject* Factory<TKey, TObject, TArgument>::createObject(Key key, Argument arg)
 		}
 		++it;
 	}
-	std::cerr<<"Object type "<<key<<" creation failed."<<std::endl;
+//	std::cerr<<"Object type "<<key<<" creation failed."<<std::endl;
 	return NULL;
+}
+
+template <typename TKey, class TObject, typename TArgument>
+TObject* Factory<TKey, TObject, TArgument>::createAnyObject(Argument arg)
+{
+	Object* object;
+	Creator* creator;
+	typename std::multimap<Key, Creator*>::iterator it = registry.begin();
+	typename std::multimap<Key, Creator*>::iterator end = registry.end();
+	while (it != end)
+	{
+		creator = (*it).second;
+		object = creator->createInstance(arg);
+		if (object != NULL)
+		{
+			return object;
+		}
+		++it;
+	}
+//	std::cerr<<"Object type "<<key<<" creation failed."<<std::endl;
+	return NULL;
+}
+
+
+template <typename TKey, class TObject, typename TArgument>
+bool Factory<TKey, TObject, TArgument>::hasKey(Key key)
+{
+	return (this->registry.find(key) != this->registry.end());
 }
 
 template <typename TKey, class TObject, typename TArgument>

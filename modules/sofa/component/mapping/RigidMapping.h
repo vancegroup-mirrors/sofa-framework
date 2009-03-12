@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,30 +27,33 @@
 
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/componentmodel/behavior/MappedModel.h>
+#include <sofa/component/component.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <vector>
 
 namespace sofa
 {
 
-	namespace component
-	{
+namespace component
+{
 
-		namespace mapping
-		{
+namespace mapping
+{
 
 /// This class can be overridden if needed for additionnal storage within template specializations.
-			template<class InDataTypes, class OutDataTypes>
-			class RigidMappingInternalData
-			{
-				public:
-			};
+template<class InDataTypes, class OutDataTypes>
+class RigidMappingInternalData
+{
+public:
+};
 
 
-			template <class BasicMapping>
-			class RigidMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
-			{
-				public:
+template <class BasicMapping>
+class RigidMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
+{
+public:
 					typedef BasicMapping Inherit;
 					typedef typename Inherit::In In;
 					typedef typename Inherit::Out Out;
@@ -59,26 +62,29 @@ namespace sofa
 					typedef typename Out::Coord Coord;
 					typedef typename Out::Deriv Deriv;
 					typedef typename In::Deriv InDeriv;
-					typedef typename In::SparseDeriv InSparseDeriv;
+                                        typedef typename std::map<unsigned int, Deriv>::const_iterator OutConstraintIterator;
 					typedef typename Coord::value_type Real;
 					enum { N=Coord::static_size };
 					typedef defaulttype::Mat<N,N,Real> Mat;
-					
+
 					Data< VecCoord > points;
 					VecCoord rotatedPoints;
 					RigidMappingInternalData<typename In::DataTypes, typename Out::DataTypes> data;
 					Data<unsigned int> index;
-					Data< std::string > filename;
+					Data< std::string > fileRigidMapping;
 					Data< bool > useX0;
+					Data< bool > indexFromEnd;
 
 					RigidMapping ( In* from, Out* to )
 							: Inherit ( from, to ),
 							points ( initData ( &points,"initialPoints", "Local Coordinates of the points" ) ),
 							index ( initData ( &index, ( unsigned ) 0,"index","input DOF index" ) ),
-							filename ( initData ( &filename,"filename","Filename" ) ),
+							fileRigidMapping ( initData ( &fileRigidMapping,"fileRigidMapping","Filename" ) ),
 							useX0( initData ( &useX0,false,"useX0","Use x0 instead of local copy of initial positions (to support topo changes)") ),
+							indexFromEnd( initData ( &indexFromEnd,false,"indexFromEnd","input DOF index starts from the end of input DOFs vector") ),
 							repartition ( initData ( &repartition,"repartition","number of dest dofs per entry dof" ) )
 					{
+                                          addAlias(&fileRigidMapping,"filename");
 					}
 
 					virtual ~RigidMapping()
@@ -93,7 +99,6 @@ namespace sofa
 
 					void parse ( core::objectmodel::BaseObjectDescription* arg )
 					{
-						if ( !filename.getValue().empty() ) this->load ( filename.getValue().c_str() );
 						this->Inherit::parse ( arg );
 					}
 
@@ -117,11 +122,57 @@ namespace sofa
 					void load ( const char* filename );
 					Data<sofa::helper::vector<unsigned int> >  repartition;
 					const VecCoord& getPoints();
-			};
+};
 
-		} // namespace mapping
+using core::Mapping;
+using core::componentmodel::behavior::MechanicalMapping;
+using core::componentmodel::behavior::MappedModel;
+using core::componentmodel::behavior::State;
+using core::componentmodel::behavior::MechanicalState;
 
-	} // namespace component
+using sofa::defaulttype::Vec2dTypes;
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec2fTypes;
+using sofa::defaulttype::Vec3fTypes;
+using sofa::defaulttype::ExtVec2fTypes;
+using sofa::defaulttype::ExtVec3fTypes;
+using sofa::defaulttype::Rigid2dTypes;
+using sofa::defaulttype::Rigid3dTypes;
+using sofa::defaulttype::Rigid2fTypes;
+using sofa::defaulttype::Rigid3fTypes;
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_RIGIDMAPPING_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid3dTypes>, MechanicalState<Vec3dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid2dTypes>, MechanicalState<Vec2dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3dTypes>, MappedModel<Vec3dTypes> > >;
+// extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3dTypes>, MappedModel<ExtVec3dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3dTypes>, MappedModel<ExtVec3fTypes> > >;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid3fTypes>, MechanicalState<Vec3fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid2fTypes>, MechanicalState<Vec2fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3fTypes>, MappedModel<Vec3fTypes> > >;
+// extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3fTypes>, MappedModel<ExtVec3dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3fTypes>, MappedModel<ExtVec3fTypes> > >;
+#endif
+
+#ifndef SOFA_FLOAT
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid3dTypes>, MechanicalState<Vec3fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid3fTypes>, MechanicalState<Vec3dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid2dTypes>, MechanicalState<Vec2fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< MechanicalMapping<MechanicalState<Rigid2fTypes>, MechanicalState<Vec2dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3dTypes>, MappedModel<Vec3fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Mapping< State<Rigid3fTypes>, MappedModel<Vec3dTypes> > >;
+#endif
+#endif
+#endif
+
+} // namespace mapping
+
+} // namespace component
 
 } // namespace sofa
 

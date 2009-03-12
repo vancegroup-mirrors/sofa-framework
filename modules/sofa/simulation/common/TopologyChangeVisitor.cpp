@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -44,45 +44,52 @@ using namespace sofa::core;
 
 void TopologyChangeVisitor::processTopologyChange(core::objectmodel::BaseObject* obj)
 {
-	obj->handleTopologyChange();
+    obj->handleTopologyChange(source);
 }
 
 Visitor::Result TopologyChangeVisitor::processNodeTopDown(simulation::Node* node)
 {
-	bool is_TopologicalMapping = false;
+    //if (!root) root = node;
+    bool is_TopologicalMapping = false;
 
-	for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
-	{
-		if (dynamic_cast<sofa::core::componentmodel::topology::TopologicalMapping*>(*it)!= NULL){ // find a TopologicalMapping node among the brothers (it must be the first one written)
+    for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
+    {
+	sofa::core::componentmodel::topology::TopologicalMapping* obj = dynamic_cast<sofa::core::componentmodel::topology::TopologicalMapping*>(*it);
+	if (obj != NULL){ // find a TopologicalMapping node among the brothers (it must be the first one written)
+	    
+	    if(obj->propagateFromInputToOutputModel() && obj->getFrom() == source){ //node != root){ // the propagation of topological changes comes (at least) from a father node, not from a brother
 
-			sofa::core::componentmodel::topology::TopologicalMapping* obj = dynamic_cast<sofa::core::componentmodel::topology::TopologicalMapping*>(*it);
-			
-			if(getNbIter() > 0){ // the propagation of topological changes comes (at least) from a father node, not from a brother
-
-				obj->updateTopologicalMapping(); // update the specific TopologicalMapping
-				is_TopologicalMapping = true;
-			}
-		}
+		obj->updateTopologicalMappingTopDown(); // update the specific TopologicalMapping
+		is_TopologicalMapping = true;
+	    }
 	}
+    }
 
-	if(is_TopologicalMapping){ // find one TopologicalMapping node among the brothers (which must be the first one written in the scene file)
+    if(is_TopologicalMapping){ // find one TopologicalMapping node among the brothers (which must be the first one written in the scene file)
+	//return RESULT_PRUNE; // stop the propagation of topological changes
+    }
 
-		// Increment the number of iterations of the method processNodeTopDown
-		incrNbIter();
-		return RESULT_PRUNE; // stop the propagation of topological changes
-	}
-
-	for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
-	{
-		this->processTopologyChange(*it);
-	}
-
-	// Increment the number of iterations of the method processNodeTopDown
-	incrNbIter();
-	return RESULT_CONTINUE;
+    for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
+    {
+	this->processTopologyChange(*it);
+    }
+    return RESULT_CONTINUE;
 }
 
+void TopologyChangeVisitor::processNodeBottomUp(simulation::Node* node)
+{
+    for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
+    {
+	sofa::core::componentmodel::topology::TopologicalMapping* obj = dynamic_cast<sofa::core::componentmodel::topology::TopologicalMapping*>(*it);
+	if (obj != NULL){ // find a TopologicalMapping node among the brothers (it must be the first one written)
 
+	    if(obj->propagateFromOutputToInputModel() && obj->getTo() == source){ //node == root){
+
+		obj->updateTopologicalMappingBottomUp(); // update the specific TopologicalMapping
+	    }
+	}
+    }
+}
 
 } // namespace simulation
 

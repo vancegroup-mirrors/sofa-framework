@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,6 +37,7 @@
 #define SOFA_SIMULATION_UPDATEMAPPINGENDEVENT_H
 
 #include <sofa/core/objectmodel/Event.h>
+#include <sofa/simulation/common/common.h>
 
 namespace sofa
 {
@@ -48,7 +49,7 @@ namespace simulation
   Event fired by Simulation::animate() after computing a new animation step.
   @author Jeremie Allard
 */
-class UpdateMappingEndEvent : public sofa::core::objectmodel::Event
+class SOFA_SIMULATION_COMMON_API UpdateMappingEndEvent : public sofa::core::objectmodel::Event
 {
 public:
     UpdateMappingEndEvent( double dt );
@@ -56,7 +57,7 @@ public:
     ~UpdateMappingEndEvent();
     
     double getDt() const { return dt; }
-    
+    virtual const char* getClassName() const { return "UpdateMappingEndEvent"; }    
 protected:
     double dt;
 };

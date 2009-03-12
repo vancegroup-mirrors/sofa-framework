@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -27,7 +27,7 @@
 #ifndef SOFA_GUI_VIEWER_MAIN_H
 #define SOFA_GUI_VIEWER_MAIN_H
 
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 
 class QWidget;
 
@@ -46,7 +46,7 @@ int MainLoop(const char* argv0,
 
 bool InsertTab(QWidget* tab, const char* name);
 
-sofa::simulation::tree::GNode* CurrentSimulation();
+sofa::simulation::Node* CurrentSimulation();
 
 void Redraw();
 

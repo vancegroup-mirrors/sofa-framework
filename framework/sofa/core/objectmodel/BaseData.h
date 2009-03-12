@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,7 +33,10 @@
 
 #include <list>
 #include <iostream>
-#include <typeinfo> 
+#include <typeinfo>
+#include <sofa/core/core.h>
+#include <sofa/core/objectmodel/DDGNode.h>
+
 namespace sofa
 {
 
@@ -47,7 +50,7 @@ namespace objectmodel
  *  \brief Abstract base class for all fields, independently of their type.
  *
  */
-class BaseData
+class SOFA_CORE_API BaseData : public DDGNode
 {
 public:
     /** Constructor
@@ -55,17 +58,19 @@ public:
      *  \param h help
      *  \param m true iff the argument is mandatory
      */
-    BaseData( const char* h)
-    : help(h)
-    , m_isSet(false), m_isDisplayed(true)
+    BaseData( const char* h, bool isDisplayed=true, bool isReadOnly=false )
+    : help(h), group(""), widget("")
+    , m_counter(0), m_isDisplayed(isDisplayed), m_isReadOnly(isReadOnly)/*, parent(NULL), writer(NULL)*/
     {}
-    
-    /// Base destructor: does nothing.
-    virtual ~BaseData(){}
+
+    /// Base destructor
+    virtual ~BaseData()
+    {
+    }
 
     /// Read the command line
     virtual bool read( std::string& str ) = 0;
-    
+
     /// Print the value of the associated variable
     virtual void printValue( std::ostream& ) const =0;
 
@@ -75,22 +80,80 @@ public:
     /// Print the value type of the associated variable
     virtual std::string getValueTypeString() const=0;
 
-    /// Help message
-    const char* help;
-    
+    /// Get help message
+    const char* getHelp() const { return help; }
+
+    /// Set help message
+    void setHelp(const char* val) { help = val; }
+
+    /// @deprecated Set help message
+    void setHelpMsg(const char* val) { help = val; }
+
+    /// Get group
+    const char* getGroup() const { return group; }
+
+    /// Set group
+    void setGroup(const char* val) { group = val; }
+
+    /// Get widget
+    const char* getWidget() const { return widget; }
+
+    /// Set widget
+    void setWidget(const char* val) { widget = val; }
+
     /// True if the value has been modified
-    inline bool isSet() const { return m_isSet; }
-    
+    bool isSet() const { return m_counter > 0; }
+
     /// True if the Data has to be displayed in the GUI
-    inline bool isDisplayed() const { return m_isDisplayed; }
-        
+    bool isDisplayed() const { return m_isDisplayed; }
+
+    /// True if the Data will be readable only in the GUI
+    bool isReadOnly() const { return m_isReadOnly; }
+
     /// Can dynamically change the status of a Data, by making it appear or disappear
     void setDisplayed(bool b){m_isDisplayed = b;}
+    /// Can dynamically change the status of a Data, by making it readOnly
+    void setReadOnly(bool b){m_isReadOnly = b;}
+
+    /// Return the number of changes since creation
+    /// This can be used to efficiently detect changes
+    int getCounter() const { return m_counter; }
+
+    /// Set for this Data the value of its parent value
+    virtual bool setParentValue(BaseData* parent) = 0;
+
+    /// Update the value of this Data
+    void update()
+    {
+        dirty = false;
+        for(std::list<DDGNode*>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+        {
+            if ((*it)->isDirty())
+            {
+                (*it)->update();
+            }
+            if (updateFromParentValue(dynamic_cast<BaseData*>(*it)))
+                break;
+        }
+    }
+
 protected:
-    /// True if a value has been read on the command line
-    bool m_isSet;
-    /// True if the Data will be displayed in GUI 
+
+    /// Update this Data from the value of its parent
+    virtual bool updateFromParentValue(BaseData* parent) = 0;
+
+    /// Help message
+    const char* help;
+    /// group
+    const char* group;
+    /// widget
+    const char* widget;
+    /// Number of changes since creation
+    int m_counter;
+    /// True if the Data will be displayed in the GUI
     bool m_isDisplayed;
+    /// True if the Data will be readable only in the GUI
+    bool m_isReadOnly;
 
     /// Helper method to decode the type name to a more readable form if possible
     static std::string decodeTypeName(const std::type_info& t);

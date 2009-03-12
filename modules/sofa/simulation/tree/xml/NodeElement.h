@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -41,7 +41,7 @@ namespace tree
 namespace xml
 {
 
-class NodeElement : public Element<core::objectmodel::BaseNode>
+class SOFA_SIMULATION_TREE_API NodeElement : public Element<core::objectmodel::BaseNode>
 {
 public:
 	NodeElement(const std::string& name, const std::string& type, BaseElement* parent=NULL);

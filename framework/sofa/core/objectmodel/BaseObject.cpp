@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,9 +25,13 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
+#include <sofa/core/componentmodel/topology/Topology.h>
+#include <sofa/helper/TagFactory.h>
 #include <iostream>
+
 using std::cerr;
 using std::endl;
 
@@ -43,14 +47,133 @@ namespace objectmodel
 BaseObject::BaseObject()
         : Base()
         , f_listening(initData( &f_listening, false, "listening", "if true, handle the events, otherwise ignore the events"))
-        , f_printLog(initData( &f_printLog, false, "printLog", "if true, print logs at run-time"))
+        , f_tags(initData( &f_tags, "tags", "list of the subsets the objet belongs to"))
         , context_(NULL)
 /*        , m_isListening(false)
         , m_printLog(false)*/
-{}
+{
+}
 
 BaseObject::~BaseObject()
 {}
+
+void BaseObject::parse( BaseObjectDescription* arg )
+{
+  std::vector< std::string > attributeList;
+  arg->getAttributeList(attributeList);
+  for (unsigned int i=0;i<attributeList.size();++i)
+    {
+        std::vector< BaseData* > dataModif = findGlobalField(attributeList[i]);
+        for (unsigned int d=0;d<dataModif.size();++d)
+        {
+            const char* val = arg->getAttribute(attributeList[i]);
+            if (val)
+            {
+                std::string valueString(val);
+
+                /* test if data is a link */
+                if (valueString[0] == '@')
+                {
+                    std::size_t posPath = valueString.rfind('/');
+                    if (posPath == std::string::npos) posPath = 0;
+                    std::size_t posDot = valueString.rfind('.');
+                    std::string objectName;
+                    std::string dataName;
+
+                    BaseObject* obj = NULL;
+
+                    /* if '.' not found, try to find the data in the current object */
+                    if (posPath == 0 && posDot == std::string::npos)
+                    {
+                        obj = this;
+                        objectName = this->getName();
+                        dataName = valueString;
+                    }
+                    else
+                    {
+                        if (posDot == std::string::npos) // no data specified, look for one with the same name
+                        {
+                            objectName = valueString;
+                            dataName = attributeList[i];
+                        }
+                        else
+                        {
+                            objectName = valueString.substr(1,posDot-1);
+                            dataName = valueString.substr(posDot+1);
+                        }
+
+                        if (objectName[0] == '[')
+                        {
+                            if (objectName[objectName.size()-1] != ']')
+                            {
+                                serr<<"ERROR: Missing ']' in at the end of "<< objectName << sendl;
+                                break;
+                            }
+
+                            objectName = objectName.substr(1, objectName.size()-2);
+
+                            if (objectName.empty())
+                            {
+                                serr<<"ERROR: Missing object level between [] in : " << val << sendl;
+                                break;
+                            }
+
+                            int objectLevel = atoi(objectName.c_str());
+                            helper::vector<BaseObject*> objects;
+                            getContext()->get<BaseObject>(&objects, BaseContext::Local);
+
+                            helper::vector<BaseObject*>::iterator it;
+
+                            for(it = objects.begin(); it != objects.end(); ++it)
+                            {
+                                if ((*it) == this)
+                                {
+                                    it += objectLevel;
+                                    if ((*it) != NULL)
+                                    {
+                                        obj = (*it);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            obj = getContext()->get<BaseObject>(objectName);
+                        }
+
+                        if (obj == NULL)
+                        {
+                            serr<<"could not find object for option "<< attributeList[i] <<": " << objectName << sendl;
+                            break;
+                        }
+                    }
+
+                    BaseData* parentData = obj->findField(dataName);
+
+                    if (parentData == NULL)
+                    {
+                        serr<<"could not read value for option "<< attributeList[i] <<": " << val << sendl;
+                        break;
+                    }
+
+                    /* set parent value to the child */
+                    if (!dataModif[d]->setParentValue(parentData))
+                    {
+                        serr<<"could not copy value from parent Data "<< valueString << ". Incompatible Data types" << sendl;
+                        break;
+                    }
+                    parentData->addOutput(dataModif[d]);
+                    /* children Data can be modified changing the parent Data value */
+                    dataModif[d]->setReadOnly(true);
+                    break;
+                }
+
+                if( !(dataModif[d]->read( valueString ))) serr<<"could not read value for option "<< attributeList[i] <<": " << val << sendl;
+            }
+        }
+    }
+}
 
 void BaseObject::setContext(BaseContext* n)
 {
@@ -70,14 +193,18 @@ BaseContext* BaseObject::getContext()
 }
 
 void BaseObject::init()
-{ }
+{
+}
 
 void BaseObject::bwdInit()
-{ }
+{
+}
 
 /// Update method called when variables used in precomputation are modified.
 void BaseObject::reinit()
-{ std::cout<<"WARNING: for this object, the reinit method does nothing.\n\n";}
+{ 
+    //sout<<"WARNING: the reinit method of the object "<<this->getName()<<" does nothing."<<sendl;
+}
 
 /// Save the initial state for later uses in reset()
 void BaseObject::storeResetState()
@@ -97,13 +224,32 @@ void BaseObject::cleanup()
 { }
 
 /// Handle an event
-void BaseObject::handleEvent( Event* e )
+void BaseObject::handleEvent( Event* /*e*/ )
 {
-    cerr<<"BaseObject "<<getName()<<" ("<<getTypeName()<<") gets an event"<<endl;
+	/*
+    serr<<"BaseObject "<<getName()<<" ("<<getTypeName()<<") gets an event"<<sendl;
     if( KeypressedEvent* ke = dynamic_cast<KeypressedEvent*>( e ) )
     {
-        cerr<<"BaseObject "<<getName()<<" gets a key event: "<<ke->getKey()<<endl;
+        serr<<"BaseObject "<<getName()<<" gets a key event: "<<ke->getKey()<<sendl;
     }
+	*/
+}
+
+/// Handle topological Changes from a given Topology
+void BaseObject::handleTopologyChange(core::componentmodel::topology::Topology* t)
+{
+    if (t == this->getContext()->getTopology())
+    {
+	//	sout << getClassName() << " " << getName() << " processing topology changes from " << t->getName() << sendl;
+		handleTopologyChange();
+    }
+}
+
+/// Handle state Changes from a given Topology
+void BaseObject::handleStateChange(core::componentmodel::topology::Topology* t)
+{
+    if (t == this->getContext()->getTopology())
+	handleStateChange();
 }
 
 // void BaseObject::setListening( bool b )
@@ -132,6 +278,23 @@ double BaseObject::getTime() const
     return getContext()->getTime();
 }
 
+bool BaseObject::hasTag(Tag t) const
+{
+    return (f_tags.getValue().count( t ) > 0 );
+}
+
+
+void BaseObject::addTag(Tag t)
+{
+    f_tags.beginEdit()->insert(t);
+    f_tags.endEdit();
+}
+
+void BaseObject::removeTag(Tag t)
+{
+    f_tags.beginEdit()->erase(t);
+    f_tags.endEdit();
+}
 
 } // namespace objectmodel
 

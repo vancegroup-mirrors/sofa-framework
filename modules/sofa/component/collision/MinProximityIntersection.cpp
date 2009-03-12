@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 #include <sofa/helper/system/config.h>
 #include <sofa/component/collision/MinProximityIntersection.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/component/collision/proximity.h>
+#include <sofa/helper/proximity.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
@@ -716,7 +716,7 @@ bool MinProximityIntersection::testIntersection(Ray &t1,Triangle &t2)
 
 	if (PQ.norm2() < alarmDist*alarmDist)
 	{
-		//std::cout<<"Collision between Line - Triangle"<<std::endl;
+		//sout<<"Collision between Line - Triangle"<<sendl;
 		return true;
 	}
 	else

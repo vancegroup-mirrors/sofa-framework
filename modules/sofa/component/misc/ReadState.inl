@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -44,6 +44,7 @@ ReadState::ReadState()
 : f_filename( initData(&f_filename, "filename", "output file name"))
 , f_interval( initData(&f_interval, 0.0, "interval", "time duration between inputs"))
 , f_shift( initData(&f_shift, 0.0, "shift", "shift between times in the file and times when they will be read"))
+, f_loop( initData(&f_loop, false, "loop", "set to 'true' to re-read the file when reaching the end"))
 , mmodel(NULL)
 , infile(NULL)
 , nextTime(0)
@@ -74,7 +75,7 @@ void ReadState::reset()
         infile = new std::ifstream(filename.c_str());
         if( !infile->is_open() )
         {
-            std::cerr << "Error opening file "<<filename<<std::endl;
+            serr << "Error opening file "<<filename<<sendl;
             delete infile;
             infile = NULL;
         }
@@ -90,25 +91,27 @@ void ReadState::handleEvent(sofa::core::objectmodel::Event* event)
     }
     if (/* simulation::AnimateEndEvent* ev = */ dynamic_cast<simulation::AnimateEndEvent*>(event))
     {
+	
     }
 }
 
 
 
-    void ReadState::setTime(double time)
+void ReadState::setTime(double time)
 {
  if (time < nextTime) {reset(); nextTime=0.0;}
 }
 
-    void ReadState::processReadState(double time)
+void ReadState::processReadState(double time)
 {
  if (time == lastTime) return;
  setTime(time);
  processReadState(); 
 }
 
-    void ReadState::processReadState()
+void ReadState::processReadState()
 {
+	static double totalTime = 0.0;
   bool updated = false;
   
   if (infile && mmodel)
@@ -120,38 +123,48 @@ void ReadState::handleEvent(sofa::core::objectmodel::Event* event)
     while (nextTime <= time && !infile->eof())
     {
       getline(*infile, line);
-                //std::cout << "line= "<<line<<std::endl;
+			//sout << "line= "<<line<<sendl;
       std::istringstream str(line);
       str >> cmd;
       if (cmd == "T=")
       {
         str >> nextTime;
-	if (nextTime <= time) validLines.clear();
+				nextTime += totalTime;
+				if (nextTime <= time) 
+					validLines.clear();
       }
 
-      if (nextTime <= time) validLines.push_back(line);
-    }
-
+      if (nextTime <= time) 
+				validLines.push_back(line);
+		}
+		
     for (std::vector<std::string>::iterator it=validLines.begin();it!=validLines.end();++it)
     {
-    std::istringstream str(*it);
-    cmd.clear();
-    str >> cmd;
-    if (cmd == "X=")
-    {
-	mmodel->readX(str);
+			std::istringstream str(*it);
+			cmd.clear();
+			str >> cmd;
+			if (cmd == "X=")
+			{
+				mmodel->readX(str);
         updated = true;
-    }
-    else if (cmd == "V=")
-    {
-	mmodel->readV(str);
+			}
+			else if (cmd == "V=")
+			{
+				mmodel->readV(str);
         updated = true;
-    }
+			}
     }
   }
-  if (updated)
-  {
-            //std::cout<<"update from file"<<std::endl;
+	
+	if (f_loop.getValue() && infile->eof()) 
+	{
+		infile->clear();
+		infile->seekg(0);
+    totalTime = nextTime;
+	}
+
+  if (updated) {
+		//sout<<"update from file"<<sendl;
     sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor action1;
     this->getContext()->executeVisitor(&action1);
     sofa::simulation::UpdateMappingVisitor action2;

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -63,7 +63,7 @@ namespace behavior
  *  (some computations can be executed in parallel).
  *
  */
-class OdeSolver : public virtual objectmodel::BaseObject
+class SOFA_CORE_API OdeSolver : public virtual objectmodel::BaseObject
 {
 public:
     typedef BaseMechanicalState::VecId VecId;
@@ -75,8 +75,21 @@ public:
     /// Main computation method.
     ///
     /// Specify and execute all computation for timestep integration, i.e.
+    /// advancing the state from time t to t+dt, putting the resulting position and velocity in the provided vectors.
+    virtual void solve(double /*dt*/, BaseMechanicalState::VecId /*xResult*/, BaseMechanicalState::VecId /*vResult*/) { serr << "ERROR: " << getClassName() << " don't implement solve on custom x and v" << sendl; }
+
+    /// Main computation method.
+    ///
+    /// Specify and execute all computation for timestep integration, i.e.
     /// advancing the state from time t to t+dt.
-    virtual void solve (double dt) = 0;
+    virtual void solve (double dt) { solve(dt, BaseMechanicalState::VecId::position(), BaseMechanicalState::VecId::velocity()); }
+
+
+    /** Find all the LMConstraint present in the scene graph and solve a part of them
+     * @param Id nature of the constraint to be solved
+     * @param propagateVelocityToPosition need to update the position once the velocity has been constrained
+     **/
+    virtual void solveConstraint(BaseMechanicalState::VecId, bool /* propagateVelocityToConstraint */ ){};
 
     /// Propagate the given state (time, position and velocity) through all mappings
     ///
@@ -86,7 +99,7 @@ public:
 	/// Given an input derivative order (0 for position, 1 for velocity, 2 for acceleration),
 	/// how much will it affect the output derivative of the given order.
     ///
-    /// This method is used to compute the compliance for contact corrections.
+    /// This method is used to compute the constraint corrections and adapt the resolution if using baumgart type scheme
 	/// For example, a backward-Euler dynamic implicit integrator would use:
 	/// Input:      x_t  v_t  a_{t+dt}
 	/// x_{t+dt}     1    dt  dt^2
@@ -106,21 +119,38 @@ public:
 	virtual double getSolutionIntegrationFactor(int outputDerivative) const = 0;
 
 
-    /// Given the solution dx of the linear system inversion, how much will it affect the velocity
-    ///
-    /// This method is used to compute the compliance for contact corrections
-    virtual double getVelocityIntegrationFactor() const
-    {
-        return getSolutionIntegrationFactor(1);
-    }
+	/// Given the solution dx of the linear system inversion, how much will it affect the velocity
+	///
+	/// This method is used to compute the compliance for contact corrections
+	virtual double getVelocityIntegrationFactor() const
+	{
+	  return getSolutionIntegrationFactor(1);
+	}
 
-    /// Given the solution dx of the linear system inversion, how much will it affect the position
-    ///
-    /// This method is used to compute the compliance for contact corrections
+	/// Given the solution dx of the linear system inversion, how much will it affect the position
+	///
+	/// This method is used to compute the compliance for contact corrections
 	virtual double getPositionIntegrationFactor() const
-    {
-        return getSolutionIntegrationFactor(0);
-    }
+	{
+	  return getSolutionIntegrationFactor(0);
+	}
+
+	//Constraint resolution using Lapack
+#ifdef SOFA_HAVE_LAPACK
+
+	Data<bool> constraintAcc;
+	Data<bool> constraintVel;
+	Data<bool> constraintPos;
+
+	Data<bool> constraintResolution;
+	Data<unsigned int> numIterations;
+	Data<double> maxError;
+	void reinit()
+	{
+	  numIterations.setDisplayed(constraintResolution.getValue());
+	  maxError.setDisplayed(constraintResolution.getValue());
+	}
+#endif
 
 };
 

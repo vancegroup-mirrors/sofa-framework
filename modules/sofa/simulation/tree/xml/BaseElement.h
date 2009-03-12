@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,11 +25,11 @@
 #ifndef SOFA_SIMULATION_TREE_XML_BASEELEMENT_H
 #define SOFA_SIMULATION_TREE_XML_BASEELEMENT_H
 
-
 #include <sofa/helper/Factory.h>
 #include <sofa/core/objectmodel/Base.h>
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/objectmodel/BaseObjectDescription.h>
+#include <sofa/simulation/tree/tree.h>
 #include <string>
 #include <list>
 #include <map>
@@ -46,49 +46,52 @@ namespace tree
 namespace xml
 {
 
-class BaseElement : public core::objectmodel::BaseObjectDescription
+class SOFA_SIMULATION_TREE_API BaseElement : public core::objectmodel::BaseObjectDescription
 {
 private:
 	//std::string name;
 	//std::string type;
-	
+
         std::string basefile;
 	BaseElement* parent;
 	typedef std::list<BaseElement*> ChildList;
 	ChildList children;
         bool groupType;       //type of Node Element: only its objects have to be taken into account
+  protected:
+        std::map< std::string, std::string > replaceAttribute;
 public:
 	BaseElement(const std::string& name, const std::string& type, BaseElement* newParent=NULL);
-		
+
 	virtual ~BaseElement();
-	
+
 	/// Get the node class (Scene, Mapping, ...)
 	virtual const char* getClass() const = 0;
-	
+
 	/// Get the associated object
-	//virtual core::objectmodel::Base* getBaseObject() = 0;
-	
+	virtual core::objectmodel::Base* getObject() = 0;
+
 	/// Get the node instance name
 	std::string getName()
 	{ return attributes["name"]; }
-	
+
 	virtual void setName(const std::string& newName)
 	{ attributes["name"] = newName; }
-	
+
 	/// Get the node instance type (MassObject, IdentityMapping, ...)
 	std::string getType()
 	{ return attributes["type"]; }
-	
+
 	virtual void setType(const std::string& newType)
 	{ attributes["type"] = newType; }
-	
+
 	/// Get the parent node
 	sofa::core::objectmodel::BaseObjectDescription* getParent() const
 	{ return parent; }
-	
+
 	/// Get the parent node
 	BaseElement* getParentElement() const
 	{ return parent; }
+
 
     /// Get the file where this description was read from. Useful to resolve relative file paths.
     std::string getBaseFile();
@@ -97,34 +100,36 @@ public:
 
     /// Return true if this element was the root of the file
     bool isFileRoot();
-    
+
     /// Return true if this element was a special group node from an included file
     bool isGroupType(){return groupType;}
-    
+
     /// Specify that the current element if a special group node from an included file
     void setGroupType(bool b){groupType=b;}
 
 	///// Get all attribute data, read-only
 	//const std::map<std::string,std::string*>& getAttributeMap() const;
-	
+
 	///// Get all attribute data
 	//std::map<std::string,std::string*>& getAttributeMap();
-	
+
 	///// Get an attribute given its name (return defaultVal if not present)
 	//const char* getAttribute(const std::string& attr, const char* defaultVal=NULL);
-	
+
 	/// Set an attribute. Override any existing value
 	virtual void setAttribute(const std::string& attr, const char* val);
-	
+
         /// Verify the presence of an attribute
         virtual bool presenceAttribute(const std::string& s);
-            
+
 	/// Remove an attribute. Fails if this attribute is "name" or "type"
 	virtual bool removeAttribute(const std::string& attr);
-	
+
+        /// List of parameters to be replaced
+        virtual void addReplaceAttribute(const std::string &attr, const char* val);
 	/// Find a node given its name
 	virtual BaseElement* findNode(const char* nodeName, bool absolute=false);
-    
+
     /// Find a node given its name
     virtual BaseObjectDescription* find(const char* nodeName, bool absolute=false)
     {
@@ -137,11 +142,11 @@ public:
 	{
 		typename Sequence::value_type obj = dynamic_cast<typename Sequence::value_type>(getObject());
 		if (obj!=NULL) result.push_back(obj);
-		
+
 		for (child_iterator<> it = begin(); it != end(); ++it)
 			it->pushObjects<Sequence>(result);
 	}
-	
+
 	/// Get all objects of a given type
 	template<class Map>
 	void pushNamedObjects(Map& result)
@@ -150,25 +155,25 @@ public:
 		typedef typename V::second_type OPtr;
 		OPtr obj = dynamic_cast<OPtr>(getObject());
 		if (obj!=NULL) result.insert(std::make_pair(getFullName(),obj));
-		
+
 		for (child_iterator<> it = begin(); it != end(); ++it)
 			it->pushNamedObjects<Map>(result);
 	}
-	
+
 protected:
 	/// Change this node's parent. Note that this method is protected as it should be called by the parent's addChild/removeChild methods
 	virtual bool setParent(BaseElement* newParent)
 	{ parent = newParent; return true; }
-	
+
 public:
 	virtual bool addChild(BaseElement* child);
-	
+
 	virtual bool removeChild(BaseElement* child);
-	
+
 	virtual bool initNode() = 0;
-	
+
 	virtual bool init();
-	
+
 	template<class Node=BaseElement>
 	class child_iterator
 	{
@@ -201,31 +206,31 @@ public:
 		}
 		friend class BaseElement;
 	};
-	
+
 	template<class Node>
 	child_iterator<Node> begin()
 	{
 		return child_iterator<Node>(this, children.begin());
 	}
-	
+
 	child_iterator<BaseElement> begin()
 	{
 		return begin<BaseElement>();
 	}
-	
+
 	template<class Node>
 			child_iterator<Node> end()
 	{
 		return child_iterator<Node>(this, children.end());
 	}
-	
+
 	child_iterator<BaseElement> end()
 	{
 		return end<BaseElement>();
 	}
-	
+
 	typedef helper::Factory< std::string, BaseElement, std::pair<std::string, std::string> > NodeFactory;
-	
+
 	static BaseElement* Create(const std::string& nodeClass, const std::string& name, const std::string& type);
 
     template<class Node>
@@ -233,7 +238,7 @@ public:
     {
         obj = new Node(arg.first,arg.second);
     }
-	
+
 };
 
 } // namespace xml

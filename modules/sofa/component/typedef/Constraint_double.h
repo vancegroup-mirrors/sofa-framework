@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,7 +32,6 @@
 
 //Typedef to easily use constraints with double type 
 #include <sofa/component/constraint/AttachConstraint.h>
-#include <sofa/component/constraint/BoxConstraint.h>
 #include <sofa/component/constraint/FixedConstraint.h>
 #include <sofa/component/constraint/FixedPlaneConstraint.h>
 #include <sofa/component/constraint/LinearMovementConstraint.h>
@@ -50,11 +49,6 @@ typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::Vec3dTy
 //Rigid
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::Rigid2dTypes> AttachConstraintRigid2d;
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::Rigid3dTypes> AttachConstraintRigid3d;
-
-//Box Constraint
-//---------------------
-//Deformable
-typedef sofa::component::constraint::BoxConstraint<sofa::defaulttype::Vec3dTypes> BoxConstraint3d;
 
 //Fixed Constraint
 //---------------------
@@ -108,7 +102,6 @@ typedef AttachConstraint2d			    AttachConstraint2;
 typedef AttachConstraint3d			    AttachConstraint3;				 
 typedef AttachConstraintRigid2d		            AttachConstraintRigid2;				 
 typedef AttachConstraintRigid3d		            AttachConstraintRigid3;				 
-typedef BoxConstraint3d			            BoxConstraint3;					 
 typedef FixedConstraint1d			    FixedConstraint1;				 
 typedef FixedConstraint2d			    FixedConstraint2;				 
 typedef FixedConstraint3d			    FixedConstraint3;				 

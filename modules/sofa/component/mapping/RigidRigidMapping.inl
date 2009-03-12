@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,9 +37,9 @@
 #include <sofa/helper/gl/Axis.h>
 #include <string.h>
 #include <iostream>
-        
-using std::cerr;
-using std::endl;
+
+
+
 
 
 
@@ -78,7 +78,7 @@ template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::load(const char *filename)
 {
     points.beginEdit()->resize(0);
-    
+
     if (strlen(filename)>4 && !strcmp(filename+strlen(filename)-4,".xs3"))
     {
         Loader loader(this);
@@ -108,6 +108,10 @@ void RigidRigidMapping<BasicMapping>::load(const char *filename)
 template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::init()
 {
+
+      if (!fileRigidRigidMapping.getValue().empty())
+        this->load(fileRigidRigidMapping.getValue().c_str());
+
 	if (this->points.getValue().empty() && this->toModel!=NULL)
 	{
 		VecCoord& x = *this->toModel->getX();
@@ -174,10 +178,21 @@ void RigidRigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const 
 	switch (repartition.getValue().size())
 	{
 	case 0 : //no value specified : simple rigid mapping
-		in[index.getValue()].writeRotationMatrix(rotation);
-		for(unsigned int i=0;i<points.getValue().size();i++){
-			pointsR0[i].getCenter() = rotation*(points.getValue()[i]).getCenter();
-			out[i] = in[index.getValue()].mult(points.getValue()[i]);
+		if (!indexFromEnd.getValue())
+		{
+			in[index.getValue()].writeRotationMatrix(rotation);
+			for(unsigned int i=0;i<points.getValue().size();i++){
+				pointsR0[i].getCenter() = rotation*(points.getValue()[i]).getCenter();
+				out[i] = in[index.getValue()].mult(points.getValue()[i]);
+			}
+		}
+		else
+		{
+			in[in.size() - 1 - index.getValue()].writeRotationMatrix(rotation);
+			for(unsigned int i=0;i<points.getValue().size();i++){
+				pointsR0[i].getCenter() = rotation*(points.getValue()[i]).getCenter();
+				out[i] = in[in.size() - 1 - index.getValue()].mult(points.getValue()[i]);
+			}
 		}
 		break;
 
@@ -197,7 +212,7 @@ void RigidRigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const 
 
 	default: //n values are specified : heterogen repartition.getValue() mapping on the input dofs
 		if (repartition.getValue().size() != in.size()){
-			std::cerr<<"Error : mapping dofs repartition.getValue() is not correct"<<std::endl;
+			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
 			return;
 		}
 		cptOut=0;
@@ -225,11 +240,25 @@ void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childForce
 	switch (repartition.getValue().size())
 	{
 	case 0:
-		v = parentForces[index.getValue()].getVCenter();
-		omega = parentForces[index.getValue()].getVOrientation();
-		for(unsigned int i=0;i<points.getValue().size();i++){
-			childForces[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
-			childForces[i].getVOrientation() = omega;
+		if (!indexFromEnd.getValue())
+		{
+			v = parentForces[index.getValue()].getVCenter();
+			omega = parentForces[index.getValue()].getVOrientation();
+			for(unsigned int i=0;i<points.getValue().size();i++){
+				childForces[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
+				childForces[i].getVOrientation() = omega;
+			}
+		}
+		else
+		{
+			v = parentForces[parentForces.size() - 1 - index.getValue()].getVCenter();
+			omega = parentForces[parentForces.size() - 1 - index.getValue()].getVOrientation();
+
+			for(unsigned int i = 0; i < points.getValue().size(); i++)
+			{
+				childForces[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
+				childForces[i].getVOrientation() = omega;
+			}
 		}
 		break;
 
@@ -250,7 +279,7 @@ void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childForce
 
 	default:
 		if (repartition.getValue().size() != parentForces.size()){
-			std::cerr<<"Error : mapping dofs repartition.getValue() is not correct"<<std::endl;
+			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
 			return;
 		}
 		cptchildForces=0;
@@ -266,7 +295,7 @@ void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childForce
 		}
 		break;
 	}
-		
+
 }
 
 
@@ -284,13 +313,23 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 			// Jt = [ I     ]
 			//      [ -OM^t ]
 			// -OM^t = OM^
-			
+
 			Vector f = childForces[i].getVCenter();
 			v += f;
 			omega += childForces[i].getVOrientation() + cross(f,-pointsR0[i].getCenter());
 		}
-		parentForces[index.getValue()].getVCenter() += v;
-		parentForces[index.getValue()].getVOrientation() += omega;
+
+		if (!indexFromEnd.getValue())
+		{
+			parentForces[index.getValue()].getVCenter() += v;
+			parentForces[index.getValue()].getVOrientation() += omega;
+		}
+		else
+		{
+			parentForces[parentForces.size() - 1 - index.getValue()].getVCenter() += v;
+			parentForces[parentForces.size() - 1 - index.getValue()].getVOrientation() += omega;
+		}
+
 		break;
 	case 1 :
 		val = repartition.getValue()[0];
@@ -310,7 +349,7 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 		break;
 	default :
 		if (repartition.getValue().size() != parentForces.size()){
-			std::cerr<<"Error : mapping dofs repartition.getValue() is not correct"<<std::endl;
+			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
 			return;
 		}
 		cpt=0;
@@ -331,7 +370,74 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 	}
 
 }
+template <class BasicMapping>
+void RigidRigidMapping<BasicMapping>::computeAccFromMapping(  typename Out::VecDeriv& acc_out, const typename In::VecDeriv& v_in, const typename In::VecDeriv& acc_in)
+{
+	acc_out.clear();
+	acc_out.resize(points.getValue().size());
 
+
+	// current acceleration on acc_in is applied on the child (when more than one mapping)
+	applyJ(acc_out,acc_in);
+
+	// computation of the acceleration due to the current velocity
+	// a+= w^(w^OM)
+
+	Vector omega;
+	unsigned int cptchildV;
+	unsigned int val;
+
+	switch (repartition.getValue().size())
+	{
+	case 0:
+
+		if (!indexFromEnd.getValue())
+		{
+			omega = v_in[index.getValue()].getVOrientation();
+		}
+		else
+		{
+			omega = v_in[v_in.size() - 1 - index.getValue()].getVOrientation();
+		}
+
+		for(unsigned int i=0;i<points.getValue().size();i++){
+			acc_out[i].getVCenter() +=   cross(omega, cross(omega,pointsR0[i].getCenter()) );
+		}
+		break;
+
+	case 1:
+		val = repartition.getValue()[0];
+		cptchildV=0;
+		for (unsigned int ifrom=0 ; ifrom<v_in.size() ; ifrom++){
+			omega = v_in[ifrom].getVOrientation();
+
+			for(unsigned int ito=0; ito<val; ito++){
+				acc_out[cptchildV].getVCenter() +=  cross(omega, cross(omega,(pointsR0[cptchildV]).getCenter()) );
+				cptchildV++;
+			}
+		}
+		break;
+
+	default:
+		if (repartition.getValue().size() != v_in.size()){
+			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+			return;
+		}
+		cptchildV=0;
+		for (unsigned int ifrom=0 ; ifrom<v_in.size() ; ifrom++){
+			omega = v_in[ifrom].getVOrientation();
+
+			for(unsigned int ito=0; ito<repartition.getValue()[ifrom]; ito++){
+				acc_out[cptchildV].getVCenter() += cross(omega, cross(omega,(pointsR0[cptchildV]).getCenter()) );
+				cptchildV++;
+			}
+		}
+		break;
+	}
+
+
+
+}
 
 template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::draw()

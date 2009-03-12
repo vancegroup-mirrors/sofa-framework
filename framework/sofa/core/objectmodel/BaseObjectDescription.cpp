@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -124,19 +124,19 @@ Base* BaseObjectDescription::findObject(const char* nodeName)
     BaseObjectDescription* node = find(nodeName);
     if (node!=NULL)
     {
-        //std::cout << "Found node "<<nodeName<<": "<<node->getName()<<std::endl;
+        //sout << "Found node "<<nodeName<<": "<<node->getName()<<sendl;
         Base* obj = node->getObject();
         BaseContext* ctx = dynamic_cast<BaseContext*>(obj);
         if (ctx != NULL)
         {
-            //std::cout << "Node "<<nodeName<<" is a context, returning MechanicalState."<<std::endl;
+            //sout << "Node "<<nodeName<<" is a context, returning MechanicalState."<<sendl;
             obj = ctx->getMechanicalState();
         }
         return obj;
     }
     else
     {
-        std::cout << "Node "<<nodeName<<" NOT FOUND."<<std::endl;
+      std::cerr << "Node "<<nodeName<<" NOT FOUND."<<std::endl;
         return NULL;
     }
 }

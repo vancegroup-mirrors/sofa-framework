@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,6 +32,7 @@
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
 #include <sofa/simulation/common/Visitor.h>
+#include <sofa/component/component.h>
 
 #include <fstream>
 
@@ -46,13 +47,14 @@ namespace misc
 
 /** Read State vectors from file at each timestep
 */
-class ReadState: public core::objectmodel::BaseObject
+class SOFA_COMPONENT_MISC_API ReadState: public core::objectmodel::BaseObject
 {
 public:
 
     Data < std::string > f_filename;
     Data < double > f_interval;
     Data < double > f_shift;
+		Data < bool > f_loop;
 
 protected:
     core::componentmodel::behavior::BaseMechanicalState* mmodel;
@@ -67,11 +69,11 @@ public:
     virtual void init();
 
     virtual void reset();
-    
+
     void setTime(double time);
-   
+
     virtual void handleEvent(sofa::core::objectmodel::Event* event);
-    
+
     void processReadState();
     void processReadState(double time);
 
@@ -84,55 +86,55 @@ public:
             return false;
         return BaseObject::canCreate(obj, context, arg);
     }
-    
+
 
 };
 
 
 ///Create ReadState component in the graph each time needed
-class ReadStateCreator: public Visitor
+class SOFA_COMPONENT_MISC_API ReadStateCreator: public Visitor
 {
 public:
-    ReadStateCreator():sceneName(""), counterReadState(0), createInMapping(false) {}
-    ReadStateCreator(std::string &n, bool i=true, int c=0 ) { sceneName=n;init=i; counterReadState=c; }
+    ReadStateCreator():sceneName(""), createInMapping(false), counterReadState(0) {}
+    ReadStateCreator(std::string &n, bool _createInMapping, bool i=true, int c=0 ): sceneName(n), createInMapping(_createInMapping), init(i) , counterReadState(c) {}
     virtual Result processNodeTopDown( simulation::Node*  );
-    
+
     void setSceneName(std::string &n){ sceneName = n;}
     void setCounter(int c){counterReadState = c;};
     void setCreateInMapping(bool b){createInMapping=b;}
-protected:    
+protected:
     void addReadState(sofa::core::componentmodel::behavior::BaseMechanicalState *ms, simulation::Node* gnode);
-    bool init;
     std::string sceneName;
-    int counterReadState; //avoid to have two same files if two mechanical objects has the same name
     bool createInMapping;
+    bool init;
+    int counterReadState; //avoid to have two same files if two mechanical objects has the same name
 };
 
-class ReadStateActivator: public Visitor
+class SOFA_COMPONENT_MISC_API ReadStateActivator: public Visitor
 {
 public:
     ReadStateActivator( bool active):state(active) {}
     virtual Result processNodeTopDown( simulation::Node*  );
-    
+
     bool getState() const{return state;};
     void setState(bool active){state=active;};
-protected:    
+protected:
     void changeStateReader(sofa::component::misc::ReadState *ws);
-    
+
     bool state;
 };
 
-class ReadStateModifier: public simulation::Visitor
+class SOFA_COMPONENT_MISC_API ReadStateModifier: public simulation::Visitor
 {
 public:
     ReadStateModifier( double _time):time(_time) {}
     virtual Result processNodeTopDown( simulation::Node*  );
-    
+
     double getTime() const { return time; }
     void setTime(double _time) { time=_time; }
 protected:
     void changeTimeReader(sofa::component::misc::ReadState *rs) { rs->processReadState(time); }
-    
+
     double time;
 };
 

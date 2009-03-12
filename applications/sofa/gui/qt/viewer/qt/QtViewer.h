@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -44,8 +44,12 @@
 #include <sofa/helper/gl/Transformation.h>
 #include <sofa/helper/gl/Trackball.h>
 #include <sofa/helper/gl/Texture.h>
+#include <sofa/helper/gl/VisualParameters.h>
 #include <sofa/helper/system/thread/CTime.h>
 #include <sofa/simulation/tree/xml/Element.h>
+
+// allow catheter navigation using the tracking system (very simple version, surely will be modified)
+//#define TRACKING
 
 namespace sofa
 {
@@ -75,7 +79,12 @@ namespace sofa
 	      Q_OBJECT
 
 		private:
-
+#ifdef TRACKING
+		double savedX;
+		double savedY;
+		bool firstTime;
+		bool tracking;
+#endif // TRACKING
 	      enum {
 		TRACKBALL_MODE = 1,
 		PAN_MODE = 2,
@@ -89,6 +98,7 @@ namespace sofa
 
 	      enum { MINMOVE = 10 };
 
+	      VisualParameters visualParameters;
 
 	      QTimer* timerAnimate;
 	      int				_W, _H;
@@ -107,7 +117,7 @@ namespace sofa
 
 	      float			_zoomSpeed;
 	      float			_panSpeed;
-	      Transformation	_sceneTransform;
+
 	      Vector3			_previousEyePos;
 	      GLUquadricObj*	_arrow;
 	      GLUquadricObj*	_tube;
@@ -121,7 +131,6 @@ namespace sofa
 
 	      bool _waitForRender;
 
-
 	      //GLuint			_logoTexture;
 	      Texture			*texLogo;
 
@@ -130,9 +139,7 @@ namespace sofa
 
 	      double lastProjectionMatrix[16];
 	      double lastModelviewMatrix[16];
-	      GLint lastViewport[4];
-	      Vector3 sceneMinBBox;
-	      Vector3 sceneMaxBBox;
+
 	    public:
 
 	      /// Activate this class of viewer.
@@ -158,12 +165,16 @@ namespace sofa
 	      virtual void saveView();
 	      virtual void setSizeW(int);
 	      virtual void setSizeH(int);
-			
+
+		  virtual void getView(float* pos, float* ori) const;
+		  virtual void setView(float* pos, float* ori);
+		  virtual void moveView(float* pos, float* ori);
+
 	    signals:
 	      void redrawn();
 	      void resizeW( int );
 	      void resizeH( int );
-
+	      void quit();
 
 
 	    protected:
@@ -172,13 +183,10 @@ namespace sofa
 	      void initializeGL();
 	      void paintGL();
 	      void resizeGL( int w, int h );
-	      void ApplyShadowMap();
-	      void CreateRenderTexture(GLuint& textureID, int sizeX, int sizeY, int channels, int type);
-	      void StoreLightMatrices();
 
 	    public:
-	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool keepParams=false);
-	      sofa::simulation::tree::GNode* getScene()
+	      void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool keepParams=false);
+	      sofa::simulation::Node* getScene()
 		{
 		  return groot;
 		}
@@ -217,6 +225,9 @@ namespace sofa
 
 
 	      QString helpString();
+	      
+	      virtual void setBackgroundImage(std::string imageFileName);
+	      
 	    private:
 
 	      void	InitGFX(void);
@@ -234,7 +245,7 @@ namespace sofa
 	      //int     loadBMP(char *filename, TextureImage *texture);
 	      //void	LoadGLTexture(char *Filename);
 	      void	DrawLogo(void);
-	      void	DisplayOBJs(bool shadowPass = false);
+	      void	DisplayOBJs();
 	      void	DisplayMenu(void);
 	      void	DrawScene();
 
@@ -255,10 +266,10 @@ namespace sofa
 	    };
 
 	} // namespace qt
-  
+
       } // namespace viewer
 
-    } //namespace qt  
+    } //namespace qt
 
   } // namespace gui
 

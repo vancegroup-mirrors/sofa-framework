@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,7 +27,7 @@
 
 #include <sofa/helper/system/config.h>
 #include <sofa/component/collision/NewProximityIntersection.h>
-#include <sofa/component/collision/proximity.h>
+#include <sofa/helper/proximity.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
@@ -337,7 +337,7 @@ int NewProximityIntersection::computeIntersection(Sphere& e1, Sphere& e2, Output
 template<class Sphere>
 bool NewProximityIntersection::testIntersection(Line&, Sphere&)
 {
-    std::cerr << "Unnecessary call to NewProximityIntersection::testIntersection(Line,Sphere).\n";
+    serr << "Unnecessary call to NewProximityIntersection::testIntersection(Line,Sphere)."<<sendl;
     return true;
 }
 
@@ -361,7 +361,7 @@ int NewProximityIntersection::computeIntersection(Line& e1, Sphere& e2, OutputVe
 template<class Sphere>
 bool NewProximityIntersection::testIntersection(Triangle&, Sphere&)
 {
-    std::cerr << "Unnecessary call to NewProximityIntersection::testIntersection(Triangle,Sphere).\n";
+    serr << "Unnecessary call to NewProximityIntersection::testIntersection(Triangle,Sphere)."<<sendl;
     return true;
 }
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,6 +32,8 @@
 #include <sofa/helper/system/thread/CTime.h>
 #include <string.h>
 
+#include <sofa/helper/helper.h>
+
 namespace sofa
 {
 
@@ -44,7 +46,7 @@ namespace system
 namespace thread
 {
 
-enum TraceLevel
+enum SOFA_HELPER_API TraceLevel
 {
 	TRACE_DEBUG   = 0,
 	TRACE_INFO    = 1,
@@ -52,7 +54,7 @@ enum TraceLevel
 	TRACE_WARNING = 3,
 };
 
-class Trace
+class SOFA_HELPER_API Trace
 {
   static int mTraceLevel;
   static int mNbInstance;
@@ -64,7 +66,7 @@ public:
 };
 
 
-class TraceProfile
+class SOFA_HELPER_API TraceProfile
 {
  public:
   int index;

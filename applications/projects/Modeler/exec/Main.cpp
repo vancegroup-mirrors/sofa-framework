@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -28,6 +28,8 @@
 #include <fstream>
 
 #include <qapplication.h>
+#include <sofa/simulation/tree/TreeSimulation.h>
+
 #include "../lib/SofaModeler.h"
 #include <sofa/helper/system/glut.h>
 // ---------------------------------------------------------------------
@@ -37,10 +39,20 @@
 int main(int argc, char** argv)
 {	
   glutInit(&argc,argv);
-  QApplication* application = new QApplication(argc, argv);
+  QApplication* application = new QApplication(argc, argv);	
+
+  sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
   
   sofa::gui::qt::SofaModeler* sofaModeler = new sofa::gui::qt::SofaModeler();
   application->setMainWidget(sofaModeler);
   sofaModeler->show();
+
+  for (int i=1;i<argc;++i)
+    {
+      //Try to open the simulations passed in command line
+      sofaModeler->fileOpen(std::string(argv[i]));
+    }
+  if (argc <= 1 ) sofaModeler->newTab();
+
   return application->exec();
 }

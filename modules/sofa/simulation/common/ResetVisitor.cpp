@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,6 +36,7 @@ namespace simulation
 void ResetVisitor::processObject(core::objectmodel::BaseObject* obj)
 {
 	obj->reset();
+        obj->sendl.clearWarnings(); obj->sendl.clearOutputs();
 }
 
 Visitor::Result ResetVisitor::processNodeTopDown(simulation::Node* node)
@@ -44,6 +45,7 @@ Visitor::Result ResetVisitor::processNodeTopDown(simulation::Node* node)
 	{
 		this->processObject(*it);
 	}
+        node->sendl.clearWarnings(); node->sendl.clearOutputs();
 	return RESULT_CONTINUE;
 }
 

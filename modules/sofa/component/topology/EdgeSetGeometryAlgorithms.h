@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_EDGESETGEOMETRYALGORITHMS_H
 
 #include <sofa/component/topology/PointSetGeometryAlgorithms.h>
+#include <sofa/component/topology/CommonAlgorithms.h>
 
 namespace sofa
 {
@@ -64,6 +65,8 @@ namespace topology
 		typedef typename DataTypes::VecCoord VecCoord;
 		typedef typename DataTypes::Real Real;
 		typedef typename DataTypes::Coord Coord;
+		typedef typename DataTypes::CPos CPos;
+		enum { NC = CPos::static_size };
 
 
 		EdgeSetGeometryAlgorithms()
@@ -73,19 +76,54 @@ namespace topology
 		virtual ~EdgeSetGeometryAlgorithms() {}
 
 		/// computes the length of edge no i and returns it
-		virtual Real computeEdgeLength(const unsigned int i) const;
+		Real computeEdgeLength(const EdgeID i) const;
 
-		/// computes the edge length of all edges are store in the array interface
-		virtual void computeEdgeLength( BasicArrayInterface<Real> &ai) const;		// TODO: clarify, why not to use a vector here
+		/// computes the edge length of all edges and stores it in the array interface
+		void computeEdgeLength( BasicArrayInterface<Real> &ai) const;
 
 		/// computes the initial length of edge no i and returns it
-		virtual Real computeRestEdgeLength(const unsigned int i) const;
+		Real computeRestEdgeLength(const EdgeID i) const;
 
 		/// computes the initial square length of edge no i and returns it
-		virtual Real computeRestSquareEdgeLength(const unsigned int i) const;
+		Real computeRestSquareEdgeLength(const EdgeID i) const;
 
-		void writeMSHfile(const char *filename);  
+		void computeEdgeAABB(const EdgeID i, CPos& minCoord, CPos& maxCoord) const;
+
+		Coord computeEdgeCenter(const EdgeID i) const;
+
+		Coord computeEdgeDirection(const EdgeID i) const;
+
+		void getEdgeVertexCoordinates(const EdgeID i, Coord[2]) const;
+
+		void getRestEdgeVertexCoordinates(const EdgeID i, Coord[2]) const;
+
+		// test if a point is on the triangle indexed by ind_e
+		bool isPointOnEdge(const sofa::defaulttype::Vec<3,double> &pt, const unsigned int ind_e) const;
+
+		// compute barycentric coefficients
+		sofa::helper::vector< double > compute2PointsBarycoefs(const Vec<3,double> &p, unsigned int ind_p1, unsigned int ind_p2) const;
+
+		void writeMSHfile(const char *filename) const;  
 	};
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_EDGESETGEOMETRYALGORITHMS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Vec1dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Rigid3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Rigid2dTypes>;
+#endif
+
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Vec1fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Rigid3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API EdgeSetGeometryAlgorithms<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace topology
 

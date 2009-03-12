@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -30,8 +30,9 @@
 
 #include <sofa/core/componentmodel/behavior/PairInteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/helper/vector.h>
+#include <sofa/component/component.h>
 
 
 namespace sofa
@@ -45,6 +46,40 @@ namespace forcefield
 
 using namespace sofa::defaulttype;
 
+/// This class contains the description of one linear spring
+template<class T>
+class LinearSpring
+{
+public:
+    typedef T Real;
+    int     m1, m2;  ///< the two extremities of the spring: masses m1 and m2
+    Real  ks;      ///< spring stiffness
+    Real  kd;      ///< damping factor
+    Real  initpos; ///< rest length of the spring
+    
+    LinearSpring(int m1=0, int m2=0, double ks=0.0, double kd=0.0, double initpos=0.0)
+    : m1(m1), m2(m2), ks((Real)ks), kd((Real)kd), initpos((Real)initpos)
+    {
+    }
+    
+    LinearSpring(int m1, int m2, float ks, float kd=0, float initpos=0)
+    : m1(m1), m2(m2), ks((Real)ks), kd((Real)kd), initpos((Real)initpos)
+    {
+    }
+    
+    inline friend std::istream& operator >> ( std::istream& in, LinearSpring<Real>& s ){
+	in>>s.m1>>s.m2>>s.ks>>s.kd>>s.initpos;
+	return in;
+    }
+    
+    inline friend std::ostream& operator << ( std::ostream& out, const LinearSpring<Real>& s ){
+	out<<s.m1<<" "<<s.m2<<" "<<s.ks<<" "<<s.kd<<" "<<s.initpos<<"\n";
+	return out;
+    }
+    
+};
+
+
 /// This class can be overridden if needed for additionnal storage within template specializations.
 template<class DataTypes>
 class SpringForceFieldInternalData
@@ -52,7 +87,7 @@ class SpringForceFieldInternalData
 public:
 };
 
-/** Define a set of springs between particles */
+/// Set of simple springs between particles
 template<class DataTypes>
 class SpringForceField : public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public virtual core::objectmodel::BaseObject
 {
@@ -64,36 +99,14 @@ public:
     typedef typename DataTypes::Deriv Deriv;
     typedef typename Coord::value_type Real;
     typedef core::componentmodel::behavior::MechanicalState<DataTypes> MechanicalState;
-    
-    class Spring
-    {
-    public:
-        int     m1, m2;  ///< the two extremities of the spring: masses m1 and m2 
-        SReal  ks;      ///< spring stiffness
-        SReal  kd;      ///< damping factor 
-        SReal  initpos; ///< rest length of the spring 
 
-        Spring(int m1=0, int m2=0, SReal ks=0.0, SReal kd=0.0, SReal initpos=0.0)
-        : m1(m1), m2(m2), ks(ks), kd(kd), initpos(initpos)
-        {
-        }
+    typedef LinearSpring<Real> Spring;
 
-        inline friend std::istream& operator >> ( std::istream& in, Spring& s ){
-            in>>s.m1>>s.m2>>s.ks>>s.kd>>s.initpos;
-            return in;
-        }
-
-        inline friend std::ostream& operator << ( std::ostream& out, const Spring& s ){
-            out<<s.m1<<" "<<s.m2<<" "<<s.ks<<" "<<s.kd<<" "<<s.initpos<<"\n";
-            return out;
-        }
-      
-    };
 protected:
 
     SReal m_potentialEnergy;
     Data<SReal> ks;
-    Data<SReal> kd;	
+    Data<SReal> kd;
     Data<sofa::helper::vector<Spring> > springs;
     class Loader;
 
@@ -103,7 +116,7 @@ protected:
     void addSpringForce(SReal& potentialEnergy, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int i, const Spring& spring);
 
 public:
-    SpringForceField(MechanicalState* object1, MechanicalState* object2, SReal _ks=100.0, SReal _kd=5.0);	
+    SpringForceField(MechanicalState* object1, MechanicalState* object2, SReal _ks=100.0, SReal _kd=5.0);
     SpringForceField(SReal _ks=100.0, SReal _kd=5.0);
 
     virtual void parse(core::objectmodel::BaseObjectDescription* arg);
@@ -113,13 +126,20 @@ public:
     core::componentmodel::behavior::MechanicalState<DataTypes>* getObject1() { return this->mstate1; }
     core::componentmodel::behavior::MechanicalState<DataTypes>* getObject2() { return this->mstate2; }
 
+    sofa::helper::vector< Spring > getSprings(){return springs.getValue();}
+
+    virtual void reinit();
     virtual void init();
 
     virtual void addForce(VecDeriv& f1, VecDeriv& f2, const VecCoord& x1, const VecCoord& x2, const VecDeriv& v1, const VecDeriv& v2);
     virtual void addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2);
     virtual double getPotentialEnergy(const VecCoord&, const VecCoord&) { return m_potentialEnergy; }
+	
+	
+	virtual void addKToMatrix(sofa::defaulttype::BaseMatrix * /*mat*/, double /*kFact*/, unsigned int &/*offset*/);
+	
     SReal getStiffness() { return ks.getValue(); }
-    SReal getDamping(){ return kd.getValue(); } 
+    SReal getDamping(){ return kd.getValue(); }
     void setStiffness(SReal _ks){ ks.setValue(_ks); }
     void setDamping(SReal _kd){ kd.setValue(_kd); }
 
@@ -140,7 +160,25 @@ public:
         springs.beginEdit()->push_back(Spring(m1,m2,ks,kd,initlen));
         springs.endEdit();
     }
+
+	virtual void handleTopologyChange(core::componentmodel::topology::Topology *topo);
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_SPRINGFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec1dTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec6dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec1fTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SpringForceField<defaulttype::Vec6fTypes>;
+#endif
+#endif
 
 } // namespace forcefield
 

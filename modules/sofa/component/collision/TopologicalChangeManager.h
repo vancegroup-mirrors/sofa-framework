@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,8 +34,8 @@
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Vec3Types.h>
 
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/simulation/common/Node.h>
 
 /** a class to manage the handling of topological changes which have been requested from the Collision Model */
 
@@ -45,7 +45,8 @@ namespace sofa
 namespace component
 {
 	namespace collision{
-		class TriangleSetModel;
+		class TriangleModel;
+		class SphereModel;
 	}
 }
 
@@ -64,9 +65,14 @@ public:
 
 	/// Handles Removing of topological element (from any type of topology)
 	void removeItemsFromCollisionModel(sofa::core::CollisionElementIterator) const;
+	void removeItemsFromCollisionModel(sofa::core::CollisionModel* model, const std::vector<int>& indices) const;
+
 	/// Handles Cutting (activated only for a triangular topology), using global variables to register the two last input points
 	bool incisionCollisionModel(sofa::core::CollisionElementIterator, Vector3&, bool, bool);
 
+	/// Temporary solution to allow consecutif cuts
+	void initiateIncision();
+	
 protected:
 
 private:
@@ -75,9 +81,8 @@ private:
 	bool incisionTriangleSetTopology(sofa::core::componentmodel::topology::BaseMeshTopology*);
 	bool incisionTriangleSetTopology(sofa::core::CollisionElementIterator, Vector3&, bool, bool, sofa::core::componentmodel::topology::BaseMeshTopology*);
 
-	void removeItemsFromTriangleModel(sofa::core::CollisionElementIterator) const;
-	void removeItemsFromTriangleSetModel(sofa::core::CollisionElementIterator) const;
-	void removeItemsFromTriangleMeshModel(sofa::core::CollisionElementIterator) const;
+	void removeItemsFromTriangleModel(sofa::component::collision::TriangleModel* model, const std::vector<int>& indices) const;
+	void removeItemsFromSphereModel(sofa::component::collision::SphereModel* model, const std::vector<int>& indices) const;
 
 private:
 	/// Global variables to register the two last input points (for incision along one segment in a triangular mesh)

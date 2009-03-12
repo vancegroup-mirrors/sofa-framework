@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,8 @@
 #ifndef SOFA_DEFAULTTYPE_FRAME_H
 #define SOFA_DEFAULTTYPE_FRAME_H
 
+#include <sofa/defaulttype/defaulttype.h>
+
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/helper/Quater.h>
@@ -45,7 +47,7 @@ The product F1F2 can be seen as a frame displacement F1 starting from the refere
 
 \author Francois Faure, INRIA-UJF, 2006
 */
-class Frame
+class SOFA_DEFAULTTYPE_API Frame
 {
 public: 
         typedef Vec<3,SReal> Vec3;

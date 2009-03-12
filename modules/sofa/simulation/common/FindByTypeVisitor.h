@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -30,6 +30,8 @@
 #include <sofa/core/VisualModel.h>
 #include <sofa/helper/system/gl.h>
 #include <iostream>
+#include <typeinfo>
+
 
 using std::cerr;
 using std::endl;
@@ -48,7 +50,7 @@ class FindByTypeVisitor : public Visitor
 {
 public:
 	std::vector<T*> found; ///< The result of the search: contains pointers to all components of the given type found.
-	
+
 	/// For each component, if it is of the given type, then put it in the list
 	virtual Result processNodeTopDown(simulation::Node* node)
 	{
@@ -59,6 +61,8 @@ public:
 		}
 		return RESULT_CONTINUE;
 	}
+        virtual const char* getClassName() const { return "FindByTypeVisitor"; }
+		virtual std::string getInfos() const { std::string name="["+sofa::helper::gettypename(typeid(T))+"]"; return name; }
 
 };
 

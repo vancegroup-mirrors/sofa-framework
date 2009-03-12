@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -54,7 +54,7 @@ namespace topology
 	/** 
 	* A class that modifies the topology by adding and removing tetrahedra
 	*/
-	class TetrahedronSetTopologyModifier : public TriangleSetTopologyModifier
+	class SOFA_COMPONENT_CONTAINER_API TetrahedronSetTopologyModifier : public TriangleSetTopologyModifier
 	{
 	public:
 		TetrahedronSetTopologyModifier()

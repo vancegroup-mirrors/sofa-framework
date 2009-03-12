@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_QUADSETGEOMETRYALGORITHMS_H
 
 #include <sofa/component/topology/EdgeSetGeometryAlgorithms.h>
+#include <sofa/defaulttype/Vec.h>
 
 namespace sofa
 {
@@ -58,10 +59,18 @@ namespace topology
 
 		virtual ~QuadSetGeometryAlgorithms() {}
 
+		void computeQuadAABB(const QuadID i, Coord& minCoord, Coord& maxCoord) const;
+
+		Coord computeQuadCenter(const QuadID i) const;
+
+		void getQuadVertexCoordinates(const QuadID i, Coord[4]) const;
+
+		void getRestQuadVertexCoordinates(const QuadID i, Coord[4]) const;
+
 		/** \brief Computes the area of quad no i and returns it
 		*
 		*/
-		Real computeQuadArea(const unsigned int i) const;
+		Real computeQuadArea(const QuadID i) const;
 
 		/** \brief Computes the quad area of all quads are store in the array interface
 		*
@@ -71,29 +80,31 @@ namespace topology
 		/** \brief Computes the initial area  of quad no i and returns it
 		*
 		*/
-		Real computeRestQuadArea(const unsigned int i) const;
+		Real computeRestQuadArea(const QuadID i) const;
 
 		/** \brief Computes the normal vector of a quad indexed by ind_q (not normed)
 		*
 		*/
-		defaulttype::Vec<3,double> computeQuadNormal(const unsigned int ind_q);
+		defaulttype::Vec<3,double> computeQuadNormal(const QuadID ind_q) const;
 
 		/** \brief Tests if a quad indexed by ind_q (and incident to the vertex indexed by ind_p) 
 		* is included or not in the plane defined by (ind_p, plane_vect)
 		*
 		*/
-		bool is_quad_in_plane(const unsigned int ind_q, const unsigned int ind_p, 
-							const defaulttype::Vec<3,Real>& plane_vect);
+		bool isQuadInPlane(const QuadID ind_q, const unsigned int ind_p, 
+							const defaulttype::Vec<3,Real>& plane_vect) const;
+
+		bool isPointInQuad(const QuadID ind_q, const sofa::defaulttype::Vec<3,Real>& p) const;
 
 		/** \brief Write the current mesh into a msh file
 		*/
-		void writeMSHfile(const char *filename);
+		void writeMSHfile(const char *filename) const;
 	};
 
-	template< class Real>
-	bool is_point_in_quad(const defaulttype::Vec<3,Real>& p, const defaulttype::Vec<3,Real>& a, 
-						const defaulttype::Vec<3,Real>& b, const defaulttype::Vec<3,Real>& c, 
-						const defaulttype::Vec<3,Real>& d);
+	template<class Coord>
+	bool is_point_in_quad(const Coord& p,
+		                  const Coord& a, const Coord& b,
+						  const Coord& c, const Coord& d);
 
 	void snapping_test_quad(double epsilon, double alpha0, double alpha1, double alpha2, double alpha3, 
 							bool& is_snap_0, bool& is_snap_1, bool& is_snap_2, bool& is_snap_3);
@@ -107,6 +118,25 @@ namespace topology
 	template< class Real>
 	inline Real areaProduct(const defaulttype::Vec<1,Real>& , const defaulttype::Vec<1,Real>&  );
     
+#if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_QUADSETGEOMETRYALGORITHMS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Rigid3dTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Rigid2dTypes>;
+#endif
+
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Rigid3fTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API QuadSetGeometryAlgorithms<defaulttype::Rigid2fTypes>;
+#endif
+#endif
+
 } // namespace topology
 
 } // namespace component

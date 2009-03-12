@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -117,7 +117,7 @@ void SubsetMapping<BaseMapping>::init()
             }
             if (!found)
             {
-                std::cerr<<"ERROR(SubsetMapping): point "<<i<<"="<<out[i]<<" not found in input model within a radius of "<<rmax<<"."<<std::endl;
+                serr<<"ERROR(SubsetMapping): point "<<i<<"="<<out[i]<<" not found in input model within a radius of "<<rmax<<"."<<sendl;
                 indices[i] = 0;
             }
         }
@@ -130,7 +130,7 @@ void SubsetMapping<BaseMapping>::init()
         {
             if ((unsigned)indices[i] >= inSize)
             {
-                std::cerr << "ERROR(SubsetMapping): incorrect index "<<indices[i]<<" (input size "<<inSize<<")\n";
+                serr << "ERROR(SubsetMapping): incorrect index "<<indices[i]<<" (input size "<<inSize<<")"<<sendl;
                 indices.erase(indices.begin()+i);
                 --i;
             }
@@ -181,18 +181,20 @@ void SubsetMapping<BaseMapping>::applyJT( typename In::VecDeriv& out, const type
 template <class BaseMapping>
 void SubsetMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
 {
-	int offset = out.size();
+    int offset = out.size();
     out.resize(offset+in.size());
 
     const IndexArray& indices = f_indices.getValue();
-    for(unsigned int c = 0; c < in.size(); ++c)
+    for(unsigned int i = 0; i < in.size(); ++i)
     {
-		for(unsigned int j=0;j<in[c].size();j++)
+      OutConstraintIterator itOut;
+      for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
         {
-            const typename Out::SparseDeriv cIn = in[c][j];
-			out[c+offset].push_back(typename In::SparseDeriv( indices[cIn.index] , (typename In::Deriv) cIn.data ));
-		}
-	}
+          unsigned int indexIn = itOut->first;
+          OutDeriv data = (OutDeriv) itOut->second;
+          out[i+offset].insert( indices[indexIn] , data );
+        }
+    }
 
 }
 

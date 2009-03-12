@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,8 +26,14 @@
 #include <sofa/helper/Factory.inl>
 #include <sofa/helper/system/SetDirectory.h>
 #include <string.h>
+
 namespace sofa
 {
+
+namespace helper
+{
+template class Factory< std::string, simulation::tree::xml::BaseElement, std::pair<std::string, std::string> >;
+}
 
 namespace simulation
 {
@@ -81,7 +87,7 @@ bool BaseElement::isFileRoot()
 // {
 // 	return attributes;
 // }
-// 
+//
 // std::map<std::string,std::string*>& BaseElement::getAttributeMap()
 // {
 // 	return attributes;
@@ -110,6 +116,11 @@ bool BaseElement::removeAttribute(const std::string& attr)
     //delete it->second;
     attributes.erase(it);
     return true;
+}
+
+void BaseElement::addReplaceAttribute(const std::string &attr, const char* val)
+{
+  replaceAttribute[attr]=val;
 }
 
 bool BaseElement::addChild(BaseElement* child)

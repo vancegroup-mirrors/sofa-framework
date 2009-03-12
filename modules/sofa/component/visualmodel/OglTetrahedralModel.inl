@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -60,13 +60,13 @@ void OglTetrahedralModel<DataTypes>::init()
 
 	if (!nodes)
 	{
-		std::cerr << "OglTetrahedralModel : Error : no MechanicalState found." << std::endl;
+		serr << "OglTetrahedralModel : Error : no MechanicalState found." << sendl;
 		return;
 	}
 
 	if (!topo)
 	{
-		std::cerr << "OglTetrahedralModel : Error : no BaseMeshTopology found." << std::endl;
+		serr << "OglTetrahedralModel : Error : no BaseMeshTopology found." << sendl;
 		return;
 	}
 }
@@ -82,23 +82,58 @@ void OglTetrahedralModel<DataTypes>::drawTransparent()
 		glDepthMask(GL_FALSE);
 
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	//core::componentmodel::topology::BaseMeshTopology::SeqHexas::const_iterator it;
 	core::componentmodel::topology::BaseMeshTopology::SeqTetras::const_iterator it;
 
 #ifdef GL_LINES_ADJACENCY_EXT
+
 	const core::componentmodel::topology::BaseMeshTopology::SeqTetras& vec = topo->getTetras();
+
 	VecCoord& x = *nodes->getX();
 	Coord v;
 
 	glBegin(GL_LINES_ADJACENCY_EXT);
 	for(it = vec.begin() ; it != vec.end() ; it++)
 	{
-
 			for (unsigned int i=0 ; i< 4 ; i++){
 				v = x[(*it)[i]];
 				glVertex3f((GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2]);
 			}
 	}
 	glEnd();
+/*
+	const core::componentmodel::topology::BaseMeshTopology::SeqHexas& vec = topo->getHexas();
+
+	VecCoord& x = *nodes->getX();
+	Coord v;
+
+
+	const unsigned int hexa2tetras[24] = { 0, 5, 1, 6,
+										   0, 1, 3, 6,
+										   1, 3, 6, 2,
+										   6, 3, 0, 7,
+										   6, 7, 0, 5,
+										   7, 5, 4, 0 };
+
+
+
+	glBegin(GL_LINES_ADJACENCY_EXT);
+	for(it = vec.begin() ; it != vec.end() ; it++)
+	{
+
+		for (unsigned int i=0 ; i<6 ; i++)
+		{
+			for (unsigned int j=0 ; j<4 ; j++)
+			{
+				//glVertex3f((GLfloat)x[(*it)[hexa2tetras[i][j]]][0], (GLfloat)x[(*it)[hexa2tetras[i][j]]][1], (GLfloat)x[(*it)[hexa2tetras[i][j]]][2]);
+				glVertex3f((GLfloat)x[(*it)[hexa2tetras[i*4 + j]]][0], (GLfloat)x[(*it)[hexa2tetras[i*4 + j]]][1], (GLfloat)x[(*it)[hexa2tetras[i*4 + j]]][2]);
+			}
+		}
+	}
+	glEnd();
+	*/
+#else
+
 #endif
 	glDisable(GL_BLEND);
 	glDepthMask(GL_TRUE);

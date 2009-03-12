@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -39,7 +39,7 @@
 #endif
 
 
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 
 #include <sofa/simulation/common/VisualVisitor.h>
 #include <sofa/simulation/common/InitVisitor.h>
@@ -84,7 +84,7 @@ namespace sofa
 	setRecordInitialTime(initial_time);
 	setRecordFinalTime(initial_time);
 	setRecordTime(initial_time);		  	
-	viewer->getScene()->execute< sofa::simulation::UpdateSimulationContextVisitor >();
+	if ( viewer->getScene()) viewer->getScene()->execute< sofa::simulation::UpdateSimulationContextVisitor >();
 	timeSlider->update();
       }
       
@@ -110,14 +110,15 @@ namespace sofa
 
       void RealGUI::addReadState(bool init)
       {		
-	sofa::component::misc::ReadStateCreator v(writeSceneName,init);
+	sofa::component::misc::ReadStateCreator v(writeSceneName,false,init);
 	v.execute(viewer->getScene());	
 	std::cout << "Reading Recorded simulation with base name: " << writeSceneName << "\n";
       }
       
       void RealGUI::addWriteState()
       {	
-	sofa::component::misc::WriteStateCreator v(writeSceneName);
+	//record X, V, but won't record in the Mapping
+	sofa::component::misc::WriteStateCreator v(writeSceneName, true, true, false);
 	v.execute(viewer->getScene());	
 	std::cout << "Recording simulation with base name: " << writeSceneName << "\n";
       }
@@ -190,11 +191,10 @@ namespace sofa
 	
 	double init_time  = getRecordInitialTime();
 	double time = getRecordTime() - atof(dtEdit->text());
-	if (time >= init_time)
-	{
-	  setRecordTime(time);
-	  slot_loadrecord_timevalue();
-	}
+	if (time < init_time) time = init_time;
+	
+	setRecordTime(time);
+	slot_loadrecord_timevalue(false);
       }
 
 
@@ -226,7 +226,7 @@ namespace sofa
 	if (timeSlider->value() != timeSlider->maxValue())
 	{  
 	  setRecordTime(getRecordTime() + atof(dtEdit->text()));	
-	  slot_loadrecord_timevalue();
+	  slot_loadrecord_timevalue(false);
 	}
       }
 
@@ -239,30 +239,36 @@ namespace sofa
 	}
       }
 
-      void RealGUI::slot_sliderValue(int value)
+      void RealGUI::slot_sliderValue(int value, bool updateTime)
       {
 	if (timeSlider->value() == value) return;
 	double init_time   = getRecordInitialTime();
 	double final_time  = getRecordFinalTime();
- 	double time = init_time + value/((float)timeSlider->maxValue())*(final_time-initial_time);
- 	setRecordTime(time);
+	if (updateTime)
+	  {
+	    double time = init_time + value/((float)timeSlider->maxValue())*(final_time-initial_time);
+	    setRecordTime(time);
+	  }
 	timeSlider->setValue(value);
 	timeSlider->update();
-	loadSimulation();  	
+	loadSimulation();
       }
 
-      void RealGUI::slot_loadrecord_timevalue()
+      void RealGUI::slot_loadrecord_timevalue(bool updateTime)
       {       
 	
  	double init_time = getRecordInitialTime();
  	double final_time = getRecordFinalTime();
  	double current_time = getRecordTime();
 	
-	int value = (int)((current_time-init_time)/((float)(final_time-init_time))*timeSlider->maxValue()+0.5);
+	int value = (int)((current_time-init_time)/((float)(final_time-init_time))*timeSlider->maxValue());
 		
-	if (value >= timeSlider->minValue() && value <= timeSlider->maxValue())    slot_sliderValue(value);
-	else if (value < timeSlider->minValue()) 	                           slot_sliderValue(timeSlider->minValue());
-	else if (value > timeSlider->maxValue())
+	if (value > timeSlider->minValue())                                      slot_sliderValue(value, updateTime);
+	else if ( value < timeSlider->maxValue())                                slot_sliderValue(value, updateTime);
+	else if (!updateTime && value == timeSlider->maxValue())                 slot_sliderValue(value, updateTime);
+	else if (value <= timeSlider->minValue()) 	                         slot_sliderValue(timeSlider->minValue());
+
+	if (current_time >= final_time)
 	{
 	  playforward_record->setOn(false);
 	  slot_sliderValue(timeSlider->maxValue());
@@ -281,7 +287,7 @@ namespace sofa
 	  return;
 	}
 		  
-	unsigned int sleep_time = clock();
+	float sleep_time = clock()/(float)CLOCKS_PER_SEC;
 	double time=getRecordTime();
 			
 	//update the time in the context
@@ -290,11 +296,9 @@ namespace sofa
 	
 	//read the state for the current time
 	sofa::component::misc::ReadStateModifier v(time);
-	v.execute(viewer->getScene());		  
+	v.execute(viewer->getScene());		
 		
-	viewer->getQWidget()->update();
-		
-	if (!one_step) sleep((unsigned int)(1000*viewer->getScene()->getDt()), sleep_time);	
+	if (!one_step) sleep((viewer->getScene()->getDt()), sleep_time);	
 		
 	//Exporting sequence of OBJs 	
 	if ( _animationOBJ )
@@ -310,10 +314,10 @@ namespace sofa
 	  }
 	//Exporting states
 	if ( m_dumpState )
-	  getSimulation()->dumpState ( viewer->getScene(), *m_dumpStateStream );
+	  simulation::getSimulation()->dumpState ( viewer->getScene(), *m_dumpStateStream );
 	//Exporting in GNUplot format
 	if ( m_exportGnuplot )
-	  getSimulation()->exportGnuplot ( viewer->getScene(), viewer->getScene()->getTime() );
+	  simulation::getSimulation()->exportGnuplot ( viewer->getScene(), viewer->getScene()->getTime() );
 
 	emit newStep();			 
       }
@@ -339,19 +343,19 @@ namespace sofa
       void RealGUI::setRecordInitialTime(double time)
       {
 	char buf[100];
-	sprintf ( buf, "Init: %.3f s", fabs(time) );
+	sprintf ( buf, "Init: %.3g s", fabs(time) );
 	initialTime->setText ( buf ); 
       }
       void RealGUI::setRecordFinalTime(double time)
       {
 	char buf[100];
-	sprintf ( buf, "End: %.3f s", fabs(time) );
+	sprintf ( buf, "End: %.3g s", fabs(time) );
 	finalTime->setText( buf );	
       }
       void RealGUI::setRecordTime(double time)
       {
 	char buf[100];
-	sprintf ( buf, "%.3f", fabs(time) );
+	sprintf ( buf, "%.3g", fabs(time) );
 	loadRecordTime->setText( buf );	   
 	setTimeSimulation(getRecordTime());
       }
@@ -359,9 +363,10 @@ namespace sofa
       void RealGUI::setTimeSimulation(double time)
       {
 	char buf[100];
-	sprintf ( buf, "Time: %.3f s", time );
+	sprintf ( buf, "Time: %.3g s", time );
 	timeLabel->setText ( buf );	
-	viewer->getScene()->setTime(time);
+	if (viewer->getScene())
+	  viewer->getScene()->setTime(time);
       }
     } // namespace qt
 

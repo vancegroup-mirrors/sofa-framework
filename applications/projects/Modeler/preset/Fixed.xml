@@ -1,9 +1,0 @@
-  <Node name="Fixed">       
-    <Object type="MeshLoader" filename="file"/>
-    <Object type="Mesh"/>        
-    <Object type="MechanicalObject"  dx="0" dy="0" dz="0" rx="0" ry="0" rz="0" scale="1.0"/>                
-    <Object moving="0" simulated="0" type="Triangle"/>        
-    <Object moving="0" simulated="0" type="Line"/>        
-    <Object moving="0" simulated="0" type="Point"/>        
-    <Object color="0.500 0.500 0.500" filename="file" name="Visual" type="OglModel"  dx="0" dy="0" dz="0" rx="0" ry="0" rz="0" scale="1.0"/>       
-  </Node>              

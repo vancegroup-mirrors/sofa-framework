@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -67,6 +67,13 @@ public:
 
     virtual const ContactVector& getContacts() { return contacts; }
 
+	/// virtual methods used for cleaning the pipeline after a dynamic graph node deletion.
+	/** 
+	 * Contacts can be attached to a deleted node and their deletion is a problem for the pipeline.
+	 * @param c is the list of deleted contacts.
+	 */
+	virtual void removeContacts(const ContactVector &/*c*/) { }
+	
     /// virtual because subclasses might do precomputations based on intersection algorithms
     virtual void setIntersectionMethod(Intersection* v) { intersectionMethod = v;    }
     Intersection* getIntersectionMethod() const         { return intersectionMethod; }

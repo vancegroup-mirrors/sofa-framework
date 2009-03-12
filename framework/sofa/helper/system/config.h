@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -67,5 +67,16 @@ typedef double SReal;
 
 #define SOFA_DECL_CLASS(name) extern "C" { int sofa_concat(class_,name) = 0; }
 #define SOFA_LINK_CLASS(name) extern "C" { extern int sofa_concat(class_,name); int sofa_concat(link_,name) = sofa_concat(class_,name); }
+
+#ifndef WIN32
+#	define SOFA_EXPORT_DYNAMIC_LIBRARY 
+#   define SOFA_IMPORT_DYNAMIC_LIBRARY 
+#else
+#	define SOFA_EXPORT_DYNAMIC_LIBRARY __declspec( dllexport )
+#   define SOFA_IMPORT_DYNAMIC_LIBRARY __declspec( dllimport )
+#   ifdef _MSC_VER
+#       pragma warning(disable : 4231)
+#   endif
+#endif
 
 #endif

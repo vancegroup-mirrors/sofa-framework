@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,7 +29,7 @@
 #define SOFA_COMPONENT_ODESOLVER_CGIMPLICITSOLVER_H
 
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
-#include <sofa/simulation/common/OdeSolverImpl.h>
+#include <sofa/component/odesolver/OdeSolverImpl.h>
 
 namespace sofa
 {
@@ -44,7 +44,7 @@ using namespace sofa::defaulttype;
 
 /** Implicit time integrator using the filtered conjugate gradient solution [Baraff&Witkin 98].
 */
-class CGImplicitSolver : public sofa::simulation::OdeSolverImpl
+class SOFA_COMPONENT_ODESOLVER_API CGImplicitSolver : public OdeSolverImpl
 {
 public:
 
@@ -78,7 +78,7 @@ public:
 	/// The last column is returned by the getSolutionIntegrationFactor method.
 	double getIntegrationFactor(int inputDerivative, int outputDerivative) const 
 	{
-		const double dt = getContext()->getDt();
+	  const double dt = this->getContext()->getDt();
 		double matrix[3][3] = {
 			{ 1, dt, 0},
 			{ 0, 1, 0},

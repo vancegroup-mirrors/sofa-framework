@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -87,6 +87,18 @@ protected:
 		Mat3 DfDx; /// the edge stiffness matrix
 
 		EdgeRestInformation() {
+		}
+
+		/// Output stream
+		inline friend std::ostream& operator<< ( std::ostream& os, const EdgeRestInformation& /*eri*/ )
+		{
+		return os;
+		}
+		
+		/// Input stream
+		inline friend std::istream& operator>> ( std::istream& in, EdgeRestInformation& /*eri*/ )
+		{
+		return in;
 		}
 	};
 

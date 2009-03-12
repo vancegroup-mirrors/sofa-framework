@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -30,6 +30,9 @@
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/core/VisualModel.h>
+#include <sofa/helper/gl/FrameBufferObject.h>
+#include <sofa/component/component.h>
+
 namespace sofa
 {
 
@@ -53,11 +56,23 @@ namespace visualmodel
 
 using sofa::defaulttype::Vector3;
 
-class Light : public virtual sofa::core::VisualModel {
+class SOFA_COMPONENT_VISUALMODEL_API Light : public virtual sofa::core::VisualModel {
 protected:
 	Data<Vector3> color;
+	Data<float> zNear;
+	Data<float> zFar;
 	GLint lightID;
 
+	helper::gl::FrameBufferObject shadowFBO;
+	GLuint shadowTexWidth, shadowTexHeight;
+	//GLuint shadowTexture;
+	//GLuint shadowFBO;
+	GLuint debugVisualShadowTexture;
+
+	GLfloat lightMatProj[16];
+	GLfloat lightMatModelview[16];
+
+	void computeShadowMapSize();
 public:
 
 	Light();
@@ -65,12 +80,21 @@ public:
 
 	void setID(const GLint& id);
 
+	//VisualModel
 	virtual void initVisual() ;
 	void init();
 	virtual void drawLight();
 	void draw() { } ;
 	virtual void reinit();
 	void update() {} ;
+
+	//CastShadowModel
+	virtual void preDrawShadow();
+	virtual void postDrawShadow();
+	virtual GLuint getShadowMapSize();
+	virtual GLuint getShadowTexture() { return 0 ;};
+	virtual GLfloat* getProjectionMatrix() { return NULL ;};
+	virtual GLfloat* getModelviewMatrix() { return NULL ;};
 };
 
 class DirectionalLight : public Light {
@@ -88,7 +112,7 @@ public:
 
 };
 
-class PositionalLight : public Light {
+class SOFA_COMPONENT_VISUALMODEL_API PositionalLight : public Light {
 protected:
 	Data<Vector3> position;
 	Data<float> attenuation;
@@ -103,7 +127,7 @@ public:
 
 };
 
-class SpotLight : public PositionalLight {
+class SOFA_COMPONENT_VISUALMODEL_API SpotLight : public PositionalLight {
 protected:
 	Data<Vector3> direction;
 	Data<float> cutoff;
@@ -115,6 +139,11 @@ public:
 	virtual void initVisual() ;
 	virtual void drawLight();
 	virtual void reinit();
+
+	void preDrawShadow();
+	GLuint getShadowTexture();
+	GLfloat* getProjectionMatrix();
+	GLfloat* getModelviewMatrix();
 
 
 };

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -36,6 +36,7 @@
 #include <OgreColourValue.h>
 #include <vector>
 
+#include <tinyxml.h>
 // Forward declarations
 class TiXmlElement;
 
@@ -79,6 +80,10 @@ namespace Ogre
 		std::vector<nodeProperty> nodeProperties;
 		std::vector<String> staticObjects;
 		std::vector<String> dynamicObjects;
+
+		std::vector<String> directionalLights;
+		std::vector<String> pointLights;
+		std::vector<String> spotLights;
 		EnvironmentProperty environment;
 
 	protected:

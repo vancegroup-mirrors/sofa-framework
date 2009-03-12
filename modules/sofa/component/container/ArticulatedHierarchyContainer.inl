@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,7 @@
 
 #include <sofa/component/container/ArticulatedHierarchyContainer.h>
 #include <sofa/helper/system/FileRepository.h>
+#include <sofa/simulation/common/Simulation.h>
 
 namespace sofa
 {
@@ -38,7 +39,7 @@ namespace component
 namespace container
 {
 
-ArticulatedHierarchyContainer::ArticulationCenter::Articulation::Articulation(): 
+ArticulatedHierarchyContainer::ArticulationCenter::Articulation::Articulation():
 	axis(initData(&axis, (Vector3) Vector3(1,0,0), "rotationAxis", "Set the rotation axis for the articulation")),
 	rotation(initData(&rotation, (bool) false, "rotation", "Rotation")),
 	translation(initData(&translation, (bool) false, "translation", "Translation")),
@@ -46,7 +47,7 @@ ArticulatedHierarchyContainer::ArticulationCenter::Articulation::Articulation():
 {
 }
 
-ArticulatedHierarchyContainer::ArticulationCenter::ArticulationCenter(): 
+ArticulatedHierarchyContainer::ArticulationCenter::ArticulationCenter():
 	parentIndex(initData(&parentIndex, "parentIndex", "Parent of the center articulation")),
 	childIndex(initData(&childIndex, "childIndex", "Child of the center articulation")),
 	globalPosition(initData(&globalPosition, "globalPosition", "Global position of the articulation center")),
@@ -81,16 +82,6 @@ vector<ArticulatedHierarchyContainer::ArticulationCenter*> ArticulatedHierarchyC
 	return acendantList;
 }
 
-vector<ArticulatedHierarchyContainer::ArticulationCenter*> ArticulatedHierarchyContainer::getArticulationCenters()
-{
-	return articulationCenters;
-}
-
-vector<ArticulatedHierarchyContainer::ArticulationCenter::Articulation*> ArticulatedHierarchyContainer::ArticulationCenter::getArticulations()
-{
-	return articulations;
-}
-
 ArticulatedHierarchyContainer::ArticulatedHierarchyContainer():
     filename(initData(&filename, "filename", "BVH File to load the articulation", false))
 {
@@ -102,7 +93,7 @@ ArticulatedHierarchyContainer::ArticulatedHierarchyContainer():
 }
 
 
-void ArticulatedHierarchyContainer::buildCenterArticulationsTree(sofa::helper::io::bvh::BVHJoint* bvhjoint, int id_buf, const char* name, simulation::tree::GNode* node)
+void ArticulatedHierarchyContainer::buildCenterArticulationsTree(sofa::helper::io::bvh::BVHJoint* bvhjoint, int id_buf, const char* name, simulation::Node* node)
 {
 	std::vector<sofa::helper::io::bvh::BVHJoint*> jointChildren = bvhjoint->getChildren();
 	if (jointChildren.size()==0)
@@ -112,7 +103,7 @@ void ArticulatedHierarchyContainer::buildCenterArticulationsTree(sofa::helper::i
 	str.append("/");
 	str.append(bvhjoint->getName());
 
-	simulation::tree::GNode* nodeOfArticulationCenters = new simulation::tree::GNode(str);
+	simulation::Node* nodeOfArticulationCenters = simulation::getSimulation()->newNode(str);
 	node->addChild(nodeOfArticulationCenters);
 
 	ArticulationCenter* ac = new ArticulationCenter();
@@ -124,11 +115,13 @@ void ArticulatedHierarchyContainer::buildCenterArticulationsTree(sofa::helper::i
 	ac->parentIndex.setValue(id_buf);
 	ac->childIndex.setValue(bvhjoint->getId()+1);
 
-	simulation::tree::GNode* nodeOfArticulations = new simulation::tree::GNode("articulations");
+	simulation::Node* nodeOfArticulations = simulation::getSimulation()->newNode("articulations");
 	nodeOfArticulationCenters->addChild(nodeOfArticulations);
 
 	sofa::helper::io::bvh::BVHChannels* channels = bvhjoint->getChannels();
 	sofa::helper::io::bvh::BVHMotion* motion = bvhjoint->getMotion();
+	
+	std::cerr<<"num Frames found in BVH ="<<motion->frameCount<<std::endl;
 
 	ArticulationCenter::Articulation* a;
 
@@ -215,22 +208,22 @@ void ArticulatedHierarchyContainer::buildCenterArticulationsTree(sofa::helper::i
 
 void ArticulatedHierarchyContainer::init ()
 {
-	simulation::tree::GNode* context = dynamic_cast<simulation::tree::GNode *>(this->getContext()); // access to current node
-		
+  simulation::tree::GNode* context = dynamic_cast<simulation::tree::GNode *>(this->getContext()); // access to current node
+
 	std::string file = filename.getValue();
 	if ( sofa::helper::system::DataRepository.findFile (file) )
 	{
-	  
+
 	  sofa::helper::io::bvh::BVHLoader loader = sofa::helper::io::bvh::BVHLoader();
-	  joint = loader.load(sofa::helper::system::DataRepository.getFile ( file ).c_str());	  
+	  joint = loader.load(sofa::helper::system::DataRepository.getFile ( file ).c_str());
 	  chargedFromFile = true;
 	  numOfFrames = joint->getMotion()->frameCount;
 	  dtbvh = joint->getMotion()->frameTime;
 	}
-	
+
 	if (joint != NULL)
 	{
-		simulation::tree::GNode* articulationCenters = new simulation::tree::GNode("ArticulationCenters");
+		simulation::Node* articulationCenters = simulation::getSimulation()->newNode("ArticulationCenters");
 		context->addChild(articulationCenters);
 
 		buildCenterArticulationsTree(joint, 0, "Root", articulationCenters);
@@ -255,9 +248,22 @@ void ArticulatedHierarchyContainer::init ()
 				GNode* n = *it;
 				n->getTreeObjects<ArticulationCenter::Articulation>(&(*ac)->articulations);
 			}
+			
+			// for Arboris Mapping, init the transformation for each articulation center
+			Quat q; // TODO: add a rotation component to the positionning on the ArticulatedHierarchyContainer
+			(*ac)->H_p_pLc.set((*ac)->posOnParent.getValue(),q);
+			(*ac)->H_c_cLp.set((*ac)->posOnChild.getValue(), q);
+			(*ac)->H_pLc_cLp.identity();
+			
+			
+		
+			
 		}
 	}
 }
+
+
+
 
 } // namespace container
 

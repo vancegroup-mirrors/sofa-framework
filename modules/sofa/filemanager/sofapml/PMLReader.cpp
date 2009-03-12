@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -48,7 +48,8 @@
 #include "sofa/component/collision/DefaultCollisionGroupManager.h"
 #include "sofa/component/collision/BruteForceDetection.h"
 #include "sofa/simulation/common/VisualVisitor.h"
-#include "sofa/simulation/tree/Simulation.h"
+#include "sofa/simulation/common/Simulation.h"
+#include "sofa/simulation/common/Node.h"
 
 using namespace sofa::component::collision;
 using namespace sofa::simulation::tree;
@@ -56,7 +57,7 @@ using namespace sofa::simulation;
 
 namespace sofa
 {
- 
+
 namespace filemanager
 {
 
@@ -68,7 +69,7 @@ void PMLReader::BuildStructure(const char* filename, GNode* root){
 
 	if (!filename) return;
 
-	if(pm) { 
+	if(pm) {
 		delete pm;
 		pm = NULL;
 	}
@@ -109,15 +110,15 @@ void PMLReader::BuildStructure(GNode* root){
 
 	//get each body
 	PMLBody * body;
-	for (unsigned int i=0 ; i<bodies->getNumberOfSubComponents() ; i++ ) 
+	for (unsigned int i=0 ; i<bodies->getNumberOfSubComponents() ; i++ )
 	{
 		//create the under structure (mech model, topology, etc) to create the body
 		body = createBody( (StructuralComponent*) bodies->getSubComponent(i), root );
 
 		//if no problem, we put it in the scene graph
-		if (body) {	
+		if (body) {
 			bodiesList.push_back(body);
-			if (body->hasCollisions()) 
+			if (body->hasCollisions())
 				collisionsExist = true;
 		}
 	}
@@ -151,7 +152,7 @@ void PMLReader::BuildStructure(GNode* root){
 	//if there is 2 bodies with the same type and some nodes in common, we merge them
 	processFusions(root);
 
-	sofa::simulation::tree::getSimulation()->init(root);
+	sofa::simulation::getSimulation()->init(root);
 }
 
 //create the body structure
@@ -163,15 +164,15 @@ PMLBody* PMLReader::createBody(StructuralComponent* SC, GNode * root) {
 	GNode * child = new GNode(SC->getProperties()->getName());
 
 	if (type == "rigid" ) {
-		root->addChild(child);
+	  root->addChild((simulation::Node*)child);
 		return new PMLRigidBody(SC, child);
 	}
 	if (type == "FEM" ){
-		root->addChild(child);
+		root->addChild((simulation::Node*)child);
 		return new PMLFemForceField(SC, child);
 	}
 	if (type == "stiffSpring" ){
-		root->addChild(child);
+		root->addChild((simulation::Node*)child);
 		return new PMLStiffSpringForceField(SC, child);
 	}
 	if (type == "interaction" ){
@@ -204,7 +205,7 @@ PMLBody* PMLReader::createBody(StructuralComponent* SC, GNode * root) {
 			it++;
 		}
 		if (body1){
-			body1->parentNode->addChild(child);
+		  body1->parentNode->addChild((simulation::Node*)child);
 			return new PMLMappedBody(SC, body1, child);
 		}else
 			cerr<<"mapped body : no body ref named "<<name1<<" found"<<endl;
@@ -214,11 +215,11 @@ PMLBody* PMLReader::createBody(StructuralComponent* SC, GNode * root) {
 }
 
 
-void PMLReader::processFusions(GNode * root) 
+void PMLReader::processFusions(GNode * root)
 {
 	std::vector<PMLBody *>::iterator it1 = bodiesList.begin();
 	std::vector<PMLBody *>::iterator it2 = bodiesList.begin();
-	
+
 	while (it1 != bodiesList.end()) {
 		it2 = it1;
 		it2++;
@@ -233,7 +234,7 @@ void PMLReader::processFusions(GNode * root)
 							std::vector<PMLBody *>::iterator tmp = it2;
 							tmp--;
 							(*it1)->parentNode->setName((*it1)->parentNode->getName() + " & "+ (*it2)->parentNode->getName() );
-							root->removeChild( (*it2)->parentNode );
+							root->removeChild( (simulation::Node*)(*it2)->parentNode );
 							bodiesList.erase(it2);
 							it2 = tmp;
 						}
@@ -249,7 +250,7 @@ void PMLReader::processFusions(GNode * root)
 
 
 //save the current scene as a pml filename
-void PMLReader::saveAsPML(const char * filename) 
+void PMLReader::saveAsPML(const char * filename)
 {
 	std::vector<PMLBody*>::iterator itb = bodiesList.begin();
 	StructuralComponent * atoms = pm->getAtoms();
@@ -297,8 +298,8 @@ Vector3 PMLReader::getAtomPos(unsigned int atomindex)
 }
 
 
-//update all the physical model atoms positions 
-void PMLReader::updatePML() 
+//update all the physical model atoms positions
+void PMLReader::updatePML()
 {
 	std::vector<PMLBody*>::iterator itb = bodiesList.begin();
 	StructuralComponent * atoms = pm->getAtoms();

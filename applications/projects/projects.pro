@@ -9,7 +9,7 @@ SUBDIRS += meshconv
 SUBDIRS += generateDoc
 SUBDIRS += GenerateRigid
 
-
+ 
 SUBDIRS += Modeler
 !contains (DEFINES, SOFA_GUI_QTVIEWER) {
 	!contains (DEFINES, SOFA_GUI_QGLVIEWER) {
@@ -29,6 +29,10 @@ contains(DEFINES, SOFA_HAVE_FLOWVR){
 
 contains(DEFINES, SOFA_HAVE_SENSABLE){
 	SUBDIRS += SensAble
+}
+
+contains(DEFINES, SOFA_HAVE_CHAI3D){
+	SUBDIRS += Haptic
 }
 
 

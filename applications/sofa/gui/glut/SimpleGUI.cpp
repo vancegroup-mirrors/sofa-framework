@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -27,7 +27,8 @@
 #include "SimpleGUI.h"
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/system/FileRepository.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
+#include <sofa/simulation/tree/GNode.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
@@ -71,7 +72,7 @@ using std::cout;
 using std::endl;
 using namespace sofa::defaulttype;
 using namespace sofa::helper::gl;
-using sofa::simulation::tree::getSimulation;
+using sofa::simulation::getSimulation;
 
 
 SimpleGUI* SimpleGUI::instance = NULL;
@@ -128,7 +129,7 @@ SofaGUI* SimpleGUI::CreateGUI(const char* /*name*/, const std::vector<std::strin
     glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     glutSwapBuffers ();
 
-    
+
     glutReshapeFunc ( glut_reshape );
     glutIdleFunc ( glut_idle );
     glutDisplayFunc ( glut_display );
@@ -161,7 +162,7 @@ void SimpleGUI::glut_display()
     glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     if (instance)
     {
-	instance->paintGL();
+        instance->paintGL();
     }
     glutSwapBuffers ();
 }
@@ -170,7 +171,7 @@ void SimpleGUI::glut_reshape(int w, int h)
 {
     if (instance)
     {
-	instance->resizeGL(w,h);
+        instance->resizeGL(w,h);
     }
 }
 
@@ -178,8 +179,8 @@ void SimpleGUI::glut_keyboard(unsigned char k, int, int)
 {
     if (instance)
     {
-	instance->updateModifiers();
-	instance->keyPressEvent(k);
+        instance->updateModifiers();
+        instance->keyPressEvent(k);
     }
 }
 
@@ -187,8 +188,8 @@ void SimpleGUI::glut_mouse(int button, int state, int x, int y)
 {
     if (instance)
     {
-	instance->updateModifiers();
-	instance->mouseEvent( (state==GLUT_DOWN?MouseButtonPress : MouseButtonRelease), x, y, button );
+        instance->updateModifiers();
+        instance->mouseEvent( (state==GLUT_DOWN?MouseButtonPress : MouseButtonRelease), x, y, button );
     }
 }
 
@@ -196,8 +197,8 @@ void SimpleGUI::glut_motion(int x, int y)
 {
     if (instance)
     {
-	//instance->updateModifiers();
-	instance->mouseEvent( MouseMove, x, y, 0 );
+        //instance->updateModifiers();
+        instance->mouseEvent( MouseMove, x, y, 0 );
     }
 }
 
@@ -205,8 +206,8 @@ void SimpleGUI::glut_special(int k, int, int)
 {
     if (instance)
     {
-	instance->updateModifiers();
-	instance->keyPressEvent(k);
+        instance->updateModifiers();
+        instance->keyPressEvent(k);
     }
 }
 
@@ -214,11 +215,11 @@ void SimpleGUI::glut_idle()
 {
     if (instance)
     {
-	if (instance->getScene() && instance->getScene()->getContext()->getAnimate())
-	    instance->step();
-	else
-	    CTime::sleep(0.01);
-	instance->animate();
+        if (instance->getScene() && instance->getScene()->getContext()->getAnimate())
+            instance->step();
+        else
+            CTime::sleep(0.01);
+        instance->animate();
     }
 }
 
@@ -274,7 +275,7 @@ SimpleGUI::SimpleGUI()
 {
     instance = this;
 
-    groot = NULL;                
+    groot = NULL;
     initTexturesDone = false;
     // setup OpenGL mode for the window
 
@@ -341,7 +342,7 @@ SimpleGUI::SimpleGUI()
     _mouseInteractorNewQuat = _mouseInteractorTrackball.GetQuaternion();
 
     interactor = NULL;
-        
+
     //////////////////////
     m_isControlPressed = false;
     m_isShiftPressed = false;
@@ -363,7 +364,7 @@ SimpleGUI::~SimpleGUI()
 }
 
 // -----------------------------------------------------------------
-// --- OpenGL initialization method - includes light definitions, 
+// --- OpenGL initialization method - includes light definitions,
 // --- color tracking, etc.
 // -----------------------------------------------------------------
 void SimpleGUI::initializeGL(void)
@@ -450,7 +451,7 @@ void SimpleGUI::initializeGL(void)
 
         //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         //Load texture for logo
-	texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile("textures/SOFA_logo.bmp")));
+        texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile("textures/SOFA_logo.bmp")));
          texLogo->init();
 
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -465,11 +466,11 @@ void SimpleGUI::initializeGL(void)
         // Here we allocate memory for our depth texture that will store our light's view
         CreateRenderTexture(g_DepthTexture, SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT);
         CreateRenderTexture(ShadowTextureMask, SHADOW_MASK_SIZE, SHADOW_MASK_SIZE, GL_LUMINANCE, GL_LUMINANCE);
-        
+
         if (_glshadow == GLSLShader::InitGLSL())
         {
             // Here we pass in our new vertex and fragment shader files to our shader object.
-	    g_Shader.InitShaders(sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.vert"), sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.frag"));
+            g_Shader.InitShaders(sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.vert"), sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.frag"));
         }else
 #endif
         {
@@ -500,7 +501,7 @@ void SimpleGUI::initializeGL(void)
 ///////////////////////////////// STORE LIGHT MATRICES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
 void SimpleGUI::StoreLightMatrices()
-{    
+{
     //    _lightPosition[0] =  _sceneTransform.translation[0] + 10;//*cosf(TT);
     //    _lightPosition[1] =  _sceneTransform.translation[1] + 10;//*sinf(2*TT);
     //    _lightPosition[2] =  _sceneTransform.translation[2] + 35;//
@@ -554,7 +555,7 @@ void SimpleGUI::StoreLightMatrices()
             1.0/(fabs(g_mProjection[2])+fabs(g_mProjection[6])+fabs(g_mProjection[10])));
         glMultMatrixf(g_mProjection);
         glMultMatrixd(lastProjectionMatrix);
-        
+
         // Grab the current matrix that will be used for the light's projection matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, g_mProjection);
 
@@ -567,9 +568,9 @@ void SimpleGUI::StoreLightMatrices()
 
         // Reset the current modelview matrix
         glLoadIdentity();
-        
+
         // This is where we set the light's position and view.
-        gluLookAt(_lightPosition[0],  _lightPosition[1],  _lightPosition[2], 
+        gluLookAt(_lightPosition[0],  _lightPosition[1],  _lightPosition[2],
         _sceneTransform.translation[0],       _sceneTransform.translation[1],        _sceneTransform.translation[2],        0, 1, 0);
 
         // Now that we have the light's view, let's save the current modelview matrix.
@@ -597,7 +598,7 @@ void SimpleGUI::StoreLightMatrices()
 
 void SimpleGUI::CreateRenderTexture(GLuint& textureID, int sizeX, int sizeY, int channels, int type)
 {
-    glGenTextures(1, &textureID);                                
+    glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     // Create the texture and store it on the video card
@@ -617,14 +618,14 @@ void SimpleGUI::CreateRenderTexture(GLuint& textureID, int sizeX, int sizeY, int
 //////////////////////////////// APPLY SHADOW MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
 
 void SimpleGUI::ApplyShadowMap()
-{                
+{
 #ifdef SOFA_HAVE_GLEW
     // Let's turn our shaders on for doing shadow mapping on our world
     g_Shader.TurnOn();
 
     // Turn on our texture unit for shadow mapping and bind our depth texture
     glActiveTextureARB(GL_TEXTURE1_ARB);
-    glEnable(GL_TEXTURE_2D); 
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, g_DepthTexture);
 
     // Give GLSL our texture unit that holds the shadow map
@@ -643,7 +644,7 @@ void SimpleGUI::ApplyShadowMap()
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 
     // Create our bias matrix to have a 0 to 1 ratio after clip space
-    const float mBias[] = {0.5, 0.0, 0.0, 0.0, 
+    const float mBias[] = {0.5, 0.0, 0.0, 0.0,
         0.0, 0.5, 0.0, 0.0,
         0.0, 0.0, 0.5+g_DepthBias[0], 0.0,
         0.5, 0.5, 0.5+g_DepthBias[1], 1.0};
@@ -676,7 +677,7 @@ void SimpleGUI::ApplyShadowMap()
     glMatrixMode(GL_MODELVIEW);
 
     // Turn the first multi-texture pass off
-    
+
     glActiveTextureARB(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D);
     glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -717,8 +718,8 @@ void SimpleGUI::Display3DText(float x, float y, float z, char* string)
 }
 
 // ---------------------------------------------------
-// --- 
-// --- 
+// ---
+// ---
 // ---------------------------------------------------
 void SimpleGUI::DrawAxis(double xpos, double ypos, double zpos,
     double arrowSize)
@@ -800,8 +801,8 @@ void SimpleGUI::DrawAxis(double xpos, double ypos, double zpos,
 }
 
 // ---------------------------------------------------
-// --- 
-// --- 
+// ---
+// ---
 // ---------------------------------------------------
 void SimpleGUI::DrawBox(double* minBBox, double* maxBBox, double r)
 {
@@ -832,7 +833,7 @@ void SimpleGUI::DrawBox(double* minBBox, double* maxBBox, double r)
                                       maxBBox[1]           ,
                            (corner&2)?minBBox[2]:maxBBox[2]);
             }
-        
+
             // --- Draw the Z edges
             for (int corner=0; corner<4; ++corner)
             {
@@ -906,7 +907,7 @@ void SimpleGUI::DrawBox(double* minBBox, double* maxBBox, double r)
 
 // ----------------------------------------------------------------------------------
 // --- Draw a "plane" in wireframe. The "plane" is parallel to the XY axis
-// --- of the main coordinate system 
+// --- of the main coordinate system
 // ----------------------------------------------------------------------------------
 void SimpleGUI::DrawXYPlane(double zo, double xmin, double xmax, double ymin,
     double ymax, double step)
@@ -935,7 +936,7 @@ void SimpleGUI::DrawXYPlane(double zo, double xmin, double xmax, double ymin,
 
 // ----------------------------------------------------------------------------------
 // --- Draw a "plane" in wireframe. The "plane" is parallel to the XY axis
-// --- of the main coordinate system 
+// --- of the main coordinate system
 // ----------------------------------------------------------------------------------
 void SimpleGUI::DrawYZPlane(double xo, double ymin, double ymax, double zmin,
     double zmax, double step)
@@ -964,7 +965,7 @@ void SimpleGUI::DrawYZPlane(double xo, double ymin, double ymax, double zmin,
 
 // ----------------------------------------------------------------------------------
 // --- Draw a "plane" in wireframe. The "plane" is parallel to the XY axis
-// --- of the main coordinate system 
+// --- of the main coordinate system
 // ----------------------------------------------------------------------------------
 void SimpleGUI::DrawXZPlane(double yo, double xmin, double xmax, double zmin,
     double zmax, double step)
@@ -995,7 +996,7 @@ void SimpleGUI::DrawXZPlane(double yo, double xmin, double xmax, double zmin,
 void SimpleGUI::DrawLogo()
 {
     int w = 0;
-    int h = 0; 
+    int h = 0;
 
     if (texLogo && texLogo->getImage()) {
         h = texLogo->getImage()->getHeight();
@@ -1030,7 +1031,7 @@ void SimpleGUI::DrawLogo()
     glVertex3d((_W-w)/2, _H-(_H-h)/2, 0.0);
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, 0);    
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -1042,24 +1043,24 @@ void SimpleGUI::DrawLogo()
 // -------------------------------------------------------------------
 void SimpleGUI::DisplayOBJs(bool shadowPass)
 {
-    
+
     Enable<GL_LIGHTING> light;
     Enable<GL_DEPTH_TEST> depth;
-    
+
     glShadeModel(GL_SMOOTH);
     //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glColor4f(1,1,1,1);
     glDisable(GL_COLOR_MATERIAL);
-    
+
     if (!initTexturesDone)
     {
 //         std::cout << "-----------------------------------> initTexturesDone\n";
         //---------------------------------------------------
-        simulation::tree::getSimulation()->initTextures(groot);
+        simulation::getSimulation()->initTextures(groot);
         //---------------------------------------------------
         initTexturesDone = true;
     }
-    
+
     {
         if (shadowPass)
             getSimulation()->drawShadows(groot);
@@ -1069,11 +1070,11 @@ void SimpleGUI::DisplayOBJs(bool shadowPass)
         {
             DrawAxis(0.0, 0.0, 0.0, 10.0);
             if (sceneMinBBox[0] < sceneMaxBBox[0])
-	      {
-		Vec3d minTemp=sceneMinBBox;
-		Vec3d maxTemp=sceneMaxBBox;
-		DrawBox(minTemp.ptr(), maxTemp.ptr());
-	      }
+              {
+                Vec3d minTemp=sceneMinBBox;
+                Vec3d maxTemp=sceneMaxBBox;
+                DrawBox(minTemp.ptr(), maxTemp.ptr());
+              }
         }
     }
 
@@ -1110,7 +1111,7 @@ void SimpleGUI::DisplayMenu(void)
 // ---
 // ---------------------------------------------------------
 void SimpleGUI::DrawScene(void)
-{    
+{
 
     _newQuat.buildRotationMatrix(_sceneTransform.rotation);
     calcProjection();
@@ -1146,7 +1147,7 @@ void SimpleGUI::DrawScene(void)
 
                 // Since we don't care about color when rendering the depth values to
                 // the shadow-map texture, we disable color writing to increase speed.
-                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); 
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
                 // This turns of the polygon offset functionality to fix artifacts.
                 // Comment this out and run the program to see what artifacts I mean.
@@ -1169,7 +1170,7 @@ void SimpleGUI::DrawScene(void)
                 glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, (int)SHADOW_WIDTH, (int)SHADOW_HEIGHT);
 
                 // We can turn color writing back on since we already stored the depth values
-                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
                 // Turn off polygon offsetting
                 glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1209,7 +1210,7 @@ void SimpleGUI::DrawScene(void)
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
             glLoadIdentity();
-            glOrtho(0,1,0,1,-1,1); 
+            glOrtho(0,1,0,1,-1,1);
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();{
                 glLoadIdentity();
@@ -1273,7 +1274,7 @@ void SimpleGUI::DrawScene(void)
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
             glLoadIdentity();
-            glOrtho(0,1,0,1,-1,1); 
+            glOrtho(0,1,0,1,-1,1);
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();{
                 glLoadIdentity();
@@ -1295,7 +1296,7 @@ void SimpleGUI::DrawScene(void)
             glDisable(GL_TEXTURE_2D);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
-    
+
     }
     else
 #endif
@@ -1468,8 +1469,8 @@ void SimpleGUI::paintGL()
 
     //    beginDisplay = MesureTemps();
 
-    // valid() is turned off when FLTK creates a new context for this window 
-    // or when the window resizes, and is turned on after draw() is called.  
+    // valid() is turned off when FLTK creates a new context for this window
+    // or when the window resizes, and is turned on after draw() is called.
     // Use this to avoid unneccessarily initializing the OpenGL context.
     //static double lastOrthoTransZ = 0.0;
     /*
@@ -1526,15 +1527,15 @@ void SimpleGUI::eventNewStep()
         double fps = ((double)timeTicks / (curtime - beginTime[i]))*(frameCounter<100?frameCounter:100);
         char buf[100];
         sprintf(buf, "%.1f FPS", fps);
-	std::string title = "SOFA";
-	if (!sceneFileName.empty())
-	{
-	    title += " :: ";
-	    title += sceneFileName;
-	}
-	title += " :: ";
-	title += buf;
-	glutSetWindowTitle(title.c_str());
+        std::string title = "SOFA";
+        if (!sceneFileName.empty())
+        {
+            title += " :: ";
+            title += sceneFileName;
+        }
+        title += " :: ";
+        title += buf;
+        glutSetWindowTitle(title.c_str());
 
         beginTime[i] = curtime;
         //frameCounter = 0;
@@ -1542,32 +1543,32 @@ void SimpleGUI::eventNewStep()
     if (m_displayComputationTime && (frameCounter%100) == 0 && groot!=NULL)
     {
         std::cout << "========== ITERATION " << frameCounter << " ==========\n";
-        const simulation::tree::GNode::NodeTimer& total = groot->getTotalTime();
-        const std::map<std::string, simulation::tree::GNode::NodeTimer>& times = groot->getVisitorTime();
-        const std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, simulation::tree::GNode::ObjectTimer> >& objtimes = groot->getObjectTime();
+        const simulation::Node::NodeTimer& total = groot->getTotalTime();
+        const std::map<std::string, simulation::Node::NodeTimer>& times = groot->getVisitorTime();
+        const std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, simulation::Node::ObjectTimer> >& objtimes = groot->getObjectTime();
         const double fact = 1000000.0 / (100*groot->getTimeFreq());
-        for (std::map<std::string, simulation::tree::GNode::NodeTimer>::const_iterator it = times.begin(); it != times.end(); ++it)
+        for (std::map<std::string, simulation::Node::NodeTimer>::const_iterator it = times.begin(); it != times.end(); ++it)
         {
             std::cout << "TIME "<<it->first<<": " << ((int)(fact*it->second.tTree+0.5))*0.001 << " ms (" << (1000*it->second.tTree/total.tTree)*0.1 << " %).\n";
-            std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, simulation::tree::GNode::ObjectTimer> >::const_iterator it1 = objtimes.find(it->first);
+            std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, simulation::Node::ObjectTimer> >::const_iterator it1 = objtimes.find(it->first);
             if (it1 != objtimes.end())
             {
-                for (std::map<sofa::core::objectmodel::BaseObject*, simulation::tree::GNode::ObjectTimer>::const_iterator it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
+                for (std::map<sofa::core::objectmodel::BaseObject*, simulation::Node::ObjectTimer>::const_iterator it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
                 {
                     std::cout << "  "<< sofa::helper::gettypename(typeid(*(it2->first)))<<" "<< it2->first->getName() <<": "
                         << ((int)(fact*it2->second.tObject+0.5))*0.001 << " ms (" << (1000*it2->second.tObject/it->second.tTree)*0.1 << " %).\n";
                 }
             }
         }
-        for (std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, simulation::tree::GNode::ObjectTimer> >::const_iterator it = objtimes.begin(); it != objtimes.end(); ++it)
+        for (std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, simulation::Node::ObjectTimer> >::const_iterator it = objtimes.begin(); it != objtimes.end(); ++it)
         {
             if (times.count(it->first)>0) continue;
             ctime_t ttotal = 0;
-            for (std::map<sofa::core::objectmodel::BaseObject*, simulation::tree::GNode::ObjectTimer>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+            for (std::map<sofa::core::objectmodel::BaseObject*, simulation::Node::ObjectTimer>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
                 ttotal += it2->second.tObject;
             std::cout << "TIME "<<it->first<<": " << ((int)(fact*ttotal+0.5))*0.001 << " ms (" << (1000*ttotal/total.tTree)*0.1 << " %).\n";
             if (ttotal > 0)
-                for (std::map<sofa::core::objectmodel::BaseObject*, simulation::tree::GNode::ObjectTimer>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+                for (std::map<sofa::core::objectmodel::BaseObject*, simulation::Node::ObjectTimer>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
                 {
                     std::cout << "  "<< sofa::helper::gettypename(typeid(*(it2->first)))<<" "<< it2->first->getName() <<": "
                         << ((int)(fact*it2->second.tObject+0.5))*0.001 << " ms (" << (1000*it2->second.tObject/ttotal)*0.1 << " %).\n";
@@ -1827,19 +1828,19 @@ void SimpleGUI::keyPressEvent ( int k )
         }
 
     case ' ':
-	// --- start/stop
+        // --- start/stop
         {
-	    playpause();
-	    break;
-	}
+            playpause();
+            break;
+        }
 
     case 'n':
-	// --- step
+        // --- step
         {
-	    step();
-	    redraw();
-	    break;
-	}
+            step();
+            redraw();
+            break;
+        }
 
     case 'q': //GLUT_KEY_Escape:
         {
@@ -1861,7 +1862,7 @@ void SimpleGUI::keyPressEvent ( int k )
                 std::cout << "Interaction Mode OFF\n";
                 _mouseInteractorTranslationMode = false;
                 _mouseInteractorRotationMode = false;
-            }    
+            }
             break;
         }
     case GLUT_KEY_F5:
@@ -1873,6 +1874,7 @@ void SimpleGUI::keyPressEvent ( int k )
                 Quaternion q = _newQuat;
                 Transformation t = _sceneTransform;
                 simulation::Node* newroot = getSimulation()->load(filename.c_str());
+                getSimulation()->init(newroot);
                 if (newroot == NULL)
                 {
                     std::cerr << "Failed to load "<<filename<<std::endl;
@@ -1917,11 +1919,11 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             break;
 
         case MouseMove:
-            // 
+            //
             break;
 
         case MouseButtonRelease:
-            // Mouse left button is released 
+            // Mouse left button is released
             if (button == GLUT_LEFT_BUTTON)
             {
                 if (_mouseInteractorMoving)
@@ -1949,7 +1951,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                 _mouseInteractorSavedPosY = eventY;
                 _mouseInteractorMoving = true;
             }
-            // Mouse right button is pushed 
+            // Mouse right button is pushed
             else if (button == GLUT_RIGHT_BUTTON)
             {
                 _translationMode = Z_TRANSLATION;
@@ -1960,7 +1962,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             break;
 
         case MouseButtonRelease:
-            // Mouse left button is released 
+            // Mouse left button is released
             if ((button == GLUT_LEFT_BUTTON) && (_translationMode == XY_TRANSLATION))
             {
                 if (_mouseInteractorMoving)
@@ -1969,7 +1971,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                     _mouseInteractorMoving = false;
                 }
             }
-            // Mouse right button is released 
+            // Mouse right button is released
             else if ((button == GLUT_RIGHT_BUTTON) && (_translationMode == Z_TRANSLATION))
             {
                 if (_mouseInteractorMoving)
@@ -1996,11 +1998,11 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             interactor->setName("mouse");
             if (groot)
             {
-                simulation::tree::GNode* child = new simulation::tree::GNode("mouse");
+                simulation::Node* child = new simulation::tree::GNode("mouse");
                 groot->addChild(child);
                 child->addObject(interactor);
             }
-	    interactor->init();
+            interactor->init();
         }
         interactor->newEvent("show");
         switch (type)
@@ -2014,7 +2016,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             {
                 interactor->newEvent("pick2");
             }
-			else if (button == GLUT_MIDDLE_BUTTON) // Shift+Midclick (by 2 steps defining 2 input points) to cut from one point to another
+                        else if (button == GLUT_MIDDLE_BUTTON) // Shift+Midclick (by 2 steps defining 2 input points) to cut from one point to another
             {
                 interactor->newEvent("pick3");
             }
@@ -2071,7 +2073,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                 _mouseInteractorSavedPosX = eventX;
                 _mouseInteractorSavedPosY = eventY;
             }
-            // Mouse right button is pushed 
+            // Mouse right button is pushed
             else if (button == GLUT_RIGHT_BUTTON)
             {
                 _navigationMode = BTRIGHT_MODE;
@@ -2079,7 +2081,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                 _mouseInteractorSavedPosX = eventX;
                 _mouseInteractorSavedPosY = eventY;
             }
-            // Mouse middle button is pushed 
+            // Mouse middle button is pushed
             else if (button == GLUT_MIDDLE_BUTTON)
             {
                 _navigationMode = BTMIDDLE_MODE;
@@ -2090,11 +2092,11 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             break;
 
         case MouseMove:
-            // 
+            //
             break;
 
         case MouseButtonRelease:
-            // Mouse left button is released 
+            // Mouse left button is released
             if (button == GLUT_LEFT_BUTTON)
             {
                 if (_mouseInteractorMoving)
@@ -2186,7 +2188,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                 _mouseInteractorSavedPosX = eventX;
                 _mouseInteractorSavedPosY = eventY;
             }
-            // Mouse right button is pushed 
+            // Mouse right button is pushed
             else if (button == GLUT_RIGHT_BUTTON)
             {
                 _navigationMode = BTRIGHT_MODE;
@@ -2194,7 +2196,7 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
                 _mouseInteractorSavedPosX = eventX;
                 _mouseInteractorSavedPosY = eventY;
             }
-            // Mouse middle button is pushed 
+            // Mouse middle button is pushed
             else if (button == GLUT_MIDDLE_BUTTON)
             {
                 _navigationMode = BTMIDDLE_MODE;
@@ -2205,11 +2207,11 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             break;
 
         case MouseMove:
-            // 
+            //
             break;
 
         case MouseButtonRelease:
-            // Mouse left button is released 
+            // Mouse left button is released
             if (button == GLUT_LEFT_BUTTON)
             {
                 if (_mouseInteractorMoving)
@@ -2276,8 +2278,8 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             _mouseInteractorSavedPosY = eventY;
             }
         }
-        static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
-        static_cast<sofa::simulation::tree::GNode*>(instrument->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
+        static_cast<sofa::simulation::Node*>(instrument->getContext())->execute<sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor>();
+        static_cast<sofa::simulation::Node*>(instrument->getContext())->execute<sofa::simulation::UpdateMappingVisitor>();
         }
     }
     else
@@ -2322,11 +2324,11 @@ void SimpleGUI::mouseEvent ( int type, int eventX, int eventY, int button )
             break;
 
         case MouseMove:
-            // 
+            //
             break;
 
         case MouseButtonRelease:
-            // Mouse left button is released 
+            // Mouse left button is released
             if (button == GLUT_LEFT_BUTTON)
             {
                 if (_moving && _navigationMode == TRACKBALL_MODE)
@@ -2425,19 +2427,19 @@ void SimpleGUI::step()
         //groot->setLogTime(true);
 
         getSimulation()->animate(groot);
-        
+
         if( m_dumpState )
           getSimulation()->dumpState( groot, *m_dumpStateStream );
         if( m_exportGnuplot )
           getSimulation()->exportGnuplot( groot, groot->getTime() );
-        
+
 
         _waitForRender = true;
         eventNewStep();
 
         redraw();
     }
-    
+
     if (_animationOBJ)
     {
 #ifdef CAPTURE_PERIOD
@@ -2518,7 +2520,7 @@ void SimpleGUI::showVisual(bool value)
     if (groot)
     {
         groot->getContext()->setShowVisualModels(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2528,7 +2530,7 @@ void SimpleGUI::showBehavior(bool value)
     if (groot)
     {
         groot->getContext()->setShowBehaviorModels(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2538,7 +2540,7 @@ void SimpleGUI::showCollision(bool value)
     if (groot)
     {
         groot->getContext()->setShowCollisionModels(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2548,7 +2550,7 @@ void SimpleGUI::showBoundingCollision(bool value)
     if (groot)
     {
         groot->getContext()->setShowBoundingCollisionModels(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2558,7 +2560,7 @@ void SimpleGUI::showMapping(bool value)
     if (groot)
     {
         groot->getContext()->setShowMappings(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2568,7 +2570,7 @@ void SimpleGUI::showMechanicalMapping(bool value)
     if (groot)
     {
         groot->getContext()->setShowMechanicalMappings(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2578,7 +2580,7 @@ void SimpleGUI::showForceField(bool value)
     if (groot)
     {
         groot->getContext()->setShowForceFields(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2588,7 +2590,7 @@ void SimpleGUI::showInteractionForceField(bool value)
     if (groot)
     {
         groot->getContext()->setShowInteractionForceFields(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2598,7 +2600,7 @@ void SimpleGUI::showWireFrame(bool value)
     if (groot)
     {
         groot->getContext()->setShowWireFrame(value);
-	getSimulation()->updateVisualContext(groot);
+        getSimulation()->updateVisualContext(groot);
     }
     redraw();
 }
@@ -2633,12 +2635,12 @@ void SimpleGUI::exportOBJ(bool exportMTL)
         ofilename << "scene";
 //     double time = groot->getTime();
 //     ofilename << '-' << (int)(time*1000);
-    
+
     std::stringstream oss;
     oss.width(5);
     oss.fill('0');
     oss << _animationOBJcounter;
-    
+
     ofilename << '_' << (oss.str().c_str());
     ofilename << ".obj";
     std::string filename = ofilename.str();

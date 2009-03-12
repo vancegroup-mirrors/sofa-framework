@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -48,7 +48,7 @@ namespace behavior
  *  \brief Abstract interface for linear system solvers
  *
  */
-class LinearSolver : public virtual objectmodel::BaseObject
+class SOFA_CORE_API LinearSolver : public virtual objectmodel::BaseObject
 {
 public:
     typedef BaseMechanicalState::VecId VecId;
@@ -74,6 +74,12 @@ public:
 
     /// Solve the system as constructed using the previous methods
     virtual void solveSystem() = 0;
+
+	///
+	virtual void partial_solve(std::list<int>& /*I_last_Disp*/, std::list<int>& /*I_last_Dforce*/, bool /*NewIn*/){std::cerr<<"WARNING : partial_solve is not implemented yet"<<std::endl; }
+
+    /// Invert the system, this method is optional because it's call when solveSystem() is called for the first time
+    virtual void invertSystem() {}
 
     /// Multiply the inverse of the system matrix by the transpose of the given matrix J
     ///
@@ -106,6 +112,12 @@ public:
 
     /// Get the linear system inverse matrix, or NULL if this solver does not build it
     virtual defaulttype::BaseMatrix* getSystemInverseBaseMatrix() { return NULL; }
+
+    /// Read the Matrix solver from a file
+    virtual bool readFile(std::istream& /*in*/) { return false;}
+
+    /// Read the Matrix solver from a file
+    virtual bool writeFile(std::ostream& /*out*/) {return false;}
 
 protected:
 };

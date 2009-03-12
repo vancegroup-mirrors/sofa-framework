@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,8 +31,9 @@
 #include <assert.h>
 #include <sofa/helper/gl/template.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+#include <sofa/simulation/common/Simulation.h>
+
 
 namespace sofa
 {
@@ -122,10 +123,10 @@ void PenalityContactForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df
 	}
 }
 
-template <class DataTypes> 
+template <class DataTypes>
     double PenalityContactForceField<DataTypes>::getPotentialEnergy(const VecCoord&, const VecCoord&)
 {
-    cerr<<"PenalityContactForceField::getPotentialEnergy-not-implemented !!!"<<endl;
+    serr<<"PenalityContactForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 
@@ -137,73 +138,89 @@ void PenalityContactForceField<DataTypes>::draw()
 	const VecCoord& p2 = *this->mstate2->getX();
     glDisable(GL_LIGHTING);
 
-	glBegin(GL_LINES);
+    std::vector< defaulttype::Vector3 > points[4];
+
 	for (unsigned int i=0; i<contacts.getValue().size(); i++)
 	{
 		const Contact& c = contacts.getValue()[i];
 		Real d = c.dist - (p2[c.m2]-p1[c.m1])*c.norm;
 		if (c.age > 10) //c.spen > c.mu_s * c.ks * 0.99)
 			if (d > 0)
-				glColor4f(1,0,1,1);
+			  {
+				points[0].push_back(p1[c.m1]);
+				points[0].push_back(p2[c.m2]);
+			  }
 			else
-				glColor4f(0,1,1,1);
+			  {
+				points[1].push_back(p1[c.m1]);
+				points[1].push_back(p2[c.m2]);
+			  }
 		else
 			if (d > 0)
-				glColor4f(1,0,0,1);
+			  {
+				points[2].push_back(p1[c.m1]);
+				points[2].push_back(p2[c.m2]);
+			  }
 			else
-				glColor4f(0,1,0,1);
-		helper::gl::glVertexT(p1[c.m1]);
-		helper::gl::glVertexT(p2[c.m2]);
+			  {
+				points[3].push_back(p1[c.m1]);
+				points[3].push_back(p2[c.m2]);
+			  }
 	}
-	glEnd();
+	simulation::getSimulation()->DrawUtility.drawLines(points[0], 1, defaulttype::Vec<4,float>(1,0,1,1));
+	simulation::getSimulation()->DrawUtility.drawLines(points[1], 1, defaulttype::Vec<4,float>(0,1,1,1));
+	simulation::getSimulation()->DrawUtility.drawLines(points[2], 1, defaulttype::Vec<4,float>(1,0,0,1));
+	simulation::getSimulation()->DrawUtility.drawLines(points[3], 1, defaulttype::Vec<4,float>(0,1,0,1));
 
+
+	std::vector< defaulttype::Vector3 > pointsN;
 	if (getContext()->getShowNormals())
 	{
-		glColor4f(1,1,0,1);
-		glBegin(GL_LINES);
 		for (unsigned int i=0; i<contacts.getValue().size(); i++)
 		{
 			const Contact& c = contacts.getValue()[i];
 			Coord p = p1[c.m1] - c.norm;
-			helper::gl::glVertexT(p1[c.m1]);
-			helper::gl::glVertexT(p);
+			pointsN.push_back(p1[c.m1]);
+			pointsN.push_back(p);
+
+
 			p = p2[c.m2] + c.norm;
-			helper::gl::glVertexT(p2[c.m2]);
-			helper::gl::glVertexT(p);
+			pointsN.push_back(p2[c.m2]);
+			pointsN.push_back(p);
 		}
-		glEnd();
+		simulation::getSimulation()->DrawUtility.drawLines(pointsN, 1, defaulttype::Vec<4,float>(1,1,0,1));
 	}
 }
 
 
 template<class DataTypes>
-    void PenalityContactForceField<DataTypes>::grabPoint( 
-    const core::componentmodel::behavior::MechanicalState<defaulttype::Vec3Types> *tool, 
-    const helper::vector< unsigned int > &index, 
-    helper::vector< std::pair< core::objectmodel::BaseObject*, defaulttype::Vec3f> > &result, 
+    void PenalityContactForceField<DataTypes>::grabPoint(
+    const core::componentmodel::behavior::MechanicalState<defaulttype::Vec3Types> *tool,
+    const helper::vector< unsigned int > &index,
+    helper::vector< std::pair< core::objectmodel::BaseObject*, defaulttype::Vec3f> > &result,
     helper::vector< unsigned int > &triangle,
-    helper::vector< unsigned int > &index_point)  
+    helper::vector< unsigned int > &index_point)
 {
   if (static_cast< core::objectmodel::BaseObject *>(this->mstate1) == static_cast< const core::objectmodel::BaseObject *>(tool))
-  {     
+  {
     for (unsigned int i=0;i<contacts.getValue().size();i++)
     {
       for (unsigned int j=0;j<index.size();j++)
       {
-	if (contacts.getValue()[i].m1  == (int)index[j]) 
+	if (contacts.getValue()[i].m1  == (int)index[j])
 	{
-	  result.push_back(std::make_pair(static_cast< core::objectmodel::BaseObject *>(this), 
+	  result.push_back(std::make_pair(static_cast< core::objectmodel::BaseObject *>(this),
 			   (*this->mstate2->getX())[contacts.getValue()[i].m2])
 			  );
 	  triangle.push_back(contacts.getValue()[i].index2);
 	  index_point.push_back(index[j]);
 	}
       }
-    } 
-  }	  
-  else if (static_cast< core::objectmodel::BaseObject *>(this->mstate2) == static_cast< const core::objectmodel::BaseObject *>(tool)) 
+    }
+  }
+  else if (static_cast< core::objectmodel::BaseObject *>(this->mstate2) == static_cast< const core::objectmodel::BaseObject *>(tool))
   {
-	    
+
     for (unsigned int i=0;i<contacts.getValue().size();i++)
     {
       for (unsigned int j=0;j<index.size();j++)
@@ -213,17 +230,17 @@ template<class DataTypes>
 	  result.push_back(std::make_pair(static_cast< core::objectmodel::BaseObject *>(this),
 			   (*this->mstate1->getX())[contacts.getValue()[i].m1])
 			  );
-	  
+
 	  triangle.push_back(contacts.getValue()[i].index1);
 	  index_point.push_back(index[j]);
 	}
-      }	      
+      }
     }
   }
-	  
-	  	  	  
+
+
 }
-	
+
 
 } // namespace forcefield
 

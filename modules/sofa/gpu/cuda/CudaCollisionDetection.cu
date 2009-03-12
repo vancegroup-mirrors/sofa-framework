@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -24,10 +24,10 @@
 ******************************************************************************/
 #include "CudaCommon.h"
 #include "CudaMath.h"
-#include <stdio.h>
+#include "mycuda.h"
 #include "cuda.h"
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 namespace sofa
 {
 namespace gpu
@@ -180,7 +180,7 @@ __global__ void CudaCollisionDetection_runTests_kernel(const GPUTest* tests, int
 
 void CudaCollisionDetection_runTests(unsigned int nbTests, unsigned int maxPoints, const void* tests, void* nresults)
 {
-    printf("sizeof(GPUTest)=%d\nsizeof(GPUContact)=%d\nsizeof(matrix3<float>)=%d\n",sizeof(GPUTest),sizeof(GPUContact),sizeof(matrix3<float>));
+    sofa::gpu::cuda::myprintf("sizeof(GPUTest)=%d\nsizeof(GPUContact)=%d\nsizeof(matrix3<float>)=%d\n",sizeof(GPUTest),sizeof(GPUContact),sizeof(matrix3<float>));
     const GPUTest* gputests = (const GPUTest*)tests;
     // round up to 16
     //maxPoints = (maxPoints+15)&-16;
@@ -190,7 +190,7 @@ void CudaCollisionDetection_runTests(unsigned int nbTests, unsigned int maxPoint
     
 }
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

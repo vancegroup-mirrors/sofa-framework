@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,8 +34,8 @@
 #include <sofa/helper/system/config.h>
 #include <assert.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -64,7 +64,11 @@ JointSpringForceField<DataTypes>::JointSpringForceField()
 {
 }
 
-                  
+template<class DataTypes>
+JointSpringForceField<DataTypes>::~JointSpringForceField()
+{
+}
+
 template <class DataTypes>
 void JointSpringForceField<DataTypes>::init()
 {
@@ -93,13 +97,13 @@ void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy
 	//compute elongation
 	Mp1p2.getCenter() -= spring.initTrans;
 	//compute torsion
-	Mp1p2.getOrientation() =  Mp1p2.getOrientation() * spring.initRot.inverse();
+	Mp1p2.getOrientation() = Mp1p2.getOrientation() * spring.initRot.inverse();
 
 	//-- decomposing spring torsion in 2 parts (lawful rotation and illicit rotation) to fix bug with large rotations
 	Vector dRangles = Mp1p2.getOrientation().toEulerVector();
 		//lawful torsion = spring torsion in the axis where ksr is null 
 	Vector lawfulRots( (Real)spring.freeMovements[3], (Real)spring.freeMovements[4], (Real)spring.freeMovements[5] );
-	spring.lawfulTorsion = Quat::createFromRotationVector(dRangles.linearProduct(lawfulRots));
+	spring.lawfulTorsion = Quat::createQuaterFromEuler(dRangles.linearProduct(lawfulRots));
 	Mat MRLT;
 	spring.lawfulTorsion.toMatrix(MRLT);
 		//extra torsion = spring torsion in the other axis (ksr not null), expressed in the lawful torsion reference axis

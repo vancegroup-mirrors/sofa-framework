@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -49,7 +49,7 @@ namespace objectmodel
  *  \brief Implementation of BaseContext, storing all shared parameters in Datas.
  *
  */
-class Context : public BaseContext
+class SOFA_CORE_API Context : public BaseContext
 {
 public:
     
@@ -240,8 +240,10 @@ public:
     
     /// Copy the context variables of visualization from the given instance
     void copyVisualContext(const Context& c);
+    	
+    /// Fusion the context variables of visualization from the given instance with the current instance
+    void fusionVisualContext(const Context& c);
     
-    friend std::ostream& operator << (std::ostream& out, const Context& c );
 	
 
 

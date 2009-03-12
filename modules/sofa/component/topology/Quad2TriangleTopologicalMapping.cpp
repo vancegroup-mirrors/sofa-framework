@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,6 +35,8 @@
 #include <sofa/component/topology/QuadSetTopologyChange.h>
 
 #include <sofa/component/topology/PointSetTopologyChange.h> 
+
+#include <sofa/component/topology/GridTopology.h> 
 
 #include <sofa/defaulttype/Vec.h>
 #include <map>
@@ -84,17 +86,17 @@ Quad2TriangleTopologicalMapping::~Quad2TriangleTopologicalMapping()
 
 void Quad2TriangleTopologicalMapping::init()
 {
-	//std::cout << "INFO_print : init Quad2TriangleTopologicalMapping" << std::endl;
+	//sout << "INFO_print : init Quad2TriangleTopologicalMapping" << sendl;
 
 	// INITIALISATION of TRIANGULAR mesh from QUADULAR mesh :
 
 	if (fromModel) {
 		
-		std::cout << "INFO_print : Quad2TriangleTopologicalMapping - from = quad" << std::endl;
+		sout << "INFO_print : Quad2TriangleTopologicalMapping - from = quad" << sendl;
 		
 		if (toModel) {
 
-			std::cout << "INFO_print : Quad2TriangleTopologicalMapping - to = triangle" << std::endl;
+			sout << "INFO_print : Quad2TriangleTopologicalMapping - to = triangle" << sendl;
 
 			TriangleSetTopologyContainer *to_tstc;
 		    toModel->getContext()->get(to_tstc);	
@@ -109,18 +111,40 @@ void Quad2TriangleTopologicalMapping::init()
 			
 			Loc2GlobVec.clear();
 			In2OutMap.clear();
-
+			
+			// These values are only correct if the mesh is a grid topology
+			int nx = 2;
+			int ny = 1;
+			int nz = 1;
+			{
+				topology::GridTopology* grid = dynamic_cast<topology::GridTopology*>(fromModel);
+				if (grid != NULL)
+				{
+					nx = grid->getNx()-1;
+					ny = grid->getNy()-1;
+					nz = grid->getNz()-1;
+				}
+			}
+			
 			for (unsigned int i=0; i<quadArray.size(); ++i) {
 
-					//std::cout << "INFO_print : Quad2TriangleTopologicalMapping - i = " << i << std::endl;
-					//std::cout << "INFO_print : Quad2TriangleTopologicalMapping - quad = " << quadArray[i] << std::endl;
+					//sout << "INFO_print : Quad2TriangleTopologicalMapping - i = " << i << sendl;
+					//sout << "INFO_print : Quad2TriangleTopologicalMapping - quad = " << quadArray[i] << sendl;
 
 					unsigned int p0 = quadArray[i][0]; 
 					unsigned int p1 = quadArray[i][1];
 					unsigned int p2 = quadArray[i][2];
 					unsigned int p3 = quadArray[i][3];
-					to_tstm->addTriangleProcess(Triangle(helper::make_array<unsigned int>((unsigned int) p0, (unsigned int) p1, (unsigned int) p2)));
-					to_tstm->addTriangleProcess(Triangle(helper::make_array<unsigned int>((unsigned int) p0, (unsigned int) p2, (unsigned int) p3)));
+				  if (((i%nx) ^ (i/nx)) & 1)
+					{
+						to_tstm->addTriangleProcess(Triangle(helper::make_array<unsigned int>((unsigned int) p0, (unsigned int) p1, (unsigned int) p3)));
+					  to_tstm->addTriangleProcess(Triangle(helper::make_array<unsigned int>((unsigned int) p2, (unsigned int) p3, (unsigned int) p1)));
+					}
+					else
+					{
+						to_tstm->addTriangleProcess(Triangle(helper::make_array<unsigned int>((unsigned int) p1, (unsigned int) p2, (unsigned int) p0)));
+						to_tstm->addTriangleProcess(Triangle(helper::make_array<unsigned int>((unsigned int) p3, (unsigned int) p0, (unsigned int) p2)));
+					}
 
 					Loc2GlobVec.push_back(i);
 					Loc2GlobVec.push_back(i);
@@ -131,7 +155,9 @@ void Quad2TriangleTopologicalMapping::init()
 
 			}			
 
+			//to_tstm->propagateTopologicalChanges();
 			to_tstm->notifyEndingEvent();
+			//to_tstm->propagateTopologicalChanges();
 		}
 		
 	}
@@ -141,7 +167,7 @@ unsigned int Quad2TriangleTopologicalMapping::getFromIndex(unsigned int ind){
 	return ind; // identity
 }
 
-void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
+void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 
 
 	// INITIALISATION of TRIANGULAR mesh from QUADULAR mesh :
@@ -164,14 +190,16 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 
 				case core::componentmodel::topology::ENDING_EVENT:
 					{
-						//std::cout << "INFO_print : TopologicalMapping - ENDING_EVENT" << std::endl;
+						//sout << "INFO_print : TopologicalMapping - ENDING_EVENT" << sendl;
+						to_tstm->propagateTopologicalChanges();
 						to_tstm->notifyEndingEvent();
+						to_tstm->propagateTopologicalChanges();
 						break;
 					}
 
 				case core::componentmodel::topology::QUADSADDED:
 					{
-						//std::cout << "INFO_print : TopologicalMapping - QUADSADDED" << std::endl;
+						//sout << "INFO_print : TopologicalMapping - QUADSADDED" << sendl;
 						if (fromModel) {
 
 							const sofa::helper::vector<Quad> &quadArray=fromModel->getQuads();
@@ -210,13 +238,13 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 							
 							to_tstm->addTrianglesProcess(triangles_to_create) ;							
 							to_tstm->addTrianglesWarning(triangles_to_create.size(), triangles_to_create, trianglesIndexList) ;							
-							to_tstm->propagateTopologicalChanges();								
+							to_tstm->propagateTopologicalChanges();
 						}
 						break;
 					}
 				case core::componentmodel::topology::QUADSREMOVED:
 					{
-						//std::cout << "INFO_print : TopologicalMapping - QUADSREMOVED" << std::endl;
+						//sout << "INFO_print : TopologicalMapping - QUADSREMOVED" << sendl;
 
 						if (fromModel) {
 
@@ -231,7 +259,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 
 							for (unsigned int i = 0; i < tab.size(); ++i)
 							{
-								//std::cout << "INFO_print : Quad2TriangleTopologicalMapping - remove quad " << tab[i] << std::endl;
+								//sout << "INFO_print : Quad2TriangleTopologicalMapping - remove quad " << tab[i] << sendl;
 
 								unsigned int k = tab[i];
 								sofa::helper::vector<unsigned int> ind_k;	
@@ -269,7 +297,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 											Loc2GlobVec[ind_k[1]] = ind_tmp;
 										}									
 									}else{								
-										std::cout << "INFO_print : Quad2TriangleTopologicalMapping - In2OutMap should have the quad " << last << std::endl;			
+										sout << "INFO_print : Quad2TriangleTopologicalMapping - In2OutMap should have the quad " << last << sendl;			
 									}
 
 									if((int) ind_k[1] != ind_last){ 									
@@ -311,7 +339,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 									to_tstm->removeTriangles(triangles_to_remove, true, false);					
 
 								}else{
-									std::cout << "INFO_print : Quad2TriangleTopologicalMapping - In2OutMap should have the quad " << k << std::endl;
+									sout << "INFO_print : Quad2TriangleTopologicalMapping - In2OutMap should have the quad " << k << sendl;
 								}
 								
 								--last;
@@ -323,7 +351,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 
 					case core::componentmodel::topology::POINTSREMOVED:
 					{
-						//std::cout << "INFO_print : TopologicalMapping - POINTSREMOVED" << std::endl;
+						//sout << "INFO_print : TopologicalMapping - POINTSREMOVED" << sendl;
 						
 						const sofa::helper::vector<unsigned int> tab = ( static_cast< const sofa::component::topology::PointsRemoved * >( *itBegin ) )->getArray();
 
@@ -331,7 +359,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 
 						for(unsigned int i = 0; i < tab.size(); ++i){
 
-							//std::cout << "INFO_print : Quad2TriangleTopologicalMapping - point = " << tab[i] << std::endl;
+							//sout << "INFO_print : Quad2TriangleTopologicalMapping - point = " << tab[i] << sendl;
 							indices.push_back(tab[i]);
 						}
 
@@ -339,7 +367,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 						
 						to_tstm->removePointsWarning(tab_indices, false);
 						to_tstm->propagateTopologicalChanges();
-						to_tstm->removePointsProcess(tab_indices, false);							
+						to_tstm->removePointsProcess(tab_indices, false);
 
 						break;
 					}
@@ -347,7 +375,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 					
 					case core::componentmodel::topology::POINTSRENUMBERING:
 					{
-						//std::cout << "INFO_print : Hexa2QuadTopologicalMapping - POINTSREMOVED" << std::endl;
+						//sout << "INFO_print : Hexa2QuadTopologicalMapping - POINTSREMOVED" << sendl;
 						
 						const sofa::helper::vector<unsigned int> &tab = ( static_cast< const PointsRenumbering * >( *itBegin ) )->getIndexArray();
 						const sofa::helper::vector<unsigned int> &inv_tab = ( static_cast< const PointsRenumbering * >( *itBegin ) )->getinv_IndexArray();
@@ -357,7 +385,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 
 						for(unsigned int i = 0; i < tab.size(); ++i){
 
-							//std::cout << "INFO_print : Hexa2QuadTopologicalMapping - point = " << tab[i] << std::endl;
+							//sout << "INFO_print : Hexa2QuadTopologicalMapping - point = " << tab[i] << sendl;
 							indices.push_back(tab[i]);
 							inv_indices.push_back(inv_tab[i]);
 						}
@@ -366,7 +394,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 						sofa::helper::vector<unsigned int>& inv_tab_indices = inv_indices;
 						
 						to_tstm->renumberPointsWarning(tab_indices, inv_tab_indices, false);						
-						to_tstm->propagateTopologicalChanges();						
+						to_tstm->propagateTopologicalChanges();
 						to_tstm->renumberPointsProcess(tab_indices, inv_tab_indices, false);							
 
 						break;
@@ -375,13 +403,13 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMapping(){
 					
 					case core::componentmodel::topology::POINTSADDED:
 					{
-						//std::cout << "INFO_print : Quad2TriangleTopologicalMapping - POINTSADDED" << std::endl;
+						//sout << "INFO_print : Quad2TriangleTopologicalMapping - POINTSADDED" << sendl;
 
-						const sofa::component::topology::PointsAdded *ta=static_cast< const sofa::component::topology::PointsAdded * >( *itBegin );							
+						const sofa::component::topology::PointsAdded *ta=static_cast< const sofa::component::topology::PointsAdded * >( *itBegin );
 						
 						to_tstm->addPointsProcess(ta->getNbAddedVertices());						
 						to_tstm->addPointsWarning(ta->getNbAddedVertices(), ta->ancestorsList, ta->coefs, false);						
-						to_tstm->propagateTopologicalChanges();						
+						to_tstm->propagateTopologicalChanges();
 
 						break;
 					}	

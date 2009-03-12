@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Interface: GNodeVisitor
 //
-// Description: 
+// Description:
 //
 //
 // Author: The SOFA team </www.sofa-framework.org>, (C) 2008
@@ -33,8 +33,8 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
-#ifndef sofa_simulation_treeGNodeVisitor_h
-#define sofa_simulation_treeGNodeVisitor_h
+#ifndef sofa_simulation_tree_GNodeVisitor_h
+#define sofa_simulation_tree_GNodeVisitor_h
 
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/simulation/tree/GNode.h>
@@ -50,7 +50,7 @@ Base class for the Visitors which deal with GNodes specifically rather than Node
 
 	@author The SOFA team </www.sofa-framework.org>
 */
-class GNodeVisitor : public sofa::simulation::Visitor
+class SOFA_SIMULATION_TREE_API GNodeVisitor : public sofa::simulation::Visitor
 {
 public:
     GNodeVisitor();
@@ -100,7 +100,8 @@ public:
 	}
     }
 
-	/// Helper method to enumerate objects in the given list. The callback gets the pointer to node 
+    virtual const char* getClassName() const { return "GNodeVisitor"; }
+	/// Helper method to enumerate objects in the given list. The callback gets the pointer to node
 	template < class Act, class Container, class Object >
 	void for_each(Act* action, GNode* node, const Container& list, void (Act::*fn)(GNode*, Object*))
 	{
@@ -123,7 +124,7 @@ public:
 		}
 	}
 
-	/// Helper method to enumerate objects in the given list. The callback gets the pointer to node 
+	/// Helper method to enumerate objects in the given list. The callback gets the pointer to node
         template < class Act, class Container, class Object >
                 Visitor::Result for_each_r(Act* action, GNode* node, const Container& list, Visitor::Result (Act::*fn)(GNode*, Object*))
                 {

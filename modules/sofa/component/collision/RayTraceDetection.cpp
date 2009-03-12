@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,7 +35,7 @@
 #include <sofa/core/componentmodel/collision/DetectionOutput.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/collision/RayTraceDetection.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <map>
 #include <queue>
 #include <stack>
@@ -68,7 +68,7 @@ namespace sofa
 	int RayTraceDetectionClass =
 	core::
 	RegisterObject
-	("Collision detection using extensive pair-wise tests").add <
+	("Collision detection using TriangleOctreeModel").add <
 	RayTraceDetection > ();
 
       using namespace core::objectmodel;
@@ -91,7 +91,7 @@ namespace sofa
 	  dynamic_cast < TriangleOctreeModel * >(cm2->getLast ());
 	if (!tm1 || !tm2)
 	    return;
-	
+
 
 		/*construct the octree of both models, when it still doesn't exisits */
 	if (!tm1->octreeRoot)
@@ -110,7 +110,7 @@ namespace sofa
 	/* get the output vector for a TriangleOctreeModel, TriangleOctreeModel Collision*/
 	/*Get the cube representing the bounding box of both Models */
 	sofa::core::componentmodel::collision::DetectionOutputVector *& contacts=outputsMap[std::make_pair(tm1, tm2)];
-	  
+
 
 
 	if (contacts == NULL)
@@ -143,7 +143,7 @@ namespace sofa
 	    /*creates a Triangle for each object being tested */
 	    Triangle tri1 (tm1, j);
 
-	   
+
 	    /*cosAngle will store the angle between the triangle from t1 and his corresponding in t2 */
 	    double cosAngle;
 	    /*cosAngle will store the angle between the triangle from t1 and another triangle on t1 that is crossed by the -normal of tri1*/
@@ -159,21 +159,21 @@ namespace sofa
 	    /*test if this triangle was tested before */
 
 	    /*set the triangle as tested */
+	    int flags = tri1.flags();
 
-	
 	    /*test only the points related to this triangle */
-	    if (tri1.flags () & TriangleModel::FLAG_P1)
+	    if (flags & TriangleModel::FLAG_P1)
 	      {
 		normau[nPoints] = tm1->pNorms[tri1.p1Index ()];
 		trianglePoints[nPoints++] = tri1.p1 ();
 
 	      }
-	    if (tri1.flags () & TriangleModel::FLAG_P2)
+	    if (flags & TriangleModel::FLAG_P2)
 	      {
 		normau[nPoints] = tm1->pNorms[tri1.p2Index ()];
 		trianglePoints[nPoints++] = tri1.p2 ();
 	      }
-	    if (tri1.flags () & TriangleModel::FLAG_P3)
+	    if (flags & TriangleModel::FLAG_P3)
 	      {
 		normau[nPoints] = tm1->pNorms[tri1.p3Index ()];
 		trianglePoints[nPoints++] = tri1.p3 ();
@@ -183,7 +183,7 @@ namespace sofa
 	      {
 
 		Vector3 point = trianglePoints[t];
-		
+
              if ((point[0] < (minVect2[0]))
                  || (point[0] > maxVect2[0] )
                  || (point[1] < minVect2[1] )
@@ -219,7 +219,7 @@ namespace sofa
 		    continue;
 		  }
 
-		
+
 		Triangle tri3 (tm1, resTriangle2);
 		cosAngle2 = dot (tri1.n (), tri3.n ());
 		if (cosAngle2 > 0)
@@ -271,11 +271,11 @@ namespace sofa
               core::componentmodel::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
               if (intersector == NULL)
                   continue;
-              
+
               core::CollisionModel* cm1 = (swapModels?cm2:cm);
               cm2 = (swapModels?cm:cm2);
-              
-	   
+
+
 	    // Here we assume a single root element is present in both models
 	    if (intersector->canIntersect (cm1->begin (), cm2->begin ()))
 	      {
@@ -296,19 +296,19 @@ namespace sofa
 	  core::CollisionElementIterator > >TestPair;
 
 
-	CubeModel *cm1 = dynamic_cast < CubeModel * >(cmPair.first);	
-	CubeModel *cm2 = dynamic_cast < CubeModel * >(cmPair.second);	
+	CubeModel *cm1 = dynamic_cast < CubeModel * >(cmPair.first);
+	CubeModel *cm2 = dynamic_cast < CubeModel * >(cmPair.second);
 	if (cm1 && cm2)
 	  {
 	    ctime_t t0, t1, t2;
 	    t0 = CTime::getRefTime ();
 	    findPairsVolume (cm1, cm2);
 
-	 
+
 	    t1 = CTime::getRefTime ();
-	    
+
 	    findPairsVolume (cm2, cm1);
-	    t2 = CTime::getRefTime ();	
+	    t2 = CTime::getRefTime ();
 	  }
       }
 
@@ -341,8 +341,8 @@ namespace sofa
 		glVertex3d (it2->point[1][0], it2->point[1][1],
 			    it2->point[1][2]);
 		glEnd ();
-		std::cerr << it2->point[0] << " " << it2->
-		  point[0] << std::endl;
+		serr << it2->point[0] << " " << it2->
+		  point[0] << sendl;
 		it2->elem.first.draw ();
 		it2->elem.second.draw ();
 	      }

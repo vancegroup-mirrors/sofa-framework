@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -42,7 +42,8 @@ using namespace core::componentmodel::behavior;
 
 template<class DataTypes>
 QuadBendingSprings<DataTypes>::QuadBendingSprings()
-: dof(NULL)
+: localRange( initData(&localRange, defaulttype::Vec<2,int>(-1,-1), "localRange", "optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)" ) )
+, dof(NULL)
 {
 }
 
@@ -54,6 +55,14 @@ QuadBendingSprings<DataTypes>::~QuadBendingSprings()
 template<class DataTypes>
 void QuadBendingSprings<DataTypes>::addSpring( unsigned a, unsigned b, std::set<IndexPair>& springSet )
 {
+    if (localRange.getValue()[0] >= 0)
+    {
+	if ((int)a < localRange.getValue()[0] && (int)b < localRange.getValue()[0]) return;
+    }
+    if (localRange.getValue()[1] >= 0)
+    {
+	if ((int)a > localRange.getValue()[1] && (int)b > localRange.getValue()[1]) return;
+    }
     IndexPair ab(a<b?a:b, a<b?b:a);
     if (springSet.find(ab) != springSet.end()) return;
     springSet.insert(ab);
@@ -62,7 +71,7 @@ void QuadBendingSprings<DataTypes>::addSpring( unsigned a, unsigned b, std::set<
     Real d = (Real)this->kd.getValue();
     Real l = (x[a]-x[b]).norm();
     this->SpringForceField<DataTypes>::addSpring(a,b, s, d, l );
-    //std::cout<<"=================================QuadBendingSprings<DataTypes>::addSpring "<<a<<", "<<b<<std::endl;
+    //sout<<"=================================QuadBendingSprings<DataTypes>::addSpring "<<a<<", "<<b<<sendl;
 }
 
 template<class DataTypes>
@@ -90,7 +99,7 @@ void QuadBendingSprings<DataTypes>::init()
 {
     dof = dynamic_cast<MechanicalObject<DataTypes>*>( this->getContext()->getMechanicalState() );
     assert(dof);
-    //std::cout<<"==================================QuadBendingSprings<DataTypes>::init(), dof size = "<<dof->getX()->size()<<std::endl;
+    //sout<<"==================================QuadBendingSprings<DataTypes>::init(), dof size = "<<dof->getX()->size()<<sendl;
 
     // Set the bending springs
 
@@ -101,7 +110,7 @@ void QuadBendingSprings<DataTypes>::init()
     assert( topology );
 
     const sofa::core::componentmodel::topology::BaseMeshTopology::SeqQuads& quads = topology->getQuads();
-    //std::cout<<"==================================QuadBendingSprings<DataTypes>::init(), quads size = "<<quads.size()<<std::endl;
+    //sout<<"==================================QuadBendingSprings<DataTypes>::init(), quads size = "<<quads.size()<<sendl;
     for( unsigned i= 0; i<quads.size(); ++i )
     {
         const sofa::core::componentmodel::topology::BaseMeshTopology::Quad& face = quads[i];

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,52 +38,29 @@
 namespace sofa
 {
 
-  namespace component
-  {
-	  namespace topology
-	  {
-		  typedef core::componentmodel::topology::BaseMeshTopology::Triangle	Triangle;
-	  }
+namespace component
+{
 
-    namespace collision
-    {
-
-      using sofa::helper::system::thread::CTime;
-      using sofa::helper::system::thread::ctime_t;
-
-
-  TriangleAABB::TriangleAABB (Triangle & t)
-      {
-        for (int i = 0; i < 3; i++)
-          {
-
-            bb[i * 2] = bb_min3 (t.p1 ()[i], t.p2 ()[i], t.p3 ()[i]);
-            bb[(i * 2) + 1] = bb_max3 (t.p1 ()[i], t.p2 ()[i], t.p3 ()[i]);
-            
-        m_size =
-          bb_max3 (fabs (bb[1] - bb[0]), fabs (bb[3] - bb[2]),
-                   fabs (bb[5] - bb[4]));
-        
-
-      }
+namespace topology
+{
+typedef core::componentmodel::topology::BaseMeshTopology::Triangle	Triangle;
 }
 
+namespace collision
+{
 
+using sofa::helper::system::thread::CTime;
+using sofa::helper::system::thread::ctime_t;
 
-    
-	int TriangleOctreeModelClass =	core::RegisterObject ("collision model using a triangular mesh mapped to an Octree").add <	TriangleOctreeModel > ().addAlias ("TriangleOctree");
+int TriangleOctreeModelClass =	core::RegisterObject ("collision model using a triangular mesh mapped to an Octree").add <	TriangleOctreeModel > ().addAlias ("TriangleOctree");
 
-        TriangleOctreeModel::TriangleOctreeModel ()
-      {
-	octreeRoot = NULL;
-	cubeSize = CUBE_SIZE;
-      }
+TriangleOctreeModel::TriangleOctreeModel ()
+{
+}
 
-
-
- void TriangleOctreeModel::draw ()
-      {
-
+void TriangleOctreeModel::draw ()
+{
+    TriangleModel::draw();
         if (isActive () && getContext ()->getShowCollisionModels ())
           {
             if (getContext ()->getShowWireFrame ())
@@ -107,50 +84,8 @@ namespace sofa
             if (getContext ()->getShowWireFrame ())
               glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
           }
-      }
+}
 
-      int TriangleOctreeModel::fillOctree (int tId, int /*d*/, Vector3 /*v*/)
-      {
-
-
-	Vector3 center;
-	Triangle t (this, tId);
-	Vector3 corner (-cubeSize, -cubeSize, -cubeSize);
-
-	TriangleAABB aabb (t);
-	double *bb = aabb.getAABB ();
-	/*Computes the depth of the bounding box in a octree
-
-	 */
-	int d1 = (int)((log10( (double) CUBE_SIZE * 2) / log10( (double)2) )/ aabb.size ());
-	/*computes the size of the octree box that can store the bounding box */
-	int divs = (1 << (d1));
-	double inc = (double) (2 * CUBE_SIZE) / divs;
-	if (bb[0] >= -CUBE_SIZE && bb[2] >= -CUBE_SIZE && bb[4] >= -CUBE_SIZE
-	    && bb[1] <= CUBE_SIZE && bb[3] <= CUBE_SIZE && bb[5] <= CUBE_SIZE)
-	  for (double x1 =
-	       (((int)((bb[0] + CUBE_SIZE) / inc)) * inc - CUBE_SIZE);
-	       x1 <= bb[1]; x1 += inc)
-	    {
-
-	      for (double y1 =
-		   ((int)((bb[2] + CUBE_SIZE) / inc)) * inc - CUBE_SIZE;
-		   y1 <= bb[3]; y1 += inc)
-		{
-
-
-		  for (double z1 =
-		       ((int)((bb[4] + CUBE_SIZE) / inc)) * inc - CUBE_SIZE;
-		       z1 <= bb[5]; z1 += inc)
-		    {
-		      octreeRoot->insert (x1, y1, z1, inc, tId);
-
-		    }
-		}
-	    }
-	return 0;
-
-      }
 void TriangleOctreeModel::computeBoundingTree(int maxDepth)
 {
 	const helper::vector<topology::Triangle>& tri = *triangles;
@@ -205,6 +140,7 @@ const Vector3* pt[3];
 	for(int i=0;i<size2;i++){
 		pNorms[i].normalize();
 	}
+#if 0
 	if(!pTri.size()){
 	/*creates the list of triangles that are associated to a point*/
 	pTri.resize(size2);
@@ -216,27 +152,24 @@ const Vector3* pt[3];
 		   pTri[tri[i][2]].push_back(i);
 		}
 	}
+#endif
+
 }
  
-void TriangleOctreeModel::computeContinuousBoundingTree(double/* dt*/, int maxDepth){
-		computeBoundingTree(maxDepth);
+void TriangleOctreeModel::computeContinuousBoundingTree(double/* dt*/, int maxDepth)
+{
+    computeBoundingTree(maxDepth);
+}
 
-	}
-      void TriangleOctreeModel::buildOctree ()
-      {
-	octreeRoot = new TriangleOctree (this);
+void TriangleOctreeModel::buildOctree()
+{
+    this->octreeTriangles = &this->getTriangles();
+    this->octreePos = &this->getX();
+    TriangleOctreeRoot::buildOctree();
+}
 
-	/*for each triangle add it to the octree*/
-	for (size_t i = 0; i < elems.size (); i++)
-	  {
+} // namespace collision
 
-	    fillOctree (i);
+} // namespace component
 
-	  }
-      }
-
-    }				// namespace collision
-
-  }				// namespace component
-
-}				// namespace sofa
+} // namespace sofa

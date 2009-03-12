@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -57,7 +57,7 @@ extern void mycudaGLUnregisterBufferObject(int id);
 extern void mycudaGLMapBufferObject(void** ptr, int id);
 extern void mycudaGLUnmapBufferObject(int id);
 
-extern void mycudaLogError(int err, const char* src);
+extern void mycudaLogError(const char* err, const char* src);
 extern int myprintf(const char* fmt, ...);
 extern const char* mygetenv(const char* name);
 

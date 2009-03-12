@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -79,19 +79,19 @@ void VisualDrawVisitor::processVisualModel(simulation::Node* node, core::VisualM
 	{
 	case core::VisualModel::Std:
 	{
-		if (shader)
+		if (shader && shader->isActive())
 			shader->start();
 		vm->drawVisual();
-		if (shader)
+		if (shader && shader->isActive())
 			shader->stop();
 		break;
 	}
 	case core::VisualModel::Transparent:
 	{
-		if (shader)
+		if (shader && shader->isActive())
 			shader->start();
 		vm->drawTransparent();
-		if (shader)
+		if (shader && shader->isActive())
 			shader->stop();
 		break;
 	}

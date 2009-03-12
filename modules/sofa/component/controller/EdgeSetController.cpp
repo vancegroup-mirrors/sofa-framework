@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,7 +33,7 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
-
+#define SOFA_COMPONENT_CONTROLLER_EDGESETCONTROLLER_CPP
 #include <sofa/component/controller/EdgeSetController.inl>
 
 #include <sofa/core/ObjectFactory.h>
@@ -45,7 +45,7 @@ namespace sofa
 {
 
 namespace component
-{
+{ 
 
 namespace controller
 {
@@ -72,17 +72,17 @@ int EdgeSetControllerClass = core::RegisterObject("")
 //.add< EdgeSetController<Rigid2fTypes> >()
 ;
 
-//template class EdgeSetController<Vec3dTypes>;
-//template class EdgeSetController<Vec3fTypes>;
-//template class EdgeSetController<Vec2dTypes>;
-//template class EdgeSetController<Vec2fTypes>;
-//template class EdgeSetController<Vec1dTypes>;
-//template class EdgeSetController<Vec1fTypes>;
+//template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Vec3dTypes>;
+//template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Vec3fTypes>;
+//template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Vec2dTypes>;
+//template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Vec2fTypes>;
+//template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Vec1dTypes>;
+//template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Vec1fTypes>;
 #ifndef SOFA_FLOAT
-template class EdgeSetController<Rigid3dTypes>;
+template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Rigid3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class EdgeSetController<Rigid3fTypes>;
+template class SOFA_COMPONENT_CONTROLLER_API EdgeSetController<Rigid3fTypes>;
 #endif
 //template class EdgeSetController<Rigid2dTypes>;
 //template class EdgeSetController<Rigid2fTypes>;

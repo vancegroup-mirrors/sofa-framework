@@ -15,11 +15,12 @@
 			<Object type="RigidMapping" />
 		</Node>
 		<Node name="CollisionTip">
-			<Object type="SphereModel" position="0.0348 0 -0.62 0.0348 0 -0.61 0.0348 0 -0.60" radius="0.03" contactStiffness="0" simulated="0" moving="1" active="0" />
+			<Object type="SphereModel" radius="0.03" contactStiffness="0" simulated="0" moving="1" active="0" />
+			<MechanicalObject position="0.0348 0 -0.62 0.0348 0 -0.61 0.0348 0 -0.60"/>
 			<Object type="RigidMapping" />
 		</Node>
 		<Node name="Visual">
-			<Object type="OglModel" name="visual" filename="Demos/Ophtalmo/data/mesh/Carve_instrument.obj" color="0.1 0.1 0.1 1.0" />
+			<Object type="OglModel" name="visual" fileMesh="Demos/Ophtalmo/data/mesh/Carve_instrument.obj" color="0.1 0.1 0.1 1.0" />
 			<Object type="RigidMapping" object2="visual" />
 		</Node>
 	</Node>

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,8 +31,8 @@
 #include <sofa/helper/system/glut.h>
 #include <sofa/helper/system/FileRepository.h>
 
-using std::cerr;
-using std::endl;
+
+
 
 
 namespace sofa
@@ -113,7 +113,7 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
   inFile.open(fileInRepository.c_str());
   if (inFile.fail()) 
   {
-    std::cerr << "Fail to open file sph" << std::endl;
+    serr << "Fail to open file sph" << sendl;
     return false;
   }
   levels = 0; degree = 0;
@@ -135,7 +135,7 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
 
       if (inFile.fail()) 
 	  {
-        std::cerr << "Error: incorrect file format sph " << std::endl;
+        serr << "Error: incorrect file format sph " << sendl;
         return false;
       }
         
@@ -208,7 +208,7 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
 void SphereTreeModel::applyScale(const double s)
 {
 	Inherit::applyScale(s);
-	std::cout << "Applying scale " << s << " to " << size << " spheres" << std::endl;
+	sout << "Applying scale " << s << " to " << size << " spheres" << sendl;
 	for (int i=0;i<size;i++)
 		radius[i] *= s;
 }
@@ -280,7 +280,7 @@ void SphereTreeModel::computeBoundingTree(int /*maxDepth*/)
 
 void SphereTreeModel::computeContinuousBoundingTree(double /*dt*/, int /*maxDepth*/)
 {	// To do
-	cout << "SphereTreeModel::computeContinuousBoundingTree - not implemented" << endl;
+	sout << "SphereTreeModel::computeContinuousBoundingTree - not implemented" << endl;
 }
 
 std::pair<core::CollisionElementIterator,core::CollisionElementIterator> SphereTreeModel::getInternalChildren(int index) const

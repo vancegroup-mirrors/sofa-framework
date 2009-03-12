@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,7 +31,6 @@
 
 //Typedef to easily use constraints with float type 
 #include <sofa/component/constraint/AttachConstraint.h>
-#include <sofa/component/constraint/BoxConstraint.h>
 #include <sofa/component/constraint/FixedConstraint.h>
 #include <sofa/component/constraint/FixedPlaneConstraint.h>
 #include <sofa/component/constraint/LinearMovementConstraint.h>
@@ -48,11 +47,6 @@ typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::Vec3fTy
 //Rigid
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::Rigid2fTypes> AttachConstraintRigid2f;
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::Rigid3fTypes> AttachConstraintRigid3f;
-
-//Box Constraint
-//---------------------
-//Deformable
-typedef sofa::component::constraint::BoxConstraint<sofa::defaulttype::Vec3fTypes> BoxConstraint3f;
 
 //Fixed Constraint
 //---------------------
@@ -106,7 +100,6 @@ typedef AttachConstraint2f			    AttachConstraint2;
 typedef AttachConstraint3f			    AttachConstraint3;				 
 typedef AttachConstraintRigid2f		            AttachConstraintRigid2;				 
 typedef AttachConstraintRigid3f		            AttachConstraintRigid3;				 
-typedef BoxConstraint3f			            BoxConstraint3;					 
 typedef FixedConstraint1f			    FixedConstraint1;				 
 typedef FixedConstraint2f			    FixedConstraint2;				 
 typedef FixedConstraint3f			    FixedConstraint3;				 

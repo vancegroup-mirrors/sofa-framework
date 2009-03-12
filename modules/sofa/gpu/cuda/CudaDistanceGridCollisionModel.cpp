@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -146,7 +146,7 @@ CudaDistanceGrid* CudaDistanceGrid::load(const std::string& filename, double sca
             return NULL;
         }
         //std::cout << "bbox = "<<mesh.bb<<std::endl;
-        
+
         if (!mesh.getAttrib(flowvr::render::Mesh::MESH_DISTMAP))
         {
             std::cerr << "ERROR: FlowVR mesh "<<filename<<" does not contain distance information. Please use flowvr-distmap."<<std::endl;
@@ -155,14 +155,14 @@ CudaDistanceGrid* CudaDistanceGrid::load(const std::string& filename, double sca
         nx = mesh.distmap->nx;
         ny = mesh.distmap->ny;
         nz = mesh.distmap->nz;
-        ftl::Vec3f fpmin = ftl::transform(mesh.distmap->mat,ftl::Vec3f(0,0,0))*scale;
-        ftl::Vec3f fpmax = ftl::transform(mesh.distmap->mat,ftl::Vec3f(nx-1,ny-1,nz-1))*scale;
+        ftl::Vec3f fpmin = ftl::transform(mesh.distmap->mat,ftl::Vec3f(0,0,0))*(float)scale;
+        ftl::Vec3f fpmax = ftl::transform(mesh.distmap->mat,ftl::Vec3f((float)(nx-1),(float)(ny-1),(float)(nz-1)))*(float)scale;
         pmin = Coord(fpmin.ptr());
         pmax = Coord(fpmax.ptr());
         std::cout << "Copying "<<nx<<"x"<<ny<<"x"<<nz<<" distance grid in <"<<pmin<<">-<"<<pmax<<">"<<std::endl;
         CudaDistanceGrid* grid = new CudaDistanceGrid(nx, ny, nz, pmin, pmax);
         for (int i=0; i< grid->nxnynz; i++)
-            grid->dists[i] = mesh.distmap->data[i]*scale;
+            grid->dists[i] = mesh.distmap->data[i]*(float)scale;
 
         if (mesh.getAttrib(flowvr::render::Mesh::MESH_POINTS_GROUP))
         {
@@ -326,7 +326,7 @@ void CudaDistanceGrid::calcCubeDistance(Real dim, int np)
         int nbp = np*np*np - (np-2)*(np-2)*(np-2);
         //std::cout << "Copying "<<nbp<<" cube vertices."<<std::endl;
         meshPts.resize(nbp);
-        
+
         for (int i=0,z=0; z<np; z++)
         for (int y=0; y<np; y++)
         for (int x=0; x<np; x++)
@@ -379,9 +379,9 @@ void CudaDistanceGrid::calcDistance()
         /*
 	    if (!texcolor)
 		glGenTextures(1, &texcolor);
-	    
+
 	    glBindTexture(target, texcolor);
-	    
+
 	    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -393,7 +393,7 @@ void CudaDistanceGrid::calcDistance()
 	    if (!texdepth)
 		glGenTextures(1, &texdepth);
             glBindTexture(target, texdepth);
-	    
+
 	    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -448,7 +448,7 @@ std::map<CudaDistanceGrid::CudaDistanceGridParams, CudaDistanceGrid*>& CudaDista
 
 CudaRigidDistanceGridCollisionModel::CudaRigidDistanceGridCollisionModel()
 : modified(true)
-, filename( initData( &filename, "filename", "load distance grid from specified file"))
+, fileCudaRigidDistanceGrid( initData( &fileCudaRigidDistanceGrid, "fileCudaRigidDistanceGrid", "load distance grid from specified file"))
 , scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
 , box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , nx( initData( &nx, 64, "nx", "number of values on X axis") )
@@ -458,9 +458,10 @@ CudaRigidDistanceGridCollisionModel::CudaRigidDistanceGridCollisionModel()
 , usePoints( initData( &usePoints, true, "usePoints", "use mesh vertices for collision detection"))
 {
     rigid = NULL;
+    addAlias(&fileCudaRigidDistanceGrid,"filename");
 }
 
-CudaRigidDistanceGridCollisionModel::~CudaRigidDistanceGridCollisionModel() 
+CudaRigidDistanceGridCollisionModel::~CudaRigidDistanceGridCollisionModel()
 {
     for (unsigned int i=0; i<elems.size(); i++)
     {
@@ -476,18 +477,18 @@ void CudaRigidDistanceGridCollisionModel::init()
     rigid = dynamic_cast< core::componentmodel::behavior::MechanicalState<RigidTypes>* > (getContext()->getMechanicalState());
 
     CudaDistanceGrid* grid = NULL;
-    if (filename.getValue().empty())
+    if (fileCudaRigidDistanceGrid.getValue().empty())
     {
         if (elems.size()==0 || elems[0].grid==NULL)
             std::cerr << "ERROR: CudaRigidDistanceGridCollisionModel requires an input filename.\n";
         // else the grid has already been set
         return;
     }
-    std::cout << "CudaRigidDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<filename.getValue();
+    std::cout << "CudaRigidDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<fileCudaRigidDistanceGrid.getValue();
     if (scale.getValue()!=1.0) std::cout<<" scale="<<scale.getValue();
     if (box.getValue()[0][0]<box.getValue()[1][0]) std::cout<<" bbox=<"<<box.getValue()[0]<<">-<"<<box.getValue()[0]<<">";
     std::cout << std::endl;
-    grid = CudaDistanceGrid::loadShared(filename.getValue(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
+    grid = CudaDistanceGrid::loadShared(fileCudaRigidDistanceGrid.getValue(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
 
     resize(1);
     elems[0].grid = grid;
@@ -540,11 +541,11 @@ using sofa::component::collision::CubeModel;
 void CudaRigidDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
 {
     CubeModel* cubeModel = this->createPrevious<CubeModel>();
-    
+
     if (!modified && !isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
-    
+
     updateGrid();
-    
+
     cubeModel->resize(size);
     for (int i=0; i<size; i++)
     {

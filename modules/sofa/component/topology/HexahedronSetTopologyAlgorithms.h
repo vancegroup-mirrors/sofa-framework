@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -64,6 +64,25 @@ namespace topology
 		HexahedronSetTopologyModifier*						m_modifier;
 		HexahedronSetGeometryAlgorithms< DataTypes >*		m_geometryAlgorithms;
 	};
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETTOPOLOGYALGORITHMS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Rigid3dTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Rigid2dTypes>;
+#endif
+
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Rigid3fTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetTopologyAlgorithms<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace topology
 

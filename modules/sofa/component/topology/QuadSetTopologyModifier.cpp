@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -59,7 +59,7 @@ namespace topology
 		if((t[0]==t[1]) || (t[0]==t[2]) || (t[0]==t[3]) 
 		|| (t[1]==t[2]) || (t[1]==t[3]) || (t[2]==t[3]))
 		{
-			cout << "Error: [QuadSetTopologyModifier::addQuad] : invalid quad: " 
+			sout << "Error: [QuadSetTopologyModifier::addQuad] : invalid quad: " 
 				 << t[0] << ", " << t[1] << ", " << t[2] <<  ", " << t[3] <<  endl;
 
 			return;
@@ -71,7 +71,7 @@ namespace topology
 		{
 			if(m_container->getQuadIndex(t[0],t[1],t[2],t[3]) != -1)
 			{
-				cout << "Error: [QuadSetTopologyModifier::addQuad] : Quad " 
+				sout << "Error: [QuadSetTopologyModifier::addQuad] : Quad " 
 					 << t[0] << ", " << t[1] << ", " << t[2] <<  ", " << t[3] << " already exists." << endl;
 				return;
 			}
@@ -179,7 +179,7 @@ namespace topology
 		if(!m_container->hasQuads()) // this method should only be called when quads exist
 		{
 	#ifndef NDEBUG
-			cout << "Error. [QuadSetTopologyModifier::removeQuadsProcess] quad array is empty." << endl;
+			sout << "Error. [QuadSetTopologyModifier::removeQuadsProcess] quad array is empty." << endl;
 	#endif
 			return;
 		}

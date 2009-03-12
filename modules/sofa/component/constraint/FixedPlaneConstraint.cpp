@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -23,6 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/component/constraint/FixedPlaneConstraint.inl>
+#include <sofa/core/componentmodel/behavior/Constraint.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
 
@@ -49,10 +50,10 @@ int FixedPlaneConstraintClass = core::RegisterObject("Project particles on a giv
 #endif
 ;
 #ifndef SOFA_FLOAT
-template class FixedPlaneConstraint<Vec3dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedPlaneConstraint<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class FixedPlaneConstraint<Vec3fTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedPlaneConstraint<Vec3fTypes>;
 #endif
 } // namespace constraint
 

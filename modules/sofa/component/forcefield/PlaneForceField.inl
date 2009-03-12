@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,15 +25,16 @@
 #ifndef SOFA_COMPONENT_INTERACTIONFORCEFIELD_PLANEFORCEFIELD_INL
 #define SOFA_COMPONENT_INTERACTIONFORCEFIELD_PLANEFORCEFIELD_INL
 
-//#include <sofa/core/componentmodel/behavior/ForceField.inl>
+#include <sofa/core/componentmodel/behavior/ForceField.inl>
+#include <sofa/simulation/common/Simulation.h>
 #include "PlaneForceField.h"
 #include <sofa/helper/system/config.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/helper/gl/template.h>
 #include <assert.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -51,18 +52,28 @@ void PlaneForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, cons
 	//this->dfdd.resize(p1.size());
 	this->contacts.clear();
 	f1.resize(p1.size());
-	for (unsigned int i=0; i<p1.size(); i++)
+
+	unsigned int ibegin = 0;
+	unsigned int iend = p1.size();
+
+	if (localRange.getValue()[0] >= 0)
+	    ibegin = localRange.getValue()[0];
+
+	if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	    iend = localRange.getValue()[1]+1;
+
+	for (unsigned int i=ibegin; i<iend; i++)
 	{
 		Real d = p1[i]*planeNormal.getValue()-planeD.getValue();
 		if (d<0)
 		{
-                  //cerr<<"PlaneForceField<DataTypes>::addForce, d = "<<d<<endl;	
+                  //serr<<"PlaneForceField<DataTypes>::addForce, d = "<<d<<sendl;
                   Real forceIntensity = -this->stiffness.getValue()*d;
-                  //cerr<<"PlaneForceField<DataTypes>::addForce, stiffness = "<<stiffness.getValue()<<endl;	
+                  //serr<<"PlaneForceField<DataTypes>::addForce, stiffness = "<<stiffness.getValue()<<sendl;
                   Real dampingIntensity = -this->damping.getValue()*d;
-                  //cerr<<"PlaneForceField<DataTypes>::addForce, dampingIntensity = "<<dampingIntensity<<endl;	
+                  //serr<<"PlaneForceField<DataTypes>::addForce, dampingIntensity = "<<dampingIntensity<<sendl;
                   Deriv force = planeNormal.getValue()*forceIntensity - v1[i]*dampingIntensity;
-                  //cerr<<"PlaneForceField<DataTypes>::addForce, force = "<<force<<endl;	
+                  //serr<<"PlaneForceField<DataTypes>::addForce, force = "<<force<<sendl;
                   f1[i]+=force;
 			//this->dfdd[i] = -this->stiffness;
 			this->contacts.push_back(i);
@@ -84,10 +95,36 @@ void PlaneForceField<DataTypes>::addDForce(VecDeriv& f1, const VecDeriv& dx1, do
 }
 
 template<class DataTypes>
+void PlaneForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal kFactor, unsigned int &offset)
+{
+	const Real fact = (Real)(-this->stiffness.getValue()*kFactor);
+	const Deriv& normal = planeNormal.getValue();
+	for (unsigned int i=0; i<this->contacts.size(); i++)
+	{
+		unsigned int p = this->contacts[i];
+		for (int l=0;l<Deriv::static_size;++l)
+			for (int c=0;c<Deriv::static_size;++c)
+			{
+				SReal coef = normal[l] * fact * normal[c];
+				mat->add(offset + p*Deriv::static_size + l, offset + p*Deriv::static_size + c, coef);
+			}
+	}
+}
+template<class DataTypes>
 void PlaneForceField<DataTypes>::updateStiffness( const VecCoord& x )
 {
 	this->contacts.clear();
-	for (unsigned int i=0; i<x.size(); i++)
+
+	unsigned int ibegin = 0;
+	unsigned int iend = x.size();
+
+	if (localRange.getValue()[0] >= 0)
+	    ibegin = localRange.getValue()[0];
+
+	if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	    iend = localRange.getValue()[1]+1;
+
+	for (unsigned int i=ibegin; i<iend; i++)
 	{
 		Real d = x[i]*planeNormal.getValue()-planeD.getValue();
 		if (d<0)
@@ -98,10 +135,10 @@ void PlaneForceField<DataTypes>::updateStiffness( const VecCoord& x )
 }
 
 
-template <class DataTypes> 
+template <class DataTypes>
     double PlaneForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
-    std::cerr<<"PlaneForceField::getPotentialEnergy-not-implemented !!!"<<std::endl;
+    serr<<"PlaneForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 
@@ -131,10 +168,12 @@ void PlaneForceField<DataTypes>::draw()
 template<class DataTypes>
 void PlaneForceField<DataTypes>::drawPlane(float size)
 {
+    if (size == 0.0f) size = (float)drawSize.getValue();
+
     const VecCoord& p1 = *this->mstate->getX();
-    
+
     defaulttype::Vec3d normal; normal = planeNormal.getValue();
-	
+
     // find a first vector inside the plane
     defaulttype::Vec3d v1;
     if( 0.0 != normal[0] ) v1 = defaulttype::Vec3d(-normal[1]/normal[0], 1.0, 0.0);
@@ -145,7 +184,7 @@ void PlaneForceField<DataTypes>::drawPlane(float size)
     defaulttype::Vec3d v2;
     v2 = v1.cross(normal);
     v2.normalize();
-    
+
     defaulttype::Vec3d center = normal*planeD.getValue();
     defaulttype::Vec3d corners[4];
     corners[0] = center-v1*size-v2*size;
@@ -153,48 +192,69 @@ void PlaneForceField<DataTypes>::drawPlane(float size)
     corners[2] = center+v1*size+v2*size;
     corners[3] = center-v1*size+v2*size;
 
-    // glEnable(GL_LIGHTING);
+
     glEnable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glCullFace(GL_FRONT);
-    
-    glColor3f(color.getValue()[0],color.getValue()[1],color.getValue()[2]);
-    
-    glBegin(GL_QUADS);
-    helper::gl::glVertexT(corners[0]);
-    helper::gl::glVertexT(corners[1]);
-    helper::gl::glVertexT(corners[2]);
-    helper::gl::glVertexT(corners[3]);
-    glEnd();
-    
+
+
+    std::vector< defaulttype::Vector3 > points;
+
+    points.push_back(corners[0]);
+    points.push_back(corners[1]);
+    points.push_back(corners[2]);
+
+    points.push_back(corners[0]);
+    points.push_back(corners[2]);
+    points.push_back(corners[3]);
+
+    simulation::getSimulation()->DrawUtility.setPolygonMode(2,false); //Cull Front face
+
+    simulation::getSimulation()->DrawUtility.drawTriangles(points, defaulttype::Vec<4,float>(color.getValue()[0],color.getValue()[1],color.getValue()[2],0.5));
+    simulation::getSimulation()->DrawUtility.setPolygonMode(0,false); //No Culling
     glDisable(GL_CULL_FACE);
-    
-    glColor4f(1,0,0,1);
-    glDisable(GL_LIGHTING);
+
+    std::vector< defaulttype::Vector3 > pointsLine;
     // lines for points penetrating the plane
-    glBegin(GL_LINES);
-    for (unsigned int i=0; i<p1.size(); i++)
+
+    unsigned int ibegin = 0;
+    unsigned int iend = p1.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
+
+    defaulttype::Vector3 point1,point2;
+    unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
+    for (unsigned int i=ibegin; i<iend; i++)
     {
         Real d = p1[i]*planeNormal.getValue()-planeD.getValue();
         Coord p2 = p1[i];
         p2 += planeNormal.getValue()*(-d);
         if (d<0)
-        {
-            helper::gl::glVertexT(p1[i]);
-            helper::gl::glVertexT(p2);
-        }
+	  {
+	    for (unsigned int s=0;s<sizePoints;++s)
+	      {
+		point1[s] = p1[i][s];
+		point2[s] = p2[s];
+	      }
+	  }
+	  pointsLine.push_back(point1);
+	  pointsLine.push_back(point2);
     }
-    glEnd();
+    simulation::getSimulation()->DrawUtility.drawLines(pointsLine, 1, defaulttype::Vec<4,float>(1,0,0,1));
 }
 
 template <class DataTypes>
-    bool PlaneForceField<DataTypes>::addBBox(double* minBBox, double* maxBBox)
+bool PlaneForceField<DataTypes>::addBBox(double* minBBox, double* maxBBox)
 {
     if (!bDraw.getValue()) return false;
-    
+
     defaulttype::Vec3d normal; normal = planeNormal.getValue();
     double size=10.0;
-    
+
     // find a first vector inside the plane
     defaulttype::Vec3d v1;
     if( 0.0 != normal[0] ) v1 = defaulttype::Vec3d(-normal[1]/normal[0], 1.0, 0.0);
@@ -205,7 +265,7 @@ template <class DataTypes>
     defaulttype::Vec3d v2;
     v2 = v1.cross(normal);
     v2.normalize();
-    
+
     defaulttype::Vec3d center = normal*planeD.getValue();
     defaulttype::Vec3d corners[4];
     corners[0] = center-v1*size-v2*size;

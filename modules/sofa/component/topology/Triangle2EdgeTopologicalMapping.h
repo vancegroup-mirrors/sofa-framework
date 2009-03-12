@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -86,7 +86,7 @@ using namespace sofa::core;
              * reflect the effects of the first topology changes on the second topology.
              *
 			 */
-			virtual void updateTopologicalMapping();
+			virtual void updateTopologicalMappingTopDown();
 
 			virtual unsigned int getFromIndex(unsigned int ind);
 
@@ -99,9 +99,9 @@ using namespace sofa::core;
 			static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
 			{
 				if (arg->findObject(arg->getAttribute("object1","../..")) == NULL)
-					std::cerr << "Cannot create "<<className(obj)<<" as object1 is missing.\n";
+					context->serr << "Cannot create "<<className(obj)<<" as object1 is missing."<<context->sendl;
 				if (arg->findObject(arg->getAttribute("object2","..")) == NULL)
-					std::cerr << "Cannot create "<<className(obj)<<" as object2 is missing.\n";
+					context->serr << "Cannot create "<<className(obj)<<" as object2 is missing."<<context->sendl;
 				
 				if (arg->findObject(arg->getAttribute("object1","../..")) == NULL || arg->findObject(arg->getAttribute("object2","..")) == NULL) 
 				  return false;

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,12 +33,12 @@ namespace component
 {
 namespace controller
 {
-	
+
 
 void LCPForceFeedback::init()
 {
 	this->ForceFeedback::init();
-	OmniDriver* driver = context->get<OmniDriver>(); 
+	OmniDriver* driver = context->get<OmniDriver>();
 
 //	BaseObject* object2 = static_cast<BaseObject*>(context->getObject(classid(sofa::component::odesolver::MasterContactSolver)));
 
@@ -48,15 +48,15 @@ void LCPForceFeedback::init()
 
 	mState = dynamic_cast<MechanicalState<Rigid3dTypes> *> (this->getContext()->getMechanicalState());
 	if (!mState)
-		std::cerr << "WARNING - LCPForceFeedback has no binding MechanicalState\n";
+		serr << "LCPForceFeedback has no binding MechanicalState" << sendl;
 
 
 	if (!mastersolver)
-		std::cerr << "WARNING - LCPForceFeedback has no binding MasterContactSolver\n" ;
+		serr << "LCPForceFeedback has no binding MasterContactSolver" << sendl;
 
 	lcp = mastersolver->getLCP();
 
-	cout << "init LCPForceFeedback " << driver << " done " << std::endl;
+	sout << "init LCPForceFeedback " << driver << " done " << sendl;
 };
 
 void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, double /*v*/, double /*w*/, double /*q*/, double& fx, double& fy, double& fz)
@@ -70,29 +70,29 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 	static double mz = (*mState->getX())[0].getCenter()[2];
 
 	static component::odesolver::LCP* lcp_buf = NULL;
-	
+
 	static RigidTypes::VecConst c;
 	static std::vector<int> id_buf;
-	
+
 	if (lcp_buf == NULL)
 	{
 		lcp_buf = mastersolver->getLCP();
 		mx = (*mState->getX())[0].getCenter()[0];
     	my = (*mState->getX())[0].getCenter()[1];
-        mz = (*mState->getX())[0].getCenter()[2];		
+        mz = (*mState->getX())[0].getCenter()[2];
 	}
 
 	lcp = mastersolver->getLCP();
-	
+
 	if (lcp_buf!=lcp)
 	{
 		//////////////////// NEW LCP //////////////////////
-		//std::cout<<"new LCP detected"<<std::endl;
-		
+		//sout<<"new LCP detected"<<sendl;
+
 		mx = (*mState->getX())[0].getCenter()[0];
     	my = (*mState->getX())[0].getCenter()[1];
-        mz = (*mState->getX())[0].getCenter()[2];	
-        
+        mz = (*mState->getX())[0].getCenter()[2];
+
         // copy of the constraints that correspond to the lcp in vecConst c
         c.clear();
         id_buf.clear();
@@ -100,46 +100,45 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 		{
 			int indexC1 = mState->getConstraintId()[c1];
 			id_buf.push_back(indexC1);
-			int sizeC1 = (*mState->getC())[c1].size();
 			RigidTypes::SparseVecDeriv v;
-			for(int i = 0; i < sizeC1; i++)
+			std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
+			for(itConstraint=(*mState->getC())[c1].getData().begin();itConstraint!=(*mState->getC())[c1].getData().end();itConstraint++)
 			{
-				RigidTypes::SparseDeriv d((*mState->getC())[c1][i].index, (*mState->getC())[c1][i].data);
-				v.push_back(d);
+				v.insert(itConstraint->first, itConstraint->second);
 			}
 			c.push_back(v);
-		} 
-        		
+		}
+
 	}
 	else
 	{
-		//std::cout<<"old LCP "<<std::endl;
+		//sout<<"old LCP "<<sendl;
 	}
-	lcp_buf = lcp;	
+	lcp_buf = lcp;
 	//lcp->wait();
 	//lcp->lock();
 
-	
+
 
 
 /////// Copy the constraint buffer /////////
-	RigidTypes::VecConst* constraints = &c; 
+	RigidTypes::VecConst* constraints = &c;
 ///////////////////////////////////////////
-	
+
 /////// Fordebug /////////
 //	if(lcp)
-//		std::cout<<"numConst" <<constraints->size()<<std::endl;
+//		sout<<"numConst" <<constraints->size()<<sendl;
 //	else
-//		std::cout<<"WARNING : LCP is null"<<std::endl;
-/////////////////////////		
+//		sout<<"WARNING : LCP is null"<<sendl;
+/////////////////////////
 
-//	std::cout << "LCPForceFeedback::computeForce " << constraints->size() << std::endl;
+//	sout << "LCPForceFeedback::computeForce " << constraints->size() << sendl;
 
 	if(lcp)
 	{
 		if ((lcp)->getMu() > 0.0 && constraints->size())
 		{
-			
+
 			//RigidTypes::VecDeriv DX;
 			//DX.resize(3);
 			const unsigned int numConstraints = constraints->size();
@@ -157,80 +156,80 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 			double dy = (y - my);
 			double dz = (z - mz);
 
-			//cout << "two !" << endl;
+			//sout << "two !" << endl;
 
 			for(unsigned int c1 = 0; c1 < numConstraints; c1++)
 			{
 				int indexC1 = id_buf[c1];
-				int sizeC1 = (*constraints)[c1].size();
-				for(int i = 0; i < sizeC1; i++)
+				std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
+				for(itConstraint=(*constraints)[c1].getData().begin();itConstraint!=(*constraints)[c1].getData().end();itConstraint++)
 				{
-					//cout << "constraint ID :  " << indexC1 << endl;
-					(lcp)->getDfree()[indexC1] += (*constraints)[c1][i].data[0] * dx;
-					(lcp)->getDfree()[indexC1] += (*constraints)[c1][i].data[1] * dy;
-					(lcp)->getDfree()[indexC1] += (*constraints)[c1][i].data[2] * dz;
-					//cout << "data : " << constraints[c1][i].data[0] << " " << constraints[c1][i].data[1] << " " << constraints[c1][i].data[2] << endl;
+					//sout << "constraint ID :  " << indexC1 << endl;
+					(lcp)->getDfree()[indexC1] += itConstraint->second[0] * dx;
+					(lcp)->getDfree()[indexC1] += itConstraint->second[1] * dy;
+					(lcp)->getDfree()[indexC1] += itConstraint->second[2] * dz;
+					//sout << "data : " << constraints[c1][i].data[0] << " " << constraints[c1][i].data[1] << " " << constraints[c1][i].data[2] << endl;
 				}
 			}
 
-			//cout << "three !" << endl;
+			//sout << "three !" << endl;
 
 			double tol = lcp->getTolerance();
 			int max = 100;
-			
+
 			tol *= 0.001;
 			//helper::nlcp_gaussseidel((lcp)->getNbConst(), (lcp)->getDfree(), (lcp)->getW(), (lcp)->getF(), (lcp)->getMu(), tol, max, true);
 			helper::nlcp_gaussseidelTimed((lcp)->getNbConst(), (lcp)->getDfree(), (lcp)->getW(), (lcp)->getF(), (lcp)->getMu(), tol, max, true, 0.0008);
 			//helper::afficheLCP((lcp)->getDfree(), (lcp)->getW(), (lcp)->getF(),(lcp)->getNbConst());
 
 
-			//cout << "four !" << endl;
+			//sout << "four !" << endl;
 
 			for(unsigned int c1 = 0; c1 < numConstraints; c1++)
 			{
 				int indexC1 = id_buf[c1];
-				int sizeC1 = (*constraints)[c1].size();
-				for(int i = 0; i < sizeC1; i++)
+				std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
+				for(itConstraint=(*constraints)[c1].getData().begin();itConstraint!=(*constraints)[c1].getData().end();itConstraint++)
 				{
-					(lcp)->getDfree()[indexC1] -= (*constraints)[c1][i].data[0] * dx;
-					(lcp)->getDfree()[indexC1] -= (*constraints)[c1][i].data[1] * dy;
-					(lcp)->getDfree()[indexC1] -= (*constraints)[c1][i].data[2] * dz;
+					(lcp)->getDfree()[indexC1] -= itConstraint->second[0] * dx;
+					(lcp)->getDfree()[indexC1] -= itConstraint->second[1] * dy;
+					(lcp)->getDfree()[indexC1] -= itConstraint->second[2] * dz;
 				}
 			}
 
-			//cout << "five !" << endl;
+			//sout << "five !" << endl;
 
 			for(unsigned int c1 = 0; c1 < numConstraints; c1++)
 			{
 				int indexC1 = id_buf[c1];
 				if ((lcp)->getF()[indexC1] != 0.0)
 				{
-					int sizeC1 = (*constraints)[c1].size();
+					std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
 
-					for(int i = 0; i < sizeC1; i++)
+					for(itConstraint=(*constraints)[c1].getData().begin();itConstraint!=(*constraints)[c1].getData().end();itConstraint++)
 					{
-						force[0] += (*constraints)[c1][i].data * (lcp)->getF()[indexC1];
+						force[0] += itConstraint->second * (lcp)->getF()[indexC1];
 					}
 				}
 			}
 
-			//cout << "six !" << endl;
+			//sout << "six !" << endl;
 
 			fx = force[0][0]*forceCoef.getValue() ;//0.0003;
 			fy = force[0][1]*forceCoef.getValue() ;//0.0003;
 			fz = force[0][2]*forceCoef.getValue();//0.0003;
 
-			//cout << "seven !" << endl;
+			//sout << "seven !" << endl;
 
-			//cout << "haptic forces : " << fx << " " << fy << " " << fz << endl;
-			//cout << "forces : " << force << end;
-			//cout << "haptic diff : " << DX[0][0] << " " << DX[1][0] << " " << DX[2][0]  << endl;
+			//sout << "haptic forces : " << fx << " " << fy << " " << fz << endl;
+			//sout << "forces : " << force << end;
+			//sout << "haptic diff : " << DX[0][0] << " " << DX[1][0] << " " << DX[2][0]  << endl;
 		}
-		//cout << "eight" << endl;
+		//sout << "eight" << endl;
 
 	}
 
-	//cout << "nine !" << endl;
+	//sout << "nine !" << endl;
 	//lcp->unlock();
 
 };

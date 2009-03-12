@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -42,6 +42,7 @@
 #include <sofa/helper/gl/Transformation.h>
 #include <sofa/helper/gl/Trackball.h>
 #include <sofa/helper/gl/Texture.h>
+#include <sofa/helper/gl/VisualParameters.h>
 #include <sofa/helper/system/thread/CTime.h>
 #include <sofa/simulation/tree/xml/Element.h>
 
@@ -57,7 +58,7 @@ namespace sofa
 
     namespace qt
     {
-      
+
       namespace viewer
       {
 
@@ -80,13 +81,14 @@ namespace sofa
 	      int				_clearBuffer;
 	      bool			_lightModelTwoSides;
 	      float			_lightPosition[4];
-	
+
 
 	      double lastProjectionMatrix[16];
 	      double lastModelviewMatrix[16];
-	      GLint lastViewport[4];
-	
-	      
+
+	      VisualParameters visualParameters;
+
+
 
 	      //     float			_zoomSpeed;
 	      //     float			_panSpeed;
@@ -106,14 +108,10 @@ namespace sofa
 
 
 	      ctime_t			_beginTime;
-	
-	
+
+
 	      bool _waitForRender;
 
-	      
-	      Vector3 sceneMinBBox;
-	      Vector3 sceneMaxBBox;
-	      
 	    public:
 
 	      /// Activate this class of viewer.
@@ -138,9 +136,6 @@ namespace sofa
 	      virtual void draw();
 	      void viewAll();
 	      void resizeGL( int w, int h );
-	      void ApplyShadowMap();
-	      void CreateRenderTexture(GLuint& textureID, int sizeX, int sizeY, int channels, int type);
-	      void StoreLightMatrices();
 
 	    public:
 // 	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool keepParams=false);
@@ -158,14 +153,16 @@ namespace sofa
 	      bool ready(){return _waitForRender;};
 	      void wait(){_waitForRender = true;};
 
-	      void	UpdateOBJ(void);	  
-	      
+	      void	UpdateOBJ(void);
+
 	      void moveRayPickInteractor(int eventX, int eventY);
 
 	      // 	static Quaternion _newQuat;
 
 
 	      QString helpString();
+	      
+	      virtual void setBackgroundImage(std::string imageFileName);
 
 	    private:
 
@@ -184,7 +181,7 @@ namespace sofa
 	      //int     loadBMP(char *filename, TextureImage *texture);
 	      //void	LoadGLTexture(char *Filename);
 	      void	DrawLogo(void);
-	      void	DisplayOBJs(bool shadowPass = false);
+	      void	DisplayOBJs();
 	      void	DisplayMenu(void);
 	      void	DrawScene();
 
@@ -203,17 +200,18 @@ namespace sofa
 
 
 
-	
+
 	      public slots:
 	      void resetView();
 	      void saveView();
 	      void setSizeW(int);
 	      void setSizeH(int);
-			
+
 	    signals:
 	      void redrawn();
 	      void resizeW( int );
 	      void resizeH( int );
+	      void quit();
 	    };
 
 	} // namespace qgl

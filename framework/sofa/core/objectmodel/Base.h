@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,10 +28,13 @@
 #define SOFA_CORE_OBJECTMODEL_BASE_H
 
 #include <sofa/helper/system/config.h>
+#include <sofa/helper/system/SofaOStream.h>
+#include <sofa/helper/vector.h>
 #include <sofa/core/objectmodel/DataPtr.h>
 #include <sofa/core/objectmodel/Data.h>
 #include <sofa/core/objectmodel/BaseObjectDescription.h>
 #include <string>
+#include <map>
 
 using sofa::core::objectmodel::DataPtr;
 using sofa::core::objectmodel::Data;
@@ -52,51 +55,57 @@ namespace objectmodel
  *  Most importantly it defines how to retrieve information about an object (name, type, fields).
  *
  */
-class Base
+class SOFA_CORE_API Base
 {
 public:
     Base();
     virtual ~Base();
-    
+
     /// Name of the object.
     Data<std::string> name;
 
+    /// @name debug
+    ///   Methods related to debugging
+    ///@{
+    Data<bool> f_printLog;
+
+
     /// Accessor to the object name
     std::string getName() const;
-    
+
     /// Set the name of this object
     void setName(const std::string& n);
-    
+
     /// Get the type name of this object (i.e. class and template types)
     virtual std::string getTypeName() const
     {
         return decodeTypeName(typeid(*this));
     }
-    
+
     /// Get the class name of this object
     virtual std::string getClassName() const
     {
         return decodeClassName(typeid(*this));
     }
-    
+
     /// Get the template type names (if any) used to instantiate this object
     virtual std::string getTemplateName() const
     {
         return decodeTemplateName(typeid(*this));
     }
-    
+
     /// Helper method to decode the type name to a more readable form if possible
     static std::string decodeTypeName(const std::type_info& t);
-    
+
     /// Helper method to extract the class name (removing namespaces and templates)
     static std::string decodeClassName(const std::type_info& t);
-    
+
     /// Helper method to extract the namespace (removing class name and templates)
     static std::string decodeNamespaceName(const std::type_info& t);
-    
+
     /// Helper method to extract the template name (removing namespaces and class name)
     static std::string decodeTemplateName(const std::type_info& t);
-    
+
     /// Helper method to get the type name of a type derived from this class
     ///
     /// This method should be used as follow :
@@ -107,7 +116,7 @@ public:
     {
         return decodeTypeName(typeid(T));
     }
-    
+
     /// Helper method to get the class name of a type derived from this class
     ///
     /// This method should be used as follow :
@@ -118,7 +127,7 @@ public:
     {
         return decodeClassName(typeid(T));
     }
-    
+
     /// Helper method to get the namespace name of a type derived from this class
     ///
     /// This method should be used as follow :
@@ -129,7 +138,7 @@ public:
     {
         return decodeNamespaceName(typeid(T));
     }
-    
+
     /// Helper method to get the template name of a type derived from this class
     ///
     /// This method should be used as follow :
@@ -143,105 +152,151 @@ public:
 
     /// Assign the field values stored in the given list of name + value pairs of strings
     void parseFields ( std::list<std::string> str );
-    
+
     /// Assign the field values stored in the given map of name -> value pairs
     virtual void parseFields ( const std::map<std::string,std::string*>& str );
-    
+
     /// Write the current field values to the given map of name -> value pairs
     void writeDatas (std::map<std::string,std::string*>& str);
-    
-    /// Write the current field values to the given text output stream
-    void writeDatas (std::ostream& out);
-       
+
     /// Write the current Node values to the given XML output stream
     void xmlWriteNodeDatas (std::ostream& out, unsigned level);
-    
+
     /// Write the current field values to the given XML output stream
-    void xmlWriteDatas (std::ostream& out, unsigned level);
-    
-    /// Find a field give its name, if not found, the index is the size of the vector
-    unsigned int findField( const char* name ) const
+    void xmlWriteDatas (std::ostream& out, unsigned level, bool compact);
+
+    /// Find a field given its name, if not found, the index is the size of the vector
+    BaseData* findField( const char* name ) const
     {
         std::string ln(name);
-	unsigned int i;
-	for ( i=0;i<m_fieldVec.size();i++)
+	for ( unsigned int i=0;i<m_fieldVec.size();i++)
 	{
-	    if (m_fieldVec[i].first == ln) return i;
+	    if (m_fieldVec[i].first == ln) return m_fieldVec[i].second;
 	}
-	return i;
+	return NULL;
     }
-    unsigned int findField( const std::string &name ) const
+    BaseData* findField( const std::string &name ) const
     {
-	unsigned int i;
-	for ( i=0;i<m_fieldVec.size();i++)
+	for ( unsigned int i=0;i<m_fieldVec.size();i++)
 	{
-	    if (m_fieldVec[i].first == name) return i;
+	    if (m_fieldVec[i].first == name) return m_fieldVec[i].second;
 	}
-	return i;
-    }
-    /// Helper method used to initialize a field containing a value of type T
-    template<class T>
-    Data<T> initData( Data<T>* field, const char* name, const char* help, bool isDisplayed=true )
-    {
-        std::string ln(name);
-        if( ln.size()>0 && findField(ln)!=m_fieldVec.size() )
-        {
-            std::cerr << "field name " << ln << " already used in this class or in a parent class !...aborting" << std::endl;
-            exit( 1 );
-        }
-        //field = tmp;
-	m_fieldVec.push_back( std::make_pair(ln,field));
-	return Data<T>(help,isDisplayed);
-    }
-    
-    /// Helper method used to initialize a field containing a value of type T
-    template<class T>
-	Data<T> initData( Data<T>* field, const T& value, const char* name, const char* help, bool isDisplayed=true  )
-    {
-        std::string ln(name);
-        if( ln.size()>0 && findField(ln)!=m_fieldVec.size()  )
-        {
-            std::cerr << "field name " << ln << " already used in this class or in a parent class !...aborting" << std::endl;
-            exit( 1 );
-        }
-        //field = tmp;
-	m_fieldVec.push_back( std::make_pair(ln,field));
-        return Data<T>(value,help,isDisplayed);
-    }
-    
-    /// Helper method used to initialize a field pointing to a value of type T
-    template<class T>
-	DataPtr<T> initDataPtr( DataPtr<T>* field, T* ptr, const char* name, const char* help, bool isDisplayed=true  )
-    {
-        std::string ln(name);
-        if( ln.size()>0 && findField(ln)!=m_fieldVec.size() )
-        {
-            std::cerr << "field name " << ln << " already used in this class or in a parent class !...aborting" << std::endl;
-            exit( 1 );
-        }
-        //field = tmp;
-	m_fieldVec.push_back( std::make_pair(ln,field));
-	return DataPtr<T>(ptr,help,isDisplayed);
+	return NULL;
     }
 
+    /// Find fields given a name: several can be found as we look into the alias map
+    std::vector< BaseData* > findGlobalField( const char* name ) const
+    {
+        std::string ln(name);
+        std::vector<BaseData*> dataCorresponding;
+        //Search in the list of Datas
+        BaseData *f=findField(name);
+        if (f) dataCorresponding.push_back(f);
+        //Search in the aliases
+        typedef std::multimap< std::string, BaseData* >::const_iterator multimapIterator;
+        std::pair< multimapIterator, multimapIterator> range;
+        multimapIterator itAlias;
+
+        range=m_aliasData.equal_range(ln);
+        for (itAlias=range.first;itAlias!=range.second;itAlias++)dataCorresponding.push_back(itAlias->second);
+        return dataCorresponding;
+    }
+    std::vector< BaseData* > findGlobalField( const std::string &name ) const
+    {
+        std::string ln(name);
+        std::vector<BaseData*> dataCorresponding;
+        //Search in the list of Datas
+        BaseData *f=findField(name);
+        if (f) dataCorresponding.push_back(f);
+        //Search in the aliases
+        typedef std::multimap< std::string, BaseData* >::const_iterator multimapIterator;
+        std::pair< multimapIterator, multimapIterator> range;
+        multimapIterator itAlias;
+
+        range=m_aliasData.equal_range(name);
+        for (itAlias=range.first;itAlias!=range.second;itAlias++)dataCorresponding.push_back(itAlias->second);
+        return dataCorresponding;
+    }
+
+    /// Helper method used to initialize a field containing a value of type T
+    template<class T>
+    Data<T> initData( Data<T>* field, const char* name, const char* help, bool isDisplayed=true, bool isReadOnly=false )
+    {
+        std::string ln(name);
+        if( ln.size()>0 && findField(ln) )
+        {
+            serr << "field name " << ln << " already used in this class or in a parent class !...aborting" << sendl;
+            exit( 1 );
+        }
+        //field = tmp;
+	m_fieldVec.push_back( std::make_pair(ln,field));
+	return Data<T>(help,isDisplayed,isReadOnly);
+    }
+
+    /// Helper method used to initialize a field containing a value of type T
+    template<class T>
+	Data<T> initData( Data<T>* field, const T& value, const char* name, const char* help, bool isDisplayed=true, bool isReadOnly=false  )
+    {
+        std::string ln(name);
+        if( ln.size()>0 && findField(ln)  )
+        {
+            serr << "field name " << ln << " already used in this class or in a parent class !...aborting" << sendl;
+            exit( 1 );
+        }
+        //field = tmp;
+	m_fieldVec.push_back( std::make_pair(ln,field));
+        return Data<T>(value,help,isDisplayed,isReadOnly);
+    }
+
+    /// Helper method used to initialize a field pointing to a value of type T
+    template<class T>
+	DataPtr<T> initDataPtr( DataPtr<T>* field, T* ptr, const char* name, const char* help, bool isDisplayed=true, bool isReadOnly=false  )
+    {
+        std::string ln(name);
+        if( ln.size()>0 && findField(ln) )
+        {
+            serr << "field name " << ln << " already used in this class or in a parent class !...aborting" << sendl;
+            exit( 1 );
+        }
+        //field = tmp;
+	m_fieldVec.push_back( std::make_pair(ln,field));
+	return DataPtr<T>(ptr,help,isDisplayed,isReadOnly);
+    }
+
+    /// Helper method used to add an alias to a DataPtr
+
+    void addAlias( BaseData* field, const char* alias)
+    {
+      m_aliasData.insert(std::make_pair(std::string(alias),field));
+    }
 
     /// Parse the given description to assign values to this object's fields and potentially other parameters
     virtual void parse ( BaseObjectDescription* arg );
 
-    /// Accessor to the map containing all the fields of this object
+    /// Accessor to the vector containing all the fields of this object
     std::vector< std::pair<std::string, BaseData*> > getFields() { return m_fieldVec; }
+    /// Accessor to the map containing all the aliases of this object
+    std::multimap< std::string, BaseData* > getAliases() { return m_aliasData; }
+
+    sofa::helper::system::SofaOStream sendl;
+    std::ostringstream               &serr;
+    std::ostringstream               &sout;
+
 
 protected:
+
+
     /// name -> Field object
     std::vector< std::pair<std::string, BaseData*> > m_fieldVec;
-    
+    std::multimap< std::string, BaseData* > m_aliasData;
+
     /// Add a field. Note that this method should only be called if the field was not initialized with the initData<T> of field<T> methods
     void addField( BaseData* f, const char* name )
     {
         std::string ln(name);
-        if( ln.size()>0 && findField(ln)!=m_fieldVec.size() )
+        if( ln.size()>0 && findField(ln) )
         {
-            std::cerr << "field name " << ln << " already used in this class or in a parent class !...aborting" << std::endl;
+            serr << "field name " << ln << " already used in this class or in a parent class !...aborting" << sendl;
             exit( 1 );
         }
 	m_fieldVec.push_back( std::make_pair(ln,f));
@@ -253,6 +308,8 @@ protected:
 } // namespace core
 
 } // namespace sofa
+
+
 
 #endif
 

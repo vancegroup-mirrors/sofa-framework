@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,14 +33,14 @@ namespace sofa
 namespace simulation
 {
 
-StateChangeVisitor::StateChangeVisitor()
-: root(true)
+StateChangeVisitor::StateChangeVisitor(core::componentmodel::topology::Topology* source)
+: root(true), source(source)
 {
 }
 
 void StateChangeVisitor::processStateChange(core::objectmodel::BaseObject* obj)
 {
-    obj->handleStateChange();
+    obj->handleStateChange(source);
 }
 
 Visitor::Result StateChangeVisitor::processNodeTopDown(simulation::Node* node)
@@ -60,8 +60,6 @@ Visitor::Result StateChangeVisitor::processNodeTopDown(simulation::Node* node)
     root = false; // now we process child nodes
     return RESULT_CONTINUE; // continue the propagation of state changes
 }
-
-
 
 } // namespace simulation
 

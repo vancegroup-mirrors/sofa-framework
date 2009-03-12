@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -61,7 +61,7 @@ void BackTrace::dump()
 			for (int i = 0; i < size; ++i)
 			{
 				char* symbol = symbols[i];
-				
+
 				// Decode the method's name to a more readable form if possible
 				char *beginmangled = strrchr(symbol,'(');
 				if (beginmangled != NULL)
@@ -90,7 +90,7 @@ void BackTrace::dump()
 							free(name);
 							name = realname;
 						}
-						fprintf(stderr,"-> %.*s%s%s\n",beginmangled-symbol,symbol,name,endmangled);
+						fprintf(stderr,"-> %.*s%s%s\n",(int)(beginmangled-symbol),symbol,name,endmangled);
 						free(name);
 					}
 					else
@@ -131,6 +131,8 @@ void BackTrace::sig(int sig)
 	dump();
 	signal(sig,SIG_DFL);
 	raise(sig);
+#else
+	fprintf(stderr,"\nERROR: BackTrace::sig(%d) not supported.\n",sig);
 #endif
 }
 

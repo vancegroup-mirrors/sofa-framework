@@ -1,0 +1,50 @@
+<Node 	name="root" 
+	gravity="0 0 0" 
+	dt="0.05" 
+	showBehaviorModels="1" 
+	showCollisionModels="0" 
+	showMappings="0" 
+	showForceFields="0" 
+	 >
+	<DefaultPipeline name="CollisionPipeline" printLog="0" verbose="0"/>
+	<BruteForceDetection name="BruteForceDetection" printLog="0"/>
+	<DefaultContactManager name="CollisionResponse" printLog="0" response="default"/>
+	<MinProximityIntersection name="Proximity" printLog="0" alarmDistance="0.8" contactDistance="0.5"/>
+	<DefaultCollisionGroupManager name="default0" printLog="0"/>
+	<Node 	name="Voxels" 
+		gravity="0 -9.81 0" 
+		 >
+		<EulerImplicitSolver name="default1" printLog="0"/>
+		<CGLinearSolver template="GraphScattered" name="default2" printLog="0" iterations="100" threshold="1e-08"/>
+		<VoxelGridLoader name="gridLoader" printLog="0" filename="textures/Test_64_64_4.raw" voxelSize="1 1 1" resolution="64 64 4" bgValue="0"/>
+		<MechanicalObject template="Vec3d" name="Hexa" printLog="0" position="0 0 0"/>
+		<DynamicSparseGridTopologyContainer name="Container" printLog="0"/>
+		<DynamicSparseGridTopologyModifier name="Modifier" printLog="0"/>
+		<DynamicSparseGridTopologyAlgorithms template="Vec3d" name="TopoAlgo" printLog="0"/>
+		<DynamicSparseGridGeometryAlgorithms template="Vec3d" name="GeomAlgo" printLog="0"/>
+		<HexahedralFEMForceField template="Vec3d" name="FEM" printLog="0" method="large" poissonRatio="0.3" youngModulus="1000"/>
+		<DiagonalMass template="Vec3d" name="default3" printLog="0" massDensity="0.5"/>
+		<Node 	name="Triangles" 
+			gravity="0 -9.81 0" 
+			 >
+			<MechanicalObject template="Vec3d" name="Triangles" printLog="0" position="0 0 0" ignoreLoader="1"/>
+			<TriangleSetTopologyContainer name="Container" printLog="0"/>
+			<TriangleSetTopologyModifier name="Modifier" printLog="0"/>
+			<TriangleSetTopologyAlgorithms template="Vec3d" name="TopoAlgo" printLog="0"/>
+			<TriangleSetGeometryAlgorithms template="Vec3d" name="GeomAlgo" printLog="0"/>
+			<Hexa2TriangleTopologicalMapping name="TopoMapping" printLog="0" listening="1" object1="../../Container" object2="Container"/>
+			<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="BarycentricMapping" printLog="0" object1="../../Hexa" object2="Triangles" hexamap="0 "/>
+			<Node 	name="Visual Model" 
+				gravity="0 -9.81 0" 
+				 >
+				<OglModel template="ExtVec3f" name="Visual" printLog="0" material="Default Diffuse 1 0 0 1 1 Ambient 1 0 0 0.2 1 Specular 0 0 0 1 1 Emissive 0 0 0 1 1 Shininess 0 45" useVBO="0"/>
+				<IdentityMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="IdentityMapping" printLog="0" object1="../../Triangles" object2="Visual"/>
+			</Node>
+			<Node 	name="Collision Model" 
+				gravity="0 -9.81 0" 
+				 >
+				<TriangleModel name="CollisionModel" printLog="0"/>
+			</Node>
+		</Node>
+	</Node>
+</Node>

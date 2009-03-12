@@ -4,6 +4,7 @@
 # Target is a library:  sofacore$$LIBSUFFIX
 
 HEADERS += \
+          core.h\ 
           BaseMapping.h \
           BehaviorModel.h \
           CollisionElement.h \
@@ -12,6 +13,7 @@ HEADERS += \
           componentmodel/behavior/BaseConstraint.h \
           componentmodel/behavior/BaseConstraintCorrection.h \
           componentmodel/behavior/BaseForceField.h \
+          componentmodel/behavior/BaseLMConstraint.h \
           componentmodel/behavior/BaseMass.h \
           componentmodel/behavior/BaseMechanicalMapping.h \
           componentmodel/behavior/BaseMechanicalState.h \
@@ -22,6 +24,8 @@ HEADERS += \
           componentmodel/behavior/InteractionForceField.h \
           componentmodel/behavior/InteractionConstraint.h \
           componentmodel/behavior/LinearSolver.h \
+          componentmodel/behavior/LMConstraint.h \
+          componentmodel/behavior/LMConstraint.inl \
           componentmodel/behavior/PairInteractionForceField.h \
           componentmodel/behavior/PairInteractionForceField.inl \
 	  componentmodel/behavior/MixedInteractionForceField.h \
@@ -40,6 +44,7 @@ HEADERS += \
           componentmodel/behavior/MultiVector.h \
           componentmodel/behavior/MultiMatrix.h \
           componentmodel/behavior/OdeSolver.h \
+          componentmodel/behavior/State.h \
           componentmodel/collision/BroadPhaseDetection.h \
           componentmodel/collision/CollisionAlgorithm.h \
           componentmodel/collision/CollisionGroupManager.h \
@@ -67,6 +72,8 @@ HEADERS += \
           objectmodel/Context.h \
           objectmodel/ContextObject.h \
           objectmodel/Data.h \
+          objectmodel/DataEngine.h \
+	  objectmodel/DDGNode.h \
           objectmodel/DetachNodeEvent.h \
           objectmodel/Event.h \
           objectmodel/DataPtr.h \
@@ -78,11 +85,32 @@ HEADERS += \
 	  objectmodel/OmniEvent.h \
 	  objectmodel/GLInitializedEvent.h \
           objectmodel/VDataPtr.h \
+          objectmodel/Tag.h \
           objectmodel/XDataPtr.h \
           VisualModel.h \
+          VisualManager.h \
           ObjectFactory.h
 
 SOURCES +=  \
+          objectmodel/Base.cpp \
+          objectmodel/BaseContext.cpp \
+          objectmodel/BaseObject.cpp \
+          objectmodel/BaseObjectDescription.cpp \
+          objectmodel/ClassInfo.cpp \
+          objectmodel/Context.cpp \
+	  objectmodel/DDGNode.cpp \
+          objectmodel/DetachNodeEvent.cpp \
+          objectmodel/Event.cpp \
+          objectmodel/DataEngine.cpp \
+          objectmodel/DataPtr.cpp \
+	  objectmodel/JoystickEvent.cpp \
+          objectmodel/KeypressedEvent.cpp \
+          objectmodel/KeyreleasedEvent.cpp \
+	  objectmodel/MouseEvent.cpp \
+  	  objectmodel/OmniEvent.cpp \
+          objectmodel/Tag.cpp \
+          ObjectFactory.cpp \
+          Mapping.cpp \	   
           CollisionModel.cpp \
           componentmodel/behavior/LinearSolver.cpp \
           componentmodel/behavior/MasterSolver.cpp \
@@ -93,25 +121,11 @@ SOURCES +=  \
           componentmodel/collision/Pipeline.cpp \
           componentmodel/topology/BaseMeshTopology.cpp \
           componentmodel/topology/BaseTopology.cpp \
-          objectmodel/Base.cpp \
-          objectmodel/BaseContext.cpp \
-          objectmodel/BaseObject.cpp \
-          objectmodel/BaseObjectDescription.cpp \
-          objectmodel/ClassInfo.cpp \
-          objectmodel/Context.cpp \
-          objectmodel/DetachNodeEvent.cpp \
-          objectmodel/Event.cpp \
-          objectmodel/DataPtr.cpp \
-	  objectmodel/JoystickEvent.cpp \
-          objectmodel/KeypressedEvent.cpp \
-          objectmodel/KeyreleasedEvent.cpp \
-	  objectmodel/MouseEvent.cpp \
-  	  objectmodel/OmniEvent.cpp \
-          ObjectFactory.cpp \
-          Mapping.cpp \	   
           componentmodel/behavior/BaseConstraint.cpp \
-          componentmodel/behavior/BaseForceField.cpp \
+          componentmodel/behavior/BaseForceField.cpp \   
+          componentmodel/behavior/BaseLMConstraint.cpp \
           componentmodel/behavior/ForceField.cpp \
+          componentmodel/behavior/LMConstraint.cpp \
           componentmodel/behavior/Mass.cpp \
           componentmodel/behavior/Constraint.cpp \
           componentmodel/behavior/MechanicalMapping.cpp \
@@ -127,8 +141,14 @@ include($${SOFA_DIR}/sofa.cfg){
 }
 TARGET = sofacore$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
+
+CONFIG -= staticlib
+CONFIG += dll
+
 LIBS += -lsofahelper$$LIBSUFFIX -lsofadefaulttype$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS
+
+DEFINES += SOFA_BUILD_CORE
 
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/modules

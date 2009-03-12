@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -27,6 +27,7 @@
 //#include "OgreVector3.h"
 #include <sofa/gui/qt/viewer/qtogre/QtOgreViewer.h>
 #include <GenGraphForm.h>
+#include <sofa/gui/SofaGUI.h>
 
 #ifdef SOFA_QT4
 #include <QFileDialog>
@@ -52,39 +53,38 @@ namespace sofa
 	  {
 	    using namespace Ogre;
 
-	    //if no view file was present, we set up automatically the view.
-	    showEntireScene();
-
 	    if (!sceneFileName.empty())
 	      {
-		std::string viewFileName = sceneFileName+".ogre.view";
+		std::string viewFileName = sceneFileName+"."+sofa::gui::SofaGUI::GetGUIName()+".view";
 		std::ifstream in(viewFileName.c_str());
 		if (!in.fail())
 		  {
 		    Ogre::Vector3 camera_position;
 		    Ogre::Quaternion camera_orientation;
-
 		    in >> camera_position[0];
 		    in >> camera_position[1];
 		    in >> camera_position[2];
 
 
-		    in >> camera_orientation.w;
 		    in >> camera_orientation.x;
 		    in >> camera_orientation.y;
 		    in >> camera_orientation.z;
-		    camera_orientation.normalise();
+		    in >> camera_orientation.w;
 
-		    mCamera->setOrientation(camera_orientation);			
+		    camera_orientation.normalise();
+		    
 
 		    mCamera->setPosition(camera_position);
-
+		    mCamera->setOrientation(camera_orientation);
+ 		    update();
 		    in.close();
-		    update();
 		    return;
 		  }		
 	      } 
-	    update();
+
+	    //if no view file was present, we set up automatically the view.
+	    showEntireScene();
+ 	    update();
 	  }
 
 
@@ -93,7 +93,6 @@ namespace sofa
 	  // Resize
 	  void QtOgreViewer::setSizeW( int size )
 	  {
-
 	    if (mRenderWindow != NULL){
 	      mRenderWindow->resize( size, mRenderWindow->getHeight());
 	      mRenderWindow->windowMovedOrResized();
@@ -117,18 +116,20 @@ namespace sofa
 	  {
 	    if (!sceneFileName.empty())
 	      {
-		std::string viewFileName = sceneFileName+".ogre.view";
+		std::string viewFileName = sceneFileName+"."+sofa::gui::SofaGUI::GetGUIName()+".view";
 		std::ofstream out(viewFileName.c_str());
 		if (!out.fail())
 		  {
+
 		    Ogre::Vector3 position_cam = mCamera->getPosition();
 		    Ogre::Quaternion orientation_cam = mCamera->getOrientation();
 
 		    out << position_cam[0] << " " << position_cam[1] << " " << position_cam[2] << "\n";
 		    out << orientation_cam.x << " " << orientation_cam.y << " " << orientation_cam.z << " " << orientation_cam.w << "\n";
+
 		    out.close();
 
-
+		    
 		  }
 		std::cout << "View parameters saved in "<<viewFileName<<std::endl;
 	      }

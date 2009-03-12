@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -77,7 +77,7 @@ public:
     void redraw();
     int closeGUI();
 
-    sofa::simulation::tree::GNode* currentSimulation()
+    sofa::simulation::Node* currentSimulation()
     {
 	return getScene();
     }
@@ -130,7 +130,7 @@ private:
     enum { MINMOVE = 10 };
 
 
-    sofa::simulation::tree::GNode* groot;
+    sofa::simulation::Node* groot;
     std::string sceneFileName;
 
     int				_W, _H;
@@ -226,7 +226,7 @@ protected:
 
 public:
     void setScene(sofa::simulation::Node* scene, const char* filename=NULL);
-    sofa::simulation::tree::GNode* getScene()
+    sofa::simulation::Node* getScene()
     {
         return groot;
     }

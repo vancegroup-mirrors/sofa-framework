@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -46,11 +46,12 @@ OmniEvent::OmniEvent(State state, double posX, double posY, double posZ)
 
 }
 
-OmniEvent::OmniEvent(State state, Vector3 position, Quat orientation)
+OmniEvent::OmniEvent(State state, Vector3 position, Quat orientation, bool button)
 : sofa::core::objectmodel::Event()
 	, m_state(state)
 	, m_position(position)
 	, m_orientation(orientation)
+	, m_button(button)
 {
 	m_posX = position[0];
 	m_posY = position[1];

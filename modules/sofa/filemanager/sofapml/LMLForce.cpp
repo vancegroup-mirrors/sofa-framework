@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,7 +34,7 @@
 
 #include "LMLForce.inl"
 #include "sofa/defaulttype/Vec3Types.h"
-#include "sofa/component/MechanicalObject.h"
+#include "sofa/component/container/MechanicalObject.h"
 #include <sofa/core/ObjectFactory.h>
 using namespace sofa::defaulttype;
 using namespace sofa::component;
@@ -47,12 +47,13 @@ namespace filemanager
 
 namespace pml
 {
+
 using namespace core::componentmodel::behavior;
 
 SOFA_DECL_CLASS(LMLForce)
 
+template class SOFA_BUILD_FILEMANAGER_PML_API LMLForce<Vec3Types>;
 
-template class LMLForce<Vec3Types>;
 }
 }
 }

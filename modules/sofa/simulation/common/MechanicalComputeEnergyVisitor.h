@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -50,7 +50,7 @@ Compute the amount of mechanical energy
 
 	@author Francois Faure
 */
-class MechanicalComputeEnergyVisitor : public sofa::simulation::MechanicalVisitor
+class SOFA_SIMULATION_COMMON_API MechanicalComputeEnergyVisitor : public sofa::simulation::MechanicalVisitor
 {
     SReal m_kineticEnergy;
     SReal m_potentialEnergy;
@@ -70,6 +70,10 @@ class MechanicalComputeEnergyVisitor : public sofa::simulation::MechanicalVisito
     /// Process the BaseForceField
     virtual Result fwdForceField(simulation::Node* /*node*/, core::componentmodel::behavior::BaseForceField* f);
  
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalComputeEnergyVisitor"; }
+	
 };
 
 }

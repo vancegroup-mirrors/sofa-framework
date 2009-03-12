@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,9 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_FORCEFIELD_TETRAHEDRONFEMFORCEFIELD_CPP
 #include <sofa/component/forcefield/TetrahedronFEMForceField.inl>
+#include <sofa/core/componentmodel/behavior/ForceField.inl>
 #include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/ObjectFactory.h>
 //#include <typeinfo>
 
@@ -54,10 +56,10 @@ int TetrahedronFEMForceFieldClass = core::RegisterObject("Tetrahedral finite ele
 ;
 
 #ifndef SOFA_FLOAT
-template class TetrahedronFEMForceField<Vec3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TetrahedronFEMForceField<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class TetrahedronFEMForceField<Vec3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TetrahedronFEMForceField<Vec3fTypes>;
 #endif
 
 } // namespace forcefield

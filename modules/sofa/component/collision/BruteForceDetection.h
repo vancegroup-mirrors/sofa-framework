@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,7 @@
 
 #include <sofa/core/componentmodel/collision/BroadPhaseDetection.h>
 #include <sofa/core/componentmodel/collision/NarrowPhaseDetection.h>
+#include <sofa/component/component.h>
 #include <sofa/core/CollisionElement.h>
 #include <sofa/defaulttype/Vec.h>
 #include <set>
@@ -43,7 +44,7 @@ namespace collision
 
 using namespace sofa::defaulttype;
 
-class BruteForceDetection :
+class SOFA_COMPONENT_COLLISION_API BruteForceDetection :
 	public core::componentmodel::collision::BroadPhaseDetection,
 	public core::componentmodel::collision::NarrowPhaseDetection
 {

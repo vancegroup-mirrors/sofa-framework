@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -45,7 +45,7 @@ using namespace sofa::defaulttype;
 /**
  * @brief This event notifies about SensAble PHANTOM® device interaction.
  */
-class OmniEvent : public sofa::core::objectmodel::Event
+class SOFA_CORE_API OmniEvent : public sofa::core::objectmodel::Event
 {
 public:
 
@@ -66,7 +66,7 @@ public:
 	/**
 	 * @brief Constructor.
 	 */
-	OmniEvent(State state, Vector3 position, Quat orientation);
+	OmniEvent(State state, Vector3 position, Quat orientation, bool button);
 
 	/**
 	 * @brief Destructor.
@@ -103,12 +103,18 @@ public:
 	 */
 	Quat getOrientation(void) const {return m_orientation;}
 
+	/**
+	 * @brief Get the PHANTOM® button state.
+	 */
+	bool getButton(void) const {return m_button;}
+
 private:
 
 	State m_state; ///< SensAble PHANTOM® buttons state on the event propagation.
 	double m_posX, m_posY, m_posZ; ///< SensAble PHANTOM® coordinates.
 	Vector3 m_position;///< SensAble PHANTOM® coordinates in a Vec3d type.
 	Quat m_orientation;///< SensAble PHANTOM® orientation.
+	bool m_button;
 };
 
 } // namespace objectmodel

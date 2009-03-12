@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,7 @@
 
 #include <sofa/component/forcefield/SpringEdgeDataForceField.h>
 #include <sofa/helper/io/MassSpringLoader.h>
+#include <sofa/simulation/tree/Simulation.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/component/topology/TopologyChangedEvent.h>
 #include <sofa/helper/system/config.h>
@@ -49,9 +50,9 @@ namespace forcefield
 using namespace sofa::core::componentmodel::behavior;
 
 template<class DataTypes>
-void springCreationFunction(int index, 
-							void* param, typename SpringEdgeDataForceField<DataTypes>::Spring& t, 
-							const component::topology::Edge& ,  
+void springCreationFunction(int index,
+							void* param, typename SpringEdgeDataForceField<DataTypes>::Spring& t,
+							const component::topology::Edge& ,
 							const std::vector< unsigned int > &ancestors,
 							const std::vector< double >& coefs)
 {
@@ -104,7 +105,7 @@ bool SpringEdgeDataForceField<DataTypes>::load(const char *filename)
 }
 
 template <class DataTypes>
-void SpringEdgeDataForceField<DataTypes>::resizeArray(unsigned int n) 
+void SpringEdgeDataForceField<DataTypes>::resizeArray(unsigned int n)
 {
 	springArray.resize(n);
 }
@@ -128,7 +129,7 @@ SpringEdgeDataForceField<DataTypes>::SpringEdgeDataForceField(core::componentmod
 		springArray.setCreateFunction(springCreationFunction<DataTypes>);
 		springArray.setCreateParameter( (void *) this );
 	}
-	
+
 
 template <class DataTypes>
 void SpringEdgeDataForceField<DataTypes>::init()
@@ -161,7 +162,7 @@ public:
 };
 
 template <class DataTypes>
-void SpringEdgeDataForceField<DataTypes>::createDefaultSprings() 
+void SpringEdgeDataForceField<DataTypes>::createDefaultSprings()
 {
 	component::topology::EdgeSetTopologyContainer *container=topology->getEdgeSetTopologyContainer();
 	const std::vector<component::topology::Edge> &ea=container->getEdgeArray();
@@ -193,7 +194,7 @@ void SpringEdgeDataForceField<DataTypes>::handleEvent( Event* e )
 		}
 	} else {
 		component::topology::TopologyChangedEvent *tce=dynamic_cast<component::topology::TopologyChangedEvent *>(e);
-		/// test that the event is a change of topology and that it 
+		/// test that the event is a change of topology and that it
 		if ((tce) && (tce->getTopology()== getContext()->getMainTopology())) {
 			core::componentmodel::topology::BaseTopology *topology = static_cast<core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
 
@@ -214,7 +215,7 @@ void SpringEdgeDataForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& 
 	const std::vector<component::topology::Edge> &ea=container->getEdgeArray();
 	Coord u;
 	Real d,inverseLength,elongation,elongationVelocity,forceIntensity;
-	
+
 	Deriv relativeVelocity,force;
 	for (unsigned int i=0; i<ea.size(); i++)
 	{
@@ -296,15 +297,14 @@ void SpringEdgeDataForceField<DataTypes>::addDForce(VecDeriv& df, const VecDeriv
 template<class DataTypes>
 void SpringEdgeDataForceField<DataTypes>::draw()
 {
-	if (getContext()->getShowForceFields()==false) 
+	if (getContext()->getShowForceFields()==false)
 		return;
 	const VecCoord& p = *this->object->getX();
 	component::topology::EdgeSetTopologyContainer *container=topology->getEdgeSetTopologyContainer();
 	const std::vector<component::topology::Edge> &ea=container->getEdgeArray();
 
-    glDisable(GL_LIGHTING);
-	
-	glBegin(GL_LINES);
+
+	std::vector< Vector3 > points[2];
 	for (unsigned int i=0; i<springArray.size(); i++)
 	{
 		const component::topology::Edge &e=ea[i];
@@ -313,14 +313,19 @@ void SpringEdgeDataForceField<DataTypes>::draw()
 		Real d = (p[e.second]-p[e.first]).norm();
 
 		if (d<s.restLength*0.9999)
-			glColor4f(1,0.5f,0,1);
+		  {
+		    points[0].push_back(p[e.first]);
+		    points[0].push_back(p[e.second]);
+		  }
 		else
-			glColor4f(0,1,0.5f,1);
-
-		glVertex3d(p[e.first][0],p[e.first][1],p[e.first][2]);
-		glVertex3d(p[e.second][0],p[e.second][1],p[e.second][2]);
+		  {
+		    points[1].push_back(p[e.first]);
+		    points[1].push_back(p[e.second]);
+		  }
 	}
-	glEnd();
+	simulation::tree::getSimulation()->DrawUtility.drawLines(points[0], 1, Vec<4,float>(1,0.5,0,1));
+	simulation::tree::getSimulation()->DrawUtility.drawLines(points[1], 1, Vec<4,float>(0,1,0.5,1));
+
 }
 
 } // namespace forcefield

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,7 +22,9 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_FORCEFIELD_MESHSPRINGFORCEFIELD_CPP
 #include <sofa/component/forcefield/MeshSpringForceField.inl>
+#include <sofa/core/componentmodel/behavior/PairInteractionForceField.inl>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -54,14 +56,14 @@ int MeshSpringForceFieldClass = core::RegisterObject("Spring force field acting 
 ;
 
 #ifndef SOFA_FLOAT
-template class MeshSpringForceField<Vec3dTypes>;
-template class MeshSpringForceField<Vec2dTypes>;
-template class MeshSpringForceField<Vec1dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API MeshSpringForceField<Vec3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API MeshSpringForceField<Vec2dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API MeshSpringForceField<Vec1dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class MeshSpringForceField<Vec3fTypes>;
-template class MeshSpringForceField<Vec2fTypes>;
-template class MeshSpringForceField<Vec1fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API MeshSpringForceField<Vec3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API MeshSpringForceField<Vec2fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API MeshSpringForceField<Vec1fTypes>;
 #endif
 } // namespace forcefield
 

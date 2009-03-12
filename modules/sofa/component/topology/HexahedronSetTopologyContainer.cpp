@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #include <sofa/component/topology/HexahedronSetTopologyContainer.h>
 #include <sofa/core/ObjectFactory.h>
 
-#include <sofa/component/MeshLoader.h>
+#include <sofa/component/container/MeshLoader.h>
 
 namespace sofa
 {
@@ -34,45 +34,51 @@ namespace component
 {
 namespace topology
 {
-	using namespace std;
-	using namespace sofa::defaulttype;
 
-  SOFA_DECL_CLASS(HexahedronSetTopologyContainer)
-  int HexahedronSetTopologyContainerClass = core::RegisterObject("Hexahedron set topology container")
-    .add< HexahedronSetTopologyContainer >()
-    ;
+using namespace std;
+using namespace sofa::defaulttype;
 
-    const unsigned int hexahedronEdgeArray[12][2]={{0,1},{0,3},{0,4},{1,2},{1,5},{2,3},{2,6},{3,7},{4,5},{4,7},{5,6},{6,7}};
+SOFA_DECL_CLASS(HexahedronSetTopologyContainer)
+int HexahedronSetTopologyContainerClass = core::RegisterObject("Hexahedron set topology container")
+.add< HexahedronSetTopologyContainer >()
+;
 
-	HexahedronSetTopologyContainer::HexahedronSetTopologyContainer()
-	: QuadSetTopologyContainer()
-	{ }
+const unsigned int hexahedronEdgeArray[12][2]={{0,1},{0,3},{0,4},{1,2},{1,5},{2,3},{2,6},{3,7},{4,5},{4,7},{5,6},{6,7}};
+
+HexahedronSetTopologyContainer::HexahedronSetTopologyContainer()
+: QuadSetTopologyContainer()
+, d_hexahedron(initDataPtr(&d_hexahedron, &m_hexahedron, "hexas", "List of hexahedron indices"))
+{
+}
 
 HexahedronSetTopologyContainer::HexahedronSetTopologyContainer(const sofa::helper::vector< Hexahedron > &hexahedra )
 : QuadSetTopologyContainer()
 , m_hexahedron( hexahedra )
+, d_hexahedron(initDataPtr(&d_hexahedron, &m_hexahedron, "hexas", "List of hexahedron indices"))
 {
     for (unsigned int i=0; i<m_hexahedron.size(); ++i)
     {
         for(unsigned int j=0; j<8; ++j)
         {
             int a = m_hexahedron[i][j];
-            if (a >= (int)nbPoints) nbPoints = a+1;
+            if (a >= getNbPoints()) nbPoints.setValue(a+1);
         }
     }
 }
 
 void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e, int f, int g, int h )
 {
-  m_hexahedron.push_back(Hexahedron(a,b,c,d,e,f,g,h));
-    if (a >= (int)nbPoints) nbPoints = a+1;
-    if (b >= (int)nbPoints) nbPoints = b+1;
-    if (c >= (int)nbPoints) nbPoints = c+1;
-    if (d >= (int)nbPoints) nbPoints = d+1;
-    if (e >= (int)nbPoints) nbPoints = e+1;
-    if (f >= (int)nbPoints) nbPoints = f+1;
-    if (g >= (int)nbPoints) nbPoints = g+1;
-    if (h >= (int)nbPoints) nbPoints = h+1;
+    d_hexahedron.beginEdit();
+    m_hexahedron.push_back(Hexahedron(a,b,c,d,e,f,g,h));
+    d_hexahedron.endEdit();
+    if (a >= getNbPoints()) nbPoints.setValue(a+1);
+    if (b >= getNbPoints()) nbPoints.setValue(b+1);
+    if (c >= getNbPoints()) nbPoints.setValue(c+1);
+    if (d >= getNbPoints()) nbPoints.setValue(d+1);
+    if (e >= getNbPoints()) nbPoints.setValue(e+1);
+    if (f >= getNbPoints()) nbPoints.setValue(f+1);
+    if (g >= getNbPoints()) nbPoints.setValue(g+1);
+    if (h >= getNbPoints()) nbPoints.setValue(h+1);
 }
 
 	void HexahedronSetTopologyContainer::init()
@@ -83,19 +89,23 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 	void HexahedronSetTopologyContainer::loadFromMeshLoader(sofa::component::MeshLoader* loader)
 	{
 		// load points
+                if (!m_hexahedron.empty()) return;
 		PointSetTopologyContainer::loadFromMeshLoader(loader);
-		m_hexahedron = loader->getHexas();
+		d_hexahedron.beginEdit();
+		loader->getHexas(m_hexahedron);
+		d_hexahedron.endEdit();
 	}
 
 	void HexahedronSetTopologyContainer::createHexahedronSetArray()
 	{
 	#ifndef NDEBUG
-		cout << "Error. [HexahedronSetTopologyContainer::createHexahedronSetArray] This method must be implemented by a child topology." << endl;
+                serr << "Error. [createHexahedronSetArray] This method must be implemented by a child topology." << sendl;
 	#endif
 	}
 
 	void HexahedronSetTopologyContainer::createEdgeSetArray()
 	{
+		d_edge.beginEdit();
 		if(hasEdges())
 		{
 			EdgeSetTopologyContainer::clear();
@@ -129,6 +139,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 				} 
 			}
 		}
+		d_edge.endEdit();
 	}
 
 	void HexahedronSetTopologyContainer::createHexahedronEdgeArray()
@@ -149,7 +160,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 			for(unsigned int j=0; j<12; ++j) 
 			{ 
 				const int edgeIndex = getEdgeIndex(t[hexahedronEdgeArray[j][0]],
-													t[hexahedronEdgeArray[j][1]]);
+				                                   t[hexahedronEdgeArray[j][1]]);
 				m_hexahedronEdge[i][j] = edgeIndex; 
 			}
 		}
@@ -157,6 +168,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 
 	void HexahedronSetTopologyContainer::createQuadSetArray()
 	{
+		d_quad.beginEdit();
 		if(hasQuads())
 		{
 			QuadSetTopologyContainer::clear();
@@ -333,6 +345,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 				m_quad.push_back(qu);
 			} 
 		}
+		d_quad.endEdit();
 	}
 
 	void HexahedronSetTopologyContainer::createHexahedronQuadArray()
@@ -438,7 +451,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 		if(!hasHexahedra() && getNbPoints()>0)
 		{
 	#ifndef NDEBUG
-			cout << "Warning. [HexahedronSetTopologyContainer::getHexahedronArray] creating hexahedron array." << endl;
+			sout << "Warning. [HexahedronSetTopologyContainer::getHexahedronArray] creating hexahedron array." << endl;
 	#endif
 			createHexahedronSetArray();
 		}
@@ -737,7 +750,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 
 					if(!check_hexa_vertex_shell)
 					{
-						std::cout << "*** CHECK FAILED : check_hexa_vertex_shell, i = " << i << " , j = " << j << std::endl;
+					  std::cout << "*** CHECK FAILED : check_hexa_vertex_shell, i = " << i << " , j = " << j << std::endl;
 						ret = false;
 					}
 				}
@@ -765,7 +778,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 												|| (m_hexahedronEdge[tes[j]][11]==i);
 					if(!check_hexa_edge_shell)
 					{
-						std::cout << "*** CHECK FAILED : check_hexa_edge_shell, i = " << i << " , j = " << j << std::endl;
+					  std::cout << "*** CHECK FAILED : check_hexa_edge_shell, i = " << i << " , j = " << j << std::endl;
 						ret = false;
 					}
 				}
@@ -787,7 +800,7 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 												|| (m_hexahedronQuad[tes[j]][5]==i);
 					if(!check_hexa_quad_shell)
 					{
-						std::cout << "*** CHECK FAILED : check_hexa_quad_shell, i = " << i << " , j = " << j << std::endl;
+ 					  std::cout << "*** CHECK FAILED : check_hexa_quad_shell, i = " << i << " , j = " << j << std::endl;
 						ret = false;
 					}
 				}
@@ -832,7 +845,9 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 
 	void HexahedronSetTopologyContainer::clearHexahedra()
 	{
+		d_hexahedron.beginEdit();
 		m_hexahedron.clear();
+		d_hexahedron.endEdit();
 	}
 
 	void HexahedronSetTopologyContainer::clearHexahedronEdges()

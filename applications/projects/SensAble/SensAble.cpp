@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -44,6 +44,8 @@
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/ObjectFactory.h>
+
+#include <sofa/component/typedef/Sofa_typedef.h>
 
 using namespace sofa::defaulttype;
 using namespace sofa::simulation::tree;
@@ -203,9 +205,14 @@ SensAble::SensAble()
 	devicePivot = mrotation.multTranspose(pivot.getValue() - xform.getValue().getCenter()) / scale.getValue();
 	initDevice();
 
+	GNode* sphnode = new GNode;
 	sphereModel = new sofa::component::collision::SphereModel();
-	double r = 1;
-	sphereModel->addSphere(Vec3d(0,0,0),r);
+	sphnode->addObject(sphereModel);
+    MechanicalObject3* DOF = new MechanicalObject3;
+	sphnode->addObject(DOF);
+	sphereModel->init();
+	DOF->init();
+	sphereModel->addSphere(Vec3d(0,0,0), 1);
 }
 
 void SensAble::handleEvent(sofa::core::objectmodel::Event* event)
@@ -308,7 +315,7 @@ void SensAble::updatePosition(double /* dt */) {
 	if (bRenderForce)
 	{
 
-	    Vec3d f = (*sphereModel->getF())[0];
+	    Vec3d f = (*sphereModel->getMechanicalState()->getF())[0];
 	if (rigidModel != NULL)
 	{
 	    MechanicalComputeForceVisitor(VecId::force()).execute( rigidModel->getContext() );
@@ -333,7 +340,7 @@ void SensAble::updatePosition(double /* dt */) {
 		hdScheduleSynchronous(SetForceCallback, &currentForce, HD_DEFAULT_SCHEDULER_PRIORITY);
 	}
 
-	(*sphereModel->getF())[0] = Vec3d(0,0,0);
+	(*sphereModel->getMechanicalState()->getF())[0] = Vec3d(0,0,0);
 	if (rigidModel != NULL)
 	{
 	    MechanicalResetForceVisitor(VecId::force()).execute( rigidModel->getContext() );
@@ -442,8 +449,8 @@ void SensAble::draw()
 		n.normalize();
 		glLineWidth(5);
 		Vec3d p1,p2;
-		p1 = (*sphereModel->getX())[0]+n*0.5*scale.getValue();
-		p2 = (*sphereModel->getX())[0]+n*0.5*scale.getValue()+f*2;
+		p1 = (*sphereModel->getMechanicalState()->getX())[0]+n*0.5*scale.getValue();
+		p2 = (*sphereModel->getMechanicalState()->getX())[0]+n*0.5*scale.getValue()+f*2;
 		glBegin(GL_LINES);
 //			glVertex3dv(p1.ptr());
 //			glVertex3dv(p2.ptr());

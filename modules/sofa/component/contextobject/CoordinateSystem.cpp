@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,12 +28,12 @@
 
 #include <sofa/component/contextobject/CoordinateSystem.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <iostream>
 #include <sofa/helper/system/gl.h>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -72,23 +72,23 @@ void CoordinateSystem::setTransform( const Frame& f )
 //     positionInParent_ = Frame( v, this->getOrientation() );
 //     return this;
 // }
-// 
+//
 CoordinateSystem::Vec CoordinateSystem::getOrigin() const
 {
     return positionInParent_.getOrigin();
 }
-// 
+//
 // CoordinateSystem* CoordinateSystem::setOrientation( const Rot& r )
 // {
 //     positionInParent_ = Frame( this->getOrigin(), r );
 //     return this;
 // }
-// 
+//
 CoordinateSystem::Rot CoordinateSystem::getOrientation( ) const
 {
     return positionInParent_.getOrientation();
 }
-// 
+//
 // CoordinateSystem* CoordinateSystem::set( const Vec& v, const Rot& r )
 // {
 //     positionInParent_ = Frame( v, r );
@@ -112,10 +112,10 @@ CoordinateSystem::Rot CoordinateSystem::getOrientation( ) const
 
 void CoordinateSystem::apply()
 {
-    //cerr<<"CoordinateSystem::apply(), frame = "<<   getName() <<", t="<<getContext()->getTime() << endl;
+    //serr<<"CoordinateSystem::apply(), frame = "<<   getName() <<", t="<<getContext()->getTime() << endl;
     core::objectmodel::BaseContext* context = getContext();
-    //cerr<<"CoordinateSystem::apply, current position = "<<context->getPositionInWorld()<<endl;
-    //cerr<<"CoordinateSystem::apply, transform = "<<this->getTransform()<<endl;
+    //serr<<"CoordinateSystem::apply, current position = "<<context->getPositionInWorld()<<sendl;
+    //serr<<"CoordinateSystem::apply, transform = "<<this->getTransform()<<sendl;
 
     // store parent position and velocity
     Frame parentToWorld = context->getPositionInWorld();
@@ -142,7 +142,7 @@ void CoordinateSystem::apply()
     context->setVelocityBasedLinearAccelerationInWorld( newLinearAcceleration );
     context->setPositionInWorld( newLocalToWorld );
     context->setVelocityInWorld( newSpatialVelocity );
-    //cerr<<"CoordinateSystem::apply, new position = "<<context->getPositionInWorld()<<endl;
+    //serr<<"CoordinateSystem::apply, new position = "<<context->getPositionInWorld()<<sendl;
 
 }
 
@@ -168,7 +168,7 @@ void CoordinateSystem::draw()
     */
 }
 
-using namespace sofa::defaulttype; 
+using namespace sofa::defaulttype;
 
 
 

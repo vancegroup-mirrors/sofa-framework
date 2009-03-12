@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,10 +27,13 @@
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_FORCEFIELD_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_FORCEFIELD_H
 
+#include <sofa/core/core.h>
 #include <sofa/core/componentmodel/behavior/BaseForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/defaulttype/BaseVector.h>
 #include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -205,6 +208,22 @@ public:
 protected:
     MechanicalState<DataTypes> *mstate;
 };
+
+#if defined(WIN32) && !defined(SOFA_BUILD_CORE)
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec3dTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec2dTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec1dTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec6dTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Rigid3dTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Rigid2dTypes>;
+
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec3fTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec2fTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec1fTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Vec6fTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Rigid3fTypes>;
+extern template class SOFA_CORE_API ForceField<defaulttype::Rigid2fTypes>;
+#endif
 
 } // namespace behavior
 

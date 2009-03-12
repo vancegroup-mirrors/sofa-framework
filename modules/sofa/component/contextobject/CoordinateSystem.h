@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,6 +31,7 @@
 #include <sofa/core/objectmodel/ContextObject.h>
 #include <sofa/defaulttype/SolidTypes.h>
 #include <sofa/defaulttype/Vec.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -48,10 +49,7 @@ class Topology;
 }
 namespace simulation
 {
-namespace tree
-{
-class GNode;
-}
+class Node;
 }
 
 namespace component
@@ -62,7 +60,7 @@ namespace contextobject
 
 /** Defines the local coordinate system with respect to its parent.
 */
-class CoordinateSystem : public core::objectmodel::ContextObject
+class SOFA_COMPONENT_CONTEXTOBJECT_API CoordinateSystem : public core::objectmodel::ContextObject
 {
 public:
     typedef core::objectmodel::BaseContext::SolidTypes SolidTypes;
@@ -75,14 +73,14 @@ public:
     CoordinateSystem();
     virtual ~CoordinateSystem()
     {}
-    
+
     // ContextObject
     virtual void apply();
 
     virtual void draw();
 
     virtual void reinit();
-    
+
     virtual void init();
 
     /// Transform wrt parent

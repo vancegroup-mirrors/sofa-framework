@@ -12,12 +12,12 @@
 			<Object type="UniformMass" filename="BehaviorModels/rigid.xs3"/>
 			<Node name="Manche">
 				<Node name="Visu">
-					<Object type="OglModel" name="Visual" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" />
+					<Object type="OglModel" name="Visual" fileMesh="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" />
 					<Object type="RigidMapping" object1="../.." object2="Visual" index="0"/>
 				</Node>
 				<!--
 				<Node name="Collis">
-					<Object type="Mesh" filename="mesh/smCube27.obj" />
+					<Object type="Mesh" fileTopology="mesh/smCube27.obj" />
 					<Object type="MechanicalObject" name="Collision"/>
 					<Object type="Triangle" />
 					<Object type="RigidMapping" object1="../.." object2="Collision" index="0"/>
@@ -25,7 +25,7 @@
 			</Node>
 			<Node name="mors_droit" >
 				<Node name="Visu">
-					<Object type="OglModel" name="Visual" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_right.obj" />
+					<Object type="OglModel" name="Visual" fileMesh="Demos/Ophtalmo/data/mesh/Grab_instrument_right.obj" />
 					<Object type="RigidMapping" object1="../.." object2="Visual" index="1"/>
 				</Node>
 				
@@ -47,7 +47,7 @@
 			</Node>
 			<Node name="mors_gauche">
 				<Node name="Visu">
-					<Object type="OglModel" name="Visual" filename="Demos/Ophtalmo/data/mesh/Grab_instrument_left.obj" />
+					<Object type="OglModel" name="Visual" fileMesh="Demos/Ophtalmo/data/mesh/Grab_instrument_left.obj" />
 					<Object type="RigidMapping" object1="../.." object2="Visual" index="2"/>
 				</Node>
 				

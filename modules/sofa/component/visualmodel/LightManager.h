@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,7 +38,11 @@
 #define SOFA_COMPONENT_LIGHTMANAGER_H
 
 #include <sofa/defaulttype/SolidTypes.h>
+#include <sofa/component/component.h>
 #include <sofa/component/visualmodel/Light.h>
+#include <sofa/core/VisualManager.h>
+#include <sofa/core/objectmodel/Event.h>
+#include <sofa/component/visualmodel/OglShadowShader.h>
 
 namespace sofa
 {
@@ -57,12 +61,17 @@ namespace visualmodel
  *
  */
 
-class LightManager : public core::VisualModel {
+class SOFA_COMPONENT_VISUALMODEL_API LightManager : public core::VisualManager {
 private:
 	static const unsigned int MAX_NUMBER_OF_LIGHTS = GL_MAX_LIGHTS;
 	std::vector<Light*> lights;
+	bool shadowEnabled;
+
+	OglShadowShader* shadowShader;
+	void makeShadowMatrix(unsigned int i);
 
 public:
+	Data<bool> debugViewDepthBuffer;
 	LightManager();
 	virtual ~LightManager();
 
@@ -70,14 +79,27 @@ public:
 	void reinit();
 	void initVisual();
 	void update() { };
+
+	void preDrawScene(helper::gl::VisualParameters* vp);
+	bool drawScene(helper::gl::VisualParameters* vp);
+	void postDrawScene(helper::gl::VisualParameters* vp);
+
+
 	void draw();
+    void fwdDraw(Pass);
+    void bwdDraw(Pass);
 
 	///Register a light into the LightManager
 	void putLight(Light* light);
+
 	///Register a vector of lights into the LightManager
 	void putLights(std::vector<Light*> lights);
+
 	///Remove all lights of the LightManager
 	void clear();
+
+	void handleEvent(sofa::core::objectmodel::Event* event);
+
 };
 
 }//namespace visualmodel

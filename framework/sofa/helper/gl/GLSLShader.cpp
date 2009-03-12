@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -49,14 +49,14 @@ bool GLSLShader::InitGLSL()
         return false;
     }
 //     fprintf(stdout, "GLSLShader: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-    
+
     // Make sure find the GL_ARB_shader_objects extension so we can use shaders.
     if(!GLEW_ARB_shader_objects)
     {
         fprintf(stderr, "Error: GL_ARB_shader_objects extension not supported!\n");
         return false;
     }
-    
+
     // Make sure we support the GLSL shading language 1.0
     if(!GLEW_ARB_shading_language_100)
     {
@@ -135,9 +135,9 @@ bool GLSLShader::CompileShader(GLint target, const std::string& source, GLhandle
     shader = glCreateShaderObjectARB(target);
 
     const char* src = source.c_str();
-    
+
     glShaderSourceARB(shader, 1, &src, NULL);
-    
+
     glCompileShaderARB(shader);
 
     GLint compiled = 0, length = 0, laux = 0;
@@ -167,7 +167,7 @@ void GLSLShader::InitShaders(const std::string& strVertex, const std::string& st
 	Release();
 
     bool ready = true;
-    
+
     // Now we load and compile the shaders from their respective files
     ready &= CompileShader( GL_VERTEX_SHADER_ARB, header + LoadTextFile(strVertex), m_hVertexShader );
     if (!strGeometry.empty())
@@ -221,7 +221,7 @@ void GLSLShader::InitShaders(const std::string& strVertex, const std::string& st
         std::cerr << logString << std::endl;
         free(logString);
     }
-    
+
     // Now, let's turn off the shader initially.
     glUseProgramObjectARB(0);
 }
@@ -261,6 +261,17 @@ GLint GLSLShader::GetVariable(std::string strVariable)
 	// This returns the variable ID for a variable that is used to find
 	// the address of that variable in memory.
 	return glGetUniformLocationARB(m_hProgramObject, strVariable.c_str());
+}
+
+GLint GLSLShader::GetAttributeVariable(std::string strVariable)
+{
+	// If we don't have an active program object, let's return -1
+	if(!m_hProgramObject)
+		return -1;
+
+	// This returns the variable ID for a variable that is used to find
+	// the address of that variable in memory.
+	return glGetAttribLocationARB(m_hProgramObject, strVariable.c_str());
 }
 
 

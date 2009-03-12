@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,7 @@
 #include <sofa/core/componentmodel/collision/CollisionGroupManager.h>
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/tree/GNode.h>
+#include <sofa/component/component.h>
 #include <set>
 
 
@@ -40,10 +41,10 @@ namespace component
 namespace collision
 {
 
-class DefaultCollisionGroupManager : public core::componentmodel::collision::CollisionGroupManager
+class SOFA_COMPONENT_COLLISION_API DefaultCollisionGroupManager : public core::componentmodel::collision::CollisionGroupManager
 {
 public:
-	typedef std::set<simulation::tree::GNode*> GroupSet;
+	typedef std::set<simulation::Node*> GroupSet;
 	GroupSet groupSet;
 public:
 	DefaultCollisionGroupManager();
@@ -58,7 +59,7 @@ public:
 	Otherwise, an empty Node is returned.
 	The OdeSolver is added afterwards.
 	*/
-	virtual simulation::tree::GNode* buildCollisionGroup();
+	virtual simulation::Node* buildCollisionGroup();
 
 protected:
 	virtual simulation::tree::GNode* getIntegrationNode(core::CollisionModel* model);

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <sofa/helper/helper.h>
+
 namespace sofa
 {
 
@@ -54,7 +56,7 @@ namespace system
 ///
 /// A path is considered as a concatenation of directories separated by :
 // A small utility class to temporarly set the current directory to the same as a specified file
-class FileRepository
+class SOFA_HELPER_API FileRepository
 {
 public:
 
@@ -114,7 +116,7 @@ protected:
     static bool findFileIn(std::string& filename, const std::string& path);
 };
 
-extern FileRepository DataRepository; ///< Default repository
+extern SOFA_HELPER_API FileRepository DataRepository; ///< Default repository
 
 } // namespace system
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,6 +38,7 @@
 #define SOFA_COMPONENT_CONTROLLER_CONTROLLER_H
 
 #include <sofa/core/componentmodel/behavior/BaseController.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -72,7 +73,7 @@ namespace controller
  * Provides also an interface for BeginAnimation and EndAnimation events
  * launched at the beginning and the end of a time step.
  */
-  class Controller : public virtual core::componentmodel::behavior::BaseController
+class SOFA_COMPONENT_CONTROLLER_API Controller : public virtual core::componentmodel::behavior::BaseController
 {
 
 public:
@@ -80,6 +81,11 @@ public:
 	* @brief Default constructor.
 	*/
 	Controller();
+
+	/**
+	* @brief Destructor.
+	*/
+	virtual ~Controller();
 
 	/**
 	* @brief Mouse event callback.
@@ -116,13 +122,14 @@ public:
 	*/
 	virtual void onEndAnimationStep(void){};
 
+
 protected:
 
 	Data< bool > handleEventTriggersUpdate; ///< Event reception triggers object update ?
 	
-private:
+public:
 
-	void handleEvent(core::objectmodel::Event *);
+	virtual void handleEvent(core::objectmodel::Event *);
 };
 
 } // namespace controller

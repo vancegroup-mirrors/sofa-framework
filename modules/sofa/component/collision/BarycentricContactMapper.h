@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,9 +31,9 @@
 #include <sofa/component/mapping/IdentityMapping.h>
 #include <sofa/component/mapping/RigidMapping.h>
 #include <sofa/component/mapping/SubsetMapping.h>
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/simulation/tree/GNode.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/simulation/common/Node.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/component/collision/SphereModel.h>
 #include <sofa/component/collision/SphereTreeModel.h>
 #include <sofa/component/collision/TriangleModel.h>
@@ -180,7 +180,7 @@ public:
                 return this->mapper->createPointInQuad(P, qindex, this->model->getMechanicalState()->getX());
             else
             {
-                std::cerr << "ContactMapper<TriangleMeshModel>: ERROR invalid contact element index "<<index<<" on a topology with "<<nbt<<" triangles and "<<nbq<<" quads."<<std::endl;
+	        std::cerr << "ContactMapper<TriangleMeshModel>: ERROR invalid contact element index "<<index<<" on a topology with "<<nbt<<" triangles and "<<nbq<<" quads."<<std::endl;
                 std::cerr << "model="<<this->model->getName()<<" size="<<this->model->getSize()<<std::endl;
                 return -1;
             }
@@ -233,7 +233,7 @@ public:
     
     MMechanicalState* createMapping(const char* name="contactPoints");
     
-    void resize(int size)
+    void resize(int /*size*/)
     {
     }
     
@@ -307,15 +307,15 @@ public:
 };
 
 /// Mapper for SphereModel
-template<class TInDataTypes, class DataTypes>
-class ContactMapper<TSphereModel<TInDataTypes>, DataTypes> : public IdentityContactMapper<TSphereModel<TInDataTypes>, DataTypes>
+template<class DataTypes>
+class ContactMapper<SphereModel, DataTypes> : public IdentityContactMapper<SphereModel, DataTypes>
 {
 public:
     typedef typename DataTypes::Real Real;
     typedef typename DataTypes::Coord Coord;
     int addPoint(const Coord& /*P*/, int index, Real& r)
     {
-	TSphere<TInDataTypes> e(this->model, index);
+	Sphere e(this->model, index);
 	r = e.r();
         return index;
     }
@@ -350,7 +350,7 @@ public:
     typedef component::MechanicalObject<typename RigidContactMapper::DataTypes> MMechanicalObject;
     typedef mapping::RigidMapping< core::componentmodel::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
     MCollisionModel* model;
-    simulation::tree::GNode* child;
+    simulation::Node* child;
     MMapping* mapping;
     MMechanicalState* outmodel;
     int nbp;
@@ -494,7 +494,7 @@ public:
     typedef component::MechanicalObject<typename SubsetContactMapper::DataTypes> MMechanicalObject;
     typedef mapping::SubsetMapping< core::componentmodel::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
     MCollisionModel* model;
-    simulation::tree::GNode* child;
+    simulation::Node* child;
     MMapping* mapping;
     MMechanicalState* outmodel;
     int nbp;
@@ -569,6 +569,18 @@ public:
     {
     }
 };
+
+
+#if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_COLLISION)
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<SphereModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<SphereTreeModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<PointModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<LineModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<TriangleModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<TetrahedronModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<RigidDistanceGridCollisionModel>;
+extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<FFDDistanceGridCollisionModel>;
+#endif
 
 } // namespace collision
 

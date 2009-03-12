@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 #define SOFA_DEFAULTTYPE_VEC_H
 
 #include <sofa/helper/fixed_array.h>
-#include <sofa/helper/static_assert.h>
+#include <boost/static_assert.hpp>
 #include <sofa/helper/rmath.h>
 #include <functional>
 
@@ -466,14 +466,14 @@ public:
     bool operator==(const Vec& b) const
     {
         for (int i=0;i<N;i++)
-			if ( fabs( this->elems[i] - b[i] ) > EQUALITY_THRESHOLD ) return false;
+			if ( fabs( (float)(this->elems[i] - b[i]) ) > EQUALITY_THRESHOLD ) return false;
         return true;
     }
 
     bool operator!=(const Vec& b) const
     {
         for (int i=0;i<N;i++)
-			if ( fabs( this->elems[i] - b[i] ) > EQUALITY_THRESHOLD ) return true;
+			if ( fabs( (float)(this->elems[i] - b[i]) ) > EQUALITY_THRESHOLD ) return true;
         return false;
     }
 
@@ -502,6 +502,12 @@ public:
     void operator=(const Vec<M,real2>& v)
     {
 	this->Vec<N,real>::operator=(v);
+    }
+
+    /// Scalar vector multiplication operator.
+    friend Vec<N,real> operator*(real r, const Vec<N,real>& v)
+    {
+        return v*r;
     }
 };
 
@@ -583,13 +589,6 @@ typedef Vec6d Vector6; ///< alias
 } // namespace defaulttype
 
 } // namespace sofa
-
-/// Scalar vector multiplication operator.
-template <int N, typename real>
-sofa::defaulttype::Vec<N,real> operator*(real r, const sofa::defaulttype::Vec<N,real>& v)
-{
-  return v*r;
-}
 
 
 // Specialization of the std comparison function, to use Vec as std::map key

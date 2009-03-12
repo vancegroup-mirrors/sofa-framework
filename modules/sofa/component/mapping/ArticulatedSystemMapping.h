@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,7 +35,7 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <vector>
 #include <sofa/component/container/ArticulatedHierarchyContainer.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 
 namespace sofa
 {
@@ -61,50 +61,59 @@ public:
     typedef typename Out::VecDeriv OutVecDeriv;
     typedef typename Out::Coord OutCoord;
     typedef typename Out::Deriv OutDeriv;
-	typedef typename Out::SparseVecDeriv OutSparseVecDeriv;
-	typedef typename Out::SparseDeriv OutSparseDeriv;
+    typedef typename Out::SparseVecDeriv OutSparseVecDeriv;
+    typedef typename std::map<unsigned int, OutDeriv>::const_iterator OutConstraintIterator;
     typedef typename In::VecCoord InVecCoord;
     typedef typename In::VecDeriv InVecDeriv;
     typedef typename In::Coord InCoord;
     typedef typename In::Deriv InDeriv;
-	typedef typename In::SparseVecDeriv InSparseVecDeriv;
-	typedef typename In::SparseDeriv InSparseDeriv;
+    typedef typename In::SparseVecDeriv InSparseVecDeriv;
+    typedef typename std::map<unsigned int, InDeriv>::const_iterator InConstraintIterator;
     typedef typename In::Real Real;
     typedef typename OutCoord::value_type OutReal;
-    
+
     typedef sofa::core::componentmodel::behavior::MechanicalState<typename Out::DataTypes> InRoot;
-    
+
     InRoot* rootModel;
 
+	/*
 	ArticulatedSystemMapping(In* from, Out* to)
 	: Inherit(from, to), rootModel(NULL), ahc(NULL)
+	, m_rootModelName(initData(&m_rootModelName, std::string(""), "rootModel", "Root position if a rigid root model is specified."))
 	{
 	}
-	
+	*/
+
+	ArticulatedSystemMapping(In* from, Out* to);
+
 	virtual ~ArticulatedSystemMapping()
 	{
 	}
 
 	void init();
 	void reset();
-	
+
 
 	//void applyOld( typename Out::VecCoord& out, const typename In::VecCoord& in );
-	
-	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in )
+	{
+		apply(out, in, NULL);
+	}
+
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in, const typename InRoot::VecCoord* inroot  );
 
 	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in, const typename InRoot::VecDeriv* inroot );
-	
+
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in, typename InRoot::VecDeriv* outroot );
 
 	void applyJT( typename In::VecConst& out, const typename Out::VecConst& in, typename InRoot::VecConst* outroot );
-	
+
 
 	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
 	{
 		applyJ(out,in, NULL);
 	}
-	
+
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 	{
 		applyJT(out,in, NULL);
@@ -119,6 +128,16 @@ public:
 	 * @name
 	 */
 	//@{
+	/**
+	 * @brief
+	 */
+	void propagateX();
+
+	/**
+	 * @brief
+	 */
+	void propagateXfree();
+
 
 	/**
 	 * @brief
@@ -150,11 +169,13 @@ public:
 	void draw();
 
 	/**
-	*	Stores al the articulation centers 
+	*	Stores al the articulation centers
 	*/
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*> articulationCenters;
 
 	ArticulatedHierarchyContainer* ahc;
+
+	Data<std::string> m_rootModelName;
 
 private:
 	Vec<1,Quat> Buf_Rotation;

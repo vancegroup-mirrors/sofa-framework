@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,37 +36,41 @@ namespace simulation
 
 
 /// Compute collision reset, detection and response in one step
-class CollisionVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API CollisionVisitor : public Visitor
 {
 public:
 	virtual void processCollisionPipeline(simulation::Node* node, core::componentmodel::collision::Pipeline* obj);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "collision"; }
+        virtual const char* getClassName() const { return "CollisionVisitor"; }
 };
 
 /// Remove collision response from last step
-class CollisionResetVisitor : public CollisionVisitor
+class SOFA_SIMULATION_COMMON_API CollisionResetVisitor : public CollisionVisitor
 {
 public:
 	void processCollisionPipeline(simulation::Node* node, core::componentmodel::collision::Pipeline* obj);
+        virtual const char* getClassName() const { return "CollisionResetVisitor"; }
 };
 
 /// Compute collision detection
-class CollisionDetectionVisitor : public CollisionVisitor
+class SOFA_SIMULATION_COMMON_API CollisionDetectionVisitor : public CollisionVisitor
 {
 public:
 	void processCollisionPipeline(simulation::Node* node, core::componentmodel::collision::Pipeline* obj);
+        virtual const char* getClassName() const { return "CollisionDetectionVisitor"; }
 };
 
 /// Compute collision response
-class CollisionResponseVisitor : public CollisionVisitor
+class SOFA_SIMULATION_COMMON_API CollisionResponseVisitor : public CollisionVisitor
 {
 public:
 	void processCollisionPipeline(simulation::Node* node, core::componentmodel::collision::Pipeline* obj);
+        virtual const char* getClassName() const { return "CollisionResponseVisitor"; }
 };
 
 

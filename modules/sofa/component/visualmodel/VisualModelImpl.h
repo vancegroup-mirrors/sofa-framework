@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,6 +33,7 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/io/Mesh.h>
+#include <sofa/component/component.h>
 
 #include <map>
 
@@ -100,7 +101,7 @@ public:
  *
  */
 
-class VisualModelImpl : public core::VisualModel, public ExtVec3fMappedModel, public RigidMappedModel
+class SOFA_COMPONENT_VISUALMODEL_API VisualModelImpl : public core::VisualModel, public ExtVec3fMappedModel, public RigidMappedModel
 {
 protected:
     // use types from ExtVec3fTypes
@@ -149,13 +150,16 @@ protected:
     /// If it is empty then each vertex correspond to one normal
     ResizableExtVector<int> vertNormIdx;
 
-    float scaleTex;
-    Data< std::string > filename;
+
+
+    Data< std::string > fileMesh;
     Data< std::string > texturename;
     Data< Vector3 > translation;
     Data< Vector3 > rotation;
     Data< SReal > scale;
 
+    Data< TexCoord >  scaleTex;
+    Data< TexCoord >  translationTex;
     Vec3f bbox[2];
 
     virtual void internalDraw()
@@ -185,14 +189,19 @@ public:
     void applyRotation (const double rx, const double ry, const double rz);
     void applyRotation(const Quat q);
     void applyScale(const double s);
+    virtual void applyUVTransformation();
     void applyUVTranslation(const double dU, const double dV);
     void applyUVScale(const double su, const double sv);
 
     void flipFaces();
 
-    void setFilename(std::string s){filename.setValue(s);}
-    std::string getFilename(){return filename.getValue();}
-    
+    void setFilename(std::string s){fileMesh.setValue(s);}
+    void setTranslation(double dx,double dy,double dz){translation.setValue(Vector3(dx,dy,dz));};
+    void setRotation(double rx,double ry,double rz){rotation.setValue(Vector3(rx,ry,rz));};
+    void setScale(double s){scale.setValue(s);};
+
+    std::string getFilename(){return fileMesh.getValue();}
+
     void setColor(float r, float g, float b, float a);
     void setColor(std::string color);
 
@@ -214,6 +223,8 @@ public:
     virtual void computeMesh();
     virtual void computeNormals();
     virtual void computeBBox();
+
+    virtual void updateBuffers() { };
 
     virtual void updateVisual();
 

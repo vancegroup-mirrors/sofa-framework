@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,11 +36,12 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/core/Mapping.h>
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <string.h>
 #include <iostream>
-        
-using std::cerr;
-using std::endl;
+
+
+
 
 
 
@@ -59,7 +60,7 @@ template <class BasicMapping>
 class RigidMapping<BasicMapping>::Loader : public helper::io::MassSpringLoader, public helper::io::SphereLoader
 {
 public:
-  
+
     RigidMapping<BasicMapping>* dest;
     Loader(RigidMapping<BasicMapping>* dest) : dest(dest) {}
     virtual void addMass(SReal px, SReal py, SReal pz, SReal, SReal, SReal, SReal, SReal, bool, bool)
@@ -80,7 +81,7 @@ template <class BasicMapping>
 void RigidMapping<BasicMapping>::load(const char *filename)
 {
     points.beginEdit()->resize(0);
-    
+
     if (strlen(filename)>4 && !strcmp(filename+strlen(filename)-4,".xs3"))
     {
         Loader loader(this);
@@ -144,18 +145,19 @@ int RigidMapping<BasicMapping>::addPoint(const Coord& c, int indexFrom)
 template <class BasicMapping>
 void RigidMapping<BasicMapping>::init()
 {
-	//cerr<<"RigidMapping<BasicMapping>::init begin "<<getName()<<endl;
+        if ( !fileRigidMapping.getValue().empty() ) this->load ( fileRigidMapping.getValue().c_str() );
+	//serr<<"RigidMapping<BasicMapping>::init begin "<<getName()<<sendl;
 	if (this->points.getValue().empty() && this->toModel!=NULL && !useX0.getValue())
 	{
 		VecCoord& x = *this->toModel->getX();
-		//std::cout << "RigidMapping: init "<<x.size()<<" points."<<std::endl;
+		//sout << "RigidMapping: init "<<x.size()<<" points."<<sendl;
 		points.beginEdit()->resize(x.size());
 		for (unsigned int i=0;i<x.size();i++)
 			(*points.beginEdit())[i] = x[i];
 	}
-	//cerr<<"RigidMapping<BasicMapping>::init now doing  BasicMapping::init()"<<getName()<<endl;
+	//serr<<"RigidMapping<BasicMapping>::init now doing  BasicMapping::init()"<<getName()<<sendl;
 	this->BasicMapping::init();
-	//cerr<<"RigidMapping<BasicMapping>::init end "<<getName()<<endl;
+	//serr<<"RigidMapping<BasicMapping>::init end "<<getName()<<sendl;
 }
 /*
 template <class BasicMapping>
@@ -223,7 +225,7 @@ const typename RigidMapping<BasicMapping>::VecCoord & RigidMapping<BasicMapping>
 	{
 		const VecCoord* v = M_getX0(this->toModel);
 		if (v) return *v;
-		else std::cerr << "RigidMapping: ERROR useX0 can only be used in MechanicalMappings." << std::endl;
+		else serr << "RigidMapping: ERROR useX0 can only be used in MechanicalMappings." << sendl;
 	}
 	return points.getValue();
 }
@@ -231,7 +233,7 @@ const typename RigidMapping<BasicMapping>::VecCoord & RigidMapping<BasicMapping>
 template <class BasicMapping>
 void RigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typename In::VecCoord& in )
 {
-	//cerr<<"RigidMapping<BasicMapping>::apply "<<getName()<<endl;
+	//serr<<"RigidMapping<BasicMapping>::apply "<<getName()<<sendl;
 	unsigned int cptOut;
 	unsigned int val;
 	Coord translation;
@@ -245,8 +247,17 @@ void RigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typen
 	switch (repartition.getValue().size())
 	{
 	case 0 : //no value specified : simple rigid mapping
-		translation = in[index.getValue()].getCenter();
-		in[index.getValue()].writeRotationMatrix(rotation);
+
+		if (indexFromEnd.getValue())
+		{
+			translation = in[in.size() - 1 - index.getValue()].getCenter();
+			in[in.size() - 1 - index.getValue()].writeRotationMatrix(rotation);
+		}
+		else
+		{
+			translation = in[index.getValue()].getCenter();
+			in[index.getValue()].writeRotationMatrix(rotation);
+		}
 
 		for(unsigned int i=0;i<pts.size();i++)
 		{
@@ -254,13 +265,14 @@ void RigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typen
 			out[i] = rotatedPoints[i];
 			out[i] += translation;
 		}
+
 		break;
 
 	case 1 : //one value specified : uniform repartition mapping on the input dofs
 		val = repartition.getValue()[0];
 		//Out::VecCoord::iterator itOut = out.begin();
 		cptOut=0;
-		
+
 		for (unsigned int ifrom=0 ; ifrom<in.size() ; ifrom++){
 			translation = in[ifrom].getCenter();
 			in[ifrom].writeRotationMatrix(rotation);
@@ -276,7 +288,7 @@ void RigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typen
 
 	default: //n values are specified : heterogen repartition mapping on the input dofs
 		if (repartition.getValue().size() != in.size()){
-			std::cerr<<"Error : mapping dofs repartition is not correct"<<std::endl;
+			serr<<"Error : mapping dofs repartition is not correct"<<sendl;
 			return;
 		}
 		cptOut=0;
@@ -308,8 +320,17 @@ void RigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out, const type
 	switch (repartition.getValue().size())
 	{
 	case 0:
-		v = in[index.getValue()].getVCenter();
-		omega = in[index.getValue()].getVOrientation();
+		if (indexFromEnd.getValue())
+		{
+			v = in[in.size() - 1 - index.getValue()].getVCenter();
+			omega = in[in.size() - 1 - index.getValue()].getVOrientation();
+		}
+		else
+		{
+			v = in[index.getValue()].getVCenter();
+			omega = in[index.getValue()].getVOrientation();
+		}
+
 		for(unsigned int i=0;i<pts.size();i++)
 		{
 			// out = J in
@@ -335,7 +356,7 @@ void RigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out, const type
 		break;
 	default:
 		if (repartition.getValue().size() != in.size()){
-			std::cerr<<"Error : mapping dofs repartition is not correct"<<std::endl;
+			serr<<"Error : mapping dofs repartition is not correct"<<sendl;
 			return;
 		}
 
@@ -354,7 +375,7 @@ void RigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out, const type
 		}
 		break;
 	}
-		
+
 }
 
 template <class BasicMapping>
@@ -372,16 +393,26 @@ void RigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& out, const type
 			// Jt = [ I     ]
 			//      [ -OM^t ]
 			// -OM^t = OM^
-			
+
 			Deriv f = in[i];
-					//cerr<<"RigidMapping<BasicMapping>::applyJT, f = "<<f<<endl;
+					//serr<<"RigidMapping<BasicMapping>::applyJT, f = "<<f<<sendl;
 			v += f;
 			omega += cross(rotatedPoints[i],f);
-					//cerr<<"RigidMapping<BasicMapping>::applyJT, new v = "<<v<<endl;
-					//cerr<<"RigidMapping<BasicMapping>::applyJT, new omega = "<<omega<<endl;
+					//serr<<"RigidMapping<BasicMapping>::applyJT, new v = "<<v<<sendl;
+					//serr<<"RigidMapping<BasicMapping>::applyJT, new omega = "<<omega<<sendl;
 		}
-		out[index.getValue()].getVCenter() += v;
-		out[index.getValue()].getVOrientation() += omega;
+
+		if (indexFromEnd.getValue())
+		{
+			out[out.size() - 1 - index.getValue()].getVCenter() += v;
+			out[out.size() - 1 - index.getValue()].getVOrientation() += omega;
+		}
+		else
+		{
+			out[index.getValue()].getVCenter() += v;
+			out[index.getValue()].getVOrientation() += omega;
+		}
+
 		break;
 	case 1 :
 		val = repartition.getValue()[0];
@@ -401,7 +432,7 @@ void RigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& out, const type
 		break;
 	default :
 		if (repartition.getValue().size() != out.size()){
-			std::cerr<<"Error : mapping dofs repartition is not correct"<<std::endl;
+			serr<<"Error : mapping dofs repartition is not correct"<<sendl;
 			return;
 		}
 
@@ -446,29 +477,32 @@ void RigidMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typen
 		typename Out::Coord ApplicationPoint;
 
 		// computation of the constaint direction
-				typename Out::Deriv n;
+		typename Out::Deriv n;
 
-				typename Out::Deriv w_n;
+                typename Out::Deriv w_n;
 
-		// in[i].size() = num node involved in the constraint
-		for (unsigned int j=0;j<in[i].size();j++)
-		{
-			int index = in[i][j].index;	// index of the node
-			w_n = (Deriv) in[i][j].data;	// weighted value of the constraint direction
-			double w = w_n.norm();	// computation of the weight
-			// the application point (on the child model) is computed using barycentric values //
-			ApplicationPoint += rotatedPoints[index]*w;
-			// we add the contribution of each weighted direction
-			n += w_n ;
+                OutConstraintIterator itOut;
+                for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+                  {
+                    unsigned int indexIn = itOut->first;// index of the node
+                    Deriv data=(Deriv) itOut->second;
+                    
+                    w_n = (Deriv) data;	// weighted value of the constraint direction
+                    double w = w_n.norm();	// computation of the weight
+                    // the application point (on the child model) is computed using barycentric values //
+                    ApplicationPoint += rotatedPoints[indexIn]*w;
+                    // we add the contribution of each weighted direction
+                    n += w_n ;
 		}
-		
-		if (n.norm() < 0.9999 || n.norm() > 1.00001)
-			printf("\n WARNING : constraint direction is not normalized !!!");
-        
+
+//   		if (n.norm() < 0.9999 || n.norm() > 1.00001)
+//  			printf("\n WARNING : constraint direction is not normalized !!!\n");
+
 		// apply Jt.n as a constraint for the center of mass
 		// Jt = [ I   ]
 		//      [ OM^ ]
-				typename Out::Deriv omega_n = cross(ApplicationPoint,n);
+//                 typename Out::Deriv _n=n; _n.normalize();
+ 		typename Out::Deriv omega_n = cross(ApplicationPoint,n);
 
 		InDeriv direction;
 
@@ -476,7 +510,14 @@ void RigidMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typen
 		direction.getVOrientation() = omega_n;
 
 		// for rigid model, there's only the center of mass as application point (so only one vector for each constraint)
-		out[outSize+i].push_back(InSparseDeriv(index.getValue(), direction)); // 0 = index of the center of mass
+		if (indexFromEnd.getValue())
+		{
+			out[outSize+i].insert(out.size() - 1 - index.getValue(), direction); // 0 = index of the center of mass
+		}
+		else
+		{
+			out[outSize+i].insert(index.getValue(), direction); // 0 = index of the center of mass
+		}
 	}
 }
 
@@ -549,16 +590,17 @@ template <class BasicMapping>
 void RigidMapping<BasicMapping>::draw()
 {
     if (!this->getShow()) return;
-	glDisable (GL_LIGHTING);
-	glPointSize(7);
-	glColor4f (1,1,0,1);
-	glBegin (GL_POINTS);
+	std::vector< Vector3 > points;
+	Vector3 point;
+	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
+
 	const typename Out::VecCoord& x = *this->toModel->getX();
 	for (unsigned int i=0; i<x.size(); i++)
 	{
-		helper::gl::glVertexT(x[i]);
+	  for (unsigned int s=0;s<sizePoints;++s) point[s] = x[i][s];
+	  points.push_back(point);
 	}
-	glEnd();
+	simulation::getSimulation()->DrawUtility.drawPoints(points, 7, Vec<4,float>(1,1,0,1));
 }
 
 } // namespace mapping

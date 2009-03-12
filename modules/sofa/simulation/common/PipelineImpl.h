@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_SIMULATION_PIPELINEIMPL_H
 
 #include <sofa/core/componentmodel/collision/Pipeline.h>
+#include <sofa/simulation/common/common.h>
 
 #include <vector>
 
@@ -38,7 +39,7 @@ namespace simulation
 
 using namespace sofa::core::componentmodel::collision;
 
-class PipelineImpl : public virtual sofa::core::componentmodel::collision::Pipeline
+class SOFA_SIMULATION_COMMON_API PipelineImpl : public virtual sofa::core::componentmodel::collision::Pipeline
 {
 	
 public:

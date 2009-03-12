@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,11 +38,10 @@
 #define SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_H
 
 #include <sofa/component/controller/Controller.h>
-#include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/defaulttype/Quat.h>
-
-namespace sofa { namespace core { namespace componentmodel { namespace behavior { template<class DataTypes> class MechanicalState; } } } }
-
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -162,6 +161,8 @@ public:
 protected:
 
 	Data< unsigned int > index; ///< Controlled DOF index.
+	Data< bool > onlyTranslation; ///< Controlling the DOF only in translation
+	
 	core::componentmodel::behavior::MechanicalState<DataTypes> *mState; ///< Controlled MechanicalState.
 
 	sofa::defaulttype::Vec<3,Real> mainDirection; ///< Direction corresponding to the Mouse vertical axis. Default value is (0.0,0.0,-1.0), Z axis.
@@ -176,7 +177,28 @@ protected:
 	int mouseSavedPosX, mouseSavedPosY; ///< Last recorded mouse position
 	Vector3 position;
 	Quat orientation;	
+	bool buttonOmni;
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec3dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec6dTypes>;
+extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Rigid3dTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Rigid2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec3fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Vec6fTypes>;
+extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Rigid3fTypes>;
+//extern template class SOFA_COMPONENT_CONTROLLER_API MechanicalStateController<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace controller
 

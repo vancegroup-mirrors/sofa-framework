@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -41,7 +41,7 @@
 #endif
 
 //#include <sofa/component/forcefield/StiffSpringForceField.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <map>
 
 #include <sofa/core/componentmodel/behavior/ForceField.h> // or "BaseForceField.h" ?
@@ -128,6 +128,17 @@ public:
 		EdgeInformation(int m1=0, int m2=0, /* double ks=getKs(), double kd=getKd(), */ double restlength=0.0, bool is_activated=false, bool is_initialized=false) 
 			: m1(m1), m2(m2), /* ks(ks), kd(kd), */ restlength(restlength), is_activated(is_activated), is_initialized(is_initialized)
 		{
+		}
+		/// Output stream
+		inline friend std::ostream& operator<< ( std::ostream& os, const EdgeInformation& /*ei*/ )
+		{
+		return os;
+		}
+		
+		/// Input stream
+		inline friend std::istream& operator>> ( std::istream& in, EdgeInformation& /*ei*/ )
+		{
+		return in;
 		}
 	};
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -204,16 +204,12 @@ void IdentityMapping<BaseMapping>::applyJT( typename In::VecConst& out, const ty
     for(unsigned int i=0;i<in.size();i++)
     {
         typename In::SparseVecDeriv& o = out[i+outSize];
-        o.reserve(in[i].size());
-        for(unsigned int j=0;j<in[i].size();j++)
-        {
-            const typename Out::SparseDeriv& cIn = in[i][j];
-            InDeriv value;
-            //for (unsigned int k=0;k<N;++k)
-            //    value[k] = (Real) cIn.data[k];
-            eq(value, cIn.data);
-	    //std::cout << "n= "<<cIn.data<<" -> "<<value<<std::endl;
-            o.push_back( typename In::SparseDeriv(cIn.index, value) );
+        OutConstraintIterator itOut;
+        for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+          {
+            unsigned int indexIn = itOut->first;
+            InDeriv data; eq(data, itOut->second);
+            o.insert( indexIn, data);
         }
     }
 }

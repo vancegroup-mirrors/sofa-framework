@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,8 @@
 #define SOFA_COMPONENT_ODESOLVER_EULERIMPLICITSOLVER_H
 
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
-#include <sofa/simulation/common/OdeSolverImpl.h>
+#include <sofa/component/odesolver/OdeSolverImpl.h>
+
 
 namespace sofa
 {
@@ -41,7 +42,7 @@ using namespace sofa::defaulttype;
 
 /** Implicit time integrator using backward Euler scheme.
 */
-class EulerImplicitSolver : public sofa::simulation::OdeSolverImpl
+ class SOFA_COMPONENT_ODESOLVER_API EulerImplicitSolver : public sofa::component::odesolver::OdeSolverImpl
 {
 public:
     
@@ -51,8 +52,10 @@ public:
     Data<bool> f_verbose;
 
     EulerImplicitSolver();
+
+    void init();
     
-    void solve (double dt);
+    void solve (double dt, sofa::core::componentmodel::behavior::BaseMechanicalState::VecId xResult, sofa::core::componentmodel::behavior::BaseMechanicalState::VecId vResult);
     
     /// Given a displacement as computed by the linear system inversion, how much will it affect the velocity
     ///

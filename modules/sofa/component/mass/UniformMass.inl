@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,11 +32,13 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/DataTypeInfo.h>
 #include <sofa/component/mass/AddMToMatrixFunctor.h>
+#include <sofa/simulation/common/Simulation.h>
+#include <sofa/helper/gl/DrawManager.h>
 #include <iostream>
-#include <string.h> 
+#include <string.h>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -54,8 +56,13 @@ template <class DataTypes, class MassType>
 UniformMass<DataTypes, MassType>::UniformMass()
 : mass( initData(&mass, MassType(1.0f), "mass", "Mass of each particle") )
 , totalMass( initData(&totalMass, 0.0, "totalmass", "Sum of the particles' masses") )
+, filenameMass( initData(&filenameMass, "filename", "Rigid file to load the mass parameters") )
 , showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
 , showAxisSize( initData(&showAxisSize, 1.0f, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
+, compute_mapping_inertia( initData(&compute_mapping_inertia, true, "compute_mapping_inertia", "to be used if the mass is placed under a mapping" ) )
+, showInitialCenterOfGravity( initData(&showInitialCenterOfGravity, false, "showInitialCenterOfGravity", "display the initial center of gravity of the system" ) )
+, showX0( initData(&showX0, false, "showX0", "display the rest positions" ) )
+, localRange( initData(&localRange, defaulttype::Vec<2,int>(-1,-1), "localRange", "optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)" ) )
 {}
 
 template <class DataTypes, class MassType>
@@ -75,37 +82,70 @@ void UniformMass<DataTypes, MassType>::setTotalMass(double m)
 }
 
 template <class DataTypes, class MassType>
-void UniformMass<DataTypes, MassType>::init()
+void UniformMass<DataTypes, MassType>::reinit()
 {
-	this->core::componentmodel::behavior::Mass<DataTypes>::init();
-    if (this->totalMass.getValue()>0 && this->mstate!=NULL)
+  if (this->totalMass.getValue()>0 && this->mstate!=NULL)
     {
         MassType* m = this->mass.beginEdit();
         *m = ((typename DataTypes::Real)this->totalMass.getValue() / this->mstate->getX()->size());
         this->mass.endEdit();
     }
+    else
+    {
+      this->totalMass.setValue(  this->mstate->getX()->size()*this->mass.getValue());
+    }
+}
+template <class DataTypes, class MassType>
+void UniformMass<DataTypes, MassType>::init()
+{
+    loadRigidMass(filenameMass.getValue());
+    if (filenameMass.getValue().empty()) filenameMass.setDisplayed(false);
+    this->core::componentmodel::behavior::Mass<DataTypes>::init();
+    reinit();
 }
 
 // -- Mass interface
 template <class DataTypes, class MassType>
     void UniformMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
 {
+    unsigned int ibegin = 0;
+    unsigned int iend = dx.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
     MassType m = mass.getValue();
     if (factor != 1.0)
         m *= (typename DataTypes::Real)factor;
-    for (unsigned int i=0;i<dx.size();i++)
+
+    for (unsigned int i=ibegin;i<iend;i++)
     {
-      res[i] += dx[i] * m;
+        res[i] += dx[i] * m;
+        //serr<<"dx[i] = "<<dx[i]<<", m = "<<m<<", dx[i] * m = "<<dx[i] * m<<sendl;
     }
 }
 
 template <class DataTypes, class MassType>
 void UniformMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f)
 {
+
+    unsigned int ibegin = 0;
+    unsigned int iend = f.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
     const MassType& m = mass.getValue();
-    for (unsigned int i=0;i<f.size();i++)
+    for (unsigned int i=ibegin;i<iend;i++)
     {
       a[i] = f[i] / m;
+	 // serr<<"f[i] = "<<f[i]<<", m = "<<m<<", f[i] / m = "<<f[i] / m<<sendl;
     }
 }
 
@@ -126,7 +166,7 @@ void UniformMass<DataTypes, MassType>::addGravityToV(double dt)
 		DataTypes::set( theGravity, g[0], g[1], g[2]);
 		Deriv hg = theGravity * (Real)dt;
 		if (this->f_printLog.getValue())
-		    std::cerr << "UniformMass::addGravityToV hg = "<<theGravity<<"*"<<dt<<"="<<hg<<std::endl;
+		    serr << "UniformMass::addGravityToV hg = "<<theGravity<<"*"<<dt<<"="<<hg<<sendl;
 		for (unsigned int i=0;i<v.size();i++)   {
 			v[i] += hg;
 		}
@@ -140,9 +180,19 @@ void UniformMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& x, 
 void UniformMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& /*x*/, const VecDeriv& /*v*/)
 #endif
 {
+
 	//if gravity was added separately (in solver's "solve" method), then nothing to do here
 	if(this->m_separateGravity.getValue())
 		return;
+
+    unsigned int ibegin = 0;
+    unsigned int iend = f.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
 
     // weight
     const SReal* g = this->getContext()->getLocalGravity().ptr();
@@ -152,54 +202,92 @@ void UniformMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& /*x
     const MassType& m = mass.getValue();
     Deriv mg = theGravity * m;
     if (this->f_printLog.getValue())
-	cerr<<"UniformMass::addForce, mg = "<<mass<<" * "<<theGravity<<" = "<<mg<<endl;
+	serr<<"UniformMass::addForce, mg = "<<mass<<" * "<<theGravity<<" = "<<mg<<sendl;
+
+
+
+
 
 #ifdef SOFA_SUPPORT_MOVING_FRAMES
     // velocity-based stuff
     core::objectmodel::BaseContext::SpatialVector vframe = getContext()->getVelocityInWorld();
     core::objectmodel::BaseContext::Vec3 aframe = getContext()->getVelocityBasedLinearAccelerationInWorld() ;
-//     cerr<<"UniformMass<DataTypes, MassType>::computeForce(), vFrame in world coordinates = "<<vframe<<endl;
-     //cerr<<"UniformMass<DataTypes, MassType>::computeForce(), aFrame in world coordinates = "<<aframe<<endl;
-//     cerr<<"UniformMass<DataTypes, MassType>::computeForce(), getContext()->getLocalToWorld() = "<<getContext()->getPositionInWorld()<<endl;
+//     serr<<"UniformMass<DataTypes, MassType>::computeForce(), vFrame in world coordinates = "<<vframe<<sendl;
+     //serr<<"UniformMass<DataTypes, MassType>::computeForce(), aFrame in world coordinates = "<<aframe<<sendl;
+//     serr<<"UniformMass<DataTypes, MassType>::computeForce(), getContext()->getLocalToWorld() = "<<getContext()->getPositionInWorld()<<sendl;
 
     // project back to local frame
     vframe = getContext()->getPositionInWorld() / vframe;
     aframe = getContext()->getPositionInWorld().backProjectVector( aframe );
-//     cerr<<"UniformMass<DataTypes, MassType>::computeForce(), vFrame in local coordinates= "<<vframe<<endl;
-//     cerr<<"UniformMass<DataTypes, MassType>::computeForce(), aFrame in local coordinates= "<<aframe<<endl;
-//     cerr<<"UniformMass<DataTypes, MassType>::computeForce(), mg in local coordinates= "<<mg<<endl;
+//     serr<<"UniformMass<DataTypes, MassType>::computeForce(), vFrame in local coordinates= "<<vframe<<sendl;
+//     serr<<"UniformMass<DataTypes, MassType>::computeForce(), aFrame in local coordinates= "<<aframe<<sendl;
+//     serr<<"UniformMass<DataTypes, MassType>::computeForce(), mg in local coordinates= "<<mg<<sendl;
 #endif
 
+
     // add weight and inertia force
-    for (unsigned int i=0;i<f.size();i++)
+    for (unsigned int i=ibegin;i<iend;i++)
     {
 #ifdef SOFA_SUPPORT_MOVING_FRAMES
 	f[i] += mg + core::componentmodel::behavior::inertiaForce(vframe,aframe,m,x[i],v[i]);
 #else
         f[i] += mg;
 #endif
-        //cerr<<"UniformMass<DataTypes, MassType>::computeForce(), vframe = "<<vframe<<", aframe = "<<aframe<<", x = "<<x[i]<<", v = "<<v[i]<<endl;
-        //cerr<<"UniformMass<DataTypes, MassType>::computeForce() = "<<mg + Core::inertiaForce(vframe,aframe,mass,x[i],v[i])<<endl;
-    }
+        //serr<<"UniformMass<DataTypes, MassType>::computeForce(), vframe = "<<vframe<<", aframe = "<<aframe<<", x = "<<x[i]<<", v = "<<v[i]<<sendl;
+        //serr<<"UniformMass<DataTypes, MassType>::computeForce() = "<<mg + Core::inertiaForce(vframe,aframe,mass,x[i],v[i])<<sendl;
+	}
 
+#ifdef SOFA_SUPPORT_MAPPED_MASS
+	if (compute_mapping_inertia.getValue())
+	{
+		VecDeriv& acc =  *this->mstate->getDx();
+		// add inertia force due to acceleration from the motion of the mapping (coriolis type force)
+		if (acc.size() != f.size())
+			return;
+		for (unsigned int i=0;i<f.size();i++)
+		{
+			Deriv coriolis = -acc[i]*m;
+			f[i] += coriolis;
+		}
+	}
+#endif
 }
 
 template <class DataTypes, class MassType>
     double UniformMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v )
 {
+
+    unsigned int ibegin = 0;
+    unsigned int iend = v.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
     double e=0;
     const MassType& m = mass.getValue();
-    for (unsigned int i=0;i<v.size();i++)
+    for (unsigned int i=ibegin;i<iend;i++)
     {
       e+= v[i]*m*v[i];
     }
-    //cerr<<"UniformMass<DataTypes, MassType>::getKineticEnergy = "<<e/2<<endl;
+    //serr<<"UniformMass<DataTypes, MassType>::getKineticEnergy = "<<e/2<<sendl;
     return e/2;
 }
 
 template <class DataTypes, class MassType>
     double UniformMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x )
 {
+    unsigned int ibegin = 0;
+    unsigned int iend = x.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
     double e = 0;
     const MassType& m = mass.getValue();
     // gravity
@@ -208,13 +296,13 @@ template <class DataTypes, class MassType>
     DataTypes::set
             ( theGravity, g[0], g[1], g[2]);
     Deriv mg = theGravity * m;
-    //cerr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, theGravity = "<<theGravity<<endl;
-    for (unsigned int i=0;i<x.size();i++)
+    //serr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, theGravity = "<<theGravity<<sendl;
+    for (unsigned int i=ibegin;i<iend;i++)
     {
-/*        cerr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, mass = "<<mass<<endl;
-        cerr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, x = "<<x[i]<<endl;
-        cerr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, remove "<<theGravity*mass*x[i]<<endl;*/
-      e -= mg*x[i]; 
+/*        serr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, mass = "<<mass<<sendl;
+        serr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, x = "<<x[i]<<sendl;
+        serr<<"UniformMass<DataTypes, MassType>::getPotentialEnergy, remove "<<theGravity*mass*x[i]<<sendl;*/
+      e -= mg*x[i];
     }
     return e;
 }
@@ -245,20 +333,35 @@ void UniformMass<DataTypes, MassType>::draw()
     if (!getContext()->getShowBehaviorModels())
         return;
     const VecCoord& x = *this->mstate->getX();
-    //cerr<<"UniformMass<DataTypes, MassType>::draw() "<<x<<endl;
-	Coord gravityCenter;
-    glDisable (GL_LIGHTING);
-    glPointSize(2);
-    glColor4f (1,1,1,1);
-    glBegin (GL_POINTS);
-    for (unsigned int i=0; i<x.size(); i++)
-    {
-        helper::gl::glVertexT(x[i]);
-		gravityCenter += x[i];
-    }
-    glEnd();
 
+    unsigned int ibegin = 0;
+    unsigned int iend = x.size();
+
+    if (localRange.getValue()[0] >= 0)
+	ibegin = localRange.getValue()[0];
+
+    if (localRange.getValue()[1] >= 0 && (unsigned int)localRange.getValue()[1]+1 < iend)
+	iend = localRange.getValue()[1]+1;
+
+    //serr<<"UniformMass<DataTypes, MassType>::draw() "<<x<<sendl;
+
+
+    std::vector<  Vector3 > points;
+    std::vector< Vec<2,int> > indices;
+
+    Coord gravityCenter;
+    for (unsigned int i=ibegin; i<iend; i++)
+    {
+      Vector3 p;
+      for (unsigned int j=0;j< Coord::static_size; ++j)
+	p[j] = x[i][j];
+
+      points.push_back(p);
+      gravityCenter += x[i];
+    }
+    simulation::getSimulation()->DrawUtility.drawPoints(points, 2, Vec<4,float>(1,1,1,1));
 	if(showCenterOfGravity.getValue()){
+	  points.clear();
 		glBegin (GL_LINES);
 		glColor4f (1,1,0,1);
 		gravityCenter /= x.size();
@@ -286,32 +389,25 @@ template <class DataTypes, class MassType>
 			if (p[c] > maxBBox[c]) maxBBox[c] = p[c];
 			if (p[c] < minBBox[c]) minBBox[c] = p[c];
 		}
-	}  
+	}
 	return true;
 }
 
 template<class DataTypes, class MassType>
-void UniformMass<DataTypes, MassType>::parse(core::objectmodel::BaseObjectDescription* arg)
+void UniformMass<DataTypes, MassType>::loadRigidMass(std::string )
 {
-  Inherited::parse(arg);
-  /*
-  if (arg->getAttribute("mass"))
-    {
-      this->setMass((MassType)atof(arg->getAttribute("mass")));
-    }
-    if (arg->getAttribute("totalmass"))
-    {
-      this->setTotalMass(atof(arg->getAttribute("totalmass")));
-    }
-  */
+  //If the template is not rigid, we hide the Data filenameMass, to avoid confusion.
+  filenameMass.setDisplayed(false);
+  this->mass.setDisplayed(false);
 }
 
 
 //Specialization for rigids
 #ifndef SOFA_FLOAT
-
 template<>
-    void UniformMass<Rigid3dTypes, Rigid3dMass>::parse(core::objectmodel::BaseObjectDescription* arg);
+    void UniformMass<Rigid3dTypes, Rigid3dMass>::reinit();
+template<>
+    void UniformMass<Rigid3dTypes, Rigid3dMass>::loadRigidMass(std::string);
 template <>
     void UniformMass<Rigid3dTypes, Rigid3dMass>::draw();
 template <>
@@ -325,7 +421,9 @@ template <>
 #endif
 #ifndef SOFA_DOUBLE
 template<>
-    void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObjectDescription* arg);
+    void UniformMass<Rigid3fTypes, Rigid3fMass>::reinit();
+template<>
+    void UniformMass<Rigid3fTypes, Rigid3fMass>::loadRigidMass(std::string);
 template <>
     void UniformMass<Rigid3fTypes, Rigid3fMass>::draw();
 template <>
@@ -347,6 +445,3 @@ template <>
 } // namespace sofa
 
 #endif
-
-
-

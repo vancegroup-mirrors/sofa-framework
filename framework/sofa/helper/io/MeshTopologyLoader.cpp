@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -78,6 +78,7 @@ bool MeshTopologyLoader::loadObj(const char *filename)
     }
     
     const vector< vector < vector <int> > > & facets = mesh->getFacets();
+    std::set< std::pair<int,int> > edges;
     for (unsigned int i=0; i<facets.size(); i++)
     {
         const vector<int>& facet = facets[i][0];
@@ -107,7 +108,6 @@ bool MeshTopologyLoader::loadObj(const char *filename)
                 addTriangle(facet[0],facet[j-1],facet[j]);
         }
 
-		std::set< std::pair<int,int> > edges;
 		// Add edges
 		if (facet.size()>2)
 		{

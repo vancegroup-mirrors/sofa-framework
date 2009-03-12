@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -35,7 +35,7 @@
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/visualmodel/VisualModelImpl.h>
-// SOFA -> OGRE3D conversion
+
 
 namespace sofa
 {
@@ -45,83 +45,42 @@ namespace sofa
 
     namespace visualmodel
     {
-template<class T>
-Ogre::Vector3 conv(const sofa::defaulttype::Vec<3,T>& v)
-{
-    return Ogre::Vector3((float)v[0], (float)v[1], (float)v[2]);
-}
 
-// SOFA <- OGRE3D conversion
-
-template<class T>
-sofa::defaulttype::Vec3f conv(const Ogre::Vector3& v)
-{
-    return sofa::defaulttype::Vec3f((float)v[0], (float)v[1], (float)v[2]);
-}
-
-class OgreVisualModel : public sofa::component::visualmodel::VisualModelImpl//, public sofa::core::componentmodel::behavior::MappedModel<sofa::defaulttype::ExtVec3fTypes>
+class OgreVisualModel : public sofa::component::visualmodel::VisualModelImpl
 {
 public:
-  
-    static bool lightSwitched;
-    Data<std::string> materialname;
-       
-
-    //Initial Position of a OgreVisualModel
-    float dx,dy,dz,scale;
-    
-    int meshRevision;
-
-    int getNbTriangles()
-    {
-      sofa::core::componentmodel::topology::BaseMeshTopology* topology = dynamic_cast<sofa::core::componentmodel::topology::BaseMeshTopology*>(getContext()->getTopology());
-        if (useTopology && topology) 
-	{	  
-	  return topology->getNbTriangles() + 2*topology->getNbQuads();
-	}
-        else          return (this->triangles.size() + 2*this->quads.size());
-    }    
-
-    Ogre::MeshPtr ogreMesh;
-    Ogre::Entity* ogreEntity;
-    Ogre::SceneNode* ogreNode;
-    
-    Ogre::HardwareVertexBufferSharedPtr vBuffer;
-    Ogre::HardwareIndexBufferSharedPtr iBuffer;
-    
     OgreVisualModel();
-    
-    std::string getOgreName();
-        
-   
-    void parse(core::objectmodel::BaseObjectDescription* );
+    ~OgreVisualModel();
+    void setOgreSceneManager(Ogre::SceneManager* m){mSceneMgr=m;}
+ private:
+    virtual void internalDraw();
+ public:
+    virtual void reinit();
+    virtual void initVisual(){internalDraw();}
+    virtual void initTextures(){internalDraw();}
 
-    void reinit();
-    
-    virtual void attach(Ogre::SceneManager* sceneMgr);
+    virtual void applyUVTransformation();
 
-    // GL method -> do nothing for Ogre
-    virtual void draw() {}
-    // GL method -> do nothing for Ogre
-    virtual void initTextures() {}
-
-    virtual void updateVisual();
-    
-
-    static int counter;
 protected:
-    ResizableExtVector<Vec<2,float> > mirror_tex;
-    void uploadVertices();
+    void uploadStructure();
+    void uploadNormals();
+    void updateMaterial();
+    void convertManualToMesh();
 
-    void uploadIndices();
+    static int meshName;   
+    static int materialName;   
 
-    void computeNormals();
+    Data< std::string > materialFile;
+    Data< bool > culling;
 
-    void computeBounds();
 
-    void updateMaterial(Ogre::MaterialPtr &mat);
-    std::string uniqueName(void);
-    std::string submesh_material;
+    std::string currentName;
+    Ogre::ManualObject *ogreObject;
+    Ogre::ManualObject *ogreNormalObject;
+    Ogre::SceneManager* mSceneMgr;
+    Ogre::MaterialPtr currentMaterial;
+    Ogre::MaterialPtr currentMaterialNormals;
+
 };
     }
   }

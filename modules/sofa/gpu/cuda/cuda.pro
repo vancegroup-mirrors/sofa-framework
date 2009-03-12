@@ -11,6 +11,26 @@ CONFIG += $$CONFIGLIBRARIES
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
+LIBS += -lsofasimulation$$LIBSUFFIX
+LIBS += -lsofatree$$LIBSUFFIX
+LIBS += -lsofacomponentbase$$LIBSUFFIX
+LIBS += -lsofacomponentmastersolver$$LIBSUFFIX
+LIBS += -lsofacomponentfem$$LIBSUFFIX
+LIBS += -lsofacomponentinteractionforcefield$$LIBSUFFIX
+LIBS += -lsofacomponentcontextobject$$LIBSUFFIX
+LIBS += -lsofacomponentbehaviormodel$$LIBSUFFIX
+LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
+LIBS += -lsofacomponentodesolver$$LIBSUFFIX
+LIBS += -lsofacomponentbase$$LIBSUFFIX
+LIBS += -lsofacomponentcontroller$$LIBSUFFIX
+LIBS += -lsofacomponentengine$$LIBSUFFIX
+LIBS += -lsofacomponentvisualmodel$$LIBSUFFIX
+LIBS += -lsofacomponentmass$$LIBSUFFIX
+LIBS += -lsofacomponentforcefield$$LIBSUFFIX
+LIBS += -lsofacomponentmapping$$LIBSUFFIX
+LIBS += -lsofacomponentconstraint$$LIBSUFFIX
+LIBS += -lsofacomponentcollision$$LIBSUFFIX
+LIBS += -lsofacomponentmisc$$LIBSUFFIX
 LIBS += -lsofacomponent$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS
 
@@ -54,9 +74,9 @@ HEADERS += mycuda.h \
            CudaSpatialGridContainer.inl \
            CudaVisualModel.h \
            CudaVisualModel.inl \
+           CudaTestForceField.h \
            CudaTetrahedralVisualModel.h \
-           CudaTetrahedralVisualModel.inl \
-           CudaTestForceField.h
+           CudaTetrahedralVisualModel.inl
 
 SOURCES += mycuda.cpp \
            CudaMechanicalObject.cpp \
@@ -74,11 +94,13 @@ SOURCES += mycuda.cpp \
            CudaDistanceGridCollisionModel.cpp \
            CudaCollision.cpp \
            CudaCollisionDetection.cpp \
+		   CudaSphereModel.cpp \
            CudaPointModel.cpp \
            CudaPenalityContactForceField.cpp \
            CudaVisualModel.cpp \
            CudaTetrahedralVisualModel.cpp \
-           CudaTestForceField.cpp
+           CudaTestForceField.cpp \
+           CudaSetTopology.cpp 
 
 CUDA_SOURCES += mycuda.cu \
            CudaMechanicalObject.cu \
@@ -95,6 +117,6 @@ CUDA_SOURCES += mycuda.cu \
            CudaCollisionDetection.cu \
            CudaContactMapper.cu \
            CudaPenalityContactForceField.cu \
-           CudaVisualModel.cu \
-           CudaTestForceField.cu
+           CudaTestForceField.cu \
+           CudaVisualModel.cu
 

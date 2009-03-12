@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -56,7 +56,7 @@ public:
 		else
 			id = cpt++;
 
-	//	std::cout << id << std::endl;
+	//	sout << id << sendl;
 	}
 
 	virtual ~Identifier()
@@ -118,7 +118,7 @@ public:
 
 long cantorPolynomia(unsigned long x, unsigned long y)
 {
-	// Polynome de Cantor de N² sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
+	// Polynome de Cantor de Nï¿½ sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
 	return ((x+y)*(x+y)+3*x+y)/2;
 }
 

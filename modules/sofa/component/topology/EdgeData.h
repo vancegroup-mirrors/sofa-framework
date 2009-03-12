@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,7 @@
 
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/helper/vector.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -68,7 +69,7 @@ namespace topology
 	* happen (non exhaustive list: Edges added, removed, fused, renumbered).
 	*/
 	template< class T, class Alloc = std::allocator<T> > 
-	class EdgeData : public sofa::helper::vector<T, Alloc> 
+	class EdgeData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
 	public:
 		/// size_type
@@ -77,34 +78,85 @@ namespace topology
 		typedef typename sofa::helper::vector<T,Alloc>::reference reference;
 		/// const reference to a value (read only)
 		typedef typename sofa::helper::vector<T,Alloc>::const_reference const_reference;
+		/// const iterator 
+		typedef typename sofa::helper::vector<T,Alloc>::const_iterator const_iterator;
 
 	public:
 		/// Constructor
-		EdgeData(size_type n, const T& value): sofa::helper::vector<T,Alloc>(n,value) {}
+		EdgeData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+			  void (*createFunc) (int, void*, T&, const Edge &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = ed_basicCreateFunc,
+				void* createParam  = (void*)NULL,
+				void (*destroyFunc)(int, void*, T&) = ed_basicDestroyFunc,
+				void* destroyParam = (void*)NULL )
+		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(data), 
+		m_createFunc(createFunc), m_destroyFunc(destroyFunc), 
+		m_createTriangleFunc(0), m_destroyTriangleFunc(0), 
+		m_createTetrahedronFunc(0), m_destroyTetrahedronFunc(0),
+		m_createParam(createParam), m_destroyParam(destroyParam)
+		{}
+
 		/// Constructor
-		EdgeData(int n, const T& value): sofa::helper::vector<T,Alloc>(n,value) {}
+		EdgeData(size_type n, const T& value) : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n, value);
+			this->endEdit();
+		}
 		/// Constructor
-		EdgeData(long n, const T& value): sofa::helper::vector<T,Alloc>(n,value) {}
+		EdgeData(int n, const T& value) : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n, value);
+			this->endEdit();
+		}
 		/// Constructor
-		explicit EdgeData(size_type n): sofa::helper::vector<T,Alloc>(n) {}
+		EdgeData(long n, const T& value): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n, value);
+			this->endEdit();
+		}
 		/// Constructor
-		EdgeData(const sofa::helper::vector<T, Alloc>& x): sofa::helper::vector<T,Alloc>(x) {}
+		explicit EdgeData(size_type n): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->resize(n);
+			this->endEdit();
+		}
+		/// Constructor
+		EdgeData(const sofa::helper::vector<T, Alloc>& x): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			(*data) = x;
+			this->endEdit();
+		}
 
 #ifdef __STL_MEMBER_TEMPLATES
 		/// Constructor
 		template <class InputIterator>
-		EdgeData(InputIterator first, InputIterator last): sofa::helper::vector<T,Alloc>(first,last){}
+		EdgeData(InputIterator first, InputIterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->assign(first, last);
+			this->endEdit();
+		}
 #else /* __STL_MEMBER_TEMPLATES */
 		/// Constructor
-		EdgeData(typename EdgeData<T>::const_iterator first, typename EdgeData<T,Alloc>::const_iterator last): sofa::helper::vector<T,Alloc>(first,last){}
+		EdgeData(const_iterator first, const_iterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		{
+			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			data->assign(first, last);
+			this->endEdit();
+		}
 #endif /* __STL_MEMBER_TEMPLATES */
 
+
 		/// Optionnaly takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
-		EdgeData( void (*createFunc) (int, void*, T&, const Edge &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = ed_basicCreateFunc,  
-				void* createParam  = (void*)NULL, 
-				void (*destroyFunc)(int, void*, T&                                     ) = ed_basicDestroyFunc, 
-				void* destroyParam = (void*)NULL ) 
-		: sofa::helper::vector<T,Alloc>(), 
+		EdgeData( void (*createFunc) (int, void*, T&, const Edge &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = ed_basicCreateFunc,
+				void* createParam  = (void*)NULL,
+				void (*destroyFunc)(int, void*, T&) = ed_basicDestroyFunc,
+				void* destroyParam = (void*)NULL )
+		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false), 
 		m_createFunc(createFunc), m_destroyFunc(destroyFunc), 
 		m_createTriangleFunc(0), m_destroyTriangleFunc(0), 
 		m_createTetrahedronFunc(0), m_destroyTetrahedronFunc(0),

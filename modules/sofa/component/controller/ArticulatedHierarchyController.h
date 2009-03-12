@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -64,7 +64,7 @@ using sofa::component::container::ArticulatedHierarchyContainer;
  * Mouse Buttons and Wheel are controlling the value.
  * Keyboard is used to select the controlled articulation.
  */
-class ArticulatedHierarchyController : public Controller
+class SOFA_COMPONENT_CONTROLLER_API ArticulatedHierarchyController : public Controller
 {
 public:
 	typedef std::vector< ArticulatedHierarchyContainer::ArticulationCenter * > ArtCenterVec;
@@ -162,6 +162,7 @@ protected:
 
 	ArtCenterVec m_artCenterVec; ///< List of ArticulationCenters controlled by the controller.
 };
+
 
 } // namespace controller
 

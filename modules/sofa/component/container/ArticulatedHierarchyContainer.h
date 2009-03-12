@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,8 +29,9 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/simulation/tree/GNode.h>
 #include <sofa/helper/io/bvh/BVHLoader.h>
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/component/component.h>
+#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/defaulttype/SolidTypes.h>
 
 namespace sofa
 {
@@ -49,9 +50,11 @@ using namespace sofa::simulation::tree;
 * @see ArticulatedCenter
 * @see Articulation
 */
-class ArticulatedHierarchyContainer : public virtual core::objectmodel::BaseObject
+class SOFA_COMPONENT_CONTAINER_API ArticulatedHierarchyContainer : public virtual core::objectmodel::BaseObject
 {
 public:
+
+	typedef SolidTypes<double>::Transform Transform;
 
 /**
 *	This class defines an articulation center.	This contains a set of articulations.
@@ -107,6 +110,12 @@ public:
 		Data<int> articulationIndex;
 
 		std::vector<double> motion;
+		
+		/**
+		 *	For Arboris Mapping H_pLc_a : transformation accumulates the successive transformation provided by articulations on the
+		 *  same articulation center 
+		 */		
+		 Transform H_pLc_a;
 	};
 
 	/**
@@ -154,6 +163,15 @@ public:
 	*   2 - (Attach on Child ) the axis of the articulations are linked to the child (estimate position from the previous time step) - rotations are treated by successive increases -
 	*/
 	Data<int> articulationProcess;
+	
+	/**
+	*   for ARBORIS Mapping
+	*	Store information about the transformation induced by the articulation center (joint)
+	*   H_p_pLc and H_c_cLp redefine posOnParent, posOnChild (a local rotation between the center of the articualtion and the parent/child bodies can be defined) 
+	*   H_pLc_cLp is transformation induced by the articulations of the articulation center (joint)
+				  it is updated during "apply" function of the Mapping
+	*/
+	Transform H_p_pLc, H_c_cLp, H_pLc_cLp;
 
 	
 	vector<Articulation*> articulations;
@@ -193,7 +211,7 @@ public:
 
 	}
 
-	vector<Articulation*> getArticulations();
+	vector<Articulation*>& getArticulations() { return articulations; }
 	
 	Quat OrientationArticulationCenter;
 	Vector3 DisplacementArticulationCenter;
@@ -212,7 +230,7 @@ public:
 
 	void setFilename(std::string f){filename.setValue(f);}
 	
-	vector<ArticulationCenter*> getArticulationCenters();
+	vector<ArticulationCenter*> getArticulationCenters() { return articulationCenters; }
 	ArticulationCenter* getArticulationCenterAsChild(int index);
 	vector<ArticulationCenter*> getAcendantList(int index);
 
@@ -230,7 +248,7 @@ private:
 	
 	unsigned int id;
 	sofa::helper::io::bvh::BVHJoint* joint;
-	void buildCenterArticulationsTree(sofa::helper::io::bvh::BVHJoint*, int id_buf, const char* name, simulation::tree::GNode* node);
+	void buildCenterArticulationsTree(sofa::helper::io::bvh::BVHJoint*, int id_buf, const char* name, simulation::Node* node);
 };
 
 } // namespace container

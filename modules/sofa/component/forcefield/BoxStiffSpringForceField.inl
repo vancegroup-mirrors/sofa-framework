@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -67,11 +67,22 @@ namespace sofa
       {
 	Inherit::bwdInit();
 	sofa::helper::vector <unsigned int> indices1;
-	const Vec6& b1=box_object1.getValue();
+	Vec6& b1=*(box_object1.beginEdit());
+
+	if (b1[0] > b1[3]) std::swap(b1[0],b1[3]);
+	if (b1[1] > b1[4]) std::swap(b1[1],b1[4]);
+	if (b1[2] > b1[5]) std::swap(b1[2],b1[5]);
+	box_object1.endEdit();
+
 	this->mstate1->getIndicesInSpace( indices1, b1[0],b1[3],b1[1],b1[4],b1[2],b1[5] );
 
 	sofa::helper::vector <unsigned int> indices2;
-	const Vec6& b2=box_object2.getValue();
+	Vec6& b2=*(box_object2.beginEdit());
+	if (b2[0] > b2[3]) std::swap(b2[0],b2[3]);
+	if (b2[1] > b2[4]) std::swap(b2[1],b2[4]);
+	if (b2[2] > b2[5]) std::swap(b2[2],b2[5]);
+	box_object2.endEdit();
+
 	this->mstate2->getIndicesInSpace( indices2, b2[0],b2[3],b2[1],b2[4],b2[2],b2[5] );
 
 

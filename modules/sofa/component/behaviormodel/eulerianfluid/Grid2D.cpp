@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -111,11 +111,11 @@ void Grid2D::clear(int _nx, int _ny)
 {
     t = 0;
     tend = 40;
-    
+
     int old_ncell=ncell;
     nx=_nx; ny=_ny;
     ncell = nx*ny;
-    
+
     if (ncell != old_ncell)
     {
         if (fdata!=NULL) delete[] fdata;
@@ -200,10 +200,10 @@ void Grid2D::step(Grid2D* prev, Grid2D* temp, real dt, real diff)
     t = prev->t+dt;
     tend = prev->tend;
     //std::cout << "STEP\n";
-    
+
     //clear(prev->nx, prev->ny);
     //temp->clear(prev->nx, prev->ny);
-    
+
     step_init(prev, temp, dt, diff);      // init fluid obstacles
     //step_particles(prev, temp, dt, diff); // init particles
     step_levelset(prev, temp, dt, diff); // advance levelset
@@ -212,9 +212,9 @@ void Grid2D::step(Grid2D* prev, Grid2D* temp, real dt, real diff)
     step_advect(prev, temp, dt, diff);    // advance fluid u to temp u
     step_diffuse(prev, temp, dt, diff);   // calc diffusion of temp u to fluid u
     step_project(prev, temp, dt, diff);   // calc pressure and project fluid u to divergent free field. use temp as temporary scalar fields
-    
+
     // And that should be it!
-    
+
     //std::cout << "STEP: Done!\n";
 }
 
@@ -231,12 +231,12 @@ void Grid2D::step_init(const Grid2D* /*prev*/, Grid2D* /*temp*/, real /*dt*/, re
     //  int x1 = x0+4;
     //  int y0 = ny/2-2;
     //  int y1 = y0+4;
-    
+
     const unsigned char* obs = (const unsigned char*)obstacles;
     int lnsize = (nx+7)/8;
-    
+
     //memset(fdata,0,ncell*sizeof(Cell));
-    
+
     FOR_ALL_CELLS(fdata,
     {
         if (x<bsize || y<bsize || x>=nx-bsize || y>=ny-bsize
@@ -264,7 +264,7 @@ void Grid2D::step_levelset(Grid2D* prev, Grid2D* temp, real dt, real /*diff*/)
 //    std::cout << "STEP: levelset\n";
 
     // advect levelset into temp
-    
+
     // Modified Eulerian / Midpoint method
     // Carlson Thesis page 22
 
@@ -280,7 +280,7 @@ void Grid2D::step_levelset(Grid2D* prev, Grid2D* temp, real dt, real /*diff*/)
             // TODO: Check if xn1_2 is not in empty cell
             un = (un + prev->interp(xn1))*0.5;
             xn1 = xn - un*dt;
-            
+
             temp->levelset[ind] = prev->getlevelset(xn1);
         }
         else
@@ -312,10 +312,10 @@ void Grid2D::step_levelset(Grid2D* prev, Grid2D* temp, real dt, real /*diff*/)
             temp->levelset[ind] = phi/n;
         }
     });
-    
+
     // Levelset Reinitilization using Fast Marching Method
     //TODO do not reinit at every steps
-    
+
     fmm_heap_size = 0;
     const int cmax[2] = { nx-1, ny-1 };
     const int dind[2] = { 1, nx };
@@ -409,7 +409,7 @@ void Grid2D::step_levelset(Grid2D* prev, Grid2D* temp, real dt, real /*diff*/)
             }
         }
     });
-    
+
     while (fmm_heap_size > 0)
     {
         int ind = fmm_pop();
@@ -607,10 +607,10 @@ void Grid2D::step_forces(const Grid2D* prev, Grid2D* /*temp*/, real dt, real /*d
     // Solid immovable obstacles set all velocity inside and touching them to 0
     // (free-slip condition)
     // Carlson Thesis page 23
-    
+
     //vec2 f(0,-9.81*dt/scale);
     vec2 f(0,-5*dt);
-    
+
     FOR_INNER_CELLS(fdata,
     {
         vec2 u = f;
@@ -639,9 +639,9 @@ void Grid2D::step_forces(const Grid2D* prev, Grid2D* /*temp*/, real dt, real /*d
         }
         fdata[ind].u = u;
     });
-    
+
     //std::cout << "t="<<t<<" tend="<<tend<<std::endl;
-    
+
     if (t > 0 && t < tend)
     {
         float f = 2*t;
@@ -654,14 +654,14 @@ void Grid2D::step_forces(const Grid2D* prev, Grid2D* /*temp*/, real dt, real /*d
         else if (t>tend-1) r*= tend-t;
         int ir = rceil(r)+5;
         //real r2=r*r;
-    
+
         //real cr = (t+0)/3; cr = rabs(cr-rnear(cr))*2;
         //real cg = (t+1)/3; cg = rabs(cg-rnear(cg))*2;
         //real cb = (t+2)/3; cb = rabs(cb-rnear(cb))*2;
         //real cr = (t+2.5)/3; cr = rmax(0.0f,rabs(cr-rnear(cr))*3-0.5f);
         //real cg = (t    )/3; cg = rmin(1.0f,rabs(cg-rnear(cg))*3);
         //real cb = 1;
-    
+
                 for (int y=cy-ir;y<=cy+ir;y++)
                     if ((unsigned)y<(unsigned)ny)
                         for (int x=cx-ir;x<=cx+ir;x++)
@@ -688,14 +688,14 @@ void Grid2D::step_surface(const Grid2D* /*prev*/, Grid2D* /*temp*/, real /*dt*/,
     //  std::cout << "STEP: Surfaces\n";
     // Boundary conditions are not trivial...
     // Carlson Thesis page 24-28
-    
+
     enum {
         FACE_X0=1<<0,
         FACE_X1=1<<1,
         FACE_Y0=1<<2,
         FACE_Y1=1<<3,
     };
-    
+
     FOR_SURFACE_CELLS(fdata,
     {
         if (fdata[ind].type>0)
@@ -715,13 +715,13 @@ void Grid2D::step_surface(const Grid2D* /*prev*/, Grid2D* /*temp*/, real /*dt*/,
                 // Continuity condition: x1-x0+y1-y0 = 0
                 switch (mask)
                 { // 16 cases...
-                    
+
                     // 1 face: add the other values
                     case FACE_X0: x0 = x1   +y1-y0; break;
                     case FACE_X1: x1 = x0   +y0-y1; break;
                     case FACE_Y0: y0 = x1-x0+y1   ; break;
                     case FACE_Y1: y1 = x0-x1+y0   ; break;
-            
+
                     // 2 faces: weaker condition x1=x0 y1=y0
                     // opposite faces -> do nothing
                     case FACE_X0|FACE_X1: break;
@@ -731,16 +731,16 @@ void Grid2D::step_surface(const Grid2D* /*prev*/, Grid2D* /*temp*/, real /*dt*/,
                     case FACE_X0|FACE_Y1: x0 = x1;  y1 = y0; break;
                     case FACE_X1|FACE_Y0: x1 = x0;  y0 = y1; break;
                     case FACE_X1|FACE_Y1: x1 = x0;  y1 = y0; break;
-                    
+
                     // 3 faces with one opposite pair: ignore the pair and resolve the remaining one
                     case FACE_X0|FACE_Y0|FACE_Y1: x0 = x1   +y1-y0; break;
                     case FACE_X1|FACE_Y0|FACE_Y1: x1 = x0   +y0-y1; break;
                     case FACE_Y0|FACE_X0|FACE_X1: y0 = x1-x0+y1   ; break;
                     case FACE_Y1|FACE_X0|FACE_X1: y1 = x0-x1+y0   ; break;
-                    
+
                     // 4 faces: can't do anything
                     case FACE_X0|FACE_X1|FACE_Y0|FACE_Y1: break;
-                    
+
                     // Done!
                 }
             }
@@ -756,14 +756,14 @@ void Grid2D::step_surface(const Grid2D* /*prev*/, Grid2D* /*temp*/, real /*dt*/,
 void Grid2D::step_advect(const Grid2D* /*prev*/, Grid2D* temp, real dt, real /*diff*/)
 {
     //  std::cout << "STEP: Fluid Advection\n";
-    
+
     // Calculate advection using a semi-lagrangian technique
     // Stam
-    
+
     // not much optimized for now...
-    
+
     memset(temp->fdata,0,temp->ncell*sizeof(Cell));
-    
+
     FOR_INNER_CELLS(temp->fdata,
     {
         // X Axis
@@ -784,17 +784,17 @@ void Grid2D::step_diffuse(const Grid2D* /*prev*/, Grid2D* temp, real /*dt*/, rea
     //  std::cout << "STEP: Fluid Diffusion\n";
     // Calculate diffusion back to here
     // TODO: Check boundary conditions
-    
+
     if (diff==0.0f)
     {
         for (int ind=0;ind<ncell;ind++)
             fdata[ind].u = temp->fdata[ind].u;
         return;
     }
-    
+
     real a = diff;
     real inv_c = 1.0f / (1.0001f + 4*a);
-    
+
     FOR_INNER_CELLS(fdata,
     {
         fdata[ind].u = (temp->fdata[ind].u +
@@ -808,30 +808,30 @@ void Grid2D::step_diffuse(const Grid2D* /*prev*/, Grid2D* temp, real /*dt*/, rea
 void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff*/)
 {
     //  std::cout << "STEP: Fluid Projection\n";
-    
+
     // Finally calculate projection to divergence free velocity
-    
+
     // u_new = u~ - dt/P Dp where P = fluid density and p = pressure, Dp = (dp/dx,dp/dy)
-    // D.u_new = 0  =>  -dx²D²p = -P/dt dx²D.u~
-    //   where  -dx²D²p = 6p(i,j,k)-p(i-1,j,k)-p(i,j-1,k)-p(i,j,k-1)-p(i+1,j,k)-p(i,j+1,k)-p(i,j,k+1)
-    //     and  -P/dt dx²D.u~ = -P/dt dx ( u~(i+1,j,k) - u~(i,j,k) + v~(i,j+1,k) - v~(i,j,k) + w~(i,j,k+1) - w~(i,j,k) )
+    // D.u_new = 0  =>  -dxï¿½Dï¿½p = -P/dt dxï¿½D.u~
+    //   where  -dxï¿½Dï¿½p = 6p(i,j,k)-p(i-1,j,k)-p(i,j-1,k)-p(i,j,k-1)-p(i+1,j,k)-p(i,j+1,k)-p(i,j,k+1)
+    //     and  -P/dt dxï¿½D.u~ = -P/dt dx ( u~(i+1,j,k) - u~(i,j,k) + v~(i,j+1,k) - v~(i,j,k) + w~(i,j,k+1) - w~(i,j,k) )
     // Ap = b where A is a diagonal matrix plus neighbour coefficients at -1
-    
+
     memset(temp->fdata,0,temp->ncell*sizeof(Cell));
     memset(temp->pressure,0,temp->ncell*sizeof(real));
-    
+
     real* diag = (real*)temp->fdata;
     real* b = diag+ncell;
     real* r = b+ncell;
     real* g = r+ncell;
     real* q = temp->pressure;
-    
+
     real a = -1.0f/dt;
-    
+
     real b_norm2 = 0.0;
-    
+
     //  int nbdiag[7]={0,0,0,0,0,0,0};
-    
+
     FOR_INNER_CELLS(diag,
     {
         if (fdata[ind].type>0)
@@ -845,7 +845,7 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
             diag[ind] = d;
         }
     });
-    
+
     FOR_INNER_CELLS(b,
     {
         if (fdata[ind].type>0)
@@ -855,24 +855,24 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
             b_norm2 += bi*bi;
         }
     });
-    
+
     //  std::cout << "Proc"<<Grank<<" local b2="<<b_norm2<<std::endl;
     //reduceAll(1,&b_norm2);
     //  std::cout << "Proc"<<Grank<<" global b2="<<b_norm2<<std::endl;
-    
+
     FOR_ALL_CELLS(pressure,
     {
         if (fdata[ind].type>0)
             pressure[ind] = prev->pressure[ind]; // use previous pressure as initial estimate
         else pressure[ind] = 0;
     });
-    
+
     //  std::cout << "STEP: Pressure diag";
     //  for (int i=0;i<7;i++) std::cout << ' ' << nbdiag[i];
     //  std::cout << '\n';
-    
+
     real err = 0.0;
-    
+
     // r = b - Ax
     FOR_INNER_CELLS(r,
     {
@@ -883,14 +883,14 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
                               -pressure[ind+index( 1,0)]-pressure[ind+index(0, 1)]);
         }
     });
-    
+
     FOR_ALL_CELLS(g,
     {
         g[ind] = r[ind]; // first direction is r
     });
-    
+
     real min_err = 0.0001f*b_norm2;
-    
+
     int step;
     for (step=0;step<100;step++)
     {
@@ -900,7 +900,7 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
         {
         err += r[ind]*r[ind];
         });
-        
+
         if (err<=min_err) break;
         if (step>0)
         {
@@ -919,14 +919,14 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
             {
                 real Ag = (diag[ind]*g[ind]
                           -g[ind+index(-1,0)]-g[ind+index(0,-1)]
-                          -g[ind+index( 1,0)]-g[ind+index(0, 1)]); 
+                          -g[ind+index( 1,0)]-g[ind+index(0, 1)]);
                 q[ind] = Ag;
                 g_q += g[ind]*Ag;
             }
         });
-        
+
         real alpha = err/g_q;
-        
+
         FOR_ALL_CELLS(pressure,
         {
             pressure[ind] += alpha*g[ind];
@@ -934,16 +934,16 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
         });
     }
 
-    //  std::cout << "STEP: CG iteration "<<step<<" error "<<sqrt(err/b_norm2)<<"\n";
-    
+    // std::cout << "STEP: CG iteration "<<step<<" error "<<sqrt(err/b_norm2)<<"\n";
+
     // Now apply pressure back to velocity
     a = dt;
-    
+
     real max_speed = 0.5f/dt;
-    
+
     //max_pressure = 0.0f;
     max_pressure = prev->max_pressure;
-    
+
     FOR_INNER_CELLS(fdata,
     {
         if (fdata[ind].type>=PART_EMPTY)
@@ -963,7 +963,7 @@ void Grid2D::step_project(const Grid2D* prev, Grid2D* temp, real dt, real /*diff
             }
         }
     });
-    
+
     //  std::cout << "STEP: max pressure "<<max_pressure<<'\n';
 }
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -30,8 +30,9 @@
 
 
 
-#include <sofa/simulation/tree/Simulation.h>
-
+#include <sofa/simulation/common/Simulation.h>
+#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/tree/MutationListener.h>
 #include <iostream>
 #include <qapplication.h>
 #include <qpushbutton.h>
@@ -43,8 +44,6 @@
 #include <qheader.h>
 #endif
  
-
-
 
 namespace sofa
 {
@@ -97,16 +96,17 @@ namespace sofa
       {
 	progname = pname;
 	{
-	  int argc=1;
+	  int *argc= new int;
 	  char* argv[1];
+          *argc = 1;
 	  argv[0] = strdup(progname);
-	  application = new QApplication(argc,argv);
+	  application = new QApplication(*argc,argv);
 	  free(argv[0]);
 	}
 	// create interface
 	gui = new RealGUI("qt");
 	if (groot)
-		gui->setScene(groot, filename);
+          gui->setScene((simulation::Node*) groot, filename);
 	//((RealGUI*) gui)->setTitle(filename);
 	//gui->viewer->SwitchToPresetView();
 	
@@ -139,7 +139,7 @@ namespace sofa
 	gui->viewer->getQWidget()->update();
       }
 
-      sofa::simulation::tree::GNode* CurrentSimulation()   
+      sofa::simulation::Node* CurrentSimulation()   
       {
 			  
 	if (gui==NULL) return NULL;

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -64,20 +64,85 @@ namespace topology
 
 		virtual ~HexahedronSetGeometryAlgorithms() {}
 
-		/// computes the volume of hexahedron no i and returns it
-		Real computeHexahedronVolume(const unsigned int i) const;
+		void computeHexahedronAABB(const HexaID h, Coord& minCoord, Coord& maxCoord) const;
+
+		void computeHexahedronRestAABB(const HexaID h, Coord& minCoord, Coord& maxCoord) const;
+
+		Coord computeHexahedronCenter(const HexaID h) const;
+
+		Coord computeHexahedronRestCenter(const HexaID h) const;
+
+		void getHexahedronVertexCoordinates(const HexaID h, Coord[8]) const;
+
+		void getRestHexahedronVertexCoordinates(const HexaID h, Coord[8]) const;
+
+		/// computes the volume of hexahedron no h and returns it
+		Real computeHexahedronVolume(const HexaID h) const;
 
 		/// computes the hexahedron volume of all hexahedra are store in the array interface
 		void computeHexahedronVolume( BasicArrayInterface<Real> &ai) const;
 
 		/// computes the hexahedron volume  of hexahedron no i and returns it
-		Real computeRestHexahedronVolume(const unsigned int i) const;
+		Real computeRestHexahedronVolume(const HexaID h) const;
+
+		/// computes barycentric coordinates corresponding to a given position. Warning: this method is only correct if the hexahedron is not deformed
+		defaulttype::Vector3 computeHexahedronBarycentricCoeficients(const HexaID h, const Coord& p) const;
+
+    /// computes barycentric coordinates corresponding to a given position in the hexa 'h' in its rest position. Warning: this method is only correct if the hexahedron is not deformed
+		defaulttype::Vector3 computeHexahedronRestBarycentricCoeficients(const HexaID h, const Coord& p) const;
+
+		/// computes a position corresponding to given barycentric coordinates
+		Coord getPointPositionInHexahedron(const HexaID h, const defaulttype::Vector3& baryC) const;
+
+		Coord getRestPointPositionInHexahedron(const HexaID h, const defaulttype::Vector3& baryC) const;
+
+		/// computes a position corresponding to given barycentric coordinates
+		Coord getPointPositionInHexahedron(const HexaID h, const Real baryC[3]) const;
+
+		Coord getRestPointPositionInHexahedron(const HexaID h, const Real baryC[3]) const;
+
+		/// finds a hexahedron which is nearest to a given point. Computes barycentric coordinates and a distance measure.
+		virtual int findNearestElement(const Coord& pos, defaulttype::Vector3& baryC, Real& distance) const;
+
+    /// given a vector of points, find the nearest hexa for each point. Computes barycentric coordinates and a distance measure.
+    virtual void findNearestElements(const VecCoord& pos, helper::vector<int>& elem, helper::vector<defaulttype::Vector3>& baryC, helper::vector<Real>& dist) const;
+
+    /// finds a hexahedron, in its rest position, which is nearest to a given point. Computes barycentric coordinates and a distance measure.
+    virtual int findNearestElementInRestPos(const Coord& pos, defaulttype::Vector3& baryC, Real& distance) const;
+
+    /// given a vector of points, find the nearest hexa, in its rest position, for each point. Computes barycentric coordinates and a distance measure.
+    virtual void findNearestElementsInRestPos(const VecCoord& pos, helper::vector<int>& elem, helper::vector<defaulttype::Vector3>& baryC, helper::vector<Real>& dist) const;
+
+    /// If the point is inside the element, the distance measure is < 0. If the point is outside the element, the distance measure is a squared distance to the element center.
+    virtual Real computeElementDistanceMeasure(const HexaID h, const Coord p) const;
+
+    /// If the point is inside the element in its rest position, the distance measure is < 0. If the point is outside the element in its rest position, the distance measure is a squared distance to the element center.
+		virtual Real computeElementRestDistanceMeasure(const HexaID h, const Coord p) const;
 
 		/** \brief Write the current mesh into a msh file
 		*/
-		void writeMSHfile(const char *filename);
+		void writeMSHfile(const char *filename) const;
 	};
-    
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETGEOMETRYALGORITHMS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Rigid3dTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Rigid2dTypes>;
+#endif
+
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Rigid3fTypes>;
+//extern template class SOFA_COMPONENT_TOPOLOGY_API HexahedronSetGeometryAlgorithms<defaulttype::Rigid2fTypes>;
+#endif
+#endif
+
 } // namespace topology
 
 } // namespace component

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -81,6 +81,13 @@ public:
     ///
     /// This method must be reimplemented by all mappings if they need to support constraints.
     virtual void applyJT( typename In::VecConst& /*out*/, const typename Out::VecConst& /*in*/ ) {}
+	
+	/// If the mapping input has a rotation velocity, it computes the subsequent acceleration 
+	/// created by the derivative terms
+	/// $ a_out = w^(w^rel_pos)	$
+	/// This method must be reimplemented by all mappings if they need to support composite accelerations
+	virtual void computeAccFromMapping(  typename Out::VecDeriv& /*acc_out*/, const typename In::VecDeriv& /*v_in*/, const typename In::VecDeriv& /*acc_in*/){}
+	
 
     /// Get the source (upper) model.
     virtual BaseMechanicalState* getMechFrom();
@@ -117,6 +124,15 @@ public:
     /// This method retrieves the v vectors and call the internal apply() method implemented by the component.
     virtual void propagateV();
 
+	/// Propagate acceleration due to the derivative of the mapping function
+	///
+	/// If the mapping input has a rotation velocity, it computes the subsequent acceleration
+	/// $ a_out = w^(w^rel_pos)	$
+	///
+	/// This method retrieves the acc and v vectors and call the internal computeAccFromMapping() method implemented by the component.
+    virtual void propagateA();
+	
+
     /// Propagate displacement from the source model to the destination model.
     ///
     /// If the MechanicalMapping can be represented as a matrix J, this method computes
@@ -149,9 +165,14 @@ public:
     /// This method retrieves the constraint matrices and call the internal applyJT() method implemented by the component.
     virtual void accumulateConstraint();
 
+    virtual std::string getTemplateName() const
+    {
+      return templateName(this);
+    }
+
     static std::string templateName(const MechanicalMapping<In, Out>* = NULL)
     {
-      return std::string("MechanicalMapping[")+In::DataTypes::Name() + std::string(",") + Out::DataTypes::Name() + std::string("]");
+      return std::string("MechanicalMapping<")+In::DataTypes::Name() + std::string(",") + Out::DataTypes::Name() + std::string(">");
     }
 
 protected:

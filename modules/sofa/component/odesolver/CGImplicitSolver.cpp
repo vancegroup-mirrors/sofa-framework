@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,8 +32,8 @@
 #include <iostream>
 #include "sofa/helper/system/thread/CTime.h"
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -111,7 +111,7 @@ void CGImplicitSolver::solve(double dt)
     b.teq(h);                           // b = h(f0 + (h+rs)df/dx v - rd M v)
 
     if( verbose )
-	cerr<<"CGImplicitSolver, f0 = "<< b <<endl;
+	serr<<"CGImplicitSolver, f0 = "<< b <<sendl;
 
     projectResponse(b);          // b is projected to the constrained space
 
@@ -123,7 +123,7 @@ void CGImplicitSolver::solve(double dt)
     double rho, rho_1=0, alpha, beta;
 
     if( verbose )
-	cerr<<"CGImplicitSolver, projected f0 = "<< b <<endl;
+	serr<<"CGImplicitSolver, projected f0 = "<< b <<sendl;
 
     v_clear( x );
     //v_eq(r,b); // initial residual
@@ -131,11 +131,11 @@ void CGImplicitSolver::solve(double dt)
 
     if( verbose )
     {
-        cerr<<"CGImplicitSolver, dt = "<< dt <<endl;
-        cerr<<"CGImplicitSolver, initial x = "<< pos <<endl;
-        cerr<<"CGImplicitSolver, initial v = "<< vel <<endl;
-        cerr<<"CGImplicitSolver, r0 = f0 = "<< b <<endl;
-        //cerr<<"CGImplicitSolver, r0 = "<< r <<endl;
+        serr<<"CGImplicitSolver, dt = "<< dt <<sendl;
+        serr<<"CGImplicitSolver, initial x = "<< pos <<sendl;
+        serr<<"CGImplicitSolver, initial v = "<< vel <<sendl;
+        serr<<"CGImplicitSolver, r0 = f0 = "<< b <<sendl;
+        //serr<<"CGImplicitSolver, r0 = "<< r <<sendl;
     }
 
     unsigned nb_iter;
@@ -143,7 +143,12 @@ void CGImplicitSolver::solve(double dt)
     for( nb_iter=1; nb_iter<=f_maxIter.getValue(); nb_iter++ )
     {
 	    
-// 		printWithElapsedTime( x, helper::system::thread::CTime::getTime()-time0,std::cout );
+#ifdef DUMP_VISITOR_INFO
+	  std::ostringstream comment;
+	  comment << "Iteration : " << nb_iter;
+	  simulation::Visitor::printComment(comment.str());
+#endif
+// 		printWithElapsedTime( x, helper::system::thread::CTime::getTime()-time0,sout );
 		
         //z = r; // no precond
         //rho = r.dot(z);
@@ -171,7 +176,7 @@ void CGImplicitSolver::solve(double dt)
 
         if( verbose )
         {
-            cerr<<"p : "<<p<<endl;
+            serr<<"p : "<<p<<sendl;
         }
         
         // matrix-vector product
@@ -180,18 +185,18 @@ void CGImplicitSolver::solve(double dt)
         
         if( verbose )
         {
-            cerr<<"q = df/dx p : "<<q<<endl;
+            serr<<"q = df/dx p : "<<q<<sendl;
         }
         
         q *= -h*(h+f_rayleighStiffness.getValue());  // q = -h(h+rs) df/dx p
         
         if( verbose )
         {
-            cerr<<"q = -h(h+rs) df/dx p : "<<q<<endl;
+            serr<<"q = -h(h+rs) df/dx p : "<<q<<sendl;
         }
         //
-        // 		cerr<<"-h(h+rs) df/dx p : "<<q<<endl;
-        // 		cerr<<"f_rayleighMass.getValue() : "<<f_rayleighMass.getValue()<<endl;
+        // 		serr<<"-h(h+rs) df/dx p : "<<q<<sendl;
+        // 		serr<<"f_rayleighMass.getValue() : "<<f_rayleighMass.getValue()<<sendl;
 
         // apply global Rayleigh damping 
         if (f_rayleighMass.getValue()==0.0)
@@ -208,7 +213,7 @@ void CGImplicitSolver::solve(double dt)
         }
         if( verbose )
         {
-            cerr<<"q = Mp -h(h+rs) df/dx p +hr Mp  =  "<<q<<endl;
+            serr<<"q = Mp -h(h+rs) df/dx p +hr Mp  =  "<<q<<sendl;
         }
 
         // filter the product to take the constraints into account
@@ -216,7 +221,7 @@ void CGImplicitSolver::solve(double dt)
         projectResponse(q);     // q is projected to the constrained space
         if( verbose )
         {
-            cerr<<"q after constraint projection : "<<q<<endl;
+            serr<<"q after constraint projection : "<<q<<sendl;
         }
 
         double den = p.dot(q);
@@ -227,7 +232,7 @@ void CGImplicitSolver::solve(double dt)
             endcond = "threshold";
             if( verbose )
             {
-                cerr<<"CGImplicitSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<endl;
+                serr<<"CGImplicitSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<sendl;
             }
             break;
         }
@@ -237,21 +242,23 @@ void CGImplicitSolver::solve(double dt)
         r.peq(q,-alpha);                // r = r - alpha q
 #else // single-operation optimization
         {
-            simulation::MechanicalVMultiOpVisitor vmop;
-            vmop.ops.resize(2);
-            vmop.ops[0].first = (VecId)x;
-            vmop.ops[0].second.push_back(std::make_pair((VecId)x,1.0));
-            vmop.ops[0].second.push_back(std::make_pair((VecId)p,alpha));
-            vmop.ops[1].first = (VecId)r;
-            vmop.ops[1].second.push_back(std::make_pair((VecId)r,1.0));
-            vmop.ops[1].second.push_back(std::make_pair((VecId)q,-alpha));
+  	    typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+	    VMultiOp ops;
+            ops.resize(2);
+            ops[0].first = (VecId)x;
+            ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+            ops[0].second.push_back(std::make_pair((VecId)p,alpha));
+            ops[1].first = (VecId)r;
+            ops[1].second.push_back(std::make_pair((VecId)r,1.0));
+            ops[1].second.push_back(std::make_pair((VecId)q,-alpha));  
+	    simulation::MechanicalVMultiOpVisitor vmop(ops);
             vmop.execute(this->getContext());
         }
 #endif
         if( verbose ){
-            cerr<<"den = "<<den<<", alpha = "<<alpha<<endl;
-            cerr<<"x : "<<x<<endl;
-            cerr<<"r : "<<r<<endl;
+            serr<<"den = "<<den<<", alpha = "<<alpha<<sendl;
+            serr<<"x : "<<x<<sendl;
+            serr<<"r : "<<r<<sendl;
         }
 
         rho_1 = rho;
@@ -264,14 +271,16 @@ void CGImplicitSolver::solve(double dt)
     pos.peq( vel, h );                  // pos = pos + h vel
 #else // single-operation optimization
     {
-        simulation::MechanicalVMultiOpVisitor vmop;
-        vmop.ops.resize(2);
-        vmop.ops[0].first = (VecId)vel;
-        vmop.ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
-        vmop.ops[0].second.push_back(std::make_pair((VecId)x,1.0));
-        vmop.ops[1].first = (VecId)pos;
-        vmop.ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
-        vmop.ops[1].second.push_back(std::make_pair((VecId)vel,h));
+        typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+	VMultiOp ops;
+        ops.resize(2);
+        ops[0].first = (VecId)vel;
+        ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
+        ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+        ops[1].first = (VecId)pos;
+        ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
+        ops[1].second.push_back(std::make_pair((VecId)vel,h));  
+	simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.execute(this->getContext());
     }
 #endif
@@ -280,14 +289,18 @@ void CGImplicitSolver::solve(double dt)
     
     if( printLog )
     {
-        cerr<<"CGImplicitSolver::solve, nbiter = "<<nb_iter<<" stop because of "<<endcond<<endl;
+        serr<<"CGImplicitSolver::solve, nbiter = "<<nb_iter<<" stop because of "<<endcond<<sendl;
     }
     if( verbose )
     {
-        cerr<<"CGImplicitSolver::solve, solution = "<<x<<endl;
-        cerr<<"CGImplicitSolver, final x = "<< pos <<endl;
-        cerr<<"CGImplicitSolver, final v = "<< vel <<endl;
+        serr<<"CGImplicitSolver::solve, solution = "<<x<<sendl;
+        serr<<"CGImplicitSolver, final x = "<< pos <<sendl;
+        serr<<"CGImplicitSolver, final v = "<< vel <<sendl;
     }
+
+#ifdef SOFA_HAVE_LAPACK
+    applyConstraints();
+#endif
 }
 
 SOFA_DECL_CLASS(CGImplicit)

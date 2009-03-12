@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,9 +27,13 @@
 #ifndef SOFA_DEFAULTTYPE_MAT_H
 #define SOFA_DEFAULTTYPE_MAT_H
 
+#include <sofa/helper/system/config.h>
 #include <sofa/defaulttype/Vec.h>
 #include <assert.h>
-#include <sofa/helper/static_assert.h>
+#include <boost/static_assert.hpp>
+#include <iostream>
+using std::cerr;
+using std::endl;
 
 namespace sofa
 {
@@ -93,13 +97,13 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
     this->elems[2]=r3;
     this->elems[3]=r4;
   }
-  
+
   /// Constructor from an element
   explicit Mat(const real& v)
   {
       for( int i=0; i<L; i++ )
           for( int j=0; j<C; j++ )
-              this->elems[i][j] = v; 
+              this->elems[i][j] = v;
   }
 
   /// Constructor from another matrix
@@ -108,33 +112,33 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
   {
     std::copy(m.begin(), m.begin()+L, this->begin());
   }
-  
+
   /// Constructor from an array of elements (stored per line).
   template<typename real2>
   explicit Mat(const real2* p)
   {
     std::copy(p, p+N, this->begin()->begin());
   }
-  
+
   /// number of lines
   real getNbLines() const
   {
 	  return L;
   }
-  
+
   /// number of colums
   real getNbCols() const
   {
 	  return C;
   }
-  
+
 
   /// Assignment from an array of elements (stored per line).
   void operator=(const real* p)
   {
     std::copy(p, p+N, this->begin()->begin());
   }
-  
+
   /// Assignment from another matrix
   template<typename real2> void operator=(const Mat<L,C,real2>& m)
   {
@@ -323,8 +327,8 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
             if (this->elems[i]!=b[i]) return true;
         return false;
     }
-	
-	
+
+
 	bool isSymetric() const
 	{
 		for (int i=0;i<L;i++)
@@ -383,7 +387,7 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
     }
     return r;
   }
-  
+
   /// Multiplication of the transposed Matrix * Column
   Line multTranspose(const Col& v) const
   {
@@ -396,7 +400,7 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
       }
       return r;
   }
-  
+
 
   /// Transposed Matrix multiplication operator.
   template <int P>
@@ -412,7 +416,7 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
       }
     return r;
   }
-  
+
 
   /// Scalar multiplication operator.
   Mat<L,C,real> operator*(real f) const
@@ -423,7 +427,13 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
 	r[i][j] = (*this)[i][j] * f;
     return r;
   }
-  
+
+  /// Scalar matrix multiplication operator.
+  friend Mat<L,C,real> operator*(real r, const Mat<L,C,real>& m)
+  {
+    return m*r;
+  }
+
   /// Scalar division operator.
   Mat<L,C,real> operator/(real f) const
   {
@@ -486,6 +496,59 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
     return invertMatrix(*this, m);
   }
 
+  static Mat<L,C,real> transformTranslation(const Vec<C-1,real>& t)
+  {
+	  Mat<L,C,real> m;
+	  m.identity();
+	  for (int i=0;i<C-1;++i)
+		  m.elems[i][C-1] = t[i];
+	  return m;
+  }
+
+  static Mat<L,C,real> transformScale(real s)
+  {
+	  Mat<L,C,real> m;
+	  m.identity();
+	  for (int i=0;i<C-1;++i)
+		  m.elems[i][i] = s;
+	  return m;
+  }
+
+  static Mat<L,C,real> transformScale(const Vec<C-1,real>& s)
+  {
+	  Mat<L,C,real> m;
+	  m.identity();
+	  for (int i=0;i<C-1;++i)
+		  m.elems[i][i] = s[i];
+	  return m;
+  }
+
+  template<class Quat>
+  static Mat<L,C,real> transformRotation(const Quat& q)
+  {
+	  Mat<L,C,real> m;
+	  m.identity();
+	  q.toMatrix(m);
+	  return m;
+  }
+
+  /// Multiplication operator Matrix * Vector considering the matrix as a transformation.
+  Vec<C-1,real> transform(const Vec<C-1,real>& v) const
+  {
+	Vec<C-1,real> r(NOINIT);
+    for(int i=0;i<C-1;i++)
+    {
+      r[i]=(*this)[i][0] * v[0];
+      for(int j=1;j<C-1;j++)
+    	  r[i] += (*this)[i][j] * v[j];
+	  r[i] += (*this)[i][C-1];
+    }
+    return r;
+  }
+  
+  
+
+
 };
 
 /// Same as Mat except the values are not initialized by default
@@ -531,6 +594,8 @@ inline real determinant(const Mat<2,2,real>& m)
 	     - m(1,0)*m(0,1);
 }
 
+#define MIN_DETERMINANT  1.0e-100
+
 /// Matrix inversion (general case).
 template<int S, class real>
 bool invertMatrix(Mat<S,S,real>& dest, const Mat<S,S,real>& from)
@@ -564,8 +629,9 @@ bool invertMatrix(Mat<S,S,real>& dest, const Mat<S,S,real>& from)
       }
     }
 
-    if (pivot <= 1e-10)
+    if (pivot <= (real) MIN_DETERMINANT)
     {
+      cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
       return false;
     }
 
@@ -605,8 +671,10 @@ bool invertMatrix(Mat<3,3,real>& dest, const Mat<3,3,real>& from)
 {
   real det=determinant(from);
 
-  if ( -1e-10<=det && det<=1e-10)
+  if ( -(real) MIN_DETERMINANT<=det && det<=(real) MIN_DETERMINANT){
+    cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
     return false;
+  }
 
   dest(0,0)= (from(1,1)*from(2,2) - from(2,1)*from(1,2))/det;
   dest(1,0)= (from(1,2)*from(2,0) - from(2,2)*from(1,0))/det;
@@ -617,7 +685,7 @@ bool invertMatrix(Mat<3,3,real>& dest, const Mat<3,3,real>& from)
   dest(0,2)= (from(0,1)*from(1,2) - from(1,1)*from(0,2))/det;
   dest(1,2)= (from(0,2)*from(1,0) - from(1,2)*from(0,0))/det;
   dest(2,2)= (from(0,0)*from(1,1) - from(1,0)*from(0,1))/det;
-  
+
   return true;
 }
 
@@ -627,16 +695,19 @@ bool invertMatrix(Mat<2,2,real>& dest, const Mat<2,2,real>& from)
 {
   real det=determinant(from);
 
-  if ( -1e-10<=det && det<=1e-10)
+  if ( -(real) MIN_DETERMINANT<=det && det<=(real) MIN_DETERMINANT){
+    cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
     return false;
+  }
 
   dest(0,0)=  from(1,1)/det;
   dest(0,1)= -from(0,1)/det;
   dest(1,0)= -from(1,0)/det;
   dest(1,1)=  from(0,0)/det;
-  
+
   return true;
 }
+#undef MIN_DETERMINANT
 
 typedef Mat<2,2,float> Mat2x2f;
 typedef Mat<2,2,double> Mat2x2d;
@@ -702,6 +773,45 @@ template <int L, int C, typename real>
 }
 
 
+
+
+/// printing in other software formats
+  
+template <int L, int C, typename real>
+void printMatlab(std::ostream& o, const Mat<L,C,real>& m)
+{
+	o<<"[";
+	for(int l=0;l<L;++l)
+	{
+		for(int c=0;c<C;++c)
+		{
+			o<<m[l][c];
+			if( c!=C-1 ) o<<",\t";
+		}
+		if( l!=L-1 ) o<<";"<<endl;
+	}
+	o<<"]"<<endl;
+}
+
+
+template <int L, int C, typename real>
+void printMaple(std::ostream& o, const Mat<L,C,real>& m)
+{
+	o<<"matrix("<<L<<","<<C<<", [";
+	for(int l=0;l<L;++l)
+	{
+		for(int c=0;c<C;++c)
+		{
+			o<<m[l][c];
+			o<<",\t";
+		}
+		if( l!=L-1 ) o<<endl;
+	}
+	o<<"])"<<endl;
+}
+
+
+
 /// return the max of two values
 template<class T1,class T2>
 inline const T1 S_MAX(const T1 &a, const T2 &b)
@@ -723,12 +833,12 @@ inline const T1 S_SIGN(const T1 &a, const T2 &b)
 }
 
 template<class T>
-inline const T S_SQR(const T a) 
+inline const T S_SQR(const T a)
 {
 	return a*a;
 }
 
-///Computes sqrt(a² + b²) without destructive underflow or overflow.
+///Computes sqrt(aï¿½ + bï¿½) without destructive underflow or overflow.
 template <class T1, class T2>
 T1 pythag(const T1 a, const T2 b)
 {
@@ -935,21 +1045,21 @@ Real cond(Mat<m,n,Real> &a)
 {
 	Vec<n,Real>w;
 	Mat<n,m,Real> *v = new Mat<n,m,Real>();
-	
+
 	svddcmp( a, w, *v );
-	
+
 	delete v;
-	
+
 	return fabs(w[0]/w[n-1]);
 }
 
 
-/// Compute the LU decomposition of matrix a. a is replaced by its pivoted LU decomposition. indx stores pivoting indices. 
+/// Compute the LU decomposition of matrix a. a is replaced by its pivoted LU decomposition. indx stores pivoting indices.
 template< int n, typename Real>
         void ludcmp(Mat<n,n,Real> &a, Vec<n,int> &indx)
 {
     const Real TINY=(Real)1.0e-20;
-    int i,imax=0,j,k; 
+    int i,imax=0,j,k;
     Real big,dum,sum,temp;
 
     Vec<n,Real> vv;
@@ -1017,7 +1127,7 @@ template< int n, typename Real>
     }
 }
 
-/** Compute the inverse of matrix m. 
+/** Compute the inverse of matrix m.
 \warning Matrix m is replaced by its LU decomposition.
 */
 template< int n, typename Real>
@@ -1025,10 +1135,10 @@ template< int n, typename Real>
 {
     Vec<n,int> idx;
     Vec<n,Real> col;
-    
+
     ludcmp(m,idx);
-    
-    for( int i=0; i<n; i++ ){ 
+
+    for( int i=0; i<n; i++ ){
         for( int j=0; j<n; j++ )
             col[j] = 0;
         col[i] = 1;
@@ -1054,14 +1164,5 @@ inline Mat<L,C,T> dyad( const Vec<L,T>& u, const Vec<C,T>& v )
 } // namespace sofa
 
 // iostream
-
-
-
-/// Scalar matrix multiplication operator.
-template <int L, int C, typename real>
-sofa::defaulttype::Mat<L,C,real> operator*(real r, const sofa::defaulttype::Mat<L,C,real>& m)
-{
-  return m*r;
-}
 
 #endif

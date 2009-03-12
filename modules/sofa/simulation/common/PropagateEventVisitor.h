@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Interface: PropagateEventVisitor
 //
-// Description: 
+// Description:
 //
 //
 // Author: The SOFA team </www.sofa-framework.org>, (C) 2006
@@ -51,16 +51,18 @@ Propagation is done top-down until the event is handled.
 
 	@author The SOFA team </www.sofa-framework.org>
 */
-class PropagateEventVisitor : public sofa::simulation::Visitor
+class SOFA_SIMULATION_COMMON_API PropagateEventVisitor : public sofa::simulation::Visitor
 {
 public:
     PropagateEventVisitor(sofa::core::objectmodel::Event* e);
 
     ~PropagateEventVisitor();
-    
+
     Visitor::Result processNodeTopDown(simulation::Node* node);
     void processObject(simulation::Node*, core::objectmodel::BaseObject* obj);
 
+    virtual const char* getClassName() const { return "PropagateEventVisitor"; }
+	virtual std::string getInfos() const { return std::string(m_event->getClassName());  }
     protected:
         sofa::core::objectmodel::Event* m_event;
 };

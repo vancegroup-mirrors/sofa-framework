@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,10 +22,10 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_MASS_DIAGONALMASS_CPP
 #include <sofa/component/mass/DiagonalMass.inl>
+#include <sofa/core/componentmodel/behavior/Mass.inl>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/gl/Axis.h>
 
 namespace sofa
@@ -357,18 +357,18 @@ template <>
     ;
 
 #ifndef SOFA_FLOAT
-  template class DiagonalMass<Vec3dTypes,double>;
-  template class DiagonalMass<Vec2dTypes,double>;
-  template class DiagonalMass<Vec1dTypes,double>;
-  template class DiagonalMass<Rigid3dTypes,Rigid3dMass>;
-  template class DiagonalMass<Rigid2dTypes,Rigid2dMass>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec3dTypes,double>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec2dTypes,double>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec1dTypes,double>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Rigid3dTypes,Rigid3dMass>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Rigid2dTypes,Rigid2dMass>;
 #endif
 #ifndef SOFA_DOUBLE
-  template class DiagonalMass<Vec3fTypes,float>;
-  template class DiagonalMass<Vec2fTypes,float>;
-  template class DiagonalMass<Vec1fTypes,float>;
-  template class DiagonalMass<Rigid3fTypes,Rigid3fMass>;
-  template class DiagonalMass<Rigid2fTypes,Rigid2fMass>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec3fTypes,float>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec2fTypes,float>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec1fTypes,float>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Rigid3fTypes,Rigid3fMass>;
+  template class SOFA_COMPONENT_MASS_API DiagonalMass<Rigid2fTypes,Rigid2fMass>;
 #endif
 
 

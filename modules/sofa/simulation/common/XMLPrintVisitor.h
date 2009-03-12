@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -40,22 +40,28 @@ namespace simulation
 {
 
 
-class XMLPrintVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API XMLPrintVisitor : public Visitor
 {
 protected:
     std::ostream& m_out;
 	int level;
 public:
-    XMLPrintVisitor(std::ostream& out) : m_out(out), level(0) {}
-	
+    XMLPrintVisitor(std::ostream& out, bool c=false) : m_out(out),level(0), compact(c) {}
+
 	template<class T>
 	void processObject(T obj);
-	
+
 	template<class Seq>
 	void processObjects(Seq& list);
-	
+
+	void processBaseObject(core::objectmodel::BaseObject* obj);
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 	virtual void processNodeBottomUp(simulation::Node* node);
+        virtual const char* getClassName() const { return "XMLPrintVisitor"; }
+        protected:
+        //Print in compact mode or expanded mode
+          bool compact;
 };
 
 } // namespace simulation

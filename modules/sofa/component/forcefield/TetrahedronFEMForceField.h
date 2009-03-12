@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/helper/vector.h>
-#include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Mat.h>
 
 
@@ -103,7 +103,7 @@ protected:
     typedef Mat<12, 6, Real> StrainDisplacement;
 
     /// Rigid transformation (rotation) matrix
-    typedef MatNoInit<3, 3, Real> Transformation; 
+    typedef MatNoInit<3, 3, Real> Transformation;
 
     /// Stiffness matrix ( = RJKJtRt  with K the Material stiffness matrix, J the strain-displacement matrix, and R the transformation matrix if any )
     typedef Mat<12, 12, Real> StiffnessMatrix;
@@ -135,7 +135,7 @@ protected:
     VecCoord _initialPoints; ///< the intial positions of the points
 
     bool needUpdateTopology;
-    
+
     TetrahedronFEMForceFieldInternalData<DataTypes> data;
     friend class TetrahedronFEMForceFieldInternalData<DataTypes>;
 
@@ -143,6 +143,12 @@ public:
     //For a faster contact handling with simplified compliance
     void getRotation(Transformation& R, unsigned int nodeIdx);
 
+    void getRotations(VecReal& vecR)
+    {
+    	vecR.resize(_indexedElements->size()*9);
+    	for (unsigned int i=0;i<_indexedElements->size();++i)
+    		getRotation(*(Transformation*)&(vecR[i*9]),i);
+    }
 
     DataPtr< VecCoord > f_initialPoints; ///< the intial positions of the points
     int method;
@@ -182,25 +188,25 @@ public:
     void setYoungModulus(Real val) { this->f_youngModulus.setValue(val); }
 
     void setMethod(std::string methodName)
-    {     
+    {
       if (methodName == "small")	this->setMethod(SMALL);
       else if (methodName  == "polar")	this->setMethod(POLAR);
-      else 	
+      else
       {
-	if (methodName != "large") 
-	  std::cerr << "unknown method: large method will be used. Remark: Available method are \"small\", \"polar\", \"large\" \n";
+	if (methodName != "large")
+	  serr << "unknown method: large method will be used. Remark: Available method are \"small\", \"polar\", \"large\" "<<sendl;
 	this->setMethod(LARGE);
-      }     
+      }
     }
-    
-    void setMethod(int val) 
-    { 
-      method = val; 
+
+    void setMethod(int val)
+    {
+      method = val;
       switch(val)
       {
-        case SMALL: f_method.setValue("small"); break;    
+        case SMALL: f_method.setValue("small"); break;
         case POLAR: f_method.setValue("polar"); break;
-        default   : f_method.setValue("large"); 
+        default   : f_method.setValue("large");
       };
     }
 
@@ -253,12 +259,22 @@ public:
     void initPolar(int i, Index&a, Index&b, Index&c, Index&d);
     void accumulateForcePolar( Vector& f, const Vector & p, typename VecElement::const_iterator elementIt, Index elementIndex );
     void applyStiffnessPolar( Vector& f, const Vector& x, int i=0, Index a=0,Index b=1,Index c=2,Index d=3, double fact=1.0  );
-    
+
 	void handleTopologyChange()
 	{
 	    needUpdateTopology = true;
 	}
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_TETRAHEDRONFEMFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API TetrahedronFEMForceField<defaulttype::Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API TetrahedronFEMForceField<defaulttype::Vec3fTypes>;
+#endif
+#endif
 
 } // namespace forcefield
 

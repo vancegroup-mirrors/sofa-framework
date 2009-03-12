@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,10 +27,14 @@
 #ifndef SOFA_CORE_COMPONENTMODEL_BEHAVIOR_MASS_H
 #define SOFA_CORE_COMPONENTMODEL_BEHAVIOR_MASS_H
 
+#include <sofa/core/core.h>
 #include <sofa/core/componentmodel/behavior/BaseMass.h>
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
+
 namespace sofa
 {
 
@@ -53,13 +57,16 @@ namespace behavior
  *  It is also a ForceField, computing gravity-related forces.
  */
 template<class DataTypes>
-class Mass : virtual public ForceField<DataTypes>, public BaseMass 
+class Mass : virtual public ForceField<DataTypes>, public BaseMass
 {
 public:
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
+    //Constraint typedef
+    typedef typename DataTypes::VecConst VecConst;
+    typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
 
     Mass(MechanicalState<DataTypes> *mm = NULL);
 
@@ -141,14 +148,22 @@ public:
     virtual void addMBKToMatrix(sofa::defaulttype::BaseMatrix * matrix, double mFact, double bFact, double kFact, unsigned int &offset);
 
     /// initialization to export kinetic and potential energy to gnuplot files format
-    virtual void initGnuplot(const std::string path);	
+    virtual void initGnuplot(const std::string path);
 
     /// export kinetic and potential energy state at "time" to a gnuplot file
-    virtual void exportGnuplot(double time);	
+    virtual void exportGnuplot(double time);
 
     /// perform  v += dt*g operation. Used if mass wants to added G separately from the other forces to v.
     virtual void addGravityToV(double dt)=0;
 
+
+    virtual void buildSystemMatrix(defaulttype::BaseMatrix &/* invM_Jtrans */, defaulttype::BaseMatrix &/* A */, 
+				   const sofa::helper::vector< sofa::helper::vector<unsigned int>  >&/* constraintId */,
+				   const sofa::helper::vector< double > /* factor */, 
+				   const sofa::helper::vector< unsigned int > /* offset */,
+				   const defaulttype::BaseVector& /* FixedPoints */);
+
+    virtual void buildInvMassDenseMatrix(defaulttype::BaseMatrix &m);
 
 protected:
 	/// stream to export Kinematic, Potential and Mechanical Energy to gnuplot files
@@ -172,6 +187,20 @@ Deriv inertiaForce( const SV& /*sv*/, const Vec& /*a*/, const M& /*m*/, const Co
     //const Deriv& omega=sv.getAngularVelocity();
     //return -( a + omega.cross( omega.cross(x) + v*2 ))*m;
 }
+
+#if defined(WIN32) && !defined(SOFA_BUILD_CORE)
+extern template class SOFA_CORE_API Mass<defaulttype::Vec3dTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Vec2dTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Vec1dTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Rigid3dTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Rigid2dTypes>;
+
+extern template class SOFA_CORE_API Mass<defaulttype::Vec3fTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Vec2fTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Vec1fTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Rigid3fTypes>;
+extern template class SOFA_CORE_API Mass<defaulttype::Rigid2fTypes>;
+#endif
 
 } // namespace behavior
 

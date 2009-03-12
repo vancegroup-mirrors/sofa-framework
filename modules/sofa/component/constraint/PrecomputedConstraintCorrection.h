@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -58,7 +58,8 @@ public:
     typedef typename DataTypes::VecConst VecConst;
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
-	typedef typename DataTypes::SparseVecDeriv Const;
+    typedef typename std::map<unsigned int, Deriv>::const_iterator ConstraintIterator;
+    typedef typename DataTypes::SparseVecDeriv Const;
 
     /// element rotation matrix
     typedef typename Coord::value_type Real;
@@ -121,6 +122,7 @@ protected:
 	Real Fbuf[6], DXbuf;
 
 
+	
 /* optimization : buf of result = Compliance * VecConst on a sparse structure
 	typedef struct {
 		Deriv Cn;

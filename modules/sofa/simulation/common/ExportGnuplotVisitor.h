@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -39,7 +39,7 @@ namespace simulation
 {
 
 
-  class InitGnuplotVisitor : public simulation::Visitor
+class SOFA_SIMULATION_COMMON_API InitGnuplotVisitor : public simulation::Visitor
 {
 public:
     std::string gnuplotDirectory;
@@ -48,28 +48,30 @@ public:
 
     /// This method calls the fwd* methods during the forward traversal. You typically do not overload it.
     virtual Result processNodeTopDown(simulation::Node* node);
-    
+
     /// Return a category name for this action.
     /// Only used for debugging / profiling purposes
     virtual const char* getCategoryName() const
     {
         return "initGnuplot";
     }
+    virtual const char* getClassName() const { return "InitGnuplotVisitor"; }
 };
 
-  class ExportGnuplotVisitor : public simulation::Visitor
+class SOFA_SIMULATION_COMMON_API ExportGnuplotVisitor : public simulation::Visitor
 {
   public:
     ExportGnuplotVisitor( double time );
     /// This method calls the fwd* methods during the forward traversal. You typically do not overload it.
     virtual Result processNodeTopDown(simulation::Node* node);
-    
+
     /// Return a category name for this action.
     /// Only used for debugging / profiling purposes
     virtual const char* getCategoryName() const
     {
       return "exportGnuplot";
     }
+    virtual const char* getClassName() const { return "ExportGnuplotVisitor"; }
   protected:
     double m_time;
 };

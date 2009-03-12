@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,8 +35,8 @@
 #include <assert.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -102,10 +102,10 @@ namespace sofa
         f1[a] += Deriv ( fT, C1);
         f2[b] -= Deriv ( fT, C2);
 
-/*cerr << "f1: " << fT1 << ", " << fR1 << endl;
-cerr << "f2: " << fT2 << ", " << fR2 << endl;
-cerr << "sum: " << fT2 + fT1 << ", " << fR2 + fR1 << endl;
-cerr << "diff: " << fT2 - fT1 << ", " << fR2 - fR1 << endl;*/
+/*serr << "f1: " << fT1 << ", " << fR1 << endl;
+serr << "f2: " << fT2 << ", " << fR2 << endl;
+serr << "sum: " << fT2 + fT1 << ", " << fR2 + fR1 << endl;
+serr << "diff: " << fT2 - fT1 << ", " << fR2 - fR1 << endl;*/
       }
 
       template<class DataTypes>

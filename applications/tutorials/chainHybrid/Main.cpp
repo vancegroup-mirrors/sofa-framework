@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -25,14 +25,14 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/helper/ArgumentParser.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/tree/TreeSimulation.h>
 #include <sofa/component/contextobject/CoordinateSystem.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/core/objectmodel/Context.h>
 #include <sofa/gui/SofaGUI.h>
 
 //Including components for collision detection
-#include <sofa/component/collision/DefaultPipeline.h> 
+#include <sofa/component/collision/DefaultPipeline.h>
 #include <sofa/component/collision/DefaultContactManager.h>
 #include <sofa/component/collision/DefaultCollisionGroupManager.h>
 #include <sofa/component/collision/BruteForceDetection.h>
@@ -40,19 +40,21 @@
 #include <sofa/component/collision/TriangleModel.h>
 
 //Including component for topological description of the objects
-#include <sofa/component/topology/MeshTopology.h> 
-#include <sofa/component/topology/RegularGridTopology.h> 
-#include <sofa/component/MeshLoader.h>
+#include <sofa/component/topology/MeshTopology.h>
+#include <sofa/component/topology/RegularGridTopology.h>
+#include <sofa/component/container/MeshLoader.h>
 
 //Including Solvers
 #include <sofa/component/odesolver/EulerImplicitSolver.h>
 #include <sofa/component/linearsolver/CGLinearSolver.h>
-#include <sofa/simulation/common/MatrixLinearSolver.h>
+#include <sofa/component/linearsolver/MatrixLinearSolver.h>
 
 #include <sofa/component/visualmodel/OglModel.h>
 
 #include <sofa/simulation/common/TransformationVisitor.h>
 #include <sofa/helper/system/glut.h>
+
+#include <sofa/helper/system/SetDirectory.h>
 
 using sofa::component::visualmodel::OglModel;
 
@@ -62,8 +64,8 @@ using namespace sofa::component::topology;
 using sofa::component::MeshLoader;
 using sofa::component::odesolver::EulerImplicitSolver;
 using sofa::component::linearsolver::CGLinearSolver;
-using sofa::simulation::GraphScatteredMatrix;
-using sofa::simulation::GraphScatteredVector;
+using sofa::component::linearsolver::GraphScatteredMatrix;
+using sofa::component::linearsolver::GraphScatteredVector;
 typedef CGLinearSolver<GraphScatteredMatrix,GraphScatteredVector> CGLinearSolverGraph;
 
 //Using double by default, if you have SOFA_FLOAT in use in you sofa-default.cfg, then it will be FLOAT.
@@ -82,14 +84,14 @@ int main(int argc, char** argv)
     GNode* groot = new GNode;
     groot->setName( "root" );
     groot->setGravityInWorld( Coord3(0,0,-10) );
-    
-    
+
+
     //Components for collision management
     //------------------------------------
     //--> adding collision pipeline
     DefaultPipeline* collisionPipeline = new DefaultPipeline;
     collisionPipeline->setName("Collision Pipeline");
-    groot->addObject(collisionPipeline);   
+    groot->addObject(collisionPipeline);
 
     //--> adding collision detection system
     BruteForceDetection* detection = new BruteForceDetection;
@@ -103,33 +105,29 @@ int main(int argc, char** argv)
     detectionProximity->setContactDistance(0.2); //min distance before setting a spring to create a repulsion
     groot->addObject(detectionProximity);
 
-    
+
     //--> adding contact manager
     DefaultContactManager* contactManager = new DefaultContactManager;
     contactManager->setName("Contact Manager");
-    groot->addObject(contactManager);    
+    groot->addObject(contactManager);
 
     //--> adding component to handle groups of collision.
     DefaultCollisionGroupManager* collisionGroupManager = new DefaultCollisionGroupManager;
     collisionGroupManager->setName("Collision Group Manager");
     groot->addObject(collisionGroupManager);
 
-    
-    
+
+
     //Elements of the scene
     //------------------------------------
-    GNode* chain = new GNode;
-    chain->setName("Chain");
-    groot->addChild(chain);
+    GNode* chain = new GNode("Chain",groot);
 
     //************************************
     //Torus Fixed
-    GNode* torusFixed = new GNode;
-    torusFixed->setName("Fixed");
-    chain->addChild(torusFixed);
+    GNode* torusFixed = new GNode("Fixed",chain);
 
     MeshLoader* loaderFixed = new MeshLoader;
-    loaderFixed->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj"));
+    loaderFixed->load(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj").c_str());
     torusFixed->addObject(loaderFixed);
 
     MeshTopology* meshTorusFixed = new MeshTopology;
@@ -137,10 +135,10 @@ int main(int argc, char** argv)
 
     MechanicalObject3* dofFixed = new MechanicalObject3; dofFixed->setName("Fixed Object");
     torusFixed->addObject(dofFixed);
-    
+
     TriangleModel* triangleFixed = new TriangleModel; triangleFixed->setName("Collision Fixed");
     triangleFixed->setSimulated(false); //Not simulated, fixed object
-    triangleFixed->setMoving(false);    //No extern events 
+    triangleFixed->setMoving(false);    //No extern events
     torusFixed->addObject(triangleFixed);
 
     OglModel* visualFixed = new OglModel;
@@ -152,9 +150,7 @@ int main(int argc, char** argv)
 
     //************************************
     //Torus FEM
-    GNode* torusFEM = new GNode;
-    torusFEM->setName("FEM");
-    chain->addChild(torusFEM);
+    GNode* torusFEM = new GNode("FEM",chain);
 
     EulerImplicitSolver* solverFEM = new EulerImplicitSolver;
     CGLinearSolverGraph* linearFEM = new CGLinearSolverGraph;
@@ -165,20 +161,22 @@ int main(int argc, char** argv)
     solverFEM->setName("Conjugate Gradient");
     linearFEM->f_maxIter.setValue(20); //iteration maxi for the CG
     linearFEM->f_smallDenominatorThreshold.setValue(0.000001);
-    linearFEM->f_tolerance.setValue(0.001); 
+    linearFEM->f_tolerance.setValue(0.001);
 
     torusFEM->addObject(solverFEM);
     torusFEM->addObject(linearFEM);
 
 
     MeshLoader* loaderFEM = new MeshLoader;
-    loaderFEM->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_low_res.msh"));
+    loaderFEM->load(sofa::helper::system::DataRepository.getFile("mesh/torus_low_res.msh").c_str());
     torusFEM->addObject(loaderFEM);
 
     MeshTopology* meshTorusFEM = new MeshTopology;
     torusFEM->addObject(meshTorusFEM);
 
     MechanicalObject3* dofFEM = new MechanicalObject3; dofFEM->setName("FEM Object");
+    dofFEM->setTranslation(2.5,0,0);
+    dofFEM->setRotation(90,0,0);
     torusFEM->addObject(dofFEM);
 
     UniformMass3* uniMassFEM = new UniformMass3;
@@ -186,7 +184,7 @@ int main(int argc, char** argv)
     torusFEM->addObject(uniMassFEM);
 
     TetrahedronFEMForceField3* tetraFEMFF = new TetrahedronFEMForceField3;
-    tetraFEMFF->setName("FEM");    
+    tetraFEMFF->setName("FEM");
     tetraFEMFF->setComputeGlobalMatrix(false);
     tetraFEMFF->setMethod("large");
     tetraFEMFF->setPoissonRatio(0.3);
@@ -194,14 +192,14 @@ int main(int argc, char** argv)
     torusFEM->addObject(tetraFEMFF);
 
     //Node VISUAL
-    GNode* FEMVisualNode = new GNode;
-    FEMVisualNode->setName("Visu");
-    torusFEM->addChild(FEMVisualNode);
+    GNode* FEMVisualNode = new GNode("Visu",torusFEM);
 
     OglModel* visualFEM = new OglModel;
     visualFEM->setName("visual");
     visualFEM->load(sofa::helper::system::DataRepository.getFile("mesh/torus.obj"),"","");
     visualFEM->setColor("red");
+    visualFEM->setTranslation(2.5,0,0);
+    visualFEM->setRotation(90,0,0);
     FEMVisualNode->addObject(visualFEM);
 
     BarycentricMapping3_to_Ext3* mappingFEM = new BarycentricMapping3_to_Ext3(dofFEM, visualFEM);
@@ -210,18 +208,18 @@ int main(int argc, char** argv)
 
 
     //Node COLLISION
-    GNode* FEMCollisionNode = new GNode;
-    FEMCollisionNode->setName("Visu");
-    torusFEM->addChild(FEMCollisionNode);
+    GNode* FEMCollisionNode = new GNode("Collision",torusFEM);
 
     MeshLoader* loaderFEM_surf = new MeshLoader;
-    loaderFEM_surf->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj"));
+    loaderFEM_surf->load(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj").c_str());
     FEMCollisionNode->addObject(loaderFEM_surf);
 
     MeshTopology* meshTorusFEM_surf= new MeshTopology;
     FEMCollisionNode->addObject(meshTorusFEM_surf);
 
     MechanicalObject3* dofFEM_surf = new MechanicalObject3;  dofFEM_surf->setName("Collision Object FEM");
+    dofFEM_surf->setTranslation(2.5,0,0);
+    dofFEM_surf->setRotation(90,0,0);
     FEMCollisionNode->addObject(dofFEM_surf);
 
     TriangleModel* triangleFEM = new TriangleModel;triangleFEM->setName("TriangleCollision FEM");
@@ -233,9 +231,7 @@ int main(int argc, char** argv)
 
     //************************************
     //Torus Spring
-    GNode* torusSpring = new GNode;
-    torusSpring->setName("Spring");
-    chain->addChild(torusSpring);
+    GNode* torusSpring = new GNode("Spring",chain);
 
     EulerImplicitSolver* solverSpring = new EulerImplicitSolver;
     CGLinearSolverGraph* linearSpring = new CGLinearSolverGraph;
@@ -246,19 +242,21 @@ int main(int argc, char** argv)
     linearSpring->setName("Conjugate Gradient");
     linearSpring->f_maxIter.setValue(20); //iteration maxi for the CG
     linearSpring->f_smallDenominatorThreshold.setValue(0.000001);
-    linearSpring->f_tolerance.setValue(0.001); 
+    linearSpring->f_tolerance.setValue(0.001);
 
     torusSpring->addObject(solverSpring);
     torusSpring->addObject(linearSpring);
 
     MeshLoader* loaderSpring = new MeshLoader;
-    loaderSpring->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_low_res.msh"));
+    loaderSpring->load(sofa::helper::system::DataRepository.getFile("mesh/torus_low_res.msh").c_str());
     torusSpring->addObject(loaderSpring);
+    loaderSpring->init();
 
     MeshTopology* meshTorusSpring = new MeshTopology;
     torusSpring->addObject(meshTorusSpring);
 
     MechanicalObject3* dofSpring = new MechanicalObject3; dofSpring->setName("Spring Object");
+    dofSpring->setTranslation(5,0.0,0.0);
     torusSpring->addObject(dofSpring);
 
     UniformMass3* uniMassSpring = new UniformMass3;
@@ -266,20 +264,19 @@ int main(int argc, char** argv)
     torusSpring->addObject(uniMassSpring);
 
     MeshSpringForceField3* springFF = new MeshSpringForceField3;
-    springFF->setName("Springs");    
+    springFF->setName("Springs");
     springFF->setStiffness(400);
     springFF->setDamping(0);
     torusSpring->addObject(springFF);
 
     //Node VISUAL
-    GNode* SpringVisualNode = new GNode;
-    SpringVisualNode->setName("Visu");
-    torusSpring->addChild(SpringVisualNode);
+    GNode* SpringVisualNode = new GNode("Visu",torusSpring);
 
     OglModel* visualSpring = new OglModel;
     visualSpring->setName("visual");
     visualSpring->load(sofa::helper::system::DataRepository.getFile("mesh/torus.obj"),"","");
     visualSpring->setColor("green");
+    visualSpring->setTranslation(5,0.0,0.0);
     SpringVisualNode->addObject(visualSpring);
 
     BarycentricMapping3_to_Ext3* mappingSpring = new BarycentricMapping3_to_Ext3(dofSpring, visualSpring);
@@ -288,18 +285,17 @@ int main(int argc, char** argv)
 
 
     //Node COLLISION
-    GNode* SpringCollisionNode = new GNode;
-    SpringCollisionNode->setName("Visu");
-    torusSpring->addChild(SpringCollisionNode);
+    GNode* SpringCollisionNode = new GNode("Collision",torusSpring);
 
     MeshLoader* loaderSpring_surf = new MeshLoader;
-    loaderSpring_surf->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj"));
+    loaderSpring_surf->load(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj").c_str());
     SpringCollisionNode->addObject(loaderSpring_surf);
 
     MeshTopology* meshTorusSpring_surf= new MeshTopology;
     SpringCollisionNode->addObject(meshTorusSpring_surf);
 
     MechanicalObject3* dofSpring_surf = new MechanicalObject3; dofSpring_surf->setName("Collision Object Spring");
+    dofSpring_surf->setTranslation(5,0.0,0.0);
     SpringCollisionNode->addObject(dofSpring_surf);
 
     TriangleModel* triangleSpring = new TriangleModel; triangleSpring->setName("TriangleCollision Spring");
@@ -311,9 +307,7 @@ int main(int argc, char** argv)
 
     //************************************
     //Torus FFD
-    GNode* torusFFD = new GNode;
-    torusFFD->setName("FFD");
-    chain->addChild(torusFFD);
+    GNode* torusFFD = new GNode("FFD",chain);
 
     EulerImplicitSolver* solverFFD = new EulerImplicitSolver;
     CGLinearSolverGraph* linearFFD = new CGLinearSolverGraph;
@@ -324,12 +318,14 @@ int main(int argc, char** argv)
     linearFFD->setName("Conjugate Gradient");
     linearFFD->f_maxIter.setValue(20); //iteration maxi for the CG
     linearFFD->f_smallDenominatorThreshold.setValue(0.000001);
-    linearFFD->f_tolerance.setValue(0.001); 
+    linearFFD->f_tolerance.setValue(0.001);
 
     torusFFD->addObject(solverFFD);
     torusFFD->addObject(linearFFD);
 
     MechanicalObject3* dofFFD = new MechanicalObject3; dofFFD->setName("FFD Object");
+    dofFFD->setTranslation(7.5,0,0);
+    dofFFD->setRotation(90,0,0);
     torusFFD->addObject(dofFFD);
 
     UniformMass3* uniMassFFD = new UniformMass3;
@@ -338,27 +334,26 @@ int main(int argc, char** argv)
 
     RegularGridTopology* gridTopo = new RegularGridTopology(6,2,5); //dimension of the grid
     gridTopo->setPos(
-		     -2.5,2.5,  //Xmin, Xmax
-		     -0.5,0.5,  //Ymin, Ymax
-		     -2,2       //Zmin, Zmax
-		     );
+                     -2.5,2.5,  //Xmin, Xmax
+                     -0.5,0.5,  //Ymin, Ymax
+                     -2,2       //Zmin, Zmax
+                     );
     torusFFD->addObject(gridTopo);
 
     RegularGridSpringForceField3* FFDFF = new RegularGridSpringForceField3;
-    FFDFF->setName("Springs FFD");    
+    FFDFF->setName("Springs FFD");
     FFDFF->setStiffness(200);
     FFDFF->setDamping(0);
     torusFFD->addObject(FFDFF);
 
     //Node VISUAL
-    GNode* FFDVisualNode = new GNode;
-    FFDVisualNode->setName("Visu");
-    torusFFD->addChild(FFDVisualNode);
+    GNode* FFDVisualNode = new GNode("Visu",torusFFD);
 
     OglModel* visualFFD = new OglModel;
     visualFFD->setName("visual");
     visualFFD->load(sofa::helper::system::DataRepository.getFile("mesh/torus.obj"),"","");
     visualFFD->setColor("yellow");
+    visualFFD->setTranslation(7.5,0,0);
     FFDVisualNode->addObject(visualFFD);
 
     BarycentricMapping3_to_Ext3* mappingFFD = new BarycentricMapping3_to_Ext3(dofFFD, visualFFD);
@@ -367,19 +362,17 @@ int main(int argc, char** argv)
 
 
     //Node COLLISION
-    GNode* FFDCollisionNode = new GNode;
-    FFDCollisionNode->setName("Visu");
-    torusFFD->addChild(FFDCollisionNode);
-
+    GNode* FFDCollisionNode = new GNode("Collision",torusFFD);
 
     MeshLoader* loaderFFD_surf = new MeshLoader;
-    loaderFFD_surf->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj"));
+    loaderFFD_surf->load(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj").c_str());
     FFDCollisionNode->addObject(loaderFFD_surf);
 
     MeshTopology* meshTorusFFD_surf= new MeshTopology;
     FFDCollisionNode->addObject(meshTorusFFD_surf);
 
     MechanicalObject3* dofFFD_surf = new MechanicalObject3; dofFFD_surf->setName("Collision Object FFD");
+    dofFFD_surf->setTranslation(7.5,0,0);
     FFDCollisionNode->addObject(dofFFD_surf);
 
     TriangleModel* triangleFFD = new TriangleModel;  triangleFFD->setName("TriangleCollision FFD");
@@ -390,9 +383,7 @@ int main(int argc, char** argv)
 
     //************************************
     //Torus Rigid
-    GNode* torusRigid = new GNode;
-    torusRigid->setName("Rigid");
-    chain->addChild(torusRigid);
+    GNode* torusRigid = new GNode("Rigid",chain);
 
 
     EulerImplicitSolver* solverRigid = new EulerImplicitSolver;
@@ -404,12 +395,13 @@ int main(int argc, char** argv)
     solverRigid->setName("Conjugate Gradient");
     linearRigid->f_maxIter.setValue(20); //iteration maxi for the CG
     linearRigid->f_smallDenominatorThreshold.setValue(0.000001);
-    linearRigid->f_tolerance.setValue(0.001); 
+    linearRigid->f_tolerance.setValue(0.001);
 
     torusRigid->addObject(solverRigid);
     torusRigid->addObject(linearRigid);
 
     MechanicalObjectRigid3* dofRigid = new MechanicalObjectRigid3; dofRigid->setName("Rigid Object");
+    dofRigid->setTranslation(10,0,0);
     torusRigid->addObject(dofRigid);
 
     UniformMassRigid3* uniMassRigid = new UniformMassRigid3;
@@ -417,9 +409,7 @@ int main(int argc, char** argv)
     torusRigid->addObject(uniMassRigid);
 
     //Node VISUAL
-    GNode* RigidVisualNode = new GNode;
-    RigidVisualNode->setName("Visu");
-    torusRigid->addChild(RigidVisualNode);
+    GNode* RigidVisualNode = new GNode("Visu", torusRigid);
 
     OglModel* visualRigid = new OglModel;
     visualRigid->setName("visual");
@@ -433,12 +423,10 @@ int main(int argc, char** argv)
 
 
     //Node COLLISION
-    GNode* RigidCollisionNode = new GNode;
-    RigidCollisionNode->setName("Visu");
-    torusRigid->addChild(RigidCollisionNode);
+    GNode* RigidCollisionNode = new GNode("Collision", torusRigid);
 
     MeshLoader* loaderRigid_surf = new MeshLoader;
-    loaderRigid_surf->setFilename(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj"));
+    loaderRigid_surf->load(sofa::helper::system::DataRepository.getFile("mesh/torus_for_collision.obj").c_str());
     RigidCollisionNode->addObject(loaderRigid_surf);
 
     MeshTopology* meshTorusRigid_surf= new MeshTopology;
@@ -453,32 +441,15 @@ int main(int argc, char** argv)
     RigidMechanicalMappingRigid3_to_3* mechaMappingRigid = new RigidMechanicalMappingRigid3_to_3(dofRigid, dofRigid_surf);
     RigidCollisionNode->addObject(mechaMappingRigid);
 
-    getSimulation()->init(groot);
-
-    //Set the initial position: must be done AFTER the initialization of the scene    
-    sofa::simulation::TransformationVisitor transform;
-    transform.setTranslation(2.5,0.0,0.0);
-    transform.setRotation(90,0,0);
-    transform.execute(torusFEM); 
-
-    transform.setTranslation(5.0,0.0,0.0);
-    transform.setRotation(0,0,0);
-    transform.execute(torusSpring);
-
-    transform.setTranslation(7.5,0.0,0.0);
-    transform.setRotation(90,0,0);
-    transform.execute(torusFFD);
-
-    transform.setTranslation(10.0,0.0,0.0);
-    transform.setRotation(00,0,0);
-    transform.execute(torusRigid);
-
 
     groot->setAnimate(false);
 
-	//=======================================
-	// Run the main loop
+    getSimulation()->init(groot);
+
+
+    //=======================================
+    // Run the main loop
     sofa::gui::SofaGUI::MainLoop(groot);
 
-	return 0;
+        return 0;
 }

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -51,7 +51,7 @@ bool ImageBMP::load(std::string filename)
 	return false;
     }
 	unsigned short int bfType;
-	long int bfOffBits;
+	uint32_t bfOffBits;
 	short int biPlanes;
 	short int biBitCount;
 	long int biSizeImage;
@@ -79,7 +79,7 @@ bool ImageBMP::load(std::string filename)
 	/* skip file size and reserved fields of bitmap file header */
 	fseek(file, 8, SEEK_CUR);
 	/* get the position of the actual bitmap data */
-	if (!fread(&bfOffBits, sizeof(long int), 1, file))
+	if (!fread(&bfOffBits, sizeof(uint32_t), 1, file))
     {
 		std::cerr << "Error reading file!\n";
 		return false;

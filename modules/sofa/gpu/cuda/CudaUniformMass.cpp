@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -41,6 +41,11 @@ int UniformMassCudaClass = core::RegisterObject("Supports GPU-side computations 
 .add< component::mass::UniformMass<CudaVec3fTypes,float> >()
 .add< component::mass::UniformMass<CudaVec3f1Types,float> >()
 .add< component::mass::UniformMass<CudaRigid3fTypes,sofa::defaulttype::Rigid3fMass> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::mass::UniformMass<CudaVec3dTypes,double> >()
+.add< component::mass::UniformMass<CudaVec3d1Types,double> >()
+.add< component::mass::UniformMass<CudaRigid3dTypes,sofa::defaulttype::Rigid3dMass> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
 ;
 
 } // namespace cuda

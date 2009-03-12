@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,35 +35,39 @@ namespace gpu {
 namespace cuda {
 
 using namespace sofa::defaulttype;
-	
-template <class T>	
-class CudaBaseMatrix : public BaseMatrix {	
+
+template <class T>
+class CudaBaseMatrix : public BaseMatrix {
 	public :
-	
+
 		CudaMatrix<T> & getCudaMatrix() {
-			return m;			
+			return m;
 		}
-	
+
 		void resize(int nbCol, int nbRow) {
-			m.resize(nbCol,nbRow,BSIZE);		
-		}	
-	
+			m.resize(nbCol,nbRow,BSIZE);
+		}
+
 		void resize(int nbCol, int nbRow,int ws) {
-			m.resize(nbCol,nbRow,ws);		
-		}	
-	
-		int rowSize() const {
+			m.resize(nbCol,nbRow,ws);
+		}
+
+		unsigned int rowSize() const {
 			return m.getSizeY();
 		}
-	
-		int colSize() const {
+
+		unsigned int colSize() const {
 			return m.getSizeX();
 		}
-	
+
 		SReal element(int i, int j) const {
 			return m[i][j];
 		}
-			
+
+		const T* operator[] ( int i ) const {
+			return m[i];
+		}
+
 		void clear() {
 			for (unsigned j=0; j<m.getSizeX(); j++) {
 				for (unsigned i=0; i<m.getSizeY(); i++) {
@@ -71,30 +75,34 @@ class CudaBaseMatrix : public BaseMatrix {
 				}
 			}
 		}
-			
+
 		void set(int j, int i, double v) {
 #ifdef DEBUG_BASE
-			if ((j>=rowSize()) || (i>=colSize())) {	
+			if ((j>=rowSize()) || (i>=colSize())) {
 				printf("forbidden acces %d %d\n",j,i);
 				exit(1);
-			}			
-#endif			
+			}
+#endif
 			m[j][i] = (T)v;
 		}
-	
+
 		void add(int j, int i, double v) {
 #ifdef DEBUG_BASE
-			if ((j>=rowSize()) || (i>=colSize())) {		
+			if ((j>=rowSize()) || (i>=colSize())) {
 				printf("forbidden acces %d %d\n",j,i);
 				exit(1);
-			}			
-#endif			
+			}
+#endif
 			m[j][i] += (T)v;
 		}
 
+		static std::string Name() {
+			return "CudaBaseMatrix";
+		}
+
 	private :
-		CudaMatrix<T> m;			
-};	
+		CudaMatrix<T> m;
+};
 
 template <class T>
 class CudaBaseVector : public BaseVector {
@@ -103,15 +111,15 @@ class CudaBaseVector : public BaseVector {
 		CudaVector<T>& getCudaVector() {
 			return v;
 		}
-	
+
 		T& operator[](int i) {
 			return v[i];
 		}
-	
+
 		const T& operator[](int i) const {
 			return v[i];
 		}
-	
+
 		void resize(int nbRow) {
 			v.resize(nbRow);
 		}
@@ -119,8 +127,8 @@ class CudaBaseVector : public BaseVector {
 		void resize(int nbRow,int warp_size) {
 			v.resize(nbRow,warp_size);
 		}
-		
-		int size() const {
+
+		unsigned int size() const {
 			return v.size();
 		}
 
@@ -129,20 +137,24 @@ class CudaBaseVector : public BaseVector {
 		}
 
 		void clear() {
-		  for (int i=0; i<size(); i++) v[i]=(T)(0.0);
+		  for (unsigned int i=0; i<size(); i++) v[i]=(T)(0.0);
 		}
-	
+
 		void set(int i, SReal val) {
 			v[i] = (T) val;
 		}
-	
+
 		void add(int i, SReal val) {
 			v[i] += (T)val;
 		}
 
+		static std::string Name() {
+			return "CudaBaseVector";
+		}
+
 	private :
-		CudaVector<T> v;		
-}; 
+		CudaVector<T> v;
+};
 
 } // namespace cuda
 } // namespace gpu

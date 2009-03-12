@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,8 +27,8 @@
 #include <math.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -49,16 +49,20 @@ DefaultMasterSolver::DefaultMasterSolver()
 {
 }
 
+DefaultMasterSolver::~DefaultMasterSolver()
+{
+}
+
 void DefaultMasterSolver::step(double dt)
 {
     // First do collision detection and response creation
-	if (this->f_printLog.getValue()) std::cout << "DefaultMasterSolver::step, begin collision" << std::endl;
+	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin collision" << sendl;
     computeCollision();
-	if (this->f_printLog.getValue()) std::cout << "DefaultMasterSolver::step, end collision" << std::endl;
+	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end collision" << sendl;
     // Then integrate the time step
-	if (this->f_printLog.getValue()) std::cout << "DefaultMasterSolver::step, begin integration" << std::endl;
+	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
     integrate(dt);
-	if (this->f_printLog.getValue()) std::cout << "DefaultMasterSolver::step, end integration" << std::endl;
+	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
 }
 
 } // namespace mastersolver

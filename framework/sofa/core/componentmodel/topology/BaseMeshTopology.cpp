@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -45,8 +45,9 @@ using helper::vector;
 using helper::fixed_array;
 
 BaseMeshTopology::BaseMeshTopology()
-: d_filename(initData(&d_filename,"filename","Filename of the mesh"))
+: fileTopology(initData(&fileTopology,"fileTopology","Filename of the mesh"))
 {
+  addAlias(&fileTopology,"filename");
 }
 
 /// Returns the set of edges adjacent to a given vertex.
@@ -192,15 +193,16 @@ const BaseMeshTopology::QuadHexas& BaseMeshTopology::getHexaQuadShell(QuadID)
     return empty;
 }
 
+void BaseMeshTopology::init()
+{
+}
 void BaseMeshTopology::parse(core::objectmodel::BaseObjectDescription* arg)
 {
-    if (arg->getAttribute("filename"))
-    {
-        d_filename.setValue( arg->getAttribute("filename") );
-	this->load(arg->getAttribute("filename"));
-    }
-    arg->removeAttribute("filename");
     this->core::componentmodel::topology::Topology::parse(arg);
+    if (!fileTopology.getValue().empty())
+    {
+        this->load(fileTopology.getValue().c_str());
+    }
 }
 
 class DefaultMeshTopologyLoader : public helper::io::MeshTopologyLoader
@@ -240,14 +242,14 @@ bool BaseMeshTopology::load(const char* filename)
     std::string meshFilename(filename);
     if (!sofa::helper::system::DataRepository.findFile (meshFilename))
     {
-        logWarning(std::string("Mesh \"") + filename +std::string("\" not found"));
+        serr << "Mesh \""<< filename <<"\" not found"<< sendl;
         return false;
     }
-    this->d_filename.setValue( meshFilename );
+    this->fileTopology.setValue( meshFilename );
     DefaultMeshTopologyLoader loader(this);
     if (!loader.load(meshFilename.c_str()))
     {
-        logWarning(std::string("Unable to load Mesh \"") + filename );
+        serr << "Unable to load Mesh \""<<filename << sendl;
         return false;
     }
     return true;
@@ -291,7 +293,8 @@ void BaseMeshTopology::addHexa(int, int, int, int, int, int, int, int)
 
 std::list<const TopologyChange *>::const_iterator BaseMeshTopology::firstChange() const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::firstChange() not supported." << std::endl;
+        std::cerr << "WARNING: "<<this->getClassName()<<"::firstChange() not supported." ;
+	std::cerr<< std::endl;
 	std::list<const TopologyChange *>::const_iterator l;
 	return l;
 }
@@ -319,105 +322,105 @@ std::list<const TopologyChange *>::const_iterator BaseMeshTopology::lastStateCha
 
 int BaseMeshTopology::getEdgeIndex(PointID, PointID)
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndex() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndex() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getTriangleIndex(PointID, PointID, PointID)
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getTriangleIndex() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getTriangleIndex() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getQuadIndex(PointID, PointID, PointID, PointID)
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getQuadIndex() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getQuadIndex() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getTetrahedronIndex(PointID, PointID, PointID, PointID)
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getTetrahedronIndex() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getTetrahedronIndex() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getHexahedronIndex(PointID, PointID, PointID, PointID, PointID, PointID, PointID, PointID)
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getHexahedronIndex() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getHexahedronIndex() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getVertexIndexInTriangle(const Triangle &, PointID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInTriangle() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInTriangle() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getEdgeIndexInTriangle(const TriangleEdges &, EdgeID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInTriangle() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInTriangle() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getVertexIndexInQuad(Quad &, PointID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInQuad() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInQuad() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getEdgeIndexInQuad(QuadEdges &, EdgeID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInQuad() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInQuad() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getVertexIndexInTetrahedron(const Tetra &, PointID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInTetrahedron() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInTetrahedron() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getEdgeIndexInTetrahedron(const TetraEdges &, EdgeID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInTetrahedron() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInTetrahedron() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getTriangleIndexInTetrahedron(const TetraTriangles &, TriangleID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getTriangleIndexInTetrahedron() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getTriangleIndexInTetrahedron() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getVertexIndexInHexahedron(Hexa &, PointID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInHexahedron() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getVertexIndexInHexahedron() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getEdgeIndexInHexahedron(const HexaEdges &, EdgeID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInHexahedron() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getEdgeIndexInHexahedron() not supported." << std::endl;
 	return 0;
 }
 
 int BaseMeshTopology::getQuadIndexInHexahedron(const HexaQuads &, QuadID) const
 {
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getQuadIndexInHexahedron() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getQuadIndexInHexahedron() not supported." << std::endl;
 	return 0;
 }
 
-BaseMeshTopology::Edge BaseMeshTopology::getLocalTetrahedronEdges (const unsigned int) const 
+BaseMeshTopology::Edge BaseMeshTopology::getLocalTetrahedronEdges (const unsigned int) const
 {
 	static BaseMeshTopology::Edge empty;
-	std::cerr << "WARNING: "<<this->getClassName()<<"::getLocalTetrahedronEdges() not supported." << std::endl;	
+	std::cerr << "WARNING: "<<this->getClassName()<<"::getLocalTetrahedronEdges() not supported." << std::endl;
 	return empty;
 }
 
 } // namespace topology
 
 } // namespace componentmodel
-    
+
 } // namespace core
 
 } // namespace sofa

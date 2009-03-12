@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -51,14 +51,19 @@ public:
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
     typedef typename DataTypes::VecConst VecConst;
-	typedef typename DataTypes::Coord Coord;
+    typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
+    typedef typename std::map<unsigned int, Deriv>::const_iterator ConstraintIterator;
+    typedef typename Coord::value_type Real;
+    typedef helper::vector<Real> VecReal;
 
 	UncoupledConstraintCorrection(behavior::MechanicalState<DataTypes> *mm = NULL);
 
     virtual ~UncoupledConstraintCorrection();
 
     virtual void init();
+
+
 
     /// Retrieve the associated MechanicalState
     behavior::MechanicalState<DataTypes>* getMState() { return mstate; }
@@ -68,6 +73,21 @@ public:
     virtual void applyContactForce(const defaulttype::BaseVector *f);
 
 	virtual void resetContactForce();
+	
+	
+	// new API for non building the constraint system during solving process //
+	
+	virtual bool hasConstraintNumber(int index) ;  // virtual ???
+	
+	virtual void resetForUnbuiltResolution(double * f, std::list<int>& /*renumbering*/)  ;
+	
+	virtual void addConstraintDisplacement(double *d, int begin,int end) ;
+	
+	virtual void setConstraintDForce(double *df, int begin, int end, bool update) ;
+
+	virtual void getBlockDiagonalCompliance(defaulttype::BaseMatrix* W, int begin, int end) ;
+	/////////////////////////////////////////////////////////////////////////////////	
+	
 
     /// Pre-construction check method called by ObjectFactory.
     /// Check that DataTypes matches the MechanicalState.
@@ -88,9 +108,23 @@ public:
     {
         return DataTypes::Name();
     }
-
+		
 protected:
     behavior::MechanicalState<DataTypes> *mstate;
+	
+public:
+	Data< VecReal > compliance;	
+	
+
+private:
+	// new :  for non building the constraint system during solving process //
+	VecDeriv constraint_disp, constraint_force;	
+	std::list<int> constraint_dofs;		// list of indices of each point which is involve with constraint
+	std::vector<int> id_to_localIndex;	// table that gives the local index of a constraint given its id
+	
+	//std::vector< std::vector<int> >  dof_constraint_table;   // table of indices of each point involved with each constraint 
+
+
 };
 
 } // namespace collision

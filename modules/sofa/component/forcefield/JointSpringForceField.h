@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,9 +28,10 @@
 
 #include <sofa/core/componentmodel/behavior/PairInteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/defaulttype/Vec.h>
-#include <vector>
+#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/Mat.h>
+#include <sofa/component/component.h>
+#include <vector>
 using namespace sofa::defaulttype;
 
 
@@ -44,34 +45,18 @@ namespace forcefield
 {
 
 template<class DataTypes>
-class JointSpringForceFieldInternalData
-{
-public:
-};
-
-  /** JointSpringForceField simulates 6D springs between Rigid DOFS
-	  Use kst vector to specify the directionnal stiffnesses (on each local axe)
-	  Use ksr vector to specify the rotational stiffnesses (on each local axe)
-  */
-template<class DataTypes>
-class JointSpringForceField : public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public virtual core::objectmodel::BaseObject
-{
-public:
-    typedef typename core::componentmodel::behavior::PairInteractionForceField<DataTypes> Inherit;
+  class JointSpring
+  {
+    public:
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
-	typedef core::componentmodel::behavior::MechanicalState<DataTypes> MechanicalState;
 	enum { N=Coord::static_size };
 	typedef defaulttype::Mat<N,N,Real> Mat;
 	typedef Vec<N,Real> Vector;
 
-
-  class Spring
-  {
-    public:
       int  m1, m2;			/// the two extremities of the spring: masses m1 and m2 
       Real kd;				/// damping factor 
       Vector  initTrans;		/// rest length of the spring 
@@ -92,7 +77,7 @@ public:
 
 
 	  ///constructors
-	  Spring()
+	  JointSpring()
 	  : m1(0), m2(0), kd(0), lawfulTorsion(0,0,0,1), extraTorsion(0,0,0,1)
 	  , softStiffnessTrans(0), hardStiffnessTrans(10000), softStiffnessRot(0), hardStiffnessRot(10000), blocStiffnessRot(100)
 	  //, freeMovements(0,0,0,1,1,1), limitAngles(-100000, 100000, -100000, 100000, -100000, 100000)
@@ -103,7 +88,7 @@ public:
 		  initRot = Quat(0,0,0,1);
 	  }
 
-	  Spring(int m1, int m2)
+	  JointSpring(int m1, int m2)
 	  : m1(m1), m2(m2), kd(0), lawfulTorsion(0,0,0,1), extraTorsion(0,0,0,1)
 	  , softStiffnessTrans(0), hardStiffnessTrans(10000), softStiffnessRot(0), hardStiffnessRot(10000), blocStiffnessRot(100)
 	  //, freeMovements(0,0,0,1,1,1), limitAngles(-100000, 100000, -100000, 100000, -100000, 100000)
@@ -114,7 +99,7 @@ public:
 		  initRot = Quat(0,0,0,1);
 	  }
 
-	  Spring(int m1, int m2, Real softKst, Real hardKst, Real softKsr, Real hardKsr, Real blocKsr, Real axmin, Real axmax, Real aymin, Real aymax, Real azmin, Real azmax, Real kd)
+	  JointSpring(int m1, int m2, Real softKst, Real hardKst, Real softKsr, Real hardKsr, Real blocKsr, Real axmin, Real axmax, Real aymin, Real aymax, Real azmin, Real azmax, Real kd)
       : m1(m1), m2(m2), kd(kd), lawfulTorsion(0,0,0,1), extraTorsion(0,0,0,1)
 	  //,limitAngles(axmin,axmax,aymin,aymax,azmin,azmax)
 	  , softStiffnessTrans(softKst), hardStiffnessTrans(hardKst), softStiffnessRot(softKsr), hardStiffnessRot(hardKsr), blocStiffnessRot(blocKsr)
@@ -168,7 +153,7 @@ public:
 	  void setDamping(Real _kd){  kd = _kd;	  }
 
 
-      inline friend std::istream& operator >> ( std::istream& in, Spring& s )
+      inline friend std::istream& operator >> ( std::istream& in, JointSpring<DataTypes>& s )
 	  {
 		//default joint is a free rotation joint --> translation is bloqued, rotation is free
   		s.freeMovements = sofa::defaulttype::Vec<6,bool>(false, false, false, true, true, true);
@@ -205,7 +190,7 @@ public:
 				else if(str == "REST_R")
 					  in>>s.initRot;
 				else{
-					std::cerr<<"Error parsing Spring : Unknown Attribute "<<str<<std::endl;
+				  std::cerr<<"Error parsing Spring : Unknown Attribute "<<str<<std::endl;
 					  return in;
 				}
 
@@ -226,7 +211,7 @@ public:
         return in;
       }
       
-      friend std::ostream& operator << ( std::ostream& out, const Spring& s )
+      friend std::ostream& operator << ( std::ostream& out, const JointSpring<DataTypes>& s )
 	  {
 		  out<<"BEGIN_SPRING  "<<s.m1<<" "<<s.m2<<"  ";
 
@@ -256,9 +241,35 @@ public:
       }
       
   };
-// end inner class spring
+// end class JointSpring
 
 
+template<class DataTypes>
+class JointSpringForceFieldInternalData
+{
+public:
+};
+
+  /** JointSpringForceField simulates 6D springs between Rigid DOFS
+	  Use kst vector to specify the directionnal stiffnesses (on each local axe)
+	  Use ksr vector to specify the rotational stiffnesses (on each local axe)
+  */
+template<class DataTypes>
+class JointSpringForceField : public core::componentmodel::behavior::PairInteractionForceField<DataTypes>, public virtual core::objectmodel::BaseObject
+{
+public:
+    typedef typename core::componentmodel::behavior::PairInteractionForceField<DataTypes> Inherit;
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::Coord Coord;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef typename Coord::value_type Real;
+	typedef core::componentmodel::behavior::MechanicalState<DataTypes> MechanicalState;
+	enum { N=Coord::static_size };
+	typedef defaulttype::Mat<N,N,Real> Mat;
+	typedef Vec<N,Real> Vector;
+
+    typedef JointSpring<DataTypes> Spring;
 
 protected:
 
@@ -284,7 +295,9 @@ protected:
 public:
     JointSpringForceField(MechanicalState* object1, MechanicalState* object2);	
     JointSpringForceField();
-	
+
+    virtual ~JointSpringForceField();
+
 	core::componentmodel::behavior::MechanicalState<DataTypes>* getObject1() { return this->mstate1; }
 	core::componentmodel::behavior::MechanicalState<DataTypes>* getObject2() { return this->mstate2; }
 
@@ -329,6 +342,11 @@ public:
 
 };
 
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_JOINTSPRINGFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+extern template class SOFA_COMPONENT_FORCEFIELD_API JointSpringForceField<defaulttype::Rigid3dTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API JointSpringForceField<defaulttype::Rigid3fTypes>;
+#endif
 } // namespace forcefield
 
 } // namespace component

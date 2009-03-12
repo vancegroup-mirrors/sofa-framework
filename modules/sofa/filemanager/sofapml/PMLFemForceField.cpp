@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,7 +34,7 @@
 
 #include "PMLFemForceField.h"
 
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/component/forcefield/TetrahedronFEMForceField.h>
 #include <sofa/component/forcefield/StiffSpringForceField.h>
 #include <sofa/component/mass/UniformMass.h>
@@ -92,7 +92,7 @@ PMLFemForceField::PMLFemForceField(StructuralComponent* body, GNode * parent)
 
 PMLFemForceField::~PMLFemForceField()
 {
-	if(mmodel) delete mmodel; 
+	if(mmodel) delete mmodel;
 	//if(pmodel) delete pmodel;
 	//if(lmodel) delete lmodel;
 	if(tmodel) delete tmodel;
@@ -131,7 +131,7 @@ void PMLFemForceField::initDensity(string m)
 }
 
 
-//convenient method to tesselate a hexahedron to 5 tetrahedron
+//convenient method to tesselate a hexahedron to 5 tetrahedra
 // used by createTopology method
 BaseMeshTopology::Tetra * PMLFemForceField::Tesselate(Cell* pCell)
  {
@@ -180,9 +180,9 @@ void PMLFemForceField::createMechanicalState(StructuralComponent* body)
 }
 
 
-// creation of the topolgy
-// topology constituted exclusively by tetrahedrons 
-// --> if there is hexahedrons, they are tesselated in 5 tetrahedron
+// creation of the topology
+// topology constituted exclusively by tetrahedra
+// --> if there is hexahedrons, they are tesselated in 5 tetrahedra
 void PMLFemForceField::createTopology(StructuralComponent* body)
 {
 	topology = new MeshTopology();
@@ -194,7 +194,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 	Cell * pCell;
 	Atom * pAtom;
 
-	//for each pml cell, build 1 or 5 tetrahedrons
+	//for each pml cell, build 1 or 5 tetrahedra
 	for (unsigned int cid(0) ; cid<nbCells ; cid++) {
 		pCell = body->getCell(cid);
 		switch(pCell->getProperties()->getType()) {
@@ -206,7 +206,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 					for (unsigned int l1=0 ; l1<4 ; l1++) {
 						for (unsigned int l2=l1+1 ; l2<4 ; l2++) {
 							line = new BaseMeshTopology::Line;
-							(*line)[0] = tet[p][l1]; 
+							(*line)[0] = tet[p][l1];
 							(*line)[1] = tet[p][l2];
 							((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(*line);
 						}
@@ -222,7 +222,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 					for (unsigned int l1=0 ; l1<4 ; l1++) {
 						for (unsigned int l2=l1+1 ; l2<4 ; l2++) {
 							line = new BaseMeshTopology::Line;
-							(*line)[0] = (*tet)[l1]; 
+							(*line)[0] = (*tet)[l1];
 							(*line)[1] = (*tet)[l2];
 							((BaseMeshTopology::SeqLines&)((BaseMeshTopology*)topology)->getLines()).push_back(*line);
 						}
@@ -230,7 +230,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 				}
 				((BaseMeshTopology::SeqTetras&)((BaseMeshTopology*)topology)->getTetras()).push_back(*tet);
 				break;
-				
+
 			default : break;
 
 		}
@@ -239,7 +239,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 }
 
 
-//creation of the mass 
+//creation of the mass
 //normaly there 1 value OR nbDOFs values (OR 0 if not specified)
 void PMLFemForceField::createMass(StructuralComponent* body)
 {
@@ -273,7 +273,7 @@ void PMLFemForceField::createMass(StructuralComponent* body)
 						massList[AtomsToDOFsIndexes[pAtom->getIndex()]] += m;
 					}
 				}
-				
+
 				mass = new DiagonalMass<Vec3Types,SReal>;
 				for (unsigned int im=0 ; im<massList.size() ; im++) {
 					((DiagonalMass<Vec3Types,SReal>*)mass)->addMass( massList[im] );
@@ -339,8 +339,8 @@ void PMLFemForceField::createVisualModel(StructuralComponent* body)
 					(*triangle)[j] = AtomsToDOFsIndexes[pAtom->getIndex()];
 				}
 				((BaseMeshTopology::SeqTriangles&)((BaseMeshTopology*)topology)->getTriangles()).push_back(*triangle);
-				break;			
-				
+				break;
+
 				default : break;
 		}
 	}
@@ -371,9 +371,9 @@ void PMLFemForceField::createForceField()
 
 	if(deformationType== "SMALL")
 		((TetrahedronFEMForceField<Vec3Types>*)forcefield)->setMethod(0);
-	if(deformationType== "LARGE") 
+	if(deformationType== "LARGE")
 		((TetrahedronFEMForceField<Vec3Types>*)forcefield)->setMethod(1);
-	if(deformationType== "POLAR") 
+	if(deformationType== "POLAR")
 		((TetrahedronFEMForceField<Vec3Types>*)forcefield)->setMethod(2);
 
 	parentNode->addObject(forcefield);
@@ -386,7 +386,7 @@ void PMLFemForceField::createCollisionModel()
 		tmodel = new TriangleModel;
 		//lmodel = new LineModel;
 		//pmodel = new PointModel;
-	
+
 		parentNode->addObject( tmodel);
 		//parentNode->addObject( lmodel );
 		//parentNode->addObject( pmodel );
@@ -407,7 +407,7 @@ bool PMLFemForceField::FusionBody(PMLBody* body)
 	map<unsigned int, unsigned int>::iterator it = femBody->AtomsToDOFsIndexes.begin();
 	map<unsigned int, unsigned int>::iterator itt;
 	unsigned int X1size = ((MechanicalState<Vec3Types>*)mmodel)->getX()->size();
-	while (it !=  femBody->AtomsToDOFsIndexes.end()) 
+	while (it !=  femBody->AtomsToDOFsIndexes.end())
 	{
 		//if femBody's index doesn't exist in current list, we insert it
 		if ( (itt = this->AtomsToDOFsIndexes.find( (*it).first)) == this->AtomsToDOFsIndexes.end() ){

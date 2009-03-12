@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -133,7 +133,7 @@ bool generateFactoryPHPDoc(const std::string& filename, const std::string& url)
     //sofa::core::ObjectFactory::getInstance()->dump();
     std::ofstream out(filename.c_str());
 
-    out << "<html><body>\n";
+    //out << "<html><body>\n";
 
     std::vector<std::string> templates;
     std::set<std::string> templateSet;
@@ -326,12 +326,12 @@ bool generateFactoryPHPDoc(const std::string& filename, const std::string& url)
 		    out << "<span class=\"field-value\">"<<xmlencode(f->getValueString())<<"</span>";
 		    out << "</td>";
 		    out << "</tr>\n";
-		    if (f->help && *f->help && strncmp(f->help,"TODO",4))
+		    if (f->getHelp() && *f->getHelp() && strncmp(f->getHelp(),"TODO",4))
 		    {
 			out << "<tr class=\"sofa-field-description\">";
 			out << "<td></td>";
 			out << "<td class=\"sofa-field-description\" colspan=\""<<nbcol - 1<<"\">";
-			out << "<div class=\"field-description\">"<<f->help<<"</div>";
+			out << "<div class=\"field-description\">"<<f->getHelp()<<"</div>";
 			out << "</td>";
 			out << "</tr>\n";
 		    }
@@ -350,7 +350,25 @@ bool generateFactoryPHPDoc(const std::string& filename, const std::string& url)
     }
     out << "</table>\n";
 
-    out << "</body></html>\n";
+    out << "<?php if ($base) { ?>";
+
+    out << "<p> <b>Filter by Base Class :</b> ";
+
+    out << "<?php if ($show) { echo '<a href=\""<<url<<"'.($desc?'?desc='.$desc:'').'\">'; ?>";
+    out << "ALL";
+    out << "<?php } if ($show) echo '</a>'; ?>";
+    for (const char** c = baseClasses; *c; ++c)
+    {
+	out << " <span class=\"class-base-name\" style=\"background-color: " << sofa::simulation::Colors::getColor(*c) << ";\">";
+	out << "<?php if ($show != '"<<xmlencode(*c)<<"') echo '<a href=\""<<url<<"?show="<<xmlencode(*c)<<"'.($desc?'&desc='.$desc:'').'\">'; ?>";
+	out << *c;
+	out << "<?php if ($show != '"<<xmlencode(*c)<<"') echo '</a>'; ?>";
+	out << "</span>";
+    }
+    out << "</p>\n";
+    out << "<?php } ?>";
+
+    //out << "</body></html>\n";
 
     return true;
 }

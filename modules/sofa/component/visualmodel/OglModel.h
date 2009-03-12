@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -30,6 +30,7 @@
 #include <sofa/helper/gl/Texture.h>
 #include <sofa/core/VisualModel.h>
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
+#include <sofa/component/component.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/component/visualmodel/VisualModelImpl.h>
@@ -57,12 +58,14 @@ namespace visualmodel
  *
  */
 
-class OglModel : public VisualModelImpl
+class SOFA_COMPONENT_VISUALMODEL_API OglModel : public VisualModelImpl
 {
-private:
-	Data<bool> premultipliedAlpha;
+protected:
+	Data<bool> premultipliedAlpha, useVBO, writeZTransparent;
     helper::gl::Texture *tex;
-
+    GLuint vbo, iboTriangles, iboQuads;
+    bool canUseVBO, VBOGenDone, initDone, useTriangles, useQuads;
+    unsigned int oldVerticesSize, oldTrianglesSize, oldQuadsSize;
     void internalDraw();
 
 public:
@@ -74,7 +77,20 @@ public:
     bool loadTexture(const std::string& filename);
 
 	void initTextures();
-	void initVisual();
+	virtual void initVisual();
+
+	virtual void init() { VisualModelImpl::init(); };
+
+	virtual void updateBuffers();
+	void createVertexBuffer();
+	void createTrianglesIndicesBuffer();
+	void createQuadsIndicesBuffer();
+	void initVertexBuffer();
+	void initTrianglesIndicesBuffer();
+	void initQuadsIndicesBuffer();
+	bool updateVertexBuffer();
+	bool updateTrianglesIndicesBuffer();
+	bool updateQuadsIndicesBuffer();
 };
 
 typedef sofa::defaulttype::Vec<3,GLfloat> GLVec3f;

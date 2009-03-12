@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,10 +22,10 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_FORCEFIELD_BEAMFEMFORCEFIELD_CPP
 #include <sofa/component/forcefield/BeamFEMForceField.inl>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/component/MechanicalObject.h>
 #include <sofa/core/ObjectFactory.h>
 //#include <typeinfo>
 
@@ -56,10 +56,10 @@ SOFA_DECL_CLASS(BeamFEMForceField)
 ;
 
 #ifndef SOFA_FLOAT
-template class BeamFEMForceField<Rigid3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API BeamFEMForceField<Rigid3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class BeamFEMForceField<Rigid3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API BeamFEMForceField<Rigid3fTypes>;
 #endif
 
 } // namespace forcefield

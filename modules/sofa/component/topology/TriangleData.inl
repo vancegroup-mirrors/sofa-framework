@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -57,7 +57,7 @@ namespace topology
 				if (m_createTetrahedronFunc) 
 				{
 					const TetrahedraAdded *ea = static_cast< const TetrahedraAdded* >( *changeIt );
-					(*m_createTetrahedronFunc)(ea->tetrahedronIndexArray, m_createParam, *this);
+					(*m_createTetrahedronFunc)(ea->tetrahedronIndexArray, m_createParam, *(this->beginEdit()));
 				}
 				break;
 			}
@@ -66,7 +66,7 @@ namespace topology
 				if (m_destroyTetrahedronFunc) 
 				{
 					const TetrahedraRemoved *er = static_cast< const TetrahedraRemoved * >( *changeIt );
-					(*m_destroyTetrahedronFunc)(er->getArray(), m_createParam, *this);
+					(*m_destroyTetrahedronFunc)(er->getArray(), m_createParam, *(this->beginEdit()));
 				}
 				break;
 			}		
@@ -96,9 +96,13 @@ namespace topology
 	template <typename T, typename Alloc>
 	void TriangleData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 
 	{
-		T tmp = (*this)[i1];
-		(*this)[i1] = (*this)[i2];
-		(*this)[i2] = tmp;
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+		T tmp = data[i1];
+		data[i1] = data[i2];
+		data[i2] = tmp;
+		this->endEdit();
+
 	}
 
 	template <typename T, typename Alloc>
@@ -107,13 +111,14 @@ namespace topology
 									const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors, 
 									const sofa::helper::vector< sofa::helper::vector< double > >& coefs ) 
 	{
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
 		// Using default values
-		unsigned int i0 = this->size();
-		this->resize(i0+nbTriangles);
+		unsigned int i0 = data.size();
+		data.resize(i0+nbTriangles);
 
 		for (unsigned int i = 0; i < nbTriangles; ++i)
 		{
-			T& t = (*this)[i0+i];
+			T& t = data[i0+i];
 			if (ancestors.empty() || coefs.empty())
 			{
 				const sofa::helper::vector< unsigned int > empty_vecint;
@@ -123,21 +128,24 @@ namespace topology
 			else
 				m_createFunc( i0+i, m_createParam, t, triangle[i], ancestors[i], coefs[i] );
 		}
+		this->endEdit();
 	}
 
 	template <typename T, typename Alloc>
 	void TriangleData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index ) 
 	{
-		unsigned int last = this->size() -1;
+		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+		unsigned int last = data.size() -1;
 
 		for (unsigned int i = 0; i < index.size(); ++i)
 		{
-			m_destroyFunc( index[i], m_destroyParam, (*this)[index[i]] );
+			m_destroyFunc( index[i], m_destroyParam, data[index[i]] );
 			swap( index[i], last );
 			--last;
 		}
 
-		resize( this->size() - index.size() );
+		data.resize( data.size() - index.size() );
 	}
 
 } // namespace topology

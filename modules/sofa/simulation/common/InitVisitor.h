@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -41,19 +41,19 @@ namespace simulation
 {
 
 /** Initialize a newly created (or modified) scene graph.
-    
+
     Forward: simulation::Node::initialize() This method puts the OdeSolver, if any, first in the list of components. Then BaseObject::init() for all components.
-    
+
     Backward: OdeSolver::bwdInit()
-    
+
     */
-class InitVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API InitVisitor : public Visitor
 {
-	
+
 public:
 	InitVisitor() {}
-	
-	
+
+
 	virtual Result processNodeTopDown(simulation::Node* node);
         virtual void processNodeBottomUp(simulation::Node* node);
 
@@ -63,6 +63,7 @@ public:
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "init"; }
+        virtual const char* getClassName() const { return "InitVisitor"; }
 };
 
 } // namespace simulation

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,6 +31,8 @@
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/vector.h>
 #include <sofa/component/topology/PointSubset.h>
 #include <set>
@@ -71,10 +73,11 @@ public:
 protected:
 	FixedConstraintInternalData<DataTypes> data;
 	friend class FixedConstraintInternalData<DataTypes>;
-	
+
 public:
 	Data<SetIndex> f_indices;
 	Data<bool> f_fixAll;
+	Data<double> _drawSize;
 
 	FixedConstraint();
 
@@ -92,19 +95,20 @@ public:
 
 	void applyConstraint(defaulttype::BaseMatrix *mat, unsigned int &offset);
 	void applyConstraint(defaulttype::BaseVector *vect, unsigned int &offset);
-	
+
+        void applyInvMassConstraint(defaulttype::BaseVector *, unsigned int &);
 	// Handle topological changes
 	virtual void handleTopologyChange();
 
 	virtual void draw();
-		
+
 	/// this constraint is holonomic
 	bool isHolonomic() {return true;}
 
 protected :
 
 	sofa::core::componentmodel::topology::BaseMeshTopology* topology;
-	
+
 	// Define TestNewPointFunction
     static bool FCTestNewPointFunction(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& );
 
@@ -112,6 +116,26 @@ protected :
 	static void FCRemovalFunction ( int , void*);
 
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINT_FIXEDCONSTRAINT_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec1dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec6dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Rigid3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Rigid2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec1fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Vec6fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Rigid3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace constraint
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -26,6 +26,7 @@
 ******************************************************************************/
 #include "SofaGUI.h"
 #include <sofa/component/init.h>
+#include <sofa/simulation/tree/xml/initXml.h>
 
 namespace sofa
 {
@@ -52,6 +53,7 @@ SOFA_LINK_CLASS(OgreGUI)
 int SofaGUI::Init()
 {
     sofa::component::init();
+	sofa::simulation::tree::xml::initXml();
     if (guiCreators().empty())
     {
         std::cerr << "ERROR(SofaGUI): No GUI registered."<<std::endl;
@@ -72,9 +74,8 @@ int SofaGUI::Init()
         return 0;
 }
 
-int SofaGUI::MainLoop(sofa::simulation::Node* groot, const char* filename)
+int SofaGUI::createGUI(sofa::simulation::Node* groot, const char* filename)
 {
-    int ret = 0;
     const char* name = GetGUIName();
     if (!currentGUI)
     {
@@ -89,6 +90,18 @@ int SofaGUI::MainLoop(sofa::simulation::Node* groot, const char* filename)
             std::cerr << "ERROR(SofaGUI): GUI "<<name<<" creation failed."<<std::endl;
             return 1;
         }
+    }
+	return 0;
+}
+
+
+int SofaGUI::MainLoop(sofa::simulation::Node* groot, const char* filename)
+{
+    int ret = 0;
+    const char* name = GetGUIName();
+    if (!currentGUI)
+    {
+        createGUI(groot, filename);
     }
     ret = currentGUI->mainLoop();
     if (ret)

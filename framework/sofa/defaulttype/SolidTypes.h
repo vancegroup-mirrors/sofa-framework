@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,6 +37,8 @@
 #ifndef SOFA_DEFAULTTYPE_SOLIDTYPES_H
 #define SOFA_DEFAULTTYPE_SOLIDTYPES_H
 
+#include <sofa/defaulttype/defaulttype.h>
+
 //#include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
@@ -44,6 +46,7 @@
 #include <sofa/helper/fixed_array.h>
 #include <sofa/helper/vector.h>
 #include <iostream>
+#include <map>
 
 namespace sofa
 {
@@ -53,11 +56,11 @@ namespace defaulttype
 
 /**
 Base types for the ArticulatedSolid: position, orientation, velocity, angular velocity, etc.
- 
+
 @author François Faure, INRIA-UJF, 2006
 */
 template< class R=float >
-class SolidTypes
+class SOFA_DEFAULTTYPE_API SolidTypes
 {
 public:
     typedef R Real;
@@ -70,9 +73,9 @@ public:
 
 
     /** A spatial vector.
-    When representing a velocity, lineVec is the angular velocity and freeVec is the linear velocity. 
+    When representing a velocity, lineVec is the angular velocity and freeVec is the linear velocity.
     When representing a spatial force, lineVec is the force and freeVec is the torque. */
-    class SpatialVector
+    class SOFA_DEFAULTTYPE_API SpatialVector
     {
     public:
         Vec lineVec;
@@ -80,7 +83,7 @@ public:
         void clear();
         SpatialVector();
         /**
-        \param l The line vector: angular velocity, or force 
+        \param l The line vector: angular velocity, or force
         \param f The free vector: linear velocity, or torque
         */
         SpatialVector( const Vec& l, const Vec& f );
@@ -160,7 +163,7 @@ public:
         }
         /// If the SpatialVector models a spatial force, then the torque is the lineVec.
         /// Otherwise, the SpatialVector models a spatial velocity, and this method returns an angular velocity.
-        Vec& getForce() 
+        Vec& getForce()
         {
             return lineVec;
         }
@@ -180,7 +183,7 @@ public:
 
 
     */
-    class Transform
+    class SOFA_DEFAULTTYPE_API Transform
     {
     public:
         /// The default constructor does not initialize the transform
@@ -227,7 +230,7 @@ public:
         Transform& operator *= (const Transform& f2);
         /// Project a spatial vector from child to parent
         SpatialVector operator * (const SpatialVector& sv ) const;
-        /// Project a spatial vector from parent to child (the inverse of operator *). This method computes (*this).inversed()*sv without inverting (*this). 
+        /// Project a spatial vector from parent to child (the inverse of operator *). This method computes (*this).inversed()*sv without inverting (*this).
         SpatialVector operator / (const SpatialVector& sv ) const;
         /// Write an OpenGL matrix encoding the transformation of the coordinate system of the child wrt the coordinate system of the parent.
         void writeOpenGlMatrix( double *m ) const;
@@ -278,7 +281,7 @@ public:
     };
 
 
-    class RigidInertia
+    class SOFA_DEFAULTTYPE_API RigidInertia
     {
     public:
         Real m;  ///< mass
@@ -297,7 +300,7 @@ public:
         }
     };
 
-    class ArticulatedInertia
+    class SOFA_DEFAULTTYPE_API ArticulatedInertia
     {
     public:
         Mat M;
@@ -331,20 +334,37 @@ public:
     //         typedef std::vector<SpatialVector> VecDeriv;
 
 
-	template <class T>
-	class SparseData
-	{
-	public:
-		SparseData(unsigned int _index, T& _data): index(_index), data(_data){};
-		unsigned int index;
-		T data;
-	};
+        /// Data Structure to store lines of the matrix L.
+        template <class T>
+        class SparseConstraint
+        {
+          public:
+          SparseConstraint(){};
+          void insert( unsigned int index, const T &value)
+          {
+            data[index] += value;
+          }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
 
-	typedef SparseData<Coord> SparseCoord;
-	typedef SparseData<Deriv> SparseDeriv;
+          T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
 
-    typedef helper::vector<SparseCoord> SparseVecCoord;
-    typedef helper::vector<SparseDeriv> SparseVecDeriv;
+          std::map< unsigned int, T > &getData() {return data;};
+          const std::map< unsigned int, T > &getData() const {return data;};
+        protected:
+          std::map< unsigned int, T > data;
+        };
+
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
 	//! All the Constraints applied to a state Vector
 	typedef	helper::vector<SparseVecDeriv> VecConst;
@@ -360,7 +380,7 @@ public:
     static Mat crossM( const Vec& v );
 
     static ArticulatedInertia dyad ( const SpatialVector& u, const SpatialVector& v );
-    
+
     static const char* Name()
     {
         return "Solid";

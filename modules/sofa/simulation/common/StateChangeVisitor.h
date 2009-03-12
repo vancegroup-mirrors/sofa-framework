@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_SIMULATION_TREE_STATECHANGEACTION_H
 
 #include <sofa/simulation/common/Visitor.h>
+#include <sofa/core/componentmodel/topology/Topology.h>
 
 namespace sofa
 {
@@ -33,14 +34,14 @@ namespace sofa
 namespace simulation
 {
 
-class StateChangeVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API StateChangeVisitor : public Visitor
 {
 
 public:
-    StateChangeVisitor();
+    StateChangeVisitor(core::componentmodel::topology::Topology* source);
 
 	virtual void processStateChange(core::objectmodel::BaseObject* obj);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 
 	/// Specify whether this action can be parallelized.
@@ -49,9 +50,11 @@ public:
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "stateChange"; }
+        virtual const char* getClassName() const { return "StateChangeVisitor"; }
 
 protected:
 	bool root;
+    core::componentmodel::topology::Topology* source;
 };
 
 

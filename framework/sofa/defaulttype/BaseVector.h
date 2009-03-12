@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,7 @@
 #ifndef SOFA_DEFAULTTYPE_BASEVECTOR_H
 #define SOFA_DEFAULTTYPE_BASEVECTOR_H
 
+#include <sofa/helper/system/config.h>
 namespace sofa
 {
 
@@ -43,7 +44,7 @@ public:
     virtual ~BaseVector(){}
 
     /// Number of elements
-    virtual int size(void) const = 0;
+    virtual unsigned int size(void) const = 0;
     /// Read the value of element i
     virtual SReal element(int i) const = 0;
 
@@ -51,17 +52,17 @@ public:
     virtual void resize(int dim) = 0;
     /// Reset all values to 0
     virtual void clear() = 0;
-    
+
     /// Write the value of element i
     virtual void set(int i, SReal v) = 0;
     /// Add v to the existing value of element i
     virtual void add(int i, SReal v) = 0;
-/*    
+/*
     /// Write the value of element i
     virtual void set(int i, SReal v) { set(i,(SReal)v); }
     /// Add v to the existing value of element i
     virtual void add(int i, SReal v) { add(i,(SReal)v); }
-*/  
+*/
     /// Reset the value of element i to 0
     virtual void clear(int i) { set(i,0.0); }
 };

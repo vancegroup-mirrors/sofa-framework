@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -52,18 +52,20 @@ class BaseMapping : public virtual objectmodel::BaseObject
 public:
 	/// Destructor
 	virtual ~BaseMapping() { }
-	
+
+
 	/// Apply the transformation from the input model to the output model (like apply displacement from BehaviorModel to VisualModel)
 	virtual void updateMapping() = 0;
-	
+
 	/// Accessor to the input model of this mapping
 	virtual objectmodel::BaseObject* getFrom() = 0;
-	
+
 	/// Accessor to the output model of this mapping
 	virtual objectmodel::BaseObject* getTo() = 0;
 
 	/// Disable the mapping to get the original coordinates of the mapped model.
 	virtual void disable()=0;
+
 
 };
 

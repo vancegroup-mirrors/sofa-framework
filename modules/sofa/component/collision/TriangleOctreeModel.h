@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,11 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_COLLISION_TRIANGLEOCTREEMDEL_H
-#define SOFA_COMPONENT_COLLISION_TRIANGLEOCTREEMDEL_H
+#ifndef SOFA_COMPONENT_COLLISION_TRIANGLEOCTREEMODEL_H
+#define SOFA_COMPONENT_COLLISION_TRIANGLEOCTREEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/component/collision/TriangleModel.h>
@@ -36,64 +36,38 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace collision 
-    {
+namespace collision 
+{
 
-      using namespace sofa::defaulttype;
+using namespace sofa::defaulttype;
 
-      class TriangleOctree;
-      class TriangleModel;
+class SOFA_COMPONENT_COLLISION_API TriangleOctreeModel : public  TriangleModel, public TriangleOctreeRoot
+{
+public:
+    TriangleOctreeModel();
 
-      class TriangleOctreeModel:public  TriangleModel
-      {
-      public:
-	TriangleOctreeModel();
-	/*the triangles assiciated to a point*/
-	vector<vector<int> > pTri;
-	/*the normals for each point*/
-	vector<Vector3> pNorms;
-        /*the size of the octree cube*/
-	int cubeSize;
-	/*the first node of the octree*/
-	TriangleOctree *octreeRoot;
-	//vector < Vector4 > octreeVec;
-	void	draw();
-	virtual void computeBoundingTree(int maxDepth=0);
-	virtual void computeContinuousBoundingTree(double dt, int maxDepth=0);
-	/*init the octree creation*/
-	void buildOctree ();
-	protected:
-	/*used to add a triangle  to the octree*/
-	int fillOctree (int t, int d = 0, Vector3 v = Vector3 (0, 0, 0));
-      };
-      /*class used to manage the Bounding Box for each triangle*/
-      class TriangleAABB
-      {
+#if 0
+    /// the triangles associated to a point
+    vector<vector<int> > pTri;
+#endif
 
+    /// the normals for each point
+    vector<Vector3> pNorms;
+    //vector < Vector4 > octreeVec;
+    void draw();
+    virtual void computeBoundingTree(int maxDepth=0);
+    virtual void computeContinuousBoundingTree(double dt, int maxDepth=0);
+    /// init the octree creation
+    void buildOctree ();
+};
 
+} // namespace collision
 
-	double bb[6];
+} // namespace component
 
-	double m_size;
-    	  public:
-	double *getAABB ()
-	{
-	  return bb;
-	}
-	double size ()
-	{
-	  return m_size;
-	}
-	TriangleAABB (Triangle & t);
-      };
-
-    }				// namespace collision
-
-  }				// namespace component
-
-}				// namespace sofa
+} // namespace sofa
 
 #endif

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,8 +29,8 @@
 #include <sofa/component/forcefield/StiffSpringForceField.inl>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -41,16 +41,30 @@ namespace component
 namespace forcefield
 {
 
-template <class DataTypes> 
+template <class DataTypes>
+MeshSpringForceField<DataTypes>::~MeshSpringForceField()
+{
+}
+
+template <class DataTypes>
     double MeshSpringForceField<DataTypes>::getPotentialEnergy()
     {
-        cerr<<"MeshSpringForceField::getPotentialEnergy-not-implemented !!!"<<endl;
+        serr<<"MeshSpringForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
         return 0;
     }
 
 template<class DataTypes>
 void MeshSpringForceField<DataTypes>::addSpring(std::set<std::pair<int,int> >& sset, int m1, int m2, Real stiffness, Real damping)
 {
+    if (localRange.getValue()[0] >= 0)
+    {
+	if (m1 < localRange.getValue()[0] || m2 < localRange.getValue()[0]) return;
+    }
+    if (localRange.getValue()[1] >= 0)
+    {
+	if (m1 > localRange.getValue()[1] && m2 > localRange.getValue()[1]) return;
+    }
+
 	if (m1<m2)
 	{
 		if (sset.count(std::make_pair(m1,m2))>0) return;
@@ -72,12 +86,11 @@ void MeshSpringForceField<DataTypes>::init()
 	this->StiffSpringForceField<DataTypes>::clear();
 	if(!(this->mstate1) || !(this->mstate2))
 		this->mstate2 = this->mstate1 = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *>(this->getContext()->getMechanicalState());
-	
+
 	if (this->mstate1==this->mstate2)
 	{
 		sofa::core::componentmodel::topology::BaseMeshTopology* topology = this->mstate1->getContext()->getMeshTopology();
-		
-				
+
 		if (topology != NULL)
 		{
 			std::set< std::pair<int,int> > sset;
@@ -139,7 +152,7 @@ void MeshSpringForceField<DataTypes>::init()
 					this->addSpring(sset, e[2], e[3], s, d);
 				}
 			}
-			
+
 			if (this->cubesStiffness.getValue() != 0.0 || this->cubesDamping.getValue() != 0.0)
 			{
 				s = this->cubesStiffness.getValue();
@@ -169,13 +182,6 @@ void MeshSpringForceField<DataTypes>::init()
 	this->StiffSpringForceField<DataTypes>::init();
 }
 
-template<class DataTypes>
-void MeshSpringForceField<DataTypes>::parse(core::objectmodel::BaseObjectDescription* arg)
-{
-    this->StiffSpringForceField<DataTypes>::parse(arg);
-    if (arg->getAttribute("stiffness"))          this->setStiffness         ((Real)atof(arg->getAttribute("stiffness")));
-    if (arg->getAttribute("damping"))            this->setDamping           ((Real)atof(arg->getAttribute("damping")));
-}
 
 } // namespace forcefield
 

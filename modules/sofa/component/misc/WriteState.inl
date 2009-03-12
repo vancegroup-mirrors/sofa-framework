@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_MISC_WRITESTATE_INL
 
 #include <sofa/component/misc/WriteState.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 
 #include <fstream>
 
@@ -77,24 +77,24 @@ namespace sofa
 	// test the size and range of the DOFs to write in the file output
 	if (mmodel)
 	  {
-	    timeToTestEnergyIncrease = f_keperiod.getValue();		
+	    timeToTestEnergyIncrease = f_keperiod.getValue();
 	  }
 	///////////// end of the tests.
-	
+
 	const std::string& filename = f_filename.getValue();
 	if (!filename.empty())
 	  {
 // 	    std::ifstream infile(filename.c_str());
 // 	    if( infile.is_open() )
 // 	      {
-// 		std::cerr << "ERROR: file "<<filename<<" already exists. Remove it to record new motion."<<std::endl;
+// 		serr << "ERROR: file "<<filename<<" already exists. Remove it to record new motion."<<sendl;
 // 	      }
-// 	    else	    	    
+// 	    else
 	      {
 		outfile = new std::ofstream(filename.c_str());
 		if( !outfile->is_open() )
 		  {
-		    std::cerr << "Error creating file "<<filename<<std::endl;
+		    serr << "Error creating file "<<filename<<sendl;
 		    delete outfile;
 		    outfile = NULL;
 		  }
@@ -108,7 +108,7 @@ namespace sofa
 	nextTime = 0;
 	lastTime = 0;
 	kineticEnergyThresholdReached = false;
-	timeToTestEnergyIncrease = f_keperiod.getValue();  
+	timeToTestEnergyIncrease = f_keperiod.getValue();
 	savedKineticEnergy = 0;
       }
 
@@ -117,29 +117,29 @@ namespace sofa
       {
 	if (/* simulation::AnimateBeginEvent* ev = */ dynamic_cast<simulation::AnimateBeginEvent*>(event))
 	  {
-      
+
 	    if (outfile && mmodel)
 	      {
 		if (!kineticEnergyThresholdReached)
-		  {  
+		  {
 		    double time = getContext()->getTime();
 		    // the time to measure the increase of energy is reached
 		    if (f_stopAt.getValue())
 		      {
 			if (time > timeToTestEnergyIncrease)
 			  {
-			    simulation::tree::GNode *gnode = dynamic_cast<simulation::tree::GNode *>(this->getContext());
+			    simulation::Node *gnode = dynamic_cast<simulation::Node *>(this->getContext());
 			    if (!gnode->mass)
 			      {	// Error: the mechanical model has no mass
-				std::cerr << "Error: Kinetic energy can not be computed. The mass for " << mmodel->getName() << " has no been defined" << std::endl;
+				serr << "Error: Kinetic energy can not be computed. The mass for " << mmodel->getName() << " has no been defined" << sendl;
 				exit(-1);
 			      }
 			    else
 			      {// computes the energy increase
 				if (fabs(gnode->mass->getKineticEnergy() - savedKineticEnergy) < f_stopAt.getValue())
 				  {
-				    std::cout << "WriteState has been stopped. Kinetic energy threshold has been reached" << std::endl;
-				    kineticEnergyThresholdReached = true;						
+				    sout << "WriteState has been stopped. Kinetic energy threshold has been reached" << sendl;
+				    kineticEnergyThresholdReached = true;
 				  }
 				else
 				  {	// save the last energy measured
@@ -150,10 +150,10 @@ namespace sofa
 			      }
 			  }
 		      }
-    	
+
 		    if (nextTime<f_time.getValue().size())
 		      {
-			// store the actual time instant 
+			// store the actual time instant
 			lastTime = f_time.getValue()[nextTime];
 			if (time >= lastTime) // if the time simulation is >= that the actual time instant
 			  {
@@ -184,7 +184,7 @@ namespace sofa
 			    (*outfile) << "T= "<< time << "\n";
 			    if (f_writeX.getValue())
 			      {
-				(*outfile) << "  X= ";							
+				(*outfile) << "  X= ";
 				mmodel->writeX(*outfile);
 				(*outfile) << "\n";
 			      }

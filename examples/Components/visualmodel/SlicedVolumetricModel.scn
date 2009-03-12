@@ -1,0 +1,19 @@
+<Node name="root"  dt="0.05" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0" showBoundingTree="0" gravity="0 0 0">
+
+	<MechanicalObject />
+	<Object type="RegularGrid"
+			  nx="10" ny="5" nz="5"
+			  xmin="-10" xmax="1"
+			  ymin="-10" ymax="1"
+			  zmin="-10" zmax="1"
+		/>
+	
+	<Node name="Visual" >
+		<VoxelGridLoader name="gridLoader" filename="textures/med_data_256_256_123.raw"
+							  segmentationFile="textures/med_segm_256_256_123.raw"
+							  voxelSize="0.2 0.2 0.4" resolution="256 256 123" 
+			dataValue="12" bgValue="0" generateHexa="false" />
+		<SlicedVolumetricModel alpha="0.2" color="red" nbSlices="100"/>
+	</Node>
+</Node>
+

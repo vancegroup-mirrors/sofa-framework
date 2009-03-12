@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -23,21 +23,20 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/component/collision/DefaultCollisionGroupManager.h>
+#include <sofa/core/ObjectFactory.h>
 #include <sofa/core/CollisionModel.h>
-#include <sofa/helper/system/config.h>
+// #include <sofa/helper/system/config.h>
 #include <sofa/helper/FnDispatcher.h>
 #include <sofa/helper/FnDispatcher.inl>
-#include <sofa/component/collision/DefaultCollisionGroupManager.h>
 #include <sofa/component/odesolver/EulerSolver.h>
 #include <sofa/component/odesolver/RungeKutta4Solver.h>
 #include <sofa/component/odesolver/CGImplicitSolver.h>
 #include <sofa/component/odesolver/StaticSolver.h>
 #include <sofa/component/odesolver/EulerImplicitSolver.h>
 #include <sofa/component/linearsolver/CGLinearSolver.h>
-#include <sofa/core/ObjectFactory.h>
-#include <string.h>
+// #include <string.h>
 #include <sofa/simulation/tree/GNode.h>
-
+#include <sofa/simulation/common/Simulation.h>
 
 namespace sofa
 {
@@ -68,7 +67,7 @@ public:
 	static SolverSet merge(core::componentmodel::behavior::OdeSolver* solver1, core::componentmodel::behavior::OdeSolver* solver2);
 
 protected:
-	
+
 	FnDispatcher<core::componentmodel::behavior::OdeSolver, SolverSet> solverDispatcher;
 
 	SolverMerger ();
@@ -82,37 +81,36 @@ DefaultCollisionGroupManager::~DefaultCollisionGroupManager()
 {
 }
 
-simulation::tree::GNode* DefaultCollisionGroupManager::buildCollisionGroup() {
-	return new simulation::tree::GNode;
+simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
+  return simulation::getSimulation()->newNode("CollisionGroup");
 }
 
 void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* scene, const sofa::helper::vector<Contact*>& contacts)
 {
 	int groupIndex = 1;
-	simulation::tree::GNode* groot = dynamic_cast<simulation::tree::GNode*>(scene);
-	if (groot==NULL)
+	simulation::Node* node = dynamic_cast<simulation::Node*>(scene);
+	if (node==NULL)
 	{
-		std::cerr << "DefaultCollisionGroupManager only support graph-based scenes.\n";
+		serr << "DefaultCollisionGroupManager only support graph-based scenes."<<sendl;
 		return;
 	}
-	
-	simulation::tree::GNode* node = groot;
+
 	if (node && !node->getLogTime()) node=NULL; // Only use node for time logging
-	simulation::tree::GNode::ctime_t t0 = 0;
+	simulation::Node::ctime_t t0 = 0;
 
 	if (node) t0 = node->startTime();
 
 	// Map storing group merging history
-	std::map<simulation::tree::GNode*, simulation::tree::GNode*> mergedGroups;
-	sofa::helper::vector<simulation::tree::GNode*> contactGroup;
-	sofa::helper::vector<simulation::tree::GNode*> removedGroup;
+	std::map<simulation::Node*, simulation::Node*> mergedGroups;
+	sofa::helper::vector<simulation::Node*> contactGroup;
+	sofa::helper::vector<simulation::Node*> removedGroup;
 	contactGroup.reserve(contacts.size());
 	for(sofa::helper::vector<Contact*>::const_iterator cit = contacts.begin(); cit != contacts.end(); cit++)
 	{
 		Contact* contact = *cit;
 		simulation::tree::GNode* group1 = getIntegrationNode(contact->getCollisionModels().first);
 		simulation::tree::GNode* group2 = getIntegrationNode(contact->getCollisionModels().second);
-		simulation::tree::GNode* group = NULL;
+		simulation::Node* group = NULL;
 		if (group1==NULL || group2==NULL)
 		{
 		}
@@ -138,14 +136,14 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 					// create a new group
 					group = buildCollisionGroup();
 					group->setName(groupName);
-					parent->addChild(group); 
-					
+					parent->addChild(group);
+
 					core::objectmodel::Context *current_context = dynamic_cast< core::objectmodel::Context *>(parent->getContext());
 					group->copyVisualContext( (*current_context));
 
 					group->updateSimulationContext();
-					group->moveChild(group1);
-					group->moveChild(group2);
+					group->moveChild((simulation::Node*)group1);
+					group->moveChild((simulation::Node*)group2);
 					groupSet.insert(group);
 				}
 				else if (group1IsColl)
@@ -173,7 +171,7 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 							group->moveObject(*group2->object.begin());
 						while(!group2->child.empty())
 							group->moveChild(*group2->child.begin());
-						parent->removeChild(group2);
+						parent->removeChild((simulation::Node*)group2);
 						groupSet.erase(group2);
 						mergedGroups[group2] = group;
 						delete solver2.first;
@@ -208,14 +206,14 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 		}
 		contactGroup.push_back(group);
 	}
-	
+
 	if (node) t0 = node->endTime(t0, "collision/groups", this);
-	
+
 	// now that the groups are final, attach contacts' response
 	for(unsigned int i=0;i<contacts.size();i++)
 	{
 		Contact* contact = contacts[i];
-		simulation::tree::GNode* group = contactGroup[i];
+		simulation::Node* group = contactGroup[i];
 		while (group!=NULL && mergedGroups.find(group)!=mergedGroups.end())
 			group = mergedGroups[group];
 		if (group!=NULL)
@@ -223,27 +221,29 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 		else
 			contact->createResponse(scene);
 	}
-	
+
 	if (node) t0 = node->endTime(t0, "collision/contacts", this);
-	
+
 	// delete removed groups
-	for (sofa::helper::vector<simulation::tree::GNode*>::iterator it = removedGroup.begin(); it!=removedGroup.end(); ++it)
+	for (sofa::helper::vector<simulation::Node*>::iterator it = removedGroup.begin(); it!=removedGroup.end(); ++it)
 		delete *it;
 	removedGroup.clear();
-	
+
 	// finally recreate group vector
 	groups.clear();
-	for (std::set<simulation::tree::GNode*>::iterator it = groupSet.begin(); it!=groupSet.end(); ++it)
+	for (std::set<simulation::Node*>::iterator it = groupSet.begin(); it!=groupSet.end(); ++it)
 		groups.push_back(*it);
 	//if (!groups.empty())
-	//	std::cout << groups.size()<<" collision groups created."<<std::endl;
+	//	sout << groups.size()<<" collision groups created."<<sendl;
 }
 
 void DefaultCollisionGroupManager::clearGroups(core::objectmodel::BaseContext* /*scene*/)
 {
-	for (std::set<simulation::tree::GNode*>::iterator it = groupSet.begin(); it!=groupSet.end(); ++it)
+	for (std::set<simulation::Node*>::iterator it = groupSet.begin(); it!=groupSet.end(); ++it)
 	{
-		simulation::tree::GNode* group = *it;
+          simulation::tree::GNode* group = dynamic_cast<simulation::tree::GNode*>(*it);
+          if (group)
+            {
 		simulation::tree::GNode* parent = group->parent;
 		while(!group->child.empty())
 			parent->moveChild(*group->child.begin());
@@ -253,8 +253,9 @@ void DefaultCollisionGroupManager::clearGroups(core::objectmodel::BaseContext* /
 			group->removeObject(obj);
 			delete obj;
 		}
-		parent->removeChild(group);
+		parent->removeChild((simulation::Node*)group);
 		delete group;
+            }
 	}
 
 	groupSet.clear();
@@ -299,15 +300,15 @@ SolverSet createSolverCGImplicitCGImplicit(odesolver::CGImplicitSolver& solver1,
     solver->f_maxIter.setValue( solver1.f_maxIter.getValue() > solver2.f_maxIter.getValue() ? solver1.f_maxIter.getValue() : solver2.f_maxIter.getValue() );
     solver->f_tolerance.setValue( solver1.f_tolerance.getValue() < solver2.f_tolerance.getValue() ? solver1.f_tolerance.getValue() : solver2.f_tolerance.getValue());
     solver->f_smallDenominatorThreshold.setValue( solver1.f_smallDenominatorThreshold.getValue() < solver2.f_smallDenominatorThreshold.getValue() ? solver1.f_smallDenominatorThreshold.getValue() : solver2.f_smallDenominatorThreshold.getValue());
-    
+
     solver->f_rayleighStiffness.setValue( solver1.f_rayleighStiffness.getValue() < solver2.f_rayleighStiffness.getValue() ? solver1.f_rayleighStiffness.getValue() : solver2.f_rayleighStiffness.getValue() );
-    
+
     solver->f_rayleighMass.setValue( solver1.f_rayleighMass.getValue() < solver2.f_rayleighMass.getValue() ? solver1.f_rayleighMass.getValue() : solver2.f_rayleighMass.getValue() );
     solver->f_velocityDamping.setValue( solver1.f_velocityDamping.getValue() > solver2.f_velocityDamping.getValue() ? solver1.f_velocityDamping.getValue() : solver2.f_velocityDamping.getValue());
     return SolverSet(solver, NULL);
 }
 
-typedef linearsolver::CGLinearSolver<simulation::GraphScatteredMatrix,simulation::GraphScatteredVector> DefaultCGLinearSolver;
+typedef linearsolver::CGLinearSolver<component::linearsolver::GraphScatteredMatrix,component::linearsolver::GraphScatteredVector> DefaultCGLinearSolver;
 
 LinearSolver* createLinearSolver(OdeSolver* solver1, OdeSolver* solver2)
 {
@@ -339,7 +340,7 @@ SolverSet createSolverEulerImplicitEulerImplicit(odesolver::EulerImplicitSolver&
 {
     odesolver::EulerImplicitSolver* solver = new odesolver::EulerImplicitSolver;
     solver->f_rayleighStiffness.setValue( solver1.f_rayleighStiffness.getValue() < solver2.f_rayleighStiffness.getValue() ? solver1.f_rayleighStiffness.getValue() : solver2.f_rayleighStiffness.getValue() );
-    
+
     solver->f_rayleighMass.setValue( solver1.f_rayleighMass.getValue() < solver2.f_rayleighMass.getValue() ? solver1.f_rayleighMass.getValue() : solver2.f_rayleighMass.getValue() );
     solver->f_velocityDamping.setValue( solver1.f_velocityDamping.getValue() > solver2.f_velocityDamping.getValue() ? solver1.f_velocityDamping.getValue() : solver2.f_velocityDamping.getValue());
     return SolverSet(solver, createLinearSolver(&solver1, &solver2));
@@ -390,7 +391,16 @@ using namespace SolverMergers;
 SolverSet SolverMerger::merge(core::componentmodel::behavior::OdeSolver* solver1, core::componentmodel::behavior::OdeSolver* solver2)
 {
 	static SolverMerger instance;
-	return instance.solverDispatcher.go(*solver1, *solver2);
+	SolverSet obj=instance.solverDispatcher.go(*solver1, *solver2);
+#ifdef SOFA_HAVE_LAPACK
+	obj.first->constraintAcc.setValue( (solver1->constraintAcc.getValue() || solver2->constraintAcc.getValue() ) );
+	obj.first->constraintVel.setValue( (solver1->constraintVel.getValue() || solver2->constraintVel.getValue() ) );
+	obj.first->constraintPos.setValue( (solver1->constraintPos.getValue() || solver2->constraintPos.getValue() ) );
+	obj.first->constraintResolution.setValue( (solver1->constraintResolution.getValue() && solver2->constraintResolution.getValue() ) );
+	obj.first->numIterations.setValue( std::max(solver1->numIterations.getValue(), solver2->numIterations.getValue() ) );
+	obj.first->maxError.setValue( std::min(solver1->maxError.getValue(), solver2->maxError.getValue() ) );
+#endif
+	return obj;
 }
 
 SolverMerger::SolverMerger()

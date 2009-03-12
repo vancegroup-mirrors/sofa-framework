@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -28,7 +28,7 @@
 #include <fstream>
 
 #include <sofa/helper/ArgumentParser.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/tree/TreeSimulation.h>
 #include <sofa/component/contextobject/Gravity.h>
 #include <sofa/component/contextobject/CoordinateSystem.h>
 #include <sofa/core/objectmodel/Context.h>
@@ -41,6 +41,7 @@
 #include <sofa/helper/system/glut.h>
 
 using namespace sofa::simulation::tree;
+using sofa::simulation::Node;
 using sofa::component::odesolver::CGImplicitSolver;
 using sofa::component::topology::MeshTopology;
 using sofa::component::visualmodel::OglModel;
@@ -105,9 +106,8 @@ int main(int argc, char** argv)
     fem->setYoungModulus(6);
 
     // Tetrahedron skin
-    GNode* skin = new GNode;
-    skin->setName( "skin" );
-    groot->addChild(skin);
+    GNode* skin = new GNode("skin",groot);;
+
     // The visual model
     OglModel* visual = new OglModel();
     visual->setName( "visual" );

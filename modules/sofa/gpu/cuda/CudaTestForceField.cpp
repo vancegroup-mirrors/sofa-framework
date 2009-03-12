@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -67,7 +67,7 @@ void CudaTestForceField::reinit()
     if (topology==NULL || topology->getNbCubes()==0)
 #endif    
     {
-	std::cerr << "ERROR(CudaTestForceField): no elements found.\n";
+      serr << "ERROR(CudaTestForceField): no elements found.\n";
 	return;
     }
 #ifdef SOFA_NEW_HEXA    
@@ -91,9 +91,9 @@ void CudaTestForceField::reinit()
     {
         nbv = nelems.rbegin()->first + 1;
     }
-    std::cout << "CudaTestForceField: "<<inputElems.size()<<" elements, "<<nbv<<" nodes, max "<<nmax<<" elements per node."<<std::endl;
+    sout << "CudaTestForceField: "<<inputElems.size()<<" elements, "<<nbv<<" nodes, max "<<nmax<<" elements per node."<<sendl;
     init(inputElems.size(), nbv, nmax);
-    std::cout << "CudaTestForceField: precomputations..."<<std::endl;
+    sout << "CudaTestForceField: precomputations..."<<sendl;
     const VecCoord&x = *this->mstate->getX();
     nelems.clear();
     for (unsigned int i=0;i<inputElems.size();i++)
@@ -109,12 +109,12 @@ void CudaTestForceField::reinit()
 	for (unsigned int j=0;j<e.size();++j)
 	    r += (x[e[j]]-center).norm();
 	r /= e.size();
-	std::cout << "E["<<i<<"]: center="<<center<<" r="<<r<<std::endl;
+	sout << "E["<<i<<"]: center="<<center<<" r="<<r<<sendl;
         setE(i, e, 1, r, 10, 10);
         for (unsigned int j=0;j<e.size();j++)
             setV(e[j], nelems[e[j]]++, i*e.size()+j);
     }
-    std::cout << "CudaTestForceField::reinit() DONE."<<std::endl;
+    sout << "CudaTestForceField::reinit() DONE."<<sendl;
 }
 
 void CudaTestForceField::addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v)

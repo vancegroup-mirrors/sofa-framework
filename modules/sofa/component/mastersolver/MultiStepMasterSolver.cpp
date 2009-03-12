@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,8 +27,8 @@
 #include <math.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -51,6 +51,10 @@ MultiStepMasterSolver::MultiStepMasterSolver()
 {
 }
 
+MultiStepMasterSolver::~MultiStepMasterSolver()
+{
+}
+
 void MultiStepMasterSolver::step(double dt)
 {
     const int ncollis = collisionSteps.getValue();
@@ -59,12 +63,12 @@ void MultiStepMasterSolver::step(double dt)
     for (int c=0;c<ncollis;++c)
     {
         // First do collision detection and response creation
-        if (this->f_printLog.getValue()) std::cout << "collision" << std::endl;
+        sout << "collision" << sendl;
         computeCollision();
         for (int i=0;i<ninteg;++i)
         {
             // Then integrate the time step
-            if (this->f_printLog.getValue()) std::cout << "integration" << std::endl;
+            sout << "integration" << sendl;
             integrate(dt);
         }
     }

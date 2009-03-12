@@ -352,6 +352,17 @@
                                         <string>Create gnuplot files for each named element of the simulation</string>
                                     </property>
                                 </widget>
+                                <widget class="QCheckBox">
+                                    <property name="name">
+                                        <cstring>exportVisitorCheckbox</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>export visitor execution</string>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Create a xml description of the execution of the visitors</string>
+                                    </property>
+                                </widget>
                                 <widget class="QLabel">
                                     <property name="name">
                                         <cstring>statsLabel</cstring>
@@ -615,6 +626,7 @@
     <item text="&amp;Edit" name="editMenu">
         <action name="editRecordDirectoryAction"/>
         <action name="editGnuplotDirectoryAction"/>
+        <action name="PluginManagerAction"/>
     </item>
     <item text="&amp;View" name="View">
         <action name="viewerOpenGLAction"/>
@@ -991,6 +1003,17 @@
         </property>
     </action>
     <action>
+      <property name="name">
+        <cstring>PluginManagerAction</cstring>
+      </property>
+      <property name="text">
+        <string>Plugin Manager...</string>
+      </property>
+      <property name="menuText">
+        <string>Plugin Manager...</string>
+      </property>
+    </action>
+    <action>
         <property name="name">
             <cstring>Action</cstring>
         </property>
@@ -1075,6 +1098,12 @@
         <signal>activated()</signal>
         <receiver>GUI</receiver>
         <slot>fileSaveAs()</slot>
+    </connection>
+    <connection>
+        <sender>exportGraphAction</sender>
+        <signal>activated()</signal>
+        <receiver>GUI</receiver>
+        <slot>exportGraph()</slot>
     </connection>
     <connection>
         <sender>fileExitAction</sender>
@@ -1173,6 +1202,12 @@
         <slot>editRecordDirectory()</slot>
     </connection>
     <connection>
+      <sender>PluginManagerAction</sender>
+      <signal>activated()</signal>
+      <receiver>GUI</receiver>
+      <slot>showPluginManager()</slot>
+    </connection>
+    <connection>
         <sender>editGnuplotDirectoryAction</sender>
         <signal>activated()</signal>
         <receiver>GUI</receiver>
@@ -1191,6 +1226,7 @@
     <slot>fileReload()</slot>
     <slot>fileSave()</slot>
     <slot>fileSaveAs()</slot>
+    <slot>exportGraph()</slot>
     <slot>fileExit()</slot>
     <slot>editUndo()</slot>
     <slot>editRedo()</slot>
@@ -1209,6 +1245,7 @@
     <slot>RightClickedItemInSceneView( QListViewItem *, const QPoint &amp;, int )</slot>
     <slot>editRecordDirectory()</slot>
     <slot>editGnuplotDirectory()</slot>
+    <slot>showPluginManager()</slot>
     <slot>showVisualModels()</slot>
     <slot>hideVisualModels()</slot>
     <slot>showBehaviorModels()</slot>

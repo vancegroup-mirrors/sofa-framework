@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,9 @@
 
 #include <sofa/core/componentmodel/topology/BaseTopology.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -54,6 +57,12 @@ namespace topology
 		typedef typename DataTypes::Real Real;
 		typedef typename DataTypes::Coord Coord;
 		typedef typename DataTypes::VecCoord VecCoord;
+		typedef typename DataTypes::CPos CPos;
+		enum { NC = CPos::static_size };
+
+		enum Angle {ACUTE, RIGHT, OBTUSE};
+
+		Angle computeAngle(PointID ind_p0, PointID ind_p1, PointID ind_p2) const;
 
 		PointSetGeometryAlgorithms()
 		: GeometryAlgorithms()
@@ -73,23 +82,50 @@ namespace topology
 		index 2 = zmin, index 3 = xmax, index 4 = ymax, index 5=zmax */
 		void getAABB(Real bb[6]) const;
 
+		/** \brief Returns the axis aligned bounding box */
+		void getAABB(CPos& minCoord, CPos& maxCoord) const;
+
+		const Coord& getPointPosition(const PointID pointId) const;
+
+		const Coord& getPointRestPosition(const PointID pointId) const;
+
 		/** \brief Returns the object where the mechanical DOFs are stored */
 		sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *getDOF() const { return object;	}
 
-                virtual std::string getTemplateName() const
-                {
-                  return templateName(this);
-                }
+        virtual std::string getTemplateName() const
+        {
+          return templateName(this);
+        }
 
-                static std::string templateName(const PointSetGeometryAlgorithms<DataTypes>* = NULL)
-                {
-                  return DataTypes::Name();
-                }
+        static std::string templateName(const PointSetGeometryAlgorithms<DataTypes>* = NULL)
+        {
+          return DataTypes::Name();
+        }
+
 	protected:
 		/** the object where the mechanical DOFs are stored */
 		sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *object;
 		sofa::core::componentmodel::topology::BaseMeshTopology* m_topology;
 	};
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_POINTSETGEOMETRYALGORITHMS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Vec1dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Rigid3dTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Rigid2dTypes>;
+#endif
+
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Vec1fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Rigid3fTypes>;
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSetGeometryAlgorithms<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace topology
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,97 +38,97 @@ bool ContinuousTriangleIntersection::isCollision(void)
 {
 	SReal t[3], u[3], v[3];
 	double dt = 0.01; //Scene::getInstance()->getDt();
-	//std::cout<<"Triangle 2  : " << tr2 << std::endl;
+	//sout<<"Triangle 2  : " << tr2 << sendl;
 
 //	getc(stdin);
 
 	if (intersectPointTriangle(t[0], u[0], v[0], tr2.p1(), tr2.v1(), tr1.p1(), tr1.v1(), tr1.p2(), tr1.v2(), tr1.p3(), tr1.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectPointTriangle(t[1], u[1], v[1], tr2.p2(), tr2.v2(), tr1.p1(), tr1.v1(), tr1.p2(), tr1.v2(), tr1.p3(), tr1.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 	
 	if (intersectPointTriangle(t[2], u[2], v[2], tr2.p3(), tr2.v3(), tr1.p1(), tr1.v1(), tr1.p2(), tr1.v2(), tr1.p3(), tr1.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectPointTriangle(t[0], u[0], v[0], tr1.p1(), tr1.v1(), tr2.p1(), tr2.v1(), tr2.p2(), tr2.v2(), tr2.p3(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;	
 	}
 
 	if (intersectPointTriangle(t[1], u[1], v[1], tr1.p2(), tr1.v2(), tr2.p1(), tr2.v1(), tr2.p2(), tr2.v2(), tr2.p3(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;	
+		// sout<<"Triangle 1  : " << tr1 << sendl;	
 		return true;
 	}
 
 	if (intersectPointTriangle(t[2], u[2], v[2], tr1.p3(), tr1.v3(), tr2.p1(), tr2.v1(), tr2.p2(), tr2.v2(), tr2.p3(), tr2.v3(), dt))
 	{
-		 //std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		 //sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[0], u[0], v[0], tr1.p1(), tr1.p2(), tr1.v1(), tr1.v2(), tr2.p1(), tr2.p2(), tr2.v1(), tr2.v2(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[1], u[1], v[1], tr1.p1(), tr1.p3(), tr1.v1(), tr1.v3(), tr2.p1(), tr2.p2(), tr2.v1(), tr2.v2(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 	
 	if (intersectEdgeEdge(t[2], u[2], v[2], tr1.p2(), tr1.p3(), tr1.v2(), tr1.v3(), tr2.p1(), tr2.p2(), tr2.v1(), tr2.v2(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[0], u[0], v[0], tr1.p1(), tr1.p2(), tr1.v1(), tr1.v2(), tr2.p1(), tr2.p3(), tr2.v1(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[1], u[1], v[1], tr1.p1(), tr1.p3(), tr1.v1(), tr1.v3(), tr2.p1(), tr2.p3(), tr2.v1(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[2], u[2], v[2], tr1.p2(), tr1.p3(), tr1.v2(), tr1.v3(), tr2.p1(), tr2.p3(), tr2.v1(), tr2.v3(), dt))
 	{
-		//std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		//sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[0], u[0], v[0], tr1.p1(), tr1.p2(), tr1.v1(), tr1.v2(), tr2.p2(), tr2.p3(), tr2.v2(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;
+		// sout<<"Triangle 1  : " << tr1 << sendl;
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[1], u[1], v[1], tr1.p1(), tr1.p3(), tr1.v1(), tr1.v3(), tr2.p2(), tr2.p3(), tr2.v2(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;	
+		// sout<<"Triangle 1  : " << tr1 << sendl;	
 		return true;
 	}
 
 	if (intersectEdgeEdge(t[2], u[2], v[2], tr1.p2(), tr1.p3(), tr1.v2(), tr1.v3(), tr2.p2(), tr2.p3(), tr2.v2(), tr2.v3(), dt))
 	{
-		// std::cout<<"Triangle 1  : " << tr1 << std::endl;	
+		// sout<<"Triangle 1  : " << tr1 << sendl;	
 		return true;
 	}
 
@@ -148,25 +148,25 @@ core::componentmodel::collision::DetectionOutput* ContinuousTriangleIntersection
 	intersectPointTriangle(t[1], u[1], v[1], tr2.p2(), tr2.v2(), tr1.p1(), tr1.v1(), tr1.p2(), tr1.v2(), tr1.p3(), tr1.v3(), dt);
 	intersectPointTriangle(t[2], u[2], v[2], tr2.p3(), tr2.v3(), tr1.p1(), tr1.v1(), tr1.p2(), tr1.v2(), tr1.p3(), tr1.v3(), dt);
 	
-	// std::cout << "t = "  << t[0] << " " << t[1] << " " << t[2] << std::endl;
+	// sout << "t = "  << t[0] << " " << t[1] << " " << t[2] << sendl;
 
 	intersectPointTriangle(t[0], u[0], v[0], tr1.p1(), tr1.v1(), tr2.p1(), tr2.v1(), tr2.p2(), tr2.v2(), tr2.p3(), tr2.v3(), dt);
 	intersectPointTriangle(t[1], u[1], v[1], tr1.p2(), tr1.v2(), tr2.p1(), tr2.v1(), tr2.p2(), tr2.v2(), tr2.p3(), tr2.v3(), dt);
 	intersectPointTriangle(t[2], u[2], v[2], tr1.p3(), tr1.v3(), tr2.p1(), tr2.v1(), tr2.p2(), tr2.v2(), tr2.p3(), tr2.v3(), dt);
 	
-	// std::cout << "t = "  << t[0] << " " << t[1] << " " << t[2] << std::endl;
+	// sout << "t = "  << t[0] << " " << t[1] << " " << t[2] << sendl;
 
 	intersectEdgeEdge(t[0], u[0], v[0], tr1.p1(), tr1.p2(), tr1.v1(), tr1.v2(), tr2.p1(), tr2.p2(), tr2.v1(), tr2.v2(), dt);
 	intersectEdgeEdge(t[1], u[1], v[1], tr1.p1(), tr1.p3(), tr1.v1(), tr1.v3(), tr2.p1(), tr2.p2(), tr2.v1(), tr2.v2(), dt);
 	intersectEdgeEdge(t[2], u[2], v[2], tr1.p2(), tr1.p3(), tr1.v2(), tr1.v3(), tr2.p1(), tr2.p2(), tr2.v1(), tr2.v2(), dt);
 	
-	// std::cout << "t = "  << t[0] << " " << t[1] << " " << t[2] << std::endl;
+	// sout << "t = "  << t[0] << " " << t[1] << " " << t[2] << sendl;
 
 	intersectEdgeEdge(t[0], u[0], v[0], tr1.p1(), tr1.p2(), tr1.v1(), tr1.v2(), tr2.p1(), tr2.p3(), tr2.v1(), tr2.v3(), dt);
 	intersectEdgeEdge(t[1], u[1], v[1], tr1.p1(), tr1.p3(), tr1.v1(), tr1.v3(), tr2.p1(), tr2.p3(), tr2.v1(), tr2.v3(), dt);
 	intersectEdgeEdge(t[2], u[2], v[2], tr1.p2(), tr1.p3(), tr1.v2(), tr1.v3(), tr2.p1(), tr2.p3(), tr2.v1(), tr2.v3(), dt);
 	
-	// std::cout << "t = "  << t[0] << " " << t[1] << " " << t[2] << std::endl;
+	// sout << "t = "  << t[0] << " " << t[1] << " " << t[2] << sendl;
 
 	intersectEdgeEdge(t[0], u[0], v[0], tr1.p1(), tr1.p2(), tr1.v1(), tr1.v2(), tr2.p2(), tr2.p3(), tr2.v2(), tr2.v3(), dt);
 	intersectEdgeEdge(t[1], u[1], v[1], tr1.p1(), tr1.p3(), tr1.v1(), tr1.v3(), tr2.p2(), tr2.p3(), tr2.v2(), tr2.v3(), dt);
@@ -280,7 +280,7 @@ int ContinuousTriangleIntersection::intersectEdgeEdge (SReal& t, SReal& u, SReal
 
     if (det > -EPSILON && det < EPSILON)
     {
-        std::cerr << "~ContinuousTriangleIntersection::intersectEdgeEdge: POSSIBLY PARALLEL EDGES, CANNOT FIND DETERMINANT" << std::endl;
+      std::cerr << "~ContinuousTriangleIntersection::intersectEdgeEdge: POSSIBLY PARALLEL EDGES, CANNOT FIND DETERMINANT" << std::endl;
 
         return 0;
     }
@@ -390,7 +390,7 @@ int ContinuousTriangleIntersection::intersectPointTriangle (SReal& t, SReal& u, 
 
     if (det > -EPSILON && det < EPSILON)
     {
-        std::cerr << "ContinousTriangleIntersection::intersectPointTriangle: POSSIBLY POINT IS PARALLEL TO PLANE, CANNOT FIND DETERMINANT" << std::endl;
+      std::cerr << "ContinousTriangleIntersection::intersectPointTriangle: POSSIBLY POINT IS PARALLEL TO PLANE, CANNOT FIND DETERMINANT" << std::endl;
         return 0;
     }
 
@@ -529,7 +529,7 @@ int ContinuousTriangleIntersection::solveQuadratic (SReal& t1, SReal& t2, const 
         numRoots++;
     }
     //else
-    //    std::cerr << "ContinousTriangleIntersection::solveQuadratic: UNSOLVABLE QUADRATIC EQUATION" << std::endl;
+    //    serr << "ContinousTriangleIntersection::solveQuadratic: UNSOLVABLE QUADRATIC EQUATION" << sendl;
 
 
     return numRoots;

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,6 +33,7 @@
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/helper/fixed_array.h>
 #include <sofa/helper/vector.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -50,12 +51,14 @@ using helper::vector;
 using helper::fixed_array;
 
 
-class MeshTopology : public core::componentmodel::topology::BaseMeshTopology
+class SOFA_COMPONENT_CONTAINER_API MeshTopology : public core::componentmodel::topology::BaseMeshTopology
 {
   public:
 
 	MeshTopology();
-		
+
+	virtual void parse(core::objectmodel::BaseObjectDescription* arg);
+
 	virtual void init();
 	
 	virtual int getNbPoints() const;
@@ -88,6 +91,8 @@ class MeshTopology : public core::componentmodel::topology::BaseMeshTopology
     /// @{
     /// Returns the set of edges adjacent to a given vertex.
     virtual const VertexEdges &getEdgeVertexShell(PointID i);
+	/// Returns the set of edges adjacent to a given vertex.
+    virtual const VertexEdges &getOrientedEdgeVertexShell(PointID i);
     /// Returns the set of edges adjacent to a given triangle.
     virtual const TriangleEdges &getEdgeTriangleShell(TriangleID i);
     /// Returns the set of edges adjacent to a given quad.
@@ -98,12 +103,16 @@ class MeshTopology : public core::componentmodel::topology::BaseMeshTopology
     virtual const HexaEdges& getEdgeHexaShell(HexaID i);
     /// Returns the set of triangle adjacent to a given vertex.
     virtual const VertexTriangles &getTriangleVertexShell(PointID i);
+	/// Returns the set of oriented triangle adjacent to a given vertex.
+	virtual const VertexTriangles &getOrientedTriangleVertexShell(PointID i);
     /// Returns the set of triangle adjacent to a given edge.
     virtual const EdgeTriangles &getTriangleEdgeShell(EdgeID i);
     /// Returns the set of triangles adjacent to a given tetrahedron.
     virtual const TetraTriangles& getTriangleTetraShell(TetraID i);
     /// Returns the set of quad adjacent to a given vertex.
     virtual const VertexQuads &getQuadVertexShell(PointID i);
+	/// Returns the set of oriented quad adjacent to a given vertex.
+    virtual const VertexQuads &getOrientedQuadVertexShell(PointID i);
     /// Returns the set of quad adjacent to a given edge.
     virtual const EdgeQuads &getQuadEdgeShell(EdgeID i);
     /// Returns the set of quads adjacent to a given hexahedron.
@@ -147,15 +156,35 @@ class MeshTopology : public core::componentmodel::topology::BaseMeshTopology
 
     void draw();
 
+    virtual bool hasVolume() { return ( ( getNbTetras() + getNbHexas() ) > 0 ); }
+    virtual bool hasSurface() { return ( ( getNbTriangles() + getNbQuads() ) > 0 ); }
+    virtual bool hasLines() { return ( ( getNbLines() ) > 0 ); }
+
+    virtual bool isVolume() { return hasVolume(); }
+    virtual bool isSurface() { return !hasVolume() && hasSurface(); }
+    virtual bool isLines() { return !hasVolume() && !hasSurface() && hasLines(); }
+
+	// test whether p0p1 has the same orientation as triangle t
+	// opposite dirction: return -1
+	// same direction: return 1
+	// otherwise: return 0
+	int computeRelativeOrientationInTri(const unsigned int ind_p0, const unsigned int ind_p1, const unsigned int ind_t);
+
+	// test whether p0p1 has the same orientation as triangle t
+	// opposite dirction: return -1
+	// same direction: return 1
+	// otherwise: return 0
+	int computeRelativeOrientationInQuad(const unsigned int ind_p0, const unsigned int ind_p1, const unsigned int ind_q);
+
 protected:
 	int nbPoints;
-	vector< fixed_array<SReal,3> > seqPoints;
+	Data< vector< defaulttype::Vec<3,SReal> > > seqPoints;
 	
 	Data<SeqEdges> seqEdges;
 	bool validEdges;
 	
 	//SeqTriangles   seqTriangles;
-        Data<SeqTriangles> seqTriangles;
+    Data<SeqTriangles> seqTriangles;
 	bool         validTriangles;
 	
 	//SeqQuads       seqQuads;
@@ -173,10 +202,12 @@ protected:
 	Data<SeqCubes>       seqHexas;
 #endif
 	bool         validHexas;
-	
 
 	/** the array that stores the set of edge-vertex shells, ie for each vertex gives the set of adjacent edges */
 	vector< VertexEdges > m_edgeVertexShell;
+
+	/** the array that stores the set of oriented edge-vertex shells, ie for each vertex gives the set of adjacent edges */
+	vector< VertexEdges > m_orientedEdgeVertexShell;
 
 	/** the array that stores the set of edge-triangle shells, ie for each triangle gives the 3 adjacent edges */
 	vector< TriangleEdges > m_edgeTriangleShell;
@@ -193,6 +224,9 @@ protected:
 	/// for each vertex provides the set of triangles adjacent to that vertex
 	vector< VertexTriangles > m_triangleVertexShell;
 
+	/// for each vertex provides the set of oriented triangles adjacent to that vertex
+	vector< VertexTriangles > m_orientedTriangleVertexShell;
+
 	/// for each edge provides the set of triangles adjacent to that edge
 	vector< EdgeTriangles > m_triangleEdgeShell;
 	
@@ -201,6 +235,9 @@ protected:
 
 	/// for each vertex provides the set of quads adjacent to that vertex
 	vector< VertexQuads > m_quadVertexShell;
+
+	/// for each vertex provides the set of oriented quads adjacent to that vertex
+	vector< VertexQuads > m_orientedQuadVertexShell;
 	
 	/// for each edge provides the set of quads adjacent to that edge
 	vector< EdgeQuads > m_quadEdgeShell;
@@ -225,7 +262,7 @@ protected:
 	
 	/// for each quad provides the set of hexahedrons adjacent to that quad
 	vector< QuadHexas > m_hexaQuadShell;
-		
+
 	/** \brief Creates the EdgeSetIndex.
 	 *
 	 * This function is only called if the EdgeVertexShell member is required.
@@ -269,6 +306,13 @@ protected:
 	 */
 	void createTriangleVertexShellArray();
 
+	/** \brief Creates the oriented Triangle Vertex Shell Array
+	*
+	* This function is only called if the OrientedTriangleVertexShell array is required.
+	* m_orientedTriangleVertexShell[i] contains the indices of all triangles adjacent to the ith vertex 
+	*/
+	void createOrientedTriangleVertexShellArray();
+
 	/** \brief Creates the Triangle Edge Shell Array
 	 *
 	 * This function is only called if the TriangleEdgeShell array is required.
@@ -289,6 +333,13 @@ protected:
 	 * m_quadVertexShell[i] contains the indices of all quads adjacent to the ith vertex 
 	 */
 	void createQuadVertexShellArray ();
+
+	/** \brief Creates the Quad Vertex Shell Array
+	 *
+	 * This function is only called if the QuadVertexShell array is required.
+	 * m_quadVertexShell[i] contains the indices of all quads adjacent to the ith vertex 
+	 */
+	void createOrientedQuadVertexShellArray ();
 
 	/** \brief Creates the Quad Edge Shell Array
 	 *
@@ -359,12 +410,13 @@ protected:
 	const vector< VertexQuads >& getQuadVertexShellArray();
 
 
-
+public:
 	/** \brief Returns the index of the edge joining vertex v1 and vertex v2; returns -1 if no edge exists 
 	 *
 	 */
 	int getEdgeIndex(PointID v1, PointID v2);
-	
+
+protected:	
 	/** Returns the indices of a triangle given three vertex indices : returns -1 if none */
 	int getTriangleIndex(PointID v1, PointID v2, PointID v3);
 		
@@ -386,6 +438,7 @@ protected:
 	/** \brief Returns the index (either 0, 1 ,2 or 3) of the vertex whose global index is vertexIndex. Returns -1 if none 
 	*
 	*/
+
 	int getVertexIndexInTriangle(const Triangle &t, PointID vertexIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2) of the edge whose global index is edgeIndex. Returns -1 if none 
@@ -444,11 +497,11 @@ protected:
 
 	void invalidate();
 	
-	virtual void updateEdges()     { }
-	virtual void updateTriangles() { }
-	virtual void updateQuads()     { }
-	virtual void updateTetras()    { }
-	virtual void updateHexas()     { }
+	virtual void updateEdges();
+	virtual void updateTriangles();
+	virtual void updateQuads();
+	virtual void updateTetras();
+	virtual void updateHexas();
 
 	protected:
 		virtual void loadFromMeshLoader(sofa::component::MeshLoader* loader);

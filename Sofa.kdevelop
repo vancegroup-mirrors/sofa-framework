@@ -20,7 +20,7 @@
   </general>
   <kdevfileview>
     <groups>
-      <group pattern="*.cpp;*.cxx;*.h;*.inl" name="Sources" />
+      <group pattern="*.cpp;*.cxx;*.h;*.inl;*.cu" name="Sources" />
       <group pattern="*.ui" name="User Interface" />
       <group pattern="*.png" name="Icons" />
       <group pattern="*" name="Others" />
@@ -82,7 +82,7 @@
   <kdevdebugger>
     <general>
       <dbgshell/>
-      <programargs>examples/demoChainHybrid.scn</programargs>
+      <programargs>examples/Demos/liver.scn</programargs>
       <gdbpath/>
       <configGdbScript/>
       <runShellScript/>
@@ -100,17 +100,17 @@
   </kdevdebugger>
   <kdevtrollproject>
     <run>
-      <mainprogram>/disc/bousquet/Sofa</mainprogram>
-      <programargs>scenes/liver.scn</programargs>
+      <mainprogram>./bin/runSofa-latest</mainprogram>
+      <programargs>-r</programargs>
       <directoryradio>build</directoryradio>
       <customdirectory>/</customdirectory>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
       <envvars>
-        <envvar value="./lib/linux:$LD_LIBRARY_PATH:./lib/linux:$LD_LIBRARY_PATH:/usr/local/cuda/lib" name="LD_LIBRARY_PATH" />
+        <envvar value="./lib/linux:/usr/local/cuda/lib:$LD_LIBRARY_PATH" name="LD_LIBRARY_PATH" />
       </envvars>
       <globaldebugarguments/>
-      <globalcwd>/disc/ffaure/sofa-dev/trunk/Sofa</globalcwd>
+      <globalcwd>/home/allardj/work/Sofa</globalcwd>
       <useglobalprogram>true</useglobalprogram>
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
@@ -119,15 +119,11 @@
       <activedir></activedir>
     </general>
     <make>
-      <abortonerror>false</abortonerror>
+      <abortonerror>true</abortonerror>
       <numberofjobs>4</numberofjobs>
       <dontact>false</dontact>
       <makebin/>
-      <envvars>
-        <envvar value="/usr/local/cuda/lib" name="CUDA_LIB_PATH" />
-        <envvar value="./lib/linux:$LD_LIBRARY_PATH" name="LD_LIBRARY_PATH" />
-        <envvar value="$PATH:/usr/local/cuda/bin" name="PATH" />
-      </envvars>
+      <envvars/>
       <prio>0</prio>
       <runmultiplejobs>true</runmultiplejobs>
     </make>
@@ -138,7 +134,7 @@
       <disableDefaultOpts>true</disableDefaultOpts>
       <enableFilenamesOnly>false</enableFilenamesOnly>
       <showVariablesInTree>true</showVariablesInTree>
-      <showParseErrors>true</showParseErrors>
+      <showParseErrors>false</showParseErrors>
     </qmake>
   </kdevtrollproject>
   <kdevfilecreate>
@@ -177,7 +173,7 @@
       <alwaysParseInBackground>true</alwaysParseInBackground>
       <usePermanentCaching>true</usePermanentCaching>
       <alwaysIncludeNamespaces>false</alwaysIncludeNamespaces>
-      <includePaths>.;</includePaths>
+      <includePaths>.;framework;modules;applications</includePaths>
     </codecompletion>
     <creategettersetter>
       <prefixGet/>
@@ -190,11 +186,11 @@
     <qt>
       <used>false</used>
       <version>3</version>
-      <root>/usr/lib/qt-3.3/</root>
+      <root></root>
       <includestyle>3</includestyle>
       <designerintegration>EmbeddedKDevDesigner</designerintegration>
-      <qmake>/usr/lib/qt-3.3//bin/qmake</qmake>
-      <designer>/usr/lib/qt-3.3//bin/designer</designer>
+      <qmake>/usr/bin/qmake</qmake>
+      <designer>/usr/bin/designer-qt3</designer>
       <designerpluginpaths/>
     </qt>
     <designerintegration>
@@ -215,13 +211,14 @@
   <kdevdocumentation>
     <projectdoc>
       <docsystem>Doxygen Documentation Collection</docsystem>
-      <docurl>html/index.html</docurl>
+      <docurl>doc/doxygen/html/index.html</docurl>
       <usermanualurl/>
     </projectdoc>
   </kdevdocumentation>
   <ctagspart>
     <customArguments/>
     <customTagfilePath/>
+    <activeTagsFiles/>
   </ctagspart>
   <kdevvisualadvance>
     <emulator>VisualBoyAdvance</emulator>

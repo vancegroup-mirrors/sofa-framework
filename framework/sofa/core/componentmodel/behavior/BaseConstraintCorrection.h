@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -52,17 +52,33 @@ class BaseConstraintCorrection : public virtual objectmodel::BaseObject
 {
 public:
     virtual ~BaseConstraintCorrection() {}
-    
+
     virtual void getCompliance(defaulttype::BaseMatrix* W) = 0;
-	 
-	 virtual void CudaGetCompliance(defaulttype::BaseMatrix* W) {
-		 std::cout << "warning : CudaGetCompliance(defaulttype::BaseMatrix* W) is not implemented in " << this->getTypeName() << std::endl;
-		 getCompliance(W); // par defaut si la methode cuda n'est pas implementé on resoud sur CPU
-	 }
-    
+	
+
+
+         virtual void CudaGetCompliance(defaulttype::BaseMatrix* W) {
+                 sout << "warning : CudaGetCompliance(defaulttype::BaseMatrix* W) is not implemented in " << this->getTypeName() << sendl;
+                 getCompliance(W); // par defaut si la methode cuda n'est pas implementé on resoud sur CPU
+         }
+
     virtual void applyContactForce(const defaulttype::BaseVector *f) = 0;
-    
+
     virtual void resetContactForce() = 0;
+	
+	// NEW : for non building the constraint system during solving///////////////// 
+	virtual bool hasConstraintNumber(int /*index*/) {return true;}
+	
+	virtual void resetForUnbuiltResolution(double * /*f*/, std::list<int>& /*renumbering*/) {}   
+	
+	virtual void addConstraintDisplacement(double * /*d*/, int /*begin*/,int /*end*/) { }
+	
+	virtual void setConstraintDForce(double * /*df*/, int /*begin*/,int /*end*/, bool /*update*/) { }	  // f += df
+
+	virtual void getBlockDiagonalCompliance(defaulttype::BaseMatrix* /*W*/, int /*begin*/,int /*end*/) {
+				sout << "warning : getBlockDiagonalCompliance(defaulttype::BaseMatrix* W) is not implemented in " << this->getTypeName() << sendl;
+		}
+	/////////////////////////////////////////////////////////////////////////////////	
 
 };
 

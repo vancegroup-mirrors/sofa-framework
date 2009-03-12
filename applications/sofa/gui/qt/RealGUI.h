@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -44,6 +44,9 @@
 #include <sofa/gui/qt/AddObject.h>
 #include <sofa/gui/qt/ModifyObject.h>
 #include <sofa/gui/qt/DisplayFlagWidget.h>
+#include <sofa/gui/qt/WindowVisitor.h>
+#include <sofa/gui/qt/GraphVisitor.h>
+#include <sofa/gui/qt/SofaPluginManager.h>
 
 #include <sofa/simulation/tree/xml/XML.h>
 #include <sofa/helper/system/SetDirectory.h>
@@ -58,6 +61,7 @@
 #include <QTimer>
 #include <Q3TextDrag>
 #include <Q3PopupMenu>
+#include <QLibrary>
 typedef Q3ListViewItem QListViewItem;
 typedef QStackedWidget QWidgetStack;
 typedef Q3PopupMenu QPopupMenu;
@@ -70,6 +74,7 @@ typedef QTextDrag Q3TextDrag;
 #include <qlistview.h>
 #include <qslider.h>
 #include <qpopupmenu.h>
+#include <qlibrary.h>
 #endif 
  
 
@@ -143,6 +148,7 @@ public:
 	  
 	  virtual void editRecordDirectory();
 	  virtual void editGnuplotDirectory();
+	  virtual void showPluginManager();
 
 	  void dragEnterEvent( QDragEnterEvent* event){event->accept();}
 	  void dropEvent(QDropEvent* event);
@@ -154,7 +160,6 @@ public:
 	  void RightClickedItemInSceneView(QListViewItem *item, const QPoint& point, int index);
 	  void playpauseGUI(bool value);
 	  void step();
-	  void animate();
 	  void setDt(double);
 	  void setDt(const QString&);
 	  void resetScene();
@@ -170,10 +175,13 @@ public:
 	  void slot_playforward(  ) ;
 	  void slot_stepforward( ) ;
 	  void slot_forward( );
-	  void slot_sliderValue(int);
-	  void slot_loadrecord_timevalue();
+	  void slot_sliderValue(int value,bool updateTime=true);
+	  void slot_loadrecord_timevalue(bool updateTime=true);
 
 
+	  void updateViewerParameters();
+	  void updateBackgroundColour();
+	  void updateBackgroundImage();
 
 	  void changeInstrument(int);
   
@@ -197,11 +205,12 @@ public:
 	  
 
 	  void exportGraph();
-	  void exportGraph(sofa::simulation::tree::GNode*);
+	  void exportGraph(sofa::simulation::Node*);
 	  void exportOBJ(bool exportMTL=true);
 	  void dumpState(bool);
 	  void displayComputationTime(bool);
 	  void setExportGnuplot(bool);
+	  void setExportVisitor(bool);
 	  void currentTabChanged(QWidget*);
 
 	signals:
@@ -227,8 +236,12 @@ public:
 	  	 
 	  bool isErasable(core::objectmodel::Base* element);
 
+	  void startDumpVisitor();
+	  void stopDumpVisitor();
+
 	  bool m_dumpState;
 	  std::ofstream* m_dumpStateStream;
+	  std::ofstream* m_dumpVisitorStream;
 	  bool m_exportGnuplot;
 	  bool _animationOBJ; int _animationOBJcounter;// save a succession of .obj indexed by _animationOBJcounter
 	  bool m_displayComputationTime;
@@ -239,11 +252,14 @@ public:
 	  
 	  GraphListenerQListView* graphListener;
 	  QListViewItem *item_clicked;
-	  GNode *node_clicked;
+	  Node *node_clicked;
 	  QTimer* timerStep;
 	  QTimer* timerRecordStep;
 	  QLabel* fpsLabel;
 	  QLabel* timeLabel;
+	  WFloatLineEdit *background[3];
+	  QLineEdit *backgroundImage;
+
 	  
 	  void setPixmap(std::string pixmap_filename, QPushButton* b);
 
@@ -272,19 +288,20 @@ public:
 	  std::string record_directory;
 	  std::string gnuplot_directory;
 	  std::string writeSceneName;
+	  std::string pathDumpVisitor;
 	      
 	  QWidgetStack* left_stack;
 	  AddObject *dialog;
 
 
 
-	  sofa::simulation::tree::GNode* getScene() { if (viewer) return viewer->getScene(); else return NULL; }
+	  sofa::simulation::Node* getScene() { if (viewer) return viewer->getScene(); else return NULL; }
 
-	  void sleep(unsigned int mseconds, unsigned int init_time)
+	  void sleep(float seconds, float init_time)
 	  {
 	    unsigned int t = 0;
-	   clock_t goal = mseconds + init_time;
-	   while (goal > clock()) t++;
+	    clock_t goal = (clock_t) (seconds + init_time);
+	    while (goal > clock()/(float)CLOCKS_PER_SEC) t++;
 	  }
 	  
 	private:
@@ -325,6 +342,9 @@ public:
 #endif
 
 	  DisplayFlagWidget *displayFlag;
+	  WindowVisitor* windowTraceVisitor;
+	  GraphVisitor* handleTraceVisitor;
+	  SofaPluginManager* pluginManager;
 
 };
 

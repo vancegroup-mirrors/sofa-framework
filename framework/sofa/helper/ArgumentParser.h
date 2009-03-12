@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,6 +32,8 @@
 #ifndef SOFA_HELPER_ARGUMENTPARSER_H
 #define SOFA_HELPER_ARGUMENTPARSER_H
 
+#include <sofa/helper/helper.h>
+
 #include <iostream>
 #include <stdlib.h>
 #include <sstream>
@@ -52,7 +54,7 @@ namespace helper
 typedef std::istringstream istrstream; 
 
 /// Abstract base class for all command line arguments
-class ArgumentBase
+class SOFA_HELPER_API ArgumentBase
 {
 public:
 	/// character string
@@ -188,7 +190,7 @@ bool Argument<bool>::read( std::list<std::string>& )
 }
 
 template<> inline 
-        bool Argument<std::string>::read( std::list<std::string>& str )
+bool Argument<std::string>::read( std::list<std::string>& str )
 {
 	if (str.empty()) return false;
 	std::string s = str.front();
@@ -223,7 +225,7 @@ The special option -h or --help displays help on all arguments.
 See examples argumentParserLine_test.cpp and argumentParserFile_test.cpp
 @see Argument
 */
-class ArgumentParser {
+class SOFA_HELPER_API ArgumentParser {
 	/// String
 	typedef std::string string;
 	/// Associate a string with a Argument object

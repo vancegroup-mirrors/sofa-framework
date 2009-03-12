@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -62,8 +62,14 @@ bool ObjectElement::init()
     i++;
     it->init();
   }
-  
-  return initNode();  
+
+  return initNode();
+}
+
+/// Set an attribute. Override any existing value
+void ObjectElement::setAttribute(const std::string& attr, const char* val)
+{
+      attributes[attr] = val;
 }
 
 bool ObjectElement::initNode()
@@ -72,33 +78,44 @@ bool ObjectElement::initNode()
     core::objectmodel::BaseContext* ctx = dynamic_cast<core::objectmodel::BaseContext*>(getParent()->getObject());
 
 //     std::cout << "ObjectElement: creating "<<getAttribute( "type", "" )<<std::endl;
-    
+
+    for (AttributeMap::iterator it = attributes.begin(), itend = attributes.end(); it != itend; ++it)
+    {
+          if (replaceAttribute.find(it->first) != replaceAttribute.end())
+          {
+            setAttribute(it->first,replaceAttribute[it->first].c_str());
+          }
+    }
 
     core::objectmodel::BaseObject *obj = core::ObjectFactory::CreateObject(ctx, this);
-    
+
     if (obj == NULL)
         obj = Factory::CreateObject(this->getType(), this);
     if (obj == NULL)
+    {
+        getParent()->logWarning(std::string("Object type \"" + getType() + "\" creation Failed" ));
         return false;
+    }
     setObject(obj);
     obj->setName(getName());
-    
-    // display any unused attributes
-    std::string unused;
+
+        // display any unused attributes
+   std::string unused;
     for (AttributeMap::iterator it = attributes.begin(), itend = attributes.end(); it != itend; ++it)
     {
         if (!it->second.isAccessed())
         {
             unused += ' ';
             unused += it->first;
-     
-            obj->logWarning(std::string("Unused Attribute: \"") + it->first + std::string("\" with value: \"" ) + it->second.c_str() + std::string("\"") );       
+
+            obj->serr <<"Unused Attribute: \""<<it->first <<"\" with value: \"" <<it->second.c_str() <<"\"" << obj->sendl;
         }
     }
-    if (!unused.empty())
-    {
-        std::cerr << "WARNING: Unused attribute(s) in "<<getFullName()<<" :"<<unused<<std::endl;
-    }
+//     if (!unused.empty())
+//     {
+//         std::cerr << "WARNING: Unused attribute(s) in "<<getFullName()<<" :"<<unused<<std::endl;
+//     }
+
     return true;
 }
 

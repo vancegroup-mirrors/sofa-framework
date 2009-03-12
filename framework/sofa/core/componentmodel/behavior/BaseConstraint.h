@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -46,7 +46,6 @@ namespace componentmodel
 
 namespace behavior
 {
-/// @TODO  The classes applyConstraint, getConstraintValue && getConstraintId need to be commented
 
 /**
  *  \brief Component computing constraints within a simulated body.
@@ -60,10 +59,21 @@ namespace behavior
  *  see the InteractionConstraint class).
  *
  */
-class BaseConstraint : public virtual objectmodel::BaseObject
+class SOFA_CORE_API BaseConstraint : public virtual objectmodel::BaseObject
 {
 public:
+    BaseConstraint()
+    : group(initData(&group, 0, "group", "ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle."))
+    {
+    }
+
     virtual ~BaseConstraint() { }
+
+    /// Get the ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
+    int getGroup() const { return group.getValue(); }
+
+    /// Set the ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
+    void setGroup(int g) { group.setValue(g); }
 
     /// @name Vector operations
     /// @{
@@ -91,18 +101,22 @@ public:
     /// Project the compliance Matrix to constrained space.
     virtual void projectResponse(double **);
 
-    /// @}
-
-    virtual void applyConstraint(unsigned int&, double&);
+    /// Project to constrained space using offset parameter
+    virtual void applyConstraint(unsigned int&);
 
 	/// Project the global Mechanical Matrix to constrained space using offset parameter
     virtual void applyConstraint(defaulttype::BaseMatrix *, unsigned int & /*offset*/);
 
+    /// Apply constraint to the inverse of the mass matrix
+    virtual void applyInvMassConstraint(defaulttype::BaseVector *, unsigned int &);
+
 	/// Project the global Mechanical Vector to constrained space using offset parameter
     virtual void applyConstraint(defaulttype::BaseVector *, unsigned int & /*offset*/);
 
-	virtual void getConstraintValue(defaulttype::BaseVector *) {};
-	virtual void getConstraintValue(double *) {};
+	/// Set the violation of each constraint
+    virtual void getConstraintValue(defaulttype::BaseVector *, bool /* freeMotion */ = true ) {}
+	
+	/// Set an Id for each constraint
 	virtual void getConstraintId(long * /*id*/, unsigned int & /*offset*/) {}
 
 
@@ -112,6 +126,11 @@ public:
 	/// Non-holonomic constraints (like contact, friction...) need more specific treatments
 	virtual bool isHolonomic() {return false; }
 
+	/// Test if the constraint is satisfied: return the error.
+	virtual double getError(){ return 0.0;}
+
+protected:
+	Data<int> group;
 };
 
 } // namespace behavior

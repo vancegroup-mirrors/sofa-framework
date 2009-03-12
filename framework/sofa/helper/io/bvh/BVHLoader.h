@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,6 +29,7 @@
 
 #include <sofa/helper/io/bvh/BVHJoint.h>
 #include <sofa/helper/io/bvh/BVHMotion.h>
+#include <sofa/helper/helper.h>
 
 namespace sofa
 {
@@ -47,7 +48,7 @@ namespace bvh
 *	This files describe a hierarchical articulated model and also an associated motion
 *	see http://www.cs.wisc.edu/graphics/Courses/cs-838-1999/Jeff/BVH.html for the file format specification
 */
-class BVHLoader
+class SOFA_HELPER_API BVHLoader
 {
 public:
 	BVHLoader(){};

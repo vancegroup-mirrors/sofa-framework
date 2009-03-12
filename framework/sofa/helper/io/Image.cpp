@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -24,6 +24,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#include <sofa/helper/system/config.h>
 #include <sofa/helper/io/Image.h>
 #include <sofa/helper/Factory.inl>
 
@@ -33,12 +34,13 @@ namespace sofa
 namespace helper
 {
 
-template class Factory<std::string, sofa::helper::io::Image, std::string>;
+template class SOFA_HELPER_API Factory<std::string, sofa::helper::io::Image, std::string>;
 
 namespace io
 {
 
-
+SOFA_LINK_CLASS(ImageBMP)
+SOFA_LINK_CLASS(ImagePNG)
 
 Image::Image()
 : width(0), height(0), nbBits(0), data(NULL)

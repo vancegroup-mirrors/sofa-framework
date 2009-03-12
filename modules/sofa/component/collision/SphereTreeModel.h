@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,7 +36,7 @@
 #define SOFA_COMPONENT_COLLISION_SPHERETREEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <vector>
@@ -96,7 +96,7 @@ public:
     @brief A Sphere Tree based collision object: No tool to generation .sph file are provided by Sofa. 
       Tools can be found at http://isg.cs.tcd.ie/spheretree/ . If you manage to integrate an automatic generation tool to provide .sph files from .obj, don't hesitate to share it to the Sofa's comunity.
  */
-class SphereTreeModel : public component::MechanicalObject<Vec3Types>, public core::CollisionModel
+class SOFA_COMPONENT_COLLISION_API SphereTreeModel : public component::MechanicalObject<Vec3Types>, public core::CollisionModel
 {
 public:
 	typedef component::MechanicalObject<Vec3Types> Inherit;

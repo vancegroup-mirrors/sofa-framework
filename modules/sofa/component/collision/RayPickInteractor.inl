@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,7 +37,7 @@
 #include <sofa/component/mapping/SkinningMapping.h>
 #include <sofa/component/forcefield/StiffSpringForceField.h>
 #include <sofa/component/forcefield/VectorSpringForceField.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 
 #include <sofa/helper/system/gl.h>
@@ -68,7 +68,7 @@ void DefaultPickingManager<DataTypes,ContactForceField>::release()
     // release the attached body
     for (unsigned int i=0; i<forcefields.size(); i++)
     {
-	std::cout << "DefaultPickingManager: Deleting "<<forcefields[i]->getClassName()<<" "<<forcefields[i]->getName()<<std::endl;
+	sout << "DefaultPickingManager: Deleting "<<forcefields[i]->getClassName()<<" "<<forcefields[i]->getName()<<sendl;
 	forcefields[i]->cleanup();
 	forcefields[i]->getContext()->removeObject(forcefields[i]);
 	delete forcefields[i];
@@ -125,15 +125,17 @@ component::MechanicalObject<DataTypes>* DefaultPickingManager<DataTypes,ContactF
     if (mechanicalObject == NULL)
     {
         mechanicalObject = new component::MechanicalObject<DataTypes>();
-        simulation::tree::GNode* parent = dynamic_cast<simulation::tree::GNode*>(context);
+        simulation::Node* parent = dynamic_cast<simulation::Node*>(context);
         if (parent != NULL)
         {
             std::string name = "contactMouse";
             name += DataTypes::Name();
-            simulation::tree::GNode* child = new simulation::tree::GNode(name);
+            simulation::Node* child = simulation::getSimulation()->newNode(name);
             parent->addChild(child);
             child->updateContext();
             child->addObject(mechanicalObject);
+	    if (parent->get<sofa::core::componentmodel::behavior::OdeSolver>()) // we are below a solver, use a VoidMapping to indicate that it should not touch this object
+		child->addObject(new component::mapping::VoidMapping);
         }
         else
         {
@@ -155,7 +157,7 @@ bool DefaultPickingManager<DataTypes,ContactForceField>::attach(core::CollisionE
     BaseContactMapper<DataTypes>* mapper2 = BaseContactMapper<DataTypes>::Create(model2);
     if (mapper2 == NULL)
     {
-        std::cerr << "DefaultPickingManager: ContactMapper from "<<model2->getClassName()<<"<"<<model2->getTemplateName()<<"> to "<<DataTypes::Name()<<" not found."<<std::endl;
+        serr << "DefaultPickingManager: ContactMapper from "<<model2->getClassName()<<"<"<<model2->getTemplateName()<<"> to "<<DataTypes::Name()<<" not found."<<sendl;
 	//sofa::helper::printFactoryLog();
         return false;
     }
@@ -190,6 +192,46 @@ bool DefaultPickingManager<DataTypes,ContactForceField>::attach(core::CollisionE
     attachedPoints.push_back(std::make_pair(Ray(rayModel,elem1.getIndex()), dist));
     return true;
 }
+
+template<class DataTypes, class ContactForceField>
+bool DefaultPickingManager<DataTypes,ContactForceField>::attach(core::CollisionElementIterator elem1, core::componentmodel::behavior::BaseMechanicalState* model2, int elem2, double dist, Vector3 p1, Vector3 p2)
+{
+    core::CollisionModel* model1 = elem1.getCollisionModel();
+    RayModel* rayModel = dynamic_cast<RayModel*>(model1);
+    if (rayModel == NULL) return false;
+    MechanicalState<DataTypes>* mstate2 = dynamic_cast<MechanicalState<DataTypes>*>(model2);
+    if (mstate2 == NULL)
+    {
+        serr << "DefaultPickingManager: MechanicalState "<<model2->getClassName()<<"<"<<model2->getTemplateName()<<"> not supported."<<sendl;
+        return false;
+    }
+    component::MechanicalObject<DataTypes>* mstate1 = getMState(rayModel->getContext());
+    std::string name = "contactMouse";
+    name += DataTypes::Name();
+    ContactForceField* ff = new ContactForceField(mstate1, mstate2);
+    name = this->getName();
+    name += "-";
+    name += model2->getClassName();
+    ff->setName(name);
+    ff->clear(1);
+    int index1 = attachedPoints.size();
+    mstate1->resize(index1+1);
+    int index2 = elem2;
+    Real r1 = 0.0;
+    Real r2 = 0.0;
+    // Create mapping for second point
+    Coord p; p = p2;
+    p2 = (*mstate2->getX())[index2];
+    double stiffness = (elem1.getContactStiffness());
+    double mu_v = (elem1.getContactFriction());
+    addContact(ff, index1, index2, stiffness, mu_v, r1+r2, p1, p2);
+    mstate2->getContext()->addObject(ff);
+    ff->init();
+    forcefields.push_back(ff);
+    attachedPoints.push_back(std::make_pair(Ray(rayModel,elem1.getIndex()), dist));
+    return true;
+}
+
 
 template<>
 void DefaultPickingManager<defaulttype::Vec3Types,forcefield::VectorSpringForceField<defaulttype::Vec3Types> >::addContact(forcefield::VectorSpringForceField<defaulttype::Vec3Types>* ff, int index1, int index2, double stiffness, double mu_v, double /*length*/, const Vector3& p1, const Vector3& p2);

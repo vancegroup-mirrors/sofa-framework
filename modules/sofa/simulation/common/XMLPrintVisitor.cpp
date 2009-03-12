@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -61,19 +61,30 @@ void XMLPrintVisitor::processObject(T obj)
 
     std::string classname = obj->getClassName();
     std::string templatename = obj->getTemplateName();
-    
-    m_out << "<Object type=\"" << xmlencode(classname) << "\"";
+
+    m_out << "<" << xmlencode(classname);
     if (!templatename.empty())
         m_out << " template=\"" << xmlencode(templatename) << "\"";
-       
-    m_out << ">\n";
-    
-    obj->xmlWriteDatas( m_out, level+1 );
-    
-    
-    for (int i=0;i<level;i++)
-      m_out << "\t";
-    m_out << "</Object>" << std::endl;
+
+    if (!compact) m_out << ">\n";
+
+    obj->xmlWriteDatas( m_out, level+1, compact );
+
+    if (compact)
+    {
+      m_out << "/>" << std::endl;
+    }
+    else
+    {
+      for (int i=0;i<level;i++)
+        m_out << "\t";
+      m_out << "</" << xmlencode(classname)  <<">" << std::endl;
+    }
+}
+
+void XMLPrintVisitor::processBaseObject(core::objectmodel::BaseObject* obj)
+{
+	processObject(obj);
 }
 
 template<class Seq>
@@ -93,13 +104,13 @@ Visitor::Result XMLPrintVisitor::processNodeTopDown(simulation::Node* node)
 {
 	for (int i=0;i<level;i++)
 		m_out << "\t";
-	m_out << "<Node ";
-	
+	m_out << "<Node \t";
+
  	++level;
-        node->xmlWriteNodeDatas(m_out,level);     
-	
+        node->xmlWriteNodeDatas(m_out,level);
+
 	for (int i=0;i<level;i++)
-	  m_out << "\t";   
+	  m_out << "\t";
         m_out << " >\n";
 
 	if (node->mechanicalMapping != NULL)
@@ -111,10 +122,11 @@ Visitor::Result XMLPrintVisitor::processNodeTopDown(simulation::Node* node)
     {
         sofa::core::objectmodel::BaseObject* obj = *it;
         if (   dynamic_cast<sofa::core::componentmodel::behavior::InteractionForceField*> (obj) == NULL
-            && dynamic_cast<sofa::core::componentmodel::behavior::InteractionConstraint*> (obj) == NULL )
+	       && dynamic_cast<sofa::core::componentmodel::behavior::InteractionConstraint*> (obj) == NULL
+	       && dynamic_cast<sofa::core::componentmodel::behavior::BaseLMConstraint*> (obj) == NULL)
             this->processObject(obj);
     }
-    
+
 	return RESULT_CONTINUE;
 }
 
@@ -124,15 +136,16 @@ void XMLPrintVisitor::processNodeBottomUp(simulation::Node* node)
     {
         sofa::core::objectmodel::BaseObject* obj = *it;
         if (   dynamic_cast<sofa::core::componentmodel::behavior::InteractionForceField*> (obj) != NULL
-            || dynamic_cast<sofa::core::componentmodel::behavior::InteractionConstraint*> (obj) != NULL )
+	       || dynamic_cast<sofa::core::componentmodel::behavior::InteractionConstraint*> (obj) != NULL
+	       || dynamic_cast<sofa::core::componentmodel::behavior::BaseLMConstraint*> (obj) != NULL   )
             this->processObject(obj);
     }
     --level;
-    
+
     for (int i=0;i<level;i++)
         m_out << "\t";
     m_out << "</Node>"<<std::endl;
-    
+
 }
 
 } // namespace simulation

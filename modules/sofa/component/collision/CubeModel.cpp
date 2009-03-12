@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -23,6 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/component/collision/CubeModel.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/core/ObjectFactory.h>
 #include <algorithm>
 #include <math.h>
@@ -78,6 +79,15 @@ void CubeModel::setParentOf(int childIndex, const Vector3& min, const Vector3& m
 	int i = parentOf[childIndex];
 	elems[i].minBBox = min;
 	elems[i].maxBBox = max;
+}
+
+void CubeModel::setLeafCube(int cubeIndex, int childIndex)
+{
+	parentOf[childIndex] = cubeIndex;
+	this->elems[cubeIndex].children.first=core::CollisionElementIterator(getNext(), childIndex);
+    this->elems[cubeIndex].children.second=core::CollisionElementIterator(getNext(), childIndex+1);
+	//elems[cubeIndex].minBBox = min;
+	//elems[cubeIndex].maxBBox = max;
 }
 
 void CubeModel::setLeafCube(int cubeIndex, std::pair<core::CollisionElementIterator,core::CollisionElementIterator> children, const Vector3& min, const Vector3& max)
@@ -172,7 +182,7 @@ void CubeModel::draw(int index)
 void CubeModel::draw()
 {
     if (!isActive() || !((getNext()==NULL)?getContext()->getShowCollisionModels():getContext()->getShowBoundingCollisionModels())) return;
-    glDisable(GL_LIGHTING);
+
     int level=0;
     CollisionModel* m = getPrevious();
     float color = 1.0f;
@@ -182,25 +192,49 @@ void CubeModel::draw()
         ++level;
         color *= 0.5f;
     }
+    Vec<4,float> c;
     if (isSimulated())
-        glColor4f(1.0f, 1.0f, 1.0f, color);
+      c=Vec<4,float>(1.0f, 1.0f, 1.0f, color);
     else
-        glColor4f(1.0f, 1.0f, 0.0f, color);
-    if (color < 1.0f)
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthMask(0);
-    }
+      c=Vec<4,float>(1.0f, 1.0f, 1.0f, color);
+
+    std::vector< Vector3 > points;
     for (int i=0;i<size;i++)
     {
-        draw(i);
+	const Vector3& vmin = elems[i].minBBox;
+	const Vector3& vmax = elems[i].maxBBox;
+
+	points.push_back(Vector3(vmin[0], vmin[1], vmin[2]));
+	points.push_back(Vector3(vmin[0], vmin[1], vmax[2]));
+	points.push_back(Vector3(vmin[0], vmax[1], vmin[2]));
+	points.push_back(Vector3(vmin[0], vmax[1], vmax[2]));
+	points.push_back(Vector3(vmax[0], vmin[1], vmin[2]));
+	points.push_back(Vector3(vmax[0], vmin[1], vmax[2]));
+	points.push_back(Vector3(vmax[0], vmax[1], vmin[2]));
+	points.push_back(Vector3(vmax[0], vmax[1], vmax[2]));
+
+	points.push_back(Vector3(vmin[0], vmin[1], vmin[2]));
+	points.push_back(Vector3(vmin[0], vmax[1], vmin[2]));
+	points.push_back(Vector3(vmin[0], vmin[1], vmax[2]));
+	points.push_back(Vector3(vmin[0], vmax[1], vmax[2]));
+	points.push_back(Vector3(vmax[0], vmin[1], vmin[2]));
+	points.push_back(Vector3(vmax[0], vmax[1], vmin[2]));
+	points.push_back(Vector3(vmax[0], vmin[1], vmax[2]));
+	points.push_back(Vector3(vmax[0], vmax[1], vmax[2]));
+
+	points.push_back(Vector3(vmin[0], vmin[1], vmin[2]));
+	points.push_back(Vector3(vmax[0], vmin[1], vmin[2]));
+	points.push_back(Vector3(vmin[0], vmax[1], vmin[2]));
+	points.push_back(Vector3(vmax[0], vmax[1], vmin[2]));
+	points.push_back(Vector3(vmin[0], vmin[1], vmax[2]));
+	points.push_back(Vector3(vmax[0], vmin[1], vmax[2]));
+	points.push_back(Vector3(vmin[0], vmax[1], vmax[2]));
+	points.push_back(Vector3(vmax[0], vmax[1], vmax[2]));
     }
-    if (color < 1.0f)
-    {
-        glDisable(GL_BLEND);
-        glDepthMask(1);
-    }
+
+    simulation::getSimulation()->DrawUtility.drawLines(points, 1, Vec<4,float>(c));
+
+
     if (getPrevious()!=NULL)
         getPrevious()->draw();
 }
@@ -250,7 +284,7 @@ public:
         const CubeModel::CubeData* c2 = (const CubeModel::CubeData*)p2;
         double v1 = c1->minBBox[Axis] + c1->maxBBox[Axis];
         double v2 = c2->minBBox[Axis] + c2->maxBBox[Axis];
-        
+
         if (v1 < v2)
             return -1;
         else if (v1 > v2)
@@ -262,18 +296,18 @@ public:
 
 void CubeModel::computeBoundingTree(int maxDepth)
 {
-    //std::cout << ">CubeModel::computeBoundingTree("<<maxDepth<<")"<<std::endl;
+    //sout << ">CubeModel::computeBoundingTree("<<maxDepth<<")"<<sendl;
     std::list<CubeModel*> levels;
     levels.push_front(createPrevious<CubeModel>());
     for (int i=0;i<maxDepth;i++)
         levels.push_front(levels.front()->createPrevious<CubeModel>());
     CubeModel* root = levels.front();
     //if (isStatic() && root->getPrevious() == NULL && !root->empty()) return; // No need to recompute BBox if immobile
-    
+
     if (root->empty() || root->getPrevious() != NULL)
     {
         // Tree must be reconstructed
-        //std::cout << "Building Tree with depth "<<maxDepth<<" from "<<size<<" elements.\n";
+        //sout << "Building Tree with depth "<<maxDepth<<" from "<<size<<" elements."<<sendl;
         // First remove extra levels
         while(root->getPrevious()!=NULL)
         {
@@ -287,7 +321,7 @@ void CubeModel::computeBoundingTree(int maxDepth)
                 (*it)->resize(0);
         }
         // Then build root cell
-        //std::cout << "CubeModel: add root cube"<<std::endl;
+        //sout << "CubeModel: add root cube"<<sendl;
         root->addCube(Cube(this,0),Cube(this,size));
         // Construct tree by splitting cells along their biggest dimension
         std::list<CubeModel*>::iterator it = levels.begin();
@@ -296,14 +330,14 @@ void CubeModel::computeBoundingTree(int maxDepth)
         int lvl = 0;
         while(it != levels.end())
         {
-            //std::cout << "CubeModel: split level "<<lvl<<std::endl;
+            //sout << "CubeModel: split level "<<lvl<<sendl;
             CubeModel* clevel = *it;
             clevel->elems.reserve(level->size*2);
             for(Cube cell = Cube(level->begin()); level->end() != cell; ++cell)
             {
                 const std::pair<Cube,Cube>& subcells = cell.subcells();
                 int ncells = subcells.second.getIndex() - subcells.first.getIndex();
-                //std::cout << "CubeModel: level "<<lvl<<" cell "<<cell.getIndex()<<": current subcells "<<subcells.first.getIndex() << " - "<<subcells.second.getIndex()<<std::endl;
+                //sout << "CubeModel: level "<<lvl<<" cell "<<cell.getIndex()<<": current subcells "<<subcells.first.getIndex() << " - "<<subcells.second.getIndex()<<sendl;
                 if (ncells > 4)
                 { // Only split cells with more than 4 childs
                     // Find the biggest dimension
@@ -320,10 +354,10 @@ void CubeModel::computeBoundingTree(int maxDepth)
                             splitAxis = 1;
                         else
                             splitAxis = 2;
-                    
+
                     // Separate cells on each side of the median cell
 
-#if defined(__GNUC__) && (__GNUC__ == 4) 
+#if defined(__GNUC__) && (__GNUC__ == 4)
 // && (__GNUC_MINOR__ == 1) && (__GNUC_PATCHLEVEL__ == 1)
                     // there is apparently a bug in std::sort with GCC 4.x
                     if (splitAxis == 0)
@@ -342,7 +376,7 @@ void CubeModel::computeBoundingTree(int maxDepth)
                     Cube cmiddle(this, middle);
                     int c1 = clevel->addCube(subcells.first, cmiddle);
                     int c2 = clevel->addCube(cmiddle, subcells.second);
-                    //std::cout << "L"<<lvl<<" cell "<<cell.getIndex()<<" split along "<<(splitAxis==0?'X':splitAxis==1?'Y':'Z')<<" in cell "<<c1<<" size "<<middle-subcells.first.getIndex()<<" and cell "<<c2<<" size "<<subcells.second.getIndex()-middle<<".\n";
+                    //sout << "L"<<lvl<<" cell "<<cell.getIndex()<<" split along "<<(splitAxis==0?'X':splitAxis==1?'Y':'Z')<<" in cell "<<c1<<" size "<<middle-subcells.first.getIndex()<<" and cell "<<c2<<" size "<<subcells.second.getIndex()-middle<<"."<<sendl;
                     //level->elems[cell.getIndex()].subcells = std::make_pair(Cube(clevel,c1),Cube(clevel,c2+1));
                     level->elems[cell.getIndex()].subcells.first = Cube(clevel,c1);
                     level->elems[cell.getIndex()].subcells.second = Cube(clevel,c2+1);
@@ -352,9 +386,12 @@ void CubeModel::computeBoundingTree(int maxDepth)
             level = clevel;
             ++lvl;
         }
-        // Finally update parentOf to reflect new cell order
-        for (int i=0;i<size;i++)
-            parentOf[elems[i].children.first.getIndex()] = i;
+        if (!parentOf.empty())
+        {
+        	// Finally update parentOf to reflect new cell order
+        	for (int i=0;i<size;i++)
+        		parentOf[elems[i].children.first.getIndex()] = i;
+        }
     }
     else
     {
@@ -362,12 +399,12 @@ void CubeModel::computeBoundingTree(int maxDepth)
         int lvl = 0;
         for (std::list<CubeModel*>::reverse_iterator it = levels.rbegin(); it != levels.rend(); it++)
         {
-            //std::cout << "CubeModel: update level "<<lvl<<std::endl;
+            //sout << "CubeModel: update level "<<lvl<<sendl;
             (*it)->updateCubes();
             ++lvl;
         }
     }
-    //std::cout << "<CubeModel::computeBoundingTree("<<maxDepth<<")"<<std::endl;
+    //sout << "<CubeModel::computeBoundingTree("<<maxDepth<<")"<<sendl;
 }
 
 } // namespace collision

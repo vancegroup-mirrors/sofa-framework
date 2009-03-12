@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -63,6 +63,7 @@ public:
     typedef TetrahedronFEMForceFieldInternalData<DataTypes> Data;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
+    typedef typename DataTypes::VecReal VecReal;
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
     typedef typename DataTypes::Real Real;
@@ -185,12 +186,12 @@ public:
     /// Varying data associated with each element
     struct GPUElementState
     {
-        /// rotation matrix
-        Mat<3,3,Real> Rt;
+        /// transposed rotation matrix
+        Real Rt[3][3][BSIZE];
         /// current internal stress
-        Vec<6,Real> S;
+        //Vec<6,Real> S;
         /// unused value to align to 64 bytes
-        Real dummy;
+        //Real dummy;
     };
 
     /// Varying data associated with each element
@@ -199,6 +200,8 @@ public:
         Vec<4,Real> fA,fB,fC,fD;
     };
 
+    gpu::cuda::CudaVector<GPUElementState> initState;
+    gpu::cuda::CudaVector<int> rotationIdx;
     gpu::cuda::CudaVector<GPUElementState> state;
     gpu::cuda::CudaVector<GPUElementForce> eforce;
     int nbElement; ///< number of elements
@@ -213,11 +216,13 @@ public:
     {
     	elems.clear();
     	state.clear();
+    	initState.clear();
+    	rotationIdx.clear();
     	eforce.clear();
     	velems.clear();
         nbElement = nbe;
         elems.resize((nbe+BSIZE-1)/BSIZE);
-        state.resize(nbe);
+        state.resize((nbe+BSIZE-1)/BSIZE);
         eforce.resize(nbe);
         vertex0 = v0;
         nbVertex = nbv;
@@ -241,13 +246,13 @@ public:
 
     void setE(int i, const Element& indices, const Coord& /*a*/, const Coord& b, const Coord& c, const Coord& d, const MaterialStiffness& K, const StrainDisplacement& /*J*/)
     {
-        /*std::cout << "CPU Info:\n a = "<<a<<"\n b = "<<b<<"\n c = "<<c<<"\n d = "<<d<<"\n K = "
+        /*sout << "CPU Info:\n a = "<<a<<"\n b = "<<b<<"\n c = "<<c<<"\n d = "<<d<<"\n K = "
             <<K[0]<<"\n     "<<K[1]<<"\n     "<<K[2]<<"\n     "
             <<K[3]<<"\n     "<<K[4]<<"\n     "<<K[5]<<"\n J="
             <<J[0]<<"\n     "<<J[1]<<"\n     "<<J[2]<<"\n     "
             <<J[3]<<"\n     "<<J[4]<<"\n     "<<J[5]<<"\n     "
             <<J[6]<<"\n     "<<J[7]<<"\n     "<<J[8]<<"\n     "
-            <<J[9]<<"\n     "<<J[10]<<"\n     "<<J[11]<<std::endl;*/
+            <<J[9]<<"\n     "<<J[10]<<"\n     "<<J[11]<<sendl;*/
         GPUElement& e = elems[i/BSIZE]; i = i%BSIZE;
         e.ia[i] = indices[0] - vertex0;
         e.ib[i] = indices[1] - vertex0;
@@ -263,7 +268,7 @@ public:
         e.Jby_bx[i] = (-e.cx[i] * e.dz[i]) / e.bx[i];
         e.Jbz_bx[i] = (e.cx[i]*e.dy[i] - e.cy[i]*e.dx[i]) / e.bx[i];
         //e.dummy[i] = 0;
-        /*std::cout << "GPU Info:\n b = "<<e.bx<<"\n c = "<<e.cx<<" "<<e.cy<<"\n d = "<<e.dx<<" "<<e.dy<<" "<<e.dz<<"\n K = "
+        /*sout << "GPU Info:\n b = "<<e.bx<<"\n c = "<<e.cx<<" "<<e.cy<<"\n d = "<<e.dx<<" "<<e.dy<<" "<<e.dz<<"\n K = "
             <<(e.gamma_bx2+e.mu2_bx2)/bx2<<" "<<(e.gamma_bx2)/bx2<<" "<<(e.gamma_bx2)/bx2<<" 0 0 0\n     "
             <<(e.gamma_bx2)/bx2<<" "<<(e.gamma_bx2+e.mu2_bx2)/bx2<<" "<<(e.gamma_bx2)/bx2<<" 0 0 0\n     "
             <<(e.gamma_bx2)/bx2<<" "<<(e.gamma_bx2)/bx2<<" "<<(e.gamma_bx2+e.mu2_bx2)/bx2<<" 0 0 0\n     "
@@ -279,19 +284,20 @@ public:
             <<(e.Jbx_bx)*e.bx<<" 0 0 "<<(e.Jby_bx)*e.bx<<" 0 "<<(e.Jbz_bx)*e.bx<<"\n     "
             <<"0 "<<(e.Jby_bx)*e.bx<<" 0 "<<(e.Jbx_bx)*e.bx<<" "<<(e.Jbz_bx)*e.bx<<" 0\n     "
             <<"0 0 "<<(e.Jbz_bx)*e.bx<<" 0 "<<(e.Jby_bx)*e.bx<<" "<<(e.Jbx_bx)*e.bx<<"\n     "
-            
+
             <<(0)*e.bx<<" 0 0 "<<(e.dz)*e.bx<<" 0 "<<(-e.dy)*e.bx<<"\n     "
             <<"0 "<<(e.dz)*e.bx<<" 0 "<<(0)*e.bx<<" "<<(-e.dy)*e.bx<<" 0\n     "
             <<"0 0 "<<(-e.dy)*e.bx<<" 0 "<<(e.dz)*e.bx<<" "<<(0)*e.bx<<"\n     "
 
             <<(0)*e.bx<<" 0 0 "<<(0)*e.bx<<" 0 "<<(e.cy)*e.bx<<"\n     "
             <<"0 "<<(0)*e.bx<<" 0 "<<(0)*e.bx<<" "<<(e.cy)*e.bx<<" 0\n     "
-            <<"0 0 "<<(e.cy)*e.bx<<" 0 "<<(0)*e.bx<<" "<<(0)*e.bx<<std::endl;*/
+            <<"0 0 "<<(e.cy)*e.bx<<" 0 "<<(0)*e.bx<<" "<<(0)*e.bx<<sendl;*/
     }
 
     static void reinit(Main* m);
     static void addForce(Main* m, VecDeriv& f, const VecCoord& x, const VecDeriv& /*v*/);
     static void addDForce (Main* m, VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
+    static void getRotations(Main* m, VecReal& rotations);
 };
 
 //
@@ -302,11 +308,18 @@ public:
 #define CudaTetrahedronFEMForceField_DeclMethods(T) \
     template<> void TetrahedronFEMForceField< T >::reinit(); \
     template<> void TetrahedronFEMForceField< T >::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v); \
+    template<> void TetrahedronFEMForceField< T >::getRotations(VecReal& vecR); \
     template<> void TetrahedronFEMForceField< T >::addDForce(VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
 
 CudaTetrahedronFEMForceField_DeclMethods(gpu::cuda::CudaVec3fTypes);
 CudaTetrahedronFEMForceField_DeclMethods(gpu::cuda::CudaVec3f1Types);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+CudaTetrahedronFEMForceField_DeclMethods(gpu::cuda::CudaVec3dTypes);
+CudaTetrahedronFEMForceField_DeclMethods(gpu::cuda::CudaVec3d1Types);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 #undef CudaTetrahedronFEMForceField_DeclMethods
 

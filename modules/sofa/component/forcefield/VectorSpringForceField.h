@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 #include <sofa/component/forcefield/SpringForceField.h>
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/component/topology/EdgeData.h>
 #include <sofa/component/topology/TopologyChangedEvent.h>
@@ -76,6 +76,18 @@ public:
         Spring() : ks(1.0), kd(1.0)
         {
         }
+
+	/// Output stream
+	inline friend std::ostream& operator<< ( std::ostream& os, const Spring& /*s*/ )
+	{
+	return os;
+	}
+	
+	/// Input stream
+	inline friend std::istream& operator>> ( std::istream& in, Spring& /*s*/ )
+	{
+	return in;
+	}
     };
 protected:
 
@@ -120,6 +132,7 @@ public:
     core::componentmodel::behavior::MechanicalState<DataTypes>* getObject2() { return this->mstate2; }
 
     virtual void init();
+    virtual void bwdInit();
 
     void createDefaultSprings();
 
@@ -154,8 +167,10 @@ public:
 
     void clear(int reserve=0)
     {
-        springArray.clear();
-        if (reserve) springArray.reserve(reserve);
+	helper::vector<Spring>& springArrayData = *(springArray.beginEdit());
+        springArrayData.clear();
+        if (reserve) springArrayData.reserve(reserve);
+	springArray.endEdit();
     }
 
     void addSpring(int m1, int m2, SReal ks, SReal kd, Coord restVector);
@@ -165,6 +180,16 @@ public:
     friend class Loader;
 
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_VECTORSPRINGFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API VectorSpringForceField<defaulttype::Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API VectorSpringForceField<defaulttype::Vec3fTypes>;
+#endif
+#endif
 
 } // namespace forcefield
 

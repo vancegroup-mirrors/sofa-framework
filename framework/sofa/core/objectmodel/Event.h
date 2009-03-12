@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,8 @@
 #ifndef SOFA_CORE_OBJECTMODEL_EVENT_H
 #define SOFA_CORE_OBJECTMODEL_EVENT_H
 
+#include <sofa/core/core.h>
+
 namespace sofa
 {
 
@@ -43,7 +45,7 @@ namespace objectmodel
  *
  * @author Francois Faure
  */
-class Event{
+class SOFA_CORE_API Event{
 public:
     Event();
 
@@ -55,6 +57,7 @@ public:
     /// Returns true of the event has been handled
     bool isHandled() const;
 
+    virtual const char* getClassName() const { return "Event"; }
 protected:
     bool m_handled;
 };

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -78,6 +78,10 @@ objectmodel::BaseObject* Mapping<In,Out>::getTo()
 template <class In, class Out>
 void Mapping<In,Out>::init()
 {
+        if (!object2.isSet() && toModel)
+        {
+          this->object2.setValue( toModel->getName() );
+        }
 	this->updateMapping();
 }
 
@@ -101,8 +105,8 @@ void Mapping<In,Out>::updateMapping()
 	if (this->toModel->getX()!=NULL && this->fromModel->getX()!=NULL)
 	{
 		apply(*this->toModel->getX(), *this->fromModel->getX());
-		//cerr<<"Mapping<In,Out>::updateMapping(), *this->fromModel->getX() = "<<*this->fromModel->getX()<<endl;
-		//cerr<<"Mapping<In,Out>::updateMapping(), *this->toModel->getX() = "<<*this->toModel->getX()<<endl;
+		//serr<<"Mapping<In,Out>::updateMapping(), *this->fromModel->getX() = "<<*this->fromModel->getX()<<sendl;
+		//serr<<"Mapping<In,Out>::updateMapping(), *this->toModel->getX() = "<<*this->toModel->getX()<<sendl;
 	}
 	if (this->toModel->getV()!=NULL && this->fromModel->getV()!=NULL)
 	{

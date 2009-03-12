@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -42,7 +42,7 @@ namespace objectmodel
 	@author Juan Pablo de la Plata
 	@brief This event is propagated along the objects when a key on the keyboard is released.
 */
-class KeyreleasedEvent : public core::objectmodel::Event
+class SOFA_CORE_API KeyreleasedEvent : public core::objectmodel::Event
 {
 public:
     /// Constructor

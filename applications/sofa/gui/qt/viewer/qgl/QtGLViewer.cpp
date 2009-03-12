@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -28,7 +28,7 @@
 #include <sofa/helper/system/config.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/thread/CTime.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
@@ -43,6 +43,7 @@
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
 #include <sofa/helper/system/glut.h>
+#include <sofa/gui/SofaGUI.h>
 #include <qevent.h>
 #include "GenGraphForm.h"
 #include "Main.h"
@@ -81,51 +82,12 @@ namespace sofa
 	  using std::endl;
 	  using namespace sofa::defaulttype;
 	  using namespace sofa::helper::gl;
-	  using sofa::simulation::tree::getSimulation;
+	  using sofa::simulation::getSimulation;
 
 	  //extern UserInterface*	GUI;
 	  //extern OBJmodel*		cubeModel;
 	  // Quaternion QtGLViewer::_newQuat;
 
-
-#ifdef SOFA_HAVE_GLEW
-	  // Shadow Mapping parameters
-
-	  // These store our width and height for the shadow texture
-	  enum { SHADOW_WIDTH = 512 };
-	  enum { SHADOW_HEIGHT = 512 };
-	  enum { SHADOW_MASK_SIZE = 2048 };
-
-	  // This is used to set the mode with glTexParameteri() for comparing depth values.
-	  // We use GL_COMPARE_R_TO_TEXTURE_ARB as our mode.  R is used to represent the depth value.
-#define GL_TEXTURE_COMPARE_MODE_ARB       0x884C
-
-	  // This is used to set the function with glTexParameteri() to tell OpenGL how we
-	  // will compare the depth values (we use GL_LEQUAL (less than or equal)).
-#define GL_TEXTURE_COMPARE_FUNC_ARB       0x884D
-
-	  // This mode is what will compare our depth values for shadow mapping
-#define GL_COMPARE_R_TO_TEXTURE_ARB       0x884E
-
-	  // The texture array where we store our image data
-	  GLuint g_DepthTexture;
-
-	  // This is our global shader object that will load the shader files
-	  GLSLShader g_Shader;
-
-	  //float g_DepthOffset[2] = { 3.0f, 0.0f };
-	  float g_DepthOffset[2] = { 10.0f, 0.0f };
-	  float g_DepthBias[2] = { 0.0f, 0.0f };
-
-	  // These are the light's matrices that need to be stored
-	  float g_mProjection[16] = {0};
-	  float g_mModelView[16] = {0};
-	  //float g_mCameraInverse[16] = {0};
-
-	  GLuint ShadowTextureMask;
-
-	  // End of Shadow Mapping Parameters
-#endif // SOFA_HAVE_GLEW
 
 	  static bool enabled = false;
 	  sofa::core::ObjectFactory::ClassEntry* classVisualModel;
@@ -139,7 +101,7 @@ namespace sofa
 	      {
 		enabled = true;
 		// Replace generic visual models with OglModel
-		sofa::core::ObjectFactory::AddAlias("VisualModel", "OglModel", true, &classVisualModel); 
+		sofa::core::ObjectFactory::AddAlias("VisualModel", "OglModel", true, &classVisualModel);
 	      }
 	    return 0;
 	  }
@@ -152,7 +114,7 @@ namespace sofa
 	    if (enabled)
 	      {
 		enabled = false;
-		sofa::core::ObjectFactory::ResetAlias("VisualModel", classVisualModel); 
+		sofa::core::ObjectFactory::ResetAlias("VisualModel", classVisualModel);
 	      }
 	    return 0;
 	  }
@@ -163,9 +125,14 @@ namespace sofa
 	  QtGLViewer::QtGLViewer(QWidget* parent, const char* name)
 	    : QGLViewer(parent, name)
 	  {
-	
-	    groot = NULL;				
+
+	    groot = NULL;
 	    initTexturesDone = false;
+
+	    backgroundColour[0]=1.0f;
+	    backgroundColour[1]=1.0f;
+	    backgroundColour[2]=1.0f;
+
 	    // setup OpenGL mode for the window
 	    //Fl_Gl_Window::mode(FL_RGB | FL_DOUBLE | FL_DEPTH | FL_ALPHA);
 	    timerAnimate = new QTimer(this);
@@ -178,8 +145,6 @@ namespace sofa
 	    _video = false;
 	    _axis = false;
 	    _background = 0;
-	    _shadow = false;
-	    _gl_shadow = false;
 	    _numOBJmodels = 0;
 	    _materialMode = 0;
 	    _facetNormal = GL_FALSE;
@@ -215,20 +180,23 @@ namespace sofa
 	    gluQuadricNormals(_disk, GLU_SMOOTH);
 
 
-	
+
 	    //////////////////////
-		
-		
+
+
 	    interactor = NULL;
 	    _mouseInteractorMoving = false;
 	    _mouseInteractorSavedPosX = 0;
 	    _mouseInteractorSavedPosY = 0;
 	    m_isControlPressed = false;
-		
+
 	    setManipulatedFrame( new qglviewer::ManipulatedFrame() );
 	    //near and far plane are better placed
             camera()->setZNearCoefficient(0.001);
 	    camera()->setZClippingCoefficient(5);
+
+	    visualParameters.zNear = camera()->zNear();
+	    visualParameters.zFar = camera()->zFar();
 	  }
 
 
@@ -240,14 +208,14 @@ namespace sofa
 	  }
 
 	  // -----------------------------------------------------------------
-	  // --- OpenGL initialization method - includes light definitions, 
+	  // --- OpenGL initialization method - includes light definitions,
 	  // --- color tracking, etc.
 	  // -----------------------------------------------------------------
 	  void QtGLViewer::init(void)
 	  {
 	    restoreStateFromFile();
-	
-	
+
+
 	    static	 GLfloat	specref[4];
 	    static	 GLfloat	ambientLight[4];
 	    static	 GLfloat	diffuseLight[4];
@@ -301,7 +269,7 @@ namespace sofa
 #else
                   glActiveTextureARB        = (PFNGLACTIVETEXTUREARBPROC)        glewGetProcAddress("glActiveTextureARB");
                   glMultiTexCoord2fARB    = (PFNGLMULTITEXCOORD2FARBPROC)        glewGetProcAddress("glMultiTexCoord2fARB");
-                  
+
                   // Make sure our multi-texturing extensions were loaded correctly
                   if(!glActiveTextureARB || !glMultiTexCoord2fARB)
                   {
@@ -310,7 +278,7 @@ namespace sofa
                       //PostQuitMessage(0);
                   }
 #endif
-                  
+
 		_clearBuffer = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
 		_lightModelTwoSides = false;
 
@@ -345,7 +313,7 @@ namespace sofa
 
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		//Load texture for logo
-		texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile("textures/SOFA_logo.bmp") ));
+		texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile(backgroundImage) ));
 		texLogo->init();
 
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -356,44 +324,26 @@ namespace sofa
 		glEnable(GL_LIGHT0);
 		//glEnable(GL_COLOR_MATERIAL);
 
-#ifdef SOFA_HAVE_GLEW
-		// Here we allocate memory for our depth texture that will store our light's view
-		CreateRenderTexture(g_DepthTexture, SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT);
-		CreateRenderTexture(ShadowTextureMask, SHADOW_MASK_SIZE, SHADOW_MASK_SIZE, GL_LUMINANCE, GL_LUMINANCE);
-		
-		if ( GLSLShader::InitGLSL() )
-		{
-		    // Here we pass in our new vertex and fragment shader files to our shader object.
-		    g_Shader.InitShaders(sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.vert"), sofa::helper::system::DataRepository.getFile("shaders/ShadowMappingPCF.frag"));
-		    _gl_shadow = true;
-		}
-		else
-#endif
-		{
-		    printf("WARNING QtGLViewer : shadows are not supported !\n");
-		    _gl_shadow=false;
-		}
-
 		// change status so we only do this stuff once
 		initialized = true;
 
 		_beginTime = CTime::getTime();
 
-		printf("\n");	 	      		
-	
-	
+		printf("\n");
+
+
 		// GL_LIGHT1 follows the camera
 		// 	glMatrixMode(GL_MODELVIEW);
 		// 	glPushMatrix();
 		// 	glLoadIdentity();
 		// 	glLightfv(GL_LIGHT0, GL_POSITION, _lightPosition);
 		// 	glPopMatrix();
-	
-	    
-	
+
+
+
 		// 	camera()->setType( qglviewer::Camera::ORTHOGRAPHIC );
 		// 	camera()->setType( qglviewer::Camera::PERSPECTIVE  );
-	
+
 	      }
 
 	    // switch to preset view
@@ -405,199 +355,6 @@ namespace sofa
 	    // save x3d file in the MainController. So we need to change it:
 	    setShortcut(QGLViewer::SAVE_SCREENSHOT, Qt::Key_S);
 	    setShortcut(QGLViewer::HELP, Qt::Key_H);
-	  }
-
-	  // ---------------------------------------------------------
-	  // ---
-	  // ---------------------------------------------------------
-
-	  ///////////////////////////////// STORE LIGHT MATRICES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-	  /////
-	  /////	This function positions our view from the light for shadow mapping
-	  /////
-	  ///////////////////////////////// STORE LIGHT MATRICES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-
-	  void QtGLViewer::StoreLightMatrices()
-	  {	
-	    //	_lightPosition[0] =  _sceneTransform.translation[0] + 10;//*cosf(TT);
-	    //	_lightPosition[1] =  _sceneTransform.translation[1] + 10;//*sinf(2*TT);
-	    //	_lightPosition[2] =  _sceneTransform.translation[2] + 35;//
-
-	    //_lightPosition[0] =  1;
-	    //_lightPosition[1] =  -10;
-	    //_lightPosition[2] =  0;
-
-	    // Reset our current light matrices
-	    memset(g_mModelView, 0, sizeof(float)*16);
-	    memset(g_mProjection, 0, sizeof(float)*16);
-
-	    g_mModelView[0] = 1; // identity
-	    g_mModelView[5] = 1;
-	    g_mModelView[10] = 1;
-	    g_mModelView[15] = 1;
-
-	    // Using perpective shadow map for the "miner lamp" case ( i.e. light.z == 0 )
-	    // which is just a "rotation" in sceen space
-
-	    float lx = -_lightPosition[0] * lastProjectionMatrix[0] - _lightPosition[1] * lastProjectionMatrix[4] + lastProjectionMatrix[12];
-	    float ly = -_lightPosition[0] * lastProjectionMatrix[1] - _lightPosition[1] * lastProjectionMatrix[5] + lastProjectionMatrix[13];
-	    float lz = -_lightPosition[0] * lastProjectionMatrix[2] - _lightPosition[1] * lastProjectionMatrix[6] + lastProjectionMatrix[14];
-	    //float lw = -_lightPosition[0] * lastProjectionMatrix[3] - _lightPosition[1] * lastProjectionMatrix[7] + lastProjectionMatrix[15];
-	    //std::cout << "lx = "<<lx<<" ly = "<<ly<<" lz = "<<lz<<" lw = "<<lw<<std::endl;
-
-	    Vector3 l(-lx,-ly,-lz);
-	    Vector3 y;
-	    y = l.cross(Vector3(1,0,0));
-	    Vector3 x;
-	    x = y.cross(l);
-	    l.normalize();
-	    y.normalize();
-	    x.normalize();
-
-	    g_mProjection[ 0] = x[0]; g_mProjection[ 4] = x[1]; g_mProjection[ 8] = x[2]; g_mProjection[12] =    0;
-	    g_mProjection[ 1] = y[0]; g_mProjection[ 5] = y[1]; g_mProjection[ 9] = y[2]; g_mProjection[13] =    0;
-	    g_mProjection[ 2] = l[0]; g_mProjection[ 6] = l[1]; g_mProjection[10] = l[2]; g_mProjection[14] =    0;
-	    g_mProjection[ 3] =    0; g_mProjection[ 7] =    0; g_mProjection[11] =    0; g_mProjection[15] =    1;
-
-	    g_mProjection[ 0] = x[0]; g_mProjection[ 4] = y[0]; g_mProjection[ 8] = l[0]; g_mProjection[12] =    0;
-	    g_mProjection[ 1] = x[1]; g_mProjection[ 5] = y[1]; g_mProjection[ 9] = l[1]; g_mProjection[13] =    0;
-	    g_mProjection[ 2] = x[2]; g_mProjection[ 6] = y[2]; g_mProjection[10] = l[2]; g_mProjection[14] =    0;
-	    g_mProjection[ 3] =    0; g_mProjection[ 7] =    0; g_mProjection[11] =    0; g_mProjection[15] =    1;
-
-	    glPushMatrix();{
-
-	      glLoadIdentity();
-	      glScaled(1.0/(fabs(g_mProjection[0])+fabs(g_mProjection[4])+fabs(g_mProjection[8])),
-		       1.0/(fabs(g_mProjection[1])+fabs(g_mProjection[5])+fabs(g_mProjection[9])),
-		       1.0/(fabs(g_mProjection[2])+fabs(g_mProjection[6])+fabs(g_mProjection[10])));
-	      glMultMatrixf(g_mProjection);
-	      glMultMatrixd(lastProjectionMatrix);
-		
-	      // Grab the current matrix that will be used for the light's projection matrix
-	      glGetFloatv(GL_MODELVIEW_MATRIX, g_mProjection);
-
-	      // Go back to the original matrix
-	    }glPopMatrix();
-
-	    /*
-	    // Let's push on a new matrix so we don't change the rest of the world
-	    glPushMatrix();{
-
-	    // Reset the current modelview matrix
-	    glLoadIdentity();
-		
-	    // This is where we set the light's position and view.
-	    gluLookAt(_lightPosition[0],  _lightPosition[1],  _lightPosition[2], 
-	    _sceneTransform.translation[0],	   _sceneTransform.translation[1],	    _sceneTransform.translation[2],		0, 1, 0);
-
-	    // Now that we have the light's view, let's save the current modelview matrix.
-	    glGetFloatv(GL_MODELVIEW_MATRIX, g_mModelView);
-
-	    // Reset the current matrix
-	    glLoadIdentity();
-
-	    // Set our FOV, aspect ratio, then near and far planes for the light's view
-	    gluPerspective(90.0f, 1.0f, 4.0f, 250.0f);
-
-	    // Grab the current matrix that will be used for the light's projection matrix
-	    glGetFloatv(GL_MODELVIEW_MATRIX, g_mProjection);
-
-	    // Go back to the original matrix
-	    }glPopMatrix();
-	    */
-	  }
-
-	  /////////////////////////////// CREATE RENDER TEXTURE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-	  /////
-	  /////	This function creates a blank texture to render to
-	  /////
-	  /////////////////////////////// CREATE RENDER TEXTURE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-
-	  void QtGLViewer::CreateRenderTexture(GLuint& textureID, int sizeX, int sizeY, int channels, int type)
-	  {
-	    glGenTextures(1, &textureID);								
-	    glBindTexture(GL_TEXTURE_2D, textureID);
-
-	    // Create the texture and store it on the video card
-	    glTexImage2D(GL_TEXTURE_2D, 0, channels, sizeX, sizeY, 0, type, GL_UNSIGNED_INT, NULL);
-
-	    // Set the texture quality
-	    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	    glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	  }
-
-	  //////////////////////////////// APPLY SHADOW MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-	  /////
-	  /////	This function applies the shadow map to our world data
-	  /////
-	  //////////////////////////////// APPLY SHADOW MAP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*
-
-	  void QtGLViewer::ApplyShadowMap()
-	  {
-#ifdef SOFA_HAVE_GLEW
-	    // Let's turn our shaders on for doing shadow mapping on our world
-	    g_Shader.TurnOn();
-
-	    // Turn on our texture unit for shadow mapping and bind our depth texture
-	    glActiveTextureARB(GL_TEXTURE1_ARB);
-	    glEnable(GL_TEXTURE_2D); 
-	    glBindTexture(GL_TEXTURE_2D, g_DepthTexture);
-
-	    // Give GLSL our texture unit that holds the shadow map
-	    g_Shader.SetInt(g_Shader.GetVariable("shadowMap"), 1);
-	    //g_Shader.SetInt(g_Shader.GetVariable("tex"), 0);
-
-	    // Here is where we set the mode and function for shadow mapping with shadow2DProj().
-
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
-			    GL_COMPARE_R_TO_TEXTURE_ARB);
-
-	    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-
-	    // Create our bias matrix to have a 0 to 1 ratio after clip space
-	    const float mBias[] = {0.5, 0.0, 0.0, 0.0, 
-				   0.0, 0.5, 0.0, 0.0,
-				   0.0, 0.0, 0.5+g_DepthBias[0], 0.0,
-				   0.5, 0.5, 0.5+g_DepthBias[1], 1.0};
-
-	    glMatrixMode(GL_TEXTURE);
-
-	    glLoadMatrixf(mBias);			// The bias matrix to convert to a 0 to 1 ratio
-	    glMultMatrixf(g_mProjection);	// The light's projection matrix
-	    glMultMatrixf(g_mModelView);	// The light's modelview matrix
-	    //glMultMatrixf(g_mCameraInverse);// The inverse modelview matrix
-
-	    glMatrixMode(GL_MODELVIEW);			// Switch back to normal modelview mode
-
-	    glActiveTextureARB(GL_TEXTURE0_ARB);
-
-	    // Render the world that needs to be shadowed
-
-
-	    camera()->getModelViewMatrix( lastModelviewMatrix );
-		
-	    DisplayOBJs();
-
-	    // Reset the texture matrix
-	    glMatrixMode(GL_TEXTURE);
-	    glLoadIdentity();
-	    glMatrixMode(GL_MODELVIEW);
-
-	    // Turn the first multi-texture pass off
-	
-	    glActiveTextureARB(GL_TEXTURE1_ARB);
-	    glDisable(GL_TEXTURE_2D);
-	    glActiveTextureARB(GL_TEXTURE0_ARB);
-
-	    // Light expected, we need to turn our shader off since we are done
-	    g_Shader.TurnOff();
-#endif // SOFA_HAVE_GLEW
 	  }
 
 	  // ---------------------------------------------------------
@@ -631,8 +388,8 @@ namespace sofa
 	  }
 
 	  // ---------------------------------------------------
-	  // --- 
-	  // --- 
+	  // ---
+	  // ---
 	  // ---------------------------------------------------
 	  void QtGLViewer::DrawAxis(double xpos, double ypos, double zpos,
 				    double arrowSize)
@@ -714,8 +471,8 @@ namespace sofa
 	  }
 
 	  // ---------------------------------------------------
-	  // --- 
-	  // --- 
+	  // ---
+	  // ---
 	  // ---------------------------------------------------
 	  void QtGLViewer::DrawBox(Real* minBBox, Real* maxBBox, Real r)
 	  {
@@ -746,7 +503,7 @@ namespace sofa
 			     maxBBox[1]           ,
 			     (corner&2)?minBBox[2]:maxBBox[2]);
 		}
-        
+
 	      // --- Draw the Z edges
 	      for (int corner=0; corner<4; ++corner)
 		{
@@ -820,7 +577,7 @@ namespace sofa
 
 	  // ----------------------------------------------------------------------------------
 	  // --- Draw a "plane" in wireframe. The "plane" is parallel to the XY axis
-	  // --- of the main coordinate system 
+	  // --- of the main coordinate system
 	  // ----------------------------------------------------------------------------------
 	  void QtGLViewer::DrawXYPlane(double zo, double xmin, double xmax, double ymin,
 				       double ymax, double step)
@@ -849,7 +606,7 @@ namespace sofa
 
 	  // ----------------------------------------------------------------------------------
 	  // --- Draw a "plane" in wireframe. The "plane" is parallel to the XY axis
-	  // --- of the main coordinate system 
+	  // --- of the main coordinate system
 	  // ----------------------------------------------------------------------------------
 	  void QtGLViewer::DrawYZPlane(double xo, double ymin, double ymax, double zmin,
 				       double zmax, double step)
@@ -878,7 +635,7 @@ namespace sofa
 
 	  // ----------------------------------------------------------------------------------
 	  // --- Draw a "plane" in wireframe. The "plane" is parallel to the XY axis
-	  // --- of the main coordinate system 
+	  // --- of the main coordinate system
 	  // ----------------------------------------------------------------------------------
 	  void QtGLViewer::DrawXZPlane(double yo, double xmin, double xmax, double zmin,
 				       double zmax, double step)
@@ -909,9 +666,9 @@ namespace sofa
 	  void QtGLViewer::DrawLogo()
 	  {
 	    glPushMatrix();
-	
+
 	    int w = 0;
-	    int h = 0; 
+	    int h = 0;
 
 	    if (texLogo && texLogo->getImage()) {
 	      h = texLogo->getImage()->getHeight();
@@ -946,7 +703,7 @@ namespace sofa
 	    glVertex3d((_W-w)/2, _H-(_H-h)/2, 0.0);
 	    glEnd();
 
-	    glBindTexture(GL_TEXTURE_2D, 0);	
+	    glBindTexture(GL_TEXTURE_2D, 0);
 
 	    glMatrixMode(GL_PROJECTION);
 	    glPopMatrix();
@@ -957,37 +714,34 @@ namespace sofa
 	  // -------------------------------------------------------------------
 	  // ---
 	  // -------------------------------------------------------------------
-	  void QtGLViewer::DisplayOBJs(bool shadowPass)
+	  void QtGLViewer::DisplayOBJs()
 	  {
 	    if (!groot) return;
-    
+
 	    Enable<GL_LIGHTING> light;
 	    Enable<GL_DEPTH_TEST> depth;
-    
+
 	    glShadeModel(GL_SMOOTH);
 	    //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	    glColor4f(1,1,1,1);
 	    glDisable(GL_COLOR_MATERIAL);
-    
+
 	    if (!initTexturesDone)
 	      {
 //		std::cout << "-----------------------------------> initTexturesDone\n";
 		//---------------------------------------------------
-		getSimulation()->initTextures(groot);
+		simulation::getSimulation()->initTextures(groot);
 		//---------------------------------------------------
 		initTexturesDone = true;
 	      }
-    
+
 	      {
-		if (shadowPass)
-		  getSimulation()->drawShadows(groot);
-		else
-		  getSimulation()->draw(groot);
+		  simulation::getSimulation()->draw(groot, &visualParameters);
 		if (_axis)
 		  {
 		    DrawAxis(0.0, 0.0, 0.0, 10.0);
-		    if (sceneMinBBox[0] < sceneMaxBBox[0])
-		      DrawBox(sceneMinBBox.ptr(), sceneMaxBBox.ptr());
+		    if (visualParameters.minBBox[0] < visualParameters.maxBBox[0])
+		      DrawBox(visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr());
 		  }
 	      }
 
@@ -1024,200 +778,20 @@ namespace sofa
 	  // ---
 	  // ---------------------------------------------------------
 	  void QtGLViewer::DrawScene(void)
-	  {	
-	
+	  {
+
 	    camera()->getProjectionMatrix( lastProjectionMatrix );
-	
-	    camera()->getViewport( lastViewport );
-	    lastViewport[1]=0;
-	    lastViewport[3]=-lastViewport[3];
-	
 
-#ifdef SOFA_HAVE_GLEW
-	    if (_shadow)
-	    {
-		//glGetDoublev(GL_MODELVIEW_MATRIX,lastModelviewMatrix);
-
-		// Update the light matrices for it's current position
-		StoreLightMatrices();
-
-		// Set the current viewport to our texture size
-		glViewport(0, 0, (int)SHADOW_WIDTH, (int)SHADOW_HEIGHT);
-
-		// Clear the screen and depth buffer so we can render from the light's view
-		glClearColor(0.0f,0.0f,0.0f,0.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Now we just need to set the matrices for the light before we render
-		glMatrixMode(GL_PROJECTION);
-
-		// Push on a matrix to make sure we can restore to the old matrix easily
-		glPushMatrix();{
-		  // Set the current projection matrix to our light's projection matrix
-		  glLoadMatrixf(g_mProjection);
-
-		  // Load modelview mode to set our light's modelview matrix
-		  glMatrixMode(GL_MODELVIEW);
-		  glPushMatrix();{
-		    // Load the light's modelview matrix before we render to a texture
-		    glLoadMatrixf(g_mModelView);
-
-		    // Since we don't care about color when rendering the depth values to
-		    // the shadow-map texture, we disable color writing to increase speed.
-		    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); 
-
-		    // This turns of the polygon offset functionality to fix artifacts.
-		    // Comment this out and run the program to see what artifacts I mean.
-		    glEnable(GL_POLYGON_OFFSET_FILL);
-		    glDisable(GL_BLEND);
-
-		    // Eliminate artifacts caused by shadow mapping
-		    //	glPolygonOffset(1.0f, 0.10f);
-		    glPolygonOffset(g_DepthOffset[0], g_DepthOffset[1]);
-
-		    // Render the world according to the light's view
-		    DisplayOBJs(true);
-
-		    // Now that the world is rendered, save the depth values to a texture
-		    glDisable(GL_BLEND);
-		    //glEnable(GL_TEXTURE_2D);
-		    glBindTexture(GL_TEXTURE_2D, g_DepthTexture);
-
-		    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, (int)SHADOW_WIDTH, (int)SHADOW_HEIGHT);
-
-		    // We can turn color writing back on since we already stored the depth values
-		    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
-
-		    // Turn off polygon offsetting
-		    glDisable(GL_POLYGON_OFFSET_FILL);
-
-		  }glPopMatrix();
-		  // Go back to the projection mode and restore the original matrix
-		  glMatrixMode(GL_PROJECTION);
-		  // Restore the original projection matrix
-		}glPopMatrix();
-
-		// Go back to modelview model to start drawing like normal
-		glMatrixMode(GL_MODELVIEW);
-
-		// Restore our normal viewport size to our screen width and height
-		glViewport(0, 0, GetWidth(), GetHeight());
-
-		// Clear the color and depth bits and start over from the camera's view
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		//glPushMatrix();{
-		//	glLoadIdentity();
-		//	_sceneTransform.ApplyInverse();
-		//	glGetFloatv(GL_MODELVIEW_MATRIX, g_mCameraInverse);
-		//}glPopMatrix();
-
-		glLightfv( GL_LIGHT0, GL_POSITION, _lightPosition );
-		/*
-		  {
-		  glEnable(GL_TEXTURE_2D);
-		  glActiveTextureARB(GL_TEXTURE0_ARB);
-		  glBindTexture(GL_TEXTURE_2D, g_Texture[SHADOW_ID]);
-		  glTexEnvi(GL_TEXTURE_2D,GL_TEXTURE_ENV_MODE,  GL_REPLACE);
-		  Disable<GL_DEPTH_TEST> dtoff;
-		  Disable<GL_LIGHTING> dlight;
-		  glColor3f(1,1,1);
-		  glViewport(0, 0, 128, 128);
-		  glMatrixMode(GL_PROJECTION);
-		  glPushMatrix();
-		  glLoadIdentity();
-		  glOrtho(0,1,0,1,-1,1); 
-		  glMatrixMode(GL_MODELVIEW);
-		  glPushMatrix();{
-		  glLoadIdentity();
-		  glBegin(GL_QUADS);{
-		  glTexCoord2f(0,0);
-		  glVertex2f(0,0);
-		  glTexCoord2f(0,1);
-		  glVertex2f(0,1);
-		  glTexCoord2f(1,1);
-		  glVertex2f(1,1);
-		  glTexCoord2f(1,0);
-		  glVertex2f(1,0);
-		  }glEnd();
-		  }glPopMatrix();
-		  glMatrixMode(GL_PROJECTION);
-		  glPopMatrix();
-		  glMatrixMode(GL_MODELVIEW);
-		  glViewport(0, 0, GetWidth(), GetHeight());
-		  }
-		*/
+	    camera()->getViewport( visualParameters.viewport );
+	    visualParameters.viewport[1]=0;
+	    visualParameters.viewport[3]=-visualParameters.viewport[3];
 
 
-		// Render the world and apply the shadow map texture to it
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixd(lastProjectionMatrix);
-		glMatrixMode(GL_MODELVIEW);
-		ApplyShadowMap();
-		{ // NICO
-		  Enable<GL_TEXTURE_2D> texture_on;
-		  glDisable(GL_BLEND);
-		  glBindTexture(GL_TEXTURE_2D, ShadowTextureMask);
-		  glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, GetWidth(), GetHeight());
-		}
-		if (_background==0)
-		  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		else if (_background==1)
-		  glClearColor(0.0f,0.0f,0.0f,0.0f);
-		else if (_background==2)
-		  glClearColor(1.0f,1.0f,1.0f,1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
 		if (_background==0)
 		  DrawLogo();
-		
-		DisplayOBJs();
 
-		{
-		  float ofu = GetWidth()/(float)SHADOW_MASK_SIZE;
-		  float ofv = GetHeight()/(float)SHADOW_MASK_SIZE;
-		  glActiveTextureARB(GL_TEXTURE0_ARB);
-		  glEnable(GL_TEXTURE_2D);
-		  glBindTexture(GL_TEXTURE_2D,ShadowTextureMask);
-		  //glTexEnvi(GL_TEXTURE_2D,GL_TEXTURE_ENV_MODE,  GL_REPLACE);
-		  Disable<GL_DEPTH_TEST> dtoff;
-		  Disable<GL_LIGHTING> dlight;
-		  Enable<GL_BLEND> blend_on;
-		  glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-		  glColor3f(1,1,1);
-		  glViewport(0, 0, GetWidth(), GetHeight());
-		  glMatrixMode(GL_PROJECTION);
-		  glPushMatrix();
-		  glLoadIdentity();
-		  glOrtho(0,1,0,1,-1,1); 
-		  glMatrixMode(GL_MODELVIEW);
-		  glPushMatrix();{
-		    glLoadIdentity();
-		    glBegin(GL_QUADS);{
-		      glTexCoord2f(0,0);
-		      glVertex2f(0,0);
-		      glTexCoord2f(0,ofv);
-		      glVertex2f(0,1);
-		      glTexCoord2f(ofu,ofv);
-		      glVertex2f(1,1);
-		      glTexCoord2f(ofu,0);
-		      glVertex2f(1,0);
-		    }glEnd();
-		  }glPopMatrix();
-		  glMatrixMode(GL_PROJECTION);
-		  glPopMatrix();
-		  glMatrixMode(GL_MODELVIEW);
-		  glViewport(0, 0, GetWidth(), GetHeight());
-		  glDisable(GL_TEXTURE_2D);
-		  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
-	
-	    }
-	    else
-#endif
-	    {
-		if (_background==0)
-		  DrawLogo();
-		
 
 		camera()->getModelViewMatrix( lastModelviewMatrix );
 
@@ -1230,25 +804,25 @@ namespace sofa
 		    glLightfv(GL_LIGHT0, GL_POSITION, _lightPosition);
 		    glPopMatrix();
 		    Enable<GL_LIGHT0> light0;
-		    // 
+		    //
 		    glColor3f(0.5f, 0.5f, 0.6f);
 		    // 			DrawXZPlane(-4.0, -20.0, 20.0, -20.0, 20.0, 1.0);
 		    // 			DrawAxis(0.0, 0.0, 0.0, 10.0);
-		
+
 		    DisplayOBJs();
 
 		    DisplayMenu();		// always needs to be the last object being drawn
 		}
-	    }
+
 	  }
 
 	  void QtGLViewer::viewAll()
 	  {
-	    getSimulation()->computeBBox(groot, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
+	    getSimulation()->computeBBox(groot, visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr());
 
 	    sceneBBoxIsValid = true;
-	    QGLViewer::setSceneBoundingBox(   qglviewer::Vec(sceneMinBBox.ptr()),qglviewer::Vec(sceneMaxBBox.ptr()) );
-       
+	    QGLViewer::setSceneBoundingBox(   qglviewer::Vec(visualParameters.minBBox.ptr()),qglviewer::Vec(visualParameters.maxBBox.ptr()) );
+
 	    qglviewer::Vec pos;
 	    pos[0] = 0.0;
 	    pos[1] = 0.0;
@@ -1263,14 +837,14 @@ namespace sofa
 	  // --- Reshape of the window, reset the projection
 	  // ---------------------------------------------------------
 	  void QtGLViewer::resizeGL(int width, int height)
-	  {	
+	  {
 	    _W = width;
 	    _H = height;
-	
+
 
 	    QGLViewer::resizeGL( width,  height);
-	    camera()->setScreenWidthAndHeight(_W,_H);
-  
+// 	    camera()->setScreenWidthAndHeight(_W,_H);
+
 	    this->resize(width, height);
 	    emit( resizeW( _W ) );
 	    emit( resizeH( _H ) );
@@ -1287,8 +861,8 @@ namespace sofa
 
 	    //	beginDisplay = MesureTemps();
 
-	    // valid() is turned off when FLTK creates a new context for this window 
-	    // or when the window resizes, and is turned on after draw() is called.  
+	    // valid() is turned off when FLTK creates a new context for this window
+	    // or when the window resizes, and is turned on after draw() is called.
 	    // Use this to avoid unneccessarily initializing the OpenGL context.
 	    //static double lastOrthoTransZ = 0.0;
 	    /*
@@ -1302,11 +876,11 @@ namespace sofa
 	    */
 	    // clear buffers (color and depth)
 	    if (_background==0)
-	      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	      glClearColor(0.0f,0.0f,0.0f,1.0f);
 	    else if (_background==1)
 	      glClearColor(0.0f,0.0f,0.0f,0.0f);
 	    else if (_background==2)
-	      glClearColor(1.0f,1.0f,1.0f,1.0f);
+	      glClearColor(backgroundColour[0],backgroundColour[1],backgroundColour[2], 1.0f);
 	    glClearDepth(1.0);
 	    glClear(_clearBuffer);
 
@@ -1325,7 +899,7 @@ namespace sofa
 
 	    if (_waitForRender)
 	      _waitForRender = false;
-    
+
 	    emit( redrawn() );
 	  }
 
@@ -1335,7 +909,7 @@ namespace sofa
 
 
 	  void QtGLViewer::keyPressEvent ( QKeyEvent * e )
-	  {		  
+	  {
 	    // 	cerr<<"QtGLViewer::keyPressEvent, get "<<e->key()<<endl;
 	    if( isControlPressed() ) // pass event to the scene data structure
 	      {
@@ -1351,12 +925,12 @@ namespace sofa
 		  case Qt::Key_S: //screenshot
 		  case Qt::Key_H: //shortcuts for screenshot and help page specified for qglviewer
 		    {
-		      QGLViewer::keyPressEvent(e); 
+		      QGLViewer::keyPressEvent(e);
 		      break;
 		    }
 		  case Qt::Key_T:
 		    {
-		      if (camera()->type() == qglviewer::Camera::ORTHOGRAPHIC)					 	
+		      if (camera()->type() == qglviewer::Camera::ORTHOGRAPHIC)
 			camera()->setType( qglviewer::Camera::PERSPECTIVE  );
 		      else
 			camera()->setType( qglviewer::Camera::ORTHOGRAPHIC );
@@ -1367,10 +941,15 @@ namespace sofa
 		      viewAll();
 		      break;
 		    }
+		  case Qt::Key_Escape:
+		    {
+		      emit(quit());
+		      break;
+		    }
 		  default:
 		    {
 		      SofaViewer::keyPressEvent(e);
-		      QGLViewer::keyPressEvent(e);		      
+		      QGLViewer::keyPressEvent(e);
 		      e->ignore();
 		    }
 		  }
@@ -1411,7 +990,7 @@ namespace sofa
 		return true;
 	      }
 	    else if (e->state()&Qt::ControlButton)
-	      {			
+	      {
 		moveLaparoscopic(e);
 		return true;
 	      }
@@ -1424,20 +1003,20 @@ namespace sofa
 	  }
 
 	void QtGLViewer::wheelEvent(QWheelEvent* e)
-	{	
+	{
 		if (e->state()&Qt::ControlButton)
 			moveLaparoscopic(e);
 		else
-			QGLViewer::wheelEvent(e);		
+			QGLViewer::wheelEvent(e);
 	}
 
 	  void QtGLViewer::moveRayPickInteractor(int eventX, int eventY)
 	  {
 	    Vec3d p0, px, py, pz;
-	    gluUnProject(eventX, lastViewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(p0[0]), &(p0[1]), &(p0[2]));
-	    gluUnProject(eventX+1, lastViewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(px[0]), &(px[1]), &(px[2]));
-	    gluUnProject(eventX, lastViewport[3]-1-(eventY+1), 0, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(py[0]), &(py[1]), &(py[2]));
-	    gluUnProject(eventX, lastViewport[3]-1-(eventY), 1, lastModelviewMatrix, lastProjectionMatrix, lastViewport, &(pz[0]), &(pz[1]), &(pz[2]));
+	    gluUnProject(eventX, visualParameters.viewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, visualParameters.viewport, &(p0[0]), &(p0[1]), &(p0[2]));
+	    gluUnProject(eventX+1, visualParameters.viewport[3]-1-(eventY), 0, lastModelviewMatrix, lastProjectionMatrix, visualParameters.viewport, &(px[0]), &(px[1]), &(px[2]));
+	    gluUnProject(eventX, visualParameters.viewport[3]-1-(eventY+1), 0, lastModelviewMatrix, lastProjectionMatrix, visualParameters.viewport, &(py[0]), &(py[1]), &(py[2]));
+	    gluUnProject(eventX, visualParameters.viewport[3]-1-(eventY), 1, lastModelviewMatrix, lastProjectionMatrix, visualParameters.viewport, &(pz[0]), &(pz[1]), &(pz[2]));
 	    px -= p0;
 	    py -= p0;
 	    pz -= p0;
@@ -1470,12 +1049,13 @@ namespace sofa
 	  // -------------------------------------------------------------------
 	  void QtGLViewer::resetView()
 	  {
-
 	    viewAll();
 
 	    if (!sceneFileName.empty())
 	      {
-		std::string viewFileName = sceneFileName+".view";
+		//Test if we have a specific view point for the QGLViewer
+		//That case, the camera will be well placed
+		std::string viewFileName = sceneFileName+"."+sofa::gui::SofaGUI::GetGUIName()+".view";
 		std::ifstream in(viewFileName.c_str());
 		if (!in.fail())
 		  {
@@ -1483,11 +1063,8 @@ namespace sofa
 		    in >> pos[0];
 		    in >> pos[1];
 		    in >> pos[2];
-			
-		    camera()->setPosition(pos);
 
 		    qglviewer::Quaternion q;
-			
 		    in >> q[0];
 		    in >> q[1];
 		    in >> q[2];
@@ -1495,11 +1072,43 @@ namespace sofa
 		    q.normalize();
 
 		    camera()->setOrientation(q);
-		    camera()->showEntireScene();
+		    camera()->setPosition(pos);
+
 		    in.close();
 		    update();
+
 		    return;
-		  }	    
+		  }
+		else
+		  {
+		    //If we have the default QtViewer view file, we have to use, showEntireScene
+		    //as the FOV of the QtViewer is not constant, so the parameters are not good
+		    std::string viewFileName = sceneFileName+".view";
+		    std::ifstream in(viewFileName.c_str());
+		    if (!in.fail())
+		      {
+			qglviewer::Vec pos;
+			in >> pos[0];
+			in >> pos[1];
+			in >> pos[2];
+			
+			qglviewer::Quaternion q;
+			in >> q[0];
+			in >> q[1];
+			in >> q[2];
+			in >> q[3];
+			q.normalize();
+			
+			camera()->setOrientation(q);
+			camera()->setPosition(pos);
+			camera()->showEntireScene();
+			
+			in.close();
+			update();
+			
+			return;
+		      }
+		  }
 	      }
 	    update();
 	  }
@@ -1509,7 +1118,7 @@ namespace sofa
 	  {
 	    if (!sceneFileName.empty())
 	      {
-		std::string viewFileName = sceneFileName+".view";
+		std::string viewFileName = sceneFileName+"."+sofa::gui::SofaGUI::GetGUIName()+".view";
 		std::ofstream out(viewFileName.c_str());
 		if (!out.fail())
 		  {
@@ -1532,14 +1141,21 @@ namespace sofa
 	  {
 	    resizeGL( _W, size );
 	    updateGL();
-	
+
 	  }
 
+	  void QtGLViewer::setBackgroundImage(std::string imageFileName)
+	  {
+		  SofaViewer::setBackgroundImage(imageFileName);
+		  texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile(imageFileName) ));
+		  texLogo->init();
+	  }
+	  
 
 	  QString QtGLViewer::helpString()
 	  {
 
-	    QString text( 
+	    QString text(
 			 "<H1>QtGLViewer</H1><hr>\
 <ul>\
 <li><b>Mouse</b>: TO NAVIGATE<br></li>\
@@ -1570,8 +1186,8 @@ Each time the frame is updated a screenshot is saved<br></li>\
 
 	} // namespace qgl
 
-      } // namespace viewer 
- 
+      } // namespace viewer
+
     } //namespace qt
 
   } // namespace gui

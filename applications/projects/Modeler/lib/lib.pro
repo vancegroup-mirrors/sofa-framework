@@ -13,10 +13,13 @@ INCLUDEPATH += $$SOFA_DIR/extlibs
 
 SOURCES = SofaModeler.cpp \
           GraphModeler.cpp \
-          AddPreset.cpp
+          AddPreset.cpp \
+          ../../../sofa/gui/qt/SofaPluginManager.cpp
+
 HEADERS = SofaModeler.h \
           GraphModeler.h \
-          AddPreset.h
+          AddPreset.h \
+          ../../../sofa/gui/qt/SofaPluginManager.h
 
 contains (DEFINES, SOFA_QT4) {	
 
@@ -24,11 +27,16 @@ contains (DEFINES, SOFA_QT4) {
 	  QT += qt3support xml
 	  FORMS3 += Modeler.ui 
 	  FORMS3 += DialogAddPreset.ui
-                    
+        FORMS3 += ../../../sofa/gui/qt/PluginManager.ui                    
 }
 else {
 	  CONFIG += $$CONFIGLIBRARIES qt
 	  FORMS += Modeler.ui
 	  FORMS += DialogAddPreset.ui
+        FORMS += ../../../sofa/gui/qt/PluginManager.ui                    
 }
 
+
+#add local libraries to the modeler
+!include(lib-local.cfg) {
+}

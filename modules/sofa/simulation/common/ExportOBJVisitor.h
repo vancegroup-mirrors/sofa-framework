@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -37,7 +37,7 @@ namespace sofa
 namespace simulation
 {
 
-class ExportOBJVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API ExportOBJVisitor : public Visitor
 {
 public:
 	std::ostream* out;
@@ -45,11 +45,12 @@ public:
 
 	ExportOBJVisitor(std::ostream* out, std::ostream* mtl=NULL);
 	~ExportOBJVisitor();
-	
+
 	virtual void processVisualModel(Node* node, core::VisualModel* vm);
-	
+
 	virtual Result processNodeTopDown(Node* node);
 	virtual void processNodeBottomUp(Node* node);
+        virtual const char* getClassName() const { return "ExportOBJVisitor"; }
 
 protected:
 	int ID;

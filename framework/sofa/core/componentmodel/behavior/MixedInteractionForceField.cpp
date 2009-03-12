@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/core/componentmodel/behavior/MixedInteractionForceField.inl>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
@@ -42,48 +42,56 @@ namespace behavior
 
 using namespace sofa::defaulttype;
 
+template class SOFA_CORE_API MixedInteractionForceField<Vec1dTypes, Vec3dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1dTypes, Rigid3dTypes>;
 
-template class MixedInteractionForceField<Vec3dTypes, Vec3dTypes>;
-template class MixedInteractionForceField<Vec2dTypes, Vec2dTypes>;
-template class MixedInteractionForceField<Vec1dTypes, Vec1dTypes>;
-template class MixedInteractionForceField<Rigid3dTypes, Rigid3dTypes> ;
-template class MixedInteractionForceField<Rigid2dTypes, Rigid2dTypes> ;
-template class MixedInteractionForceField<Vec3dTypes, Rigid3dTypes> ;
-template class MixedInteractionForceField<Vec2dTypes, Rigid2dTypes> ;
-template class MixedInteractionForceField<Rigid3dTypes, Vec3dTypes> ;
-template class MixedInteractionForceField<Rigid2dTypes, Vec2dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3dTypes, Vec3dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2dTypes, Vec2dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1dTypes, Vec1dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3dTypes, Rigid3dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2dTypes, Rigid2dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3dTypes, Rigid3dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2dTypes, Rigid2dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3dTypes, Vec3dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2dTypes, Vec2dTypes> ;
 
-template class MixedInteractionForceField<Vec3fTypes, Vec3fTypes>;
-template class MixedInteractionForceField<Vec2fTypes, Vec2fTypes>;
-template class MixedInteractionForceField<Vec1fTypes, Vec1fTypes>;
-template class MixedInteractionForceField<Rigid3fTypes, Rigid3fTypes> ;
-template class MixedInteractionForceField<Rigid2fTypes, Rigid2fTypes> ;
-template class MixedInteractionForceField<Vec3fTypes, Rigid3fTypes> ;
-template class MixedInteractionForceField<Vec2fTypes, Rigid2fTypes> ;
-template class MixedInteractionForceField<Rigid3fTypes, Vec3fTypes> ;
-template class MixedInteractionForceField<Rigid2fTypes, Vec2fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1fTypes, Vec3fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1fTypes, Rigid3fTypes>;
 
-template class MixedInteractionForceField<Vec3dTypes, Vec3fTypes>;
-template class MixedInteractionForceField<Vec2dTypes, Vec2fTypes>;
-template class MixedInteractionForceField<Vec1dTypes, Vec1fTypes>;
-template class MixedInteractionForceField<Rigid3dTypes, Rigid3fTypes> ;
-template class MixedInteractionForceField<Rigid2dTypes, Rigid2fTypes> ;
-template class MixedInteractionForceField<Vec3dTypes, Rigid3fTypes> ;
-template class MixedInteractionForceField<Vec2dTypes, Rigid2fTypes> ;
-template class MixedInteractionForceField<Rigid3dTypes, Vec3fTypes> ;
-template class MixedInteractionForceField<Rigid2dTypes, Vec2fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3fTypes, Vec3fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2fTypes, Vec2fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1fTypes, Vec1fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3fTypes, Rigid3fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2fTypes, Rigid2fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3fTypes, Rigid3fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2fTypes, Rigid2fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3fTypes, Vec3fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2fTypes, Vec2fTypes> ;
 
+template class SOFA_CORE_API MixedInteractionForceField<Vec1dTypes, Vec3fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1fTypes, Vec3dTypes>;
 
-template class MixedInteractionForceField<Vec3fTypes, Vec3dTypes>;
-template class MixedInteractionForceField<Vec2fTypes, Vec2dTypes>;
-template class MixedInteractionForceField<Vec1fTypes, Vec1dTypes>;
-template class MixedInteractionForceField<Rigid3fTypes, Rigid3dTypes> ;
-template class MixedInteractionForceField<Rigid2fTypes, Rigid2dTypes> ;
-template class MixedInteractionForceField<Vec3fTypes, Rigid3dTypes> ;
-template class MixedInteractionForceField<Vec2fTypes, Rigid2dTypes> ;
-template class MixedInteractionForceField<Rigid3fTypes, Vec3dTypes> ;
-template class MixedInteractionForceField<Rigid2fTypes, Vec2dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1dTypes, Rigid3fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1fTypes, Rigid3dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3dTypes, Vec3fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2dTypes, Vec2fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1dTypes, Vec1fTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3dTypes, Rigid3fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2dTypes, Rigid2fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3dTypes, Rigid3fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2dTypes, Rigid2fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3dTypes, Vec3fTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2dTypes, Vec2fTypes> ;
 
+template class SOFA_CORE_API MixedInteractionForceField<Vec3fTypes, Vec3dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2fTypes, Vec2dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Vec1fTypes, Vec1dTypes>;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3fTypes, Rigid3dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2fTypes, Rigid2dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec3fTypes, Rigid3dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Vec2fTypes, Rigid2dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid3fTypes, Vec3dTypes> ;
+template class SOFA_CORE_API MixedInteractionForceField<Rigid2fTypes, Vec2dTypes> ;
 
 } // namespace behavior
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,6 +29,9 @@
 
 #include <sofa/core/objectmodel/DataPtr.h>
 #include "ForceField.h"
+#include <iostream>
+using std::cerr;
+using std::endl;
 
 namespace sofa
 {
@@ -56,8 +59,10 @@ ForceField<DataTypes>::~ForceField()
 template<class DataTypes>
 void ForceField<DataTypes>::init()
 {
+    //serr<<"ForceField<DataTypes>::init() "<<getName()<<" start"<<sendl;
     BaseForceField::init();
     mstate = dynamic_cast< MechanicalState<DataTypes>* >(getContext()->getMechanicalState());
+    //serr<<"ForceField<DataTypes>::init() "<<getName()<<" done"<<sendl;
 }
 
 template<class DataTypes>
@@ -83,7 +88,7 @@ void ForceField<DataTypes>::addDForceV(double kFactor, double bFactor)
 template<class DataTypes>
 void ForceField<DataTypes>::addDForce(VecDeriv& /*df*/, const VecDeriv& /*dx*/)
 {
-    std::cerr << "ERROR("<<getClassName()<<"): addDForce not implemented.\n";
+    serr << "ERROR("<<getClassName()<<"): addDForce not implemented." << sendl;
 }
 
 template<class DataTypes>

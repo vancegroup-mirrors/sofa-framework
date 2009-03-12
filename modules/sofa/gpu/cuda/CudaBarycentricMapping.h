@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -131,18 +131,18 @@ public:
 
     void clear(int reserve=0);
 
-    int addPointInLine(int lineIndex, const SReal* baryCoords);
+    int addPointInLine(const int lineIndex, const SReal* baryCoords);
     int createPointInLine(const typename Out::Coord& p, int lineIndex, const typename In::VecCoord* points);
     
-    int addPointInTriangle(int triangleIndex, const SReal* baryCoords);
+    int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
     int createPointInTriangle(const typename Out::Coord& p, int triangleIndex, const typename In::VecCoord* points);
     
-    int addPointInQuad(int quadIndex, const SReal* baryCoords);
+    int addPointInQuad(const int quadIndex, const SReal* baryCoords);
     int createPointInQuad(const typename Out::Coord& p, int quadIndex, const typename In::VecCoord* points);
     
-    int addPointInTetra(int tetraIndex, const SReal* baryCoords);
+    int addPointInTetra(const int tetraIndex, const SReal* baryCoords);
     
-    int addPointInCube(int cubeIndex, const SReal* baryCoords);
+    int addPointInCube(const int cubeIndex, const SReal* baryCoords);
     
     void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
     void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -34,6 +34,8 @@
 //
 //
 #include <sofa/component/forcefield/TriangleBendingSprings.inl>
+#include <sofa/component/forcefield/StiffSpringForceField.inl>
+#include <sofa/core/componentmodel/behavior/PairInteractionForceField.inl>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -64,12 +66,12 @@ int TriangleBendingSpringsClass = core::RegisterObject("Springs added to a train
 #endif
 ;
 #ifndef SOFA_FLOAT
-template class TriangleBendingSprings<Vec3dTypes>;
-template class TriangleBendingSprings<Vec2dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TriangleBendingSprings<Vec3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TriangleBendingSprings<Vec2dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class TriangleBendingSprings<Vec3fTypes>;
-template class TriangleBendingSprings<Vec2fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TriangleBendingSprings<Vec3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API TriangleBendingSprings<Vec2fTypes>;
 #endif
 } // namespace forcefield
 

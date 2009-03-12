@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -60,7 +60,7 @@ namespace core
  *    to the final elements) 
  *
  */
-class CollisionModel : public virtual objectmodel::BaseObject
+class SOFA_CORE_API CollisionModel : public virtual objectmodel::BaseObject
 {
 public:
 
@@ -328,6 +328,10 @@ public:
     /// Contact response algorithm
     std::string getContactResponse() { return contactResponse.getValue(); }
     
+    /// If not zero, ID of a group containing this model. No collision can occur between collision
+    /// models of the same group (allowing the same object to have multiple collision models)
+    int getGroup() { return group.getValue(); }
+    
     /// @}
     
     /// Topology associated to the collision model
@@ -361,7 +365,7 @@ protected:
     /// collision models specify a different class it is up to the manager to choose.
     Data<std::string> contactResponse;
     /// If not zero, ID of a group containing this model. No collision can occur between collision
-    /// models of the same group (allowing the same object to have multiple collision models
+    /// models of the same group (allowing the same object to have multiple collision models)
     Data<int> group;
     /// color used to display the collision model if requested
     Data<defaulttype::Vec4f> color;

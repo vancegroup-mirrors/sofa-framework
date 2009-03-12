@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -23,7 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/helper/system/config.h>
-#include <sofa/component/collision/proximity.h>
+#include <sofa/helper/proximity.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/componentmodel/collision/Intersection.inl>
@@ -42,6 +42,8 @@
 #include <sofa/core/componentmodel/collision/Intersection.inl>
 
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+
+#include <sofa/simulation/common/Simulation.h>
 
 namespace sofa
 {
@@ -84,7 +86,7 @@ void PointModel::init()
 
 	if (mstate==NULL)
 	{
-		std::cerr << "ERROR: PointModel requires a Vec3 Mechanical Model.\n";
+		serr<<"ERROR: PointModel requires a Vec3 Mechanical Model" << sendl;
 		return;
 	}
 
@@ -113,11 +115,8 @@ void PointModel::draw()
 	if (getContext()->getShowCollisionModels())
 	{
 		if (getContext()->getShowWireFrame())
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		  simulation::getSimulation()->DrawUtility.setPolygonMode(0,true);
 
-		glDisable(GL_LIGHTING);
-		glPointSize(3);
-		glColor4fv(getColor4f());
 
 		// Check topological modifications
 		const int npoints = mstate->getX()->size();
@@ -126,16 +125,23 @@ void PointModel::draw()
 			resize(npoints);
 		}
 
+		std::vector< Vector3 > pointsP;
+		std::vector< Vector3 > pointsL;
 		for (int i = 0; i < size; i++)
 		{
-			draw(i);
+		  Point t(this,i);
+		  pointsP.push_back(t.p());
+		  if ((unsigned)i < normals.size())
+		    {
+		      pointsL.push_back(t.p());
+		      pointsL.push_back(t.p()+normals[i]*0.1f);
+		    }
 		}
+		simulation::getSimulation()->DrawUtility.drawPoints(pointsP, 3, Vec<4,float>(getColor4f()));
+		simulation::getSimulation()->DrawUtility.drawLines(pointsL, 1, Vec<4,float>(getColor4f()));
 
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glDisable(GL_LIGHTING);
-		glPointSize(1);
 		if (getContext()->getShowWireFrame())
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		  simulation::getSimulation()->DrawUtility.setPolygonMode(0,false);
 	}
 	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
 		getPrevious()->draw();
@@ -143,17 +149,18 @@ void PointModel::draw()
 
 bool PointModel::canCollideWithElement(int index, CollisionModel* model2, int index2)
 {
+	//sout<<"PointModel("<<this->getName()<<") :: canCollideWithElement("<<model2->getName()<<") is called"<<sendl;
     if (!this->bSelfCollision.getValue()) return true;
     if (this->getContext() != model2->getContext()) return true;
     if (model2 == this)
     {
-        //std::cout << "point self test "<<index<<" - "<<index2<<std::endl;
+        //sout << "point self test "<<index<<" - "<<index2<<sendl;
         return index < index2-2; // || index > index2+1;
     }
     else
         return model2->canCollideWithElement(index2, this, index);
 }
-    
+
 void PointModel::computeBoundingTree(int maxDepth)
 {
 	CubeModel* cubeModel = createPrevious<CubeModel>();
@@ -168,7 +175,7 @@ void PointModel::computeBoundingTree(int maxDepth)
 	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
 
     if (computeNormals.getValue()) updateNormals();
-    
+
 	cubeModel->resize(size);
 	if (!empty())
 	{
@@ -194,7 +201,7 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 		updated = true;
 	}
 	if (!isMoving() && !cubeModel->empty() && !updated) return; // No need to recompute BBox if immobile
-	
+
     if (computeNormals.getValue()) updateNormals();
 
 	Vector3 minElem, maxElem;
@@ -209,7 +216,7 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 			Point p(this,i);
 			const Vector3& pt = p.p();
 			const Vector3 ptv = pt + p.v()*dt;
-		
+
 			for (int c = 0; c < 3; c++)
 			{
 				                              minElem[c] = pt[c];
@@ -222,7 +229,7 @@ void PointModel::computeContinuousBoundingTree(double dt, int maxDepth)
 		cubeModel->computeBoundingTree(maxDepth);
 	}
 }
-    
+
 void PointModel::updateNormals()
 {
     const VecCoord& x = *mstate->getX();
@@ -356,12 +363,12 @@ bool Point::testLMD(const Vector3 &PQ, double &coneFactor, double &coneExtension
 			Vector3 l = (pt - x[ped[0]]) + (pt - x[ped[1]]);
 			l.normalize();
 			nMean += l;
-		}		
+		}
 	}
 
 	if (nMean.norm()> 0.0000000001)
 		nMean.normalize();
-		
+
 
 	for (unsigned int i=0; i<edgeVertexShell.size(); i++)
 	{
@@ -387,7 +394,7 @@ bool Point::testLMD(const Vector3 &PQ, double &coneFactor, double &coneExtension
 
 
 
-        
+
 } // namespace collision
 
 } // namespace component

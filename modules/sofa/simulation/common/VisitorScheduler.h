@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_SIMULATION_VISITORSCHEDULER_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/simulation/common/common.h>
 #include "ClassSystem.h"
 
 namespace sofa {
@@ -37,7 +38,7 @@ namespace simulation
 class Visitor;
 
 /// Abstract class defining custom schedule of action execution through the graph.
-class VisitorScheduler : public virtual core::objectmodel::BaseObject
+class SOFA_SIMULATION_COMMON_API VisitorScheduler : public virtual core::objectmodel::BaseObject
 {
 public:
 	virtual ~VisitorScheduler() {}

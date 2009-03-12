@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,16 @@
 #define CUDAMATH_H
 
 #include <cuda_runtime.h>
+#include <cuda.h>
+
+#if defined(__cplusplus) && CUDA_VERSION < 2000
+namespace sofa
+{
+namespace gpu
+{
+namespace cuda
+{
+#endif
 
 template<class real>
 class CudaVec2;
@@ -101,6 +111,86 @@ typedef CudaVec2<float> CudaVec2f;
 typedef CudaVec3<float> CudaVec3f;
 typedef CudaVec4<float> CudaVec4f;
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+class __align__(8) double3
+{
+public:
+    double x, y, z;
+};
+
+class __align__(16) double4
+{
+public:
+    double x, y, z, w;
+};
+
+template<>
+class CudaVec2<double> : public double2
+{
+public:
+    typedef double Real;
+    static __inline__ __device__ __host__ CudaVec2<double> make(Real x, Real y)
+    {
+	CudaVec2<double> r; r.x = x; r.y = y; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec2<double> make(double2 v)
+    {
+	CudaVec2<double> r; r.x = v.x; r.y = v.y; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec2<double> make(double3 v)
+    {
+	CudaVec2<double> r; r.x = v.x; r.y = v.y; return r;
+    }
+};
+
+template<>
+class CudaVec3<double> : public double3
+{
+public:
+    typedef double Real;
+    static __inline__ __device__ __host__ CudaVec3<double> make(Real x, Real y, Real z=0)
+    {
+	CudaVec3<double> r; r.x = x; r.y = y;  r.z = z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec3<double> make(double2 v, Real z=0)
+    {
+	CudaVec3<double> r; r.x = v.x; r.y = v.y;  r.z = z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec3<double> make(double3 v)
+    {
+	CudaVec3<double> r; r.x = v.x; r.y = v.y;  r.z = v.z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec3<double> make(double4 v)
+    {
+	CudaVec3<double> r; r.x = v.x; r.y = v.y;  r.z = v.z; return r;
+    }
+};
+
+template<>
+class CudaVec4<double> : public double4
+{
+public:
+    typedef double Real;
+    static __inline__ __device__ __host__ CudaVec4<double> make(Real x, Real y, Real z, Real w=0)
+    {
+	CudaVec4<double> r; r.x = x; r.y = y;  r.z = z; r.w = w; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec4<double> make(double3 v, Real w=0)
+    {
+	CudaVec4<double> r; r.x = v.x; r.y = v.y;  r.z = v.z; r.w = w; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec4<double> make(double4 v)
+    {
+	CudaVec4<double> r; r.x = v.x; r.y = v.y;  r.z = v.z; r.w = v.w; return r;
+    }
+};
+
+typedef CudaVec2<double> CudaVec2d;
+typedef CudaVec3<double> CudaVec3d;
+typedef CudaVec4<double> CudaVec4d;
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 template<class real>
 __device__ CudaVec3<real> operator+(CudaVec3<real> a, CudaVec3<real> b)
@@ -244,6 +334,38 @@ public:
     {
         return x*v.x+y*v.y+z*v.z;
     }
+    __device__ matrix3<real> operator*(matrix3<real> v)
+    {
+    	matrix3<real> r;
+    	r.x.x = x.x * v.x.x + x.y * v.y.x + x.z * v.z.x;
+    	r.x.y = x.x * v.x.y + x.y * v.y.y + x.z * v.z.y;
+    	r.x.z = x.x * v.x.z + x.y * v.y.z + x.z * v.z.z;
+
+    	r.y.x = y.x * v.x.x + y.y * v.y.x + y.z * v.z.x;
+    	r.y.y = y.x * v.x.y + y.y * v.y.y + y.z * v.z.y;
+    	r.y.z = y.x * v.x.z + y.y * v.y.z + y.z * v.z.z;
+
+    	r.z.x = z.x * v.x.x + z.y * v.y.x + z.z * v.z.x;
+    	r.z.y = z.x * v.x.y + z.y * v.y.y + z.z * v.z.y;
+    	r.z.z = z.x * v.x.z + z.y * v.y.z + z.z * v.z.z;
+    	return r;
+    }
+    __device__ matrix3<real> mulT(matrix3<real> v)
+    {
+    	matrix3<real> r;
+    	r.x.x = x.x * v.x.x + y.x * v.y.x + z.x * v.z.x;
+    	r.x.y = x.x * v.x.y + y.x * v.y.y + z.x * v.z.y;
+    	r.x.z = x.x * v.x.z + y.x * v.y.z + z.x * v.z.z;
+
+    	r.y.x = x.y * v.x.x + y.y * v.y.x + z.y * v.z.x;
+    	r.y.y = x.y * v.x.y + y.y * v.y.y + z.y * v.z.y;
+    	r.y.z = x.y * v.x.z + y.y * v.y.z + z.y * v.z.z;
+
+    	r.z.x = x.z * v.x.x + y.z * v.y.x + z.z * v.z.x;
+    	r.z.y = x.z * v.x.y + y.z * v.y.y + z.z * v.z.y;
+    	r.z.z = x.z * v.x.z + y.z * v.y.z + z.z * v.z.z;
+    	return r;
+    }
     __device__ real mulX(CudaVec3<real> v)
     {
         return dot(x,v);
@@ -256,30 +378,36 @@ public:
     {
         return dot(z,v);
     }
-    __device__ void readAoS(const real* data)
+    __device__ void readAoS(const real* data, int bsize = blockDim.x)
     {
-        x.x=*data; data+=blockDim.x;
-        x.y=*data; data+=blockDim.x;
-        x.z=*data; data+=blockDim.x;
-        y.x=*data; data+=blockDim.x;
-        y.y=*data; data+=blockDim.x;
-        y.z=*data; data+=blockDim.x;
-        z.x=*data; data+=blockDim.x;
-        z.y=*data; data+=blockDim.x;
-        z.z=*data; data+=blockDim.x;
+        x.x=*data; data+=bsize;
+        x.y=*data; data+=bsize;
+        x.z=*data; data+=bsize;
+        y.x=*data; data+=bsize;
+        y.y=*data; data+=bsize;
+        y.z=*data; data+=bsize;
+        z.x=*data; data+=bsize;
+        z.y=*data; data+=bsize;
+        z.z=*data; data+=bsize;
     }
-    __device__ void writeAoS(real* data)
+    __device__ void writeAoS(real* data, int bsize = blockDim.x)
     {
-        *data=x.x; data+=blockDim.x;
-        *data=x.y; data+=blockDim.x;
-        *data=x.z; data+=blockDim.x;
-        *data=y.x; data+=blockDim.x;
-        *data=y.y; data+=blockDim.x;
-        *data=y.z; data+=blockDim.x;
-        *data=z.x; data+=blockDim.x;
-        *data=z.y; data+=blockDim.x;
-        *data=z.z; data+=blockDim.x;
+        *data=x.x; data+=bsize;
+        *data=x.y; data+=bsize;
+        *data=x.z; data+=bsize;
+        *data=y.x; data+=bsize;
+        *data=y.y; data+=bsize;
+        *data=y.z; data+=bsize;
+        *data=z.x; data+=bsize;
+        *data=z.y; data+=bsize;
+        *data=z.z; data+=bsize;
     }
 };
+
+#if defined(__cplusplus) && CUDA_VERSION < 2000
+} // namespace cuda
+} // namespace gpu
+} // namespace sofa
+#endif
 
 #endif

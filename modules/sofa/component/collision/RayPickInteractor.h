@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,9 +28,10 @@
 #include <sofa/component/collision/RayModel.h>
 #include <sofa/core/BehaviorModel.h>
 
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/simulation/common/Node.h>
 #include <sofa/component/collision/BarycentricContactMapper.h>
+#include <sofa/component/mapping/VoidMapping.h>
 
 
 #include <sofa/defaulttype/Vec.h>
@@ -50,11 +51,34 @@ namespace collision
 {
 using namespace sofa::defaulttype;
 
-class BasePickingManager : public virtual sofa::core::objectmodel::BaseObject
+struct PickPoints
+{
+    core::CollisionModel* model1;
+    int elem1;
+    core::CollisionModel* model2;
+    core::componentmodel::behavior::BaseMechanicalState* mstate2;
+    int elem2;
+    double dist;
+    Vector3 p1, p2;
+    PickPoints() : model1(NULL), elem1(0), model2(NULL), mstate2(NULL), elem2(0), dist(0) {}
+};
+
+class SOFA_COMPONENT_COLLISION_API BasePickingManager : public virtual sofa::core::objectmodel::BaseObject
 {
 public:
+
     virtual ~BasePickingManager();
-    virtual bool attach(int button, core::CollisionElementIterator elem1, core::CollisionElementIterator elem2, double dist, Vector3 p1, Vector3 p2) = 0;
+    virtual bool attach(int /*button*/, core::CollisionElementIterator /*elem1*/, core::CollisionElementIterator /*elem2*/, double /*dist*/, Vector3 /*p1*/, Vector3 /*p2*/)
+    {
+	return false;
+    }
+    virtual bool attach(int button, PickPoints& a)
+    {
+	if (a.model1 && a.model2)
+	    return attach(button, core::CollisionElementIterator(a.model1, a.elem1), core::CollisionElementIterator(a.model2, a.elem2), a.dist, a.p1, a.p2);
+	else
+	    return false;
+    }
     virtual bool isAttached() = 0;
     virtual void release() = 0;
     virtual void update() = 0;
@@ -82,40 +106,52 @@ public:
     }
 };
 
-class RayPickInteractor : public RayModel, public core::BehaviorModel
+class SOFA_COMPONENT_COLLISION_API RayPickInteractor : public RayModel, public core::BehaviorModel, public mapping::VoidMapping
 {
 public:
 	RayPickInteractor();
 	~RayPickInteractor();
-	
+
 	virtual void init();
-	
+
 	virtual bool isActive();
-	
+
+    virtual bool pickParticles(double /*rayOx*/, double /*rayOy*/, double /*rayOz*/, double /*rayDx*/, double /*rayDy*/, double /*rayDz*/, double /*radius0*/, double /*dRadius*/,
+			       std::multimap< double, std::pair<sofa::core::componentmodel::behavior::BaseMechanicalState*, int> >& /*particles*/)
+    {
+	return false;
+    }
+
 	/// Computation of a new simulation step.
 	virtual void updatePosition(double dt);
-	
+
 	/// Interactor interface
 	virtual void newPosition(const Vector3& translation, const Quat& rotation, const Mat4x4d& transformation);
 	virtual void newEvent(const std::string& command);
-	
+	/// Set ray radius, at positions (0,0,0) and (0,0,1) in last transmitted transformation
+	virtual void setRayRadius(double r0, double r1);
+
 	virtual void draw();
 
     virtual bool isAttached();
 
+    Data<bool> useCollisions;
 
 protected:
 	void pickBody();
 	void releaseBody();
 
-	core::componentmodel::collision::DetectionOutput* findFirstCollision(const Ray& ray, double* dist);
+	bool findFirstCollision(const Ray& ray, PickPoints& result, bool create = false);
 
 	// TODO: remove the FIRST_INPUT, SECOND_INPUT, IS_CUT states
     enum { DISABLED, PRESENT, ACTIVE, ATTACHED, FIRST_INPUT, SECOND_INPUT, IS_CUT } state; // FIRST_INPUT and SECOND_INPUT are states to control inputs points for incision in a triangular mesh
 	int button; // index of activated button (only valid in ACTIVE state)
 	Mat4x4d transform;
+	Real rayRadius0, rayRadius1;
 
     helper::vector<BasePickingManager*> pickManagers;
+
+    helper::vector<PickPoints*> pickPoints;
 
 	// TopologicalChangeManager object to handle topological changes
 	TopologicalChangeManager topo_changeManager;
@@ -135,10 +171,15 @@ public:
 
     DefaultPickingManager();
 
-    virtual bool attach(int button, core::CollisionElementIterator elem1, core::CollisionElementIterator elem2, double dist, Vector3 p1, Vector3 p2)
+    virtual bool attach(int button, PickPoints& a)
     {
         if (button == this->button.getValue())
-            return attach(elem1, elem2, dist, p1, p2);
+	{
+	    if (a.model1 && a.model2)
+		return attach(core::CollisionElementIterator(a.model1, a.elem1), core::CollisionElementIterator(a.model2, a.elem2), a.dist, a.p1, a.p2);
+	    else if (a.model1 && a.mstate2)
+		return attach(core::CollisionElementIterator(a.model1, a.elem1), a.mstate2, a.elem2, a.dist, a.p1, a.p2);
+	}
 	return false;
     }
     virtual bool isAttached()
@@ -167,6 +208,8 @@ protected:
     virtual component::MechanicalObject<DataTypes>* getMState(core::objectmodel::BaseContext* context);
 
     virtual bool attach(core::CollisionElementIterator elem1, core::CollisionElementIterator elem2, double dist, Vector3 p1, Vector3 p2);
+
+    virtual bool attach(core::CollisionElementIterator elem1, core::componentmodel::behavior::BaseMechanicalState* mstate2, int elem2, double dist, Vector3 p1, Vector3 p2);
 
     virtual void addContact(ContactForceField* ff, int index1, int index2, double stiffness, double mu_v, double length, const Vector3& p1, const Vector3& p2);
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,9 +28,11 @@
 // Default size of thread blocks
 // Between 16 and 512
 enum { BSIZE=64 };
-
 enum { MBSIZE=96 };
 // Max size of thread blocks
 enum { MAXTHREADS=512 };
+
+// Size of shared memory
+enum { SHAREDMEMORYSIZE=16384 };
 
 #endif

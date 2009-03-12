@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -29,21 +29,29 @@
 
 #include <stdlib.h>
 
-#include <viewer/qtogre/DotSceneLoader.h>
-
-#include <viewer/SofaViewer.h>
+#include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
+#include <sofa/gui/qt/viewer/SofaViewer.h>
+#include <sofa/gui/qt/viewer/qtogre/QOgreLightWidget.h>
+#include "../../WFloatLineEdit.h"
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 
 
 #ifdef SOFA_QT4
 #include <QPaintEvent>
 #include <QWidget>
+#include <Q3GroupBox>
+#include <QSpinBox>
+#include <QPushButton>
 #else
 #include <qlayout.h>
+#include <qgroupbox.h>
+#include <qspinbox.h>
+#include <qpushbutton.h>
+typedef QGroupBox Q3GroupBox;
 #endif
 
 #include <Ogre.h>
@@ -51,7 +59,7 @@
 
 
 using namespace sofa::helper::system::thread;
-using namespace sofa::simulation::tree;
+using namespace sofa::simulation;
 
 #if defined(SOFA_GPU_CUDA)
 #include <sofa/gpu/cuda/mycuda.h>
@@ -102,31 +110,26 @@ namespace sofa
 	      static int DisableViewer();
 
 	      QtOgreViewer( QWidget *parent=0, const char *name=0 );
-	      ~QtOgreViewer()
-		{
-
-		  if(mRoot != NULL){
-		    delete mRoot;
-		    mRoot = NULL;
-		  }
-		};
+	      ~QtOgreViewer();
 
 	      QWidget* getQWidget() { return this; }
 
 	      bool ready(){return _waitForRender;};
-	      void wait(){_waitForRender = true;};/*
-						    virtual void update(void);*/
 	      void showEntireScene(void);
 
 
-	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename, bool keepParams=false);
+	      void setScene(sofa::simulation::Node* scene, const char* filename, bool keepParams=false);
 
 	      void setup(void);
 	      void setupView(void);          //Creation of the first window of visualization
 	      QString helpString();
 
+	      void removeViewerTab(QTabWidget *t);
+	      void configureViewerTab(QTabWidget *t);
+
 	      void moveRayPickInteractor(int eventX, int eventY);
-	      
+
+	      void setBackgroundColour(float r, float g, float b);
 	    private:
 				
 	      Ogre::String mResourcePath;
@@ -194,10 +197,13 @@ namespace sofa
 		  }
 	      }
 
-	      void update();
 
+	      void addDirLight(std::string lightName=std::string());
+	      void addPointLight(std::string lightName=std::string());
+	      void addSpotLight(std::string lightName=std::string());
 	    protected:
-
+	      Ogre::ManualObject* drawUtility;
+	      Ogre::MaterialPtr   drawMaterial;
 	      ctime_t _beginTime;
 
 	      bool m_mouseLeftPressed;
@@ -205,39 +211,57 @@ namespace sofa
 	      bool m_mouseMiddlePressed;
 	      QPoint m_mousePressPos;
 	      QPoint m_mousePos;
-	      bool m_background;
 	      bool pickDone;
+
+	      std::string sceneFile;
+	      //Tab in the GUI containing the interface to configure the lights
+	      QWidget  *tabLights;
+
+	      //Viewer Tab Widget
+	      QPushButton *saveLightsButton;
+	      WFloatLineEdit *ambient[3];
+	      //Lights	     
+	      QWidget  *dirLight; 
+	      QSpinBox *numDirLight;
+	      std::vector< QOgreDirectionalLightWidget *> dirLightOgreWidget;
+	      QWidget  *pointLight;
+	      QSpinBox *numPointLight;
+	      std::vector< QOgrePointLightWidget       *> pointLightOgreWidget;
+	      QWidget  *spotLight;
+	      QSpinBox *numSpotLight;
+	      std::vector< QOgreSpotLightWidget        *> spotLightOgreWidget;
+	      bool needUpdateParameters;
+	      
+
 
 	      Ogre::Vector3 m_mTranslateVector;
 	      Ogre::Radian m_mRotX, m_mRotY;
 	      Ogre::Real m_mMoveSpeed;
 	      Ogre::Degree m_mRotateSpeed;
 	      Ogre::SceneNode* zeroNode;
-	      Ogre::SceneNode*  camNode;
 	      bool _waitForRender;
-
-	      //Initial Bounding Box
-	      Ogre::AxisAlignedBox world_BB;
+	      float _factorWheel;
 
 	      void resize()
 	      {
 		if (mRenderWindow != NULL)
 		  {
-		    emit(resizeW(width())); 
-		    emit(resizeH(height())); 
 		    mRenderWindow->windowMovedOrResized();
 		    mRenderWindow->resize(width(), height());     
 		    mVp->setDimensions(0,0, 1.0, 1.0);
 		    mCamera->setAspectRatio(Ogre::Real(mVp->getActualWidth()) / Ogre::Real(mVp->getActualHeight()));
 		    update();
+		    emit(resizeW(width()));
+		    emit(resizeH(height()));
 		  }
 	      }
 
 	      bool updateInteractor( QMouseEvent * e );	
 				
-	      virtual void paintEvent(QPaintEvent*);				
-	      virtual void resizeEvent(QResizeEvent*);			
-	      virtual void timerEvent(QTimerEvent * event){Q_UNUSED(event);update();}
+	      void updateIntern();
+ 	      virtual void paintEvent(QPaintEvent*);				 
+ 	      virtual void resizeEvent(QResizeEvent*);			 
+	      virtual void timerEvent(QTimerEvent * event){Q_UNUSED(event);updateIntern();}
 
 	      virtual void keyPressEvent ( QKeyEvent * e );
 	      virtual void mousePressEvent(QMouseEvent* evt);
@@ -258,6 +282,20 @@ namespace sofa
 
 
 	      public slots:	      
+	      virtual void update(){
+#ifndef SOFA_QT4
+		updateIntern();
+#endif
+	      };
+	      
+	      void updateViewerParameters();
+
+	      void resizeDirLight(int v);
+	      void resizePointLight(int v);
+	      void resizeSpotLight(int v);
+
+	      void saveLights();
+
 	      virtual void resetView();
 	      virtual void saveView();  
 	      virtual void setSizeW(int); 
@@ -267,7 +305,7 @@ namespace sofa
 	      void redrawn(); 
 	      void resizeW( int ); 
 	      void resizeH( int ); 
-
+	      void quit();
 
 	    };
 	} //qtogre

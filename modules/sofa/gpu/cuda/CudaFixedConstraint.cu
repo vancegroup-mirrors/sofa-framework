@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #include "CudaMath.h"
 #include "cuda.h"
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 namespace sofa
 {
 namespace gpu
@@ -42,6 +42,14 @@ void FixedConstraintCuda3f_projectResponseIndexed(unsigned int size, const void*
 void FixedConstraintCuda3f1_projectResponseContiguous(unsigned int size, void* dx);
 void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void FixedConstraintCuda3d_projectResponseContiguous(unsigned int size, void* dx);
+void FixedConstraintCuda3d_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+void FixedConstraintCuda3d1_projectResponseContiguous(unsigned int size, void* dx);
+void FixedConstraintCuda3d1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 }
 
@@ -135,8 +143,45 @@ void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void
 	FixedConstraintCuda3t1_projectResponseIndexed_kernel<float><<< grid, threads >>>(size, (const int*)indices, (CudaVec4<float>*)dx);
 }
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
 
-#if defined(__cplusplus) && CUDA_VERSION != 2000
+void FixedConstraintCuda3d_projectResponseContiguous(unsigned int size, void* dx)
+{
+	dim3 threads(BSIZE,1);
+	//dim3 grid((size+BSIZE-1)/BSIZE,1);
+	//FixedConstraintCuda3t_projectResponseContiguous_kernel<double><<< grid, threads >>>(size, (CudaVec3<double>*)dx);
+	//dim3 grid((3*size+BSIZE-1)/BSIZE,1);
+	//FixedConstraintCuda1t_projectResponseContiguous_kernel<double><<< grid, threads >>>(3*size, (double*)dx);
+	cudaMemset(dx, 0, size*3*sizeof(double));
+}
+
+void FixedConstraintCuda3d1_projectResponseContiguous(unsigned int size, void* dx)
+{
+	dim3 threads(BSIZE,1);
+	//dim3 grid((size+BSIZE-1)/BSIZE,1);
+	//FixedConstraintCuda3t1_projectResponseContiguous_kernel<double><<< grid, threads >>>(size, (CudaVec4<double>*)dx);
+	//dim3 grid((4*size+BSIZE-1)/BSIZE,1);
+	//FixedConstraintCuda1t_projectResponseContiguous_kernel<double><<< grid, threads >>>(4*size, (double*)dx);
+	cudaMemset(dx, 0, size*4*sizeof(double));
+}
+
+void FixedConstraintCuda3d_projectResponseIndexed(unsigned int size, const void* indices, void* dx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	FixedConstraintCuda3t_projectResponseIndexed_kernel<double><<< grid, threads >>>(size, (const int*)indices, (CudaVec3<double>*)dx);
+}
+
+void FixedConstraintCuda3d1_projectResponseIndexed(unsigned int size, const void* indices, void* dx)
+{
+	dim3 threads(BSIZE,1);
+	dim3 grid((size+BSIZE-1)/BSIZE,1);
+	FixedConstraintCuda3t1_projectResponseIndexed_kernel<double><<< grid, threads >>>(size, (const int*)indices, (CudaVec4<double>*)dx);
+}
+
+#endif // SOFA_GPU_CUDA_DOUBLE
+
+#if defined(__cplusplus) && CUDA_VERSION < 2000
 } // namespace cuda
 } // namespace gpu
 } // namespace sofa

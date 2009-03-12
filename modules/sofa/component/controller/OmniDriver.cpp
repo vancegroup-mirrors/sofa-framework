@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -43,9 +43,9 @@
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
 
-using std::cout;
-using std::cerr;
-using std::endl;
+
+
+
 
 //sensable namespace
 using namespace sofa::defaulttype;
@@ -148,7 +148,7 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 
 	rot.fromMatrix(mrot);
 	rot.normalize();
-	
+
 	if ((rot[0]*data->servoDeviceData.quat[0]+rot[1]*data->servoDeviceData.quat[1]+rot[2]*data->servoDeviceData.quat[2]+rot[3]*data->servoDeviceData.quat[3]) < 0)
 		for (int i=0;i<4;i++)
 			rot[i] *= -1;
@@ -171,7 +171,7 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	currentForce[1] = ( data->rotation[0][1] * fx + data->rotation[1][1] * fy + data->rotation[2][1] * fz) * data->forceScale;
 	currentForce[2] = ( data->rotation[0][2] * fx + data->rotation[1][2] * fy + data->rotation[2][2] * fz) * data->forceScale;
 
-	if(data->servoDeviceData.m_buttonState1)
+ 	if(data->servoDeviceData.m_buttonState1 || data->permanent_feedback)
 		hdSetDoublev(HD_CURRENT_FORCE, currentForce);
 
 	++data->servoDeviceData.nupdates;
@@ -285,12 +285,14 @@ int initDevice(OmniData* data)
 
 
 
-OmniDriver::OmniDriver() 
+OmniDriver::OmniDriver()
 : scale(initData(&scale, 0.1, "scale","Default scale applied to the Phantom Coordinates. "))
 , forceScale(initData(&forceScale, 1.0, "forceScale","Default forceScale applied to the force feedback. "))
 , position(initData(&position, Vec3d(0,0,0), "position","Default position applied to the Phantom Coordinates"))
 , orientation(initData(&orientation, Vec3d(0,0,0), "orientation","Default orientation applied to the Phantom Coordinates"))
+, permanent(initData(&permanent, false, "permanent" , "Apply the force feedback permanently"))
 {
+	serr<<"toto"<<sendl;
 	this->f_listening.setValue(true);
 	data = new OmniData;
 	data->forceFeedback = new NullForceFeedback();
@@ -302,7 +304,7 @@ OmniDriver::~OmniDriver()
 
 void OmniDriver::cleanup()
 {
-	std::cout << "OmniDriver::cleanup()" << std::endl;
+	sout << "OmniDriver::cleanup()" << sendl;
 	hdScheduleSynchronous(stopCallback, data, HD_MIN_SCHEDULER_PRIORITY);
     //exitHandler();
     isInitialized = false;
@@ -311,7 +313,7 @@ void OmniDriver::cleanup()
 
 void OmniDriver::setForceFeedback(ForceFeedback* ff)
 {
-	cout << "change ff" << endl;
+	sout << "change ff" << endl;
 	if(data->forceFeedback)
 		delete data->forceFeedback;
 	data->forceFeedback = ff;
@@ -319,8 +321,8 @@ void OmniDriver::setForceFeedback(ForceFeedback* ff)
 
 void OmniDriver::init()
 {
-	std::cout << "OmniDriver::init()" << std::endl;
-	context = dynamic_cast<simulation::tree::GNode *>(this->getContext()); // access to current node
+	sout << "OmniDriver::init()" << sendl;
+	context = dynamic_cast<simulation::Node *>(this->getContext()); // access to current node
 	double fx, fy, fz;
 	data->forceFeedback->computeForce(0,0,0, 0,0,0,1, fx, fy, fz);
 	//OmniData* data = new OmniData();
@@ -329,11 +331,13 @@ void OmniDriver::init()
 	data->scale = scale.getValue();
 	data->forceScale = forceScale.getValue();
 	data->translation = position.getValue();
-	Vector3 radV = orientation.getValue() * M_PI/180; 
+	Vector3 radV = orientation.getValue() * M_PI/180;
 	Quaternion q = helper::Quater<double>::createFromRotationVector(radV);
 	q.toMatrix(data->rotation);
 	initDevice(data);
-	std::cout << "OmniDriver::init() done" << std::endl;
+	sout << "OmniDriver::init() done" << sendl;
+
+	data->permanent_feedback = permanent.getValue();
 }
 
 void OmniDriver::reinit()
@@ -350,14 +354,16 @@ void OmniDriver::handleEvent(core::objectmodel::Event *event)
 if (data->deviceData.ready)
 {
     data->deviceData.quat.normalize();
-		//cout << "driver is working ! " << data->servoDeviceData.transform[12+0] << endl;
+		//sout << "driver is working ! " << data->servoDeviceData.transform[12+0] << endl;
 		sofa::core::objectmodel::OmniEvent::State omniState = sofa::core::objectmodel::OmniEvent::Button1;
 //		sofa::core::objectmodel::OmniEvent omniEvent(omniState, deviceData.transform[12+0]*0.1,
 //		deviceData.transform[12+1]*0.1,
 //		deviceData.transform[12+2]*0.1);
-//std::cout << "omni pos="<<data->deviceData.pos<<" quat="<<data->deviceData.quat<<std::endl;
-		sofa::core::objectmodel::OmniEvent omniEvent(omniState, data->deviceData.pos, data->deviceData.quat);
-		
+//sout << "omni pos="<<data->deviceData.pos<<" quat="<<data->deviceData.quat<<sendl;
+
+
+		sofa::core::objectmodel::OmniEvent omniEvent(omniState, data->deviceData.pos, data->deviceData.quat,  data->deviceData.m_buttonState1);
+
 		this->getContext()->propagateEvent(&omniEvent);
 }
 	}

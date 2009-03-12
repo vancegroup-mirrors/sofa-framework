@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -47,9 +47,9 @@ using sofa::helper::vector;
 class LaparoscopicRigid3Types
 {
 public:
-	
+
 	typedef SReal Real;
-	
+
 	class Deriv
 	{
 	private:
@@ -57,20 +57,22 @@ public:
 		Vector3 vOrientation;
 	  public:
 		typedef Real value_type;
+		typedef Real Pos;
+		typedef Vector3 Rot;
 		friend class Coord;
-		
+
 		Deriv (const Real &velTranslation, const Vector3 &velOrient)
 		: vTranslation(velTranslation), vOrientation(velOrient) {}
 		Deriv () { clear(); }
-		
+
 		void clear() { vTranslation = 0; vOrientation.clear(); }
-		
+
 		void operator +=(const Deriv& a)
 		{
 		    vTranslation += a.vTranslation;
 		    vOrientation += a.vOrientation;
 		}
-		
+
 		Deriv operator + (const Deriv& a) const
 		{
 		    Deriv d;
@@ -78,25 +80,25 @@ public:
 		    d.vOrientation = vOrientation + a.vOrientation;
 		    return d;
 		}
-		
+
 		void operator*=(Real a)
 		{
 			vTranslation *= a;
 			vOrientation *= a;
 		}
-		
+
 		Deriv operator*(Real a) const
 		{
 			Deriv r = *this;
 			r*=a;
 			return r;
 		}
-		
-		Deriv operator - () const 
+
+		Deriv operator - () const
 		{
 			return Deriv(-vTranslation, -vOrientation);
 		}
-		
+
 		/// dot product
 		Real operator*(const Deriv& a) const
 		{
@@ -104,7 +106,7 @@ public:
 					+vOrientation[0]*a.vOrientation[0]+vOrientation[1]*a.vOrientation[1]
 					+vOrientation[2]*a.vOrientation[2];
 		}
-		
+
 		Real& getVTranslation (void) { return vTranslation; }
 		Vector3& getVOrientation (void) { return vOrientation; }
 		const Real& getVTranslation (void) const { return vTranslation; }
@@ -120,21 +122,23 @@ public:
                     return in;
                 }
         };
-	
+
 	class Coord
 	{
-	  
+
 	private:
 		Real translation;
 		Quat orientation;
 	public:
 		typedef Real value_type;
+		typedef Real Pos;
+		typedef Quat Rot;
 		Coord (const Real &posTranslation, const Quat &orient)
 		: translation(posTranslation), orientation(orient) {}
 		Coord () { clear(); }
-		
+
 		void clear() { translation = 0; orientation.clear(); }
-	
+
 		void operator +=(const Deriv& a)
 		{
 			translation += a.getVTranslation();
@@ -144,7 +148,7 @@ public:
 				orientation[i] += qDot[i] * (SReal)0.5;
 			orientation.normalize();
 		}
-		
+
 		Coord operator + (const Deriv& a) const
 		{
 			Coord c = *this;
@@ -156,7 +160,7 @@ public:
 			c.orientation.normalize();
 			return c;
 		}
-		
+
 		void operator +=(const Coord& a)
 		{
 // 			std::cout << "+="<<std::endl;
@@ -164,21 +168,21 @@ public:
 			//orientation += a.getOrientation();
 			//orientation.normalize();
 		}
-		
+
 		void operator*=(Real a)
 		{
 // 			std::cout << "*="<<std::endl;
 			translation *= a;
 			//orientation *= a;
 		}
-		
+
 		Coord operator*(Real a) const
 		{
 			Coord r = *this;
 			r*=a;
 			return r;
 		}
-		
+
 		/// dot product (FF: WHAT????  )
 		Real operator*(const Coord& a) const
 		{
@@ -186,7 +190,7 @@ public:
 				+orientation[0]*a.orientation[0]+orientation[1]*a.orientation[1]
 				+orientation[2]*a.orientation[2]+orientation[3]*a.orientation[3];
 		}
-		
+
 		Real& getTranslation () { return translation; }
 		Quat& getOrientation () { return orientation; }
 		const Real& getTranslation () const { return translation; }
@@ -201,19 +205,19 @@ public:
                     in>>c.orientation;
                     return in;
                 }
-		
+
 		static Coord identity() {
 			Coord c;
 			return c;
 		}
-		
+
 		/// Apply a transformation with respect to itself
 		void multRight( const Coord& c )
 		{
 			translation += c.getTranslation();
 			orientation = orientation * c.getOrientation();
 		}
-		
+
 		/// compute the product with another frame on the right
 		Coord mult( const Coord& c ) const {
 		    Coord r;
@@ -226,21 +230,52 @@ public:
 		    return orientation.inverseRotate(v);
 		}
 	};
-	
-	template <class T>
-	class SparseData
-	{
-	public:
-		SparseData(unsigned int _index, const T& _data): index(_index), data(_data){};
-		unsigned int index;
-		T data;
-	};
 
-	typedef SparseData<Coord> SparseCoord;
-	typedef SparseData<Deriv> SparseDeriv;
+    typedef Coord::Pos CPos;
+    typedef Coord::Rot CRot;
+	static const CPos& getCPos(const Coord& c) { return c.getTranslation(); }
+	static void setCPos(Coord& c, const CPos& v) { c.getTranslation() = v; }
+	static const CRot& getCRot(const Coord& c) { return c.getOrientation(); }
+	static void setCRot(Coord& c, const CRot& v) { c.getOrientation() = v; }
 
-	typedef vector<SparseCoord> SparseVecCoord;
-	typedef vector<SparseDeriv> SparseVecDeriv;
+    typedef Deriv::Pos DPos;
+    typedef Deriv::Rot DRot;
+	static const DPos& getDPos(const Deriv& d) { return d.getVTranslation(); }
+	static void setDPos(Deriv& d, const DPos& v) { d.getVTranslation() = v; }
+	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
+	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
+
+
+        /// Data Structure to store lines of the matrix L.
+        template <class T>
+        class SparseConstraint
+        {
+          public:
+          SparseConstraint(){};
+          void insert( unsigned int index, const T &value)
+          {
+            data[index] += value;
+          }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+          T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
+
+          std::map< unsigned int, T > &getData() {return data;};
+          const std::map< unsigned int, T > &getData() const {return data;};
+        protected:
+          std::map< unsigned int, T > data;
+        };
+
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
 	//! All the Constraints applied to a state Vector
 	typedef	vector<SparseVecDeriv> VecConst;
@@ -254,37 +289,37 @@ public:
 	{
 	    c.getTranslation() = (Real)x;
 	}
-	
+
     template<typename T>
 	static void get(T& x, T&, T&, const Coord& c)
 	{
 	    x = (T)c.getTranslation();
 	}
-	
+
     template<typename T>
 	static void add(Coord& c, T x, T, T)
 	{
 	    c.getTranslation() += (Real)x;
 	}
-	
+
     template<typename T>
-	static void set(Deriv& c, T x, T, T)
+	static void set(Deriv& d, T x, T, T)
 	{
-	    c.getVTranslation() = (Real)x;
+	    d.getVTranslation() = (Real)x;
 	}
-	
+
     template<typename T>
-	static void get(T& x, T& y, T& z, const Deriv& c)
+	static void get(T& x, T& y, T& z, const Deriv& d)
 	{
-	    x = (T)c.getVTranslation();
+	    x = (T)d.getVTranslation();
 	    y = (T)0;
 	    z = (T)0;
 	}
-	
+
     template<typename T>
-	static void add(Deriv& c, T x, T, T)
+	static void add(Deriv& d, T x, T, T)
 	{
-	    c.getVTranslation() += (T)x;
+	    d.getVTranslation() += (T)x;
 	}
 	static const char* Name()
 	{
@@ -294,9 +329,9 @@ public:
 	static Coord interpolate(const helper::vector< Coord > &ancestors, const helper::vector< Real > &coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Coord c;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			c += ancestors[i] * coefs[i];
@@ -308,9 +343,9 @@ public:
 	static Deriv interpolate(const helper::vector< Deriv > &ancestors, const helper::vector< Real > &coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Deriv d;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			d += ancestors[i] * coefs[i];
@@ -345,17 +380,17 @@ public:
 	static unsigned int size() { return 5; }
 
 	template <typename T>
-	static void getValue(const LaparoscopicRigidTypes::Coord &type, unsigned int index, T& value) 
-	{ 
+	static void getValue(const LaparoscopicRigidTypes::Coord &type, unsigned int index, T& value)
+	{
 		if (index < 1)
-			value = static_cast<T>(type.getTranslation()); 
+			value = static_cast<T>(type.getTranslation());
 		else
 			value = static_cast<T>(type.getOrientation()[index-1]);
 	}
-	
+
 	template<typename T>
-	static void setValue(LaparoscopicRigidTypes::Coord &type, unsigned int index, const T& value ) 
-	{ 
+	static void setValue(LaparoscopicRigidTypes::Coord &type, unsigned int index, const T& value )
+	{
 		if (index < 1)
 		  type.getTranslation() = static_cast<LaparoscopicRigidTypes::Coord::value_type>(value);
 		else
@@ -368,19 +403,19 @@ class DataTypeInfo<LaparoscopicRigidTypes::Deriv>
 {
 public:
 	static unsigned int size() { return 4; }
-	
+
 	template <typename T>
-	static void getValue(const LaparoscopicRigidTypes::Deriv &type, unsigned int index, T& value) 
-	{ 
+	static void getValue(const LaparoscopicRigidTypes::Deriv &type, unsigned int index, T& value)
+	{
 		if (index < 1)
-			value = static_cast<T>(type.getVTranslation()); 
+			value = static_cast<T>(type.getVTranslation());
 		else
 			value = static_cast<T>(type.getVOrientation()[index-1]);
 	}
-	
+
 	template<typename T>
-	static void setValue(LaparoscopicRigidTypes::Deriv &type, unsigned int index, const T& value ) 
-	{ 
+	static void setValue(LaparoscopicRigidTypes::Deriv &type, unsigned int index, const T& value )
+	{
 		if (index < 1)
 		  type.getVTranslation() = static_cast<LaparoscopicRigidTypes::Deriv::value_type>(value);
 		else
@@ -417,7 +452,7 @@ namespace behavior {
 		defaulttype::Vector3 omega( vframe.lineVec[0], vframe.lineVec[1], vframe.lineVec[2] );
 		defaulttype::Vector3 origin, finertia, zero(0,0,0);
 		origin[0] = x.getTranslation();
-		
+
 		finertia = -( aframe + omega.cross( omega.cross(origin) + defaulttype::Vector3(v.getVTranslation()*2,0,0) ))*mass.mass;
 		return defaulttype::LaparoscopicRigid3Types::Deriv( finertia[0], zero );
 		/// \todo replace zero by Jomega.cross(omega)

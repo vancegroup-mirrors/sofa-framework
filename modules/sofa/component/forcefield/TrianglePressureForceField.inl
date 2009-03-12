@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -44,9 +44,9 @@ using namespace sofa::defaulttype;
 using namespace core::componentmodel::topology;
 
 
-using std::cerr;
-using std::cout;
-using std::endl;
+
+
+
 
 template <class DataTypes> TrianglePressureForceField<DataTypes>::~TrianglePressureForceField()
 {
@@ -63,7 +63,7 @@ template <class DataTypes> void  TrianglePressureForceField<DataTypes>::handleTo
 }
 template <class DataTypes> void TrianglePressureForceField<DataTypes>::init()
 {
-    //std::cerr << "initializing TrianglePressureForceField" << std::endl;
+    //serr << "initializing TrianglePressureForceField" << sendl;
     this->core::componentmodel::behavior::ForceField<DataTypes>::init();
 
 	_topology = getContext()->getMeshTopology();
@@ -100,7 +100,7 @@ void TrianglePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord
 template <class DataTypes> 
     double TrianglePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
 {
-    cerr<<"TrianglePressureForceField::getPotentialEnergy-not-implemented !!!"<<endl;
+    serr<<"TrianglePressureForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 
@@ -127,7 +127,7 @@ void TrianglePressureForceField<DataTypes>::updateTriangleInformation()
 
 	for(it=trianglePressureMap.begin(); it!=trianglePressureMap.end(); it++ )
 	{
-		(*it).second.force=((*it).second.area)*pressure.getValue();
+		(*it).second.force=(pressure.getValue()*(*it).second.area);
 	}
 }
 

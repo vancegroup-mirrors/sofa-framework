@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,18 +36,19 @@ namespace simulation
 {
 
 
-class UpdateMappingVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API UpdateMappingVisitor : public Visitor
 {
 public:
 
     void processMapping(simulation::Node* node, core::BaseMapping* obj);
     void processMechanicalMapping(simulation::Node*, core::componentmodel::behavior::BaseMechanicalMapping* obj);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "mapping"; }
+        virtual const char* getClassName() const { return "UpdateMappingVisitor"; }
 
 	/// Specify whether this action can be parallelized.
 	virtual bool isThreadSafe() const { return true; }

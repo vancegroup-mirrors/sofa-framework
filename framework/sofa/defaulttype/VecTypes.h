@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -54,30 +54,52 @@ public:
 	typedef vector<Deriv> VecDeriv;
 	typedef vector<Real> VecReal;
 
+    typedef Coord CPos;
+	static const CPos& getCPos(const Coord& c) { return c; }
+	static void setCPos(Coord& c, const CPos& v) { c = v; }
+    typedef Deriv DPos;
+	static const DPos& getDPos(const Deriv& d) { return d; }
+	static void setDPos(Deriv& d, const DPos& v) { d = v; }
 
-	template <class T>
-	class SparseData
-	{
-	public:
-		SparseData(unsigned int _index, const T& _data): index(_index), data(_data){};
-		SparseData(){};
-		unsigned int index;
-		T data;
-	};
 
-	typedef SparseData<Coord> SparseCoord;
-	typedef SparseData<Deriv> SparseDeriv;
+        /// Data Structure to store lines of the matrix L.
+        template <class T>
+        class SparseConstraint
+        {
+          public:
+          SparseConstraint(){};
+          void insert( unsigned int index, const T &value)
+          {
+            data[index] += value;
+          }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+          T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
 
-	typedef vector<SparseCoord> SparseVecCoord;
-	typedef vector<SparseDeriv> SparseVecDeriv;
+          std::map< unsigned int, T > &getData() {return data;};
+          const std::map< unsigned int, T > &getData() const {return data;};
+        protected:
+          std::map< unsigned int, T > data;
+        };
+
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
 	//! All the Constraints applied to a state Vector
 	typedef	vector<SparseVecDeriv> VecConst;
-	
+
     template<typename T>
 	static void set(Coord& c, T x, T y, T z)
 	{
-	
+
 		if (c.size() > 0)
 			c[0] = (Real)x;
 		if (c.size() > 1)
@@ -85,7 +107,7 @@ public:
 		if (c.size() > 2)
 			c[2] = (Real)z;
 	}
-	
+
     template<typename T>
 	static void get(T& x, T& y, T& z, const Coord& c)
 	{
@@ -93,7 +115,7 @@ public:
 	  y = (c.size() > 1) ? (T) c[1] : (T) 0.0;
 	  z = (c.size() > 2) ? (T) c[2] : (T) 0.0;
 	}
-	
+
     template<typename T>
 	static void add(Coord& c, T x, T y, T z)
 	{
@@ -104,15 +126,15 @@ public:
 		if (c.size() > 2)
 			c[2] += (Real)z;
 	}
-	
+
 	static const char* Name();
 
 	static Coord interpolate(const helper::vector< Coord > &ancestors, const helper::vector< Real > &coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Coord c;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			c += ancestors[i] * coefs[i];
@@ -296,28 +318,50 @@ public:
 	typedef ResizableExtVector<Deriv> VecDeriv;
 	typedef ResizableExtVector<Real> VecReal;
 
-	template <class T>
-	class SparseData
-	{
-	public:
-		SparseData(unsigned int _index, const T& _data): index(_index), data(_data){};
-		unsigned int index;
-		T data;
-	};
+    typedef Coord CPos;
+	static const CPos& getCPos(const Coord& c) { return c; }
+	static void setCPos(Coord& c, const CPos& v) { c = v; }
+    typedef Deriv DPos;
+	static const DPos& getDPos(const Deriv& d) { return d; }
+	static void setDPos(Deriv& d, const DPos& v) { d = v; }
 
-	typedef SparseData<Coord> SparseCoord;
-	typedef SparseData<Deriv> SparseDeriv;
+        template <class T>
+        class SparseConstraint
+        {
+          public:
+          SparseConstraint(){};
+          void insert( unsigned int index, const T &value)
+          {
+            data[index] += value;
+          }
+          void set( unsigned int index, const T &value)
+          {
+            data[index] = value;
+          }
+          T& getDataAt(unsigned int index)
+            {
+              typename std::map< unsigned int, T >::iterator it = data.find(index);
+              static T zeroValue=T();
+              if (it != data.end()) return it->second;
+              else return zeroValue;
+            };
 
-	typedef vector<SparseCoord> SparseVecCoord;
-	typedef vector<SparseDeriv> SparseVecDeriv;
+          const std::map< unsigned int, T > &getData() const {return data;};
+          std::map< unsigned int, T > &getData() {return data;};
+        protected:
+          std::map< unsigned int, T > data;
+        };
+
+	typedef SparseConstraint<Coord> SparseVecCoord;
+	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
 	//! All the Constraints applied to a state Vector
 	typedef	vector<SparseVecDeriv> VecConst;
-	
+
     template<typename T>
 	static void set(Coord& c, T x, T y, T z)
 	{
-	
+
 		if (c.size() > 0)
 			c[0] = (Real)x;
 		if (c.size() > 1)
@@ -325,7 +369,7 @@ public:
 		if (c.size() > 2)
 			c[2] = (Real)z;
 	}
-	
+
     template<typename T>
 	static void get(T& x, T& y, T& z, const Coord& c)
 	{
@@ -333,7 +377,7 @@ public:
 	  y = (c.size() > 1) ? (T) c[1] : (T) 0.0;
 	  z = (c.size() > 2) ? (T) c[2] : (T) 0.0;
 	}
-	
+
     template<typename T>
 	static void add(Coord& c, T x, T y, T z)
 	{
@@ -344,15 +388,15 @@ public:
 		if (c.size() > 2)
 			c[2] += (Real)z;
 	}
-	
+
 	static const char* Name();
 
 	static Coord interpolate(const helper::vector< Coord > & ancestors, const helper::vector< Real > & coefs)
 	{
 		assert(ancestors.size() == coefs.size());
-			
+
 		Coord c;
-		
+
 		for (unsigned int i = 0; i < ancestors.size(); i++)
 		{
 			c += ancestors[i] * coefs[i];
@@ -594,7 +638,7 @@ inline defaulttype::Vec<2, float> inertiaForce<
 namespace objectmodel
 {
 
-// Specialization of Field::getValueTypeString() method to display smaller aliases 
+// Specialization of Field::getValueTypeString() method to display smaller aliases
 // The next line hides all those methods from the doxygen documentation
 /// \cond TEMPLATE_OVERRIDES
 

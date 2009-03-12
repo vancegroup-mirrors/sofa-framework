@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -38,13 +38,6 @@ namespace component
 namespace forcefield
 {
 
-template<class DataTypes>
-void SparseGridSpringForceField<DataTypes>::parse(core::objectmodel::BaseObjectDescription* arg)
-{
-    this->Inherit::parse(arg);
-    if (arg->getAttribute("stiffness")) this->setStiffness((Real)atof(arg->getAttribute("stiffness")));
-    if (arg->getAttribute("damping")) this->setDamping((Real)atof(arg->getAttribute("damping")));
-}
 
 using std::cout;
 using std::cerr;
@@ -70,7 +63,7 @@ void SparseGridSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2,
             int size = index;
             size += topology->getNbVoxels()*24;
             this->dfdx.resize(size);
-	    
+
             int i,j,k;
 
             Voxels *voxels;

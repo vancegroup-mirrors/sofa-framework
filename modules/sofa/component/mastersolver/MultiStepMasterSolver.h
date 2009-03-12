@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,7 @@
 
 #include <sofa/core/componentmodel/behavior/MasterSolver.h>
 #include <sofa/simulation/common/MasterSolverImpl.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -39,10 +40,11 @@ namespace mastersolver
 
 /** The simplest master solver, equivalent to the default behavior when no master solver is used.
 */
-class MultiStepMasterSolver : public sofa::simulation::MasterSolverImpl
+class SOFA_COMPONENT_MASTERSOLVER_API MultiStepMasterSolver : public sofa::simulation::MasterSolverImpl
 {
 public:
     MultiStepMasterSolver();
+    virtual ~MultiStepMasterSolver();
     void step (double dt);
     Data<int> collisionSteps;
     Data<int> integrationSteps;

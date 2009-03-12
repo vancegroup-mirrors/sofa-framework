@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Interface: Node
 //
-// Description: 
+// Description:
 //
 //
 // Author: The SOFA team </www.sofa-framework.org>, (C) 2008
@@ -43,6 +43,7 @@
 #include <sofa/core/objectmodel/ContextObject.h>
 #include <sofa/core/CollisionModel.h>
 #include <sofa/core/VisualModel.h>
+#include <sofa/core/VisualManager.h>
 #include <sofa/core/Shader.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/core/Mapping.h>
@@ -51,6 +52,7 @@
 #include <sofa/core/componentmodel/behavior/InteractionForceField.h>
 #include <sofa/core/componentmodel/behavior/Mass.h>
 #include <sofa/core/componentmodel/behavior/Constraint.h>
+#include <sofa/core/componentmodel/behavior/BaseLMConstraint.h>
 #include <sofa/core/componentmodel/topology/Topology.h>
 #include <sofa/core/componentmodel/topology/BaseTopology.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
@@ -60,6 +62,7 @@
 #include <sofa/core/componentmodel/collision/Pipeline.h>
 #include <sofa/core/objectmodel/Event.h>
 
+#include <sofa/simulation/common/common.h>
 #include <sofa/simulation/common/VisitorScheduler.h>
 using sofa::simulation::VisitorScheduler;
 namespace sofa
@@ -82,20 +85,20 @@ namespace simulation {
 /**
 Implements the object (component) management of the core::Context.
 Contains objects in lists and provides accessors.
-The other nodes are not visible (unknown scene graph). 
+The other nodes are not visible (unknown scene graph).
 
 	@author The SOFA team </www.sofa-framework.org>
 */
-class Node : public sofa::core::objectmodel::Context
+class SOFA_SIMULATION_COMMON_API Node : public sofa::core::objectmodel::Context
 {
-	
+
 public:
 	Node(const std::string& name="");
 
     virtual ~Node();
 
 	/// @name High-level interface
-	/// @{	
+	/// @{
 	/// Initialize the components
 	void init();
 	/// Apply modifications to the components
@@ -105,17 +108,17 @@ public:
 	/// Draw the objects in an OpenGl context
 	void glDraw();
 	/// @}
-	
+
     /// @name Visitor handling
     /// @{
-	
+
     /// Execute a recursive action starting from this node.
     /// This method bypasses the actionScheduler of this node if any.
     virtual void doExecuteVisitor(Visitor* action)=0;
-		
+
     /// Execute a recursive action starting from this node
-	void executeVisitor( simulation::Visitor* action); 
-	
+	void executeVisitor( simulation::Visitor* action);
+
     /// Execute a recursive action starting from this node
     void execute(simulation::Visitor& action)
     {
@@ -305,22 +308,33 @@ public:
     Sequence<core::componentmodel::behavior::BaseForceField> forceField;
     Sequence<core::componentmodel::behavior::InteractionForceField> interactionForceField;
     Sequence<core::componentmodel::behavior::BaseConstraint> constraint;
+    Sequence<core::componentmodel::behavior::BaseLMConstraint> LMConstraint;
     Sequence<core::objectmodel::ContextObject> contextObject;
 
     Sequence<core::BaseMapping> mapping;
     Sequence<core::BehaviorModel> behaviorModel;
     Sequence<core::VisualModel> visualModel;
+    Sequence<core::VisualManager> visualManager;
     Sequence<core::CollisionModel> collisionModel;
 
     Single<core::componentmodel::collision::Pipeline> collisionPipeline;
     Sequence<core::objectmodel::BaseObject> unsorted;
    /// @}
-   
-	
+
+
 	/// @name Set/get objects
 	/// @{
+
+
+        /// Add a child node
+        virtual void addChild(Node* node);
     
-	
+	/// Remove a child node
+	virtual void removeChild(Node* node);
+
+	/// Move a node from another node
+	virtual void moveChild(Node* obj);
+
 	/// Add an object and return this. Detect the implemented interfaces and add the object to the corresponding lists.
 	virtual bool addObject(core::objectmodel::BaseObject* obj);
 
@@ -374,16 +388,16 @@ public:
     {
         return this->get<Object>(SearchDown);
     }
-    
+
 	/// Topology
 	virtual core::componentmodel::topology::Topology* getTopology() const;
-    
+
     /// Mesh Topology (unified interface for both static and dynamic topologies)
 	virtual core::componentmodel::topology::BaseMeshTopology* getMeshTopology() const;
 
     /// Mechanical Degrees-of-Freedom
 	virtual core::objectmodel::BaseObject* getMechanicalState() const;
-    
+
     /// Shader
 	virtual core::objectmodel::BaseObject* getShader() const;
 
@@ -391,10 +405,10 @@ public:
 	virtual void removeControllers();
 
     /// @}
-	
+
 	/// @name Time management
 	/// @{
-    
+
 	    void setLogTime(bool);
     bool getLogTime() const { return logTime_; }
 
@@ -460,7 +474,7 @@ public:
     bool getDebug() const;
     // debug
     void printComponents();
-	
+
 	/*
     /// Get parent node (or NULL if no hierarchy or for root node)
     virtual core::objectmodel::BaseNode* getParent();
@@ -470,12 +484,12 @@ public:
 
     /// Get a list of child node
     virtual sofa::helper::vector< core::objectmodel::BaseNode* >  getChildren();
-    
+
     /// Get a list of child node
     virtual const sofa::helper::vector< core::objectmodel::BaseNode* >  getChildren() const;
     */
 
-	const BaseContext* getContext() const;
+    const BaseContext* getContext() const;
     BaseContext* getContext();
 
     /// Update the whole context values, based on parent and local ContextObjects
@@ -483,24 +497,24 @@ public:
 
     /// Update the simulation context values(gravity, time...), based on parent and local ContextObjects
     virtual void updateSimulationContext();
-    
+
     /// Called during initialization to corectly propagate the visual context to the children
     virtual void initVisualContext(){}
-    
-    /// Propagate an event 
+
+    /// Propagate an event
     virtual void propagateEvent( core::objectmodel::Event* event );
 
     /// Update the visual context values, based on parent and local ContextObjects
     virtual void updateVisualContext(int FILTER=10);
-    
+
 	Single<VisitorScheduler> actionScheduler;
-    
+
     // VisitorScheduler can use doExecuteVisitor() method
     friend class VisitorScheduler;
-	
+
  	/// Must be called after each graph modification. Do not call it directly, apply an InitVisitor instead.
     virtual void initialize();
-    
+
     /// Called after initialization to set the default value of the visual context.
     virtual void setDefaultVisualContextValue();
 
@@ -516,7 +530,7 @@ protected:
     std::map<std::string, std::map<core::objectmodel::BaseObject*, ObjectTimer> > objectTime;
 
     /// @}
-    
+
 	virtual void doAddObject(core::objectmodel::BaseObject* obj);
     virtual void doRemoveObject(core::objectmodel::BaseObject* obj);
 
@@ -525,12 +539,12 @@ protected:
 	virtual void notifyAddObject(core::objectmodel::BaseObject* ){}
 	virtual void notifyRemoveObject(core::objectmodel::BaseObject* ){}
 	virtual void notifyMoveObject(core::objectmodel::BaseObject* , Node* /*prev*/){}
-	
+
 	BaseContext* _context;
 
         // Added by FF to model component dependencies
   public:
-	/// Pairs representing component dependencies. First must be initialized before second. 
+	/// Pairs representing component dependencies. First must be initialized before second.
 	Data < sofa::helper::vector < std::string > > depend;
 	/// Sort the components according to the dependencies expressed in Data depend.
 	void sortComponents();

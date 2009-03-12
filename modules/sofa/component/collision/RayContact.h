@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_COLLISION_RAYCONTACT_H
 
 #include <sofa/core/componentmodel/collision/Contact.h>
+#include <sofa/component/component.h>
 #include <sofa/helper/Factory.h>
 
 namespace sofa
@@ -41,7 +42,7 @@ using namespace sofa::defaulttype;
 
 class RayModel;
 
-class BaseRayContact : public core::componentmodel::collision::Contact
+class SOFA_COMPONENT_COLLISION_API BaseRayContact : public core::componentmodel::collision::Contact
 {
 public:
     typedef RayModel CollisionModel1;

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -89,7 +89,7 @@ void MixedInteractionForceField<DataTypes1, DataTypes2>::addDForceV(double kFact
 template<class DataTypes1, class DataTypes2>
 void MixedInteractionForceField<DataTypes1, DataTypes2>::addDForce(VecDeriv1& /*df1*/, VecDeriv2& /*df2*/, const VecDeriv1& /*dx1*/, const VecDeriv2& /*dx2*/)
 {
-    std::cerr << "ERROR("<<getClassName()<<"): addDForce not implemented.\n";
+    serr << "ERROR("<<getClassName()<<"): addDForce not implemented." << sendl;
 }
 
 template<class DataTypes1, class DataTypes2>

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -27,7 +27,8 @@
 #include <iostream>
 #include <fstream>
 #include <sofa/helper/ArgumentParser.h>
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/tree/xml/initXml.h>
+#include <sofa/simulation/tree/TreeSimulation.h>
 #include <sofa/component/init.h>
 #include <sofa/helper/Factory.h>
 #include <sofa/helper/BackTrace.h>
@@ -35,6 +36,7 @@
 #include <sofa/gui/SofaGUI.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
+#include <sofa/helper/system/atomic.h>
 
 #ifndef WIN32
 #include <dlfcn.h>
@@ -43,15 +45,15 @@ bool loadPlugin(const char* filename)
   void *handle;
   handle=dlopen(filename, RTLD_LAZY);
   if (!handle)
-  { 
-    std::cerr<<"Error loading plugin "<<filename<<": "<<dlerror()<<std::endl; 
+  {
+    std::cerr<<"Error loading plugin "<<filename<<": "<<dlerror()<<std::endl;
     return false;
-  } 
+  }
   std::cerr<<"Plugin "<<filename<<" loaded."<<std::endl;
   return true;
 }
 #else
-bool loadPlugin(const char* filename)
+bool loadPlugin(const char* /*filename*/)
 {
 	std::cerr << "Plugin loading not supported on this platform.\n";
 	return false;
@@ -63,34 +65,39 @@ bool loadPlugin(const char* filename)
 // ---------------------------------------------------------------------
 int main(int argc, char** argv)
 {
-    sofa::helper::BackTrace::autodump();
- 
+	std::cout << "Using " << sofa::helper::system::atomic<int>::getImplName()<<" atomics." << std::endl;
 
-    glutInit(&argc,argv);
+    sofa::helper::BackTrace::autodump();
+
+
 
 	sofa::gui::SofaGUI::SetProgramName(argv[0]);
 	std::string fileName ;
 	bool        startAnim = false;
 	bool        printFactory = false;
+	bool        loadRecent = false;
 	std::string gui = sofa::gui::SofaGUI::GetGUIName();
 	std::vector<std::string> plugins;
-	std::vector<std::string> files; 
-	
+	std::vector<std::string> files;
+
 	std::string gui_help = "choose the UI (";
 	gui_help += sofa::gui::SofaGUI::ListSupportedGUI('|');
 	gui_help += ")";
 
 	sofa::helper::parse(&files, "This is a SOFA application. Here are the command line arguments")
-//	.option(&fileName,'f',"file","scene file")
 	.option(&startAnim,'s',"start","start the animation loop")
 	.option(&printFactory,'p',"factory","print factory logs")
-	//.option(&nogui,'g',"nogui","use no gui, run a number of iterations and exit")
 	.option(&gui,'g',"gui",gui_help.c_str())
 	.option(&plugins,'l',"load","load given plugins")
+	.option(&loadRecent,'r',"recent","load most recently opened file")
 	(argc,argv);
 
-    sofa::component::init();
-
+	if(gui!="batch")
+	    glutInit(&argc,argv);
+	sofa::component::init();
+	sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
+	sofa::simulation::tree::xml::initXml();
+	
 	if (!files.empty()) fileName = files[0];
 
 	for (unsigned int i=0;i<plugins.size();i++)
@@ -100,38 +107,56 @@ int main(int argc, char** argv)
 	{
 		std::cout << "////////// FACTORY //////////" << std::endl;
 		sofa::helper::printFactoryLog();
-		std::cout << "//////// END FACTORY ////////" << std::endl;  
+		std::cout << "//////// END FACTORY ////////" << std::endl;
 	}
 
 	if (int err=sofa::gui::SofaGUI::Init(argv[0],gui.c_str()))
 		return err;
 
-	sofa::simulation::tree::GNode* groot = NULL; 
+	sofa::simulation::tree::GNode* groot = NULL;
+
 
     if (fileName.empty())
     {
-        fileName = "Demos/liver.scn"; 
-        sofa::helper::system::DataRepository.findFile(fileName);
+        fileName = "Demos/liver.scn";
+
+        if (loadRecent) // try to reload the latest scene
+        {
+            std::string scenes = "config/Sofa.ini"; 
+            scenes = sofa::helper::system::DataRepository.getFile( scenes );
+            std::ifstream mrulist(scenes.c_str());
+            std::getline(mrulist,fileName);
+            mrulist.close();
+        }
+        fileName = sofa::helper::system::DataRepository.getFile(fileName);
     }
-
-    std::string in_filename(fileName);
-    if (in_filename.rfind(".simu") == std::string::npos)
-      groot = dynamic_cast<sofa::simulation::tree::GNode*>( sofa::simulation::tree::getSimulation()->load(fileName.c_str()));
-
-    if (groot==NULL)
+	if (groot==NULL)
     {
         groot = new sofa::simulation::tree::GNode;
-        //return 1; 
+        //return 1;
     }
+
+	if (int err=sofa::gui::SofaGUI::createGUI(groot,fileName.c_str()))
+			return err;
+
+    std::string in_filename(fileName);
+	if (in_filename.rfind(".simu") == std::string::npos){
+      sofa::simulation::tree::getSimulation()->unload ( groot);
+      groot = dynamic_cast<sofa::simulation::tree::GNode*>( sofa::simulation::tree::getSimulation()->load(fileName.c_str()));
+      sofa::simulation::tree::getSimulation()->init(groot);
+	  if(sofa::gui::SofaGUI::CurrentGUI())
+		  sofa::gui::SofaGUI::CurrentGUI()->setScene(groot,fileName.c_str());
+	}
+
 
     if (startAnim)
         groot->setAnimate(true);
 
-    
+
 
 	//=======================================
 	// Run the main loop
-  
+
 	if (gui=="none")
 	{
 		if (groot==NULL)

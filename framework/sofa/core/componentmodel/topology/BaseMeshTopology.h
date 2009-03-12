@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -35,6 +35,8 @@
 #include <sofa/helper/fixed_array.h>
 #include <sofa/helper/vector.h>
 
+#include <sofa/core/core.h>
+
 namespace sofa
 {
 
@@ -53,7 +55,7 @@ using helper::fixed_array;
 
 #define SOFA_NEW_HEXA
 
- class BaseMeshTopology : public core::componentmodel::topology::Topology
+ class SOFA_CORE_API BaseMeshTopology : public core::componentmodel::topology::Topology
 {
 public:
     //typedef int index_type;
@@ -65,19 +67,19 @@ public:
     typedef index_type		QuadID;
     typedef index_type		TetraID;
     typedef index_type		HexaID;
-    
+
     typedef fixed_array<PointID,2> Edge;
     typedef fixed_array<PointID,3> Triangle;
     typedef fixed_array<PointID,4> Quad;
     typedef fixed_array<PointID,4> Tetra;
     typedef fixed_array<PointID,8> Hexa;
-    
+
     typedef vector<Edge>		SeqEdges;
-    typedef vector<Triangle>	SeqTriangles;
+    typedef vector<Triangle>		SeqTriangles;
     typedef vector<Quad>		SeqQuads;
     typedef vector<Tetra>		SeqTetras;
     typedef vector<Hexa>		SeqHexas;
-    
+
     /// @name Deprecated types, for backward-compatibility
     /// @{
     typedef EdgeID		LineID;
@@ -89,12 +91,12 @@ public:
     typedef SeqHexas SeqCubes;
 #endif
     /// @}
-    
+
     /// fixed-size neighbors arrays
     /// @{
     typedef fixed_array<EdgeID,3>		TriangleEdges;
-    typedef fixed_array<QuadID,4>		QuadEdges;
-    typedef fixed_array<TriangleID,4>	TetraTriangles;
+    typedef fixed_array<EdgeID,4>		QuadEdges;
+    typedef fixed_array<TriangleID,4>		TetraTriangles;
     typedef fixed_array<EdgeID,6>		TetraEdges;
     typedef fixed_array<QuadID,6>		HexaQuads;
     typedef fixed_array<EdgeID,12>		HexaEdges;
@@ -103,7 +105,7 @@ public:
     /// dynamic-size neighbors arrays
     /// @{
     typedef vector<EdgeID>			VertexEdges;
-    typedef vector<TriangleID>		VertexTriangles;
+    typedef vector<TriangleID>			VertexTriangles;
     typedef vector<QuadID>			VertexQuads;
     typedef vector<TetraID>			VertexTetras;
     typedef vector<HexaID>			VertexHexas;
@@ -116,17 +118,17 @@ public:
     /// @}
 
     BaseMeshTopology();
-
+    virtual void init();
     void parse(core::objectmodel::BaseObjectDescription* arg);
 
     /// Load the topology from a file.
     ///
     /// The default implementation supports the following formats: obj, gmsh, mesh (custom simple text file), xs3 (deprecated description of mass-springs networks).
     virtual bool load(const char* filename);
-    virtual std::string getFilename() const {return d_filename.getValue();}
+    virtual std::string getFilename() const {return fileTopology.getValue();}
 
     // defined in Topology
-    //virtual int getNbPoints() const = 0;	
+    //virtual int getNbPoints() const = 0;
 
     /// Complete sequence accessors
     /// @{
@@ -192,18 +194,18 @@ public:
     /// @}
 
 
-	/// Returns the index of the edge joining vertex v1 and vertex v2; returns -1 if no edge exists 
+	/// Returns the index of the edge joining vertex v1 and vertex v2; returns -1 if no edge exists
 	virtual int getEdgeIndex(PointID v1, PointID v2);
-	/// Returns the index of the triangle given three vertex indices; returns -1 if no triangle exists 
+	/// Returns the index of the triangle given three vertex indices; returns -1 if no triangle exists
 	virtual int getTriangleIndex(PointID v1, PointID v2, PointID v3);
-	/// Returns the index of the quad given four vertex indices; returns -1 if no quad exists 
+	/// Returns the index of the quad given four vertex indices; returns -1 if no quad exists
 	virtual int getQuadIndex(PointID v1, PointID v2, PointID v3, PointID v4);
-	/// Returns the index of the tetrahedron given four vertex indices; returns -1 if no tetrahedron exists 
+	/// Returns the index of the tetrahedron given four vertex indices; returns -1 if no tetrahedron exists
 	virtual int getTetrahedronIndex(PointID v1, PointID v2, PointID v3, PointID v4);
-	/// Returns the index of the hexahedron given eight vertex indices; returns -1 if no hexahedron exists 
+	/// Returns the index of the hexahedron given eight vertex indices; returns -1 if no hexahedron exists
 	virtual int getHexahedronIndex(PointID v1, PointID v2, PointID v3, PointID v4, PointID v5, PointID v6, PointID v7, PointID v8);
 
-	
+
 	/** returns the index (either 0, 1 ,2 or 3) of the vertex whose global index is vertexIndex. Returns -1 if none */
 	virtual int getVertexIndexInTriangle(const Triangle &t, PointID vertexIndex) const;
 	/** returns the index (either 0, 1 ,2) of the edge whose global index is edgeIndex. Returns -1 if none */
@@ -230,7 +232,7 @@ public:
 
 	/** returns for each index (between 0 and 5) the two vertex indices that are adjacent to that edge */
 	virtual Edge getLocalTetrahedronEdges (const unsigned int i) const;
-    
+
     /// @name Deprecated names, for backward-compatibility
     /// @{
     const SeqLines& getLines() { return getEdges(); }
@@ -270,7 +272,7 @@ public:
 
     /// return true if the given cube is active, i.e. it contains or is surrounded by mapped points.
     /// @deprecated
-    virtual bool isCubeActive(int /*index*/) { return true; }    
+    virtual bool isCubeActive(int /*index*/) { return true; }
 
     /// Management of topological changes and state changes
     /// @{
@@ -294,9 +296,14 @@ public:
     /// @}
 
 
+	virtual sofa::helper::vector <EdgeID> getEdgesBorder() { return sofa::helper::vector<EdgeID>();}
+
+	virtual sofa::helper::vector <TriangleID> getTrianglesBorder() { return sofa::helper::vector<TriangleID>();}
+
+
 protected:
 
-	Data< std::string > d_filename;
+	Data< std::string > fileTopology;
 };
 
 } // namespace topology

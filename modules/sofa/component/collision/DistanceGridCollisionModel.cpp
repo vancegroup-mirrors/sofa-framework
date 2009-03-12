@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,6 +32,10 @@
 //#ifdef SOFA_HAVE_FLOWVR
 #include <flowvr/render/mesh.h>
 //#endif
+
+#include <fstream>
+#include <sstream>
+
 namespace sofa
 {
 
@@ -63,7 +67,7 @@ using namespace defaulttype;
 
 RigidDistanceGridCollisionModel::RigidDistanceGridCollisionModel()
 : modified(true)
-, filename( initData( &filename, "filename", "load distance grid from specified file"))
+, fileRigidDistanceGrid( initData( &fileRigidDistanceGrid, "fileRigidDistanceGrid", "load distance grid from specified file"))
 , scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
 , box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , nx( initData( &nx, 64, "nx", "number of values on X axis") )
@@ -73,9 +77,10 @@ RigidDistanceGridCollisionModel::RigidDistanceGridCollisionModel()
 , usePoints( initData( &usePoints, true, "usePoints", "use mesh vertices for collision detection"))
 {
     rigid = NULL;
+    addAlias(&fileRigidDistanceGrid,"filename");
 }
 
-RigidDistanceGridCollisionModel::~RigidDistanceGridCollisionModel() 
+RigidDistanceGridCollisionModel::~RigidDistanceGridCollisionModel()
 {
     for (unsigned int i=0; i<elems.size(); i++)
     {
@@ -91,18 +96,18 @@ void RigidDistanceGridCollisionModel::init()
     rigid = dynamic_cast< core::componentmodel::behavior::MechanicalState<RigidTypes>* > (getContext()->getMechanicalState());
 
     DistanceGrid* grid = NULL;
-    if (filename.getValue().empty())
+    if (fileRigidDistanceGrid.getValue().empty())
     {
         if (elems.size()==0 || elems[0].grid==NULL)
             std::cerr << "ERROR: RigidDistanceGridCollisionModel requires an input filename.\n";
         // else the grid has already been set
         return;
     }
-    std::cout << "RigidDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<filename.getValue();
+    std::cout << "RigidDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<fileRigidDistanceGrid.getValue();
     if (scale.getValue()!=1.0) std::cout<<" scale="<<scale.getValue();
     if (box.getValue()[0][0]<box.getValue()[1][0]) std::cout<<" bbox=<"<<box.getValue()[0]<<">-<"<<box.getValue()[0]<<">";
     std::cout << std::endl;
-    grid = DistanceGrid::loadShared(filename.getValue(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
+    grid = DistanceGrid::loadShared(fileRigidDistanceGrid.getValue(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
 
     resize(1);
     elems[0].grid = grid;
@@ -153,11 +158,11 @@ void RigidDistanceGridCollisionModel::setNewState(int index, double dt, Distance
 void RigidDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
 {
     CubeModel* cubeModel = this->createPrevious<CubeModel>();
-    
+
     if (!modified && !isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
-    
+
     updateGrid();
-    
+
     cubeModel->resize(size);
     for (int i=0; i<size; i++)
     {
@@ -298,21 +303,32 @@ void RigidDistanceGridCollisionModel::draw(int index)
 
     if (grid->meshPts.empty())
     {
+	int dnz = (grid->getNz() < 128) ? grid->getNz() : 128;
+	int dny = (grid->getNy() < 128) ? grid->getNy() : 128;
+	int dnx = (grid->getNx() < 128) ? grid->getNx() : 128;
         glBegin(GL_POINTS);
+	if (dnx >= 2 && dny >= 2 && dnz >= 2)
         {
-            for (int z=0, ind=0; z<grid->getNz(); z++)
-            for (int y=0; y<grid->getNy(); y++)
-            for (int x=0; x<grid->getNx(); x++, ind++)
-            {
-                DistanceGrid::Coord p = grid->coord(x,y,z);
-                SReal d = (*grid)[ind];
-                if (d < mindist || d > maxdist) continue;
-                d /= maxdist;
-                if (d<0)
-                    glColor3d(1+d*0.25, 0, 1+d);
-                else
-                    glColor3d(0, 1-d*0.25, 1-d);
-		helper::gl::glVertexT(p);
+	    for (int iz=0; iz<dnz; ++iz)
+	    {
+		int z = (iz*(grid->getNz()-1))/(dnz-1);
+		for (int iy=0; iy<dny; ++iy)
+		{
+		    int y = (iy*(grid->getNy()-1))/(dny-1);
+		    for (int ix=0; ix<dnx; ++ix)
+		    {
+			int x = (ix*(grid->getNx()-1))/(dnx-1);
+			DistanceGrid::Coord p = grid->coord(x,y,z);
+			SReal d = (*grid)[grid->index(x,y,z)];
+			if (d < mindist || d > maxdist) continue;
+			d /= maxdist;
+			if (d<0)
+			    glColor3d(1+d*0.25, 0, 1+d);
+			else
+			    continue; //glColor3d(0, 1-d*0.25, 1-d);
+			helper::gl::glVertexT(p);
+		    }
+		}
             }
         }
         glEnd();
@@ -362,7 +378,7 @@ void RigidDistanceGridCollisionModel::draw(int index)
 ////////////////////////////////////////////////////////////////////////////////
 
 FFDDistanceGridCollisionModel::FFDDistanceGridCollisionModel()
-: filename( initData( &filename, "filename", "load distance grid from specified file"))
+: fileFFDDistanceGrid( initData( &fileFFDDistanceGrid, "fileFFDDistanceGrid", "load distance grid from specified file"))
 , scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
 , box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , nx( initData( &nx, 64, "nx", "number of values on X axis") )
@@ -373,9 +389,10 @@ FFDDistanceGridCollisionModel::FFDDistanceGridCollisionModel()
 {
 	ffd = NULL;
         ffdGrid = NULL;
+ addAlias(&fileFFDDistanceGrid,"filename");
 }
 
-FFDDistanceGridCollisionModel::~FFDDistanceGridCollisionModel() 
+FFDDistanceGridCollisionModel::~FFDDistanceGridCollisionModel()
 {
     //for (unsigned int i=0; i<elems.size(); i++)
     //    if (elems[i].grid!=NULL) elems[i].grid->release();
@@ -390,21 +407,21 @@ void FFDDistanceGridCollisionModel::init()
     ffdGrid = dynamic_cast< topology::RegularGridTopology* > (getContext()->getMeshTopology());
     if (!ffd || !ffdGrid)
     {
-        std::cerr << "ERROR: FFDDistanceGridCollisionModel requires a Vec3-based deformable model with associated RegularGridTopology.\n";
+        serr <<"FFDDistanceGridCollisionModel requires a Vec3-based deformable model with associated RegularGridTopology" << sendl;
         return;
     }
 
     DistanceGrid* grid = NULL;
-    if (filename.getValue().empty())
+    if (fileFFDDistanceGrid.getValue().empty())
     {
-        std::cerr << "ERROR: FFDDistanceGridCollisionModel requires an input filename.\n";
+        serr<<"ERROR: FFDDistanceGridCollisionModel requires an input filename" << sendl;
         return;
     }
-    std::cout << "FFDDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<filename.getValue();
+    std::cout << "FFDDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<fileFFDDistanceGrid.getValue();
     if (scale.getValue()!=1.0) std::cout<<" scale="<<scale.getValue();
     if (box.getValue()[0][0]<box.getValue()[1][0]) std::cout<<" bbox=<"<<box.getValue()[0]<<">-<"<<box.getValue()[0]<<">";
     std::cout << std::endl;
-    grid = DistanceGrid::loadShared(filename.getValue(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
+    grid = DistanceGrid::loadShared(fileFFDDistanceGrid.getValue(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
     if (grid && !dumpfilename.getValue().empty())
     {
         std::cout << "FFDDistanceGridCollisionModel: dump grid to "<<dumpfilename.getValue()<<std::endl;
@@ -452,7 +469,7 @@ void FFDDistanceGridCollisionModel::init()
         if (ffdGrid->isCubeActive( e ))
         {
             if (c != e)
-                elems[c].points.swap(elems[e].points); // move the list of points to the new 
+                elems[c].points.swap(elems[e].points); // move the list of points to the new
             elems[c].elem = e;
 #ifdef SOFA_NEW_HEXA
 			core::componentmodel::topology::BaseMeshTopology::Hexa cube = ffdGrid->getHexaCopy(e);
@@ -488,11 +505,11 @@ void FFDDistanceGridCollisionModel::setGrid(DistanceGrid* surf, int index)
 void FFDDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
 {
     CubeModel* cubeModel = this->createPrevious<CubeModel>();
-    
+
     if (!isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
-    
+
     updateGrid();
-    
+
     cubeModel->resize(size);
     for (int i=0; i<size; i++)
     {
@@ -670,7 +687,7 @@ void FFDDistanceGridCollisionModel::draw(int index)
         glBegin(GL_POINTS);
         {
             helper::gl::glVertexT(cube.center);
-	    
+
         }
         glEnd();
     }
@@ -777,6 +794,10 @@ DistanceGrid* DistanceGrid::load(const std::string& filename, double scale, int 
         grid->computeBBox();
         return grid;
     }
+    else if (filename.length()>4 && filename.substr(filename.length()-4) == ".vtk")
+    {
+	return loadVTKFile(filename, scale);
+    }
 //#ifdef SOFA_HAVE_FLOWVR
     else if (filename.length()>6 && filename.substr(filename.length()-6) == ".fmesh")
     {
@@ -787,7 +808,7 @@ DistanceGrid* DistanceGrid::load(const std::string& filename, double scale, int 
             return NULL;
         }
         //std::cout << "bbox = "<<mesh.bb<<std::endl;
-        
+
         if (!mesh.getAttrib(flowvr::render::Mesh::MESH_DISTMAP))
         {
             std::cerr << "ERROR: FlowVR mesh "<<filename<<" does not contain distance information. Please use flowvr-distmap."<<std::endl;
@@ -911,6 +932,186 @@ bool DistanceGrid::save(const std::string& filename)
 }
 
 
+template<class T> bool readData(std::istream& in, int dataSize, bool binary, DistanceGrid::VecSReal& data, double scale)
+{
+    if (binary)
+    {
+	T* buffer = new T[dataSize];
+        in.read((char*)buffer, dataSize * sizeof(T));
+        if (in.eof() || in.bad())
+        {
+            delete[] buffer;
+            return false;
+        }
+	else
+	{
+	    for (int i=0;i<dataSize;++i)
+		data[i] = (SReal)(buffer[i]*scale);
+	}
+	delete[] buffer;
+	return true;
+    }
+    else
+    {
+        int i = 0;
+        std::string line;
+	T buffer;
+        while(i < dataSize && !in.eof() && !in.bad())
+        {
+            std::getline(in, line);
+            std::istringstream ln(line);
+            while (i < dataSize && ln >> buffer)
+	    {
+		data[i] = (SReal)(buffer*scale);
+                ++i;
+	    }
+        }
+        return (i == dataSize);
+    }
+}
+
+DistanceGrid* DistanceGrid::loadVTKFile(const std::string& filename, double scale)
+{
+    // Format doc: http://www.vtk.org/pdf/file-formats.pdf
+    // http://www.cacr.caltech.edu/~slombey/asci/vtk/vtk_formats.simple.html
+
+    std::ifstream inVTKFile(filename.c_str(), std::ifstream::in & std::ifstream::binary);
+    if( !inVTKFile.is_open() )
+    {
+        return NULL;
+    }
+    std::string line;
+
+    // Part 1
+    std::getline(inVTKFile, line);
+    if (std::string(line,0,23) != "# vtk DataFile Version ") return NULL;
+    std::string version(line,23);
+
+    // Part 2
+    std::string header;
+    std::getline(inVTKFile, header);
+
+    // Part 3
+    std::getline(inVTKFile, line);
+
+    bool binary;
+    if (line == "BINARY") binary = true;
+    else if (line == "ASCII") binary = false;
+    else return NULL;
+
+    // Part 4
+    std::getline(inVTKFile, line);
+    if (line != "DATASET STRUCTURED_POINTS")
+    {
+        return NULL;
+    }
+
+    std::cout << (binary ? "Binary" : "Text") << " VTK File " << filename << " (version " << version << "): " << header << std::endl;
+    enum { Header, CellData, PointData } section = Header;
+    int dataSize = 0;
+    int nx = 0, ny = 0, nz = 0;
+    Coord origin, spacing(1.0f,1.0f,1.0f);
+    while(!inVTKFile.eof())
+    {
+        std::getline(inVTKFile, line);
+        std::istringstream ln(line);
+        std::string kw;
+        ln >> kw;
+        if (kw == "DIMENSIONS")
+        {
+            ln >> nx >> ny >> nz;
+        }
+        else if (kw == "SPACING")
+        {
+            ln >> spacing[0] >> spacing[1] >> spacing[2];
+	    spacing *= scale;
+        }
+        else if (kw == "ORIGIN")
+        {
+            ln >> origin[0] >> origin[1] >> origin[2];
+	    origin *= scale;
+        }
+        else if (kw == "CELL_DATA")
+        {
+            section = CellData;
+            ln >> dataSize;
+        }
+        else if (kw == "POINT_DATA")
+        {
+            section = PointData;
+            ln >> dataSize;
+        }
+        else if (kw == "SCALARS")
+        {
+            std::string name, typestr;
+            ln >> name >> typestr;
+            std::cout << "Found " << typestr << " data: " << name << std::endl;
+            std::getline(inVTKFile, line); // lookup_table, ignore
+            std::cout << "Loading " << nx<<"x"<<ny<<"x"<<nz << " volume..." << std::endl;
+	    DistanceGrid* grid = new DistanceGrid(nx, ny, nz, origin, origin + Coord(spacing[0] * nx, spacing[1] * ny, spacing[2]*nz));
+	    bool ok = true;
+	    if (typestr == "char") ok = readData<char>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "unsigned_char") ok = readData<unsigned char>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "short") ok = readData<short>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "unsigned_short") ok = readData<unsigned short>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "int") ok = readData<int>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "unsigned_int") ok = readData<unsigned int>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "long") ok = readData<long long>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "unsigned_long") ok = readData<unsigned long long>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "float") ok = readData<float>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else if (typestr == "double") ok = readData<double>(inVTKFile, dataSize, binary, grid->dists, scale);
+	    else
+	    {
+		std::cerr << "Invalid type " << typestr << std::endl;
+		ok = false;
+	    }
+	    if (!ok)
+	    {
+		delete grid;
+		return NULL;
+	    }
+            std::cout << "Volume data loading OK." << std::endl;
+	    grid->computeBBox();
+            return grid; // we read one scalar field, stop here.
+        }
+    }
+    return NULL;
+}
+
+template<class T>
+void * readData(std::istream& in, int dataSize, bool binary)
+{
+    T* buffer = new T[dataSize];
+    if (binary)
+    {
+        in.read((char*)buffer, dataSize * sizeof(T));
+        if (in.eof() || in.bad())
+        {
+            delete[] buffer;
+            return NULL;
+        }
+    }
+    else
+    {
+        int i = 0;
+        std::string line;
+        while(i < dataSize && !in.eof() && !in.bad())
+        {
+            std::getline(in, line);
+            std::istringstream ln(line);
+            while (i < dataSize && ln >> buffer[i])
+                ++i;
+        }
+        if (i < dataSize)
+        {
+            delete[] buffer;
+            return NULL;
+        }
+    }
+    return buffer;
+}
+
+
 template<int U, int V>
 bool pointInTriangle(const DistanceGrid::Coord& p, const DistanceGrid::Coord& p0, const DistanceGrid::Coord& p1, const DistanceGrid::Coord& p2)
 {
@@ -968,7 +1169,7 @@ void DistanceGrid::calcCubeDistance(SReal dim, int np)
         int nbp = np*np*np - (np-2)*(np-2)*(np-2);
         //std::cout << "Copying "<<nbp<<" cube vertices."<<std::endl;
         meshPts.resize(nbp);
-        
+
         for (int i=0,z=0; z<np; z++)
         for (int y=0; y<np; y++)
         for (int x=0; x<np; x++)
@@ -1057,7 +1258,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 		int ind = index(x,y,z);
 		SReal dist = pos*normal + d;
 		//if (rabs(dist) > cellWidth) continue; // no edge from this point can cross the plane
-		
+
 		// X edge
 		if (rabs(normal[0]) > 1e-6)
 		{
@@ -1075,7 +1276,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 				{ // nearest triangle
 				    dists[ind] = dist1;
 				    fmm_status[ind] = FMM_KNOWN_OUT;
-				}			    
+				}
 				if (dist2 < (dists[ind2]))
 				{ // nearest triangle
 				    dists[ind2] = dist2;
@@ -1088,7 +1289,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 				{ // nearest triangle
 				    dists[ind] = dist1;
 				    fmm_status[ind] = FMM_KNOWN_IN;
-				}			    
+				}
 				if (dist2 < (dists[ind2]))
 				{ // nearest triangle
 				    dists[ind2] = dist2;
@@ -1098,7 +1299,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 			}
 		    }
 		}
-		
+
 		// Y edge
 		if (rabs(normal[1]) > 1e-6)
 		{
@@ -1116,7 +1317,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 				{ // nearest triangle
 				    dists[ind] = dist1;
 				    fmm_status[ind] = FMM_KNOWN_OUT;
-				}			    
+				}
 				if (dist2 < (dists[ind2]))
 				{ // nearest triangle
 				    dists[ind2] = dist2;
@@ -1129,7 +1330,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 				{ // nearest triangle
 				    dists[ind] = dist1;
 				    fmm_status[ind] = FMM_KNOWN_IN;
-				}			    
+				}
 				if (dist2 < (dists[ind2]))
 				{ // nearest triangle
 				    dists[ind2] = dist2;
@@ -1139,7 +1340,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 			}
 		    }
 		}
-		
+
 		// Z edge
 		if (rabs(normal[2]) > 1e-6)
 		{
@@ -1157,7 +1358,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 				{ // nearest triangle
 				    dists[ind] = dist1;
 				    fmm_status[ind] = FMM_KNOWN_OUT;
-				}			    
+				}
 				if (dist2 < (dists[ind2]))
 				{ // nearest triangle
 				    dists[ind2] = dist2;
@@ -1170,7 +1371,7 @@ void DistanceGrid::calcDistance(sofa::helper::io::Mesh* mesh, double scale)
 				{ // nearest triangle
 				    dists[ind] = dist1;
 				    fmm_status[ind] = FMM_KNOWN_IN;
-				}			    
+				}
 				if (dist2 < (dists[ind2]))
 				{ // nearest triangle
 				    dists[ind2] = dist2;

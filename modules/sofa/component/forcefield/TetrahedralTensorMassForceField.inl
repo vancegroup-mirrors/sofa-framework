@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 #include <sofa/helper/gl/template.h>
 #include <sofa/component/topology/TetrahedronData.inl>
 #include <sofa/component/topology/EdgeData.inl>
-
+#include <sofa/core/componentmodel/behavior/ForceField.inl>
 
 namespace sofa
 {
@@ -43,9 +43,9 @@ using namespace sofa::defaulttype;
 using namespace	sofa::component::topology;
 using namespace core::componentmodel::topology;
 
-using std::cerr;
-using std::cout;
-using std::endl;
+
+
+
 
 using core::componentmodel::topology::BaseMeshTopology;
 
@@ -126,7 +126,7 @@ void TetrahedralTensorMassForceField<DataTypes>::TetrahedralTMTetrahedronCreatio
 				// print if obtuse tetrahedron along that edge
 				if (ff->f_printLog.getValue()) {
 					if (val1<0) 
-						std::cerr<<"negative cotangent["<<tetrahedronAdded[i]<<"]["<<j<<"]"<<std::endl;
+					  std::cerr<<"negative cotangent["<<tetrahedronAdded[i]<<"]["<<j<<"]"<<std::endl;
 				}
 
 				if (ff->_topology->getEdge(te[j])[0]!=t[l]) {
@@ -203,7 +203,7 @@ void TetrahedralTensorMassForceField<DataTypes>::TetrahedralTMTetrahedronDestruc
 				// print if obtuse tetrahedron along that edge
 				if (ff->f_printLog.getValue()) {
 					if (val1<0) 
-						std::cerr<<"negative cotangent["<<tetrahedronRemoved[i]<<"]["<<j<<"]"<<std::endl;
+					  std::cerr<<"negative cotangent["<<tetrahedronRemoved[i]<<"]["<<j<<"]"<<std::endl;
 				}
 
 				if (ff->_topology->getEdge(te[j])[0]!=t[l]) {
@@ -256,20 +256,22 @@ template <class DataTypes> TetrahedralTensorMassForceField<DataTypes>::~Tetrahed
 
 template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init()
 {
-	std::cerr << "initializing TetrahedralTensorMassForceField" << std::endl;
+	serr << "initializing TetrahedralTensorMassForceField" << sendl;
 	this->Inherited::init();
 
 	_topology = getContext()->getMeshTopology();
 
 	if (_topology->getNbTetras()==0)
 	{
-		std::cerr << "ERROR(TetrahedralTensorMassForceField): object must have a Tetrahedral Set Topology.\n";
+		serr << "ERROR(TetrahedralTensorMassForceField): object must have a Tetrahedral Set Topology."<<sendl;
 		return;
 	}
 	updateLameCoefficients();
 
+	helper::vector<EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
+
 	/// prepare to store info in the edge array
-	edgeInfo.resize(_topology->getNbEdges());
+	edgeInf.resize(_topology->getNbEdges());
 
 	if (_initialPoints.size() == 0)
 	{
@@ -281,7 +283,7 @@ template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init
 	int i;
 	// set edge tensor to 0
 	for (i=0;i<_topology->getNbEdges();++i) {
-		TetrahedralTMEdgeCreationFunction(i, (void*) this, edgeInfo[i],
+		TetrahedralTMEdgeCreationFunction(i, (void*) this, edgeInf[i],
 			_topology->getEdge(i),  (const std::vector< unsigned int > )0,
 			(const std::vector< double >)0);
 	}
@@ -290,7 +292,7 @@ template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init
 	for (i=0;i<_topology->getNbTetras();++i)
 		tetrahedronAdded.push_back(i);
 	TetrahedralTMTetrahedronCreationFunction(tetrahedronAdded,(void*) this,
-		edgeInfo);
+		edgeInf);
 
 
 	edgeInfo.setCreateFunction(TetrahedralTMEdgeCreationFunction);
@@ -299,13 +301,14 @@ template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init
 	edgeInfo.setCreateParameter( (void *) this );
 	edgeInfo.setDestroyParameter( (void *) this );
 
+	edgeInfo.endEdit();
 }
 
 
 template <class DataTypes> 
     double TetrahedralTensorMassForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/)
 {
-	std::cerr<<"TetrahedralTensorMassForceField::getPotentialEnergy-not-implemented !!!"<<endl;
+	serr<<"TetrahedralTensorMassForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 template <class DataTypes> 
@@ -316,13 +319,14 @@ void TetrahedralTensorMassForceField<DataTypes>::addForce(VecDeriv& f, const Vec
 
 	EdgeRestInformation *einfo;
 
+	helper::vector<EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
+
 	Deriv force;
 	Coord dp0,dp1,dp;
 
-
 	for(int i=0; i<nbEdges; i++ )
 	{
-		einfo=&edgeInfo[i];
+		einfo=&edgeInf[i];
 		v0=_topology->getEdge(i)[0];
 		v1=_topology->getEdge(i)[1];
 		dp0=x[v0]-_initialPoints[v0];
@@ -333,6 +337,7 @@ void TetrahedralTensorMassForceField<DataTypes>::addForce(VecDeriv& f, const Vec
 		f[v0]-=einfo->DfDx.transposeMultiply(dp);
 	}
 
+	edgeInfo.endEdit();
 }
 
 
@@ -344,13 +349,14 @@ void TetrahedralTensorMassForceField<DataTypes>::addDForce(VecDeriv& df, const V
 
 	EdgeRestInformation *einfo;
 
+	helper::vector<EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
 
 	Deriv force;
 	Coord dp0,dp1,dp;
 
 	for(int i=0; i<nbEdges; i++ )
 	{
-		einfo=&edgeInfo[i];
+		einfo=&edgeInf[i];
 		v0=_topology->getEdge(i)[0];
 		v1=_topology->getEdge(i)[1];
 		dp0=dx[v0];
@@ -360,7 +366,7 @@ void TetrahedralTensorMassForceField<DataTypes>::addDForce(VecDeriv& df, const V
 		df[v1]+=einfo->DfDx*dp;
 		df[v0]-=einfo->DfDx.transposeMultiply(dp);
 	}
-
+	edgeInfo.endEdit();
 }
 
 
@@ -369,7 +375,7 @@ void TetrahedralTensorMassForceField<DataTypes>::updateLameCoefficients()
 {
 	lambda= f_youngModulus.getValue()*f_poissonRatio.getValue()/((1-2*f_poissonRatio.getValue())*(1+f_poissonRatio.getValue()));
 	mu = f_youngModulus.getValue()/(2*(1+f_poissonRatio.getValue()));
-//	std::cerr << "initialized Lame coef : lambda=" <<lambda<< " mu="<<mu<<std::endl;
+//	serr << "initialized Lame coef : lambda=" <<lambda<< " mu="<<mu<<sendl;
 }
 
 

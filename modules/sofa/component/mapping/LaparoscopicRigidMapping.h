@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,8 +31,8 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 #include <sofa/component/topology/PointSubset.h>
-#include <sofa/component/MechanicalObject.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/simulation/common/Node.h>
 #include <sofa/defaulttype/VecTypes.h>
 
 
@@ -62,28 +62,28 @@ public:
 public:
 	  Data<defaulttype::Vector3> pivot;
 	  Data<defaulttype::Quat> rotation;
-	
+
 	LaparoscopicRigidMapping(In* from, Out* to)
 	  : Inherit(from, to)
 	    , pivot(initData(&pivot, defaulttype::Vector3(0,0,0), "pivot","Pivot point position"))
 	    , rotation(initData(&rotation, defaulttype::Quat(0,0,0,1), "rotation", "TODO-rotation"))
 	    {
 	    }
-	
+
 	  virtual ~LaparoscopicRigidMapping()
 	    {
 	    }
-	
-	
+
+
 	  //void setPivot(const defaulttype::Vector3& val) { this->pivot = val; }
 	  //void setRotation(const defaulttype::Quat& val) { this->rotation = val; this->rotation.normalize(); }
-	
+
 	  void init();
-	
+
 	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-	
+
 	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-	
+
 	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
 	  void draw();

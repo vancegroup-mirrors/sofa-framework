@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -77,6 +77,21 @@ void PlaneForceField<gpu::cuda::CudaVec3f1Types>::addForce (VecDeriv& f, const V
 template <>
 void PlaneForceField<gpu::cuda::CudaVec3f1Types>::addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+template <>
+void PlaneForceField<gpu::cuda::CudaVec3dTypes>::addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+
+template <>
+void PlaneForceField<gpu::cuda::CudaVec3dTypes>::addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
+
+template <>
+void PlaneForceField<gpu::cuda::CudaVec3d1Types>::addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+
+template <>
+void PlaneForceField<gpu::cuda::CudaVec3d1Types>::addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 } // namespace forcefield
 

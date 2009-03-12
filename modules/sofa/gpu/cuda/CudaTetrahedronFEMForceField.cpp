@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -29,6 +29,24 @@
 namespace sofa
 {
 
+namespace component
+{
+
+namespace forcefield
+{
+using namespace sofa::gpu::cuda;
+
+template class TetrahedronFEMForceField<CudaVec3fTypes>;
+template class TetrahedronFEMForceField<CudaVec3f1Types>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+template class TetrahedronFEMForceField<CudaVec3dTypes>;
+template class TetrahedronFEMForceField<CudaVec3d1Types>;
+#endif // SOFA_GPU_CUDA_DOUBLE
+
+}
+
+}
+
 namespace gpu
 {
 
@@ -40,6 +58,10 @@ SOFA_DECL_CLASS(CudaTetrahedronFEMForceField)
 int TetrahedronFEMForceFieldCudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
 .add< component::forcefield::TetrahedronFEMForceField<CudaVec3fTypes> >()
 .add< component::forcefield::TetrahedronFEMForceField<CudaVec3f1Types> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::forcefield::TetrahedronFEMForceField<CudaVec3dTypes> >()
+.add< component::forcefield::TetrahedronFEMForceField<CudaVec3d1Types> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
 ;
 
 } // namespace cuda

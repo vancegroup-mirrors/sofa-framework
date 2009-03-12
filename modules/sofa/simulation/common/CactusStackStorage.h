@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,6 +25,7 @@
 #ifndef SOFA_SIMULATION_TREE_CACTUSSTACKSTORAGE_H
 #define SOFA_SIMULATION_TREE_CACTUSSTACKSTORAGE_H
 
+#include <sofa/simulation/common/common.h>
 #include <sofa/simulation/common/LocalStorage.h>
 #include <stack>
 
@@ -38,7 +39,7 @@ namespace simulation
 
 /// Cactus Stack implementation of LocalStorage.
 /// See http://www.nist.gov/dads/HTML/cactusstack.html
-  class CactusStackStorage : public simulation::LocalStorage
+class SOFA_SIMULATION_COMMON_API CactusStackStorage : public simulation::LocalStorage
 {
 protected:
 	CactusStackStorage* up; ///< This point to the parent stack
@@ -65,11 +66,12 @@ public:
 	{
 		return down;
 	}
-	
+
 	void push(void* data);
 	void* pop();
 	void* top() const;
 	bool empty() const;
+        virtual const char* getClassName() const { return "CactusStackStorage"; }
 };
 
 } // namespace simulation

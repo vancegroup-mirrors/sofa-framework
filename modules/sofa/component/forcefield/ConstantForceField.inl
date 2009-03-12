@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,6 @@
 #ifndef SOFA_COMPONENT_INTERACTIONFORCEFIELD_ConstantForceField_INL
 #define SOFA_COMPONENT_INTERACTIONFORCEFIELD_ConstantForceField_INL
 
-#include <sofa/core/componentmodel/behavior/ForceField.inl>
 #include "ConstantForceField.h"
 #include <sofa/helper/system/config.h>
 #include <sofa/defaulttype/VecTypes.h>
@@ -33,8 +32,11 @@
 #include <sofa/helper/gl/template.h>
 #include <assert.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+#include <sofa/helper/gl/BasicShapes.h>
+#include <sofa/simulation/common/Simulation.h>
+
+
+
 
 namespace sofa
 {
@@ -49,7 +51,9 @@ namespace sofa
       template<class DataTypes>
       ConstantForceField<DataTypes>::ConstantForceField()
           : points(initData(&points, "points", "points where the forces are applied"))
-          , forces(initData(&forces, "forces", "applied forces"))
+          , forces(initData(&forces, "forces", "applied forces at each point"))
+          , force(initData(&force, "force", "applied force to all points if forces attribute is not specified"))
+		  , arrowSizeCoef(initData(&arrowSizeCoef,0.0, "arrowSizeCoef", "Size of the drawn arrows (0->no arrows, sign->direction of drawing"))
       {}
 
 
@@ -59,9 +63,15 @@ namespace sofa
         f1.resize(p1.size());
         const VecIndex& indices = points.getValue();
         const VecDeriv& f = forces.getValue();
-        for (unsigned int i=0; i<indices.size(); i++)
+	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
+		unsigned int i = 0;
+        for (; i<f.size(); i++)
         {
           f1[indices[i]]+=f[i];
+        }
+        for (; i<indices.size(); i++)
+        {
+          f1[indices[i]]+=f_end;
         }
       }
 
@@ -72,12 +82,29 @@ namespace sofa
       {
         const VecIndex& indices = points.getValue();
         const VecDeriv& f = forces.getValue();
+	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
         double e=0;
-        for (unsigned int i=0; i<indices.size(); i++)
+	unsigned int i = 0;
+        for (; i<f.size(); i++)
         {
            e -= f[i]*x[indices[i]];
         }
+        for (; i<indices.size(); i++)
+        {
+           e -= f_end*x[indices[i]];
+        }
         return e;
+      }
+
+      template <class DataTypes>
+	  void ConstantForceField<DataTypes>::setForce( unsigned i, const Deriv& force )
+      {
+        VecIndex& indices = *points.beginEdit();
+        VecDeriv& f = *forces.beginEdit();
+        indices.push_back(i);
+		f.push_back( force );
+		points.endEdit();
+		forces.endEdit();
       }
 
 
@@ -99,22 +126,53 @@ namespace sofa
       template<class DataTypes>
       void ConstantForceField<DataTypes>::draw()
       {
-        if (!getContext()->getShowForceFields()) return;  /// \todo put this in the parent class
+       if (!getContext()->getShowForceFields()) return;  /// \todo put this in the parent class
         const VecIndex& indices = points.getValue();
         const VecDeriv& f = forces.getValue();
+	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
         const VecCoord& x = *this->mstate->getX();
-        glDisable(GL_LIGHTING);
-        glBegin(GL_LINES);
-        glColor3f(0,1,0);
-        for (unsigned int i=0; i<indices.size(); i++)
-        {
-          Real xx,xy,xz,fx,fy,fz;
-          DataTypes::get(xx,xy,xz,x[indices[i]]);
-          DataTypes::get(fx,fy,fz,f[i]);
-          glVertex3f( (GLfloat)xx, (GLfloat)xy, (GLfloat)xz );
-          glVertex3f( (GLfloat)(xx+fx), (GLfloat)(xy+fy), (GLfloat)(xz+fz) );
-        }
-        glEnd();
+
+		double aSC = arrowSizeCoef.getValue();
+
+		if( fabs(aSC)<1.0e-10 )
+		{
+			std::vector<defaulttype::Vector3> points;
+			for (unsigned int i=0; i<indices.size(); i++)
+			{
+			Real xx,xy,xz,fx,fy,fz;
+			DataTypes::get(xx,xy,xz,x[indices[i]]);
+			DataTypes::get(fx,fy,fz,(i<f.size())? f[i] : f_end);
+			points.push_back(defaulttype::Vector3(xx, xy, xz ));
+			points.push_back(defaulttype::Vector3(xx+fx, xy+fy, xz+fz ));
+			}
+			simulation::getSimulation()->DrawUtility.drawLines(points, 2, defaulttype::Vec<4,float>(0,1,0,1));
+		}
+		else
+		{
+			for (unsigned int i=0; i<indices.size(); i++)
+			{
+				Real xx,xy,xz,fx,fy,fz;
+				DataTypes::get(xx,xy,xz,x[indices[i]]);
+				DataTypes::get(fx,fy,fz,(i<f.size())? f[i] : f_end);
+
+
+				defaulttype::Vector3 p1( xx, xy, xz);
+				defaulttype::Vector3 p2( aSC*fx+xx, aSC*fy+xy, aSC*fz+xz );
+
+				float norm = (float)(p2-p1).norm();
+
+				if( aSC > 0)
+				{
+				  //helper::gl::drawArrow(p1,p2, norm/20.0);
+				  simulation::getSimulation()->DrawUtility.drawArrow(p1,p2, norm/20.0f, defaulttype::Vec<4,float>(1.0f,0.4f,0.4f,1.0f));
+				}
+				else
+				{
+				  //helper::gl::drawArrow(p2,p1, norm/20.0);
+ 				  simulation::getSimulation()->DrawUtility.drawArrow(p2,p1, norm/20.0f, defaulttype::Vec<4,float>(1.0f,0.4f,0.4f,1.0f));
+				}
+			}
+		}
       }
 
 

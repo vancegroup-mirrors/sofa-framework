@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,7 @@
 #include <sofa/component/collision/BarycentricContactMapper.h>
 #include <sofa/gpu/cuda/CudaDistanceGridCollisionModel.h>
 #include <sofa/gpu/cuda/CudaPointModel.h>
+#include <sofa/gpu/cuda/CudaSphereModel.h>
 #include <sofa/gpu/cuda/CudaCollisionDetection.h>
 #include <sofa/gpu/cuda/CudaRigidMapping.h>
 #include <sofa/gpu/cuda/CudaSubsetMapping.h>
@@ -148,7 +149,6 @@ public:
 };
 
 
-/// Mapper for CudaPointDistanceGridCollisionModel
 template <class DataTypes>
 class ContactMapper<sofa::gpu::cuda::CudaSphereModel,DataTypes> : public SubsetContactMapper<sofa::gpu::cuda::CudaSphereModel,DataTypes>
 {

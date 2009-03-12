@@ -4,36 +4,17 @@
 # Cible : une bibliotheque:  sofaguiviewer$$LIBSUFFIX
 
 
-HEADERS += viewer/SofaViewer.h \
-           Main.h \
-           RealGUI.h \
-           GraphListenerQListView.h \
-           GenGraphForm.h \
-           AddObject.h \
-           DisplayFlagWidget.h \
-           ModifyObject.h \
-           WFloatLineEdit.h \
-           FileManagement.h
-
-
-SOURCES += Main.cpp \
-           RealGUI_graph.cpp \
-           RealGUI_record.cpp \
-           RealGUI.cpp \
-           GraphListenerQListView.cpp \
-           GenGraphForm.cpp \
-           AddObject.cpp \
-           DisplayFlagWidget.cpp \
-           ModifyObject.cpp \
-           WFloatLineEdit.cpp \
-           FileManagement.cpp
-
-
 SOFA_DIR = ../../../..
 TEMPLATE = lib
 include($${SOFA_DIR}/sofa.cfg)
 
 TARGET = sofaguiqt$$LIBSUFFIX
+
+LIBS += $$SOFA_FRAMEWORK_LIBS $$SOFA_MODULES_LIBS
+LIBS += -lsofagui$$LIBSUFFIX
+LIBS += $$SOFA_GUI_EXT_LIBS
+LIBS += $$SOFA_EXT_LIBS
+
 
 contains (DEFINES, SOFA_QT4) {	
 
@@ -42,6 +23,8 @@ contains (DEFINES, SOFA_QT4) {
 	  FORMS3 += GUI.ui
 	  FORMS3 += BaseGenGraphForm.ui
 	  FORMS3 += DialogAddObject.ui
+	  FORMS3 += VisitorGUI.ui
+	  FORMS3 += PluginManager.ui
 }
 else {
 	  CONFIG += $$CONFIGLIBRARIES qt
@@ -49,12 +32,50 @@ else {
 	  FORMS += GUI.ui
 	  FORMS += BaseGenGraphForm.ui
 	  FORMS += DialogAddObject.ui
+	  FORMS += VisitorGUI.ui
+	  FORMS += PluginManager.ui
 }
 
-LIBS += $$SOFA_FRAMEWORK_LIBS $$SOFA_MODULES_LIBS
-LIBS += -lsofagui$$LIBSUFFIX
-LIBS += $$SOFA_GUI_EXT_LIBS
-LIBS += $$SOFA_EXT_LIBS
+
+HEADERS += viewer/SofaViewer.h \
+           GraphListenerQListView.h \
+           GenGraphForm.h \
+           AddObject.h \
+           Main.h \
+           RealGUI.h \
+           DisplayFlagWidget.h \
+           GraphDataWidget.h \
+           GraphVisitor.h \
+           ModifyObject.h \
+           SimpleDataWidget.h \
+           StructDataWidget.h \
+           TableDataWidget.h \
+           WFloatLineEdit.h \ 
+           WindowVisitor.h \
+           FileManagement.h \
+           SofaPluginManager.h \
+           ImageQt.h
+
+SOURCES += Main.cpp \
+           GraphListenerQListView.cpp \
+           GenGraphForm.cpp \
+           AddObject.cpp \
+           RealGUI_graph.cpp \
+           RealGUI_record.cpp \
+           RealGUI.cpp \
+           DisplayFlagWidget.cpp \
+           GraphDataWidget.cpp \  
+           GraphVisitor.cpp \
+           ModifyObject.cpp \
+           SimpleDataWidget.cpp \
+           StructDataWidget.cpp \
+           TableDataWidget.cpp \
+           WFloatLineEdit.cpp \
+           WindowVisitor.cpp \
+           FileManagement.cpp \
+           SofaPluginManager.cpp \
+           ImageQt.cpp
+
 
 contains( DEFINES, SOFA_GUI_QTVIEWER){
 
@@ -82,41 +103,21 @@ contains( DEFINES, SOFA_GUI_QGLVIEWER){
 
 }
 
-contains( DEFINES, SOFA_GUI_QTOGREVIEWER){
 ########################################################################
 #  OGRE 3D
 ########################################################################
 
-	win32 {
-		INCLUDEPATH += $(OGRE_HOME)/include
-		QMAKE_LIBDIR += $(OGRE_HOME)/lib
-		LIBS += OgreMain.lib
-	}
-
-	unix {
-		macx:  QMAKE_CXXFLAGS += -Wno-unused
-		
-		!macx: {
-                  	 QMAKE_CXXFLAGS += $$system(pkg-config --cflags OGRE )
-		  LIBS += $$system(pkg-config --libs OGRE )
-		  #CONFIG += link_pkgconfig
-		  #PKGCONFIG += OGRE
-		  #PKGCONFIG += CEGUI
-		  #PKGCONFIG += OIS
-                }
-	}
+contains( DEFINES, SOFA_GUI_QTOGREVIEWER){
 
         SOURCES += viewer/qtogre/DotSceneLoader.cpp \
                    viewer/qtogre/QtOgreViewer.cpp\ 
                    viewer/qtogre/QtOgreViewer_slots.cpp\ 
                    viewer/qtogre/OgreVisualModel.cpp \
-                   viewer/qtogre/tinyxml.cpp \
-                   viewer/qtogre/tinyxmlerror.cpp \
-                   viewer/qtogre/tinyxmlparser.cpp
+                   viewer/qtogre/QOgreLightWidget.cpp
 			   
 	HEADERS += viewer/qtogre/DotSceneLoader.h \
                    viewer/qtogre/QtOgreViewer.h \
                    viewer/qtogre/OgreVisualModel.h \
-                   viewer/qtogre/tinyxml.h
+                   viewer/qtogre/QOgreLightWidget.h
                
 }

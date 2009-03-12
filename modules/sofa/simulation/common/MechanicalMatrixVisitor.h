@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -53,22 +53,26 @@ namespace sofa
 
     using namespace sofa::defaulttype;
     /** Base class for easily creating new actions for mechanical matrix manipulation
- 
+
 	During the first traversal (top-down), method processNodeTopDown(simulation::Node*) is applied to each simulation::Node. Each component attached to this node is processed using the appropriate method, prefixed by fwd.
- 
+
 	During the second traversal (bottom-up), method processNodeBottomUp(simulation::Node*) is applied to each simulation::Node. Each component attached to this node is processed using the appropriate method, prefixed by bwd.
- 
+
 	The default behavior of the fwd* and bwd* is to do nothing. Derived actions typically overload these methods to implement the desired processing.
- 
+
     */
-    class MechanicalMatrixVisitor : public Visitor
+    class SOFA_SIMULATION_COMMON_API MechanicalMatrixVisitor : public Visitor
     {
     public:
       typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
 
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalMatrixVisitor"; }
+
       /**@name Forward processing
 	 Methods called during the forward (top-down) traversal of the data structure.
-	 Method processNodeTopDown(simulation::Node*) calls the fwd* methods in the order given here. When there is a mapping, it is processed first, then method fwdMappedMechanicalState is applied to the BaseMechanicalState. 
+	 Method processNodeTopDown(simulation::Node*) calls the fwd* methods in the order given here. When there is a mapping, it is processed first, then method fwdMappedMechanicalState is applied to the BaseMechanicalState.
 	 When there is no mapping, the BaseMechanicalState is processed first using method fwdMechanicalState.
 	 Then, the other fwd* methods are applied in the given order.
       */
@@ -76,13 +80,13 @@ namespace sofa
 
       /// This method calls the fwd* methods during the forward traversal. You typically do not overload it.
       virtual Result processNodeTopDown(simulation::Node* node);
-    
+
       /// Process the OdeSolver
       virtual Result fwdOdeSolver(simulation::Node* /*node*/, core::componentmodel::behavior::OdeSolver* /*solver*/)
       {
         return RESULT_CONTINUE;
       }
-    
+
       /// Process the BaseMechanicalMapping
       virtual Result fwdMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
       {
@@ -136,8 +140,8 @@ namespace sofa
 
       /**@name Backward processing
 	 Methods called during the backward (bottom-up) traversal of the data structure.
-	 Method processNodeBottomUp(simulation::Node*) calls the bwd* methods. 
-	 When there is a mapping, method bwdMappedMechanicalState is applied to the BaseMechanicalState. 
+	 Method processNodeBottomUp(simulation::Node*) calls the bwd* methods.
+	 When there is a mapping, method bwdMappedMechanicalState is applied to the BaseMechanicalState.
 	 When there is no mapping, the BaseMechanicalState is processed using method bwdMechanicalState.
 	 Finally, the mapping (if any) is processed using method bwdMechanicalMapping.
       */
@@ -145,7 +149,7 @@ namespace sofa
 
       /// This method calls the bwd* methods during the backward traversal. You typically do not overload it.
       virtual void processNodeBottomUp(simulation::Node* node);
-    
+
       /// Process the BaseMechanicalState when it is not mapped from parent level
       virtual void bwdMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* /*mm*/)
       {}
@@ -153,15 +157,15 @@ namespace sofa
       /// Process the BaseMechanicalState when it is mapped from parent level
       virtual void bwdMappedMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* /*mm*/)
       {}
-    
+
       /// Process the BaseMechanicalMapping
       virtual void bwdMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
       {}
-    
+
       /// Process the OdeSolver
       virtual void bwdOdeSolver(simulation::Node* /*node*/, core::componentmodel::behavior::OdeSolver* /*solver*/)
       {}
-    
+
       ///@}
 
 
@@ -177,7 +181,7 @@ namespace sofa
 
 
     /** Compute the size of a dynamics matrix (mass or stiffness) of the whole scene */
-    class MechanicalGetMatrixDimensionVisitor : public MechanicalMatrixVisitor
+    class SOFA_SIMULATION_COMMON_API MechanicalGetMatrixDimensionVisitor : public MechanicalMatrixVisitor
     {
     public:
       unsigned int * const nbRow;
@@ -191,11 +195,15 @@ namespace sofa
 	ms->contributeToMatrixDimension(nbRow, nbCol);
 	return RESULT_CONTINUE;
       }
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalGetMatrixDimensionVisitor"; }
+
     };
 
-	
+
     /** Accumulate the entries of a dynamics matrix (mass or stiffness) of the whole scene */
-    class MechanicalAddMBK_ToMatrixVisitor : public MechanicalMatrixVisitor
+    class SOFA_SIMULATION_COMMON_API MechanicalAddMBK_ToMatrixVisitor : public MechanicalMatrixVisitor
     {
     public:
       BaseMatrix *mat;
@@ -208,6 +216,10 @@ namespace sofa
 	offsetOnEnter = _offset;
 	offsetOnExit = _offset;
       }
+
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalAddMBK_ToMatrixVisitor"; }
 
       virtual Result fwdMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* ms)
       {
@@ -254,7 +266,7 @@ namespace sofa
 
 #if 0 // deprecated: as dx is stored in MechanicalState, compute df there and then convert to BaseVector using MechanicalMultiVector2BaseVectorVisitor
     /** Accumulate the entries of a dynamics vector (e.g. force) of the whole scene */
-    class MechanicalAddMBKdx_ToVectorVisitor : public MechanicalMatrixVisitor
+    class SOFA_SIMULATION_COMMON_API MechanicalAddMBKdx_ToVectorVisitor : public MechanicalMatrixVisitor
     {
     public:
       BaseVector *vect;
@@ -298,7 +310,7 @@ namespace sofa
 	      std::cout << "Dx Null\n";
 	    else
 	      std::cout << "Dx Not Null\n";
-			
+
 	    mass->addMDxToVector(vect,m,offsetOnEnter,dx.isNull());
 	  }
 
@@ -318,12 +330,16 @@ namespace sofa
     };
 #endif
 
-    class MechanicalMultiVector2BaseVectorVisitor : public MechanicalMatrixVisitor
+    class SOFA_SIMULATION_COMMON_API MechanicalMultiVector2BaseVectorVisitor : public MechanicalMatrixVisitor
     {
     public:
       VecId src;
       BaseVector *vect;
       unsigned int offset;
+
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalMultiVector2BaseVectorVisitor"; }
 
     MechanicalMultiVector2BaseVectorVisitor(VecId _src, defaulttype::BaseVector * _vect, unsigned int _offset=0)
       : src(_src),vect(_vect),offset(_offset)
@@ -341,12 +357,16 @@ namespace sofa
       }
     };
 
-    class MechanicalMultiVectorPeqBaseVectorVisitor : public MechanicalMatrixVisitor
+    class SOFA_SIMULATION_COMMON_API MechanicalMultiVectorPeqBaseVectorVisitor : public MechanicalMatrixVisitor
     {
     public:
       BaseVector *src;
       VecId dest;
       unsigned int offset;
+
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalMultiVectorPeqBaseVectorVisitor"; }
 
     MechanicalMultiVectorPeqBaseVectorVisitor(VecId _dest, defaulttype::BaseVector * _src, unsigned int _offset=0)
       : src(_src),dest(_dest),offset(_offset)

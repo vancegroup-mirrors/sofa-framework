@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,17 +28,15 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/core/componentmodel/collision/Intersection.h>
 #include <sofa/core/componentmodel/collision/NarrowPhaseDetection.h>
-#include <sofa/component/collision/SphereModel.h>
-#include <sofa/component/collision/TriangleModel.h>
+#include <sofa/core/CollisionModel.h>
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/objectmodel/Event.h>
+#include <sofa/defaulttype/Vec3Types.h>
 
 #include <sofa/core/componentmodel/behavior/BaseController.h>
 
 #include <fstream>
-
-#include <sofa/component/topology/TetrahedronSetTopologyModifier.h>
 
 namespace sofa
 {
@@ -49,14 +47,14 @@ namespace component
 namespace collision
 {
 
-class CarvingManager : public core::componentmodel::behavior::BaseController
+class SOFA_COMPONENT_COLLISION_API CarvingManager : public core::componentmodel::behavior::BaseController
 {
 public:
-    typedef TriangleModel::DataTypes DataTypes;
+	typedef defaulttype::Vec3Types DataTypes;
     typedef DataTypes::Coord Coord;
     typedef DataTypes::Real Real;
     
-    typedef SphereModel ToolModel;
+	typedef core::CollisionModel ToolModel;
     typedef helper::vector<core::componentmodel::collision::DetectionOutput> ContactVector;
 
     Data < std::string > f_modelTool;
@@ -69,13 +67,9 @@ public:
     Data < char > keyEvent;
     Data < char > keySwitchEvent;
 
-	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
-	sofa::component::topology::TetrahedronSetTopologyModifier* tetraMod; 
-
 protected:
     ToolModel* modelTool;
-    TriangleModel* modelSurface;
-    sofa::core::componentmodel::topology::TopologicalMapping * topoMapping;
+    core::CollisionModel* modelSurface;
     core::componentmodel::collision::Intersection* intersectionMethod;
     core::componentmodel::collision::NarrowPhaseDetection* detectionNP;
 

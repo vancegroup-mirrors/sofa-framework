@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -94,7 +94,7 @@ PMLRigidBody::PMLRigidBody(StructuralComponent* body, GNode * parent)
 
 
 PMLRigidBody::~PMLRigidBody()
-{ 
+{
 	if(mmodel){ delete mmodel; mmodel=NULL;}
 	if (mapping){ delete mapping; mapping = NULL;}
 	if (VisualNode){ delete VisualNode; VisualNode = NULL;}
@@ -148,7 +148,7 @@ void PMLRigidBody::initPosition(string m)
 	}
 	if (vec.size() >= 3)
 	  transPos = Vector3(vec[0],vec[1],vec[2]);
-	else 
+	else
 	  transPos = Vector3(0,0,0);
 
 	if (vec.size() == 6){
@@ -262,7 +262,7 @@ void PMLRigidBody::createTopology(StructuralComponent* body)
 void PMLRigidBody::createVisualModel(StructuralComponent* body)
 {
 	VisualNode = new GNode("points");
-	parentNode->addChild(VisualNode);
+	parentNode->addChild((simulation::Node*)VisualNode);
 	//create mechanical object
 	mmodel = new MechanicalObject<Vec3Types>;
 	//create visual model
@@ -313,7 +313,7 @@ void PMLRigidBody::createMass(StructuralComponent* body)
 		bary[0] = bary[1] = bary[2] = 0.0;
 
 		//calcul matrice d'inertie
-		for (unsigned int i=0; i<nbPoints; i++) 
+		for (unsigned int i=0; i<nbPoints; i++)
 		{
 			if (massList.size() == nbPoints)
 				masse = massList[i];
@@ -340,7 +340,7 @@ void PMLRigidBody::createMass(StructuralComponent* body)
 		D -= totalMass* bary[1]*bary[2];
 		E -= totalMass* bary[2]*bary[0];
 		F -= totalMass* bary[0]*bary[1];
-		
+
 		SReal coefs[9] = {A,-F, -E, -F, B, -D, -E, -D, C };
 
 		Mat3x3d iMatrix(coefs);
@@ -404,7 +404,7 @@ void PMLRigidBody::createMass(StructuralComponent* body)
 
 void PMLRigidBody::createCollisionModel()
 {
-	if (collisionsON) 
+	if (collisionsON)
 	{
 		//CollisionNode = new GNode("Collision");
 		//parentNode->addChild(CollisionNode);

@@ -14,16 +14,18 @@
 		<Object type="Triangle" simulated="0" moving="0" />
 		<Object type="Line" simulated="0" moving="0" />
 		<Object type="Point" simulated="0" moving="0" />
-		<Object type="OglModel" name="Visual" filename="mesh/torus2.obj" color="0.5 0.5 0.5 1.0" scale="5.0"/>
+		<Object type="OglModel" name="Visual" fileMesh="mesh/torus2.obj" color="0.5 0.5 0.5 1.0" scale="5.0"/>
 	</Node>
 
 	 <Node name="Torus2">
-		<Object type="EulerSolver"/>
+		<!--<Object type="EulerSolver"/> -->
+		<Object type="EulerImplicitSolver"/>	
+		<Object type="CGLinearSolver" iterations="25"/>	
 		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-12" dy="0"/>
 		<Object type="UniformMass" filename="BehaviorModels/torus.rigid" mass="5000.0"/>
 		<Object type="UncoupledConstraintCorrection"/>
 		<Node name="Visu">
-			<Object type="OglModel" name="Visual" filename="mesh/torus.obj" color="0.0 0.5 0.5 1.0" scale="5.0"/>
+			<Object type="OglModel" name="Visual" fileMesh="mesh/torus.obj" color="0.0 0.5 0.5 1.0" scale="5.0"/>
 			<Object type="RigidMapping" object1="../.." object2="Visual" />
 		</Node>
 		<Node name="Surf2">
@@ -36,14 +38,15 @@
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
-	
+	<!--
 	<Node name="Torus3">
-		<Object type="EulerSolver"/>
+		<Object type="EulerImplicitSolver"/>	
+		<Object type="CGLinearSolver" iterations="25"/>	
 		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-25" dy="0"/>
 		<Object type="UniformMass" filename="BehaviorModels/torus2.rigid" mass="5000.0"/>
 		<Object type="UncoupledConstraintCorrection"/>
 		<Node name="Visu">
-			<Object type="OglModel" name="Visual" filename="mesh/torus2.obj" color="1.0 0.5 0.25 1.0" scale="5.0"/>
+			<Object type="OglModel" name="Visual" fileMesh="mesh/torus2.obj" color="1.0 0.5 0.25 1.0" scale="5.0"/>
 			<Object type="RigidMapping" object1="../.." object2="Visual" />
 		</Node>
 		<Node name="Surf2">
@@ -58,12 +61,13 @@
 	</Node>
 	
 	<Node name="Torus4">
-		<Object type="EulerSolver"/>
+		<Object type="EulerImplicitSolver"/>	
+		<Object type="CGLinearSolver" iterations="25"/>	
 		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-38" dy="0"/>
 		<Object type="UniformMass" filename="BehaviorModels/torus.rigid" mass="5000.0"/>
 		<Object type="UncoupledConstraintCorrection"/>
 		<Node name="Visu">
-			<Object type="OglModel" name="Visual" filename="mesh/torus.obj" color="0.0 0.5 0.5 1.0" scale="5.0"/>
+			<Object type="OglModel" name="Visual" fileMesh="mesh/torus.obj" color="0.0 0.5 0.5 1.0" scale="5.0"/>
 			<Object type="RigidMapping" object1="../.." object2="Visual" />
 		</Node>
 		<Node name="Surf2">
@@ -76,5 +80,5 @@
 			<Object type="RigidMapping" />
 		</Node>
 	</Node>
-	
+	-->
 </Node>

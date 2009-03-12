@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,6 +33,8 @@
 #include <assert.h>
 #include <iostream>
 
+#include <sofa/helper/helper.h>
+
 namespace sofa
 {
 
@@ -40,7 +42,7 @@ namespace helper
 {
 
 template<class Real>
-class Quater
+class SOFA_HELPER_API Quater
 {
 private:
         Real _q[4];
@@ -135,6 +137,9 @@ public:
 		Quater<Real> operator*(const Quater<Real> &q1) const;
 
     Quater<Real> operator*(const Real &r) const;
+	Quater<Real> operator/(const Real &r) const;
+	void operator*=(const Real &r);
+	void operator/=(const Real &r);
 
         /// Given two Quaters, multiply them together to get a third quaternion.
         //template <class T>
@@ -237,6 +242,20 @@ public:
 
         void operator+=(const Quater& q2);
         void operator*=(const Quater& q2);
+
+		bool operator==(const Quater& q) const
+		{
+			for (int i=0;i<4;i++)
+				if ( fabs( _q[i] - q._q[i] ) > EQUALITY_THRESHOLD ) return false;
+			return true;
+		}
+
+		bool operator!=(const Quater& q) const
+		{
+			for (int i=0;i<4;i++)
+				if ( fabs( _q[i] - q._q[i] ) > EQUALITY_THRESHOLD ) return true;
+			return false;
+		}
         
         /// write to an output stream
         inline friend std::ostream& operator << ( std::ostream& out, const Quater& v ){

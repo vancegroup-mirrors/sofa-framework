@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -60,9 +60,9 @@ namespace sofa
                     u *= inverseLength;
                     Real elongation = (Real)(d - spring.initpos);
                     potentialEnergy += elongation * elongation * spring.ks / 2;
-/*                    cerr<<"StiffSpringForceField<DataTypes>::addSpringForce, p1 = "<<p1<<endl;
-                    cerr<<"StiffSpringForceField<DataTypes>::addSpringForce, p2 = "<<p2<<endl;
-                    cerr<<"StiffSpringForceField<DataTypes>::addSpringForce, new potential energy = "<<potentialEnergy<<endl;*/
+/*                    serr<<"StiffSpringForceField<DataTypes>::addSpringForce, p1 = "<<p1<<sendl;
+                    serr<<"StiffSpringForceField<DataTypes>::addSpringForce, p2 = "<<p2<<sendl;
+                    serr<<"StiffSpringForceField<DataTypes>::addSpringForce, new potential energy = "<<potentialEnergy<<sendl;*/
                     Deriv relativeVelocity = v2[b]-v1[a];
                     Real elongationVelocity = dot(u,relativeVelocity);
                     Real forceIntensity = (Real)(spring.ks*elongation+spring.kd*elongationVelocity);
@@ -105,7 +105,7 @@ namespace sofa
 		dforce *= kFactor;
                 f1[a]+=dforce;
                 f2[b]-=dforce;
-                //cerr<<"StiffSpringForceField<DataTypes>::addSpringDForce, a="<<a<<", b="<<b<<", dforce ="<<dforce<<endl;
+                //serr<<"StiffSpringForceField<DataTypes>::addSpringDForce, a="<<a<<", b="<<b<<", dforce ="<<dforce<<sendl;
             }
 
             template<class DataTypes>
@@ -116,10 +116,10 @@ namespace sofa
                 f1.resize(x1.size());
                 f2.resize(x2.size());
                 m_potentialEnergy = 0;
-                        //cerr<<"StiffSpringForceField<DataTypes>::addForce()"<<endl;
+                        //serr<<"StiffSpringForceField<DataTypes>::addForce()"<<sendl;
                 for (unsigned int i=0; i<springs.size(); i++)
                 {
-                    //cerr<<"StiffSpringForceField<DataTypes>::addForce() between "<<springs[i].m1<<" and "<<springs[i].m2<<endl;
+                    //serr<<"StiffSpringForceField<DataTypes>::addForce() between "<<springs[i].m1<<" and "<<springs[i].m2<<sendl;
                     this->addSpringForce(m_potentialEnergy,f1,x1,v1,f2,x2,v2, i, springs[i]);
                 }
             }
@@ -129,16 +129,44 @@ namespace sofa
             {
                 df1.resize(dx1.size());
                 df2.resize(dx2.size());
-                //cerr<<"StiffSpringForceField<DataTypes>::addDForce, dx1 = "<<dx1<<endl;
-                //cerr<<"StiffSpringForceField<DataTypes>::addDForce, df1 before = "<<f1<<endl;
+                //serr<<"StiffSpringForceField<DataTypes>::addDForce, dx1 = "<<dx1<<sendl;
+                //serr<<"StiffSpringForceField<DataTypes>::addDForce, df1 before = "<<f1<<sendl;
                 const helper::vector<Spring>& springs = this->springs.getValue();
                 for (unsigned int i=0; i<springs.size(); i++)
                 {
                     this->addSpringDForce(df1,dx1,df2,dx2, i, springs[i], kFactor, bFactor);
                 }
-                //cerr<<"StiffSpringForceField<DataTypes>::addDForce, df1 = "<<f1<<endl;
-                //cerr<<"StiffSpringForceField<DataTypes>::addDForce, df2 = "<<f2<<endl;
+                //serr<<"StiffSpringForceField<DataTypes>::addDForce, df1 = "<<f1<<sendl;
+                //serr<<"StiffSpringForceField<DataTypes>::addDForce, df2 = "<<f2<<sendl;
             }
+			
+			
+			
+			
+			template<class DataTypes>
+			void StiffSpringForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix * mat, double kFact, unsigned int &offset)
+			{
+				const sofa::helper::vector<Spring >& ss = this->springs.getValue();
+	
+				for (unsigned int e=0; e<ss.size(); e++)
+				{
+					const Spring& s = ss[e];
+					
+					unsigned p1 = offset+N*s.m1;
+					unsigned p2 = offset+N*s.m2;
+					
+					for(int i=0; i<N; i++)
+						for (int j=0; j<N; j++)
+					{
+						Real k = (Real)(this->dfdx[e][i][j]*kFact);
+						
+						mat->add(p1+i,p1+j, -k);
+						mat->add(p1+i,p2+j, k);
+						mat->add(p2+i,p1+j, k);//or mat->add(p1+j,p2+i, k);
+						mat->add(p2+i,p2+j, -k);
+					}
+				}
+			}
 
         } // namespace forcefield
 

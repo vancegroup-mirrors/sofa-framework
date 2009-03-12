@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -43,7 +43,7 @@ namespace behavior
 
 /// Helper class allowing to construct mechanical expressions
 ///
-class MechanicalMatrix
+class SOFA_CORE_API MechanicalMatrix
 {
 protected:
     enum { MFACT = 0, BFACT = 1, KFACT = 2 };

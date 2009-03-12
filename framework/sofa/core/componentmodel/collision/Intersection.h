@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -69,7 +69,7 @@ public:
 ///
 /// This class uses the new ClassInfo metaclass to be able to recognize derived classes. So it is no longer necessary
 /// to register all derived collision models (i.e. an intersector registered for RayModel will also be used for RayPickIntersector).
-class IntersectorMap : public std::map< std::pair< helper::TypeInfo, helper::TypeInfo >, ElementIntersector* >
+class SOFA_CORE_API IntersectorMap : public std::map< std::pair< helper::TypeInfo, helper::TypeInfo >, ElementIntersector* >
 {
 public:
 
@@ -91,7 +91,7 @@ protected:
 /** @brief Given 2 collision elements, test if an intersection is possible (for bounding volumes), or compute intersection points if any
 */
 
-class Intersection : public virtual objectmodel::BaseObject
+class SOFA_CORE_API Intersection : public virtual objectmodel::BaseObject
 {
 public:
 
@@ -116,6 +116,28 @@ public:
 
 	/// Return the contact distance (must return 0 if useProximity() is false)
 	virtual double getContactDistance() const { return 0.0; }
+	
+
+	/// Actions to accomplish when the broadPhase is started. By default do nothing.
+	virtual void beginBroadPhase()
+	{
+	}
+	
+	/// Actions to accomplish when the broadPhase is finished. By default do nothing.
+	virtual void endBroadPhase()
+	{
+	}
+
+	/// Actions to accomplish when the narrow Phase is started. By default do nothing.
+	virtual void beginNarrowPhase()
+	{
+	}
+	
+	/// Actions to accomplish when the narrow Phase is finished. By default do nothing.
+	virtual void endNarrowPhase()
+	{
+	}
+
 
 };
 

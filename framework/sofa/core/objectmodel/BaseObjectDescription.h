@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,9 +27,12 @@
 #ifndef SOFA_CORE_OBJECTMODEL_BASEOBJECTDESCRIPTION_H
 #define SOFA_CORE_OBJECTMODEL_BASEOBJECTDESCRIPTION_H
 
+#include <sofa/helper/vector.h>
 #include <string>
 #include <list>
 #include <map>
+
+#include <sofa/core/core.h>
 
 namespace sofa
 {
@@ -49,7 +52,7 @@ class Base;
  *  This default implementation simply stores an attributes map and does not support any hierarchy.
  *
  */
-class BaseObjectDescription
+class SOFA_CORE_API BaseObjectDescription
 {
 public:
     class Attribute
@@ -67,28 +70,28 @@ public:
         bool isAccessed() { return accessed; }
         void setAccessed(bool v) { accessed = v; }
     };
-    
+
     typedef std::map<std::string,Attribute> AttributeMap;
-    
+
     BaseObjectDescription(const char* name=NULL, const char* type=NULL);
-    
+
     virtual ~BaseObjectDescription();
-    
+
     /// Get the associated object (or NULL if it is not created yet)
     virtual Base* getObject();
-    
+
     /// Get the object instance name
     virtual std::string getName();
-    
+
     /// Get the parent node
     virtual BaseObjectDescription* getParent() const;
-    
+
     /// Get the file where this description was read from. Useful to resolve relative file paths.
     virtual std::string getBaseFile();
-    
+
     ///// Get all attribute data, read-only
     //virtual const AttributeMap& getAttributeMap() const;
-    
+
     ///// Get list of all attributes
     template<class T> void getAttributeList(T& container)
     {
@@ -96,24 +99,26 @@ public:
             it != attributes.end(); ++it)
             container.push_back(it->first);
     }
-    
+
     /// Find an object description given its name (relative to this object)
     virtual BaseObjectDescription* find(const char* nodeName, bool absolute=false);
-    
+
     /// Find an object given its name (relative to this object)
     virtual Base* findObject(const char* nodeName);
-    
+
     /// Get an attribute given its name (return defaultVal if not present)
     virtual const char* getAttribute(const std::string& attr, const char* defaultVal=NULL);
-    
+
     /// Remove an attribute given its name
     virtual bool removeAttribute(const std::string& attr);
-    
+
     /// Get the full name of this object (i.e. concatenation if all the names of its ancestors and itself)
     virtual std::string getFullName();
-    
+
+    virtual void logWarning(std::string s){warnings.push_back(s);};
 protected:
     AttributeMap attributes;
+    std::vector< std::string > warnings;
 };
 
 } // namespace objectmodel

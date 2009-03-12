@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -97,6 +97,13 @@ public:
     /// $ v_out = J v_in $
     virtual void propagateV() = 0;
 
+
+	/// Propagate acceleration due to the derivative of the mapping function
+	///
+	/// If the mapping input has a rotation velocity, it computes the subsequent acceleration
+	/// $ a_out = w^(w^rel_pos)	$
+	virtual void propagateA() {}
+
     /// Propagate displacement from the source model to the destination model.
     ///
     /// If the MechanicalMapping can be represented as a matrix J, this method computes
@@ -125,6 +132,10 @@ public:
 	///
 	/// It is for instance used in RigidMapping to get the local coordinates of the object.
 	virtual void disable() {}
+
+    /// Retrives a line of the Jacobian Matrix.
+    virtual void getJ(unsigned int /*Idx*/, sofa::helper::vector< double > &/*factor*/, sofa::helper::vector< unsigned int > &/*indices*/)
+        {sout << "getJ Not Implemented Yet" << sendl;};
 };
 
 } // namespace behavior

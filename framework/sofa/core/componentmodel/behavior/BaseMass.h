@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -78,10 +78,10 @@ public:
     virtual void addMToMatrix(defaulttype::BaseMatrix * matrix, double mFact, unsigned int &offset) = 0;
 
     /// initialization to export kinetic and potential energy to gnuplot files format
-    virtual void initGnuplot(const std::string path)=0;	
+    virtual void initGnuplot(const std::string path)=0;
 
     /// export kinetic and potential energy state at "time" to a gnuplot file
-    virtual void exportGnuplot(double time)=0;	
+    virtual void exportGnuplot(double time)=0;
 
     /// perform  v += dt*g operation. Used if mass wants to added G separately from the other forces to v.
     virtual void addGravityToV(double dt)=0;
@@ -90,9 +90,14 @@ public:
     virtual double getElementMass(unsigned int index)=0;
 
     /// @}
+    virtual void buildSystemMatrix(defaulttype::BaseMatrix &/* invM_Jtrans */, defaulttype::BaseMatrix &/* A */, 
+				   const sofa::helper::vector< sofa::helper::vector<unsigned int>  >&/* constraintId */,
+				   const sofa::helper::vector< double > /* factor */, 
+				   const sofa::helper::vector< unsigned int > /* offset */,
+				   const defaulttype::BaseVector& /* FixedPoints */){};
+    virtual void buildInvMassDenseMatrix(defaulttype::BaseMatrix &){};
 
-
-    /// Member specifying if the gravity is added separately to the DOFs velocities (in solve method), 
+    /// Member specifying if the gravity is added separately to the DOFs velocities (in solve method),
     /// or if is added with the other forces(addForceMethod)
     Data<bool> m_separateGravity;
 

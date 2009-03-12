@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -64,7 +64,7 @@ namespace objectmodel
 *
 * 
 */
-class JoystickEvent : public sofa::core::objectmodel::Event
+class SOFA_CORE_API JoystickEvent : public sofa::core::objectmodel::Event
 {
 public:
 
@@ -72,7 +72,7 @@ public:
 	 * @brief	Implements an event that notifies about axis positions (like analog controls of a joystick).
 	 * 			The axis position is normalized so values are always in the range [-1, 1].
 	 */
-	class AxisEvent
+	class SOFA_CORE_API AxisEvent
 	{
 	public:
 		/**
@@ -121,7 +121,7 @@ public:
 	/**
 	 * @brief Implements the button event for joysticks
 	 */
-	class ButtonEvent
+	class SOFA_CORE_API ButtonEvent
 	{
 	public:
 		/**
@@ -154,7 +154,7 @@ public:
 	/**
 	 * @brief Implements an event notifiying changes about a directionnal hat on a device (like a joystick).
 	 */
-	class HatEvent
+	class SOFA_CORE_API HatEvent
 	{
 	public:	
 		/**

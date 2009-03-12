@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,18 +25,23 @@
 
 // CONVENTION : indices ordering for the vertices of an hexahedron :
 //
-// 	   Y  3---------2
-//     ^ /	       /|
-//     |/	      / |
+//     Y  3---------2
+//     ^ /         /|
+//     |/         / |
 //     7---------6  |
-//     |    	 |  |
+//     |         |  |
 //     |  0------|--1
-//     | / 	     | /
-//     |/	     |/
+//     | /       | /
+//     |/        |/
 //     4---------5-->X
 //    /
 //   /
 //  Z
+//
+// Hexahedron quads are ordered as {BACK, FRONT, BOTTOM, RIGHT, TOP, LEFT}
+// The quads orientation is clockwise
+//
+
 
 #ifndef SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETTOPOLOGYCONTAINER_H
 #define SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETTOPOLOGYCONTAINER_H
@@ -72,7 +77,7 @@ namespace topology
 	typedef HexaQuads	HexahedronQuads;
 
 	/** a class that stores a set of hexahedra and provides access with adjacent quads, edges and vertices */
-	class HexahedronSetTopologyContainer : public QuadSetTopologyContainer 
+	class SOFA_COMPONENT_CONTAINER_API HexahedronSetTopologyContainer : public QuadSetTopologyContainer 
 	{
 		friend class HexahedronSetTopologyModifier;
 		
@@ -225,60 +230,6 @@ namespace topology
 		/** returns the index of the quad whose global index is quadIndex. Returns -1 if none */
 		int getQuadIndexInHexahedron(const HexahedronQuads &t,unsigned int quadIndex) const;
 
-		inline friend std::ostream& operator<< (std::ostream& out, const HexahedronSetTopologyContainer& t)
-		{
-			out  << t.m_hexahedron<< " "
-				<< t.m_hexahedronEdge<< " "
-				<< t.m_hexahedronQuad;
-
-			out << " "<< t.m_hexahedronVertexShell.size();
-			for (unsigned int i=0;i<t.m_hexahedronVertexShell.size();i++)
-			{
-				out << " " << t.m_hexahedronVertexShell[i];
-			}
-			out <<" "<< t.m_hexahedronEdgeShell.size();
-			for (unsigned int i=0;i<t.m_hexahedronEdgeShell.size();i++)
-			{
-				out << " " << t.m_hexahedronEdgeShell[i];
-			}
-			out <<" "<< t.m_hexahedronQuadShell.size();
-			for (unsigned int i=0;i<t.m_hexahedronQuadShell.size();i++)
-			{
-				out << " " << t.m_hexahedronQuadShell[i];
-			}
-			return out;
-		}
-
-		inline friend std::istream& operator>>(std::istream& in, HexahedronSetTopologyContainer& t)
-		{
-			unsigned int s;
-			sofa::helper::vector< unsigned int > value;
-
-
-			in >> t.m_hexahedron >> t.m_hexahedronEdge >> t.m_hexahedronQuad;
-
-
-			in >> s;
-			for (unsigned int i=0;i<s;i++)
-			{
-				in >> value;
-				t.m_hexahedronVertexShell.push_back(value);
-			}
-			in >> s;
-			for (unsigned int i=0;i<s;i++)
-			{
-				in >> value;
-				t.m_hexahedronEdgeShell.push_back(value);
-			}
-			in >> s;
-			for (unsigned int i=0;i<s;i++)
-			{
-				in >> value;
-				t.m_hexahedronQuadShell.push_back(value);
-			}
-			return in;
-		}
-
 	protected:
 		/** \brief Creates the EdgeSet array.
 		*
@@ -322,7 +273,7 @@ namespace topology
 
 		void clearHexahedronQuadShell();
 
-	private:
+	protected:
 		/** \brief Creates the array of edge indices for each hexahedron 
 		*
 		* This function is only called if the HexahedronEdge array is required.
@@ -346,7 +297,7 @@ namespace topology
 
 		/** \brief Creates the Hexahedron Edge Shell Array
 		*
-		* This function is only called if the HexahedronEdheShell array is required.
+		* This function is only called if the HexahedronEdgeShell array is required.
 		* m_hexahedronEdgeShell[i] contains the indices of all hexahedra adjacent to the ith edge 
 		*/
 		void createHexahedronEdgeShellArray();
@@ -371,6 +322,7 @@ namespace topology
 	protected:
 		/// provides the set of hexahedra
 		sofa::helper::vector<Hexahedron> m_hexahedron;
+		DataPtr< sofa::helper::vector<Hexahedron> > d_hexahedron;
 		/// provides the set of edges for each hexahedron
 		sofa::helper::vector<HexahedronEdges> m_hexahedronEdge;
 		/// provides the set of quads for each hexahedron

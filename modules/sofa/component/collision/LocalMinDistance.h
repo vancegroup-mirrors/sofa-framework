@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -43,7 +43,7 @@ namespace component
 namespace collision
 {
 
-class LocalMinDistance : public DiscreteIntersection
+class SOFA_COMPONENT_COLLISION_API LocalMinDistance : public DiscreteIntersection
 {
 public:
    // Data<bool> useSphereTriangle;
@@ -106,6 +106,9 @@ public:
 	bool testValidity(Triangle&, const Vector3&);
 
 	void draw();
+
+	/// Actions to accomplish when the broadPhase is started. By default do nothing.
+	virtual void beginBroadPhase(){}
 
 private:
 	double mainAlarmDistance;

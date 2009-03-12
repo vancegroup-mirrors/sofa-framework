@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_FORCEFIELD_TETRAHEDRALCOROTATIONALFEMFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/component/topology/TetrahedronData.h>
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/Vec.h>
@@ -117,6 +117,18 @@ protected:
 		Transformation initialTransformation;
 
 		TetrahedronInformation() {
+		}
+
+		/// Output stream
+		inline friend std::ostream& operator<< ( std::ostream& os, const TetrahedronInformation& /*tri*/ )
+		{
+		return os;
+		}
+		
+		/// Input stream
+		inline friend std::istream& operator>> ( std::istream& in, TetrahedronInformation& /*tri*/ )
+		{
+		return in;
 		}
 	};
 	/// container that stotes all requires information for each tetrahedron

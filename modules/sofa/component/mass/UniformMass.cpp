@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,6 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_MASS_UNIFORMMASS_CPP
 #include <sofa/component/mass/UniformMass.inl>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
@@ -75,17 +76,23 @@ Mat3x3d MatrixFromEulerXYZ(double thetaX, double thetaY, double thetaZ)
 
 
 #ifndef SOFA_FLOAT
-template<>
-void UniformMass<Rigid3dTypes, Rigid3dMass>::parse(core::objectmodel::BaseObjectDescription* arg)
+template<> SOFA_COMPONENT_MASS_API
+void UniformMass<Rigid3dTypes, Rigid3dMass>::reinit()
 {
-  Inherited::parse(arg);
-  Rigid3dMass m = this->getMass();
-  if (arg->getAttribute("filename"))
+  this->mass.beginEdit()->recalc();
+  this->mass.endEdit();
+}
+
+template<> SOFA_COMPONENT_MASS_API
+void UniformMass<Rigid3dTypes, Rigid3dMass>::loadRigidMass(std::string filename)
+{
+  this->totalMass.setDisplayed(false);
+  if (!filename.empty())
   {
-    std::string filename = arg->getAttribute("filename");
+    Rigid3dMass m = this->getMass();
     if (!sofa::helper::system::DataRepository.findFile(filename))
     {
-      std::cerr << "ERROR: cannot find file '" << filename << "'." << std::endl;
+      serr << "ERROR: cannot find file '" << filename << "'." << sendl;
     }
     else
     {
@@ -93,78 +100,78 @@ void UniformMass<Rigid3dTypes, Rigid3dMass>::parse(core::objectmodel::BaseObject
     FILE*	file;
     if ((file = fopen(filename.c_str(), "r")) == NULL)
     {
-      std::cerr << "ERROR: cannot read file '" << filename << "'." << std::endl;
+      serr << "ERROR: cannot read file '" << filename << "'." << sendl;
     }
     else
     {
-      //std::cout << "Loading rigid model '" << filename << "'" << std::endl;
-        // Check first line 
+      //sout << "Loading rigid model '" << filename << "'" << sendl;
+        // Check first line
         //if (fgets(cmd, 7, file) != NULL && !strcmp(cmd,"Xsp 3.0"))
       {
         skipToEOL(file);
-		
+	int result;
         while (fscanf(file, "%s", cmd) != EOF)
         {
           if (!strcmp(cmd,"inrt"))
           {
             for (int i = 0; i < 9; i++)
             {
-              fscanf(file, "%lf", &(m.inertiaMatrix.ptr()[i]));
+              result=fscanf(file, "%lf", &(m.inertiaMatrix.ptr()[i]));
             }
           }
-          else if (!strcmp(cmd,"cntr"))
+          else if (!strcmp(cmd,"cntr") || !strcmp(cmd,"center") )
           {
             Vec3d center;
             for (int i = 0; i < 3; ++i)
             {
-              fscanf(file, "%lf", &(center[i]));
+              result=fscanf(file, "%lf", &(center[i]));
             }
           }
           else if (!strcmp(cmd,"mass"))
           {
             double mass;
-            fscanf(file, "%lf", &mass);
-            if (!arg->getAttribute("mass"))
+            result=fscanf(file, "%lf", &mass);
+            if (!this->mass.isSet())
                 m.mass = mass;
           }
           else if (!strcmp(cmd,"volm"))
           {
-            fscanf(file, "%lf", &(m.volume));
+            result=fscanf(file, "%lf", &(m.volume));
           }
           else if (!strcmp(cmd,"frme"))
           {
             Quatd orient;
             for (int i = 0; i < 4; ++i)
             {
-              fscanf(file, "%lf", &(orient[i]));
+              result=fscanf(file, "%lf", &(orient[i]));
             }
             orient.normalize();
           }
           else if (!strcmp(cmd,"grav"))
           {
             Vec3d gravity;
-            fscanf(file, "%lf %lf %lf\n", &(gravity.x()),
+            result=fscanf(file, "%lf %lf %lf\n", &(gravity.x()),
                    &(gravity.y()), &(gravity.z()));
           }
           else if (!strcmp(cmd,"visc"))
           {
             double viscosity = 0;
-            fscanf(file, "%lf", &viscosity);
+            result=fscanf(file, "%lf", &viscosity);
           }
           else if (!strcmp(cmd,"stck"))
           {
             double tmp;
-            fscanf(file, "%lf", &tmp); //&(MSparams.default_stick));
+            result=fscanf(file, "%lf", &tmp); //&(MSparams.default_stick));
           }
           else if (!strcmp(cmd,"step"))
           {
             double tmp;
-            fscanf(file, "%lf", &tmp); //&(MSparams.default_dt));
+            result=fscanf(file, "%lf", &tmp); //&(MSparams.default_dt));
           }
           else if (!strcmp(cmd,"prec"))
           {
             double tmp;
-            fscanf(file, "%lf", &tmp); //&(MSparams.default_prec));
+            result=fscanf(file, "%lf", &tmp); //&(MSparams.default_prec));
           }
           else if (cmd[0] == '#')	// it's a comment
           {
@@ -180,13 +187,15 @@ void UniformMass<Rigid3dTypes, Rigid3dMass>::parse(core::objectmodel::BaseObject
       fclose(file);
     }
     }
-  }
-  m.recalc();
   this->setMass(m);
+  }
+  else
+    if (this->totalMass.getValue()>0 ) this->mass.setValue(this->totalMass.getValue());
+  this->totalMass.setValue(0.0);
 }
 
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Rigid3dTypes, Rigid3dMass>::draw()
 {
   if (!getContext()->getShowBehaviorModels())
@@ -215,6 +224,16 @@ template <>
     gravityCenter += (x[i].getCenter());
   }
 
+  if (showInitialCenterOfGravity.getValue())
+  {
+	  const VecCoord& x0 = *mstate->getX0();
+
+	  for (unsigned int i=0; i<x0.size(); i++)
+	  {       
+		helper::gl::Axis::draw(x0[i].getCenter(), x0[i].getOrientation(), len*showAxisSize.getValue());
+	  }
+  }
+
   if(showCenterOfGravity.getValue()){
     gravityCenter /= x.size();
     glColor3f (1,1,0);
@@ -231,17 +250,17 @@ template <>
 
 
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Rigid2dTypes, Rigid2dMass>::draw()
 {
   if (!getContext()->getShowBehaviorModels())
     return;
   const VecCoord& x = *mstate->getX();
   defaulttype::Vec3d len;
-    
+
   len[0] = len[1] = sqrt(mass.getValue().inertiaMatrix);
   len[2] = 0;
-    
+
   for (unsigned int i=0; i<x.size(); i++)
   {
     Quat orient(Vec3d(0,0,1), x[i].getOrientation());
@@ -250,7 +269,7 @@ template <>
   }
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     double UniformMass<Rigid3dTypes,Rigid3dMass>::getPotentialEnergy( const Rigid3dTypes::VecCoord& x )
 {
   double e = 0;
@@ -264,7 +283,7 @@ template <>
 }
 
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     double UniformMass<Rigid2dTypes,Rigid2dMass>::getPotentialEnergy( const Rigid2dTypes::VecCoord& x )
 {
   double e = 0;
@@ -277,27 +296,27 @@ template <>
   return e;
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     double UniformMass<Rigid3dTypes,Rigid3dMass>::getElementMass(unsigned int )
 {
   return (mass.getValue().mass);
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     sofa::defaulttype::Vector3::value_type UniformMass<Rigid2dTypes,Rigid2dMass>::getElementMass(unsigned int )
 {
   return (mass.getValue().mass);
 }
 
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Vec6dTypes, double>::draw()
 {
   if (!getContext()->getShowBehaviorModels())
     return;
   const VecCoord& x = *mstate->getX();
   const VecCoord& x0 = *mstate->getX0();
-    
+
   Mat3x3d R; R.identity();
   glBegin(GL_LINES);
   for (unsigned int i=0; i<x.size(); i++)
@@ -324,7 +343,7 @@ template <>
   glEnd();
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Vec3dTypes, double>::addMDxToVector(defaulttype::BaseVector *resVect, const VecDeriv* dx, double mFact, unsigned int& offset)
 {
   unsigned int derivDim = Deriv::size();
@@ -347,17 +366,23 @@ template <>
 #endif
 
 #ifndef SOFA_DOUBLE
-template<>
-void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObjectDescription* arg)
+template<> SOFA_COMPONENT_MASS_API
+void UniformMass<Rigid3fTypes, Rigid3fMass>::reinit()
 {
-  Inherited::parse(arg);
-  Rigid3fMass m = this->getMass();
-  if (arg->getAttribute("filename"))
+  this->mass.beginEdit()->recalc();
+  this->mass.endEdit();
+}
+
+template<> SOFA_COMPONENT_MASS_API
+void UniformMass<Rigid3fTypes, Rigid3fMass>::loadRigidMass(std::string filename)
+{
+  this->totalMass.setDisplayed(false);
+  if (!filename.empty())
   {
-    std::string filename = arg->getAttribute("filename");
+    Rigid3fMass m = this->getMass();
     if (!sofa::helper::system::DataRepository.findFile(filename))
     {
-      std::cerr << "ERROR: cannot find file '" << filename << "'." << std::endl;
+      serr << "ERROR: cannot find file '" << filename << "'." << sendl;
     }
     else
     {
@@ -365,23 +390,23 @@ void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObject
     FILE*	file;
     if ((file = fopen(filename.c_str(), "r")) == NULL)
     {
-      std::cerr << "ERROR: cannot read file '" << filename << "'." << std::endl;
+      serr << "ERROR: cannot read file '" << filename << "'." << sendl;
     }
     else
     {
-      //std::cout << "Loading rigid model '" << filename << "'" << std::endl;
-        // Check first line 
+      //sout << "Loading rigid model '" << filename << "'" << sendl;
+        // Check first line
         //if (fgets(cmd, 7, file) != NULL && !strcmp(cmd,"Xsp 3.0"))
       {
         skipToEOL(file);
-		
+	int result;
         while (fscanf(file, "%s", cmd) != EOF)
         {
           if (!strcmp(cmd,"inrt"))
           {
             for (int i = 0; i < 9; i++)
             {
-              fscanf(file, "%f", &(m.inertiaMatrix.ptr()[i]));
+              result=fscanf(file, "%f", &(m.inertiaMatrix.ptr()[i]));
             }
           }
           else if (!strcmp(cmd,"cntr"))
@@ -389,54 +414,54 @@ void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObject
             Vec3d center;
             for (int i = 0; i < 3; ++i)
             {
-              fscanf(file, "%lf", &(center[i]));
+              result=fscanf(file, "%lf", &(center[i]));
             }
           }
           else if (!strcmp(cmd,"mass"))
           {
             float mass;
-            fscanf(file, "%f", &mass);
-            if (!arg->getAttribute("mass"))
+            result=fscanf(file, "%f", &mass);
+            if (!this->mass.isSet())
                 m.mass = mass;
           }
           else if (!strcmp(cmd,"volm"))
           {
-            fscanf(file, "%f", &(m.volume));
+            result=fscanf(file, "%f", &(m.volume));
           }
           else if (!strcmp(cmd,"frme"))
           {
             Quatd orient;
             for (int i = 0; i < 4; ++i)
             {
-              fscanf(file, "%lf", &(orient[i]));
+              result=fscanf(file, "%lf", &(orient[i]));
             }
             orient.normalize();
           }
           else if (!strcmp(cmd,"grav"))
           {
             Vec3d gravity;
-            fscanf(file, "%lf %lf %lf\n", &(gravity.x()),
+            result=fscanf(file, "%lf %lf %lf\n", &(gravity.x()),
                    &(gravity.y()), &(gravity.z()));
           }
           else if (!strcmp(cmd,"visc"))
           {
             double viscosity = 0;
-            fscanf(file, "%lf", &viscosity);
+            result=fscanf(file, "%lf", &viscosity);
           }
           else if (!strcmp(cmd,"stck"))
           {
             double tmp;
-            fscanf(file, "%lf", &tmp); //&(MSparams.default_stick));
+            result=fscanf(file, "%lf", &tmp); //&(MSparams.default_stick));
           }
           else if (!strcmp(cmd,"step"))
           {
             double tmp;
-            fscanf(file, "%lf", &tmp); //&(MSparams.default_dt));
+            result=fscanf(file, "%lf", &tmp); //&(MSparams.default_dt));
           }
           else if (!strcmp(cmd,"prec"))
           {
             double tmp;
-            fscanf(file, "%lf", &tmp); //&(MSparams.default_prec));
+            result=fscanf(file, "%lf", &tmp); //&(MSparams.default_prec));
           }
           else if (cmd[0] == '#')	// it's a comment
           {
@@ -452,13 +477,17 @@ void UniformMass<Rigid3fTypes, Rigid3fMass>::parse(core::objectmodel::BaseObject
       fclose(file);
     }
     }
-  }
-  m.recalc();
+
   this->setMass(m);
+  }
+  else
+    if (this->totalMass.getValue()>0 ) this->mass.setValue((Real)this->totalMass.getValue());
+  this->totalMass.setValue(0.0f);
+
 }
 
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Rigid3fTypes, Rigid3fMass>::draw()
 {
   if (!getContext()->getShowBehaviorModels())
@@ -501,17 +530,17 @@ template <>
   }
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Rigid2fTypes, Rigid2fMass>::draw()
 {
   if (!getContext()->getShowBehaviorModels())
     return;
   const VecCoord& x = *mstate->getX();
   defaulttype::Vec3d len;
-    
+
   len[0] = len[1] = sqrt(mass.getValue().inertiaMatrix);
   len[2] = 0;
-    
+
   for (unsigned int i=0; i<x.size(); i++)
   {
     Quat orient(Vec3d(0,0,1), x[i].getOrientation());
@@ -520,7 +549,7 @@ template <>
   }
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     double UniformMass<Rigid3fTypes,Rigid3fMass>::getPotentialEnergy( const Rigid3fTypes::VecCoord& x )
 {
   double e = 0;
@@ -533,7 +562,7 @@ template <>
   return e;
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     double UniformMass<Rigid2fTypes,Rigid2fMass>::getPotentialEnergy( const Rigid2fTypes::VecCoord& x )
 {
   double e = 0;
@@ -546,7 +575,7 @@ template <>
   return e;
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     double UniformMass<Rigid3fTypes,Rigid3fMass>::getElementMass(unsigned int )
 {
   return (double)(mass.getValue().mass);
@@ -559,14 +588,14 @@ template <>
   return (double)(mass.getValue().mass);
 }
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Vec6fTypes, float>::draw()
 {
   if (!getContext()->getShowBehaviorModels())
     return;
   const VecCoord& x = *mstate->getX();
   const VecCoord& x0 = *mstate->getX0();
-    
+
   Mat3x3d R;
   glBegin(GL_LINES);
   for (unsigned int i=0; i<x.size(); i++)
@@ -594,7 +623,7 @@ template <>
 }
 
 
-template <>
+template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Vec3fTypes, float>::addMDxToVector(defaulttype::BaseVector *resVect, const VecDeriv* dx, SReal mFact, unsigned int& offset)
 {
   unsigned int derivDim = Deriv::size();
@@ -615,18 +644,6 @@ template <>
 }
 
 #endif
-
-// specialization for rigid bodies
-
-
-// specialization for rigid bodies
-
-// specialization for rigid bodies
-// specialization for rigid bodies
-
-
-
-
 
 
 SOFA_DECL_CLASS(UniformMass)
@@ -653,20 +670,20 @@ int UniformMassClass = core::RegisterObject("Define the same mass for all the pa
 ;
 
 #ifndef SOFA_FLOAT
-template class UniformMass<Vec3dTypes,double>;
-template class UniformMass<Vec2dTypes,double>;
-template class UniformMass<Vec1dTypes,double>;
-template class UniformMass<Vec6dTypes,double>;
-template class UniformMass<Rigid3dTypes,Rigid3dMass>;
-template class UniformMass<Rigid2dTypes,Rigid2dMass>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec3dTypes,double>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec2dTypes,double>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec1dTypes,double>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec6dTypes,double>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Rigid3dTypes,Rigid3dMass>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Rigid2dTypes,Rigid2dMass>;
 #endif
 #ifndef SOFA_DOUBLE
-template class UniformMass<Vec3fTypes,float>;
-template class UniformMass<Vec2fTypes,float>;
-template class UniformMass<Vec1fTypes,float>;
-template class UniformMass<Vec6fTypes,float>;
-template class UniformMass<Rigid3fTypes,Rigid3fMass>;
-template class UniformMass<Rigid2fTypes,Rigid2fMass>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec3fTypes,float>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec2fTypes,float>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec1fTypes,float>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Vec6fTypes,float>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Rigid3fTypes,Rigid3fMass>;
+template class SOFA_COMPONENT_MASS_API UniformMass<Rigid2fTypes,Rigid2fMass>;
 #endif
 
 } // namespace mass

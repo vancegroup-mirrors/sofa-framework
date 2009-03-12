@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -41,7 +41,11 @@ namespace mapping
 
 	using namespace sofa::core::componentmodel::behavior;
 
-
+/** mapping computing the center of mass of an object.
+	the output of the mapping has to be a single dof.
+	Its position is then set from the input DOFs, proportionally to their mass.
+	This allow to control an object by setting forces on its center of mass.
+ */
 template <class BasicMapping>
 class CenterOfMassMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
 {
@@ -73,8 +77,10 @@ class CenterOfMassMapping : public BasicMapping, public virtual core::objectmode
 
 
   protected :
+	  ///pointer on the input DOFs mass
 	BaseMass * masses;
 
+	  /// the total mass of the input object
 	double totalMass;
 
 };

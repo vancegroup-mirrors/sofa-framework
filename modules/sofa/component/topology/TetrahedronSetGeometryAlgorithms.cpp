@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,7 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-
+#define SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETGEOMETRYALGORITHMS_CPP
 #include <sofa/component/topology/TetrahedronSetGeometryAlgorithms.h>
 #include <sofa/component/topology/TetrahedronSetGeometryAlgorithms.inl>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -57,15 +57,15 @@ namespace topology
 	;
 
     #ifndef SOFA_FLOAT
-	template class TetrahedronSetGeometryAlgorithms<Vec3dTypes>;
-	template class TetrahedronSetGeometryAlgorithms<Vec2dTypes>;
-	template class TetrahedronSetGeometryAlgorithms<Vec1dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec3dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec2dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec1dTypes>;
     #endif
 
     #ifndef SOFA_DOUBLE
-	template class TetrahedronSetGeometryAlgorithms<Vec3fTypes>;
-	template class TetrahedronSetGeometryAlgorithms<Vec2fTypes>;
-	template class TetrahedronSetGeometryAlgorithms<Vec1fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec3fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec2fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec1fTypes>;
     #endif
 
 } // namespace topology

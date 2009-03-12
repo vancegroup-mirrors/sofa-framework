@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,7 +28,7 @@
 #include "CudaTypes.h"
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/io/Mesh.h>
@@ -203,7 +203,7 @@ public:
 	int i = index(p, coefs);
 	return interp(i, coefs);
     }
-    
+
     Coord grad(int index, const Coord& coefs) const
     {
         // val = dist[0][0][0] * (1-x) * (1-y) * (1-z)
@@ -429,7 +429,7 @@ public:
     const Vector3& getPrevTranslation();
     double getPrevDt();
     /// @}
-    
+
     /// Set new grid and transform, keeping the old state to estimate velocity
     void setNewState(double dt, CudaDistanceGrid* grid, const Matrix3& rotation, const Vector3& translation);
 };
@@ -444,7 +444,7 @@ protected:
         Matrix3 rotation;
         Vector3 translation;
         CudaDistanceGrid* grid;
-        
+
         /// @name Previous state data
         /// Used to estimate velocity in case the distance grid itself is dynamic
         /// @{
@@ -453,7 +453,7 @@ protected:
         Vector3 prevTranslation; ///< Previous translation
         double prevDt; ///< Time difference between previous and current state
         /// @}
-        
+
         bool isTransformed; ///< True if translation/rotation was set
         ElementData() : grid(NULL), prevGrid(NULL), prevDt(0.0), isTransformed(false) { rotation.identity(); prevRotation.identity(); }
     };
@@ -462,7 +462,7 @@ protected:
     bool modified;
 
     // Input data parameters
-    Data< std::string > filename;
+    Data< std::string > fileCudaRigidDistanceGrid;
     Data< double > scale;
     Data< helper::fixed_array<CudaDistanceGrid::Coord,2> > box;
     Data< int > nx;
@@ -524,12 +524,12 @@ public:
     {
         return elems[index].prevDt;
     }
-    
+
     /// Set new grid and transform, keeping the old state to estimate velocity
     void setNewState(int index, double dt, CudaDistanceGrid* grid, const Matrix3& rotation, const Vector3& translation);
-    
+
     /// @}
-    
+
     /// Set new grid and transform, keeping the old state to estimate velocity
     void setNewState(double dt, CudaDistanceGrid* grid, const Matrix3& rotation, const Vector3& translation);
 

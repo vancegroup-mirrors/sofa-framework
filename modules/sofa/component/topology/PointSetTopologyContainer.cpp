@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -24,8 +24,8 @@
 ******************************************************************************/
 #include <sofa/component/topology/PointSetTopologyContainer.h>
 
-#include <sofa/simulation/tree/GNode.h>
-#include <sofa/component/MeshLoader.h>
+#include <sofa/simulation/common/Node.h>
+#include <sofa/component/container/MeshLoader.h>
 
 #include <sofa/core/ObjectFactory.h>
 namespace sofa
@@ -45,13 +45,14 @@ int PointSetTopologyContainerClass = core::RegisterObject("Point set topology co
 ;
 
 PointSetTopologyContainer::PointSetTopologyContainer(int npoints)
-: nbPoints(npoints)
+: nbPoints(initData(&nbPoints, (unsigned int )npoints, "nbPoints", "Number of points"))
+, d_initPoints(initDataPtr(&d_initPoints, &initPoints, "points", "Initial position of points"))
 {
 }
 
 void PointSetTopologyContainer::setNbPoints(int n)
 {
-    nbPoints = n;
+    nbPoints.setValue(n);
 }
 
 bool PointSetTopologyContainer::checkTopology() const
@@ -61,15 +62,15 @@ bool PointSetTopologyContainer::checkTopology() const
 
 void PointSetTopologyContainer::clear()
 {
-  nbPoints = 0;
+  nbPoints.setValue(0);
   initPoints.clear();
 }
 
 void PointSetTopologyContainer::addPoint(double px, double py, double pz)
 {
   initPoints.push_back(InitTypes::Coord((SReal)px, (SReal)py, (SReal)pz));
-  if (initPoints.size() > (unsigned)nbPoints)
-    nbPoints = initPoints.size();
+  if (initPoints.size() > nbPoints.getValue())
+    nbPoints.setValue(initPoints.size());
 }
 
 bool PointSetTopologyContainer::hasPos() const
@@ -103,38 +104,48 @@ double PointSetTopologyContainer::getPZ(int i) const
 
 void PointSetTopologyContainer::init()
 {
-    sofa::component::MeshLoader* loader;
-    this->getContext()->get(loader);
-    
-    if(loader)
-    {
-        loadFromMeshLoader(loader);
-    }
+    core::componentmodel::topology::TopologyContainer::init();
+
+    d_initPoints.getValue(); // make sure initPoints is up to date
+    if (nbPoints.getValue() == 0 && !initPoints.empty())
+        nbPoints.setValue(initPoints.size());
+
+        if(nbPoints.getValue() == 0)
+	{
+		sofa::component::MeshLoader* loader;
+		this->getContext()->get(loader);
+
+		if(loader)
+		{
+			loadFromMeshLoader(loader);
+		}
+	}
 }
 
 void PointSetTopologyContainer::loadFromMeshLoader(sofa::component::MeshLoader* loader)
 {
-    nbPoints = loader->getNbPoints();
+    if (!initPoints.empty()) return;
+    nbPoints.setValue( loader->getNbPoints() );
 }
 
 void PointSetTopologyContainer::addPoints(const unsigned int nPoints)
 {
-    nbPoints += nPoints;
+    nbPoints.setValue( nbPoints.getValue() + nPoints);
 }
 
 void PointSetTopologyContainer::removePoints(const unsigned int nPoints)
 {
-    nbPoints -= nPoints;
+    nbPoints.setValue(nbPoints.getValue() - nPoints);
 }
 
 void PointSetTopologyContainer::addPoint()
 {
-    ++nbPoints;
+    nbPoints.setValue(nbPoints.getValue()+1);
 }
 
 void PointSetTopologyContainer::removePoint()
 {
-    --nbPoints;
+    nbPoints.setValue(nbPoints.getValue()-1);
 }
 
 } // namespace topology

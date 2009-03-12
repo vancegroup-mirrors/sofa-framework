@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,16 +27,14 @@
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/objectmodel/ContextObject.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
 
 	namespace simulation
 	{
-		namespace tree
-		{
-			class GNode;
-		}
+		class Node;
 	}
 
 namespace component
@@ -48,14 +46,14 @@ namespace contextobject
 using namespace sofa::defaulttype;
 
 /** Override the default gravity */
-class Gravity : public core::objectmodel::ContextObject
+class SOFA_COMPONENT_CONTEXTOBJECT_API Gravity : public core::objectmodel::ContextObject
 {
 public:
         Gravity();
-        
+
         Data<Vector3> f_gravity; ///< Gravity in the world coordinate system
 
-	/// Modify the context of the GNode
+	/// Modify the context of the Node
 	void apply();
 };
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -379,7 +379,7 @@ void GenGraphForm::doClose()
 	this->close();
 }
 
-void GenGraphForm::setScene(sofa::simulation::tree::GNode* scene)
+void GenGraphForm::setScene(sofa::simulation::Node* scene)
 {
 	graph = scene;
 }

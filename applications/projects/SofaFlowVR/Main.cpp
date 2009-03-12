@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -32,7 +32,7 @@
 #include <flowvr/render/chunkwriter.h>
 //#include <flowvr/interact/chunkwriter.h>
 
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -49,7 +49,7 @@
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/tree/DeleteVisitor.h>
-#include <sofa/component/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/component/collision/PointModel.h>
 #include <sofa/component/collision/MinProximityIntersection.h>
 #include <sofa/component/collision/BruteForceDetection.h>
@@ -63,9 +63,9 @@
 #endif
 
 #include <sofa/gui/SofaGUI.h>
-#include <sofa/helper/system/gl.h> 
+#include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
-  
+
 using sofa::helper::system::thread::CTime;
 using sofa::helper::system::thread::ctime_t;
 using namespace sofa::simulation::tree;
@@ -163,31 +163,31 @@ public:
     {
         f_listening.setValue(true);
     }
-    
+
     virtual ~FlowVRObject()
     {
     }
-    
+
     virtual void animateBegin(double /*dt*/)
     {
     }
-    
+
     virtual void animateEnd(double /*dt*/)
     {
     }
-    
+
     virtual void flowvrPreInit(std::set<flowvr::Port*>* /*ports*/)
     {
     }
-    
+
     virtual void flowvrInit(flowvr::ModuleAPI* /*module*/)
     {
     }
-    
+
     virtual void flowvrBeginIteration(flowvr::ModuleAPI* /*module*/)
     {
     }
-    
+
     virtual void flowvrEndIteration(flowvr::ModuleAPI* /*module*/)
     {
     }
@@ -280,7 +280,7 @@ public:
     {
 	mod = this;
     }
-    
+
     virtual void init()
     {
         if (module!=NULL) return;
@@ -311,7 +311,7 @@ public:
         ev2.module = module;
         getContext()->propagateEvent(&ev2);
     }
-    
+
     virtual void animateBegin(double /*dt*/)
     {
         if (module==NULL) return;
@@ -329,7 +329,7 @@ public:
         ev.module = module;
         getContext()->propagateEvent(&ev);
     }
-    
+
     virtual void animateEnd(double /*dt*/)
     {
         if (module==NULL) return;
@@ -400,13 +400,13 @@ public:
     sofa::component::collision::MinProximityIntersection * intersection;
     sofa::component::collision::BruteForceDetection * detection;
     sofa::helper::vector<double> newPointsDist;
-    
+
     Mat4x4f matrix;
     int facetsLastIt;
     int pointsLastIt;
     int matrixLastIt;
     double motionLastTime;
-    
+
     FlowVRInputMesh()
     : pInFacets(createInputPort("facets")), pInPoints(createInputPort("points")), pInMatrix(createInputPort("matrix"))
     , computeV( initData(&computeV, false, "computeV", "estimate velocity by detecting nearest primitive of previous model") )
@@ -425,7 +425,7 @@ public:
 	    delete newPointsNode;
 	}
     }
-    
+
     virtual void flowvrPreInit(std::set<flowvr::Port*>* ports)
     {
         std::cout << "Received FlowVRPreInit"<<std::endl;
@@ -446,23 +446,23 @@ public:
 	    newPointsNode->addObject ( intersection = new sofa::component::collision::MinProximityIntersection );
 	    intersection->setAlarmDistance(maxVDist.getValue());
 	    intersection->setContactDistance(0); //maxVDist.getValue());
-	    
+
 	    newPointsNode->addObject ( detection = new sofa::component::collision::BruteForceDetection );
 	    detection->setIntersectionMethod(intersection);
-	    
+
 	    newPointsNode->execute<sofa::simulation::InitVisitor>();
 	}
     }
-    
+
     virtual void flowvrBeginIteration(flowvr::ModuleAPI* module)
     {
         //std::cout << "Received FlowVRBeginIteration"<<std::endl;
         flowvr::Message points, facets;
-// 	double time = getContext()->getTime();
-        
+ 	double time = getContext()->getTime();
+
         module->get(pInPoints, points);
         module->get(pInFacets, facets);
-    
+
         bool newmatrix = false;
         if (pInMatrix->isConnected())
         {
@@ -477,7 +477,7 @@ public:
                 newmatrix = true;
             }
         }
-        
+
         int pointsIt = -1;
         points.stamps.read(pInPoints->stamps->it,pointsIt);
         const unsigned int nbv = points.data.getSize()/sizeof(Vec3f);
@@ -487,14 +487,14 @@ public:
             const Vec3f* vertices = points.data.getRead<Vec3f>(0);
             const Vec3f trans = mod->f_trans.getValue();
             const float scale = mod->f_scale.getValue();
-            
+
             BaseObject* mmodel = getContext()->getMechanicalState();
 #ifndef SOFA_FLOAT
 	    sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>* mmodel3d;
 	    if ((mmodel3d = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>*>(mmodel))!=NULL)
 	    {
 	      bool doComputeV = (computeV.getValue() && newPoints != NULL && motionLastTime != -1000);
-		
+
 	      sofa::core::componentmodel::behavior::MechanicalState<Vec3dTypes>* mm;
 	      if (doComputeV)
 	      {
@@ -595,11 +595,11 @@ public:
 #endif
 			       motionLastTime = time;
 	    }
-	
+
 #endif
 #ifndef SOFA_DOUBLE
 	    sofa::core::componentmodel::behavior::MechanicalState<Vec3fTypes>* mmodel3f;
-            
+
 	    if ((mmodel3f = dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<Vec3fTypes>*>(mmodel))!=NULL)
 	    {
                 //std::cout << "Copying "<<nbv<<" vertices to mmodel3f"<<std::endl;
@@ -635,7 +635,7 @@ public:
             facetsLastIt = facetsIt;
             const unsigned int nbi = facets.data.getSize()/sizeof(unsigned short);
             const unsigned short* indices = facets.data.getRead<unsigned short>(0);
-            
+
             // check indices
             bool valid = true;
             for (unsigned int i=0;i<nbi;i++)
@@ -707,8 +707,8 @@ template<class DistanceGridModel, class DistanceGrid>
 class FlowVRInputDistanceGrid : public FlowVRObject
 {
 public:
- 
-  
+
+
 
     flowvr::InputPort* pInDistance;
     flowvr::InputPort* pInMatrix;
@@ -776,7 +776,7 @@ public:
             if (grid)
             {
                 //rigid = grid->getRigidModel();
-                
+
                 // just create a dummy distance grid for now
                 emptyGrid = new DistanceGrid(2,2,2,typename DistanceGrid::Coord(0,0,-100),typename DistanceGrid::Coord(0.001f,0.001f,-99.999f));
                 for (int i=0;i<emptyGrid->size();i++)
@@ -834,7 +834,7 @@ public:
                 matrixLastIt = matrixIt;
                 if (lastMatrix != matrix || newscale)
                     newmotion = true;
-                
+
                 //if(rigid)
                 //    (*rigid->getX())[0].fromMatrix(matrix);
             }
@@ -853,7 +853,7 @@ public:
             //const Vec3f* vertices = points.data.getRead<Vec3f>(0);
             const Vec3f trans = mod->f_trans.getValue();
             const float scale = mod->f_scale.getValue()*mscale;
-            
+
             int nz = 0;
             int ny = 0;
             int nx = 0;
@@ -870,7 +870,7 @@ public:
             distance.stamps.read(stampDP[2], dp[2]);
             for (int i=0;i<6;i++)
                 distance.stamps.read(stampBB[i], bbox[i]);
-            
+
             if (!nx || !ny || !nz || bbox[0] > bbox[3])
             { // empty grid
                 curDistGrid->release();
@@ -883,7 +883,7 @@ public:
                 typename DistanceGrid::Coord pmax = pmin + Vec3f(dp[0]*(nx-1),dp[1]*(ny-1),dp[2]*(ny-2))*scale;
                 typename DistanceGrid::Coord bbmin = pmin + Vec3f(dp[0]*bbox[0],dp[1]*bbox[1],dp[2]*bbox[2])*scale;
                 typename DistanceGrid::Coord bbmax = pmin + Vec3f(dp[0]*bbox[3],dp[1]*bbox[4],dp[2]*bbox[5])*scale;
-                
+
                 /*if (scale==1.0f)
                 {
                     curDistGrid->release();
@@ -904,7 +904,7 @@ public:
             newmotion = true;
         }
         }
-        
+
         if (newmotion)
         {
             Mat3x3f rotation;
@@ -1116,13 +1116,13 @@ public:
     {
         clearSharedResources(&scene);
     }
-    
+
     virtual void flowvrPreInit(std::set<flowvr::Port*>* ports)
     {
         std::cout << "Received FlowVRPreInit"<<std::endl;
         ports->insert(pOutScene);
     }
-    
+
     virtual void flowvrBeginIteration(flowvr::ModuleAPI* /*module*/)
     {
         if (!init)
@@ -1135,7 +1135,7 @@ public:
             init = true;
         }
     }
-    
+
     virtual void flowvrEndIteration(flowvr::ModuleAPI* /*module*/)
     {
         FlowVRRenderUpdateEvent ev;
@@ -1160,7 +1160,7 @@ public:
             //init = true;
         }
     }
-    
+
 };
 
 SOFA_DECL_CLASS(FlowVRRenderWriter)
@@ -1179,10 +1179,10 @@ public:
     : scene(NULL), scratch(NULL), module(NULL)
     {
     }
-    
+
     virtual void renderInit() = 0;
     virtual void renderUpdate()= 0;
-    
+
     void flowvrInit(flowvr::ModuleAPI* module)
     {
         this->module = module;
@@ -1207,18 +1207,18 @@ public:
 	}
         renderUpdate();
     }
-    
+
     /*
     void initTextures()
     {
     }
-    
+
     void update()
     {
         //if (scene!=NULL)
         //    renderUpdate();
     }
-    
+
     void draw()
     {
     }
@@ -1236,7 +1236,7 @@ public:
     Data<std::string> pShader;
     Data<bool> useTangent;
     std::string texture;
-    
+
     std::map<std::string,std::string> paramT;
     std::map<std::string,std::string> paramNM;
     std::map<std::string,std::string> paramVS;
@@ -1251,7 +1251,7 @@ public:
     flowvr::ID idVS;
     flowvr::ID idPS;
     flowvr::ID idTex;
-    
+
     bool posModified;
     bool normModified;
     bool meshModified;
@@ -1313,7 +1313,7 @@ public:
             }
         }
     }
-    
+
     virtual bool loadTexture(const std::string& filename)
     {
         texture = filename;
@@ -1343,9 +1343,9 @@ public:
         //normModified = true;
     }
 
-    void computeMesh(sofa::core::componentmodel::topology::BaseMeshTopology* topology)
+    void computeMesh(sofa::core::componentmodel::topology::BaseMeshTopology* /*topology*/)
     {
-        Inherit::computeMesh(topology);
+        Inherit::computeMesh();
         meshModified = true;
     }
 
@@ -1410,7 +1410,7 @@ public:
 	    { // enable alpha blending
 		scene->addParam(idP,flowvr::render::ChunkPrimParam::PARAMOPENGL,"Blend",true);
 		scene->addParam(idP,flowvr::render::ChunkPrimParam::ORDER,"",1);
-		scene->addParam(idP,flowvr::render::ChunkPrimParam::PARAMOPENGL,"DepthWrite",false);		
+		scene->addParam(idP,flowvr::render::ChunkPrimParam::PARAMOPENGL,"DepthWrite",false);
 	    }
 
             // add user-defined textures
@@ -1535,65 +1535,65 @@ public:
                 ResizableExtVector<Vec4f> tangent; tangent.resize(t.size());
                 ResizableExtVector<Coord> tangent1; tangent1.resize(t.size());
                 ResizableExtVector<Coord> tangent2; tangent2.resize(t.size());
-                
+
                 // see http://www.terathon.com/code/tangent.php
-                
+
                 for (unsigned int i=0;i<triangles.size();i++)
                 {
                     int i1 = triangles[i][0];
                     int i2 = triangles[i][1];
                     int i3 = triangles[i][2];
-                    
+
                     const Coord& v1 = x[i1];
                     const Coord& v2 = x[i2];
                     const Coord& v3 = x[i3];
-                    
+
                     const TexCoord& w1 = t[i1];
                     const TexCoord& w2 = t[i2];
                     const TexCoord& w3 = t[i3];
-                    
+
                     float x1 = v2[0] - v1[0];
                     float x2 = v3[0] - v1[0];
                     float y1 = v2[1] - v1[1];
                     float y2 = v3[1] - v1[1];
                     float z1 = v2[2] - v1[2];
                     float z2 = v3[2] - v1[2];
-                    
+
                     float s1 = w2[0] - w1[0];
                     float s2 = w3[0] - w1[0];
                     float t1 = w2[1] - w1[1];
                     float t2 = w3[1] - w1[1];
-                    
+
                     float r = 1.0f / (s1 * t2 - s2 * t1);
                     Coord sdir((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
                     Coord tdir((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
-                    
+
                     tangent1[i1] += sdir;
                     tangent1[i2] += sdir;
                     tangent1[i3] += sdir;
-                    
+
                     tangent2[i1] += tdir;
                     tangent2[i2] += tdir;
                     tangent2[i3] += tdir;
                 }
-                
+
                 for (unsigned int i=0;i<quads.size();i++)
                 {
                     int i1 = quads[i][0];
                     int i2 = quads[i][1];
                     int i3 = quads[i][2];
                     int i4 = quads[i][3];
-                    
+
                     const Coord& v1 = x[i1];
                     const Coord& v2 = x[i2];
                     const Coord& v3 = x[i3];
                     const Coord& v4 = x[i4];
-                    
+
                     const TexCoord& w1 = t[i1];
                     const TexCoord& w2 = t[i2];
                     const TexCoord& w3 = t[i3];
                     const TexCoord& w4 = t[i4];
-                    
+
                     // triangle i1 i2 i3
                     {
                         float x1 = v2[0] - v1[0];
@@ -1602,25 +1602,25 @@ public:
                         float y2 = v3[1] - v1[1];
                         float z1 = v2[2] - v1[2];
                         float z2 = v3[2] - v1[2];
-                        
+
                         float s1 = w2[0] - w1[0];
                         float s2 = w3[0] - w1[0];
                         float t1 = w2[1] - w1[1];
                         float t2 = w3[1] - w1[1];
-                        
+
                         float r = 1.0f / (s1 * t2 - s2 * t1);
                         Coord sdir((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
                         Coord tdir((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
-                        
+
                         tangent1[i1] += sdir;
                         tangent1[i2] += sdir;
                         tangent1[i3] += sdir;
-                        
+
                         tangent2[i1] += tdir;
                         tangent2[i2] += tdir;
                         tangent2[i3] += tdir;
                     }
-                    
+
                     // triangle i1 i3 i4
                     {
                         float x1 = v3[0] - v1[0];
@@ -1629,26 +1629,26 @@ public:
                         float y2 = v4[1] - v1[1];
                         float z1 = v3[2] - v1[2];
                         float z2 = v4[2] - v1[2];
-                        
+
                         float s1 = w3[0] - w1[0];
                         float s2 = w4[0] - w1[0];
                         float t1 = w3[1] - w1[1];
                         float t2 = w4[1] - w1[1];
-                        
+
                         float r = 1.0f / (s1 * t2 - s2 * t1);
                         Coord sdir((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
                         Coord tdir((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
-                        
+
                         tangent1[i1] += sdir;
                         tangent1[i3] += sdir;
                         tangent1[i4] += sdir;
-                        
+
                         tangent2[i1] += tdir;
                         tangent2[i3] += tdir;
                         tangent2[i4] += tdir;
                     }
                 }
-                
+
                 for (unsigned int i=0;i<tangent.size();i++)
                 {
                     const Coord& normal = n[i];
@@ -1660,7 +1660,7 @@ public:
                     // Calculate handedness
                     tangent[i][3] = ((normal.cross(t1) * tangent2[i]) < 0.0f) ? -1.0f : 1.0f;
                 }
-                
+
                 int types[1] = { ftl::Type::get(tangent[0]) };
                 flowvr::render::ChunkVertexBuffer* vb = scene->addVertexBuffer(idVBTangent, tangent.size(), 1, types, bb);
                 vb->gen = lastPosRev;
@@ -1757,10 +1757,10 @@ bool loadPlugin(const char* filename)
   void *handle;
   handle=dlopen(filename, RTLD_LAZY);
   if (!handle)
-  { 
-    std::cerr<<"Error loading plugin "<<filename<<": "<<dlerror()<<std::endl; 
+  {
+    std::cerr<<"Error loading plugin "<<filename<<": "<<dlerror()<<std::endl;
     return false;
-  } 
+  }
   std::cerr<<"Plugin "<<filename<<" loaded."<<std::endl;
   return true;
 }
@@ -1785,8 +1785,8 @@ int main(int argc, char** argv)
 	bool        printFactory = false;
 	std::string gui = sofa::gui::SofaGUI::GetGUIName();
 	std::vector<std::string> plugins;
-	std::vector<std::string> files; 
-	
+	std::vector<std::string> files;
+
 	std::string gui_help = "choose the UI (";
 	gui_help += sofa::gui::SofaGUI::ListSupportedGUI('|');
 	gui_help += ")";
@@ -1811,38 +1811,39 @@ int main(int argc, char** argv)
 	{
 		std::cout << "////////// FACTORY //////////" << std::endl;
 		sofa::helper::printFactoryLog();
-		std::cout << "//////// END FACTORY ////////" << std::endl;  
+		std::cout << "//////// END FACTORY ////////" << std::endl;
 	}
 
 	if (int err=sofa::gui::SofaGUI::Init(argv[0],gui.c_str()))
 		return err;
 
-	sofa::simulation::tree::GNode* groot = NULL; 
+	sofa::simulation::Node* groot = NULL;
 
     if (fileName.empty())
     {
-        fileName = "liver.scn"; 
+        fileName = "liver.scn";
         sofa::helper::system::DataRepository.findFile(fileName);
     }
 
     sofa::core::ObjectFactory::ClassEntry* classVisualModel;
-    sofa::core::ObjectFactory::AddAlias("VisualModel", "FlowVRRenderMesh", true, &classVisualModel); 
-    groot = sofa::simulation::tree::getSimulation()->load(fileName.c_str());
+    sofa::core::ObjectFactory::AddAlias("VisualModel", "FlowVRRenderMesh", true, &classVisualModel);
+    groot = sofa::simulation::getSimulation()->load(fileName.c_str());
+    sofa::simulation::tree::getSimulation()->init(groot);
 
     if (groot==NULL)
     {
         groot = new sofa::simulation::tree::GNode;
-        //return 1; 
+        //return 1;
     }
 
     if (startAnim)
         groot->setAnimate(true);
 
-    
+
 
 	//=======================================
 	// Run the main loop
-  
+
 	if (gui=="batch")
 	{
 		if (groot==NULL)
@@ -1852,7 +1853,7 @@ int main(int argc, char** argv)
 		}
 		for (int i=0;true;i++)
 		{
-			sofa::simulation::tree::getSimulation()->animate(groot);
+			sofa::simulation::getSimulation()->animate(groot);
 		}
 		std::cout << "FlowVR has sent stop" << std::endl;
 	}
@@ -1864,6 +1865,6 @@ int main(int argc, char** argv)
 	}
 
 	if (groot!=NULL)
-		sofa::simulation::tree::getSimulation()->unload(groot);
+		sofa::simulation::getSimulation()->unload(groot);
 	return 0;
 }

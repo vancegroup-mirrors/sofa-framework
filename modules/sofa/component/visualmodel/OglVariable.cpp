@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -83,23 +83,23 @@ OglInt4Variable::OglInt4Variable()
 
 void OglIntVariable::initVisual()
 {
-	shader->setInt(id.getValue().c_str(), value.getValue());
+	shader->setInt(indexShader.getValue(), id.getValue().c_str(), value.getValue());
 }
 
 
 void OglInt2Variable::initVisual()
 {
-	shader->setInt2(id.getValue().c_str(), value.getValue()[0], value.getValue()[1]);
+	shader->setInt2(indexShader.getValue(), id.getValue().c_str(), value.getValue()[0], value.getValue()[1]);
 }
 
 void OglInt3Variable::initVisual()
 {
-	shader->setInt3(id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2]);
+	shader->setInt3(indexShader.getValue(), id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2]);
 }
 
 void OglInt4Variable::initVisual()
 {
-	shader->setInt4(id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2], value.getValue()[3]);
+	shader->setInt4(indexShader.getValue(), id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2], value.getValue()[3]);
 }
 
 /** SINGLE FLOAT VARIABLE **/
@@ -152,23 +152,23 @@ OglFloat4Variable::OglFloat4Variable()
 
 void OglFloatVariable::initVisual()
 {
-	shader->setFloat(id.getValue().c_str(), value.getValue());
+	shader->setFloat(indexShader.getValue(), id.getValue().c_str(), value.getValue());
 }
 
 
 void OglFloat2Variable::initVisual()
 {
-	shader->setFloat2(id.getValue().c_str(), value.getValue()[0], value.getValue()[1]);
+	shader->setFloat2(indexShader.getValue(), id.getValue().c_str(), value.getValue()[0], value.getValue()[1]);
 }
 
 void OglFloat3Variable::initVisual()
 {
-	shader->setFloat3(id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2]);
+	shader->setFloat3(indexShader.getValue(), id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2]);
 }
 
 void OglFloat4Variable::initVisual()
 {
-	shader->setFloat4(id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2], value.getValue()[3]);
+	shader->setFloat4(indexShader.getValue(), id.getValue().c_str(), value.getValue()[0], value.getValue()[1], value.getValue()[2], value.getValue()[3]);
 }
 
 
@@ -231,7 +231,7 @@ void OglIntVector2Variable::init()
 	helper::vector<GLint> temp = iv.getValue();
 	if (iv.getValue().size() %2 != 0)
 	{
-		std::cerr << "The number of values is not even ; padding with one zero" << std::endl;
+		serr << "The number of values is not even ; padding with one zero" << sendl;
 		temp.push_back(0);
 		iv.setValue(temp);
 		
@@ -245,7 +245,7 @@ void OglIntVector3Variable::init()
 	
 	if (iv.getValue().size() %3 != 0)
 	{
-		std::cerr << "The number of values is not a multiple of 3 ; padding with zero(s)" << std::endl;
+		serr << "The number of values is not a multiple of 3 ; padding with zero(s)" << sendl;
 		while (iv.getValue().size() %3 != 0)
 			temp.push_back(0);
 		iv.setValue(temp);
@@ -259,7 +259,7 @@ void OglIntVector4Variable::init()
 	
 	if (iv.getValue().size() %4 != 0)
 	{
-		std::cerr << "The number of values is not a multiple of 4 ; padding with zero(s)" << std::endl;
+		serr << "The number of values is not a multiple of 4 ; padding with zero(s)" << sendl;
 		while (iv.getValue().size() %4 != 0)
 			temp.push_back(0);
 		iv.setValue(temp);
@@ -268,22 +268,22 @@ void OglIntVector4Variable::init()
 
 void OglIntVectorVariable::initVisual()
 {
-	shader->setIntVector(id.getValue().c_str(), iv.getValue().size(), &(iv.getValue()[0]));
+	shader->setIntVector(indexShader.getValue(), id.getValue().c_str(), iv.getValue().size(), &(iv.getValue()[0]));
 }
 
 void OglIntVector2Variable::initVisual()
 {	
-	shader->setIntVector2(id.getValue().c_str(), iv.getValue().size()/2, &(iv.getValue()[0]));
+	shader->setIntVector2(indexShader.getValue(), id.getValue().c_str(), iv.getValue().size()/2, &(iv.getValue()[0]));
 }
 
 void OglIntVector3Variable::initVisual()
 {	
-	shader->setIntVector3(id.getValue().c_str(), iv.getValue().size()/3, &(iv.getValue()[0]));
+	shader->setIntVector3(indexShader.getValue(), id.getValue().c_str(), iv.getValue().size()/3, &(iv.getValue()[0]));
 }
 
 void OglIntVector4Variable::initVisual()
 {
-	shader->setIntVector4(id.getValue().c_str(), iv.getValue().size()/4, &(iv.getValue()[0]));
+	shader->setIntVector4(indexShader.getValue(), id.getValue().c_str(), iv.getValue().size()/4, &(iv.getValue()[0]));
 }
 
 
@@ -345,7 +345,7 @@ void OglFloatVector2Variable::init()
 	helper::vector<float> temp = fv.getValue();
 	if (fv.getValue().size() %2 != 0)
 	{
-		std::cerr << "The number of values is not even ; padding with one zero" << std::endl;
+		serr << "The number of values is not even ; padding with one zero" << sendl;
 		temp.push_back(0.0);
 		fv.setValue(temp);
 	}
@@ -358,7 +358,7 @@ void OglFloatVector3Variable::init()
 	
 	if (fv.getValue().size() %3 != 0)
 	{
-		std::cerr << "The number of values is not a multiple of 3 ; padding with zero(s)" << std::endl;
+		serr << "The number of values is not a multiple of 3 ; padding with zero(s)" << sendl;
 		while (fv.getValue().size() %3 != 0)
 			temp.push_back(0.0);
 		fv.setValue(temp);
@@ -372,7 +372,7 @@ void OglFloatVector4Variable::init()
 	
 	if (fv.getValue().size() %4 != 0)
 	{
-		std::cerr << "The number of values is not a multiple of 4 ; padding with zero(s)" << std::endl;
+		serr << "The number of values is not a multiple of 4 ; padding with zero(s)" << sendl;
 		while (fv.getValue().size() %4 != 0)
 			temp.push_back(0.0);
 		fv.setValue(temp);
@@ -381,22 +381,22 @@ void OglFloatVector4Variable::init()
 
 void OglFloatVectorVariable::initVisual()
 {
-	shader->setFloatVector(id.getValue().c_str(), fv.getValue().size(), &(fv.getValue()[0]));
+	shader->setFloatVector(indexShader.getValue(), id.getValue().c_str(), fv.getValue().size(), &(fv.getValue()[0]));
 }
 
 void OglFloatVector2Variable::initVisual()
 {	
-	shader->setFloatVector2(id.getValue().c_str(), fv.getValue().size()/2, &(fv.getValue()[0]));
+	shader->setFloatVector2(indexShader.getValue(), id.getValue().c_str(), fv.getValue().size()/2, &(fv.getValue()[0]));
 }
 
 void OglFloatVector3Variable::initVisual()
 {	
-	shader->setFloatVector3(id.getValue().c_str(), fv.getValue().size()/3, &(fv.getValue()[0]));
+	shader->setFloatVector3(indexShader.getValue(), id.getValue().c_str(), fv.getValue().size()/3, &(fv.getValue()[0]));
 }
 
 void OglFloatVector4Variable::initVisual()
 {
-	shader->setFloatVector4(id.getValue().c_str(), fv.getValue().size()/4, &(fv.getValue()[0]));
+	shader->setFloatVector4(indexShader.getValue(), id.getValue().c_str(), fv.getValue().size()/4, &(fv.getValue()[0]));
 }
 
 

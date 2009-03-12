@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,6 +31,8 @@
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
+#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/vector.h>
 #include <sofa/component/topology/PointSubset.h>
 #include <set>
@@ -73,7 +75,7 @@ protected:
 	AttachConstraintInternalData<DataTypes> data;
 
 	sofa::core::componentmodel::topology::BaseMeshTopology* topology;
-	
+
 public:
 	Data<SetIndex> f_indices1;
 	Data<SetIndex> f_indices2;
@@ -85,8 +87,10 @@ public:
 	Data<defaulttype::Vector3> f_lastPos;
 	Data<defaulttype::Vector3> f_lastDir;
 	Data<bool> f_clamp;
+	Data<Real> f_minDistance;
 
     helper::vector<bool> activeFlags;
+    helper::vector<bool> constraintReleased;
     helper::vector<Real> lastDist;
     helper::vector<defaulttype::Quat> restRotations;
 
@@ -116,10 +120,29 @@ public:
 	bool isHolonomic() {return true;}
 
 protected :
-    void projectPosition(Coord& x1, Coord& x2, bool /*freeRotations*/, unsigned /*index*/) { x2 = x1; }
-    void projectVelocity(Deriv& x1, Deriv& x2, bool /*freeRotations*/, unsigned /*index*/) { x2 = x1; }
-    void projectResponse(Deriv& dx1, Deriv& dx2, bool /*freeRotations*/, bool twoway, unsigned /*index*/)
+    void projectPosition(Coord& x1, Coord& x2, bool /*freeRotations*/, unsigned index) {
+        // do nothing if distance between x2 & x1 is bigger than f_minDistance
+        if (f_minDistance.getValue() != -1 &&
+	   (x2 - x1).norm() > f_minDistance.getValue())
+	{
+		constraintReleased[index] = true;
+		return;
+	}
+	constraintReleased[index] = false;
+
+	x2 = x1;
+    }
+    void projectVelocity(Deriv& x1, Deriv& x2, bool /*freeRotations*/, unsigned index) { 
+    // do nothing if distance between x2 & x1 is bigger than f_minDistance
+    	if (constraintReleased[index]) return;
+
+    	x2 = x1;
+    }
+    void projectResponse(Deriv& dx1, Deriv& dx2, bool /*freeRotations*/, bool twoway, unsigned index)
     {
+	// do nothing if distance between x2 & x1 is bigger than f_minDistance
+   	if (constraintReleased[index]) return;
+
         if (!twoway)
         {
             dx2 = Deriv();
@@ -141,6 +164,25 @@ protected :
 	//static void FCRemovalFunction ( int , void*);
 
 };
+
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINT_ATTACHCONSTRAINT_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Vec1dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Rigid3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Rigid2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Vec1fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Rigid3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API AttachConstraint<defaulttype::Rigid2fTypes>;
+#endif
+#endif
 
 } // namespace constraint
 

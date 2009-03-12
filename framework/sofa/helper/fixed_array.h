@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -55,13 +55,16 @@
 #pragma once
 #endif
 
-#include <sofa/helper/static_assert.h>
+#include <sofa/helper/system/config.h>
+#include <sofa/helper/helper.h>
+#include <boost/static_assert.hpp>
 
 #include <cstddef>
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
 #include <math.h>
+
 
 namespace sofa
 {

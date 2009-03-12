@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -44,6 +44,14 @@ void FixedConstraintCuda3f_projectResponseIndexed(unsigned int size, const void*
 void FixedConstraintCuda3f1_projectResponseContiguous(unsigned int size, void* dx);
 void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+void FixedConstraintCuda3d_projectResponseContiguous(unsigned int size, void* dx);
+void FixedConstraintCuda3d_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+void FixedConstraintCuda3d1_projectResponseContiguous(unsigned int size, void* dx);
+void FixedConstraintCuda3d1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 }
 
 } // namespace cuda
@@ -78,11 +86,11 @@ void FixedConstraintInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal
 		{
 			data.minIndex = *sortedIndices.begin();
 			data.maxIndex = *sortedIndices.rbegin();
-			//std::cout << "CudaFixedConstraint: "<<sortedIndices.size()<<" contiguous fixed indices, "<<data.minIndex<<" - "<<data.maxIndex<<std::endl;
+			//std::cout << "CudaFixedConstraint: "<<sortedIndices.size()<<" contiguous fixed indices, "<<data.minIndex<<" - "<<data.maxIndex<<sendl;
 		}
 		else
 		{
-		    //std::cout << "CudaFixedConstraint: "<<sortedIndices.size()<<" non-contiguous fixed indices"<<std::endl;
+		    //std::cout << "CudaFixedConstraint: "<<sortedIndices.size()<<" non-contiguous fixed indices"<<sendl;
 			data.cudaIndices.reserve(sortedIndices.size());
 			for (std::set<int>::const_iterator it = sortedIndices.begin(); it!=sortedIndices.end(); it++)
 				data.cudaIndices.push_back(*it);
@@ -127,7 +135,7 @@ void FixedConstraintInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal
             data.cudaIndices.push_back(index);
             data.minIndex = -1;
             data.maxIndex = -1;
-            std::cout << "CudaFixedConstraint: new indices array size "<<data.cudaIndices.size()<<"\n";
+	    std::cout << "CudaFixedConstraint: new indices array size "<<data.cudaIndices.size()<<"\n";
         }
     }
     else
@@ -211,6 +219,33 @@ void FixedConstraintInternalData<gpu::cuda::CudaVec3f1Types>::projectResponse(Ma
 	FixedConstraintCuda3f1_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
 }
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+template <>
+void FixedConstraintInternalData<gpu::cuda::CudaVec3dTypes>::projectResponse(Main* m, VecDeriv& dx)
+{
+    Data& data = m->data;
+    if (m->f_fixAll.getValue())
+	FixedConstraintCuda3d_projectResponseContiguous(dx.size(), ((double*)dx.deviceWrite()));
+    else if (data.minIndex >= 0)
+	FixedConstraintCuda3d_projectResponseContiguous(data.maxIndex-data.minIndex+1, ((double*)dx.deviceWrite())+3*data.minIndex);
+    else
+	FixedConstraintCuda3d_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
+}
+
+template <>
+void FixedConstraintInternalData<gpu::cuda::CudaVec3d1Types>::projectResponse(Main* m, VecDeriv& dx)
+{
+    Data& data = m->data;
+    if (m->f_fixAll.getValue())
+	FixedConstraintCuda3d1_projectResponseContiguous(dx.size(), ((double*)dx.deviceWrite()));
+    else if (data.minIndex >= 0)
+	FixedConstraintCuda3d1_projectResponseContiguous(data.maxIndex-data.minIndex+1, ((double*)dx.deviceWrite())+4*data.minIndex);
+    else
+	FixedConstraintCuda3d1_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
+}
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 // I know using macros is bad design but this is the only way not to repeat the code for all CUDA types
 #define CudaFixedConstraint_ImplMethods(T) \
@@ -226,6 +261,12 @@ void FixedConstraintInternalData<gpu::cuda::CudaVec3f1Types>::projectResponse(Ma
 CudaFixedConstraint_ImplMethods(gpu::cuda::CudaVec3fTypes);
 CudaFixedConstraint_ImplMethods(gpu::cuda::CudaVec3f1Types);
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+CudaFixedConstraint_ImplMethods(gpu::cuda::CudaVec3dTypes);
+CudaFixedConstraint_ImplMethods(gpu::cuda::CudaVec3d1Types);
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 #undef CudaFixedConstraint_ImplMethods
 

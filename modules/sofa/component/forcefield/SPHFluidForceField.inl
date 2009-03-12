@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,8 +32,8 @@
 #include <math.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -46,12 +46,12 @@ namespace forcefield
 
 template<class DataTypes>
 SPHFluidForceField<DataTypes>::SPHFluidForceField()
-: particleRadius   (initData(&particleRadius   ,Real(1)     , "radius", "Radius of a Particle")), 
-  particleMass     (initData(&particleMass     ,Real(1)     , "mass", "Mass of a Particle")), 
-  pressureStiffness(initData(&pressureStiffness,Real(100)   , "pressure", "Pressure")), 
-  density0         (initData(&density0         ,Real(1)     , "density", "Density")), 
-  viscosity        (initData(&viscosity        ,Real(0.001f), "viscosity", "Viscosity")), 
-  surfaceTension   (initData(&surfaceTension   ,Real(0)     , "surfaceTension", "Surface Tension")), 
+: particleRadius   (initData(&particleRadius   ,Real(1)     , "radius", "Radius of a Particle")),
+  particleMass     (initData(&particleMass     ,Real(1)     , "mass", "Mass of a Particle")),
+  pressureStiffness(initData(&pressureStiffness,Real(100)   , "pressure", "Pressure")),
+  density0         (initData(&density0         ,Real(1)     , "density", "Density")),
+  viscosity        (initData(&viscosity        ,Real(0.001f), "viscosity", "Viscosity")),
+  surfaceTension   (initData(&surfaceTension   ,Real(0)     , "surfaceTension", "Surface Tension")),
   grid(NULL)
 {
 }
@@ -63,7 +63,7 @@ void SPHFluidForceField<DataTypes>::init()
 	this->Inherit::init();
 	this->getContext()->get(grid); //new Grid(particleRadius.getValue());
 	if (grid==NULL)
-	    std::cout << "WARNING: SpatialGridContainer not found by SPHFluidForceField, slow O(n2) method will be used !!!" << std::endl;
+	    serr<<"SpatialGridContainer not found by SPHFluidForceField, slow O(n2) method will be used !!!" << sendl;
 	int n = (*this->mstate->getX()).size();
 	particles.resize(n);
 	for (int i=0;i<n;i++)
@@ -168,8 +168,8 @@ void SPHFluidForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, con
 		{
 			if (particles[i].neighbors.size() != particles[i].neighbors2.size())
 			{
-				std::cerr << "particle "<<i<<" "<< x[i] <<" : "<<particles[i].neighbors.size()<<" neighbors on grid, "<< particles[i].neighbors2.size() << " neighbors on bruteforce.\n";
-				std::cerr << "grid-only neighbors:";
+				serr << "particle "<<i<<" "<< x[i] <<" : "<<particles[i].neighbors.size()<<" neighbors on grid, "<< particles[i].neighbors2.size() << " neighbors on bruteforce."<<sendl;
+				serr << "grid-only neighbors:";
 				for (unsigned int j=0;j<particles[i].neighbors.size();j++)
 				{
 					int index = particles[i].neighbors[j].first;
@@ -177,10 +177,10 @@ void SPHFluidForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, con
 					while (j2 < particles[i].neighbors2.size() && particles[i].neighbors2[j2].first != index)
 						++j2;
 					if (j2 == particles[i].neighbors2.size())
-						std::cerr << " "<< x[index] << "<"<< particles[i].neighbors[j].first<<","<<particles[i].neighbors[j].second<<">";
+						serr << " "<< x[index] << "<"<< particles[i].neighbors[j].first<<","<<particles[i].neighbors[j].second<<">";
 				}
-				std::cerr << "\n";
-				std::cerr << "bruteforce-only neighbors:";
+				serr << ""<<sendl;
+				serr << "bruteforce-only neighbors:";
 				for (unsigned int j=0;j<particles[i].neighbors2.size();j++)
 				{
 					int index = particles[i].neighbors2[j].first;
@@ -188,9 +188,9 @@ void SPHFluidForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, con
 					while (j2 < particles[i].neighbors.size() && particles[i].neighbors[j2].first != index)
 						++j2;
 					if (j2 == particles[i].neighbors.size())
-						std::cerr << " "<< x[index] << "<"<< particles[i].neighbors2[j].first<<","<<particles[i].neighbors2[j].second<<">";
+						serr << " "<< x[index] << "<"<< particles[i].neighbors2[j].first<<","<<particles[i].neighbors2[j].second<<">";
 				}
-				std::cerr << "\n";
+				serr << ""<<sendl;
 			}
 		}
 #endif
@@ -254,7 +254,7 @@ void SPHFluidForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, con
 			Deriv fpressure = gradWp(x[i]-x[j],r_h,CgradWp) * ( - m2 * (Pi.pressure / (Pi.density*Pi.density) + Pj.pressure / (Pj.density*Pj.density)) );
 			f[i] += fpressure;
 			f[j] -= fpressure;
-	
+
 			// Viscosity
 			Deriv fviscosity = ( v[j] - v[i] ) * ( m2 * viscosity.getValue() / (Pi.density * Pj.density) * laplacianWv(r_h,ClaplacianWv) );
 			f[i] += fviscosity;
@@ -285,16 +285,16 @@ void SPHFluidForceField<DataTypes>::addDForce(VecDeriv& f1,  const VecDeriv& dx1
 		const unsigned int ib = df.b;
 		const Deriv u = p1[ib]-p1[ia];
 		const Deriv du = dx1[ib]-dx1[ia];
-		const Deriv dforce = u * (df.df * (du*u)); 
+		const Deriv dforce = u * (df.df * (du*u));
 		f1[ia] += dforce;
 		f1[ib] -= dforce;
 	}
 }
 
-    template <class DataTypes> 
+    template <class DataTypes>
 	double SPHFluidForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
 {
-    cerr<<"SPHFluidForceField::getPotentialEnergy-not-implemented !!!"<<endl;
+    serr<<"SPHFluidForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;
 }
 

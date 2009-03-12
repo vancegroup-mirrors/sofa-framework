@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -73,7 +73,7 @@ namespace topology
 		// check if the 2 vertices are different
 		if(e[0] == e[1])
 		{
-			cout << "Error: [EdgeSetTopologyModifier::addEdge] : invalid edge: " 
+			sout << "Error: [EdgeSetTopologyModifier::addEdge] : invalid edge: " 
 				 << e[0] << ", " << e[1] << endl;
 
 			return;
@@ -85,7 +85,7 @@ namespace topology
 		{
 			if(m_container->getEdgeIndex(e[0],e[1]) != -1)
 			{
-				cout << "Error: [EdgeSetTopologyModifier::addEdgesProcess] : Edge " 
+				sout << "Error: [EdgeSetTopologyModifier::addEdgesProcess] : Edge " 
 					 << e[0] << ", " << e[1] << " already exists." << endl;
 				return;
 			}
@@ -172,7 +172,7 @@ namespace topology
 	{
 		if(!m_container->hasEdges())	// this method should only be called when edges exist
 		{
-			cout << "Warning. [EdgeSetTopologyModifier::removeEdgesProcess] edge array is empty." << endl;
+			sout << "Warning. [EdgeSetTopologyModifier::removeEdgesProcess] edge array is empty." << endl;
 			return;
 		}
 
@@ -303,7 +303,10 @@ namespace topology
 				const unsigned int p0 = inv_index[ m_container->m_edge[i][0]  ];
 				const unsigned int p1 = inv_index[ m_container->m_edge[i][1]  ];
 
-				if(p0<p1)
+				// FIXME : Edges should not be flipped during simulations as it will break code such as FEM storing a rest shape.
+				// Commented by pierre-jean.bensoussan@digital-trainers.com
+				/*
+				if(p0 < p1)
 				{
 					m_container->m_edge[i][0] = p0;
 					m_container->m_edge[i][1] = p1;
@@ -313,6 +316,10 @@ namespace topology
 					m_container->m_edge[i][0] = p1;
 					m_container->m_edge[i][1] = p0;
 				}
+				*/
+
+				m_container->m_edge[i][0] = p0;
+				m_container->m_edge[i][1] = p1;
 			}
 		}
 
@@ -693,7 +700,7 @@ namespace topology
 
 		property_map<Graph, vertex_index_t>::type index_map = get(vertex_index, G);
 
-		std::cout << "original bandwidth: " << bandwidth(G) << std::endl;
+		sout << "original bandwidth: " << bandwidth(G) << sendl;
 
 		std::vector<Vertex> inv_perm(num_vertices(G));
 		std::vector<size_type> perm(num_vertices(G));
@@ -701,23 +708,23 @@ namespace topology
 		//reverse cuthill_mckee_ordering
 		cuthill_mckee_ordering(G, inv_perm.rbegin());
 
-		//std::cout << "Reverse Cuthill-McKee ordering:" << endl;
-		//std::cout << "  ";
+		//sout << "Reverse Cuthill-McKee ordering:" << endl;
+		//sout << "  ";
 		unsigned int ind_i = 0;
 		for (std::vector<Vertex>::const_iterator it = inv_perm.begin();
 			it != inv_perm.end(); ++it)
 		{
-				//std::cout << index_map[*it] << " ";
+				//sout << index_map[*it] << " ";
 				inverse_permutation[ind_i++]=index_map[*it];
 		}
-		//std::cout << endl;
+		//sout << endl;
 
 		for (size_type c=0; c!=inv_perm.size(); ++c)
 			perm[index_map[inv_perm[c]]] = c;
 
-		std::cout << "  bandwidth: " 
+		sout << "  bandwidth: " 
 			<< bandwidth(G, make_iterator_property_map(&perm[0], index_map, perm[0]))
-			<< std::endl;
+			<< sendl;
 	}
 
 

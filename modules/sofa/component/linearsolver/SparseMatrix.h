@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_LINEARSOLVER_SPARSEMATRIX_H
 
 #include <sofa/defaulttype/BaseMatrix.h>
-#include <sofa/simulation/common/MatrixLinearSolver.h>
+#include <sofa/component/linearsolver/MatrixLinearSolver.h>
 #include "FullVector.h"
 
 #include <map>
@@ -94,6 +94,7 @@ public:
 
     void resize(int nbRow, int nbCol)
     {
+
 #ifdef SPARSEMATRIX_VERBOSE
         if (nbRow != rowSize() || nbCol != colSize())
             std::cout << /* this->Name()  <<  */": resize("<<nbRow<<","<<nbCol<<")"<<std::endl;
@@ -103,12 +104,12 @@ public:
         nCol = nbCol;
     }
 
-    int rowSize(void) const
+    unsigned int rowSize(void) const
     {
         return nRow;
     }
 
-    int colSize(void) const
+    unsigned int colSize(void) const
     {
         return nCol;
     }
@@ -118,7 +119,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)i >= (unsigned)rowSize() || (unsigned)j >= (unsigned)colSize())
         {
-            std::cerr << "ERROR: invalid read access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid read access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return 0.0;
         }
 #endif
@@ -139,7 +140,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)i >= (unsigned)rowSize() || (unsigned)j >= (unsigned)colSize())
         {
-            std::cerr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return;
         }
 #endif
@@ -154,7 +155,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)i >= (unsigned)rowSize() || (unsigned)j >= (unsigned)colSize())
         {
-            std::cerr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return;
         }
 #endif
@@ -169,7 +170,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)i >= (unsigned)rowSize() || (unsigned)j >= (unsigned)colSize())
         {
-            std::cerr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return;
         }
 #endif
@@ -192,7 +193,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)i >= (unsigned)rowSize())
         {
-            std::cerr << "ERROR: invalid write access to row "<<i<<" in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid write access to row "<<i<<" in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return;
         }
 #endif
@@ -210,7 +211,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)j >= (unsigned)colSize())
         {
-            std::cerr << "ERROR: invalid write access to column "<<j<<" in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid write access to column "<<j<<" in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return;
         }
 #endif
@@ -230,7 +231,7 @@ public:
 #ifdef SPARSEMATRIX_CHECK
         if ((unsigned)i >= (unsigned)rowSize() || (unsigned)i >= (unsigned)colSize())
         {
-            std::cerr << "ERROR: invalid write access to row and column "<<i<<" in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            serr << "ERROR: invalid write access to row and column "<<i<<" in "<</* this->Name() <<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
             return;
         }
 #endif
@@ -239,7 +240,7 @@ public:
     }
 
     void clear() { data.clear(); }
-    
+
     template<class Real2>
     void mul(FullVector<Real2>& res, const FullVector<Real2>& v) const
     {
@@ -252,7 +253,7 @@ public:
             res[itl->first] = r;
         }
     }
-    
+
     template<class Real2>
     void mulTranspose(FullVector<Real2>& res, const FullVector<Real2>& v) const
     {
@@ -264,7 +265,7 @@ public:
                 res[ite->first] += (Real2)ite->second * vi;
         }
     }
-    
+
     template<class Real2>
     void mul(FullVector<Real2>& res, const defaulttype::BaseVector* v) const
     {
@@ -277,7 +278,7 @@ public:
             res[itl->first] = r;
         }
     }
-    
+
     template<class Real2>
     void mulTranspose(FullVector<Real2>& res, const defaulttype::BaseVector* v) const
     {
@@ -289,7 +290,7 @@ public:
                 res[ite->first] += (Real2)ite->second * vi;
         }
     }
-    
+
     template<class Real2>
     void mul(defaulttype::BaseVector* res, const FullVector<Real2>& v) const
     {
@@ -302,7 +303,7 @@ public:
             res->set(itl->first, r);
         }
     }
-    
+
     template<class Real2>
     void mulTranspose(defaulttype::BaseVector* res, const FullVector<Real2>& v) const
     {
@@ -314,7 +315,7 @@ public:
                 res->add(ite->first, ite->second * vi);
         }
     }
-    
+
     void mul(defaulttype::BaseVector* res, const defaulttype::BaseVector* v) const
     {
         res->resize(rowSize());
@@ -326,7 +327,7 @@ public:
             res->set(itl->first, r);
         }
     }
-    
+
     void mulTranspose(defaulttype::BaseVector* res, const defaulttype::BaseVector* v) const
     {
         res->resize(colSize());
@@ -337,7 +338,7 @@ public:
                 res->add(ite->first, ite->second * vi);
         }
     }
-    
+
     template<class Real2>
     FullVector<Real2> operator*(const FullVector<Real2>& v) const
     {
@@ -348,8 +349,8 @@ public:
 
     friend std::ostream& operator << (std::ostream& out, const SparseMatrix<T>& v )
     {
-        int nx = v.Ncols();
-        int ny = v.Nrows();
+        int nx = v.colSize();
+        int ny = v.rowSize();
         out << "[";
         for (int y=0;y<ny;++y)
         {
@@ -366,6 +367,13 @@ public:
 
     static const char* Name() { return "SparseMatrix"; }
 };
+
+#ifdef SPARSEMATRIX_CHECK
+#undef SPARSEMATRIX_CHECK
+#endif
+#ifdef SPARSEMATRIX_VERBOSE
+#undef SPARSEMATRIX_VERBOSE
+#endif
 
 } // namespace linearsolver
 

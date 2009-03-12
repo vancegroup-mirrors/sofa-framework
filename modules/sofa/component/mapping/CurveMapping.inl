@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Interface: CurveMapping
 //
-// Description: 
+// Description:
 //
 //
 // Author: The SOFA team </www.sofa-framework.org>, (C) 2008
@@ -38,6 +38,7 @@
 
 #include <sofa/component/mapping/CurveMapping.h>
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.inl>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Mat.h>
@@ -82,7 +83,7 @@ inline Quat computeOrientation(const Vec3d& AB, const Quat& Q)
 
 	Vec3d x = quat.rotate(Vec3d(1,0,0));
 	PQ.normalize();
-	
+
 	if (dot(x, PQ) > 0.99)
 		return Q;
 
@@ -95,14 +96,14 @@ inline Quat computeOrientation(const Vec3d& AB, const Quat& Q)
 		alpha = M_PI;
 	}
 	else
-	{		
+	{
 		y = cross(x, PQ);
 		y.normalize();
 		alpha = acos(dot(x, PQ));
 	}
 
 	Quat qaux = Quat(y, alpha);
-	
+
 	return (qaux * quat);
 }
 
@@ -112,15 +113,15 @@ void CurveMapping<BasicMapping>::init()
 	int nin = this->fromModel->getSize();
 	int nout = numNodes.getValue();
 	this->toModel->resize(nout);
-	
+
 	lengthElements.resize(nin-1);
 //	const InVecCoord& x0 = *this->fromModel->getX0();
 	const InVecCoord& x0 = *this->fromModel->getX();
-	
+
 	for (int i=0; i<nin-1; i++)
 	{
 		lengthElements[i] = (Real)(x0[i+1]-x0[i]).norm();
-		//std::cout << "l["<<i<<"] = "<<lengthElements[i]<<std::endl;
+		//sout << "l["<<i<<"] = "<<lengthElements[i]<<sendl;
 	}
 
 	helper::vector<Real> &a = *angle.beginEdit();
@@ -138,12 +139,12 @@ void CurveMapping<BasicMapping>::init()
 		q = quatElements[i];
 	}
         rotateElements();
-	
+
 	helper::vector<Real> ab;
-	
+
 	ab = abscissa.getValue();
 	ab.resize(nout);
-	
+
 	if (stepNode.getValue() != 0)
 	{
 		for (unsigned int i=1; i<ab.size(); i++)
@@ -154,12 +155,12 @@ void CurveMapping<BasicMapping>::init()
 		for (unsigned int i=1; i<ab.size(); i++)
 			ab[i] = advanceAbscissa( ab[i-1], distNode.getValue());
 	}
-	
+
 	abscissa.setValue(ab);
-	
+
 	old_integer.resize(nout);
 	fill(old_integer.begin(), old_integer.end(), -1);
-	
+
 	old_angle.resize(nout);
 	fill(old_angle.begin(), old_angle.end(), 0.0);
     apply(*this->toModel->getX(), *this->fromModel->getX());
@@ -174,7 +175,7 @@ void CurveMapping<BasicMapping>::init()
 	apply(xto, xfrom);
 
 	catheterDataFile << "BeamModel_Name toto"
-			//write the name 
+			//write the name
 			 << endl
 			 << "Number_of_Nodes "
 			 << xto.size()
@@ -183,7 +184,7 @@ void CurveMapping<BasicMapping>::init()
 			 << xto.size() - 1
 			 << endl
 			 << "List_of_Nodes" << endl;
-	
+
 	for (unsigned int i=0; i<xto.size(); i++)
 	{
 		catheterDataFile << i + 1
@@ -208,7 +209,7 @@ void CurveMapping<BasicMapping>::init()
 				 << "	"
 				 << "2560000.000000" << endl;
 	}
-	
+
 	this->toModel->resize(1);
 */
     old_integer.resize(this->toModel->getSize());
@@ -270,7 +271,7 @@ void CurveMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typen
 			//if (integer != old_integer[i]) // rigid position has changed
 			{
 				out[i].getOrientation() = rotatedQuatElements[integer]; //computeOrientation(AB, out[i].getOrientation());
-				
+
 			}
 // 			Real Dtheta = angle.getValue()[i] - old_angle[i];
 // 			if (fabs(Dtheta) > 0.00001)
@@ -357,25 +358,25 @@ void CurveMapping<BaseMapping>::handleEvent(sofa::core::objectmodel::Event* even
             helper::vector<Real> ab;
             ab = abscissa.getValue();
             Real s = velocity.getValue() * (Real)this->getContext()->getDt();
-//            std::cout << "abscissa += "<<s<<std::endl;
+//            sout << "abscissa += "<<s<<sendl;
             for(unsigned int i=0; i<abscissa.getValue().size(); i++)
             {
                 //ab[i] += s;
 		    ab[i] = advanceAbscissa(ab[i], s);
                 //if (ab[i] > this->fromModel->getSize())
                 //    ab[i] = this->fromModel->getSize();
-//                std::cout << "abscissa["<<i<<"] = "<<ab[i]<<std::endl;
+//                sout << "abscissa["<<i<<"] = "<<ab[i]<<sendl;
             }
 	    if (distNode.getValue() != 0)
 	    {
 		    for (unsigned int i=1; i<ab.size(); i++)
 			    ab[i] = advanceAbscissa( ab[i-1], distNode.getValue());
 	    }
-		abscissa.setValue(ab); 
+		abscissa.setValue(ab);
         }
     }
 	else if (sofa::core::objectmodel::MouseEvent* ev = dynamic_cast<sofa::core::objectmodel::MouseEvent*>(event))
-	{	
+	{
 		switch (ev->getState())
 		{
 			case sofa::core::objectmodel::MouseEvent::Wheel :
@@ -385,7 +386,7 @@ void CurveMapping<BaseMapping>::handleEvent(sofa::core::objectmodel::Event* even
 					for(unsigned int i=0; i<abscissa.getValue().size(); i++)
 					{
 						ab[i] = (ev->getWheelDelta() > 0) ? ab[i] + step.getValue() : ab[i] - step.getValue();
-					
+
 						if (ab[i] > this->fromModel->getSize())
 							ab[i] = (Real)this->fromModel->getSize();
 
@@ -395,7 +396,7 @@ void CurveMapping<BaseMapping>::handleEvent(sofa::core::objectmodel::Event* even
 					abscissa.setValue(ab);
 				}
 				break;
-				
+
 			default:
 				break;
 		}
@@ -420,7 +421,7 @@ void CurveMapping<BaseMapping>::handleEvent(sofa::core::objectmodel::Event* even
 				if (ab[i] > this->fromModel->getSize())
 					ab[i] = (Real)this->fromModel->getSize();
 			}
-			abscissa.setValue(ab); 
+			abscissa.setValue(ab);
 			break;
  		case 'W':
  			ab = abscissa.getValue();
@@ -430,7 +431,7 @@ void CurveMapping<BaseMapping>::handleEvent(sofa::core::objectmodel::Event* even
 				if (ab[i] < 0.0)
 					ab[i] = 0.0;
  			}
- 			abscissa.setValue(ab); 
+ 			abscissa.setValue(ab);
  			break;
 		case 'L':
 			ang = angle.getValue();
@@ -459,15 +460,18 @@ template <class BaseMapping>
 void CurveMapping<BaseMapping>::draw()
 {
 	if (!this->getShow()) return;
-	glPointSize(5);
-	glColor4f (1,1,0,1);
-	glBegin (GL_POINTS);
+	std::vector< Vector3 > points;
+	Vector3 point;
+	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
+
 	const VecCoord& x = *this->toModel->getX();
 	for (unsigned int i=0; i<x.size(); i++)
 	{
-		helper::gl::glVertexT(x[i]);
+	  for (unsigned int s=0;s<sizePoints;++s) point[s] = x[i][s];
+	  points.push_back(point);
 	}
-	glEnd();
+	simulation::getSimulation()->DrawUtility.drawPoints(points, 5, Vec<4,float>(1,1,0,1));
+
 }
 
 

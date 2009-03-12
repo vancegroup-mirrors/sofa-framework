@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,7 @@
 #define SOFA_HELPER_SYSTEM_THREAD_CTIME_H
 
 #include <time.h>
+#include <sofa/helper/helper.h>
 
 #ifdef WIN32
 # include <windows.h>
@@ -56,7 +57,7 @@ typedef ULONGLONG ctime_t;
 typedef unsigned long long ctime_t;
 #endif
 
-class CTime
+class SOFA_HELPER_API CTime
 {
 public:
 	//volatile causes: "warning: type qualifiers ignored on function return type" on GCC 4.3

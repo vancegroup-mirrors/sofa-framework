@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,6 +28,7 @@
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/core/componentmodel/topology/BaseTopology.h>
+#include <sofa/component/component.h>
 
 namespace sofa
 {
@@ -45,7 +46,7 @@ namespace topology
 
 	/** The container class that stores a set of points and provides access
 	to each point. This set of point may be a subset of the DOF of the mechanical model */
-	class PointSetTopologyContainer : public core::componentmodel::topology::TopologyContainer
+	class SOFA_COMPONENT_CONTAINER_API PointSetTopologyContainer : public core::componentmodel::topology::TopologyContainer
 	{
     public:
 
@@ -89,7 +90,7 @@ namespace topology
 		/** \brief Returns the number of vertices in this topology.
 		*
 		*/
-		int getNbPoints() const { return (int)nbPoints; }
+                int getNbPoints() const { return (int)nbPoints.getValue(); }
 		void setNbPoints(int n);
 		virtual bool hasPos() const;
 		virtual double getPX(int i) const;
@@ -100,13 +101,14 @@ namespace topology
 	protected:
 		virtual void loadFromMeshLoader(sofa::component::MeshLoader* loader);
 
-	protected:
-		unsigned int nbPoints;
+        protected:
+                Data<unsigned int> nbPoints;
 
 	private:
 		typedef defaulttype::Vec3Types InitTypes;
 		InitTypes::VecCoord initPoints;
-	};
+                DataPtr<InitTypes::VecCoord> d_initPoints;
+        };
 
 } // namespace topology
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,6 +33,8 @@
 #include <string>
 #include <string.h>
 
+#include <sofa/helper/helper.h>
+#include <vector>
 
 namespace sofa
 {
@@ -47,7 +49,7 @@ namespace gl
 #error GL Shader support requires GLEW. Please define SOFA_HAVE_GLEW to use shaders.
 #endif
 
-class GLSLShader
+class SOFA_HELPER_API GLSLShader
 {
 public:
 
@@ -56,9 +58,9 @@ public:
 
     /// This builds a header before any shader contents
     void AddHeader(const std::string& header);
-    
+
     void AddDefineMacro(const std::string &name, const std::string &value);
-    
+
     /// This loads our text file for each shader and returns it in a string
     std::string LoadTextFile(const std::string& strFile);
 
@@ -67,15 +69,18 @@ public:
 
     /// This loads a vertex, geometry and fragment shader
     void InitShaders(const std::string& strVertex, const std::string& stdGeometry, const std::string& strFragment);
-    
+
     /// This loads a vertex and fragment shader
     void InitShaders(const std::string& strVertex, const std::string& strFragment)
     {
 	InitShaders(strVertex, std::string(""), strFragment);
     }
-	
+
     /// This returns an ID for a variable in our shader
     GLint GetVariable(std::string strVariable);
+
+    /// This returns an ID for an attribute variable in our shader
+    GLint GetAttributeVariable(std::string strVariable);
 
     /// These are our basic get functions for our private data
     /// @{
@@ -84,13 +89,13 @@ public:
     GLhandleARB GetGeometryS()	{	return m_hGeometryShader; }
     GLhandleARB GetFragmentS()	{	return m_hFragmentShader; }
 
-    /// Below are functions to set an integer or a float 
+    /// Below are functions to set an integer or a float
     /// @{
     void SetInt(GLint variable, int newValue);
     void SetFloat(GLint variable, float newValue);
     /// @}
-    
-    /// Below are functions to set more than 1 integer or float 
+
+    /// Below are functions to set more than 1 integer or float
     /// @{
     void SetInt2(GLint variable, int i1, int i2);
     void SetInt3(GLint variable, int i1, int i2, int i3);
@@ -99,8 +104,8 @@ public:
     void SetFloat3(GLint variable, float v0, float v1, float v2);
     void SetFloat4(GLint variable, float v0, float v1, float v2, float v3);
     /// @}
-    
-    /// Below are functions to set a vector of integer or float 
+
+    /// Below are functions to set a vector of integer or float
     /// @{
     void SetIntVector(GLint variable, GLsizei count, const GLint *value);
     void SetIntVector2(GLint variable, GLsizei count, const GLint *value);
@@ -112,6 +117,7 @@ public:
     void SetFloatVector3(GLint variable, GLsizei count, const float *value);
     void SetFloatVector4(GLint variable, GLsizei count, const float *value);
     /// @}
+
 
     /// These 2 functions turn on and off our shader
     /// @{
@@ -130,7 +136,7 @@ public:
 
     GLint GetGeometryVerticesOut() { return geometry_vertices_out; }
     void  SetGeometryVerticesOut(GLint v) { geometry_vertices_out = v; }
-    
+
 protected:
 
     bool CompileShader(GLint target, const std::string& source, GLhandleARB& shader);

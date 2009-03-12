@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -153,5 +153,131 @@ public:
 };
 
 
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+// no support for texturing with double yet...
+
+template<class TOut>
+class InputVectorTexture<double, TOut> : public InputVectorDirect<double, TOut>
+{
+public:
+};
+
+template<class TOut>
+class InputVectorTexture<CudaVec2<double>, TOut> : public InputVectorDirect<CudaVec2<double>, TOut>
+{
+public:
+};
+
+template<class TOut>
+class InputVectorTexture<CudaVec3<double>, TOut> : public InputVectorDirect<CudaVec3<double>, TOut>
+{
+public:
+};
+
+template<class TOut>
+class InputVectorTexture<CudaVec4<double>, TOut> : public InputVectorDirect<CudaVec4<double>, TOut>
+{
+public:
+};
+
+/*
+template<class TOut>
+class InputVectorTexture<double, TOut>
+{
+public:
+    typedef double TIn;
+    static texture<double,1,cudaReadModeElementType> tex;
+
+    __host__ void set(const TIn* x)
+    {
+	static const void* cur = NULL;
+	if (x != cur)
+	{
+	    cudaBindTexture((size_t*)NULL, tex, x);
+	    cur = x;
+	}
+    }
+    __inline__ __device__ TOut get(int i, const TIn* x)
+    {
+	return tex1Dfetch(tex, i);
+    }
+};
+
+template<class TOut>
+class InputVectorTexture<CudaVec2<double>, TOut>
+{
+public:
+    typedef CudaVec2<double> TIn;
+    static texture<double2,1,cudaReadModeElementType> tex;
+
+    __host__ void set(const TIn* x)
+    {
+	static const void* cur = NULL;
+	if (x != cur)
+	{
+	    cudaBindTexture((size_t*)NULL, tex, x);
+	    cur = x;
+	}
+    }
+    __inline__ __device__ TOut get(int i, const TIn* x)
+    {
+	return TOut::make(tex1Dfetch(tex, i));
+    }
+};
+
+template<class TOut>
+class InputVectorTexture<CudaVec3<double>, TOut>
+{
+public:
+    typedef CudaVec3<double> TIn;
+    static texture<double,1,cudaReadModeElementType> tex;
+
+    __host__ void set(const TIn* x)
+    {
+	static const void* cur = NULL;
+	if (x != cur)
+	{
+	    cudaBindTexture((size_t*)NULL, tex, x);
+	    cur = x;
+	}
+    }
+    __inline__ __device__ TOut get(int i, const TIn* x)
+    {
+	int i3 = umul24(i,3);
+	double x1 = tex1Dfetch(tex, i3);
+	double x2 = tex1Dfetch(tex, i3+1);
+	double x3 = tex1Dfetch(tex, i3+2);
+	return TOut::make(x1,x2,x3);
+    }
+};
+
+template<class TOut>
+class InputVectorTexture<CudaVec4<double>, TOut>
+{
+public:
+    typedef CudaVec4<double> TIn;
+    static texture<double2,1,cudaReadModeElementType> tex;
+
+    __host__ void set(const TIn* x)
+    {
+	static const void* cur = NULL;
+	if (x != cur)
+	{
+	    cudaBindTexture((size_t*)NULL, tex, x);
+	    cur = x;
+	}
+    }
+    __inline__ __device__ TOut get(int i, const TIn* x)
+    {
+	int i2 = (i<<1);
+	double2 x1 = tex1Dfetch(tex, i2);
+	double2 x2 = tex1Dfetch(tex, i2+1);
+	return TOut::make(make_double4(x1.x,x1.y,x2.x,x2.y));
+    }
+};
+*/
+
+#endif // SOFA_GPU_CUDA_DOUBLE
 
 #endif

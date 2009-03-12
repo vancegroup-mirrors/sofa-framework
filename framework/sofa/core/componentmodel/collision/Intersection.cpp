@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -82,7 +82,7 @@ ElementIntersector* IntersectorMap::get(core::CollisionModel* model1, core::Coll
 
     std::cerr << "ERROR: Element Intersector "
               << gettypename(t1) << "-"
-              << gettypename(t2) << " NOT FOUND.\n";
+              << gettypename(t2) << " NOT FOUND." << std::endl;
     (*this)[std::make_pair(t1,t2)] = NULL;
     return NULL;
 }

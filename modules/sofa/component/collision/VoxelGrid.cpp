@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -59,9 +59,9 @@ namespace helper
 		atoi(arg->getAttribute("draw","0"))!=0
 		);
 	}
-	
+
 	SOFA_DECL_CLASS(VoxelGrid)
-	
+
 	Creator<simulation::tree::xml::ObjectFactory, VoxelGrid> VoxelGridClass("VoxelGridDetection");
 }
 namespace component
@@ -78,17 +78,17 @@ void VoxelGrid::posToIdx (const Vector3& pos, Vector3 &indices)
 	int i;
 	Vector3 nbSubdivisions;
 
-	for (i = 0; i < 3; i++) 
+	for (i = 0; i < 3; i++)
 		nbSubdivisions[i] = (maxVect[i] - minVect[i]) / step[i];
 
 	indices[0] = (int)((pos[0] - minVect[0]) / step[0]);
 	if (indices[0] < 0) indices[0] = 0;
 	if (indices[0] >= nbSubdivisions[0]) indices[0] = nbSubdivisions[0] - 1;
-	
+
 	indices[1] = (int)((pos[1] - minVect[1]) / step[1]);
 	if (indices[1] < 0) indices[1] = 0;
 	if (indices[1] >= nbSubdivisions[1]) indices[1] = nbSubdivisions[1] - 1;
-	
+
 	indices[2] = (int)((pos[2] - minVect[2]) / step[2]);
 	if (indices[2] < 0) indices[2] = 0;
 	if (indices[2] >= nbSubdivisions[2]) indices[2] = nbSubdivisions[2] - 1;
@@ -97,18 +97,18 @@ void VoxelGrid::posToIdx (const Vector3& pos, Vector3 &indices)
 void VoxelGrid::createVoxelGrid (const Vector3& minAxis, const Vector3& maxAxis, const Vector3 &nbSubdivision)
 {
 	int i, j, k;
-	
+
 	timeStamp = -1;
 	minVect = minAxis;
 	maxVect = maxAxis;
 	//nbSubDiv = nbSubdivision;
 	Vector3 minCell, maxCell;
 
-	for (i = 0; i < 3; i++) 
+	for (i = 0; i < 3; i++)
 		step[i] = (maxVect[i] - minVect[i]) / nbSubdivision[i];
-	
+
 	grid = new GridCell**[(int) nbSubdivision[0]];
-	for (i = 0; i < (int)nbSubdivision[0]; i++) 
+	for (i = 0; i < (int)nbSubdivision[0]; i++)
 	{
 		grid[i] = new GridCell*[(int)nbSubdivision[1]];
 		for (j = 0; j < (int)nbSubdivision[1]; j++) {
@@ -120,7 +120,7 @@ void VoxelGrid::createVoxelGrid (const Vector3& minAxis, const Vector3& maxAxis,
 				maxCell[0] = minCell[0] + step[0];
 				maxCell[1] = minCell[1] + step[1];
 				maxCell[2] = minCell[2] + step[2];
-				grid[i][j][k].setMinMax(minCell, maxCell);		
+				grid[i][j][k].setMinMax(minCell, maxCell);
 			}
 		}
 	}
@@ -172,12 +172,12 @@ void VoxelGrid::add(CollisionModel *cm, int phase)
 			maxBBox[1] += distance;
 			maxBBox[2] += distance;
 		}
-		
+
 		posToIdx (minBBox, ijk);
 		posToIdx (maxBBox, lmn);
 
 		core::CollisionModel::clearAllVisits();
-		
+
 		for(int i = (int) ijk[0]; i <= (int)lmn[0]; i++ ){
 			for(int j = (int) ijk[1] ; j <= (int) lmn[1]; j++ ){
 				for(int k = (int) ijk[2] ; k <= (int) lmn[2]; k++ ){
@@ -191,7 +191,7 @@ void VoxelGrid::add(CollisionModel *cm, int phase)
 		// get the collision pair or self collision pair for this model
 		sofa::helper::vector<CollisionElementIterator>::const_iterator itCollis = collisionElems.begin();
 		sofa::helper::vector<CollisionElementIterator>::const_iterator itCollisEnd = collisionElems.end();
-		
+
 		for (; itCollis != itCollisEnd; itCollis++)
 		{
 			//if ((*it)->canCollideWith(*itCollis))
@@ -211,7 +211,7 @@ void VoxelGrid::add(CollisionModel *cm, int phase)
 
 void VoxelGrid::addCollisionPair(const std::pair<CollisionModel*, CollisionModel*>& cmPair)
 {
-	timeLogger = dynamic_cast<simulation::tree::GNode*>(getContext());
+	timeLogger = dynamic_cast<simulation::Node*>(getContext());
 	if (timeLogger && !timeLogger->getLogTime()) timeLogger=NULL;
 	timeInter = 0;
 
@@ -249,14 +249,14 @@ void VoxelGrid::draw()
 	Vector3 nbSubdiv;
 	int i;
 
-	for (i = 0; i < 3; i++) 
+	for (i = 0; i < 3; i++)
 		nbSubdiv[i] = (maxVect[i] - minVect[i]) / step[i];
 
 	glDisable(GL_LIGHTING);
 	glColor3f (0.0, 0.25, 0.25);
-	
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	
+
 	glBegin(GL_QUADS);
 	glVertex3d (minVect[0], minVect[1], minVect[2]);
 	glVertex3d (minVect[0], maxVect[1], minVect[2]);
@@ -279,7 +279,7 @@ void VoxelGrid::draw()
 	glVertex3d (minVect[0], minVect[1], maxVect[2]);
 
 	glEnd();
-	
+
 	for(i = 0; i < (int) nbSubdiv[0]; i++)
 	{
 		for(int j = 0 ; j < (int) nbSubdiv[1]; j++){
@@ -287,7 +287,7 @@ void VoxelGrid::draw()
 				grid[i][j][k].draw(timeStamp);
 			}
 		}
-	}	
+	}
 	sofa::helper::vector<std::pair<CollisionElementIterator, CollisionElementIterator> >::iterator it = elemPairs.begin();
 	sofa::helper::vector<std::pair<CollisionElementIterator, CollisionElementIterator> >::iterator itEnd = elemPairs.end();
 	if (elemPairs.size() >= 1)
@@ -297,7 +297,7 @@ void VoxelGrid::draw()
 		glLineWidth(3);
 		//std::cout << "Size : " << elemPairs.size() << std::endl;
 		for (; it != itEnd; it++)
-		{	
+		{
 			it->first->draw();
 			it->second->draw();
 		}
@@ -317,12 +317,12 @@ void GridCell::add(VoxelGrid* grid, CollisionElementIterator collisionElem, sofa
 	minBBox1 = collisionElem.getBBoxMin();
 	maxBBox1 = collisionElem.getBBoxMax();
 
-	simulation::tree::GNode::ctime_t t0 = 0;
+	simulation::Node::ctime_t t0 = 0;
 
 	{
 		sofa::helper::vector < CollisionElementIterator >	::iterator it	 = collisElems.begin();
 		sofa::helper::vector < CollisionElementIterator >	::iterator itEnd = collisElems.end();
-	
+
 		if (proximity)
 		{
 			minBBox1[0] -= distance;
@@ -332,7 +332,7 @@ void GridCell::add(VoxelGrid* grid, CollisionElementIterator collisionElem, sofa
 			maxBBox1[1] += distance;
 			maxBBox1[2] += distance;
 		}
-	
+
 		for (; it < itEnd; it++)
 		{
 			if (!collisionElem.canCollideWith(*it)) continue;
@@ -343,7 +343,7 @@ void GridCell::add(VoxelGrid* grid, CollisionElementIterator collisionElem, sofa
 			if (minBBox1[0] > maxBBox2[0] || minBBox2[0] > maxBBox1[0]
 			|| minBBox1[1] > maxBBox2[1] || minBBox2[1] > maxBBox1[1]
 			|| minBBox1[2] > maxBBox2[2] || minBBox2[2] > maxBBox1[2]) continue;
-	
+
 			if (grid->timeLogger) t0 = grid->timeLogger->startTime();
 			bool b = intersectionMethod->canIntersect(collisionElem, (*it));
 			if (grid->timeLogger) grid->timeInter += grid->timeLogger->startTime() - t0;
@@ -384,7 +384,7 @@ void GridCell::add(VoxelGrid* grid, CollisionElementIterator collisionElem, sofa
 
 void GridCell::eraseAll(int timeStampMethod)
 {
-	if (timeStampMethod != timeStamp) 
+	if (timeStampMethod != timeStamp)
 	{
 		timeStamp = timeStampMethod;
 		collisElems.clear();
@@ -413,9 +413,9 @@ void GridCell::draw (int timeStampMethod)
 	{
 		glColor3f (0.0, 1.0, 1.0);
 	}
-	
+
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	
+
 	glBegin(GL_QUADS);
 	glVertex3d (minCell[0], minCell[1], minCell[2]);
 	glVertex3d (minCell[0], maxCell[1], minCell[2]);

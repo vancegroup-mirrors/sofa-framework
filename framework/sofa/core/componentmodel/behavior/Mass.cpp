@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,41 +25,37 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/core/componentmodel/behavior/Mass.inl>
-#include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
 
-    namespace core
-    {
+namespace core
+{
 
-        namespace componentmodel
-        {
+namespace componentmodel
+{
 
-            namespace behavior
-            {
+namespace behavior
+{
 
-                using namespace sofa::defaulttype;
-		
-		template class Mass<Vec3dTypes>;
-		template class Mass<Vec2dTypes>;
-		template class Mass<Vec1dTypes>;
-		template class Mass<Rigid3dTypes>;
-		template class Mass<Rigid2dTypes>;
-		
-		template class Mass<Vec3fTypes>;
-		template class Mass<Vec2fTypes>;
-		template class Mass<Vec1fTypes>;
-		template class Mass<Rigid3fTypes>;
-		template class Mass<Rigid2fTypes>;
-		
+using namespace sofa::defaulttype;
 
+template class SOFA_CORE_API Mass<Vec3dTypes>;
+template class SOFA_CORE_API Mass<Vec2dTypes>;
+template class SOFA_CORE_API Mass<Vec1dTypes>;
+template class SOFA_CORE_API Mass<Rigid3dTypes>;
+template class SOFA_CORE_API Mass<Rigid2dTypes>;
 
-            } // namespace behavior
-            
-        } // namespace componentmodel
+template class SOFA_CORE_API Mass<Vec3fTypes>;
+template class SOFA_CORE_API Mass<Vec2fTypes>;
+template class SOFA_CORE_API Mass<Vec1fTypes>;
+template class SOFA_CORE_API Mass<Rigid3fTypes>;
+template class SOFA_CORE_API Mass<Rigid2fTypes>;
 
-    } // namespace core
+} // namespace behavior
+
+} // namespace componentmodel
+
+} // namespace core
 
 } // namespace sofa

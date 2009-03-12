@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -42,7 +42,7 @@ namespace sofa
 namespace simulation
 {
 
-class VisualVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API VisualVisitor : public Visitor
 {
 public:
     virtual void processVisualModel(simulation::Node* node, core::VisualModel* vm) = 0;
@@ -58,9 +58,10 @@ public:
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "visual"; }
+        virtual const char* getClassName() const { return "VisualVisitor"; }
 };
 
-class VisualDrawVisitor : public VisualVisitor
+class SOFA_SIMULATION_COMMON_API VisualDrawVisitor : public VisualVisitor
 {
 public:
     typedef core::VisualModel::Pass Pass;
@@ -76,39 +77,46 @@ public:
     virtual void processVisualModel(simulation::Node* node, core::VisualModel* vm);
     virtual void processObject(simulation::Node* node, core::objectmodel::BaseObject* o);
     virtual void bwdVisualModel(simulation::Node* node, core::VisualModel* vm);
+    virtual const char* getClassName() const { return "VisualDrawVisitor"; }
+#ifdef DUMP_VISITOR_INFO
+    virtual void printInfo(const core::objectmodel::BaseContext*,bool )  {return;}
+#endif
 };
 
-class VisualUpdateVisitor : public VisualVisitor
+class SOFA_SIMULATION_COMMON_API VisualUpdateVisitor : public VisualVisitor
 {
 public:
 	virtual void processVisualModel(simulation::Node*, core::VisualModel* vm);
+        virtual const char* getClassName() const { return "VisualUpdateVisitor"; }
 };
 
-class VisualInitVisitor : public VisualVisitor
+class SOFA_SIMULATION_COMMON_API VisualInitVisitor : public VisualVisitor
 {
 public:
 	virtual void processVisualModel(simulation::Node*, core::VisualModel* vm);
+        virtual const char* getClassName() const { return "VisualInitVisitor"; }
 };
 
-class VisualComputeBBoxVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API VisualComputeBBoxVisitor : public Visitor
 {
 public:
   double minBBox[3];
   double maxBBox[3];
 	VisualComputeBBoxVisitor();
-	
+
 	virtual void processMechanicalState(simulation::Node*, core::componentmodel::behavior::BaseMechanicalState* vm);
 	virtual void processVisualModel(simulation::Node*, core::VisualModel* vm);
 
 	virtual Result processNodeTopDown(simulation::Node* node)
-	{	  
+	{
 	  for_each(this, node, node->mechanicalState, &VisualComputeBBoxVisitor::processMechanicalState);
 	  for_each(this, node, node->visualModel,     &VisualComputeBBoxVisitor::processVisualModel);
-	  
+
 	  return RESULT_CONTINUE;
 	}
-	
-	
+        virtual const char* getClassName() const { return "VisualComputeBBoxVisitor"; }
+
+
 };
 
 } // namespace simulation

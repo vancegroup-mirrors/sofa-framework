@@ -1,6 +1,6 @@
 
-   SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3
-           (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS
+   SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4
+           (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS
 
   Authors: See Authors.txt
 
@@ -65,7 +65,7 @@ Building Sofa under Windows :
      Launch Project VC8.bat.	 
 
  - MSVC 9 : (Visual 2008)
-     Launch Project VC8.bat.	 
+     Launch Project VC9.bat.	 
 
  - console :
      Open a command prompt with environment variables pointing to Visual

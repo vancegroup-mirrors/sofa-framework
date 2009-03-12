@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,6 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGYALGORITHMS_CPP
 #include <sofa/component/topology/TriangleSetTopologyAlgorithms.h>
 #include <sofa/component/topology/TriangleSetTopologyAlgorithms.inl>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -57,15 +58,15 @@ namespace topology
 	#endif
 	;
 	#ifndef SOFA_FLOAT
-	template class TriangleSetTopologyAlgorithms<Vec3dTypes>;
-	template class TriangleSetTopologyAlgorithms<Vec2dTypes>;
-	template class TriangleSetTopologyAlgorithms<Vec1dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetTopologyAlgorithms<Vec3dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetTopologyAlgorithms<Vec2dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetTopologyAlgorithms<Vec1dTypes>;
 	#endif
 
 	#ifndef SOFA_DOUBLE
-	template class TriangleSetTopologyAlgorithms<Vec3fTypes>;
-	template class TriangleSetTopologyAlgorithms<Vec2fTypes>;
-	template class TriangleSetTopologyAlgorithms<Vec1fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetTopologyAlgorithms<Vec3fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetTopologyAlgorithms<Vec2fTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TriangleSetTopologyAlgorithms<Vec1fTypes>;
 	#endif
 
 } // namespace topology

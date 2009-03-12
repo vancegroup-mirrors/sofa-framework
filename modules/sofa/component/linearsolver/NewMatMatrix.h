@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_LINEARSOLVER_NEWMATMATRIX_H
 
 #include <sofa/defaulttype/BaseMatrix.h>
-#include <sofa/simulation/common/MatrixLinearSolver.h>
+#include <sofa/component/linearsolver/MatrixLinearSolver.h>
 #include "NewMatVector.h"
 
 namespace sofa
@@ -46,10 +46,10 @@ class TNewMatMatrix : public Mat, public defaulttype::BaseMatrix
 {
 public:
     typedef Mat M;
-    //typedef NewMAT::Matrix SubMatrixType;
-    typedef TNewMatMatrix<NewMAT::Matrix> SubMatrixType;
-    typedef TNewMatMatrix<NewMAT::Matrix> InvMatrixType;
-    typedef NewMAT::LinearEquationSolver LUSolver;
+    //typedef NEWMAT::Matrix SubMatrixType;
+    typedef TNewMatMatrix<NEWMAT::Matrix> SubMatrixType;
+    typedef TNewMatMatrix<NEWMAT::Matrix> InvMatrixType;
+    typedef NEWMAT::LinearEquationSolver LUSolver;
     explicit TNewMatMatrix(int defaultBandWidth = 11)
     : bandWidth(defaultBandWidth)
     {
@@ -64,12 +64,12 @@ public:
         (*this) = 0.0;
     }
 
-    int rowSize(void) const
+    unsigned int rowSize(void) const
     {
         return M::Nrows();
     }
 
-    int colSize(void) const
+    unsigned int colSize(void) const
     {
         return M::Ncols();
     }
@@ -100,7 +100,7 @@ public:
 #endif
         M::element(i,j) = v;
     }
-    
+
     void add(int i, int j, double v)
     {
 #ifdef NEWMAT_VERBOSE
@@ -115,7 +115,7 @@ public:
 #endif
         M::element(i,j) += v;
     }
-    
+
     void clear(int i, int j)
     {
 #ifdef NEWMAT_VERBOSE
@@ -130,7 +130,7 @@ public:
 #endif
         M::element(i,j) = 0.0;
     }
-    
+
     void clearRow(int i)
     {
 #ifdef NEWMAT_VERBOSE
@@ -145,7 +145,7 @@ public:
 #endif
         M::Row(1+i) = 0.0;
     }
-    
+
     void clearCol(int j)
     {
 #ifdef NEWMAT_VERBOSE
@@ -160,7 +160,7 @@ public:
 #endif
         M::Column(1+j) = 0.0;
     }
-    
+
     void clearRowCol(int i)
     {
 #ifdef NEWMAT_VERBOSE
@@ -176,24 +176,24 @@ public:
         M::Row(1+i) = 0.0;
         M::Column(1+i) = 0.0;
     }
-    
-    NewMAT::GetSubMatrix sub(int i, int j, int nrow, int ncol)
+
+    NEWMAT::GetSubMatrix sub(int i, int j, int nrow, int ncol)
     {
         return M::SubMatrix(i+1,i+nrow,j+1,j+ncol);
     }
-    
+
     template<class T>
     void getSubMatrix(int i, int j, int nrow, int ncol, T& m)
     {
         m = M::SubMatrix(i+1,i+nrow,j+1,j+ncol);
     }
-    
+
     template<class T>
     void setSubMatrix(int i, int j, int nrow, int ncol, const T& m)
     {
         M::SubMatrix(i+1,i+nrow,j+1,j+ncol) = m;
     }
-    
+
     void solve(NewMatVector *rv, NewMatVector *ov)
     {
 #ifdef NEWMAT_VERBOSE
@@ -213,12 +213,12 @@ public:
         assert((ov!=NULL) && (rv!=NULL));
         solve(rv,ov);
     }
-    
+
     LUSolver* makeLUSolver()
     {
         return new LUSolver(*this);
     }
-    
+
     void solve(NewMatVector *rv, NewMatVector *ov, LUSolver* solver)
     {
 #ifdef NEWMAT_VERBOSE
@@ -229,12 +229,12 @@ public:
         std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): solve("<<*ov<<") = "<<*rv<<std::endl;
 #endif
     }
-    
+
     template<class T>
     void operator=(const T& m) { M::operator=(m); }
 
     void clear() { (*this) = 0.0; }
-    
+
     friend std::ostream& operator << (std::ostream& out, const TNewMatMatrix& v )
     {
         int nx = v.Ncols();
@@ -252,55 +252,55 @@ public:
         out << " ]";
         return out;
     }
-    
+
     static const char* Name();
-    
+
     int bandWidth;
 };
 
-typedef TNewMatMatrix<NewMAT::Matrix> NewMatMatrix;
-typedef TNewMatMatrix<NewMAT::SymmetricMatrix> NewMatSymmetricMatrix;
-typedef TNewMatMatrix<NewMAT::BandMatrix> NewMatBandMatrix;
-typedef TNewMatMatrix<NewMAT::SymmetricBandMatrix> NewMatSymmetricBandMatrix;
+typedef TNewMatMatrix<NEWMAT::Matrix> NewMatMatrix;
+typedef TNewMatMatrix<NEWMAT::SymmetricMatrix> NewMatSymmetricMatrix;
+typedef TNewMatMatrix<NEWMAT::BandMatrix> NewMatBandMatrix;
+typedef TNewMatMatrix<NEWMAT::SymmetricBandMatrix> NewMatSymmetricBandMatrix;
 
 template<>
-inline const char* TNewMatMatrix<NewMAT::Matrix>::Name() { return "NewMat"; }
+inline const char* TNewMatMatrix<NEWMAT::Matrix>::Name() { return "NewMat"; }
 
 template<>
-inline const char* TNewMatMatrix<NewMAT::SymmetricMatrix>::Name() { return "NewMatSymmetric"; }
+inline const char* TNewMatMatrix<NEWMAT::SymmetricMatrix>::Name() { return "NewMatSymmetric"; }
 
 template<>
-inline const char* TNewMatMatrix<NewMAT::BandMatrix>::Name() { return "NewMatBand"; }
+inline const char* TNewMatMatrix<NEWMAT::BandMatrix>::Name() { return "NewMatBand"; }
 
 template<>
-inline const char* TNewMatMatrix<NewMAT::SymmetricBandMatrix>::Name() { return "NewMatSymmetricBand"; }
+inline const char* TNewMatMatrix<NEWMAT::SymmetricBandMatrix>::Name() { return "NewMatSymmetricBand"; }
 
 template<>
-inline void TNewMatMatrix<NewMAT::SymmetricMatrix>::resize(int nbRow, int nbCol)
+inline void TNewMatMatrix<NEWMAT::SymmetricMatrix>::resize(int nbRow, int nbCol)
 {
     if (nbCol != nbRow)
-        std::cerr << "ERROR: NewMAT::SymmetricMatrix must be square, size "<<nbRow<<"x"<<nbCol<<" not supported."<<std::endl;
+        std::cerr << "ERROR: NEWMAT::SymmetricMatrix must be square, size "<<nbRow<<"x"<<nbCol<<" not supported."<<std::endl;
     M::ReSize(nbRow);
 }
 
 template<>
-inline void TNewMatMatrix<NewMAT::BandMatrix>::resize(int nbRow, int nbCol)
+inline void TNewMatMatrix<NEWMAT::BandMatrix>::resize(int nbRow, int nbCol)
 {
     if (nbCol != nbRow)
-        std::cerr << "ERROR: NewMAT::BandMatrix must be square, size "<<nbRow<<"x"<<nbCol<<" not supported."<<std::endl;
+        std::cerr << "ERROR: NEWMAT::BandMatrix must be square, size "<<nbRow<<"x"<<nbCol<<" not supported."<<std::endl;
     M::ReSize(nbRow, bandWidth, bandWidth);
 }
 
 template<>
-inline void TNewMatMatrix<NewMAT::SymmetricBandMatrix>::resize(int nbRow, int nbCol)
+inline void TNewMatMatrix<NEWMAT::SymmetricBandMatrix>::resize(int nbRow, int nbCol)
 {
     if (nbCol != nbRow)
-        std::cerr << "ERROR: NewMAT::SymmetricBandMatrix must be square, size "<<nbRow<<"x"<<nbCol<<" not supported."<<std::endl;
+        std::cerr << "ERROR: NEWMAT::SymmetricBandMatrix must be square, size "<<nbRow<<"x"<<nbCol<<" not supported."<<std::endl;
     M::ReSize(nbRow, bandWidth);
 }
 
 template<>
-inline void TNewMatMatrix<NewMAT::SymmetricMatrix>::set(int i, int j, double v)
+inline void TNewMatMatrix<NEWMAT::SymmetricMatrix>::set(int i, int j, double v)
 {
 #ifdef NEWMAT_VERBOSE
     std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") = "<<v<<std::endl;
@@ -317,7 +317,7 @@ inline void TNewMatMatrix<NewMAT::SymmetricMatrix>::set(int i, int j, double v)
 }
 
 template<>
-inline void TNewMatMatrix<NewMAT::SymmetricMatrix>::add(int i, int j, double v)
+inline void TNewMatMatrix<NEWMAT::SymmetricMatrix>::add(int i, int j, double v)
 {
 #ifdef NEWMAT_VERBOSE
     std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") += "<<v<<std::endl;
@@ -334,7 +334,7 @@ inline void TNewMatMatrix<NewMAT::SymmetricMatrix>::add(int i, int j, double v)
 }
 
 template<>
-inline SReal TNewMatMatrix<NewMAT::BandMatrix>::element(int i, int j) const
+inline SReal TNewMatMatrix<NEWMAT::BandMatrix>::element(int i, int j) const
 {
 #ifdef NEWMAT_CHECK
     if ((unsigned)i >= (unsigned)rowSize() || (unsigned)j >= (unsigned)colSize())
@@ -348,10 +348,10 @@ inline SReal TNewMatMatrix<NewMAT::BandMatrix>::element(int i, int j) const
     else
         return M::element(i,j);
 }
-     
-     
+
+
 template<>
-    inline void TNewMatMatrix<NewMAT::BandMatrix>::set(int i, int j, double v)
+    inline void TNewMatMatrix<NEWMAT::BandMatrix>::set(int i, int j, double v)
 {
 #ifdef NEWMAT_VERBOSE
     std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") = "<<v<<std::endl;
@@ -363,16 +363,13 @@ template<>
         return;
     }
 #endif
-    if (j < i-bandWidth || j > i+bandWidth)
-    {
-        std::cerr << "ERROR: trying to set "<<v<<" to element ("<<i<<","<<j<<") in NewMAT::BandMatrix of bandwidth "<<bandWidth<<std::endl;
-        return;
+    if (j >= i-bandWidth && j <= i+bandWidth) {
+    	M::element(i,j) = v;
     }
-    M::element(i,j) = v;
 }
 
 template<>
-    inline void TNewMatMatrix<NewMAT::BandMatrix>::add(int i, int j, double v)
+    inline void TNewMatMatrix<NEWMAT::BandMatrix>::add(int i, int j, double v)
 {
 #ifdef NEWMAT_VERBOSE
     std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") += "<<v<<std::endl;
@@ -384,16 +381,13 @@ template<>
         return;
     }
 #endif
-    if (j < i-bandWidth || j > i+bandWidth)
-    {
-        std::cerr << "ERROR: trying to set "<<v<<" to element ("<<i<<","<<j<<") in NewMAT::BandMatrix of bandwidth "<<bandWidth<<std::endl;
-        return;
+    if (j >= i-bandWidth && j <= i+bandWidth) {
+        	M::element(i,j) += v;
     }
-    M::element(i,j) += v;
 }
 
 template<>
-    inline SReal TNewMatMatrix<NewMAT::SymmetricBandMatrix>::element(int i, int j) const
+    inline SReal TNewMatMatrix<NEWMAT::SymmetricBandMatrix>::element(int i, int j) const
 {
 #ifdef NEWMAT_CHECK
     if ((unsigned)i >= (unsigned)rowSize() || (unsigned)j >= (unsigned)colSize())
@@ -407,9 +401,9 @@ template<>
     else
         return M::element(i,j);
 }
-    
+
 template<>
-    inline void TNewMatMatrix<NewMAT::SymmetricBandMatrix>::set(int i, int j, double v)
+    inline void TNewMatMatrix<NEWMAT::SymmetricBandMatrix>::set(int i, int j, double v)
 {
 #ifdef NEWMAT_VERBOSE
     std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") = "<<v<<std::endl;
@@ -423,7 +417,7 @@ template<>
 #endif
     if (j < i-bandWidth || j > i+bandWidth)
     {
-        std::cerr << "ERROR: trying to set "<<v<<" to element ("<<i<<","<<j<<") in NewMAT::SymmetricBandMatrix of bandwidth "<<bandWidth<<std::endl;
+        std::cerr << "ERROR: trying to set "<<v<<" to element ("<<i<<","<<j<<") in NEWMAT::SymmetricBandMatrix of bandwidth "<<bandWidth<<std::endl;
         return;
     }
     if (j <= i)
@@ -431,7 +425,7 @@ template<>
 }
 
 template<>
-    inline void TNewMatMatrix<NewMAT::SymmetricBandMatrix>::add(int i, int j, double v)
+    inline void TNewMatMatrix<NEWMAT::SymmetricBandMatrix>::add(int i, int j, double v)
 {
 #ifdef NEWMAT_VERBOSE
     std::cout << /* this->Name()  <<  */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") += "<<v<<std::endl;
@@ -445,55 +439,51 @@ template<>
 #endif
     if (j < i-bandWidth || j > i+bandWidth)
     {
-        std::cerr << "ERROR: trying to set "<<v<<" to element ("<<i<<","<<j<<") in NewMAT::SymmetricBandMatrix of bandwidth "<<bandWidth<<std::endl;
+        std::cerr << "ERROR: trying to set "<<v<<" to element ("<<i<<","<<j<<") in NEWMAT::SymmetricBandMatrix of bandwidth "<<bandWidth<<std::endl;
         return;
     }
     if (j <= i)
         M::element(i,j) += v;
 }
+
+
+template<>
+class MatrixLinearSolverInternalData< component::linearsolver::TNewMatMatrix<NEWMAT::SymmetricBandMatrix> , component::linearsolver::NewMatVector >
+{
+public:
+    Data<int> bandWidth;
+    MatrixLinearSolverInternalData(core::objectmodel::BaseObject* o)
+    : bandWidth( o->initData(&bandWidth, 11, "bandWidth", "width of the band on each side of the diagonal (i.e. total values per lines is 2*bandWidth+1)"))
+    {}
+};
+
+template<>
+inline component::linearsolver::TNewMatMatrix<NEWMAT::SymmetricBandMatrix>* MatrixLinearSolver< component::linearsolver::TNewMatMatrix<NEWMAT::SymmetricBandMatrix> , component::linearsolver::NewMatVector >::createMatrix()
+{
+    return new component::linearsolver::TNewMatMatrix<NEWMAT::SymmetricBandMatrix>(this->data->bandWidth.getValue());
+}
+
+template<>
+class MatrixLinearSolverInternalData< component::linearsolver::TNewMatMatrix<NEWMAT::BandMatrix> , component::linearsolver::NewMatVector >
+{
+public:
+    Data<int> bandWidth;
+    MatrixLinearSolverInternalData(core::objectmodel::BaseObject* o)
+    : bandWidth( o->initData(&bandWidth, 11, "bandWidth", "width of the band on each side of the diagonal (i.e. total values per lines is 2*bandWidth+1)"))
+    {}
+};
+
+template<>
+inline component::linearsolver::TNewMatMatrix<NEWMAT::BandMatrix>* MatrixLinearSolver< component::linearsolver::TNewMatMatrix<NEWMAT::BandMatrix> , component::linearsolver::NewMatVector >::createMatrix()
+{
+    return new component::linearsolver::TNewMatMatrix<NEWMAT::BandMatrix>(this->data->bandWidth.getValue());
+}
+
 
 } // namespace linearsolver
 
 } // namespace component
 
-namespace simulation
-{
-
-template<>
-class MatrixLinearSolverInternalData< component::linearsolver::TNewMatMatrix<NewMAT::SymmetricBandMatrix> , component::linearsolver::NewMatVector >
-{
-public:
-    Data<int> bandWidth;
-    MatrixLinearSolverInternalData(core::objectmodel::BaseObject* o)
-    : bandWidth( o->initData(&bandWidth, 11, "bandWidth", "width of the band on each side of the diagonal (i.e. total values per lines is 2*bandWidth+1)"))
-    {}
-};
-
-template<>
-inline component::linearsolver::TNewMatMatrix<NewMAT::SymmetricBandMatrix>* MatrixLinearSolver< component::linearsolver::TNewMatMatrix<NewMAT::SymmetricBandMatrix> , component::linearsolver::NewMatVector >::createMatrix()
-{
-    return new component::linearsolver::TNewMatMatrix<NewMAT::SymmetricBandMatrix>(this->data->bandWidth.getValue());
-}
-
-template<>
-class MatrixLinearSolverInternalData< component::linearsolver::TNewMatMatrix<NewMAT::BandMatrix> , component::linearsolver::NewMatVector >
-{
-public:
-    Data<int> bandWidth;
-    MatrixLinearSolverInternalData(core::objectmodel::BaseObject* o)
-    : bandWidth( o->initData(&bandWidth, 11, "bandWidth", "width of the band on each side of the diagonal (i.e. total values per lines is 2*bandWidth+1)"))
-    {}
-};
-
-template<>
-inline component::linearsolver::TNewMatMatrix<NewMAT::BandMatrix>* MatrixLinearSolver< component::linearsolver::TNewMatMatrix<NewMAT::BandMatrix> , component::linearsolver::NewMatVector >::createMatrix()
-{
-    return new component::linearsolver::TNewMatMatrix<NewMAT::BandMatrix>(this->data->bandWidth.getValue());
-}
-    
-
-} // namespace simulation
-            
 } // namespace sofa
 
 #endif

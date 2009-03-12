@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,7 @@
 #ifndef SOFA_DEFAULTTYPE_BASEMATRIX_H
 #define SOFA_DEFAULTTYPE_BASEMATRIX_H
 
+#include <sofa/helper/system/config.h>
 namespace sofa
 {
 
@@ -43,9 +44,9 @@ public:
     virtual ~BaseMatrix(){}
 
     /// Number of rows
-    virtual int rowSize(void) const = 0;
+    virtual unsigned int rowSize(void) const = 0;
     /// Number of columns
-    virtual int colSize(void) const = 0;
+    virtual unsigned int colSize(void) const = 0;
     /// Read the value of the element at row i, column j (using 0-based indices)
     virtual SReal element(int i, int j) const = 0;
     /// Resize the matrix and reset all values to 0

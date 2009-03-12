@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -40,29 +40,29 @@ namespace topology
     using namespace sofa::defaulttype;
 	
 	template< class DataTypes>
-	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeEdgeLength( const unsigned int i) const 
+	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeEdgeLength( const EdgeID i) const 
 	{
 		const Edge &e = this->m_topology->getEdge(i);
 		const VecCoord& p = *(this->object->getX());
-		const Real length = (p[e[0]]-p[e[1]]).norm();
+		const Real length = (DataTypes::getCPos(p[e[0]])-DataTypes::getCPos(p[e[1]])).norm();
 		return length;
 	}
 
 	template< class DataTypes>
-	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeRestEdgeLength( const unsigned int i) const 
+	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeRestEdgeLength( const EdgeID i) const 
 	{
 		const Edge &e = this->m_topology->getEdge(i);
 		const VecCoord& p = *(this->object->getX0());
-		const Real length = (p[e[0]]-p[e[1]]).norm();
+		const Real length = (DataTypes::getCPos(p[e[0]])-DataTypes::getCPos(p[e[1]])).norm();
 		return length;
 	}
 
 	template< class DataTypes>
-	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeRestSquareEdgeLength( const unsigned int i) const 
+	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeRestSquareEdgeLength( const EdgeID i) const 
 	{		
 		const Edge &e = this->m_topology->getEdge(i);
 		const VecCoord& p = *(this->object->getX0());
-		const Real length = (p[e[0]]-p[e[1]]).norm2();
+		const Real length = (DataTypes::getCPos(p[e[0]])-DataTypes::getCPos(p[e[1]])).norm2();
 		return length;
 	}
 
@@ -76,49 +76,199 @@ namespace topology
 		for (unsigned int i=0; i<ea.size(); ++i) 
 		{
 			const Edge &e = ea[i];
-			ai[i] = (p[e[0]]-p[e[1]]).norm();
+			ai[i] = (DataTypes::getCPos(p[e[0]])-DataTypes::getCPos(p[e[1]])).norm();
 		}
 	}
 
-        /// Write the current mesh into a msh file
-        template <typename DataTypes>
-            void EdgeSetGeometryAlgorithms<DataTypes>::writeMSHfile(const char *filename)                   
-        {
-          std::ofstream myfile;                    
-          myfile.open (filename); 
-                 
-          const typename DataTypes::VecCoord& vect_c = *(this->object->getX());                    
+	template<class DataTypes>
+	void EdgeSetGeometryAlgorithms<DataTypes>::computeEdgeAABB(const EdgeID i, CPos& minCoord, CPos& maxCoord) const
+	{
+		const Edge &e = this->m_topology->getEdge(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
+		const CPos& a = DataTypes::getCPos(p[e[0]]);
+		const CPos& b = DataTypes::getCPos(p[e[1]]);
+		for (int c=0;c<NC;++c)
+			if (a[c] < b[c]) { minCoord[c] = a[c]; maxCoord[c] = b[c]; }
+			else             { minCoord[c] = b[c]; maxCoord[c] = a[c]; }
+	}
 
-          const unsigned int numVertices = vect_c.size(); 
+	template<class DataTypes>
+	void EdgeSetGeometryAlgorithms<DataTypes>::getEdgeVertexCoordinates(const EdgeID i, Coord pnt[2]) const
+	{
+		const Edge &e = this->m_topology->getEdge(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
 
-          myfile << "$NOD\n";      
-          myfile << numVertices <<"\n";    
+		pnt[0] = p[e[0]];
+		pnt[1] = p[e[1]];
+	}
 
-          for (unsigned int i=0; i<numVertices; ++i)       
-          {        
-            double x = (double) vect_c[i][0];       
-            double y = (double) vect_c[i][1];       
-            double z = (double) vect_c[i][2];       
+	template<class DataTypes>
+	void EdgeSetGeometryAlgorithms<DataTypes>::getRestEdgeVertexCoordinates(const EdgeID i, Coord pnt[2]) const
+	{
+		const Edge &e = this->m_topology->getEdge(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX0());
 
-            myfile << i+1 << " " << x << " " << y << " " << z <<"\n";       
-          }        
+		pnt[0] = p[e[0]];
+		pnt[1] = p[e[1]];
+	}
 
-          myfile << "$ENDNOD\n";   
-          myfile << "$ELM\n";      
+	template<class DataTypes>
+	typename DataTypes::Coord EdgeSetGeometryAlgorithms<DataTypes>::computeEdgeCenter(const EdgeID i) const
+	{
+		const Edge &e = this->m_topology->getEdge(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
 
-          const sofa::helper::vector<Edge> &edge = this->m_topology->getEdges();       
+		return (p[e[0]] + p[e[1]]) * (Real) 0.5;
+	}
 
-          myfile << edge.size() <<"\n";     
+	template<class DataTypes>
+	typename DataTypes::Coord EdgeSetGeometryAlgorithms<DataTypes>::computeEdgeDirection(const EdgeID i) const
+	{
+		const Edge &e = this->m_topology->getEdge(i);
+		const typename DataTypes::VecCoord& p = *(this->object->getX());
+		return (p[e[1]] - p[e[0]]);
+	}
 
-          for (unsigned int i=0; i<edge.size(); ++i)        
-          {        
-            myfile << i+1 << " 1 1 1 2 " << edge[i][0]+1 << " " << edge[i][1]+1 <<"\n";   
-          }        
+	// test if a point is on the triangle indexed by ind_e
+	template<class DataTypes>
+	bool EdgeSetGeometryAlgorithms<DataTypes>::isPointOnEdge(const sofa::defaulttype::Vec<3,double> &pt, const unsigned int ind_e) const
+	{
+		const double ZERO = 1e-12;
 
-          myfile << "$ENDELM\n";   
+		sofa::defaulttype::Vec<3,double> p0 = pt;
 
-          myfile.close();          
-        }
+		Coord vertices[2];
+		getEdgeVertexCoordinates(ind_e, vertices);
+
+		sofa::defaulttype::Vec<3,double> p1; //(vertices[0][0], vertices[0][1], vertices[0][2]);
+		sofa::defaulttype::Vec<3,double> p2; //(vertices[1][0], vertices[1][1], vertices[1][2]);
+		DataTypes::get(p1[0], p1[1], p1[2], vertices[0]);
+		DataTypes::get(p2[0], p2[1], p2[2], vertices[1]);
+		
+		sofa::defaulttype::Vec<3,double> v = (p0 - p1).cross(p0 - p2);
+
+		if(v.norm2() < ZERO)
+			return true;
+		else
+			return false;
+	}
+
+	//
+	template<class DataTypes>
+	sofa::helper::vector< double > EdgeSetGeometryAlgorithms<DataTypes>::compute2PointsBarycoefs(
+		const Vec<3,double> &p,
+		unsigned int ind_p1,
+		unsigned int ind_p2) const
+	{
+		const double ZERO = 1e-6;
+
+		sofa::helper::vector< double > baryCoefs;
+
+    	const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
+    	const typename DataTypes::Coord& c0 = vect_c[ind_p1];
+    	const typename DataTypes::Coord& c1 = vect_c[ind_p2];
+
+		Vec<3,double> a; DataTypes::get(a[0], a[1], a[2], c0);
+    	Vec<3,double> b; DataTypes::get(a[0], a[1], a[2], c1);
+
+    	double dis = (b - a).norm();
+		double coef_a, coef_b;
+
+		if(dis < ZERO)
+		{
+			coef_a = 0.5;
+			coef_b = 0.5;
+		}
+		else
+		{
+			coef_a = (p - b).norm() / dis;
+			coef_b = (p - a).norm() / dis;
+		}
+
+		baryCoefs.push_back(coef_a); 
+    	baryCoefs.push_back(coef_b); 
+
+    	return baryCoefs;
+    	
+	}
+
+    /// Write the current mesh into a msh file
+    template <typename DataTypes>
+    void EdgeSetGeometryAlgorithms<DataTypes>::writeMSHfile(const char *filename) const       
+    {
+      std::ofstream myfile;                    
+      myfile.open (filename); 
+             
+      const typename DataTypes::VecCoord& vect_c = *(this->object->getX());                    
+
+      const unsigned int numVertices = vect_c.size(); 
+
+      myfile << "$NOD\n";      
+      myfile << numVertices <<"\n";    
+
+      for (unsigned int i=0; i<numVertices; ++i)       
+      {        
+		  double x=0,y=0,z=0; DataTypes::get(x,y,z, vect_c[i]);
+
+        myfile << i+1 << " " << x << " " << y << " " << z <<"\n";       
+      }        
+
+      myfile << "$ENDNOD\n";   
+      myfile << "$ELM\n";      
+
+      const sofa::helper::vector<Edge> &edge = this->m_topology->getEdges();       
+
+      myfile << edge.size() <<"\n";     
+
+      for (unsigned int i=0; i<edge.size(); ++i)        
+      {        
+        myfile << i+1 << " 1 1 1 2 " << edge[i][0]+1 << " " << edge[i][1]+1 <<"\n";   
+      }        
+
+      myfile << "$ENDELM\n";   
+
+      myfile.close();          
+    }
+
+
+	template<class Vec>
+	bool is_point_on_edge(const Vec& p, const Vec& a, const Vec& b)
+	{
+		const double ZERO = 1e-12;
+		Vec v = (p - a).cross(p - b);
+
+		if(v.norm2() < ZERO)
+			return true;
+		else
+			return false;
+	}
+
+	template<class Vec>
+	sofa::helper::vector< double > compute_2points_barycoefs(const Vec& p, const Vec& a, const Vec& b)
+	{
+		const double ZERO = 1e-6;
+
+		sofa::helper::vector< double > baryCoefs;
+
+    	double dis = (b - a).norm();
+		double coef_a, coef_b;
+
+		if(dis < ZERO)
+		{
+			coef_a = 0.5;
+			coef_b = 0.5;
+		}
+		else
+		{
+			coef_a = (p - b).norm() / dis;
+			coef_b = (p - a).norm() / dis;
+		}
+
+		baryCoefs.push_back(coef_a); 
+    	baryCoefs.push_back(coef_b); 
+
+    	return baryCoefs;
+	}
 } // namespace topology
 
 } // namespace component

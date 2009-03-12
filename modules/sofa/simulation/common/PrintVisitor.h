@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -36,25 +36,26 @@ namespace simulation
 {
 
 
-class PrintVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API PrintVisitor : public Visitor
 {
 protected:
 	int verbose;
 	int level;
 public:
 	PrintVisitor() : verbose(0), level(0) {}
-	
+
 	void setVerbose(int v) { verbose = v; }
 	int getVerbose() const { return verbose; }
-	
+
 	template<class T>
 	void processObject(T obj);
-	
+
 	template<class Seq>
 	void processObjects(Seq& list, const char* name);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
 	virtual void processNodeBottomUp(simulation::Node* node);
+        virtual const char* getClassName() const { return "PrintVisitor"; }
 };
 
 } // namespace simulation

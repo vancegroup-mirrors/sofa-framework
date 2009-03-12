@@ -32,11 +32,11 @@
 			<Object type="RigidMapping" />
 		</Node>
 		<Node name="VisualHandle">
-			<Object type="OglModel" name="visual" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" color="0.1 0.1 0.1 1.0" />
+			<Object type="OglModel" name="visual" fileMesh="Demos/Ophtalmo/data/mesh/Blade_instrument_handle.obj" color="0.1 0.1 0.1 1.0" />
 			<Object type="RigidMapping" object2="visual" />
 		</Node>			
 		<Node name="VisualTip">
-			<Object type="OglModel" name="visual" filename="Demos/Ophtalmo/data/mesh/Blade_instrument_tip.obj" />
+			<Object type="OglModel" name="visual" fileMesh="Demos/Ophtalmo/data/mesh/Blade_instrument_tip.obj" />
 			<Object type="RigidMapping" object2="visual" />
 		</Node>			
 	</Node>

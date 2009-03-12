@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -26,6 +26,7 @@
 #define SOFA_SIMULATION_TREE_GNODE_H
 
 #include <sofa/simulation/common/Node.h>
+#include <sofa/simulation/tree/tree.h>
 #include <sofa/simulation/tree/MutationListener.h>
 #include <sofa/simulation/tree/xml/NodeElement.h>
 #include <stdlib.h>
@@ -52,7 +53,7 @@ class MutationListener;
 
 /** Define the structure of the scene. Contains (as pointer lists) Component objects and children GNode objects.
 */
-class GNode : public simulation::Node, public core::objectmodel::BaseNode
+class SOFA_SIMULATION_TREE_API GNode : public simulation::Node, public core::objectmodel::BaseNode
 {
 public:
     GNode( const std::string& name="", GNode* parent=NULL  );
@@ -63,19 +64,20 @@ public:
     void reinit();
     
     /// Add a child node
-    virtual void addChild(GNode* node);
+    virtual void addChild(Node* node);
 
     /// Remove a child
-    virtual void removeChild(GNode* node);
+    virtual void removeChild(Node* node);
 
+    /// Move a node from another node
+    virtual void moveChild(Node* obj);
+
+    //Pure Virtual method from BaseNode
     /// Add a child node
     virtual void addChild(BaseNode* node);
 
     /// Remove a child node
     virtual void removeChild(BaseNode* node);
-
-    /// Move a node from another node
-    virtual void moveChild(GNode* obj);
 
 
     /// @name Visitors and graph traversal
@@ -150,39 +152,44 @@ public:
     virtual void updateSimulationContext();
     
 
-    /// Log time spent on an action category and the concerned object
-    void addTime(ctime_t t, const std::string& s, core::objectmodel::BaseObject* obj);
-
-    /// Log time spent given a start time, an action category, and the concerned object
-    ctime_t endTime(ctime_t t0, const std::string& s, core::objectmodel::BaseObject* obj);
-
     /// Log time spent on an action category, and the concerned object, plus remove the computed time from the parent caller object
     void addTime(ctime_t t, const std::string& s, core::objectmodel::BaseObject* obj, core::objectmodel::BaseObject* parent);
-
-    /// Log time spent given a start time, an action category, and the concerned object, plus remove the computed time from the parent caller object
-    ctime_t endTime(ctime_t t0, const std::string& s, core::objectmodel::BaseObject* obj, core::objectmodel::BaseObject* parent);
-	
-
 
 
     /// Return the full path name of this node
     std::string getPathName() const;
 
-    /// Generic object access, possibly searching up or down from the current context
-	///
+    /// Generic object access, given a set of required tags, possibly searching up or down from the current context
+    ///
     /// Note that the template wrapper method should generally be used to have the correct return type,
-	virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, SearchDirection dir = SearchUp) const;
+    virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, const sofa::core::objectmodel::TagSet& tags, SearchDirection dir = SearchUp) const;
+
+    /// Generic object access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, SearchDirection dir = SearchUp) const
+    {
+        return getObject(class_info, sofa::core::objectmodel::TagSet(), dir);
+    }
 
     /// Generic object access, given a path from the current context
-	///
+    ///
     /// Note that the template wrapper method should generally be used to have the correct return type,
-	virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, const std::string& path) const;
+    virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, const std::string& path) const;
 
+    /// Generic list of objects access, given a set of required tags, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, const sofa::core::objectmodel::TagSet& tags, SearchDirection dir = SearchUp) const;
+    
     /// Generic list of objects access, possibly searching up or down from the current context
-	///
+    ///
     /// Note that the template wrapper method should generally be used to have the correct return type,
-	virtual void getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const;
-
+    void getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const
+    {
+        getObjects(class_info, container, sofa::core::objectmodel::TagSet(), dir);
+    }
+    
     void addListener(MutationListener* obj);
 
     void removeListener(MutationListener* obj);

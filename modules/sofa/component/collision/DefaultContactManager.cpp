@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -24,8 +24,8 @@
 ******************************************************************************/
 #include <sofa/component/collision/DefaultContactManager.h>
 #include <sofa/core/ObjectFactory.h>
-using std::cerr;
-using std::endl;
+
+
 
 
 namespace sofa
@@ -71,15 +71,15 @@ void DefaultContactManager::clear()
 
 void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 {
-	 //cerr<<"DefaultContactManager::createContacts"<<endl;
-	 
+	 //serr<<"DefaultContactManager::createContacts"<<sendl;
+
 	//outputsMap.clear();
 	//for (sofa::helper::vector<core::componentmodel::collision::DetectionOutput*>::const_iterator it = outputs.begin(); it!=outputs.end(); ++it)
 	//{
 	//	core::componentmodel::collision::DetectionOutput* o = *it;
 	//	outputsMap[std::make_pair(o->elem.first.getCollisionModel(),o->elem.second.getCollisionModel())].push_back(o);
 	//}
-	
+
 	// Remove any inactive contacts or add any new contact
 	DetectionOutputMap::iterator outputsIt = outputsMap.begin();
 	std::map< std::pair<core::CollisionModel*,core::CollisionModel*>, core::componentmodel::collision::Contact* >::iterator contactIt = contactMap.begin();
@@ -89,16 +89,12 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 	{
 		if (outputsIt!=outputsMap.end() && (contactIt == contactMap.end() || outputsIt->first < contactIt->first))
 		{ // new contact
-			//std::cout << "Creation new "<<contacttype<<" contact"<<std::endl;
+			//sout << "Creation new "<<contacttype<<" contact"<<sendl;
                     core::CollisionModel* model1 = outputsIt->first.first;
                     core::CollisionModel* model2 = outputsIt->first.second;
-                    std::string response1 = model1->getContactResponse();
-                    std::string response2 = model2->getContactResponse();
-                    std::string responseUsed = response.getValue();
-                    if (!response1.empty()) responseUsed = response1;
-                    else if (!response2.empty()) responseUsed = response2;
+                    std::string responseUsed = getContactResponse(model1, model2);
                     core::componentmodel::collision::Contact* contact = core::componentmodel::collision::Contact::Create(responseUsed, model1, model2, intersectionMethod);
-		    if (contact == NULL) std::cerr << "Contact "<<responseUsed<<" between " << model1->getClassName()<<" and "<<model2->getClassName() << " creation failed"<<std::endl;
+		    if (contact == NULL) serr << "Contact "<<responseUsed<<" between " << model1->getClassName()<<" and "<<model2->getClassName() << " creation failed"<<sendl;
 			else
 			{
 				contactMap[std::make_pair(model1, model2)] = contact;
@@ -112,7 +108,7 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 		}
 		else if (contactIt!=contactMap.end() && (outputsIt == outputsMap.end() || contactIt->first < outputsIt->first))
 		{ // inactive contact
-			//std::cout << "Deleting inactive "<<contacttype<<" contact"<<std::endl;
+			//sout << "Deleting inactive "<<contacttype<<" contact"<<sendl;
 			if (contactIt->second->keepAlive())
 			{
 				contactIt->second->setDetectionOutputs(NULL);
@@ -165,6 +161,16 @@ void DefaultContactManager::createContacts(DetectionOutputMap& outputsMap)
 	}
 }
 
+std::string DefaultContactManager::getContactResponse(core::CollisionModel* model1, core::CollisionModel* model2)
+{
+    std::string responseUsed = response.getValue();
+    std::string response1 = model1->getContactResponse();
+    std::string response2 = model2->getContactResponse();
+    if (!response1.empty()) responseUsed = response1;
+    else if (!response2.empty()) responseUsed = response2;
+    return responseUsed;
+}
+
 void DefaultContactManager::draw()
 {
 	for (sofa::helper::vector<core::componentmodel::collision::Contact*>::iterator it = contacts.begin(); it!=contacts.end(); it++)
@@ -174,9 +180,60 @@ void DefaultContactManager::draw()
 	}
 }
 
+
+void DefaultContactManager::removeContacts(const ContactVector &c)
+{
+	ContactVector::const_iterator remove_it = c.begin();
+	ContactVector::const_iterator remove_itEnd = c.end();
+
+	ContactVector::iterator it;
+	ContactVector::iterator itEnd;
+
+	ContactMap::iterator map_it;
+	ContactMap::iterator map_itEnd;
+
+	while (remove_it != remove_itEnd)
+	{
+		// Whole scene contacts
+		it = contacts.begin();
+		itEnd = contacts.end();
+
+		while (it != itEnd)
+		{
+			if (*it == *remove_it)
+			{
+				contacts.erase(it);
+				break;
+			}
+
+			++it;
+		}
+
+		// Stored contacts (keeping alive)
+		map_it = contactMap.begin();
+		map_itEnd = contactMap.end();
+
+		while (map_it != map_itEnd)
+		{
+			if (map_it->second == *remove_it)
+			{
+				ContactMap::iterator erase_it = map_it;
+				++map_it;
+				contactMap.erase(erase_it);
+			}
+			else
+			{
+				++map_it;
+			}
+		}
+		
+		++remove_it;
+	}
+
+}
+
 } // namespace collision
 
 } // namespace component
 
 } // namespace sofa
-

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -27,6 +27,8 @@
 #ifndef SOFA_HELPER_GL_GLFONT_H
 #define SOFA_HELPER_GL_GLFONT_H
 
+#include <sofa/helper/helper.h>
+
 namespace sofa
 {
 
@@ -36,9 +38,9 @@ namespace helper
 namespace gl
 {
 
-void glfntInit(void);
-void glfntWriteBitmap(float x,float y,char *s);
-void glfntClose(void);
+SOFA_HELPER_API void glfntInit(void);
+SOFA_HELPER_API void glfntWriteBitmap(float x,float y,char *s);
+SOFA_HELPER_API void glfntClose(void);
 
 } // namespace gl
 

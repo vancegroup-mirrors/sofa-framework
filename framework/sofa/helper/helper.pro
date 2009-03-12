@@ -6,8 +6,13 @@ include($${SOFA_DIR}/sofa.cfg)
 
 TARGET = sofahelper$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
-LIBS += $$SOFA_EXT_LIBS
 
+CONFIG -= staticlib
+CONFIG += dll
+
+LIBS += $$SOFA_EXT_LIBS
+INCLUDEPATH += /usr/include/libxml2
+DEFINES += SOFA_BUILD_HELPER
 # Cross-dependecy to faulttype is forbidden as defaulttype depends on helper...
 # LIBS += -lsofadefaulttype$$LIBSUFFIX
 
@@ -16,6 +21,7 @@ INCLUDEPATH -= $$SOFA_DIR/modules
 INCLUDEPATH -= $$SOFA_DIR/applications
 
 HEADERS += \
+          helper.h \
           ArgumentParser.h \
           BackTrace.h \
           fixed_array.h \
@@ -24,17 +30,23 @@ HEADERS += \
           FnDispatcher.h \
           FnDispatcher.inl \
           gl/Axis.h \
+	 	  gl/BasicShapes.h \
           gl/Cylinder.h \
           gl/Capture.h \
+          gl/DrawManager.h \
           gl/glfont.h \
+          gl/glText.inl \
+          gl/glText.h \
           gl/RAII.h \
           gl/template.h \
           gl/Texture.h \
           gl/Trackball.h \
           gl/Transformation.h \
-          io/Image.h \
+          gl/VisualParameters.h \
+		  io/Image.h \
           io/ImageBMP.h \
           io/ImagePNG.h \
+          io/ImageRAW.h \
           io/MassSpringLoader.h \
           io/Mesh.h \
           io/MeshOBJ.h \
@@ -42,20 +54,21 @@ HEADERS += \
           io/MeshTrian.h \
           io/SphereLoader.h \
           io/TriangleLoader.h \
-	  io/bvh/BVHChannels.h \
-	  io/bvh/BVHJoint.h \
-	  io/bvh/BVHLoader.h \
-	  io/bvh/BVHMotion.h \
-	  io/bvh/BVHOffset.h \
+          io/bvh/BVHChannels.h \
+          io/bvh/BVHJoint.h \
+          io/bvh/BVHLoader.h \
+          io/bvh/BVHMotion.h \
+          io/bvh/BVHOffset.h \
           LCPcalc.h \
           LCPSolver.h \
           LCPSolver.inl \
+          map.h \
           MarchingCubeUtility.h \
           PolarDecompose.h \
           Quater.h \
           Quater.inl \
           rmath.h \
-          static_assert.h \
+          set.h \
           system/config.h \
           system/gl.h \
           system/glu.h \
@@ -65,9 +78,12 @@ HEADERS += \
           system/thread/CTime.h \
           system/thread/debug.h \
           system/PipeProcess.h \
+          system/SofaOStream.h \
+          TagFactory.h \
           vector.h \
-	  polygon_cube_intersection/vec.h \
-	  polygon_cube_intersection/polygon_cube_intersection.h
+          polygon_cube_intersection/vec.h \
+          polygon_cube_intersection/polygon_cube_intersection.h \
+	  proximity.h
 
 SOURCES += \
           ArgumentParser.cpp \
@@ -76,23 +92,26 @@ SOURCES += \
           gl/Axis.cpp \
           gl/Cylinder.cpp \
           gl/Capture.cpp \
+          gl/DrawManager.cpp \
           gl/glfont.cpp \
+          gl/glText.cpp \
           gl/Texture.cpp \
           gl/Trackball.cpp \
           gl/Transformation.cpp \
           io/Image.cpp \
           io/ImageBMP.cpp \
           io/ImagePNG.cpp \
+          io/ImageRAW.cpp \
           io/MassSpringLoader.cpp \
           io/Mesh.cpp \
           io/MeshOBJ.cpp \
           io/MeshTopologyLoader.cpp \
           io/MeshTrian.cpp \
           io/SphereLoader.cpp \
-          io/TriangleLoader.cpp \
-	  io/bvh/BVHJoint.cpp \
-	  io/bvh/BVHLoader.cpp \
-	  io/bvh/BVHMotion.cpp \
+          io/TriangleLoader.cpp \          
+          io/bvh/BVHJoint.cpp \
+          io/bvh/BVHLoader.cpp \
+          io/bvh/BVHMotion.cpp \
           LCPcalc.cpp \         
           MarchingCubeUtility.cpp \
           Quater.cpp \
@@ -101,17 +120,24 @@ SOURCES += \
           system/thread/CTime.cpp \
           system/thread/debug.cpp \
           system/PipeProcess.cpp \
-	  polygon_cube_intersection/polygon_cube_intersection.cpp \
-	  polygon_cube_intersection/fast_polygon_cube_intersection.cpp
+          system/SofaOStream.cpp \
+          TagFactory.cpp \
+          polygon_cube_intersection/polygon_cube_intersection.cpp \
+          polygon_cube_intersection/fast_polygon_cube_intersection.cpp \
+          vector.cpp \
+	  proximity.cpp
 
 
 contains(DEFINES,SOFA_HAVE_GLEW){
 
     HEADERS += \
-          gl/GLSLShader.h
+          gl/FrameBufferObject.h \
+          gl/GLSLShader.h 
 
     SOURCES += \
-          gl/GLSLShader.cpp
-
+    	  gl/FrameBufferObject.cpp \
+          gl/GLSLShader.cpp 
+          
 }
+
 

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -31,6 +31,7 @@
 #include <sofa/simulation/common/AnimateEndEvent.h>
 #include <sofa/core/componentmodel/topology/TopologicalMapping.h>
 #include <sofa/helper/gl/template.h>
+#include <sofa/component/collision/TopologicalChangeManager.h>
 
 namespace sofa
 {
@@ -43,20 +44,19 @@ namespace collision
 
 SOFA_DECL_CLASS(CarvingManager)
 
-int CarvingManagerClass = core::RegisterObject("Manager handling carving operations between a SphereModel and a TriangleSetModel relying on a TetrahedronSetTopology")
+int CarvingManagerClass = core::RegisterObject("Manager handling carving operations between a tool and an object.")
 .add< CarvingManager >()
 ;
 
 
 CarvingManager::CarvingManager()
-: f_modelTool( initData(&f_modelTool, "modelTool", "SharpLineModel path"))
-, f_modelSurface( initData(&f_modelSurface, "modelSurface", "TriangleSetModel path"))
+: f_modelTool( initData(&f_modelTool, "modelTool", "Tool model path"))
+, f_modelSurface( initData(&f_modelSurface, "modelSurface", "TriangleSetModel or SphereModel path"))
 , active( initData(&active, false, "active", "Activate this object.\nNote that this can be dynamically controlled by using a key") )
 , keyEvent( initData(&keyEvent, '1', "key", "key to press to activate this object until the key is released") )
 , keySwitchEvent( initData(&keySwitchEvent, '4', "keySwitch", "key to activate this object until the key is pressed again") )
 , modelTool(NULL)
 , modelSurface(NULL)
-, topoMapping(NULL)
 , intersectionMethod(NULL)
 , detectionNP(NULL)
 {
@@ -69,22 +69,20 @@ CarvingManager::~CarvingManager()
 
 void CarvingManager::init()
 {
-	_topology = this->getContext()->getMeshTopology();
-	this->getContext()->get(tetraMod);
-
     if (f_modelTool.getValue().empty())
         modelTool = getContext()->get<ToolModel>(core::objectmodel::BaseContext::SearchDown);
     else
         modelTool = getContext()->get<ToolModel>(f_modelTool.getValue());
     if (f_modelSurface.getValue().empty())
     {
-        // we look for a TriangleSetModel relying on a TetrahedronSetTopology.
+        // we look for a CollisionModel relying on a TetrahedronSetTopology.
         //modelSurface = getContext()->get<TriangleSetModel>(core::objectmodel::BaseContext::SearchDown);
-        std::vector<TriangleModel*> models;
-        getContext()->get<TriangleModel>(&models, core::objectmodel::BaseContext::SearchRoot);
+        std::vector<core::CollisionModel*> models;
+        getContext()->get<core::CollisionModel>(&models, core::objectmodel::BaseContext::SearchRoot);
+	    sofa::core::componentmodel::topology::TopologicalMapping * topoMapping;
         for (unsigned int i=0;i<models.size();++i)
         {
-            TriangleModel* m = models[i];
+            core::CollisionModel* m = models[i];
             m->getContext()->get(topoMapping);
             if (topoMapping == NULL) continue;
             
@@ -94,18 +92,17 @@ void CarvingManager::init()
     }
     else
     {
-        modelSurface = getContext()->get<TriangleModel>(f_modelSurface.getValue());
-        modelSurface->getContext()->get(topoMapping);
+        modelSurface = getContext()->get<core::CollisionModel>(f_modelSurface.getValue());
     }
     intersectionMethod = getContext()->get<core::componentmodel::collision::Intersection>();
     detectionNP = getContext()->get<core::componentmodel::collision::NarrowPhaseDetection>();
     bool error = false;
-    if (modelTool == NULL) { std::cerr << "CarvingManager: modelTool not found\n"; error = true; }
-    if (modelSurface == NULL) { std::cerr << "CarvingManager: modelSurface not found\n"; error = true; }
-    if (intersectionMethod == NULL) { std::cerr << "CarvingManager: intersectionMethod not found\n"; error = true; }
-    if (detectionNP == NULL) { std::cerr << "CarvingManager: NarrowPhaseDetection not found\n"; error = true; }
+    if (modelTool == NULL) { serr << "CarvingManager: modelTool not found"<<sendl; error = true; }
+    if (modelSurface == NULL) { serr << "CarvingManager: modelSurface not found"<<sendl; error = true; }
+    if (intersectionMethod == NULL) { serr << "CarvingManager: intersectionMethod not found"<<sendl; error = true; }
+    if (detectionNP == NULL) { serr << "CarvingManager: NarrowPhaseDetection not found"<<sendl; error = true; }
     if (!error)
-        std::cout << "CarvingManager: init OK." << std::endl;
+        sout << "CarvingManager: init OK." << sendl;
 }
 
 void CarvingManager::reset()
@@ -115,19 +112,9 @@ void CarvingManager::reset()
 void CarvingManager::doCarve()
 {
     if (modelTool==NULL || modelSurface==NULL || intersectionMethod == NULL || detectionNP == NULL) return;
-
-	if (topoMapping == NULL){
-		_topology = modelSurface->getContext()->getMeshTopology();		
-		modelSurface->getContext()->get(tetraMod);   
-	}else{
-		_topology = topoMapping->getFrom()->getContext()->getMeshTopology();		
-		topoMapping->getFrom()->getContext()->get(tetraMod);	    
-	}
-    
-    if (tetraMod == NULL) return;
     
     // do collision detection
-    //std::cout << "CarvingManager: build bounding trees" << std::endl;
+    //sout << "CarvingManager: build bounding trees" << sendl;
     {
         const bool continuous = intersectionMethod->useContinuous();
         const double dt       = getContext()->getDt();
@@ -150,7 +137,7 @@ void CarvingManager::doCarve()
     //vectCMPair.push_back(std::make_pair(modelSurface,modelTool));
     vectCMPair.push_back(std::make_pair(modelSurface->getFirst(),modelTool->getFirst()));
     
-    //std::cout << "CarvingManager: narrow phase" << std::endl;
+    //sout << "CarvingManager: narrow phase" << sendl;
     detectionNP->setInstance(this);
     detectionNP->setIntersectionMethod(intersectionMethod);
     detectionNP->beginNarrowPhase();
@@ -159,51 +146,50 @@ void CarvingManager::doCarve()
     
     const core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap& detectionOutputs = detectionNP->getDetectionOutputs();
     
-    //std::cout << "CarvingManager: process contacts" << std::endl;
+    //sout << "CarvingManager: process contacts" << sendl;
 
     const ContactVector* contacts = NULL;
     core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap::const_iterator it = detectionOutputs.begin(); //find(std::make_pair(modelSurface,modelTool));
     if (it != detectionOutputs.end())
     {
-	std::cout << "Contacts available..." << std::endl;
+#ifndef NDEBUG
+	sout << "Contacts available..." << sendl;
+#endif
         contacts = dynamic_cast<const ContactVector*>(it->second);
     }
     unsigned int ncontacts = 0;
     if (contacts != NULL)
     {
         ncontacts = contacts->size();
-        std::cout << contacts->size() << " contacts detected." << std::endl;
+#ifndef NDEBUG
+        sout << contacts->size() << " contacts detected." << sendl;
+#endif
     }
-    std::set<unsigned> elemsToRemove;
+    std::vector<int> elemsToRemove;
     for (unsigned int j=0; j < ncontacts; ++j)
     {
         const ContactVector::value_type& c = (*contacts)[j];
         int triangleIdx = (c.elem.first.getCollisionModel()==modelSurface ? c.elem.first.getIndex():c.elem.second.getIndex());
-        // convert from local collision model indices to global topology ones
-        if (topoMapping)
-        {
-			triangleIdx = topoMapping->getGlobIndex(triangleIdx);
-        }
-        const sofa::helper::vector< unsigned int >& tetras = _topology->getTetraTriangleShell(triangleIdx);
-        elemsToRemove.insert(tetras.begin(), tetras.end());
+
+		elemsToRemove.push_back(triangleIdx);
     }
     if (!elemsToRemove.empty())
     {
-        std::cout << elemsToRemove.size() << " tetrahedra to remove"<<std::endl;
-        sofa::helper::vector< unsigned int > tetrahedra;
-        for (std::set<unsigned>::const_iterator it = elemsToRemove.begin(), itend = elemsToRemove.end(); it != itend; ++it)
-            tetrahedra.push_back(*it);
-        tetraMod->removeTetrahedra(tetrahedra);
+#ifndef NDEBUG
+        sout << elemsToRemove.size() << " elements to remove"<<sendl;
+#endif
+		static TopologicalChangeManager manager;
+		manager.removeItemsFromCollisionModel(modelSurface, elemsToRemove);
     }
     detectionNP->setInstance(NULL);
-    //std::cout << "CarvingManager: carve done" << std::endl;
+    //sout << "CarvingManager: carve done" << sendl;
 }
 
 void CarvingManager::handleEvent(sofa::core::objectmodel::Event* event)
 {
     if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
     {
-    	std::cout << "GET KEY "<<ev->getKey()<<std::endl;
+    	sout << "GET KEY "<<ev->getKey()<<sendl;
         if (ev->getKey() == keyEvent.getValue())
         {
             active.setValue(true);

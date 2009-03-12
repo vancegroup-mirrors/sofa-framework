@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -28,36 +28,38 @@
 #define SOFA_CORE_OBJECTMODEL_BASECONTEXT_H
 
 #include <sofa/core/objectmodel/Base.h>
+#include <sofa/core/objectmodel/Tag.h>
 #include <sofa/core/objectmodel/ClassInfo.h>
 #include <sofa/defaulttype/SolidTypes.h>
 #include <set>
 
 namespace sofa
 {
-  namespace simulation
-  {
-      class Visitor;
-  }
 
-  namespace core
-  {
+namespace simulation
+{
+class Visitor;
+}
 
-    // forward declaration of classes accessible from the context
-    namespace componentmodel
-    {
-      namespace topology
-      {
-	class Topology;
-	class BaseTopology;
-	class BaseMeshTopology;
-      }
-    }
+namespace core
+{
 
-    namespace objectmodel
-    {
+// forward declaration of classes accessible from the context
+namespace componentmodel
+{
+namespace topology
+{
+class Topology;
+class BaseTopology;
+class BaseMeshTopology;
+}
+}
 
-      class BaseObject;
-      class Event;
+namespace objectmodel
+{
+
+class BaseObject;
+class Event;
 
       /**
        *  \brief Base class for Context classes, storing shared variables and parameters.
@@ -70,9 +72,9 @@ namespace sofa
        *
        * \author Jeremie Allard
        */
-      class BaseContext : public virtual Base
-      {
-      public:
+class SOFA_CORE_API BaseContext : public virtual Base
+{
+public:
 
 	/// @name Types defined for local coordinate system handling
 	/// @{
@@ -214,78 +216,131 @@ namespace sofa
 	/// Global Shader 
 	virtual BaseObject* getShader() const;
 
-	/// Generic object access, possibly searching up or down from the current context
-	///
-	/// Note that the template wrapper method should generally be used to have the correct return type,
-	virtual void* getObject(const ClassInfo& class_info, SearchDirection dir = SearchUp) const;
+    /// Generic object access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const ClassInfo& class_info, SearchDirection dir = SearchUp) const;
 
-	/// Generic object access, given a path from the current context
-	///
-	/// Note that the template wrapper method should generally be used to have the correct return type,
-	virtual void* getObject(const ClassInfo& class_info, const std::string& path) const;
+    /// Generic object access, given a set of required tags, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const ClassInfo& class_info, const TagSet& tags, SearchDirection dir = SearchUp) const;
 
-	class GetObjectsCallBack
-	{
-	public:
-	  virtual ~GetObjectsCallBack() {}
-	  virtual void operator()(void* ptr) = 0;
-	};
+    /// Generic object access, given a path from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void* getObject(const ClassInfo& class_info, const std::string& path) const;
 
-	/// Generic list of objects access, possibly searching up or down from the current context
-	///
-	/// Note that the template wrapper method should generally be used to have the correct return type,
-	virtual void getObjects(const ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const;
+    class GetObjectsCallBack
+    {
+    public:
+        virtual ~GetObjectsCallBack() {}
+        virtual void operator()(void* ptr) = 0;
+    };
 
-	/// Generic object access template wrapper, possibly searching up or down from the current context
-	template<class T>
-	  T* get(SearchDirection dir = SearchUp) const
-	  {
-	    return reinterpret_cast<T*>(this->getObject(classid(T), dir));
-	  }
+    /// Generic list of objects access, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void getObjects(const ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const;
+    
+    /// Generic list of objects access, given a set of required tags, possibly searching up or down from the current context
+    ///
+    /// Note that the template wrapper method should generally be used to have the correct return type,
+    virtual void getObjects(const ClassInfo& class_info, GetObjectsCallBack& container, const TagSet& tags, SearchDirection dir = SearchUp) const;
 
-	/// Generic object access template wrapper, possibly searching up or down from the current context
-	template<class T>
-	  void get(T*& ptr, SearchDirection dir = SearchUp) const
-	  {
-	    ptr = this->get<T>(dir);
-	  }
+    /// Generic object access template wrapper, possibly searching up or down from the current context
+    template<class T>
+    T* get(SearchDirection dir = SearchUp) const
+    {
+        return reinterpret_cast<T*>(this->getObject(classid(T), dir));
+    }
 
-	/// Generic object access template wrapper, given a path from the current context
-	template<class T>
-	  T* get(const std::string& path) const
-	  {
-	    return reinterpret_cast<T*>(this->getObject(classid(T), path));
-	  }
+    /// Generic object access template wrapper, possibly searching up or down from the current context
+    template<class T>
+    void get(T*& ptr, SearchDirection dir = SearchUp) const
+    {
+        ptr = this->get<T>(dir);
+    }
+    
+    /// Generic object access template wrapper, given a required tag, possibly searching up or down from the current context
+    template<class T>
+    T* get(const Tag& tag, SearchDirection dir = SearchUp) const
+    {
+        return reinterpret_cast<T*>(this->getObject(classid(T), TagSet(tag), dir));
+    }
+    
+    /// Generic object access template wrapper, given a required tag, possibly searching up or down from the current context
+    template<class T>
+    void get(T*& ptr, const Tag& tag, SearchDirection dir = SearchUp) const
+    {
+        ptr = this->get<T>(tag, dir);
+    }
+    
+    /// Generic object access template wrapper, given a set of required tags, possibly searching up or down from the current context
+    template<class T>
+    T* get(const TagSet& tags, SearchDirection dir = SearchUp) const
+    {
+        return reinterpret_cast<T*>(this->getObject(classid(T), tags, dir));
+    }
+    
+    /// Generic object access template wrapper, given a set of required tags, possibly searching up or down from the current context
+    template<class T>
+    void get(T*& ptr, const TagSet& tags, SearchDirection dir = SearchUp) const
+    {
+        ptr = this->get<T>(tags, dir);
+    }
+    
+    /// Generic object access template wrapper, given a path from the current context
+    template<class T>
+    T* get(const std::string& path) const
+    {
+        return reinterpret_cast<T*>(this->getObject(classid(T), path));
+    }
 
-	/// Generic object access template wrapper, given a path from the current context
-	template<class T>
-	  void get(T*& ptr, const std::string& path) const
-	  {
-	    ptr = this->get<T>(path);
-	  }
+    /// Generic object access template wrapper, given a path from the current context
+    template<class T>
+    void get(T*& ptr, const std::string& path) const
+    {
+        ptr = this->get<T>(path);
+    }
 
-	template<class T, class Container>
-	  class GetObjectsCallBackT : public GetObjectsCallBack
-	{
-	public:
-	  Container* dest;
-	GetObjectsCallBackT(Container* d) : dest(d) {}
-	  virtual void operator()(void* ptr)
-	  {
-	    dest->push_back(reinterpret_cast<T*>(ptr));
-	  }
-	};
+    template<class T, class Container>
+    class GetObjectsCallBackT : public GetObjectsCallBack
+    {
+    public:
+        Container* dest;
+        GetObjectsCallBackT(Container* d) : dest(d) {}
+        virtual void operator()(void* ptr)
+        {
+            dest->push_back(reinterpret_cast<T*>(ptr));
+        }
+    };
 
-	/// Generic list of objects access template wrapper, possibly searching up or down from the current context
-	template<class T, class Container>
-	  void get(Container* list, SearchDirection dir = SearchUp) const
-	{
-	  GetObjectsCallBackT<T,Container> cb(list);
-	  this->getObjects(classid(T), cb, dir);
-	}
+    /// Generic list of objects access template wrapper, possibly searching up or down from the current context
+    template<class T, class Container>
+    void get(Container* list, SearchDirection dir = SearchUp) const
+    {
+        GetObjectsCallBackT<T,Container> cb(list);
+        this->getObjects(classid(T), cb, dir);
+    }
 
-
-	/// @}
+    /// Generic list of objects access template wrapper, given a required tag, possibly searching up or down from the current context
+    template<class T, class Container>
+    void get(Container* list, const Tag& tag, SearchDirection dir = SearchUp) const
+    {
+        GetObjectsCallBackT<T,Container> cb(list);
+        this->getObjects(classid(T), cb, TagSet(tag), dir);
+    }
+    
+    /// Generic list of objects access template wrapper, given a set of required tags, possibly searching up or down from the current context
+    template<class T, class Container>
+    void get(Container* list, const TagSet& tags, SearchDirection dir = SearchUp) const
+    {
+        GetObjectsCallBackT<T,Container> cb(list);
+        this->getObjects(classid(T), cb, tags, dir);
+    }
+    
+    /// @}
 
 	/// @name Parameters Setters
 	/// @{
@@ -398,6 +453,7 @@ namespace sofa
 
 	/// @}
 
+    friend std::ostream SOFA_CORE_API & operator << (std::ostream& out, const BaseContext& c );
       };
 
     } // namespace objectmodel

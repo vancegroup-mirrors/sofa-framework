@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -39,13 +39,13 @@ namespace sofa
   {
 
     /** Update the position of a new simulation step
-    
+
      */
-    class BehaviorUpdatePositionVisitor : public Visitor
+    class SOFA_SIMULATION_COMMON_API BehaviorUpdatePositionVisitor : public Visitor
     {
-	
+
     public:
-    BehaviorUpdatePositionVisitor(double _dt):dt(_dt) {}             
+    BehaviorUpdatePositionVisitor(double _dt):dt(_dt) {}
       void processBehaviorModel(simulation::Node* node, core::BehaviorModel* b);
       virtual Result processNodeTopDown(simulation::Node* node);
 
@@ -55,6 +55,7 @@ namespace sofa
       /// Return a category name for this action.
       /// Only used for debugging / profiling purposes
       virtual const char* getCategoryName() const { return "behavior update position"; }
+      virtual const char* getClassName() const { return "BehaviorUpdatePositionVisitor"; }
 
       void setDt(double _dt){dt = _dt;}
       double getDt(){return dt;}

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -66,8 +66,8 @@ namespace topology
 	class TopologicalMapping;
 
 
-	/** A class that contains a set of high-level (user friendly) methods that perform topological changes */
-	class TopologyAlgorithms : public sofa::core::componentmodel::topology::BaseTopologyObject
+	/** A class that contains a set of high-level (user frisendly) methods that perform topological changes */
+	class SOFA_CORE_API TopologyAlgorithms : public sofa::core::componentmodel::topology::BaseTopologyObject
 	{
 	protected:
 		/** \brief Constructor.
@@ -94,7 +94,7 @@ namespace topology
 	};
 
 	/** A class that contains a set of methods that describes the geometry of the object */
-	class GeometryAlgorithms : public sofa::core::componentmodel::topology::BaseTopologyObject
+	class SOFA_CORE_API GeometryAlgorithms : public sofa::core::componentmodel::topology::BaseTopologyObject
 	{
 	protected:
 		/** \brief Constructor.
@@ -112,7 +112,7 @@ namespace topology
 	};
 
 	/** A class that contains a set of low-level methods that perform topological changes */
-	class TopologyModifier : public sofa::core::componentmodel::topology::BaseTopologyObject
+	class SOFA_CORE_API TopologyModifier : public sofa::core::componentmodel::topology::BaseTopologyObject
 	{
 	protected:
 		/** \brief Constructor.
@@ -174,7 +174,7 @@ namespace topology
 	};
 
 	/** A class that contains a description of the topology (set of edges, triangles, adjacency information, ...) */
-	class TopologyContainer : public sofa::core::componentmodel::topology::BaseTopologyObject,
+	class SOFA_CORE_API TopologyContainer : public sofa::core::componentmodel::topology::BaseTopologyObject,
 							  public core::componentmodel::topology::BaseMeshTopology
 	{
 	protected:

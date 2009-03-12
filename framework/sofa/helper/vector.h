@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -33,12 +33,17 @@
 #include <cassert>
 #include <iostream>
 #include <stdlib.h>
+#include <typeinfo>
+
+#include <sofa/helper/helper.h>
 
 namespace sofa
 {
 
 namespace helper
 {
+
+void SOFA_HELPER_API vector_access_failure(const void* vec, unsigned size, unsigned i, const std::type_info& type);
 
 //======================================================================
 /**	Same as std::vector, + range checking on operator[ ] 
@@ -94,7 +99,9 @@ public:
 /// Read/write random access 
 reference operator[](size_type n) { 
 #ifndef NDEBUG
-	assert( n<this->size() );
+	if (n>=this->size())
+		vector_access_failure(this, this->size(), n, typeid(T));
+	//assert( n<this->size() );
 #endif
   	return *(this->begin() + n); 
   }
@@ -102,7 +109,9 @@ reference operator[](size_type n) {
 /// Read-only random access
 const_reference operator[](size_type n) const { 
 #ifndef NDEBUG
-	assert( n<this->size() );
+	if (n>=this->size())
+		vector_access_failure(this, this->size(), n, typeid(T));
+	//assert( n<this->size() );
 #endif
   	return *(this->begin() + n); 
   }
@@ -204,6 +213,32 @@ inline std::istream& vector<int, std::allocator<int> >::read( std::istream& in )
     if( in.rdstate() & std::ios_base::eofbit ) { in.clear(); }
     return in;
 }
+
+/// Output stream
+/// Specialization for writing vectors of unsigned char
+template<>
+ inline std::ostream& vector<unsigned char, std::allocator<unsigned char> >::write(std::ostream& os) const
+  {
+      if( this->size()>0 ){
+          for( unsigned int i=0; i<this->size()-1; ++i ) os<<(int)(*this)[i]<<" ";
+          os<<(int)(*this)[this->size()-1];
+      }
+      return os;
+  }
+
+/// Inpu stream
+/// Specialization for writing vectors of unsigned char
+template<>
+  inline std::istream&  vector<unsigned char, std::allocator<unsigned char> >::read(std::istream& in)
+  {
+      int t;
+      this->clear();
+      while(in>>t){
+          this->push_back((unsigned char)t);
+      }
+      if( in.rdstate() & std::ios_base::eofbit ) { in.clear(); }
+      return in;
+  }
 
 /// Input stream
 /// Specialization for reading vectors of int and unsigned int using "A-B" notation for all integers between A and B
@@ -311,13 +346,13 @@ template<class T, class TT>
 void removeIndex( std::vector<T,TT>& v, size_t index )
 {
 #ifndef NDEBUG
-	assert( 0<= static_cast<int>(index) && index <v.size() );
+	//assert( 0<= static_cast<int>(index) && index <v.size() );
+	if (index>=v.size())
+		vector_access_failure(&v, v.size(), index, typeid(T));
 #endif
  	v[index] = v.back();
  	v.pop_back();
 }
-
-
 
 //@}
 

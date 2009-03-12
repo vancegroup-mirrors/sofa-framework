@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,7 +25,7 @@
 //
 // C++ Interface: AnimateBeginEvent
 //
-// Description: 
+// Description:
 //
 //
 // Author: Jeremie Allard, MGH/CIMIT, (C) 2006
@@ -37,6 +37,7 @@
 #define SOFA_SIMULATION_ANIMATEBEGINEVENT_H
 
 #include <sofa/core/objectmodel/Event.h>
+#include <sofa/simulation/common/common.h>
 
 namespace sofa
 {
@@ -48,15 +49,15 @@ namespace simulation
   Event fired by Simulation::animate() before computing a new animation step.
   @author Jeremie Allard
 */
-class AnimateBeginEvent : public sofa::core::objectmodel::Event
+class SOFA_SIMULATION_COMMON_API AnimateBeginEvent : public sofa::core::objectmodel::Event
 {
 public:
     AnimateBeginEvent( double dt );
 
     ~AnimateBeginEvent();
-    
+
     double getDt() const { return dt; }
-    
+    virtual const char* getClassName() const { return "AnimateBeginEvent"; }
 protected:
     double dt;
 };

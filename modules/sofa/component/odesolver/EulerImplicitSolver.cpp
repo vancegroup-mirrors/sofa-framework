@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -32,8 +32,8 @@
 #include <iostream>
 #include "sofa/helper/system/thread/CTime.h"
 
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -55,7 +55,19 @@ EulerImplicitSolver::EulerImplicitSolver()
 {
 }
 
-void EulerImplicitSolver::solve(double dt)
+void EulerImplicitSolver::init()
+{
+    if (!this->getTags().empty())
+    {
+	sout << "EulerImplicitSolver: responsible for the following objects with tags " << this->getTags() << " :" << sendl;
+	helper::vector<core::objectmodel::BaseObject*> objs;
+	this->getContext()->get<core::objectmodel::BaseObject>(&objs,this->getTags(),sofa::core::objectmodel::BaseContext::SearchDown);
+	for (unsigned int i=0;i<objs.size();++i)
+	    sout << "  " << objs[i]->getClassName() << ' ' << objs[i]->getName() << sendl;
+    }
+}
+
+void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior::BaseMechanicalState::VecId xResult, sofa::core::componentmodel::behavior::BaseMechanicalState::VecId vResult)
 {
     MultiVector pos(this, VecId::position());
     MultiVector vel(this, VecId::velocity());
@@ -71,101 +83,88 @@ void EulerImplicitSolver::solve(double dt)
     //const bool printLog = f_printLog.getValue();
     const bool verbose  = f_verbose.getValue();
 
-    addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
-
     //projectResponse(vel);          // initial velocities are projected to the constrained space
-
-#if 1
 
     // compute the right-hand term of the equation system
     // accumulation through mappings is disabled as it will be done by addMBKv after all factors are computed
     computeForce(b, true, false);             // b = f0
 
-    //computeDfV(f);                // f = df/dx v
-    //b.peq(f,h+f_rayleighStiffness.getValue());      // b = f0 + (h+rs)df/dx v
-    //addMdx(b,vel,-f_rayleighMass.getValue()); // no need to propagate vel as dx again
-    //f.teq(-1);
-    //addMBKv(f, 0 /* (f_rayleighMass.getValue() == 0.0 ? 0.0 : -f_rayleighMass.getValue()) */, 0, 1);
-    //cerr<<"EulerImplicitSolver, diff = "<< f <<endl;
-    
     // new more powerful visitors
     // b += (h+rs)df/dx v - rd M v
     // values are not cleared so that contributions from computeForces are kept and accumulated through mappings once at the end
     addMBKv(b, (f_rayleighMass.getValue() == 0.0 ? 0.0 : -f_rayleighMass.getValue()), 0, h+f_rayleighStiffness.getValue(), false, true);
 
-#else
-
-    // compute the right-hand term of the equation system
-    computeForce(b);             // b = f0
-
-    //propagateDx(vel);            // dx = v
-    //computeDf(f);                // f = df/dx v
-    computeDfV(f);                // f = df/dx v
-    b.peq(f,h+f_rayleighStiffness.getValue());      // b = f0 + (h+rs)df/dx v
-
-    if (f_rayleighMass.getValue() != 0.0)
-    {
-        //f.clear();
-        //addMdx(f,vel);
-        //b.peq(f,-f_rayleighMass.getValue());     // b = f0 + (h+rs)df/dx v - rd M v
-        //addMdx(b,VecId(),-f_rayleighMass.getValue()); // no need to propagate vel as dx again
-        addMdx(b,vel,-f_rayleighMass.getValue()); // no need to propagate vel as dx again
-    }
-
-#endif
-
     b.teq(h);                           // b = h(f0 + (h+rs)df/dx v - rd M v)
 
     if( verbose )
-	cerr<<"EulerImplicitSolver, f0 = "<< b <<endl;
+	serr<<"EulerImplicitSolver, f0 = "<< b <<sendl;
 
     projectResponse(b);          // b is projected to the constrained space
-    
+
     if( verbose )
-	cerr<<"EulerImplicitSolver, projected f0 = "<< b <<endl;
-    
+	serr<<"EulerImplicitSolver, projected f0 = "<< b <<sendl;
+
     MultiMatrix matrix(this);
     matrix = MechanicalMatrix::K * (-h*(h+f_rayleighStiffness.getValue())) + MechanicalMatrix::M * (1+h*f_rayleighMass.getValue());
-    
+
     //if( verbose )
-//	cerr<<"EulerImplicitSolver, matrix = "<< (MechanicalMatrix::K * (-h*(h+f_rayleighStiffness.getValue())) + MechanicalMatrix::M * (1+h*f_rayleighMass.getValue())) << " = " << matrix <<endl;
-    
+//	serr<<"EulerImplicitSolver, matrix = "<< (MechanicalMatrix::K * (-h*(h+f_rayleighStiffness.getValue())) + MechanicalMatrix::M * (1+h*f_rayleighMass.getValue())) << " = " << matrix <<sendl;
+
     matrix.solve(x, b);
     // projectResponse(x);
     // x is the solution of the system
 
     // apply the solution
+
+    MultiVector newPos(this, xResult);
+    MultiVector newVel(this, vResult);
 #ifdef SOFA_NO_VMULTIOP // unoptimized version
-    vel.peq( x );                       // vel = vel + x
-    pos.peq( vel, h );                  // pos = pos + h vel
+    //vel.peq( x );                       // vel = vel + x
+    newVel.eq(vel, x);
+    //pos.peq( vel, h );                  // pos = pos + h vel
+    newPos.eq(pos, newVel, h);
+
 #else // single-operation optimization
     {
-        simulation::MechanicalVMultiOpVisitor vmop;
-        vmop.ops.resize(2);
-        vmop.ops[0].first = (VecId)vel;
-        vmop.ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
-        vmop.ops[0].second.push_back(std::make_pair((VecId)x,1.0));
-        vmop.ops[1].first = (VecId)pos;
-        vmop.ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
-        vmop.ops[1].second.push_back(std::make_pair((VecId)vel,h));
+        typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+	VMultiOp ops;
+        ops.resize(2);
+        ops[0].first = (VecId)newVel;
+        ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
+        ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+        ops[1].first = (VecId)newPos;
+        ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
+        ops[1].second.push_back(std::make_pair((VecId)newVel,h));
+	simulation::MechanicalVMultiOpVisitor vmop(ops);
+        vmop.setTags(this->getTags());
         vmop.execute(this->getContext());
     }
 #endif
+
+    addSeparateGravity(dt, newVel);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
     if (f_velocityDamping.getValue()!=0.0)
-        vel *= exp(-h*f_velocityDamping.getValue());
+        newVel *= exp(-h*f_velocityDamping.getValue());
 
     if( verbose )
     {
-        cerr<<"EulerImplicitSolver, final x = "<< pos <<endl;
-        cerr<<"EulerImplicitSolver, final v = "<< vel <<endl;
+        serr<<"EulerImplicitSolver, final x = "<< newPos <<sendl;
+        serr<<"EulerImplicitSolver, final v = "<< newVel <<sendl;
     }
+    
+#ifdef SOFA_HAVE_LAPACK
+    applyConstraints();
+#endif
+
+
 }
 
 SOFA_DECL_CLASS(EulerImplicitSolver)
 
 int EulerImplicitSolverClass = core::RegisterObject("Implicit time integrator using backward Euler scheme")
 .add< EulerImplicitSolver >()
-.addAlias("EulerImplicit");
+.addAlias("EulerImplicit")
+.addAlias("ImplicitEulerSolver")
+.addAlias("ImplicitEuler")
 ;
 
 } // namespace odesolver

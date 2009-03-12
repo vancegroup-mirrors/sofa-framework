@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -25,7 +25,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include "BatchGUI.h"
-#include <sofa/simulation/tree/Simulation.h>
+#include <sofa/simulation/common/Simulation.h>
 
 namespace sofa
 {
@@ -49,7 +49,7 @@ int BatchGUI::mainLoop()
         std::cout << "Computing "<<nbIter<<" iterations." << std::endl;
         for (int i=0;i<nbIter;i++)
         {
-            sofa::simulation::tree::getSimulation()->animate(groot);
+            sofa::simulation::getSimulation()->animate(groot);
         }
         std::cout <<nbIter<<" iterations done." << std::endl;
     }

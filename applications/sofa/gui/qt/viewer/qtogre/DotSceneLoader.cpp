@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -27,7 +27,6 @@
 // http://www.ogre3d.org/wiki/index.php/New_DotScene_Loader
 
 #include "viewer/qtogre/DotSceneLoader.h"
-#include "tinyxml.h"
 #include <Ogre.h>
 
 using namespace std;
@@ -294,13 +293,25 @@ void DotSceneLoader::processLight(TiXmlElement *XMLNode, SceneNode *pParent)
 
 	String sValue = getAttrib(XMLNode, "type");
 	if(sValue == "point")
+	  {
 		pLight->setType(Light::LT_POINT);
+		pointLights.push_back(name);
+	  }
 	else if(sValue == "directional")
+	  {
 		pLight->setType(Light::LT_DIRECTIONAL);
+		directionalLights.push_back(name);
+	  }
 	else if(sValue == "spot")
+	  {
 		pLight->setType(Light::LT_SPOTLIGHT);
+		spotLights.push_back(name);
+	  }
 	else if(sValue == "radPoint")
+	  {
 		pLight->setType(Light::LT_POINT);
+		pointLights.push_back(name);
+	  }
 
 	pLight->setVisible(getAttribBool(XMLNode, "visible", true));
 	pLight->setCastShadows(getAttribBool(XMLNode, "castShadows", true));
@@ -948,34 +959,34 @@ void DotSceneLoader::processLightAttenuation(TiXmlElement *XMLNode, Light *pLigh
 
 String DotSceneLoader::getAttrib(TiXmlElement *XMLNode, const String &attrib, const String &defaultValue)
 {
-	if(XMLNode->Attribute(attrib))
-		return XMLNode->Attribute(attrib);
-	else
-		return defaultValue;
+  if(XMLNode->Attribute(attrib.c_str()))
+    return XMLNode->Attribute(attrib.c_str());
+  else
+    return defaultValue;
 }
 
 Real DotSceneLoader::getAttribReal(TiXmlElement *XMLNode, const String &attrib, Real defaultValue)
 {
-	if(XMLNode->Attribute(attrib))
-		return StringConverter::parseReal(XMLNode->Attribute(attrib));
+	if(XMLNode->Attribute(attrib.c_str()))
+		return StringConverter::parseReal(XMLNode->Attribute(attrib.c_str()));
 	else
 		return defaultValue;
 }
 
 int DotSceneLoader::getAttribInt(TiXmlElement *XMLNode, const String &attrib, int defaultValue)
 {
-	if(XMLNode->Attribute(attrib))
-		return StringConverter::parseInt(XMLNode->Attribute(attrib));
+	if(XMLNode->Attribute(attrib.c_str()))
+		return StringConverter::parseInt(XMLNode->Attribute(attrib.c_str()));
 	else
 		return defaultValue;
 }
 
 bool DotSceneLoader::getAttribBool(TiXmlElement *XMLNode, const String &attrib, bool defaultValue)
 {
-	if(!XMLNode->Attribute(attrib))
+	if(!XMLNode->Attribute(attrib.c_str()))
 		return defaultValue;
 
-	if(String(XMLNode->Attribute(attrib)) == "true")
+	if(String(XMLNode->Attribute(attrib.c_str())) == "true")
 		return true;
 
 	return false;

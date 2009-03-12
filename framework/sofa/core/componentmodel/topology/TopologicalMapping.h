@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -86,7 +86,19 @@ public:
 	Out* getTo() {return toModel;}
 
 	/// Method called at each topological changes propagation which comes from the INPUT topology to adapt the OUTPUT topology :
-	virtual void updateTopologicalMapping() = 0;
+	virtual void updateTopologicalMappingTopDown() = 0;
+
+	/// Method called at each topological changes propagation which comes from the OUTPUT topology to adapt the INPUT topology :
+	virtual void updateTopologicalMappingBottomUp(){};
+
+	/// Return true if this mapping is able to propagate topological changes from input to output model
+	virtual bool propagateFromInputToOutputModel() { return true; }
+
+	/// Return true if this mapping is able to propagate topological changes from output to input model
+	virtual bool propagateFromOutputToInputModel() { return false; }
+
+  /// return true if the output topology subdivide the input one. (the topological uses the Loc2GlobVec/Glob2LocMap/In2OutMap structs and share the same DOFs)
+  virtual bool isTheOutputTopologySubdividingTheInputOne() { return true;}
 
 	/// Accessor to index maps :
 	const std::map<unsigned int, unsigned int>& getGlob2LocMap(){ return Glob2LocMap;}
@@ -105,6 +117,11 @@ public:
 	{
 		return 0;
 	}
+
+  /** return all the from indices in the 'In' topology corresponding to the index in the 'Out' topology.
+  *   This function is used instead of  the previous one when the function isTheOutputTopologySubdividingTheInputOne() returns false.
+  */
+  virtual void getFromIndex( vector<unsigned int>& /*fromIndices*/, const unsigned int /*toIndex*/) const {}
 
 	const std::map<unsigned int, sofa::helper::vector<unsigned int> >& getIn2OutMap(){ return In2OutMap;}
 

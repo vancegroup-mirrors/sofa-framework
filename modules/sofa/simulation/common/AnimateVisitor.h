@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,6 +25,7 @@
 #ifndef SOFA_SIMULATION_ANIMATEACTION_H
 #define SOFA_SIMULATION_ANIMATEACTION_H
 
+#include <sofa/simulation/common/common.h>
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/core/BehaviorModel.h>
 #include <sofa/core/componentmodel/behavior/InteractionForceField.h>
@@ -38,22 +39,22 @@ namespace sofa
 namespace simulation
 {
 
-class AnimateVisitor : public Visitor
+class SOFA_SIMULATION_COMMON_API AnimateVisitor : public Visitor
 {
 protected:
 	double dt;
 public:
 	AnimateVisitor(double dt=0.0) : dt(dt) {}
-	
+
 	void setDt(double v) { dt = v; }
 	double getDt() const { return dt; }
-	
+
 	virtual void processCollisionPipeline(simulation::Node* node, core::componentmodel::collision::Pipeline* obj);
 	virtual void processBehaviorModel(simulation::Node* node, core::BehaviorModel* obj);
 	virtual void fwdInteractionForceField(simulation::Node* node, core::componentmodel::behavior::InteractionForceField* obj);
 	virtual void processMasterSolver(simulation::Node* node, core::componentmodel::behavior::MasterSolver* obj);
 	virtual void processOdeSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* obj);
-	
+
 	virtual Result processNodeTopDown(simulation::Node* node);
         //virtual void processNodeBottomUp(simulation::Node* node);
 
@@ -63,6 +64,7 @@ public:
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "animate"; }
+        virtual const char* getClassName() const { return "AnimateVisitor"; }
 };
 
 } // namespace simulation

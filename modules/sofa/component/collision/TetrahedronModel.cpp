@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -25,15 +25,15 @@
 #include <sofa/component/collision/TetrahedronModel.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/helper/gl/template.h>
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <sofa/component/topology/RegularGridTopology.h>
 #include <sofa/core/CollisionElement.h>
 #include <sofa/core/ObjectFactory.h>
 #include <vector>
 #include <sofa/helper/system/gl.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
+
+
 
 namespace sofa
 {
@@ -45,7 +45,7 @@ namespace collision
 {
 
 SOFA_DECL_CLASS(TetrahedronModel)
-    
+
 int TetrahedronModelClass = core::RegisterObject("collision model using a tetrahedral mesh, as described in BaseMeshTopology")
 .add< TetrahedronModel >()
 .addAlias("Tetrahedron")
@@ -55,7 +55,7 @@ TetrahedronModel::TetrahedronModel()
 : tetra(NULL), mstate(NULL)
 {
 }
-    
+
 void TetrahedronModel::resize(int size)
 {
     this->core::CollisionModel::resize(size);
@@ -72,20 +72,20 @@ void TetrahedronModel::init()
 
     if (mstate==NULL)
     {
-        std::cerr << "ERROR: TetrahedronModel requires a Vec3 Mechanical Model.\n";
+        serr<<"TetrahedronModel requires a Vec3 Mechanical Model" << sendl;
         return;
     }
-       
+
     if (!_topology) {
-        std::cerr << "ERROR: TetrahedronModel requires a BaseMeshTopology.\n";
+        serr<<"TetrahedronModel requires a BaseMeshTopology" << sendl;
         return;
     }
-    
+
     tetra = &_topology->getTetras();
     resize(tetra->size());
-    
+
 }
-    
+
 void TetrahedronModel::handleTopologyChange()
 {
     resize(_topology->getNbTetras());
@@ -110,19 +110,19 @@ void TetrahedronModel::draw(int index)
     helper::gl::glVertexT(p1);
     helper::gl::glVertexT(p3);
     helper::gl::glVertexT(p2);
-    
+
     n2 = cross(p4-p1,p3-p1); n2.normalize();
     helper::gl::glNormalT(n2);
     helper::gl::glVertexT(p1);
     helper::gl::glVertexT(p4);
     helper::gl::glVertexT(p3);
-    
+
     n3 = cross(p2-p1,p4-p1); n3.normalize();
     helper::gl::glNormalT(n3);
     helper::gl::glVertexT(p1);
     helper::gl::glVertexT(p2);
     helper::gl::glVertexT(p4);
-    
+
     n4 = cross(p3-p2,p4-p2); n4.normalize();
     helper::gl::glNormalT(n4);
     helper::gl::glVertexT(p2);
@@ -207,7 +207,7 @@ void TetrahedronModel::computeBoundingTree(int maxDepth)
 	elems[i].bary2coord = m;
 	elems[i].coord2bary = minv;
     }
-    
+
     if (maxDepth == 0)
     { // no hierarchy
         if (empty())

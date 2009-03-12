@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 3      *
-*                (c) 2006-2008 MGH, INRIA, USTL, UJF, CNRS                    *
+*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
 * This library is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
@@ -22,12 +22,12 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_CONSTRAINT_FIXEDCONSTRAINT_CPP
 #include <sofa/component/constraint/FixedConstraint.inl>
+#include <sofa/core/componentmodel/behavior/Constraint.inl>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/defaulttype/RigidTypes.h>
 
-#include <sofa/simulation/tree/GNode.h>
+#include <sofa/simulation/common/Node.h>
 #include <sofa/component/mass/UniformMass.h>
 
 namespace sofa
@@ -65,21 +65,21 @@ int FixedConstraintClass = core::RegisterObject("Attach given particles to their
 ;
 
 #ifndef SOFA_FLOAT
-template class FixedConstraint<Vec3dTypes>;
-template class FixedConstraint<Vec2dTypes>;
-template class FixedConstraint<Vec1dTypes>;
-template class FixedConstraint<Vec6dTypes>;
-template class FixedConstraint<Rigid3dTypes>;
-template class FixedConstraint<Rigid2dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec3dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec2dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec1dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec6dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Rigid3dTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Rigid2dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class FixedConstraint<Vec3fTypes>;
-template class FixedConstraint<Vec2fTypes>;
-template class FixedConstraint<Vec1fTypes>;
-template class FixedConstraint<Vec6fTypes>;
-template class FixedConstraint<Rigid3fTypes>;
-template class FixedConstraint<Rigid2fTypes>;
-#endif 
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec3fTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec2fTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec1fTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Vec6fTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Rigid3fTypes>;
+template class SOFA_COMPONENT_CONSTRAINT_API FixedConstraint<Rigid2fTypes>;
+#endif
 
 #ifndef SOFA_FLOAT
 template <>

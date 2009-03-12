@@ -1,0 +1,4 @@
+plot 'out-time' using 1:2 title 'No precond' with line, \
+'out-time' using 1:9 title 'Cholesky Precond' with line, \
+'out-time' using 1:10 title 'Cholesky Precond 10' with line
+ 

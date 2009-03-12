@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<!-- See http://wiki.sofa-framework.org/wiki/TutorialMappingDragonBarycentric -->
+<Node name="root" dt="0.01" gravity="0 0 -9.81" showBehavior="1">
+
+  <EulerImplicitSolver name="EulerImplicit" />
+  <CGLinearSolver name="CG Solver" />
+  
+  <Object type="MechanicalObject" name="Particles"/>
+  <Object type="RegularGrid" name="RegularGrid"
+	  nx="4" ny="4" nz="4"
+	  xmin="-1" xmax="1"
+	  ymin="-2" ymax="2"
+	  zmin="0" zmax="3"
+	  />
+  
+  <UniformMass name="Mass" totalmass="1" />
+  <MeshSpringForceField name="Springs" stiffness="10" damping="1" />
+
+  <PlaneForceField name="Floor" normal="0 0.2 1" stiffness="100" damping="1" draw="1" />
+  <PlaneForceField name="Wall" normal="0 -1 0" d="-4" stiffness="100" damping="1" draw="1" color="1 1 1" />
+
+  <Node name="Dragon" >
+
+    <Object type="OglModel" name="DragonParticles" fileMesh="mesh/dragon.obj" scale="0.2" dz="1.5" rotation="90 0 -90"/>
+
+    <Object type="BarycentricMapping" object1="../../Particles" object2="DragonParticles"/>
+
+  </Node>
+
+</Node>

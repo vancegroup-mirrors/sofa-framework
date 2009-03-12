@@ -1,0 +1,85 @@
+
+<Node name="root" dt="0.02" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="0" >
+	<!-- <Object type="Simulation" name="Simulation" /> -->
+	<CollisionPipeline verbose="0" name="CollisionPipeline"/>
+	<BruteForceDetection name="N2" />
+	<CollisionResponse response="default" name="collision response"/>
+	<!--<Object type="CollisionGroup" />-->
+	
+	<Node name="LiverNormal" depend="topo dofs">
+		<!--<Object type="CGImplicit" iterations="25"/>-->
+		<EulerImplicit name="cg_odesolver" printLog="false"/>
+		<CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+        	<MeshLoader name="meshLoader" filename="mesh/liver.msh"/>
+		<MechanicalObject name="dofs" dx="3" />
+		<!-- Container for the tetrahedra-->
+		<TetrahedronSetTopologyContainer name="topo"/>
+		<!-- Algorithms: used in DiagonalMass to compute the mass -->
+		<TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+		<DiagonalMass massDensity="1" name="computed using mass density"/>
+		<TetrahedralCorotationalFEMForceField name="FEM" youngModulus="500" poissonRatio="0.3" computeGlobalMatrix="false" method="large"/> 
+                <FixedConstraint name="FixedConstraint" indices="3 39 64" />
+
+		<Node name="Visu">
+		<!-- Using material contained in liver-smooth.obj -->
+			<Object type="OglShader" vertFilename="shaders/tritexturing.vert" fragFilename="shaders/tritexturing.frag"/>
+			<Object type="OglFloat2Variable" id="scaleTexture" value="1.0 1.0" />
+			<Object type="OglFloatVariable" id="showDebug" value="0.0" />
+			<Object type="OglFloatVariable" id="bumpFactor" value="0.0" />
+
+			<Object type="OglTexture2D" id="planarTextureX" texture2DFilename="data/textures/liver-texture-square.png" textureUnit="1" repeat="true"/>
+			<Object type="OglTexture2D" id="planarTextureY" texture2DFilename="data/textures/liver-texture-square.png" textureUnit="2" repeat="true"/>
+			<Object type="OglTexture2D" id="planarTextureZ" texture2DFilename="data/textures/liver-texture-square.png" textureUnit="3" repeat="true"/>
+			<Object type="OglTexture2D" id="normalMap" texture2DFilename="data/textures/liver-cyrrhosis-NM.png" textureUnit="4" repeat="true"/>
+			
+			<OglShaderVisualModel name="VisualModel" fileMesh="mesh/liver-smooth.obj" scale="1.0" dx="3" material="texture Ambient 1 0.2 0.2 0.2 0.0 Diffuse 1 1.0 1.0 1.0 1.0 Specular 1 1.0 1.0 1.0 1.0 Emissive 0 0.15 0.05 0.05 0.0 Shininess 1 20"/>
+			<BarycentricMapping object1="../.." object2="VisualModel" name="visual mapping"/>
+		</Node>
+		<Node name="Surf">
+			<Sphere name="CollisionModel" filename="mesh/liver.sph" />
+			<MechanicalObject dx="3"/>
+			<BarycentricMapping name="sphere mapping"/>
+		</Node>
+	</Node>
+	
+	<Node name="LiverCyrrhosis" depend="topo dofs">
+		<!--<Object type="CGImplicit" iterations="25"/>-->
+		<EulerImplicit name="cg_odesolver" printLog="false"/>
+		<CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+        	<MeshLoader name="meshLoader" filename="mesh/liver.msh"/>
+		<MechanicalObject name="dofs" dx="-3" />
+		<!-- Container for the tetrahedra-->
+		<TetrahedronSetTopologyContainer name="topo"/>
+		<!-- Algorithms: used in DiagonalMass to compute the mass -->
+		<TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+		<DiagonalMass massDensity="1" name="computed using mass density"/>
+		<TetrahedralCorotationalFEMForceField name="FEM" youngModulus="500" poissonRatio="0.3" computeGlobalMatrix="false" method="large"/> 
+                <FixedConstraint name="FixedConstraint" indices="3 39 64" />
+
+		<Node name="Visu">
+		<!-- Using material contained in liver-smooth.obj -->
+			<Object type="OglShader" vertFilename="shaders/tritexturing.vert" fragFilename="shaders/tritexturing.frag"/>
+			<Object type="OglFloat2Variable" id="scaleTexture" value="2.0 2.44" />
+			<Object type="OglFloatVariable" id="showDebug" value="0.0" />
+			<Object type="OglFloatVariable" id="bumpFactor" value="0.75" />
+
+			<Object type="OglTexture2D" id="planarTextureX" texture2DFilename="data/textures/liver-cyrrhosis.png" textureUnit="1" repeat="true"/>
+			<Object type="OglTexture2D" id="planarTextureY" texture2DFilename="data/textures/liver-cyrrhosis.png" textureUnit="2" repeat="true"/>
+			<Object type="OglTexture2D" id="planarTextureZ" texture2DFilename="data/textures/liver-cyrrhosis.png" textureUnit="3" repeat="true"/>
+			<Object type="OglTexture2D" id="normalMap" texture2DFilename="data/textures/liver-cyrrhosis-NM.png" textureUnit="4" repeat="true"/>
+			
+			<OglShaderVisualModel name="VisualModel" fileMesh="mesh/liver-smooth.obj" scale="1.0" dx="-3" material="texture Ambient 1 0.2 0.2 0.2 0.0 Diffuse 1 1.0 1.0 1.0 1.0 Specular 1 1.0 1.0 1.0 1.0 Emissive 0 0.15 0.05 0.05 0.0 Shininess 1 10"/>
+			<BarycentricMapping object1="../.." object2="VisualModel" name="visual mapping"/>
+		</Node>
+		<Node name="Surf">
+			<Sphere name="CollisionModel" filename="mesh/liver.sph" />
+			<MechanicalObject dx="-3"/>
+			<BarycentricMapping name="sphere mapping"/>
+		</Node>
+	</Node>
+	
+	<Object type="LightManager" />
+	<Object type="SpotLight" name="light1" color="1 1 1" position="-2 -20 25" direction="0 1 -0.5"  cutoff="45" exponent="1"/>
+	
+</Node>
+

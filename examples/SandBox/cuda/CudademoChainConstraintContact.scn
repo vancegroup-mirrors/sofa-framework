@@ -1,0 +1,83 @@
+<Node name="root"  dt="0.01" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0">
+	<Object type="CudaMasterContactSolver" useGPU="8" mu="0.0" maxIt="1000"/>
+	
+	<Object type="CollisionPipeline" depth="6" verbose="0" draw="0"/>
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="LocalMinDistance" name="Proximity" alarmDistance="1.5" contactDistance="1.0" angleCone="0.0"/>
+	<Object type="CollisionResponse" name="Response" response="CudaFrictionContact"/>
+	<Object type="CollisionGroup" name="Group" />
+	
+	<Node name="Torus1">
+		<Object type="MeshLoader" filename="mesh/torus2_for_collision.obj" />
+		<Object type="Mesh" />
+		<Object type="MechanicalObject" scale="5.0"/>
+		<Object type="Triangle" simulated="0" moving="0" />
+		<Object type="Line" simulated="0" moving="0" />
+		<Object type="Point" simulated="0" moving="0" />
+		<Object type="OglModel" name="Visual" fileMesh="mesh/torus2.obj" color="1.0 0.5 0.25 1.0" scale="5.0"/>
+	</Node>
+	
+	<Node name="Torus2">
+		<Object type="EulerImplicitSolver"/>
+		<Object type="CGLinearSolver" iterations="25"/>
+		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-12" dy="0"/>
+		<Object type="UniformMass" filename="BehaviorModels/torus.rigid" mass="5000.0"/>
+		<Object type="CudaUncoupledConstraintCorrection"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" fileMesh="mesh/torus.obj" color="0.0 0.5 0.5 1.0" scale="5.0"/>
+			<Object type="RigidMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="Surf2">
+			<Object type="MeshLoader" filename="mesh/torus_for_collision.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" scale="5.0"/>
+			<Object type="Triangle" />	
+			<Object type="Line" />	
+			<Object type="Point" />
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+	
+	<Node name="Torus3">
+		<Object type="EulerImplicitSolver"/>
+		<Object type="CGLinearSolver" iterations="25"/>
+		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-25" dy="0"/>
+		<Object type="UniformMass" filename="BehaviorModels/torus2.rigid" mass="5000.0"/>
+		<Object type="CudaUncoupledConstraintCorrection"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" fileMesh="mesh/torus2.obj" color="1.0 0.5 0.25 1.0" scale="5.0"/>
+			<Object type="RigidMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="Surf2">
+			<Object type="MeshLoader" filename="mesh/torus2_for_collision.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" scale="5.0"/>
+			<Object type="Triangle" /> 
+			<Object type="Line" />
+			<Object type="Point" />
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+	
+	<Node name="Torus4">
+		<Object type="EulerImplicitSolver"/>
+		<Object type="CGLinearSolver" iterations="25"/>
+		<Object type="MechanicalObject" template="Rigid" scale="5.0" dx ="-38" dy="0"/>
+		<Object type="UniformMass" filename="BehaviorModels/torus.rigid" mass="5000.0"/>
+		<Object type="CudaUncoupledConstraintCorrection"/>
+		<Node name="Visu">
+			<Object type="OglModel" name="Visual" fileMesh="mesh/torus.obj" color="0.0 0.5 0.5 1.0" scale="5.0"/>
+			<Object type="RigidMapping" object1="../.." object2="Visual" />
+		</Node>
+		<Node name="Surf2">
+			<Object type="MeshLoader" filename="mesh/torus_for_collision.obj" />
+			<Object type="Mesh" />
+			<Object type="MechanicalObject" scale="5.0"/>
+			<Object type="Triangle" /> 
+			<Object type="Line" />
+			<Object type="Point" />
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+	
+</Node>

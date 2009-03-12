@@ -1,0 +1,3 @@
+plot 'out-time' using 1:2 title 'No precond' with line, \
+'out-time' using 1:3 title 'Jacobi Precond' with line, \
+'out-time' using 1:4 title 'Jacobi Precond 10' with line

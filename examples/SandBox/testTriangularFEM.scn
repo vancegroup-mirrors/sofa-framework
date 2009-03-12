@@ -1,0 +1,52 @@
+<Node name="root" dt="0.002" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="0" showBoundingTree="0" showVisualModels="1" gravity="0 0 0">
+	<Object type="CollisionPipeline" verbose="0" />
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="CollisionResponse" response="default" />
+	<Object type="MinProximityIntersection" name="Proximity" alarmDistance="0.8" contactDistance="0.5" />
+	<Object type="CollisionGroup" />
+
+
+	<Node name="Square1">
+		<Object type="StaticSolver" />
+		<Object type="CGLinearSolver" iterations="50" tolerance="1e-15" threshold="1e-15"/>
+		<Object type="RegularGrid" name="grid" min="0 0 0" max="1 1 0" nx="25" ny="25" nz="1" />
+		<Object type="MechanicalObject" />
+		<Object type="UniformMass" totalmass="0.1" />
+		<Object type="FixedPlaneConstraint" direction="0 1 0" dmin="0.99" dmax="1.01"/>
+		<Object type="BoxConstraint" box="0.45 0.99 -0.01 0.55 1.01 0.01"/>
+		<Object type="ConstantForceField" points="0-24" forces="0 -2000 0"/>
+		<Node name="Triangles">
+			<include href="Objects/TriangleSetTopology.xml" />
+			<Object type="Quad2TriangleTopologicalMapping" object1="grid" object2="Container" />
+			<Object type="TriangularFEMForceField" name="FEM1" youngModulus="10000" poissonRatio="0.45" method="large" />
+			<Object type="Triangle"/>
+			<Node>
+				<Object type="OglModel" name="Visual" color="red"/>
+				<Object type="IdentityMapping" object1="../.." object2="Visual"/>
+			</Node>
+		</Node>
+	</Node>
+
+	<Node name="Square2">
+		<Object type="StaticSolver" />
+		<Object type="CGLinearSolver" iterations="50" tolerance="1e-15" threshold="1e-15"/>
+		<Object type="RegularGrid" name="grid" min="0 0 0" max="1 1 0" nx="25" ny="25" nz="1" />
+		<Object type="MechanicalObject" />
+		<Object type="UniformMass" totalmass="0.1" />
+		<Object type="FixedPlaneConstraint" direction="0 1 0" dmin="0.99" dmax="1.01"/>
+		<Object type="BoxConstraint" box="0.45 0.99 -0.01 0.55 1.01 0.01"/>
+		<Object type="ConstantForceField" points="0-24" forces="0 -2000 0"/>
+		<Node name="Triangles">
+			<include href="Objects/TriangleSetTopology.xml" />
+			<Object type="Quad2TriangleTopologicalMapping" object1="grid" object2="Container" />
+			<Object type="TriangularFEMForceField" name="FEM2" youngModulus="10000" poissonRatio="0.45" method="small" />
+			<Object type="Triangle"/>
+			<Node>
+				<Object type="OglModel" name="Visual" color="green"/>
+				<Object type="IdentityMapping" object1="../.." object2="Visual"/>
+			</Node>
+		</Node>
+	</Node> 
+
+</Node>
+

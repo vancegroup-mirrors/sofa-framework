@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head><meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>SOFA_HAPTIC</title></head>
+<body><div style="text-align: center;"><big><big><big style="font-weight: bold;">HOW TO USE HAPTIC DEVICE IN SOFA</big><br><small><small><small>Gurvan Le Moigno - 2008</small></small></small><br></big></big><div style="text-align: left; margin-top: 52px; height: 19px;"><h1>Abstract</h1>This
+HOW-TO is targeted to the SOFA user who wants to use an haptic device
+in SOFA scenes. You need to have some experiences with SOFA. This
+document contains some pre-requisite to run the code, an explanation of
+how it works and, finaly, some code examples to integrate the Haptic
+Device in your own scenes.<br><h1>Pre-requisite / First launch</h1>This SOFA module use the <a href="http://www.chai3d.org">Chai3D library</a>&nbsp;to abstract haptic devices low-level interface.<br><br><div style="text-align: center;"><img style="width: 492px; height: 210px;" alt="Interaction between SOFA &amp; Chai3D" src="picture/arch.png"><br></div><br>For
+the moment, only SensAble PHANToM device have been tested, with the
+SensAble OpenHaptics toolkit. But we expect that all Chai3D compatible
+device works with our implementaton.<br><br>So
+let's start. You
+need to install the device driver and the openhaptis toolkit. Run the test and some example to be sure all is OK.<br>for linux user, be sure that openhaptics library (HD, HDU, HL, HLU) are installed in /usr/lib directory<br>for windows user, be sure that the 3DTOUCH_BASE environment variable is created and specify your openhaptic home dir.<br><br><br>Next,
+you need to download the chai3d_dependencies.zip file from the
+"Fichiers" tab of the Sofa Dev Gforge page and uncompress it in your
+Sofa root directory.<br>It copy several files :<br>extlibs/CHAI3D&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;-- contains all the Chai3D
+include file<br>bin/phantomHD.dll&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;--
+chai3D needs this dll to initialize the phantom <br>lib/linux/libchai3d_linux.a&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;-- &nbsp;pre-compiled
+version of chai3D library for linux&nbsp; <br>lib/win32/Common/chai3d_complete.lib &nbsp; -- pre-compiled version of chai3D library for windows<br>lib/win32/Common/chai3d_completed.lib &nbsp; -- pre-compiled debug version of chai3D library for windows<br><br><br>If you use other device, recompile chai3D and replace the
+folowing files :<br>- $SOFA_DIR$/lib/linux/libchai3d_linux.a &nbsp;for linux<br>- $SOFA_DIR$/lib/win32/Common/chai3d_complete.lib &nbsp; &nbsp;for&nbsp;windows<br><br><br>Move into the SOFA directory and copy <span style="text-decoration: underline;">sofa-default.cfg</span> in <span style="text-decoration: underline;">sofa-local.cfg</span>. Open <span style="text-decoration: underline;">sofa-local.cfg</span> and uncomment the line:<br><span style="font-family: Courier;">DEFINES += SOFA_HAVE_CHAI3D</span><br><br>Execute
+qmake and compile SOFA. A new executable named Haptic has been built
+in the&nbsp;<span style="text-decoration: underline;">bin</span> directory. Run it and open the liver-haptic.scn scene
+in the&nbsp;scenes directory.<br><br>Launch
+the animation and start playing with the liver. You should see this
+interface with a little yellow ball following your device moves:<br><br><div style="text-align: center;"><img style="width: 763px; height: 646px;" alt="ScreenShot With Device" src="picture/withDevice.png"><br></div><h1>How it works</h1>There are two main classes : <span style="font-weight: bold;">HapticDevice</span> and <span style="font-weight: bold;">HapticMapping</span>.<br><br style="font-weight: bold;"><span style="font-weight: bold;">HapticDevice</span> is used as a link between Chai3D and SOFA. It contains a reference to the device and the haptic loop.<br><br><span style="font-weight: bold;">HapticMapping</span> is a specialized <span style="font-weight: bold;">RigidRigidMapping</span>.
+In fact, whereas a classic mapping takes two SOFA objects as input
+and&nbsp;output models, the HapticMapping only takes an output model and
+replaces the input by a <span style="font-weight: bold;">HapticDevice</span> object.<br><br><div style="text-align: center;"><img style="width: 623px; height: 160px;" alt="Mapping explanation" src="picture/mappingExplanation.png"><br></div><br>At every step of the simulation, the <span style="font-family: Courier;">apply()</span> method of each mapping is called. In our HapticMapping, the <span style="font-family: Courier;">apply()</span>
+method gets the real device position, converts it into the SOFA scene
+axes * and gives this new position to the output SOFA object. So if we
+use a rigid mechanical object&nbsp; as output of the HapticMapping,
+this object follows the position of the physical haptic device.<br><br>*
+In fact, we want that the sofa object representing the
+device&nbsp;moves in a special coordinate system fixed in front of
+the camera. The rotation and translation of the SOFA simulation
+scene modifies the device position for the user.<br><br><h1>Code Examples</h1>You
+have two ways to integrate the HapticMapping in your scene graph. You
+can insert it directly in your scene xml file, or you can launch a
+scene and add the haptic node dynamicaly.<br><br><h3>External add</h3>Here
+is an example of a graph that you can add in every scene to add a
+little collision sphere following your device moves:<br><br><div style="text-align: center;"><div style="text-align: left;"><img style="float: left; width: 390px; height: 155px;" alt="Haptic node details" src="picture/HapticNode-detail.png"><br><br><br><br><br><br><br><br><br><span style="text-decoration: underline;">Explanations :</span><br><br>The Mechanical Object contains a moving frame representing the device.<br>The HapticMapping maps the mechanical object above from the HapticDevice (hidden for the SOFA graph scene)<br>The collision model of the device is a simple small sphere.<br>The
+collision mapping links the sphere collision model to the moving frame.
+Note that you can you use any other CollisionModel to represent the
+shape of the device. <br><br style="font-style: italic;"><span style="font-style: italic;">the complete code of this scene graph part can be found in <a href="../../../../scenes/addHaptic.xml">scenes/addHaptic.xml</a></span><br><br>With
+this scene graph, at every simulation step, the
+mechanical object takes the position of the device, and the sphere
+collision model follows it thanks to the collision mapping.<br><br>In theory, you can connect what you want with the HapticMapping. The only restrictions are :<br>- The HapticMapping must have a MechanicalObject&lt;Rigid3*Types&gt; (Rigid3dTypes or Rigid3fTypes) sibling.<br>- The Haptic Device node must be under a solver.<br><br>Warning : You need to start the animation to see the visual model of the sphere.<br><br><h3>Xml Scene add</h3><br>Let's see how the HapticMapping is included in a scene file :<br><br>&lt;Object type="HapticMapping" template="Rigid3dTypes"&gt;<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;Attribute type="name"&gt;<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;Data value="Haptic Mapping"/&gt;<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/Attribute&gt;<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;Attribute type="openGlInitialized"&gt;<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;Data value="1"/&gt;<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/Attribute&gt;<br>&lt;/Object&gt;<br><br>The two important elements are :<br>- The template of the SOFA output model : can be Rigid3dTypes or Rigid3fTypes<br>-
+The boolean data openGlInitialized. By default, it's false and it
+change to true when openGl is initialized. If we add the node after
+loading a scene, openGL is already initialized and we have to specify
+the true (1) value. In summary, if you launch a scene wich contains a
+haptic device at the begining, you can omit or put this value to false.
+If you use a part of scene graph that you load after the scene, you
+need to put this value to true (as in the addHaptics.xml example).<br><br><h1>Future Works</h1>The
+next step is to compute feedback to feel as best as possible the
+collision under the device and all the SOFA objects of the scene.<br>Fix this bug : Chai3D can't initialize twice a scene with an haptic device.<br><br><br><br><br></div></div></div></div></body></html>

@@ -1,0 +1,3 @@
+plot 'out-iter' using 1:2 title 'No precond' with line, \
+'out-iter' using 1:7 title 'SSOR Precond' with line, \
+'out-iter' using 1:8 title 'SSOR Precond 10' with line

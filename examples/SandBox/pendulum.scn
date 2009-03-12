@@ -1,0 +1,123 @@
+<Node name="root" 
+	gravity="0 -10 0" 
+	dt="0.01" 
+	time="0" 
+	animate="0" 
+	showVisualModels="1" 
+	showBehaviorModels="1" 
+	showCollisionModels="0" 
+	showBoundingCollisionModels="0" 
+	showMappings="0" 
+	showMechanicalMappings="1" 
+	showForceFields="1" 
+	showInteractionForceFields="1" 
+	showWireFrame="0" 
+	showNormals="0" 
+	 >
+	<Node name="Newmark" >
+		<Newmark name="ode solver" rayleighMass="0" rayleighStiffness="0" printLog="true"/>
+		<LULinearSolver/>
+		<MechanicalObject template="Vec3d">
+			<Attribute type="position">
+				<Data value="0 0 1 1 0 1"/>
+			</Attribute>
+			<Attribute type="velocity">
+				<Data value="0 0 0 0 0 0"/>
+			</Attribute>
+		</MechanicalObject>
+		<UniformMass template="Vec3d">
+			<Attribute type="mass">
+				<Data value="1"/>
+			</Attribute>
+		</UniformMass>
+		<FixedConstraint template="Vec3d">
+			<Attribute type="indices">
+				<Data value="0"/>
+			</Attribute>
+		</FixedConstraint>
+		<StiffSpringForceField template="Vec3d">
+			<Attribute type="spring">
+				<Data value="1 0 100 0 1"/>
+			</Attribute>
+		</StiffSpringForceField>
+	</Node>
+	<Node name="Euler Implicit" >
+		<EulerImplicit name="ode solver" rayleighMass="0" rayleighStiffness="0" printLog="true"/>
+		<LULinearSolver/>
+		<MechanicalObject template="Vec3d">
+			<Attribute type="position">
+				<Data value="0 0 0 1 0 0"/>
+			</Attribute>
+			<Attribute type="velocity">
+				<Data value="0 0 0 0 0 0"/>
+			</Attribute>
+		</MechanicalObject>
+		<UniformMass template="Vec3d">
+			<Attribute type="mass">
+				<Data value="1"/>
+			</Attribute>
+		</UniformMass>
+		<FixedConstraint template="Vec3d">
+			<Attribute type="indices">
+				<Data value="0"/>
+			</Attribute>
+		</FixedConstraint>
+		<StiffSpringForceField template="Vec3d">
+			<Attribute type="spring">
+				<Data value="1 0 100 0 1"/>
+			</Attribute>
+		</StiffSpringForceField>
+	</Node>
+	<Node name="RK4 Explicit" >
+		<RungeKutta4 name="ode solver" printLog="true"/>
+		<MechanicalObject template="Vec3d">
+			<Attribute type="position">
+				<Data value="0 0 -1 1 0 -1"/>
+			</Attribute>
+			<Attribute type="velocity">
+				<Data value="0 0 0 0 0 0"/>
+			</Attribute>
+		</MechanicalObject>
+		<UniformMass template="Vec3d">
+			<Attribute type="mass">
+				<Data value="1"/>
+			</Attribute>
+		</UniformMass>
+		<FixedConstraint template="Vec3d">
+			<Attribute type="indices">
+				<Data value="0"/>
+			</Attribute>
+		</FixedConstraint>
+		<StiffSpringForceField template="Vec3d">
+			<Attribute type="spring">
+				<Data value="1 0 100 0 1"/>
+			</Attribute>
+		</StiffSpringForceField>
+	</Node>
+	<Node name="Euler Explicit" >
+		<Euler name="ode solver" printLog="true"/>
+		<MechanicalObject template="Vec3d">
+			<Attribute type="position">
+				<Data value="0 0 -2 1 0 -2"/>
+			</Attribute>
+			<Attribute type="velocity">
+				<Data value="0 0 0 0 0 0"/>
+			</Attribute>
+		</MechanicalObject>
+		<UniformMass template="Vec3d">
+			<Attribute type="mass">
+				<Data value="1"/>
+			</Attribute>
+		</UniformMass>
+		<FixedConstraint template="Vec3d">
+			<Attribute type="indices">
+				<Data value="0"/>
+			</Attribute>
+		</FixedConstraint>
+		<StiffSpringForceField template="Vec3d">
+			<Attribute type="spring">
+				<Data value="1 0 100 0 1"/>
+			</Attribute>
+		</StiffSpringForceField>
+	</Node>
+</Node>

@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/evasion/lemoigno/Desktop/HOW TO HAPTIC DEVICE SOFA/picture"
+   sodipodi:docname="mapping explanation.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="TriangleOutL"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="TriangleOutL"
+       style="overflow:visible">
+      <path
+         id="path4228"
+         d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none"
+         transform="scale(0.8)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;">
+      <path
+         id="path4151"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lend"
+       style="overflow:visible;">
+      <path
+         id="path4133"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="221.89428"
+     inkscape:cy="505.78112"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1280"
+     inkscape:window-height="949"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g5350"
+       inkscape:export-filename="/home/evasion/lemoigno/Desktop/HOW TO HAPTIC DEVICE SOFA/picture/mappingExplanation.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90">
+      <rect
+         y="326.64792"
+         x="60"
+         height="85.714287"
+         width="142.85715"
+         id="rect2160"
+         style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1" />
+      <rect
+         style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+         id="rect2166"
+         width="142.85715"
+         height="85.714287"
+         x="288"
+         y="326.64792" />
+      <rect
+         y="326.64792"
+         x="508"
+         height="85.714287"
+         width="142.85715"
+         id="rect2168"
+         style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1" />
+      <text
+         transform="scale(0.7865814,1.2713243)"
+         id="text3141"
+         y="298.98444"
+         x="88.196121"
+         style="font-size:23.3722496px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="298.98444"
+           x="88.196121"
+           id="tspan3143"
+           sodipodi:role="line">HapticDevice</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:23.3722496px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         x="367.88748"
+         y="297.86075"
+         id="text3145"
+         transform="scale(0.7865814,1.2713243)"><tspan
+           sodipodi:role="line"
+           id="tspan3147"
+           x="367.88748"
+           y="297.86075">HapticMapping</tspan></text>
+      <text
+         transform="scale(0.7865814,1.2713243)"
+         id="text3149"
+         y="285.05072"
+         x="735.84552"
+         style="font-size:23.3722496px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="285.05072"
+           x="735.84552"
+           id="tspan3151"
+           sodipodi:role="line">Mechanical</tspan><tspan
+           id="tspan3153"
+           y="314.26603"
+           x="735.84552"
+           sodipodi:role="line">Object</tspan></text>
+      <path
+         transform="matrix(0.3856074,0,0,0.3856074,179.12328,182.10346)"
+         d="M -305.51793,299.12536 C -285.23923,313.82709 -290.93513,344.88434 -307.88742,359.46353 C -328.88252,377.5196 -361.33736,372.89779 -378.29148,351.68351 C -396.89123,328.4101 -391.78212,293.61282 -368.49197,275.54869 C -343.68418,256.30745 -307.04622,261.80578 -288.14333,286.57717 C -286.42655,288.82693 -284.87347,291.2014 -283.49954,293.67547"
+         sodipodi:t0="0.078400791"
+         sodipodi:argument="-20.02183"
+         sodipodi:radius="58.901508"
+         sodipodi:revolution="1.11"
+         sodipodi:expansion="0.18000001"
+         sodipodi:cy="320.93362"
+         sodipodi:cx="-335.71429"
+         id="path3155"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.5999999;stroke-linecap:butt;stroke-linejoin:miter;marker-mid:none;marker-end:url(#TriangleOutL);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         sodipodi:type="spiral" />
+      <text
+         id="text4329"
+         y="261.64792"
+         x="30.714285"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="261.64792"
+           x="30.714285"
+           id="tspan4331"
+           sodipodi:role="line">Thread computing</tspan><tspan
+           id="tspan4333"
+           y="276.64792"
+           x="30.714285"
+           sodipodi:role="line">physical device position</tspan></text>
+      <path
+         id="path4335"
+         d="M 201.40192,376.6479 L 280.53574,376.6479"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.14669728;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#TriangleOutL);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5308"
+         d="M 431.3275,370.93361 L 501.81483,370.93361"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.08582401;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#TriangleOutL);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         id="text5310"
+         y="343.64789"
+         x="215.57143"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="343.64789"
+           x="215.57143"
+           id="tspan5312"
+           sodipodi:role="line">getPosition</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         x="432.85715"
+         y="367.36218"
+         id="text5314"><tspan
+           sodipodi:role="line"
+           id="tspan5316"
+           x="432.85715"
+           y="367.36218">setPosition</tspan><tspan
+           id="tspan5330"
+           sodipodi:role="line"
+           x="432.85715"
+           y="382.36218">(x', y', z)</tspan></text>
+      <path
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.12837875;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#TriangleOutL);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 285.83805,349.50504 L 209.36507,349.50504"
+         id="path5318" />
+      <text
+         xml:space="preserve"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         x="221.28571"
+         y="371.50504"
+         id="text5320"><tspan
+           sodipodi:role="line"
+           id="tspan5322"
+           x="221.28571"
+           y="371.50504">x, y, z</tspan></text>
+      <path
+         sodipodi:nodetypes="cc"
+         inkscape:transform-center-y="12.142857"
+         id="path5324"
+         d="M 334.87076,322.36218 C 302.86205,279.35693 394.93038,277.12123 368.48659,322.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.12837875;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#TriangleOutL);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         id="text5326"
+         y="284.50507"
+         x="300.71426"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="284.50507"
+           x="300.71426"
+           id="tspan5328"
+           sodipodi:role="line">x, y, z  =&gt; x', y', z'</tspan></text>
+    </g>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke-width:1.20000005;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect6350"
+       width="122.14286"
+       height="77.14286"
+       x="95"
+       y="482.36218" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.97219163;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect6352"
+       width="105.9421"
+       height="53.79924"
+       x="118.45753"
+       y="835.8197" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="170.71429"
+       y="858.07642"
+       id="text7323"><tspan
+         sodipodi:role="line"
+         id="tspan7325"
+         x="170.71429"
+         y="858.07642">Haptic Device</tspan><tspan
+         sodipodi:role="line"
+         x="170.71429"
+         y="873.07642"
+         id="tspan7327">Type 1</tspan></text>
+    <g
+       id="g7359"
+       transform="translate(131.14286,-11.428571)">
+      <rect
+         y="847.24829"
+         x="121.31467"
+         height="53.79924"
+         width="105.9421"
+         id="rect7361"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.97219163;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         id="text7363"
+         y="869.505"
+         x="173.57144"
+         style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="869.505"
+           x="173.57144"
+           id="tspan7365"
+           sodipodi:role="line">Haptic Device</tspan><tspan
+           id="tspan7367"
+           y="884.505"
+           x="173.57144"
+           sodipodi:role="line">Type 2</tspan></text>
+    </g>
+    <g
+       transform="translate(257.14286,-11.428571)"
+       id="g7369">
+      <rect
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.97219163;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect7371"
+         width="105.9421"
+         height="53.79924"
+         x="121.31467"
+         y="847.24829" />
+      <text
+         xml:space="preserve"
+         style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         x="173.57144"
+         y="869.505"
+         id="text7373"><tspan
+           sodipodi:role="line"
+           id="tspan7375"
+           x="173.57144"
+           y="869.505">Haptic Device</tspan><tspan
+           sodipodi:role="line"
+           x="173.57144"
+           y="884.505"
+           id="tspan7377">Type 3</tspan></text>
+    </g>
+    <g
+       id="g7379"
+       transform="translate(379.14286,-11.428571)">
+      <rect
+         y="847.24829"
+         x="121.31467"
+         height="53.79924"
+         width="105.9421"
+         id="rect7381"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.97219163;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         id="text7383"
+         y="869.505"
+         x="173.57144"
+         style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="869.505"
+           x="173.57144"
+           id="tspan7385"
+           sodipodi:role="line">Haptic Device</tspan><tspan
+           id="tspan7387"
+           y="884.505"
+           x="173.57144"
+           sodipodi:role="line">Type 4</tspan></text>
+    </g>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.20000005;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect7389"
+       width="487.14285"
+       height="64.285713"
+       x="117.14286"
+       y="756.64789" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.38695335px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="189.69751"
+       y="795.02649"
+       id="text7391"><tspan
+         sodipodi:role="line"
+         id="tspan7393"
+         x="189.69751"
+         y="795.02649">CHai3D Library : Universal device interface</tspan></text>
+    <rect
+       y="565.60828"
+       x="117.53184"
+       height="174.93633"
+       width="486.3649"
+       id="rect7397"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.97795761;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+</svg>

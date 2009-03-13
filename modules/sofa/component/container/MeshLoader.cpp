@@ -70,7 +70,7 @@ bool MeshLoader::load(const char* filename)
 	clear();
 	if (!MeshTopologyLoader::load(filename))
     {         
-      serr << "Unable to load Mesh \""<<filename << sendl;                      
+      serr << "Unable to load Mesh "<<filename << sendl;                      
 		return false;
 	}
 

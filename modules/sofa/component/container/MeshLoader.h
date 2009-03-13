@@ -30,6 +30,7 @@
 #include <sofa/helper/vector.h>
 
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/helper/io/MeshTopologyLoader.h>
 #include <sofa/component/component.h>
 
@@ -117,7 +118,7 @@ protected:
 	SeqTetras		seqTetras;
 	SeqHexas		seqHexas;
 
-	Data< std::string > filename;
+	sofa::core::objectmodel::DataFileName filename;
 	Data< bool > triangulate;
 	Data< bool > fillMState; ///< Must this mesh loader fill the mstate instead of manually or by using the topology 
 };

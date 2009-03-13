@@ -41,6 +41,7 @@ contains(DEFINES,SOFA_HAVE_GLEW){
            OglTetrahedralModel.inl \
            OglTexture.h \
            OglVariable.h \
+           OglVariable.inl \
            PostProcessManager.h \
            SlicedVolumetricModel.h
 

@@ -332,7 +332,7 @@ Simulation::~Simulation(){
 			void Simulation::initGnuplot ( Node* root )
 			{
 				if ( !root ) return;
-				InitGnuplotVisitor v(gnuplotDirectory.getValue());
+                                InitGnuplotVisitor v(gnuplotDirectory.getFullPath());
 				root->execute( v );
 			}
 

@@ -28,6 +28,7 @@
 #include <sofa/component/container/MeshLoader.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/component/component.h>
+#include <sofa/core/objectmodel/DataFileName.h>
 
 namespace sofa
 {
@@ -88,8 +89,7 @@ namespace sofa
         Data< Vec3i >                   dataResolution;
 		Data< Vec6i >                   roi;
 		Data< int >						headerSize;
-
-		Data< std::string >				segmentationFile;
+                sofa::core::objectmodel::DataFileName segmentationFile;
 		Data< int >						segmentationHeaderSize;
 
 		Data< helper::vector<int> >     backgroundValue;

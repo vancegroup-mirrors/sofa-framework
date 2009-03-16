@@ -61,16 +61,6 @@ namespace sofa
 
 	virtual void reinit();
 	
-	/**\brief Function swaping edge between two adjacents triangles. Create two new triangles and remove the two old one. 
-	* This function call private functions of the container reordering the different shells.
-	* Different from the others used in adding and removing triangles which are faster but need informations of
-	* the state's topology before modifications.
-	* @see ManifoldTriangleSetTopologyContainer::reorderingTopologyOnROI()
-	* @param index of first triangle.
-	* @param index of second triangle adjacent to the first one.
-	*/
-	bool edgeSwap (const TriangleID& indexTri1, const TriangleID& indexTri2);
-		
 	virtual void Debug(); // TO BE REMOVED WHEN CLASS IS SURE.
 
       protected:
@@ -83,7 +73,7 @@ namespace sofa
 	* @see createRemovingEdgesFutureModifications()
 	* @see testRemovingModifications().
 	*/
-	virtual bool removeTrianglesPreconditions(sofa::helper::vector< unsigned int >& items);
+	virtual bool removeTrianglesPreconditions(const sofa::helper::vector< unsigned int >& items);
 
 	/**\brief Postprocessing to apply to the triangle topology. In this class topology should stay manifold.
 	* These functions reorder the triangles around each vertex where triangles have been deleted.
@@ -108,6 +98,41 @@ namespace sofa
 	 */
 	virtual void addTrianglesPostProcessing(const sofa::helper::vector <Triangle>& triangles);
 
+	/** \brief: Reorder the vertex in the array of a given edge. In order to be in the oriented in the right direction
+	 * regarding the first triangle of m_triangleEdgeShellArray[ edgeIndex ].
+	 *
+	 */
+	void reorderingEdge(const unsigned int edgeIndex);
+
+	
+	/** \brief: Reorder the triangle vertex array around a given vertex.
+	 *
+	 */
+	void reorderingTriangleVertexShell (const unsigned int vertexIndex);
+
+	
+	/** \brief: Reorder the edge vertex array around a given vertex.
+	 *
+	 */
+	void reorderingEdgeVertexShell (const unsigned int vertexIndex);
+
+	
+	/** \brief: Reorder the three shell arrays around a list of given vertices.
+	 *
+	 */
+	void reorderingTopologyOnROI (const sofa::helper::vector <unsigned int>& listVertex);
+
+	
+	/** \brief: Swap a list of edges.
+	 *
+	 */
+	void edgeSwapProcess (const sofa::helper::vector <EdgeID>& listEdges);
+
+	
+	/** \brief: Swap the edge adjacent to the two input triangles (To be used by the ray pick interactor).
+	 *
+	 */
+	void edgeSwapProcess (const TriangleID& indexTri1, const TriangleID& indexTri2);
 	
       private:
 	
@@ -146,7 +171,7 @@ namespace sofa
 	 * m_modifications[0] = vertex index number.
 	 * m_modifications[i>0] = 0 (no change) or 1 (remove m_triangleVertexShell[ m_modifications[0] ][i+1])
 	 */
-	void createRemovingTrianglesFutureModifications(sofa::helper::vector< unsigned int >& items);
+	void createRemovingTrianglesFutureModifications(const sofa::helper::vector< unsigned int >& items);
 
 	
 	/** Test the modifications to apply around one vertex. After removing triangles, only one connexe composante
@@ -180,7 +205,16 @@ namespace sofa
 	 */
 	void reorderEdgeForRemoving();
 	
-
+	/**\brief Function swaping edge between two adjacents triangles. Create two new triangles and remove the two old one. 
+	* This function call private functions of the container reordering the different shells.
+	* Different from the others used in adding and removing triangles which are faster but need informations of
+	* the state's topology before modifications.
+	* @see ManifoldTriangleSetTopologyContainer::reorderingTopologyOnROI()
+	* @param index of first triangle.
+	* @param index of second triangle adjacent to the first one.
+	*/
+	void edgeSwap (const EdgeID& indexEdge);
+	
       };
       
     } // namespace topology

@@ -981,7 +981,7 @@ const MeshTopology::QuadEdges& MeshTopology::getEdgeQuadShell(QuadID i)
 
 const MeshTopology::TetraEdges& MeshTopology::getEdgeTetraShell(TetraID i)
 {
-    if (!m_edgeTetraShell.empty() || i > m_edgeTetraShell.size()-1)
+    if (m_edgeTetraShell.empty() || i > m_edgeTetraShell.size()-1)
         createEdgeTetraShellArray();
     return m_edgeTetraShell[i];
 }
@@ -1559,7 +1559,7 @@ void MeshTopology::updateEdges()
 		  e=Edge(v1,v2);
 		else
 		  e=Edge(v2,v1);
-	    }
+	    
 	    ite=edgeMap.find(e);
 	    if (ite==edgeMap.end())
 	    {
@@ -1574,6 +1574,7 @@ void MeshTopology::updateEdges()
 		edgeIndex=(*ite).second;
 	    }
 	    //m_edgeTetraShell[i][j]=edgeIndex; 
+      }
 	}
 
         const SeqHexas& hexas = getHexas(); // do not use seqHexas directly as it might not be up-to-date
@@ -1596,7 +1597,7 @@ void MeshTopology::updateEdges()
 		  e=Edge(v1,v2);
 		else
 		  e=Edge(v2,v1);
-	    }
+	    
 	    ite=edgeMap.find(e);
 	    if (ite==edgeMap.end())
 	    {
@@ -1611,6 +1612,7 @@ void MeshTopology::updateEdges()
 		edgeIndex=(*ite).second;
 	    }
 	    //m_edgeHexaShell[i][j]=edgeIndex; 
+      }
 	}
     }
     else if (hasSurface())

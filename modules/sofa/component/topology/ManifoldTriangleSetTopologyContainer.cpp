@@ -24,12 +24,7 @@
 ******************************************************************************/
 #include <sofa/component/topology/ManifoldTriangleSetTopologyContainer.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/component/container/MechanicalObject.inl>
-//#include <sofa/defaulttype/VecTypes.h>
-
-#include <sofa/component/container/MeshLoader.h>
-//#include <sofa/helper/gl/template.h>
-#include <sofa/helper/gl/glText.inl>
+//#include <sofa/component/container/MeshLoader.h>
 
 namespace sofa
 {
@@ -666,7 +661,7 @@ namespace sofa
 
 
   
-      int ManifoldTriangleSetTopologyContainer::getNextTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
+      TriangleID ManifoldTriangleSetTopologyContainer::getNextTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
       {
     
 	if(!hasTriangleVertexShell())	// this method should only be called when the shell array exists
@@ -739,7 +734,7 @@ namespace sofa
 
   
   
-      int ManifoldTriangleSetTopologyContainer::getPreviousTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
+      TriangleID ManifoldTriangleSetTopologyContainer::getPreviousTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
       {
     
 	if(!hasTriangleVertexShell())	// this method should only be called when the shell array exists
@@ -812,7 +807,7 @@ namespace sofa
   
 
   
-      int ManifoldTriangleSetTopologyContainer::getOppositeTriangleEdgeShell(EdgeID edgeIndex, TriangleID triangleIndex)
+      TriangleID ManifoldTriangleSetTopologyContainer::getOppositeTriangleEdgeShell(EdgeID edgeIndex, TriangleID triangleIndex)
       {
 
 	if(!hasTriangleEdgeShell())	// this method should only be called when the shell array exists
@@ -877,7 +872,7 @@ namespace sofa
 
 
   
-      int ManifoldTriangleSetTopologyContainer::getNextEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
+      EdgeID ManifoldTriangleSetTopologyContainer::getNextEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
       {
     
 	if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists
@@ -973,7 +968,7 @@ namespace sofa
 	
 
 
-      int ManifoldTriangleSetTopologyContainer::getPreviousEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
+      EdgeID ManifoldTriangleSetTopologyContainer::getPreviousEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
       {
 
 	if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists
@@ -1069,135 +1064,107 @@ namespace sofa
       }
 
 
-  
-      sofa::helper::vector <TriangleID> ManifoldTriangleSetTopologyContainer::getTrianglesBorder()
-      {
-	if(!hasTriangleEdgeShell())	// this method should only be called when the shell array exists
-	{
-#ifndef NDEBUG
-	  std::cout << "Warning. [ManifoldTriangleSetTopologyContainer::getTrianglesBorder] Triangle edge shell array is empty." << std::endl;
-#endif
 
-	  createTriangleEdgeShellArray();
-	}
-
-	const unsigned int nbrEdges = getNumberOfEdges();
-	sofa::helper::vector <TriangleID> TrianglesBorder;
-	bool test = true;
-
-	for (unsigned int i = 0; i < nbrEdges; ++i)
-	{
-	  if (m_triangleEdgeShell[i].size() == 1)
-	  {
-	    for (unsigned int j = 0; j < TrianglesBorder.size(); ++j)
-	    {
-	      if (TrianglesBorder[j] == m_triangleEdgeShell[i][0])
-	      {
-		test = false;
-		break;
-	      }
-	    }
-
-	    if(test)
-	    {
-	      TrianglesBorder.push_back (m_triangleEdgeShell[i][0]);
-	    }
-	    test = true;
-	  }
-	}
-    
-	return TrianglesBorder;
-      }
-  
-  
-
-      sofa::helper::vector <EdgeID> ManifoldTriangleSetTopologyContainer::getEdgesBorder()
-      {
-
-	if(!hasTriangleEdgeShell())	// this method should only be called when the shell array exists
-	{
-#ifndef NDEBUG
-	  std::cout << "Warning. [ManifoldTriangleSetTopologyContainer::getEdgesBorder] Triangle edge shell array is empty." << std::endl;
-#endif
-
-	  createTriangleEdgeShellArray();
-	}
-
-	const unsigned int nbrEdges = getNumberOfEdges();
-	sofa::helper::vector <EdgeID> edgesBorder;
-	bool test = true;
-        
-	for (unsigned int i = 0; i < nbrEdges; ++i)
-	{
       
-	  if (m_triangleEdgeShell[i].size() == 1)
-	  {
-	    for(unsigned int j = 0; j< edgesBorder.size(); j++)
-	    {
-	      if (edgesBorder[j] == i)
-	      {
-		test = false;
-		break;
-	      }
-	    }
-
-	    if(test)
-	    {
-	      edgesBorder.push_back (i);
-	    }
-	    test = true;
-	  }
-	}
-    
-	return edgesBorder;
-      }
-
-
-
-      sofa::helper::vector <PointID> ManifoldTriangleSetTopologyContainer::getPointsBorder()
+      void ManifoldTriangleSetTopologyContainer::createElementsOnBorder()
       {
 
-	if(!hasTriangleEdgeShell())	// this method should only be called when the shell array exists
+	if(!hasTriangleEdgeShell())	// Use the triangleEdgeShellArray. Should check if it is consistent
 	{
 #ifndef NDEBUG
-	  std::cout << "Warning. [ManifoldTriangleSetTopologyContainer::getEdgesBorder] Triangle edge shell array is empty." << std::endl;
+	  std::cout << "Warning. [ManifoldTriangleSetTopologyContainer::createElementsOnBorder] Triangle edge shell array is empty." << std::endl;
 #endif
-
+	  
 	  createTriangleEdgeShellArray();
 	}
 
+	if(!m_trianglesOnBorder.empty())
+	  m_trianglesOnBorder.clear();
+
+	if(!m_edgesOnBorder.empty())
+	  m_edgesOnBorder.clear();
+
+	if(!m_pointsOnBorder.empty())
+	  m_pointsOnBorder.clear();
+	
 	const unsigned int nbrEdges = getNumberOfEdges();
-	sofa::helper::vector <PointID> pointsBorder;
-	bool test = true;
-    
-    
-	for (unsigned int i = 0; i < nbrEdges; ++i)
+	bool newTriangle = true;
+	bool newEdge = true;
+	bool newPoint = true;
+	
+	
+	for (unsigned int i = 0; i < nbrEdges; i++) 
 	{
-	  if (m_triangleEdgeShell[i].size() == 1)
+	  if (m_triangleEdgeShell[i].size() == 1) // I.e this edge is on a border
 	  {
-	    for(unsigned int j = 0; j< pointsBorder.size(); j++)
+
+	    // --- Triangle case ---
+	    for (unsigned int j = 0; j < m_trianglesOnBorder.size(); j++) // Loop to avoid duplicated indices
 	    {
-	      if (pointsBorder[j] == m_edge[i][0])
+	      if (m_trianglesOnBorder[j] == m_triangleEdgeShell[i][0]) 
 	      {
-		test = false;
+		newTriangle = false;
 		break;
 	      }
 	    }
 
-	    if(test)
+	    if(newTriangle) // If index doesn't already exist, add it to the list of triangles On border.
 	    {
-	      pointsBorder.push_back (m_edge[i][0]);
+	      m_trianglesOnBorder.push_back (m_triangleEdgeShell[i][0]);
 	    }
-	    test = true;
+
+	    
+	    // --- Edge case ---
+	    for (unsigned int j = 0; j < m_edgesOnBorder.size(); j++) // Loop to avoid duplicated indices
+	    {
+	      if (m_edgesOnBorder[j] == i) 
+	      {
+		newEdge = false;
+		break;
+	      }
+	    }
+
+	    if(newEdge) // If index doesn't already exist, add it to the list of edges On border.
+	    {
+	      m_edgesOnBorder.push_back (i);
+	    }
+
+
+	    // --- Point case ---
+	    PointID firstVertex = m_edge[i][0];
+	    for (unsigned int j = 0; j < m_pointsOnBorder.size(); j++) // Loop to avoid duplicated indices
+	    {
+	      if (m_pointsOnBorder[j] == firstVertex) 
+	      {
+		newPoint = false;
+		break;
+	      }
+	    }
+
+	    if(newPoint) // If index doesn't already exist, add it to the list of points On border.
+	    {
+	      m_pointsOnBorder.push_back (firstVertex);
+	    }
+	    
+
+	    newTriangle = true; //reinitialize tests variables
+	    newEdge = true;
+	    newPoint = true;
 	  }
 	}
-    
-	return pointsBorder;
       }
+      
 
-
+      bool ManifoldTriangleSetTopologyContainer::hasBorderElementLists() const
+      {
+	if(!m_trianglesOnBorder.empty() && !m_edgesOnBorder.empty() && !m_pointsOnBorder.empty())
+	  return true;
+	else
+	  return false;
+      }
+      
   
-      sofa::helper::vector< unsigned int > &ManifoldTriangleSetTopologyContainer::getTriangleEdgeShellForModification(const unsigned int i) 
+      sofa::helper::vector< TriangleID > &ManifoldTriangleSetTopologyContainer::getTriangleEdgeShellForModification(const unsigned int i) 
       {
       
 	if(!hasTriangleEdgeShell())	// this method should only be called when the shell array exists
@@ -1221,7 +1188,7 @@ namespace sofa
 
   
 
-      sofa::helper::vector< unsigned int > &ManifoldTriangleSetTopologyContainer::getTriangleVertexShellForModification(const unsigned int i) 
+      sofa::helper::vector< TriangleID > &ManifoldTriangleSetTopologyContainer::getTriangleVertexShellForModification(const unsigned int i) 
       {
   
 	if(!hasTriangleVertexShell())	// this method should only be called when the shell array exists
@@ -1245,7 +1212,7 @@ namespace sofa
 
 
   
-      sofa::helper::vector< unsigned int > &ManifoldTriangleSetTopologyContainer::getEdgeVertexShellForModification(const unsigned int i) 
+      sofa::helper::vector< EdgeID > &ManifoldTriangleSetTopologyContainer::getEdgeVertexShellForModification(const unsigned int i) 
       {
 
 	if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists
@@ -1269,203 +1236,48 @@ namespace sofa
 
 
 
-  
-
-      void ManifoldTriangleSetTopologyContainer::reorderingEdge(const unsigned int edgeIndex)
+      const sofa::helper::vector <TriangleID>& ManifoldTriangleSetTopologyContainer::getTrianglesOnBorder()
       {
-    
-	if(hasEdges() && hasTriangleEdgeShell()) 
+	if (!hasBorderElementLists()) // this method should only be called when border lists exists
 	{
-	  Edge the_edge = m_edge[edgeIndex];
-	  unsigned int triangleIndex, edgeIndexInTriangle;
-	  TriangleEdges TriangleEdgeArray;
-	  Triangle TriangleVertexArray;
-      
-	  if (m_triangleEdgeShell[edgeIndex].empty())
-	  {
 #ifndef NDEBUG
-	    std::cout << "Warning. [ManifoldTriangleSetTopologyContainer::reorderingEdge]: shells required have not beeen created " << std::endl;
-	    return;
+	  sout << "Warning. [ManifoldTriangleSetTopologyContainer::getTrianglesOnBorder] A border element list is empty." << endl;
 #endif
-	  }
-
-	  triangleIndex = m_triangleEdgeShell[edgeIndex][0];
-	  TriangleEdgeArray = getTriangleEdge( triangleIndex);
-	  TriangleVertexArray = m_triangle[triangleIndex];
-      
-	  edgeIndexInTriangle = getEdgeIndexInTriangle(TriangleEdgeArray, edgeIndex);
-      
-	  m_edge[edgeIndex][0] = TriangleVertexArray[ (edgeIndexInTriangle+1)%3 ];
-	  m_edge[edgeIndex][1] = TriangleVertexArray[ (edgeIndexInTriangle+2)%3 ];
-
-	} else {
-#ifndef NDEBUG
-	  std::cout << "Warning. [ManifoldTriangleSetTopologyContainer::reorderingEdge]: shells required have not beeen created " << std::endl;
-#endif
+	  createElementsOnBorder();
 	}
-          
+
+	return m_trianglesOnBorder;
       }
+      
 
-
-      void ManifoldTriangleSetTopologyContainer::reorderingTriangleVertexShell (const unsigned int vertexIndex)
+      const sofa::helper::vector <EdgeID>& ManifoldTriangleSetTopologyContainer::getEdgesOnBorder()
       {
-	std::cout << "ManifoldTriangleSetTopologyContainer::reorderingTriangleVertexShell()" << std::endl;
-	//To be added eventually
-	(void)vertexIndex; 
-      }
-
-
-      void ManifoldTriangleSetTopologyContainer::reorderingEdgeVertexShell (const unsigned int vertexIndex)
-      {
-	std::cout << "ManifoldTriangleSetTopologyContainer::reorderingEdgeVertexShell()" << std::endl;
-	//To be added eventually
-	(void)vertexIndex;
-      }
-
-  
-      void ManifoldTriangleSetTopologyContainer::reorderingTopologyOnROI (const sofa::helper::vector <unsigned int>& listVertex)
-      {
-    
-	//To use this function, all shells sould have already been created.
-
-	//Finding edges concerned
-	for (unsigned int vertexIndex = 0; vertexIndex < listVertex.size(); vertexIndex++)
+	if (!hasBorderElementLists()) // this method should only be called when border lists exists
 	{
-	  sofa::helper::vector <unsigned int>& edgeVertexShell = getEdgeVertexShellForModification( listVertex[vertexIndex] );
-	  sofa::helper::vector <unsigned int>& triangleVertexShell = getTriangleVertexShellForModification( listVertex[vertexIndex] );
-      
-	  sofa::helper::vector <unsigned int>::iterator it;
-	  sofa::helper::vector < sofa::helper::vector <unsigned int> > vertexTofind;
-
-	  sofa::helper::vector <unsigned int> goodEdgeShell;
-	  sofa::helper::vector <unsigned int> goodTriangleShell;
-      
-	  unsigned int firstVertex =0;
-	  unsigned int secondVertex =0;
-	  unsigned int cpt = 0;
-
-      
-	  vertexTofind.resize (triangleVertexShell.size());
-
-      
-	  // Path to follow creation
-	  for (unsigned int triangleIndex = 0; triangleIndex < triangleVertexShell.size(); triangleIndex++)
-	  {
-	    Triangle vertexTriangle = m_triangle[ triangleVertexShell[triangleIndex] ];
-	
-	    vertexTofind[triangleIndex].push_back( vertexTriangle[ ( getVertexIndexInTriangle(vertexTriangle, listVertex[vertexIndex] )+1 )%3 ]);
-	    vertexTofind[triangleIndex].push_back( vertexTriangle[ ( getVertexIndexInTriangle(vertexTriangle, listVertex[vertexIndex] )+2 )%3 ]);
-	  }
-
-	  firstVertex = vertexTofind[0][0];
-	  secondVertex = vertexTofind[0][1];
-
-	  goodTriangleShell.push_back(triangleVertexShell[0]);
-	  goodEdgeShell.push_back(edgeVertexShell[0]);
-
-      
-	  bool testFind = false;
-	  bool reverse = false;
-	  cpt = 0;
-  
-	  // Start following path
-	  for (unsigned int triangleIndex = 1; triangleIndex < triangleVertexShell.size(); triangleIndex++)
-	  {
-	    for (unsigned int pathIndex = 1; pathIndex < triangleVertexShell.size(); pathIndex++)
-	    {
-
-	      if (vertexTofind[pathIndex][0] == secondVertex)
-	      {
-		goodTriangleShell.push_back(triangleVertexShell[pathIndex]);
-
-		int the_edge = getEdgeIndex ( listVertex [vertexIndex], vertexTofind[pathIndex][0]);
-		if (the_edge == -1)
-		  the_edge = getEdgeIndex ( vertexTofind[pathIndex][0], listVertex [vertexIndex]);
-		goodEdgeShell.push_back(the_edge);
-    
-		secondVertex = vertexTofind[pathIndex][1];
-
-		testFind = true;
-		break;
-	      }
-	    }
-
-	    if (!testFind) //tetra has not be found, this mean we reach a border, we reverse the method
-	    {
-	      reverse = true;
-	      break;
-	    }
-	
-	    cpt++;
-	    testFind =false;
-	  }
-
-	  // Reverse path following methode
-	  if(reverse)
-	  {
 #ifndef NDEBUG
-	    std::cout << "shell on border: "<< vertexIndex << std::endl;
+	  sout << "Warning. [ManifoldTriangleSetTopologyContainer::getEdgesOnBorder] A border element list is empty." << endl;
 #endif
-	    for (unsigned int triangleIndex = cpt+1; triangleIndex<triangleVertexShell.size(); triangleIndex++)
-	    {
-	      for (unsigned int pathIndex = 0; pathIndex<triangleVertexShell.size();pathIndex++)
-	      {
-
-		if (vertexTofind[pathIndex][1] == firstVertex)
-		{
-		  goodTriangleShell.insert (goodTriangleShell.begin(),triangleVertexShell[pathIndex]);
-	      
-		  int the_edge = getEdgeIndex ( listVertex [vertexIndex], vertexTofind[pathIndex][1]);
-		  if (the_edge == -1)
-		    the_edge = getEdgeIndex ( vertexTofind[pathIndex][1], listVertex [vertexIndex]);
-		  goodEdgeShell.insert (goodEdgeShell.begin(),the_edge);
-
-		  firstVertex = vertexTofind[pathIndex][0];
-		  break;
-		}
-	      }
-	    }
-	  }
-
-	  for (unsigned int i = 0; i<vertexTofind.size(); i++)
-	  {
-	    for (unsigned int j = vertexIndex; j <listVertex.size(); j++)
-	    {
-	      if (vertexTofind[i][0] == listVertex[j])
-	      {
-		int the_edge = getEdgeIndex ( listVertex [vertexIndex], listVertex [j]);
-
-		if (the_edge == -1)
-		  the_edge = getEdgeIndex ( listVertex [j], listVertex [vertexIndex]);
-	    
-		reorderingEdge (the_edge);
-	      }
-	    }
-	  }
-      
-      
-	  if (edgeVertexShell.size() != triangleVertexShell.size()) //border case
-	  {
-	    unsigned int vertex = vertexTofind[triangleVertexShell.size()-1][1];
-	    int the_edge = getEdgeIndex ( listVertex [vertexIndex], vertex);
-
-	    if (the_edge == -1)
-	      the_edge = getEdgeIndex ( vertex, listVertex [vertexIndex]);
-
-	    goodEdgeShell.push_back(the_edge);
-	
-	    reorderingEdge(the_edge);
-	  }
-
-      
-	  edgeVertexShell = goodEdgeShell;
-	  goodEdgeShell.clear();
-	  vertexTofind.clear();
-
-	  triangleVertexShell = goodTriangleShell;
-	  goodTriangleShell.clear();
+	  createElementsOnBorder();
 	}
+
+	return m_edgesOnBorder;
       }
+
+
+      const sofa::helper::vector <PointID>& ManifoldTriangleSetTopologyContainer::getPointsOnBorder()
+      {
+	if (!hasBorderElementLists()) // this method should only be called when border lists exists
+	{
+#ifndef NDEBUG
+	  sout << "Warning. [ManifoldTriangleSetTopologyContainer::getPointsOnBorder] A border element list is empty." << endl;
+#endif
+	  createElementsOnBorder();
+	}
+	
+	return m_pointsOnBorder;
+      }
+      
+      
   
     } // namespace topology
 

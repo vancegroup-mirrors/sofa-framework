@@ -30,6 +30,7 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/Vec.h>
+#include <sofa/core/objectmodel/DataFileName.h>
 #include <vector>
 
 using namespace sofa::defaulttype;
@@ -72,7 +73,7 @@ protected:
 
 public:
 	Data<unsigned> index;
-	Data< std::string > fileRigidRigidMapping;
+        sofa::core::objectmodel::DataFileName fileRigidRigidMapping;
 	//axis length for display
 	Data<double> axisLength;
 	Data< bool > indexFromEnd;
@@ -96,11 +97,6 @@ public:
 	void init();
 
 	//	void disable(); //useless now that points are saved in a Data
-
-    void parse(core::objectmodel::BaseObjectDescription* arg)
-    {
-      this->Inherit::parse(arg);
-    }
 
 	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 

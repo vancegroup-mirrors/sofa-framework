@@ -297,12 +297,14 @@ public:
     /// @}
 
 
-	virtual sofa::helper::vector <EdgeID> getEdgesBorder() { return sofa::helper::vector<EdgeID>();}
+	// functions returning border elements. To be moved in a mapping.
+	virtual const sofa::helper::vector <TriangleID>& getTrianglesOnBorder();
+	
+	virtual const sofa::helper::vector <EdgeID>& getEdgesOnBorder();
 
-	virtual sofa::helper::vector <TriangleID> getTrianglesBorder() { return sofa::helper::vector<TriangleID>();}
+	virtual const sofa::helper::vector <PointID>& getPointsOnBorder();
 
-
-protected:
+ protected:
 
 	sofa::core::objectmodel::DataFileName fileTopology;
 };

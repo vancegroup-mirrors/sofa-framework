@@ -671,11 +671,6 @@ namespace sofa
 	  force[i] = Deriv();
       }
 
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::parse(core::objectmodel::BaseObjectDescription* arg)
-      {
-	this->Inherit::parse(arg);
-      }
 #ifndef SOFA_FLOAT
 
       template<>

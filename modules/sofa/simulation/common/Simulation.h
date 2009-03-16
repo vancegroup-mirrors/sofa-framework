@@ -29,6 +29,7 @@
 #include <sofa/helper/gl/DrawManager.h>
 #include <sofa/helper/gl/VisualParameters.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
+#include <sofa/core/objectmodel/DataFileName.h>
 
 namespace sofa
 {
@@ -108,7 +109,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
         
 	/// Number of mechanical steps within an animation step
 	Data<unsigned> numMechSteps;
-	Data<std::string> gnuplotDirectory;
+        sofa::core::objectmodel::DataFileName gnuplotDirectory;
 	
 	helper::vector< Node* > instruments;
 	Data< int > instrumentInUse;

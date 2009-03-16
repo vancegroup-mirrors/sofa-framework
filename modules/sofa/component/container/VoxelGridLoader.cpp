@@ -85,7 +85,7 @@ namespace sofa
 		roi.endEdit();
 
 		if(!filename.getValue().empty())
-			image = loadImage(filename.getValue(), res, headerSize.getValue());
+                        image = loadImage(filename.getFullPath(), res, headerSize.getValue());
 
 		if ( image == NULL )
 			return;
@@ -95,7 +95,7 @@ namespace sofa
 #endif
 
 		if(!segmentationFile.getValue().empty())
-			segmentation = loadImage(segmentationFile.getValue(), res, segmentationHeaderSize.getValue());
+                        segmentation = loadImage(segmentationFile.getFullPath(), res, segmentationHeaderSize.getValue());
 
 		reinit();
 	}

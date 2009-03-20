@@ -197,7 +197,7 @@ namespace sofa
 	    //Create the materials
 	    if (!materialFile.getValue().empty())
 	      {
-		currentMaterial = Ogre::MaterialManager::getSingleton().getByName(materialFile.getValue());
+                currentMaterial = Ogre::MaterialManager::getSingleton().getByName(materialFile.getFullPath());
 	      }
 	    if (currentMaterial.isNull())
 	      {

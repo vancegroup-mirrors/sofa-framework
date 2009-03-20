@@ -8,7 +8,7 @@
       <rect>
         <x>0</x>
         <y>0</y>
-        <width>700</width>
+        <width>800</width>
         <height>550</height>
       </rect>
     </property>
@@ -141,12 +141,6 @@
                     <property name="name">
 		      <cstring>SofaComponents</cstring>
                     </property>
-		    <property name="minimumSize">
-		      <size>
-			<width>300</width>
-			<height>700</height>
-		      </size>
-		    </property>
                     <property name="currentIndex">
 		      <number>-1</number>
                     </property>
@@ -193,6 +187,24 @@
     </item>
   </menubar>
   <toolbars>
+    <toolbar dock="2">
+        <property name="name">
+            <cstring>toolBar</cstring>
+        </property>
+        <property name="label">
+            <string>Tools</string>
+        </property>
+        <action name="fileNewTabAction"/>
+        <action name="fileClearTabAction"/>
+        <action name="fileOpenAction"/>
+        <separator/>
+        <action name="editUndoAction"/>
+        <action name="editRedoAction"/>
+        <action name="editCutAction"/>
+        <action name="editCopyAction"/>
+        <action name="editPasteAction"/>
+        <separator/>
+    </toolbar>
   </toolbars>
   <actions>
     <action>

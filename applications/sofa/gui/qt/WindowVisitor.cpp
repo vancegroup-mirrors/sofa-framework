@@ -29,17 +29,23 @@
 #ifdef SOFA_QT4
 #include <Q3Header>
 #include <Q3PopupMenu>
-#include <QMessageBox>
+#include <QMessageBox> 
+#include <QPainter>
+#include <QGridLayout>
 #else
 #include <qheader.h> 
 #include <qpopupmenu.h>
 #include <qmessagebox.h> 
+#include <qpainter.h>
+#include <qlayout.h>
+#include <qsplitter.h>
 #endif
 
 
 #ifndef SOFA_QT4
 typedef QPopupMenu Q3PopupMenu;
 typedef QListViewItem Q3ListViewItem;
+typedef QTable QTableWidget;
 #endif
 namespace sofa
 {
@@ -50,9 +56,10 @@ namespace sofa
     namespace qt
     {
       QPixmap *WindowVisitor::icons[WindowVisitor::OTHER+1];
+
       WindowVisitor::WindowVisitor()
       {
-	      
+
 #ifdef SOFA_QT4
 	connect(graphView, SIGNAL(rightButtonClicked ( Q3ListViewItem *, const QPoint &, int )),  this, SLOT( rightClick(Q3ListViewItem *, const QPoint &, int ))); 
 #else
@@ -111,13 +118,79 @@ namespace sofa
 	    {
 	      img[OTHER]   ->setPixel(x,y,qRgba(0,0,255,255));
 	    }
-
+        
 
         icons[NODE]    = new QPixmap(*img[NODE]   );
         icons[COMMENT] = new QPixmap(*img[COMMENT]);
         icons[COMPONENT] = new QPixmap(*img[COMPONENT]);
         icons[OTHER]   = new QPixmap(*img[OTHER]  );
 
+#ifdef SOFA_QT4
+        QWidget *statsWidget=new QWidget(splitterStats);
+#else
+        QWidget *statsWidget=new QWidget(splitterStats);
+#endif
+
+        QGridLayout *statsLayout=new QGridLayout(statsWidget);
+
+
+        
+        typeOfCharts = new QComboBox(statsWidget);
+        QStringList list;
+        list << "Latest execution"
+             << "Most time-consuming step" 
+             << "Total execution time";
+
+
+#ifdef SOFA_QT4
+        splitterStats->addWidget(statsWidget);
+        typeOfCharts->insertItems(0,list); 
+#else
+        typeOfCharts->insertStringList(list,0);        
+#endif
+
+        chartsComponent=new ChartsWidget(statsWidget);
+        chartsVisitor  =new ChartsWidget(statsWidget);
+
+        statsLayout->addWidget(typeOfCharts,0,0);
+        statsLayout->addWidget(chartsComponent,1,0);
+        statsLayout->addWidget(chartsVisitor,2,0);
+
+        connect(typeOfCharts, SIGNAL(activated(int)), this, SLOT(setCurrentCharts(int)));
+      }
+
+      
+      void WindowVisitor::setCharts(std::vector< dataTime >&latestC, std::vector< dataTime >&maxTC, std::vector< dataTime >&totalC,
+                                             std::vector< dataTime >&latestV, std::vector< dataTime >&maxTV, std::vector< dataTime >&totalV)
+      {
+        componentsTime=latestC;
+        componentsTimeMax=maxTC;
+        componentsTimeTotal=totalC;
+        visitorsTime=latestV;
+        visitorsTimeMax=maxTV;
+        visitorsTimeTotal=totalV;
+        setCurrentCharts(typeOfCharts->currentItem());
+      }
+
+
+
+      void WindowVisitor::setCurrentCharts(int type)
+      {
+        switch(type)
+          {
+          case 0:
+            chartsComponent->setChart(componentsTime, componentsTime.size());
+            chartsVisitor->setChart(visitorsTime, visitorsTime.size());
+            break;
+          case 1:
+            chartsComponent->setChart(componentsTimeMax, componentsTimeMax.size());
+            chartsVisitor->setChart(visitorsTimeMax, visitorsTimeMax.size());
+            break;
+          case 2:
+            chartsComponent->setChart(componentsTimeTotal, componentsTimeTotal.size());
+            chartsVisitor->setChart(visitorsTimeTotal, visitorsTimeTotal.size());
+            break;
+          }        
       }
 
       void WindowVisitor::rightClick(Q3ListViewItem *item, const QPoint &point, int index)
@@ -176,6 +249,7 @@ namespace sofa
 	  }
 	item->setOpen ( true );
       }
+
 
     }
   }

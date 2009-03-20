@@ -22,24 +22,15 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_VISUALMODEL_OGLMODEL_H
-#define SOFA_COMPONENT_VISUALMODEL_OGLMODEL_H
+#ifndef SOFA_COMPONENT_TOPOLOGY_MANIFOLDTRIANGLESETTOPOLOGYALGORITHMS_INL
+#define SOFA_COMPONENT_TOPOLOGY_MANIFOLDTRIANGLESETTOPOLOGYALGORITHMS_INL
 
-#include <string>
-#include <sofa/helper/gl/template.h>
-#include <sofa/helper/gl/Texture.h>
-#include <sofa/core/VisualModel.h>
-#include <sofa/core/componentmodel/behavior/MappedModel.h>
-#include <sofa/component/component.h>
-#include <sofa/defaulttype/Vec.h>
-#include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/component/visualmodel/VisualModelImpl.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif // _WIN32
-
-
+#include <sofa/component/topology/ManifoldTriangleSetTopologyContainer.h>
+#include <sofa/component/topology/ManifoldTriangleSetTopologyModifier.h>
+#include <sofa/component/topology/ManifoldTriangleSetTopologyAlgorithms.h>
+#include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
+#include <algorithm>
+#include <functional>
 
 namespace sofa
 {
@@ -47,59 +38,24 @@ namespace sofa
 namespace component
 {
 
-namespace visualmodel
+namespace topology
 {
+    using namespace sofa::defaulttype;
+    using namespace sofa::core::componentmodel::behavior;
+	
+	template<class DataTypes>
+	void ManifoldTriangleSetTopologyAlgorithms< DataTypes >::init()
+	{
+		TriangleSetTopologyAlgorithms< DataTypes >::init();		
+		this->getContext()->get(m_container);
+		this->getContext()->get(m_modifier);
+		this->getContext()->get(m_geometryAlgorithms);
+	}	
 
-/**
- *  \brief Main class for rendering 3D model in SOFA.
- *
- *  This class implements VisuelModelImpl with rendering functions
- *  using OpenGL.
- *
- */
-
-class SOFA_COMPONENT_VISUALMODEL_API OglModel : public VisualModelImpl
-{
-protected:
-	Data<bool> premultipliedAlpha, useVBO, writeZTransparent;
-    helper::gl::Texture *tex;
-    GLuint vbo, iboTriangles, iboQuads;
-    bool canUseVBO, VBOGenDone, initDone, useTriangles, useQuads;
-    unsigned int oldVerticesSize, oldTrianglesSize, oldQuadsSize;
-    void internalDraw();
-
-public:
-
-    OglModel();
-
-    ~OglModel();
-
-    bool loadTexture(const std::string& filename);
-
-	void initTextures();
-	virtual void initVisual();
-
-	virtual void init() { VisualModelImpl::init(); };
-
-	virtual void updateBuffers();
-	void createVertexBuffer();
-	void createTrianglesIndicesBuffer();
-	void createQuadsIndicesBuffer();
-	void initVertexBuffer();
-	void initTrianglesIndicesBuffer();
-	void initQuadsIndicesBuffer();
-	void updateVertexBuffer();
-	void updateTrianglesIndicesBuffer();
-	void updateQuadsIndicesBuffer();
-};
-
-typedef sofa::defaulttype::Vec<3,GLfloat> GLVec3f;
-typedef sofa::defaulttype::ExtVectorTypes<GLVec3f,GLVec3f> GLExtVec3fTypes;
-
-} // namespace visualmodel
+} // namespace topology
 
 } // namespace component
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENTS_MANIFOLDEDGESETTOPOLOGYALGORITHMS_INL

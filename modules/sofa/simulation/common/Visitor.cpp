@@ -152,10 +152,13 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
 #ifdef DUMP_VISITOR_INFO
           if (printActivated)
           {
-            std::string info;
-            for (unsigned int i=0;i<depthLevel;++i) info += "\t";
-            info+= "<Component type=\"" + obj->getClassName() + "\" name=\"" + obj->getName() + "\">\n";
-            dumpInfo(info);
+
+            std::ostringstream info;
+            for (unsigned int i=0;i<depthLevel;++i) info << "\t";
+
+            
+            info<< "<Component type=\"" << obj->getClassName() << "\" name=\"" << obj->getName() << "\" ptr=\"" << obj << "\" >\n";
+            dumpInfo(info.str());
             Visitor::depthLevel++;
             initComponentTime = CTime::getRefTime();
           }

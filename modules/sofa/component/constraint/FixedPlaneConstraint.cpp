@@ -22,10 +22,12 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_CONSTRAINT_FIXEDPLANECONSTRAINT_CPP
 #include <sofa/component/constraint/FixedPlaneConstraint.inl>
 #include <sofa/core/componentmodel/behavior/Constraint.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -44,17 +46,76 @@ SOFA_DECL_CLASS(FixedPlaneConstraint)
 int FixedPlaneConstraintClass = core::RegisterObject("Project particles on a given plane")
 #ifndef SOFA_FLOAT
 .add< FixedPlaneConstraint<Vec3dTypes> >()
+.add< FixedPlaneConstraint<Rigid3dTypes> >()
 #endif
-#ifndef DOUBLE
+#ifndef SOFA_DOUBLE
 .add< FixedPlaneConstraint<Vec3fTypes> >()
+.add< FixedPlaneConstraint<Rigid3fTypes> >()
 #endif
 ;
+
+
 #ifndef SOFA_FLOAT
+template class SOFA_COMPONENT_CONSTRAINT_API FixedPlaneConstraint<Rigid3dTypes>;
 template class SOFA_COMPONENT_CONSTRAINT_API FixedPlaneConstraint<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
+template class SOFA_COMPONENT_CONSTRAINT_API FixedPlaneConstraint<Rigid3fTypes>;
 template class SOFA_COMPONENT_CONSTRAINT_API FixedPlaneConstraint<Vec3fTypes>;
 #endif
+
+#ifndef SOFA_FLOAT
+template <>
+void FixedPlaneConstraint<Rigid3dTypes>::projectResponse(Rigid3dTypes::VecDeriv& res)
+{
+  const int N=Coord::static_size;
+  Vec<N,Real> dir=direction.getValue().getCenter();
+
+  for (helper::vector< unsigned int > ::const_iterator it = this->indices.getValue().begin(); it != this->indices.getValue().end(); ++it)
+  {
+    res[*it].getVCenter() -= dir*(dir*(res[*it].getVCenter()));
+  }
+}
+
+template <>
+bool FixedPlaneConstraint<Rigid3dTypes>::isPointInPlane(Rigid3dTypes::Coord p)
+{
+  const int N=Coord::static_size;
+  Vec<N,Real> pos = p.getCenter();
+  Real d=pos*direction.getValue().getCenter();
+  if ((d>dmin.getValue())&& (d<dmax.getValue()))
+    return true;
+  else
+    return false;
+}
+#endif
+
+#ifndef SOFA_DOUBLE
+template <>
+void FixedPlaneConstraint<Rigid3fTypes>::projectResponse(VecDeriv& res)
+{
+  const int N=Coord::static_size;
+  Vec<N,Real> dir=direction.getValue().getCenter();
+
+  for (helper::vector< unsigned int > ::const_iterator it = this->indices.getValue().begin(); it != this->indices.getValue().end(); ++it)
+  {
+    res[*it].getVCenter() -= dir*(dir*(res[*it].getVCenter()));
+  }
+}
+
+template <>
+bool FixedPlaneConstraint<Rigid3fTypes>::isPointInPlane(Coord p)
+{
+  const int N=Coord::static_size;
+  Vec<N,Real> pos = p.getCenter();
+  Real d=pos*direction.getValue().getCenter();
+  if ((d>dmin.getValue())&& (d<dmax.getValue()))
+    return true;
+  else
+    return false;
+}
+#endif
+
 } // namespace constraint
 
 } // namespace component

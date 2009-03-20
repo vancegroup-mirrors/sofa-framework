@@ -33,7 +33,7 @@
 #include <sofa/core/objectmodel/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/objectmodel/XDataPtr.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/PointSubset.h>
 
 namespace sofa
@@ -46,10 +46,12 @@ namespace engine
 {
 
 using namespace core::componentmodel::behavior;
+using namespace core::componentmodel::topology;
 using namespace core::objectmodel;
 
-/** Keep fixed all the particles located inside a given box.
-*/
+/** 
+ * This class find all the points located inside a given box.
+ */
 template <class DataTypes>
 class BoxROI : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
 {
@@ -63,9 +65,10 @@ public:
 
     BoxROI();
 
-    ~BoxROI();
+    ~BoxROI(){}
 
     void init();
+
     void reinit();
 
     void update();
@@ -108,9 +111,8 @@ public:
       return DataTypes::Name();
     }
 
-    VecCoord* x0;
     Data< helper::vector<Vec6> > boxes;
-    XDataPtr<DataTypes>* const f_X0;
+    Data<VecCoord> f_X0;
     Data<SetIndex> f_indices;
     Data<double> _drawSize;
     MechanicalState<DataTypes>* mstate;

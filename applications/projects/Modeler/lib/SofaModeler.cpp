@@ -111,6 +111,8 @@ namespace sofa
 
 	runInSofaAction->addTo(runSofaMenu);
 
+	runInSofaAction->addTo(toolBar);
+
 	runSofaMenu->insertItem("Change Sofa Binary...", this, SLOT( changeSofaBinary()));
 	sofaBinary=std::string();
 
@@ -238,7 +240,10 @@ namespace sofa
 	const QRect screen = QApplication::desktop()->availableGeometry(QApplication::desktop()->primaryScreen());
  	this->move(  ( screen.width()- this->width()  ) / 2,  ( screen.height() - this->height()) / 2  );
 	
-	GraphSupport->resize(300,550);
+	GraphSupport->resize(200,550);
+
+        Library->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Minimum);
+        SofaComponents->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Minimum);
       };
 
 
@@ -469,6 +474,10 @@ namespace sofa
 	QString s = sofa::gui::qt::getSaveFileName ( this, QString(path.c_str()), "Scenes (*.scn *.xml)", "save file dialog", "Choose where the scene will be saved" );
 	if ( s.length() >0 )
 	  {
+
+            std::string extension=sofa::helper::system::SetDirectory::GetExtension(s.ascii());
+            if (extension.empty()) s+=QString(".scn");
+
 	    fileSave ( s.ascii() );
 //  	    if (graph->getFilename().empty())
 //  	      {
@@ -818,7 +827,7 @@ namespace sofa
 	unsigned int displayed=0;
 
 	std::multimap< QWidget*, std::pair< QPushButton*, QComboBox*> >::iterator itMap;
-	for (int p=0;p<(int)pages.size();++p)
+	for (unsigned int p=0;p<pages.size();++p)
 	  {
 	    QWidget* page=pages[p].begin()->first;
 	    const unsigned int numComponents=pages[p].size();
@@ -866,8 +875,8 @@ namespace sofa
 	  }
 	
 	displayComponents = displayed;
-	changeLibraryLabel(SofaComponents->currentIndex());
 
+	changeLibraryLabel(SofaComponents->currentIndex());
 	SofaComponents->update();
       }
 

@@ -35,7 +35,7 @@
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/visualmodel/VisualModelImpl.h>
-
+#include <sofa/core/objectmodel/DataFileName.h>
 
 namespace sofa
 {
@@ -70,7 +70,7 @@ protected:
     static int meshName;   
     static int materialName;   
 
-    Data< std::string > materialFile;
+    sofa::core::objectmodel::DataFileName materialFile;
     Data< bool > culling;
 
 

@@ -61,6 +61,12 @@ namespace sofa
 	{
 	  edgeSwapProcess (m_triSwap.getValue());
 	}
+
+	if(m_swapMesh.getValue() && this->getContext()->getAnimate())
+	{
+	  swapRemeshing();
+	}
+	
       }
       
 
@@ -357,7 +363,7 @@ namespace sofa
       
       void ManifoldTriangleSetTopologyModifier::Debug() //To be removed when release is sure
       {
-#ifndef NDEBUG
+	//#ifndef NDEBUG
 	
 	std::cout << "ManifoldTriangleSetTopologyModifier::Debug()" << std::endl;
 
@@ -371,11 +377,19 @@ namespace sofa
 	  std::cout << "edge: " << i << " => Triangles:  " << m_container->getTriangleEdgeShellForModification(i) << std::endl;
 	}
 
-	for (unsigned int i = 0; i < m_container->getNumberOfEdges(); i++)
+	for (int i = 0; i < m_container->getNbPoints(); i++)
 	{
 	  std::cout << "vertex: " << i << " => Edges:  " << m_container->getEdgeVertexShellForModification(i) << std::endl;
 	}
-#endif
+
+	for (unsigned int i = 0; i < m_container->getNumberOfEdges(); i++)
+	{
+	  std::cout << "edge: " << i << " => Vertex:  " << m_container->getEdgeArray()[i] << std::endl;
+	}
+	
+	
+	
+	//#endif
       }
 
 
@@ -619,10 +633,10 @@ namespace sofa
 		cpt++;
 		//		std::cout << "edgeShellTmp[i]: "<< edgeShellTmp[i] << std::endl;
 		//m_triangleEdgeShell:
-		//	sofa::helper::vector <unsigned int> &triangleEdgeShell = m_container->getTriangleEdgeShellForModification(edgeShellTmp[i]);
-		//	unsigned int tmp = triangleEdgeShell[0];
-		//	triangleEdgeShell[0] = triangleEdgeShell[1];
-		//	triangleEdgeShell[1] = tmp;
+		sofa::helper::vector <unsigned int> &triangleEdgeShell = m_container->getTriangleEdgeShellForModification(edgeShellTmp[i]);
+		unsigned int tmp = triangleEdgeShell[0];
+		triangleEdgeShell[0] = triangleEdgeShell[1];
+		triangleEdgeShell[1] = tmp;
 	      }
 	      else
 	      {
@@ -853,7 +867,6 @@ namespace sofa
   
       void ManifoldTriangleSetTopologyModifier::reorderingTopologyOnROI (const sofa::helper::vector <unsigned int>& listVertex)
       {
-    
 	//To use this function, all shells should have already been created.
 
 	//Finding edges concerned
@@ -867,7 +880,7 @@ namespace sofa
 
 	  sofa::helper::vector <unsigned int> goodEdgeShell;
 	  sofa::helper::vector <unsigned int> goodTriangleShell;
-      
+	  
 	  unsigned int firstVertex =0;
 	  unsigned int secondVertex =0;
 	  unsigned int cpt = 0;
@@ -886,12 +899,16 @@ namespace sofa
 	  secondVertex = vertexTofind[0][1];
 
 	  goodTriangleShell.push_back(triangleVertexShell[0]);
-	  goodEdgeShell.push_back(edgeVertexShell[0]);
 
-      
+	  int the_edge = m_container->getEdgeIndex ( listVertex [vertexIndex], vertexTofind[0][0]);
+	  if (the_edge == -1)
+	    the_edge = m_container->getEdgeIndex ( vertexTofind[0][0], listVertex [vertexIndex]);
+	  goodEdgeShell.push_back(the_edge);
+
 	  bool testFind = false;
 	  bool reverse = false;
 	  cpt = 0;
+
 	  // Start following path
 	  for (unsigned int triangleIndex = 1; triangleIndex < triangleVertexShell.size(); triangleIndex++)
 	  {
@@ -921,15 +938,16 @@ namespace sofa
 	    }
 	
 	    cpt++;
-	    testFind =false;
+	    testFind = false;
 	  }
 
 	  // Reverse path following methode
 	  if(reverse)
 	  {
 #ifndef NDEBUG
-	    std::cout << "shell on border: "<< vertexIndex << std::endl;
+	    std::cout << "shell on border: "<< listVertex[vertexIndex] << std::endl;
 #endif
+	    
 	    for (unsigned int triangleIndex = cpt+1; triangleIndex<triangleVertexShell.size(); triangleIndex++)
 	    {
 	      for (unsigned int pathIndex = 0; pathIndex<triangleVertexShell.size();pathIndex++)
@@ -939,7 +957,7 @@ namespace sofa
 		{
 		  goodTriangleShell.insert (goodTriangleShell.begin(),triangleVertexShell[pathIndex]);
 	      
-		  int the_edge = m_container->getEdgeIndex ( listVertex [vertexIndex], vertexTofind[pathIndex][1]);
+		  int the_edge = m_container->getEdgeIndex ( listVertex [vertexIndex], vertexTofind[pathIndex][0]);
 		  if (the_edge == -1)
 		    the_edge = m_container->getEdgeIndex ( vertexTofind[pathIndex][1], listVertex [vertexIndex]);
 		  goodEdgeShell.insert (goodEdgeShell.begin(),the_edge);
@@ -969,18 +987,39 @@ namespace sofa
       
 	  if (edgeVertexShell.size() != triangleVertexShell.size()) //border case
 	  {
-	    unsigned int vertex = vertexTofind[triangleVertexShell.size()-1][1];
-	    int the_edge = m_container->getEdgeIndex ( listVertex [vertexIndex], vertex);
+	    bool edgeFind = false;
+	    int the_edge = -1;
+	    
+	    for (unsigned int i = 0; i < edgeVertexShell.size(); i++)
+	    {
+	      edgeFind = false;
+	      for (unsigned int j = 0; j < goodEdgeShell.size(); j++)
+	      {
+		if (edgeVertexShell[i] == goodEdgeShell[j])
+		{
+		  edgeFind = true;
+		  break;
+		}
+	      }
 
-	    if (the_edge == -1)
-	      the_edge = m_container->getEdgeIndex ( vertex, listVertex [vertexIndex]);
+	      if(!edgeFind)
+	      {
+		the_edge = edgeVertexShell[i];
+		break;
+	      }
+	    }
 
-	    goodEdgeShell.push_back(the_edge);
-	
-	    reorderingEdge(the_edge);
+	    if (the_edge != -1)
+	    {
+	      goodEdgeShell.push_back(the_edge);
+	      reorderingEdge(the_edge);
+	    } else {
+#ifndef NDEBUG
+	      std::cout << "Error: reorderingTopologyOnROI: vertex "<< listVertex[vertexIndex] << "is on the border but last edge not found." <<std::endl;
+#endif
+	    }
 	  }
 
-      
 	  edgeVertexShell = goodEdgeShell;
 	  goodEdgeShell.clear();
 	  vertexTofind.clear();
@@ -991,7 +1030,95 @@ namespace sofa
       }
 
 
+      void ManifoldTriangleSetTopologyModifier::swapRemeshing()
+      {
+	// All the mesh is about to be remeshed by swaping edges. So passing a simple list.
+	sofa::helper::vector <EdgeID> listEdges;
+	for(unsigned int i = 0; i<m_container->getNumberOfEdges(); i++)
+	  listEdges.push_back (i);
+	
+	swapRemeshing(listEdges);
+      }
+
       
+      void ManifoldTriangleSetTopologyModifier::swapRemeshing(sofa::helper::vector <EdgeID>& listEdges)
+      {
+	//sofa::helper::vector <EdgeID> edgeToSwap;
+	bool allDone = false;
+	
+	while (!allDone)
+	{
+	  allDone = true;
+	  for (unsigned int edgeIndex = 0; edgeIndex<listEdges.size() ; edgeIndex++)
+	  {
+	    const sofa::helper::vector <TriangleID>& shell = m_container->getTriangleEdgeShellArray()[listEdges[edgeIndex]];
+	    
+	    if (shell.size() == 2)
+	    {
+	      sofa::helper::vector <unsigned int> listVertex;
+	      const sofa::helper::vector <PointID>& border = m_container->getPointsOnBorder();
+	      TriangleID indexTri1, indexTri2;
+
+	      indexTri1 = shell[0];
+	      indexTri2 = shell[1];
+
+	      int edgeInTri1 = m_container->getEdgeIndexInTriangle ( m_container->getEdgeTriangleShell (indexTri1), listEdges[edgeIndex]);
+	      int edgeInTri2 = m_container->getEdgeIndexInTriangle ( m_container->getEdgeTriangleShell (indexTri2), listEdges[edgeIndex]);
+	      Triangle vertexTriangle1 = m_container->getTriangleArray()[indexTri1];
+	      Triangle vertexTriangle2 = m_container->getTriangleArray()[indexTri2];
+
+	      listVertex.push_back( vertexTriangle1[edgeInTri1] );
+	      listVertex.push_back( vertexTriangle2[edgeInTri2] );
+	      listVertex.push_back( vertexTriangle1[ (edgeInTri1+1)%3 ] );
+	      listVertex.push_back( vertexTriangle2[ (edgeInTri2+1)%3 ] );
+
+	      int sum = 0;
+	      
+	      sum = (m_container->getTriangleVertexShellArray()[ listVertex[0] ]).size();
+	      sum += (m_container->getTriangleVertexShellArray()[ listVertex[1] ]).size();
+	      sum -= (m_container->getTriangleVertexShellArray()[ listVertex[2] ]).size();
+	      sum -= (m_container->getTriangleVertexShellArray()[ listVertex[3] ]).size();
+
+	      for (unsigned int i = 0; i <2; i++)
+	      {
+		for (unsigned int j = 0; j <border.size(); j++)
+		{
+		  if(listVertex[i] == border[j])
+		  {
+		    sum+=2;
+		    break;
+		  }
+		}
+	      }
+	      
+	      for (unsigned int i = 2; i <4; i++)
+	      {
+		for (unsigned int j = 0; j <border.size(); j++)
+		{
+		  if(listVertex[i] == border[j])
+		  {
+		    sum-=2;
+		    break;
+		  }
+		}
+	      }
+	      
+	      if (sum < -2)
+	      {
+		//edgeToSwap.push_back (listEdges[edgeIndex]);
+		edgeSwap (listEdges[edgeIndex]);
+		propagateTopologicalChanges();
+		allDone = false;
+	      }
+	    }
+	  }
+	  	  
+	  //edgeSwapProcess (edgeToSwap);
+	  //edgeToSwap.clear();
+	}
+      }
+      
+            
      
     } // namespace topology
     

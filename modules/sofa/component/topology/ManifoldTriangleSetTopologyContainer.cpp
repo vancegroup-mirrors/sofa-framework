@@ -445,9 +445,8 @@ namespace sofa
 
 
   
-      void ManifoldTriangleSetTopologyContainer::createTriangleVertexShellArray ()
-      {
- 
+  void ManifoldTriangleSetTopologyContainer::createTriangleVertexShellArray ()
+  {
 	if(!hasTriangles()) // this method should only be called when triangles exist
 	{
 #ifndef NDEBUG
@@ -501,7 +500,7 @@ namespace sofa
 	  }
 	}
 
-    
+	// General loop for m_triangleVertexShell creation
 	for (unsigned int vertexIndex = 0; vertexIndex < nbrVertices; ++vertexIndex)
 	{
 	  it1 = map_NextVertex[vertexIndex].begin();
@@ -511,26 +510,26 @@ namespace sofa
 	  {
 	    it2 = map_PreviousVertex[vertexIndex].find((*it1).first);
 
-	    if (it2 == map_PreviousVertex[vertexIndex].end())
+	    if (it2 == map_PreviousVertex[vertexIndex].end()) //it2 didn't find the it1 correspondant element in his map, means it's a border
 	    {
 	      firstVertex = (*it1).first;
 	      break;
-	    }
+	    }//else we are not on a border. we keep the initialised value for firstVertex
 	  }
 	  m_triangleVertexShell[vertexIndex].push_back(map_Triangles[vertexIndex][firstVertex]);
 	  cpt=1;
 
 	  for (unsigned int i = 1; i < map_NextVertex[vertexIndex].size(); ++i)
 	  {
-	    it2 = map_NextVertex[vertexIndex].find(firstVertex);
-			
-	    if ((*it2).first == (*it1).first && it2 == map_NextVertex[vertexIndex].end())
+		it2 = map_NextVertex[vertexIndex].find(firstVertex);
+		
+		if (((*it2).first == firstVertex) && (it2 == map_NextVertex[vertexIndex].end()))
 	    {
 	      // Contour has been done without reaching the end of the map
 	      break;
 	    }
-
 	    firstVertex = (*it2).second;
+		
 	    m_triangleVertexShell[vertexIndex].push_back(map_Triangles[vertexIndex][firstVertex]);
 	    cpt++;
 	  }
@@ -543,12 +542,10 @@ namespace sofa
 #endif
 	  }
 	}
-
 	map_Triangles.clear();
 	map_NextVertex.clear();
 	map_PreviousVertex.clear();
-
-      }
+  }
 
 
 	
@@ -661,7 +658,7 @@ namespace sofa
 
 
   
-      TriangleID ManifoldTriangleSetTopologyContainer::getNextTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
+      int ManifoldTriangleSetTopologyContainer::getNextTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
       {
     
 	if(!hasTriangleVertexShell())	// this method should only be called when the shell array exists
@@ -734,7 +731,7 @@ namespace sofa
 
   
   
-      TriangleID ManifoldTriangleSetTopologyContainer::getPreviousTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
+      int ManifoldTriangleSetTopologyContainer::getPreviousTriangleVertexShell(PointID vertexIndex, TriangleID triangleIndex)
       {
     
 	if(!hasTriangleVertexShell())	// this method should only be called when the shell array exists
@@ -807,7 +804,7 @@ namespace sofa
   
 
   
-      TriangleID ManifoldTriangleSetTopologyContainer::getOppositeTriangleEdgeShell(EdgeID edgeIndex, TriangleID triangleIndex)
+      int ManifoldTriangleSetTopologyContainer::getOppositeTriangleEdgeShell(EdgeID edgeIndex, TriangleID triangleIndex)
       {
 
 	if(!hasTriangleEdgeShell())	// this method should only be called when the shell array exists
@@ -872,7 +869,7 @@ namespace sofa
 
 
   
-      EdgeID ManifoldTriangleSetTopologyContainer::getNextEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
+      int ManifoldTriangleSetTopologyContainer::getNextEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
       {
     
 	if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists
@@ -968,7 +965,7 @@ namespace sofa
 	
 
 
-      EdgeID ManifoldTriangleSetTopologyContainer::getPreviousEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
+      int ManifoldTriangleSetTopologyContainer::getPreviousEdgeVertexShell(PointID vertexIndex, EdgeID edgeIndex)
       {
 
 	if(!hasEdgeVertexShell())	// this method should only be called when the shell array exists

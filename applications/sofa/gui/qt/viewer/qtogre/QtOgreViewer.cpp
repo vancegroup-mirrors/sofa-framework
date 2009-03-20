@@ -800,7 +800,7 @@ namespace sofa
 
 	  void QtOgreViewer::moveRayPickInteractor(int eventX, int eventY)
 	  {
-	    sofa::defaulttype::Vec3d  p0, px, py, pz;
+	    sofa::defaulttype::Vec3d  p0, px, py, pz, px1, py1;
 	    GLint viewPort[4] = {0,0,width(), height()};
 	    Ogre::Matrix4 modelViewMatrix = mCamera->getViewMatrix().transpose();
 	    Ogre::Matrix4 projectionMatrix = mCamera->getProjectionMatrix();
@@ -826,15 +826,23 @@ namespace sofa
 	    gluUnProject(eventX+1, viewPort[3]-1-(eventY),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px[0]), &(px[1]), &(px[2]));
 	    gluUnProject(eventX, viewPort[3]-1-(eventY+1),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py[0]), &(py[1]), &(py[2]));
 	    gluUnProject(eventX, viewPort[3]-1-(eventY),  1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(pz[0]), &(pz[1]), &(pz[2]));
-
+	    gluUnProject(eventX+1, viewPort[3]-1-(eventY), 0.1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px1[0]), &(px1[1]), &(px1[2]));
+	    gluUnProject(eventX, viewPort[3]-1-(eventY+1), 0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py1[0]), &(py1[1]), &(py1[2]));
+ 
 
   	    if ( pickDone)
   	      pz*=-1;
+
+	    px1 -= pz;
+	    py1 -= pz;
 
 	    px -= p0;
 	    py -= p0;
 	    pz -= p0;
 
+	    double r0 = sqrt(px.norm2() + py.norm2());
+	    double r1 = sqrt(px1.norm2() + py1.norm2());
+	    r1 = r0 + (r1-r0) / pz.norm();
 	    px.normalize();
 	    py.normalize();
 	    pz.normalize();
@@ -856,8 +864,8 @@ namespace sofa
 
 	    sofa::defaulttype::Mat3x3d mat; mat = transform;
 	    sofa::defaulttype::Quat q; q.fromMatrix(mat);
-	    //std::cout << p0[0]<<' '<<p0[1]<<' '<<p0[2] << " -> " << pz[0]<<' '<<pz[1]<<' '<<pz[2] << std::endl;
 	    interactor->newPosition(p0, q, transform);
+	    interactor->setRayRadius(r0, r1);
 	  }
 
 	  void QtOgreViewer::removeViewerTab(QTabWidget *t)

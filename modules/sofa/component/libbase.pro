@@ -68,6 +68,8 @@ HEADERS += component.h \
            topology/ManifoldEdgeSetTopologyAlgorithms.inl \
            topology/ManifoldTriangleSetTopologyContainer.h \
            topology/ManifoldTriangleSetTopologyModifier.h \
+           topology/ManifoldTriangleSetTopologyAlgorithms.h \
+           topology/ManifoldTriangleSetTopologyAlgorithms.inl \
            topology/ManifoldTetrahedronSetTopologyContainer.h \
            topology/MeshTopology.h \
            topology/Mesh2PointTopologicalMapping.h \
@@ -153,6 +155,7 @@ SOURCES +=  \
            topology/ManifoldEdgeSetTopologyModifier.cpp \
            topology/ManifoldTriangleSetTopologyContainer.cpp \
            topology/ManifoldTriangleSetTopologyModifier.cpp \
+           topology/ManifoldTriangleSetTopologyAlgorithms.cpp \
            topology/ManifoldTetrahedronSetTopologyContainer.cpp \
            topology/MeshTopology.cpp \
            topology/Mesh2PointTopologicalMapping.cpp \

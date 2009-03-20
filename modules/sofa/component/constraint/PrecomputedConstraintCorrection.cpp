@@ -36,7 +36,7 @@ namespace constraint
 
 SOFA_DECL_CLASS(PrecomputedConstraintCorrection)
 
-int ContactCorrectionClass = core::RegisterObject("")
+int ContactCorrectionClass = core::RegisterObject("Component computing contact forces within a simulated body using the compliance method.")
 #ifndef SOFA_FLOAT
     .add< PrecomputedConstraintCorrection<Vec3dTypes> >()
 //     .add< PrecomputedConstraintCorrection<Vec2dTypes> >()

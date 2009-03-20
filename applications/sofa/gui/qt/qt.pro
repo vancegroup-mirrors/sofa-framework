@@ -54,6 +54,7 @@ HEADERS += viewer/SofaViewer.h \
            WindowVisitor.h \
            FileManagement.h \
            SofaPluginManager.h \
+           PieWidget.h \
            ImageQt.h
 
 SOURCES += Main.cpp \
@@ -74,6 +75,7 @@ SOURCES += Main.cpp \
            WindowVisitor.cpp \
            FileManagement.cpp \
            SofaPluginManager.cpp \
+           PieWidget.cpp \
            ImageQt.cpp
 
 
@@ -92,10 +94,12 @@ contains( DEFINES, SOFA_GUI_QGLVIEWER){
 #  QGLViewer
 ########################################################################
 	win32{
-	  LIBS += $$SOFA_EXT_LIBS -lQGLViewer2
+# why do we include lQGLViewer2 whereas in extlibs, QGLviewer creates  llQGLViewer$$LIBSUFFIX ???
+#	  LIBS += $$SOFA_EXT_LIBS -lQGLViewer2$$LIBSUFFIX
+	  LIBS += $$SOFA_EXT_LIBS -lQGLViewer$$LIBSUFFIX
 	}
 	else{
-	  LIBS += $$SOFA_EXT_LIBS -lQGLViewer
+	  LIBS += $$SOFA_EXT_LIBS -lQGLViewer$$LIBSUFFIX
 	}
 	
 	SOURCES += viewer/qgl/QtGLViewer.cpp

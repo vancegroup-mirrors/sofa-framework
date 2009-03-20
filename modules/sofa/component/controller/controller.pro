@@ -16,31 +16,27 @@ HEADERS += initController.h \
            EdgeSetController.h \
            EdgeSetController.inl \
            MechanicalStateController.h \
-           MechanicalStateController.inl
+           MechanicalStateController.inl \
+           ForceFeedback.h \
+           NullForceFeedback.h \
+           EnslavementForceFeedback.h \
+           LCPForceFeedback.h
 
 SOURCES += initController.cpp \
            ArticulatedHierarchyController.cpp \
            ArticulatedHierarchyBVHController.cpp \
            Controller.cpp \
            EdgeSetController.cpp \
-           MechanicalStateController.cpp
-
-
+           MechanicalStateController.cpp \
+           NullForceFeedback.cpp \
+           EnslavementForceFeedback.cpp \
+           LCPForceFeedback.cpp
 
 contains(DEFINES,SOFA_HAVE_SENSABLE){
-
-    HEADERS +=  OmniDriver.h \
-           	    ForceFeedback.h \
-           	    NullForceFeedback.h \
-           	    EnslavementForceFeedback.h \
-		        LCPForceFeedback.h
-
-    SOURCES +=  OmniDriver.cpp \
-           	    NullForceFeedback.cpp \
-           	    EnslavementForceFeedback.cpp \
-		        LCPForceFeedback.cpp
-
+    HEADERS +=  OmniDriver.h
+    SOURCES +=  OmniDriver.cpp
 }
+
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX

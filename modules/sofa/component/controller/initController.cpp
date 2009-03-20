@@ -56,11 +56,10 @@ SOFA_LINK_CLASS(ArticulatedHierarchyController)
 SOFA_LINK_CLASS(ArticulatedHierarchyBVHController)
 SOFA_LINK_CLASS(EdgeSetController)
 SOFA_LINK_CLASS(MechanicalStateController)
-
-#ifdef SOFA_HAVE_SENSABLE
-SOFA_LINK_CLASS(OmniDriver)
 SOFA_LINK_CLASS(NullForceFeedback)
 SOFA_LINK_CLASS(EnslavementForceFeedback)
 SOFA_LINK_CLASS(LCPForceFeedback)
 
+#ifdef SOFA_HAVE_SENSABLE
+SOFA_LINK_CLASS(OmniDriver)
 #endif //SOFA_HAVE_SENSABLE

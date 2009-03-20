@@ -25,27 +25,15 @@
 #ifndef SOFA_COMPONENT_ODESOLVER_OMNISOLVER_H
 #define SOFA_COMPONENT_ODESOLVER_OMNISOLVER_H
 
-#include <sofa/core/componentmodel/behavior/OdeSolver.h>
-#include <sofa/component/odesolver/OdeSolverImpl.h>
-#include <sofa/simulation/common/Node.h>
-#include <sofa/component/linearsolver/NewMatMatrix.h>
-#include <sofa/component/linearsolver/NewMatVector.h>
-#include <sofa/component/container/MechanicalObject.h>
-#include <sofa/defaulttype/VecTypes.h>
-#include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/component/container/ArticulatedHierarchyContainer.h>
-
-#include <sofa/component/controller/ForceFeedback.h>
-
-#include <sofa/core/componentmodel/behavior/BaseController.h>
 //Sensable include
 #include <HD/hd.h>
-#include <HDU/hduVector.h>
-#include <HDU/hduError.h>
 #include <sofa/helper/LCPcalc.h>
+
+#include <sofa/core/componentmodel/behavior/BaseController.h>
 
 namespace sofa
 {
+	namespace simulation { class Node; }
 
 namespace component
 {
@@ -53,17 +41,17 @@ namespace component
 namespace controller
 {
 
+class ForceFeedback;
 
 using namespace sofa::defaulttype;
-using namespace sofa::component::linearsolver;
 using core::objectmodel::Data;
 
 /** Holds data retrieved from HDAPI. */
 typedef struct {
+		HHD id;
         int nupdates;
-        HDboolean m_buttonState1;       /* Has the device button has been pressed. */
-        HDboolean m_buttonState2;       /* Has the device button has been pressed. */
-        hduVector3Dd m_devicePosition; /* Current device coordinates. */
+        int m_buttonState;					/* Has the device button has been pressed. */
+        // hduVector3Dd m_devicePosition;	/* Current device coordinates. */
         HDErrorInfo m_error;
         Vec3d pos;
         Quat quat;
@@ -97,15 +85,17 @@ public:
         Data<Vec3d> orientation;
         Data<bool> permanent;
 
-        simulation::Node *context; //->propagateEvent()
-        //ForceFeedback* forceFeedback;
-        OmniData* data;
-        void init();
-        void reinit();
-        void setForceFeedback(ForceFeedback* ff);
+        OmniData	data;
+
         OmniDriver();
-        ~OmniDriver();
+        virtual ~OmniDriver();
+
+		virtual void init();
+        void reinit();
         void cleanup();
+
+        void setForceFeedback(ForceFeedback* ff);
+
 private:
         void handleEvent(core::objectmodel::Event *);
 };

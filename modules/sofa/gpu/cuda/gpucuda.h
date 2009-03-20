@@ -22,64 +22,15 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_LINEARSOLVER_SparseCholeskySolver_H
-#define SOFA_COMPONENT_LINEARSOLVER_SparseCholeskySolver_H
+#ifndef SOFA_GPU_CUDA_GPUCUDA_H
+#define SOFA_GPU_CUDA_GPUCUDA_H
 
-#include <sofa/core/componentmodel/behavior/LinearSolver.h>
-#include <sofa/component/linearsolver/MatrixLinearSolver.h>
-#include <sofa/simulation/common/MechanicalVisitor.h>
-#include <sofa/component/linearsolver/FullMatrix.h>
-#include <sofa/component/linearsolver/SparseMatrix.h>
-#include <sofa/component/linearsolver/CompressedRowSparseMatrix.h>
-#include <sofa/component/component.h>
-#include <sofa/helper/map.h>
-#include <math.h>
-#include <csparse.h>
+#include <sofa/helper/system/config.h>
 
-namespace sofa {
-
-namespace component {
-
-namespace linearsolver {
-
-/// Linear system solver using the conjugate gradient iterative algorithm
-template<class TMatrix, class TVector>
-class SparseCholeskySolver : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>, public virtual sofa::core::objectmodel::BaseObject {
-public:
-    typedef TMatrix Matrix;
-    typedef TVector Vector;
-    typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;
-    typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
-
-    Data<bool> f_verbose;
-    Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
-
-    SparseCholeskySolver();
-    ~SparseCholeskySolver();
-    void solve (Matrix& M, Vector& x, Vector& b);
-    void invert(Matrix& M);
-
-    bool readFile(std::istream& in);
-    bool writeFile(std::ostream& out);
-
-private :
-	css *S;
-	csn *N;
-	cs A;
-	helper::vector<int> A_i, A_p;
-	helper::vector<double> A_x;
-	double * tmp;
-};
-
-#if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_LINEARSOLVER)
-extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseCholeskySolver< CompressedRowSparseMatrix<double>,FullVector<double> >;
+#ifdef SOFA_BUILD_GPU_CUDA
+#  define SOFA_GPU_CUDA_API SOFA_EXPORT_DYNAMIC_LIBRARY
+#else
+#  define SOFA_GPU_CUDA_API SOFA_IMPORT_DYNAMIC_LIBRARY
 #endif
-
-} // namespace linearsolver
-
-} // namespace component
-
-} // namespace sofa
-
 
 #endif

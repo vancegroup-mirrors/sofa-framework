@@ -85,10 +85,19 @@ void TopologicalChangeManager::removeItemsFromTriangleModel(sofa::component::col
 		for (unsigned int i=0;i<indices.size();++i)
 			items.insert(topo_curr->getTetraTriangleShell(indices[i])[0]);
 	}
+	else if (topo_curr->getNbHexas() > 0)
+	{ // get the index of the hexa linked to each quad
+		for (unsigned int i=0;i<indices.size();++i)
+			items.insert(topo_curr->getHexaQuadShell(indices[i]/2)[0]);
+	}
 	else
 	{
+	    int nbt = topo_curr->getNbTriangles();
 		for (unsigned int i=0;i<indices.size();++i)
-			items.insert(indices[i]);
+		{
+		    items.insert(indices[i] < nbt ? indices[i] : (indices[i]+nbt)/2);
+		    //std::cout << indices[i] <<std::endl;
+		}
 	}
 
 	bool is_topoMap = true;
@@ -114,7 +123,7 @@ void TopologicalChangeManager::removeItemsFromTriangleModel(sofa::component::col
           {
             unsigned int ind_glob = topoMap->getGlobIndex(*it);
             unsigned int ind = topoMap->getFromIndex(ind_glob);
-            //sout << *it << " -> "<<ind_glob << " -> "<<ind<<sendl;
+	    //std::cout << *it << " -> "<<ind_glob << " -> "<<ind<<std::endl;
             items.insert(ind);
           }
         }
@@ -126,7 +135,7 @@ void TopologicalChangeManager::removeItemsFromTriangleModel(sofa::component::col
             topoMap->getFromIndex( indices, *it);
             for( vector<unsigned int>::const_iterator itIndices = indices.begin(); itIndices != indices.end(); itIndices++)
             {
-              //std::cout << *it << " -> " << *itIndices << std::endl;
+	      //std::cout << *it << " -> " << *itIndices << std::endl;
               items.insert( *itIndices );
             }
           }

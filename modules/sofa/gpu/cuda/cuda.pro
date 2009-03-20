@@ -2,15 +2,16 @@
 
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+DEFINES += SOFA_BUILD_GPU_CUDA
 include($${SOFA_DIR}/sofa.cfg)
 
 TARGET = sofagpucuda$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
-#CONFIG -= dynamiclib
-#CONFIG += staticlib
+
+CONFIG -= staticlib
+CONFIG += dll
+
 LIBS += $$SOFA_FRAMEWORK_LIBS
-LIBS += -lsofasimulation$$LIBSUFFIX
-LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
@@ -35,6 +36,7 @@ LIBS += -lsofacomponent$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS
 
 HEADERS += mycuda.h \
+           gpucuda.h \
            CudaTypes.h \
 	   CudaTypesBase.h \
            CudaCommon.h \
@@ -79,6 +81,7 @@ HEADERS += mycuda.h \
            CudaTetrahedralVisualModel.inl
 
 SOURCES += mycuda.cpp \
+           CudaBoxROI.cpp  \
            CudaMechanicalObject.cpp \
            CudaUniformMass.cpp \
            CudaFixedConstraint.cpp \
@@ -119,4 +122,3 @@ CUDA_SOURCES += mycuda.cu \
            CudaPenalityContactForceField.cu \
            CudaTestForceField.cu \
            CudaVisualModel.cu
-

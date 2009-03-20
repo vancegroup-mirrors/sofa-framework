@@ -468,7 +468,7 @@ namespace sofa
 	//Temporary objects
 	Triangle vertexTriangle;
 	unsigned int cpt;
-	int firstVertex;
+	unsigned int firstVertex;
 	
 	//Temporary containers
 	sofa::helper::vector< std::map<unsigned int, unsigned int> > map_Triangles;

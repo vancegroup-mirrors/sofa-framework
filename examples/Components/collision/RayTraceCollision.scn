@@ -263,6 +263,6 @@
 		<Object type="Mesh"  />
 		<Object type="MechanicalObject" dy="-10" scale="0.5" />
 		<Object type="TriangleOctree" name="Floor" simulated="0" moving="0" />
-		<Object type="OglModel" name="FloorV" fileMesh="mesh/floor2b.obj" scale="0.5" notexturename="textures/floor.bmp" color="lightgray" dy="-10" />
+		<Object type="OglModel" name="FloorV" fileMesh="mesh/floor2b.obj" scale="0.5" notexturename="textures/floor.png" color="lightgray" dy="-10" />
 	</Node>
 </Node>

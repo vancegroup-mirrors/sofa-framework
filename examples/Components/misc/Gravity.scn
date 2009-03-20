@@ -70,7 +70,7 @@
 		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
 		<Object type="Line" name="Floor" simulated="0" moving="0" />
 		<Object type="Point" name="Floor" simulated="0" moving="0" />
-		<Object type="OglModel" name="FloorV" fileMesh="mesh/floor2b.obj" scale="0.5" texturename="textures/floor.bmp" rx="180" dy="30"
+		<Object type="OglModel" name="FloorV" fileMesh="mesh/floor2b.obj" scale="0.5" texturename="textures/floor.png" rx="180" dy="30"
 			material="Default 
 				  Diffuse 1      0.75 0.75 0.75 0.4 
 				  Ambient 1      0.2 0.2 0.2 0.4 
@@ -86,7 +86,7 @@
 		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
 		<Object type="Line" name="Floor" simulated="0" moving="0" />
 		<Object type="Point" name="Floor" simulated="0" moving="0" />
-		<Object type="OglModel" name="FloorV" fileMesh="mesh/floor2b.obj" scale="0.5" texturename="textures/floor.bmp"  dy="-30"
+		<Object type="OglModel" name="FloorV" fileMesh="mesh/floor2b.obj" scale="0.5" texturename="textures/floor.png"  dy="-30"
 			material="Default 
 				  Diffuse 1      0.75 0.75 0.75 0.4 
 				  Ambient 1      0.2 0.2 0.2 0.4 

@@ -31,10 +31,6 @@ contains(DEFINES,SOFA_GUI_QGLVIEWER){
 	SUBDIRS += extlibs/libQGLViewer/QGLViewer
 }
 
-contains(DEFINES,SOFA_HAVE_COLLADADOM){
-	SUBDIRS += extlibs/colladadom/dom/colladadom.pro
-}
-
 # PML
 	SUBDIRS += extlibs/PML
 	SUBDIRS += extlibs/LML

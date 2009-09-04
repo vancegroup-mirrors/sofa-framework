@@ -32,6 +32,10 @@
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/component/topology/PointData.h>
 
+//If a table has higher than MAX_NUM_ELEM, its data won't be loaded at the creation of the window
+//user has to click on the button update to see the content
+#define MAX_NUM_ELEM 100
+
 namespace sofa
 {
 
@@ -287,9 +291,12 @@ public:
 
     QSpinBox* wSize;
     Q3Table* wTable;
-    table_data_widget_container() : wSize(NULL), wTable(NULL) {}
+    QPushButton* wDisplay;
+
+    table_data_widget_container() : wSize(NULL), wTable(NULL), wDisplay(NULL) {}
     int rows;
     int cols;
+
     void setRowHeader(int r, const std::string& s)
     {
 	if (FLAGS & TABLE_HORIZONTAL)
@@ -307,7 +314,7 @@ public:
     void setCellText(int r, int c, const std::string& s)
     {
 	if (FLAGS & TABLE_HORIZONTAL)
-	    wTable->setText(c, r, QString(s.c_str()));
+            wTable->setText(c, r, QString(s.c_str()));
 	else
 	    wTable->setText(r, c, QString(s.c_str()));
     }
@@ -339,47 +346,40 @@ public:
     {
 	s = getCellText(r,c);
     }
+
+
+
     template<class Dialog, class Slot>
     bool createWidgets(Dialog* dialog, Slot s, QWidget* parent, const data_type& d, bool readOnly)
-    {
-	rows = rhelper::size(d);
-	if (rows > 0)
+    {        
+        rows = 0;  
+        int dataRows = rhelper::size(d);
+
+	if (dataRows > 0)
 	    cols = vhelper::size(*rhelper::get(d,0));
 	else
 	    cols = vhelper::size(row_type());
 	wSize = new QSpinBox(0, INT_MAX, 1, parent);
 	if (FLAGS & TABLE_HORIZONTAL)
-	    wTable = new Q3Table(cols, rows, parent);
+	    wTable = new Q3Table(cols, 0, parent);
 	else
-	    wTable = new Q3Table(rows, cols, parent);
-	wSize->setValue(rows);
-	for (int y=0; y<rows; ++y)
-	{
-	    const char* h = rhelper::header(d,y);
-	    if (h && *h)
-		setRowHeader(y,h);
-	    else
-	    {
-		std::ostringstream o;
-		o << y;
-		setRowHeader(y,o.str());
-	    }
-	}
-	for (int x=0; x<cols; ++x)
-	{
-	    const char* h = (rows > 0) ? vhelper::header(*rhelper::get(d,0),x) : vhelper::header(row_type(),x);
-	    if (h && *h)
-		setColHeader(x,h);
-	    else
-	    {
-		std::ostringstream o;
-		o << x;
-		setColHeader(x,o.str());
-	    }
-	}
-	for (int y=0; y<rows; ++y)
-	    for (int x=0; x<cols; ++x)
-		setCell(y, x, *vhelper::get(*rhelper::get(d,y),x));
+	    wTable = new Q3Table(0, cols, parent);
+
+        wDisplay = new QPushButton( QString("Click to display the values"), parent);
+        wDisplay->setToggleButton(true);
+        wDisplay->setOn(dataRows < MAX_NUM_ELEM && dataRows != 0 );
+
+        updateVisibilityTable();
+
+        wSize->setValue(dataRows);
+
+        if (isDisplayed()) 
+          {
+            processTableModifications(d);
+            fillTable(d);
+            rows = dataRows;
+          }
+
 
 	if (readOnly)
 	{
@@ -398,6 +398,8 @@ public:
 	    }
 	    dialog->connect(wTable, SIGNAL( valueChanged(int,int) ), dialog, s);
 	}
+        dialog->connect(wDisplay, SIGNAL( clicked() ), dialog, s);
+
 	return true;
     }
     void setReadOnly(bool readOnly)
@@ -405,111 +407,169 @@ public:
 	wSize->setEnabled(!readOnly);
 	wTable->setEnabled(!readOnly);
     }
+
+    bool isDisplayed()
+    {
+      return (wDisplay->isOn());
+    }
+
+    void updateVisibilityTable()
+    {
+      setDisplayed(wDisplay->isOn());
+    }
+
+    void setDisplayed( bool disp)
+    {
+      if (disp)
+      {
+        wDisplay->setText(QString("Click to hide the values"));
+      }
+      else
+      {
+        wDisplay->setText(QString("Click to display the values"));
+      }
+
+      wTable->setShown(disp);
+    }
+
     void readFromData(const data_type& d)
     {
-	int newRows = rhelper::size(d);
-	int newCols;
-	if (rows > 0)
-	    newCols = vhelper::size(d[0]);
-	else
-	    newCols = vhelper::size(row_type());
-	if (newRows != rows)
-	{
-	    wSize->setValue(newRows);
-	    if (FLAGS & TABLE_HORIZONTAL)
-		wTable->setNumCols(newRows);
-	    else
-		wTable->setNumRows(newRows);
-	    rows = newRows;
-	}
-	if (newCols != cols)
-	{
-	    if (FLAGS & TABLE_HORIZONTAL)
-		wTable->setNumRows(newCols);
-	    else
-		wTable->setNumCols(newCols);
-	    cols = newCols;
-	}
-	for (int y=0; y<rows; ++y)
-	    for (int x=0; x<cols; ++x)
-		setCell(y, x, *vhelper::get(*rhelper::get(d,y),x));
+      int newRows = rhelper::size(d);
+      wSize->setValue(newRows);
+      
+      if (isDisplayed())
+        {
+          int newCols;
+          if (rows > 0)
+            newCols = vhelper::size(d[0]);
+          else
+            newCols = vhelper::size(row_type());
+          
+          processTableModifications(d);
+          fillTable(d);
+          rows=newRows;
+        }
     }
     void writeToData(data_type& d)
     {
-	if (!(FLAGS & TABLE_FIXEDSIZE))
-	{
-	    int oldRows = rhelper::size(d);
-	    if (rows != oldRows)
-	    {
-		rhelper::resize(rows, d);
-	    }
-	    int newRows = rhelper::size(d);
-	    if (rows != newRows)
-	    { // resize failed -> conform to the real size
-		std::cout << "Resize to " << rows << " failed. New size is " << newRows << std::endl;
-		wSize->setValue(newRows);
-		if (FLAGS & TABLE_HORIZONTAL)
-		    wTable->setNumCols(newRows);
-		else
-		    wTable->setNumRows(newRows);
-		rows = newRows;
-	    }
-	    else
-	    {
-		std::cout << "Resize to " << rows << " succeeded." << std::endl;
-	    }
-	}
-	for (int y=0; y<rows; ++y)
-	{
-	    row_type r = *rhelper::get(d,y);
-	    for (int x=0; x<cols; ++x)
-	    {
-		value_type v = *vhelper::get(r,x);
-		getCell(y, x, v);
-		vhelper::set(v,r,x);
-	    }
-	    rhelper::set(r,d,y);
-	}
+      if (!(FLAGS & TABLE_FIXEDSIZE))
+        {
+          int oldRows = rhelper::size(d);
+          if (rows != oldRows)
+            {
+              rhelper::resize(rows, d);
+            }
+
+        if (isDisplayed())
+          {
+          int newRows = rhelper::size(d);
+          if (rows != newRows)
+            { // resize failed -> conform to the real size
+              std::cout << "Resize to " << rows << " failed. New size is " << newRows << std::endl;
+              wSize->setValue(newRows);
+              if (FLAGS & TABLE_HORIZONTAL)
+                wTable->setNumCols(newRows);
+              else
+                wTable->setNumRows(newRows);
+              rows = newRows;
+            }
+          else
+            {
+              std::cout << "Resize to " << rows << " succeeded." << std::endl;
+            }
+          }
+        }
+
+      if (isDisplayed())
+        {
+          for (int y=0; y<rows; ++y)
+            {
+              row_type r = *rhelper::get(d,y);
+              for (int x=0; x<cols; ++x)
+                {
+                  value_type v = *vhelper::get(r,x);
+                  getCell(y, x, v);
+                  vhelper::set(v,r,x);
+                }
+              rhelper::set(r,d,y);
+            }
+        }
+        
     }
+
+    void processTableModifications(const data_type &d)
+    {
+      int currentNumRow;
+      if (FLAGS & TABLE_HORIZONTAL)
+        currentNumRow=wTable->numCols();
+      else
+        currentNumRow=wTable->numRows();
+
+      int dataRows = wSize->value();
+   
+      if (dataRows == currentNumRow) return;
+
+      if (FLAGS & TABLE_HORIZONTAL)
+        wTable->setNumCols(dataRows);
+      else
+        wTable->setNumRows(dataRows);
+    
+      for (int x=0; x<cols; ++x)
+        {
+          const char* h = (dataRows > 0) ? vhelper::header(*rhelper::get(d,0),x) : vhelper::header(row_type(),x);
+          if (h && *h)
+            setColHeader(x,h);
+          else
+            {
+              std::ostringstream o;
+              o << x;
+              setColHeader(x,o.str());
+            }
+        }
+    
+      for (int y=currentNumRow; y<dataRows; ++y)
+        {
+          const char* h = rhelper::header(d,y);
+          if (h && *h)
+            setRowHeader(y,h);
+          else
+            {
+              std::ostringstream o;
+              o << y;
+              setRowHeader(y,o.str());
+            }
+        }
+    }
+    
+    void fillTable(const data_type &d)
+    {
+      int currentNum;
+      if (FLAGS & TABLE_HORIZONTAL)  currentNum=wTable->numCols();
+      else                           currentNum=wTable->numRows();   
+
+      for (int y=0; y<currentNum; ++y)
+        for (int x=0; x<cols; ++x)
+          setCell(y, x, *vhelper::get(*rhelper::get(d,y),x));  
+      
+    }
+    
     bool processChange(const QObject* sender)
     {
-	if (!(FLAGS & TABLE_FIXEDSIZE) && sender == wSize)
-	{
-	    int newRows = wSize->value();
-	    if (rows == newRows) return false;
-	    if (FLAGS & TABLE_HORIZONTAL)
-		wTable->setNumCols(newRows);
-	    else
-		wTable->setNumRows(newRows);
-	    if (newRows > rows)
-	    { // initialize new rows
+      updateVisibilityTable();
+      data_type d=data_type();
 
-		data_type d = data_type();
-/* 		row_type r = row_type(); */
-		for (int y=rows; y<newRows; ++y)
-		{
-		    const char* h = rhelper::header(d,y);
-		    if (h && *h)
-			setRowHeader(y,h);
-		    else
-		    {
-			std::ostringstream o;
-			o << y;
-			setRowHeader(y,o.str());
-		    }
+      if (isDisplayed()) processTableModifications(d);
 
-		    for (int x=0; x<cols; ++x)
-                      {
-			setCell(y, x, value_type());
-                      }
-		}
-	    }
-	    rows = newRows;
-	    return true;
-	}
-	if (sender == wTable)
-	    return true;
-	return false;
+      if (!(FLAGS & TABLE_FIXEDSIZE) && sender == wSize)
+        {
+          int newRows = wSize->value();
+          if (rows == newRows) return false;          
+          if (isDisplayed())  rows = newRows;
+          return true;
+        }
+      if (sender == wTable)
+        return true;
+      return false;
     }
 };
 

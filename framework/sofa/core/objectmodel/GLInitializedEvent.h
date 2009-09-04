@@ -58,6 +58,7 @@ public:
 	 */
 	~GLInitializedEvent(){};
 
+        virtual const char* getClassName() const { return "GLInitializedEvent"; }
 };
 
 } // namespace objectmodel

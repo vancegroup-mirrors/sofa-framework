@@ -63,10 +63,12 @@ public:
 					typedef typename Out::Coord Coord;
 					typedef typename Out::Deriv Deriv;
 					typedef typename In::Deriv InDeriv;
-                                        typedef typename std::map<unsigned int, Deriv>::const_iterator OutConstraintIterator;
+                                        typedef typename defaulttype::SparseConstraint<Deriv> OutSparseConstraint;
+                                        typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
 					typedef typename Coord::value_type Real;
 					enum { N=Coord::static_size };
 					typedef defaulttype::Mat<N,N,Real> Mat;
+                                        typedef defaulttype::Vec<N,Real> Vector ;
 
 					Data< VecCoord > points;
 					VecCoord rotatedPoints;
@@ -75,6 +77,12 @@ public:
                                         sofa::core::objectmodel::DataFileName fileRigidMapping;
 					Data< bool > useX0;
 					Data< bool > indexFromEnd;
+					Data<sofa::helper::vector<unsigned int> >  repartition;
+					Data< bool > globalToLocalCoords;
+
+                                        core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskFrom;
+                                        core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskTo;
+
 
 					RigidMapping ( In* from, Out* to )
 							: Inherit ( from, to ),
@@ -83,9 +91,16 @@ public:
 							fileRigidMapping ( initData ( &fileRigidMapping,"fileRigidMapping","Filename" ) ),
 							useX0( initData ( &useX0,false,"useX0","Use x0 instead of local copy of initial positions (to support topo changes)") ),
 							indexFromEnd( initData ( &indexFromEnd,false,"indexFromEnd","input DOF index starts from the end of input DOFs vector") ),
-							repartition ( initData ( &repartition,"repartition","number of dest dofs per entry dof" ) )
+							repartition ( initData ( &repartition,"repartition","number of dest dofs per entry dof" ) ),
+							globalToLocalCoords ( initData ( &globalToLocalCoords,"globalToLocalCoords","are the output DOFs initially expressed in global coordinates" ) )
 					{
                                           addAlias(&fileRigidMapping,"filename");
+                                          maskFrom = NULL;
+                                          if (core::componentmodel::behavior::BaseMechanicalState *stateFrom = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(from))
+                                            maskFrom = &stateFrom->forceMask;
+                                          maskTo = NULL;
+                                          if (core::componentmodel::behavior::BaseMechanicalState *stateTo = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(to))
+                                            maskTo = &stateTo->forceMask;
 					}
 
 					virtual ~RigidMapping()
@@ -116,7 +131,6 @@ public:
 				protected:
 					class Loader;
 					void load ( const char* filename );
-					Data<sofa::helper::vector<unsigned int> >  repartition;
 					const VecCoord& getPoints();
 };
 

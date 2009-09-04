@@ -32,6 +32,7 @@
 #include <sofa/core/Mapping.h>
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.h>
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
+#include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
@@ -93,11 +94,13 @@ namespace component
 
       typedef typename In::VecDeriv InVecDeriv;
       typedef typename In::Deriv InDeriv;
-      typedef typename std::map<unsigned int, InDeriv>::const_iterator InConstraintIterator;
+      typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+      typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 
       typedef typename Out::VecDeriv OutVecDeriv;
       typedef typename Out::Deriv OutDeriv;
-      typedef typename std::map<unsigned int, OutDeriv>::const_iterator OutConstraintIterator;
+      typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+      typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
 
     protected:
       template< int NC,  int NP>
@@ -136,18 +139,20 @@ namespace component
       typedef MappingData<3,0> MappingData3D;
 
       virtual ~BarycentricMapper(){}
-	  virtual void init(const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
+      virtual void init(const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
       virtual void apply( typename Out::VecCoord& out, const typename In::VecCoord& in ) = 0;
       virtual void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in ) = 0;
       virtual void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in ) = 0;
       virtual void applyJT( typename In::VecConst& out, const typename Out::VecConst& in ) = 0;
       virtual void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
 
+	  //-- test mapping partiel
+	  virtual void applyOnePoint( const unsigned int& /*hexaId*/, typename Out::VecCoord& /*out*/, const typename In::VecCoord& /*in*/)
+	  {};
+	  //--
+
 	  virtual void clear( int reserve=0 ) =0;
 
-      // TODO: make it pure virtual. Get the barycentric coefficients and the coordinates of the parents of a given mapped dof.
-      virtual void getJ(unsigned int /*Idx*/, sofa::helper::vector< double > &/*factor*/, sofa::helper::vector< unsigned int > &/*indices*/)
-      {std::cerr<< "getJ NOT implemented yet\n"; };
 
       //Nothing to do
       inline friend std::istream& operator >> ( std::istream& in, BarycentricMapper< In, Out > & ) {return in;}
@@ -202,10 +207,13 @@ namespace component
 	typedef TopologyBarycentricMapper<In,Out> Inherit;
 	typedef typename Inherit::Real Real;
 	typedef typename Inherit::OutReal OutReal;
-	typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
 	typedef typename Inherit::OutDeriv  OutDeriv;
-	typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+        typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+        typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
+
 	typedef typename Inherit::InDeriv  InDeriv;
+        typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+        typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 	typedef typename Inherit::MappingData1D MappingData1D;
 	typedef typename Inherit::MappingData2D MappingData2D;
 	typedef typename Inherit::MappingData3D MappingData3D;
@@ -214,9 +222,15 @@ namespace component
 	sofa::helper::vector< MappingData2D >  map2d;
 	sofa::helper::vector< MappingData3D >  map3d;
 
+        core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+        core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
+
      public:
-		 BarycentricMapperMeshTopology(core::componentmodel::topology::BaseMeshTopology* topology)
-		: TopologyBarycentricMapper<In,Out>(topology)
+		 BarycentricMapperMeshTopology(core::componentmodel::topology::BaseMeshTopology* topology,
+                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+                   : TopologyBarycentricMapper<In,Out>(topology),
+          maskFrom(_maskFrom), maskTo(_maskTo)
 	  {}
 
 	  virtual ~BarycentricMapperMeshTopology(){}
@@ -243,8 +257,6 @@ namespace component
 	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 	  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 	  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-          void getJ(unsigned int Idx, sofa::helper::vector< double > &factor, sofa::helper::vector< unsigned int > &indices);
 
 	  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperMeshTopology<In, Out> &b )
 	    {
@@ -309,18 +321,24 @@ public:
     typedef TopologyBarycentricMapper<In,Out> Inherit;
     typedef typename Inherit::Real Real;
     typedef typename Inherit::OutReal OutReal;
-    typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
     typedef typename Inherit::OutDeriv  OutDeriv;
-    typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+    typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+    typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
     typedef typename Inherit::InDeriv  InDeriv;
+    typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+    typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
     typedef typename Inherit::CubeData CubeData;
 protected:
     sofa::helper::vector<CubeData> map;
     topology::RegularGridTopology* topology;
-
+    core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+    core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
 public:
-    BarycentricMapperRegularGridTopology(topology::RegularGridTopology* topology)
-    : Inherit(topology),topology(topology)
+    BarycentricMapperRegularGridTopology(topology::RegularGridTopology* topology,
+                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+    : Inherit(topology),topology(topology),
+      maskFrom(_maskFrom), maskTo(_maskTo)
     {}
 
     virtual ~BarycentricMapperRegularGridTopology(){}
@@ -329,6 +347,8 @@ public:
 
     bool isEmpty(){return this->map.size() == 0;}
     void setTopology(topology::RegularGridTopology* _topology){this->topology = _topology;}
+    void setMaskFrom(core::componentmodel::behavior::BaseMechanicalState::ParticleMask *m){maskFrom = m;}
+    void setMaskTo  (core::componentmodel::behavior::BaseMechanicalState::ParticleMask *m){maskTo = m;}
     topology::RegularGridTopology *getTopology(){return dynamic_cast<topology::RegularGridTopology *>(this->topology);}
 
     int addPointInCube(const int cubeIndex, const SReal* baryCoords);
@@ -363,19 +383,26 @@ public:
     typedef TopologyBarycentricMapper<In,Out> Inherit;
     typedef typename Inherit::Real Real;
     typedef typename Inherit::OutReal OutReal;
-    typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
     typedef typename Inherit::OutDeriv  OutDeriv;
-    typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+    typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+    typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
     typedef typename Inherit::InDeriv  InDeriv;
+    typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+    typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 
     typedef typename Inherit::CubeData CubeData;
 protected:
     sofa::helper::vector<CubeData> map;
     topology::SparseGridTopology* topology;
+    core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+    core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
 public:
-    BarycentricMapperSparseGridTopology(topology::SparseGridTopology* topology)
-    : TopologyBarycentricMapper<In,Out>(topology),
-      topology(topology)
+ BarycentricMapperSparseGridTopology(topology::SparseGridTopology* topology,
+                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+   : TopologyBarycentricMapper<In,Out>(topology),
+      topology(topology),
+      maskFrom(_maskFrom), maskTo(_maskTo)
     {}
 
     virtual ~BarycentricMapperSparseGridTopology(){}
@@ -434,23 +461,30 @@ public:
 		typedef TopologyBarycentricMapper<In,Out> Inherit;
 		typedef typename Inherit::Real Real;
 		typedef typename Inherit::OutReal OutReal;
-                typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
                 typedef typename Inherit::OutDeriv  OutDeriv;
-                typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+                typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+                typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
                 typedef typename Inherit::InDeriv  InDeriv;
+                typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+                typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 		typedef typename Inherit::MappingData1D MappingData;
 
       protected:
 		topology::PointData< MappingData >  map;
 		topology::EdgeSetTopologyContainer*			_container;
 		topology::EdgeSetGeometryAlgorithms<In>*	_geomAlgo;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
 
       public:
-		BarycentricMapperEdgeSetTopology(topology::EdgeSetTopologyContainer* topology)
-		: TopologyBarycentricMapper<In,Out>(topology),
-		_container(topology),
-		_geomAlgo(NULL)
-		{}
+		BarycentricMapperEdgeSetTopology(topology::EdgeSetTopologyContainer* topology,
+                                                 core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                                 core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+          : TopologyBarycentricMapper<In,Out>(topology),
+            _container(topology),
+            _geomAlgo(NULL),
+            maskFrom(_maskFrom), maskTo(_maskTo)
+	    {}
 
 	  virtual ~BarycentricMapperEdgeSetTopology(){}
 
@@ -480,7 +514,7 @@ public:
 	      in >> size_vec;
 		  sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
 		  m.clear();
-		  
+
 		  MappingData value;
 	      for (unsigned int i=0;i<size_vec;i++)
 		{
@@ -513,21 +547,28 @@ public:
 		  typedef TopologyBarycentricMapper<In,Out> Inherit;
 		  typedef typename Inherit::Real Real;
 		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
                   typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
                   typedef typename Inherit::InDeriv  InDeriv;
+                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 		  typedef typename Inherit::MappingData2D MappingData;
 	  protected:
 		topology::PointData< MappingData >		map;
 		topology::TriangleSetTopologyContainer*			_container;
 		topology::TriangleSetGeometryAlgorithms<In>*	_geomAlgo;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
 
 	  public:
-		  BarycentricMapperTriangleSetTopology(topology::TriangleSetTopologyContainer* topology)
-		: TopologyBarycentricMapper<In,Out>(topology),
-		_container(topology),
-		_geomAlgo(NULL)
+                BarycentricMapperTriangleSetTopology(topology::TriangleSetTopologyContainer* topology,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+                    : TopologyBarycentricMapper<In,Out>(topology),
+                  _container(topology),
+                  _geomAlgo(NULL),
+                  maskFrom(_maskFrom), maskTo(_maskTo)
 		{}
 
 		virtual ~BarycentricMapperTriangleSetTopology(){}
@@ -591,21 +632,28 @@ public:
 		  typedef TopologyBarycentricMapper<In,Out> Inherit;
 		  typedef typename Inherit::Real Real;
 		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
                   typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
                   typedef typename Inherit::InDeriv  InDeriv;
+                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 		  typedef typename Inherit::MappingData2D MappingData;
 	  protected:
 		topology::PointData< MappingData >  map;
 		topology::QuadSetTopologyContainer*			_container;
 		topology::QuadSetGeometryAlgorithms<In>*	_geomAlgo;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
 
 	  public:
-		  BarycentricMapperQuadSetTopology(topology::QuadSetTopologyContainer* topology)
-		: TopologyBarycentricMapper<In,Out>(topology),
+		  BarycentricMapperQuadSetTopology(topology::QuadSetTopologyContainer* topology,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+                : TopologyBarycentricMapper<In,Out>(topology),
 		_container(topology),
-		_geomAlgo(NULL)
+		_geomAlgo(NULL),
+                  maskFrom(_maskFrom), maskTo(_maskTo)
 		{}
 
 		virtual ~BarycentricMapperQuadSetTopology(){}
@@ -666,21 +714,28 @@ public:
 		  typedef TopologyBarycentricMapper<In,Out> Inherit;
 		  typedef typename Inherit::Real Real;
 		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
                   typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
                   typedef typename Inherit::InDeriv  InDeriv;
+                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 		  typedef typename Inherit::MappingData3D MappingData;
 	  protected:
 		topology::PointData< MappingData >  map;
 		topology::TetrahedronSetTopologyContainer*			_container;
 		topology::TetrahedronSetGeometryAlgorithms<In>*	_geomAlgo;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
 
 	  public:
-		  BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* topology)
-		: TopologyBarycentricMapper<In,Out>(topology),
+		  BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* topology,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+                 : TopologyBarycentricMapper<In,Out>(topology),
 		_container(topology),
-		_geomAlgo(NULL)
+		_geomAlgo(NULL),
+                  maskFrom(_maskFrom), maskTo(_maskTo)
 		{}
 
 		virtual ~BarycentricMapperTetrahedronSetTopology(){}
@@ -740,10 +795,12 @@ public:
 		  typedef TopologyBarycentricMapper<In,Out> Inherit;
 		  typedef typename Inherit::Real Real;
 		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutConstraintIterator OutConstraintIterator;
                   typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename Inherit::InConstraintIterator  InConstraintIterator;
+                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
                   typedef typename Inherit::InDeriv  InDeriv;
+                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
+                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 		  typedef typename Inherit::MappingData3D MappingData;
 
 
@@ -752,15 +809,23 @@ public:
 		topology::HexahedronSetTopologyContainer*		_container;
 		topology::HexahedronSetGeometryAlgorithms<In>*	_geomAlgo;
 
+		std::set<int>	_invalidIndex;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
+                core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
+
 	  public:
 		  BarycentricMapperHexahedronSetTopology()
-		: TopologyBarycentricMapper<In,Out>(NULL),_container(NULL),_geomAlgo(NULL)
+                    : TopologyBarycentricMapper<In,Out>(NULL),_container(NULL),_geomAlgo(NULL),
+                  maskFrom(NULL), maskTo(NULL)
 		{}
 
-		  BarycentricMapperHexahedronSetTopology(topology::HexahedronSetTopologyContainer* topology)
-		: TopologyBarycentricMapper<In,Out>(topology),
+		  BarycentricMapperHexahedronSetTopology(topology::HexahedronSetTopologyContainer* topology,
+                                                    core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                                    core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo)
+                 : TopologyBarycentricMapper<In,Out>(topology),
 		_container(topology),
-		_geomAlgo(NULL)
+		_geomAlgo(NULL),
+                  maskFrom(_maskFrom), maskTo(_maskTo)
 		{}
 
 		virtual ~BarycentricMapperHexahedronSetTopology(){}
@@ -779,6 +844,10 @@ public:
 		  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
+  		  //-- test mapping partiel
+		  void applyOnePoint( const unsigned int& hexaId, typename Out::VecCoord& out, const typename In::VecCoord& in);
+		  //--
+
 		  // handle topology changes in the From topology
 		  virtual void handleTopologyChange();
 		  // handle topology changes in the To topology
@@ -786,7 +855,8 @@ public:
 										std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator);
                   bool isEmpty(){return this->map.getValue().empty();}
                   void setTopology(topology::HexahedronSetTopologyContainer* _topology){this->topology = _topology; _container=_topology;}
-
+                  void setMaskFrom(core::componentmodel::behavior::BaseMechanicalState::ParticleMask *m) {maskFrom = m;}
+                  void setMaskTo(core::componentmodel::behavior::BaseMechanicalState::ParticleMask *m) {maskTo = m;}
 		  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperHexahedronSetTopology<In, Out> &b )
 		  {
 			  unsigned int size_vec;
@@ -837,27 +907,34 @@ public:
       typedef typename OutDataTypes::Real OutReal;
 
       typedef core::componentmodel::topology::BaseMeshTopology BaseMeshTopology;
-      
-      using Inherit::sout;
-      using Inherit::serr;
-      using Inherit::sendl;
-    protected:
 
       typedef TopologyBarycentricMapper<InDataTypes,OutDataTypes> Mapper;
       typedef BarycentricMapperRegularGridTopology<InDataTypes, OutDataTypes> RegularGridMapper;
       typedef BarycentricMapperHexahedronSetTopology<InDataTypes, OutDataTypes> HexaMapper;
 
+      using Inherit::sout;
+      using Inherit::serr;
+      using Inherit::sendl;
+
+
+    protected:
+
       Mapper* mapper;
       DataPtr< RegularGridMapper >* f_grid;
       DataPtr< HexaMapper >* f_hexaMapper;
+
+		BarycentricMapperDynamicTopology* dynamicMapper;
+
     public:
+
+
       BarycentricMapping(In* from, Out* to)
 	: Inherit(from, to), mapper(NULL)
-        , f_grid (new DataPtr< RegularGridMapper >( new RegularGridMapper( NULL ),"Regular Grid Mapping"))
-        , f_hexaMapper (new DataPtr< HexaMapper >( new HexaMapper(  ),"Hexahedron Mapper"))  
+            , f_grid (new DataPtr< RegularGridMapper >( new RegularGridMapper( NULL,NULL,NULL ),"Regular Grid Mapping"))
+        , f_hexaMapper (new DataPtr< HexaMapper >( new HexaMapper(  ),"Hexahedron Mapper"))
 	  {
 	    this->addField( f_grid, "gridmap");	f_grid->beginEdit();
- 	    this->addField( f_hexaMapper, "hexamap");	f_hexaMapper->beginEdit(); 
+ 	    this->addField( f_hexaMapper, "hexamap");	f_hexaMapper->beginEdit();
           }
 
 	BarycentricMapping(In* from, Out* to, Mapper* mapper)
@@ -895,14 +972,10 @@ public:
 
 	  void draw();
 
+	  // handle topology changes depending on the topology
+	  virtual void handleTopologyChange(core::componentmodel::topology::Topology* t);
 
-          void getJ(unsigned int Idx, sofa::helper::vector< double > &factor, sofa::helper::vector< unsigned int > &indices){mapper->getJ(Idx,factor,indices);}
-		// handle topological changes
-		virtual void handleTopologyChange();
-    // handle topology changes depending on the topology
-    virtual void handleTopologyChange(core::componentmodel::topology::Topology* t);
-
-		TopologyBarycentricMapper<InDataTypes,OutDataTypes>*	getMapper() {return mapper;}
+	  TopologyBarycentricMapper<InDataTypes,OutDataTypes>*	getMapper() {return mapper;}
 
 	protected:
 		sofa::core::componentmodel::topology::BaseMeshTopology* topology_from;

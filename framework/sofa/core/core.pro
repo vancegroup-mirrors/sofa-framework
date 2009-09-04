@@ -61,6 +61,9 @@ HEADERS += \
           componentmodel/topology/BaseTopologyObject.h \
           componentmodel/topology/TopologicalMapping.h \
           componentmodel/topology/Topology.h \
+          componentmodel/loader/BaseLoader.h \
+          componentmodel/loader/ImageLoader.h \
+          componentmodel/loader/MeshLoader.h \
           Mapping.h \
           Mapping.inl \
           objectmodel/Base.h \
@@ -90,7 +93,10 @@ HEADERS += \
           objectmodel/XDataPtr.h \
           VisualModel.h \
           VisualManager.h \
-          ObjectFactory.h
+          ObjectFactory.h \
+          SofaLibrary.h \
+          CategoryLibrary.h \
+          ComponentLibrary.h
 
 SOURCES +=  \
           objectmodel/Base.cpp \
@@ -99,6 +105,7 @@ SOURCES +=  \
           objectmodel/BaseObjectDescription.cpp \
           objectmodel/ClassInfo.cpp \
           objectmodel/Context.cpp \
+          objectmodel/Data.cpp \
 	  objectmodel/DDGNode.cpp \
           objectmodel/DetachNodeEvent.cpp \
           objectmodel/Event.cpp \
@@ -112,6 +119,9 @@ SOURCES +=  \
   	  objectmodel/OmniEvent.cpp \
           objectmodel/Tag.cpp \
           ObjectFactory.cpp \
+          SofaLibrary.cpp \
+          CategoryLibrary.cpp \
+          ComponentLibrary.cpp \
           Mapping.cpp \	   
           CollisionModel.cpp \
           componentmodel/behavior/LinearSolver.cpp \
@@ -134,7 +144,8 @@ SOURCES +=  \
           componentmodel/behavior/PairInteractionForceField.cpp \
           componentmodel/behavior/MixedInteractionForceField.cpp \
           componentmodel/behavior/PairInteractionConstraint.cpp \
-          componentmodel/behavior/MixedInteractionConstraint.cpp 
+          componentmodel/behavior/MixedInteractionConstraint.cpp \
+          componentmodel/loader/MeshLoader.cpp 
 
 SOFA_DIR = ../../..
 TEMPLATE = lib

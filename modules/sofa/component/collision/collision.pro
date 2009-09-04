@@ -16,6 +16,8 @@ HEADERS += initCollision.h \
            BarycentricPenalityContact.inl \
            BruteForceDetection.h \
            CarvingManager.h \
+           ComponentMouseInteraction.h \
+		   ComponentMouseInteraction.inl \
            ContinuousIntersection.h \
            ContinuousTriangleIntersection.h \
            Cube.h \
@@ -30,27 +32,38 @@ HEADERS += initCollision.h \
            FrictionContact.h \
            FrictionContact.inl \
            Line.h \
+           LineLocalMinDistanceFilter.h \
            LineModel.h \
+		   LMDNewProximityIntersection.h \
+		   LMDNewProximityIntersection.inl \
            LocalMinDistance.h \
+	   LocalMinDistanceFilter.h \
+	   LocalMinDistanceFilter.inl \
            MinProximityIntersection.h \
+           MouseInteractor.h \
+           MouseInteractor.inl \
            NewProximityIntersection.h \
            NewProximityIntersection.inl \
            Point.h \
+	   PointLocalMinDistanceFilter.h \
            PointModel.h \
            Ray.h \
            RayContact.h \
            RayModel.h \
-           RayPickInteractor.h \
-           RayPickInteractor.inl \
+#           RayPickInteractor.h \
+#           RayPickInteractor.inl \
            RayTriangleIntersection.h \
            RuleBasedContactManager.h \
+           SolverMerger.h \
            SpatialGridPointModel.h \
            Sphere.h \
            SphereModel.h \
            SphereTreeModel.h \
            TetrahedronModel.h \
            Triangle.h \
+	   TriangleLocalMinDistanceFilter.h \
            TriangleModel.h \
+           TriangleModelInRegularGrid.h \
            RayTraceDetection.h \
            TriangleOctree.h \
            TriangleOctreeModel.h
@@ -58,7 +71,8 @@ HEADERS += initCollision.h \
 SOURCES += initCollision.cpp \
            BarycentricContactMapper.cpp \
            BarycentricPenalityContact.cpp \
-           BruteForceDetection.cpp \
+           BruteForceDetection.cpp \     
+           ComponentMouseInteraction.cpp \
            ContinuousIntersection.cpp \
            ContinuousTriangleIntersection.cpp \
            CubeModel.cpp \
@@ -70,21 +84,29 @@ SOURCES += initCollision.cpp \
            DiscreteIntersection.cpp \
            DistanceGridCollisionModel.cpp \
            LineModel.cpp \
+		   LMDNewProximityIntersection.cpp \
            FrictionContact.cpp \
+		   LineLocalMinDistanceFilter.cpp \
            LocalMinDistance.cpp \
+	       LocalMinDistanceFilter.cpp \
            MinProximityIntersection.cpp \
+           MouseInteractor.cpp \
            NewProximityIntersection.cpp \
+	       PointLocalMinDistanceFilter.cpp \
            PointModel.cpp \
            RayContact.cpp \
            RayModel.cpp \
-           RayPickInteractor.cpp \
+#           RayPickInteractor.cpp \
            RayTriangleIntersection.cpp \
            RuleBasedContactManager.cpp \
+           SolverMerger.cpp \
            SpatialGridPointModel.cpp \
            SphereModel.cpp \
            SphereTreeModel.cpp \
            TetrahedronModel.cpp \
+	   TriangleLocalMinDistanceFilter.cpp \
            TriangleModel.cpp \
+           TriangleModelInRegularGrid.cpp \
            RayTraceDetection.cpp \
            TriangleOctree.cpp \
            TriangleOctreeModel.cpp 

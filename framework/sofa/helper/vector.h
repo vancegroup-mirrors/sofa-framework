@@ -127,7 +127,7 @@ const_reference operator[](size_type n) const {
 
   std::istream& read(std::istream& in)
   {
-      T t;
+      T t=T();
       this->clear();
       while(in>>t){
           this->push_back(t);

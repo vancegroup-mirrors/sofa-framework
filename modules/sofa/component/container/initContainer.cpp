@@ -58,6 +58,7 @@ SOFA_LINK_CLASS(ArticulatedHierarchyContainer)
 SOFA_LINK_CLASS(MappedObject)
 SOFA_LINK_CLASS(MechanicalObject)
 SOFA_LINK_CLASS(SpatialGridContainer)
+SOFA_LINK_CLASS(RotationFinder)
 SOFA_LINK_CLASS(MeshLoader)
+SOFA_LINK_CLASS(MultiMeshLoader)
 SOFA_LINK_CLASS(VoxelGridLoader)
-

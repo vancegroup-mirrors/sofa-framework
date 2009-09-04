@@ -58,7 +58,6 @@ namespace sofa
       {
 	Q_OBJECT
 	  public:       
-	enum {VISUAL, BEHAVIOR, COLLISION, BOUNDING, MAPPING, MECHANICALMAPPING, FORCEFIELD, INTERACTION, WIREFRAME, NORMALS, ALL};
 
 	DisplayFlagWidget(QWidget* parent, const char* name= 0, Qt::WFlags f= 0 );
 

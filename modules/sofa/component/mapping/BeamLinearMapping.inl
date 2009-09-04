@@ -194,7 +194,9 @@ void BeamLinearMapping<BasicMapping>::applyJT( typename In::VecConst& out, const
 		// in[i].size() = num node involved in the constraint
 
                 OutConstraintIterator itOut;
-                for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+                std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+                for (itOut=iter.first;itOut!=iter.second;itOut++)
                 {
                         unsigned int indexIn = itOut->first;
                         Deriv data = (Deriv) itOut->second;
@@ -215,8 +217,8 @@ void BeamLinearMapping<BasicMapping>::applyJT( typename In::VecConst& out, const
 			InDeriv direction1;
 			direction1.getVCenter() = w_n * (fact);
 			direction1.getVOrientation() = cross(rotatedPoints1[indexIn], w_n) * (fact);
-			out[outSize+i].insert(in0, direction0);
-			out[outSize+i].insert(in0+1, direction1);
+                        out[outSize+i].add(in0, direction0);
+                        out[outSize+i].add(in0+1, direction1);
 		}
 
 	}

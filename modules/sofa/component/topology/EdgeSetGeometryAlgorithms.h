@@ -53,7 +53,7 @@ namespace topology
 	typedef BaseMeshTopology::EdgeID EdgeID;
 	typedef BaseMeshTopology::Edge Edge;
 	typedef BaseMeshTopology::SeqEdges SeqEdges;
-	typedef BaseMeshTopology::VertexEdges VertexEdges;
+	typedef BaseMeshTopology::EdgesAroundVertex EdgesAroundVertex;
 	
 	/**
 	* A class that provides geometry information on an EdgeSet.
@@ -71,7 +71,10 @@ namespace topology
 
 		EdgeSetGeometryAlgorithms()
 		: PointSetGeometryAlgorithms<DataTypes>()
-		{}
+		  , debugViewEdgeIndices(core::objectmodel::Base::initData(&debugViewEdgeIndices, (bool) false, "debugViewEdgeIndices", "Debug : view Edge indices"))
+		  , _draw(core::objectmodel::Base::initData(&_draw, false, "drawEdges","if true, draw the edges in the topology"))
+		{
+		}
 
 		virtual ~EdgeSetGeometryAlgorithms() {}
 
@@ -103,7 +106,29 @@ namespace topology
 		// compute barycentric coefficients
 		sofa::helper::vector< double > compute2PointsBarycoefs(const Vec<3,double> &p, unsigned int ind_p1, unsigned int ind_p2) const;
 
-		void writeMSHfile(const char *filename) const;  
+		/** \brief Compute the projection coordinate of a point C on the edge i. Using compute2EdgesIntersection().
+		 * @param i edgeID on which point is projected.
+		 * @param coord_x coordinate of point to project
+		 * @param intersected bool default value true, changed as false if no intersection is done.
+		 * @return barycentric coefficient of the projection in edgeID i.
+		 */
+		sofa::helper::vector< double > computePointProjectionOnEdge (const EdgeID i, sofa::defaulttype::Vec<3,double> coord_x, bool& intersected);
+
+		/** \brief Compute the intersection coordinate of the 2 input straight lines. Lines vector director are computed using coord given in input.
+		 * @param edge1 tab Coord[2] from the 2 vertices composing first edge
+		 * @param edge2 same for second edge
+		 * @param intersected bool default value true, changed as false if no intersection is done.
+		 * @return Coord of intersection point, 0 if no intersection.
+		 */
+		Coord compute2EdgesIntersection (const Coord edge1[2], const Coord edge2[2], bool& intersected);
+		
+		void writeMSHfile(const char *filename) const;
+
+		virtual void draw();
+
+	protected:
+		Data<bool> debugViewEdgeIndices;
+		Data<bool> _draw;
 	};
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_EDGESETGEOMETRYALGORITHMS_CPP)

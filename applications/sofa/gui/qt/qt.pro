@@ -10,7 +10,8 @@ include($${SOFA_DIR}/sofa.cfg)
 
 TARGET = sofaguiqt$$LIBSUFFIX
 
-LIBS += $$SOFA_FRAMEWORK_LIBS $$SOFA_MODULES_LIBS
+LIBS += $$SOFA_FRAMEWORK_LIBS
+LIBS += $$SOFA_MODULES_LIBS
 LIBS += -lsofagui$$LIBSUFFIX
 LIBS += $$SOFA_GUI_EXT_LIBS
 LIBS += $$SOFA_EXT_LIBS
@@ -23,8 +24,11 @@ contains (DEFINES, SOFA_QT4) {
 	  FORMS3 += GUI.ui
 	  FORMS3 += BaseGenGraphForm.ui
 	  FORMS3 += DialogAddObject.ui
-	  FORMS3 += VisitorGUI.ui
 	  FORMS3 += PluginManager.ui
+	  FORMS3 += MouseManager.ui
+contains (DEFINES, SOFA_DUMP_VISITOR_INFO){
+	  FORMS3 += VisitorGUI.ui
+}
 }
 else {
 	  CONFIG += $$CONFIGLIBRARIES qt
@@ -32,8 +36,11 @@ else {
 	  FORMS += GUI.ui
 	  FORMS += BaseGenGraphForm.ui
 	  FORMS += DialogAddObject.ui
-	  FORMS += VisitorGUI.ui
 	  FORMS += PluginManager.ui
+	  FORMS += MouseManager.ui
+contains (DEFINES, SOFA_DUMP_VISITOR_INFO){
+	  FORMS += VisitorGUI.ui
+}
 }
 
 
@@ -45,16 +52,15 @@ HEADERS += viewer/SofaViewer.h \
            RealGUI.h \
            DisplayFlagWidget.h \
            GraphDataWidget.h \
-           GraphVisitor.h \
            ModifyObject.h \
            SimpleDataWidget.h \
            StructDataWidget.h \
            TableDataWidget.h \
            WFloatLineEdit.h \ 
-           WindowVisitor.h \
            FileManagement.h \
            SofaPluginManager.h \
-           PieWidget.h \
+           SofaMouseManager.h \
+           QMouseOperations.h \
            ImageQt.h
 
 SOURCES += Main.cpp \
@@ -66,18 +72,25 @@ SOURCES += Main.cpp \
            RealGUI.cpp \
            DisplayFlagWidget.cpp \
            GraphDataWidget.cpp \  
-           GraphVisitor.cpp \
            ModifyObject.cpp \
            SimpleDataWidget.cpp \
            StructDataWidget.cpp \
            TableDataWidget.cpp \
            WFloatLineEdit.cpp \
-           WindowVisitor.cpp \
            FileManagement.cpp \
            SofaPluginManager.cpp \
-           PieWidget.cpp \
+           SofaMouseManager.cpp \
            ImageQt.cpp
 
+contains (DEFINES, SOFA_DUMP_VISITOR_INFO){
+HEADERS += GraphVisitor.h \
+           WindowVisitor.h \
+           PieWidget.h
+
+SOURCES += GraphVisitor.cpp \
+           WindowVisitor.cpp \
+           PieWidget.cpp
+}
 
 contains( DEFINES, SOFA_GUI_QTVIEWER){
 

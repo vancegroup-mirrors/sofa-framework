@@ -2,8 +2,8 @@
 *       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
 *                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
 *                                                                             *
-* This program is free software; you can redistribute it and/or modify it     *
-* under the terms of the GNU General Public License as published by the Free  *
+* This program is free software; you can redistribute it and/or modify it     **
+ under the terms of the GNU General Public License as published by the Free  *
 * Software Foundation; either version 2 of the License, or (at your option)   *
 * any later version.                                                          *
 *                                                                             *
@@ -44,13 +44,16 @@
 #include <sofa/gui/qt/AddObject.h>
 #include <sofa/gui/qt/ModifyObject.h>
 #include <sofa/gui/qt/DisplayFlagWidget.h>
-#include <sofa/gui/qt/WindowVisitor.h>
-#include <sofa/gui/qt/GraphVisitor.h>
 #include <sofa/gui/qt/SofaPluginManager.h>
+#include <sofa/gui/qt/SofaMouseManager.h>
 
 #include <sofa/simulation/tree/xml/XML.h>
 #include <sofa/helper/system/SetDirectory.h>
 
+#ifdef SOFA_DUMP_VISITOR_INFO
+#include <sofa/gui/qt/WindowVisitor.h>
+#include <sofa/gui/qt/GraphVisitor.h>
+#endif
 
 #ifdef SOFA_QT4
 #include <QApplication>
@@ -62,6 +65,8 @@
 #include <Q3TextDrag>
 #include <Q3PopupMenu>
 #include <QLibrary>
+#include <QTextBrowser>
+#include <QUrl>
 typedef Q3ListViewItem QListViewItem;
 typedef QStackedWidget QWidgetStack;
 typedef Q3PopupMenu QPopupMenu;
@@ -75,8 +80,13 @@ typedef QTextDrag Q3TextDrag;
 #include <qslider.h>
 #include <qpopupmenu.h>
 #include <qlibrary.h>
+#include <qtextbrowser.h>
+#include <qurl.h>
 #endif 
  
+#ifdef SOFA_PML
+#include <sofa/simulation/tree/GNode.h>
+#endif
 
 namespace sofa
 {
@@ -90,7 +100,6 @@ namespace qt
 //enum TYPE{ NORMAL, PML, LML};  
 enum SCRIPT_TYPE { PHP, PERL };
 
-using sofa::simulation::tree::GNode;
 using sofa::simulation::Node;
 #ifdef SOFA_PML
 using namespace sofa::filemanager::pml;
@@ -128,7 +137,7 @@ public:
 
 	  virtual void fileOpen(std::string filename); //, int TYPE=NORMAL);
       	  virtual void fileOpenSimu(std::string filename); //, int TYPE=NORMAL);
-	  virtual void setScene(Node* groot, const char* filename=NULL);
+	  virtual void setScene(Node* groot, const char* filename=NULL, bool temporaryFile=false);
           virtual void setDimension(int w, int h);
           virtual void setFullScreen();
 	  virtual void setTitle( std::string windowTitle );
@@ -151,12 +160,16 @@ public:
 	  virtual void editRecordDirectory();
 	  virtual void editGnuplotDirectory();
 	  virtual void showPluginManager();
+	  virtual void showMouseManager();
 
 	  void dragEnterEvent( QDragEnterEvent* event){event->accept();}
 	  void dropEvent(QDropEvent* event);
-
+	  
+          void initRecentlyOpened();
+          
 	  public slots:
 	  void fileRecentlyOpened(int id);
+
 	  void updateRecentlyOpened(std::string fileLoaded);
 	  void DoubleClickeItemInSceneView(QListViewItem * item);
 	  void RightClickedItemInSceneView(QListViewItem *item, const QPoint& point, int index);
@@ -185,6 +198,7 @@ public:
 	  void updateBackgroundColour();
 	  void updateBackgroundImage();
 
+          void changeHtmlPage( const QUrl&);
 	  void changeInstrument(int);
   
 	  void clearGraph();
@@ -212,7 +226,9 @@ public:
 	  void dumpState(bool);
 	  void displayComputationTime(bool);
 	  void setExportGnuplot(bool);
+#ifdef SOFA_DUMP_VISITOR_INFO
 	  void setExportVisitor(bool);
+#endif
 	  void currentTabChanged(QWidget*);
 
 	signals:
@@ -236,6 +252,7 @@ public:
 	  void graphAddCollisionModelsStat(sofa::helper::vector< sofa::core::CollisionModel* > &v);	  
 	  void graphSummary();
 	  	 
+          void addInitialNodes( Node* node);
 	  bool isErasable(core::objectmodel::Base* element);
 
 	  void startDumpVisitor();
@@ -243,7 +260,7 @@ public:
 
 	  bool m_dumpState;
 	  std::ofstream* m_dumpStateStream;
-	  std::ofstream* m_dumpVisitorStream;
+	  std::ostringstream m_dumpVisitorStream;
 	  bool m_exportGnuplot;
 	  bool _animationOBJ; int _animationOBJcounter;// save a succession of .obj indexed by _animationOBJcounter
 	  bool m_displayComputationTime;
@@ -261,7 +278,7 @@ public:
 	  QLabel* timeLabel;
 	  WFloatLineEdit *background[3];
 	  QLineEdit *backgroundImage;
-
+          
 	  
 	  void setPixmap(std::string pixmap_filename, QPushButton* b);
 
@@ -323,9 +340,10 @@ public:
 	  int frameCounter;
 	  //At initialization: list of the path to the basic objects you can add to the scene
 	  std::vector< std::string > list_object;
-	  std::list< GNode *> list_object_added;
-	  std::list< GNode *> list_object_removed;
-	  std::list< GNode *> list_object_initial;
+          std::list< Node *> list_object_added;
+          std::list< Node *> list_object_removed;
+          //Pair: parent->child
+          std::list< std::pair< Node *, Node* > > list_object_initial;
 	  bool record_simulation;
 
 	  bool setViewer(const char* name);
@@ -344,9 +362,13 @@ public:
 #endif
 
 	  DisplayFlagWidget *displayFlag;
+
+#ifdef SOFA_DUMP_VISITOR_INFO
 	  WindowVisitor* windowTraceVisitor;
 	  GraphVisitor* handleTraceVisitor;
-	  SofaPluginManager* pluginManager;
+#endif
+          QDialog* descriptionScene;
+          QTextBrowser* htmlPage;
 
 };
 

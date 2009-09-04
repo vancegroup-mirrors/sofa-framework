@@ -62,4 +62,6 @@ SOFA_LINK_CLASS(OscillatorConstraint)
 SOFA_LINK_CLASS(ParabolicConstraint)
 SOFA_LINK_CLASS(PrecomputedConstraintCorrection)
 SOFA_LINK_CLASS(LinearMovementConstraint)
+SOFA_LINK_CLASS(FixedRotationConstraint)
+SOFA_LINK_CLASS(LinearVelocityConstraint)
 

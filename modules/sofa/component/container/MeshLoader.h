@@ -40,6 +40,9 @@ namespace sofa
 namespace component
 {
 
+namespace container
+{
+
 class SOFA_COMPONENT_CONTAINER_API MeshLoader : public virtual core::objectmodel::BaseObject,
 					public helper::io::MeshTopologyLoader
 {
@@ -63,14 +66,16 @@ public:
     typedef helper::vector<Edge> SeqEdges;
     typedef helper::vector<Triangle> SeqTriangles;
     typedef helper::vector<Quad> SeqQuads;
-    typedef helper::vector<Tetra> SeqTetras;
-    typedef helper::vector<Hexa> SeqHexas;
+    typedef helper::vector<Tetra> SeqTetrahedra;
+    typedef helper::vector<Hexa> SeqHexahedra;
 
 	MeshLoader();
 
 	virtual ~MeshLoader() {}
 
 	virtual void clear();
+
+        virtual void init();
 
 	virtual bool load(const char* filename);
 
@@ -86,42 +91,49 @@ public:
 	}
 
 	double getPX(int i) const { return seqPoints[i][0]; }
-    double getPY(int i) const { return seqPoints[i][1]; }
-    double getPZ(int i) const { return seqPoints[i][2]; }
+        double getPY(int i) const { return seqPoints[i][1]; }
+        double getPZ(int i) const { return seqPoints[i][2]; }
 
 	virtual int getNbPoints() const;
 	virtual void getPoints(SeqPoints& ) const;
 	virtual void getEdges(SeqEdges& ) const;
 	virtual void getTriangles(SeqTriangles& ) const;
 	virtual void getQuads(SeqQuads& ) const;
-	virtual void getTetras(SeqTetras& ) const;
-	virtual void getHexas(SeqHexas& ) const;
+	virtual void getTetrahedra(SeqTetrahedra& ) const;
+	virtual void getHexahedra(SeqHexahedra& ) const;
 	
 	bool getFillMState( ) const { return fillMState.getValue(); }
 
-    void parse(core::objectmodel::BaseObjectDescription* arg);
 
 protected:
 	// helper::io::MeshTopologyLoader API
 	void addPoint(double px, double py, double pz);
-    void addLine( int a, int b );
+        void addLine( int a, int b );
 	void addTriangle( int a, int b, int c );
-    void addTetra( int a, int b, int c, int d );
+        void addTetra( int a, int b, int c, int d );
 	void addQuad( int a, int b, int c, int d );
-    void addCube( int a, int b, int c, int d, int e, int f, int g, int h );
+        void addCube( int a, int b, int c, int d, int e, int f, int g, int h );
 
 protected:
 	SeqPoints		seqPoints;
 	SeqEdges		seqEdges;
-	SeqTriangles	seqTriangles;
+	SeqTriangles            seqTriangles;
 	SeqQuads		seqQuads;
-	SeqTetras		seqTetras;
-	SeqHexas		seqHexas;
+	SeqTetrahedra		seqTetras;
+	SeqHexahedra		seqHexas;
 
 	sofa::core::objectmodel::DataFileName filename;
 	Data< bool > triangulate;
 	Data< bool > fillMState; ///< Must this mesh loader fill the mstate instead of manually or by using the topology 
+        Data< helper::vector<sofa::defaulttype::Vector3> > vertices; 
+        Data< helper::vector<sofa::defaulttype::Vector3> > texCoords; // for the moment, we suppose that texCoords is order 2 (2 texCoords for a vertex) 
+        Data< helper::vector<sofa::defaulttype::Vector3> > normals; 
+        Data< helper::vector< helper::vector < helper::vector <int> > > > facets; 
+        
+	helper::vector<sofa::defaulttype::Vector3> computeNormals();
 };
+
+}
 
 } // namespace component
 

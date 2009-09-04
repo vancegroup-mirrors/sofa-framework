@@ -141,7 +141,8 @@ VectorSpringForceField<DataTypes>::VectorSpringForceField(MechanicalState* _obje
 , m_filename( initData(&m_filename,std::string(""),"filename","File name from which the spring informations are loaded") )
 , m_stiffness( initData(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") )
 , m_viscosity( initData(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
-{
+, usingMask(false)
+{  
     springArray.setCreateFunction(springCreationFunction);
     springArray.setCreateParameter( (void *) this );
 }
@@ -153,6 +154,7 @@ VectorSpringForceField<DataTypes>::VectorSpringForceField(MechanicalState* _obje
 , m_filename( initData(&m_filename,std::string(""),"filename","File name from which the spring informations are loaded") )
 , m_stiffness( initData(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") )
 , m_viscosity( initData(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
+, usingMask(false)
 {
     springArray.setCreateFunction(springCreationFunction);
     springArray.setCreateParameter( (void *) this );
@@ -287,7 +289,9 @@ void VectorSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2, con
 			force = (squash_vector * s.ks) + (relativeVelocity * s.kd);
 
 			f1[e[0]]+=force;
+                        this->mstate1->forceMask.insertEntry(e[0]);
 			f2[e[1]]-=force;
+                        this->mstate2->forceMask.insertEntry(e[1]);
 		}
 
 	}else{
@@ -302,9 +306,11 @@ void VectorSpringForceField<DataTypes>::addForce(VecDeriv& f1, VecDeriv& f2, con
 			Deriv squash_vector = current_direction - s.restVector;
 			Deriv relativeVelocity = v2[e[1]]-v1[e[0]];
 			force = (squash_vector * s.ks) + (relativeVelocity * s.kd);
-
+                        
 			f1[e[0]]+=force;
+                        this->mstate1->forceMask.insertEntry(e[0]);
 			f2[e[1]]-=force;
+                        this->mstate2->forceMask.insertEntry(e[1]);
 		}
 	}
 	springArray.endEdit();

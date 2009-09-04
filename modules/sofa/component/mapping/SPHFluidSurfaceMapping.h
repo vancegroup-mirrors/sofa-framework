@@ -72,7 +72,13 @@ public:
         void add
             (ParticleField* field, int i, Real r2, Real h2)
         {
-            val += (typename OutDataTypes::Real) field->getParticleField(i, r2/h2);
+        	if (field)
+                val += (typename OutDataTypes::Real) field->getParticleField(i, r2/h2);
+        	else
+        	{
+        		Real a = 1-r2/h2;
+        		val += (typename OutDataTypes::Real) (a*a*a);
+        	}
         }
     };
 
@@ -89,7 +95,7 @@ public:
             clear();
         }
     };
-    enum { GRIDDIM_LOG2 = 2 };
+    enum { GRIDDIM_LOG2 = 3 };
 };
 
 template <class In, class Out>
@@ -109,11 +115,11 @@ public:
     typedef typename InCoord::value_type InReal;
 
     SPHFluidSurfaceMapping(In* from, Out* to)
-      : Inherit(from, to), 
-      mStep(initData(&mStep,0.5,"step","Step")), 
+      : Inherit(from, to),
+      mStep(initData(&mStep,0.5,"step","Step")),
       mRadius(initData(&mRadius,2.0,"radius","Radius")),
-      mIsoValue(initData(&mIsoValue,0.5,"isoValue", "Iso Value")), 
-      sph(NULL), grid(NULL)
+      mIsoValue(initData(&mIsoValue,0.5,"isoValue", "Iso Value")),
+      sph(NULL), grid(NULL), firstApply(true)
     {
     }
 
@@ -146,7 +152,7 @@ public:
     {
         mIsoValue.setValue(val);
     }
-    
+
     void init();
 
     void apply( OutVecCoord& out, const InVecCoord& in );
@@ -158,10 +164,11 @@ public:
     void draw();
 
 
-protected: 
+protected:
     Data< double > mStep;
     Data< double > mRadius;
     Data< double > mIsoValue;
+
 
     typedef forcefield::SPHFluidForceField<typename In::DataTypes> SPHForceField;
     SPHForceField* sph;
@@ -172,6 +179,9 @@ protected:
 
     typedef SpatialGrid<GridTypes> Grid;
     typedef typename Grid::Cell Cell;
+    typedef typename Grid::Grid SubGrid;
+    typedef typename Grid::Key SubKey;
+    typedef std::pair<SubKey,SubGrid*> GridEntry;
     enum { GRIDDIM = Grid::GRIDDIM };
     enum { DX = Grid::DX };
     enum { DY = Grid::DY };
@@ -179,18 +189,50 @@ protected:
 
     Grid* grid;
 
-    void createPoints(OutVecCoord& out, int x, int y, int z, Cell* c, const Cell* cx, const Cell* cy, const Cell* cz, const OutReal isoval);
+    bool firstApply;
 
-    void createFaces(OutVecCoord& out, const Cell** cells, const OutReal isoval);
+    void createPoints(OutVecCoord& out, OutVecDeriv* normals, const GridEntry& g, int x, int y, int z, Cell* c, const Cell* cx1, const Cell* cy1, const Cell* cz1, const OutReal isoval);
+
+    void createFaces(OutVecCoord& out, OutVecDeriv* normals, const Cell** cells, const OutReal isoval);
+
+    OutReal getValue(const SubGrid* g, int cx, int cy, int cz)
+    {
+	if (cx < 0) { g = g->neighbors[0]; cx+=GRIDDIM; } else if (cx >= GRIDDIM) { g = g->neighbors[1]; cx-=GRIDDIM; }
+	if (cy < 0) { g = g->neighbors[2]; cy+=GRIDDIM; } else if (cy >= GRIDDIM) { g = g->neighbors[3]; cy-=GRIDDIM; }
+	if (cz < 0) { g = g->neighbors[4]; cz+=GRIDDIM; } else if (cz >= GRIDDIM) { g = g->neighbors[5]; cz-=GRIDDIM; }
+	return g->cell[(cz*GRIDDIM+cy)*GRIDDIM+cx].data.val;
+    }
+
+    OutDeriv calcGrad(const GridEntry& g, int x, int y, int z)
+    {
+	x-=g.first[0]*GRIDDIM;
+	y-=g.first[1]*GRIDDIM;
+	z-=g.first[2]*GRIDDIM;
+	OutDeriv n;
+	n[0] = getValue(g.second, x+1,y,z) - getValue(g.second, x-1,y,z);
+	n[1] = getValue(g.second, x,y+1,z) - getValue(g.second, x,y-1,z);
+	n[2] = getValue(g.second, x,y,z+1) - getValue(g.second, x,y,z-1);
+	return n;
+    }
 
     template<int C>
-    int addPoint(OutVecCoord& out, int x,int y,int z, OutReal v0, OutReal v1, OutReal iso)
+    int addPoint(OutVecCoord& out, OutVecDeriv* normals, const GridEntry& g, int x,int y,int z, OutReal v0, OutReal v1, OutReal iso)
     {
         int p = out.size();
         OutCoord pos = OutCoord((OutReal)x,(OutReal)y,(OutReal)z);
-        pos[C] += (iso-v0)/(v1-v0);
+	OutReal interp = (iso-v0)/(v1-v0);
+        pos[C] += interp;
         out.resize(p+1);
         out[p] = pos * mStep.getValue();
+	if (normals)
+	{
+	    normals->resize(p+1);
+	    OutDeriv& n = (*normals)[p];
+	    OutDeriv n0 = calcGrad(g, x,y,z);
+	    OutDeriv n1 = calcGrad(g, (C==0)?x+1:x,(C==1)?y+1:y,(C==2)?z+1:z);
+	    n = n0 + (n1-n0) * interp;
+	    n.normalize();
+	}
         return p;
     }
 

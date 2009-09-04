@@ -33,16 +33,16 @@
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <vector>
 
-using namespace sofa::defaulttype;
-
 namespace sofa
 {
+
 
 namespace component
 {
 
 namespace mapping
 {
+using namespace sofa::defaulttype;
 
 template <class BasicMapping>
 class RigidRigidMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
@@ -54,8 +54,9 @@ public:
 	typedef typename Out::VecCoord VecCoord;
 	typedef typename Out::VecDeriv VecDeriv;
 	typedef typename Out::Coord Coord;
-	typedef typename Out::Deriv Deriv;
-        typedef typename std::map<unsigned int, Deriv>::const_iterator OutConstraintIterator;
+	typedef typename Out::Deriv Deriv;                         
+        typedef typename defaulttype::SparseConstraint<Deriv> OutSparseConstraint;
+        typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
 	typedef typename In::Coord InCoord;
 	typedef typename In::Deriv InDeriv;	
 	typedef typename Coord::value_type Real;
@@ -77,6 +78,11 @@ public:
 	//axis length for display
 	Data<double> axisLength;
 	Data< bool > indexFromEnd;
+	Data< bool > globalToLocalCoords;
+
+        core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskFrom;
+        core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskTo;
+                                        
 
 	RigidRigidMapping(In* from, Out* to)
 	  : Inherit(from, to),
@@ -85,9 +91,16 @@ public:
 	  index(initData(&index,(unsigned)0,"index","input DOF index")),
 	  fileRigidRigidMapping(initData(&fileRigidRigidMapping,"fileRigidRigidMapping","Filename")),
 	  axisLength(initData( &axisLength, 0.7, "axisLength", "axis length for display")),
-	  indexFromEnd( initData ( &indexFromEnd,false,"indexFromEnd","input DOF index starts from the end of input DOFs vector") )
+	  indexFromEnd( initData ( &indexFromEnd,false,"indexFromEnd","input DOF index starts from the end of input DOFs vector") ),
+	  globalToLocalCoords ( initData ( &globalToLocalCoords,"globalToLocalCoords","are the output DOFs initially expressed in global coordinates" ) )
 	{
           addAlias(&fileRigidRigidMapping,"filename");
+          maskFrom = NULL;
+          if (core::componentmodel::behavior::BaseMechanicalState *stateFrom = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(from))
+            maskFrom = &stateFrom->forceMask;
+          maskTo = NULL;
+          if (core::componentmodel::behavior::BaseMechanicalState *stateTo = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(to))
+            maskTo = &stateTo->forceMask;
 	}
 
 	virtual ~RigidRigidMapping()
@@ -104,7 +117,7 @@ public:
 
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
-	//void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+	void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 
 	void computeAccFromMapping(  typename Out::VecDeriv& acc_out, const typename In::VecDeriv& v_in, const typename In::VecDeriv& acc_in);
 

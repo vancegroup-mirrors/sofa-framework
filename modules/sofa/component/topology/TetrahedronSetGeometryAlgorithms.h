@@ -38,16 +38,16 @@ namespace topology
 	using core::componentmodel::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::TetraID TetraID;
 	typedef BaseMeshTopology::Tetra Tetra;
-	typedef BaseMeshTopology::SeqTetras SeqTetras;
-	typedef BaseMeshTopology::VertexTetras VertexTetras;
-	typedef BaseMeshTopology::EdgeTetras EdgeTetras;
-	typedef BaseMeshTopology::TriangleTetras TriangleTetras;
-	typedef BaseMeshTopology::TetraEdges TetraEdges;
-	typedef BaseMeshTopology::TetraTriangles TetraTriangles;
+	typedef BaseMeshTopology::SeqTetrahedra SeqTetrahedra;
+	typedef BaseMeshTopology::TetrahedraAroundVertex TetrahedraAroundVertex;
+	typedef BaseMeshTopology::TetrahedraAroundEdge TetrahedraAroundEdge;
+	typedef BaseMeshTopology::TetrahedraAroundTriangle TetrahedraAroundTriangle;
+	typedef BaseMeshTopology::EdgesInTetrahedron EdgesInTetrahedron;
+	typedef BaseMeshTopology::TrianglesInTetrahedron TrianglesInTetrahedron;
 
 	typedef Tetra Tetrahedron;
-	typedef TetraEdges TetrahedronEdges;
-	typedef TetraTriangles TetrahedronTriangles;
+	typedef EdgesInTetrahedron EdgesInTetrahedron;
+	typedef TrianglesInTetrahedron TrianglesInTetrahedron;
 
 	/**
 	* A class that provides geometry information on an TetrahedronSet.
@@ -62,9 +62,14 @@ namespace topology
 
 		TetrahedronSetGeometryAlgorithms()
 		: TriangleSetGeometryAlgorithms<DataTypes>()
-		{}
+		  ,debugViewTetrahedraIndices (core::objectmodel::Base::initData(&debugViewTetrahedraIndices, (bool) false, "debugViewTetrahedraIndices", "Debug : view Tetrahedrons indices"))
+		  , _draw(core::objectmodel::Base::initData(&_draw, false, "drawTetrahedra","if true, draw the tetrahedra in the topology"))
+		{
+		}
 
 		virtual ~TetrahedronSetGeometryAlgorithms() {}
+
+		virtual void draw();
 
 		void computeTetrahedronAABB(const TetraID i, Coord& minCoord, Coord& maxCoord) const;
 
@@ -94,10 +99,15 @@ namespace topology
 		/// finds the indices of all tetrahedra in the ball of center ind_ta and of radius dist(ind_ta, ind_tb)
 		void getTetraInBall(const TetraID ind_ta, Real r,
 							sofa::helper::vector<unsigned int> &indices) const;
-
+		void getTetraInBall(const Coord& c, Real r,
+				     sofa::helper::vector<unsigned int> &indices) const;
 		/** \brief Write the current mesh into a msh file
 		*/
 		void writeMSHfile(const char *filename) const;
+
+	protected:
+		Data<bool> debugViewTetrahedraIndices;
+		Data<bool> _draw;
 	};
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETGEOMETRYALGORITHMS_CPP)

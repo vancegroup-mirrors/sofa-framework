@@ -59,7 +59,6 @@ SOFA_LINK_CLASS(LightManager)
 SOFA_LINK_CLASS(OglModel)
 SOFA_LINK_CLASS(PointSplatModel)
 SOFA_LINK_CLASS(PositionalLight)
-SOFA_LINK_CLASS(SlicedVolumetricModel)
 
 #ifdef SOFA_HAVE_GLEW
 SOFA_LINK_CLASS(OglShader)
@@ -96,7 +95,7 @@ SOFA_LINK_CLASS ( OglUIntAttribute );
 SOFA_LINK_CLASS ( OglUInt2Attribute );
 SOFA_LINK_CLASS ( OglUInt3Attribute );
 SOFA_LINK_CLASS ( OglUInt4Attribute );
-
+SOFA_LINK_CLASS(SlicedVolumetricModel)
 #endif
 
 

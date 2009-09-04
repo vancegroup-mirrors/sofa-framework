@@ -153,7 +153,7 @@ public:
 
 public:
 	
-  TriangularBendingSprings(/*double _ks, double _kd*/); //component::MechanicalObject<DataTypes>* m_dof = NULL);
+  TriangularBendingSprings(/*double _ks, double _kd*/); //component::container::MechanicalObject<DataTypes>* m_dof = NULL);
   //TriangularBendingSprings(); //MechanicalState<DataTypes> *mm1 = NULL, MechanicalState<DataTypes> *mm2 = NULL);
 
   virtual ~TriangularBendingSprings();
@@ -203,6 +203,17 @@ protected:
     //Data<double> kd;
 
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_TRIANGULARBENDINGSPRINGS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API TriangularBendingSprings<defaulttype::Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API TriangularBendingSprings<defaulttype::Vec3fTypes>;
+#endif
+#endif
+
 
 } // namespace forcefield
 

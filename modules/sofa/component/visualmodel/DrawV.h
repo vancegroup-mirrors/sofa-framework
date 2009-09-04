@@ -51,7 +51,7 @@ public:
     Data<bool> castShadow; ///< True if object cast shadows
     Data<bool> useAlpha; ///< True if velocity displayed using alpha blending
     Data<double> vscale; ///< Scaling of veloity vectors
-    
+
     DrawV();
 
     void initVisual();
@@ -59,17 +59,23 @@ public:
 
     bool isTransparent();
     float getVScale();
-    
+
     void drawVisual();
     void drawTransparent();
     void drawShadow();
 
     bool addBBox(double* minBBox, double* maxBBox);
-	
+
     const VecCoord* getX()  const { return &inputX; }
     const VecDeriv* getV()  const { return &inputV; }
     VecCoord* getX()  { return &inputX; }
-    VecDeriv* getV()  { return &inputV; }
+    VecCoord* getV()  { return &inputV; }
+
+    VecCoord* getX0() { return NULL; };
+    VecCoord* getN() { return NULL; };
+
+    const VecCoord* getX0() const { return NULL; };
+    const VecDeriv* getN() const { return NULL; };
 
 protected:
     ResizableExtVector<Coord> inputX;

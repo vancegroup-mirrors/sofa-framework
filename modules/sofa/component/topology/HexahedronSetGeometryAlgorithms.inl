@@ -41,7 +41,7 @@ namespace topology
 	template< class DataTypes>
 	void HexahedronSetGeometryAlgorithms< DataTypes >::computeHexahedronAABB(const HexaID h, Coord& minCoord, Coord& maxCoord) const
 	{
-		const Hexahedron &t = this->m_topology->getHexa(h);
+		const Hexahedron &t = this->m_topology->getHexahedron(h);
 		const typename DataTypes::VecCoord& p = *(this->object->getX());
 
 		for(unsigned int i=0; i<3; ++i)
@@ -57,7 +57,7 @@ namespace topology
 	template< class DataTypes>
 	void HexahedronSetGeometryAlgorithms< DataTypes >::computeHexahedronRestAABB(const HexaID h, Coord& minCoord, Coord& maxCoord) const
 	{
-		const Hexahedron &t = this->m_topology->getHexa(h);
+		const Hexahedron &t = this->m_topology->getHexahedron(h);
 		const typename DataTypes::VecCoord& p = *(this->object->getX0());
 
 		for(unsigned int i=0; i<3; ++i)
@@ -73,7 +73,7 @@ namespace topology
 	template<class DataTypes>
 	typename DataTypes::Coord HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronCenter(const HexaID h) const
 	{
-		const Hexahedron &t = this->m_topology->getHexa(h);
+		const Hexahedron &t = this->m_topology->getHexahedron(h);
 		const typename DataTypes::VecCoord& p = *(this->object->getX());
 
 		return (p[t[0]] + p[t[1]] + p[t[2]] + p[t[3]] + p[t[4]] + p[t[5]] + p[t[6]] + p[t[7]]) * (Real) 0.125;
@@ -82,7 +82,7 @@ namespace topology
 	template<class DataTypes>
 	typename DataTypes::Coord HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronRestCenter(const HexaID h) const
 	{
-		const Hexahedron &t = this->m_topology->getHexa(h);
+		const Hexahedron &t = this->m_topology->getHexahedron(h);
 		const typename DataTypes::VecCoord& p = *(this->object->getX0());
 
 		return (p[t[0]] + p[t[1]] + p[t[2]] + p[t[3]] + p[t[4]] + p[t[5]] + p[t[6]] + p[t[7]]) * (Real) 0.125;
@@ -91,7 +91,7 @@ namespace topology
 	template< class DataTypes>
 	void HexahedronSetGeometryAlgorithms< DataTypes >::getHexahedronVertexCoordinates(const HexaID h, Coord pnt[8]) const
 	{
-		const Hexahedron &t = this->m_topology->getHexa(h);
+		const Hexahedron &t = this->m_topology->getHexahedron(h);
 		const typename DataTypes::VecCoord& p = *(this->object->getX());
 
 		for(unsigned int i=0; i<8; ++i)
@@ -103,7 +103,7 @@ namespace topology
 	template< class DataTypes>
 	void HexahedronSetGeometryAlgorithms< DataTypes >::getRestHexahedronVertexCoordinates(const HexaID h, Coord pnt[8]) const
 	{
-		const Hexahedron &t = this->m_topology->getHexa(h);
+		const Hexahedron &t = this->m_topology->getHexahedron(h);
 		const typename DataTypes::VecCoord& p = *(this->object->getX0());
 
 		for(unsigned int i=0; i<8; ++i)
@@ -324,7 +324,7 @@ namespace topology
 		int index=-1;
 		distance = 1e10;
 
-		for(int c=0; c<this->m_topology->getNbHexas(); ++c)
+		for(int c=0; c<this->m_topology->getNbHexahedra(); ++c)
 		{
 			const Real d = computeElementDistanceMeasure(c, pos);	
 
@@ -359,7 +359,7 @@ namespace topology
       int index=-1;
       distance = 1e10;
 
-      for(int c=0; c<this->m_topology->getNbHexas(); ++c)
+      for(int c=0; c<this->m_topology->getNbHexahedra(); ++c)
       {
         const Real d = computeElementRestDistanceMeasure(c, pos); 
 
@@ -388,7 +388,7 @@ namespace topology
 	template< class DataTypes>
 	typename DataTypes::Real HexahedronSetGeometryAlgorithms< DataTypes >::computeHexahedronVolume( const HexaID /*h*/) const 
 	{
-		//const Hexahedron &t = this->m_topology->getHexa(h);
+		//const Hexahedron &t = this->m_topology->getHexahedron(h);
 		//const VecCoord& p = *(this->object->getX());
 		Real volume=(Real)(0.0); /// @TODO : implementation of computeHexahedronVolume
 		return volume;
@@ -397,7 +397,7 @@ namespace topology
 	template< class DataTypes>
 	typename DataTypes::Real HexahedronSetGeometryAlgorithms< DataTypes >::computeRestHexahedronVolume( const HexaID /*h*/) const 
 	{
-		//const Hexahedron &t = this->m_topology->getHexa(h);
+		//const Hexahedron &t = this->m_topology->getHexahedron(h);
 		//const VecCoord& p = *(this->object->getX0());
 		Real volume=(Real)(0.0); /// @TODO : implementation of computeRestHexahedronVolume
 		return volume;
@@ -406,11 +406,11 @@ namespace topology
 	template<class DataTypes>
 	void HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronVolume( BasicArrayInterface<Real> &ai) const
 	{
-		//const sofa::helper::vector<Hexahedron> &ta=this->m_topology->getHexas();
+		//const sofa::helper::vector<Hexahedron> &ta=this->m_topology->getHexahedra();
 		//const typename DataTypes::VecCoord& p = *(this->object->getX());
-		for(int i=0; i<this->m_topology->getNbHexas(); ++i)
+		for(int i=0; i<this->m_topology->getNbHexahedra(); ++i)
 		{
-			//const Hexahedron &t=this->m_topology->getHexa(i); //ta[i];
+			//const Hexahedron &t=this->m_topology->getHexahedron(i); //ta[i];
 			ai[i]=(Real)(0.0); /// @TODO : implementation of computeHexahedronVolume
 		}
 	}
@@ -441,7 +441,7 @@ namespace topology
 		myfile << "$ENDNOD\n"; 	 
 		myfile << "$ELM\n"; 	 
 
-		const sofa::helper::vector<Hexahedron> hea = this->m_topology->getHexas(); 	 
+		const sofa::helper::vector<Hexahedron> hea = this->m_topology->getHexahedra(); 	 
 
 		myfile << hea.size() <<"\n"; 	 
 
@@ -458,6 +458,115 @@ namespace topology
 		myfile.close(); 	 
 	}
 
+  template<class DataTypes>
+  void HexahedronSetGeometryAlgorithms<DataTypes>::draw()
+  {
+    QuadSetGeometryAlgorithms<DataTypes>::draw();
+
+    // Draw Hexa indices
+    if (debugViewHexaIndices.getValue())
+    {
+      Mat<4,4, GLfloat> modelviewM;
+      const VecCoord& coords = *(this->object->getX());
+      glColor3f(1.0,1.0,0.0);
+      glDisable(GL_LIGHTING);
+      float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
+
+      //for hexa:
+      scale = scale/2;
+
+      const sofa::helper::vector<Hexahedron> &hexaArray = this->m_topology->getHexahedra(); 	 
+      
+      for (unsigned int i =0; i<hexaArray.size(); i++)
+      {
+	
+	Hexahedron the_hexa = hexaArray[i];
+	Coord baryCoord;
+	
+	for (unsigned int j = 0; j<8; j++)
+	{
+	  Coord vertex = coords[ the_hexa[j] ];
+	  
+	  for (unsigned int k = 0; k<3; k++)
+	    baryCoord[k] += vertex[k];
+	}
+
+	baryCoord = baryCoord/8;
+	
+	std::ostringstream oss;
+	oss << i;
+	std::string tmp = oss.str();
+	const char* s = tmp.c_str();
+	glPushMatrix();
+
+	glTranslatef(baryCoord[0], baryCoord[1], baryCoord[2]);
+	glScalef(scale,scale,scale);
+
+	// Makes text always face the viewer by removing the scene rotation
+	// get the current modelview matrix
+	glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
+	modelviewM.transpose();
+
+	Vec3d temp(baryCoord[0], baryCoord[1], baryCoord[2]);
+	temp = modelviewM.transform(temp);
+	
+	//glLoadMatrixf(modelview);
+	glLoadIdentity();
+	
+	glTranslatef(temp[0], temp[1], temp[2]);
+	glScalef(scale,scale,scale);
+	
+	while(*s){
+	  glutStrokeCharacter(GLUT_STROKE_ROMAN, *s);
+	  s++;
+	}
+	
+	glPopMatrix();
+	
+      }
+    }
+
+
+    //Draw triangles
+    if (_draw.getValue())
+    {
+      const sofa::helper::vector<Hexahedron> &hexaArray = this->m_topology->getHexahedra(); 	 
+      
+      if (!hexaArray.empty())
+      {
+	glDisable(GL_LIGHTING);
+	glColor3f(1.0,1.0,0.0);
+	glBegin(GL_LINES);
+	const VecCoord& coords = *(this->object->getX());
+
+	for (unsigned int i = 0; i<hexaArray.size(); i++)
+	{
+	  const Hexahedron& H = hexaArray[i];
+	  sofa::helper::vector <Coord> hexaCoord;
+	  
+	  for (unsigned int j = 0; j<8; j++)
+	    hexaCoord.push_back (coords[H[j]]);
+	  
+	  for (unsigned int j = 0; j<4; j++)
+	  {
+	    glVertex3d(hexaCoord[j][0], hexaCoord[j][1], hexaCoord[j][2]);
+	    glVertex3d(hexaCoord[(j+1)%4][0], hexaCoord[(j+1)%4][1], hexaCoord[(j+1)%4][2]);
+
+	    glVertex3d(hexaCoord[j+4][0], hexaCoord[j+4][1], hexaCoord[j+4][2]);
+	    glVertex3d(hexaCoord[(j+1)%4 +4][0], hexaCoord[(j+1)%4 +4][1], hexaCoord[(j+1)%4 +4][2]);
+
+	    glVertex3d(hexaCoord[j][0], hexaCoord[j][1], hexaCoord[j][2]);
+	    glVertex3d(hexaCoord[j+4][0], hexaCoord[j+4][1], hexaCoord[j+4][2]);
+	  }
+	}
+	glEnd();
+      }
+    }
+  }
+  
+
+
+  
 } // namespace topology
 
 } // namespace component

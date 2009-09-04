@@ -40,6 +40,7 @@
 #include <sofa/gui/qt/viewer/qgl/QtGLViewer.h>
 #endif
 
+
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/DesactivatedNodeVisitor.h>
 
@@ -124,7 +125,6 @@ SOFA_LINK_CLASS(ImageQt);
 
 
       using sofa::core::objectmodel::BaseObject;
-      using sofa::simulation::tree::GNode;
       using namespace sofa::helper::system::thread;
       using namespace sofa::simulation;
 //       using namespace sofa::simulation::tree;
@@ -217,18 +217,26 @@ typedef QApplication QSOFAApplication;
 	  argv[0] = strdup ( SofaGUI::GetProgramName() );
 	  argv[1]=NULL;
 	  application = new QSOFAApplication ( *argc,argv );
+          
 	}
 	// create interface
 	gui = new RealGUI ( name, options );
-	Node *groot = dynamic_cast< Node* >(node);
-	if ( !groot )
-          groot = new GNode;
+	Node *root = dynamic_cast< Node* >(node);
+	if ( !root )
+          root = simulation::getSimulation()->newNode("Root");
 
-        gui->setScene ( groot, filename );
+        gui->setScene ( root, filename );
 
 	//gui->viewer->resetView();
 
 	application->setMainWidget ( gui );
+
+        QString pathIcon=(sofa::helper::system::DataRepository.getFirstPath() + std::string( "/icons/SOFA.png" )).c_str();
+#ifdef SOFA_QT4
+        application->setWindowIcon(QIcon(pathIcon));
+#else        
+        gui->setIcon(QPixmap(pathIcon));
+#endif
 
 
 	// show the gui
@@ -240,7 +248,7 @@ typedef QApplication QSOFAApplication;
 	// especialy the GL_MODELVIEW_MATRIX
 	sofa::core::objectmodel::GLInitializedEvent ev;
 	sofa::simulation::PropagateEventVisitor act(&ev);
-	groot->execute(act);
+	root->execute(act);
 	#endif // SOFA_HAVE_CHAI3D
 
 	return gui;
@@ -292,6 +300,9 @@ typedef QApplication QSOFAApplication;
       RealGUI::RealGUI ( const char* viewername, const std::vector<std::string>& /*options*/ )
 	: viewerName ( viewername ), viewer ( NULL ), currentTab ( NULL ), tabInstrument (NULL),  graphListener ( NULL ), dialog ( NULL )
       {
+
+
+
 	connect(this, SIGNAL(quit()), this, SLOT(fileExit()));
 
 #ifdef SOFA_QT4
@@ -385,10 +396,11 @@ typedef QApplication QSOFAApplication;
 	connect ( stepButton, SIGNAL ( clicked() ), this, SLOT ( step() ) );
 	connect ( ExportGraphButton, SIGNAL ( clicked() ), this, SLOT ( exportGraph() ) );
 	connect ( dumpStateCheckBox, SIGNAL ( toggled ( bool ) ), this, SLOT ( dumpState ( bool ) ) );
-	connect ( exportGnuplotFilesCheckbox, SIGNAL ( toggled ( bool ) ), this, SLOT ( setExportGnuplot ( bool ) ) );
-	connect ( exportVisitorCheckbox, SIGNAL ( toggled ( bool ) ), this, SLOT ( setExportVisitor ( bool ) ) );
 	connect ( displayComputationTimeCheckBox, SIGNAL ( toggled ( bool ) ), this, SLOT ( displayComputationTime ( bool ) ) );
-
+	connect ( exportGnuplotFilesCheckbox, SIGNAL ( toggled ( bool ) ), this, SLOT ( setExportGnuplot ( bool ) ) );
+#ifdef SOFA_DUMP_VISITOR_INFO
+        connect ( exportVisitorCheckbox, SIGNAL ( toggled ( bool ) ), this, SLOT ( setExportVisitor ( bool ) ) );
+#endif
 	connect ( record, SIGNAL (toggled (bool) ),              this, SLOT( slot_recordSimulation( bool) ) );
 	connect ( backward_record, SIGNAL (clicked () ),         this, SLOT( slot_backward( ) ) );
 	connect ( stepbackward_record, SIGNAL (clicked () ),     this, SLOT( slot_stepbackward( ) ) );
@@ -413,7 +425,7 @@ typedef QApplication QSOFAApplication;
 	pathDumpVisitor = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/dumpVisitor.xml" );
 	scenes = sofa::helper::system::DataRepository.getFile ( scenes );
 
-	updateRecentlyOpened("");
+	initRecentlyOpened();
 
 
 	//Dialog Add Object
@@ -478,9 +490,29 @@ typedef QApplication QSOFAApplication;
 	fileOpen(recentlyOpened->text(id).ascii());
       }
 
+      void RealGUI::initRecentlyOpened()
+      {
+        recentlyOpened->clear();
+	std::vector< std::string > list_files;
+
+
+	std::string scenes ( "config/Sofa.ini" );
+	scenes = sofa::helper::system::DataRepository.getFile ( scenes );
+
+
+	std::ifstream end(scenes.c_str());
+	std::string s;
+	while( std::getline(end,s) )
+	  {
+            list_files.push_back(sofa::helper::system::DataRepository.getFile(s));
+	    recentlyOpened->insertItem(QString(list_files.back().c_str()));
+	  }
+	end.close();
+
+      }
+
       void RealGUI::updateRecentlyOpened(std::string fileLoaded)
       {
-
 #ifdef WIN32
 	for (unsigned int i=0;i<fileLoaded.size();++i)
 	  {
@@ -491,39 +523,32 @@ typedef QApplication QSOFAApplication;
 
 	scenes = sofa::helper::system::DataRepository.getFile ( scenes );
 
-	std::vector< std::string > list_files;
-	std::ifstream end(scenes.c_str());
-	std::string s;
-	while( std::getline(end,s) )
-	  {
-	    if (s != fileLoaded)
-	      list_files.push_back(sofa::helper::system::DataRepository.getFile(s));
-	  }
-	end.close();
-
-
-	recentlyOpened->clear();
 	std::ofstream out;
 	out.open(scenes.c_str(),std::ios::out);
 	if (sofa::helper::system::DataRepository.findFile(fileLoaded))
 	  {
 	    fileLoaded = sofa::helper::system::DataRepository.getFile(fileLoaded);
 	    out << fileLoaded << "\n";
+	    recentlyOpened->insertItem(QString(fileLoaded.c_str()),-1,0);
+	  }
 
-	    recentlyOpened->insertItem(QString(fileLoaded.c_str()));
-	  }
-	for (unsigned int i=0;i<list_files.size() && i<MAX_RECENTLY_OPENED ;++i)
+	for (unsigned int i=1;i<recentlyOpened->count() && i< MAX_RECENTLY_OPENED;++i)
 	  {
-	    if (fileLoaded != list_files[i])
+            std::string entry = (recentlyOpened->text(recentlyOpened->idAt(i))).ascii();
+	    if (fileLoaded == entry)
 	      {
-		recentlyOpened->insertItem(QString(list_files[i].c_str()));
-		out << list_files[i] << "\n";
+		recentlyOpened->removeItemAt(i);
+                --i;
 	      }
+            else
+              {
+		out << entry << "\n";
+              }
 	  }
+
+        while (recentlyOpened->count() > MAX_RECENTLY_OPENED) recentlyOpened->removeItemAt(MAX_RECENTLY_OPENED);
 
 	out.close();
-
-
       }
 
       void RealGUI::setPixmap(std::string pixmap_filename, QPushButton* b)
@@ -548,8 +573,11 @@ typedef QApplication QSOFAApplication;
 	  }
 #endif
 	delete displayFlag;
+
+#ifdef SOFA_DUMP_VISITOR_INFO
 	delete windowTraceVisitor;
 	delete handleTraceVisitor;
+#endif
 	if (dialog) delete dialog;
       }
 
@@ -574,20 +602,27 @@ typedef QApplication QSOFAApplication;
 
 
 
-#ifndef DUMP_VISITOR_INFO
+#ifndef SOFA_DUMP_VISITOR_INFO
 	//Remove option to see visitor trace
 	this->exportVisitorCheckbox->hide();
-#endif
+#else
 	//Main window containing a QListView only
 	windowTraceVisitor = new WindowVisitor;
 	windowTraceVisitor->graphView->setSorting(-1);
 	windowTraceVisitor->hide();
 	connect(windowTraceVisitor, SIGNAL(WindowVisitorClosed(bool)), this->exportVisitorCheckbox, SLOT(setChecked(bool)));
 	handleTraceVisitor = new GraphVisitor(windowTraceVisitor);
-
+#endif
 	//--------
-	pluginManager = new SofaPluginManager;
-	pluginManager->hide();
+        descriptionScene = new QDialog(this);
+        descriptionScene->resize(400,400);
+        QVBoxLayout *descriptionLayout = new QVBoxLayout(descriptionScene);
+        htmlPage = new QTextBrowser(descriptionScene);
+        descriptionLayout->addWidget(htmlPage);
+        connect(htmlPage, SIGNAL(sourceChanged(const QUrl&)), this, SLOT(changeHtmlPage(const QUrl&)));
+	//--------
+        SofaPluginManager::getInstance()->hide();        
+        SofaMouseManager::getInstance()->hide();
 	//*********************************************************************************************************************************
 	//List of objects
 	//Read the object.txt that contains the information about the objects which can be added to the scenes whithin a given BoundingBox and scale range
@@ -706,7 +741,7 @@ typedef QApplication QSOFAApplication;
 	viewer->getQWidget()->update();
 	setGUI();
 
-
+        SofaMouseManager::getInstance()->setPickHandler(viewer->getPickHandler());
       }
 
       void RealGUI::viewerOpenGL()
@@ -857,12 +892,19 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::fileOpen ( std::string filename )
       {
+        if (filename.substr(filename.size()-5) == ".simu") 
+          {
+            return fileOpenSimu(filename);
+          }
+        
+        startButton->setOn(false);
+        descriptionScene->hide();
+        htmlPage->clear();
 
 	if ( sofa::helper::system::DataRepository.findFile (filename) )
 	  filename = sofa::helper::system::DataRepository.getFile ( filename );
 	else
-	  return;
-
+          return;
 	startDumpVisitor();
 
 	frameCounter = 0;
@@ -872,8 +914,7 @@ typedef QApplication QSOFAApplication;
 	list_object_initial.clear();
 	writeSceneName="";
 
-	update();
-
+        update();
 	//Hide the dialog to add a new object in the graph
 	if ( dialog != NULL ) dialog->hide();
 	//Hide all the dialogs to modify the graph
@@ -881,37 +922,35 @@ typedef QApplication QSOFAApplication;
 
 	if ( viewer->getScene() !=NULL )
 	{
-		simulation::getSimulation()->unload ( viewer->getScene() );
+          viewer->getPickHandler()->activateRay(false);
+          simulation::getSimulation()->unload ( viewer->getScene() );
 	  if ( graphListener!=NULL )
 	  {
 	    delete graphListener;
 	    graphListener = NULL;
 	  }
 	  graphView->clear();
-	}
-
+        }
 	//Clear the list of modified dialog opened
 	current_Id_modifyDialog=0;
 	map_modifyDialogOpened.clear();
 
-	simulation::Node* groot = simulation::getSimulation()->load ( filename.c_str() );
-        simulation::getSimulation()->init ( groot );
-	if ( groot == NULL )
+	simulation::Node* root = simulation::getSimulation()->load ( filename.c_str() );
+        simulation::getSimulation()->init ( root );
+	if ( root == NULL )
 	  {
 	    qFatal ( "Failed to load %s",filename.c_str() );
 	    stopDumpVisitor();
 	    return;
 	  }
 
-	setScene ( groot, filename.c_str() );
-	//need to create again the output streams !!
-
+	setScene ( root, filename.c_str() );
+        //need to create again the output streams !!
 	simulation::getSimulation()->gnuplotDirectory.setValue(gnuplot_directory);
-	setExportGnuplot(exportGnuplotFilesCheckbox->isChecked());
-
+        setExportGnuplot(exportGnuplotFilesCheckbox->isChecked());
 	displayComputationTime(m_displayComputationTime);
-	stopDumpVisitor();
-      }
+        stopDumpVisitor();
+      }           
 
 #ifdef SOFA_PML
       void RealGUI::pmlOpen ( const char* filename, bool /*resetView*/ )
@@ -946,13 +985,13 @@ typedef QApplication QSOFAApplication;
       {
 	if ( pmlreader )
 	  {
-		Node* groot;
+            Node* root;
 	    if ( lmlreader != NULL ) delete lmlreader;
 	    lmlreader = new LMLReader; std::cout <<"New lml reader\n";
 	    lmlreader->BuildStructure ( filename, pmlreader );
 
-	    groot = viewer->getScene();
-	    simulation::getSimulation()->init ( groot );
+	    root = viewer->getScene();
+	    simulation::getSimulation()->init ( root );
 
 	  }
 	else
@@ -980,13 +1019,26 @@ typedef QApplication QSOFAApplication;
       }
 
 
-      void RealGUI::setScene ( Node* groot, const char* filename )
+      void RealGUI::setScene ( Node* root, const char* filename, bool temporaryFile )
       {
  	if (filename)
-	{
- 	  updateRecentlyOpened(filename);
-	  setTitle ( filename );
-	}
+          {
+            if (!temporaryFile) updateRecentlyOpened(filename);
+            setTitle ( filename );
+            std::string extension=sofa::helper::system::SetDirectory::GetExtension(filename);
+            std::string htmlFile=filename;htmlFile.resize(htmlFile.size()-extension.size()-1);
+            htmlFile+=".html";          
+            if (sofa::helper::system::DataRepository.findFile (htmlFile)) 
+              {
+				  htmlFile = sofa::helper::system::DataRepository.getFile (htmlFile);
+#ifdef WIN32
+				  htmlFile = "file:///"+htmlFile;
+#endif
+                descriptionScene->show();
+                htmlPage->setSource(QUrl(QString(htmlFile.c_str())));
+              }
+
+          }
 
 	if (tabInstrument!= NULL)
 	{
@@ -997,9 +1049,9 @@ typedef QApplication QSOFAApplication;
 
 
 	graphView->clear();
-	viewer->setScene ( groot, filename );
+	viewer->setScene ( root, filename );
  	viewer->resetView();
-	initial_time = (groot != NULL)?groot->getTime():0;
+	initial_time = (root != NULL)?root->getTime():0;
 
 	record_simulation = false;
 	clearRecord();
@@ -1009,23 +1061,23 @@ typedef QApplication QSOFAApplication;
 
 	eventNewTime();
 
-	if (groot)
+	if (root)
 	  {
 	// set state of display flags
-	displayFlag->setFlag(DisplayFlagWidget::VISUAL,groot->getContext()->getShowVisualModels());
-	displayFlag->setFlag(DisplayFlagWidget::BEHAVIOR,groot->getContext()->getShowBehaviorModels());
-	displayFlag->setFlag(DisplayFlagWidget::COLLISION,groot->getContext()->getShowCollisionModels());
-	displayFlag->setFlag(DisplayFlagWidget::BOUNDING,groot->getContext()->getShowBoundingCollisionModels());
-	displayFlag->setFlag(DisplayFlagWidget::MAPPING,groot->getContext()->getShowMappings());
-	displayFlag->setFlag(DisplayFlagWidget::MECHANICALMAPPING,groot->getContext()->getShowMechanicalMappings());
-	displayFlag->setFlag(DisplayFlagWidget::FORCEFIELD,groot->getContext()->getShowForceFields());
-	displayFlag->setFlag(DisplayFlagWidget::INTERACTION,groot->getContext()->getShowInteractionForceFields());
-	displayFlag->setFlag(DisplayFlagWidget::WIREFRAME,groot->getContext()->getShowWireFrame());
-	displayFlag->setFlag(DisplayFlagWidget::NORMALS,groot->getContext()->getShowNormals());
+	displayFlag->setFlag(Node::VISUALMODELS,root->getContext()->getShowVisualModels());
+	displayFlag->setFlag(Node::BEHAVIORMODELS,root->getContext()->getShowBehaviorModels());
+	displayFlag->setFlag(Node::COLLISIONMODELS,root->getContext()->getShowCollisionModels());
+	displayFlag->setFlag(Node::BOUNDINGCOLLISIONMODELS,root->getContext()->getShowBoundingCollisionModels());
+	displayFlag->setFlag(Node::MAPPINGS,root->getContext()->getShowMappings());
+	displayFlag->setFlag(Node::MECHANICALMAPPINGS,root->getContext()->getShowMechanicalMappings());
+	displayFlag->setFlag(Node::FORCEFIELDS,root->getContext()->getShowForceFields());
+	displayFlag->setFlag(Node::INTERACTIONFORCEFIELDS,root->getContext()->getShowInteractionForceFields());
+	displayFlag->setFlag(Node::WIREFRAME,root->getContext()->getShowWireFrame());
+	displayFlag->setFlag(Node::NORMALS,root->getContext()->getShowNormals());
 
-	//simulation::getSimulation()->updateVisualContext ( groot );
-	startButton->setOn ( groot->getContext()->getAnimate() );
-	dtEdit->setText ( QString::number ( groot->getDt() ) );
+	//simulation::getSimulation()->updateVisualContext ( root );
+	startButton->setOn ( root->getContext()->getAnimate() );
+	dtEdit->setText ( QString::number ( root->getDt() ) );
 	  }
 	record->setOn(false);
 
@@ -1034,7 +1086,7 @@ typedef QApplication QSOFAApplication;
 	// especialy the GL_MODELVIEW_MATRIX
 	sofa::core::objectmodel::GLInitializedEvent ev;
 	sofa::simulation::PropagateEventVisitor act(&ev);
-	groot->execute(act);
+	root->execute(act);
 #endif // SOFA_HAVE_CHAI3D
 
 #ifdef SOFA_GUI_QTOGREVIEWER
@@ -1273,10 +1325,15 @@ typedef QApplication QSOFAApplication;
 
       }
 
-	  void RealGUI::showPluginManager()
-	  {
-		  pluginManager->show();
-	  }
+      void RealGUI::showPluginManager()
+      {
+        SofaPluginManager::getInstance()->show();
+      }
+
+      void RealGUI::showMouseManager()
+      {
+        SofaMouseManager::getInstance()->show();
+      }
 
       void RealGUI::editGnuplotDirectory()
       {
@@ -1357,27 +1414,26 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::startDumpVisitor()
       {
-#ifdef DUMP_VISITOR_INFO
-	Node* groot = viewer->getScene();
-	if (groot && this->exportVisitorCheckbox->isOn())
+#ifdef SOFA_DUMP_VISITOR_INFO
+	Node* root = viewer->getScene();
+	if (root && this->exportVisitorCheckbox->isOn())
 	  {
-	    m_dumpVisitorStream = new std::ofstream(pathDumpVisitor.c_str());
-	    Visitor::startDumpVisitor(m_dumpVisitorStream, groot->getTime());
+	    m_dumpVisitorStream.str("");
+	    Visitor::startDumpVisitor(&m_dumpVisitorStream, root->getTime());
 	  }
 #endif
       }
       void RealGUI::stopDumpVisitor()
       {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
 	if (this->exportVisitorCheckbox->isOn())
 	  {
 	    Visitor::stopDumpVisitor();
-	    m_dumpVisitorStream->flush();
-	    delete m_dumpVisitorStream;
-	    m_dumpVisitorStream=0;
+ 	    m_dumpVisitorStream.flush();
 	    //Creation of the graph
-	    if (!handleTraceVisitor->load(pathDumpVisitor)) std::cerr<< "Error while processing dumpVisitor.xml\n";
-            ::remove(pathDumpVisitor.c_str());
+            std::string xmlDoc=m_dumpVisitorStream.str();
+	    handleTraceVisitor->load(xmlDoc);
+ 	    m_dumpVisitorStream.str("");
 	  }
 #endif
       }
@@ -1386,8 +1442,8 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::step()
       {
-	Node* groot = viewer->getScene();
-	if ( groot == NULL ) return;
+	Node* root = viewer->getScene();
+	if ( root == NULL ) return;
 
 	startDumpVisitor();
 
@@ -1397,13 +1453,13 @@ typedef QApplication QSOFAApplication;
 
 
 
-	    //groot->setLogTime(true);
-	    simulation::getSimulation()->animate ( groot );
+	    //root->setLogTime(true);
+		simulation::getSimulation()->animate ( root, root->getDt() );
 
 	    if ( m_dumpState )
-	      simulation::getSimulation()->dumpState ( groot, *m_dumpStateStream );
+	      simulation::getSimulation()->dumpState ( root, *m_dumpStateStream );
 	    if ( m_exportGnuplot )
-	      simulation::getSimulation()->exportGnuplot ( groot, groot->getTime() );
+	      simulation::getSimulation()->exportGnuplot ( root, root->getTime() );
 
  	    viewer->wait();
 
@@ -1439,7 +1495,7 @@ typedef QApplication QSOFAApplication;
       {
 	static ctime_t beginTime[10];
 	static const ctime_t timeTicks = CTime::getRefTicksPerSec();
-	Node* groot = getScene();
+	Node* root = getScene();
 	if ( frameCounter==0 )
 	  {
 	    ctime_t t = CTime::getRefTime();
@@ -1461,14 +1517,14 @@ typedef QApplication QSOFAApplication;
 	    //frameCounter = 0;
 	  }
 
-	if ( m_displayComputationTime && ( frameCounter%100 ) == 0 && groot!=NULL )
+	if ( m_displayComputationTime && ( frameCounter%100 ) == 0 && root!=NULL )
 	  {
 
 	    std::cout << "========== ITERATION " << frameCounter << " ==========\n";
-	    const sofa::simulation::Node::NodeTimer& total = groot->getTotalTime();
-	    const std::map<std::string, sofa::simulation::Node::NodeTimer>& times = groot->getVisitorTime();
-	    const std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, sofa::simulation::Node::ObjectTimer> >& objtimes = groot->getObjectTime();
-	    const double fact = 1000000.0 / ( 100*groot->getTimeFreq() );
+	    const sofa::simulation::Node::NodeTimer& total = root->getTotalTime();
+	    const std::map<std::string, sofa::simulation::Node::NodeTimer>& times = root->getVisitorTime();
+	    const std::map<std::string, std::map<sofa::core::objectmodel::BaseObject*, sofa::simulation::Node::ObjectTimer> >& objtimes = root->getObjectTime();
+	    const double fact = 1000000.0 / ( 100*root->getTimeFreq() );
 	    for ( std::map<std::string, sofa::simulation::Node::NodeTimer>::const_iterator it = times.begin(); it != times.end(); ++it )
 	      {
 		std::cout << "TIME "<<it->first<<": " << ( ( int ) ( fact*it->second.tTree+0.5 ) ) *0.001 << " ms (" << ( 1000*it->second.tTree/total.tTree ) *0.1 << " %).\n";
@@ -1497,7 +1553,7 @@ typedef QApplication QSOFAApplication;
 		    }
 	      }
 	    std::cout << "TOTAL TIME: " << ( ( int ) ( fact*total.tTree+0.5 ) ) *0.001 << " ms (" << ( ( int ) ( 100/ ( fact*total.tTree*0.000001 ) +0.5 ) ) *0.01 << " FPS).\n";
-	    groot->resetTime();
+	    root->resetTime();
 
 	  }
       }
@@ -1506,11 +1562,11 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::eventNewTime()
       {
-	Node* groot = getScene();
-	if ( groot )
+	Node* root = getScene();
+	if ( root )
 	  {
 
-	    double time = groot->getTime();
+	    double time = root->getTime();
 	    char buf[100];
 	    sprintf ( buf, "Time: %.3g s", time );
 	    timeLabel->setText ( buf );
@@ -1543,12 +1599,12 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::setDt ( double value )
       {
-	Node* groot = getScene();
+	Node* root = getScene();
 	if ( value > 0.0 )
 	  {
 
-	    if ( groot )
-	      groot->getContext()->setDt ( value );
+	    if ( root )
+	      root->getContext()->setDt ( value );
 	  }
       }
 
@@ -1562,9 +1618,10 @@ typedef QApplication QSOFAApplication;
       // Reset the simulation to t=0
       void RealGUI::resetScene()
       {
-	Node* groot = getScene();
-	GNode* gnodeRoot = dynamic_cast<GNode*>(groot);
+	Node* root = getScene();
 
+
+	startDumpVisitor();
 	//Hide the dialog to add a new object in the graph
 	if ( dialog != NULL ) dialog->hide();
 	//Hide all the dialogs to modify the graph
@@ -1575,11 +1632,11 @@ typedef QApplication QSOFAApplication;
 	map_modifyDialogOpened.clear();
 
 
-	std::list< GNode *>::iterator it;
+	std::list< Node *>::iterator it;
 	//**************************************************************
 	//GRAPH MANAGER
 	bool isFrozen = graphListener->frozen;
-	if (gnodeRoot) graphListener->unfreeze ( gnodeRoot );
+	if (root) graphListener->unfreeze ( root );
 	std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator graph_iterator;
 
 
@@ -1590,13 +1647,13 @@ typedef QApplication QSOFAApplication;
 	    node_removed = false;
 
 	    //Verify if they have not been removed before
-	    std::list< GNode *>::iterator it_removed;
+	    std::list< Node *>::iterator it_removed;
 	    for ( it_removed=list_object_removed.begin();it_removed != list_object_removed.end();it_removed++ )
 	      {
 		if ( ( *it_removed ) == ( *it ) ) { node_removed=true;continue;} //node already removed
 	      }
 	    if ( node_removed ) continue;
-	    ( *it )->getParent()->removeChild ( ( *it ) );
+	    ( *it )->detachFromGraph();
 	    graphListener->removeChild ( NULL, ( *it ) );
 	    delete ( *it );
 	  }
@@ -1612,18 +1669,15 @@ typedef QApplication QSOFAApplication;
 	  {
 	    if ( it == list_object_removed.begin() ) break;
 	    --it;
-	    std::list< GNode *>::iterator it_initial;
+	    std::list< std::pair<Node *,Node *> >::iterator it_initial;
 	    for ( it_initial=list_object_initial.begin();it_initial != list_object_initial.end();it_initial++ )
 	      {
-		if ( ( *it_initial ) == ( *it ) )
-		  {
-		    it_initial++; //points to the parent of the node
-		    ( *it_initial )->addChild ( (Node*)( *it ) );
-		    graphListener->addObject (  ( *it_initial ), ( core::objectmodel::BaseObject* ) ( *it ) );
+                if ( ( it_initial->second ) == ( *it ) )
+		  {		    
+                    ( it_initial->first )->addChild ( (Node*)( *it ) );
+                    graphListener->addObject (  ( it_initial->second ), ( core::objectmodel::BaseObject* ) ( *it ) );
 		    continue;
-		  }
-		//We have to increment 2 times the iterator: le list_object_initial contains first the node, then its father
-		it_initial++;
+                  }
 	      }
 	  }
 
@@ -1632,19 +1686,22 @@ typedef QApplication QSOFAApplication;
 
 
 
-	if ( gnodeRoot && isFrozen ) graphListener->freeze ( gnodeRoot );
+	if ( root && isFrozen ) graphListener->freeze ( root );
 
 	//Reset the scene
-	if ( groot )
+	if ( root )
 	  {
-	    simulation::getSimulation()->reset ( groot );
-	    groot->setTime(initial_time);
+	    simulation::getSimulation()->reset ( root );
+	    root->setTime(initial_time);
 	    eventNewTime();
 
 	    //viewer->resetView();
 	    emit newStep();
 // 	    viewer->getQWidget()->update();
 	  }
+
+	stopDumpVisitor();
+
       }
 
 
@@ -1677,11 +1734,11 @@ typedef QApplication QSOFAApplication;
       //
       void RealGUI::displayComputationTime ( bool value )
       {
-	Node* groot = getScene();
+	Node* root = getScene();
 	m_displayComputationTime = value;
-	if ( groot )
+	if ( root )
 	  {
-	    groot->setLogTime ( m_displayComputationTime );
+	    root->setLogTime ( m_displayComputationTime );
 	  }
       }
 
@@ -1691,22 +1748,22 @@ typedef QApplication QSOFAApplication;
       //
       void RealGUI::setExportGnuplot ( bool exp )
       {
-	Node* groot = getScene();
+	Node* root = getScene();
 	m_exportGnuplot = exp;
-	if ( m_exportGnuplot && groot )
+	if ( m_exportGnuplot && root )
 	  {
-	    simulation::getSimulation()->initGnuplot ( groot );
-	    simulation::getSimulation()->exportGnuplot ( groot, groot->getTime() );
+	    simulation::getSimulation()->initGnuplot ( root );
+	    simulation::getSimulation()->exportGnuplot ( root, root->getTime() );
 	  }
       }
 
       //*****************************************************************************************
       //
+#ifdef SOFA_DUMP_VISITOR_INFO
       void RealGUI::setExportVisitor ( bool exp )
       {
 	if (exp)
 	  {
-	    std::string pFilename = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/dumpVisitor.xml" );
 	    windowTraceVisitor->show();
 	    handleTraceVisitor->clear();
 	  }
@@ -1715,7 +1772,7 @@ typedef QApplication QSOFAApplication;
 	    windowTraceVisitor->hide();
 	  }
       }
-
+#endif
 
       //*****************************************************************************************
       //
@@ -1739,8 +1796,8 @@ typedef QApplication QSOFAApplication;
       //
       void RealGUI::exportOBJ ( bool exportMTL )
       {
-	Node* groot = getScene();
-	if ( !groot ) return;
+	Node* root = getScene();
+	if ( !root ) return;
 	std::string sceneFileName = viewer->getSceneFileName();
 	std::ostringstream ofilename;
 	if ( !sceneFileName.empty() )
@@ -1762,7 +1819,7 @@ typedef QApplication QSOFAApplication;
 	ofilename << ".obj";
 	std::string filename = ofilename.str();
 	std::cout << "Exporting OBJ Scene "<<filename<<std::endl;
-	simulation::getSimulation()->exportOBJ ( groot, filename.c_str(),exportMTL );
+	simulation::getSimulation()->exportOBJ ( root, filename.c_str(),exportMTL );
       }
 
 
@@ -1853,10 +1910,9 @@ typedef QApplication QSOFAApplication;
 	    if ( node_clicked == NULL ) return;
 	  }
 
-	GNode *gnode_clicked=dynamic_cast<GNode*>(node_clicked);
 	//We allow unlock the graph to make all the changes now
 	if ( currentTab != TabGraph )
-	  graphListener->unfreeze ( gnode_clicked );
+	  graphListener->unfreeze ( node_clicked );
 
 	//Loading of the xml file
 	simulation::tree::xml::BaseElement* xml = simulation::tree::xml::loadFromFile ( path.c_str() );
@@ -1872,7 +1928,7 @@ typedef QApplication QSOFAApplication;
 	  }
 
 	Node* new_node = dynamic_cast<Node*> ( xml->getObject() );
-	GNode *new_gnode=dynamic_cast<GNode*>(new_node);
+
 	if ( new_node == NULL )
 	  {
 	    std::cerr << "Objects initialization failed."<<std::endl;
@@ -1882,21 +1938,21 @@ typedef QApplication QSOFAApplication;
 
 	//std::cout << "Initializing simulation "<<new_node->getName() <<std::endl;
 	new_node->execute<InitVisitor>();
-	if (gnode_clicked && new_gnode)
+	if (node_clicked && new_node)
 	  {
-	    if ( gnode_clicked->child.begin() ==  gnode_clicked->child.end() &&  gnode_clicked->object.begin() == gnode_clicked->object.end() )
+            if ( node_clicked->child.empty() &&  node_clicked->object.empty() )
 	      {
 		//Temporary Root : the current graph is empty, and has only a single node "Root"
-		viewer->setScene ( new_gnode, path.c_str() );
-		graphListener->removeChild ( NULL, gnode_clicked );
-		graphListener->addChild ( NULL, new_gnode );
+		viewer->setScene ( new_node, path.c_str() );
+		graphListener->removeChild ( NULL, node_clicked );
+		graphListener->addChild ( NULL, new_node );
 	      }
 	    else
 	      {
-		gnode_clicked->addChild ( (Node*)new_gnode );
-		graphListener->addObject ( gnode_clicked, ( core::objectmodel::BaseObject* ) new_gnode );
+		node_clicked->addChild (new_node );
+		graphListener->addObject ( node_clicked, (sofa::core::objectmodel::BaseObject*) new_node );
 
-		list_object_added.push_back ( new_gnode );
+		list_object_added.push_back ( new_node );
 
 	      }
 	  }
@@ -1911,7 +1967,7 @@ typedef QApplication QSOFAApplication;
 
 	//freeze the graph if needed and animate
 	if ( currentTab != TabGraph )
-	  graphListener->freeze ( gnode_clicked );
+	  graphListener->freeze ( node_clicked );
 
 	node_clicked = NULL;
 	item_clicked = NULL;
@@ -1939,10 +1995,21 @@ typedef QApplication QSOFAApplication;
 	  if (filename.rfind(".simu") != std::string::npos) fileOpenSimu(filename);
 	  else  	                                    fileOpen(filename);
       }
+      
+
+      void RealGUI::changeHtmlPage( const QUrl& u)
+      {
+        std::string path=u.path().ascii();
+#ifdef WIN32
+	  path = path.substr(1); 
+#endif
+	  path  = sofa::helper::system::DataRepository.getFile(path);
+        std::string extension=sofa::helper::system::SetDirectory::GetExtension(path.c_str());
+        if (extension == "xml" || extension == "scn") fileOpen(path);
+      }
 
       void RealGUI::updateViewerParameters()
       {
-// 	viewer->setBackgroundColour(atof(background[0]->text().ascii()),atof(background[1]->text().ascii()),atof(background[2]->text().ascii()));
 	gui->viewer->getQWidget()->update();
       }
 
@@ -1960,33 +2027,33 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::showhideElements(int FILTER, bool value)
       {
-	Node* groot = getScene();
-	if ( groot )
+	Node* root = getScene();
+	if ( root )
 	  {
 	    switch(FILTER)
 	      {
-	      case DisplayFlagWidget::ALL:
-		groot->getContext()->setShowVisualModels ( value );
-		groot->getContext()->setShowBehaviorModels ( value );
-		groot->getContext()->setShowCollisionModels ( value );
-		groot->getContext()->setShowBoundingCollisionModels ( value );
-		groot->getContext()->setShowMappings ( value );
-		groot->getContext()->setShowMechanicalMappings ( value );
-		groot->getContext()->setShowForceFields ( value );
-		groot->getContext()->setShowInteractionForceFields ( value );
+	      case Node::ALLFLAGS:
+		root->getContext()->setShowVisualModels ( value );
+		root->getContext()->setShowBehaviorModels ( value );
+		root->getContext()->setShowCollisionModels ( value );
+		root->getContext()->setShowBoundingCollisionModels ( value );
+		root->getContext()->setShowMappings ( value );
+		root->getContext()->setShowMechanicalMappings ( value );
+		root->getContext()->setShowForceFields ( value );
+		root->getContext()->setShowInteractionForceFields ( value );
 		break;
-	      case  DisplayFlagWidget::VISUAL:            groot->getContext()->setShowVisualModels ( value ); break;
-	      case  DisplayFlagWidget::BEHAVIOR:          groot->getContext()->setShowBehaviorModels ( value ); break;
-	      case  DisplayFlagWidget::COLLISION:         groot->getContext()->setShowCollisionModels ( value ); break;
-	      case  DisplayFlagWidget::BOUNDING:          groot->getContext()->setShowBoundingCollisionModels ( value );  break;
-	      case  DisplayFlagWidget::MAPPING:           groot->getContext()->setShowMappings ( value ); break;
-	      case  DisplayFlagWidget::MECHANICALMAPPING: groot->getContext()->setShowMechanicalMappings ( value ); break;
-	      case  DisplayFlagWidget::FORCEFIELD:        groot->getContext()->setShowForceFields ( value ); break;
-	      case  DisplayFlagWidget::INTERACTION:       groot->getContext()->setShowInteractionForceFields ( value );break;
-	      case  DisplayFlagWidget::WIREFRAME:         groot->getContext()->setShowWireFrame ( value );break;
-	      case  DisplayFlagWidget::NORMALS:           groot->getContext()->setShowNormals ( value );break;
+	      case  Node::VISUALMODELS:            root->getContext()->setShowVisualModels ( value ); break;
+	      case  Node::BEHAVIORMODELS:          root->getContext()->setShowBehaviorModels ( value ); break;
+	      case  Node::COLLISIONMODELS:         root->getContext()->setShowCollisionModels ( value ); break;
+	      case  Node::BOUNDINGCOLLISIONMODELS: root->getContext()->setShowBoundingCollisionModels ( value );  break;
+	      case  Node::MAPPINGS:                root->getContext()->setShowMappings ( value ); break;
+	      case  Node::MECHANICALMAPPINGS:      root->getContext()->setShowMechanicalMappings ( value ); break;
+	      case  Node::FORCEFIELDS:             root->getContext()->setShowForceFields ( value ); break;
+	      case  Node::INTERACTIONFORCEFIELDS:  root->getContext()->setShowInteractionForceFields ( value );break;
+	      case  Node::WIREFRAME:               root->getContext()->setShowWireFrame ( value );break;
+	      case  Node::NORMALS:                 root->getContext()->setShowNormals ( value );break;
 	      }
-	    sofa::simulation::getSimulation()->updateVisualContext ( groot, FILTER );
+            sofa::simulation::getSimulation()->updateVisualContext ( root, (simulation::Node::VISUAL_FLAG) FILTER );
 	  }
 	viewer->getQWidget()->update();
       }

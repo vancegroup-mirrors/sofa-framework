@@ -75,6 +75,17 @@ public:
     typedef typename DataTypes::VecDeriv VecDeriv;
 
     virtual ~MappedModel() { }
+
+
+    //Mapped Model does not store any rest position
+    virtual VecCoord* getX0() { return NULL; };
+    //Mapped Model does not store any normal
+    virtual VecCoord* getN() { return NULL; };
+
+    //Mapped Model does not store any rest position
+    virtual const VecCoord* getX0() const { return NULL; };
+    //Mapped Model does not store any normal
+    virtual const VecCoord* getN() const { return NULL; };
 };
 
 } // namespace behavior

@@ -58,9 +58,6 @@ typedef QGroupBox Q3GroupBox;
 
 
 
-using namespace sofa::helper::system::thread;
-using namespace sofa::simulation;
-
 #if defined(SOFA_GPU_CUDA)
 #include <sofa/gpu/cuda/mycuda.h>
 using namespace sofa::gpu::cuda;
@@ -90,6 +87,10 @@ namespace sofa
 
 	namespace qtogre
 	{
+
+
+using namespace sofa::helper::system::thread;
+using namespace sofa::simulation;
 
 	  class QtOgreViewer : public QWidget, public sofa::gui::qt::viewer::SofaViewer
 	    {

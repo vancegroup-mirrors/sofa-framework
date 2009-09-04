@@ -26,16 +26,6 @@
 ******************************************************************************/
 #include <sofa/gui/qt/RealGUI.h>
 
-//Graph Stats
-#include <sofa/component/collision/TriangleModel.h>
-#include <sofa/component/collision/LineModel.h>
-#include <sofa/component/collision/PointModel.h>
-#include <sofa/component/collision/SphereModel.h>
-
-#include <sofa/simulation/tree/GNode.h>
-
-#include <sofa/helper/system/FileRepository.h>
-#include <sofa/core/objectmodel/BaseContext.h>
 
 #ifdef SOFA_QT4
 #include <QWidget>
@@ -93,51 +83,52 @@ namespace sofa
     {
 
 
+
 #ifdef SOFA_QT4
       typedef Q3ListView     QListView;
       typedef Q3ListViewItem QListViewItem;
 #endif
 
-      using sofa::simulation::tree::GNode;
-      using namespace sofa::simulation::tree;
       using sofa::core::objectmodel::BaseContext;
 
+
+      void RealGUI::addInitialNodes( Node* node)
+      {
+        //Create the list of the object present at the beginning of the scene
+        for (Node::ChildIterator it = node->child.begin(); it!=node->child.end();it++)
+          {
+            Node *childNode = *it;
+            list_object_initial.push_back( std::make_pair( node, childNode ) );
+            addInitialNodes(childNode);
+          }          
+      }
+      
       void RealGUI::clearGraph()
       {
-	Node *groot = viewer->getScene();
+        Node *rootNode = viewer->getScene();
 
 	graphView->setSorting ( -1 );
 	//graphView->setTreeStepSize(10);
 	graphView->header()->hide();
 	//dumpGraph(groot, new Q3ListViewItem(graphView));
-	graphListener = new GraphListenerQListView ( graphView );
-	if (GNode *gnodeRoot = dynamic_cast< GNode *>(groot)) 
+        graphListener = new GraphListenerQListView( graphView );
 	  {
-	    graphListener->addChild ( NULL, gnodeRoot );
+            graphListener->addChild ( NULL, rootNode );
 	    
 	    //Create Stats about the simulation
-	    graphCreateStats(groot);
-
-	    //Create the list of the object present at the beginning of the scene
-	    for ( std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it = graphListener->items.begin() ; it != graphListener->items.end() ; ++ it )
-	      {
-		if ( GNode *current_node =  dynamic_cast< GNode *>(( *it ).first) )
-		  {
-		    list_object_initial.push_back ( current_node );
-		    list_object_initial.push_back ( dynamic_cast< GNode *> ( current_node->getParent() ) );
-		  }
-	      }
-
+            graphCreateStats(rootNode);
+         
+            addInitialNodes(rootNode);
 
 	    if ( currentTab != TabGraph )
 	      {
-		graphListener->freeze ( gnodeRoot );
+		graphListener->freeze ( rootNode );
 	      }
 	  }
 	simulation::Simulation *s = simulation::getSimulation();
 
-	  //In case instruments are present in the scene, we create a new tab, and display the listr
-	if (s->instruments.size() != 0)
+        //In case instruments are present in the scene, we create a new tab, and display the listr
+        if (s->instruments.size() != 0)
 	{
 	  tabInstrument = new QWidget();
 	  tabs->addTab(tabInstrument, QString("Instrument"));
@@ -280,7 +271,7 @@ namespace sofa
 	  {
 	    QListViewItem *node = new QListViewItem(GUI::StatsCounter);
 	    node->setText(0,QString(v[i]->getContext()->getName().c_str()));
-	    QPixmap* pix = sofa::gui::qt::getPixmap(dynamic_cast< sofa::simulation::tree::GNode*>(v[i]->getContext()));
+            QPixmap* pix = sofa::gui::qt::getPixmap(v[i]->getContext());
 	    if (pix) node->setPixmap(0,*pix);
 	    listStats.insert(std::make_pair(v[i]->getContext(), node));
 	    item = new QListViewItem(node);
@@ -372,7 +363,7 @@ namespace sofa
 
 	for (graph_iterator = graphListener->items.begin(); graph_iterator != graphListener->items.end(); graph_iterator++)
 	{
-	  if ( (*graph_iterator).second == item) {node_clicked = dynamic_cast< GNode* >( (*graph_iterator).first); break;}
+          if ( (*graph_iterator).second == item) {node_clicked = dynamic_cast< Node* >( (*graph_iterator).first); break;}
 	}
 
 
@@ -444,43 +435,42 @@ namespace sofa
       /*****************************************************************************************************************/
       void RealGUI::graphRemoveObject()
       {
-	GNode *gnode_clicked = dynamic_cast< GNode *>(node_clicked);
 	bool isAnimated = startButton->isOn();
 
 	playpauseGUI ( false );
-	if ( gnode_clicked != NULL )
+        if ( node_clicked != NULL )
 	{
-	  if ( gnode_clicked == simulation::getSimulation()->getContext() )
+          if ( node_clicked == simulation::getSimulation()->getContext() )
 	  {
 		//Attempt to destroy the Root node : create an empty node to handle new graph interaction
-	    GNode *groot = new GNode ( "Root" );
+            Node *root = simulation::getSimulation()->newNode( "Root" );
 
-	    groot->setShowVisualModels ( 1 );
-	    groot->setShowCollisionModels ( 0 );
-	    groot->setShowBoundingCollisionModels ( 0 );
-	    groot->setShowBehaviorModels ( 0 );
-	    groot->setShowMappings ( 0 );
-	    groot->setShowMechanicalMappings ( 0 );
-	    groot->setShowForceFields ( 0 );
-	    groot->setShowInteractionForceFields ( 0 );
-	    groot->setShowWireFrame ( 0 );
-	    groot->setShowNormals ( 0 );
+	    root->setShowVisualModels ( 1 );
+	    root->setShowCollisionModels ( 0 );
+	    root->setShowBoundingCollisionModels ( 0 );
+	    root->setShowBehaviorModels ( 0 );
+	    root->setShowMappings ( 0 );
+	    root->setShowMechanicalMappings ( 0 );
+	    root->setShowForceFields ( 0 );
+	    root->setShowInteractionForceFields ( 0 );
+	    root->setShowWireFrame ( 0 );
+	    root->setShowNormals ( 0 );
 
 
-	    viewer->setScene ( groot, viewer->getSceneFileName().c_str() );
-	    graphListener->removeChild ( NULL, gnode_clicked );
-	    graphListener->addChild ( NULL, groot );
+	    viewer->setScene ( root, viewer->getSceneFileName().c_str() );
+            graphListener->removeChild ( NULL, node_clicked );
+	    graphListener->addChild ( NULL, root );
 	  }
 	  else
 	  {
-	    gnode_clicked->getParent()->removeChild ( gnode_clicked );
-	    graphListener->removeChild ( NULL, gnode_clicked );
-	    list_object_removed.push_back ( gnode_clicked );
+            node_clicked->detachFromGraph();
+            graphListener->removeChild ( NULL, node_clicked );
+            list_object_removed.push_back ( node_clicked );
 	  }
 
 	  viewer->resetView();
 	  viewer->getQWidget()->update();
-	  gnode_clicked = NULL;
+          node_clicked = NULL;
 	  item_clicked = NULL;
 	}
 	playpauseGUI ( isAnimated );
@@ -587,21 +577,21 @@ namespace sofa
       void RealGUI::currentTabChanged ( QWidget* widget )
       {
 	if ( widget == currentTab ) return;
-	GNode* groot = viewer==NULL ? NULL : dynamic_cast<GNode*>(viewer->getScene());
+        Node* root = viewer==NULL ? NULL : viewer->getScene();
 	if ( widget == TabGraph )
 	{
-	  if ( groot && graphListener )
+	  if ( root && graphListener )
 	  {
-		//graphListener->addChild(NULL, groot);
-	    graphListener->unfreeze ( groot );
+		//graphListener->addChild(NULL, root);
+	    graphListener->unfreeze ( root );
 	  }
 	}
 	else if ( currentTab == TabGraph )
 	{
-	  if ( groot && graphListener )
+	  if ( root && graphListener )
 	  {
-		//graphListener->removeChild(NULL, groot);
-	    graphListener->freeze ( groot );
+		//graphListener->removeChild(NULL, root);
+	    graphListener->freeze ( root );
 	  }
 	}
 	else if (widget == TabStats)

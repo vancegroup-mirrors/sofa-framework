@@ -69,6 +69,7 @@ namespace sofa
 
 
 	  typedef typename core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
+          typedef core::componentmodel::behavior::BaseLMConstraint::ConstId ConstId;
 
 	  using core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::sout;
 	  using core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::serr;
@@ -78,11 +79,13 @@ namespace sofa
 	  friend class DistanceConstraintInternalData<DataTypes>;
 	
 	public:
-	DistanceConstraint( MechanicalState * /*dof*/):
-	  vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))	      
+	DistanceConstraint( MechanicalState *dof):
+          core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>(dof,dof),
+          vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))	      
 	      {};
-	DistanceConstraint( MechanicalState * /*dof1*/, MechanicalState * /* dof2 */):
-	    vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
+	DistanceConstraint( MechanicalState *dof1, MechanicalState * dof2):
+          core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>(dof1,dof2),
+	  vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
 	      {};
 	DistanceConstraint():
 	    vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain")){}
@@ -92,9 +95,11 @@ namespace sofa
 	  // -- Constraint interface
 	  void init();
 	  void reinit();
-	  void writeConstraintEquations();
+	  void writeConstraintEquations(ConstId id);
+
 	  double getError();
 
+          void addConstraint(unsigned int i1, unsigned int i2);
 
 	  virtual void draw();
 	  virtual std::string getTemplateName() const
@@ -106,19 +111,19 @@ namespace sofa
 	    return DataTypes::Name();
 	  }
 
+	  //Edges involving a distance constraint
+	  Data< SeqEdges > vecConstraint;
 
 	protected :
 	  ///Compute the length of an edge given the vector of coordinates corresponding
-	  double lengthEdge(const Edge &e, const VecCoord &x1,const VecCoord &x2);
+	  double lengthEdge(const Edge &e, const VecCoord &x1,const VecCoord &x2) const;
 	  ///Compute the direction of the constraint
-	  Deriv getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2);
+	  Deriv getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
 	  void updateRestLength();
 
 	  // Base Components of the current context
 	  core::componentmodel::topology::BaseMeshTopology *topology;  
 
-	  //Edges involving a distance constraint
-	  Data< SeqEdges > vecConstraint;
 	  // rest length pre-computated
 	  sofa::helper::vector< double > l0;
 	};
@@ -128,6 +133,5 @@ namespace sofa
   } // namespace component
 
 } // namespace sofa
-
 
 #endif

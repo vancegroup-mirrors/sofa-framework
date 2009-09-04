@@ -37,6 +37,7 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/helper/system/FileRepository.h>
 
+#include <sofa/component/visualmodel/LightManager.h>
 
 namespace sofa
 {
@@ -55,10 +56,16 @@ int OglShadowShaderClass = core::RegisterObject("OglShadowShader")
 .add< OglShadowShader >()
 ;
 
+#ifndef PCSS_SHADOWS
 const std::string OglShadowShader::PATH_TO_SHADOW_VERTEX_SHADERS = "shaders/shadowMapping.vert";
 const std::string OglShadowShader::PATH_TO_SHADOW_FRAGMENT_SHADERS = "shaders/shadowMapping.frag";
+#else
+const std::string OglShadowShader::PATH_TO_SHADOW_VERTEX_SHADERS = "shaders/shadowMappingPCSS.vert";
+const std::string OglShadowShader::PATH_TO_SHADOW_FRAGMENT_SHADERS = "shaders/shadowMappingPCSS.frag";
+#endif
 
 OglShadowShader::OglShadowShader()
+:test(initData(&test, (int) 0, "test", "test"))
 {
 
 
@@ -71,32 +78,24 @@ OglShadowShader::~OglShadowShader()
 
 void OglShadowShader::init()
 {
-	passive.setValue(true);
+	passive.setValue(false);
 	turnOn.setValue(true);
 }
 
-void OglShadowShader::initShaders(unsigned int numberOfLights)
+void OglShadowShader::initShaders(unsigned int /* numberOfLights */)
 {
 	std::string tempFragment="";
 	std::string tempVertex="";
 
-	for (unsigned int i=0 ; i<numberOfLights ; i++)
-	{
-		vertexFilenames.push_back( PATH_TO_SHADOW_VERTEX_SHADERS );
-		fragmentFilenames.push_back( PATH_TO_SHADOW_FRAGMENT_SHADERS );
-		shaderVector.push_back(new sofa::helper::gl::GLSLShader());
-	}
-	for (unsigned int i=0 ; i<numberOfLights ; i++)
-	{
-		for (unsigned int j=0 ; j<numberOfLights ; j++)
-		{
-			//if (i==0)
-					this->addDefineMacro(i,std::string("SHADOW_LIGHT0"), std::string("1"));
-			//if (i==0)
-					this->addDefineMacro(i,std::string("SHADOW_LIGHT1"), std::string("1"));
-		}
+	vertexFilenames.push_back( PATH_TO_SHADOW_VERTEX_SHADERS );
+	fragmentFilenames.push_back( PATH_TO_SHADOW_FRAGMENT_SHADERS );
+	shaderVector.push_back(new sofa::helper::gl::GLSLShader());
 
-	}
+	std::ostringstream oss;
+	oss << LightManager::MAX_NUMBER_OF_LIGHTS;
+
+	this->addDefineMacro(0,std::string("MAX_NUMBER_OF_LIGHTS"), oss.str());
+
 }
 
 }//namespace visualmodel

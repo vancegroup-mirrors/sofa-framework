@@ -79,6 +79,7 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
         MechanicalState2* mstate2 = mapper2.createMapping();
         ff = new ResponseForceField(mstate1,mstate2);
         ff->setName( getName() );
+        ff->init();
     }
 
     int insize = outputs.size();

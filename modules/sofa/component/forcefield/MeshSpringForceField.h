@@ -66,18 +66,20 @@ protected:
 
 public:
 	MeshSpringForceField()
-	: linesStiffness(initData(&linesStiffness,Real(0),"linesStiffness","Stiffness for the Lines",false))
-	, linesDamping(initData(&linesDamping,Real(0),"linesDamping","Damping for the Lines",false))
-	, trianglesStiffness(initData(&trianglesStiffness,Real(0),"trianglesStiffness","Stiffness for the Triangles",false))
-	, trianglesDamping(initData(&trianglesDamping,Real(0),"trianglesDamping","Damping for the Triangles",false))
-	, quadsStiffness(initData(&quadsStiffness,Real(0),"quadsStiffness","Stiffness for the Quads",false))
-	, quadsDamping(initData(&quadsDamping,Real(0),"quadsDamping","Damping for the Quads",false))
-	, tetrasStiffness(initData(&tetrasStiffness,Real(0),"tetrasStiffness","Stiffness for the Tetras",false))
-	, tetrasDamping(initData(&tetrasDamping,Real(0),"tetrasDamping","Damping for the Tetras",false))
-	, cubesStiffness(initData(&cubesStiffness,Real(0),"cubesStiffness","Stiffness for the Cubes",false))
-	, cubesDamping(initData(&cubesDamping,Real(0),"cubesDamping","Damping for the Cubes",false))
+	: linesStiffness(initData(&linesStiffness,Real(0),"linesStiffness","Stiffness for the Lines",true))
+	, linesDamping(initData(&linesDamping,Real(0),"linesDamping","Damping for the Lines",true))
+	, trianglesStiffness(initData(&trianglesStiffness,Real(0),"trianglesStiffness","Stiffness for the Triangles",true))
+	, trianglesDamping(initData(&trianglesDamping,Real(0),"trianglesDamping","Damping for the Triangles",true))
+	, quadsStiffness(initData(&quadsStiffness,Real(0),"quadsStiffness","Stiffness for the Quads",true))
+	, quadsDamping(initData(&quadsDamping,Real(0),"quadsDamping","Damping for the Quads",true))
+	, tetrasStiffness(initData(&tetrasStiffness,Real(0),"tetrasStiffness","Stiffness for the Tetras",true))
+	, tetrasDamping(initData(&tetrasDamping,Real(0),"tetrasDamping","Damping for the Tetras",true))
+	, cubesStiffness(initData(&cubesStiffness,Real(0),"cubesStiffness","Stiffness for the Cubes",true))
+	, cubesDamping(initData(&cubesDamping,Real(0),"cubesDamping","Damping for the Cubes",true))
 	, localRange( initData(&localRange, defaulttype::Vec<2,int>(-1,-1), "localRange", "optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)" ) )
 	{
+          this->ks.setDisplayed(false);
+          this->kd.setDisplayed(false);
           addAlias(&linesStiffness,    "stiffness");addAlias(&linesDamping,    "damping");
           addAlias(&trianglesStiffness,"stiffness");addAlias(&trianglesDamping,"damping");
           addAlias(&quadsStiffness,    "stiffness");addAlias(&quadsDamping,    "damping");
@@ -94,7 +96,7 @@ public:
 	Real getLinesStiffness() const { return linesStiffness.getValue(); }
 	Real getTrianglesStiffness() const { return trianglesStiffness.getValue(); }
 	Real getQuadsStiffness() const { return quadsStiffness.getValue(); }
-	Real getTetrasStiffness() const { return tetrasStiffness.getValue(); }
+	Real getTetrahedraStiffness() const { return tetrasStiffness.getValue(); }
 	Real getCubesStiffness() const { return cubesStiffness.getValue(); }
 	void setStiffness(Real val)
 	{
@@ -129,7 +131,7 @@ public:
 	Real getLinesDamping() const { return linesDamping.getValue(); }
 	Real getTrianglesDamping() const { return trianglesDamping.getValue(); }
 	Real getQuadsDamping() const { return quadsDamping.getValue(); }
-	Real getTetrasDamping() const { return tetrasDamping.getValue(); }
+	Real getTetrahedraDamping() const { return tetrasDamping.getValue(); }
 	Real getCubesDamping() const { return cubesDamping.getValue(); }
 	void setDamping(Real val)
 	{

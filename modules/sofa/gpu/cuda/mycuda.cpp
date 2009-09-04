@@ -23,6 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/helper/system/config.h>
+#include <sofa/helper/BackTrace.h>
 #include <iostream>
 #include <fstream>
 #include <stdarg.h>
@@ -56,7 +57,6 @@ SOFA_LINK_CLASS(CudaCollision)
 SOFA_LINK_CLASS(CudaCollisionDetection)
 SOFA_LINK_CLASS(CudaPointModel)
 SOFA_LINK_CLASS(CudaSphereModel)
-SOFA_LINK_CLASS(CudaTestForceField)
 SOFA_LINK_CLASS(CudaSetTopology)
 SOFA_LINK_CLASS(CudaVisualModel)
 SOFA_LINK_CLASS(CudaOglTetrahedralModel)
@@ -67,11 +67,14 @@ extern "C"
 //MycudaVerboseLevel mycudaVerboseLevel = LOG_ERR;
 MycudaVerboseLevel mycudaVerboseLevel = LOG_INFO;
 //MycudaVerboseLevel mycudaVerboseLevel = LOG_TRACE;
+
+int mycudaMultiOpMax = 0;
 }
 
 void mycudaLogError(const char* err, const char* src)
 {
         std::cerr << "CUDA error: "<< err <<" returned from "<< src <<".\n";
+	sofa::helper::BackTrace::dump();
 	exit(1);
 }
 

@@ -30,6 +30,8 @@
 #include "Quater.h"
 #include <math.h>
 #include <iostream>
+#include <stdio.h>
+
 
 namespace sofa
 {
@@ -39,7 +41,7 @@ namespace helper
 
 #define RENORMCOUNT 50
 
-// Constructor 
+// Constructor
 template<class Real>
 Quater<Real>::Quater()
 {
@@ -73,7 +75,7 @@ Quater<Real>::~Quater()
 /// This routine also normalizes the result every RENORMCOUNT times it is
 /// called, to keep error from creeping in.
 ///   NOTE: This routine is written so that q1 or q2 may be the same
-///  	   as dest (or each other). 
+///  	   as dest (or each other).
 template<class Real>
 //Quater<Real> operator+(Quater<Real> q1, Quater<Real> q2) const
 Quater<Real> Quater<Real>::operator+(const Quater<Real> &q1) const
@@ -207,7 +209,7 @@ Quater<Real> Quater<Real>::vectQuatMult(const defaulttype::Vec<3,Real>& vect)
 {
 	Quater<Real>	ret;
 
-	ret[3] = (Real) (-(vect[0] * _q[0] + vect[1] * _q[1] + vect[2] * _q[2])); 
+	ret[3] = (Real) (-(vect[0] * _q[0] + vect[1] * _q[1] + vect[2] * _q[2]));
 	ret[0] = (Real) (vect[0] * _q[3] + vect[1] * _q[2] - vect[2] * _q[1]);
 	ret[1] = (Real) (vect[1] * _q[3] + vect[2] * _q[0] - vect[0] * _q[2]);
 	ret[2] = (Real) (vect[2] * _q[3] + vect[0] * _q[1] - vect[1] * _q[0]);
@@ -331,11 +333,11 @@ void Quater<Real>::fromMatrix(const defaulttype::Matrix3 &m)
 // 	m[0][0] = (1.0 - 2.0 * (_q[1] * _q[1] + _q[2] * _q[2]));
 // 	m[0][1] = (2.0 * (_q[0] * _q[1] - _q[2] * _q[3]));
 // 	m[0][2] = (2.0 * (_q[2] * _q[0] + _q[1] * _q[3]));
-// 
+//
 // 	m[1][0] = (2.0 * (_q[0] * _q[1] + _q[2] * _q[3]));
 // 	m[1][1] = (1.0 - 2.0 * (_q[2] * _q[2] + _q[0] * _q[0]));
 // 	m[1][2] = (float) (2.0 * (_q[1] * _q[2] - _q[0] * _q[3]));
-// 
+//
 // 	m[2][0] = (float) (2.0 * (_q[2] * _q[0] - _q[1] * _q[3]));
 // 	m[2][1] = (float) (2.0 * (_q[1] * _q[2] + _q[0] * _q[3]));
 // 	m[2][2] = (float) (1.0 - 2.0 * (_q[1] * _q[1] + _q[0] * _q[0]));
@@ -458,6 +460,21 @@ Quater<Real> Quater<Real>::axisToQuat(defaulttype::Vec<3,Real> a, Real phi)
     return *this;
 }
 
+/// Given a quaternion, compute an axis and angle
+template<class Real>
+void Quater<Real>::quatToAxis(defaulttype::Vec<3,Real> & a, Real &phi)
+{
+    const double  sine  = sin( acos(_q[3]) );
+
+    if (!sine)
+    	a = defaulttype::Vec<3,Real>(0.0,1.0,0.0);
+    else
+    	a = defaulttype::Vec<3,Real>(_q[0],_q[1],_q[2])/ sine;
+
+    phi =  (Real) (acos(_q[3]) * 2.0) ;
+}
+
+
 template<class Real>
 defaulttype::Vec<3,Real> Quater<Real>::toEulerVector() const
 {
@@ -477,6 +494,44 @@ defaulttype::Vec<3,Real> Quater<Real>::toEulerVector() const
 	return v;
 }
 
+/*! Returns the slerp interpolation of Quaternions \p a and \p b, at time \p t.
+
+ \p t should range in [0,1]. Result is \p a when \p t=0 and \p b when \p t=1.
+
+ When \p allowFlip is \c true (default) the slerp interpolation will always use the "shortest path"
+ between the Quaternions' orientations, by "flipping" the source Quaternion if needed (see
+ negate()). */
+template<class Real>
+void Quater<Real>::slerp(const Quater& a, const Quater& b, float t, bool allowFlip)
+{
+  float cosAngle =  (float)(a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]);
+
+    float c1, c2;
+    // Linear interpolation for close orientations
+    if ((1.0f - fabs(cosAngle)) < 0.01)
+    {
+      c1 = 1.0f - t;
+      c2 = t;
+    }
+    else
+    {
+      // Spherical interpolation
+      float angle    = acos(fabs(cosAngle));
+      float sinAngle = sin(angle);
+      c1 = sin(angle * (1.0f - t)) / sinAngle;
+      c2 = sin(angle * t) / sinAngle;
+    }
+
+    // Use the shortest path
+    if (allowFlip && (cosAngle < 0.0f))
+    c1 = -c1;
+
+    _q[0] = c1*a[0] + c2*b[0];
+    _q[1] = c1*a[1] + c2*b[1];
+    _q[2] = c1*a[2] + c2*b[2];
+    _q[3] = c1*a[3] + c2*b[3];
+}
+
 ///// Output quaternion
 //template<class Real>
 //    std::ostream& operator<<(std::ostream& out, Quater<Real> Q)
@@ -484,6 +539,84 @@ defaulttype::Vec<3,Real> Quater<Real>::toEulerVector() const
 //	return (out << "(" << Q._q[0] << "," << Q._q[1] << "," << Q._q[2] << ","
 //				<< Q._q[3] << ")");
 //}
+
+template<class Real>
+Quater<Real> Quater<Real>::slerp(Quater<Real> &q1, Real t)
+{
+	Quater<Real> q0_1;
+	for (unsigned int i = 0 ; i<3 ; i++)
+		q0_1[i] = -_q[i];
+
+	q0_1[3] = _q[3];
+
+	q0_1 = q1 * q0_1;
+
+	defaulttype::Vec<3,Real> axis, temp;
+	Real angle;
+
+	q0_1.quatToAxis(axis, angle);
+
+	temp = axis * sin(t * angle);
+	for (unsigned int i = 0 ; i<3 ; i++)
+		q0_1[i] = temp[i];
+
+	q0_1[3] = cos(t * angle);
+	q0_1 = q0_1 * (*this);
+	return q0_1;
+}
+
+// Given an axis and angle, compute quaternion.
+template<class Real>
+Quater<Real> Quater<Real>::slerp2(Quater<Real> &q1, Real t)
+{
+	// quaternion to return
+	Quater<Real> qm;
+
+	// Calculate angle between them.
+	double cosHalfTheta = _q[3] * q1[3] + _q[0] * q1[0] + _q[1] * q1[1] + _q[2] * q1[2];
+	// if qa=qb or qa=-qb then theta = 0 and we can return qa
+	if (fabs(cosHalfTheta) >= 1.0){
+		qm[3] = _q[3];qm[0] = _q[0];qm[1] = _q[1];qm[2] = _q[2];
+		return qm;
+	}
+	// Calculate temporary values.
+	double halfTheta = acos(cosHalfTheta);
+	double sinHalfTheta = sqrt(1.0 - cosHalfTheta*cosHalfTheta);
+	// if theta = 180 degrees then result is not fully defined
+	// we could rotate around any axis normal to qa or qb
+	if (fabs(sinHalfTheta) < 0.001){ // fabs is floating point absolute
+		qm[3] = (Real)(_q[3] * 0.5 + q1[3] * 0.5);
+		qm[0] = (Real)(_q[0] * 0.5 + q1[0] * 0.5);
+		qm[1] = (Real)(_q[1] * 0.5 + q1[1] * 0.5);
+		qm[2] = (Real)(_q[2] * 0.5 + q1[2] * 0.5);
+		return qm;
+	}
+	double ratioA = sin((1 - t) * halfTheta) / sinHalfTheta;
+	double ratioB = sin(t * halfTheta) / sinHalfTheta;
+	//calculate Quaternion.
+	qm[3] = (Real)(_q[3] * ratioA + q1[3] * ratioB);
+	qm[0] = (Real)(_q[0] * ratioA + q1[0] * ratioB);
+	qm[1] = (Real)(_q[1] * ratioA + q1[1] * ratioB);
+	qm[2] = (Real)(_q[2] * ratioA + q1[2] * ratioB);
+	return qm;
+
+}
+
+template<class Real>
+Quater<Real> Quater<Real>::createQuaterFromFrame(const defaulttype::Vec<3, Real> &lox, const defaulttype::Vec<3, Real> &loy,const defaulttype::Vec<3, Real> &loz)
+{
+	Quater<Real> q;
+	sofa::defaulttype::Mat<3,3, Real> m;
+
+	for (unsigned int i=0 ; i<3 ;i++)
+	{
+		m[i][0] = lox[i];
+		m[i][1] = loy[i];
+		m[i][2] = loz[i];
+	}
+	q.fromMatrix(m);
+	return q;
+}
 
 /// Print quaternion (C style)
 template<class Real>
@@ -547,7 +680,6 @@ void Quater<Real>::operator*=(const Quater<Real>& q1)
 		q2._q[0] * q1._q[1] -
 		q2._q[1] * q1._q[0];
 }
-
 
 } // namespace helper
 

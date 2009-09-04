@@ -128,12 +128,6 @@ namespace sofa
           if ( bbox.max[2] > dataResolution[2] )bbox.max[2] = dataResolution[2];
         }
 
-        void setMaxIsoValue( float value) { maxIsoValue = value;};
-
-        /// Set the border to localy remesh from real coords
-		void setBordersFromRealCoords ( const sofa::helper::set<Vector3>& borders );
-
-
         /// given a set of data (size of the data and size of the marching cube beeing defined previously),
         /// we construct the surface.
         /// mesh is a vector containing the triangles defined as a sequence of three indices
@@ -145,11 +139,22 @@ namespace sofa
 
         /// Same as the previous function but the surfaces are constructed by propagating from seeds.
         /// Faster than previous but it need the precomputation of the seeds.
+				void run ( unsigned char *_data, const sofa::helper::vector< Vec3i > & seeds,
+									 const float isolevel,
+									 sofa::helper::vector< PointID >& mesh,
+									 sofa::helper::vector< Vector3>& vertices,
+									 std::map< Vector3, PointID>& map_vertices,
+									 helper::vector< helper::vector<unsigned int> >*triangleIndexInRegularGrid,
+									 bool propagate ) const;
+
+        /// Same as the previous function but the surfaces are constructed by propagating from seeds.
+        /// Faster than previous but it need the precomputation of the seeds.
         void run ( unsigned char *data, const vector<Vec3i>& seeds,
                    const float isolevel,
                    sofa::helper::vector< PointID > &triangles,
                    sofa::helper::vector< Vector3>  &vertices,
-                   helper::vector< helper::vector<unsigned int> > *triangleIndexInRegularGrid = NULL ) const;
+                   helper::vector< helper::vector<unsigned int> > *triangleIndexInRegularGrid = NULL,
+								   bool propagate = true ) const;
 
         /// given a set of data (size of the data and size of the marching cube beeing defined previously),
         /// we construct a Sofa mesh.
@@ -160,6 +165,10 @@ namespace sofa
 
         /// Given coords in the scene, find seeds coords.
         void findSeedsFromRealCoords ( vector<Vec3i>& mCubeCoords, const vector<Vector3>& realCoords ) const;
+
+				/// Set the offset to add to each new vertex index in the triangles array.
+				void setVerticesOffset( unsigned int verticesOffset);
+
       private:
 
         struct GridCell
@@ -205,22 +214,23 @@ namespace sofa
         void smoothData ( unsigned char *data ) const;
 
         /// Propagate the triangulation surface creation from a cell.
-        void propagateFrom ( const Vec3i coord,
+				void propagateFrom ( const sofa::helper::vector<Vec3i>& coord,
                              unsigned char* data, const float isolevel,
                              sofa::helper::vector< PointID >& triangles,
                              sofa::helper::vector< Vector3 >& vertices,
                              sofa::helper::set<Vec3i>& generatedCubes,
-                             helper::vector< helper::vector<unsigned int> >* triangleIndexInRegularGrid = NULL ) const;
+                             std::map< Vector3, PointID>& map_vertices,
+                             helper::vector< helper::vector<unsigned int> >* triangleIndexInRegularGrid = NULL,
+														 bool propagate = true ) const;
 
       private:
         unsigned int  cubeStep;
         unsigned int  convolutionSize;
         Vec3i     dataResolution;
         Vector3     dataVoxelSize;
-        float maxIsoValue; // if you want to limit between two iso-value.
         BoundingBox bbox; //bbox used to remesh
         BoundingBox roi; // Set value to 0 on this limit to always obtain manifold mesh. (Set to dataResolution by default but can be changed for ROI)
-        set<Vec3i> borders;
+				unsigned int verticesOffset;
     };
 
     extern SOFA_HELPER_API const int MarchingCubeEdgeTable[256];

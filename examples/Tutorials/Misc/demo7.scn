@@ -114,5 +114,5 @@
 	</Node>
 	<Object type="Sphere" name="Floor" filename="mesh/floor.sph" simulated="0" moving="0" />
 	<MechanicalObject dy="-20"/>
-	<Object type="OglModel" name="FloorV" filename="mesh/floor.obj" texturename="textures/floor.png" dy="-20" />
+	<Object type="OglModel" name="FloorV" filename="mesh/floor.obj" texturename="textures/floor.bmp" dy="-20" />
 </Node>

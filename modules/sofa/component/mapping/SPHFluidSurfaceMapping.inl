@@ -35,7 +35,9 @@
 #include <map>
 #include <list>
 
-
+#ifdef SOFA_HAVE_GLEW
+#include <sofa/component/visualmodel/OglShaderVisualModel.h>
+#endif
 
 namespace sofa
 {
@@ -71,31 +73,31 @@ void SPHFluidSurfaceMapping<In,Out>::init()
 }
 
 template <class In, class Out>
-void SPHFluidSurfaceMapping<In,Out>::createPoints(OutVecCoord& out, int x, int y, int z, Cell* c, const Cell* cx, const Cell* cy, const Cell* cz, const OutReal isoval)
+void SPHFluidSurfaceMapping<In,Out>::createPoints(OutVecCoord& out, OutVecDeriv* normals, const GridEntry& g, int x, int y, int z, Cell* c, const Cell* cx, const Cell* cy, const Cell* cz, const OutReal isoval)
 {
 	if (c->data.val>isoval)
 	{
 		if (!(cx->data.val>isoval))
-			c->data.p[0] = addPoint<0>(out, x,y,z,c->data.val,cx->data.val,isoval);
+			c->data.p[0] = addPoint<0>(out,normals,g, x,y,z,c->data.val,cx->data.val,isoval);
 		if (!(cy->data.val>isoval))
-			c->data.p[1] = addPoint<1>(out, x,y,z,c->data.val,cy->data.val,isoval);
+			c->data.p[1] = addPoint<1>(out,normals,g, x,y,z,c->data.val,cy->data.val,isoval);
 		if (!(cz->data.val>isoval))
-			c->data.p[2] = addPoint<2>(out, x,y,z,c->data.val,cz->data.val,isoval);
+			c->data.p[2] = addPoint<2>(out,normals,g, x,y,z,c->data.val,cz->data.val,isoval);
 	}
 	else
 	{
 		if (cx->data.val>isoval)
-			c->data.p[0] = addPoint<0>(out, x,y,z,c->data.val,cx->data.val,isoval);
+			c->data.p[0] = addPoint<0>(out,normals,g, x,y,z,c->data.val,cx->data.val,isoval);
 		if (cy->data.val>isoval)
-			c->data.p[1] = addPoint<1>(out, x,y,z,c->data.val,cy->data.val,isoval);
+			c->data.p[1] = addPoint<1>(out,normals,g, x,y,z,c->data.val,cy->data.val,isoval);
 		if (cz->data.val>isoval)
-			c->data.p[2] = addPoint<2>(out, x,y,z,c->data.val,cz->data.val,isoval);
+			c->data.p[2] = addPoint<2>(out,normals,g, x,y,z,c->data.val,cz->data.val,isoval);
 	}
 }
 
 
 template <class In, class Out>
-void SPHFluidSurfaceMapping<In,Out>::createFaces(OutVecCoord& out, const Cell** cells, const OutReal isoval)
+void SPHFluidSurfaceMapping<In,Out>::createFaces(OutVecCoord& out, OutVecDeriv* /*normals*/, const Cell** cells, const OutReal isoval)
 {
 
 /* Convention:
@@ -150,9 +152,12 @@ void SPHFluidSurfaceMapping<In,Out>::createFaces(OutVecCoord& out, const Cell** 
 template <class In, class Out>
 void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& in )
 {
-	if (!sph) return;
+	//if (!sph) return;
+	if (!grid) return;
 	//const InReal invStep = (InReal)(1/mStep.getValue());
+	OutVecDeriv* normals = this->toModel->getN();
 	out.resize(0);
+	if (normals) normals->resize(0);
 	clear();
 	if (in.size()==0) return;
 	const InReal r = (InReal)(getRadius()); // / mStep.getValue());
@@ -194,11 +199,11 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 			{
 				for (x=0; x<GRIDDIM-1; x++)
 				{
-					createPoints(out, x0+x, y0+y, z0+z, c, c+DX, c+DY, c+DZ, isoval);
+					createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, c+DX, c+DY, c+DZ, isoval);
 					c+=DX;
 				}
 				// X border
-				createPoints(out, x0+x, y0+y, z0+z, c, cx1, c+DY, c+DZ, isoval);
+				createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, cx1, c+DY, c+DZ, isoval);
 				c+=DX;
 				cx1+=DY;
 			}
@@ -206,12 +211,12 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 			{
 				for (x=0; x<GRIDDIM-1; x++)
 				{
-					createPoints(out, x0+x, y0+y, z0+z, c, c+DX, cy1, c+DZ, isoval);
+					createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, c+DX, cy1, c+DZ, isoval);
 					c+=DX;
 					cy1+=DX;
 				}
 				// X border
-				createPoints(out, x0+x, y0+y, z0+z, c, cx1, cy1, c+DZ, isoval);
+				createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, cx1, cy1, c+DZ, isoval);
 				c+=DX;
 				cx1+=DY;
 				cy1+=DZ+DX-DY;
@@ -222,12 +227,12 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 		{
 			for (x=0; x<GRIDDIM-1; x++)
 			{
-				createPoints(out, x0+x, y0+y, z0+z, c, c+DX, c+DY, cz1, isoval);
+				createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, c+DX, c+DY, cz1, isoval);
 				c+=DX;
 				cz1+=DX;
 			}
 			// X border
-			createPoints(out, x0+x, y0+y, z0+z, c, cx1, c+DY, cz1, isoval);
+			createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, cx1, c+DY, cz1, isoval);
 			c+=DX;
 			cx1+=DY;
 			cz1+=DX;
@@ -236,13 +241,13 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 		{
 			for (x=0; x<GRIDDIM-1; x++)
 			{
-				createPoints(out, x0+x, y0+y, z0+z, c, c+DX, cy1, cz1, isoval);
+				createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, c+DX, cy1, cz1, isoval);
 				c+=DX;
 				cy1+=DX;
 				cz1+=DX;
 			}
 			// X border
-			createPoints(out, x0+x, y0+y, z0+z, c, cx1, cy1, cz1, isoval);
+			createPoints(out, normals, *it, x0+x, y0+y, z0+z, c, cx1, cy1, cz1, isoval);
 		}
 	}
 
@@ -271,13 +276,13 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 				{
 					cells[0] = c;               cells[1] = c+DX;            cells[2] = c+DY;            cells[3] = c+DX+DY;
 					cells[4] = cells[0]+DZ;     cells[5] = cells[1]+DZ;     cells[6] = cells[2]+DZ;     cells[7] = cells[3]+DZ;
-					createFaces(out, cells, isoval);
+					createFaces(out, normals, cells, isoval);
 					c+=DX;
 				}
 				// X border
 				cells[0] = c;               cells[1] = cx1;             cells[2] = c+DY;            cells[3] = cx1+DY;
 				cells[4] = cells[0]+DZ;     cells[5] = cells[1]+DZ;     cells[6] = cells[2]+DZ;     cells[7] = cells[3]+DZ;
-				createFaces(out, cells, isoval);
+				createFaces(out, normals, cells, isoval);
 				c+=DX;
 				cx1+=DY;
 			}
@@ -287,14 +292,14 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 				{
 					cells[0] = c;               cells[1] = c+DX;            cells[2] = cy1;             cells[3] = cy1+DX;
 					cells[4] = cells[0]+DZ;     cells[5] = cells[1]+DZ;     cells[6] = cells[2]+DZ;     cells[7] = cells[3]+DZ;
-					createFaces(out, cells, isoval);
+					createFaces(out, normals, cells, isoval);
 					c+=DX;
 					cy1+=DX;
 				}
 				// X border
 				cells[0] = c;               cells[1] = cx1;            cells[2] = cy1;              cells[3] = cx1y1;
 				cells[4] = cells[0]+DZ;     cells[5] = cells[1]+DZ;     cells[6] = cells[2]+DZ;     cells[7] = cells[3]+DZ;
-				createFaces(out, cells, isoval);
+				createFaces(out, normals, cells, isoval);
 				c+=DX;
 				cx1+=DY;
 				cy1+=DZ+DX-DY;
@@ -308,14 +313,14 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 			{
 				cells[0] = c;               cells[1] = c+DX;            cells[2] = c+DY;            cells[3] = c+DX+DY;
 				cells[4] = cz1;             cells[5] = cz1+DX;          cells[6] = cz1+DY;          cells[7] = cz1+DX+DY;
-				createFaces(out, cells, isoval);
+				createFaces(out, normals, cells, isoval);
 				c+=DX;
 				cz1+=DX;
 			}
 			// X border
 			cells[0] = c;               cells[1] = cx1;            cells[2] = c+DY;            cells[3] = cx1+DY;
 			cells[4] = cz1;             cells[5] = cx1z1;          cells[6] = cz1+DY;          cells[7] = cx1z1+DY;
-			createFaces(out, cells, isoval);
+			createFaces(out, normals, cells, isoval);
 			c+=DX;
 			cx1+=DY;
 			cz1+=DX;
@@ -327,7 +332,7 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 			{
 				cells[0] = c;               cells[1] = c+DX;            cells[2] = cy1;            cells[3] = cy1+DX;
 				cells[4] = cz1;             cells[5] = cz1+DX;          cells[6] = cy1z1;          cells[7] = cy1z1+DX;
-				createFaces(out, cells, isoval);
+				createFaces(out, normals, cells, isoval);
 				c+=DX;
 				cy1+=DX;
 				cz1+=DX;
@@ -336,11 +341,28 @@ void SPHFluidSurfaceMapping<In,Out>::apply( OutVecCoord& out, const InVecCoord& 
 			// X border
 			cells[0] = c;               cells[1] = cx1;            cells[2] = cy1;            cells[3] = cx1y1;
 			cells[4] = cz1;             cells[5] = cx1z1;          cells[6] = cy1z1;          cells[7] = cx1y1z1;
-			createFaces(out, cells, isoval);
+			createFaces(out, normals, cells, isoval);
 		}
 	}
 
 	//sout << out.size() << " points, "<<seqTriangles.size()<<" faces."<<sendl;
+	if (firstApply)
+	{
+#ifdef SOFA_HAVE_GLEW
+		visualmodel::OglShaderVisualModel* oglsvm = dynamic_cast<visualmodel::OglShaderVisualModel*>(this->toModel);
+
+		if(oglsvm)
+		{
+			Vec3fTypes::VecCoord tempRest;
+			for(unsigned int i=0 ; i<out.size() ; i++)
+				tempRest.push_back(out[i]);
+			oglsvm->putRestPositions(tempRest);
+			std::cout << "void SPHFluidSurfaceMapping<In,Out>::apply" << std::endl;
+		}
+
+		firstApply = false;
+#endif
+	}
 }
 
 template <class In, class Out>

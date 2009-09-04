@@ -31,6 +31,16 @@
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
+
+#include <stdlib.h>
+#include <math.h>
+
+#ifdef SOFA_HAVE_EIGEN2
+#include <Eigen/Core>
+#include <Eigen/Sparse>
+USING_PART_OF_NAMESPACE_EIGEN
+#endif
+
 namespace sofa
 {
 
@@ -49,6 +59,8 @@ public:
     typedef sofa::core::componentmodel::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
     typedef sofa::core::componentmodel::behavior::MechanicalMatrix MechanicalMatrix;
     typedef sofa::simulation::MechanicalAccumulateLMConstraint::ConstraintData ConstraintData;
+    typedef sofa::core::componentmodel::behavior::BaseLMConstraint::ConstId ConstId;
+
 
     OdeSolverImpl();
     virtual void init();
@@ -71,7 +83,12 @@ public:
     /// @}
 
     //Constraint resolution using Lapack
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
+
+typedef Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
+typedef Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
+typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
+
     /// Apply the constraints on the position and velocity.
     void applyConstraints();
     /** Find all the LMConstraint present in the scene graph and solve a part of them
@@ -82,7 +99,7 @@ public:
 
  protected:
     /// Construct the Right hand term of the system
-    void buildRightHandTerm(VecId &Id, sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, linearsolver::FullVector<double>  &c);
+    void buildRightHandTerm( ConstId Id, sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, VectorEigen &c);
     /** Apply the correction to the state corresponding
      * @param id nature of the constraint, and correction to apply
      * @param dof MechanicalState to correct
@@ -91,7 +108,34 @@ public:
      * @param propageVelocityChange need to propagate the correction done to the velocity for the position
      **/
     void constraintStateCorrection(VecId &id, sofa::core::componentmodel::behavior::BaseMechanicalState* dof,
-				   linearsolver::FullMatrix<double>  &invM_Jtrans, linearsolver::FullVector<double>  &c,  bool propageVelocityChange=false);
+                                   const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool propageVelocityChange=false);
+
+
+ template <class T>
+   class DofToMatrix
+   {
+   public:
+   DofToMatrix(sofa::core::componentmodel::behavior::BaseMechanicalState *d,T m):dof(d), matrix(m)
+     {}
+
+     bool operator== (const sofa::core::componentmodel::behavior::BaseMechanicalState *other)
+     {       
+       if (other==dof) return true;
+       else return false;
+     }
+     bool operator== (const DofToMatrix<T>& other)
+     {
+       if (&other != this)
+         return dof == other.dof;
+       else
+         return true;
+     }
+     sofa::core::componentmodel::behavior::BaseMechanicalState *dof;
+     T matrix;
+   };
+ 
+ std::vector< DofToMatrix< SparseMatrixEigen > > invMassMatrix;
+
 #endif
 
 };

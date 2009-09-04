@@ -80,8 +80,8 @@ void Edge2QuadTopologicalMapping::init()
 
 	// INITIALISATION of QUADULAR mesh from EDGE mesh :
 
-	component::MechanicalObject<Rigid3Types>* from_mstate = dynamic_cast<component::MechanicalObject<Rigid3Types>*>(fromModel->getContext()->getMechanicalState());
-	component::MechanicalObject<Vec3Types>* to_mstate = dynamic_cast<component::MechanicalObject<Vec3Types>*>(toModel->getContext()->getMechanicalState());
+	component::container::MechanicalObject<Rigid3Types>* from_mstate = dynamic_cast<component::container::MechanicalObject<Rigid3Types>*>(fromModel->getContext()->getMechanicalState());
+	component::container::MechanicalObject<Vec3Types>* to_mstate = dynamic_cast<component::container::MechanicalObject<Vec3Types>*>(toModel->getContext()->getMechanicalState());
 	
 	if (fromModel) {
 		
@@ -98,7 +98,9 @@ void Edge2QuadTopologicalMapping::init()
 			toModel->getContext()->get(to_tstc);	
 
 			const sofa::helper::vector<Edge> &edgeArray=fromModel->getEdges();
-			
+
+			sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
+						
 			Loc2GlobVec.clear();
 			In2OutMap.clear();
 
@@ -109,62 +111,125 @@ void Edge2QuadTopologicalMapping::init()
 			Y0[0] = (Real) (0.0); Y0[1] = (Real) (1.0); Y0[2] = (Real) (0.0);
 			Z0[0] = (Real) (0.0); Z0[1] = (Real) (0.0); Z0[2] = (Real) (1.0);
 
-			to_mstate->resize(fromModel->getNbPoints() * N);
+			if (to_mstate)
+			{
+				to_mstate->resize(fromModel->getNbPoints() * N);
+			}
+
 			to_tstc->clear();
 
 			toModel->setNbPoints(fromModel->getNbPoints() * N);
-
-			for (unsigned int i=0; i<(unsigned int) fromModel->getNbPoints(); ++i) 
+		
+			if (to_mstate)
 			{
-				unsigned int p0=i;				
 
-				Mat rotation;
-				(*from_mstate->getX())[p0].writeRotationMatrix(rotation);
+				for (unsigned int i=0; i<(unsigned int) fromModel->getNbPoints(); ++i)
+				{
+					unsigned int p0=i;
 
-				Vec t;
-				t=(*from_mstate->getX())[p0].getCenter();
+					Mat rotation;
+					(*from_mstate->getX())[p0].writeRotationMatrix(rotation);
 
-				Vec Y; 
-				Vec Z;
+					Vec t;
+					t=(*from_mstate->getX())[p0].getCenter();
 
-				Y = rotation * Y0;
-				Z = rotation * Z0;
+					Vec Y;
+					Vec Z;
 
-				for(unsigned int j=0; j<N; ++j){
+					Y = rotation * Y0;
+					Z = rotation * Z0;
 
-					Vec x = t + (Y*cos((Real) (2.0*j*M_PI/N)) + Z*sin((Real) (2.0*j*M_PI/N)))*((Real) rho);					
-					
-					(*to_mstate->getX())[p0*N+j]=x;
+					for(unsigned int j=0; j<N; ++j){
+						Vec x = t + (Y*cos((Real) (2.0*j*M_PI/N)) + Z*sin((Real) (2.0*j*M_PI/N)))*((Real) rho);					
+						(*to_mstate->getX())[p0*N+j]=x;
+					}
 				}					
 			}
+			
 
 			// CREATION of the quads based on the the circles
+			sofa::helper::vector< Quad > quads_to_create;
+			sofa::helper::vector< unsigned int > quadsIndexList;
+			if(edgeList.getValue().size()==0)
+			{
+			
+			int nb_elems = toModel->getNbQuads();
 
 			for (unsigned int i=0; i<edgeArray.size(); ++i) {
 
-					unsigned int p0 = edgeArray[i][0]; 
+					unsigned int p0 = edgeArray[i][0];
 					unsigned int p1 = edgeArray[i][1];
-
+					
 					sofa::helper::vector<unsigned int> out_info;
-
+					
 					for(unsigned int j=0; j<N; ++j){
-
+						
 						unsigned int q0 = p0*N+j;
 						unsigned int q1 = p1*N+j;
 						unsigned int q2 = p1*N+((j+1)%N);
 						unsigned int q3 = p0*N+((j+1)%N);
 
-						to_tstm->addQuadProcess(Quad(helper::make_array<unsigned int>((unsigned int) q0, (unsigned int) q1, (unsigned int) q2, (unsigned int) q3)));
+						if (flipNormals.getValue())
+						{
+							Quad q = Quad(helper::make_array<unsigned int>((unsigned int) q3, (unsigned int) q2, (unsigned int) q1, (unsigned int) q0));
+							quads_to_create.push_back(q);
+							quadsIndexList.push_back(nb_elems);
+						}
+
+						else
+						{
+							Quad q = Quad(helper::make_array<unsigned int>((unsigned int) q0, (unsigned int) q1, (unsigned int) q2, (unsigned int) q3));
+							quads_to_create.push_back(q);
+							quadsIndexList.push_back(nb_elems);
+						}
+
 						Loc2GlobVec.push_back(i);
 						out_info.push_back(Loc2GlobVec.size()-1);
 					}					
+				
+
+						nb_elems++;
 
 					In2OutMap[i]=out_info;
+				}
+			}
+			else
+			{
+				for (unsigned int j=0; j<edgeList.getValue().size(); ++j) {
+				    unsigned int i=edgeList.getValue()[j];
+					
+					unsigned int p0 = edgeArray[i][0]; 
+					unsigned int p1 = edgeArray[i][1];
+					
+					sofa::helper::vector<unsigned int> out_info;
+					
+					for(unsigned int j=0; j<N; ++j){
+						
+						unsigned int q0 = p0*N+j;
+						unsigned int q1 = p1*N+j;
+						unsigned int q2 = p1*N+((j+1)%N);
+						unsigned int q3 = p0*N+((j+1)%N);
+						
+						if(flipNormals.getValue())
+							to_tstm->addQuadProcess(Quad(helper::make_array<unsigned int>((unsigned int) q0, (unsigned int) q3, (unsigned int) q2, (unsigned int) q1)));
+						else
+							to_tstm->addQuadProcess(Quad(helper::make_array<unsigned int>((unsigned int) q0, (unsigned int) q1, (unsigned int) q2, (unsigned int) q3)));
+						Loc2GlobVec.push_back(i);
+						out_info.push_back(Loc2GlobVec.size()-1);
+					}					
+					
+					In2OutMap[i]=out_info;
+				}
+			
 			}			
 			
+			to_tstm->addQuadsProcess(quads_to_create);
+			to_tstm->addQuadsWarning(quads_to_create.size(), quads_to_create, quadsIndexList);
+
 			//to_tstm->propagateTopologicalChanges();
 			to_tstm->notifyEndingEvent();
 			//to_tstm->propagateTopologicalChanges();
+			Loc2GlobDataVec.endEdit();
 		}
 		
 	}
@@ -190,6 +255,7 @@ void Edge2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 
 			std::list<const TopologyChange *>::const_iterator itBegin=fromModel->firstChange();
 			std::list<const TopologyChange *>::const_iterator itEnd=fromModel->lastChange();
+			sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
 
 			while( itBegin != itEnd )
 			{
@@ -444,7 +510,9 @@ void Edge2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 
 				++itBegin;
 			}
+		
 			to_tstm->propagateTopologicalChanges();
+			Loc2GlobDataVec.endEdit();
 		}
 	}
 

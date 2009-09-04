@@ -33,8 +33,6 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
-using std::cerr;
-using std::endl;
 
 namespace sofa
 {
@@ -42,6 +40,8 @@ namespace sofa
 namespace simulation
 {
 
+using std::cerr;
+using std::endl;
 class SOFA_SIMULATION_COMMON_API VisualVisitor : public Visitor
 {
 public:
@@ -78,7 +78,7 @@ public:
     virtual void processObject(simulation::Node* node, core::objectmodel::BaseObject* o);
     virtual void bwdVisualModel(simulation::Node* node, core::VisualModel* vm);
     virtual const char* getClassName() const { return "VisualDrawVisitor"; }
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     virtual void printInfo(const core::objectmodel::BaseContext*,bool )  {return;}
 #endif
 };

@@ -166,6 +166,18 @@ namespace topology
         return c0*(1-coord_p) + c1*coord_p;
     }
 
+    template<class DataTypes>
+    Vec<3,double> TriangleSetGeometryAlgorithms< DataTypes >::computeBaryTrianglePoint(unsigned int p0, unsigned int p1, unsigned int p2, sofa::defaulttype::Vec<3,double>& coord_p) const
+    {
+    	const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
+
+    	Vec<3,double> c0; c0 = vect_c[p0];
+    	Vec<3,double> c1; c1 = vect_c[p1];
+	Vec<3,double> c2; c2 = vect_c[p2];
+        return c0*coord_p[0] + c1*coord_p[1] + c2*coord_p[2];
+    }
+
+  
     // Computes the opposite point to ind_p
     template<class DataTypes>
     Vec<3,double> TriangleSetGeometryAlgorithms< DataTypes >::getOppositePoint(unsigned int ind_p,
@@ -236,8 +248,8 @@ namespace topology
     // barycentric coefficients of point p in triangle (a,b,c) indexed by ind_t
     template<class DataTypes>
     sofa::helper::vector< double > TriangleSetGeometryAlgorithms< DataTypes >::computeTriangleBarycoefs( 
-																				const TriangleID ind_t, 
-																				const Vec<3,double> &p) const
+													const TriangleID ind_t, 
+													const Vec<3,double> &p) const
     {
     	const Triangle &t=this->m_topology->getTriangle(ind_t);
         return compute3PointsBarycoefs(p, t[0], t[1], t[2]);
@@ -246,10 +258,10 @@ namespace topology
     // barycentric coefficients of point p in triangle whose vertices are indexed by (ind_p1,ind_p2,ind_p3)
     template<class DataTypes>
     sofa::helper::vector< double > TriangleSetGeometryAlgorithms< DataTypes >::compute3PointsBarycoefs( 
-																				const Vec<3,double> &p, 
-																				unsigned int ind_p1, 
-																				unsigned int ind_p2, 
-																				unsigned int ind_p3) const
+												       const Vec<3,double> &p, 
+												       unsigned int ind_p1, 
+												       unsigned int ind_p2, 
+												       unsigned int ind_p3) const
     {
 		const double ZERO = 1e-12;
     	sofa::helper::vector< double > baryCoefs;
@@ -407,19 +419,19 @@ namespace topology
     			{
     				if(v_12 < 0.0) /// vertex 1
     				{
-    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(t[1]));
+    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(t[1]));
     				}
     				else
     				{
     					if(v_20 < 0.0) /// vertex 0
     					{
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(t[0]));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(t[0]));
 
     					}
     					else // v_01 < 0.0
     					{
     						ind_edge=this->m_topology->getEdgeIndex(t[0],t[1]);
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     					}
     				}
     			}
@@ -429,19 +441,19 @@ namespace topology
     				{
     					if(v_20 < 0.0) /// vertex 2
     					{
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(t[2]));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(t[2]));
 
     					}
     					else // v_12 < 0.0
     					{
     						ind_edge=this->m_topology->getEdgeIndex(t[1],t[2]);
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     					}
     				}
     				else // v_20 < 0.0
     				{
     					ind_edge=this->m_topology->getEdgeIndex(t[2],t[0]);
-    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     				}
     			}
 
@@ -548,20 +560,20 @@ namespace topology
     				//if(v_12 < 0.0) /// vertex 1
 					if(v_12 < -ZERO) /// vertex 1
     				{
-    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(t[1]));
+    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(t[1]));
     				}
     				else
     				{
     					//if(v_20 < 0.0) /// vertex 0
     					if(v_20 < -ZERO) /// vertex 0
 						{
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(t[0]));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(t[0]));
 
     					}
     					else // v_01 < 0.0
     					{
     						ind_edge=this->m_topology->getEdgeIndex(t[0],t[1]);
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     					}
     				}
     			}
@@ -573,19 +585,19 @@ namespace topology
     					//if(v_20 < 0.0) /// vertex 2
     					if(v_20 < -ZERO) /// vertex 2
 						{
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(t[2]));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(t[2]));
 
     					}
     					else // v_12 < 0.0
     					{
     						ind_edge=this->m_topology->getEdgeIndex(t[1],t[2]);
-    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    						shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     					}
     				}
     				else // v_20 < 0.0
     				{
     					ind_edge=this->m_topology->getEdgeIndex(t[2],t[0]);
-    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    					shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     				}
     			}
 
@@ -636,10 +648,10 @@ namespace topology
 
     // Tests how to triangularize a quad whose vertices are defined by (p_q1, p_q2, ind_q3, ind_q4) according to the Delaunay criterion
     template<class DataTypes>
-    bool TriangleSetGeometryAlgorithms< DataTypes >::isQuadDeulaunayOriented(const Vec<3,double>& p_q1, 
-    																		const Vec<3,double>& p_q2,
-    																		unsigned int ind_q3, 
-    																		unsigned int ind_q4) const
+    bool TriangleSetGeometryAlgorithms< DataTypes >::isQuadDeulaunayOriented(const typename DataTypes::Coord& p_q1, 
+									     const typename DataTypes::Coord& p_q2,
+									     unsigned int ind_q3, 
+									     unsigned int ind_q4)
     {
     	sofa::helper::vector< double > baryCoefs;
 
@@ -648,33 +660,129 @@ namespace topology
     	const typename DataTypes::Coord& c3 = vect_c[ind_q3];
     	const typename DataTypes::Coord& c4 = vect_c[ind_q4];
 
-    	Vec<3,double> p1 = p_q1;
-    	Vec<3,double> p2 = p_q2;
-        Vec<3,double> p3; p3 = c3;
-    	Vec<3,double> p4; p4 = c4;
-        return isQuadDeulaunayOriented(p1, p2, p3, p4);
+        return isQuadDeulaunayOriented(p_q1, p_q2, c3, c4);
     }
     
     /** \brief Tests how to triangularize a quad whose vertices are defined by (p1, p2, p3, p4) according to the Delaunay criterion
      *
      */ 
-    template<class DataTypes>
-    bool TriangleSetGeometryAlgorithms< DataTypes >::isQuadDeulaunayOriented(const Vec<3,double>& q1, 
-                                 const sofa::defaulttype::Vec<3,double>& q2,
-                                 const sofa::defaulttype::Vec<3,double>& q3,
-                                 const sofa::defaulttype::Vec<3,double>& q4) const
-    {
-    	Vec<3,double> G = (q1+q2+q3)/3.0;
+  template<class DataTypes>
+  bool TriangleSetGeometryAlgorithms< DataTypes >::isQuadDeulaunayOriented(const typename DataTypes::Coord& p1, 
+									   const typename DataTypes::Coord& p2,
+									   const typename DataTypes::Coord& p3,
+									   const typename DataTypes::Coord& p4)
+  {
+    Coord tri1[3], tri2[3];
 
-    	if((G-q2)*(G-q2) <= (G-q4)*(G-q4))
-    	{
-    		return true;
-    	}
-    	else
-    	{
-    		return false;
-    	}
+    tri1[0] = p1; tri1[1] = p2; tri1[2] = p3;
+    tri2[0] = p3; tri2[1] = p4; tri2[2] = p1;
+
+
+    //Test if one vertex is inside the triangle fromed by the the 3 others
+    Coord CommonEdge[2], oppositeVertices[2];
+
+    oppositeVertices[0] = p1; sofa::defaulttype::Vec<3,double> A; A = p1;
+    CommonEdge[0] = p2;       sofa::defaulttype::Vec<3,double> C; C = p2;
+    CommonEdge[1] = p4;       sofa::defaulttype::Vec<3,double> B; B = p3;
+    oppositeVertices[1] = p3; sofa::defaulttype::Vec<3,double> D; D = p4;
+    
+    bool intersected = false;
+
+    Coord inter = compute2EdgesIntersection (CommonEdge, oppositeVertices, intersected);
+    
+    if (intersected)
+    {
+
+      sofa::defaulttype::Vec<3,double> X; DataTypes::get(X[0], X[1], X[2], inter);
+      
+      double ABAX = (A - B)*(A - X); 
+      double CDCX = (C - D)*(C - X); 
+
+      if ( (ABAX < 0) || ((A - X).norm2() > (A - B).norm2()) )
+	return true;
+      else if (	(CDCX < 0) || ((C - X).norm2() > (C - D).norm2()) )
+        return false;
+    } 
+
+    Vec<3,double> G = (A+B+C)/3.0;
+
+    if((G-C)*(G-C) <= (G-D)*(G-D))
+      return true;
+    else
+      return false;    
+  }
+  
+
+  template<class DataTypes>
+  bool TriangleSetGeometryAlgorithms< DataTypes >::isDiagonalsIntersectionInQuad (const typename DataTypes::Coord triangle1[3],const  typename DataTypes::Coord triangle2[3])
+  {
+    
+    Coord CommonEdge[2], oppositeVertices[2];
+    unsigned int cpt = 0;
+    bool test = false;
+        
+    for (unsigned int i = 0; i<3; i++)
+    {
+      test = false;
+      for (unsigned int j = 0; j<3; j++)
+	if(triangle1[i] == triangle2[j])
+	{
+	  test = true;
+	  break;
+	}
+
+      if(test)
+      {
+	CommonEdge[cpt] = triangle1[i];
+	cpt++;
+      } else
+	oppositeVertices[0] = triangle1[i];
     }
+
+    
+    for (unsigned int i = 0; i<3; i++)
+    {
+      test = false;
+      for (unsigned int j = 0; j<2; j++)
+	if (triangle2[i] == CommonEdge[j])
+	{
+	  test = true;
+	  break;
+	}
+
+      if (!test)
+      {
+	oppositeVertices[1] = triangle2[i];
+	break;
+      }
+    }
+
+    bool intersected = false;
+
+    Coord inter = compute2EdgesIntersection (CommonEdge, oppositeVertices, intersected);
+
+    if (intersected)
+    {
+      sofa::defaulttype::Vec<3,double> A; DataTypes::get(A[0], A[1], A[2], CommonEdge[0]);
+      sofa::defaulttype::Vec<3,double> B; DataTypes::get(B[0], B[1], B[2], CommonEdge[1]);
+
+      sofa::defaulttype::Vec<3,double> C; DataTypes::get(C[0], C[1], C[2], oppositeVertices[0]);
+      sofa::defaulttype::Vec<3,double> D; DataTypes::get(D[0], D[1], D[2], oppositeVertices[1]);
+
+      sofa::defaulttype::Vec<3,double> X; DataTypes::get(X[0], X[1], X[2], inter);
+      
+      double ABAX = (A - B)*(A - X); 
+      double CDCX = (C - D)*(C - X); 
+
+      if ( (ABAX < 0) || (CDCX < 0) || ((A - X).norm2() > (A - B).norm2()) || ((C - X).norm2() > (C - D).norm2()) )
+	return false;
+      else
+	return true;
+    }
+
+    return false;
+  }
+  								   
 
     // Test if a triangle indexed by ind_triangle (and incident to the vertex indexed by ind_p) is included or not in the plane defined by (ind_p, plane_vect)
     template<class DataTypes>
@@ -792,7 +900,7 @@ namespace topology
 
     		if (this->m_topology->getNbEdges()>0) 
     		{ 
-    			sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    			sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     			unsigned int ind_triangle=shell[0];
     			unsigned int i=0;
     			bool is_in_next_triangle=false;
@@ -852,7 +960,7 @@ namespace topology
 
     		if (this->m_topology->getNbEdges()>0) 
     		{ 
-    			sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
+    			sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
     			unsigned int ind_triangle=shell[0];
     			unsigned int i=0;
     			bool is_in_next_triangle=false;
@@ -891,7 +999,7 @@ namespace topology
 
     	if (this->m_topology->getNbPoints()>0) 
     	{ 
-    		sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(ind_p));
+    		sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(ind_p));
     		unsigned int ind_triangle=shell[0];
     		unsigned int i=0;
 
@@ -976,568 +1084,716 @@ namespace topology
                                                                                         sofa::helper::vector<unsigned int> &indices,
                                                                                         double &baryCoef, double& coord_kmin) const
     {
-    	// HYP : point a is in triangle indexed by t
-    	// is_entered == true => indices.size() == 2
+      // HYP : point a is in triangle indexed by t
+      // is_entered == true => indices.size() == 2
 
-    	unsigned int ind_first=0;
-    	unsigned int ind_second=0;
 
-    	if(indices.size()>1)
-    	{
-    		ind_first=indices[0];
-    		ind_second=indices[1];
-    	}
+      
+      
+      
+      unsigned int ind_first=0;
+      unsigned int ind_second=0;
 
-    	indices.clear();
+      if(indices.size()>1)
+      {
+	ind_first=indices[0];
+	ind_second=indices[1];
+      }
 
-    	bool is_validated = false;
-    	bool is_intersected = false;
+      indices.clear();
 
-    	const Triangle &t=this->m_topology->getTriangle(ind_t);
-    	const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
+      bool is_validated = false;
+      bool is_intersected = false;
 
-    	bool is_full_01=(is_entered && ((t[0] == ind_first && t[1] == ind_second) || (t[1] == ind_first && t[0] == ind_second)));
-    	bool is_full_12=(is_entered && ((t[1] == ind_first && t[2] == ind_second) || (t[2] == ind_first && t[1] == ind_second)));
-    	bool is_full_20=(is_entered && ((t[2] == ind_first && t[0] == ind_second) || (t[0] == ind_first && t[2] == ind_second)));
+      const Triangle &t=this->m_topology->getTriangle(ind_t);
+      const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
 
-    	const typename DataTypes::Coord& c0=vect_c[t[0]];
-    	const typename DataTypes::Coord& c1=vect_c[t[1]];
-    	const typename DataTypes::Coord& c2=vect_c[t[2]];
+      bool is_full_01=(is_entered && ((t[0] == ind_first && t[1] == ind_second) || (t[1] == ind_first && t[0] == ind_second)));
+      bool is_full_12=(is_entered && ((t[1] == ind_first && t[2] == ind_second) || (t[2] == ind_first && t[1] == ind_second)));
+      bool is_full_20=(is_entered && ((t[2] == ind_first && t[0] == ind_second) || (t[0] == ind_first && t[2] == ind_second)));
 
-    	Vec<3,Real> p0; 
-    	p0[0] = (Real) (c0[0]); 
-    	p0[1] = (Real) (c0[1]); 
-    	p0[2] = (Real) (c0[2]);
-    	Vec<3,Real> p1;
-    	p1[0] = (Real) (c1[0]); 
-    	p1[1] = (Real) (c1[1]); 
-    	p1[2] = (Real) (c1[2]);
-    	Vec<3,Real> p2; 
-    	p2[0] = (Real) (c2[0]); 
-    	p2[1] = (Real) (c2[1]); 
-    	p2[2] = (Real) (c2[2]);
+      const typename DataTypes::Coord& c0=vect_c[t[0]];
+      const typename DataTypes::Coord& c1=vect_c[t[1]];
+      const typename DataTypes::Coord& c2=vect_c[t[2]];
 
-    	Vec<3,Real> pa; 
-    	pa[0] = (Real) (a[0]); 
-    	pa[1] = (Real) (a[1]); 
-    	pa[2] = (Real) (a[2]);
-    	Vec<3,Real> pb;
-    	pb[0] = (Real) (b[0]); 
-    	pb[1] = (Real) (b[1]); 
-    	pb[2] = (Real) (b[2]);
+      Vec<3,Real> p0; 
+      p0[0] = (Real) (c0[0]); 
+      p0[1] = (Real) (c0[1]); 
+      p0[2] = (Real) (c0[2]);
+      Vec<3,Real> p1;
+      p1[0] = (Real) (c1[0]); 
+      p1[1] = (Real) (c1[1]); 
+      p1[2] = (Real) (c1[2]);
+      Vec<3,Real> p2; 
+      p2[0] = (Real) (c2[0]); 
+      p2[1] = (Real) (c2[1]); 
+      p2[2] = (Real) (c2[2]);
 
-    	Vec<3,Real> v_normal = (p2-p0).cross(p1-p0);
-    	//Vec<3,Real> v_normal = (Vec<3,Real>) computeTriangleNormal(ind_t);
+      Vec<3,Real> pa; 
+      pa[0] = (Real) (a[0]); 
+      pa[1] = (Real) (a[1]); 
+      pa[2] = (Real) (a[2]);
+      Vec<3,Real> pb;
+      pb[0] = (Real) (b[0]); 
+      pb[1] = (Real) (b[1]); 
+      pb[2] = (Real) (b[2]);
 
-    	Real norm_v_normal = v_normal.norm(); // WARN : square root COST
+      Vec<3,Real> v_normal = (p2-p0).cross(p1-p0);
+      //Vec<3,Real> v_normal = (Vec<3,Real>) computeTriangleNormal(ind_t);
 
-    	if(norm_v_normal != 0.0)
-    	{
-    		v_normal/=norm_v_normal; 
+      Real norm_v_normal = v_normal.norm(); // WARN : square root COST
 
-    		Vec<3,Real> v_ab = pb-pa;
-    		Vec<3,Real> v_ab_proj = v_ab - v_normal * dot(v_ab,v_normal); // projection
-    		Vec<3,Real> pb_proj = v_ab_proj + pa;
+      if(norm_v_normal != 0.0)
+      {
+	
+	v_normal/=norm_v_normal; 
 
-    		Vec<3,Real> v_01 = p1-p0;
-    		Vec<3,Real> v_12 = p2-p1;
-    		Vec<3,Real> v_20 = p0-p2;
+	Vec<3,Real> v_ab = pb-pa;
+	Vec<3,Real> v_ab_proj = v_ab - v_normal * dot(v_ab,v_normal); // projection (same values if incision in the plan)
+	Vec<3,Real> pb_proj = v_ab_proj + pa;
 
-    		Vec<3,Real> n_proj =v_ab_proj.cross(v_normal);
-    		Vec<3,Real> n_01 = v_01.cross(v_normal);
-    		Vec<3,Real> n_12 = v_12.cross(v_normal);
-    		Vec<3,Real> n_20 = v_20.cross(v_normal);
+	Vec<3,Real> v_01 = p1-p0;
+	Vec<3,Real> v_12 = p2-p1;
+	Vec<3,Real> v_20 = p0-p2;
 
-    		Real norm2_v_ab_proj = v_ab_proj*(v_ab_proj);
+	Vec<3,Real> n_proj =v_ab_proj.cross(v_normal);
+	
+	Vec<3,Real> n_01 = v_01.cross(v_normal);
+	Vec<3,Real> n_12 = v_12.cross(v_normal);
+	Vec<3,Real> n_20 = v_20.cross(v_normal);
 
-    		if(norm2_v_ab_proj != 0.0) // pb_proj != pa
-    		{
-    			double coord_t=0.0;
-    			double coord_k=0.0;
+	Real norm2_v_ab_proj = v_ab_proj*(v_ab_proj); //dot product WARNING
+	
+	if(norm2_v_ab_proj != 0.0) // pb_proj != pa
+	{
+	  double coord_t=0.0;
+	  double coord_k=0.0;
 
-    			double is_initialized=false;
-    			coord_kmin=0.0;
+	  double is_initialized=false;
+	  coord_kmin=0.0;
 
-    			double coord_test1;
-    			double coord_test2;
+	  double coord_test1;
+	  double coord_test2;
 
-    			double s_t;
-    			double s_k;
+	  double s_t;
+	  double s_k;
 
-    			if(!is_full_01)
-    			{
-    				/// Test of edge (p0,p1) :
+	  if(!is_full_01)
+	  {
+	    /// Test of edge (p0,p1) :
+	    s_t = (p0-p1)*n_proj;
+	    s_k = (pa-pb_proj)*n_01;
 
-    				s_t = (p0-p1)*n_proj;
-    				s_k = (pa-pb_proj)*n_01;
+	    // s_t == 0.0 iff s_k == 0.0
 
-    				// s_t == 0.0 iff s_k == 0.0
+	    if(s_t==0.0) // (pa,pb_proj) and (p0,p1) are parallel
+	    {
+	      if((p0-pa)*(n_proj)==0.0) // (pa,pb_proj) and (p0,p1) are on the same line
+	      {
+		coord_test1 = (pa-p0)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
+		coord_test2 = (pa-p1)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
 
-    				if(s_t==0.0) // (pa,pb_proj) and (p0,p1) are parallel
-    				{
-    					if((p0-pa)*(n_proj)==0.0) // (pa,pb_proj) and (p0,p1) are on the same line
-    					{
-    						coord_test1 = (pa-p0)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
-    						coord_test2 = (pa-p1)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
+		if(coord_test1>=0)
+		{
+		  coord_k=coord_test1;
+		  coord_t=0.0;
+		}
+		else
+		{
+		  coord_k=coord_test2;
+		  coord_t=1.0;
+		}
 
-    						if(coord_test1>=0)
-    						{
-    							coord_k=coord_test1;
-    							coord_t=0.0;
-    						}
-    						else
-    						{
-    							coord_k=coord_test2;
-    							coord_t=1.0;
-    						}
+		is_intersected = (coord_k > 0.0 && (coord_t >= 0.0 && coord_t <= 1.0));
 
-    						is_intersected = (coord_k > 0.0 && (coord_t >= 0.0 && coord_t <= 1.0));
+	      }else // (pa,pb_proj) and (p0,p1) are parallel and disjoint
+	      {
+		is_intersected=false;
+	      }
+	    }
+	    else // s_t != 0.0 and s_k != 0.0
+	    {
+	      coord_k=double((pa-p0)*(n_01))*1.0/double(s_k);
+	      coord_t=double((p0-pa)*(n_proj))*1.0/double(s_t);
 
-    					}else // (pa,pb_proj) and (p0,p1) are parallel and disjoint
-    					{
-    						is_intersected=false;
-    					}
-    				}
-    				else // s_t != 0.0 and s_k != 0.0
-    				{
-    					coord_k=double((pa-p0)*(n_01))*1.0/double(s_k);
-    					coord_t=double((p0-pa)*(n_proj))*1.0/double(s_t);
+	      is_intersected = ((coord_k > 0.0) && (coord_t >= 0.0 && coord_t <= 1.0));
+	    }
+	    
+	    if(is_intersected)
+	    {
+	      if((!is_initialized) || (coord_k > coord_kmin))
+	      {
+		indices.clear();
+		indices.push_back(t[0]);
+		indices.push_back(t[1]);
+		baryCoef=coord_t;
+		coord_kmin=coord_k;	
+	      }
 
-    					is_intersected = ((coord_k > 0.0) && (coord_t >= 0.0 && coord_t <= 1.0));
-    				}
+	      is_initialized=true;
+	    }
 
-    				if(is_intersected)
-    				{
-    					if((!is_initialized) || (coord_k > coord_kmin))
-    					{
-    						indices.clear();
-    						indices.push_back(t[0]);
-    						indices.push_back(t[1]);
-    						baryCoef=coord_t;
-    						coord_kmin=coord_k;	
-    					}
+	    is_validated = is_validated || is_initialized;
+	  }
+	  
 
-    					is_initialized=true;
-    				}
+	  
+	  if(!is_full_12)
+	  {
+	    /// Test of edge (p1,p2) :
+	    
+	    s_t = (p1-p2)*(n_proj);
+	    s_k = (pa-pb_proj)*(n_12);
 
-    				is_validated = is_validated || is_initialized;
-    			}
+ 	    // s_t == 0.0 iff s_k == 0.0
 
-    			if(!is_full_12)
-    			{
-    				/// Test of edge (p1,p2) :
+	    if(s_t==0.0) // (pa,pb_proj) and (p1,p2) are parallel
+	    {
+	      if((p1-pa)*(n_proj)==0.0) // (pa,pb_proj) and (p1,p2) are on the same line
+	      {
+		coord_test1 = (pa-p1)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
+		coord_test2 = (pa-p2)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
 
-    				s_t = (p1-p2)*(n_proj);
-    				s_k = (pa-pb_proj)*(n_12);
+		if(coord_test1>=0)
+		{
+		  coord_k=coord_test1;
+		  coord_t=0.0;
+		}
+		else
+		{
+		  coord_k=coord_test2;
+		  coord_t=1.0;
+		}
 
-    				// s_t == 0.0 iff s_k == 0.0
+		is_intersected = (coord_k > 0.0 && (coord_t >= 0.0 && coord_t <= 1.0));
+	      }
+	      else // (pa,pb_proj) and (p1,p2) are parallel and disjoint
+	      {
+		is_intersected=false;
+	      }
 
-    				if(s_t==0.0) // (pa,pb_proj) and (p1,p2) are parallel
-    				{
-    					if((p1-pa)*(n_proj)==0.0) // (pa,pb_proj) and (p1,p2) are on the same line
-    					{
-    						coord_test1 = (pa-p1)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
-    						coord_test2 = (pa-p2)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
+	    }else{ // s_t != 0.0 and s_k != 0.0
 
-    						if(coord_test1>=0)
-    						{
-    							coord_k=coord_test1;
-    							coord_t=0.0;
-    						}
-    						else
-    						{
-    							coord_k=coord_test2;
-    							coord_t=1.0;
-    						}
+	      coord_k=double((pa-p1)*(n_12))*1.0/double(s_k);
+	      coord_t=double((p1-pa)*(n_proj))*1.0/double(s_t);
 
-    						is_intersected = (coord_k > 0.0 && (coord_t >= 0.0 && coord_t <= 1.0));
-    					}
-    					else // (pa,pb_proj) and (p1,p2) are parallel and disjoint
-    					{
-    						is_intersected=false;
-    					}
+	      is_intersected = ((coord_k > 0.0) && (coord_t >= 0.0 && coord_t <= 1.0));
+	    }
 
-    				}else{ // s_t != 0.0 and s_k != 0.0
+	    if(is_intersected)
+	    {
+	      if((!is_initialized) || (coord_k > coord_kmin))
+	      {
+		indices.clear();
+		indices.push_back(t[1]);
+		indices.push_back(t[2]);
+		baryCoef=coord_t;
+		coord_kmin=coord_k;
+	      }	
 
-    					coord_k=double((pa-p1)*(n_12))*1.0/double(s_k);
-    					coord_t=double((p1-pa)*(n_proj))*1.0/double(s_t);
+	      is_initialized=true;
+	    }
 
-    					is_intersected = ((coord_k > 0.0) && (coord_t >= 0.0 && coord_t <= 1.0));
-    				}
+	    is_validated = is_validated || is_initialized;
+	  }
 
-    				if(is_intersected)
-    				{
-    					if((!is_initialized) || (coord_k > coord_kmin))
-    					{
-    						indices.clear();
-    						indices.push_back(t[1]);
-    						indices.push_back(t[2]);
-    						baryCoef=coord_t;
-    						coord_kmin=coord_k;
-    					}	
 
-    					is_initialized=true;
-    				}
+	  
+	  if(!is_full_20)
+	  {
+	    /// Test of edge (p2,p0) :
 
-    				is_validated = is_validated || is_initialized;
-    			}
+	    s_t = (p2-p0)*(n_proj);
+	    s_k = (pa-pb_proj)*(n_20);
 
-    			if(!is_full_20)
-    			{
-    				/// Test of edge (p2,p0) :
+	    // s_t == 0.0 iff s_k == 0.0
 
-    				s_t = (p2-p0)*(n_proj);
-    				s_k = (pa-pb_proj)*(n_20);
+	    if(s_t==0.0) // (pa,pb_proj) and (p2,p0) are parallel
+	    {
+	      if((p2-pa)*(n_proj)==0.0) // (pa,pb_proj) and (p2,p0) are on the same line
+	      {
+		coord_test1 = (pa-p2)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
+		coord_test2 = (pa-p0)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
 
-    				// s_t == 0.0 iff s_k == 0.0
+		if(coord_test1>=0)
+		{
+		  coord_k=coord_test1;
+		  coord_t=0.0;
+		}
+		else
+		{
+		  coord_k=coord_test2;
+		  coord_t=1.0;
+		}
 
-    				if(s_t==0.0) // (pa,pb_proj) and (p2,p0) are parallel
-    				{
-    					if((p2-pa)*(n_proj)==0.0) // (pa,pb_proj) and (p2,p0) are on the same line
-    					{
-    						coord_test1 = (pa-p2)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
-    						coord_test2 = (pa-p0)*(pa-pb_proj)/norm2_v_ab_proj; // HYP : pb_proj != pa
+		is_intersected = (coord_k > 0.0 && (coord_t >= 0.0 && coord_t <= 1.0));
 
-    						if(coord_test1>=0)
-    						{
-    							coord_k=coord_test1;
-    							coord_t=0.0;
-    						}
-    						else
-    						{
-    							coord_k=coord_test2;
-    							coord_t=1.0;
-    						}
+	      }
+	      else // (pa,pb_proj) and (p2,p0) are parallel and disjoint
+	      {
+		is_intersected = false;
+	      }
+	    }
+	    else // s_t != 0.0 and s_k != 0.0
+	    {
+	      coord_k=double((pa-p2)*(n_20))*1.0/double(s_k);
+	      coord_t=double((p2-pa)*(n_proj))*1.0/double(s_t);
 
-    						is_intersected = (coord_k > 0.0 && (coord_t >= 0.0 && coord_t <= 1.0));
+	      is_intersected = ((coord_k > 0.0) && (coord_t >= 0.0 && coord_t <= 1.0));
+	    }
 
-    					}
-    					else // (pa,pb_proj) and (p2,p0) are parallel and disjoint
-    					{
-    						is_intersected = false;
-    					}
-    				}
-    				else // s_t != 0.0 and s_k != 0.0
-    				{
-    					coord_k=double((pa-p2)*(n_20))*1.0/double(s_k);
-    					coord_t=double((p2-pa)*(n_proj))*1.0/double(s_t);
+	    if(is_intersected)
+	    {
+	      if((!is_initialized) || (coord_k > coord_kmin))
+	      {
+		indices.clear();
+		indices.push_back(t[2]);
+		indices.push_back(t[0]);
+		baryCoef=coord_t;
+		coord_kmin=coord_k;
+	      }	
 
-    					is_intersected = ((coord_k > 0.0) && (coord_t >= 0.0 && coord_t <= 1.0));
-    				}
+	      is_initialized = true;
+	    }
+	    is_validated = is_validated || is_initialized;
+	  }
 
-    				if(is_intersected)
-    				{
-    					if((!is_initialized) || (coord_k > coord_kmin))
-    					{
-    						indices.clear();
-    						indices.push_back(t[2]);
-    						indices.push_back(t[0]);
-    						baryCoef=coord_t;
-    						coord_kmin=coord_k;
-    					}	
+	  
+	}
+	else
+	{
+	  //std::cout << "points a and b are projected to the same point on triangle t" << std::endl;
+	  is_validated = false; // points a and b are projected to the same point on triangle t
+	}
+      }
+      else
+      {
+	//std::cout << "triangle t is flat" << std::endl;
+	is_validated = false; // triangle t is flat
+      }
 
-    					is_initialized = true;
-    				}
-
-    				is_validated = is_validated || is_initialized;
-    			}
-    		}
-    		else
-    		{
-    			is_validated = false; // points a and b are projected to the same point on triangle t
-    		}
-    	}
-    	else
-    	{
-    		is_validated = false; // triangle t is flat
-    	}
-
-    	return is_validated;	
+      return is_validated;	
     }
 
 
-    // Computes the list of points (edge,coord) intersected by the segment from point a to point b 
-    // and the triangular mesh
-    template<class DataTypes>
-    bool TriangleSetGeometryAlgorithms< DataTypes >::computeIntersectedPointsList(const Vec<3,double>& a, 
-    												const Vec<3,double>& b, 
-    												const unsigned int ind_ta, 
-    												unsigned int& ind_tb,
-    												sofa::helper::vector< unsigned int > &triangles_list, 
-    												sofa::helper::vector<unsigned int> &edges_list, 
-    												sofa::helper::vector< double >& coords_list, bool& is_on_boundary) const
+  
+
+
+  // Computes the list of points (edge,coord) intersected by the segment from point a to point b 
+  // and the triangular mesh
+  template<class DataTypes>
+  bool TriangleSetGeometryAlgorithms< DataTypes >::computeIntersectedPointsList(const PointID last_point,
+										const Vec<3,double>& a, 
+										const Vec<3,double>& b, 
+										unsigned int& ind_ta, 
+										unsigned int& ind_tb,
+										sofa::helper::vector< unsigned int > &triangles_list, 
+										sofa::helper::vector<unsigned int> &edges_list, 
+										sofa::helper::vector< double >& coords_list, bool& is_on_boundary) const
+  {
+    
+    bool is_validated=true;
+    bool is_intersected=true;
+    
+    Vec<3,double> c_t_test = a;
+    
+    is_on_boundary = false;
+    
+    sofa::helper::vector<unsigned int> indices;
+    
+    double coord_t=0.0;
+    double coord_k=0.0;
+    double coord_k_test=0.0;
+    double dist_min=0.0;
+
+    Vec<3,double> p_current=a;
+      
+    TriangleID ind_t_current=ind_ta;
+    EdgeID ind_edge;
+    PointID ind_index;
+    TriangleID ind_triangle = ind_ta;
+    is_intersected=computeSegmentTriangleIntersection(false, p_current, b, (const unsigned int) ind_t_current, indices, coord_t, coord_k);
+
+    // In case the ind_t is not the good one.
+    if ( (!is_intersected || indices[0] == last_point || indices[1] == last_point) && (last_point != (unsigned int)-1)) 
     {
-    	bool is_validated=true;
-    	bool is_intersected=true;
+      
+      const sofa::helper::vector< unsigned int >& shell = this->m_topology->getTrianglesAroundVertex (last_point);
 
-    	Vec<3,double> c_t_test = a;
+      for (unsigned int i = 0; i<shell.size(); i++)
+      {
+	if (shell [i] != ind_t_current)
+	  is_intersected=computeSegmentTriangleIntersection(false, p_current, b, shell[i], indices, coord_t, coord_k);
 
-    	is_on_boundary = false;
+	if (is_intersected && indices[0] != last_point && indices[1] != last_point)
+	{
+	  ind_t_current = shell[i];
+	  ind_ta = ind_t_current;
+	  break;
+	}
+      }
+    }
+    
+    /*
+      std::cout << "*********************************" << std::endl;
+      std::cout << "ind_t_current: " << ind_t_current << std::endl;
+      std::cout << "p_current: " << p_current << std::endl;
+      std::cout << "coord_t: " << coord_t << std::endl;
+      std::cout << "coord_k: " << coord_k << std::endl;
+      std::cout << "indices: " << indices << std::endl;
+      std::cout << "last_point: " << last_point << std::endl;
+      std::cout << "a: " << a << std::endl;
+      std::cout << "b: " << b << std::endl;
+      std::cout << "is_intersected: "<< is_intersected << std::endl;
+      std::cout << "*********************************" << std::endl;
+    */
 
-    	sofa::helper::vector<unsigned int> indices;
+    coord_k_test=coord_k;
+    dist_min=(b-a)*(b-a);
 
-    	double coord_t=0.0;
-    	double coord_k=0.0;
-    	double coord_k_test=0.0;
+    while((coord_k_test<1.0 && is_validated) && is_intersected)
+    {
+      ind_edge=this->m_topology->getEdgeIndex(indices[0],indices[1]);
+      edges_list.push_back(ind_edge);
+      triangles_list.push_back(ind_t_current);
+      if (this->m_topology->getEdge(ind_edge)[0] == indices[0])
+	coords_list.push_back(coord_t);
+      else
+	coords_list.push_back(1.0-coord_t);
 
-    	Vec<3,double> p_current=a;
-    	unsigned int ind_t_current=ind_ta;
+      const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
 
-    	unsigned int ind_edge;
-    	unsigned int ind_index;
-    	unsigned int ind_triangle = ind_ta;
+      Vec<3,double> c_t_current; // WARNING : conversion from 'double' to 'float', possible loss of data ! // typename DataTypes::Coord
+      c_t_current[0]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][0]))+coord_t*((double) (vect_c[indices[1]][0])));
+      c_t_current[1]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][1]))+coord_t*((double) (vect_c[indices[1]][1])));
+      c_t_current[2]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][2]))+coord_t*((double) (vect_c[indices[1]][2])));
 
-    	double dist_min=0.0;
+      p_current=c_t_current;
 
-    	is_intersected=computeSegmentTriangleIntersection(false, p_current, b, (const unsigned int) ind_t_current, indices, coord_t, coord_k);
+      Vec<3,Real> p_t_aux;
+      p_t_aux[0] = (Real) (c_t_current[0]); 
+      p_t_aux[1] = (Real) (c_t_current[1]); 
+      p_t_aux[2] = (Real) (c_t_current[2]);
 
-    	coord_k_test=coord_k;
-    	dist_min=(b-a)*(b-a);
 
-    	while((coord_k_test<1.0 && is_validated) && is_intersected)
-    	{
-                ind_edge=this->m_topology->getEdgeIndex(indices[0],indices[1]);
-    		edges_list.push_back(ind_edge);
-                triangles_list.push_back(ind_t_current);
-                if (this->m_topology->getEdge(ind_edge)[0] == indices[0])
-                    coords_list.push_back(coord_t);
-                else
-                    coords_list.push_back(1.0-coord_t);
 
-    		const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
+      
+      if(coord_t==0.0 || coord_t==1.0) // current point indexed by ind_t_current is on a vertex
+      {
+	//std::cout << "INFO_print : INPUT ON A VERTEX !!!" <<  std::endl;
+	if(coord_t==0.0)
+	{
+	  ind_index=indices[0];
+	}
+	else // coord_t==1.0
+	{
+	  ind_index=indices[1];
+	}    			
 
-    		Vec<3,double> c_t_current; // WARNING : conversion from 'double' to 'float', possible loss of data ! // typename DataTypes::Coord
-    		c_t_current[0]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][0]))+coord_t*((double) (vect_c[indices[1]][0])));
-    		c_t_current[1]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][1]))+coord_t*((double) (vect_c[indices[1]][1])));
-    		c_t_current[2]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][2]))+coord_t*((double) (vect_c[indices[1]][2])));
+	if (this->m_topology->getNbPoints() >0) 
+	{ 
+	  sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundVertex(ind_index));
+	  ind_triangle=shell[0];
+	  unsigned int i=0;
+	  //bool is_in_next_triangle=false;
+	  bool is_test_init=false;
 
-    		p_current=c_t_current;
+	  unsigned int ind_from = ind_t_current;
 
-    		Vec<3,Real> p_t_aux;
-    		p_t_aux[0] = (Real) (c_t_current[0]); 
-    		p_t_aux[1] = (Real) (c_t_current[1]); 
-    		p_t_aux[2] = (Real) (c_t_current[2]);
+	  if(shell.size()>1) // at leat one neighbor triangle which is not indexed by ind_t_current
+	  {
+	    is_on_boundary=false;
 
-    		if(coord_t==0.0 || coord_t==1.0) // current point indexed by ind_t_current is on a vertex
-    		{
-    			//sout << "INFO_print : INPUT ON A VERTEX !!!" <<  sendl;
+	    while(i < shell.size())
+	    {
+	      if(shell[i] != ind_from)
+	      {
+		ind_triangle=shell[i];
 
-    			if(coord_t==0.0)
-    			{
-    				ind_index=indices[0];
-    			}
-    			else // coord_t==1.0
-    			{
-    				ind_index=indices[1];
-    			}    			
+		const Triangle &t=this->m_topology->getTriangle(ind_triangle);
 
-    			if (this->m_topology->getNbPoints() >0) 
-    			{ 
-    				sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleVertexShell(ind_index));
-    				ind_triangle=shell[0];
-    				unsigned int i=0;
-    				//bool is_in_next_triangle=false;
-    				bool is_test_init=false;
+		const typename DataTypes::Coord& c0=vect_c[t[0]];
+		const typename DataTypes::Coord& c1=vect_c[t[1]];
+		const typename DataTypes::Coord& c2=vect_c[t[2]];
 
-    				unsigned int ind_from = ind_t_current;
+		Vec<3,Real> p0_aux; 
+		p0_aux[0] = (Real) (c0[0]); 
+		p0_aux[1] = (Real) (c0[1]); 
+		p0_aux[2] = (Real) (c0[2]);
+		Vec<3,Real> p1_aux;
+		p1_aux[0] = (Real) (c1[0]); 
+		p1_aux[1] = (Real) (c1[1]); 
+		p1_aux[2] = (Real) (c1[2]);
+		Vec<3,Real> p2_aux; 
+		p2_aux[0] = (Real) (c2[0]); 
+		p2_aux[1] = (Real) (c2[1]); 
+		p2_aux[2] = (Real) (c2[2]);
 
-    				if(shell.size()>1) // at leat one neighbor triangle which is not indexed by ind_t_current
-    				{
-    					is_on_boundary=false;
+		is_intersected=computeSegmentTriangleIntersection(true, p_current, b, ind_triangle, indices, coord_t, coord_k);
 
-    					while(i < shell.size())
-    					{
-    						if(shell[i] != ind_from)
-    						{
-    							ind_triangle=shell[i];
+		if(is_intersected)
+		{
+		  Vec<3,double> c_t_test; // WARNING : conversion from 'double' to 'float', possible loss of data ! // typename DataTypes::Coord
+		  c_t_test[0]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][0]))+coord_t*((double) (vect_c[indices[1]][0])));
+		  c_t_test[1]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][1]))+coord_t*((double) (vect_c[indices[1]][1])));
+		  c_t_test[2]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][2]))+coord_t*((double) (vect_c[indices[1]][2])));
 
-    							const Triangle &t=this->m_topology->getTriangle(ind_triangle);
+		  double dist_test=(b-c_t_test)*(b-c_t_test);
 
-    							const typename DataTypes::Coord& c0=vect_c[t[0]];
-    							const typename DataTypes::Coord& c1=vect_c[t[1]];
-    							const typename DataTypes::Coord& c2=vect_c[t[2]];
+		  if(is_test_init)
+		  {
+		    if(dist_test<dist_min && coord_k<=1) //dist_test<dist_min
+		    {
+		      coord_k_test=coord_k;
+		      dist_min=dist_test;
+		      ind_t_current=ind_triangle;
+		    }
+		  }
+		  else
+		  {
+		    is_test_init=true;
+		    coord_k_test=coord_k;
+		    dist_min=dist_test;
+		    ind_t_current=ind_triangle;
+		  }
+		}
+	      }
 
-    							Vec<3,Real> p0_aux; 
-    							p0_aux[0] = (Real) (c0[0]); 
-    							p0_aux[1] = (Real) (c0[1]); 
-    							p0_aux[2] = (Real) (c0[2]);
-    							Vec<3,Real> p1_aux;
-    							p1_aux[0] = (Real) (c1[0]); 
-    							p1_aux[1] = (Real) (c1[1]); 
-    							p1_aux[2] = (Real) (c1[2]);
-    							Vec<3,Real> p2_aux; 
-    							p2_aux[0] = (Real) (c2[0]); 
-    							p2_aux[1] = (Real) (c2[1]); 
-    							p2_aux[2] = (Real) (c2[2]);
+	      i=i+1;
+	    }
 
-    							is_intersected=computeSegmentTriangleIntersection(true, p_current, b, ind_triangle, indices, coord_t, coord_k);
+	    is_intersected=is_test_init;
 
-    							if(is_intersected)
-    							{
-    								Vec<3,double> c_t_test; // WARNING : conversion from 'double' to 'float', possible loss of data ! // typename DataTypes::Coord
-    								c_t_test[0]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][0]))+coord_t*((double) (vect_c[indices[1]][0])));
-    								c_t_test[1]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][1]))+coord_t*((double) (vect_c[indices[1]][1])));
-    								c_t_test[2]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][2]))+coord_t*((double) (vect_c[indices[1]][2])));
+	  }
+	  else
+	  {
+	    is_on_boundary=true;
+	    is_validated=false;
+	  }
+	}
+	else
+	{
+	  is_validated=false;
+	}
+      }
+      else // current point indexed by ind_t_current is on an edge, but not on a vertex
+      {
+	ind_edge=this->m_topology->getEdgeIndex(indices[0],indices[1]);    			
 
-    								double dist_test=(b-c_t_test)*(b-c_t_test);
+	if (this->m_topology->getNbEdges()>0) 
+	{ 
+	  sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTrianglesAroundEdge(ind_edge));
+	  
+	  ind_triangle=shell[0];
+	  unsigned int i=0;
 
-    								if(is_test_init)
-    								{
-    									if(dist_test<dist_min && coord_k<=1) //dist_test<dist_min
-    									{
-    										coord_k_test=coord_k;
-    										dist_min=dist_test;
-    										ind_t_current=ind_triangle;
-    									}
-    								}
-    								else
-    								{
-    									is_test_init=true;
-    									coord_k_test=coord_k;
-    									dist_min=dist_test;
-    									ind_t_current=ind_triangle;
-    								}
-    							}
-    						}
+	  bool is_test_init=false;
 
-    						i=i+1;
-    					}
+	  unsigned int ind_from = ind_t_current;
 
-    					is_intersected=is_test_init;
+	  if(shell.size()>0) // at leat one neighbor triangle which is not indexed by ind_t_current
+	  {
+	    is_on_boundary=false;
+	    
+	    while(i < shell.size())
+	    {
+	      if(shell[i] != ind_from)
+	      {
+		ind_triangle=shell[i];
 
-    				}
-    				else
-    				{
-    					is_on_boundary=true;
-    					is_validated=false;
-    				}
-    			}
-    			else
-    			{
-    				is_validated=false;
-    			}
-    		}
-    		else // current point indexed by ind_t_current is on an edge, but not on a vertex
-    		{
-    			ind_edge=this->m_topology->getEdgeIndex(indices[0],indices[1]);    			
+		const Triangle &t=this->m_topology->getTriangle(ind_triangle);
 
-    			if (this->m_topology->getNbEdges()>0) 
-    			{ 
-    				sofa::helper::vector< unsigned int > shell =(sofa::helper::vector< unsigned int >) (this->m_topology->getTriangleEdgeShell(ind_edge));
-    				ind_triangle=shell[0];
-    				unsigned int i=0;
+		const typename DataTypes::Coord& c0=vect_c[t[0]];
+		const typename DataTypes::Coord& c1=vect_c[t[1]];
+		const typename DataTypes::Coord& c2=vect_c[t[2]];
 
-    				bool is_test_init=false;
+		Vec<3,Real> p0_aux; 
+		p0_aux[0] = (Real) (c0[0]); 
+		p0_aux[1] = (Real) (c0[1]); 
+		p0_aux[2] = (Real) (c0[2]);
+		Vec<3,Real> p1_aux;
+		p1_aux[0] = (Real) (c1[0]); 
+		p1_aux[1] = (Real) (c1[1]); 
+		p1_aux[2] = (Real) (c1[2]);
+		Vec<3,Real> p2_aux; 
+		p2_aux[0] = (Real) (c2[0]); 
+		p2_aux[1] = (Real) (c2[1]); 
+		p2_aux[2] = (Real) (c2[2]);
 
-    				unsigned int ind_from = ind_t_current;
+		is_intersected=computeSegmentTriangleIntersection(true, p_current, b, ind_triangle, indices, coord_t, coord_k);
 
-    				if(shell.size()>1) // at leat one neighbor triangle which is not indexed by ind_t_current
-    				{
-    					is_on_boundary=false;
+		if(is_intersected)
+		{
+		  //Vec<3,double> c_t_test; // WARNING : conversion from 'double' to 'float', possible loss of data ! // typename DataTypes::Coord
+		  c_t_test[0]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][0]))+coord_t*((double) (vect_c[indices[1]][0])));
+		  c_t_test[1]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][1]))+coord_t*((double) (vect_c[indices[1]][1])));
+		  c_t_test[2]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][2]))+coord_t*((double) (vect_c[indices[1]][2])));
 
-    					while(i < shell.size())
-    					{
-    						if(shell[i] != ind_from)
-    						{
-    							ind_triangle=shell[i];
+		  double dist_test=(b-c_t_test)*(b-c_t_test);
 
-    							const Triangle &t=this->m_topology->getTriangle(ind_triangle);
+		  if(is_test_init)
+		  {
+		    if(dist_test<dist_min && coord_k<=1) //dist_test<dist_min
+		    {
+		      coord_k_test=coord_k;
+		      dist_min=dist_test;
+		      ind_t_current=ind_triangle;
+		    }
+		  }
+		  else
+		  {
+		    is_test_init=true;
+		    coord_k_test=coord_k;
+		    dist_min=dist_test;
+		    ind_t_current=ind_triangle;
+		  }
+		}
+	      }
 
-    							const typename DataTypes::Coord& c0=vect_c[t[0]];
-    							const typename DataTypes::Coord& c1=vect_c[t[1]];
-    							const typename DataTypes::Coord& c2=vect_c[t[2]];
+		i=i+1;
+	    }
+	    
 
-    							Vec<3,Real> p0_aux; 
-    							p0_aux[0] = (Real) (c0[0]); 
-    							p0_aux[1] = (Real) (c0[1]); 
-    							p0_aux[2] = (Real) (c0[2]);
-    							Vec<3,Real> p1_aux;
-    							p1_aux[0] = (Real) (c1[0]); 
-    							p1_aux[1] = (Real) (c1[1]); 
-    							p1_aux[2] = (Real) (c1[2]);
-    							Vec<3,Real> p2_aux; 
-    							p2_aux[0] = (Real) (c2[0]); 
-    							p2_aux[1] = (Real) (c2[1]); 
-    							p2_aux[2] = (Real) (c2[2]);
-
-    							is_intersected=computeSegmentTriangleIntersection(true, p_current, b, ind_triangle, indices, coord_t, coord_k);
-
-    							if(is_intersected)
-    							{
-    								//Vec<3,double> c_t_test; // WARNING : conversion from 'double' to 'float', possible loss of data ! // typename DataTypes::Coord
-    								c_t_test[0]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][0]))+coord_t*((double) (vect_c[indices[1]][0])));
-    								c_t_test[1]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][1]))+coord_t*((double) (vect_c[indices[1]][1])));
-    								c_t_test[2]=(double) ((1.0-coord_t)*((double) (vect_c[indices[0]][2]))+coord_t*((double) (vect_c[indices[1]][2])));
-
-    								double dist_test=(b-c_t_test)*(b-c_t_test);
-
-    								if(is_test_init)
-    								{
-    									if(dist_test<dist_min && coord_k<=1) //dist_test<dist_min
-    									{
-    										coord_k_test=coord_k;
-    										dist_min=dist_test;
-    										ind_t_current=ind_triangle;
-    									}
-    								}
-    								else
-    								{
-    									is_test_init=true;
-    									coord_k_test=coord_k;
-    									dist_min=dist_test;
-    									ind_t_current=ind_triangle;
-    								}
-    							}
-    						}
-
-    						i=i+1;
-    					}
-
-    					is_intersected=is_test_init;
-    				}
-    				else
-    				{
-    					is_on_boundary=true;
-    					is_validated=false;
-    				}
-    			}
-    			else
-    			{
-    				is_validated=false;
-    			}
-    		}
-    	}
+	    is_intersected=is_test_init;
+	  }
+	  else
+	  {
+	    is_on_boundary=true;
+	    is_validated=false;
+	  }
+	}
+	else
+	{
+	  is_validated=false;
+	}
+      }
+    }
         
-        if (ind_tb == (unsigned int)-1)
-            ind_tb = ind_triangle;
+    if (ind_tb == (unsigned int)-1)
+      ind_tb = ind_triangle;
 
-    	bool is_reached = (ind_tb==ind_triangle && coord_k_test>=1.0);
+    bool is_reached = (ind_tb==ind_triangle && coord_k_test>=1.0);
 
-    	if(is_reached)
-    	{
-	  std::cout << "INFO_print - TriangleSetTopology.inl : Cut is reached" << std::endl;
-    	}
+    if(is_reached)
+    {
+      std::cout << "INFO_print - TriangleSetTopology.inl : Cut is reached" << std::endl;
+    }
 
-    	if(is_on_boundary)
-    	{
-    		std::cout << "INFO_print - TriangleSetTopology.inl : Cut meets a mesh boundary" << std::endl;
-    	}
+    if(is_on_boundary)
+    {
+      std::cout << "INFO_print - TriangleSetTopology.inl : Cut meets a mesh boundary" << std::endl;
+    }
 
-    	if(!is_reached && !is_on_boundary)
-    	{
-    		std::cout << "INFO_print - TriangleSetTopology.inl : Cut is not reached" << std::endl;
-    		ind_tb=ind_triangle;
-    	}
+    if(!is_reached && !is_on_boundary)
+    {
+      std::cout << "INFO_print - TriangleSetTopology.inl : Cut is not reached" << std::endl;
+      ind_tb=ind_triangle;
+    }
 
-    	return (is_reached && is_validated && is_intersected); // b is in triangle indexed by ind_t_current
-    }    
+    return (is_reached && is_validated && is_intersected); // b is in triangle indexed by ind_t_current
+   
+  }
+  
+
+
+  template <typename DataTypes>
+  bool TriangleSetGeometryAlgorithms<DataTypes>::computeIntersectedObjectsList (const PointID last_point,
+										const sofa::defaulttype::Vec<3,double>& a, const sofa::defaulttype::Vec<3,double>& b,
+										unsigned int& ind_ta, unsigned int& ind_tb,// A verifier pourquoi la ref!
+										sofa::helper::vector< sofa::core::componentmodel::topology::TopologyObjectType>& topoPath_list,
+										sofa::helper::vector<unsigned int>& indices_list,
+										sofa::helper::vector< Vec<3, double> >& coords_list) const
+  {
+    //// QUICK FIX TO USE THE NEW PATH DECLARATION (WITH ONLY EDGES COMING FROM PREVIOUS FUNCTION)
+    //// ** TODO: create the real function handle different objects intersection **
+    // QUICK FIX for fracture: border points (a and b) can be a point.
+
+    // Output declarations
+    sofa::helper::vector<unsigned int> triangles_list;
+    sofa::helper::vector<unsigned int> edges_list;
+    sofa::helper::vector< double > coordsEdge_list;
+    bool is_on_boundary = false;
+    bool pathOK;
+    bool isOnPoint = false;
+    
+    // using old function:
+    pathOK = this->computeIntersectedPointsList (last_point, a, b, ind_ta, ind_tb, triangles_list, edges_list, coordsEdge_list, is_on_boundary);
+    
+    if (pathOK)
+    {
+      // creating new declaration path:
+      Vec<3,double> baryCoords;
+      
+      // 1 - First point a (for the moment: always a point in a triangle)
+      if (last_point != (unsigned int)-1)
+      {
+	  topoPath_list.push_back (core::componentmodel::topology::POINT);
+	  indices_list.push_back (last_point);
+	  const typename DataTypes::VecCoord& realC = *(this->object->getX());
+	  for (unsigned int i = 0; i<3; i++)
+	    baryCoords[i]=realC[last_point][i];
+      }
+      else
+      {
+	sofa::helper::vector< double > coefs_a = computeTriangleBarycoefs (ind_ta, a);
+	topoPath_list.push_back (core::componentmodel::topology::TRIANGLE);
+	indices_list.push_back (ind_ta);
+	for (unsigned int i = 0; i<3; i++)
+	  baryCoords[i]=coefs_a[i];
+      }
+
+      coords_list.push_back (baryCoords);
+
+      
+      // 2 - All edges intersected (only edges for now)
+      for (unsigned int i = 0; i< edges_list.size(); i++)
+      {
+	topoPath_list.push_back (core::componentmodel::topology::EDGE);
+	indices_list.push_back (edges_list[i]);
+		
+	baryCoords[0] = coordsEdge_list[i];
+	baryCoords[1] = 0.0; // or 1 - coordsEdge_list[i] ??
+	baryCoords[2] = 0.0;
+	
+	coords_list.push_back (baryCoords);
+      }
+      
+      // 3 - Last point b (for the moment: always a point in a triangle)
+      sofa::helper::vector< double > coefs_b = computeTriangleBarycoefs (ind_tb, b);
+      
+      for (unsigned int i = 0; i<3; i++)
+	if (coefs_b[i] > 0.9999 )
+	{
+	  topoPath_list.push_back (core::componentmodel::topology::POINT);
+	  indices_list.push_back (this->m_topology->getTriangle (ind_tb)[i]);
+	  isOnPoint = true;
+	  break;
+	}
+      
+      if (!isOnPoint)
+      {
+	topoPath_list.push_back (core::componentmodel::topology::TRIANGLE);
+	indices_list.push_back (ind_tb);
+      }
+      for (unsigned int i = 0; i<3; i++)
+	baryCoords[i]=coefs_b[i];
+      
+      coords_list.push_back (baryCoords);
+    }
+    
+    return pathOK;
+  }
+  
+
+
+  
 
 /// Get the triangle in a given direction from a point.
 template <typename DataTypes>
 int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, const sofa::defaulttype::Vec<3,double>& dir) const
 {
     const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
-    const sofa::helper::vector<TriangleID> &shell=this->m_topology->getTriangleVertexShell(p);
+    const sofa::helper::vector<TriangleID> &shell=this->m_topology->getTrianglesAroundVertex(p);
     Vec<3,Real> dtest = dir;
     for (unsigned int i=0;i<shell.size();++i)
     {
@@ -1717,7 +1973,140 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
     		return false;
     	}
     }
+
+
+  
+  template<class DataTypes>
+  void TriangleSetGeometryAlgorithms<DataTypes>::draw()
+  {
+    EdgeSetGeometryAlgorithms<DataTypes>::draw();
+
+    // Draw Triangles indices
+    if (debugViewTriangleIndices.getValue())
+    {
+      Mat<4,4, GLfloat> modelviewM;
+      const VecCoord& coords = *(this->object->getX());
+      glColor3f(0.0,0.4,0.4);
+      glDisable(GL_LIGHTING);
+      float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
+
+      //for triangles:
+      scale = scale/2;
+
+      const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles(); 	 
+      
+      for (unsigned int i =0; i<triangleArray.size(); i++)
+      {
+	
+	Triangle the_tri = triangleArray[i];
+	Coord baryCoord;
+	Coord vertex1 = coords[ the_tri[0] ];
+	Coord vertex2 = coords[ the_tri[1] ];
+	Coord vertex3 = coords[ the_tri[2] ];
+	  
+	for (unsigned int k = 0; k<3; k++)
+	  baryCoord[k] = (vertex1[k]+vertex2[k]+vertex3[k])/3;
+
+	std::ostringstream oss;
+	oss << i;
+	std::string tmp = oss.str();
+	const char* s = tmp.c_str();
+	glPushMatrix();
+
+	glTranslatef(baryCoord[0], baryCoord[1], baryCoord[2]);
+	glScalef(scale,scale,scale);
+
+	// Makes text always face the viewer by removing the scene rotation
+	// get the current modelview matrix
+	glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
+	modelviewM.transpose();
+
+	Vec3d temp(baryCoord[0], baryCoord[1], baryCoord[2]);
+	temp = modelviewM.transform(temp);
+	
+	//glLoadMatrixf(modelview);
+	glLoadIdentity();
+	
+	glTranslatef(temp[0], temp[1], temp[2]);
+	glScalef(scale,scale,scale);
+	
+	while(*s){
+	  glutStrokeCharacter(GLUT_STROKE_ROMAN, *s);
+	  s++;
+	}
+	
+	glPopMatrix();
+	
+      }
+    }
+
+
+    // Draw Triangles
+    if (_draw.getValue())
+    {
+      const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles();
+      
+      if (!triangleArray.empty()) // Draw triangle surfaces
+      {
+	const VecCoord& coords = *(this->object->getX());
+
+	glDisable(GL_LIGHTING);
+	glColor3f(0.2,1.0,1.0);
+	glBegin(GL_TRIANGLES);
+	for (unsigned int i = 0; i<triangleArray.size(); i++)
+	{
+	  const Triangle& t = triangleArray[i];
+
+	  for (unsigned int j = 0; j<3; j++)
+	  {
+	    Coord coordP = coords[t[j]];
+	    glVertex3d(coordP[0], coordP[1], coordP[2]);
+	  }
+	}
+	glEnd();
+
+	glColor3f(0.0,0.4,0.4);
+	glBegin(GL_LINES);
+	const sofa::helper::vector<Edge> &edgeArray = this->m_topology->getEdges();
+
+	if (!edgeArray.empty()) // Draw triangle edges for better display
+	{
+	  for (unsigned int i = 0; i<edgeArray.size(); i++)
+	  {
+	    const Edge& e = edgeArray[i];
+	    Coord coordP1 = coords[e[0]];
+	    Coord coordP2 = coords[e[1]];
+	    glVertex3d(coordP1[0], coordP1[1], coordP1[2]);
+	    glVertex3d(coordP2[0], coordP2[1], coordP2[2]);
+	  }
+	}
+	else
+	{
+	  for (unsigned int i = 0; i<triangleArray.size(); i++)
+	  {
+	    const Triangle& t = triangleArray[i];
+	    sofa::helper::vector <Coord> triCoord;
+
+	    for (unsigned int j = 0; j<3; j++)
+	      triCoord.push_back (coords[t[j]]);
+
+	    for (unsigned int j = 0; j<3; j++)
+	    {
+	      glVertex3d(triCoord[j][0], triCoord[j][1], triCoord[j][2]);
+	      glVertex3d(triCoord[(j+1)%3][0], triCoord[(j+1)%3][1], triCoord[(j+1)%3][2]);
+	    }
+	  }
+	}
+	glEnd();
+      }
+    }
     
+  }
+
+
+
+
+  
 } // namespace topology
 
 } // namespace component

@@ -32,8 +32,6 @@
 #include <assert.h>
 #include <boost/static_assert.hpp>
 #include <iostream>
-using std::cerr;
-using std::endl;
 
 namespace sofa
 {
@@ -41,6 +39,8 @@ namespace sofa
 namespace defaulttype
 {
 
+using std::cerr;
+using std::endl;
 template <int L, int C, class real=float>
 class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
         //class Mat : public Vec<L,Vec<C,real> >
@@ -121,13 +121,13 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
   }
 
   /// number of lines
-  real getNbLines() const
+  int getNbLines() const
   {
 	  return L;
   }
 
   /// number of colums
-  real getNbCols() const
+  int getNbCols() const
   {
 	  return C;
   }
@@ -545,8 +545,8 @@ class Mat : public helper::fixed_array<VecNoInit<C,real>,L>
     }
     return r;
   }
-  
-  
+
+
 
 
 };
@@ -776,7 +776,7 @@ template <int L, int C, typename real>
 
 
 /// printing in other software formats
-  
+
 template <int L, int C, typename real>
 void printMatlab(std::ostream& o, const Mat<L,C,real>& m)
 {

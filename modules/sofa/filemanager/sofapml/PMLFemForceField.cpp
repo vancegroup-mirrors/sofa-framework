@@ -41,12 +41,6 @@
 #include <sofa/component/mass/DiagonalMass.h>
 #include <sofa/component/mapping/IdentityMapping.h>
 #include <sofa/component/topology/MeshTopology.h>
-using namespace sofa::component::mass;
-using namespace sofa::component::mapping;
-using namespace sofa::component::forcefield;
-using namespace sofa::component::topology;
-using namespace sofa::component;
-
 #include <PhysicalModel.h>
 #include <MultiComponent.h>
 #include <CellProperties.h>
@@ -60,6 +54,12 @@ namespace filemanager
 
 namespace pml
 {
+
+using namespace sofa::component::mass;
+using namespace sofa::component::mapping;
+using namespace sofa::component::forcefield;
+using namespace sofa::component::topology;
+using namespace sofa::component;
 
 PMLFemForceField::PMLFemForceField(StructuralComponent* body, GNode * parent)
 {
@@ -202,7 +202,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 			case StructureProperties::HEXAHEDRON :
 				tet = Tesselate(pCell);
 				for (unsigned int p(0) ; p<5 ; p++) {
-					((BaseMeshTopology::SeqTetras&)((BaseMeshTopology*)topology)->getTetras()).push_back(tet[p]);
+					((BaseMeshTopology::SeqTetrahedra&)((BaseMeshTopology*)topology)->getTetrahedra()).push_back(tet[p]);
 					for (unsigned int l1=0 ; l1<4 ; l1++) {
 						for (unsigned int l2=l1+1 ; l2<4 ; l2++) {
 							line = new BaseMeshTopology::Line;
@@ -228,7 +228,7 @@ void PMLFemForceField::createTopology(StructuralComponent* body)
 						}
 					}
 				}
-				((BaseMeshTopology::SeqTetras&)((BaseMeshTopology*)topology)->getTetras()).push_back(*tet);
+				((BaseMeshTopology::SeqTetrahedra&)((BaseMeshTopology*)topology)->getTetrahedra()).push_back(*tet);
 				break;
 
 			default : break;
@@ -427,12 +427,12 @@ bool PMLFemForceField::FusionBody(PMLBody* body)
 	BaseMeshTopology * femTopo = (BaseMeshTopology * ) (femBody->getTopology());
 
 	//fusion tetras
-	for (int i=0 ; i < femTopo->getNbTetras() ; i++)  {
-		BaseMeshTopology::Tetra tet = femTopo->getTetra(i);
+	for (int i=0 ; i < femTopo->getNbTetrahedra() ; i++)  {
+		BaseMeshTopology::Tetra tet = femTopo->getTetrahedron(i);
 		for (unsigned int j(0) ; j<4 ; j++) {
 			tet[j] = oldToNewIndex[tet[j] ];
 		}
-		((BaseMeshTopology::SeqTetras&)((BaseMeshTopology*)topology)->getTetras()).push_back(tet);
+		((BaseMeshTopology::SeqTetrahedra&)((BaseMeshTopology*)topology)->getTetrahedra()).push_back(tet);
 	}
 	//fusion triangles
 	for (int i=0 ; i < femTopo->getNbTriangles() ; i++)  {

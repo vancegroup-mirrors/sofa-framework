@@ -30,8 +30,11 @@
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/core/VisualModel.h>
-#include <sofa/helper/gl/FrameBufferObject.h>
 #include <sofa/component/component.h>
+
+#ifdef SOFA_HAVE_GLEW
+#include <sofa/helper/gl/FrameBufferObject.h>
+#endif
 
 namespace sofa
 {
@@ -58,15 +61,17 @@ using sofa::defaulttype::Vector3;
 
 class SOFA_COMPONENT_VISUALMODEL_API Light : public virtual sofa::core::VisualModel {
 protected:
+	GLint lightID;
+	GLuint shadowTexWidth, shadowTexHeight;
+
 	Data<Vector3> color;
 	Data<float> zNear;
 	Data<float> zFar;
-	GLint lightID;
+	Data<GLuint> shadowTextureSize;
 
+#ifdef SOFA_HAVE_GLEW
 	helper::gl::FrameBufferObject shadowFBO;
-	GLuint shadowTexWidth, shadowTexHeight;
-	//GLuint shadowTexture;
-	//GLuint shadowFBO;
+#endif
 	GLuint debugVisualShadowTexture;
 
 	GLfloat lightMatProj[16];
@@ -74,6 +79,7 @@ protected:
 
 	void computeShadowMapSize();
 public:
+	Data<bool> enableShadow;
 
 	Light();
 	virtual ~Light();

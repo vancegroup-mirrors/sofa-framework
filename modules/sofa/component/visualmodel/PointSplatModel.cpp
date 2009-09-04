@@ -44,7 +44,7 @@ namespace component
 
 namespace visualmodel
 {
-
+  
   SOFA_DECL_CLASS(PointSplatModel)
 
   int PointSplatModelClass = core::RegisterObject("A simple visualization for a cloud of points.")
@@ -82,7 +82,7 @@ void PointSplatModel::init()
 	
     VisualModel::init();
 
-	VoxelGridLoader *loader;
+        container::VoxelGridLoader *loader;
 	getContext()->get(loader);
 	if(loader && _mstate)
 	{

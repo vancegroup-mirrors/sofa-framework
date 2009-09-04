@@ -23,6 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/component/collision/LineModel.h>
+#include <sofa/component/collision/LineLocalMinDistanceFilter.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/component/collision/Line.h>
 #include <sofa/core/CollisionElement.h>
@@ -62,7 +63,8 @@ using core::componentmodel::topology::BaseMeshTopology;
 //;
 
 LineModel::LineModel()
-: mstate(NULL), topology(NULL), meshRevision(-1)
+: mstate(NULL), topology(NULL), meshRevision(-1), m_lmdFilter(NULL)
+, LineActiverEngine(initData(&LineActiverEngine,"LineActiverEngine", "path of a component LineActiver that activate or desactivate collision line during execution") ) 
 {
 }
 
@@ -94,6 +96,12 @@ void LineModel::init()
 		return;
 	}
 
+	simulation::Node* node = dynamic_cast< simulation::Node* >(this->getContext());
+	if (node != 0)
+	{
+		m_lmdFilter = node->getNodeObject< LineLocalMinDistanceFilter >();
+	}
+
 	core::componentmodel::topology::BaseMeshTopology *bmt = getContext()->getMeshTopology();
 	if (!bmt) {
         serr <<"LineModel requires a MeshTopology" << sendl;
@@ -109,6 +117,27 @@ void LineModel::init()
 	}
 
 	updateFromTopology();
+	
+	const std::string path = LineActiverEngine.getValue();
+	
+	if (path.size()==0)
+	{
+		myActiver = new LineActiver();
+		std::cout<<"no Line Activer founded for LineModel "<<this->getName()<<std::endl;
+	}
+	else
+	{
+		this->getContext()->get(myActiver ,path  );
+		
+		if (myActiver==NULL)
+		{
+			myActiver = new LineActiver();
+			std::cout<<"wrong path for Line Activer for LineModel "<< this->getName() <<std::endl;
+		}
+		else
+			std::cout<<"Line Activer  founded !! for LineModel "<< this->getName() <<std::endl;
+	}
+	
 }
 
 
@@ -262,7 +291,7 @@ void LineModel::handleTopologyChange()
 								lastIndexVec[i_next] = lastIndexVec[i];
 							}
 
-							const sofa::helper::vector<unsigned int> &shell = bmt->getEdgeVertexShell(lastIndexVec[i]);
+							const sofa::helper::vector<unsigned int> &shell = bmt->getEdgesAroundVertex(lastIndexVec[i]);
 
 							for (j = 0; j < shell.size(); ++j)
 							{
@@ -341,7 +370,7 @@ void LineModel::updateFromTopology()
 
 			if (idx[0] >= nbPoints || idx[1] >= nbPoints)
 			{
-				serr << "ERROR: Out of range index in Line " << i << ": " << idx[0] << " " << idx[1] << " ( total points = " << nbPoints << " )"<<sendl;
+				serr << "ERROR: Out of range index in Line " << i << ": " << idx[0] << " " << idx[1] << " : total points (size of the MState) = " << nbPoints <<sendl;
 				continue;
 			}
 
@@ -357,6 +386,8 @@ void LineModel::updateFromTopology()
 void LineModel::draw(int index)
 {
 	Line t(this,index);
+	if (!t.activated)
+		return;
 	glBegin(GL_LINES);
 	helper::gl::glVertexT(t.p1());
 	helper::gl::glVertexT(t.p2());
@@ -381,8 +412,10 @@ void LineModel::draw()
 		for (int i=0;i<size;i++)
 		{
 		  Line t(this,i);
-		  points.push_back(t.p1());
-		  points.push_back(t.p2());
+		  if(t.activated){
+			points.push_back(t.p1());
+			points.push_back(t.p2());
+		  }
 		}
 
 		simulation::getSimulation()->DrawUtility.drawLines(points, 1, Vec<4,float>(getColor4f()));
@@ -406,7 +439,8 @@ bool LineModel::canCollideWithElement(int index, CollisionModel* model2, int ind
     else if (model2 == mpoints)
     {
         //sout << "line-point self test "<<index<<" - "<<index2<<sendl;
-        return index2 < elems[index].i1-1 || index2 > elems[index].i2+1;
+        //std::cout << "line-point self test "<<index<<" - "<<index2<<"   - elems[index].i1-1"<<elems[index].i1-1<<"   elems[index].i2+1 "<<elems[index].i2+1<<std::endl;
+		return index2 < elems[index].i1-1 || index2 > elems[index].i2+1;
     }
     else
         return model2->canCollideWithElement(index2, this, index);
@@ -443,6 +477,11 @@ void LineModel::computeBoundingTree(int maxDepth)
 			cubeModel->setParentOf(i, minElem, maxElem);
 		}
 		cubeModel->computeBoundingTree(maxDepth);
+	}
+
+	if (m_lmdFilter != 0)
+	{
+		m_lmdFilter->invalidate();
 	}
 }
 
@@ -484,6 +523,19 @@ void LineModel::computeContinuousBoundingTree(double dt, int maxDepth)
 		cubeModel->computeBoundingTree(maxDepth);
 	}
 }
+
+
+LineLocalMinDistanceFilter *LineModel::getFilter() const
+{
+	return m_lmdFilter;
+}
+
+
+void LineModel::setFilter(LineLocalMinDistanceFilter *lmdFilter)
+{
+	m_lmdFilter = lmdFilter;
+}
+
 
 } // namespace collision
 

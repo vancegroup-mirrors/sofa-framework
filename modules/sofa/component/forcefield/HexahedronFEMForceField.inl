@@ -38,8 +38,6 @@
 
 
 
-using std::set;
-
 
 
 // WARNING: indices ordering is different than in topology node
@@ -67,6 +65,7 @@ namespace component
 namespace forcefield
 {
 
+using std::set;
 using namespace sofa::defaulttype;
 
 #ifndef SOFA_NEW_HEXA
@@ -95,7 +94,7 @@ void HexahedronFEMForceField<DataTypes>::init()
 		return;
 	}
 #ifdef SOFA_NEW_HEXA
-	else if( _mesh->getNbHexas()<=0 )
+	else if( _mesh->getNbHexahedra()<=0 )
 #else
 	else if( _mesh->getNbCubes()<=0 )
 #endif
@@ -110,7 +109,7 @@ void HexahedronFEMForceField<DataTypes>::init()
 // 	else
 // 	{
 #ifdef SOFA_NEW_HEXA
-		_indexedElements = & (_mesh->getHexas());
+		_indexedElements = & (_mesh->getHexahedra());
 #else
 		_indexedElements = & (_mesh->getCubes());
 #endif

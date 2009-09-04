@@ -66,7 +66,7 @@ inline void MassEdgeCreationFunction(const sofa::helper::vector<unsigned int> &e
 	if (dm->getMassTopologyType()==DiagonalMass<DataTypes, MassType>::TOPOLOGY_EDGESET) {
 
 		typename DataTypes::Real md=dm->getMassDensity();
-		typename DataTypes::Real mass=typename DataTypes::Real();
+                typename DataTypes::Real mass=(typename DataTypes::Real) 0;
 		unsigned int i;
 
 		for (i=0;i<edgeAdded.size();++i) {
@@ -92,7 +92,7 @@ inline void MassEdgeDestroyFunction(const sofa::helper::vector<unsigned int> &ed
 	if (dm->getMassTopologyType()==DiagonalMass<DataTypes, MassType>::TOPOLOGY_EDGESET) {
 
 		typename DataTypes::Real md=dm->getMassDensity();
-		typename DataTypes::Real mass=typename DataTypes::Real();
+                typename DataTypes::Real mass=(typename DataTypes::Real) 0;
 		unsigned int i;
 
 		for (i=0;i<edgeRemoved.size();++i) {
@@ -118,7 +118,7 @@ inline void MassTriangleCreationFunction(const sofa::helper::vector<unsigned int
 	if (dm->getMassTopologyType()==DiagonalMass<DataTypes, MassType>::TOPOLOGY_TRIANGLESET) {
 
 		typename DataTypes::Real md=dm->getMassDensity();
-		typename DataTypes::Real mass=typename DataTypes::Real();
+                typename DataTypes::Real mass=(typename DataTypes::Real) 0;
 		unsigned int i;
 
 		for (i=0;i<triangleAdded.size();++i) {
@@ -145,7 +145,7 @@ inline void MassTriangleDestroyFunction(const sofa::helper::vector<unsigned int>
 	if (dm->getMassTopologyType()==DiagonalMass<DataTypes, MassType>::TOPOLOGY_TRIANGLESET) {
 
 		typename DataTypes::Real md=dm->getMassDensity();
-		typename DataTypes::Real mass=typename DataTypes::Real();
+                typename DataTypes::Real mass=(typename DataTypes::Real) 0;
 		unsigned int i;
 
 		for (i=0;i<triangleRemoved.size();++i) {
@@ -176,12 +176,12 @@ inline void MassTetrahedronCreationFunction(const sofa::helper::vector<unsigned 
 	if (dm->getMassTopologyType()==DiagonalMass<DataTypes, MassType>::TOPOLOGY_TETRAHEDRONSET) {
 
 		typename DataTypes::Real md=dm->getMassDensity();
-		typename DataTypes::Real mass=typename DataTypes::Real();
+                typename DataTypes::Real mass=(typename DataTypes::Real) 0;
 		unsigned int i;
 
 		for (i=0;i<tetrahedronAdded.size();++i) {
 			/// get the tetrahedron to be added
-			const Tetrahedron &t=dm->_topology->getTetra(tetrahedronAdded[i]);
+			const Tetrahedron &t=dm->_topology->getTetrahedron(tetrahedronAdded[i]);
 			// compute its mass based on the mass density and the tetrahedron volume
 			if(dm->tetraGeo){
 				mass=(md*dm->tetraGeo->computeRestTetrahedronVolume(tetrahedronAdded[i]))/(typename DataTypes::Real)4.0;
@@ -205,12 +205,12 @@ inline void MassTetrahedronDestroyFunction(const sofa::helper::vector<unsigned i
 	if (dm->getMassTopologyType()==DiagonalMass<DataTypes, MassType>::TOPOLOGY_TETRAHEDRONSET) {
 
 		typename DataTypes::Real md=dm->getMassDensity();
-		typename DataTypes::Real mass=typename DataTypes::Real();
+                typename DataTypes::Real mass=(typename DataTypes::Real) 0;
 		unsigned int i;
 
 		for (i=0;i<tetrahedronRemoved.size();++i) {
 			/// get the tetrahedron to be added
-			const Tetrahedron &t=dm->_topology->getTetra(tetrahedronRemoved[i]);
+			const Tetrahedron &t=dm->_topology->getTetrahedron(tetrahedronRemoved[i]);
 			if(dm->tetraGeo){
 				// compute its mass based on the mass density and the tetrahedron volume
 				mass=(md*dm->tetraGeo->computeRestTetrahedronVolume(tetrahedronRemoved[i]))/(typename DataTypes::Real)4.0;
@@ -295,6 +295,8 @@ void DiagonalMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx
     }
 }
 
+
+
 template <class DataTypes, class MassType>
 void DiagonalMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f)
 {
@@ -348,11 +350,22 @@ void DiagonalMass<DataTypes, MassType>::addMToMatrix(defaulttype::BaseMatrix * m
 
 
 template <class DataTypes, class MassType>
-    double DiagonalMass<DataTypes, MassType>::getElementMass(unsigned int index)
+    double DiagonalMass<DataTypes, MassType>::getElementMass(unsigned int index) const
 {
 	return (SReal)(f_mass.getValue()[index]);
 }
 
+
+  //TODO: special case for Rigid Mass
+template <class DataTypes, class MassType>
+void DiagonalMass<DataTypes, MassType>::getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const
+{
+  const unsigned int dimension = defaulttype::DataTypeInfo<Deriv>::size();
+  if (m->rowSize() != dimension || m->colSize() != dimension) m->resize(dimension,dimension);
+
+  m->clear();
+  AddMToMatrixFunctor<Deriv,MassType>()(m, f_mass.getValue()[index], 0, 1);
+}
 
 template <class DataTypes, class MassType>
 void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
@@ -372,7 +385,7 @@ void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
   {
     if (_topology && (m_massDensity.getValue() > 0 || f_mass.getValue().size() == 0))
       {
-	if (_topology->getNbTetras()>0 && tetraGeo) {
+	if (_topology->getNbTetrahedra()>0 && tetraGeo) {
 
 	  MassVector& masses = *f_mass.beginEdit();
 	  topologyType=TOPOLOGY_TETRAHEDRONSET;
@@ -385,11 +398,11 @@ void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
 	    masses[i]=(Real)0;
 
 	  Real md=m_massDensity.getValue();
-	  Real mass=Real();
+          Real mass=(Real)0;
 
-	  for (int i=0;i<_topology->getNbTetras();++i) {
+	  for (int i=0;i<_topology->getNbTetrahedra();++i) {
 
-	    const Tetrahedron &t=_topology->getTetra(i);
+	    const Tetrahedron &t=_topology->getTetrahedron(i);
 	    if(tetraGeo){
 	      mass=(md*tetraGeo->computeRestTetrahedronVolume(i))/(Real)4.0;
 	    }
@@ -412,7 +425,7 @@ void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
 	    masses[i]=(Real)0;
 
 	  Real md=m_massDensity.getValue();
-	  Real mass=Real();
+          Real mass=(Real)0;
 
 	  for (int i=0;i<_topology->getNbTriangles();++i) {
 	    const Triangle &t=_topology->getTriangle(i);
@@ -426,7 +439,7 @@ void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
 	  f_mass.endEdit();
 	}
 	/*
-	  else if (_topology->getNbHexas()>0) {
+	  else if (_topology->getNbHexahedra()>0) {
 
 	  // TODO : Hexas
 	  topologyType=TOPOLOGY_HEXAHEDRONSET;
@@ -450,7 +463,7 @@ void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
 	    masses[i]=(Real)0;
 
 	  Real md=m_massDensity.getValue();
-	  Real mass=Real();
+          Real mass=(Real)0;
 
 	  for (int i=0;i<_topology->getNbEdges();++i) {
 	    const Edge &e=_topology->getEdge(i);

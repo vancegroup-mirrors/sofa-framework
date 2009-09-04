@@ -23,6 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/component/collision/TriangleModel.h>
+#include <sofa/component/collision/TriangleLocalMinDistanceFilter.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/component/collision/Triangle.h>
 #include <sofa/component/topology/TriangleData.inl>
@@ -65,6 +66,7 @@ TriangleModel::TriangleModel()
 : mstate(NULL)
 , computeNormals(initData(&computeNormals, true, "computeNormals", "set to false to disable computation of triangles normal"))
 , meshRevision(-1)
+, m_lmdFilter(NULL)
 {
     triangles = &mytriangles;
 }
@@ -90,10 +92,17 @@ void TriangleModel::init()
         return;
     }
 
-	 if (!_topology) {
+	if (!_topology) 
+	{
         serr << "TriangleModel requires a BaseMeshTopology" << sendl;
         return;
     }
+
+	simulation::Node* node = dynamic_cast< simulation::Node* >(this->getContext());
+	if (node != 0)
+	{
+		m_lmdFilter = node->getNodeObject< TriangleLocalMinDistanceFilter >();
+	}
 
 	//sout << "INFO_print : Col - init TRIANGLE " << sendl;
 	 sout << "TriangleModel: initially "<<_topology->getNbTriangles()<<" triangles." << sendl;
@@ -233,18 +242,18 @@ int TriangleModel::getTriangleFlags(int i)
     sofa::core::componentmodel::topology::BaseMeshTopology::Triangle t = (*triangles)[i];
     if (i < _topology->getNbTriangles())
     {
-	if (_topology->getTriangleVertexShell(t[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
+	if (_topology->getTrianglesAroundVertex(t[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
 	    f |= FLAG_P1;
-	if (_topology->getTriangleVertexShell(t[1])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
+	if (_topology->getTrianglesAroundVertex(t[1])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
 	    f |= FLAG_P2;
-	if (_topology->getTriangleVertexShell(t[2])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
+	if (_topology->getTrianglesAroundVertex(t[2])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
 	    f |= FLAG_P3;
-	const sofa::core::componentmodel::topology::BaseMeshTopology::TriangleEdges& e = _topology->getEdgeTriangleShell(i);
-	if (_topology->getTriangleEdgeShell(e[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
+	const sofa::core::componentmodel::topology::BaseMeshTopology::EdgesInTriangle& e = _topology->getEdgesInTriangle(i);
+	if (_topology->getTrianglesAroundEdge(e[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
 	    f |= FLAG_E12;
-	if (_topology->getTriangleEdgeShell(e[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
+	if (_topology->getTrianglesAroundEdge(e[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
 	    f |= FLAG_E23;
-	if (_topology->getTriangleEdgeShell(e[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
+	if (_topology->getTrianglesAroundEdge(e[0])[0] == (sofa::core::componentmodel::topology::BaseMeshTopology::TriangleID)i)
 	    f |= FLAG_E31;
     }
     else
@@ -279,10 +288,26 @@ void TriangleModel::handleTopologyChange()
 		resize(_topology->getNbTriangles());
 		needsUpdate=true;
 		updateFlags();
-		//updateNormals();
+
+//                 updateNormals();
 		break;
 	    }
-	    default: break;
+			/*
+				case core::componentmodel::topology::TRIANGLESADDED:
+				{
+						//sout << "INFO_print : Vis - TRIANGLESADDED" << sendl;
+					const sofa::component::topology::TrianglesAdded *ta=static_cast< const sofa::component::topology::TrianglesAdded * >( *itBegin );
+					for (unsigned int i=0;i<ta->getNbAddedTriangles();++i) {
+						Triangle t(this, size - ta->getNbAddedTriangles() + i);
+						const Vector3& pt1 = t.p1();
+						const Vector3& pt2 = t.p2();
+						const Vector3& pt3 = t.p3();
+						t.n() = cross(pt2-pt1,pt3-pt1);
+						t.n().normalize();
+					}
+					break;
+				}*/
+				default: break;
 	    }
 	    ++itBegin;
 	}
@@ -410,7 +435,7 @@ void TriangleModel::handleTopologyChange()
 
 									}
 
-									const sofa::helper::vector<unsigned int> &shell=_topology->getTriangleVertexShell(lastIndexVec[i]);
+									const sofa::helper::vector<unsigned int> &shell=_topology->getTrianglesAroundVertex(lastIndexVec[i]);
 									for (j=0;j<shell.size();++j) {
 
 										unsigned int ind_j =shell[j];
@@ -556,7 +581,22 @@ void TriangleModel::draw()
                 sofa::simulation::getSimulation()->DrawUtility.setLightingEnabled(false);
 		if (getContext()->getShowWireFrame())
 		  simulation::getSimulation()->DrawUtility.setPolygonMode(0,false);
-	}
+
+
+                if (getContext()->getShowNormals())
+                  {
+                    std::vector< Vector3 > points;
+                    for (int i=0;i<size;i++)
+                      {
+                        Triangle t(this,i);
+                        points.push_back((t.p1()+t.p2()+t.p3())/3.0);
+                        points.push_back(points.back()+t.n());                            
+                      }
+
+                    simulation::getSimulation()->DrawUtility.drawLines(points, 1, Vec<4,float>(1,1,1,1));
+
+                  }
+        }
 	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
 		getPrevious()->draw();
 }
@@ -564,8 +604,10 @@ void TriangleModel::draw()
 void TriangleModel::computeBoundingTree(int maxDepth)
 {
 	CubeModel* cubeModel = createPrevious<CubeModel>();
-        updateFromTopology();
+	updateFromTopology();
+
 	if (needsUpdate && !cubeModel->empty()) cubeModel->resize(0);
+
 	if (!isMoving() && !cubeModel->empty() && !needsUpdate) return; // No need to recompute BBox if immobile
 
 	needsUpdate=false;
@@ -574,96 +616,102 @@ void TriangleModel::computeBoundingTree(int maxDepth)
 
 	const bool calcNormals = computeNormals.getValue();
 
-    if (maxDepth == 0)
-    { // no hierarchy
-	if (empty())
-	    cubeModel->resize(0);
-	else
-	{
-	    cubeModel->resize(1);
-	    minElem = x[0];
-	    maxElem = x[0];
-	    for (unsigned i=1;i<x.size();i++)
-	    {
-		const Vector3& pt1 = x[i];
-		if (pt1[0] > maxElem[0]) maxElem[0] = pt1[0];
-		else if (pt1[0] < minElem[0]) minElem[0] = pt1[0];
-		if (pt1[1] > maxElem[1]) maxElem[1] = pt1[1];
-		else if (pt1[1] < minElem[1]) minElem[1] = pt1[1];
-		if (pt1[2] > maxElem[2]) maxElem[2] = pt1[2];
-		else if (pt1[2] < minElem[2]) minElem[2] = pt1[2];
-	    }
-	    if (calcNormals)
-	    for (int i=0;i<size;i++)
-	    {
-		Triangle t(this,i);
-		const Vector3& pt1 = x[t.p1Index()];
-		const Vector3& pt2 = x[t.p2Index()];
-		const Vector3& pt3 = x[t.p3Index()];
-
-		/*for (int c = 0; c < 3; c++)
+	if (maxDepth == 0)
+	{ // no hierarchy
+		if (empty())
+			cubeModel->resize(0);
+		else
 		{
-		    if (i==0)
-		    {
-			minElem[c] = pt1[c];
-			maxElem[c] = pt1[c];
-		    }
-		    else
-		    {
-			if (pt1[c] > maxElem[c]) maxElem[c] = pt1[c];
-			else if (pt1[c] < minElem[c]) minElem[c] = pt1[c];
-		    }
-		    if (pt2[c] > maxElem[c]) maxElem[c] = pt2[c];
-		    else if (pt2[c] < minElem[c]) minElem[c] = pt2[c];
-		    if (pt3[c] > maxElem[c]) maxElem[c] = pt3[c];
-		    else if (pt3[c] < minElem[c]) minElem[c] = pt3[c];
-		}*/
-
-		// Also recompute normal vector
-		t.n() = cross(pt2-pt1,pt3-pt1);
-		t.n().normalize();
-
-	    }
-	    cubeModel->setLeafCube(0, std::make_pair(this->begin(),this->end()), minElem, maxElem); // define the bounding box of the current triangle
-	}
-    }
-    else
-    {
-
-        cubeModel->resize(size);  // size = number of triangles
-	if (!empty())
-	{
-		for (int i=0;i<size;i++)
-		{
-			Triangle t(this,i);
-		const Vector3& pt1 = x[t.p1Index()];
-		const Vector3& pt2 = x[t.p2Index()];
-		const Vector3& pt3 = x[t.p3Index()];
-
-			for (int c = 0; c < 3; c++)
+			cubeModel->resize(1);
+			minElem = x[0];
+			maxElem = x[0];
+			for (unsigned i=1;i<x.size();i++)
 			{
-				                              minElem[c] = pt1[c];
-				                              maxElem[c] = pt1[c];
-				     if (pt2[c] > maxElem[c]) maxElem[c] = pt2[c];
-				else if (pt2[c] < minElem[c]) minElem[c] = pt2[c];
-				     if (pt3[c] > maxElem[c]) maxElem[c] = pt3[c];
-				else if (pt3[c] < minElem[c]) minElem[c] = pt3[c];
+				const Vector3& pt1 = x[i];
+				if (pt1[0] > maxElem[0]) maxElem[0] = pt1[0];
+				else if (pt1[0] < minElem[0]) minElem[0] = pt1[0];
+				if (pt1[1] > maxElem[1]) maxElem[1] = pt1[1];
+				else if (pt1[1] < minElem[1]) minElem[1] = pt1[1];
+				if (pt1[2] > maxElem[2]) maxElem[2] = pt1[2];
+				else if (pt1[2] < minElem[2]) minElem[2] = pt1[2];
 			}
 			if (calcNormals)
-			{
-			// Also recompute normal vector
-			t.n() = cross(pt2-pt1,pt3-pt1);
-			t.n().normalize();
-			}
-                        cubeModel->setParentOf(i, minElem, maxElem); // define the bounding box of the current triangle
+				for (int i=0;i<size;i++)
+				{
+					Triangle t(this,i);
+					const Vector3& pt1 = x[t.p1Index()];
+					const Vector3& pt2 = x[t.p2Index()];
+					const Vector3& pt3 = x[t.p3Index()];
+
+					/*for (int c = 0; c < 3; c++)
+					{
+					if (i==0)
+					{
+					minElem[c] = pt1[c];
+					maxElem[c] = pt1[c];
+					}
+					else
+					{
+					if (pt1[c] > maxElem[c]) maxElem[c] = pt1[c];
+					else if (pt1[c] < minElem[c]) minElem[c] = pt1[c];
+					}
+					if (pt2[c] > maxElem[c]) maxElem[c] = pt2[c];
+					else if (pt2[c] < minElem[c]) minElem[c] = pt2[c];
+					if (pt3[c] > maxElem[c]) maxElem[c] = pt3[c];
+					else if (pt3[c] < minElem[c]) minElem[c] = pt3[c];
+					}*/
+
+					// Also recompute normal vector
+					t.n() = cross(pt2-pt1,pt3-pt1);
+					t.n().normalize();
+				}
+
+				cubeModel->setLeafCube(0, std::make_pair(this->begin(),this->end()), minElem, maxElem); // define the bounding box of the current triangle
 		}
-		cubeModel->computeBoundingTree(maxDepth);
 	}
-    }
+	else
+	{
+
+		cubeModel->resize(size);  // size = number of triangles
+		if (!empty())
+		{
+			for (int i=0;i<size;i++)
+			{
+				Triangle t(this,i);
+				const Vector3& pt1 = x[t.p1Index()];
+				const Vector3& pt2 = x[t.p2Index()];
+				const Vector3& pt3 = x[t.p3Index()];
+
+				for (int c = 0; c < 3; c++)
+				{
+					minElem[c] = pt1[c];
+					maxElem[c] = pt1[c];
+					if (pt2[c] > maxElem[c]) maxElem[c] = pt2[c];
+					else if (pt2[c] < minElem[c]) minElem[c] = pt2[c];
+					if (pt3[c] > maxElem[c]) maxElem[c] = pt3[c];
+					else if (pt3[c] < minElem[c]) minElem[c] = pt3[c];
+				}
+				if (calcNormals)
+				{
+					// Also recompute normal vector
+					t.n() = cross(pt2-pt1,pt3-pt1);
+					t.n().normalize();
+				}
+				cubeModel->setParentOf(i, minElem, maxElem); // define the bounding box of the current triangle
+			}
+			cubeModel->computeBoundingTree(maxDepth);
+		}
+	}
+
+	if (m_lmdFilter != 0)
+	{
+		m_lmdFilter->invalidate();
+	}
 }
 
 void TriangleModel::computeContinuousBoundingTree(double dt, int maxDepth)
-{	CubeModel* cubeModel = createPrevious<CubeModel>();
+{	
+	CubeModel* cubeModel = createPrevious<CubeModel>();
 	updateFromTopology();
 	if (needsUpdate) cubeModel->resize(0);
 	if (!isMoving() && !cubeModel->empty() && !needsUpdate) return; // No need to recompute BBox if immobile
@@ -709,6 +757,18 @@ void TriangleModel::computeContinuousBoundingTree(double dt, int maxDepth)
 		}
 		cubeModel->computeBoundingTree(maxDepth);
 	}
+}
+
+
+TriangleLocalMinDistanceFilter *TriangleModel::getFilter() const
+{
+	return m_lmdFilter;
+}
+
+
+void TriangleModel::setFilter(TriangleLocalMinDistanceFilter *lmdFilter)
+{
+	m_lmdFilter = lmdFilter;
 }
 
 

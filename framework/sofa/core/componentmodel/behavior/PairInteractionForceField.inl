@@ -32,8 +32,6 @@
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/objectmodel/BaseNode.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
 
 namespace sofa
 {
@@ -47,11 +45,14 @@ namespace componentmodel
 namespace behavior
 {
 
+using std::cerr;
+using std::endl;
+
 template<class DataTypes>
 PairInteractionForceField<DataTypes>::PairInteractionForceField(MechanicalState<DataTypes> *mm1, MechanicalState<DataTypes> *mm2)
 : _object1(initData(&_object1, "object1", "First object in interaction")),
   _object2(initData(&_object2, "object2", "Second object in interaction")),	     
-  mstate1(mm1), mstate2(mm2)
+  mstate1(mm1), mstate2(mm2), mask1(NULL), mask2(NULL)
 {  
 }
 
@@ -106,6 +107,7 @@ BaseMechanicalState*  PairInteractionForceField<DataTypes>::getMState(sofa::core
 template<class DataTypes>
     void PairInteractionForceField<DataTypes>::init()
 {
+
   InteractionForceField::init();
   if (mstate1 == NULL || mstate2 == NULL)
   {
@@ -131,15 +133,7 @@ template<class DataTypes>
       sofa::core::objectmodel::BaseContext *context = NULL;
       sofa::core::objectmodel::BaseNode*    currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(mstate1->getContext());
     
-      std::string object_name=currentNode->getContext()->getName();
-      currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(currentNode->getParent());
-      while (currentNode != NULL)
-      {      
-	context = currentNode->getContext();
-	if (context == this->getContext()) break;
-	object_name = context->getName() + "/" + object_name;      
-	currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(currentNode->getParent());
-      }
+      std::string object_name=currentNode->getPathName();
       if (context != NULL) _object1.setValue(object_name);
     }
     
@@ -149,28 +143,26 @@ template<class DataTypes>
       sofa::core::objectmodel::BaseContext *context = NULL;
       sofa::core::objectmodel::BaseNode*    currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(mstate2->getContext());
     
-      std::string object_name=currentNode->getContext()->getName();
-      currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(currentNode->getParent());
-      while (currentNode != NULL)
-      {      
-	context = currentNode->getContext();
-	if (context == this->getContext()) break;
-	object_name = context->getName() + "/" + object_name;      
-	currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(currentNode->getParent());
-      }
+      std::string object_name=currentNode->getPathName();
       if (context != NULL) _object2.setValue(object_name);
     }
   }
   
+  this->mask1 = &mstate1->forceMask;
+  this->mask2 = &mstate2->forceMask;
 }
 
 template<class DataTypes>
 void PairInteractionForceField<DataTypes>::addForce()
 {
     if (mstate1 && mstate2)
+      {
+        mstate1->forceMask.setInUse(this->useMask());
+        mstate2->forceMask.setInUse(this->useMask());
         addForce(*mstate1->getF(), *mstate2->getF(),
                  *mstate1->getX(), *mstate2->getX(),
                  *mstate1->getV(), *mstate2->getV());
+      }
     else serr<<"PairInteractionForceField<DataTypes>::addForce(), mstate missing"<<sendl;
 }
 

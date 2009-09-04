@@ -16,7 +16,6 @@ HEADERS +=  \
            BlockJacobiPreconditioner.h \
            SSORPreconditioner.h \
            CholeskySolver.h \
-           LapackOperations.h \
            LULinearSolver.h \
            BTDLinearSolver.h \
            FullVector.h \
@@ -38,14 +37,6 @@ SOURCES += initLinearSolver.cpp \
            FullVector.cpp \
            MatrixLinearSolver.cpp 
 
-contains(DEFINES,SOFA_HAVE_LAPACK){
-
-    HEADERS +=  \
-               LapackOperations.h
-
-    SOURCES +=  \
-               LapackOperations.cpp
-}
 
 contains(DEFINES,SOFA_HAVE_MKL){
 

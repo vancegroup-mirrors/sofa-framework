@@ -72,9 +72,20 @@ namespace sofa
       }
 
 
+      template <class DataTypes>
+      void DistanceConstraint<DataTypes>::addConstraint(unsigned int i1, unsigned int i2)
+      {
+        SeqEdges &constraints = *(vecConstraint.beginEdit());
+        constraints.resize(constraints.size()+1);
+        constraints.back()[0] = i1;
+        constraints.back()[1] = i2;
+        vecConstraint.endEdit();
+        
+      }
+
 
       template <class DataTypes>
-      double DistanceConstraint<DataTypes>::lengthEdge(const Edge &e, const VecCoord &x1, const VecCoord &x2)
+      double DistanceConstraint<DataTypes>::lengthEdge(const Edge &e, const VecCoord &x1, const VecCoord &x2) const
       {
         return (x2[e[1]] -  x1[e[0]]).norm();
       }
@@ -96,15 +107,15 @@ namespace sofa
 
 #ifndef SOFA_FLOAT
       template<>
-      Rigid3dTypes::Deriv DistanceConstraint<Rigid3dTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2);
+      Rigid3dTypes::Deriv DistanceConstraint<Rigid3dTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
 #endif
 #ifndef SOFA_DOUBLE
       template<>
-      Rigid3fTypes::Deriv DistanceConstraint<Rigid3fTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2);
+      Rigid3fTypes::Deriv DistanceConstraint<Rigid3fTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
 #endif
 
       template<class DataTypes>
-      typename DataTypes::Deriv DistanceConstraint<DataTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2)
+      typename DataTypes::Deriv DistanceConstraint<DataTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const
       {
         Deriv V12 = (x2[e[1]] - x1[e[0]]);
         V12.normalize();
@@ -113,7 +124,7 @@ namespace sofa
 
 
       template<class DataTypes>
-      void DistanceConstraint<DataTypes>::writeConstraintEquations()
+      void DistanceConstraint<DataTypes>::writeConstraintEquations(ConstId Id)
       {
         const VecCoord &x1=*(this->object1->getX());
         const VecCoord &x2=*(this->object2->getX());
@@ -131,36 +142,53 @@ namespace sofa
             unsigned int idx1=edges[i][0];
             unsigned int idx2=edges[i][1];
 
-            double length     = lengthEdge(edges[i],x1,x2);
-            double restLength = this->l0[i];
-
             Deriv V12 = getDirection(edges[i], x1, x2);
+
+            core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraint = this->addGroupConstraint(Id);
+            SReal correction=0;
+            switch(Id)
+              {
+              case core::componentmodel::behavior::BaseLMConstraint::ACC :
+                {
+                  const VecDeriv &dx1=*(this->object1->getDx());
+                  const VecDeriv &dx2=*(this->object2->getDx());
+                  correction=(dx2[idx2]-dx1[idx1])*V12;
+                  break;
+                }
+              case core::componentmodel::behavior::BaseLMConstraint::VEL :
+                {
+                  const VecDeriv &v1=*(this->object1->getV());
+                  const VecDeriv &v2=*(this->object2->getV());
+                  correction=(v2[idx2]-v1[idx1])*V12;
+                  break;
+                }
+              case core::componentmodel::behavior::BaseLMConstraint::POS :
+                {
+                  SReal length     = lengthEdge(edges[i],x1,x2);
+                  SReal restLength = this->l0[i];
+                  correction= length-restLength;
+                  break;
+                }
+              };
+
             //VecConst interface:
             //index where the direction will be found
-            const unsigned int idxInVecConst[2]={c1.size(), c2.size()};
+            const unsigned int idxInVecConst[2]={c1.size(),
+                                                 c2.size()+(this->object1 == this->object2)};
             SparseVecDeriv V1;
-            V1.insert(idx1,V12); c1.push_back(V1);
+            V1.add(idx1,V12); c1.push_back(V1);
 
-            if (this->object1 != this->object2)
-            {
-              SparseVecDeriv V2;
-              V2.insert(idx2,V12);c2.push_back(V2);
-            }
+            //             if (this->object1 != this->object2)
+            //             {
+            SparseVecDeriv V2;
+            V2.add(idx2,V12);c2.push_back(V2);
+            //             }
+            constraint->addConstraint( idxInVecConst[0], idxInVecConst[1], correction, core::componentmodel::behavior::BaseLMConstraint::BILATERAL);
 
-	    core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraintAcc = addGroupConstraint(this->ACC);
-	    core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraintVel = addGroupConstraint(this->VEL);
- 	    core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraintPos = addGroupConstraint(this->POS);
-
-            //BaseLMConstraint interface
-            constraintAcc->addConstraint(idxInVecConst[0], idxInVecConst[1],
-                                0, this->FINAL); //0 in acceleration along V12
-            constraintVel->addConstraint( idxInVecConst[0], idxInVecConst[1],
-                                0, this->FINAL); //0 in velocity along V12
-            constraintPos->addConstraint( idxInVecConst[0], idxInVecConst[1],
-                                restLength-length, this->CORRECTION); //we apply a constraint to correct the current length to the rest length
 
           }
       }
+
 
       template <class DataTypes>
       double DistanceConstraint<DataTypes>::getError()

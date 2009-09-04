@@ -30,12 +30,12 @@
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Quat.h>
+#include <sofa/defaulttype/SparseConstraintTypes.h>
 #include <sofa/core/objectmodel/BaseContext.h>
 //#include <sofa/core/componentmodel/behavior/Mass.h>
 #include <sofa/helper/vector.h>
 #include <sofa/helper/rmath.h>
 #include <iostream>
-using std::endl;
 
 namespace sofa
 {
@@ -43,6 +43,7 @@ namespace sofa
 namespace defaulttype
 {
 
+using std::endl;
 using sofa::helper::vector;
 
 template<int N, typename real>
@@ -358,6 +359,15 @@ public:
         return c;
     }
 
+	Vec3 rotate(const Vec3& v) const
+    {
+        return orientation.rotate(v);
+    }
+    Vec3 inverseRotate(const Vec3& v) const
+    {
+        return orientation.inverseRotate(v);
+    }
+
     /// Apply a transformation with respect to itself
     void multRight( const RigidCoord<3,real>& c )
     {
@@ -561,34 +571,6 @@ public:
 	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
 	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
 
-        /// Data Structure to store lines of the matrix L.
-        template <class T>
-          class SparseConstraint
-          {
-          public:
-            SparseConstraint(){};
-            void insert( unsigned int index, const T &value)
-            {
-              data[index] += value;
-            }
-          void set( unsigned int index, const T &value)
-          {
-            data[index] = value;
-          }
-            T& getDataAt(unsigned int index)
-            {
-              typename std::map< unsigned int, T >::iterator it = data.find(index);
-              static T zeroValue=T();
-              if (it != data.end()) return it->second;
-              else return zeroValue;
-            };
-
-            std::map< unsigned int, T > &getData() {return data;};
-            const std::map< unsigned int, T > &getData() const {return data;};
-          protected:
-            std::map< unsigned int, T > data;
-          };
-
 	typedef SparseConstraint<Coord> SparseVecCoord;
 	typedef SparseConstraint<Deriv> SparseVecDeriv;
 
@@ -762,6 +744,14 @@ public:
         RigidDeriv<2,real> d;
         d.vCenter = vCenter + a.vCenter;
         d.vOrientation = vOrientation + a.vOrientation;
+        return d;
+    }
+
+	RigidDeriv<2,real> operator - (const RigidDeriv<2,real>& a) const
+    {
+        RigidDeriv<2,real> d;
+        d.vCenter = vCenter - a.vCenter;
+        d.vOrientation = vOrientation - a.vOrientation;
         return d;
     }
 
@@ -1189,33 +1179,6 @@ public:
 
     typedef vector<Coord> VecCoord;
     typedef vector<Deriv> VecDeriv;
-
-    template <class T>
-      class SparseConstraint
-      {
-      public:
-        SparseConstraint(){};
-        void insert( unsigned int index, const T &value)
-        {
-          data[index] += value;
-        }
-          void set( unsigned int index, const T &value)
-          {
-            data[index] = value;
-          }
-        T& getDataAt(unsigned int index)
-            {
-              typename std::map< unsigned int, T >::iterator it = data.find(index);
-              static T zeroValue=T();
-              if (it != data.end()) return it->second;
-              else return zeroValue;
-            };
-
-        std::map< unsigned int, T > &getData() {return data;};
-        const std::map< unsigned int, T > &getData() const {return data;};
-      protected:
-        std::map< unsigned int, T > data;
-      };
 
     typedef SparseConstraint<Coord> SparseVecCoord;
     typedef SparseConstraint<Deriv> SparseVecDeriv;

@@ -36,7 +36,12 @@
 #include <algorithm>
 
 #ifndef SOFA_QT4
+#include <qsplitter.h>
+#include <qvaluelist.h>
 typedef QListViewItem Q3ListViewItem;
+#else
+#include <QSplitter>
+#include <QList>
 #endif
 namespace sofa
 {
@@ -51,11 +56,10 @@ namespace sofa
       bool GraphVisitor::load(std::string &file)
       {	
 	//Open it using TinyXML
-	TiXmlDocument doc(file.c_str());
-	bool loadOk = doc.LoadFile();
-	if (!loadOk) return false;
+	TiXmlDocument doc;
+        doc.Parse(file.c_str());
 	
-	TiXmlHandle hDoc(&doc);
+        TiXmlHandle hDoc(&doc);
 	TiXmlNode* pElem;
 	//Getting the root of the file
 	pElem=hDoc.FirstChildElement().Element();
@@ -89,6 +93,20 @@ namespace sofa
         //        window->pieChart->setChart(visitorsTime, visitorsTime.size());
         window->setCharts(componentsTime,componentsTimeMax,componentsTimeTotal,
                           visitorsTime,visitorsTimeMax,visitorsTimeTotal);
+
+        if (!initSize)
+          {
+            const int sizeLeft = window->graphView->columnWidth(0)+window->graphView->columnWidth(1)+7;
+#ifdef SOFA_QT4
+            QList< int > listSize; 
+#else
+            QValueList< int > listSize; 
+#endif
+            listSize << sizeLeft
+                     << window->statsWidget->width()-(sizeLeft-window->graphView->width());
+            window->splitterStats->setSizes(listSize);
+            initSize=true;
+          }
 	return true;	   
       }
       
@@ -146,7 +164,8 @@ namespace sofa
                   }
                 if (std::find(visitedNode.begin(), visitedNode.end(), componentName) == visitedNode.end())
                   {
-                    dataTime t(timeSec-timeComponentsBelow.back(), componentType, componentName, componentPtr);
+                    dataTime t(timeSec-timeComponentsBelow.back()
+                               , componentType, componentName, componentPtr);
                     std::vector< dataTime >::iterator it=std::find(componentsTime.begin(),componentsTime.end(),t);
                     if (it != componentsTime.end()) it->time += t.time;
                     else componentsTime.push_back(t);
@@ -162,7 +181,7 @@ namespace sofa
               }
             else  
               { 
-                if (std::find(visitedNode.begin(), visitedNode.end(),nodeType) == visitedNode.end())
+                if (nodeType != "Node" && std::find(visitedNode.begin(), visitedNode.end(),nodeType) == visitedNode.end())
                   {                 
                     dataTime t(timeSec, nodeType);
                     std::vector< dataTime >::iterator it=std::find(visitorsTime.begin(),visitorsTime.end(),t);
@@ -177,9 +196,10 @@ namespace sofa
                     visitedNode.push_back(nodeType);
                   }
               }
+ 
+            if (nodeType == "Node" || nodeType == "Component" || nodeType.rfind("Visitor") == nodeType.size()-7)
+              timeComponentsBelow.back() = timeSec;
           }
-        
-        timeComponentsBelow.back() = timeSec;
 
         addTime(item,  s.str());
       }

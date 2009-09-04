@@ -36,6 +36,7 @@
 #include <sofa/simulation/common/AnimateEndEvent.h>
 //
 #include <sofa/simulation/common/Node.h>
+#include <cstring>
 
 
 //sensable namespace

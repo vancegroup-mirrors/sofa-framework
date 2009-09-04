@@ -95,6 +95,8 @@ public:
         }
         return *ptr;
     }
+    /// The value stored in counter can be false, as the pointer can be modified without using the BaseData API. The counter doesn't mean anything in that case
+    inline bool isCounterValid() const {return false;}
 protected:
     /// Pointer to the parameter
     T* ptr;

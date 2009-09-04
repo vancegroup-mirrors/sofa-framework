@@ -29,6 +29,7 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/component/forcefield/TetrahedronFEMForceField.h>
 
+#include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Vec.h>
 
@@ -58,7 +59,9 @@ public:
     typedef typename DataTypes::VecConst VecConst;
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
-    typedef typename std::map<unsigned int, Deriv>::const_iterator ConstraintIterator;
+    typedef typename defaulttype::SparseConstraint<Deriv> SparseConstraint;
+    typedef typename SparseConstraint::const_data_iterator ConstConstraintIterator;
+    typedef typename SparseConstraint::data_iterator ConstraintIterator;
     typedef typename DataTypes::SparseVecDeriv Const;
 
     /// element rotation matrix
@@ -74,7 +77,7 @@ public:
 
     virtual ~PrecomputedConstraintCorrection();
 
-    virtual void init();
+    virtual void bwdInit();
 
     /// Retrieve the associated MechanicalState
     behavior::MechanicalState<DataTypes>* getMState() { return mstate; }
@@ -88,6 +91,20 @@ public:
 
 
 	virtual void resetContactForce();
+
+	
+	// new API for non building the constraint system during solving process //
+	
+	virtual void resetForUnbuiltResolution(double * f, std::list<int>& /*renumbering*/)  ;
+	
+	virtual bool hasConstraintNumber(int index) ;  // virtual ???
+	
+	virtual void addConstraintDisplacement(double *d, int begin,int end) ;
+	
+	virtual void setConstraintDForce(double *df, int begin, int end, bool update) ;
+
+	virtual void getBlockDiagonalCompliance(defaulttype::BaseMatrix* W, int begin, int end) ;
+	/////////////////////////////////////////////////////////////////////////////////	
 
     /// Pre-construction check method called by ObjectFactory.
     /// Check that DataTypes matches the MechanicalState.
@@ -112,11 +129,30 @@ public:
 
 protected:
     behavior::MechanicalState<DataTypes> *mstate;
-    //Vec3DTypes specific menber !
-    Real* appCompliance;
+
+    struct InverseStorage
+    {
+	Real* data;
+	int nbref;
+	InverseStorage() : data(NULL), nbref(0) {}
+    };
+    std::string invName;
+    InverseStorage* invM;
+    const Real* appCompliance;
+
+    static std::map<std::string, InverseStorage>& getInverseMap()
+    {
+	static std::map<std::string, InverseStorage> registry;
+	return registry;
+    }
+
+    static InverseStorage* getInverse(std::string name);
+
+    static void releaseInverse(std::string name, InverseStorage* inv);
+
     unsigned int nbRows, nbCols, dof_on_node, nbNodes;
-	int *_indexNodeSparseCompliance;
-	std::vector<Deriv> _sparseCompliance;
+    helper::vector<int> _indexNodeSparseCompliance;
+    helper::vector<Deriv> _sparseCompliance;
 	Real Fbuf[6], DXbuf;
 
 
@@ -134,10 +170,13 @@ protected:
 	//Deriv **_sparseCompliance;
 
 
-
-	
-
-
+	// new :  for non building the constraint system during solving process //
+    //VecDeriv constraint_disp, constraint_force;	
+    //std::list<int> constraint_dofs;		// list of indices of each point which is involve with constraint
+    helper::vector<int> id_to_localIndex;	// table that gives the local index of a constraint given its id
+    sofa::helper::vector<unsigned int>* localConstraintId;
+    linearsolver::FullMatrix<Real> localW;
+    double* constraint_force;
 
 };
 

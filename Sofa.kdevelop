@@ -83,7 +83,7 @@
     <general>
       <dbgshell/>
       <programargs>examples/Demos/liver.scn</programargs>
-      <gdbpath/>
+      <gdbpath>/usr/local/bin/gdb</gdbpath>
       <configGdbScript/>
       <runShellScript/>
       <runGdbScript/>
@@ -100,17 +100,18 @@
   </kdevdebugger>
   <kdevtrollproject>
     <run>
-      <mainprogram>./bin/runSofa-latest</mainprogram>
+      <mainprogram>/media/data/Sofa/bin/runSofa</mainprogram>
       <programargs>-r</programargs>
       <directoryradio>build</directoryradio>
       <customdirectory>/</customdirectory>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
       <envvars>
-        <envvar value="./lib/linux:/usr/local/cuda/lib:$LD_LIBRARY_PATH" name="LD_LIBRARY_PATH" />
+        <envvar value="./lib/linux:./lib/sofa-plugins:/usr/local/cuda/lib:$LD_LIBRARY_PATH" name="LD_LIBRARY_PATH" />
+        <envvar value="/usr/local/cuda/bin/:$PATH" name="PATH" />
       </envvars>
-      <globaldebugarguments/>
-      <globalcwd>/home/allardj/work/Sofa</globalcwd>
+      <globaldebugarguments>/home/delaplaj/sofa/examples/Components/constraint/BoxConstraint.scn</globaldebugarguments>
+      <globalcwd>/media/data/Sofa</globalcwd>
       <useglobalprogram>true</useglobalprogram>
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
@@ -120,7 +121,7 @@
     </general>
     <make>
       <abortonerror>true</abortonerror>
-      <numberofjobs>4</numberofjobs>
+      <numberofjobs>5</numberofjobs>
       <dontact>false</dontact>
       <makebin/>
       <envvars/>
@@ -190,7 +191,7 @@
       <includestyle>3</includestyle>
       <designerintegration>EmbeddedKDevDesigner</designerintegration>
       <qmake>/usr/bin/qmake</qmake>
-      <designer>/usr/bin/designer-qt3</designer>
+      <designer></designer>
       <designerpluginpaths/>
     </qt>
     <designerintegration>

@@ -51,6 +51,7 @@ class SOFA_COMPONENT_VISUALMODEL_API OglShaderVisualModel : public OglModel
 protected:
 
 	typedef ExtVec3fTypes::Coord Coord;
+	typedef ExtVec3fTypes::VecCoord VecCoord;
 
 	GLuint abo;
     OglShader* shader;
@@ -64,11 +65,18 @@ public:
 	virtual ~OglShaderVisualModel();
 
   void init();
-	void initVisual();
+  void initVisual();
+
+  void putRestPositions(const Vec3fTypes::VecCoord& positions);
+
+  virtual void bwdDraw(Pass);
+  virtual void fwdDraw(Pass);
 
   // handle topological changes
   virtual void handleTopologyChange();
   void computeRestNormals();
+
+
 };
 
 } //namespace visualmodel

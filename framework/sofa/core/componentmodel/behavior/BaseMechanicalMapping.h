@@ -72,6 +72,8 @@ public:
     virtual BaseMechanicalState* getMechTo() = 0;
     /// Return false if this mapping should only be used as a regular mapping instead of a mechanical mapping.
     virtual bool isMechanical() = 0;
+    /// Determine if this mapping should only be used as a regular mapping instead of a mechanical mapping.
+    virtual void setMechanical(bool b) = 0;
 
     /// Return true if the destination model has the same topology as the source model.
     ///
@@ -128,14 +130,11 @@ public:
     /// $ C_in += J^t C_out $
     virtual void accumulateConstraint() {}
 
+
 	/// Disable the mapping to get the original coordinates of the mapped model.
 	///
 	/// It is for instance used in RigidMapping to get the local coordinates of the object.
 	virtual void disable() {}
-
-    /// Retrives a line of the Jacobian Matrix.
-    virtual void getJ(unsigned int /*Idx*/, sofa::helper::vector< double > &/*factor*/, sofa::helper::vector< unsigned int > &/*indices*/)
-        {sout << "getJ Not Implemented Yet" << sendl;};
 };
 
 } // namespace behavior

@@ -36,7 +36,10 @@ namespace sofa
 namespace component
 {
 
+namespace container
+{
 class MeshLoader;
+}
 
 namespace topology
 {   
@@ -54,56 +57,98 @@ namespace topology
 
 		virtual ~PointSetTopologyContainer() {}
 
+		
+		virtual void init();
+
+
+		
 		/// Procedural creation methods
 		/// @{
 		virtual void clear();
 		virtual void addPoint(double px, double py, double pz);
 		/// @}
 
-		virtual void init();
 
-		/** \brief Checks if the Topology is coherent
-		*
-		*/
-		virtual bool checkTopology() const;
-
-		void addPoint();
-
-		void addPoints(const unsigned int nPoints);
-
-		void removePoint();
-
-		void removePoints(const unsigned int nPoints);
-
-		inline friend std::ostream& operator<< (std::ostream& out, const PointSetTopologyContainer& /*t*/)
-		{
-			return out;
-		}
-
-		inline friend std::istream& operator>>(std::istream& in, PointSetTopologyContainer& /*t*/)
-		{
-			return in;
-		}
-
+		
 		/// BaseMeshTopology API
 		/// @{
-		/** \brief Returns the number of vertices in this topology.
-		*
-		*/
+
+		/** \brief Returns the number of vertices in this topology. */
                 int getNbPoints() const { return (int)nbPoints.getValue(); }
+
+		
+		/** \brief Set the number of vertices in this topology. */		
 		void setNbPoints(int n);
+
+		
+		/** \brief check if vertices in this topology have positions. */
 		virtual bool hasPos() const;
+
+		/** \brief Returns the X coordinate of the ith DOF. */
 		virtual double getPX(int i) const;
+
+		/** \brief Returns the Y coordinate of the ith DOF. */
 		virtual double getPY(int i) const;
+
+		/** \brief Returns the Z coordinate of the ith DOF. */
 		virtual double getPZ(int i) const;
+
 		/// @}
 
-	protected:
-		virtual void loadFromMeshLoader(sofa::component::MeshLoader* loader);
 
+
+		/// Dynamic Topology API
+		/// @{
+
+		/** \brief Checks if the Topology is coherent
+		 *
+		 */
+		virtual bool checkTopology() const;
+
+		/** \brief add one DOF in this topology (simply increment the number of DOF)
+		 *
+		 */
+		void addPoint();
+
+
+		/** \brief add a number of DOFs in this topology (simply increase the number of DOF according to this parameter)
+		 *
+		 * @param The number of point to add.
+		 */
+		void addPoints(const unsigned int nPoints);
+
+
+		/** \brief remove one DOF in this topology (simply decrement the number of DOF)
+		 *
+		 */
+		void removePoint();
+
+
+		/** \brief remove a number of DOFs in this topology (simply decrease the number of DOF according to this parameter)
+		 *
+		 * @param The number of point to remove.
+		 */
+		void removePoints(const unsigned int nPoints);
+
+		/// @}
+		
+		inline friend std::ostream& operator<< (std::ostream& out, const PointSetTopologyContainer& /*t*/)
+		{
+		  return out;
+		}
+		
+		inline friend std::istream& operator>>(std::istream& in, PointSetTopologyContainer& /*t*/)
+		{
+		  return in;
+		}
+		
+		
+	protected:
+		virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
+		
         protected:
                 Data<unsigned int> nbPoints;
-
+		
 	private:
 		typedef defaulttype::Vec3Types InitTypes;
 		InitTypes::VecCoord initPoints;

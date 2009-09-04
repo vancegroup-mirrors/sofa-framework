@@ -144,22 +144,24 @@ void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::
     for(unsigned int i = 0; i < in.size(); ++i)
       {
         OutConstraintIterator itOut;
-        for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+        std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+        
+        for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
             OutDeriv data = (OutDeriv) itOut->second;
 	    int source = pointSource.getValue()[indexIn];
 	    if (source > 0)
 	    {
-		out[i+offset].insert(source-1 , data);
+                out[i+offset].add(source-1 , data);
 	    }
 	    else if (source < 0)
 	    {
 		core::componentmodel::topology::BaseMeshTopology::Edge e = edges[-source-1];
 		InDeriv f =  data;
 		f*=0.5f;
-		out[i+offset].insert( e[0] , f );
-		out[i+offset].insert( e[1] , f );
+                out[i+offset].add( e[0] , f );
+                out[i+offset].add( e[1] , f );
 	    }
 	}
     }

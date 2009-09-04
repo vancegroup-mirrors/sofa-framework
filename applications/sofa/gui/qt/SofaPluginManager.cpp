@@ -26,6 +26,8 @@
 ******************************************************************************/
 #include "SofaPluginManager.h"
 #include "FileManagement.h"
+#include <sofa/helper/system/SetDirectory.h> 
+#include <sofa/helper/system/FileRepository.h>
 
 #ifdef SOFA_QT4
 //#include <Q3Header>
@@ -92,8 +94,13 @@ namespace sofa
  				QString sfile = settings.readEntry("/location");
 				settings.endGroup();
 
-				//load the plugin libs
+				//load the plugin libs -> automatically look at the relase/debug version depending on the current mode we are
+#ifndef NDEBUG
+				  	//add the "d" in the name if we are currently in debug mode
+					sfile.replace(QString("."), QString("d."));
+#endif
 				QLibrary lib(sfile);
+
 				componentLoader componentLoaderFunc = (componentLoader) lib.resolve("initExternalModule");
 				componentStr componentNameFunc = (componentStr) lib.resolve("getModuleName");
 
@@ -102,7 +109,12 @@ namespace sofa
 					componentLoaderFunc();
 					QString sname(componentNameFunc());
 
-					Q3ListViewItem * item = new Q3ListViewItem(listPlugins, sname, sfile);
+					componentStr componentVersionFunc = (componentStr) lib.resolve("getModuleVersion");
+					QString sversion;
+					if(componentVersionFunc)
+						sversion=componentVersionFunc();
+
+					Q3ListViewItem * item = new Q3ListViewItem(listPlugins, sname, sversion, sfile);
 					item->setSelectable(true);
 				}
 			}
@@ -115,14 +127,30 @@ namespace sofa
 		void SofaPluginManager::addLibrary()
 		{
 			//get the lib to load
-			QString sfile = getOpenFileName ( this, NULL, "dynamic library (*.dll *.so *.dylib)", "load library dialog",  "Choose the component library to load" );
+			std::string pluginPath = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/lib/sofa-plugins/" );
+#if defined (__APPLE__)
+                        QString sfile = getOpenFileName ( this, QString(pluginPath.c_str()), "dynamic library (*.dylib*)", "load library dialog",  "Choose the component library to load" );
+#elif defined (WIN32)
+                        QString sfile = getOpenFileName ( this, QString(pluginPath.c_str()), "dynamic library (*.dll)", "load library dialog",  "Choose the component library to load" );
+#else
+                        QString sfile = getOpenFileName ( this, QString(pluginPath.c_str()), "dynamic library (*.so)", "load library dialog",  "Choose the component library to load" );
+#endif
 			if(sfile=="")
 				return;
+#ifdef NDEBUG
+			if(sfile.contains(QString("d.")) == true)
+				if(QMessageBox::question(this, "library loading warning","This plugin lib seems to be in debug mode whereas you are currently in release mode.\n Are you sure you want to load this lib?",QMessageBox::Yes,QMessageBox::No) != QMessageBox::Yes)
+					return;
+#else
+			if(sfile.contains(QString("d.")) == false)
+				if(QMessageBox::question(this, "library loading warning","This plugin lib seems to be in release mode whereas you are currently in debug mode.\n Are you sure you want to load this lib?",QMessageBox::Yes,QMessageBox::No) != QMessageBox::Yes)
+					return;
+#endif
 
 			//try to load the lib
 			QLibrary lib(sfile);
 			if (!lib.load())
-				std::cout<<"Error loading library " << sfile.latin1() <<std::endl;
+				std::cout<<"Error loading plugin " << sfile.latin1() <<std::endl;
 
 			//get the functions
 			typedef void (*componentLoader)();
@@ -134,7 +162,13 @@ namespace sofa
 				//fill the list view
 				componentLoaderFunc();
 				QString sname(componentNameFunc());
-				Q3ListViewItem * item = new Q3ListViewItem(listPlugins, sname, sfile);
+
+				componentStr componentVersionFunc = (componentStr) lib.resolve("getModuleVersion");
+				QString sversion;
+				if(componentVersionFunc)
+					sversion=componentVersionFunc();
+
+				Q3ListViewItem * item = new Q3ListViewItem(listPlugins, sname, sversion, sfile);
 				item->setSelectable(true);
 
 				//add to the settings (to record it)
@@ -145,6 +179,10 @@ namespace sofa
 				  QString titi;
 				  titi = titi.setNum(size+1);
 				  settings.beginGroup(titi);
+#ifndef NDEBUG
+				  	//remove the "d" in the name if we are currently in debug mode
+					sfile.replace(QString("d."), QString("."));
+#endif
 				    settings.writeEntry("/location", sfile);
 				  settings.endGroup();
 				  settings.writeEntry("/size", size+1);
@@ -162,7 +200,7 @@ namespace sofa
 		{
 			//get the selected item
 			Q3ListViewItem * curItem = listPlugins->selectedItem();
-			QString location = curItem->text(1); //get the location value
+			QString location = curItem->text(2); //get the location value
 			//remove it from the list view 
 			listPlugins->removeItem(curItem);
 
@@ -183,6 +221,8 @@ namespace sofa
 			}
 
 			settings.endGroup(); 
+			description->clear();
+			listComponents->clear();
 		}
 
 
@@ -191,7 +231,7 @@ namespace sofa
 		{
 			//update the component list when an item is selected
 			listComponents->clear();
-			QString location = curItem->text(1); //get the location value
+			QString location = curItem->text(2); //get the location value
 			QLibrary lib(location);
 			typedef const char* (*componentStr)();
 			componentStr componentListFunc = (componentStr) lib.resolve("getModuleComponentList");
@@ -207,7 +247,7 @@ namespace sofa
 		{
 			//update the component list when an item is selected
 			description->clear();
-			QString location = curItem->text(1); //get the location value
+			QString location = curItem->text(2); //get the location value
 			QLibrary lib(location);
 			typedef const char* (*componentStr)();
 			componentStr componentDescFunc = (componentStr) lib.resolve("getModuleDescription");

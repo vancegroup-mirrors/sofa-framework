@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_COLLISION_POINTMODEL_H
 
 #include <sofa/core/CollisionModel.h>
+#include <sofa/component/collision/LocalMinDistanceFilter.h>
 #include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -43,6 +44,7 @@ namespace collision
 using namespace sofa::defaulttype;
 
 class PointModel;
+class PointLocalMinDistanceFilter;
 
 class Point : public core::TCollisionElementIterator<PointModel>
 {
@@ -57,6 +59,16 @@ public:
     Vector3 n() const;
 	
     bool testLMD(const Vector3 &, double &, double &);
+	
+	bool activated;
+};
+
+class PointActiver
+{
+public:
+	PointActiver(){}
+	virtual ~PointActiver(){}
+	virtual bool activePoint(int /*index*/){return true;}
 };
 
 class SOFA_COMPONENT_COLLISION_API PointModel : public core::CollisionModel
@@ -69,6 +81,8 @@ public:
 	typedef DataTypes::Coord Coord;
 	typedef DataTypes::Deriv Deriv;
 	typedef Point Element;
+	typedef helper::vector<unsigned int> VecIndex;
+	
 	friend class Point;
 	
 	PointModel();
@@ -93,26 +107,48 @@ public:
 	
 	//virtual const char* getTypeName() const { return "Point"; }
 	
-	
+	PointLocalMinDistanceFilter *getFilter() const;
+
+	//template< class TFilter >
+	//TFilter *getFilter() const
+	//{
+	//	if (m_lmdFilter != 0)
+	//		return m_lmdFilter;
+	//	else
+	//		return &m_emptyFilter;
+	//}
+
+	void setFilter(PointLocalMinDistanceFilter * /*lmdFilter*/);
 
 protected:
 
 	core::componentmodel::behavior::MechanicalState<Vec3Types>* mstate;
     
     Data<bool> computeNormals;
+	
+	Data<std::string> PointActiverEngine;
 
     VecDeriv normals;
 
+	PointLocalMinDistanceFilter *m_lmdFilter;
+	EmptyFilter m_emptyFilter;
+
     void updateNormals();
+	
+	PointActiver *myActiver;
 };
 
 inline Point::Point(PointModel* model, int index)
 : core::TCollisionElementIterator<PointModel>(model, index)
-{}
+{
+	activated =model->myActiver->activePoint(index);
+}
 
 inline Point::Point(core::CollisionElementIterator& i)
 : core::TCollisionElementIterator<PointModel>(static_cast<PointModel*>(i.getCollisionModel()), i.getIndex())
 {
+	PointModel* CM = static_cast<PointModel*>(i.getCollisionModel());
+	activated = CM->myActiver->activePoint(i.getIndex());
 }
 
 inline const Vector3& Point::p() const { return (*model->mstate->getX())[index]; }

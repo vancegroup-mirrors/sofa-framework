@@ -14,6 +14,7 @@ DEFINES += POINT_DATA_VECTOR_ACCESS
 
 HEADERS += component.h \
            container/MeshLoader.h \
+		   container/MultiMeshLoader.h \
            container/MappedObject.h \
            container/MappedObject.inl \
            container/MechanicalObject.h \
@@ -22,8 +23,11 @@ HEADERS += component.h \
            container/ArticulatedHierarchyContainer.h \
            container/ArticulatedHierarchyContainer.inl \
            container/ImplicitSurfaceContainer.h \
+           container/RotationFinder.h \
+           container/RotationFinder.inl \
            container/SpatialGridContainer.h \
            container/SpatialGridContainer.inl \   
+           container/DistanceGrid.h \
            topology/CenterPointTopologicalMapping.h \
            topology/CommonAlgorithms.h \
            topology/CubeTopology.h \
@@ -32,9 +36,7 @@ HEADERS += component.h \
            topology/DynamicSparseGridGeometryAlgorithms.h \
            topology/DynamicSparseGridTopologyAlgorithms.inl \
            topology/DynamicSparseGridTopologyAlgorithms.h \
-#           topology/DynamicSparseGridTopologyContainer.inl \
            topology/DynamicSparseGridTopologyContainer.h \
-#           topology/DynamicSparseGridTopologyModifier.inl \
            topology/DynamicSparseGridTopologyModifier.h \
            topology/Edge2QuadTopologicalMapping.h \
            topology/EdgeData.h \
@@ -94,6 +96,7 @@ HEADERS += component.h \
            topology/QuadSetGeometryAlgorithms.inl \
            topology/QuadSetTopologyAlgorithms.inl \
            topology/RegularGridTopology.h \
+           topology/SimpleTesselatedHexaTopologicalMapping.h \
            topology/SimpleTesselatedTetraTopologicalMapping.h \
            topology/SparseGridTopology.h \
            topology/Tetra2TriangleTopologicalMapping.h \
@@ -123,12 +126,15 @@ HEADERS += component.h \
 SOURCES +=  \
            container/initContainer.cpp \
            container/MeshLoader.cpp \
+		   container/MultiMeshLoader.cpp \
            container/MappedObject.cpp \
            container/MechanicalObject.cpp \
            container/VoxelGridLoader.cpp \
            container/ArticulatedHierarchyContainer.cpp \
            container/ImplicitSurfaceContainer.cpp \
+           container/RotationFinder.cpp \
            container/SpatialGridContainer.cpp \
+           container/DistanceGrid.cpp \
            topology/initTopology.cpp \
            topology/CenterPointTopologicalMapping.cpp \
            topology/CubeTopology.cpp \
@@ -171,6 +177,7 @@ SOURCES +=  \
            topology/QuadSetTopologyContainer.cpp \
            topology/QuadSetTopologyModifier.cpp \
            topology/RegularGridTopology.cpp \
+           topology/SimpleTesselatedHexaTopologicalMapping.cpp \
            topology/SimpleTesselatedTetraTopologicalMapping.cpp \
            topology/SparseGridTopology.cpp \
            topology/Tetra2TriangleTopologicalMapping.cpp \

@@ -22,8 +22,8 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_CONSTANTFORCEFIELD_H
-#define SOFA_COMPONENT_CONSTANTFORCEFIELD_H
+#ifndef SOFA_COMPONENT_FORCEFIELD_RESTSHAPESPRINGFORCEFIELD_H
+#define SOFA_COMPONENT_FORCEFIELD_RESTSHAPESPRINGFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
@@ -56,6 +56,14 @@ public:
 		
 	Data< VecIndex > points;
 	Data< VecReal > stiffness;
+	Data< VecReal > angularStiffness;
+	Data<std::string> external_rest_shape;
+	Data< VecIndex > external_points; 
+	
+	sofa::core::componentmodel::behavior::MechanicalState<DataTypes>* restMState;
+	//sofa::core::componentmodel::behavior::MechanicalState<DataTypes>* restMState;	
+	bool useRestMState;
+	VecDeriv Springs_dir;
 	
     RestShapeSpringsForceField();
 	///
@@ -78,7 +86,7 @@ public:
 	virtual void addKToMatrix(sofa::defaulttype::BaseMatrix * /*mat*/, double /*kFact*/, unsigned int &/*offset*/);
 	
 	
-	void draw();
+	virtual void draw();
 	bool addBBox(double* minBBox, double* maxBBox);
 
 };

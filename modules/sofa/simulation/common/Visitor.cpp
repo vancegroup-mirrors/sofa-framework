@@ -25,10 +25,8 @@
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/simulation/common/VisualVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
-
-#ifdef DUMP_VISITOR_INFO
 #include <sofa/simulation/common/Simulation.h>
-#endif
+
 namespace sofa
 {
 
@@ -37,15 +35,30 @@ namespace simulation
 
 
 
-void Visitor::execute(sofa::core::objectmodel::BaseContext* c)
+void Visitor::execute(sofa::core::objectmodel::BaseContext* c, bool doPrefetch)
 {
+  if (getSimulation()->isPrefetchingUsed() && doPrefetch)
+    {
+#ifdef SOFA_DUMP_VISITOR_INFO
+        const std::string prefetchName=std::string("Prefetch--") + std::string(getClassName());
+        printNode(prefetchName);
+#endif
+	prefetching = true;
+	sofa::core::objectmodel::BaseObject::setPrefetching(true);
 	c->executeVisitor(this);
+	prefetching = false;
+	sofa::core::objectmodel::BaseObject::setPrefetching(false);
+#ifdef SOFA_DUMP_VISITOR_INFO
+        printCloseNode(prefetchName);
+#endif
+    }
+    c->executeVisitor(this);
 }
-#ifdef DUMP_VISITOR_INFO
-unsigned int Visitor::depthLevel=0;
-simulation::Node::ctime_t Visitor::initDumpTime;
-bool Visitor::printActivated=false;
-std::ostream *Visitor::outputVisitor=NULL;
+#ifdef SOFA_DUMP_VISITOR_INFO
+  simulation::Node::ctime_t Visitor::initDumpTime;
+  std::vector< simulation::Node::ctime_t  > Visitor::initNodeTime=std::vector< simulation::Node::ctime_t >();
+  bool Visitor::printActivated=false;
+  std::ostream *Visitor::outputVisitor=NULL;
 
 void Visitor::setNode(core::objectmodel::Base* c)
 {
@@ -60,67 +73,41 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
     std::string info;
     if (dirDown)
     {
-      for (unsigned int i=0;i<Visitor::depthLevel;++i) info += "\t";
-      info += "<Node name=\"" + context->getName() + "\">\n";
-      Visitor::depthLevel++;
+      printNode("Node",context->getName());
     }
     else
     {
-      Visitor::depthLevel--;
-      for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-      info+= "</Node>\n";
+      printCloseNode("Node");
     }
-    dumpInfo(info);
     return;
   }
   else if (!this->infoPrinted)
   {
     //Beginning processing: Visitor entered its first node
     this->infoPrinted=true;
-    std::string info;
 
     std::string infos(this->getInfos());
     std::string NodeName;
     if (enteringBase) NodeName=enteringBase->getName();
 
-    initVisitTime = CTime::getRefTime();
+    TRACE_ARGUMENT arg;
+    arg.push_back(std::make_pair("infos",infos));
+    printNode(this->getClassName(), std::string(), arg);
 
-    for (unsigned int i=0;i<Visitor::depthLevel;++i) info+= "\t";
-    info +="<" + std::string(this->getClassName());
-    if (!infos.empty())
-    {
-      info += " infos=\"" + infos + "\"";
-    }
-    info+= ">\n";
 
-    Visitor::depthLevel++;
-    for (unsigned int i=0;i<Visitor::depthLevel;++i)info+= "\t";
-    info+= "<Node name=\"" + NodeName + "\">\n";
-    Visitor::depthLevel++;
-    dumpInfo(info);
+    arg.clear();
+    printNode("Node",NodeName,arg);
   }
   else
   {
   //Ending the traversal: The visitor has finished its work
   if (this->infoPrinted)
   {
-    std::ostringstream s;
     if (enteringBase)
     {
-      Visitor::depthLevel--;
-      for (unsigned int i=0;i<Visitor::depthLevel;++i) s << "\t";
-      s << "</Node>\n";
+      printCloseNode("Node");
     }
-    Visitor::depthLevel--;
-
-    
-
-    for (unsigned int i=0;i<Visitor::depthLevel;++i) s<< "\t";
-    s << "<Time value=\"" << getTimeSpent(initVisitTime,CTime::getRefTime()) << "\" />\n";
-
-    for (unsigned int i=0;i<Visitor::depthLevel;++i) s<< "\t";
-    s << "</" + std::string(this->getClassName()) + ">\n";
-    dumpInfo(s.str());
+    printCloseNode(this->getClassName());
   }
   //Reinit the Visitor debug variables
   enteringBase=NULL;
@@ -135,32 +122,59 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
     {
       std::string info;
       info+= "<!--";
-//       for (unsigned int i=0;i<Visitor::depthLevel;++i)info+="\t";
       info+=  s + " -->\n";
       dumpInfo(info);
     }
 }
+
+
+  void Visitor::printNode(const std::string &type, const std::string &name, const TRACE_ARGUMENT &arguments) 
+ {
+  if (Visitor::printActivated)
+    {
+      std::ostringstream s;
+      s << "<" << type;
+      if (!name.empty()) s << " name=\"" << name << "\"";
+      for (unsigned int i=0;i<arguments.size();++i)
+        {
+          if (!arguments[i].second.empty())
+            s << " " <<arguments[i].first << "=\"" << arguments[i].second << "\"";
+        }
+      s << ">\n";
+
+      initNodeTime.push_back(CTime::getRefTime());
+      dumpInfo(s.str());
+    }
+ }
+ void Visitor::printCloseNode(const std::string &type) 
+ {
+  if (Visitor::printActivated)
+    {
+      std::ostringstream s;
+      ctime_t tSpent = initNodeTime.back(); initNodeTime.pop_back();
+      s << "<Time value=\"" << getTimeSpent(tSpent,CTime::getRefTime()) << "\" />\n";
+      s << "</" << type << ">\n";
+      dumpInfo(s.str());
+    }
+ }
+
 #endif
 	/// Optional helper method to call before handling an object if not using the for_each method.
 	/// It currently takes care of time logging, but could be extended (step-by-step execution for instance)
 	simulation::Node::ctime_t Visitor::begin(simulation::Node* node, core::objectmodel::BaseObject*
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
             obj
 #endif
                      )
 	{
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
           if (printActivated)
           {
-
-            std::ostringstream info;
-            for (unsigned int i=0;i<depthLevel;++i) info << "\t";
-
-            
-            info<< "<Component type=\"" << obj->getClassName() << "\" name=\"" << obj->getName() << "\" ptr=\"" << obj << "\" >\n";
-            dumpInfo(info.str());
-            Visitor::depthLevel++;
-            initComponentTime = CTime::getRefTime();
+            TRACE_ARGUMENT arg;
+            arg.push_back(std::make_pair("type",std::string(obj->getClassName())));
+            std::ostringstream s; s << obj;
+            arg.push_back(std::make_pair("ptr",s.str()));
+            printNode("Component", obj->getName(), arg);
           }
 #endif
 	  return node->startTime();
@@ -171,19 +185,10 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
 	void Visitor::end(simulation::Node* node, core::objectmodel::BaseObject* obj, ctime_t t0)
 	{
 	  node->endTime(t0, getCategoryName(), obj);
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
           if (printActivated)
           {
-            Visitor::depthLevel--;
-            std::string info;
-
-            std::ostringstream s;
-            for (unsigned int i=0;i<depthLevel;++i) info += "\t";
-            s << "<Time value=\"" << getTimeSpent(initComponentTime,CTime::getRefTime()) << "\" />\n";
-            info += s.str();
-            for (unsigned int i=0;i<depthLevel;++i) info += "\t";
-            info += "</Component>\n";
-            dumpInfo(info);
+            printCloseNode("Component");
           }
 #endif
 	}

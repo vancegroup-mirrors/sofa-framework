@@ -33,7 +33,6 @@ namespace sofa
 namespace component
 {
 
-
 void SOFA_COMPONENT_MISC_API initMisc();
 
 } // namespace component

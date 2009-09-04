@@ -43,13 +43,13 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <Chai3D/CMeta3dofPointer.h>
 
-using sofa::defaulttype::Vector3;
-
 
 namespace sofa{
 	namespace core{
 		namespace objectmodel{
 
+
+using sofa::defaulttype::Vector3;
 
 
 /**

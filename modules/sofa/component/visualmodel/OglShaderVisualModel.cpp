@@ -61,14 +61,8 @@ int OglShaderVisualModelClass = core::RegisterObject("Visual model for OpenGL di
 
 OglShaderVisualModel::OglShaderVisualModel()
 {
-	// TODO Auto-generated constructor stub
-
-  vrestpositions.setContext( this->getContext());
-  vrestpositions.setID( std::string("restPosition"));
-  vrestpositions.setIndexShader( 0);
-  vrestnormals.setContext( this->getContext());
-  vrestnormals.setID( "restNormal");
-  vrestnormals.setIndexShader( 0);
+	  inputNormals = vrestpositions.beginEdit();
+	  vrestpositions.endEdit();
 }
 
 OglShaderVisualModel::~OglShaderVisualModel()
@@ -79,14 +73,17 @@ OglShaderVisualModel::~OglShaderVisualModel()
 void OglShaderVisualModel::init()
 {
 	OglModel::init();
-	sofa::core::objectmodel::BaseContext* context = this->getContext();
 
+	sofa::core::objectmodel::BaseContext* context = this->getContext();
 	shader = context->core::objectmodel::BaseContext::get<OglShader>();
 
   if( shader)
   {
     vrestpositions.setContext( this->getContext());
+	vrestpositions.setID( std::string("restPosition"));
+	vrestpositions.setIndexShader( 0);
     vrestpositions.init();
+
     ResizableExtVector<Coord>& vrestpos = * ( vrestpositions.beginEdit() );
     vrestpos.resize ( vertices.size() );
     for ( unsigned int i = 0; i < vertices.size(); i++ )
@@ -96,28 +93,49 @@ void OglShaderVisualModel::init()
     vrestpositions.endEdit();
 
     vrestnormals.setContext( this->getContext());
+	vrestnormals.setID( std::string("restNormal") );
+	vrestnormals.setIndexShader( 0);
     vrestnormals.init();
+
     ResizableExtVector<Coord>& vrestnorm = * ( vrestnormals.beginEdit() );
     vrestnorm.resize ( vnormals.size() );
     for ( unsigned int i = 0; i < vnormals.size(); i++ )
     {
       vrestnorm[i] = vnormals[i];
     }
+
     vrestnormals.endEdit();
+
   }
+
 }
 
 
 void OglShaderVisualModel::initVisual()
 {
 	OglModel::initVisual();
-
 	//Store other attributes
 	if(shader)
 	{
-    vrestpositions.initVisual();
-    vrestnormals.initVisual();
+		vrestpositions.initVisual();
+		vrestnormals.initVisual();
+
 	}
+}
+
+void OglShaderVisualModel::putRestPositions(const Vec3fTypes::VecCoord& positions)
+{
+	ResizableExtVector<Coord>& vrestpos = * ( vrestpositions.beginEdit() );
+	vrestpos.resize ( positions.size() );
+
+	for ( unsigned int i = 0; i < positions.size(); i++ )
+	{
+	  vrestpos[i] = positions[i];
+	}
+
+	vrestpositions.endEdit();
+
+	computeRestNormals();
 }
 
 void OglShaderVisualModel::handleTopologyChange()
@@ -131,7 +149,17 @@ void OglShaderVisualModel::handleTopologyChange()
   // For the moment, the only class using dynamic topology is HexaToTriangleTopologicalMapping which update itself the attributes...
 }
 
+void OglShaderVisualModel::bwdDraw(Pass pass)
+{
+	 vrestpositions.bwdDraw(pass);
+	 vrestnormals.bwdDraw(pass);
+}
 
+void OglShaderVisualModel::fwdDraw(Pass pass)
+{
+	 vrestpositions.fwdDraw(pass);
+	 vrestnormals.fwdDraw(pass);
+}
 
 void OglShaderVisualModel::computeRestNormals()
 {

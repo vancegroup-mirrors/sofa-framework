@@ -46,52 +46,56 @@ namespace sofa
 	unsigned int BaseLMConstraint::getNumConstraint(ConstId Id) 
 	{
 	  unsigned int result=0;
-	  std::vector< constraintGroup > &vec = constraintId[Id];
+	  std::vector< constraintGroup* > &vec = constraintId[Id];
 	  for (unsigned int i=0;i<vec.size();++i)
 	    {
-	      result+=vec[i].getNumConstraint();
+	      result+=vec[i]->getNumConstraint();
 	    }
 	  return result;
 	}
 
-	BaseLMConstraint::constraintGroup* BaseLMConstraint::addGroupConstraint( ConstId Id)
+	BaseLMConstraint::constraintGroup* BaseLMConstraint::addGroupConstraint( ConstId id)
 	{
-	  constraintId[Id].push_back(constraintGroup(Id));
-	  return &(constraintId[Id][constraintId[Id].size()-1]);
+          constraintGroup *c=new constraintGroup(id);
+	  constraintId[id].push_back(c);
+	  return c;
 	}
 	
 	void BaseLMConstraint::getIndicesUsed(ConstId Id, std::vector< unsigned int > &used0,std::vector< unsigned int > &used1)
-	{
-	  
-	  std::vector< BaseLMConstraint::constraintGroup > &constraints=constraintId[Id];
+	{	  
+	  const std::vector< BaseLMConstraint::constraintGroup* > &constraints=constraintId[Id];
 	  for (unsigned int idxGroupConstraint=0;idxGroupConstraint<constraints.size(); ++idxGroupConstraint)
 	    {
-	      const std::vector< unsigned int > &iUsed0= constraints[idxGroupConstraint].getIndicesUsed0();
+	      const std::vector< unsigned int > &iUsed0= constraints[idxGroupConstraint]->getIndicesUsed0();
 	      used0.insert(used0.end(),iUsed0.begin(), iUsed0.end());
-	      const std::vector< unsigned int > &iUsed1= constraints[idxGroupConstraint].getIndicesUsed1();
+	      const std::vector< unsigned int > &iUsed1= constraints[idxGroupConstraint]->getIndicesUsed1();
 	      used1.insert(used1.end(),iUsed1.begin(), iUsed1.end());
 	    }
-
 	}
-	void BaseLMConstraint::getExpectedValues(ConstId Id, std::vector< double > &expected)
-	{	 
-	  std::vector< BaseLMConstraint::constraintGroup > &constraints=constraintId[Id];
+        void BaseLMConstraint::getCorrections(ConstId Id, std::vector<SReal>& c)
+        {
+          const std::vector< BaseLMConstraint::constraintGroup* > &constraints=constraintId[Id];
 	  for (unsigned int idxGroupConstraint=0;idxGroupConstraint<constraints.size(); ++idxGroupConstraint)
 	    {
-	      const std::vector< double> &val= constraints[idxGroupConstraint].getExpectedValues();
-	      expected.insert(expected.end(),val.begin(), val.end());
-	    }
-	}
+              const std::vector<SReal>& correction=constraints[idxGroupConstraint]->getCorrections();
+              c.insert(c.end(), correction.begin(), correction.end());
+            }
+        }
+        
+        void BaseLMConstraint::clear()
+        {
+          std::map< ConstId, std::vector< constraintGroup*> >::iterator it;
+          for (it=constraintId.begin(); it!=constraintId.end();it++)
+            {
+              std::vector< constraintGroup* > &v=it->second;
+              for (unsigned int i=0;i<v.size();++i)
+                {
+                  delete v[i];
+                }
+            }
+          constraintId.clear();
+        }
 
-	void BaseLMConstraint::getExpectedValuesType(ConstId Id, std::vector< ValueId > &t)
-	{	 
-	  std::vector< BaseLMConstraint::constraintGroup > &constraints=constraintId[Id];
-	  for (unsigned int idxGroupConstraint=0;idxGroupConstraint<constraints.size(); ++idxGroupConstraint)
-	    {
-	      const std::vector< ValueId> &val= constraints[idxGroupConstraint].getExpectedValuesType();
-	      t.insert(t.end(),val.begin(), val.end());
-	    }
-	}
       }
     }
   }

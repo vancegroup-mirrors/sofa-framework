@@ -59,13 +59,13 @@
 				    <Object type="OglFloatVariable" id="refractCoeff" value="1.0"/>
 				    <Object type="OglFloatVariable" id="sphereRadius" value="3.60106"/>
 				    <Object type="OglFloatVariable" id="lightProjRadius" value="2.5"/>
-					<Object type="OglTexture2D" texture2DFilename="data/textures/choroid.png" textureUnit="1" id="sphereTexture" />
+					<Object type="OglTexture2D" texture2DFilename="data/textures/choroid.bmp" textureUnit="1" id="sphereTexture" />
 					<Object type="OglModel" name="Lens"  fileMesh="data/mesh/flat_lens.obj"  dz="-0.85" normals="0" castshadow="0" premultipliedAlpha="true"/>
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Lens" index="1"/>
 				</Node>
 
 				<Node name="Iris_">
-					<Object type="OglModel" name="Iris"  fileMesh="data/mesh/iris.obj" normals="0" texturename="data/textures/iris.png" castshadow="0" />
+					<Object type="OglModel" name="Iris"  fileMesh="data/mesh/iris.obj" normals="0" texturename="data/textures/iris.bmp" castshadow="0" />
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Iris" index="1"/>
 				</Node>
 				<Node name="Sclera_">
@@ -77,20 +77,20 @@
 					<Object type="OglFloatVariable" id="border_gamma" value="4.0"/>
 					<Object type="OglFloatVariable" id="border_alpha" value="1.0"/>
 					<Object type="OglIntVariable" id="axis" value="2"/>
-					<Object type="OglFloatVector4Variable" id="colors" values="1.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 0.0 1.0 1.0"/>
-					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.png" textureUnit="1" id="planeTexture" />
+					<Object type="OglFloatVector4Variable" id="colors" value="1.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 0.0 1.0 1.0"/>
+					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.bmp" textureUnit="1" id="planeTexture" />
 					
-					<Object type="OglModel" name="Sclera" fileMesh="data/mesh/sclera.obj" normals="0" texturename="data/textures/sclera.png" castshadow="0" premultipliedAlpha="true" />
+					<Object type="OglModel" name="Sclera" fileMesh="data/mesh/sclera.obj" normals="0" texturename="data/textures/sclera.bmp" castshadow="0" premultipliedAlpha="true" />
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Sclera" index="1"/>
 				</Node>
 	<!-- 
 				<Node name="Choroid_">
-					<Object type="OglModel" name="Choroid" fileMesh="data/mesh/choroid.obj" normals="0" texturename="data/textures/choroid.png" castshadow="0"/>
+					<Object type="OglModel" name="Choroid" fileMesh="data/mesh/choroid.obj" normals="0" texturename="data/textures/choroid.bmp" castshadow="0"/>
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Choroid" index="1"/>
 				</Node> 
 				 -->
 				<Node name="Ciliary_">
-					<Object type="OglModel" name="Ciliary"  fileMesh="data/mesh/ciliary_processes.obj" texturename="data/textures/ciliary.png" castshadow="0"/>
+					<Object type="OglModel" name="Ciliary"  fileMesh="data/mesh/ciliary_processes.obj" texturename="data/textures/ciliary.bmp" castshadow="0"/>
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Ciliary" index="1"/>
 				</Node>
 				
@@ -107,8 +107,8 @@
 					<Object type="OglFloatVariable" id="border_alpha" value="1.0"/>
 					<Object type="OglFloatVariable" id="altitude" value="0.2"/>
 					<Object type="OglIntVariable" id="axis" value="2"/>
-					<Object type="OglFloatVector4Variable" id="colors" values="1.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 0.0 1.0 1.0"/>
-					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.png" textureUnit="1" id="planeTexture"/>
+					<Object type="OglFloatVector4Variable" id="colors" value="1.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 0.0 1.0 1.0"/>
+					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.bmp" textureUnit="1" id="planeTexture"/>
 					<Object type="OglModel" name="Cornea"  fileMesh="data/mesh/cornea.obj"  normals="0" castshadow="0" premultipliedAlpha="true"/>
 					<Object type="RigidMapping" object1="6D_DOFs1" object2="Cornea" index="1"/>
 				</Node>
@@ -213,7 +213,7 @@
 					<Object type="OglFloatVariable" id="border_alpha" value="0.4"/>
 					<Object type="OglFloatVariable" id="border_gamma" value="2.0"/>
 					<Object type="OglIntVariable" id="axis" value="2"/>
-					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.png" textureUnit="1" id="planeTexture"  />
+					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.bmp" textureUnit="1" id="planeTexture"  />
 				<Object type="OglModel" name="LensVM"  color="0.65 0.55 0.45 0.3" />       
 				<Object type="IdentityMapping" object1="../../.." object2="LensVM" />
 			</Node>
@@ -227,7 +227,7 @@
 						<Object type="OglShader" geometryVerticesOut="12" geometryInputType="10" geometryOutputType="5" vertFilename="shaders/PT.vert" geoFilename="shaders/PT.geo" fragFilename="shaders/PT.frag"/>
 						<Object type="OglFloat3Variable" id="fragmentColor" value="1.0 0.0 0.0" />
 						<Object type="OglFloatVariable" id="fragmentOpacity" value="2.0"/>
-						<Object type="OglFloatVector4Variable" id="MappingTable" values="
+						<Object type="OglFloatVector4Variable" id="MappingTable" value="
 																						1 0 0 0 
 																						0 0 0 1 
 																						0 1 0 0 
@@ -267,7 +267,7 @@
 																						1 0 0 0 
 																						0 0 1 0 
 																						0 1 0 0" />
-							<Object type="OglFloatVector4Variable" id="RunSelectTable" values="
+							<Object type="OglFloatVector4Variable" id="RunSelectTable" value="
 																					0. 1. 0. 0.
 																					0. 0. 0. 0.
 																					0. 0. 1. 0.
@@ -308,7 +308,7 @@
 					<Object type="OglFloatVariable" id="border_alpha" value="0.4"/>
 					<Object type="OglFloatVariable" id="border_gamma" value="1.0"/>
 					<Object type="OglIntVariable" id="axis" value="2"/>
-					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.png" textureUnit="1" id="planeTexture"  />
+					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.bmp" textureUnit="1" id="planeTexture"  />
 				<Object type="OglModel" name="LensVM"  color="0.65 0.55 0.45 0.03" />        
 				<Object type="IdentityMapping" object1="../../.." object2="LensVM" />
 			</Node>
@@ -325,7 +325,7 @@
 						<Object type="OglShader" geometryVerticesOut="12" geometryInputType="10" geometryOutputType="5" vertFilename="shaders/PT.vert" geoFilename="shaders/PT.geo" fragFilename="shaders/PT.frag"/>
 						<Object type="OglFloat3Variable" id="fragmentColor" value="0.7 0.6 0.6" />
 						<Object type="OglFloatVariable" id="fragmentOpacity" value="3.0"/>
-						<Object type="OglFloatVector4Variable" id="MappingTable" values="
+						<Object type="OglFloatVector4Variable" id="MappingTable" value="
 																						1 0 0 0 
 																						0 0 0 1 
 																						0 1 0 0 
@@ -365,7 +365,7 @@
 																						1 0 0 0 
 																						0 0 1 0 
 																						0 1 0 0" />
-							<Object type="OglFloatVector4Variable" id="RunSelectTable" values="
+							<Object type="OglFloatVector4Variable" id="RunSelectTable" value="
 																					0. 1. 0. 0.
 																					0. 0. 0. 0.
 																					0. 0. 1. 0.
@@ -401,7 +401,7 @@
 					<Object type="OglFloatVariable" id="border_alpha" value="0.4"/>
 					<Object type="OglFloatVariable" id="border_gamma" value="1.0"/>
 					<Object type="OglIntVariable" id="axis" value="2"/>
-					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.png" textureUnit="1" id="planeTexture" normals="0" />
+					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.bmp" textureUnit="1" id="planeTexture" normals="0" />
 			
 				<Object type="OglModel" name="LensVM"  color="0.65 0.55 0.45 0.03" />       
 				<Object type="IdentityMapping" object1="../../.." object2="LensVM" />
@@ -420,7 +420,7 @@
 						<Object type="OglShader" geometryVerticesOut="12" geometryInputType="10" geometryOutputType="5" vertFilename="shaders/PT.vert" geoFilename="shaders/PT.geo" fragFilename="shaders/PT.frag"/>
 						<Object type="OglFloat3Variable" id="fragmentColor" value="1.0 1.0 0.0" />
 						<Object type="OglFloatVariable" id="fragmentOpacity" value="1.0"/>
-						<Object type="OglFloatVector4Variable" id="MappingTable" values="
+						<Object type="OglFloatVector4Variable" id="MappingTable" value="
 																						1 0 0 0 
 																						0 0 0 1 
 																						0 1 0 0 
@@ -460,7 +460,7 @@
 																						1 0 0 0 
 																						0 0 1 0 
 																						0 1 0 0" />
-							<Object type="OglFloatVector4Variable" id="RunSelectTable" values="
+							<Object type="OglFloatVector4Variable" id="RunSelectTable" value="
 																					0. 1. 0. 0.
 																					0. 0. 0. 0.
 																					0. 0. 1. 0.
@@ -494,12 +494,12 @@
 			spring="BEGIN_SPRING 0 0 KS_T 5000 5000  KS_R 50.0 50.0  KS_B 50.0  KD 0.0 END_SPRING"	/>		-->
 			
 	<Node name="CompleteEyeAnatomicalModel">
-		<Object type="OglModel" name="Muscle1"      fileMesh="data/mesh/inf_recus_muscle.obj" texturename="data/textures/muscle.png" castshadow="0" />
-		<Object type="OglModel" name="Muscle2"      fileMesh="data/mesh/lat_recus_muscle.obj" texturename="data/textures/muscle.png" castshadow="0" />
-		<Object type="OglModel" name="Muscle3"      fileMesh="data/mesh/med_recus_muscle.obj" texturename="data/textures/muscle.png" castshadow="0" />
-		<Object type="OglModel" name="Muscle4"      fileMesh="data/mesh/super_recus_muscle.obj" texturename="data/textures/muscle.png" castshadow="0" />
-		<Object type="OglModel" name="Muscle5"      fileMesh="data/mesh/infer_obl_muscle.obj" texturename="data/textures/muscle.png" castshadow="0" />
-		<Object type="OglModel" name="Muscle6"      fileMesh="data/mesh/super_obl_muscle.obj" texturename="data/textures/muscle.png" castshadow="0" />
+		<Object type="OglModel" name="Muscle1"      fileMesh="data/mesh/inf_recus_muscle.obj" texturename="data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle2"      fileMesh="data/mesh/lat_recus_muscle.obj" texturename="data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle3"      fileMesh="data/mesh/med_recus_muscle.obj" texturename="data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle4"      fileMesh="data/mesh/super_recus_muscle.obj" texturename="data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle5"      fileMesh="data/mesh/infer_obl_muscle.obj" texturename="data/textures/muscle.bmp" castshadow="0" />
+		<Object type="OglModel" name="Muscle6"      fileMesh="data/mesh/super_obl_muscle.obj" texturename="data/textures/muscle.bmp" castshadow="0" />
 	</Node>
 	<Node name="Clamps">
 <!--
@@ -508,7 +508,7 @@
 					<Object type="OglFloatVariable" id="border_gamma" value="4.0"/>
 					<Object type="OglFloatVariable" id="border_alpha" value="1.0"/>
 					<Object type="OglIntVariable" id="axis" value="2"/>
-					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.png" textureUnit="1" id="planeTexture" />
+					<Object type="OglTexture2D" texture2DFilename="textures/lights4-small-noise.bmp" textureUnit="1" id="planeTexture" />
 -->					
 	<Object type="OglShader" vertFilename="shaders/generalRenderingShader.vert" fragFilename="shaders/generalRenderingShader.frag" />
 	<Object type="OglShaderDefineMacro" id="PHONG" />
@@ -521,7 +521,7 @@
 <!--		<Object type="OglShaderDefineMacro" id="PHONG" />-->
 <!--		<Object type="OglShaderDefineMacro" id="LIGHT2" />-->
 <!--		<Object type="OglShaderDefineMacro" id="TEXTURE_UNIT_0" />-->
-		<Object type="OglModel" name="Skin"         fileMesh="data/mesh/john_hi_obj.obj" texturename="data/textures/john_hi_obj_skin_hi.png" castshadow="0" normals="0" /> 
+		<Object type="OglModel" name="Skin"         fileMesh="data/mesh/john_hi_obj.obj" texturename="data/textures/john_hi_obj_skin_hi.bmp" castshadow="0" normals="0" /> 
 	</Node>
 
 	

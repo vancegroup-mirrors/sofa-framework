@@ -37,6 +37,10 @@ namespace sofa
   namespace component
   {
 
+    namespace container
+    {
+
+
     class SOFA_COMPONENT_CONTAINER_API VoxelGridLoader : public MeshLoader
     {
       public:
@@ -67,9 +71,12 @@ namespace sofa
 
 		int getDataSize() const;
 
-		unsigned char * getData();
-		const unsigned char * getData() const;
+    unsigned char * getData();
+    const unsigned char * getData() const;
 		
+    unsigned char * getSegmentID();
+    const unsigned char * getSegmentID() const;
+
     Vec6i getROI() const;
 
 		// fill the texture by 'image' only where there is the 'segmentation' of 'activeValue' and give the 3D texture sizes
@@ -104,6 +111,8 @@ namespace sofa
 
 		int								bpp;
     };
+
+    }
 
   } // namespace component
 

@@ -44,6 +44,8 @@
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
 #include <sofa/simulation/common/UpdateMappingEndEvent.h>
+#include <sofa/simulation/common/CleanupVisitor.h>
+#include <sofa/simulation/common/DeleteVisitor.h>
 #include <sofa/core/ObjectFactory.h>
 #include <fstream>
 #include <string.h>
@@ -57,8 +59,10 @@ namespace sofa
 			using namespace sofa::defaulttype;
 Simulation::Simulation()
 : numMechSteps( initData(&numMechSteps,(unsigned) 1,"numMechSteps","Number of mechanical steps within one update step. If the update time step is dt, the mechanical time step is dt/numMechSteps.") ),
-gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
-instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used"))
+  nbSteps(0),
+  needToPrefetch(false), 
+  gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
+  instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used"))
 {}
 
 Simulation::~Simulation(){
@@ -108,6 +112,7 @@ Simulation::~Simulation(){
 				//cerr<<"Simulation::init"<<endl;
 				setContext( root->getContext());
 				if ( !root ) return;
+                                needToPrefetch = false;
 				root->execute<InitVisitor>();
 				// Save reset state for later uses in reset()
 				root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
@@ -116,6 +121,8 @@ Simulation::~Simulation(){
 
 				//Get the list of instruments present in the scene graph
 				getInstruments(root);
+
+        nbSteps = 0;
 			}
 
 			void Simulation::getInstruments( Node *node)
@@ -132,7 +139,7 @@ Simulation::~Simulation(){
 				if ( root->getMultiThreadSimulation() )
 					return;
 
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
 				simulation::Visitor::printComment(std::string("Begin Step"));
 #endif
 				{
@@ -173,9 +180,10 @@ Simulation::~Simulation(){
                                 root->execute ( act );
                             }
 				root->execute<VisualUpdateVisitor>();
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
 				simulation::Visitor::printComment(std::string("End Step"));
 #endif
+        nbSteps++;
 			}
 
 
@@ -187,7 +195,9 @@ Simulation::~Simulation(){
 				root->execute<ResetVisitor>();
 				root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
 				root->execute<UpdateMappingVisitor>();
-                                root->execute<VisualUpdateVisitor>();
+        root->execute<VisualUpdateVisitor>();
+
+        nbSteps = 0;
 			}
 
 /// Initialize the textures
@@ -223,7 +233,7 @@ Simulation::~Simulation(){
 			}
 
 /// Update only Visual contexts. Required before drawing the scene if root flags are modified.( can filter by specifying a specific element)
-			void Simulation::updateVisualContext ( Node* root, int FILTER)
+                        void Simulation::updateVisualContext ( Node* root, Node::VISUAL_FLAG FILTER)
 			{
 			  if ( !root ) return;
 			  UpdateVisualContextVisitor vis(FILTER);
@@ -343,7 +353,22 @@ Simulation::~Simulation(){
 				ExportGnuplotVisitor expg ( time );
 				root->execute ( expg );
 			}
-
+          void Simulation::unload(Node * root)
+          {
+            if ( !root ) return;
+            if (dynamic_cast<Node*>(this->getContext()) == root)
+              {
+                instruments.clear();
+                instrumentInUse.setValue(-1);
+              }
+            root->execute<CleanupVisitor>();
+            root->execute<DeleteVisitor>();
+            root->detachFromGraph();
+          }
+//      void Simulation::addStep ( )
+//      {
+//        nbSteps++; 
+//      }
 
 	} // namespace simulation
 

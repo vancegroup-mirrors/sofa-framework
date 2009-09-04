@@ -26,6 +26,7 @@
 ******************************************************************************/
 
 #include <sofa/gui/qt/DisplayFlagWidget.h>
+#include <sofa/simulation/common/Node.h>
 
 namespace sofa
 {
@@ -35,6 +36,7 @@ namespace sofa
 
     namespace qt
     {
+      using sofa::simulation::Node;
 
       DisplayFlagWidget::DisplayFlagWidget(QWidget* parent, const char* name,  Qt::WFlags f ):
 	Q3ListView(parent,name,f)
@@ -61,42 +63,42 @@ namespace sofa
 	itemShowAll->setOpen(true);
 	Q3CheckListItem* itemShowVisual    = new Q3CheckListItem(itemShowAll, "Visual", Q3CheckListItem::CheckBoxController);
 	itemShowVisual->setOpen(true);
-	itemShowFlag[VISUAL]   = new Q3CheckListItem(itemShowVisual, "Visual Models", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::VISUALMODELS]   = new Q3CheckListItem(itemShowVisual, "Visual Models", Q3CheckListItem::CheckBox);
 	Q3CheckListItem* itemShowBehavior  = new Q3CheckListItem(itemShowAll, itemShowVisual, "Behavior", Q3CheckListItem::CheckBoxController);
 	itemShowBehavior->setOpen(true);
-	itemShowFlag[BEHAVIOR]   = new Q3CheckListItem(itemShowBehavior,  "Behavior Models", Q3CheckListItem::CheckBox);
-	itemShowFlag[FORCEFIELD]   = new Q3CheckListItem(itemShowBehavior, itemShowFlag[BEHAVIOR], "Force Fields", Q3CheckListItem::CheckBox);
-	itemShowFlag[INTERACTION]   = new Q3CheckListItem(itemShowBehavior, itemShowFlag[FORCEFIELD],  "Interactions", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::BEHAVIORMODELS]   = new Q3CheckListItem(itemShowBehavior,  "Behavior Models", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::FORCEFIELDS]   = new Q3CheckListItem(itemShowBehavior, itemShowFlag[Node::BEHAVIORMODELS], "Force Fields", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::INTERACTIONFORCEFIELDS]   = new Q3CheckListItem(itemShowBehavior, itemShowFlag[Node::FORCEFIELDS],  "Interactions", Q3CheckListItem::CheckBox);
 	Q3CheckListItem* itemShowCollision = new Q3CheckListItem(itemShowAll, itemShowBehavior, "Collision", Q3CheckListItem::CheckBoxController);
 	itemShowCollision->setOpen(true);
-	itemShowFlag[COLLISION]   = new Q3CheckListItem(itemShowCollision,  "Collision Models", Q3CheckListItem::CheckBox);
-	itemShowFlag[BOUNDING]   = new Q3CheckListItem(itemShowCollision, itemShowFlag[COLLISION], "Bounding Trees", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::COLLISIONMODELS]   = new Q3CheckListItem(itemShowCollision,  "Collision Models", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::BOUNDINGCOLLISIONMODELS]   = new Q3CheckListItem(itemShowCollision, itemShowFlag[Node::COLLISIONMODELS], "Bounding Trees", Q3CheckListItem::CheckBox);
 	Q3CheckListItem* itemShowMapping   = new Q3CheckListItem(itemShowAll, itemShowCollision, "Mapping", Q3CheckListItem::CheckBoxController);
 	itemShowMapping->setOpen(true);
-	itemShowFlag[MAPPING]   = new Q3CheckListItem(itemShowMapping,  "Visual Mappings", Q3CheckListItem::CheckBox);
-	itemShowFlag[MECHANICALMAPPING]   = new Q3CheckListItem(itemShowMapping, itemShowFlag[MAPPING],  "Mechanical Mappings", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::MAPPINGS]   = new Q3CheckListItem(itemShowMapping,  "Visual Mappings", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::MECHANICALMAPPINGS]   = new Q3CheckListItem(itemShowMapping, itemShowFlag[Node::MAPPINGS],  "Mechanical Mappings", Q3CheckListItem::CheckBox);
 	Q3ListViewItem*  itemShowOptions   = new Q3ListViewItem(this, itemShowAll, "Options");
 	itemShowOptions->setOpen(true);
-	itemShowFlag[WIREFRAME]   = new Q3CheckListItem(itemShowOptions, "Wire Frame", Q3CheckListItem::CheckBox);
-	itemShowFlag[NORMALS]   = new Q3CheckListItem(itemShowOptions, itemShowFlag[WIREFRAME], "Normals", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::WIREFRAME]   = new Q3CheckListItem(itemShowOptions, "Wire Frame", Q3CheckListItem::CheckBox);
+	itemShowFlag[Node::NORMALS]   = new Q3CheckListItem(itemShowOptions, itemShowFlag[Node::WIREFRAME], "Normals", Q3CheckListItem::CheckBox);
 
 	insertItem(itemShowAll); 
 	itemShowAll->insertItem(itemShowVisual); itemShowAll->setOpen(true);
-	itemShowVisual->insertItem(itemShowFlag[VISUAL]);
+	itemShowVisual->insertItem(itemShowFlag[Node::VISUALMODELS]);
 	itemShowAll->insertItem(itemShowBehavior); 
-	itemShowBehavior->insertItem(itemShowFlag[BEHAVIOR]);	
-	itemShowBehavior->insertItem(itemShowFlag[FORCEFIELD]);
-	itemShowBehavior->insertItem(itemShowFlag[INTERACTION]);
+	itemShowBehavior->insertItem(itemShowFlag[Node::BEHAVIORMODELS]);	
+	itemShowBehavior->insertItem(itemShowFlag[Node::FORCEFIELDS]);
+	itemShowBehavior->insertItem(itemShowFlag[Node::INTERACTIONFORCEFIELDS]);
 	itemShowAll->insertItem(itemShowCollision); 
-	itemShowCollision->insertItem(itemShowFlag[COLLISION]);
-	itemShowCollision->insertItem(itemShowFlag[BOUNDING]);
+	itemShowCollision->insertItem(itemShowFlag[Node::COLLISIONMODELS]);
+	itemShowCollision->insertItem(itemShowFlag[Node::BOUNDINGCOLLISIONMODELS]);
 	itemShowAll->insertItem(itemShowMapping); 
-	itemShowMapping->insertItem(itemShowFlag[MAPPING]);
-	itemShowMapping->insertItem(itemShowFlag[MECHANICALMAPPING]);
+	itemShowMapping->insertItem(itemShowFlag[Node::MAPPINGS]);
+	itemShowMapping->insertItem(itemShowFlag[Node::MECHANICALMAPPINGS]);
 			  
 	insertItem(itemShowOptions); itemShowOptions->setOpen(true);
-	itemShowOptions->insertItem(itemShowFlag[WIREFRAME]);
-	itemShowOptions->insertItem(itemShowFlag[NORMALS]);
+	itemShowOptions->insertItem(itemShowFlag[Node::WIREFRAME]);
+	itemShowOptions->insertItem(itemShowFlag[Node::NORMALS]);
 
  	for (int i=0;i<10;++i)  mapFlag.insert(std::make_pair(itemShowFlag[i],i));
       }

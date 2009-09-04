@@ -36,16 +36,16 @@ namespace topology
 	using core::componentmodel::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::HexaID HexaID;
 	typedef BaseMeshTopology::Hexa Hexa;
-	typedef BaseMeshTopology::SeqHexas SeqHexas;
-	typedef BaseMeshTopology::VertexHexas VertexHexas;
-	typedef BaseMeshTopology::EdgeHexas EdgeHexas;
-	typedef BaseMeshTopology::QuadHexas QuadHexas;
-	typedef BaseMeshTopology::HexaEdges HexaEdges;
-	typedef BaseMeshTopology::HexaQuads HexaQuads;
+	typedef BaseMeshTopology::SeqHexahedra SeqHexahedra;
+	typedef BaseMeshTopology::HexahedraAroundVertex HexahedraAroundVertex;
+	typedef BaseMeshTopology::HexahedraAroundEdge HexahedraAroundEdge;
+	typedef BaseMeshTopology::HexahedraAroundQuad HexahedraAroundQuad;
+	typedef BaseMeshTopology::EdgesInHexahedron EdgesInHexahedron;
+	typedef BaseMeshTopology::QuadsInHexahedron QuadsInHexahedron;
 
 	typedef Hexa Hexahedron;
-	typedef HexaEdges HexahedronEdges;
-	typedef HexaQuads HexahedronQuads;
+	typedef EdgesInHexahedron EdgesInHexahedron;
+	typedef QuadsInHexahedron QuadsInHexahedron;
 	
 	/**
 	* A class that provides geometry information on an HexahedronSet.
@@ -60,6 +60,8 @@ namespace topology
 
 		HexahedronSetGeometryAlgorithms()
 		: QuadSetGeometryAlgorithms<DataTypes>()
+		  , debugViewHexaIndices(core::objectmodel::Base::initData(&debugViewHexaIndices, (bool) false, "debugViewHexaIndices", "Debug : view Hexa indices"))
+		  , _draw(core::objectmodel::Base::initData(&_draw, false, "drawHexa","if true, draw the Hexahedron in the topology"))
 		{}
 
 		virtual ~HexahedronSetGeometryAlgorithms() {}
@@ -122,6 +124,12 @@ namespace topology
 		/** \brief Write the current mesh into a msh file
 		*/
 		void writeMSHfile(const char *filename) const;
+
+		virtual void draw();
+		
+	protected:
+		Data<bool> debugViewHexaIndices;
+		Data<bool> _draw;
 	};
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETGEOMETRYALGORITHMS_CPP)

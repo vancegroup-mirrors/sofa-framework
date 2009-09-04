@@ -76,6 +76,7 @@ LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
+LIBS += -lsofacomponentvisualmodel$$LIBSUFFIX
 
 LIBS += $$SOFA_EXT_LIBS 
 

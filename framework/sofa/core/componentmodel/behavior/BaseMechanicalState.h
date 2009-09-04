@@ -32,6 +32,7 @@
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
 #include <sofa/defaulttype/Vec.h>
+
 #include <sstream>
 #include <iostream>
 
@@ -80,7 +81,7 @@ class BaseMechanicalMapping;
 class BaseMechanicalState : public virtual objectmodel::BaseObject
 {
 public:
-    BaseMechanicalState()
+ BaseMechanicalState():useMask(initData(&useMask, false, "useMask", "Usage of a mask to optimize the computation of the system, highly reducing the passage through the mappings"))
     {}
     virtual ~BaseMechanicalState()
     { }
@@ -90,6 +91,8 @@ public:
 
 	/// functions that allows to have access to the geometry without a template class : not efficient
 	virtual int getSize() const { return 0; }
+	virtual unsigned int getCoordDimension() const { return 0; }
+	virtual unsigned int getDerivDimension() const { return 0; }
 	virtual double getPX(int /*i*/) const { return 0.0; }
 	virtual double getPY(int /*i*/) const { return 0.0; }
 	virtual double getPZ(int /*i*/) const { return 0.0; }
@@ -133,6 +136,8 @@ public:
     /// Scale the current state
     virtual void applyScale(const double s)=0;
 
+    /// Renumber the constraint ids with the given permutation vector
+    virtual void renumberConstraintId(const sofa::helper::vector<unsigned>& renumbering) = 0;
 
 
     virtual bool addBBox(double* /*minBBox*/, double* /*maxBBox*/)
@@ -255,11 +260,81 @@ public:
         }
     };
 
-    /// Express the constraint J as a dense matrix
-    virtual void buildConstraintMatrix(const sofa::helper::vector<unsigned int> &/*constraintId*/, const double /* factor */, defaulttype::BaseMatrix& /*m*/, unsigned int /* numConstraint */, unsigned int /* offset */){};
+    class ConstraintBlock
+    {
+    public:
+      ConstraintBlock( unsigned int c, defaulttype::BaseMatrix *m):column(c),matrix(m){}
 
-    /// Compute the violation of the constraint and store them in a vector
-    virtual void computeConstraintProjection(const sofa::helper::vector<unsigned int> &/*constraintId*/, VecId /* Id */, defaulttype::BaseVector& /*v*/,  unsigned int /* offset */){};
+      unsigned int getColumn() const {return column;}
+      const defaulttype::BaseMatrix &getMatrix() const {return *matrix;};
+      defaulttype::BaseMatrix *getMatrix() {return matrix;};
+    protected:
+      unsigned int column;
+      defaulttype::BaseMatrix *matrix;
+    };    
+
+
+    /// Express the matrix L in term of block of matrices, using the indices of the lines in the VecConst container
+    virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &/* indices */, double /* factor */) const {return std::list<ConstraintBlock>();};
+    
+    /// Utility to store only the modified indices of a mapped dof.
+    /// This should allow to optimize the propagation of the forces from a mechanical state mapped, used as a collision model, to the independent dofs.
+    /// It is used during the applyJ and applyJT process of the MechanicalMappings.
+    /// Forcefields which acts only on a little number of particles should activate the mask (by redefining the method bool useMask()) and add entries in the particle mask
+    class ParticleMask
+    {
+      public:
+      typedef std::set< unsigned int > InternalStorage;
+    ParticleMask():inUse(true), activated(true){};
+
+      /// Insert an entry in the mask
+      void insertEntry(unsigned int index)
+      {
+        indices.insert(index);
+      }
+
+      
+      const InternalStorage &getEntries() const {return indices;};
+      InternalStorage &getEntries(){return indices;};
+
+      /// Activate the mask. By default, the mask state is set to "DEFAULT". 
+      /// It means that if no component change the current state, the mask will be used. 
+      /// If one component desactivate the filter, it won't be used at all during the time step, even if other components desire to use it.
+      void setInUse(bool use)
+      {
+        if (inUse) inUse=use;
+        else if (!use)     inUse=false; //Desactivate if one component is not using it
+      }
+      /// Allows to desactivate the usage of the mask. Typically, it is used when it is needed to propagate at the end of the integration, the position and velocity.
+      /// Different from inUse, because a mask desactivated can be re-activated.
+      void activate(bool a)
+      {
+        activated = a;
+      }
+
+      /// Test if the mask can be used
+      bool isInUse() const 
+      {
+        return activated && inUse;
+      }
+
+      /// Test if the mask is active.       
+      bool isActive() const 
+      {
+        return activated;
+      }
+      void clear(){indices.clear(); inUse=true; activated=true;}
+
+      protected:
+      InternalStorage indices;
+      bool inUse;
+      bool activated;
+    };
+
+    /// Mask to filter the particles. Used inside MechanicalMappings inside applyJ and applyJT methods.
+    ParticleMask forceMask;
+    
+    Data<bool> useMask;
 
     /// Increment the index of the given VecId, so that all 'allocated' vectors in this state have a lower index
     virtual void vAvail(VecId& v) = 0;
@@ -369,6 +444,8 @@ public:
 	virtual void setC(VecId v) = 0;
 
 
+    /// new: get the size of the vecconst (used when mapping constraints)
+    virtual unsigned int getCSize() const = 0;
 
     /// new : get compliance on the constraints
     virtual void getCompliance(double ** /*w*/){ }
@@ -379,17 +456,23 @@ public:
 
     virtual void addDxToCollisionModel(void) = 0; //{}
 
-	/// Add the Mechanical State Dimension [DOF number * DOF dimension] to the global matrix dimension
-	virtual void contributeToMatrixDimension(unsigned int * const, unsigned int * const) = 0;
+    /// Add the Mechanical State Dimension [DOF number * DOF dimension] to the global matrix dimension
+    virtual void contributeToMatrixDimension(unsigned int * const, unsigned int * const) = 0;
 
-	/// Load local mechanical data stored in the state in a global BaseVector basically stored in solvers
-	virtual void loadInBaseVector(defaulttype::BaseVector *, VecId , unsigned int &) = 0;
+    /// Load local mechanical data stored in the state in a global BaseVector basically stored in solvers
+    virtual void loadInBaseVector(defaulttype::BaseVector *, VecId , unsigned int &) = 0;
 
-	/// Add data stored in a BaseVector to a local mechanical vector of the MechanicalState
-	virtual void addBaseVectorToState(VecId , defaulttype::BaseVector *, unsigned int &) = 0;
+    /// Load local mechanical data stored in the state in a (possibly smaller) BaseVector 
+    virtual void loadInVector(defaulttype::BaseVector *, VecId , unsigned int) = 0;
 
-	/// Update offset index during the subgraph traversal
-	virtual void setOffset(unsigned int &) = 0;
+    /// Add data stored in a BaseVector to a local mechanical vector of the MechanicalState
+    virtual void addBaseVectorToState(VecId , defaulttype::BaseVector *, unsigned int &) = 0;
+
+    /// Add data stored in a Vector (whose size is smaller or equal to the State vector)  to a local mechanical vector of the MechanicalState
+    virtual void addVectorToState(VecId , defaulttype::BaseVector *, unsigned int &) = 0;
+
+    /// Update offset index during the subgraph traversal
+    virtual void setOffset(unsigned int &) = 0;
 
     /// @}
 

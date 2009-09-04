@@ -99,7 +99,7 @@ namespace sofa
 
 	
 
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
 	if (constraintAcc.getValue())  
 	  {
 	    solveConstraint(VecId::dx());
@@ -112,7 +112,7 @@ namespace sofa
 	  {
 	    vel.peq(acc,dt);
 
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
 	    if (constraintVel.getValue())
 	      {
 		solveConstraint(VecId::velocity());
@@ -120,7 +120,7 @@ namespace sofa
 #endif
 	    pos.peq(vel,dt);
 
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
 	    if (constraintPos.getValue())
 	      {
 		solveConstraint(VecId::position(),!constraintVel.getValue());
@@ -132,7 +132,7 @@ namespace sofa
 	  {
 	    pos.peq(vel,dt);
 
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
 	    bool propagateCorrectOfPositionOnVelocity = !constraintVel.getValue();
 	    solveConstraint(VecId::position(), propagateCorrectOfPositionOnVelocity);
 	    if (propagateCorrectOfPositionOnVelocity)
@@ -149,7 +149,7 @@ namespace sofa
 
 	    vel.peq(acc,dt);
 
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
 	    if (constraintVel.getValue())
 	      {
 		solveConstraint(VecId::velocity());
@@ -161,7 +161,7 @@ namespace sofa
 	  typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
 	  VMultiOp ops;
 	  ops.resize(2);
-	  // change order of operations depending on the sympletic flag
+	  // change order of operations depending on the symplectic flag
 	  int op_vel = (symplectic.getValue()?0:1);
 	  int op_pos = (symplectic.getValue()?1:0);
 	  ops[op_vel].first = (VecId)vel;
@@ -174,7 +174,7 @@ namespace sofa
 	  vmop.execute(this->getContext());
 
 
-#ifdef SOFA_HAVE_LAPACK
+#ifdef SOFA_HAVE_EIGEN2
 	  applyConstraints();
 #endif
 

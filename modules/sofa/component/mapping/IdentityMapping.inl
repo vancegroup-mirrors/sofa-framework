@@ -175,23 +175,55 @@ void IdentityMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out, const t
 {
     //const unsigned int N = Deriv::size() < InDeriv::size() ? Deriv::size() : InDeriv::size();
     out.resize(in.size());
-    for(unsigned int i=0;i<out.size();i++)
-    {
-        //for (unsigned int j=0;j < N;++j)
-        //    out[i][j] = (OutReal)in[i][j];
-        eq(out[i], in[i]);
-    }
+
+    if ( !(maskTo->isInUse()) )
+      {
+        for(unsigned int i=0;i<out.size();i++)
+          {
+            //for (unsigned int j=0;j < N;++j)
+            //    out[i][j] = (OutReal)in[i][j];
+            eq(out[i], in[i]);
+          }
+      }
+    else
+      {
+        typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+        const ParticleMask::InternalStorage &indices=maskTo->getEntries();
+        ParticleMask::InternalStorage::const_iterator it;
+        for (it=indices.begin();it!=indices.end();it++)
+          {
+            const int i=(int)(*it);
+            eq(out[i], in[i]);
+          }
+      }
 }
 
 template <class BasicMapping>
 void IdentityMapping<BasicMapping>::applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 {
     //const unsigned int N = Deriv::size() < InDeriv::size() ? Deriv::size() : InDeriv::size();
-    for(unsigned int i=0;i<out.size();i++)
+
+  if ( !(maskTo->isInUse()) )
     {
-        //for (unsigned int j=0;j < N;++j)
-	//    out[i][j] += (Real)in[i][j];
-        peq(out[i], in[i]);
+      maskFrom->setInUse(false);
+      for(unsigned int i=0;i<in.size();i++)
+        {
+          //for (unsigned int j=0;j < N;++j)
+          //    out[i][j] += (Real)in[i][j];
+          peq(out[i], in[i]);
+        }
+    }
+  else
+    {      
+      typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+      const ParticleMask::InternalStorage &indices=maskTo->getEntries();
+      ParticleMask::InternalStorage::const_iterator it;
+      for (it=indices.begin();it!=indices.end();it++)
+        {
+          const int i=(int)(*it);
+          peq(out[i], in[i]);
+          maskFrom->insertEntry(i);
+        }
     }
 }
 
@@ -205,11 +237,13 @@ void IdentityMapping<BaseMapping>::applyJT( typename In::VecConst& out, const ty
     {
         typename In::SparseVecDeriv& o = out[i+outSize];
         OutConstraintIterator itOut;
-        for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+        std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+        for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
             InDeriv data; eq(data, itOut->second);
-            o.insert( indexIn, data);
+            o.add( indexIn, data);
         }
     }
 }

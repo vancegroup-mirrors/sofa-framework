@@ -45,11 +45,11 @@ int PointSetTopologyContainerClass = core::RegisterObject("Point set topology co
 ;
 
 PointSetTopologyContainer::PointSetTopologyContainer(int npoints)
-: nbPoints(initData(&nbPoints, (unsigned int )npoints, "nbPoints", "Number of points"))
-, d_initPoints(initDataPtr(&d_initPoints, &initPoints, "points", "Initial position of points"))
+: nbPoints (initData(&nbPoints, (unsigned int )npoints, "nbPoints", "Number of points"))
+, d_initPoints (initDataPtr(&d_initPoints, &initPoints, "points", "Initial position of points"))
 {
 }
-
+  
 void PointSetTopologyContainer::setNbPoints(int n)
 {
     nbPoints.setValue(n);
@@ -112,7 +112,7 @@ void PointSetTopologyContainer::init()
 
         if(nbPoints.getValue() == 0)
 	{
-		sofa::component::MeshLoader* loader;
+          sofa::component::container::MeshLoader* loader;
 		this->getContext()->get(loader);
 
 		if(loader)
@@ -122,7 +122,7 @@ void PointSetTopologyContainer::init()
 	}
 }
 
-void PointSetTopologyContainer::loadFromMeshLoader(sofa::component::MeshLoader* loader)
+void PointSetTopologyContainer::loadFromMeshLoader(sofa::component::container::MeshLoader* loader)
 {
     if (!initPoints.empty()) return;
     nbPoints.setValue( loader->getNbPoints() );
@@ -147,6 +147,7 @@ void PointSetTopologyContainer::removePoint()
 {
     nbPoints.setValue(nbPoints.getValue()-1);
 }
+
 
 } // namespace topology
 

@@ -43,7 +43,7 @@ namespace topology
 	typename DataTypes::Real EdgeSetGeometryAlgorithms< DataTypes >::computeEdgeLength( const EdgeID i) const 
 	{
 		const Edge &e = this->m_topology->getEdge(i);
-		const VecCoord& p = *(this->object->getX());
+		const VecCoord& p = *(this->object->getX()); 
 		const Real length = (DataTypes::getCPos(p[e[0]])-DataTypes::getCPos(p[e[1]])).norm();
 		return length;
 	}
@@ -156,42 +156,44 @@ namespace topology
 	//
 	template<class DataTypes>
 	sofa::helper::vector< double > EdgeSetGeometryAlgorithms<DataTypes>::compute2PointsBarycoefs(
-		const Vec<3,double> &p,
-		unsigned int ind_p1,
-		unsigned int ind_p2) const
+												     const Vec<3,double> &p,
+												     unsigned int ind_p1,
+												     unsigned int ind_p2) const
 	{
-		const double ZERO = 1e-6;
+	  const double ZERO = 1e-6;
+	  
+	  sofa::helper::vector< double > baryCoefs;
+	  
+	  const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
+	  const typename DataTypes::Coord& c0 = vect_c[ind_p1];
+	  const typename DataTypes::Coord& c1 = vect_c[ind_p2];
 
-		sofa::helper::vector< double > baryCoefs;
+	  Vec<3,double> a; DataTypes::get(a[0], a[1], a[2], c0);
+	  Vec<3,double> b; DataTypes::get(b[0], b[1], b[2], c1);
+	  
+	  double dis = (b - a).norm();
+	  double coef_a, coef_b;
+	  
+		
+	  if(dis < ZERO)
+	  {
+	    coef_a = 0.5;
+	    coef_b = 0.5;
+	  }
+	  else
+	  {
+	    coef_a = (p - b).norm() / dis;
+	    coef_b = (p - a).norm() / dis;
+	  }
 
-    	const typename DataTypes::VecCoord& vect_c = *(this->object->getX());
-    	const typename DataTypes::Coord& c0 = vect_c[ind_p1];
-    	const typename DataTypes::Coord& c1 = vect_c[ind_p2];
-
-		Vec<3,double> a; DataTypes::get(a[0], a[1], a[2], c0);
-    	Vec<3,double> b; DataTypes::get(a[0], a[1], a[2], c1);
-
-    	double dis = (b - a).norm();
-		double coef_a, coef_b;
-
-		if(dis < ZERO)
-		{
-			coef_a = 0.5;
-			coef_b = 0.5;
-		}
-		else
-		{
-			coef_a = (p - b).norm() / dis;
-			coef_b = (p - a).norm() / dis;
-		}
-
-		baryCoefs.push_back(coef_a); 
-    	baryCoefs.push_back(coef_b); 
-
-    	return baryCoefs;
-    	
+	  baryCoefs.push_back(coef_a); 
+	  baryCoefs.push_back(coef_b); 
+	  
+	  return baryCoefs;
+	  
 	}
 
+  
     /// Write the current mesh into a msh file
     template <typename DataTypes>
     void EdgeSetGeometryAlgorithms<DataTypes>::writeMSHfile(const char *filename) const       
@@ -269,6 +271,220 @@ namespace topology
 
     	return baryCoefs;
 	}
+
+
+  template<class DataTypes>
+  sofa::helper::vector< double > EdgeSetGeometryAlgorithms<DataTypes>::computePointProjectionOnEdge (const EdgeID edgeIndex,
+												     sofa::defaulttype::Vec<3,double> c,
+												     bool& intersected)
+  {
+    
+    // Compute projection point coordinate H using parametric straight lines equations.
+    //
+    //            C                          - Compute vector orthogonal to (ABX), then vector collinear to (XH)
+    //          / .                          - Solve the equation system of straight lines intersection
+    //        /   .                          - Compute H real coordinates 
+    //      /     .                          - Compute H bary coef on AB
+    //    /       .
+    //   A ------ H -------------B
+    
+
+    Coord coord_AB, coord_AC;
+    Coord coord_edge1[2], coord_edge2[2];
+    
+    // Compute Coord of first edge AB:
+    Edge theEdge = this->m_topology->getEdge (edgeIndex);
+    getEdgeVertexCoordinates (edgeIndex, coord_edge1);
+    coord_AB = coord_edge1[1] - coord_edge1[0];
+        
+    // Compute Coord of tmp vector AC:
+    DataTypes::add (coord_edge2[0], c[0], c[1], c[2]);
+    coord_AC = coord_edge2[0] - coord_edge1[0];
+
+    // Compute Coord of second edge XH:
+    
+    sofa::defaulttype::Vec<3,double> AB; DataTypes::get(AB[0], AB[1], AB[2], coord_AB);
+    sofa::defaulttype::Vec<3,double> AC; DataTypes::get(AC[0], AC[1], AC[2], coord_AC);
+    sofa::defaulttype::Vec<3,double> ortho_ABC = cross (AB, AC)*1000;
+    sofa::defaulttype::Vec<3,double> coef_CH = cross (ortho_ABC, AB)*1000;
+	
+    for (unsigned int i = 0; i<3; i++)
+      coord_edge2[1][i] = coord_edge2[0][i] + (float)coef_CH[i];
+
+    // Compute Coord of projection point H:
+    Coord coord_H = compute2EdgesIntersection ( coord_edge1, coord_edge2, intersected);
+    sofa::defaulttype::Vec<3,double> h; DataTypes::get(h[0], h[1], h[2], coord_H);
+
+    sofa::helper::vector< double > barycoord = compute2PointsBarycoefs(h, theEdge[0], theEdge[1]);
+    return barycoord;
+    
+  }
+  
+
+
+  
+  template<class DataTypes>
+  typename DataTypes::Coord EdgeSetGeometryAlgorithms<DataTypes>::compute2EdgesIntersection (const Coord edge1[2], const Coord edge2[2], bool& intersected)
+  {
+
+    // Creating director vectors:
+    Coord vec1 = edge1[1] - edge1[0];
+    Coord vec2 = edge2[1] - edge2[0];
+    Coord X; X[0]=0; X[1]=0; X[2]=0;
+
+    int ind1 = -1;
+    int ind2 = -1;
+    double epsilon = 0.0001;
+    double lambda = 0.0;
+    double alpha = 0.0;
+
+    // Searching vector composante not null:
+    for (unsigned int i=0; i<3; i++)
+    {
+      if ( (vec1[i] > epsilon) || (vec1[i] < -epsilon) )
+      {
+	ind1 = i;
+	
+	for (unsigned int j = 0; j<3; j++)
+	  if ( (vec2[j] > epsilon || vec2[j] < -epsilon) && (j != i))
+	  {
+	    ind2 = j;
+
+	    // Solving system:
+	    double coef_lambda = vec1[ind1] - ( vec1[ind2]*vec2[ind1]/vec2[ind2] );
+
+	    if (coef_lambda < epsilon && coef_lambda > -epsilon)
+	      break;
+
+	    lambda = ( edge2[0][ind1] - edge1[0][ind1] + (edge1[0][ind2] - edge2[0][ind2])*vec2[ind1]/vec2[ind2]) * 1/coef_lambda;
+	    alpha = (edge1[0][ind2] + lambda * vec1[ind2] - edge2[0][ind2]) * 1 /vec2[ind2];
+	    break;
+	  }
+      }
+      
+      if (lambda != 0.0)
+	break; 
+    }
+
+    if ((ind1 == -1) || (ind2 == -1))
+    {
+      std::cout << "Error: EdgeSetGeometryAlgorithms::compute2EdgeIntersection, vector director is null." << std::endl;
+      intersected = false;
+      return X;
+    }
+
+    // Compute X coords:
+    for (unsigned int i = 0; i<3; i++)
+      X[i] = edge1[0][i] + (float)lambda * vec1[i];
+
+    intersected = true;
+    
+    // Check if lambda found is really a solution
+    for (unsigned int i = 0; i<3; i++)
+      if ( (X[i] - edge2[0][i] - alpha * vec2[i]) > 0.1 )
+      {
+	std::cout << "Error: EdgeSetGeometryAlgorithms::compute2EdgeIntersection, edges don't intersect themself." << std::endl;
+	intersected = false;
+      }
+    
+    return X;
+  }
+
+
+  template<class DataTypes>
+  void EdgeSetGeometryAlgorithms<DataTypes>::draw()
+  {
+
+    PointSetGeometryAlgorithms<DataTypes>::draw();
+
+    // Draw Edges indices
+    if (debugViewEdgeIndices.getValue())
+    {
+      Mat<4,4, GLfloat> modelviewM;
+      const VecCoord& coords = *(this->object->getX());
+      glColor3f(1.0,0.0,1.0);
+      glDisable(GL_LIGHTING);
+      float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
+
+      //for edges:
+      scale = scale/2;
+      
+      const sofa::helper::vector <Edge>& edgeArray = this->m_topology->getEdges();
+      
+      for (unsigned int i =0; i<edgeArray.size(); i++)
+      {
+	
+	Edge the_edge = edgeArray[i];
+	Coord baryCoord;
+	Coord vertex1 = coords[ the_edge[0] ];
+	Coord vertex2 = coords[ the_edge[1] ];
+	  
+	for (unsigned int k = 0; k<3; k++)
+	  baryCoord[k] = (vertex1[k]+vertex2[k])/2;
+
+	std::ostringstream oss;
+	oss << i;
+	std::string tmp = oss.str();
+	const char* s = tmp.c_str();
+	glPushMatrix();
+
+	glTranslatef(baryCoord[0], baryCoord[1], baryCoord[2]);
+	glScalef(scale,scale,scale);
+
+	// Makes text always face the viewer by removing the scene rotation
+	// get the current modelview matrix
+	glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
+	modelviewM.transpose();
+
+	Vec3d temp(baryCoord[0], baryCoord[1], baryCoord[2]);
+	temp = modelviewM.transform(temp);
+	
+	//glLoadMatrixf(modelview);
+	glLoadIdentity();
+	
+	glTranslatef(temp[0], temp[1], temp[2]);
+	glScalef(scale,scale,scale);
+	
+	while(*s){
+	  glutStrokeCharacter(GLUT_STROKE_ROMAN, *s);
+	  s++;
+	}
+	
+	glPopMatrix();
+      }
+    }
+
+
+    // Draw edges
+    if (_draw.getValue())
+    {
+      const sofa::helper::vector<Edge> &edgeArray = this->m_topology->getEdges();
+      
+      if (!edgeArray.empty())
+      {
+	glDisable(GL_LIGHTING);
+	glColor3f(1.0,0.0,1.0);
+	const VecCoord& coords = *(this->object->getX());
+
+	glBegin(GL_LINES);
+	for (unsigned int i = 0; i<edgeArray.size(); i++)
+	{
+	  const Edge& e = edgeArray[i];
+	  Coord coordP1 = coords[e[0]];
+	  Coord coordP2 = coords[e[1]];
+	  glVertex3d(coordP1[0], coordP1[1], coordP1[2]);
+	  glVertex3d(coordP2[0], coordP2[1], coordP2[2]);
+	}
+	glEnd();
+      }
+    }
+    
+  }
+  
+  
+
+  
+  
 } // namespace topology
 
 } // namespace component

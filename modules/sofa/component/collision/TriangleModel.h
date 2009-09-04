@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_COLLISION_TRIANGLEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
+#include <sofa/component/collision/LocalMinDistanceFilter.h>
 #include <sofa/component/container/MechanicalObject.h>
 #include <sofa/component/topology/TriangleData.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
@@ -45,6 +46,7 @@ namespace collision
 using namespace sofa::defaulttype;
 
 class TriangleModel;
+class TriangleLocalMinDistanceFilter;
 
 class Triangle : public core::TCollisionElementIterator<TriangleModel>
 {
@@ -55,7 +57,7 @@ public:
 
     const Vector3& p1() const;
     const Vector3& p2() const;
-    const Vector3& p3() const;
+    const Vector3& p3() const; 
     int p1Index() const;
     int p2Index() const;
     int p3Index() const;
@@ -134,6 +136,8 @@ protected:
 
     sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
 
+	TriangleLocalMinDistanceFilter *m_lmdFilter;
+
 public:
 
     TriangleModel();
@@ -159,6 +163,19 @@ public:
 
     const VecCoord& getX() const { return *(getMechanicalState()->getX()); }
     const sofa::core::componentmodel::topology::BaseMeshTopology::SeqTriangles& getTriangles() const { return *triangles; }
+
+	TriangleLocalMinDistanceFilter *getFilter() const;
+
+	//template< class TFilter >
+	//TFilter *getFilter() const
+	//{
+	//	if (m_lmdFilter != 0)
+	//		return m_lmdFilter;
+	//	else
+	//		return &m_emptyFilter;
+	//}
+
+	void setFilter(TriangleLocalMinDistanceFilter * /*lmdFilter*/);
 };
 
 inline Triangle::Triangle(TriangleModel* model, int index)

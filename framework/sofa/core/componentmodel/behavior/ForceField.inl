@@ -30,9 +30,6 @@
 #include <sofa/core/objectmodel/DataPtr.h>
 #include "ForceField.h"
 #include <iostream>
-using std::cerr;
-using std::endl;
-
 namespace sofa
 {
 
@@ -44,6 +41,9 @@ namespace componentmodel
 
 namespace behavior
 {
+
+using std::cerr;
+using std::endl;
 
 template<class DataTypes>
 ForceField<DataTypes>::ForceField(MechanicalState<DataTypes> *mm)
@@ -69,7 +69,10 @@ template<class DataTypes>
 void ForceField<DataTypes>::addForce()
 {
     if (mstate)
+      {
+        mstate->forceMask.setInUse(this->useMask());
         addForce(*mstate->getF(), *mstate->getX(), *mstate->getV()); 
+      }
 }
 
 template<class DataTypes>

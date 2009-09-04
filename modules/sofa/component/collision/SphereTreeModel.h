@@ -96,10 +96,10 @@ public:
     @brief A Sphere Tree based collision object: No tool to generation .sph file are provided by Sofa. 
       Tools can be found at http://isg.cs.tcd.ie/spheretree/ . If you manage to integrate an automatic generation tool to provide .sph files from .obj, don't hesitate to share it to the Sofa's comunity.
  */
-class SOFA_COMPONENT_COLLISION_API SphereTreeModel : public component::MechanicalObject<Vec3Types>, public core::CollisionModel
+class SOFA_COMPONENT_COLLISION_API SphereTreeModel : public component::container::MechanicalObject<Vec3Types>, public core::CollisionModel
 {
 public:
-	typedef component::MechanicalObject<Vec3Types> Inherit;
+	typedef component::container::MechanicalObject<Vec3Types> Inherit;
 	typedef Vec3Types InDataTypes;
 	typedef Vec3Types DataTypes;
 	typedef SingleSphere Element;

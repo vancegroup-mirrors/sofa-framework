@@ -61,7 +61,8 @@ namespace sofa
           typedef typename Out::VecDeriv VecDeriv;
           typedef typename Out::Coord Coord;
           typedef typename Out::Deriv Deriv;
-          typedef typename std::map<unsigned int, Deriv>::const_iterator OutConstraintIterator;
+          typedef typename defaulttype::SparseConstraint<Deriv> OutSparseConstraint;
+          typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
     
           typedef typename In::Coord InCoord;
           typedef typename In::Deriv InDeriv;
@@ -75,6 +76,9 @@ namespace sofa
           sofa::helper::vector<Coord> initPos; // pos: point coord in  the reference frame i, where i=0..n ( + 1 for the blended reference frame)
           sofa::helper::vector<Coord> initBlendedPos; // pos: point coord in  the blended reference frames, where i=0..n ( + 1 for the blended reference frame)
           sofa::helper::vector<Coord> rotatedPoints;
+
+          core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskFrom;
+          core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskTo;
 
           Data<sofa::helper::vector<unsigned int> > repartition;
           Data<sofa::helper::vector<double> >  coefs;

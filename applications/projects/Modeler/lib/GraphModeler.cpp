@@ -26,6 +26,8 @@
 ******************************************************************************/
 #include "GraphModeler.h"
 #include "AddPreset.h"
+#include <sofa/core/ComponentLibrary.h>
+
 
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/gui/qt/FileManagement.h> //static functions to manage opening/ saving of files
@@ -48,6 +50,8 @@
 #include <qmessagebox.h>
 #endif
 
+using sofa::core::ComponentLibrary;
+
 namespace sofa
 {
 
@@ -56,7 +60,6 @@ namespace sofa
 
     namespace qt
     {
-
 
 #ifndef SOFA_QT4
       typedef QPopupMenu Q3PopupMenu;
@@ -102,19 +105,19 @@ namespace sofa
 	return child;
       }
 
-      BaseObject *GraphModeler::addComponent(GNode *parent, ClassInfo* entry, std::string templateName, bool saveHistory, bool displayWarning)
+      BaseObject *GraphModeler::addComponent(GNode *parent, const ClassEntry* entry, const std::string &templateName, bool saveHistory, bool displayWarning)
       {
 	BaseObject *object=NULL;;
 	if (!parent || !entry) return object;
 
-
+        std::string templateUsed = templateName;
 
 	xml::ObjectElement description("Default", entry->className.c_str() );
 
 	if (!templateName.empty()) description.setAttribute("template", templateName.c_str());
 
 
-	ClassCreator* c;
+	Creator* c;
 
 	if (entry->creatorMap.size() <= 1)
 	  c=entry->creatorMap.begin()->second;
@@ -122,7 +125,8 @@ namespace sofa
 	  {
 	    if (templateName.empty())
 	      {
-		c=entry->creatorMap.find(entry->defaultTemplate)->second; templateName=entry->defaultTemplate;
+		c=entry->creatorMap.find(entry->defaultTemplate)->second;
+                templateUsed=entry->defaultTemplate;
 	      }
 	    else
 	      c=entry->creatorMap.find(templateName)->second;
@@ -161,7 +165,7 @@ namespace sofa
 			const QString warning=
 			  QString("Your component won't be created: \n \t * <")
 			  + QString(reference->getTemplateName().c_str()) + QString("> DOFs are used in the Node ") + QString(parent->getName().c_str()) + QString("\n\t * <")
-			  + QString(templateName.c_str()) + QString("> is the type of your ") + QString(entry->className.c_str());
+			  + QString(templateUsed.c_str()) + QString("> is the type of your ") + QString(entry->className.c_str());
 			if ( QMessageBox::warning ( this, caption,warning, QMessageBox::Cancel | QMessageBox::Default | QMessageBox::Escape, QMessageBox::Ignore ) == QMessageBox::Cancel )
 			  return object;
 		      }
@@ -178,11 +182,9 @@ namespace sofa
 
       void GraphModeler::dropEvent(QDropEvent* event)
       {
-	QPushButton *push = (QPushButton *)event->source();
-	if (push)  push->setDown(false);
-
 	QString text;
 	Q3TextDrag::decode(event, text);
+
 	if (!text.isEmpty())
 	  {
 	    std::string filename(text.ascii());
@@ -207,10 +209,9 @@ namespace sofa
 		return;
 	      }
 	  }
-	if (library.find(event->source()) != library.end())
+	if (text == QString("ComponentCreation"))
 	  {
-	    std::string templateName =  text.ascii();
-	    BaseObject *newComponent = addComponent(getGNode(event->pos()), library.find(event->source())->second.first, templateName );
+ 	    BaseObject *newComponent = addComponent(getGNode(event->pos()), lastSelectedComponent.second, lastSelectedComponent.first );
 	    if (newComponent)
 	      {
 		Q3ListViewItem *after = graphListener->items[newComponent];
@@ -458,7 +459,9 @@ namespace sofa
 	  {
 	    //We can't use the parent node, as it is null
 	    if (!node) return NULL;
+            delete newNode;
 	    newNode = node;
+
 	  }
 	else
 	  {
@@ -479,11 +482,16 @@ namespace sofa
 	      }
 	    else
 	      {
+                const ComponentLibrary *component = sofaLibrary->getComponent(it->getType());
 		//Configure the new Component
-		std::string templatename; std::string templateAttribute("template");
+                const std::string templateAttribute("template");
+		std::string templatename;                 
 		templatename = it->getAttribute(templateAttribute, "");
-		ClassInfo *info = getCreatorComponent(it->getType());
+
+
+		const ClassEntry *info = component->getEntry();
 		BaseObject *newComponent=addComponent(newNode, info, templatename, saveHistory,displayWarning);
+                if (!newComponent) continue;
  		configureElement(newComponent, it);
 		Q3ListViewItem* itemGraph = graphListener->items[newComponent];
 
@@ -499,18 +507,6 @@ namespace sofa
 	newNode->sendl.clearWarnings();
 
 	return newNode;
-      }
-
-      ClassInfo *GraphModeler::getCreatorComponent(std::string name)
-      {
-
-	ComponentMap::iterator it;
-	for (it=library.begin();it!=library.end();it++)
-	  {
-	    if (it->second.first->className == name)
-	      return it->second.first;
-	  }
-	return NULL;
       }
 
       void GraphModeler::configureElement(Base* b, xml::BaseElement *elem)
@@ -666,6 +662,15 @@ namespace sofa
 	if (elem.presenceAttribute(std::string("fileMesh")))     elem.setAttribute(std::string("fileMesh"),     meshFile.c_str());
 	if (elem.presenceAttribute(std::string("fileTopology"))) elem.setAttribute(std::string("fileTopology"), meshFile.c_str());
 
+	if (elem.presenceAttribute(std::string("dx2"))) elem.setAttribute(std::string("dx2"), translation[0].c_str());
+	if (elem.presenceAttribute(std::string("dy2"))) elem.setAttribute(std::string("dy2"), translation[1].c_str());
+	if (elem.presenceAttribute(std::string("dz2"))) elem.setAttribute(std::string("dz2"), translation[2].c_str());
+
+	if (elem.presenceAttribute(std::string("rx2"))) elem.setAttribute(std::string("rx2"), rotation[0].c_str());
+	if (elem.presenceAttribute(std::string("ry2"))) elem.setAttribute(std::string("ry2"), rotation[1].c_str());
+	if (elem.presenceAttribute(std::string("rz2"))) elem.setAttribute(std::string("rz2"), rotation[2].c_str());
+
+
 	if (elem.presenceAttribute(std::string("dx"))) elem.setAttribute(std::string("dx"), translation[0].c_str());
 	if (elem.presenceAttribute(std::string("dy"))) elem.setAttribute(std::string("dy"), translation[1].c_str());
 	if (elem.presenceAttribute(std::string("dz"))) elem.setAttribute(std::string("dz"), translation[2].c_str());
@@ -775,6 +780,7 @@ namespace sofa
       void GraphModeler::deleteComponent()
       {
  	Q3ListViewItem *item = currentItem();
+        if (!item) item = selectedItem();
 	deleteComponent(item);
       }
 
@@ -1051,12 +1057,15 @@ namespace sofa
       {
 	if (selectedItem())
 	  {
+	    Q3ListViewItem *last=selectedItem();
+	    while(last->nextSibling()) last=last->nextSibling();
 	    GNode *node = getGNode(selectedItem());
 	    loadNode(node, path);
 	    Q3ListViewItem *pasteItem=selectedItem();
 	    Q3ListViewItem *insertedItem=selectedItem();
 	    while(insertedItem->nextSibling()) insertedItem=insertedItem->nextSibling();
-	    initItem(insertedItem, pasteItem);
+            //Something has been add to the graph
+            if (insertedItem != last)  initItem(insertedItem, pasteItem);
 	  }
 	return selectedItem();
       }

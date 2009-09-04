@@ -28,6 +28,7 @@
 #define SOFA_HELPER_GL_BASICSHAPES_H
 
 #include <sofa/helper/gl/template.h>
+#include <sofa/helper/system/glu.h>
 #include <math.h>
 
 namespace sofa
@@ -93,7 +94,7 @@ namespace sofa
         drawCone( p1,p2,rad,rad,subd);
       }
 
-	  
+
 	  template <typename V>
 	  void drawArrow(const V& p1, const V& p2, const float& rad, const int subd=8)
 	  {
@@ -101,8 +102,8 @@ namespace sofa
 		  drawCylinder( p1,p3,rad,subd);
 		  drawCone( p3,p2,rad*2.5,0,subd);
 	  }
-	  
-	  
+
+
       template <typename V>
       void drawSphere(const V& center, const float& rad, const int subd1=8, const int subd2=8)
       {
@@ -110,6 +111,19 @@ namespace sofa
         gluQuadricDrawStyle(sphere, GLU_FILL);
         gluQuadricOrientation(sphere, GLU_OUTSIDE);
         gluQuadricNormals(sphere, GLU_SMOOTH);
+        glPushMatrix();
+        helper::gl::glTranslateT( center );
+        gluSphere(sphere,2.0*rad,subd1,subd2);
+        glPopMatrix();
+// 		delete sphere;
+      }
+
+      template <typename V>
+      void drawWireSphere(const V& center, const float& rad, const int subd1=8, const int subd2=8)
+      {
+        GLUquadricObj*	sphere = gluNewQuadric();
+        gluQuadricDrawStyle(sphere, GLU_LINE);
+        gluQuadricOrientation(sphere, GLU_OUTSIDE);
         glPushMatrix();
         helper::gl::glTranslateT( center );
         gluSphere(sphere,2.0*rad,subd1,subd2);

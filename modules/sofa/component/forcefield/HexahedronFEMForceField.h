@@ -45,6 +45,12 @@ namespace sofa
       using namespace sofa::defaulttype;
       using sofa::helper::vector;
 
+      template<class DataTypes>
+      class HexahedronFEMForceFieldInternalData
+      {
+      public:
+      };
+
       /** Compute Finite Element forces based on hexahedral elements.
        *
        * Corotational hexahedron from 
@@ -84,7 +90,7 @@ namespace sofa
         typedef core::componentmodel::topology::BaseMeshTopology::index_type Index;
 #ifdef SOFA_NEW_HEXA
 		typedef core::componentmodel::topology::BaseMeshTopology::Hexa Element;
-		typedef core::componentmodel::topology::BaseMeshTopology::SeqHexas VecElement;
+		typedef core::componentmodel::topology::BaseMeshTopology::SeqHexahedra VecElement;
 #else
 		typedef core::componentmodel::topology::BaseMeshTopology::Cube Element;
 		typedef core::componentmodel::topology::BaseMeshTopology::SeqCubes VecElement;
@@ -97,7 +103,7 @@ namespace sofa
 		
 
       protected:
-        //component::MechanicalObject<DataTypes>* object;
+        //component::container::MechanicalObject<DataTypes>* object;
 		  
 
         typedef Vec<24, Real> Displacement;		///< the displacement vector
@@ -131,6 +137,9 @@ namespace sofa
 			  static const int _indices[8]; ///< indices ordering is different than in topology node
 #endif
 
+    HexahedronFEMForceFieldInternalData<DataTypes> *data;
+    friend class HexahedronFEMForceFieldInternalData<DataTypes>;
+
 public:
 			  
 	
@@ -150,6 +159,7 @@ public:
             , _sparseGrid(NULL)
             , _indexedElements(NULL)
             , _initialPoints(initData(&_initialPoints,"initialPoints", "Initial Position"))
+            , data(new HexahedronFEMForceFieldInternalData<DataTypes>())
             , f_method(initData(&f_method,std::string("large"),"method","\"large\" or \"polar\" displacements"))
             , f_poissonRatio(initData(&f_poissonRatio,(Real)0.45f,"poissonRatio",""))
             , f_youngModulus(initData(&f_youngModulus,(Real)5000,"youngModulus",""))
@@ -203,7 +213,7 @@ public:
 
 		void setComputeGlobalMatrix(bool val) { this->f_assembling.setValue(val); }
 
-        //	component::MechanicalObject<DataTypes>* getObject() { return object; }
+        //	component::container::MechanicalObject<DataTypes>* getObject() { return object; }
 
         virtual void init();
 		virtual void reinit();

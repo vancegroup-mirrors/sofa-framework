@@ -31,6 +31,8 @@
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/helper/gl/template.h>
 
+#include <sofa/simulation/tree/GNode.h>
+
 namespace sofa
 {
 
@@ -39,6 +41,8 @@ namespace component
 
 namespace mapping
 {
+
+using sofa::simulation::tree::GNode;
 
 template <class BasicMapping>
 ArticulatedSystemMapping<BasicMapping>::ArticulatedSystemMapping(In* from, Out* to)
@@ -68,15 +72,18 @@ void ArticulatedSystemMapping<BasicMapping>::init()
 
 	if (!m_rootModelName.getValue().empty())
 	{
+		
 		std::vector< std::string > tokens(0);
-		std::string str = m_rootModelName.getValue();
-		std::string::size_type begin_index = 0;
-		std::string::size_type end_index = 0;
-    if (rootModel)
-    {
-		serr << "Root Model found : Name = " << rootModel->getName() << sendl;
+		std::string path = m_rootModelName.getValue();
+		
+		 this->fromModel->getContext()->get(rootModel , path);
+		if(rootModel)
+			sout << "Root Model found : Name = " << rootModel->getName() << sendl;
+		else
+			serr << " NO ROOT MODEL FOUND"<<sendl;		
 
-    }
+
+    /*
 		while ( (end_index = str.find("/", begin_index)) != std::string::npos )
 		{
 			tokens.push_back(str.substr(begin_index, end_index - begin_index));
@@ -108,12 +115,17 @@ void ArticulatedSystemMapping<BasicMapping>::init()
 
 		if (node != 0)
 			node->getNodeObject(rootModel);
+		*/	
 
 	}
 	else
 	{
 		context->parent->getNodeObject(rootModel);
+		if (rootModel)
+			sout << "Root Model found : Name = " << rootModel->getName() << sendl;
 	}
+	
+	
 
 	CoordinateBuf.clear();
 	CoordinateBuf.resize(xfrom.size());
@@ -134,6 +146,8 @@ void ArticulatedSystemMapping<BasicMapping>::init()
 		// sout << "(*ac)->OrientationArticulationCenter : " << (*ac)->OrientationArticulationCenter << sendl;
 		// todo : warning if a (*a)->articulationIndex.getValue() exceed xfrom size !
 	}
+	
+	
 
 	apply(xto, xfrom, (rootModel==NULL ? NULL : rootModel->getX()));
 
@@ -157,13 +171,18 @@ void ArticulatedSystemMapping<BasicMapping>::reset()
 template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::apply( typename Out::VecCoord& out, const typename In::VecCoord& in, const typename InRoot::VecCoord* inroot  )
 {
-    // Copy the root position if a rigid root model is present
+    //std::cout<<" ArticulatedSystemMapping<BasicMapping>::apply called with in: "<<in<<"  -- inroot"<<(*inroot)<<std::endl;
+	
+
+	
+	// Copy the root position if a rigid root model is present
     if (rootModel)
     {
         out[0] = (*inroot)[rootModel->getSize()-1];
-	//	sout << "Root Model Name = " << rootModel->getName() << sendl;
+		
      //   out[0] = (*rootModel->getX())[rootModel->getSize()-1];
     }
+
 
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator ac = articulationCenters.begin();
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator acEnd = articulationCenters.end();
@@ -193,7 +212,7 @@ void ArticulatedSystemMapping<BasicMapping>::apply( typename Out::VecCoord& out,
 
 		switch(process)	{
 			case 0: // 0-(default) articulation are treated one by one, the axis of the second articulation is updated by the potential rotation of the first articulation
-				//			   potential problems could arise when rotation exceed 90Â° (known problem of euler angles)
+				//			   potential problems could arise when rotation exceed 90° (known problem of euler angles)
 			{
 				// the position of the child is reset to its rest position (based on the postion of the articulation center)
 				out[child].getOrientation() = out[parent].getOrientation();
@@ -203,9 +222,13 @@ void ArticulatedSystemMapping<BasicMapping>::apply( typename Out::VecCoord& out,
 				APos = (*ac)->globalPosition.getValue();
 				for (; a != aEnd; a++)
 				{
+					Vec<3,Real> axis = (*a)->axis.getValue();
+					axis.normalize();
+					(*a)->axis.setValue(axis);
+					
 					int ind = (*a)->articulationIndex.getValue();
 					InCoord value = in[ind];
-					Vec<3,Real> axis = out[child].getOrientation().rotate((*a)->axis.getValue());
+					axis = out[child].getOrientation().rotate((*a)->axis.getValue());
 					ArticulationAxis[ind] = axis;
 
 					if ((*a)->rotation.getValue())
@@ -351,6 +374,7 @@ template <class BasicMapping>
 void ArticulatedSystemMapping<BasicMapping>::applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in, const typename InRoot::VecDeriv* inroot )
 {
 
+	apply(*this->toModel->getX(), *this->fromModel->getX(), (rootModel==NULL ? NULL : rootModel->getX()));
 	//sout<<" \n ApplyJ ";
 	OutVecCoord& xto = *this->toModel->getX();
 
@@ -422,9 +446,14 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecDeriv& out
 //	InVecCoord &xfrom= *this->fromModel->getX();
 
 	//apply(xto,xfrom);
-
+	
+	// debug
+	//apply(*this->toModel->getX(), *this->fromModel->getX(), (rootModel==NULL ? NULL : rootModel->getX()));
+	//serr<<" XTO = "<<xto<<"  - Xroot :"<<*rootModel->getX()<<sendl;
+	
 
 	OutVecDeriv fObjects6DBuf = in;
+	InVecDeriv OutBuf = out;
 
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator ac = articulationCenters.end();
 	vector<ArticulatedHierarchyContainer::ArticulationCenter*>::const_iterator acBegin = articulationCenters.begin();
@@ -474,7 +503,9 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecDeriv& out
 	if (outroot)
 	{
 		(*outroot)[outroot->size()-1] += fObjects6DBuf[0];
+				
 	}
+
 }
 
 
@@ -485,8 +516,16 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out
 //	sout << "ApplyJT const  - size in = " << in.size() << sendl;
 
 	OutVecCoord& xto = *this->toModel->getX();
+	
 
-	out.resize(in.size());
+	
+
+	
+
+	//out.resize(in.size()); 
+	unsigned int sizeOut = out.size();
+	out.resize(sizeOut+in.size());
+	
 	unsigned int sizeOutRoot =0;
 
 	if (rootModel!=NULL)
@@ -499,7 +538,9 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out
 	for(unsigned int i=0; i<in.size(); i++)
 	{
                 OutConstraintIterator itOut;
-                for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+                std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+                for (itOut=iter.first;itOut!=iter.second;itOut++)
 		{
 			int childIndex = itOut->first;
 			const OutDeriv valueConst = (OutDeriv) itOut->second;
@@ -542,21 +583,23 @@ void ArticulatedSystemMapping<BasicMapping>::applyJT( typename In::VecConst& out
 						data = (Real)dot(axis, T.getVCenter());
 						//printf("\n weightedNormalArticulation : %f", constArt.data);
 					}
-					out[i].insert(ind,data);
+					out[sizeOut+i].add(ind,data);
 					ii++;
 				}
 			}
 
 			if (rootModel!=NULL)
 			{
+				
 				unsigned int indexT = rootModel->getSize()-1; // On applique sur le dernier noeud
 				Vec<3,OutReal> posRoot = xto[indexT].getCenter();
+				
 				OutDeriv T;
 				T.getVCenter() = valueConst.getVCenter();
 				T.getVOrientation() = valueConst.getVOrientation() + cross(C - posRoot, valueConst.getVCenter());
 
-				(*outRoot)[sizeOutRoot+i].insert(indexT,T);
-				//sout<< "constraintT = data : "<< T << "index : "<< indexT<<sendl;
+				(*outRoot)[sizeOutRoot+i].add(indexT,T);
+				//std::cout<< "constraintT = data : "<< T << "index : "<< indexT<<std::endl;
 				//(*outRoot)[i].push_back(constraintT);
 			//	sout<< "constraintT = data : "<< T << "index : "<< indexT<<sendl;
 			}
@@ -573,6 +616,14 @@ void ArticulatedSystemMapping<BasicMapping>::propagateX()
 {
 	if (this->fromModel!=NULL && this->toModel->getX()!=NULL && this->fromModel->getX()!=NULL)
 		apply(*this->toModel->getX(), *this->fromModel->getX(), (rootModel==NULL ? NULL : rootModel->getX()));
+		
+	if( f_printLog.getValue())	{	
+		serr<<"ArticulatedSystemMapping::propageX processed :"<<sendl;	
+		if (rootModel!=NULL)
+			serr<<"input root: "<<*rootModel->getX();
+		serr<<"  - input: "<<*this->fromModel->getX()<<"  output : "<<*this->toModel->getX()<<sendl;
+	}		
+		
 }
 
 template <class BasicMapping>
@@ -580,6 +631,13 @@ void ArticulatedSystemMapping<BasicMapping>::propagateXfree()
 {
 	if (this->fromModel!=NULL && this->toModel->getXfree()!=NULL && this->fromModel->getXfree()!=NULL)
 		apply(*this->toModel->getXfree(), *this->fromModel->getXfree(), (rootModel==NULL ? NULL : rootModel->getXfree()));
+		
+	if( f_printLog.getValue()){
+		serr<<"ArticulatedSystemMapping::propageXfree processed"<<sendl;
+		if (rootModel!=NULL)
+			serr<<"input root: "<<*rootModel->getXfree();
+		serr<<"  - input: "<<*this->fromModel->getXfree()<<"  output : "<<*this->toModel->getXfree()<<sendl;
+		}	
 }
 
 
@@ -588,6 +646,14 @@ void ArticulatedSystemMapping<BasicMapping>::propagateV()
 {
 	if (this->fromModel!=NULL && this->toModel->getV()!=NULL && this->fromModel->getV()!=NULL)
 		applyJ(*this->toModel->getV(), *this->fromModel->getV(), (rootModel==NULL ? NULL : rootModel->getV()));
+		
+	if( f_printLog.getValue()){
+		serr<<" propagateV processed"<<sendl;
+		if (rootModel!=NULL)
+			serr<<"V input root: "<<*rootModel->getV();
+		serr<<"  - V input: "<<*this->fromModel->getV()<<"   V output : "<<*this->toModel->getV()<<sendl;
+		}		
+		
 }
 
 
@@ -597,6 +663,13 @@ void ArticulatedSystemMapping<BasicMapping>::propagateDx()
 {
 	if (this->fromModel!=NULL && this->toModel->getDx()!=NULL && this->fromModel->getDx()!=NULL)
 		applyJ(*this->toModel->getDx(), *this->fromModel->getDx(), (rootModel==NULL ? NULL : rootModel->getDx()));
+		
+	if( f_printLog.getValue()){
+		serr<<"ArticulatedSystemMapping::propagateDx processed"<<sendl;
+		if (rootModel!=NULL)
+			serr<<"input root: "<<*rootModel->getDx();
+		serr<<"  - input: "<<*this->fromModel->getDx()<<"  output : "<<*this->toModel->getDx()<<sendl;	
+		}		
 }
 
 
@@ -606,6 +679,14 @@ void ArticulatedSystemMapping<BasicMapping>::accumulateForce()
 {
 	if (this->fromModel!=NULL && this->toModel->getF()!=NULL && this->fromModel->getF()!=NULL)
 		applyJT(*this->fromModel->getF(), *this->toModel->getF(), (rootModel==NULL ? NULL : rootModel->getF()));
+		
+	if( f_printLog.getValue()){
+		serr<<"ArticulatedSystemMapping::accumulateForce processed"<<sendl;
+		serr<<" input f : "<<*this->toModel->getF();
+		if (rootModel!=NULL)
+			serr<<"- output root: "<<*rootModel->getF();
+		serr<<"  - output F: "<<*this->fromModel->getF()<<sendl;			
+		}		
 }
 
 
@@ -615,6 +696,14 @@ void ArticulatedSystemMapping<BasicMapping>::accumulateDf()
 {
 	if (this->fromModel!=NULL && this->toModel->getF()!=NULL && this->fromModel->getF()!=NULL)
 		applyJT(*this->fromModel->getF(), *this->toModel->getF(), (rootModel==NULL ? NULL : rootModel->getF()));
+		
+	if( f_printLog.getValue()){
+		serr<<"ArticulatedSystemMapping::accumulateDf processed"<<sendl;
+		serr<<" input df : "<<*this->toModel->getF();
+		if (rootModel!=NULL)
+			serr<<"- output root: "<<*rootModel->getF();
+		serr<<"  - output: "<<*this->fromModel->getF()<<sendl;	
+	}		
 }
 
 
@@ -624,6 +713,7 @@ void ArticulatedSystemMapping<BasicMapping>::accumulateConstraint()
 {
 	if (this->fromModel!=NULL && this->toModel->getC()!=NULL && this->fromModel->getC()!=NULL)
 	{
+		propagateX();
 		applyJT(*this->fromModel->getC(), *this->toModel->getC(), (rootModel==NULL ? NULL : rootModel->getC()));
 
 		// Accumulate contacts indices through the MechanicalMapping
@@ -633,7 +723,7 @@ void ArticulatedSystemMapping<BasicMapping>::accumulateConstraint()
 		while (it != itEnd)
 		{
 			this->fromModel->setConstraintId(*it);
-			// in case of a "multi-mapping" (the articulation system is placede on a  simulated object)
+			// in case of a "multi-mapping" (the articulation system is placed on a  simulated object)
 			// the constraints are transmitted to the rootModle (the <rigidtype> object which is the root of the articulated system)
 			if (rootModel!=NULL)
 				rootModel->setConstraintId(*it);

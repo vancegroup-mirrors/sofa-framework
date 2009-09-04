@@ -119,6 +119,43 @@ namespace topology
 		sofa::helper::vector<unsigned int> removedEdgesArray;
 	};
 
+
+	/** indicates that some edges are about to be moved (i.e one or both of their vertices have just been moved)
+	 * EdgesMoved_Removing First part, remove element concerned to force object to recompute global state with current positions
+	 */
+	class EdgesMoved_Removing : public core::componentmodel::topology::TopologyChange  
+	{
+	public:
+	  EdgesMoved_Removing (const sofa::helper::vector< unsigned int >& edgeShell)
+	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::EDGESMOVED_REMOVING),
+	    edgesAroundVertexMoved (edgeShell)
+	  {}
+
+	public:
+	  sofa::helper::vector< unsigned int > edgesAroundVertexMoved;
+	};
+
+	
+	/** indicates that some edges are about to be moved (i.e one or both of their vertices have just been moved)
+	 * EdgesMoved_Adding Second part, recompute state of all elements previously removed, with new positions points
+	 */
+	
+	class EdgesMoved_Adding : public core::componentmodel::topology::TopologyChange  
+	{
+	public:
+	  EdgesMoved_Adding (const sofa::helper::vector< unsigned int >& edgeShell,
+			     const sofa::helper::vector< Edge >& edgeArray)
+	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::EDGESMOVED_ADDING),
+	    edgesAroundVertexMoved (edgeShell), edgeArray2Moved (edgeArray)
+	  {}
+
+	public:
+	  sofa::helper::vector< unsigned int > edgesAroundVertexMoved;
+	  sofa::helper::vector< Edge > edgeArray2Moved;
+	};
+
+	
+
 } // namespace topology
 
 } // namespace component

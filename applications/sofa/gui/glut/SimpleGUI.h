@@ -29,6 +29,8 @@
 
 #include <sofa/gui/SofaGUI.h>
 
+#include <sofa/gui/PickHandler.h>
+
 #include <sofa/helper/system/config.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
@@ -37,7 +39,6 @@
 #include <sofa/helper/gl/Texture.h>
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/helper/system/thread/CTime.h>
-#include <sofa/component/collision/RayPickInteractor.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
 #include <sofa/helper/system/glut.h>
@@ -169,7 +170,6 @@ private:
     //GLuint			_logoTexture;
     Texture			*texLogo;
     ctime_t			_beginTime;
-    RayPickInteractor* interactor;
     double lastProjectionMatrix[16];
     double lastModelviewMatrix[16];
     GLint lastViewport[4];
@@ -225,7 +225,7 @@ protected:
     void StoreLightMatrices();
 
 public:
-    void setScene(sofa::simulation::Node* scene, const char* filename=NULL);
+    void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool temporaryFile=false);
     sofa::simulation::Node* getScene()
     {
         return groot;
@@ -267,6 +267,7 @@ public:
     Quaternion _currentQuat;
     bool _mouseTrans;
     bool _mouseRotate;
+    PickHandler pick;
 
 private:
 

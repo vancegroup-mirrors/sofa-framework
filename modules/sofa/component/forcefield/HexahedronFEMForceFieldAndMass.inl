@@ -141,7 +141,6 @@ namespace sofa
       }
 
 
-
       template<class DataTypes>
       void HexahedronFEMForceFieldAndMass<DataTypes>::computeElementMasses(  )
       {

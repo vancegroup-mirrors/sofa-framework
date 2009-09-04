@@ -46,7 +46,7 @@ void LCPForceFeedback::init()
 
 	mastersolver = context->get<sofa::component::odesolver::MasterContactSolver>();
 
-	mState = dynamic_cast<MechanicalState<Rigid3dTypes> *> (this->getContext()->getMechanicalState());
+	mState = dynamic_cast<core::componentmodel::behavior::MechanicalState<Rigid3Types> *> (this->getContext()->getMechanicalState());
 	if (!mState)
 		serr << "LCPForceFeedback has no binding MechanicalState" << sendl;
 
@@ -101,10 +101,15 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 			int indexC1 = mState->getConstraintId()[c1];
 			id_buf.push_back(indexC1);
 			RigidTypes::SparseVecDeriv v;
-			std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
-			for(itConstraint=(*mState->getC())[c1].getData().begin();itConstraint!=(*mState->getC())[c1].getData().end();itConstraint++)
+			ConstraintIterator itConstraint;
+      //std::pair< ConstraintIterator, ConstraintIterator > iter=(*mState->getC())[c1].data();
+      std::pair< ConstraintIterator, ConstraintIterator > iter;
+      iter.first=(*mState->getC())[c1].data().first;
+      iter.second=(*mState->getC())[c1].data().second;
+
+			for(itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
 			{
-				v.insert(itConstraint->first, itConstraint->second);
+				v.add(itConstraint->first, itConstraint->second);
 			}
 			c.push_back(v);
 		}
@@ -161,8 +166,10 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 			for(unsigned int c1 = 0; c1 < numConstraints; c1++)
 			{
 				int indexC1 = id_buf[c1];
-				std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
-				for(itConstraint=(*constraints)[c1].getData().begin();itConstraint!=(*constraints)[c1].getData().end();itConstraint++)
+                                ConstraintIterator itConstraint;
+                                std::pair< ConstraintIterator, ConstraintIterator > iter=(*constraints)[c1].data();
+
+				for(itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
 				{
 					//sout << "constraint ID :  " << indexC1 << endl;
 					(lcp)->getDfree()[indexC1] += itConstraint->second[0] * dx;
@@ -188,8 +195,12 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 			for(unsigned int c1 = 0; c1 < numConstraints; c1++)
 			{
 				int indexC1 = id_buf[c1];
-				std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
-				for(itConstraint=(*constraints)[c1].getData().begin();itConstraint!=(*constraints)[c1].getData().end();itConstraint++)
+
+
+                                ConstraintIterator itConstraint;
+                                std::pair< ConstraintIterator, ConstraintIterator > iter=(*constraints)[c1].data();
+
+				for(itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
 				{
 					(lcp)->getDfree()[indexC1] -= itConstraint->second[0] * dx;
 					(lcp)->getDfree()[indexC1] -= itConstraint->second[1] * dy;
@@ -204,12 +215,13 @@ void LCPForceFeedback::computeForce(double x, double y, double z, double /*u*/, 
 				int indexC1 = id_buf[c1];
 				if ((lcp)->getF()[indexC1] != 0.0)
 				{
-					std::map<unsigned int, RigidTypes::Deriv>::const_iterator itConstraint;
-
-					for(itConstraint=(*constraints)[c1].getData().begin();itConstraint!=(*constraints)[c1].getData().end();itConstraint++)
-					{
+                                        ConstraintIterator itConstraint;
+                                        std::pair< ConstraintIterator, ConstraintIterator > iter=(*constraints)[c1].data();
+                                  
+                                        for(itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+                                        {
 						force[0] += itConstraint->second * (lcp)->getF()[indexC1];
-					}
+                                        }
 				}
 			}
 

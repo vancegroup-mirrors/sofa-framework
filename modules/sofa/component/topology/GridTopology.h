@@ -30,39 +30,38 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace topology
-    {
+namespace topology
+{
 
-      using namespace sofa::defaulttype;
+using namespace sofa::defaulttype;
 
-      class SOFA_COMPONENT_CONTAINER_API GridTopology : public MeshTopology
-      {
-      public:
+class SOFA_COMPONENT_CONTAINER_API GridTopology : public MeshTopology
+{
+public:
 	GridTopology();
-	
+
 	GridTopology(int nx, int ny, int nz);
-	
+
 	void setSize(int nx, int ny, int nz);
 
 	void parse(core::objectmodel::BaseObjectDescription* arg)
 	{
-	  this->MeshTopology::parse(arg);
+		this->MeshTopology::parse(arg);
 
+		if (arg->getAttribute("nx")!=NULL && arg->getAttribute("ny")!=NULL && arg->getAttribute("nz")!=NULL )
+		{
+			const char* nx = arg->getAttribute("nx");
+			const char* ny = arg->getAttribute("ny");
+			const char* nz = arg->getAttribute("nz");
+			n.setValue(Vec<3,int>(atoi(nx),atoi(ny),atoi(nz)));
+		}
 
-	  if (arg->getAttribute("nx")!=NULL && arg->getAttribute("ny")!=NULL && arg->getAttribute("nz")!=NULL )
-	    {
-	      const char* nx = arg->getAttribute("nx");
-	      const char* ny = arg->getAttribute("ny");
-	      const char* nz = arg->getAttribute("nz");
-	      n.setValue(Vec<3,int>(atoi(nx),atoi(ny),atoi(nz)));
-	    }
-
-	  this->setSize();	  
+		this->setSize();	  
 	}
-	
+
 	int getNx() const { return n.getValue()[0]; }
 	int getNy() const { return n.getValue()[1]; }
 	int getNz() const { return n.getValue()[2]; }
@@ -70,49 +69,49 @@ namespace sofa
 	void setNx(int n_) { (*n.beginEdit())[0] = n_; setSize(); }
 	void setNy(int n_) { (*n.beginEdit())[1] = n_; setSize(); }
 	void setNz(int n_) { (*n.beginEdit())[2] = n_; setSize(); }
-	
+
 	//int getNbPoints() const { return n.getValue()[0]*n.getValue()[1]*n.getValue()[2]; }
-	
-	virtual int getNbHexas() { return (n.getValue()[0]-1)*(n.getValue()[1]-1)*(n.getValue()[2]-1); }
+
+	virtual int getNbHexahedra() { return (n.getValue()[0]-1)*(n.getValue()[1]-1)*(n.getValue()[2]-1); }
 
 	/*
 	int getNbQuads() {
-	  if (n.getValue()[2] == 1)
-	    return (n.getValue()[0]-1)*(n.getValue()[1]-1);
-	  else if (n.getValue()[1] == 1)
-	    return (n.getValue()[0]-1)*(n.getValue()[2]-1);
-	  else
-	    return (n.getValue()[1]-1)*(n.getValue()[2]-1);
+		if (n.getValue()[2] == 1)
+			return (n.getValue()[0]-1)*(n.getValue()[1]-1);
+		else if (n.getValue()[1] == 1)
+			return (n.getValue()[0]-1)*(n.getValue()[2]-1);
+		else
+			return (n.getValue()[1]-1)*(n.getValue()[2]-1);
 	}
 	*/
 
 	Hexa getHexaCopy(int i);
-	Hexa getHexa(int x, int y, int z);
+	Hexa getHexahedron(int x, int y, int z);
 
 #ifndef SOFA_NEW_HEXA
-          Cube getCubeCopy(int i) { return getHexaCopy(i); }
-          Cube getCube(int x, int y, int z) { return getHexa(x,y,z); }
+	Cube getCubeCopy(int i) { return getHexaCopy(i); }
+	Cube getCube(int x, int y, int z) { return getHexahedron(x,y,z); }
 #endif          
-          
+
 	Quad getQuadCopy(int i);
 	Quad getQuad(int x, int y, int z);
-	
+
 	int point(int x, int y, int z) const { return x+n.getValue()[0]*(y+n.getValue()[1]*z); }
 	int hexa(int x, int y, int z) const { return x+(n.getValue()[0]-1)*(y+(n.getValue()[1]-1)*z); }
-      int cube(int x, int y, int z) const { return hexa(x,y,z); }
-	
-      protected:
+	int cube(int x, int y, int z) const { return hexa(x,y,z); }
+
+protected:
 	Data< Vec<3, int> > n;
-	
+
 	virtual void setSize();
 	virtual void updateEdges();
 	virtual void updateQuads();
 	virtual void updateHexas();
-      };
+};
 
-    } // namespace topology
+} // namespace topology
 
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

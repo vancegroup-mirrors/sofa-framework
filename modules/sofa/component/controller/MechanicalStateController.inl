@@ -42,11 +42,11 @@
 #include <sofa/core/objectmodel/MouseEvent.h>
 #include <sofa/core/objectmodel/OmniEvent.h>
 #include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
-
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
 namespace sofa
@@ -204,10 +204,8 @@ void MechanicalStateController<DataTypes>::onOmniEvent(core::objectmodel::OmniEv
 	omni = false;
 }
 
-
-
 template <class DataTypes>
-void MechanicalStateController<DataTypes>::onBeginAnimationStep()
+void MechanicalStateController<DataTypes>::onBeginAnimationStep(const double /*dt*/)
 {
 	applyController();
 }

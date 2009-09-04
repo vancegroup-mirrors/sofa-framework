@@ -181,7 +181,6 @@ namespace sofa
 	    m_mMoveSpeed = 10;
 	    m_mRotateSpeed = 36;
 	    _background = 0;
-	    interactor = NULL;
 	    _mouseInteractorMoving = false;
 	    _mouseInteractorSavedPosX = 0;
 	    _mouseInteractorSavedPosY = 0;
@@ -723,9 +722,6 @@ namespace sofa
 		m_mTranslateVector = Ogre::Vector3::ZERO;
 	      }
 
-	    if (interactor!=NULL)
-	      interactor->newEvent("hide");
-
 	  }
 
 	  void QtOgreViewer::mouseMoveEvent(QMouseEvent* evt)
@@ -864,8 +860,14 @@ namespace sofa
 
 	    sofa::defaulttype::Mat3x3d mat; mat = transform;
 	    sofa::defaulttype::Quat q; q.fromMatrix(mat);
-	    interactor->newPosition(p0, q, transform);
-	    interactor->setRayRadius(r0, r1);
+
+
+
+            Vec3d position, direction;
+            position  = transform*Vec4d(0,0,0,1);
+            direction = transform*Vec4d(0,0,1,0);
+            direction.normalize();
+            pick.updateRay(position, direction);
 	  }
 
 	  void QtOgreViewer::removeViewerTab(QTabWidget *t)

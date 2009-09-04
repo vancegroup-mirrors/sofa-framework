@@ -49,7 +49,7 @@ namespace sofa
       OglAttribute< size, type, DataTypes>::OglAttribute() :
           OglShaderElement()
           , _abo ( -1 )
-          , usage( GL_STATIC_DRAW)
+          , _usage( GL_STATIC_DRAW)
           ,value( initData(&value, "value", "internal Data"))
       {
         _topology = NULL;
@@ -70,6 +70,7 @@ namespace sofa
         getContext()->get( _topology);
 
         if ( ( int ) _abo == -1 ) glGenBuffers ( 1, &_abo );
+
       }
 
 
@@ -78,45 +79,42 @@ namespace sofa
       {
         const ResizableExtVector<DataTypes>& data = value.getValue();
         unsigned int totalSize = data.size() *sizeof ( data[0] );
-
         glBindBuffer ( GL_ARRAY_BUFFER, _abo );
-
         glBufferData ( GL_ARRAY_BUFFER,
                        totalSize,
                        NULL,
-                       usage );
-
+                       _usage );
         // Fill the buffer
         glBufferSubData ( GL_ARRAY_BUFFER,
                           0,
                           totalSize,
                           data.getData() );
+        _index = shader->getAttribute ( indexShader.getValue(), id.getValue().c_str() );
 
-        _index = shader->getAttribute ( 0, id.getValue().c_str() );
-
+		
         enable();
-
         glBindBuffer(GL_ARRAY_BUFFER,0);
-
       }
 
 
       template < int size, unsigned int type, class DataTypes>
       bool OglAttribute< size, type, DataTypes>::updateABO()
       {
-        GLvoid* attrib_bo = NULL;
-        glBindBuffer(GL_ARRAY_BUFFER, _abo);
-        attrib_bo = (GLvoid*) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-
-        if(attrib_bo == NULL)
-        {
-          std::cerr << "OglAttribute : Unknown error when updating attribute indices buffer "<< std::endl;
-          return false;
-        }
-        const ResizableExtVector<DataTypes>& val = value.getValue();
-        memcpy(attrib_bo, &(val[0]), val.size()*sizeof(val[0]));
-        glUnmapBuffer(GL_ARRAY_BUFFER);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+				const ResizableExtVector<DataTypes>& data = value.getValue();
+				unsigned int totalSize = data.size() *sizeof ( data[0] );
+				glBindBuffer ( GL_ARRAY_BUFFER, _abo );
+				glBufferData ( GL_ARRAY_BUFFER,
+					           totalSize,
+					           NULL,
+					           _usage );
+				// Fill the buffer
+				glBufferSubData ( GL_ARRAY_BUFFER,
+					              0,
+					              totalSize,
+					             (char*)data.getData() );
+			
+				enable();
+				glBindBuffer(GL_ARRAY_BUFFER,0);
         return true;
       }
 
@@ -137,7 +135,7 @@ namespace sofa
 
 
       template < int size, unsigned int type, class DataTypes>
-      const ResizableExtVector<DataTypes>& OglAttribute< size, type, DataTypes>::getValue() const 
+      const ResizableExtVector<DataTypes>& OglAttribute< size, type, DataTypes>::getValue() const
       {
         return value.getValue();
       }
@@ -155,8 +153,11 @@ namespace sofa
       template < int size, unsigned int type, class DataTypes>
       void OglAttribute< size, type, DataTypes>::enable()
       {
-        glEnableVertexAttribArray ( _index );
-        glVertexAttribPointer ( _index, size, type, GL_FALSE, 0, ( char* ) NULL + 0 );
+		
+		  glBindBuffer(GL_ARRAY_BUFFER, _abo);
+		  glEnableVertexAttribArray ( _index );
+		  glVertexAttribPointer ( _index, size, type, GL_FALSE, 0, ( char* ) NULL + 0);
+		  //glBindBuffer(GL_ARRAY_BUFFER, 0);
       }
 
 
@@ -164,17 +165,20 @@ namespace sofa
       void OglAttribute< size, type, DataTypes>::disable()
       {
         glDisableVertexAttribArray ( _index );
+		glBindBuffer(GL_ARRAY_BUFFER,0);
       }
-
-
 
       template < int size, unsigned int type, class DataTypes>
-      void OglAttribute< size, type, DataTypes>::draw()
+      void OglAttribute< size, type, DataTypes>::fwdDraw(Pass)
       {
-         glEnableVertexAttribArray ( _index );
-         glVertexAttribPointer ( _index, size, type, GL_FALSE, 0, (void*)(&value.getValue()[0]));
+    	  enable();
       }
 
+      template < int size, unsigned int type, class DataTypes>
+      void OglAttribute< size, type, DataTypes>::bwdDraw(Pass)
+      {
+    	  disable();
+      }
 
       template < int size, unsigned int type, class DataTypes>
       void OglAttribute< size, type, DataTypes>::reinit()
@@ -200,8 +204,9 @@ namespace sofa
             {
               case core::componentmodel::topology::ENDING_EVENT:
               {
-                //sout << "INFO_print : Vis - ENDING_EVENT" << sendl;
+				//sout << "INFO_print : Vis - ENDING_EVENT" << sendl;
                 updateVisual();
+				updateABO();
                 break;
               }
 

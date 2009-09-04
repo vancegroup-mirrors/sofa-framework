@@ -121,6 +121,45 @@ void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &c
 {
 	assert(this->object1);
 	assert(this->object2);
+	
+	if (this->object1 == this->object2)
+	{
+
+	VecConst& c1 = *this->object1->getC();
+
+	for (unsigned int i=0; i<contacts.size(); i++)
+	{
+		Contact& c = contacts[i];
+
+		//mu = c.mu;
+		//c.mu = mu;
+		c.id = contactId++;
+
+		SparseVecDeriv svd1;
+
+		this->object1->setConstraintId(c.id);
+		svd1.add(c.m1, -c.norm);
+		svd1.add(c.m2, c.norm);
+		c1.push_back(svd1);
+		
+		if (c.mu > 0.0)
+		{
+			contactId += 2;
+			this->object1->setConstraintId(c.id+1);
+			svd1.set(c.m1, -c.t);
+			svd1.set(c.m2, c.t);
+			c1.push_back(svd1);
+
+			this->object1->setConstraintId(c.id+2);
+			svd1.set(c.m1, -c.s);
+			svd1.set(c.m2, c.s);
+			c1.push_back(svd1);
+		}
+	}
+
+	}
+	else
+	{
 
 	VecConst& c1 = *this->object1->getC();
 	VecConst& c2 = *this->object2->getC();
@@ -137,11 +176,11 @@ void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &c
 		SparseVecDeriv svd2;
 
 		this->object1->setConstraintId(c.id);
-		svd1.insert(c.m1, -c.norm);
+		svd1.add(c.m1, -c.norm);
 		c1.push_back(svd1);
 
 		this->object2->setConstraintId(c.id);
-		svd2.insert(c.m2, c.norm);
+		svd2.add(c.m2, c.norm);
 		c2.push_back(svd2);
 		
 		if (c.mu > 0.0)
@@ -163,6 +202,8 @@ void UnilateralInteractionConstraint<DataTypes>::applyConstraint(unsigned int &c
 			svd2.set(c.m2, c.s);
 			c2.push_back(svd2);
 		}
+	}
+
 	}
 }
 
@@ -229,6 +270,7 @@ void UnilateralInteractionConstraint<DataTypes>::draw()
 		helper::gl::glVertexT(c.Q);
 		helper::gl::glVertexT(c.Q-c.norm*(c.dfree));
 
+		/*
 		if (c.dfree < 0)
 		{
 			glLineWidth(5);
@@ -236,6 +278,7 @@ void UnilateralInteractionConstraint<DataTypes>::draw()
 			helper::gl::glVertexT(c.Pfree);
 			helper::gl::glVertexT(c.Qfree);
 		}
+		*/
 	}
 	glEnd();
 }

@@ -41,7 +41,7 @@ namespace topology
 	typedef BaseMeshTopology::EdgeID EdgeID;
 	typedef BaseMeshTopology::Edge Edge;
 	typedef BaseMeshTopology::SeqEdges SeqEdges;
-	typedef BaseMeshTopology::VertexEdges VertexEdges;
+	typedef BaseMeshTopology::EdgesAroundVertex EdgesAroundVertex;
 	
 	/** 
 	* A class that can apply basic transformations on a set of edges.
@@ -235,7 +235,22 @@ namespace topology
 
 		/** \brief Gives the optimal vertex permutation according to the Reverse CuthillMckee algorithm (use BOOST GRAPH LIBRAIRY)
 		*/
-		virtual void resortCuthillMckee(sofa::helper::vector<int>& inverse_permutation); 
+		virtual void resortCuthillMckee(sofa::helper::vector<int>& inverse_permutation);
+
+
+		/** \brief Move input points indices to input new coords.
+		 * Also propagate event and update edgesAroundVertex for data handling.
+		 *
+		 * @param id : list of indices to move
+		 * @param : ancestors list of ancestors to define relative new position
+		 * @param coefs : barycoef to locate new coord relatively to ancestors.
+		 * @moveDOF bool allowing the move (default true)
+		 */
+		virtual void movePointsProcess (const sofa::helper::vector <unsigned int>& id,
+                                                const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+                                                const sofa::helper::vector< sofa::helper::vector< double > >& coefs,
+						const bool moveDOF = true);
+
 
 	private:
 		EdgeSetTopologyContainer* 	m_container;

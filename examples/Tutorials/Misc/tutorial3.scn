@@ -86,6 +86,6 @@
 		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
 		<Object type="Line" name="Floor" simulated="0" moving="0" />
 		<Object type="Point" name="Floor" simulated="0" moving="0" />
-		<Object type="OglModel" name="FloorV" filename="mesh/floor2b.obj" scale="0.5" notexturename="textures/floor.png" color="gray" dy="-10" />
+		<Object type="OglModel" name="FloorV" filename="mesh/floor2b.obj" scale="0.5" notexturename="textures/floor.bmp" color="gray" dy="-10" />
 	</Node>
 </Node>

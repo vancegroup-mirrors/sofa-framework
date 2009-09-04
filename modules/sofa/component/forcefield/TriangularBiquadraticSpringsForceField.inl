@@ -51,7 +51,7 @@ using namespace core::componentmodel::topology;
 using core::componentmodel::topology::BaseMeshTopology;
 
 typedef BaseMeshTopology::Triangle			Triangle;
-typedef BaseMeshTopology::TriangleEdges		TriangleEdges;
+typedef BaseMeshTopology::EdgesInTriangle		EdgesInTriangle;
 
 
 template< class DataTypes>
@@ -93,7 +93,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSTriangleCreationFunc
 		helper::vector<typename TriangularBiquadraticSpringsForceField<DataTypes>::EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
 
 		/// describe the jth edge index of triangle no i 
-		const TriangleEdges &te= ff->_topology->getEdgeTriangleShell(triangleIndex);
+		const EdgesInTriangle &te= ff->_topology->getEdgesInTriangle(triangleIndex);
 		// store square rest length
 		for(j=0;j<3;++j) {
 			restSquareLength[j]=edgeInf[te[j]].restSquareLength;
@@ -138,7 +138,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::TRBSTriangleDestroyFunct
 		helper::vector<typename TriangularBiquadraticSpringsForceField<DataTypes>::EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
 
 		/// describe the jth edge index of triangle no i 
-		const TriangleEdges &te= ff->_topology->getEdgeTriangleShell(triangleIndex);
+		const EdgesInTriangle &te= ff->_topology->getEdgesInTriangle(triangleIndex);
 		// store square rest length
 		for(j=0;j<3;++j) {
 			edgeInf[te[j]].stiffness -= tinfo.stiffness[j]; 
@@ -274,7 +274,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addForce(VecDeriv& f, co
 		{
 			tinfo=&triangleInf[i];
 			/// describe the jth edge index of triangle no i 
-			const TriangleEdges &tea= _topology->getEdgeTriangleShell(i);
+			const EdgesInTriangle &tea= _topology->getEdgesInTriangle(i);
 			/// describe the jth vertex index of triangle no i 
 			const Triangle &ta= _topology->getTriangle(i);
 
@@ -330,7 +330,7 @@ void TriangularBiquadraticSpringsForceField<DataTypes>::addDForce(VecDeriv& df, 
 		{
 			tinfo=&triangleInf[l];
 			/// describe the jth edge index of triangle no i 
-			const TriangleEdges &tea= _topology->getEdgeTriangleShell(l);
+			const EdgesInTriangle &tea= _topology->getEdgesInTriangle(l);
 			/// describe the jth vertex index of triangle no i 
 			const Triangle &ta= _topology->getTriangle(l);
 

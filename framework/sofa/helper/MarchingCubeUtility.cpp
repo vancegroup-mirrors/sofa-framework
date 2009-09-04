@@ -376,7 +376,7 @@ namespace sofa
     MarchingCubeUtility::MarchingCubeUtility()
         : cubeStep ( 1 ), convolutionSize ( 1 ),
         dataResolution ( 0,0,0 ), dataVoxelSize ( 1.0f,1.0f,1.0f ),
-        maxIsoValue( 1.0e+38f)
+				verticesOffset( 0)
     {
 // // Computes non trivial faces.
 // int nonTrivialFaces[256];
@@ -435,45 +435,37 @@ namespace sofa
 
       cell.pos[0]=vcurf.linearProduct ( gridStep )-Vector3 ( 1.0f,1.0f,1.0f );
       Vec3i valPos0=coord.linearProduct ( dataGridStep );
-      cell.val[0]=(float)((( valPos0[0] > roi.min[0]) && ( valPos0[1] > roi.min[1]) && ( valPos0[2] > roi.min[2]) && ( valPos0[0] < roi.max[0]-1) && ( valPos0[1] < roi.max[1]-1) && ( valPos0[2] < roi.max[2]-1))?data[valPos0[0] + valPos0[1]*dataResolution[0] + valPos0[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[0] > maxIsoValue) cell.val[0] = 0;
+      cell.val[0]=(float)((( valPos0[0] >= roi.min[0]) && ( valPos0[1] >= roi.min[1]) && ( valPos0[2] >= roi.min[2]) && ( valPos0[0] < roi.max[0]) && ( valPos0[1] < roi.max[1]) && ( valPos0[2] < roi.max[2]))?data[valPos0[0] + valPos0[1]*dataResolution[0] + valPos0[2]*dataResolution[0]*dataResolution[1]]:0);
 
       Vec3i valPos;
 
       cell.pos[1]=cell.pos[0]+Vector3 ( gridStep[0], 0, 0 );
       valPos=valPos0+Vec3i ( dataGridStep[0], 0, 0 );
-      cell.val[1]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[1] > maxIsoValue) cell.val[1] = 0;
+      cell.val[1]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
 
       cell.pos[2]=cell.pos[0]+Vector3 ( gridStep[0], gridStep[1], 0 );
       valPos=valPos0+Vec3i ( dataGridStep[0], dataGridStep[1], 0 );
-      cell.val[2]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[2] > maxIsoValue) cell.val[2] = 0;
+      cell.val[2]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
 
       cell.pos[3]=cell.pos[0]+Vector3 ( 0, gridStep[1], 0 );
       valPos=valPos0+Vec3i ( 0, dataGridStep[1], 0 );
-      cell.val[3]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[3] > maxIsoValue) cell.val[3] = 0;
+      cell.val[3]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
 
       cell.pos[4]=cell.pos[0]+Vector3 ( 0, 0, gridStep[2] );
       valPos=valPos0+Vec3i ( 0, 0, dataGridStep[2] );
-      cell.val[4]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[4] > maxIsoValue) cell.val[4] = 0;
+      cell.val[4]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
 
       cell.pos[5]=cell.pos[0]+Vector3 ( gridStep[0], 0, gridStep[2] );
       valPos=valPos0+Vec3i ( dataGridStep[0], 0, dataGridStep[2] );
-      cell.val[5]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[5] > maxIsoValue) cell.val[5] = 0;
+      cell.val[5]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
 
       cell.pos[6]=cell.pos[0]+Vector3 ( gridStep[0], gridStep[1], gridStep[2] );
       valPos=valPos0+Vec3i ( dataGridStep[0], dataGridStep[1], dataGridStep[2] );
-      cell.val[6]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[6] > maxIsoValue) cell.val[6] = 0;
+      cell.val[6]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
 
       cell.pos[7]=cell.pos[0]+Vector3 ( 0, gridStep[1], gridStep[2] );
       valPos=valPos0+Vec3i ( 0, dataGridStep[1], dataGridStep[2] );
-      cell.val[7]=(float)((( valPos[0] > roi.min[0]) && ( valPos[1] > roi.min[1]) && ( valPos[2] > roi.min[2]) && ( valPos[0] < roi.max[0]-1) && ( valPos[1] < roi.max[1]-1) && ( valPos[2] < roi.max[2]-1))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
-      if( cell.val[7] > maxIsoValue) cell.val[7] = 0;
+      cell.val[7]=(float)((( valPos[0] >= roi.min[0]) && ( valPos[1] >= roi.min[1]) && ( valPos[2] >= roi.min[2]) && ( valPos[0] < roi.max[0]) && ( valPos[1] < roi.max[1]) && ( valPos[2] < roi.max[2]))?data[valPos[0] + valPos[1]*dataResolution[0] + valPos[2]*dataResolution[0]*dataResolution[1]]:0);
     }
 
     /*
@@ -551,7 +543,7 @@ namespace sofa
           else
           {
             //Add new Vertex in map
-            current_ID = map_indices.size();
+						current_ID = map_indices.size() + verticesOffset;
             map_indices.push_back ( current_P );
             map_vertices.insert ( std::make_pair ( current_P, current_ID ) );
           }
@@ -571,19 +563,17 @@ namespace sofa
 
 
 
-    void MarchingCubeUtility::propagateFrom ( const Vec3i coord,
+    void MarchingCubeUtility::propagateFrom ( const sofa::helper::vector<Vec3i>& coord,
             unsigned char* data,
             const float isolevel,
             sofa::helper::vector< PointID >& mesh,
             sofa::helper::vector< Vector3 >& vertices,
             sofa::helper::set<Vec3i>& generatedCubes,
-            helper::vector< helper::vector<unsigned int> >* triangleIndexInRegularGrid
+            std::map< Vector3, PointID>& map_vertices,
+            helper::vector< helper::vector<unsigned int> >* triangleIndexInRegularGrid,
+						bool propagate
                                             ) const
     {
-      std::map< Vector3, PointID> map_vertices;
-      for ( unsigned int i = 0; i < vertices.size(); i++ )
-        map_vertices.insert ( std::make_pair ( vertices[i], i ) );
-
       Vec3i bboxMin = Vec3i ( bbox.min / cubeStep );
       Vec3i bboxMax = Vec3i ( bbox.max / cubeStep );
       Vec3i gridSize = Vec3i ( dataResolution /cubeStep );
@@ -594,7 +584,13 @@ namespace sofa
 
       Vec3i cubeCoord, nextCube;
       stack<Vec3i> cubesToGenerate; // Stack of cubes to generate.
-      cubesToGenerate.push ( coord ); // Adds the first non-trivial cube.
+			for( sofa::helper::vector<Vec3i>::const_iterator it = coord.begin(); it != coord.end(); it++)
+			{
+				const Vec3i& voxel = *it;
+				if ( ( voxel[0] >= bbox.min[0]-1 ) && ( voxel[1] >= bbox.min[1]-1 ) && ( voxel[2] >= bbox.min[2]-1 ) && 
+					 ( voxel[0] <= bbox.max[0] ) && ( voxel[1] <= bbox.max[1] ) && ( voxel[2] <= bbox.max[2] ) )
+					cubesToGenerate.push ( *it ); // Adds the first non-trivial cube.
+			}
 
       int cubeConf;
       while ( !cubesToGenerate.empty() )
@@ -603,8 +599,6 @@ namespace sofa
         cubesToGenerate.pop();             // Remove it from the stack.
 
         if ( generatedCubes.find ( cubeCoord ) != generatedCubes.end() ) continue;
-        // If we touch the border, STOP propagating !
-        if ( borders.find ( cubeCoord ) != borders.end() ) continue;
 
         GridCell cell;
         initCell ( cell, cubeCoord, data, gridStep, dataGridStep );
@@ -613,78 +607,79 @@ namespace sofa
 
         if ( triangleIndexInRegularGrid ) updateTriangleInRegularGridVector ( *triangleIndexInRegularGrid, cubeCoord, cell, numvert / 3 );
 
-        // Propagate
-        generatedCubes.insert ( cubeCoord ); // spaceIndex cube has been polygonized
-
-        if ( ( MarchingCubeFaceTable[cubeConf] &  1 ) && ( cubeCoord[2] > bboxMin[2] ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0, 0,-1 ) );}
-        if ( ( MarchingCubeFaceTable[cubeConf] &  2 ) && ( cubeCoord[2] < bboxMax[2]-2 ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0, 0, 1 ) );}
-        if ( ( MarchingCubeFaceTable[cubeConf] &  4 ) && ( cubeCoord[0] < bboxMax[0]-2 ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 1, 0, 0 ) );}
-        if ( ( MarchingCubeFaceTable[cubeConf] &  8 ) && ( cubeCoord[0] > bboxMin[0] ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( -1, 0, 0 ) );}
-        if ( ( MarchingCubeFaceTable[cubeConf] & 16 ) && ( cubeCoord[1] > bboxMin[1] ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0,-1, 0 ) );}
-        if ( ( MarchingCubeFaceTable[cubeConf] & 32 ) && ( cubeCoord[1] < bboxMax[1]-2 ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0, 1, 0 ) );}
+				if( propagate)
+				{
+					// Propagate
+					generatedCubes.insert ( cubeCoord ); // spaceIndex cube has been polygonized
+	
+					if ( ( MarchingCubeFaceTable[cubeConf] &  1 ) && ( cubeCoord[2] >= bboxMin[2] ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0, 0,-1 ) );}
+					if ( ( MarchingCubeFaceTable[cubeConf] &  2 ) && ( cubeCoord[2] <= bboxMax[2]-2 ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0, 0, 1 ) );}
+					if ( ( MarchingCubeFaceTable[cubeConf] &  4 ) && ( cubeCoord[0] <= bboxMax[0]-2 ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 1, 0, 0 ) );}
+					if ( ( MarchingCubeFaceTable[cubeConf] &  8 ) && ( cubeCoord[0] >= bboxMin[0] ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( -1, 0, 0 ) );}
+					if ( ( MarchingCubeFaceTable[cubeConf] & 16 ) && ( cubeCoord[1] >= bboxMin[1] ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0,-1, 0 ) );}
+					if ( ( MarchingCubeFaceTable[cubeConf] & 32 ) && ( cubeCoord[1] <= bboxMax[1]-2 ) ) { cubesToGenerate.push ( cubeCoord + Vec3i ( 0, 1, 0 ) );}
+				}
       }
     }
 
 
 
-    void MarchingCubeUtility::run ( unsigned char *_data, const sofa::helper::vector< Vec3i > & seeds,
-                                    const float isolevel,
-                                    sofa::helper::vector< PointID >& mesh,
-                                    sofa::helper::vector< Vector3>& vertices,
-                                    helper::vector< helper::vector<unsigned int> >*triangleIndexInRegularGrid ) const
-    {
-      Vec3i gridSize = Vec3i ( dataResolution[0]/cubeStep, dataResolution[1]/cubeStep, dataResolution[2]/cubeStep );
-      sofa::helper::set<Vec3i> generatedCubes;
-
-
-	  unsigned int datasize = dataResolution[0]*dataResolution[1]*dataResolution[2];
-	  if ( datasize == 0 )
-        return;
-
-      unsigned char* data;
-	  bool smooth = false;
-      if ( convolutionSize != 0 )
-	  {
-			data = new unsigned char[datasize];
-			memcpy(data, _data, datasize*sizeof(unsigned char));
-			smoothData ( data );
-			smooth = true;
-	  } else {
-		data = _data;
-	  }
-
-      for ( sofa::helper::vector< Vec3i >::const_iterator it = seeds.begin(); it != seeds.end(); it++ )
-      {
-        sofa::helper::vector< PointID > tmpMesh(mesh);
-		//sofa::helper::vector< PointID >::iterator it_mesh;
-		//for ( it_mesh = mesh.begin(); it_mesh !=mesh.end() ; it_mesh++ )
-          //tmpMesh.push_back ( *it_mesh );
-
-        sofa::helper::vector< Vector3> tmpVertices(vertices);
-		//sofa::helper::vector< Vector3>::iterator it_vertices;
-        //for ( it_vertices=vertices.begin() ; it_vertices!= vertices.end() ; it_vertices++)
-          //tmpVertices.push_back ( *it_vertices );
-
-        Vec3i voxel = *it;
-        if ( ( tmpMesh.size() == mesh.size() ) && ( voxel[0] >= 0 ) && ( voxel[1] >= 0 ) && ( voxel[2] >= 0 ) )
-          propagateFrom ( voxel, data, isolevel, tmpMesh, tmpVertices, generatedCubes, triangleIndexInRegularGrid );
-
-        for ( sofa::helper::vector< PointID >::iterator it2 = tmpMesh.begin() +mesh.size(); it2 != tmpMesh.end(); it2++ )
-          mesh.push_back ( *it2 );
-
-        for ( sofa::helper::vector< Vector3 >::iterator it3 = tmpVertices.begin() +vertices.size(); it3 != tmpVertices.end(); it3++ )
-          vertices.push_back ( *it3 );
-      }
-	  if (smooth)
-		delete [] data;
-    }
+		void MarchingCubeUtility::run ( unsigned char *_data, const sofa::helper::vector< Vec3i > & seeds,
+		                                const float isolevel,
+		                                sofa::helper::vector< PointID >& mesh,
+																		sofa::helper::vector< Vector3>& vertices,
+																		std::map< Vector3, PointID>& map_vertices,
+																		helper::vector< helper::vector<unsigned int> >*triangleIndexInRegularGrid,
+		                                bool propagate ) const
+		{
+			Vec3i gridSize = Vec3i ( dataResolution[0]/cubeStep, dataResolution[1]/cubeStep, dataResolution[2]/cubeStep );
+			sofa::helper::set<Vec3i> generatedCubes;
+			
+			unsigned int datasize = dataResolution[0]*dataResolution[1]*dataResolution[2];
+			if ( datasize == 0 )
+				return;
+		
+			unsigned char* data;
+			bool smooth = false;
+			if ( convolutionSize != 0 )
+			{
+				data = new unsigned char[datasize];
+				memcpy ( data, _data, datasize*sizeof ( unsigned char ) );
+				smoothData ( data );
+				smooth = true;
+			}
+			else
+			{
+				data = _data;
+			}
+		
+			propagateFrom ( seeds, data, isolevel, mesh, vertices, generatedCubes, map_vertices, triangleIndexInRegularGrid, propagate );
+			if ( smooth )
+				delete [] data;
+		}
 
 
 
-    void MarchingCubeUtility::run ( unsigned char *_data, const float isolevel,
-                                    sofa::helper::vector< PointID >& mesh,
-                                    sofa::helper::vector< Vector3 >& vertices,
-                                    helper::vector< helper::vector<unsigned int> >* triangleIndexInRegularGrid ) const
+		void MarchingCubeUtility::run ( unsigned char *_data, const sofa::helper::vector< Vec3i > & seeds,
+																		const float isolevel,
+																		sofa::helper::vector< PointID >& mesh,
+																		sofa::helper::vector< Vector3>& vertices,
+																		helper::vector< helper::vector<unsigned int> >*triangleIndexInRegularGrid,
+																		bool propagate ) const
+		{
+			std::map< Vector3, PointID> map_vertices;
+			for ( unsigned int i = map_vertices.size(); i < vertices.size(); i++ )
+				map_vertices.insert ( std::make_pair ( vertices[i], i ) );
+
+			run( _data, seeds, isolevel, mesh, vertices, map_vertices, triangleIndexInRegularGrid, propagate);
+		}
+
+
+
+		void MarchingCubeUtility::run ( unsigned char *_data, const float isolevel,
+																		sofa::helper::vector< PointID >& mesh,
+																		sofa::helper::vector< Vector3 >& vertices,
+																		helper::vector< helper::vector<unsigned int> >* triangleIndexInRegularGrid ) const
     {
 	  	unsigned int datasize = dataResolution[0]*dataResolution[1]*dataResolution[2];
 
@@ -765,27 +760,6 @@ namespace sofa
 
 
 
-    void MarchingCubeUtility::setBordersFromRealCoords ( const set<Vector3>& borders )
-    {
-      this->borders.clear();
-      Vector3 gridSize = dataVoxelSize * cubeStep;
-      gridSize = Vector3 ( 1.0 / gridSize[0], 1.0 / gridSize[1], 1.0 / gridSize[2] );
-
-      for ( set<Vector3>::const_iterator it = borders.begin(); it != borders.end(); it++ )
-      {
-        Vec3i cube = ( ( *it ) - ( dataVoxelSize/2.0 ) ).linearProduct ( gridSize );
-        this->borders.insert ( cube );
-        assert ( cube[0] >= 0 );
-        assert ( cube[1] >= 0 );
-        assert ( cube[2] >= 0 );
-        assert ( cube[0] < dataResolution[0] );
-        assert ( cube[1] < dataResolution[1] );
-        assert ( cube[2] < dataResolution[2] );
-      }
-    }
-
-
-
     // A priori, il n'y a pas de données sur les bords (tout du moins sur le premier voxel)
     void MarchingCubeUtility::findSeeds ( vector<Vec3i>& seeds, const float isoValue, unsigned char *_data )
     {
@@ -860,7 +834,14 @@ namespace sofa
 
 
 
-    void MarchingCubeUtility::updateTriangleInRegularGridVector ( helper::vector< helper::vector<unsigned int /*regular grid space index*/> >& triangleIndexInRegularGrid, const Vec3i& coord, const GridCell& cell, unsigned int nbTriangles ) const
+		void MarchingCubeUtility::setVerticesOffset( unsigned int verticesOffset)
+		{
+			this->verticesOffset = verticesOffset;
+		}
+
+
+
+		void MarchingCubeUtility::updateTriangleInRegularGridVector ( helper::vector< helper::vector<unsigned int /*regular grid space index*/> >& triangleIndexInRegularGrid, const Vec3i& coord, const GridCell& cell, unsigned int nbTriangles ) const
     {
       vector<unsigned int> voxels;
       if ( cell.val[0] ) voxels.push_back ( ( coord[0]+0 ) + ( coord[1]+0 ) *dataResolution[0] + ( coord[2]+0 ) *dataResolution[0]*dataResolution[1] ); //les voxels occupes ds ce cube

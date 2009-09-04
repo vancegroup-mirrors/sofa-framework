@@ -29,6 +29,7 @@
 
 #include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
 #include <sofa/core/componentmodel/behavior/State.h>
+#include <sofa/defaulttype/DataTypeInfo.h>
 
 namespace sofa
 {
@@ -88,6 +89,8 @@ public:
 
     virtual ~MechanicalState() { }
 
+    virtual unsigned int getCoordDimension() const { return defaulttype::DataTypeInfo<Coord>::size(); }
+    virtual unsigned int getDerivDimension() const { return defaulttype::DataTypeInfo<Deriv>::size(); }
     /// Return the free-motion velocity vector (read-write access).
     virtual VecDeriv* getVfree() = 0;
     /// Return the current velocity vector (read-write access).
@@ -104,8 +107,10 @@ public:
     virtual VecCoord* getXfree() = 0;
     /// Return the current position vector (read-write access).
     virtual VecCoord* getX() = 0;
-    /// Return the current position vector (read-write access). 
-    virtual VecCoord* getX0() = 0; 
+    /// Return the current position vector (read-write access).
+    virtual VecCoord* getX0() = 0;
+    // Mechanical State does not store any normal
+    virtual VecCoord* getN() { return NULL; };
 
     /// Return the current position vector (read-only access).
     virtual const VecCoord* getX()  const = 0;
@@ -123,10 +128,12 @@ public:
     virtual const VecCoord* getXfree()  const = 0;
     /// Return the free-motion velocity vector (read-only access).
     virtual const VecDeriv* getVfree() const = 0;
-    /// Return the current position vector (read-only access). 
-    virtual const VecCoord* getX0()  const = 0; 
+    /// Return the current position vector (read-only access).
+    virtual const VecCoord* getX0()  const = 0;
     /// Return the initial velocity vector (read-only access).
     virtual const VecDeriv* getV0()  const = 0;
+    // Mechanical State does not store any normal
+    virtual const VecCoord* getN() const { return NULL; };
 
     /// Return a VecCoord given its index
     virtual VecCoord* getVecCoord(unsigned int index) = 0;
@@ -146,6 +153,7 @@ public:
     /// Return a VecConst given its index, or NULL if it does not exists
     virtual const VecConst* getVecConst(unsigned int index) const = 0;
 
+    virtual unsigned int getCSize() const { return getC()->size(); }
 
     /// Get the indices of the particles located in the given bounding box
     virtual void getIndicesInSpace(sofa::helper::vector<unsigned>& /*indices*/, Real /*xmin*/, Real /*xmax*/,Real /*ymin*/, Real /*ymax*/, Real /*zmin*/, Real /*zmax*/) const=0;
@@ -154,8 +162,8 @@ public:
     virtual void setConstraintId(unsigned int ) = 0;
     /// Return the constraint IDs corresponding to the entries in the constraints matrix returned by getC()
     virtual sofa::helper::vector<unsigned int>& getConstraintId() = 0;
-    
-    
+
+
     virtual std::string getTemplateName() const
     {
       return templateName(this);

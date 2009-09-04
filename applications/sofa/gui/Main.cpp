@@ -49,7 +49,7 @@ SOFA_LINK_CLASS(QTGUI)
 #ifdef SOFA_GUI_QTOGREVIEWER
 SOFA_LINK_CLASS(OgreGUI)
 #endif
-	
+
 int SofaGUI::Init()
 {
     sofa::component::init();

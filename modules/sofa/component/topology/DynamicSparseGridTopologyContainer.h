@@ -27,6 +27,7 @@
 
 #include <sofa/component/topology/HexahedronSetTopologyContainer.h>
 #include <sofa/component/topology/HexahedronData.h>
+#include <sofa/component/container/MeshLoader.h>
 #include <sofa/helper/map.h>
 
 namespace sofa
@@ -38,19 +39,19 @@ namespace sofa
       typedef defaulttype::Vec<3, int> Vec3i;
 
       /** a class that stores a sparse regular grid of hexahedra and provides a better loading and access to neighbors than HexahedronSetTopologyContainer */
-      class DynamicSparseGridTopologyContainer : public HexahedronSetTopologyContainer
+      class SOFA_COMPONENT_CONTAINER_API DynamicSparseGridTopologyContainer : public HexahedronSetTopologyContainer
       {
           friend class DynamicSparseGridTopologyModifier;
 
         public:
           typedef Hexa Hexahedron;
-          typedef HexaEdges HexahedronEdges;
-          typedef HexaQuads HexahedronQuads;
+          typedef EdgesInHexahedron EdgesInHexahedron;
+          typedef QuadsInHexahedron QuadsInHexahedron;
 
           Data< Vec3i> resolution;
 
-          Data< sofa::helper::vector<unsigned char> > valuesIndexedInRegularGrid; // dense. valeurs dans toute la grille.
-          HexahedronData<unsigned char> valuesIndexedInTopology; // pas dense. uniquement la ou il y a des hexas.
+          Data< sofa::helper::vector<unsigned char> > valuesIndexedInRegularGrid;
+          HexahedronData<unsigned char> valuesIndexedInTopology;
 
           Data< sofa::helper::vector<BaseMeshTopology::HexaID> > idxInRegularGrid;
           Data< std::map< unsigned int, BaseMeshTopology::HexaID> > idInRegularGrid2IndexInTopo;
@@ -61,7 +62,7 @@ namespace sofa
           virtual ~DynamicSparseGridTopologyContainer() {}
 
         protected:
-          virtual void loadFromMeshLoader ( sofa::component::MeshLoader* loader );
+          virtual void loadFromMeshLoader ( sofa::component::container::MeshLoader* loader );
       };
 
     } // namespace topology

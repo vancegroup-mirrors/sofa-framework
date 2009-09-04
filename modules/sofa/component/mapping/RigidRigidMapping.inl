@@ -37,7 +37,7 @@
 #include <sofa/helper/gl/Axis.h>
 #include <string.h>
 #include <iostream>
-
+#include <sofa/component/container/ArticulatedHierarchyContainer.h>
 
 
 
@@ -109,15 +109,39 @@ template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::init()
 {
 
-      if (!fileRigidRigidMapping.getValue().empty())
+    if (!fileRigidRigidMapping.getValue().empty())
         this->load(fileRigidRigidMapping.getFullPath().c_str());
+
 
 	if (this->points.getValue().empty() && this->toModel!=NULL)
 	{
 		VecCoord& x = *this->toModel->getX();
 		points.beginEdit()->resize(x.size());
-		for (unsigned int i=0;i<x.size();i++)
-			(*points.beginEdit())[i] = x[i];
+		unsigned int i=0, cpt=0;
+		if(globalToLocalCoords.getValue() == true){
+			typename In::VecCoord& xfrom = *this->fromModel->getX();
+			switch (repartition.getValue().size())
+			{
+			case 0 : 
+				for (i=0;i<x.size();i++)
+					(*points.beginEdit())[i] = x[i] - xfrom[0];
+				break;
+			case 1 : 
+				for (i=0;i<xfrom.size();i++)
+					for(unsigned int j=0; j<repartition.getValue()[0];j++,cpt++)
+						(*points.beginEdit())[cpt] = x[cpt] - xfrom[i];
+				break;
+			default : 
+				for (i=0;i<xfrom.size();i++)
+					for(unsigned int j=0; j<repartition.getValue()[i];j++,cpt++)
+						(*points.beginEdit())[cpt] = x[cpt] - xfrom[i];
+				break;
+			}
+		}
+		else{
+			for (i=0;i<x.size();i++)
+				(*points.beginEdit())[i] = x[i];
+		}
 	}
 	this->BasicMapping::init();
 }
@@ -230,72 +254,157 @@ void RigidRigidMapping<BasicMapping>::apply( typename Out::VecCoord& out, const 
 }
 
 template <class BasicMapping>
-void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childForces, const typename In::VecDeriv& parentForces )
+void RigidRigidMapping<BasicMapping>::applyJ( typename Out::VecDeriv& childVelocities, const typename In::VecDeriv& parentVelocities )
 {
 	Vector v,omega;
-	childForces.resize(points.getValue().size());
-	unsigned int cptchildForces;
+	childVelocities.resize(points.getValue().size());
+	unsigned int cptchildVelocities;
 	unsigned int val;
 
+    if ( !(maskTo->isInUse()) )
+      {
 	switch (repartition.getValue().size())
 	{
 	case 0:
 		if (!indexFromEnd.getValue())
 		{
-			v = parentForces[index.getValue()].getVCenter();
-			omega = parentForces[index.getValue()].getVOrientation();
+			v = parentVelocities[index.getValue()].getVCenter();
+			omega = parentVelocities[index.getValue()].getVOrientation();
 			for(unsigned int i=0;i<points.getValue().size();i++){
-				childForces[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
-				childForces[i].getVOrientation() = omega;
+				childVelocities[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
+				childVelocities[i].getVOrientation() = omega;
 			}
 		}
 		else
 		{
-			v = parentForces[parentForces.size() - 1 - index.getValue()].getVCenter();
-			omega = parentForces[parentForces.size() - 1 - index.getValue()].getVOrientation();
+			v = parentVelocities[parentVelocities.size() - 1 - index.getValue()].getVCenter();
+			omega = parentVelocities[parentVelocities.size() - 1 - index.getValue()].getVOrientation();
 
 			for(unsigned int i = 0; i < points.getValue().size(); i++)
 			{
-				childForces[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
-				childForces[i].getVOrientation() = omega;
+				childVelocities[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
+				childVelocities[i].getVOrientation() = omega;
 			}
 		}
 		break;
 
 	case 1:
 		val = repartition.getValue()[0];
-		cptchildForces=0;
-		for (unsigned int ifrom=0 ; ifrom<parentForces.size() ; ifrom++){
-			v = parentForces[ifrom].getVCenter();
-			omega = parentForces[ifrom].getVOrientation();
+		cptchildVelocities=0;
+		for (unsigned int ifrom=0 ; ifrom<parentVelocities.size() ; ifrom++){
+			v = parentVelocities[ifrom].getVCenter();
+			omega = parentVelocities[ifrom].getVOrientation();
 
 			for(unsigned int ito=0; ito<val; ito++){
-				childForces[cptchildForces].getVCenter() =  v + cross(omega,(pointsR0[cptchildForces]).getCenter());
-				childForces[cptchildForces].getVOrientation() = omega;
-				cptchildForces++;
+				childVelocities[cptchildVelocities].getVCenter() =  v + cross(omega,(pointsR0[cptchildVelocities]).getCenter());
+				childVelocities[cptchildVelocities].getVOrientation() = omega;
+				cptchildVelocities++;
 			}
 		}
 		break;
 
 	default:
-		if (repartition.getValue().size() != parentForces.size()){
+		if (repartition.getValue().size() != parentVelocities.size()){
 			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
 			return;
 		}
-		cptchildForces=0;
-		for (unsigned int ifrom=0 ; ifrom<parentForces.size() ; ifrom++){
-			v = parentForces[ifrom].getVCenter();
-			omega = parentForces[ifrom].getVOrientation();
+		cptchildVelocities=0;
+		for (unsigned int ifrom=0 ; ifrom<parentVelocities.size() ; ifrom++){
+			v = parentVelocities[ifrom].getVCenter();
+			omega = parentVelocities[ifrom].getVOrientation();
 
 			for(unsigned int ito=0; ito<repartition.getValue()[ifrom]; ito++){
-				childForces[cptchildForces].getVCenter() =  v + cross(omega,(pointsR0[cptchildForces]).getCenter());
-				childForces[cptchildForces].getVOrientation() = omega;
-				cptchildForces++;
+				childVelocities[cptchildVelocities].getVCenter() =  v + cross(omega,(pointsR0[cptchildVelocities]).getCenter());
+				childVelocities[cptchildVelocities].getVOrientation() = omega;
+				cptchildVelocities++;
 			}
 		}
 		break;
 	}
+      }
+    else
+      {
 
+        typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+        const ParticleMask::InternalStorage &indices=maskTo->getEntries();
+        
+        ParticleMask::InternalStorage::const_iterator it=indices.begin();
+	switch (repartition.getValue().size())
+	{
+	case 0:
+		if (!indexFromEnd.getValue())
+		{
+			v = parentVelocities[index.getValue()].getVCenter();
+			omega = parentVelocities[index.getValue()].getVOrientation();
+			for(unsigned int i=0;i<points.getValue().size() && it != indices.end();i++)
+                        {
+                                const unsigned int idx=(*it);
+                                if (idx != i) continue;
+
+				childVelocities[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
+				childVelocities[i].getVOrientation() = omega;
+                                it++;
+                        }
+		}
+		else
+		{
+			v = parentVelocities[parentVelocities.size() - 1 - index.getValue()].getVCenter();
+			omega = parentVelocities[parentVelocities.size() - 1 - index.getValue()].getVOrientation();
+
+			for(unsigned int i = 0; i < points.getValue().size() && it != indices.end(); i++)
+			{
+                                const unsigned int idx=(*it);
+                                if (idx != i) continue;
+
+				childVelocities[i].getVCenter() =  v + cross(omega,pointsR0[i].getCenter());
+				childVelocities[i].getVOrientation() = omega;
+                                it++;
+			}
+		}
+		break;
+
+	case 1:
+		val = repartition.getValue()[0];
+		cptchildVelocities=0;
+		for (unsigned int ifrom=0 ; ifrom<parentVelocities.size() && it != indices.end() ; ifrom++){
+			v = parentVelocities[ifrom].getVCenter();
+			omega = parentVelocities[ifrom].getVOrientation();
+
+			for(unsigned int ito=0; ito<val && it != indices.end(); ito++,cptchildVelocities++){
+                                const unsigned int idx=(*it);
+                                if (idx != cptchildVelocities) continue;
+
+				childVelocities[cptchildVelocities].getVCenter() =  v + cross(omega,(pointsR0[cptchildVelocities]).getCenter());
+				childVelocities[cptchildVelocities].getVOrientation() = omega;
+                                it++;
+			}
+		}
+		break;
+
+	default:
+		if (repartition.getValue().size() != parentVelocities.size()){
+			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+			return;
+		}
+		cptchildVelocities=0;
+		for (unsigned int ifrom=0 ; ifrom<parentVelocities.size()  && it != indices.end(); ifrom++){
+			v = parentVelocities[ifrom].getVCenter();
+			omega = parentVelocities[ifrom].getVOrientation();
+
+			for(unsigned int ito=0; ito<repartition.getValue()[ifrom] && it != indices.end(); ito++,cptchildVelocities++){
+
+                                const unsigned int idx=(*it);
+                                if (idx != cptchildVelocities) continue;
+
+				childVelocities[cptchildVelocities].getVCenter() =  v + cross(omega,(pointsR0[cptchildVelocities]).getCenter());
+				childVelocities[cptchildVelocities].getVOrientation() = omega;
+				
+                                it++;
+			}
+		}
+		break;
+	}
+      }
 }
 
 
@@ -305,6 +414,10 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 	Vector v,omega;
 	unsigned int val;
 	unsigned int cpt;
+
+    if ( !(maskTo->isInUse()) )
+      {	
+        maskFrom->setInUse(false);
 	switch(repartition.getValue().size())
 	{
 	case 0 :
@@ -364,12 +477,217 @@ void RigidRigidMapping<BasicMapping>::applyJT( typename In::VecDeriv& parentForc
 			}
 			parentForces[ito].getVCenter() += v;
 			parentForces[ito].getVOrientation() += omega;
-
 		}
 		break;
 	}
+      }
+    else
+      {
+        typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+        const ParticleMask::InternalStorage &indices=maskTo->getEntries();
+        
+        ParticleMask::InternalStorage::const_iterator it=indices.begin();
+	switch(repartition.getValue().size())
+	{
+	case 0 :
+                for(;it!=indices.end();it++){
+                        const int i=(*it);
+			// out = Jt in
+			// Jt = [ I     ]
+			//      [ -OM^t ]
+			// -OM^t = OM^
+
+			Vector f = childForces[i].getVCenter();
+			v += f;
+			omega += childForces[i].getVOrientation() + cross(f,-pointsR0[i].getCenter());
+		}
+
+		if (!indexFromEnd.getValue())
+		{
+			parentForces[index.getValue()].getVCenter() += v;
+			parentForces[index.getValue()].getVOrientation() += omega;
+                        maskFrom->insertEntry(index.getValue());
+		}
+		else
+		{
+			parentForces[parentForces.size() - 1 - index.getValue()].getVCenter() += v;
+			parentForces[parentForces.size() - 1 - index.getValue()].getVOrientation() += omega;
+                        maskFrom->insertEntry(parentForces.size() - 1 - index.getValue());
+		}
+
+		break;
+	case 1 :
+		val = repartition.getValue()[0];
+		cpt=0;
+		for(unsigned int ito=0;ito<parentForces.size() && it!=indices.end();ito++){
+			v=Vector();
+			omega=Vector();
+			for(unsigned int i=0;i<val && it != indices.end();i++, cpt++){
+                                const unsigned int idx=(*it);
+                                if (idx != cpt) continue;
+				Vector f = childForces[cpt].getVCenter();
+				v += f;
+				omega += childForces[cpt].getVOrientation() + cross(f,-pointsR0[cpt].getCenter());
+                                it++;
+			}
+			parentForces[ito].getVCenter() += v;
+			parentForces[ito].getVOrientation() += omega;
+                        maskFrom->insertEntry(ito);
+		}
+		break;
+	default :
+		if (repartition.getValue().size() != parentForces.size()){
+			serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+			return;
+		}
+		cpt=0;
+		for(unsigned int ito=0;ito<parentForces.size() && it != indices.end();ito++){
+			v=Vector();
+			omega=Vector();
+			for(unsigned int i=0;i<repartition.getValue()[ito] && it != indices.end();i++, cpt++){
+                                const unsigned int idx=(*it);
+                                if (idx != cpt) continue;
+				Vector f = childForces[cpt].getVCenter();
+				v += f;
+				omega += childForces[cpt].getVOrientation() + cross(f,-pointsR0[cpt].getCenter());
+                                it++;
+			}
+			parentForces[ito].getVCenter() += v;
+			parentForces[ito].getVOrientation() += omega;
+                        maskFrom->insertEntry(ito);
+		}
+		break;
+	}
+      }
 
 }
+
+
+template <class BaseMapping>
+void RigidRigidMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
+{
+
+  int outSize = out.size();
+  out.resize(in.size() + outSize); // we can accumulate in "out" constraints from several mappings
+
+
+  switch (repartition.getValue().size())
+    {
+    case 0:
+      {
+        for(unsigned int i=0; i<in.size(); i++)
+          {
+            Vector v,omega;
+            OutConstraintIterator itOut;
+            std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+            for (itOut=iter.first;itOut!=iter.second;itOut++)
+              {
+                const unsigned int i = itOut->first;// index of the node
+                Deriv data=(Deriv) itOut->second;
+                // out = Jt in
+                // Jt = [ I     ]
+                //      [ -OM^t ]
+                // -OM^t = OM^
+
+                Vector f = data.getVCenter();
+                v += f;
+                omega += data.getVOrientation() + cross(f,-pointsR0[i].getCenter());
+              }
+      
+            const InDeriv result(v, omega);
+
+            if (!indexFromEnd.getValue())
+              {
+                out[outSize+i].add(index.getValue(), result);
+              }
+            else
+              {
+                out[outSize+i].add(out.size() - 1 - index.getValue(), result);
+              }
+          }
+        break;
+          }
+    case 1:
+      {    
+        const unsigned int numDofs = this->getFromModel()->getX()->size();
+
+        const unsigned int val=repartition.getValue()[0];
+        for(unsigned int i=0; i<in.size(); i++)
+          {
+            unsigned int cpt=0;
+
+            std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+            OutConstraintIterator it=iter.first;
+            for(unsigned int ito=0;ito<numDofs && it != iter.second;ito++)
+              {
+                Vector v,omega;
+                bool needToInsert=false;
+
+                for(unsigned int r=0;r<val && it != iter.second;r++, cpt++)
+                  {
+                    const unsigned int idx=it->first;
+                    if (idx != cpt) continue;
+                    needToInsert=true;
+
+                    Deriv data=(Deriv) it->second;
+
+                    Vector f = data.getVCenter();
+                    v += f;
+                    omega += data.getVOrientation() + cross(f,-pointsR0[cpt].getCenter());
+                    it++;
+                  }
+                if (needToInsert)
+                  {
+                    const InDeriv result(v, omega);
+                    out[outSize+i].add(ito, result);
+                  }
+              }
+          }
+        break;
+      }
+    default:
+      {
+        const unsigned int numDofs = this->getFromModel()->getX()->size();
+
+        for(unsigned int i=0; i<in.size(); i++)
+          {
+            unsigned int cpt=0;
+            std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+            OutConstraintIterator it=iter.first;
+            for(unsigned int ito=0;ito<numDofs && it != iter.second;ito++)
+              {
+                Vector v,omega;
+                bool needToInsert=false;
+
+                for(unsigned int r=0;r<repartition.getValue()[ito] && it != iter.second;r++, cpt++)
+                  {
+                    const unsigned int idx=it->first;
+                    if (idx != cpt) continue;
+                    needToInsert=true;
+
+                    Deriv data=(Deriv) it->second;
+                    Vector f = data.getVCenter();
+                    v += f;
+                    omega += data.getVOrientation() + cross(f,-pointsR0[cpt].getCenter());
+                    it++;
+                  }
+
+                if (needToInsert)
+                  {
+                    const InDeriv result(v, omega);
+                    out[outSize+i].add(ito, result);
+                  }
+              }
+          }
+        break;
+      }
+    }
+}
+
+
 template <class BasicMapping>
 void RigidRigidMapping<BasicMapping>::computeAccFromMapping(  typename Out::VecDeriv& acc_out, const typename In::VecDeriv& v_in, const typename In::VecDeriv& acc_in)
 {

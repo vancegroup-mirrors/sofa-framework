@@ -81,7 +81,7 @@ namespace topology
 
 		// check if there already exists an edge. 
 		// Important: getEdgeIndex creates the edge vertex shell array
-		if(m_container->hasEdgeVertexShell())
+		if(m_container->hasEdgesAroundVertex())
 		{
 			if(m_container->getEdgeIndex(e[0],e[1]) != -1)
 			{
@@ -91,14 +91,14 @@ namespace topology
 			}
 		}
 #endif
-		if (m_container->hasEdgeVertexShell()) 
+		if (m_container->hasEdgesAroundVertex()) 
 		{	  
 			const unsigned int edgeId = m_container->getNumberOfEdges();
 
-			sofa::helper::vector< unsigned int > &shell0 = m_container->getEdgeVertexShellForModification( e[0] );
+			sofa::helper::vector< unsigned int > &shell0 = m_container->getEdgesAroundVertexForModification( e[0] );
 			shell0.push_back(edgeId);			
 
-			sofa::helper::vector< unsigned int > &shell1 = m_container->getEdgeVertexShellForModification( e[1] );
+			sofa::helper::vector< unsigned int > &shell1 = m_container->getEdgesAroundVertexForModification( e[1] );
 			shell1.push_back(edgeId);			
 		}
 
@@ -176,9 +176,9 @@ namespace topology
 			return;
 		}
 
-		if(removeIsolatedItems && !m_container->hasEdgeVertexShell()) 
+		if(removeIsolatedItems && !m_container->hasEdgesAroundVertex()) 
 		{
-			m_container->createEdgeVertexShellArray();
+			m_container->createEdgesAroundVertexArray();
 		}
 
 		sofa::helper::vector<unsigned int> vertexToBeRemoved;
@@ -187,21 +187,21 @@ namespace topology
 		for (unsigned int i=0; i<indices.size(); ++i, --lastEdgeIndex)
 		{
 			// now updates the shell information of the edge formely at the end of the array
-			if(m_container->hasEdgeVertexShell())
+			if(m_container->hasEdgesAroundVertex())
 			{
 				const Edge &e = m_container->m_edge[ indices[i] ];
 				const Edge &q = m_container->m_edge[ lastEdgeIndex ];
 				const unsigned int point0 = e[0], point1 = e[1];
 				const unsigned int point2 = q[0], point3 = q[1];
 
-				sofa::helper::vector< unsigned int > &shell0 = m_container->m_edgeVertexShell[ point0 ];
+				sofa::helper::vector< unsigned int > &shell0 = m_container->m_edgesAroundVertex[ point0 ];
 				shell0.erase( std::remove( shell0.begin(), shell0.end(), indices[i] ), shell0.end() );
 				if(removeIsolatedItems && shell0.empty()) 
 				{
 					vertexToBeRemoved.push_back(point0);
 				}
 
-				sofa::helper::vector< unsigned int > &shell1 = m_container->m_edgeVertexShell[ point1 ];
+				sofa::helper::vector< unsigned int > &shell1 = m_container->m_edgesAroundVertex[ point1 ];
 				shell1.erase( std::remove( shell1.begin(), shell1.end(), indices[i] ), shell1.end() );
 				if(removeIsolatedItems && shell1.empty()) 
 				{
@@ -211,11 +211,11 @@ namespace topology
 				if(indices[i] < lastEdgeIndex)
 				{
 					//replaces the edge index oldEdgeIndex with indices[i] for the first vertex
-					sofa::helper::vector< unsigned int > &shell2 = m_container->m_edgeVertexShell[ point2 ];
+					sofa::helper::vector< unsigned int > &shell2 = m_container->m_edgesAroundVertex[ point2 ];
 					replace(shell2.begin(), shell2.end(), lastEdgeIndex, indices[i]);			
 
 					//replaces the edge index oldEdgeIndex with indices[i] for the second vertex
-					sofa::helper::vector< unsigned int > &shell3 = m_container->m_edgeVertexShell[ point3 ];
+					sofa::helper::vector< unsigned int > &shell3 = m_container->m_edgesAroundVertex[ point3 ];
 					replace(shell3.begin(), shell3.end(), lastEdgeIndex, indices[i]);
 				}
 			}
@@ -239,8 +239,8 @@ namespace topology
 		// start by calling the parent's method.
 		PointSetTopologyModifier::addPointsProcess( nPoints );		
 
-		if(m_container->hasEdgeVertexShell())
-			m_container->m_edgeVertexShell.resize( m_container->getNbPoints() );
+		if(m_container->hasEdgesAroundVertex())
+			m_container->m_edgesAroundVertex.resize( m_container->getNbPoints() );
 	}
 
 	void EdgeSetTopologyModifier::removePointsProcess(sofa::helper::vector<unsigned int> &indices, 
@@ -251,17 +251,17 @@ namespace topology
 		if(m_container->hasEdges())
 		{
 			// forces the construction of the edge shell array if it does not exists
-			if(!m_container->hasEdgeVertexShell())
-				m_container->createEdgeVertexShellArray();
+			if(!m_container->hasEdgesAroundVertex())
+				m_container->createEdgesAroundVertexArray();
 
 			unsigned int lastPoint = m_container->getNbPoints() - 1;
 			for (unsigned int i=0; i<indices.size(); ++i, --lastPoint)
 			{
 				// updating the edges connected to the point replacing the removed one:
 				// for all edges connected to the last point
-				for (unsigned int j=0; j<m_container->m_edgeVertexShell[lastPoint].size(); ++j)
+				for (unsigned int j=0; j<m_container->m_edgesAroundVertex[lastPoint].size(); ++j)
 				{
-					const int edgeId = m_container->m_edgeVertexShell[lastPoint][j];
+					const int edgeId = m_container->m_edgesAroundVertex[lastPoint][j];
 					// change the old index for the new one
 					if ( m_container->m_edge[ edgeId ][0] == lastPoint )
 						m_container->m_edge[ edgeId ][0] = indices[i];
@@ -270,10 +270,10 @@ namespace topology
 				}
 
 				// updating the edge shell itself (change the old index for the new one)
-				m_container->m_edgeVertexShell[ indices[i] ] = m_container->m_edgeVertexShell[ lastPoint ];
+				m_container->m_edgesAroundVertex[ indices[i] ] = m_container->m_edgesAroundVertex[ lastPoint ];
 			}
 
-			m_container->m_edgeVertexShell.resize( m_container->m_edgeVertexShell.size() - indices.size() );
+			m_container->m_edgesAroundVertex.resize( m_container->m_edgesAroundVertex.size() - indices.size() );
 		}
 
 		// Important : the points are actually deleted from the mechanical object's state vectors iff (removeDOF == true)
@@ -287,14 +287,14 @@ namespace topology
 	{
 		if(m_container->hasEdges())
 		{
-			if(m_container->hasEdgeVertexShell())
+			if(m_container->hasEdgesAroundVertex())
 			{
 				// copy of the the edge vertex shell array
-				sofa::helper::vector< sofa::helper::vector< unsigned int > > edgeVertexShell_cp = m_container->getEdgeVertexShellArray();
+				sofa::helper::vector< sofa::helper::vector< unsigned int > > edgesAroundVertex_cp = m_container->getEdgesAroundVertexArray();
 
 				for (unsigned int i=0; i<index.size(); ++i)
 				{
-					m_container->m_edgeVertexShell[i] = edgeVertexShell_cp[ index[i] ];
+					m_container->m_edgesAroundVertex[i] = edgesAroundVertex_cp[ index[i] ];
 				}
 			}
 
@@ -728,6 +728,67 @@ namespace topology
 	}
 
 
+  
+  
+  void EdgeSetTopologyModifier::movePointsProcess (const sofa::helper::vector <unsigned int>& id,
+						   const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+						   const sofa::helper::vector< sofa::helper::vector< double > >& coefs,
+						   const bool moveDOF)
+  {
+    (void)moveDOF;
+    unsigned int nbrVertex = id.size();
+    bool doublet;
+    sofa::helper::vector<unsigned int> edgesAroundVertex2Move;
+    sofa::helper::vector< Edge > edgeArray;
+    
+    // Step 1/4 - Creating trianglesAroundVertex to moved due to moved points:
+    for (unsigned int i = 0; i<nbrVertex; ++i)
+    {
+      const sofa::helper::vector <unsigned int>& edgesAroundVertex = m_container->getEdgesAroundVertexArray()[ id[i] ];
+
+      for (unsigned int j = 0; j<edgesAroundVertex.size(); ++j)
+      {
+	doublet = false;
+	
+	for (unsigned int k =0; k<edgesAroundVertex2Move.size(); ++k) //Avoid double
+	{
+	  if (edgesAroundVertex2Move[k] == edgesAroundVertex[j])
+	  {
+	    doublet = true;
+	    break;
+	  }
+	}
+
+	if(!doublet)
+	  edgesAroundVertex2Move.push_back (edgesAroundVertex[j]);
+
+      }
+    }
+	
+    std::sort( edgesAroundVertex2Move.begin(), edgesAroundVertex2Move.end(), std::greater<unsigned int>() );
+
+    // Step 2/4 - Create event to delete all elements before moving and propagate it:
+    EdgesMoved_Removing *ev1 = new EdgesMoved_Removing (edgesAroundVertex2Move);
+    this->addTopologyChange(ev1);
+    propagateTopologicalChanges();
+
+
+    // Step 3/4 - Physically move all dof:
+    PointSetTopologyModifier::movePointsProcess (id, ancestors, coefs);
+	
+	
+    // Step 4/4 - Create event to recompute all elements concerned by moving and propagate it:
+    
+    // Creating the corresponding array of Triangles for ancestors
+    for (unsigned int i = 0; i<edgesAroundVertex2Move.size(); i++)
+      edgeArray.push_back (m_container->getEdgeArray()[ edgesAroundVertex2Move[i] ]);
+
+    EdgesMoved_Adding *ev2 = new EdgesMoved_Adding (edgesAroundVertex2Move, edgeArray);
+    this->addTopologyChange(ev2); // This event should be propagated with global workflow
+  }
+
+
+  
 } // namespace topology
 
 } // namespace component

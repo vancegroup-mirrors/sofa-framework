@@ -29,6 +29,7 @@
 
 #include <sofa/core/Mapping.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
+#include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
 
 namespace sofa
 {
@@ -61,7 +62,7 @@ class MechanicalMapping : public Mapping<In,Out>, public BaseMechanicalMapping
 {
 public:
     Data<bool> f_isMechanical;
-    
+
     MechanicalMapping(In* from, Out* to);
 
     virtual ~MechanicalMapping();
@@ -81,14 +82,17 @@ public:
     ///
     /// This method must be reimplemented by all mappings if they need to support constraints.
     virtual void applyJT( typename In::VecConst& /*out*/, const typename Out::VecConst& /*in*/ ) {}
-	
-	/// If the mapping input has a rotation velocity, it computes the subsequent acceleration 
-	/// created by the derivative terms
-	/// $ a_out = w^(w^rel_pos)	$
-	/// This method must be reimplemented by all mappings if they need to support composite accelerations
-	virtual void computeAccFromMapping(  typename Out::VecDeriv& /*acc_out*/, const typename In::VecDeriv& /*v_in*/, const typename In::VecDeriv& /*acc_in*/){}
-	
 
+    /// This method must be reimplemented by all mappings if they need to support mask.
+    virtual void applyJT( BaseMechanicalState::ParticleMask& /*out*/, const BaseMechanicalState::ParticleMask& /*in*/ ) {}
+
+    /// If the mapping input has a rotation velocity, it computes the subsequent acceleration
+    /// created by the derivative terms
+    /// $ a_out = w^(w^rel_pos)	$
+    /// This method must be reimplemented by all mappings if they need to support composite accelerations
+    virtual void computeAccFromMapping(  typename Out::VecDeriv& /*acc_out*/, const typename In::VecDeriv& /*v_in*/, const typename In::VecDeriv& /*acc_in*/){}
+
+        
     /// Get the source (upper) model.
     virtual BaseMechanicalState* getMechFrom();
 
@@ -97,6 +101,9 @@ public:
 
     /// Return false if this mapping should only be used as a regular mapping instead of a mechanical mapping.
     virtual bool isMechanical();
+
+    /// Determine if this mapping should only be used as a regular mapping instead of a mechanical mapping.
+    virtual void setMechanical(bool b);
 
     virtual void init();
 
@@ -131,7 +138,7 @@ public:
 	///
 	/// This method retrieves the acc and v vectors and call the internal computeAccFromMapping() method implemented by the component.
     virtual void propagateA();
-	
+
 
     /// Propagate displacement from the source model to the destination model.
     ///
@@ -164,6 +171,7 @@ public:
     ///
     /// This method retrieves the constraint matrices and call the internal applyJT() method implemented by the component.
     virtual void accumulateConstraint();
+
 
     virtual std::string getTemplateName() const
     {

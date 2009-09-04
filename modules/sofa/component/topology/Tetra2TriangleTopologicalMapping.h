@@ -48,7 +48,7 @@ using namespace sofa::core::componentmodel::topology;
 
 using namespace sofa::core;
 
-/** 
+/**
  * This class, called Tetra2TriangleTopologicalMapping, is a specific implementation of the interface TopologicalMapping where :
  *
  * INPUT TOPOLOGY = TetrahedronSetTopology
@@ -57,8 +57,8 @@ using namespace sofa::core;
  * Tetra2TriangleTopologicalMapping class is templated by the pair (INPUT TOPOLOGY, OUTPUT TOPOLOGY)
  *
 */
-	
-	class Tetra2TriangleTopologicalMapping : public TopologicalMapping 
+
+	class Tetra2TriangleTopologicalMapping : public TopologicalMapping
 	{
         public:
 
@@ -79,7 +79,7 @@ using namespace sofa::core;
              */
             virtual void init();
 
-			
+
 			/** \brief Translates the TopologyChange objects from the source to the target.
              *
              * Translates each of the TopologyChange objects waiting in the source list so that they have a meaning and
@@ -128,8 +128,8 @@ using namespace sofa::core;
 				BaseMeshTopology* topoIn=NULL;
 				BaseMeshTopology* topoOut=NULL;
 				if (arg)
-				  {	
-				    if (arg->findObject(arg->getAttribute("object1","../..")) != NULL)			      
+				  {
+				    if (arg->findObject(arg->getAttribute("object1","../..")) != NULL)
 				      (dynamic_cast<sofa::core::objectmodel::BaseObject*>(arg->findObject(arg->getAttribute("object1","../.."))))->getContext()->get(topoIn);
 				    if (arg->findObject(arg->getAttribute("object2","..")) != NULL)
 				      (dynamic_cast<sofa::core::objectmodel::BaseObject*>(arg->findObject(arg->getAttribute("object2",".."))))->getContext()->get(topoOut);
@@ -154,6 +154,8 @@ using namespace sofa::core;
 		protected:
 			Data< std::string > object1;
 			Data< std::string > object2;
+
+			Data<bool> flipNormals;
 
         };
 

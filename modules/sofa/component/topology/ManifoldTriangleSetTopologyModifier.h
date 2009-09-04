@@ -39,9 +39,9 @@ namespace sofa
       typedef BaseMeshTopology::TriangleID TriangleID;
       typedef BaseMeshTopology::Triangle Triangle;
       typedef BaseMeshTopology::SeqTriangles SeqTriangles;
-      typedef BaseMeshTopology::VertexTriangles VertexTriangles;
-      typedef BaseMeshTopology::EdgeTriangles EdgeTriangles;
-      typedef BaseMeshTopology::TriangleEdges TriangleEdges;
+      typedef BaseMeshTopology::TrianglesAroundVertex TrianglesAroundVertex;
+      typedef BaseMeshTopology::TrianglesAroundEdge TrianglesAroundEdge;
+      typedef BaseMeshTopology::EdgesInTriangle EdgesInTriangle;
       
       /** 
        * A class that modifies the topology by adding and removing triangles
@@ -64,21 +64,35 @@ namespace sofa
 	
 	virtual void Debug(); // TO BE REMOVED WHEN CLASS IS SURE.
 
-	
-	/** \brief: Swap a list of edges.
+
+	/** \brief Add and remove a subset of triangles. Eventually remove isolated edges and vertices
 	 *
+	 * This function is a complete workflow using differents methods of this class:
+	 * \sa TriangleSetTopologyModifier::removeTrianglesWarning
+	 * \sa TriangleSetTopologyModifier::removeTrianglesProcess
+	 * \sa TriangleSetTopologyModifier::addTrianglesProcess
+	 * \sa TriangleSetTopologyModifier::addTrianglesWarning
+	 * \sa reorderingTopologyOnROI
+	 * And not the Manifold ones. The interest is to allow intermediate non manifold topology.
+	 * WARNING: There are no test incusring the modification will keep the topology manifold.
+	 * 
+	 * @param nTri2Add - number of triangles to add.
+	 * @param triangles2Add - list of Triangle to add.
+	 * @param trianglesIndexList - List of their index.
+	 * @param ancestors - list of ancestors to these new triangles.
+	 * @param baryCoefs - their barycoefs related to these ancestors.
+	 * @param trianglesIndex2remove - List of triangle indices to remove.
 	 */
-	void edgeSwapProcess (const sofa::helper::vector <EdgeID>& listEdges);
-
+	virtual void addRemoveTriangles (const unsigned int nTri2Add,
+					 const sofa::helper::vector< Triangle >& triangles2Add,
+					 const sofa::helper::vector< unsigned int >& trianglesIndex2Add,
+					 const sofa::helper::vector< sofa::helper::vector< unsigned int > > & ancestors,
+					 const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs,
+					 sofa::helper::vector< unsigned int >& trianglesIndex2remove);
 	
-	/** \brief: Swap the edge adjacent to the two input triangles (To be used by the ray pick interactor).
-	 *
-	 */
-	void edgeSwapProcess (const TriangleID& indexTri1, const TriangleID& indexTri2);
-
-
+		
 	/** \brief: Reorder the vertex in the array of a given edge. In order to be in the oriented in the right direction
-	 * regarding the first triangle of m_triangleEdgeShellArray[ edgeIndex ].
+	 * regarding the first triangle of m_trianglesAroundEdgeArray[ edgeIndex ].
 	 *
 	 */
 	void reorderingEdge(const unsigned int edgeIndex);
@@ -87,13 +101,13 @@ namespace sofa
 	/** \brief: Reorder the triangle vertex array around a given vertex.
 	 *
 	 */
-	void reorderingTriangleVertexShell (const unsigned int vertexIndex);
+	void reorderingTrianglesAroundVertex (const unsigned int vertexIndex);
 
 	
 	/** \brief: Reorder the edge vertex array around a given vertex.
 	 *
 	 */
-	void reorderingEdgeVertexShell (const unsigned int vertexIndex);
+	void reorderingEdgesAroundVertex (const unsigned int vertexIndex);
 
 	
 	/** \brief: Reorder the three shell arrays around a list of given vertices.
@@ -101,17 +115,6 @@ namespace sofa
 	 */
 	void reorderingTopologyOnROI (const sofa::helper::vector <unsigned int>& listVertex);
 
-
-	/** \brief: Reorder the mesh by swaping a list of edges.
-	 * For each edge, check if topology will be better before swaping it.
-	 */
-	void swapRemeshing (sofa::helper::vector <EdgeID>& listEdges);
-
-	/** \brief: Reorder the whole mesh by swaping a all edges.
-	 * For each edge, check if topology will be better before swaping it.
-	 * @see swapRemeshing (const sofa::helper::vector <unsigned int>& listedges)
-	 */
-	void swapRemeshing ();
 	
       protected:
 
@@ -177,7 +180,7 @@ namespace sofa
 	
 	/** Fill the vector m_modificationEdge with the 3 edges of each triangle to be removed (without duplications).
 	 * This is needed,if orientations of edges have to be changed (always oriented in the right direction regarding the
-	 * first or the only one triangle of m_TriangleEdgeShellArray[ the_edge ]);
+	 * first or the only one triangle of m_TrianglesAroundEdgeArray[ the_edge ]);
 	 */
 	void createRemovingEdgesFutureModifications (const sofa::helper::vector <unsigned int> items);
 
@@ -185,7 +188,7 @@ namespace sofa
 	/** Create the vector m_modifications which store the modifications to apply to the topology.
 	 * Thus, tests can be done before any triangle(s) removal, in order to keep the topology Manifold.
 	 * m_modifications[0] = vertex index number.
-	 * m_modifications[i>0] = 0 (no change) or 1 (remove m_triangleVertexShell[ m_modifications[0] ][i+1])
+	 * m_modifications[i>0] = 0 (no change) or 1 (remove m_trianglesAroundVertex[ m_modifications[0] ][i+1])
 	 */
 	void createRemovingTrianglesFutureModifications(const sofa::helper::vector< unsigned int >& items);
 
@@ -196,13 +199,13 @@ namespace sofa
 	bool testRemovingModifications();
 
 
-	/** According to m_modification map, reorder the m_triangleVertexShellArray.
+	/** According to m_modification map, reorder the m_trianglesAroundVertexArray.
 	 *
 	 */
 	void internalRemovingPostProcessingTriangles();
 
 
-	/** According to m_modificationEdge vector, reorder the m_EdgeVertexShellArray.
+	/** According to m_modificationEdge vector, reorder the m_EdgesAroundVertexArray.
 	 *
 	 */
 	void internalRemovingPostProcessingEdges();

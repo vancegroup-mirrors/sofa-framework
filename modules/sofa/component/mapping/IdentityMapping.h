@@ -60,18 +60,27 @@ public:
 	typedef typename Out::VecCoord VecCoord;
 	typedef typename Out::VecDeriv VecDeriv;
 	typedef typename Out::Coord Coord;
-	typedef typename Out::Deriv Deriv;	
-        typedef typename std::map<unsigned int, Deriv>::const_iterator OutConstraintIterator;
+	typedef typename Out::Deriv Deriv;
+        typedef typename defaulttype::SparseConstraint<Deriv> OutSparseConstraint;
+        typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
 	typedef typename Out::DataTypes OutDataTypes;
 	typedef typename OutDataTypes::Real OutReal;
 	typedef typename OutDataTypes::VecCoord OutVecCoord;
 	typedef typename OutDataTypes::VecDeriv OutVecDeriv;
 	
+        core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskFrom;
+        core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskTo;
     //enum { N=((int)Deriv::static_size < (int)InDeriv::static_size ? (int)Deriv::static_size : (int)InDeriv::static_size) };
 	
 	IdentityMapping(In* from, Out* to)
 	: Inherit(from, to)
-	{
+	{   
+          maskFrom = NULL;
+          if (core::componentmodel::behavior::BaseMechanicalState *stateFrom = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(from))
+            maskFrom = &stateFrom->forceMask;
+          maskTo = NULL;
+          if (core::componentmodel::behavior::BaseMechanicalState *stateTo = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(to))
+            maskTo = &stateTo->forceMask;
 	}
 	
 	virtual ~IdentityMapping()

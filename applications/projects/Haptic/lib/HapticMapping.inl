@@ -34,6 +34,14 @@
 #include "sofa/component/mapping/RigidRigidMapping.h"
 
 
+
+
+namespace sofa{
+	namespace component{
+		namespace mapping{
+
+
+
 using sofa::core::componentmodel::behavior::MechanicalMapping;
 using sofa::component::mapping::RigidRigidMapping;
 
@@ -43,14 +51,6 @@ using sofa::defaulttype::Quat;
 
 typedef sofa::defaulttype::RigidCoord<3, double> coord;
 typedef sofa::defaulttype::Vec4f Vector4f;
-
-
-namespace sofa{
-	namespace component{
-		namespace mapping{
-
-
-
 
 template<class DeviceType>
 HapticMapping<DeviceType>::HapticMapping(MechanicalState<DeviceType>* device)

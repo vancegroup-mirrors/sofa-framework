@@ -77,6 +77,7 @@ public:
     virtual void resize(int size) = 0;
     virtual int addPoint(const Coord& c, int index, Real& r) = 0;
     virtual void update() = 0;
+    virtual void updateXfree() = 0;
 
     typedef helper::Factory< std::string, BaseContactMapper<DataTypes>, core::CollisionModel* > ContactMapperFactory;
     static BaseContactMapper<DataTypes>* Create(core::CollisionModel* model, const std::string& name = std::string("default"))
@@ -107,7 +108,7 @@ public:
     typedef typename MCollisionModel::Topology InTopology;
     typedef core::componentmodel::behavior::MechanicalState< InDataTypes> InMechanicalState;
     typedef core::componentmodel::behavior::MechanicalState<  typename BarycentricContactMapper::DataTypes> MMechanicalState;
-    typedef component::MechanicalObject<typename BarycentricContactMapper::DataTypes> MMechanicalObject;
+    typedef component::container::MechanicalObject<typename BarycentricContactMapper::DataTypes> MMechanicalObject;
     typedef mapping::BarycentricMapping< core::componentmodel::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
     typedef mapping::TopologyBarycentricMapper<InDataTypes, typename BarycentricContactMapper::DataTypes> MMapper;
     MCollisionModel* model;
@@ -142,6 +143,14 @@ public:
         if (mapping!=NULL)
         {
             mapping->updateMapping();
+        }
+    }
+    
+    void updateXfree()
+    {
+        if (mapping!=NULL)
+        {
+            mapping->propagateXfree();
         }
     }
 };
@@ -214,7 +223,7 @@ public:
     typedef typename MCollisionModel::InDataTypes InDataTypes;
     typedef core::componentmodel::behavior::MechanicalState<InDataTypes> InMechanicalState;
     typedef core::componentmodel::behavior::MechanicalState<typename IdentityContactMapper::DataTypes> MMechanicalState;
-    typedef component::MechanicalObject<typename IdentityContactMapper::DataTypes> MMechanicalObject;
+    typedef component::container::MechanicalObject<typename IdentityContactMapper::DataTypes> MMechanicalObject;
     typedef mapping::IdentityMapping< core::componentmodel::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
     MCollisionModel* model;
     MMapping* mapping;
@@ -247,6 +256,14 @@ public:
         if (mapping!=NULL)
         {
             mapping->updateMapping();
+        }
+    }
+    
+    void updateXfree()
+    {
+        if (mapping!=NULL)
+        {
+            mapping->propagateXfree();
         }
     }
 };
@@ -295,6 +312,10 @@ public:
     }
     
     void update()
+    {
+    }
+    
+    void updateXfree()
     {
     }
 };
@@ -347,7 +368,7 @@ public:
     typedef typename MCollisionModel::InDataTypes InDataTypes;
     typedef core::componentmodel::behavior::MechanicalState<InDataTypes> InMechanicalState;
     typedef core::componentmodel::behavior::MechanicalState<typename RigidContactMapper::DataTypes> MMechanicalState;
-    typedef component::MechanicalObject<typename RigidContactMapper::DataTypes> MMechanicalObject;
+    typedef component::container::MechanicalObject<typename RigidContactMapper::DataTypes> MMechanicalObject;
     typedef mapping::RigidMapping< core::componentmodel::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
     MCollisionModel* model;
     simulation::Node* child;
@@ -399,6 +420,14 @@ public:
         if (mapping!=NULL)
         {
             mapping->updateMapping();
+        }
+    }
+    
+    void updateXfree()
+    {
+        if (mapping!=NULL)
+        {
+            mapping->propagateXfree();
         }
     }
 
@@ -491,7 +520,7 @@ public:
     typedef typename MCollisionModel::InDataTypes InDataTypes;
     typedef core::componentmodel::behavior::MechanicalState<InDataTypes> InMechanicalState;
     typedef core::componentmodel::behavior::MechanicalState<typename SubsetContactMapper::DataTypes> MMechanicalState;
-    typedef component::MechanicalObject<typename SubsetContactMapper::DataTypes> MMechanicalObject;
+    typedef component::container::MechanicalObject<typename SubsetContactMapper::DataTypes> MMechanicalObject;
     typedef mapping::SubsetMapping< core::componentmodel::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
     MCollisionModel* model;
     simulation::Node* child;
@@ -552,6 +581,19 @@ public:
             mapping->updateMapping();
         }
     }
+    
+    void updateXfree()
+    {
+        if (mapping!=NULL)
+        {
+	    if (needInit)
+	    {
+		mapping->init();
+		needInit = false;
+	    }
+            mapping->propagateXfree();
+        }
+    }
 
     //double radius(const typename TCollisionModel::Element& /*e*/)
     //{
@@ -572,6 +614,7 @@ public:
 
 
 #if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_COLLISION)
+extern template class SOFA_COMPONENT_COLLISION_API BaseContactMapper<defaulttype::Vec3Types>;
 extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<SphereModel>;
 extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<SphereTreeModel>;
 extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<PointModel>;
@@ -585,6 +628,13 @@ extern template class SOFA_COMPONENT_COLLISION_API ContactMapper<FFDDistanceGrid
 } // namespace collision
 
 } // namespace component
+
+#if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_COLLISION)
+namespace helper
+{
+extern template class SOFA_COMPONENT_COLLISION_API Factory< std::string, sofa::component::collision::BaseContactMapper<defaulttype::Vec3Types>, core::CollisionModel* >;
+} // namespace helper
+#endif
 
 } // namespace sofa
 

@@ -25,18 +25,11 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#include <GenGraphForm.h>
-#include "RealGUI.h"
+#include <sofa/gui/qt/GraphListenerQListView.h>
+#include <sofa/simulation/common/Colors.h>
 #include "iconnode.xpm"
 #include "iconwarning.xpm"
-#include <sofa/simulation/common/Colors.h>
 
-
-#ifdef SOFA_QT4
-#include <Q3PopupMenu>
-#else
-#include <qpopupmenu.h>
-#endif
 
 namespace sofa
 {
@@ -46,12 +39,6 @@ namespace gui
 
 namespace qt
 {
-#ifdef SOFA_QT4
-typedef Q3PopupMenu QPopupMenu;
-#else
-typedef QPopupMenu Q3PopupMenu;
-#endif
-
 //***********************************************************************************************************
 
 static const int iconWidth=8;
@@ -184,8 +171,9 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       }
 
 
+
       /*****************************************************************************************************************/
-      void GraphListenerQListView::addChild(GNode* parent, GNode* child)
+      void GraphListenerQListView::addChild(Node* parent, Node* child)
       {
 	if (frozen) return;
 	if (items.count(child))
@@ -236,13 +224,13 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 	    items[child] = item;
 	  }
 	// Add all objects and grand-children
-	MutationListener::addChild(parent, child);
+        MutationListener::addChild(parent, child);
       }
 
       /*****************************************************************************************************************/
-      void GraphListenerQListView::removeChild(GNode* parent, GNode* child)
+      void GraphListenerQListView::removeChild(Node* parent, Node* child)
       {
-	MutationListener::removeChild(parent, child);
+        MutationListener::removeChild(parent, child);
 	if (items.count(child))
 	  {
 	    delete items[child];
@@ -251,7 +239,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       }
 
       /*****************************************************************************************************************/
-      void GraphListenerQListView::moveChild(GNode* previous, GNode* parent, GNode* child)
+      void GraphListenerQListView::moveChild(Node* previous, Node* parent, Node* child)
       {
 	if (frozen && items.count(child))
 	  {
@@ -286,7 +274,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       }
 
       /*****************************************************************************************************************/
-      void GraphListenerQListView::addObject(GNode* parent, core::objectmodel::BaseObject* object)
+      void GraphListenerQListView::addObject(Node* parent, core::objectmodel::BaseObject* object)
       {
 	if (frozen) return;
 	if (items.count(object))
@@ -344,7 +332,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 
 
       /*****************************************************************************************************************/
-      void GraphListenerQListView::removeObject(GNode* /*parent*/, core::objectmodel::BaseObject* object)
+      void GraphListenerQListView::removeObject(Node* /*parent*/, core::objectmodel::BaseObject* object)
       {
 	if (items.count(object))
 	  {
@@ -354,7 +342,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       }
 
       /*****************************************************************************************************************/
-      void GraphListenerQListView::moveObject(GNode* previous, GNode* parent, core::objectmodel::BaseObject* object)
+      void GraphListenerQListView::moveObject(Node* previous, Node* parent, core::objectmodel::BaseObject* object)
       {
 	if (frozen && items.count(object))
 	  {
@@ -381,8 +369,9 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 	  }
       }
 
+
       /*****************************************************************************************************************/
-      void GraphListenerQListView::freeze(GNode* groot)
+      void GraphListenerQListView::freeze(Node* groot)
       {
 	if (!items.count(groot)) return;
 	frozen = true;
@@ -390,7 +379,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
 
 
       /*****************************************************************************************************************/
-      void GraphListenerQListView::unfreeze(GNode* groot)
+      void GraphListenerQListView::unfreeze(Node* groot)
       {
 	if (!items.count(groot)) return;
 	frozen = false;

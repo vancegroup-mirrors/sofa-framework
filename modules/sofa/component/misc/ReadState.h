@@ -35,6 +35,10 @@
 #include <sofa/component/component.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 
+#ifdef SOFA_HAVE_ZLIB
+#include <zlib.h>
+#endif
+
 #include <fstream>
 
 namespace sofa
@@ -55,13 +59,17 @@ public:
     sofa::core::objectmodel::DataFileName f_filename;
     Data < double > f_interval;
     Data < double > f_shift;
-		Data < bool > f_loop;
+    Data < bool > f_loop;
 
 protected:
     core::componentmodel::behavior::BaseMechanicalState* mmodel;
     std::ifstream* infile;
+#ifdef SOFA_HAVE_ZLIB
+    gzFile gzfile;
+#endif
     double nextTime;
     double lastTime;
+    double loopTime;
 public:
     ReadState();
 
@@ -77,6 +85,9 @@ public:
 
     void processReadState();
     void processReadState(double time);
+
+    /// Read the next values in the file corresponding to the last timestep before the given time
+    bool readNext(double time, std::vector<std::string>& lines);
 
     /// Pre-construction check method called by ObjectFactory.
     /// Check that DataTypes matches the MechanicalState.
@@ -96,16 +107,18 @@ public:
 class SOFA_COMPONENT_MISC_API ReadStateCreator: public Visitor
 {
 public:
-    ReadStateCreator():sceneName(""), createInMapping(false), counterReadState(0) {}
-    ReadStateCreator(std::string &n, bool _createInMapping, bool i=true, int c=0 ): sceneName(n), createInMapping(_createInMapping), init(i) , counterReadState(c) {}
+    ReadStateCreator();
+    ReadStateCreator(const std::string &n, bool _createInMapping, bool i=true, int c=0 );
     virtual Result processNodeTopDown( simulation::Node*  );
 
     void setSceneName(std::string &n){ sceneName = n;}
     void setCounter(int c){counterReadState = c;};
     void setCreateInMapping(bool b){createInMapping=b;}
+    virtual const char* getClassName() const { return "ReadStateCreator"; }
 protected:
     void addReadState(sofa::core::componentmodel::behavior::BaseMechanicalState *ms, simulation::Node* gnode);
     std::string sceneName;
+    std::string extension;
     bool createInMapping;
     bool init;
     int counterReadState; //avoid to have two same files if two mechanical objects has the same name
@@ -119,6 +132,7 @@ public:
 
     bool getState() const{return state;};
     void setState(bool active){state=active;};
+    virtual const char* getClassName() const { return "ReadStateActivator"; }
 protected:
     void changeStateReader(sofa::component::misc::ReadState *ws);
 
@@ -133,6 +147,7 @@ public:
 
     double getTime() const { return time; }
     void setTime(double _time) { time=_time; }
+    virtual const char* getClassName() const { return "ReadStateModifier"; }
 protected:
     void changeTimeReader(sofa::component::misc::ReadState *rs) { rs->processReadState(time); }
 

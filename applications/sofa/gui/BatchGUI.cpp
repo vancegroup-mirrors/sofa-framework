@@ -26,6 +26,7 @@
 ******************************************************************************/
 #include "BatchGUI.h"
 #include <sofa/simulation/common/Simulation.h>
+#include <sofa/helper/system/thread/CTime.h>
 
 namespace sofa
 {
@@ -34,7 +35,7 @@ namespace gui
 {
 
 BatchGUI::BatchGUI()
-: groot(NULL), nbIter(1000)
+: groot(NULL), nbIter(500)
 {
 }
 
@@ -46,12 +47,13 @@ int BatchGUI::mainLoop()
 {
     if (groot)
     {
+      sofa::simulation::Node::ctime_t tSpent = sofa::helper::system::thread::CTime::getRefTime();
         std::cout << "Computing "<<nbIter<<" iterations." << std::endl;
         for (int i=0;i<nbIter;i++)
         {
             sofa::simulation::getSimulation()->animate(groot);
         }
-        std::cout <<nbIter<<" iterations done." << std::endl;
+        std::cout << "1000 iterations done in "<< 1000.0*(sofa::helper::system::thread::CTime::getRefTime()-tSpent)/((double)sofa::helper::system::thread::CTime::getTicksPerSec()) << std::endl;
     }
     return 0;
 }
@@ -66,7 +68,7 @@ int BatchGUI::closeGUI()
     return 0;
 }
 
-void BatchGUI::setScene(sofa::simulation::Node* groot, const char* filename)
+  void BatchGUI::setScene(sofa::simulation::Node* groot, const char* filename, bool )
 {
     this->groot = groot;
     this->filename = (filename?filename:"");

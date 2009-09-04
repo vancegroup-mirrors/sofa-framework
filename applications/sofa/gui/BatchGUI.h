@@ -46,12 +46,13 @@ public:
 
     BatchGUI();
 
-    void setScene(sofa::simulation::Node* groot, const char* filename="");
+    void setScene(sofa::simulation::Node* groot, const char* filename="", bool temporaryFile=false);
 
     int mainLoop();
     void redraw();
     int closeGUI();
 
+    void setNumIterations(int n){nbIter=n;};
     sofa::simulation::Node* currentSimulation();
 
     /// @}

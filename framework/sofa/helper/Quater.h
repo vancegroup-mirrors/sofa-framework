@@ -56,11 +56,11 @@ public:
 		template<class Real2>
 		Quater(const Quater<Real2>& q) { for (int i=0; i<4; i++) _q[i] = (Real)q[i]; }
         Quater( const defaulttype::Vec<3,Real>& axis, Real angle );
-        
+
         static Quater identity() {
             return Quater(0,0,0,1);
         }
-            
+
 
         /// Cast into a standard C array of elements.
         const Real* ptr() const
@@ -132,11 +132,11 @@ public:
         /// translations to get a compound translation.
         //template <class T>
         //friend Quater<T> operator+(Quater<T> q1, Quater<T> q2);
-		Quater<Real> operator+(const Quater<Real> &q1) const;
+        Quater<Real> operator+(const Quater<Real> &q1) const;
 
-		Quater<Real> operator*(const Quater<Real> &q1) const;
+        Quater<Real> operator*(const Quater<Real> &q1) const;
 
-    Quater<Real> operator*(const Real &r) const;
+        Quater<Real> operator*(const Real &r) const;
 	Quater<Real> operator/(const Real &r) const;
 	void operator*=(const Real &r);
 	void operator/=(const Real &r);
@@ -163,14 +163,24 @@ public:
 
         Quater inverse() const;
 
-		defaulttype::Vec<3,Real> toEulerVector() const;
+        defaulttype::Vec<3,Real> toEulerVector() const;
+
+
+        /*! Returns the slerp interpolation of Quaternions \p a and \p b, at time \p t.
+
+         \p t should range in [0,1]. Result is \p a when \p t=0 and \p b when \p t=1.
+
+         When \p allowFlip is \c true (default) the slerp interpolation will always use the "shortest path"
+         between the Quaternions' orientations, by "flipping" the source Quaternion if needed (see
+         negate()). */
+        void slerp(const Quater& a, const Quater& b, float t, bool allowFlip=true);
 
         // A useful function, builds a rotation matrix in Matrix based on
         // given quaternion.
 
 	void buildRotationMatrix(Real m[4][4]) const;
-	void writeOpenGlMatrix( double* m ) const; 
-        void writeOpenGlMatrix( float* m ) const; 
+	void writeOpenGlMatrix( double* m ) const;
+        void writeOpenGlMatrix( float* m ) const;
 
         //void buildRotationMatrix(MATRIX4x4 m);
 
@@ -180,6 +190,10 @@ public:
         // the given vector) and an angle about which to rotate.  The angle is
         // expressed in radians.
         Quater axisToQuat(defaulttype::Vec<3,Real> a, Real phi);
+        void quatToAxis(defaulttype::Vec<3,Real> & a, Real &phi);
+
+
+        Quater createQuaterFromFrame(const defaulttype::Vec<3, Real> &lox, const defaulttype::Vec<3, Real> &loy,const defaulttype::Vec<3, Real> &loz);
 
         /// Create using rotation vector (axis*angle) given in parent coordinates
         template<class V>
@@ -194,7 +208,7 @@ public:
                         return Quater( a[0]*s*nor, a[1]*s*nor,a[2]*s*nor, (Real)cos(phi/2) );
                 }
         }
-	
+
 	/// Create a quaternion from Euler
 	static Quater createQuaterFromEuler( defaulttype::Vec<3,Real> v) {
 	  Real quat[4];      Real a0 = v.elems[0];
@@ -204,10 +218,10 @@ public:
 	  quat[0] = sin(a0/2)*cos(a1/2)*cos(a2/2) - cos(a0/2)*sin(a1/2)*sin(a2/2);
 	  quat[1] = cos(a0/2)*sin(a1/2)*cos(a2/2) + sin(a0/2)*cos(a1/2)*sin(a2/2);
 	  quat[2] = cos(a0/2)*cos(a1/2)*sin(a2/2) - sin(a0/2)*sin(a1/2)*cos(a2/2);
-	  Quater quatResult( quat[0], quat[1], quat[2], quat[3] );     
+	  Quater quatResult( quat[0], quat[1], quat[2], quat[3] );
 	  return quatResult;
 	}
-	
+
         /// Create using the entries of a rotation vector (axis*angle) given in parent coordinates
         template<class T>
         static Quater createFromRotationVector(T a0, T a1, T a2 )
@@ -229,16 +243,33 @@ public:
         template<class T>
         static Quater set(T a0, T a1, T a2){ return createFromRotationVector(a0,a1,a2); }
 
+    	/// Return the quaternion resulting of the movement between 2 quaternions
+    	Quater quatDiff( Quater a, const Quater& b)
+    	{
+    	    // If the axes are not oriented in the same direction, flip the axis and angle of a to get the same convention than b
+    	    if (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]<0)
+    	    {
+    	        a[0] = -a[0];
+    	        a[1] = -a[1];
+    	        a[2] = -a[2];
+    	        a[3] = -a[3];
+    	    }
 
-        // Print the quaternion
-//         inline friend std::ostream& operator<<(std::ostream& out, Quater Q)
-// 		{
-// 			return (out << "(" << Q._q[0] << "," << Q._q[1] << "," << Q._q[2] << ","
-// 				<< Q._q[3] << ")");
-// 		}
+    	    Quater q = b.inverse() * a;
+    	    return q;
+    	}
+
+    	/// Return the eulerian vector resulting of the movement between 2 quaternions
+    	defaulttype::Vec<3,Real> angularDisplacement( Quater a, const Quater& b)
+		{
+    		return quatDiff(a,b).toEulerVector();
+		}
+
 
         // Print the quaternion (C style)
         void print();
+        Quater<Real> slerp(Quater<Real> &q1, Real t);
+        Quater<Real> slerp2(Quater<Real> &q1, Real t);
 
         void operator+=(const Quater& q2);
         void operator*=(const Quater& q2);
@@ -256,7 +287,7 @@ public:
 				if ( fabs( _q[i] - q._q[i] ) > EQUALITY_THRESHOLD ) return true;
 			return false;
 		}
-        
+
         /// write to an output stream
         inline friend std::ostream& operator << ( std::ostream& out, const Quater& v ){
             out<<v._q[0]<<" "<<v._q[1]<<" "<<v._q[2]<<" "<<v._q[3];

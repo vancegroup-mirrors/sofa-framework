@@ -27,7 +27,7 @@
 
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/tree/tree.h>
-#include <sofa/simulation/tree/MutationListener.h>
+#include <sofa/simulation/common/MutationListener.h>
 #include <sofa/simulation/tree/xml/NodeElement.h>
 #include <stdlib.h>
 #include <vector>
@@ -35,8 +35,6 @@
 #include <iostream>
 
 
-using std::cout;
-using std::endl;
 
 namespace sofa
 {
@@ -45,32 +43,22 @@ namespace simulation
 {
 class Visitor;
 class VisitorScheduler;
+class MutationListener;
 
 namespace tree
 {
 
-class MutationListener;
+using std::cout;
+using std::endl;
 
 /** Define the structure of the scene. Contains (as pointer lists) Component objects and children GNode objects.
 */
-class SOFA_SIMULATION_TREE_API GNode : public simulation::Node, public core::objectmodel::BaseNode
+class SOFA_SIMULATION_TREE_API GNode : public simulation::Node
 {
 public:
     GNode( const std::string& name="", GNode* parent=NULL  );
 
     virtual ~GNode();
-
-    //virtual const char* getTypeName() const { return "GNODE"; }
-    void reinit();
-    
-    /// Add a child node
-    virtual void addChild(Node* node);
-
-    /// Remove a child
-    virtual void removeChild(Node* node);
-
-    /// Move a node from another node
-    virtual void moveChild(Node* obj);
 
     //Pure Virtual method from BaseNode
     /// Add a child node
@@ -79,98 +67,34 @@ public:
     /// Remove a child node
     virtual void removeChild(BaseNode* node);
 
+    /// Move a node from another node
+    virtual void moveChild(BaseNode* obj);
 
-    /// @name Visitors and graph traversal
-    /// @{
-
-    /// Execute a recursive action starting from this node
-//    virtual void executeVisitor(Visitor* action);
-
-	/// Get parent node (or NULL if no hierarchy or for root node)
-	core::objectmodel::BaseNode* getParent();
-
-	/// Get parent node (or NULL if no hierarchy or for root node)
-	const core::objectmodel::BaseNode* getParent() const;
-	
-	/// Get parent node (or NULL if no hierarchy or for root node)
-	sofa::helper::vector< core::objectmodel::BaseNode* > getChildren();
-
-	/// Get parent node (or NULL if no hierarchy or for root node)
-	const sofa::helper::vector< core::objectmodel::BaseNode* > getChildren() const;
-
-
-    /// Find a child node given its name
-    GNode* getChild(const std::string& name) const;
-    
-    
-    /// Get a descendant node given its name
-    GNode* getTreeNode(const std::string& name) const;
-
-    /// @}
-	
-    /// @name Components
-    /// @{
-
-	/// Add an object and return this. Detect the implemented interfaces and add the object to the corresponding lists.
-	virtual bool addObject(core::objectmodel::BaseObject* obj){ return simulation::Node::addObject(obj); }
+    /// Add an object and return this. Detect the implemented interfaces and add the object to the corresponding lists.
+    virtual bool addObject(core::objectmodel::BaseObject* obj){ return simulation::Node::addObject(obj); }
 
     /// Remove an object
-	virtual bool removeObject(core::objectmodel::BaseObject* obj){ return simulation::Node::removeObject(obj); }
+    virtual bool removeObject(core::objectmodel::BaseObject* obj){ return simulation::Node::removeObject(obj); }
 	
-	/// Import an object 
-	virtual void moveObject(core::objectmodel::BaseObject* obj){ simulation::Node::moveObject(obj); }
-	    
-	/// Mechanical Degrees-of-Freedom
-	virtual core::objectmodel::BaseObject* getMechanicalState() const;
-    
-    /// Topology
-	virtual core::componentmodel::topology::Topology* getTopology() const;
-    
-    /// Mesh Topology (unified interface for both static and dynamic topologies)
-	virtual core::componentmodel::topology::BaseMeshTopology* getMeshTopology() const;
-
-    /// Shader
-	virtual core::objectmodel::BaseObject* getShader() const;
-
-	const BaseContext* getContext() const { return simulation::Node::getContext(); }
-    BaseContext* getContext() { return simulation::Node::getContext(); }
+    /// Remove the current node from the graph: consists in removing the link to its parent
+    virtual void detachFromGraph() ;   
 
 
-    /// @}
 
 
-    /// Called during initialization to corectly propagate the visual context to the children
-    virtual void initVisualContext();
-    
-    /// Update the whole context values, based on parent and local ContextObjects
-    virtual void updateContext();
 
-    /// Update the visual context values, based on parent and local ContextObjects
-    virtual void updateVisualContext(int FILTER=0);
-    
-    /// Update the simulation context values(gravity, time...), based on parent and local ContextObjects
-    virtual void updateSimulationContext();
-    
+    /// Get parent node (or NULL if no hierarchy or for root node)
+    core::objectmodel::BaseNode* getParent();
 
-    /// Log time spent on an action category, and the concerned object, plus remove the computed time from the parent caller object
-    void addTime(ctime_t t, const std::string& s, core::objectmodel::BaseObject* obj, core::objectmodel::BaseObject* parent);
+    /// Get parent node (or NULL if no hierarchy or for root node)
+    const core::objectmodel::BaseNode* getParent() const;
+	
 
-
-    /// Return the full path name of this node
-    std::string getPathName() const;
 
     /// Generic object access, given a set of required tags, possibly searching up or down from the current context
     ///
     /// Note that the template wrapper method should generally be used to have the correct return type,
     virtual void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, const sofa::core::objectmodel::TagSet& tags, SearchDirection dir = SearchUp) const;
-
-    /// Generic object access, possibly searching up or down from the current context
-    ///
-    /// Note that the template wrapper method should generally be used to have the correct return type,
-    void* getObject(const sofa::core::objectmodel::ClassInfo& class_info, SearchDirection dir = SearchUp) const
-    {
-        return getObject(class_info, sofa::core::objectmodel::TagSet(), dir);
-    }
 
     /// Generic object access, given a path from the current context
     ///
@@ -182,24 +106,36 @@ public:
     /// Note that the template wrapper method should generally be used to have the correct return type,
     virtual void getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, const sofa::core::objectmodel::TagSet& tags, SearchDirection dir = SearchUp) const;
     
-    /// Generic list of objects access, possibly searching up or down from the current context
-    ///
-    /// Note that the template wrapper method should generally be used to have the correct return type,
-    void getObjects(const sofa::core::objectmodel::ClassInfo& class_info, GetObjectsCallBack& container, SearchDirection dir = SearchUp) const
-    {
-        getObjects(class_info, container, sofa::core::objectmodel::TagSet(), dir);
-    }
-    
-    void addListener(MutationListener* obj);
 
-    void removeListener(MutationListener* obj);
+
+
+
+
+    /// Called during initialization to corectly propagate the visual context to the children
+    virtual void initVisualContext();
+    
+    /// Update the whole context values, based on parent and local ContextObjects
+    virtual void updateContext();
+
+    /// Update the visual context values, based on parent and local ContextObjects
+    virtual void updateVisualContext(VISUAL_FLAG FILTER=ALLFLAGS);
+    
+    /// Update the simulation context values(gravity, time...), based on parent and local ContextObjects
+    virtual void updateSimulationContext();
+    
+
+    /// Log time spent on an action category, and the concerned object, plus remove the computed time from the parent caller object
+    void addTime(ctime_t t, const std::string& s, core::objectmodel::BaseObject* obj, core::objectmodel::BaseObject* parent);
+    Node::ctime_t endTime(ctime_t t0, const std::string& s, core::objectmodel::BaseObject* obj, core::objectmodel::BaseObject* parent);
+
+    /// Return the full path name of this node
+    std::string getPathName() const;
+
     
 	
-	// should this be public ?
-	Single<GNode> parent;
-    Sequence<GNode> child;
-    typedef Sequence<GNode>::iterator ChildIterator;
-	
+    // should this be public ?
+    Single<GNode> parent;
+
 
 
     static void create(GNode*& obj, xml::Element<core::objectmodel::BaseNode>* arg)
@@ -214,9 +150,6 @@ protected:
     virtual void doAddChild(GNode* node);
     void doRemoveChild(GNode* node);
 
-    void notifyAddChild(GNode* node);
-    void notifyRemoveChild(GNode* node);
-    void notifyMoveChild(GNode* node, GNode* prev);
 
     /// Execute a recursive action starting from this node.
     /// This method bypass the actionScheduler of this node if any.
@@ -224,15 +157,7 @@ protected:
     // VisitorScheduler can use doExecuteVisitor() method
     friend class simulation::VisitorScheduler;
 
-	Sequence<MutationListener> listener;
 
-	
-protected:
-/*    virtual void doAddObject(core::objectmodel::BaseObject* obj);
-    virtual void doRemoveObject(core::objectmodel::BaseObject* obj);*/
-	void notifyAddObject(core::objectmodel::BaseObject* obj);
-	void notifyRemoveObject(core::objectmodel::BaseObject* obj);
-	void notifyMoveObject(core::objectmodel::BaseObject* obj, GNode* prev);
 };
 
 } // namespace tree

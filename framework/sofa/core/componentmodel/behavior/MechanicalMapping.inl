@@ -32,9 +32,6 @@
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
-
 namespace sofa
 {
 
@@ -46,6 +43,9 @@ namespace componentmodel
 
 namespace behavior
 {
+using std::cerr;
+using std::endl;
+
 
 template <class In, class Out>
 MechanicalMapping<In,Out>::MechanicalMapping(In* from, Out* to)
@@ -53,7 +53,7 @@ MechanicalMapping<In,Out>::MechanicalMapping(In* from, Out* to)
 , f_isMechanical( initData( &f_isMechanical, true, "isMechanical", "set to false if this mapping should only be used as a regular mapping instead of a mechanical mapping" ) )
 {
 }
-	
+
 template <class In, class Out>
 MechanicalMapping<In,Out>::~MechanicalMapping()
 {
@@ -75,6 +75,12 @@ template <class In, class Out>
 bool MechanicalMapping<In,Out>::isMechanical()
 {
     return this->f_isMechanical.getValue();
+}
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::setMechanical(bool b)
+{
+  f_isMechanical.setValue(b);
 }
 
 template <class In, class Out>
@@ -156,6 +162,7 @@ void MechanicalMapping<In,Out>::accumulateConstraint()
 		}
 	}
 }
+
 
 } // namespace behavior
 

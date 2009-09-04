@@ -4,7 +4,8 @@ TEMPLATE = subdirs
 include($${SOFA_DIR}/sofa.cfg)
 
 SUBDIRS += libbase.pro
-SUBDIRS += engine
+
+
 SUBDIRS += forcefield
 SUBDIRS += linearsolver
 SUBDIRS += mastersolver
@@ -20,4 +21,7 @@ SUBDIRS += mapping
 SUBDIRS += constraint
 SUBDIRS += collision
 SUBDIRS += misc
+SUBDIRS += engine
+
 SUBDIRS += libcomponent.pro
+

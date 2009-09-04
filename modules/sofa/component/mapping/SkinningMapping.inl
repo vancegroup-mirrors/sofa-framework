@@ -75,6 +75,13 @@ namespace sofa
           , wheighting ( WEIGHT_INVDIST )
           , interpolation ( INTERPOLATION_LINEAR )
       {
+        maskFrom = NULL;
+        if (core::componentmodel::behavior::BaseMechanicalState *stateFrom = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(from))
+          maskFrom = &stateFrom->forceMask;
+        maskTo = NULL;
+        if (core::componentmodel::behavior::BaseMechanicalState *stateTo = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(to))
+          maskTo = &stateTo->forceMask;
+
       }
 
       template <class BasicMapping>
@@ -351,11 +358,15 @@ namespace sofa
               out[i] = Coord();
               for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
               {
+
+                const int idx=nbRefs.getValue() *i+m;
+                const int idxReps=m_reps[idx];
+                    
                 // Save rotated points for applyJ/JT
-                rotatedPoints[nbRefs.getValue() *i+m] = in[m_reps[nbRefs.getValue() *i+m] ].getOrientation().rotate ( initPos[nbRefs.getValue() *i+m] );
+                rotatedPoints[idx] = in[idxReps].getOrientation().rotate ( initPos[idx] );
 
                 // And add each reference frames contributions to the new position out[i]
-                out[i] += ( in[m_reps[nbRefs.getValue() *i+m] ].getCenter() + rotatedPoints[nbRefs.getValue() *i+m] ) * m_coefs[nbRefs.getValue() *i+m];
+                out[i] += ( in[idxReps ].getCenter() + rotatedPoints[idx] ) * m_coefs[idx];
               }
             }
             break;
@@ -372,16 +383,44 @@ namespace sofa
 
         Deriv v,omega;
         out.resize ( initPos.size() / nbRefs.getValue() );
-        for ( unsigned int i=0;i<out.size();i++ )
-        {
-          out[i] = Deriv();
-          for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+
+        if (!(maskTo->isInUse()) )
           {
-            v = in[m_reps[nbRefs.getValue() *i+m]].getVCenter();
-            omega = in[m_reps[nbRefs.getValue() *i+m]].getVOrientation();
-            out[i] += ( v - cross ( rotatedPoints[nbRefs.getValue() *i+m],omega ) ) * m_coefs[nbRefs.getValue() *i+m];
+            for ( unsigned int i=0;i<out.size();i++ )
+              {
+                out[i] = Deriv();
+                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+                  {
+                    const int idx=nbRefs.getValue() *i+m;
+                    const int idxReps=m_reps[idx];
+
+                    v = in[idxReps].getVCenter();
+                    omega = in[idxReps].getVOrientation();
+                    out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_coefs[idx];
+                  }
+              }
           }
-        }
+        else
+          {
+            typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            const ParticleMask::InternalStorage &indices=maskTo->getEntries();
+
+            ParticleMask::InternalStorage::const_iterator it;
+            for (it=indices.begin();it!=indices.end();it++)
+              {
+                const int i=(int)(*it);
+                out[i] = Deriv();
+                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+                  {
+                    const int idx=nbRefs.getValue() *i+m;
+                    const int idxReps=m_reps[idx];
+
+                    v = in[idxReps].getVCenter();
+                    omega = in[idxReps].getVOrientation();
+                    out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_coefs[idx];
+                  }
+              }
+          }
       }
 
       template <class BasicMapping>
@@ -391,17 +430,48 @@ namespace sofa
         const sofa::helper::vector<double>& m_coefs = coefs.getValue();
 
         Deriv v,omega;
-        for ( unsigned int i=0;i<in.size();i++ )
-        {
-          for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
-          {
-            Deriv f = in[i];
-            v = f;
-            omega = cross ( rotatedPoints[nbRefs.getValue() *i+m],f );
-            out[m_reps[nbRefs.getValue() *i+m] ].getVCenter() += v * m_coefs[nbRefs.getValue() *i+m];
-            out[m_reps[nbRefs.getValue() *i+m] ].getVOrientation() += omega * m_coefs[nbRefs.getValue() *i+m];
+        if ( !(maskTo->isInUse()) )
+          {	
+            maskFrom->setInUse(false);
+            for ( unsigned int i=0;i<in.size();i++ )
+              {
+                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+                  {
+                    Deriv f = in[i];
+                    v = f;
+                    const int idx=nbRefs.getValue() *i+m;
+                    const int idxReps=m_reps[idx];
+                    omega = cross ( rotatedPoints[idx],f );
+                    out[idxReps].getVCenter() += v * m_coefs[idx];
+                    out[idxReps].getVOrientation() += omega * m_coefs[idx];
+                  }
+              }
           }
-        }
+        else
+          {
+
+            typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            const ParticleMask::InternalStorage &indices=maskTo->getEntries();
+
+            ParticleMask::InternalStorage::const_iterator it;
+            for (it=indices.begin();it!=indices.end();it++)
+              {
+                const int i=(int)(*it);
+                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+                  {
+                    Deriv f = in[i];
+                    v = f;
+                    const int idx=nbRefs.getValue() *i+m;
+                    const int idxReps=m_reps[idx];
+                    omega = cross ( rotatedPoints[idx],f );
+                    out[idxReps].getVCenter() += v * m_coefs[idx];
+                    out[idxReps].getVOrientation() += omega * m_coefs[idx];
+
+                    maskFrom->insertEntry(idxReps);
+                  }
+              }
+          }
+
       }
 
       template <class BasicMapping>
@@ -423,7 +493,9 @@ namespace sofa
           flags.clear();
           flags.resize ( nbi );
           OutConstraintIterator itOut;
-          for (itOut=in[i].getData().begin();itOut!=in[i].getData().end();itOut++)
+          std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+          for (itOut=iter.first;itOut!=iter.second;itOut++)
             {
               unsigned int indexIn = itOut->first;
               Deriv data = (Deriv) itOut->second;
@@ -440,7 +512,7 @@ namespace sofa
           {
             //if (!(v[i] == typename In::Deriv()))
             if ( flags[j] )
-              out[outSize+i].insert (j,v[j] );
+              out[outSize+i].add (j,v[j] );
           }
         }
       }

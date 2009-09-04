@@ -367,7 +367,7 @@ void ModifyObject::setNode(core::objectmodel::Base* node_clicked, Q3ListViewItem
 		  }
 		  if (dw != NULL)
 		  {
-		      //std::cout << "WIDGET created for data " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
+                      //std::cout << "WIDGET created for data " << dwarg.data << " : " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
 		      dataWidgets[dwarg.data] = dw;
 		      counterWidget+=dw->sizeWidget();
 		  }
@@ -599,12 +599,12 @@ void ModifyObject::changeValue()
     const QObject* s = sender();
     for (DataWidgetMap::iterator it = dataWidgets.begin(), itend = dataWidgets.end(); it != itend; ++it)
     {
-	DataWidget* dw = it->second;
+        DataWidget* dw = it->second;
 	if (dw->processChange(s))
 	{
-	    s = NULL;
-	    break;
-	}
+            s = NULL;
+            break;
+        }
     }
     if (s != NULL)
 	setUpdates.insert(getData(s));
@@ -624,7 +624,6 @@ void ModifyObject::changeVisualValue()
       {
 	if (buttonUpdate == NULL // || !buttonUpdate->isEnabled()
 	    ) return;
-
 
 	saveTextEdit();
 	saveTables();
@@ -666,7 +665,7 @@ void ModifyObject::changeVisualValue()
 	      }
 	    for (DataWidgetMap::iterator it = dataWidgets.begin(), itend = dataWidgets.end(); it != itend; ++it)
 	    {
-		DataWidget* dw = it->second;
+                DataWidget* dw = it->second;
 	        dw->writeToData();
 	    }
 	    //Special Treatment for visual flags
@@ -828,30 +827,27 @@ void ModifyObject::changeVisualValue()
       //Called each time a new step of the simulation if computed
       void ModifyObject::updateTables()
       {
+
 	if (graphEnergy) updateHistory();
 	updateTextEdit();
 	for (DataWidgetMap::iterator it = dataWidgets.begin(), itend = dataWidgets.end(); it != itend; ++it)
-	{
-	    DataWidget* dw = it->second;
+        {
+            DataWidget* dw = it->second;
 	    dw->update();
 	}
-	std::list< std::pair< Q3Table*, BaseData*> >::iterator it_list_Table;
-	bool skip;
+        std::list< std::pair< Q3Table*, BaseData*> >::iterator it_list_Table;
 	for (it_list_Table = list_Table.begin(); it_list_Table != list_Table.end(); it_list_Table++)
-	  {
-	    skip = false;
+          {
 
 	    if ( dynamic_cast < Data<sofa::component::misc::Monitor< Vec3Types >::MonitorData > *> ( (*it_list_Table).second ) )
 		{
 			std::list< std::pair< Q3Table*, BaseData*> >::iterator it_center = it_list_Table;
 			it_list_Table++;
 			std::list< std::pair< Q3Table*, BaseData*> >::iterator it_center2 = it_list_Table;
-			it_list_Table++; //two times because a monitor is composed of 3 baseData
-			if (!skip)
-				createTable((*it_list_Table).second,NULL,(*it_center).first,(*it_center2).first, (*it_list_Table).first);
+                        it_list_Table++; //two times because a monitor is composed of 3 baseData
+                        createTable((*it_list_Table).second,NULL,(*it_center).first,(*it_center2).first, (*it_list_Table).first);
 		}
-	    else
-	      if (!skip) createTable((*it_list_Table).second,NULL,(*it_list_Table).first);
+            else createTable((*it_list_Table).second,NULL,(*it_list_Table).first);
 	  }
       }
 

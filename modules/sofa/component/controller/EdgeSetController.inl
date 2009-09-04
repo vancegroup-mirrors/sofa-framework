@@ -83,25 +83,15 @@ void EdgeSetController<DataTypes>::init()
 	this->getContext()->get(edgeMod);
 
 	if (edgeGeo == NULL)
-		serr << "EdgeSetController has no binding EdgeSetGeometryAlgorithms" << sendl;
+		serr << "EdgeSetController has no binding EdgeSetGeometryAlgorithms." << sendl;
 
 	if (edgeMod == NULL)
-		serr << "EdgeSetController has no binding EdgeSetTopologyModifier" << sendl;
+		serr << "EdgeSetController has no binding EdgeSetTopologyModifier." << sendl;
+
+	if (reversed.getValue() && startingIndex.getValue() > 0)
+		serr << "WARNING : startingIndex different from 0 is not implemented for reversed case." << sendl;
 
 	Inherit::init();
-
-
-	if (reversed.getValue() && startingIndex.getValue() >0)
-		serr<<"WARNING : startingIndex different from 0 is not implemented for reversed case "<<sendl;
-
-
-
-	/*
-	if (_topology->getNbEdges()>0)
-	{
-		edge0RestedLength = edgeGeo->computeRestEdgeLength(0);
-	}
-	*/
 
 	computeVertexT();
 
@@ -145,8 +135,9 @@ void EdgeSetController<DataTypes>::computeVertexT()
 				vertexT[i] = vertexT[i-1] + ((x0[i] - x0[i-1]).norm());
 		}
 
-		if (n > 0)
-			refPos = x0[0];
+	/// Unused
+	//	if (n > 0)
+	//		refPos = x0[0];
 	}
 	else
 	{
@@ -160,7 +151,8 @@ void EdgeSetController<DataTypes>::computeVertexT()
 					vertexT[i] = vertexT[i+1] + ((x0[i+1] - x0[i]).norm());
 			}
 
-			refPos = x0[n-1];
+		/// Unused
+		//	refPos = x0[n-1];
 		}
 	}
 }
@@ -220,7 +212,7 @@ void EdgeSetController<DataTypes>::onKeyPressedEvent(core::objectmodel::Keypress
 
 
 template <class DataTypes>
-void EdgeSetController<DataTypes>::onBeginAnimationStep()
+void EdgeSetController<DataTypes>::onBeginAnimationStep(const double /*dt*/)
 {
 	applyController();
 }
@@ -372,7 +364,7 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 	if (!reversed.getValue())
 	{
 		sofa::helper::vector< unsigned int > baseEdge(0);
-		baseEdge = _topology->getEdgeVertexShell(startingIndex.getValue());
+		baseEdge = _topology->getEdgesAroundVertex(startingIndex.getValue());
 		/// if the startingIndex is not on the base or on the tip of the wire, then we choose the second edge shared by the starting point.
 		if (baseEdge.size() == 2)
 		{
@@ -430,7 +422,7 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 		if (n > 1)
 		{
 			sofa::helper::vector< unsigned int > baseEdge(0);
-			baseEdge = _topology->getEdgeVertexShell(n - 1);
+			baseEdge = _topology->getEdgesAroundVertex(n - 1);
 
 			if (baseEdge.size() == 1)
 			{
@@ -470,7 +462,7 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 	if (!reversed.getValue())
 	{
 		sofa::helper::vector< unsigned int > baseEdge;
-		baseEdge = _topology->getEdgeVertexShell(startingIndex.getValue()+1);
+		baseEdge = _topology->getEdgesAroundVertex(startingIndex.getValue()+1);
 
 		if (baseEdge.size()==1)
 		{
@@ -481,7 +473,6 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 		{
 			if (fabs(vertexT[startingIndex.getValue()+1] - vertexT[startingIndex.getValue()]) < ( 0.5 * edgeTLength ))
 			{
-
 				// Fuse Edges (0-1)
 				sofa::helper::vector< sofa::helper::vector<unsigned int> > edges_fuse(0);
 				sofa::helper::vector<unsigned int> v(0);
@@ -490,12 +481,11 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 				edges_fuse.push_back(v);
 				edgeMod->fuseEdges(edges_fuse, true);
 
-
 				// update vertexT
-				vertexT.erase(vertexT.begin()+startingIndex.getValue()+1);
+				vertexT.erase(vertexT.begin() + startingIndex.getValue() + 1);
 
 				// Renumber Vertices
-				 int numPoints = _topology->getNbPoints();
+				int numPoints = _topology->getNbPoints();
 
 				// The vertex to delete has to be set to the last position of the position vector.
 				sofa::helper::vector<unsigned int> permutations(numPoints);
@@ -508,8 +498,6 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 
 				for ( int i = startingIndex.getValue()+2; i < numPoints; i++)
 					permutations[i] = i-1;
-
-				std::cerr<<"permutations"<<std::endl;
 
 				sofa::helper::vector<unsigned int> inverse_permutations(numPoints);
 				for ( int i = 0; i < numPoints; i++)
@@ -526,7 +514,7 @@ void EdgeSetController<DataTypes>::modifyTopology(void)
 		if (n > 1)
 		{
 			sofa::helper::vector< unsigned int > baseEdge;
-			baseEdge = _topology->getEdgeVertexShell(n - 2);
+			baseEdge = _topology->getEdgesAroundVertex(n - 2);
 
 			if (baseEdge.size() == 2)
 			{

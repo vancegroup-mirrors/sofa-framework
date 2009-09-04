@@ -53,7 +53,6 @@ class OmniEvent;
 class KeypressedEvent;
 class KeyreleasedEvent;
 class JoystickEvent;
-
 }
 }
 }
@@ -115,12 +114,12 @@ public:
 	/**
 	* @brief Begin Animation event callback.
 	*/
-	virtual void onBeginAnimationStep(void){};
+	virtual void onBeginAnimationStep(const double /*dt*/){};
 
 	/**
 	* @brief End Animation event callback.
 	*/
-	virtual void onEndAnimationStep(void){};
+	virtual void onEndAnimationStep(const double /*dt*/){};
 
 
 protected:

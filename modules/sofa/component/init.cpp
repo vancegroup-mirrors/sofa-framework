@@ -75,6 +75,8 @@ void init()
     	initOdeSolver();
     	initTopology();
     	initVisualModel();
+
+
         first = false;
     }
 }

@@ -99,11 +99,13 @@ void Hexa2TetraTopologicalMapping::init()
 			TetrahedronSetTopologyModifier *to_tstm;
 		    toModel->getContext()->get(to_tstm);	
 
+		    sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
+		    
 			Loc2GlobVec.clear();
 			Glob2LocMap.clear();			
 
 #ifdef SOFA_NEW_HEXA
-			int nbcubes = fromModel->getNbHexas();
+			int nbcubes = fromModel->getNbHexahedra();
 #else
 			int nbcubes = fromModel->getNbCubes();
 #endif
@@ -125,7 +127,7 @@ void Hexa2TetraTopologicalMapping::init()
 			for (int i=0;i<nbcubes;i++)
 			{
 #ifdef SOFA_NEW_HEXA			
-				core::componentmodel::topology::BaseMeshTopology::Hexa c = fromModel->getHexa(i);
+				core::componentmodel::topology::BaseMeshTopology::Hexa c = fromModel->getHexahedron(i);
 #define swap(a,b) { int t = a; a = b; b = t; }
 				// TODO : swap indexes where needed (currently crash in TriangleSetContainer)
 // 				if (!((i%nx)&1))
@@ -179,7 +181,7 @@ void Hexa2TetraTopologicalMapping::init()
 			//to_tstm->propagateTopologicalChanges();
 			to_tstm->notifyEndingEvent();
 			//to_tstm->propagateTopologicalChanges();
-
+			Loc2GlobDataVec.endEdit();
 		}
 
 	}

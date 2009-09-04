@@ -7,13 +7,13 @@ H. Delingette, B. André
 
 While mesh geometry describes where mesh vertices are located in space, mesh topology tells 
 how vertices are connected to each other by edges, triangles or any type of mesh element. 
-Both information are required on a computational mesh to perform :
+Both bits of information are required on a computational mesh to perform :
 
 \begin{itemize}
 
  \item \textbf{Mesh Visualization},
 
- \item \textbf{Collision detection} : some collision detection are mesh based (e.g.
+ \item \textbf{Collision detection} : some collision detection methods are mesh based (e.g.
 triangles or edges),
 
  \item \textbf{Mechanical Modeling} : deforming a mesh also requires to the
@@ -210,7 +210,7 @@ The component Tetra$2$TriangleSetTopology handles this topological change by fol
 
 
     \item \textbf{Step $2$.} If a Topological Mapping of type ( input = TetrahedronSetTopology, output = TriangleSetTopology ) does exist, the index map $Loc2GlobVec$ is requested to give the index $glob\_T$ which is indexing the triangle T in the tetrahedral volume mesh. 
-The TetrahedronTriangleShell gives then the index $ind\_TE$ which is indexing the unique tetrahedron TE containing T. 
+The TetrahedraAroundTriangle gives then the index $ind\_TE$ which is indexing the unique tetrahedron TE containing T. 
 We call the action RemoveTetrahedra($< ind\_TE >$) on the input topology.
 
 \begin{figure*}

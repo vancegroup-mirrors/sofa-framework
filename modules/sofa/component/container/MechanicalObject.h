@@ -47,6 +47,8 @@ namespace sofa
 namespace component
 {
 
+namespace container
+{
 
 using namespace core::componentmodel::behavior;
 using namespace core::objectmodel;
@@ -72,7 +74,10 @@ public:
     typedef typename DataTypes::Deriv Deriv;
     typedef typename DataTypes::Real Real;
     typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
-    typedef typename DataTypes::VecConst VecConst;
+    typedef typename DataTypes::VecConst VecConst; 
+    typedef typename defaulttype::SparseConstraint<Deriv> SparseConstraint;
+    typedef typename SparseConstraint::const_data_iterator ConstraintIterator;
+    typedef typename core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
 
 protected:
 	VecCoord* x;
@@ -98,6 +103,8 @@ protected:
 	Data< Vector3 > translation;
 	Data< Vector3> rotation;
 	Data< SReal > scale;
+	Data< Vector3 > translation2;
+	Data< Vector3> rotation2;
         sofa::core::objectmodel::DataFileName filename;
   Data< bool> ignoreLoader;
 
@@ -130,6 +137,8 @@ public:
     MechanicalObject& operator = ( const MechanicalObject& );
 
     virtual ~MechanicalObject();
+
+    virtual bool canPrefetch() const { return false; }
 
     virtual bool load(const char* filename);
 
@@ -261,11 +270,17 @@ public:
 	/// Add the Mechanical State Dimension [DOF number * DOF dimension] to the global matrix dimension
 	virtual void contributeToMatrixDimension(unsigned int * const, unsigned int * const);
 
+        /// Load local mechanical data stored in the state in a (possibly smaller) vector
+        virtual void loadInVector(defaulttype::BaseVector *, VecId , unsigned int);
+
 	/// Load local mechanical data stored in the state in a global BaseVector basically stored in solvers
 	virtual void loadInBaseVector(defaulttype::BaseVector *, VecId , unsigned int &);
 
 	/// Add data stored in a BaseVector to a local mechanical vector of the MechanicalState
 	virtual void addBaseVectorToState(VecId , defaulttype::BaseVector *, unsigned int &);
+
+        /// Add data stored in a Vector (whose size is smaller or equal to the State vector)  to a local mechanical vector of the MechanicalState
+        virtual void addVectorToState(VecId , defaulttype::BaseVector *, unsigned int &);
 
 	/// Update offset index during the subgraph traversal
 	virtual void setOffset(unsigned int &);
@@ -274,15 +289,15 @@ public:
 
 
 
-        /// Express the constraint J as a dense matrix
-	virtual void buildConstraintMatrix(const sofa::helper::vector<unsigned int> &constraintId, const double factor, defaulttype::BaseMatrix& m,unsigned int numConstraint,  unsigned int offset);
-
-	virtual void computeConstraintProjection(const sofa::helper::vector<unsigned int> &constraintId, VecId Id, defaulttype::BaseVector& v, unsigned int offset);
+        /// Express the matrix L in term of block of matrices, using the indices of the lines in the VecConst container
+        virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &indices, double factor ) const;
 
         void setFilename(std::string s){filename.setValue(s);};
         void setTranslation(double dx,double dy,double dz){translation.setValue(Vector3(dx,dy,dz));};
         void setRotation(double rx,double ry,double rz){rotation.setValue(Vector3(rx,ry,rz));};
         void setScale(double s){scale.setValue(s);};
+        void setIgnoreLoader(bool b){ignoreLoader.setValue(b);}
+
 
         std::string getFilename(){return filename.getValue();};
 
@@ -290,6 +305,8 @@ public:
 
 	void setConstraintId(unsigned int);
 	sofa::helper::vector<unsigned int>& getConstraintId();
+	/// Renumber the constraint ids with the given permutation vector
+	void renumberConstraintId(const sofa::helper::vector<unsigned>& renumbering);
 
 
 	/// @name Integration related methods
@@ -389,6 +406,8 @@ extern template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<defaulttype:
 #endif
 extern template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<defaulttype::LaparoscopicRigid3Types>;
 #endif
+
+}
 
 } // namespace component
 

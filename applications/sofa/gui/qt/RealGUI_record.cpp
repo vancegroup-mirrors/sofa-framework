@@ -84,7 +84,7 @@ namespace sofa
 	setRecordInitialTime(initial_time);
 	setRecordFinalTime(initial_time);
 	setRecordTime(initial_time);		  	
-	if ( viewer->getScene()) viewer->getScene()->execute< sofa::simulation::UpdateSimulationContextVisitor >();
+	//if ( viewer->getScene()) viewer->getScene()->execute< sofa::simulation::UpdateSimulationContextVisitor >();
 	timeSlider->update();
       }
       
@@ -111,6 +111,7 @@ namespace sofa
       void RealGUI::addReadState(bool init)
       {		
 	sofa::component::misc::ReadStateCreator v(writeSceneName,false,init);
+        v.addTag(core::objectmodel::Tag("AutoRecord"));
 	v.execute(viewer->getScene());	
 	std::cout << "Reading Recorded simulation with base name: " << writeSceneName << "\n";
       }
@@ -119,6 +120,7 @@ namespace sofa
       {	
 	//record X, V, but won't record in the Mapping
 	sofa::component::misc::WriteStateCreator v(writeSceneName, true, true, false);
+        v.addTag(core::objectmodel::Tag("AutoRecord"));
 	v.execute(viewer->getScene());	
 	std::cout << "Recording simulation with base name: " << writeSceneName << "\n";
       }
@@ -141,8 +143,8 @@ namespace sofa
       {
 	if (value) 
 	{
-	  Node* groot = getScene();
-	  if (groot)
+	  Node* root = getScene();
+	  if (root)
 	  {	
  	   	 
 	    if (setWriteSceneName())
@@ -180,8 +182,10 @@ namespace sofa
 	}
 	  //Change the state of the writers
 	sofa::component::misc::WriteStateActivator v_write(value);
+        v_write.addTag(core::objectmodel::Tag("AutoRecord"));
 	v_write.execute(viewer->getScene());	
 	sofa::component::misc::ReadStateActivator v_read(false);
+        v_read.addTag(core::objectmodel::Tag("AutoRecord"));
 	v_read.execute(viewer->getScene());	  
       }
       
@@ -296,6 +300,7 @@ namespace sofa
 	
 	//read the state for the current time
 	sofa::component::misc::ReadStateModifier v(time);
+        v.addTag(core::objectmodel::Tag("AutoRecord"));
 	v.execute(viewer->getScene());		
 		
 	if (!one_step) sleep((viewer->getScene()->getDt()), sleep_time);	
@@ -343,19 +348,19 @@ namespace sofa
       void RealGUI::setRecordInitialTime(double time)
       {
 	char buf[100];
-	sprintf ( buf, "Init: %.3g s", fabs(time) );
+	sprintf ( buf, "Init: %g s", fabs(time) );
 	initialTime->setText ( buf ); 
       }
       void RealGUI::setRecordFinalTime(double time)
       {
 	char buf[100];
-	sprintf ( buf, "End: %.3g s", fabs(time) );
+	sprintf ( buf, "End: %g s", fabs(time) );
 	finalTime->setText( buf );	
       }
       void RealGUI::setRecordTime(double time)
       {
 	char buf[100];
-	sprintf ( buf, "%.3g", fabs(time) );
+	sprintf ( buf, "%g", fabs(time) );
 	loadRecordTime->setText( buf );	   
 	setTimeSimulation(getRecordTime());
       }
@@ -363,7 +368,7 @@ namespace sofa
       void RealGUI::setTimeSimulation(double time)
       {
 	char buf[100];
-	sprintf ( buf, "Time: %.3g s", time );
+	sprintf ( buf, "Time: %g s", time );
 	timeLabel->setText ( buf );	
 	if (viewer->getScene())
 	  viewer->getScene()->setTime(time);

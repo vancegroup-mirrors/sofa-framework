@@ -143,6 +143,6 @@
 		<Object type="Triangle" name="Floor" simulated="0" moving="0" />
 		<Object type="Line" name="Floor" simulated="0" moving="0" />
 		<Object type="Point" name="Floor" simulated="0" moving="0" />
-		<Object type="OglModel" name="FloorV" filename="mesh/floor3.obj" texturename="textures/floor.png" dy="-20" />
+		<Object type="OglModel" name="FloorV" filename="mesh/floor3.obj" texturename="textures/floor.bmp" dy="-20" />
 	</Node>
 </Node>

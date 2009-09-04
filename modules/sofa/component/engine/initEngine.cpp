@@ -53,4 +53,14 @@ void initEngine()
 
 ////////// BEGIN CLASS LIST //////////
 SOFA_LINK_CLASS(BoxROI)
-
+SOFA_LINK_CLASS(ExtrudeSurface)
+SOFA_LINK_CLASS(MergePoints)
+SOFA_LINK_CLASS(PointsFromIndices)
+SOFA_LINK_CLASS(PlaneROI)
+SOFA_LINK_CLASS(RandomPointDistributionInSurface)
+SOFA_LINK_CLASS(Spiral)
+SOFA_LINK_CLASS(TrianglesInBoxROI)
+SOFA_LINK_CLASS(TrianglesInPlaneROI)
+SOFA_LINK_CLASS(TrianglesInSphereROI)
+SOFA_LINK_CLASS(Vertex2Frame)
+SOFA_LINK_CLASS(TransformPosition)

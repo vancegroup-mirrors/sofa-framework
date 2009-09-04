@@ -29,8 +29,6 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/SolveVisitor.h>
 
-#include <sofa/helper/LCPcalc.h>
-
 #include <sofa/core/ObjectFactory.h>
 
 #include <sofa/helper/system/thread/CTime.h>
@@ -77,7 +75,7 @@ using namespace core::componentmodel::behavior;
 
 
 
-#define MAX_NUM_CONSTRAINTS 1024
+#define MAX_NUM_CONSTRAINTS 3000
 //#define DISPLAY_TIME
 
 MasterContactSolver::MasterContactSolver()
@@ -102,8 +100,8 @@ MasterContactSolver::MasterContactSolver()
 	constraintGroups.endEdit();
 
 	_numPreviousContact=0;
-	_PreviousContactList = (contactBuf *)malloc(MAX_NUM_CONSTRAINTS * sizeof(contactBuf));
-	_cont_id_list = (long *)malloc(MAX_NUM_CONSTRAINTS * sizeof(long));
+	//_PreviousContactList = (contactBuf *)malloc(MAX_NUM_CONSTRAINTS * sizeof(contactBuf));
+	//_cont_id_list = (long *)malloc(MAX_NUM_CONSTRAINTS * sizeof(long));
 	
 	_Wdiag = new SparseMatrix<double>();
 }
@@ -151,9 +149,10 @@ void MasterContactSolver::build_LCP()
 	}
 	//sout<<" computeCompliance_done "  <<sendl;
 
-	if (initial_guess.getValue())
+	if ((initial_guess.getValue()) && (_numConstraints != 0))
 	{
-		MechanicalGetContactIDVisitor(_cont_id_list).execute(context);
+	    _cont_id_list.resize(_numConstraints);
+	    MechanicalGetContactIDVisitor(&(_cont_id_list[0])).execute(context);
 		computeInitialGuess();
 	}
 }
@@ -178,8 +177,8 @@ void MasterContactSolver::build_problem_info()
 	// necessary ///////
 	if (_numConstraints > MAX_NUM_CONSTRAINTS)
 	{
-		serr<<sendl<<"Error in MasterContactSolver, maximum number of contacts exceeded, "<< _numConstraints/3 <<" contacts detected"<<sendl;
-		exit(-1);
+		serr<<sendl<<"WARNING in MasterContactSolver: maximum number of contacts exceeded, "<< _numConstraints/3 <<" contacts detected"<<sendl;
+		//exit(-1);
 	}
 
 	lcp->getMu() = _mu;
@@ -202,7 +201,8 @@ void MasterContactSolver::build_problem_info()
    
 	if (initial_guess.getValue())
 	{
-		MechanicalGetContactIDVisitor(_cont_id_list).execute(context);
+	    _cont_id_list.resize(_numConstraints);
+	    MechanicalGetContactIDVisitor(&(_cont_id_list[0])).execute(context);
 		computeInitialGuess();
 	}	
 		
@@ -259,6 +259,7 @@ void MasterContactSolver::keepContactForcesValue()
 	_numPreviousContact=0;
 
 	int numContact = (_mu > 0.0) ? _numConstraints/3 : _numConstraints;
+	_PreviousContactList.resize(numContact);
 
 	for (int c=0; c<numContact; c++)
 	{
@@ -294,7 +295,7 @@ void MasterContactSolver::step(double dt)
 	CTime *timerTotal;
 	double time = 0.0;
 	double timeTotal=0.0;
-	double timeScale = 1000.0 / (double)CTime::getRefTicksPerSec();
+	double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
 	if ( displayTime.getValue() )
 	{
 		timer = new CTime();
@@ -357,7 +358,7 @@ void MasterContactSolver::step(double dt)
 	}
 //	MechanicalResetContactForceVisitor().execute(context);
 
-	sout<<"constraintCorrections is called"<<sendl;
+	//sout<<"constraintCorrections is called"<<sendl;
 	
     for (unsigned int i=0;i<constraintCorrections.size();i++)
     {
@@ -365,10 +366,10 @@ void MasterContactSolver::step(double dt)
 		cc->resetContactForce();
 	}
 	
-	sout<<"constraintCorrections is finished"<<sendl;
+    //sout<<"constraintCorrections is finished"<<sendl;
 	if(build_lcp.getValue())
 	{
-		sout<<"build_LCP is called"<<sendl;
+	    //sout<<"build_LCP is called"<<sendl;
 		build_LCP();
 		
 		
@@ -438,7 +439,7 @@ void MasterContactSolver::step(double dt)
 
 	if ( displayTime.getValue() )
 	{
-		sout<<" TOTAL solve_LCP" <<( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
+		sout<<" TOTAL solve_LCP " <<( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
 		time = (double) timer->getTime();
 	}
 
@@ -483,7 +484,7 @@ void MasterContactSolver::step(double dt)
 	}
 	if ( displayTime.getValue() )
 	{
-		sout<<" contactCorrections" <<( (double) timer->getTime() - time)*timeScale <<" s" <<sendl;
+		sout<<" contactCorrections " <<( (double) timer->getTime() - time)*timeScale <<" ms" <<sendl;
 		sout << "<<<<<< End display MasterContactSolver time." << sendl;
 	}
 
@@ -512,18 +513,18 @@ void MasterContactSolver::step(double dt)
 
 	if (displayTime.getValue())
 	{
-		sout<<" TotalTime" <<( (double) timerTotal->getTime() - timeTotal)*timeScale <<" ms" <<sendl;
+		sout<<" TotalTime " <<( (double) timerTotal->getTime() - timeTotal)*timeScale <<" ms" <<sendl;
 	}
 
 }
 
 
-int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
+int MasterContactSolver::nlcp_gaussseidel_unbuilt(double *dfree, double *f)
 {
 
 	CTime *timer;
 	double time = 0.0;
-	double timeScale = 1000.0 / (double)CTime::getRefTicksPerSec();
+	double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
 	if ( displayTime.getValue() )
 	{
 		timer = new CTime();
@@ -533,18 +534,16 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 
 	if(_mu==0.0)
 	{	
-		serr<<"WARNING: frictionless case with unbuilt lcp is not implemented"<<sendl;
+		serr<<"WARNING: frictionless case with unbuilt nlcp is not implemented"<<sendl;
+		return 0;
 	}
 	
 	/////// test: numContacts = _numConstraints/3 (must be dividable by 3)
-	double test = _numConstraints/3;
-	int numContacts =  (int) floor(test);
-	test = _numConstraints/3 - numContacts;
-
-	if (test>0.01){
+	if (_numConstraints%3 != 0){
 		serr<<" WARNING dim should be dividable by 3 in nlcp_gaussseidel"<<sendl;
 		return 0;
 	}
+	int numContacts =  _numConstraints/3;
 	//////////////////////////////////////////////
 	// iterators
 	int it,c1;
@@ -557,6 +556,33 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 	
 	//debug
 	//std::cout<<"data are set"<<std::endl;				
+
+	
+	/// each constraintCorrection has an internal force vector that is set to "0"
+	
+	// if necessary: modify the sequence of contact
+	std::list<int> contact_sequence;
+	
+	for (unsigned int i=0;i<constraintCorrections.size();i++)
+	{
+		core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];	
+		cc->resetForUnbuiltResolution(f, contact_sequence); 
+	}
+	 
+	// debug
+	// std::cout<<"getBlockDiagonalCompliance  Wdiag = "<<(* _Wdiag)<<std::endl;
+	// return 1;
+	if ( displayTime.getValue() )
+	{
+		sout<<" build_constraints " << ( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
+		time = (double) timer->getTime();
+	}
+	
+	bool change_contact_sequence = false;
+	
+	if(contact_sequence.size() ==_numConstraints)
+		change_contact_sequence=true;
+	
 	
 	//////// Important component if the LCP is not build : 
 	// for each contact, the pair of constraint correction that is involved with the contact is memorized
@@ -596,31 +622,24 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 		
 	
 	// memory allocation of vector d
-	double *d;
-	d = (double*)malloc(_numConstraints*sizeof(double));	
+	unbuilt_d.resize(_numConstraints);
+	double *d = &(unbuilt_d[0]);
+	//d = (double*)malloc(_numConstraints*sizeof(double));	
 	
+	 
+	// debug
+	// std::cout<<"getBlockDiagonalCompliance  Wdiag = "<<(* _Wdiag)<<std::endl;
+	// return 1;
+	if ( displayTime.getValue() )
+	{
+		sout<<" link_constraints " << ( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
+		time = (double) timer->getTime();
+	}
 
 
 	//////////////
 	// Beginning of iterative computations
 	//////////////
-	
-	/// each constraintCorrection has an internal force vector that is set to "0"
-	
-	// if necessary: modify the sequence of contact
-	std::list<int> contact_sequence;
-	
-	for (unsigned int i=0;i<constraintCorrections.size();i++)
-	{
-		core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];	
-		cc->resetForUnbuiltResolution(f, contact_sequence); 
-	}
-	
-	bool change_contact_sequence = false;
-	
-	if(contact_sequence.size() ==_numConstraints)
-		change_contact_sequence=true;
-	
 	
 	
 	/////////// the 3x3 diagonal block matrix is built:
@@ -643,10 +662,12 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 
 	// allocation of the inverted system 3x3 
 	// TODO: evaluate the cost of this step : it can be avoied by directly feeding W33 in constraint correction 
-	helper::LocalBlock33 **W33;
-	W33 = (helper::LocalBlock33 **) malloc (_numConstraints*sizeof(helper::LocalBlock33));
+	unbuilt_W33.clear();
+	unbuilt_W33.resize(numContacts);
+	helper::LocalBlock33 *W33 = &(unbuilt_W33[0]); //new helper::LocalBlock33[numContacts];
+	//3 = (helper::LocalBlock33 **) malloc (_numConstraints*sizeof(helper::LocalBlock33));
 	for (c1=0; c1<numContacts; c1++){
-		W33[c1] = new helper::LocalBlock33();
+	    //3[c1] = new helper::LocalBlock33();
 		double w[6];
 		w[0] = _Wdiag->element(3*c1  , 3*c1  );
 		w[1] = _Wdiag->element(3*c1  , 3*c1+1);
@@ -654,7 +675,7 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 		w[3] = _Wdiag->element(3*c1+1, 3*c1+1);
 		w[4] = _Wdiag->element(3*c1+1, 3*c1+2);
 		w[5] = _Wdiag->element(3*c1+2, 3*c1+2);
-		W33[c1]->compute(w[0], w[1] , w[2], w[3], w[4] , w[5]);
+		W33[c1].compute(w[0], w[1] , w[2], w[3], w[4] , w[5]);
 	}			
 	 
 	// debug
@@ -662,12 +683,12 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 	// return 1;
 	if ( displayTime.getValue() )
 	{
-		sout<<" build_constraints_and_diagonal " << ( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
+		sout<<" build_diagonal " << ( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
 		time = (double) timer->getTime();
 	}
 	
 	double error = 0;
-	double dn, dt, ds, fn, ft, fs;
+	double dn, dt, ds, fn, ft, fs, fn0;
 
 	for (it=0; it<_maxIt; it++)
 	{
@@ -696,6 +717,10 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 			//if(c1<2)
 			//	std::cout<<"free displacement for contact : dn_free = "<< d[3*c1] <<"  dt_free = "<<d[3*c1+1]<<"  ds_free = "<<d[3*c1+2]<<std::endl;
 			
+				
+		// set current force in fn, ft, fs
+			fn0=fn=f[3*c1]; ft=f[3*c1+1]; fs=f[3*c1+2];
+			//f[3*c1] = 0.0; f[3*c1+1] = 0.0; f[3*c1+2] = 0.0;
 			
 			// displacement of object1 due to contact force
 			_cclist_elem1[c1]->addConstraintDisplacement(d, 3*c1, 3*c1+2);
@@ -704,13 +729,12 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 			if(_cclist_elem2[c1] != NULL)
 				_cclist_elem2[c1]->addConstraintDisplacement(d, 3*c1, 3*c1+2);
 			
-				
-		// set current force in fn, ft, fs
-			fn=f[3*c1]; ft=f[3*c1+1]; fs=f[3*c1+2];
 			
 			// set displacement in dn, dt, ds
-			dn=d[3*c1]; dt=d[3*c1+1]; ds=d[3*c1+2];												
-			
+			dn=d[3*c1]; dt=d[3*c1+1]; ds=d[3*c1+2];
+			//d[3*c1  ] = dn + (W33[c1].w[0]*fn + W33[c1].w[1]*ft + W33[c1].w[2]*fs);
+			//d[3*c1+1] = dt + (W33[c1].w[1]*fn + W33[c1].w[3]*ft + W33[c1].w[4]*fs);
+			//d[3*c1+2] = ds + (W33[c1].w[2]*fn + W33[c1].w[4]*ft + W33[c1].w[5]*fs);
 			
 			// debug
 			//if(c1<2)
@@ -722,7 +746,8 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 		
 		// compute a new state for stick/slip 		
 			/// ATTENTION  NOUVEAU GS_STATE : maintenant dn, dt et ds inclue les forces fn, ft, fs
-			W33[c1]->New_GS_State(_mu,dn,dt,ds,fn,ft,fs);
+			W33[c1].New_GS_State(_mu,dn,dt,ds,fn,ft,fs);
+			//W33[c1].GS_State(_mu,dn,dt,ds,fn,ft,fs);
 			// debug
 			//if(c1<2)
 			//	std::cout<<"New_GS_State solved for contact "<<c1<<" : dn = "<<dn<<"  dt = "<<dt<<"  ds = "<<ds<<"  fn = "<<fn<<"  ft = "<<ft<<"  fs = "<<fs<<std::endl;
@@ -734,7 +759,7 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 			
 			
 			bool update;
-			if (f[3*c1] == 0.0 && fn == 0.0)
+			if (fn0 == 0.0 && fn == 0.0)
 				update=false;
 			else
 				update=true;
@@ -774,7 +799,7 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 		}
 
 		if (error < _tol*(numContacts+1)){
-			free(d);
+		    //free(d);
 			if ( displayTime.getValue() )
 			{
 				sout<<"convergence after "<<it<<" iterations - error"<<error<<sendl;
@@ -783,10 +808,9 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 			//std::cout<<" f : ["<<std::endl;
 			for (int i = 0; i < numContacts; i++){
 			//	std::cout<<f[3*i]<<"\n"<<f[3*i+1] <<"\n"<<f[3*i+2] <<std::endl;
-				delete W33[i];
 			}
 			//std::cout<<"];"<<std::endl;
-			free(W33);
+			//delete[] W33;
 			if ( displayTime.getValue() )
 			{
 				sout<<" GAUSS_SEIDEL iterations  " << ( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
@@ -797,16 +821,16 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 			return 1;
 		}
 	}
-	free(d);
-	for (int i = 0; i < numContacts; i++)
-		delete W33[i];
-	free(W33);
+	//free(d);
+	//for (int i = 0; i < numContacts; i++)
+	//	delete W33[i];
+	//delete[] W33;
 	if ( displayTime.getValue() )
 	{
 		sout<<" GAUSS_SEIDEL iterations  " << ( (double) timer->getTime() - time)*timeScale<<" ms" <<sendl;
 	}
 	
-	std::cerr<<"\n No convergence in  unbuilt gaussseidel function : error ="<<error <<" after"<< it<<" iterations"<<std::endl;
+	std::cerr<<"\n No convergence in  unbuilt nlcp gaussseidel function : error ="<<error <<" after"<< it<<" iterations"<<std::endl;
 	//afficheLCP(dfree,W,f,dim);
 	return 0;
 	
@@ -815,6 +839,202 @@ int MasterContactSolver::gaussseidel_unbuilt(double *dfree, double *f)
 
 }
 
+
+int MasterContactSolver::lcp_gaussseidel_unbuilt(double *dfree, double *f)
+{
+    CTime timer; (void)timer;
+    double time = 0.0;
+    double timeScale = 1.0; 
+    if ( displayTime.getValue() )
+    {
+        time = (double) timer.getTime();
+        timeScale = 1000.0 / (double)CTime::getTicksPerSec();
+    }
+    
+    
+    if(_mu!=0.0)
+    {
+        serr<<"WARNING: friction case with unbuilt lcp is not implemented"<<sendl;
+        return 0;
+    }
+    
+    int numContacts =  _numConstraints;
+    //////////////////////////////////////////////
+    // iterators
+    int it,c1;
+    
+    //////////////////////////////////////////////
+    // data for iterative procedure
+    double _tol = tol.getValue();
+    int _maxIt = maxIt.getValue();
+    
+    // if necessary: modify the sequence of contact
+    std::list<int> contact_sequence;
+    
+    for (unsigned int i=0;i<constraintCorrections.size();i++)
+    {
+        core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+        cc->resetForUnbuiltResolution(f, contact_sequence); 
+    }
+    
+    if ( displayTime.getValue() )
+    {
+        sout<<" build_constraints " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
+        time = (double) timer.getTime();
+    }
+    
+    bool change_contact_sequence = false;
+    
+    if(contact_sequence.size() ==_numConstraints)
+        change_contact_sequence=true;
+    
+    
+    //////// Important component if the LCP is not build : 
+    // for each contact, the pair of constraint correction that is involved with the contact is memorized
+    _cclist_elem1.resize(numContacts);
+    _cclist_elem2.resize(numContacts);
+    for (c1=0; c1<numContacts; c1++){
+        bool elem1 = false;
+        bool elem2 = false;
+        for (unsigned int i=0;i<constraintCorrections.size();i++)
+        {
+            
+            core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+            if(cc->hasConstraintNumber(c1))
+            {
+                if(elem1){
+                    _cclist_elem2[c1] = (cc);
+                    elem2=true;
+                }
+                else
+                {
+                    _cclist_elem1[c1] = (cc);
+                    elem1=true;
+                }
+                
+            }
+        }
+        if(!elem1)
+            serr<<"WARNING: no constraintCorrection found for contact"<<c1<<sendl;
+        if(!elem2)
+            _cclist_elem2[c1] = (NULL);
+    }
+    
+    unbuilt_d.resize(_numConstraints);
+    double *d = &(unbuilt_d[0]);
+    
+    if ( displayTime.getValue() )
+    {
+        sout<<" link_constraints " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
+        time = (double) timer.getTime();
+    }
+    
+    //////////////
+    // Beginning of iterative computations
+    //////////////
+    
+    // the 1x1 diagonal block matrix is built:
+    // for each contact, the pair of constraintcorrection is called to add the contribution
+    for (c1=0; c1<numContacts; c1++)
+    {
+        // compliance of object1
+        _cclist_elem1[c1]->getBlockDiagonalCompliance(_Wdiag, c1, c1);
+        // compliance of object2 (if object2 exists)
+        if(_cclist_elem2[c1] != NULL){
+            _cclist_elem2[c1]->getBlockDiagonalCompliance(_Wdiag, c1, c1);
+        }
+    }
+    // std::cout<<"getBlockDiagonalCompliance  Wdiag = "<<(* _Wdiag)<<std::endl;
+
+    unbuilt_W11.resize(numContacts);
+    //unbuilt_invW11.resize(numContacts);
+    double *W11 = &(unbuilt_W11[0]);
+    //double *invW11 = &(unbuilt_invW11[0]);
+    for (c1=0; c1<numContacts; c1++){
+        W11[c1] = _Wdiag->element(c1, c1);
+        //invW11[c1] = 1.0 / W11[c1];
+    }
+
+    if ( displayTime.getValue() )
+    {
+        sout<<" build_diagonal " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
+        time = (double) timer.getTime();
+    }
+    
+    double error = 0;
+    double dn, fn, fn0;
+    
+    for (it=0; it<_maxIt; it++)
+    {
+        std::list<int>::iterator it_c = contact_sequence.begin();
+        error =0;
+        for (int c=0; c<numContacts; c++)
+        {
+            if(change_contact_sequence)
+            {
+                int constraint = *it_c;
+                c1 = constraint;
+                it_c++;
+                
+            }
+            else
+                c1=c;
+            
+            // compute the current violation :
+            // violation when no contact force
+            d[c1]=dfree[c1];
+            // set current force in fn
+            fn0=fn=f[c1];
+
+            // displacement of object1 due to contact force
+            _cclist_elem1[c1]->addConstraintDisplacement(d, c1, c1);
+            // displacement of object2 due to contact force (if object2 exists)
+            if(_cclist_elem2[c1] != NULL)
+                _cclist_elem2[c1]->addConstraintDisplacement(d, c1, c1);
+            // set displacement in dn
+            dn=d[c1];
+            
+            // compute a new state for stick/slip
+            /// ATTENTION  NOUVEAU GS_STATE : maintenant dn inclue les forces fn
+            //W33[c1].New_GS_State(_mu,dn,dt,ds,fn,ft,fs);
+            fn -= dn / W11[c1];
+            if (fn < 0) fn = 0;
+            error += fabs(W11[c1] * (fn - fn0));
+            
+            bool update = (fn0 != 0.0 || fn != 0.0);
+
+            if(update)
+            {
+                // set the new force :
+                // compute the Delta of contact forces:
+                f[c1] = fn - fn0;
+                _cclist_elem1[c1]->setConstraintDForce(f, c1, c1, update);
+                if(_cclist_elem2[c1] != NULL)
+                    _cclist_elem2[c1]->setConstraintDForce(f, c1, c1, update);
+            }
+            
+            f[c1] = fn;
+        }
+        
+        if (error < _tol*(numContacts+1)) {
+            if ( displayTime.getValue() )
+            {
+                sout<<"convergence after "<<it<<" iterations - error = "<<error<<sendl;
+                sout<<" GAUSS_SEIDEL iterations  " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
+                
+            }
+            return 1;
+        }
+    }
+    if ( displayTime.getValue() )
+    {
+        sout<<" GAUSS_SEIDEL iterations " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
+    }
+    
+    serr<<"No convergence in  unbuilt lcp gaussseidel function : error ="<<error <<" after"<< it<<" iterations"<<sendl;
+    //afficheLCP(dfree,W,f,dim);
+    return 0;
+}
 
 SOFA_DECL_CLASS(MasterContactSolver)
 

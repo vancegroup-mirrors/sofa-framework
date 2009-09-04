@@ -28,7 +28,6 @@
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/helper/io/Mesh.h>
-#include <sofa/simulation/tree/GNode.h>
 
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>

@@ -29,14 +29,15 @@
 
 #include <sofa/core/Mapping.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
 
 namespace sofa
 {
 
 namespace core
 {
+
+using std::cerr;
+using std::endl;
 
 template <class In, class Out>
 Mapping<In,Out>::Mapping(In* from, Out* to)
@@ -112,6 +113,12 @@ void Mapping<In,Out>::updateMapping()
 	{
 		applyJ(*this->toModel->getV(), *this->fromModel->getV());
 	}
+}
+
+template <class In, class Out>
+std::string Mapping<In,Out>::templateName(const Mapping<In, Out>* /*mapping*/)
+{
+    return std::string("Mapping<")+In::DataTypes::Name() + std::string(",") + Out::DataTypes::Name() + std::string(">");
 }
 
 } // namespace core

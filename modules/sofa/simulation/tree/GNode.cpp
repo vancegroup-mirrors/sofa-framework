@@ -25,11 +25,8 @@
 #include <sofa/simulation/tree/GNode.h>
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/simulation/common/DesactivatedNodeVisitor.h>
-#include <sofa/simulation/tree/MutationListener.h>
 #include <iostream>
 
-using std::cerr;
-using std::endl;
 
 namespace sofa
 {
@@ -39,6 +36,9 @@ namespace simulation
 
 namespace tree
 {
+
+using std::cerr;
+using std::endl;
 
 using helper::system::thread::CTime;
 using namespace sofa::core::objectmodel;
@@ -67,36 +67,26 @@ void GNode::doRemoveChild(GNode* node)
 	node->parent.remove(this);
 }
 
+
 /// Add a child node
-void GNode::addChild(Node* node)
+void GNode::addChild(core::objectmodel::BaseNode* node)
 {
-  GNode *gnode = dynamic_cast<GNode*>(node);
+  GNode *gnode = static_cast<GNode*>(node);
   notifyAddChild(gnode);
   doAddChild(gnode);
 }
 
 /// Remove a child
-void GNode::removeChild(Node* node)
+void GNode::removeChild(core::objectmodel::BaseNode* node)
 {
   GNode *gnode = dynamic_cast<GNode*>(node);
   notifyRemoveChild(gnode);
   doRemoveChild(gnode);
 }
 
-/// Add a child node
-void GNode::addChild(core::objectmodel::BaseNode* node)
-{
-	this->addChild(dynamic_cast<Node*>(node));
-}
-
-/// Remove a child node
-void GNode::removeChild(core::objectmodel::BaseNode* node)
-{
-	this->removeChild(dynamic_cast<Node*>(node));
-}
 
 /// Move a node from another node
-void GNode::moveChild(Node* node)
+void GNode::moveChild(BaseNode* node)
 {
         GNode* gnode=dynamic_cast<GNode*>(node);
 	if (!gnode) return;
@@ -114,6 +104,12 @@ void GNode::moveChild(Node* node)
 }
 
 
+/// Remove a child
+void GNode::detachFromGraph()
+{
+  if (parent)
+    parent->removeChild(this);
+}
 
 /// Generic object access, possibly searching up or down from the current context
 ///
@@ -169,7 +165,7 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
 {
 	if (path.empty())
 	{
-		return getObject(class_info, Local);
+          return Node::getObject(class_info, Local);
 	}
 	else if (path[0] == '/')
 	{
@@ -196,7 +192,7 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
 		std::string::size_type pend = path.find('/');
 		if (pend == std::string::npos) pend = path.length();
 		std::string name ( path, 0, pend );
-		GNode* child = getChild(name);
+		Node* child = getChild(name);
 		if (child)
 		{
 			while (pend < path.length() && path[pend] == '/')
@@ -296,35 +292,12 @@ const core::objectmodel::BaseNode* GNode::getParent() const
 	return parent;
 }
 
-/// Get parent node (or NULL if no hierarchy or for root node)
-sofa::helper::vector< core::objectmodel::BaseNode* > GNode::getChildren()
-{
-  sofa::helper::vector< core::objectmodel::BaseNode* > list_children;
-  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
-  {
-    list_children.push_back((*it));
-  }
-  return list_children;
-}
-
-/// Get parent node (or NULL if no hierarchy or for root node)
-const sofa::helper::vector< core::objectmodel::BaseNode* > GNode::getChildren() const
-{
-  sofa::helper::vector< core::objectmodel::BaseNode* > list_children;
-  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
-  {
-    list_children.push_back((*it));
-  }
-  return list_children;
-}
-
-
 
 /// Execute a recursive action starting from this node
 /// This method bypass the actionScheduler of this node if any.
   void GNode::doExecuteVisitor(simulation::Visitor* action)
 {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     action->setNode(this);
     action->printInfo(getContext(), true);
 #endif
@@ -343,7 +316,7 @@ const sofa::helper::vector< core::objectmodel::BaseNode* > GNode::getChildren() 
         }
         action->processNodeBottomUp(this);
 
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
       action->printInfo(getContext(), false);
 #endif
         actionStack.pop();
@@ -379,49 +352,12 @@ const sofa::helper::vector< core::objectmodel::BaseNode* > GNode::getChildren() 
         }
 
       action->processNodeBottomUp(this);
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
       action->printInfo(getContext(), false);
 #endif
     }
 }
 
-
-/// Find a child node given its name
-GNode* GNode::getChild(const std::string& name) const
-{
-    for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
-        if ((*it)->getName() == name)
-            return *it;
-    return NULL;
-}
-
-/// Get a descendant node given its name
-GNode* GNode::getTreeNode(const std::string& name) const
-{
-    GNode* result = NULL;
-    result = getChild(name);
-    for (ChildIterator it = child.begin(), itend = child.end(); result == NULL && it != itend; ++it)
-        result = (*it)->getTreeNode(name);
-    return result;
-}
-
-void GNode::notifyAddChild(GNode* node)
-{
-	for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
-		(*it)->addChild(this, node);
-}
-
-void GNode::notifyRemoveChild(GNode* node)
-{
-	for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
-		(*it)->removeChild(this, node);
-}
-
-void GNode::notifyMoveChild(GNode* node, GNode* prev)
-{
-	for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
-		(*it)->moveChild(prev, this, node);
-}
 
 /// Return the full path name of this node
 std::string GNode::getPathName() const
@@ -433,60 +369,6 @@ std::string GNode::getPathName() const
 	return str;
 }
 
-/// Topology
-core::componentmodel::topology::Topology* GNode::getTopology() const
-{
-    // return this->topology;
-    // CHANGE 12/01/06 (Jeremie A.): Inherit parent topology if no local topology is defined
-    if (this->topology)
-        return this->topology;
-    else if (parent)
-        return parent->getTopology();
-    else
-        return NULL;
-}
-
-/// Mesh Topology (unified interface for both static and dynamic topologies)
-core::componentmodel::topology::BaseMeshTopology* GNode::getMeshTopology() const
-{
-    if (this->meshTopology)
-        return this->meshTopology;
-    else if (parent)
-        return parent->getMeshTopology();
-    else
-        return NULL;
-}
-
-/// Shader
-core::objectmodel::BaseObject* GNode::getShader() const
-{
-    if (shader)
-        return shader;
-    else if (parent)
-        return parent->getShader();
-    else
-        return NULL;
-}
-
-/// Mechanical Degrees-of-Freedom
-core::objectmodel::BaseObject* GNode::getMechanicalState() const
-{
-    // return this->mechanicalModel;
-    // CHANGE 12/01/06 (Jeremie A.): Inherit parent mechanical model if no local model is defined
-	if (this->mechanicalState)
-		return this->mechanicalState;
-    else if (parent)
-        return parent->getMechanicalState();
-    else
-        return NULL;
-}
-
-/// Update the parameters of the System
-void GNode::reinit()
-{
-  sofa::simulation::DesactivationVisitor desactivate(isActive());
-  desactivate.execute( this );
-}
 
 
 void GNode::initVisualContext()
@@ -521,70 +403,68 @@ void GNode::updateContext()
 {
     if ( getParent() != NULL )
     {
-		if( debug_ ) {
-			cerr<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *getParent()->getContext() << endl;
-		}
-        copyContext(*parent);
+      if( debug_ ) {
+        cerr<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *getParent()->getContext() << endl;
+      }
+      copyContext(*parent);
     }
-	simulation::Node::updateContext();
+    simulation::Node::updateContext();
 }
 
 void GNode::updateSimulationContext()
 {
-    if ( getParent() != NULL )
+  if ( getParent() != NULL )
     {
-		if( debug_ ) {
-			cerr<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *getParent()->getContext() << endl;
-		}
-        copySimulationContext(*parent);
+      if( debug_ ) {
+        cerr<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *getParent()->getContext() << endl;
+      }
+      copySimulationContext(*parent);
     }
-	simulation::Node::updateSimulationContext();
+  simulation::Node::updateSimulationContext();
 }
 
-void GNode::updateVisualContext(int FILTER)
+void GNode::updateVisualContext(VISUAL_FLAG FILTER)
 {
     if ( getParent() != NULL )
     {
-        if (FILTER==10)
-            copyVisualContext(*parent);
-        else
+      switch (FILTER)
         {
-            switch (FILTER)
-            {
-            case 0:
-                showVisualModels_.setValue((*parent).showVisualModels_.getValue());
-                break;
-            case 1:
-                showBehaviorModels_.setValue((*parent).showBehaviorModels_.getValue());
-                break;
-            case 2:
-                showCollisionModels_.setValue((*parent).showCollisionModels_.getValue());
-                break;
-            case 3:
-                showBoundingCollisionModels_.setValue((*parent).showBoundingCollisionModels_.getValue());
-                break;
-            case 4:
-                showMappings_.setValue((*parent).showMappings_.getValue());
-                break;
-            case 5:
-                showMechanicalMappings_.setValue((*parent).showMechanicalMappings_.getValue());
-                break;
-            case 6:
-                showForceFields_.setValue((*parent).showForceFields_.getValue());
-                break;
-            case 7:
-                showInteractionForceFields_.setValue((*parent).showInteractionForceFields_.getValue());
-                break;
-            case 8:
-                showWireFrame_.setValue((*parent).showWireFrame_.getValue());
-                break;
-            case 9:
-                showNormals_.setValue((*parent).showNormals_.getValue());
-                break;
-            }
-        }
+        case VISUALMODELS:
+          showVisualModels_.setValue((*parent).showVisualModels_.getValue());
+          break;
+        case BEHAVIORMODELS:
+          showBehaviorModels_.setValue((*parent).showBehaviorModels_.getValue());
+          break;
+        case COLLISIONMODELS:
+          showCollisionModels_.setValue((*parent).showCollisionModels_.getValue());
+          break;
+        case BOUNDINGCOLLISIONMODELS:
+          showBoundingCollisionModels_.setValue((*parent).showBoundingCollisionModels_.getValue());
+          break;
+        case MAPPINGS:
+          showMappings_.setValue((*parent).showMappings_.getValue());
+          break;
+        case MECHANICALMAPPINGS:
+          showMechanicalMappings_.setValue((*parent).showMechanicalMappings_.getValue());
+          break;
+        case FORCEFIELDS:
+          showForceFields_.setValue((*parent).showForceFields_.getValue());
+          break;
+        case INTERACTIONFORCEFIELDS:
+          showInteractionForceFields_.setValue((*parent).showInteractionForceFields_.getValue());
+          break;
+        case WIREFRAME:
+          showWireFrame_.setValue((*parent).showWireFrame_.getValue());
+          break;
+        case NORMALS:
+          showNormals_.setValue((*parent).showNormals_.getValue());
+          break;
+        case ALLFLAGS:
+          copyVisualContext(*parent);
+          break;
+        }        
     }
-	simulation::Node::updateVisualContext(FILTER);
+    simulation::Node::updateVisualContext(FILTER);
 }
 
 /// Log time spent on an action category, and the concerned object, plus remove the computed time from the parent caller object
@@ -596,38 +476,14 @@ void GNode::addTime(ctime_t t, const std::string& s, core::objectmodel::BaseObje
     objectTime[s][parent].tObject -= t;
 }
 
-
-void GNode::addListener(MutationListener* obj)
+/// Log time spent given a start time, an action category, and the concerned object
+Node::ctime_t GNode::endTime(ctime_t t0, const std::string& s, core::objectmodel::BaseObject* obj, core::objectmodel::BaseObject* parent)
 {
-    // make sure we don't add the same listener twice
-    Sequence< MutationListener >::iterator it = listener.begin();
-    while (it != listener.end() && (*it)!=obj)
-        ++it;
-    if (it == listener.end())
-        listener.add(obj);
-}
-
-void GNode::removeListener(MutationListener* obj)
-{
-    listener.remove(obj);
-}
-
-void GNode::notifyAddObject(core::objectmodel::BaseObject* obj)
-{
-    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
-        (*it)->addObject(this, obj);
-}
-
-void GNode::notifyRemoveObject(core::objectmodel::BaseObject* obj)
-{
-    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
-        (*it)->removeObject(this, obj);
-}
-
-void GNode::notifyMoveObject(core::objectmodel::BaseObject* obj, GNode* prev)
-{
-    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
-        (*it)->moveObject(prev, this, obj);
+    if (!getLogTime()) return 0;
+    const ctime_t t1 = CTime::getTime();
+    const ctime_t t = t1 - t0;
+    addTime(t, s, obj, parent);
+    return t1;
 }
 
 SOFA_DECL_CLASS(GNode)

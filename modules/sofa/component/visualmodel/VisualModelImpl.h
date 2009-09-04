@@ -75,10 +75,12 @@ class ExtVec3fMappedModel : public core::componentmodel::behavior::MappedModel< 
 {
 public:
     ResizableExtVector<Coord>* inputVertices;
+    ResizableExtVector<Coord>* inputRestVertices;
+    ResizableExtVector<Coord>* inputNormals;
     bool modified; ///< True if input vertices modified since last rendering
 
     ExtVec3fMappedModel()
-    : inputVertices(NULL), modified(false)
+    : inputVertices(NULL), inputRestVertices(NULL), inputNormals(NULL), modified(false)
     {
     }
 
@@ -90,6 +92,14 @@ public:
 
     const VecCoord* getVecX()  const { return getX(); }
     VecCoord* getVecX()  { return getX(); }
+
+    virtual VecCoord* getX0() { return inputRestVertices; };
+    virtual VecCoord* getN() { return inputNormals; };
+
+    virtual const VecCoord* getX0() const { return inputRestVertices; };
+    virtual const VecCoord* getN() const { return inputNormals; };
+
+
 };
 
 /**
@@ -126,7 +136,10 @@ protected:
     bool useNormals; ///< True if normals should be read from file
     bool castShadow; ///< True if object cast shadows
 
-	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+    sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+
+    DataPtr<bool> f_useNormals; ///< True if normals should be read from file
+    Data<bool> updateNormals; ///< True if normals should be updated at each iteration
 
 /*     Data< ResizableExtVector<Coord> > vertices; */
     DataPtr< ResizableExtVector<Coord> > field_vertices;
@@ -157,7 +170,7 @@ protected:
     sofa::core::objectmodel::DataFileName texturename;
     Data< Vector3 > translation;
     Data< Vector3 > rotation;
-    Data< SReal > scale;
+    Data< Vector3 > scale;
 
     Data< TexCoord >  scaleTex;
     Data< TexCoord >  translationTex;
@@ -169,6 +182,7 @@ protected:
 
 public:
     Data< sofa::helper::io::Mesh::Material > material;
+    Data< bool > putOnlyTexCoords;
 
     VisualModelImpl();
 
@@ -190,7 +204,7 @@ public:
     //Apply Rotation from Euler angles (in degree!)
     void applyRotation (const double rx, const double ry, const double rz);
     void applyRotation(const Quat q);
-    void applyScale(const double s);
+    void applyScale(const double sx, const double sy, const double sz);
     virtual void applyUVTransformation();
     void applyUVTranslation(const double dU, const double dV);
     void applyUVScale(const double su, const double sv);
@@ -200,7 +214,7 @@ public:
     void setFilename(std::string s){fileMesh.setValue(s);}
     void setTranslation(double dx,double dy,double dz){translation.setValue(Vector3(dx,dy,dz));};
     void setRotation(double rx,double ry,double rz){rotation.setValue(Vector3(rx,ry,rz));};
-    void setScale(double s){scale.setValue(s);};
+    void setScale(double sx, double sy, double sz){scale.setValue(Vector3(sx,sy,sz));};
 
     std::string getFilename(){return fileMesh.getValue();}
 
@@ -239,11 +253,6 @@ public:
 
     bool addBBox(double* minBBox, double* maxBBox);
 
-    //const VecCoord* getX()  const; // { return &x;   }
-    //const VecDeriv* getV()  const { return NULL; }
-
-    //VecCoord* getX(); //  { return &x;   }
-    //VecDeriv* getV()  { return NULL; }
 
     /// Append this mesh to an OBJ format stream.
     /// The number of vertices position, normal, and texture coordinates already written is given as parameters

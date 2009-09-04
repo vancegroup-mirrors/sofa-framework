@@ -73,7 +73,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	virtual void updateContext(Node* root);
 
 	/// Update contexts. Required before drawing the scene if root flags are modified.
-	virtual void updateVisualContext(Node* root,int FILTER=10);
+	virtual void updateVisualContext(Node* root,Node::VISUAL_FLAG FILTER=Node::ALLFLAGS);
 
 	/// Compute the bounding box of the scene.
 	virtual void computeBBox(Node* root, SReal* minBBox, SReal* maxBBox);
@@ -107,8 +107,20 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
         /// Create a new Node of the simulation
         virtual Node* newNode(const std::string& name)=0;
         
+        /// During init, the components will tell if they need prefetch phase. If only one needs it, we have to use it.
+        void setPrefteching(bool b){ needToPrefetch |= b;};
+        
+        bool isPrefetchingUsed() const{ return needToPrefetch;};
+
 	/// Number of mechanical steps within an animation step
 	Data<unsigned> numMechSteps;
+
+        /// Number of steps of simulation
+        unsigned nbSteps;
+
+        /// Need to launch prefetches during animating steps
+        bool needToPrefetch;
+
         sofa::core::objectmodel::DataFileName gnuplotDirectory;
 	
 	helper::vector< Node* > instruments;

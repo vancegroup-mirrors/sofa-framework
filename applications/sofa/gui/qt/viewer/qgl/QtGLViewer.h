@@ -137,8 +137,7 @@ namespace sofa
 	      void viewAll();
 	      void resizeGL( int w, int h );
 
-	    public:
-// 	      void setScene(sofa::simulation::tree::GNode* scene, const char* filename=NULL, bool keepParams=false);
+            public:
 
 
 	      //void			reshape(int width, int height);
@@ -195,7 +194,7 @@ namespace sofa
 	      virtual void mousePressEvent ( QMouseEvent * e );
 	      virtual void mouseReleaseEvent ( QMouseEvent * e );
 	      virtual void mouseMoveEvent ( QMouseEvent * e );
-		  virtual void wheelEvent(QWheelEvent* e);
+              virtual void wheelEvent(QWheelEvent* e);
 	      bool mouseEvent( QMouseEvent * e );
 
 

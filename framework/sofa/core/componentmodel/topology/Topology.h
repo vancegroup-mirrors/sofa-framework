@@ -46,49 +46,67 @@ namespace topology
 {
 
 	/// The enumeration used to give unique identifiers to TopologyChange objects.
-	enum TopologyChangeType 
+	enum TopologyChangeType
 	{
-		BASE,               ///< For TopologyChange class, should never be used.
-		ENDING_EVENT,       ///< To notify the end for the current sequence of topological change events
+		BASE,                      ///< For TopologyChange class, should never be used.
+		ENDING_EVENT,              ///< To notify the end for the current sequence of topological change events
 
-		POINTSINDICESSWAP,  ///< For PointsIndicesSwap class.
-		POINTSADDED,        ///< For PointsAdded class.
-		POINTSREMOVED,      ///< For PointsRemoved class.
-		POINTSRENUMBERING,  ///< For PointsRenumbering class.
+		POINTSINDICESSWAP,         ///< For PointsIndicesSwap class.
+		POINTSADDED,               ///< For PointsAdded class.
+		POINTSREMOVED,             ///< For PointsRemoved class.
+		POINTSMOVED,               ///< For PointsMoved class.
+		POINTSRENUMBERING,         ///< For PointsRenumbering class.
 
-		EDGESADDED,         ///< For EdgesAdded class.
-		EDGESREMOVED,       ///< For EdgesRemoved class.
-		EDGESRENUMBERING,    ///< For EdgesRenumbering class.
+		EDGESADDED,                ///< For EdgesAdded class.
+		EDGESREMOVED,              ///< For EdgesRemoved class.
+		EDGESMOVED_REMOVING,       ///< For EdgesMoved class (event before changing state).
+		EDGESMOVED_ADDING,         ///< For EdgesMoved class.
+		EDGESRENUMBERING,          ///< For EdgesRenumbering class.
 
-		TRIANGLESADDED,     ///< For TrianglesAdded class.
-		TRIANGLESREMOVED,   ///< For TrianglesRemoved class.
-		TRIANGLESRENUMBERING, ///< For TrianglesRenumbering class.
+		TRIANGLESADDED,            ///< For TrianglesAdded class.
+		TRIANGLESREMOVED,          ///< For TrianglesRemoved class.
+		TRIANGLESMOVED_REMOVING,   ///< For TrianglesMoved class (event before changing state).
+		TRIANGLESMOVED_ADDING,     ///< For TrianglesMoved class.
+		TRIANGLESRENUMBERING,      ///< For TrianglesRenumbering class.
 
-		TETRAHEDRAADDED,     ///< For TrianglesAdded class.
-		TETRAHEDRAREMOVED,   ///< For TrianglesRemoved class.
-		TETRAHEDRARENUMBERING, ///< For TrianglesRenumbering class.
+		TETRAHEDRAADDED,           ///< For TrianglesAdded class.
+		TETRAHEDRAREMOVED,         ///< For TrianglesRemoved class.
+		TETRAHEDRARENUMBERING,     ///< For TrianglesRenumbering class.
 
-		QUADSADDED,          ///< For QuadsAdded class.
-		QUADSREMOVED,        ///< For QuadsRemoved class.
-		QUADSRENUMBERING,    ///< For QuadsRenumbering class.
+		QUADSADDED,                ///< For QuadsAdded class.
+		QUADSREMOVED,              ///< For QuadsRemoved class.
+		QUADSRENUMBERING,          ///< For QuadsRenumbering class.
 
-		HEXAHEDRAADDED,      ///< For TrianglesAdded class.
-		HEXAHEDRAREMOVED,    ///< For TrianglesRemoved class.
-		HEXAHEDRARENUMBERING, ///< For TrianglesRenumbering class.
+		HEXAHEDRAADDED,            ///< For TrianglesAdded class.
+		HEXAHEDRAREMOVED,          ///< For TrianglesRemoved class.
+		HEXAHEDRARENUMBERING,      ///< For TrianglesRenumbering class.
 
-		TOPOLOGYCHANGE_LASTID ///< user defined topology changes can start here
+		TOPOLOGYCHANGE_LASTID      ///< user defined topology changes can start here
 	};
 
 
+	/// The enumeration used to give unique identifiers to Topological objects.
+	enum TopologyObjectType
+	{
+	  POINT,
+	  EDGE,
+	  TRIANGLE,
+	  QUAD,
+	  TETRAHEDRON,
+	  HEXAHEDRON
+	};
+	
+
+	
 	/** \brief Base class to indicate a topology change occurred.
 	*
-	* All topological changes taking place in a given BaseTopology will issue a TopologyChange in the 
+	* All topological changes taking place in a given BaseTopology will issue a TopologyChange in the
 	* BaseTopology's changeList, so that BasicTopologies mapped to it can know what happened and decide how to
 	* react.
 	* Classes inheriting from this one describe a given topolopy change (e.g. RemovedPoint, AddedEdge, etc).
 	* The exact type of topology change is given by member changeType.
 	*/
-	class TopologyChange 
+	class TopologyChange
 	{
 	public:
 		/** \ brief Destructor.
@@ -102,18 +120,18 @@ namespace topology
 
 	protected:
 		TopologyChange( TopologyChangeType changeType = BASE )
-		: m_changeType(changeType) 
+		: m_changeType(changeType)
 		{}
 
 		TopologyChangeType m_changeType; ///< A code that tells the nature of the Topology modification event (could be an enum).
-	}; 
+	};
 
 	/** notifies the end for the current sequence of topological change events */
-	class EndingEvent : public core::componentmodel::topology::TopologyChange  
+	class EndingEvent : public core::componentmodel::topology::TopologyChange
 	{
 	public:
-		EndingEvent() 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::ENDING_EVENT) 
+		EndingEvent()
+		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::ENDING_EVENT)
 		{}
 	};
 
@@ -122,7 +140,7 @@ namespace topology
 	{
 	public:
 	        Topology():BaseObject(){}
-		virtual ~Topology() 
+		virtual ~Topology()
 		{}
 
 		// Access to embedded position information (in case the topology is a regular grid for instance)

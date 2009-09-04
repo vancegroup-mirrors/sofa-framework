@@ -38,10 +38,10 @@ namespace component
 namespace topology
 {
 	class PointSetTopologyContainer;
-    
+
 	using core::componentmodel::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::PointID PointID;
-	
+
 	/**
 	* A class that can apply basic topology transformations on a set of points.
 	*/
@@ -105,6 +105,17 @@ namespace topology
 		virtual void removePointsProcess(const sofa::helper::vector<unsigned int> &indices,
 										const bool removeDOF = true);
 
+		/** \brief move input points indices to input new coords. Also propagate event
+		 *
+		 * @param id : list of indices to move
+		 * @param : ancestors list of ancestors to define relative new position
+		 * @param coefs : barycoef to locate new coord relatively to ancestors.
+		 * @moveDOF bool allowing the move (default true)
+		 */
+		virtual void movePointsProcess (const sofa::helper::vector <unsigned int>& id,
+                                                const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+                                                const sofa::helper::vector< sofa::helper::vector< double > >& coefs,
+						const bool moveDOF = true);
 
 		/** \brief Sends a message to warn that points are about to be reordered.
 		*
@@ -133,7 +144,7 @@ namespace topology
 		* @sa lastChange()
 		*/
 		void propagateTopologicalChanges();
-		
+
 		/** \brief Called by a topology to warn the Mechanical Object component that points have been added or will be removed.
 		*
 		* StateChangeList should contain all TopologyChange objects corresponding to vertex changes in this topology
@@ -145,7 +156,7 @@ namespace topology
 		*/
 		void propagateStateChanges();
 		/// @}
-		
+
 		/** \notify the end for the current sequence of topological change events.
 		*/
 		void notifyEndingEvent();
@@ -160,7 +171,7 @@ namespace topology
 		virtual void renumberPoints( const sofa::helper::vector<unsigned int> &/*index*/,
 									const sofa::helper::vector<unsigned int> &/*inv_index*/)
 		{ }
-											
+
 	private:
 		PointSetTopologyContainer* 	m_container;
 	};

@@ -187,10 +187,23 @@ void MatrixMass<DataTypes, MassType>::addMToMatrix(defaulttype::BaseMatrix * mat
 
 
 template <class DataTypes, class MassType>
-    double MatrixMass<DataTypes, MassType>::getElementMass(unsigned int /*index*/)
+    double MatrixMass<DataTypes, MassType>::getElementMass(unsigned int /*index*/) const
 {
 	//NOT IMPLEMENTED YET
   return (sofa::defaulttype::Vector3::value_type)(_defaultValue.getValue());
+}
+
+template <class DataTypes, class MassType>
+void MatrixMass<DataTypes, MassType>::getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const
+{
+  MassType mElement=f_mass.getValue()[index];
+  const int dimension=mElement.getNbLines();
+
+  if ((int)m->rowSize() != dimension || (int)m->colSize() != dimension) m->resize(dimension,dimension);
+  
+  m->clear();
+  AddMToMatrixFunctor<Deriv,MassType>()(m, mElement, 0, 1);
+
 }
 
 

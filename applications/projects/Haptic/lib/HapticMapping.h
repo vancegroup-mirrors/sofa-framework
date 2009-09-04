@@ -32,17 +32,17 @@
 #include "sofa/core/componentmodel/behavior/MechanicalMapping.h"
 #include "sofa/component/mapping/RigidRigidMapping.h"
 
-using sofa::core::objectmodel::ChaiDevice;
-using sofa::component::mapping::RigidRigidMapping;
-using sofa::core::componentmodel::behavior::MechanicalMapping;
-using sofa::core::componentmodel::behavior::MechanicalState;
-
 
 namespace sofa{
 
 	namespace component{
 
 		namespace mapping{
+
+                  using sofa::core::objectmodel::ChaiDevice;
+                  using sofa::component::mapping::RigidRigidMapping;
+                  using sofa::core::componentmodel::behavior::MechanicalMapping;
+                  using sofa::core::componentmodel::behavior::MechanicalState;
 
 /**
 *	\brief specialized rigid to rigid mapping which link 

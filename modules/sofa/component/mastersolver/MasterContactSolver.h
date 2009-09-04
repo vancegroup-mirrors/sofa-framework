@@ -35,6 +35,7 @@
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/component/linearsolver/SparseMatrix.h>
 #include <sofa/helper/set.h>
+#include <sofa/helper/LCPcalc.h>
 
 namespace sofa
 {
@@ -113,7 +114,7 @@ public:
                 end(node, ms, t0);
                 return RESULT_CONTINUE;
         }
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     void setReadWriteVectors()
     {
     }
@@ -143,7 +144,7 @@ public:
                 end(node, ms, t0);
                 return RESULT_CONTINUE;
         }
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     void setReadWriteVectors()
     {
     }
@@ -163,7 +164,7 @@ class SOFA_COMPONENT_MASTERSOLVER_API MechanicalGetConstraintValueVisitor : publ
 
         MechanicalGetConstraintValueVisitor(BaseVector *v): _v(v) // , _numContacts(numContacts)
         {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
           setReadWriteVectors();
 #endif
         }
@@ -176,7 +177,7 @@ class SOFA_COMPONENT_MASTERSOLVER_API MechanicalGetConstraintValueVisitor : publ
                 end(node, c, t0);
                 return RESULT_CONTINUE;
         }
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     void setReadWriteVectors()
     {
     }
@@ -193,7 +194,7 @@ public:
         MechanicalGetContactIDVisitor(long *id, unsigned int offset = 0)
                 : _id(id),_offset(offset)
   {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     setReadWriteVectors();
 #endif
 }
@@ -206,7 +207,7 @@ public:
                 return RESULT_CONTINUE;
         }
 
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
     void setReadWriteVectors()
     {
     }
@@ -268,11 +269,14 @@ private:
 		
 		/// for unbuilt lcp ///
 		void build_problem_info();
-		int gaussseidel_unbuilt(double *dfree, double *f);
+		int lcp_gaussseidel_unbuilt(double *dfree, double *f);
+		int nlcp_gaussseidel_unbuilt(double *dfree, double *f);
+		int gaussseidel_unbuilt(double *dfree, double *f) { if (_mu == 0.0) return lcp_gaussseidel_unbuilt(dfree, f); else return nlcp_gaussseidel_unbuilt(dfree, f); }
+
 		SparseMatrix<double> *_Wdiag;
 		//std::vector<helper::LocalBlock33 *> _Wdiag;
 		std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem1;
-		std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem2;		
+		std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem2;
 		
 		
 						
@@ -286,9 +290,17 @@ private:
 
         } contactBuf;
 
-        contactBuf *_PreviousContactList;
+	helper::vector<contactBuf> _PreviousContactList;
         unsigned int _numPreviousContact;
-        long *_cont_id_list;
+	helper::vector<long> _cont_id_list;
+
+	// for gaussseidel_unbuilt
+	helper::vector< helper::LocalBlock33 > unbuilt_W33;
+	helper::vector< double > unbuilt_d;
+
+	helper::vector< double > unbuilt_W11;
+	helper::vector< double > unbuilt_invW11;
+	
 };
 
 } // namespace odesolver

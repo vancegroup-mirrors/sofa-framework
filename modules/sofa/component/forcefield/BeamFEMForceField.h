@@ -35,7 +35,7 @@
 #include <sofa/component/container/PoissonContainer.h>
 #include <sofa/component/container/LengthContainer.h>
 #include <sofa/component/container/RadiusContainer.h>
-
+#include <sofa/core/objectmodel/Data.h>
 
 
 namespace sofa
@@ -67,10 +67,10 @@ public:
     typedef unsigned int Index;
     typedef topology::Edge Element;
     typedef sofa::helper::vector<topology::Edge> VecElement;
-
+	typedef helper::vector<unsigned int> VecIndex;
 
 protected:
-    //component::MechanicalObject<DataTypes>* object;
+    //component::container::MechanicalObject<DataTypes>* object;
 
     typedef Vec<12, Real> Displacement;        ///< the displacement vector
 
@@ -151,13 +151,16 @@ protected:
     Data<Real> _youngModulus;
     Data<bool> _timoshenko;
     Data<Real> _radius;
-    bool _updateStiffnessMatrix;
+	Data< VecIndex > _list_segment;  
+	bool _partial_list_segment;
+    
+	bool _updateStiffnessMatrix;
     bool _assembling;
 
-    StiffnessContainer* stiffnessContainer;
-    LengthContainer* lengthContainer;
-    PoissonContainer* poissonContainer;
-    RadiusContainer* radiusContainer;
+    container::StiffnessContainer* stiffnessContainer;
+    container::LengthContainer* lengthContainer;
+    container::PoissonContainer* poissonContainer;
+    container::RadiusContainer* radiusContainer;
 
     Quat& beamQuat(int i) 
     { 
@@ -174,6 +177,8 @@ public:
     , _youngModulus(initData(&_youngModulus,(Real)5000,"youngModulus","Young Modulus"))
     , _timoshenko(initData(&_timoshenko,true,"timoshenko","use Timoshenko beam (non-null section shear area)"))
     , _radius(initData(&_radius,(Real)0.1,"radius","radius of the section"))
+	, _list_segment(initData(&_list_segment,"listSegment", "apply the forcefield to a subset list of beam segments. If no segment defined, forcefield applies to the whole topology"))
+	, _partial_list_segment(false)
     , _updateStiffnessMatrix(true)
     , _assembling(false)
     {
@@ -184,7 +189,7 @@ public:
 
     void setComputeGlobalMatrix(bool val) { this->_assembling= val; }
 
-//    component::MechanicalObject<DataTypes>* getObject() { return object; }
+//    component::container::MechanicalObject<DataTypes>* getObject() { return object; }
 
     virtual void init();
     virtual void reinit();

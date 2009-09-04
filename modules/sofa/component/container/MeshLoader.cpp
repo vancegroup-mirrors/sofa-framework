@@ -33,6 +33,9 @@ namespace sofa
 namespace component
 {
 
+namespace container
+{
+
 using namespace sofa::defaulttype;
 
 SOFA_DECL_CLASS(MeshLoader)
@@ -45,21 +48,87 @@ MeshLoader::MeshLoader()
 : filename(initData(&filename,"filename","Filename of the object"))
 , triangulate(initData(&triangulate,false,"triangulate","Divide all polygons into triangles"))
 , fillMState(initData(&fillMState,true,"fillMState","Must this mesh loader fill the mstate instead of manually or by using the topology"))
-{}
-
-void MeshLoader::parse(core::objectmodel::BaseObjectDescription* arg)
+, vertices(initData(&vertices,"vertices","Vertices of the mesh loaded")) 
+, texCoords(initData(&texCoords,"texCoords","TexCoords of the mesh loaded")) 
+, normals(initData(&normals,"normals","Normals of the mesh loaded")) 
+, facets(initData(&facets,"facets","Facets of the mesh loaded")) 
 {
-	this->BaseObject::parse(arg); 
-	
-	if (filename.getValue() != "") 
-		load(filename.getValue().c_str());
+  vertices.setPersistent(false);
+  texCoords.setPersistent(false);
+  normals.setPersistent(false);
+  facets.setPersistent(false);
+}
+
+helper::vector<sofa::defaulttype::Vector3> MeshLoader::computeNormals()
+{
+    helper::vector<sofa::defaulttype::Vector3>& vertices = mesh->getVertices();
+    helper::vector<sofa::defaulttype::Vector3> normals;
+    helper::vector< helper::vector < helper::vector <int> > >& facets = mesh->getFacets();
+
+    normals.resize(vertices.size());
+
+    if (mesh->getNormals().empty())
+    {
+        for (unsigned int i = 0; i < facets.size() ; ++i)
+        {
+            const helper::vector <int>& fpos = facets[i][0];
+            if (fpos.size() >= 3)
+            {
+                const Vector3  v1 = vertices[fpos[0]];
+                const Vector3  v2 = vertices[fpos[1]];
+                const Vector3  v3 = vertices[fpos[2]];
+                Vector3 n = cross(v2-v1, v3-v1);
+
+                n.normalize();
+
+                for (unsigned int j = 0; j < fpos.size() ; ++j)
+                {
+                    normals[fpos[j]] += n;
+                }
+            }
+        }
+    }
+    else
+    {
+        helper::vector<sofa::defaulttype::Vector3>& n = mesh->getNormals();
+
+        for (unsigned int i = 0; i < facets.size() ; ++i)
+        {
+            const helper::vector <int>& fpos = facets[i][0];
+            const helper::vector <int>& fnorm = facets[i][2];
+            for (unsigned int j = 0; j < fpos.size() ; ++j)
+            {
+                normals[fpos[j]] += n[fnorm[j]];
+            }
+        }
+    }
+
+    for (unsigned int i = 0; i < normals.size(); i++)
+    {
+        normals[i].normalize();
+    }
+    return normals;
+}
+
+void MeshLoader::init()
+{
+        if (filename.getValue() != "") load(filename.getFullPath().c_str());
+
+        if (mesh!=NULL)
+        {
+          vertices.setValue(mesh->getVertices()); 
+          texCoords.setValue(mesh->getTexCoords()); 
+          normals.setValue(computeNormals()); 
+          facets.setValue(mesh->getFacets()); 
+          delete mesh; 
+        }
 }
 
 void MeshLoader::clear()
 {
 	seqPoints.clear();
 	seqEdges.clear(); 
-    seqTriangles.clear(); 
+        seqTriangles.clear();
 	seqQuads.clear();
 	seqTetras.clear();
 	seqHexas.clear();
@@ -69,12 +138,10 @@ bool MeshLoader::load(const char* filename)
 {
 	clear();
 	if (!MeshTopologyLoader::load(filename))
-    {         
-      serr << "Unable to load Mesh "<<filename << sendl;                      
-		return false;
+        {
+          serr << "Unable to load Mesh "<<filename << sendl;
+          return false;
 	}
-
-	this->filename.setValue(filename);
 	return true;
 }
 
@@ -138,12 +205,12 @@ void MeshLoader::getQuads(MeshLoader::SeqQuads& quads) const
 	return quads.assign(seqQuads.begin(), seqQuads.end());
 }
 
-void MeshLoader::getTetras(MeshLoader::SeqTetras& tetras) const
+void MeshLoader::getTetrahedra(MeshLoader::SeqTetrahedra& tetras) const
 {
 	return tetras.assign(seqTetras.begin(), seqTetras.end());
 }
 
-void  MeshLoader::getHexas(MeshLoader::SeqHexas& hexas) const
+void  MeshLoader::getHexahedra(MeshLoader::SeqHexahedra& hexas) const
 {  
 	return hexas.assign(seqHexas.begin(), seqHexas.end());
 }
@@ -151,6 +218,8 @@ void  MeshLoader::getHexas(MeshLoader::SeqHexas& hexas) const
 int MeshLoader::getNbPoints() const
 {
 	return seqPoints.size();
+}
+
 }
 
 } // namespace component

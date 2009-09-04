@@ -29,6 +29,7 @@
 #include <sofa/core/CollisionElement.h>
 
 #include <sofa/core/BehaviorModel.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 
 
 #include <sofa/defaulttype/Vec.h>
@@ -55,7 +56,8 @@ namespace component
 
 namespace collision
 {
-	using namespace sofa::defaulttype;
+  using namespace sofa::defaulttype;
+  using namespace sofa::core::componentmodel::topology;
 
 class TopologicalChangeManager
 {
@@ -69,14 +71,16 @@ public:
 
 	/// Handles Cutting (activated only for a triangular topology), using global variables to register the two last input points
 	bool incisionCollisionModel(sofa::core::CollisionElementIterator, Vector3&, bool, bool);
-
-	/// Temporary solution to allow consecutif cuts
-	void initiateIncision();
+ 
+        bool incisionCollisionModel(sofa::core::CollisionModel* model1, unsigned int idx1, const Vector3& firstPoint, 
+                                       sofa::core::CollisionModel *model2, unsigned int idx2, const Vector3& secondPoint ) const;
 	
 protected:
 
-private:
-	bool incisionTriangleModel(sofa::core::CollisionElementIterator, Vector3&, bool, bool);
+private:  
+        bool incisionTriangleModel(TriangleModel* model1, unsigned int idx1, const Vector3& firstPoint, 
+                                                        TriangleModel *model2, unsigned int idx2, const Vector3& secondPoint ) const;
+  	bool incisionTriangleModel(sofa::core::CollisionElementIterator, Vector3&, bool, bool);
 	/// Intermediate method to handle cutting
 	bool incisionTriangleSetTopology(sofa::core::componentmodel::topology::BaseMeshTopology*);
 	bool incisionTriangleSetTopology(sofa::core::CollisionElementIterator, Vector3&, bool, bool, sofa::core::componentmodel::topology::BaseMeshTopology*);
@@ -87,12 +91,13 @@ private:
 private:
 	/// Global variables to register the two last input points (for incision along one segment in a triangular mesh)
 	struct Incision{
-		Vec<3,double> a_init;
-		Vec<3,double> b_init;
+		Vector3 a_init;
+		Vector3 b_init;
 		unsigned int ind_ta_init;
 		unsigned int ind_tb_init;
-
+	  
 		bool is_first_cut;
+	  bool is_cut_completed;
 
 		unsigned int b_last_init;
 		sofa::helper::vector< unsigned int > b_p12_last_init;

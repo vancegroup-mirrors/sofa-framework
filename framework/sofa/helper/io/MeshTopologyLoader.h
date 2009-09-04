@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <sofa/helper/helper.h>
+#include <sofa/helper/io/Mesh.h>
 
 namespace sofa
 {
@@ -42,6 +43,7 @@ namespace io
 class SOFA_HELPER_API MeshTopologyLoader
 {
 public:
+	MeshTopologyLoader():mesh(NULL) {}
 	virtual ~MeshTopologyLoader() {}
 	bool load(const char *filename);
 	virtual void setNbPoints(int /*n*/) {}
@@ -60,10 +62,13 @@ public:
 private:
 	bool loadObj(const char *filename);
 	bool loadMeshFile(const char *filename);
+	bool loadVtk(const char *filename);
 
 	bool loadGmsh(FILE *, const int);
 	bool loadXsp(FILE *, bool);
 	bool loadMesh(FILE *);
+protected:
+	helper::io::Mesh* mesh;
 };
 
 } // namespace io

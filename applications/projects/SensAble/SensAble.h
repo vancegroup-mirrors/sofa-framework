@@ -73,7 +73,7 @@ public:
 	sofa::defaulttype::Mat3x3d mrotation;
 
 	sofa::component::collision::SphereModel* sphereModel;
-	sofa::component::MechanicalObject<sofa::defaulttype::RigidTypes>* rigidModel;
+	sofa::component::container::MechanicalObject<sofa::defaulttype::RigidTypes>* rigidModel;
 
 	// -- CollisionModel interface
 /*

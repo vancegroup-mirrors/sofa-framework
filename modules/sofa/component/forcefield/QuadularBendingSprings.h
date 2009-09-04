@@ -194,7 +194,7 @@ protected:
 
     //// void registerEdge( IndexPair, IndexPair, std::map<IndexPair, IndexPair>&, std::set<IndexPair>&);
 
-    //component::MechanicalObject<DataTypes>* dof;
+    //component::container::MechanicalObject<DataTypes>* dof;
 
 };
 

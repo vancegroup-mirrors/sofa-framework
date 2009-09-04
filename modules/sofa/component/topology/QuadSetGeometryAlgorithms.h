@@ -38,9 +38,9 @@ namespace topology
 	typedef BaseMeshTopology::QuadID QuadID;
 	typedef BaseMeshTopology::Quad Quad;
 	typedef BaseMeshTopology::SeqQuads SeqQuads;
-	typedef BaseMeshTopology::VertexQuads VertexQuads;
-	typedef BaseMeshTopology::EdgeQuads EdgeQuads;
-	typedef BaseMeshTopology::QuadEdges QuadEdges;
+	typedef BaseMeshTopology::QuadsAroundVertex QuadsAroundVertex;
+	typedef BaseMeshTopology::QuadsAroundEdge QuadsAroundEdge;
+	typedef BaseMeshTopology::EdgesInQuad EdgesInQuad;
 	
 	/**
 	* A class that provides geometry information on an QuadSet.
@@ -55,7 +55,9 @@ namespace topology
 		
 		QuadSetGeometryAlgorithms()
 		  : EdgeSetGeometryAlgorithms<DataTypes>()
-		  { }
+		  , debugViewQuadIndices(core::objectmodel::Base::initData(&debugViewQuadIndices, (bool) false, "debugViewQuadIndices", "Debug : view Quad indices"))
+		  , _draw(core::objectmodel::Base::initData(&_draw, false, "drawQuads","if true, draw the quads in the topology"))
+		{ }
 
 		virtual ~QuadSetGeometryAlgorithms() {}
 
@@ -99,6 +101,13 @@ namespace topology
 		/** \brief Write the current mesh into a msh file
 		*/
 		void writeMSHfile(const char *filename) const;
+
+		virtual void draw();
+		
+	protected:
+		Data<bool> debugViewQuadIndices;
+		Data<bool> _draw;
+		
 	};
 
 	template<class Coord>

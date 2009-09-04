@@ -41,7 +41,7 @@ namespace qt
 {
 
 int MainLoop(const char* argv0, 
-             sofa::simulation::tree::GNode* groot = NULL,
+             sofa::simulation::Node* groot = NULL,
              const char* filename = NULL);
 
 bool InsertTab(QWidget* tab, const char* name);

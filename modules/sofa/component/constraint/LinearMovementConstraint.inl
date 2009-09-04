@@ -25,10 +25,9 @@
 #ifndef SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_INL
 #define SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_INL
 
+#include <sofa/component/constraint/LinearMovementConstraint.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/core/componentmodel/behavior/Constraint.inl>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
-#include <sofa/component/constraint/LinearMovementConstraint.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <iostream>
@@ -172,6 +171,8 @@ void LinearMovementConstraint<DataTypes>::init()
 	x0.resize(0);
 	nextM = prevM = Deriv();
 
+  currentTime = -1.0;
+  finished = false;
 }
 
 
@@ -185,10 +186,68 @@ template <class DataTypes>
 void LinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 {
 	Real cT = (Real) this->getContext()->getTime(); 
-	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin()){
-		const SetIndexArray & indices = m_indices.getValue().getArray();
+  if ((cT != currentTime) || !finished)
+  {
+    findKeyTimes();
+  }
 
-		bool finished=false;
+  if (finished && nextT != prevT) 
+  {
+	  	const SetIndexArray & indices = m_indices.getValue().getArray();
+
+	  	//set the motion to the Dofs 
+	  	for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+	  	{
+        dx[*it] = (nextM - prevM)*(1.0 / (nextT - prevT));
+	  	}	
+	}
+}
+
+
+template <class DataTypes>
+void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
+{
+	Real cT = (Real) this->getContext()->getTime(); 
+
+	//initialize initial Dofs positions, if it's not done
+	if (x0.size() == 0){
+		const SetIndexArray & indices = m_indices.getValue().getArray();
+		x0.resize( x.size() );
+		for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+			x0[*it] = x[*it];
+	}
+
+  if ((cT != currentTime) || !finished)
+  {
+    findKeyTimes();
+  }
+
+	//if we found 2 keyTimes, we have to interpolate a velocity (linear interpolation)
+	if(finished && nextT != prevT){
+	  const SetIndexArray & indices = m_indices.getValue().getArray();
+
+	  Real dt = (cT - prevT) / (nextT - prevT);
+	  Deriv m = prevM + (nextM-prevM)*dt;
+
+	  //set the motion to the Dofs 
+	  for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+	  {
+	  	x[*it] = x0[*it] + m ;
+	  }
+  }
+}
+
+template <class DataTypes>
+void LinearMovementConstraint<DataTypes>::findKeyTimes()
+{
+  Real cT = (Real) this->getContext()->getTime();
+
+  finished = false;
+
+	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin()){
+
+    nextT = *m_keyTimes.getValue().begin();
+    prevT = nextT;
 
 		typename helper::vector<Real>::const_iterator it_t = m_keyTimes.getValue().begin();
 		typename VecDeriv::const_iterator it_m = m_keyMovements.getValue().begin();
@@ -209,51 +268,9 @@ void LinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 			it_t++;
 			it_m++;
 		}
-
-		//if we found 2 keyTimes, we have to interpolate a velocity (linear interpolation)
-		if(finished){
-			Real dTsimu = (Real) this->getContext()->getDt();
-			Real dt = (cT - prevT) / (nextT - prevT);
-			Deriv m= (nextM-prevM)*dt;
-			Deriv mPrev= (nextM-prevM)*(((cT-dTsimu) - prevT) / (nextT - prevT));
-
-			//set the motion to the Dofs 
-			for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-			{
-				dx[*it] = (m - mPrev) * (1/dTsimu);
-			}	
-		}
-	}
+  }
 }
 
-
-template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
-{
-	Real cT = (Real) this->getContext()->getTime(); 
-
-	//initialize initial Dofs positions, if it's not done
-	if (x0.size() == 0){
-		const SetIndexArray & indices = m_indices.getValue().getArray();
-		x0.resize( x.size() );
-		for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-			x0[*it] = x[*it];
-	}
-
-	//if we found 2 keyTimes, we have to interpolate a position (linear interpolation)
-	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin() && nextT!=prevT){
-		const SetIndexArray & indices = m_indices.getValue().getArray();
-
-		Real dt = (cT - prevT) / (nextT - prevT);
-		Deriv m = prevM + (nextM-prevM)*dt;
-
-		//set the motion to the Dofs 
-		for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-		{
-			x[*it] = x0[*it] + m ;
-		}
-	}
-}
 
 //display the path the constrained dofs will go through
 template <class DataTypes>

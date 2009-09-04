@@ -39,9 +39,6 @@
 
 
 
-using std::set;
-
-
 namespace sofa
 {
 
@@ -50,6 +47,9 @@ namespace component
 
 namespace forcefield
 {
+
+
+using std::set;
 
 using namespace sofa::defaulttype;
 using namespace	sofa::component::topology;
@@ -65,7 +65,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::CFTetrahedronCreationFunct
 	TetrahedralCorotationalFEMForceField<DataTypes> *ff= (TetrahedralCorotationalFEMForceField<DataTypes> *)param;
 	if (ff) {
 
-		const Tetrahedron &t=ff->_topology->getTetra(tetrahedronIndex);
+		const Tetrahedron t=ff->_topology->getTetrahedron(tetrahedronIndex);
 		Index a = t[0];
 		Index b = t[1];
 		Index c = t[2];
@@ -122,7 +122,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::init()
 
 	_topology = getContext()->getMeshTopology();
 
-	if (_topology->getNbTetras()==0)
+	if (_topology->getNbTetrahedra()==0)
 	{
 		serr << "ERROR(TetrahedralCorotationalFEMForceField): object must have a Tetrahedral Set Topology."<<sendl;
 		return;
@@ -145,11 +145,11 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::reinit()
 
 	helper::vector<typename TetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronInformation>& tetrahedronInf = *(tetrahedronInfo.beginEdit());
 
-	tetrahedronInf.resize(_topology->getNbTetras());
+	tetrahedronInf.resize(_topology->getNbTetrahedra());
 
-	for (int i=0;i<_topology->getNbTetras();++i) {
+	for (int i=0;i<_topology->getNbTetrahedra();++i) {
 		CFTetrahedronCreationFunction(i, (void*) this, tetrahedronInf[i],
-			_topology->getTetra(i),  (const std::vector< unsigned int > )0,
+			_topology->getTetrahedron(i),  (const std::vector< unsigned int > )0,
 			(const std::vector< double >)0);
 	}
 
@@ -169,7 +169,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, con
 	{
 	case SMALL :
 		{
-			for(int i = 0 ; i<_topology->getNbTetras();++i)
+			for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 			{
 				accumulateForceSmall( f, p, i );
 			}
@@ -177,7 +177,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, con
 		}
 	case LARGE :
 		{
-			for(int i = 0 ; i<_topology->getNbTetras();++i)
+			for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 			{
 				accumulateForceLarge( f, p, i );
 			}
@@ -185,7 +185,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addForce (VecDeriv& f, con
 		}
 	case POLAR :
 		{
-			for(int i = 0 ; i<_topology->getNbTetras();++i)
+			for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 			{
 				accumulateForcePolar( f, p, i );
 			}
@@ -201,9 +201,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 	{
 	case SMALL :
 	{
-		for(int i = 0 ; i<_topology->getNbTetras();++i)
+		for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 		{
-			const Tetrahedron &t=_topology->getTetra(i);
+			const Tetrahedron t=_topology->getTetrahedron(i);
 			Index a = t[0];
 			Index b = t[1];
 			Index c = t[2];
@@ -215,9 +215,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 	}
 	case LARGE :
 	{
-		for(int i = 0 ; i<_topology->getNbTetras();++i)
+		for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 		{
-			const Tetrahedron &t=_topology->getTetra(i);
+			const Tetrahedron t=_topology->getTetrahedron(i);
 			Index a = t[0];
 			Index b = t[1];
 			Index c = t[2];
@@ -229,9 +229,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 	}
 	case POLAR :
 	{
-		for(int i = 0 ; i<_topology->getNbTetras();++i)
+		for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 		{
-			const Tetrahedron &t=_topology->getTetra(i);
+			const Tetrahedron t=_topology->getTetrahedron(i);
 			Index a = t[0];
 			Index b = t[1];
 			Index c = t[2];
@@ -365,7 +365,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(i
 {
 
 	const VecReal& localStiffnessFactor = _localStiffnessFactor;
-	const Real youngModulus = (localStiffnessFactor.empty() ? 1.0f : localStiffnessFactor[i*localStiffnessFactor.size()/_topology->getNbTetras()])*_youngModulus;
+	const Real youngModulus = (localStiffnessFactor.empty() ? 1.0f : localStiffnessFactor[i*localStiffnessFactor.size()/_topology->getNbTetrahedra()])*_youngModulus;
 	const Real poissonRatio = _poissonRatio;
 
 	helper::vector<typename TetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronInformation>& tetrahedronInf = *(tetrahedronInfo.beginEdit());
@@ -533,7 +533,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall( Vect
 {
     //serr<<"TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall"<<sendl;
 
-	const Tetrahedron &t=_topology->getTetra(elementIndex);
+	const Tetrahedron t=_topology->getTetrahedron(elementIndex);
 	const VecCoord *X0=this->mstate->getX0();
 
 
@@ -744,7 +744,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::initLarge(int i, Index&a, 
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceLarge( Vector& f, const Vector & p, Index elementIndex )
 {
-	const Tetrahedron &t=_topology->getTetra(elementIndex);
+	const Tetrahedron t=_topology->getTetrahedron(elementIndex);
 
 	helper::vector<typename TetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronInformation>& tetrahedronInf = *(tetrahedronInfo.beginEdit());
 
@@ -953,7 +953,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::initPolar(int i, Index& a,
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForcePolar( Vector& f, const Vector & p, Index elementIndex )
 {
-	const Tetrahedron &t=_topology->getTetra(elementIndex);
+	const Tetrahedron t=_topology->getTetrahedron(elementIndex);
 
 	Transformation A;
 	A[0] = p[t[1]]-p[t[0]];
@@ -1074,9 +1074,9 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::draw()
 
 
 	std::vector< Vector3 > points[4];
-	for(int i = 0 ; i<_topology->getNbTetras();++i)
+	for(int i = 0 ; i<_topology->getNbTetrahedra();++i)
 	{
-		const Tetrahedron &t=_topology->getTetra(i);
+		const Tetrahedron t=_topology->getTetrahedron(i);
 
 		Index a = t[0];
 		Index b = t[1];
@@ -1137,10 +1137,10 @@ template<class DataTypes>
 
 	helper::vector<typename TetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronInformation>& tetrahedronInf = *(tetrahedronInfo.beginEdit());
 
-	for(int IT=0 ; IT != _topology->getNbTetras() ; ++IT)
+	for(int IT=0 ; IT != _topology->getNbTetrahedra() ; ++IT)
 	{
 		computeStiffnessMatrix(JKJt,tmp,tetrahedronInf[IT].materialMatrix,tetrahedronInf[IT].strainDisplacementMatrix,Rot);
-		const Tetrahedron &t=_topology->getTetra(IT);
+		const Tetrahedron t=_topology->getTetrahedron(IT);
 
 		// find index of node 1
 		for (n1=0; n1<4; n1++)

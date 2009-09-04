@@ -41,7 +41,10 @@ namespace sofa
 namespace component
 {
 
+namespace container
+{
 class MeshLoader;
+}
 
 namespace topology
 {
@@ -70,65 +73,59 @@ class SOFA_COMPONENT_CONTAINER_API MeshTopology : public core::componentmodel::t
 	virtual const SeqEdges& getEdges();
 	virtual const SeqTriangles& getTriangles();
 	virtual const SeqQuads& getQuads();
-	virtual const SeqTetras& getTetras();
-	virtual const SeqHexas& getHexas();
+	virtual const SeqTetrahedra& getTetrahedra();
+	virtual const SeqHexahedra& getHexahedra();
 	
 	// Random accessors
 	
 	virtual int getNbEdges();
 	virtual int getNbTriangles();
 	virtual int getNbQuads();
-	virtual int getNbTetras();
-	virtual int getNbHexas();
+	virtual int getNbTetrahedra();
+	virtual int getNbHexahedra();
 	
-	virtual Edge getEdge(EdgeID i);
-	virtual Triangle getTriangle(TriangleID i);
-	virtual Quad getQuad(QuadID i);
-	virtual Tetra getTetra(TetraID i);
-	virtual Hexa getHexa(HexaID i);
+	virtual const Edge getEdge(EdgeID i);
+	virtual const Triangle getTriangle(TriangleID i);
+	virtual const Quad getQuad(QuadID i);
+	virtual const Tetra getTetrahedron(TetraID i);
+	virtual const Hexa getHexahedron(HexaID i);
 
     /// @name neighbors queries
     /// @{
     /// Returns the set of edges adjacent to a given vertex.
-    virtual const VertexEdges &getEdgeVertexShell(PointID i);
-	/// Returns the set of edges adjacent to a given vertex.
-    virtual const VertexEdges &getOrientedEdgeVertexShell(PointID i);
+    virtual const EdgesAroundVertex &getEdgesAroundVertex(PointID i);
     /// Returns the set of edges adjacent to a given triangle.
-    virtual const TriangleEdges &getEdgeTriangleShell(TriangleID i);
+    virtual const EdgesInTriangle &getEdgesInTriangle(TriangleID i);
     /// Returns the set of edges adjacent to a given quad.
-    virtual const QuadEdges &getEdgeQuadShell(QuadID i);
+    virtual const EdgesInQuad &getEdgesInQuad(QuadID i);
     /// Returns the set of edges adjacent to a given tetrahedron.
-    virtual const TetraEdges& getEdgeTetraShell(TetraID i);
+    virtual const EdgesInTetrahedron& getEdgesInTetrahedron(TetraID i);
     /// Returns the set of edges adjacent to a given hexahedron.
-    virtual const HexaEdges& getEdgeHexaShell(HexaID i);
+    virtual const EdgesInHexahedron& getEdgesInHexahedron(HexaID i);
     /// Returns the set of triangle adjacent to a given vertex.
-    virtual const VertexTriangles &getTriangleVertexShell(PointID i);
-	/// Returns the set of oriented triangle adjacent to a given vertex.
-	virtual const VertexTriangles &getOrientedTriangleVertexShell(PointID i);
+    virtual const TrianglesAroundVertex &getTrianglesAroundVertex(PointID i);
     /// Returns the set of triangle adjacent to a given edge.
-    virtual const EdgeTriangles &getTriangleEdgeShell(EdgeID i);
+    virtual const TrianglesAroundEdge &getTrianglesAroundEdge(EdgeID i);
     /// Returns the set of triangles adjacent to a given tetrahedron.
-    virtual const TetraTriangles& getTriangleTetraShell(TetraID i);
+    virtual const TrianglesInTetrahedron& getTrianglesInTetrahedron(TetraID i);
     /// Returns the set of quad adjacent to a given vertex.
-    virtual const VertexQuads &getQuadVertexShell(PointID i);
-	/// Returns the set of oriented quad adjacent to a given vertex.
-    virtual const VertexQuads &getOrientedQuadVertexShell(PointID i);
+    virtual const QuadsAroundVertex &getQuadsAroundVertex(PointID i);
     /// Returns the set of quad adjacent to a given edge.
-    virtual const EdgeQuads &getQuadEdgeShell(EdgeID i);
+    virtual const QuadsAroundEdge &getQuadsAroundEdge(EdgeID i);
     /// Returns the set of quads adjacent to a given hexahedron.
-    virtual const HexaQuads& getQuadHexaShell(HexaID i);
+    virtual const QuadsInHexahedron& getQuadsInHexahedron(HexaID i);
     /// Returns the set of tetrahedra adjacent to a given vertex.
-    virtual const VertexTetras& getTetraVertexShell(PointID i);
+    virtual const TetrahedraAroundVertex& getTetrahedraAroundVertex(PointID i);
     /// Returns the set of tetrahedra adjacent to a given edge.
-    virtual const EdgeTetras& getTetraEdgeShell(EdgeID i);
+    virtual const TetrahedraAroundEdge& getTetrahedraAroundEdge(EdgeID i);
     /// Returns the set of tetrahedra adjacent to a given triangle.
-    virtual const TriangleTetras& getTetraTriangleShell(TriangleID i);
+    virtual const TetrahedraAroundTriangle& getTetrahedraAroundTriangle(TriangleID i);
     /// Returns the set of hexahedra adjacent to a given vertex.
-    virtual const VertexHexas& getHexaVertexShell(PointID i);
+    virtual const HexahedraAroundVertex& getHexahedraAroundVertex(PointID i);
     /// Returns the set of hexahedra adjacent to a given edge.
-    virtual const EdgeHexas& getHexaEdgeShell(EdgeID i);
+    virtual const HexahedraAroundEdge& getHexahedraAroundEdge(EdgeID i);
     /// Returns the set of hexahedra adjacent to a given quad.
-    virtual const QuadHexas& getHexaQuadShell(QuadID i);
+    virtual const HexahedraAroundQuad& getHexahedraAroundQuad(QuadID i);
     /// @}
         
     // Points accessors (not always available)
@@ -156,7 +153,7 @@ class SOFA_COMPONENT_CONTAINER_API MeshTopology : public core::componentmodel::t
 
     void draw();
 
-    virtual bool hasVolume() { return ( ( getNbTetras() + getNbHexas() ) > 0 ); }
+    virtual bool hasVolume() { return ( ( getNbTetrahedra() + getNbHexahedra() ) > 0 ); }
     virtual bool hasSurface() { return ( ( getNbTriangles() + getNbQuads() ) > 0 ); }
     virtual bool hasLines() { return ( ( getNbLines() ) > 0 ); }
 
@@ -164,19 +161,38 @@ class SOFA_COMPONENT_CONTAINER_API MeshTopology : public core::componentmodel::t
     virtual bool isSurface() { return !hasVolume() && hasSurface(); }
     virtual bool isLines() { return !hasVolume() && !hasSurface() && hasLines(); }
 
-	// test whether p0p1 has the same orientation as triangle t
-	// opposite dirction: return -1
-	// same direction: return 1
-	// otherwise: return 0
-	int computeRelativeOrientationInTri(const unsigned int ind_p0, const unsigned int ind_p1, const unsigned int ind_t);
+    
+    /// Returns the set of edges adjacent to a given vertex.
+    virtual const EdgesAroundVertex &getOrientedEdgesAroundVertex(PointID i);
 
-	// test whether p0p1 has the same orientation as triangle t
-	// opposite dirction: return -1
-	// same direction: return 1
-	// otherwise: return 0
-	int computeRelativeOrientationInQuad(const unsigned int ind_p0, const unsigned int ind_p1, const unsigned int ind_q);
+    /// Returns the set of oriented triangle adjacent to a given vertex.
+    virtual const TrianglesAroundVertex &getOrientedTrianglesAroundVertex(PointID i);
+    
+    /// Returns the set of oriented quad adjacent to a given vertex.
+    virtual const QuadsAroundVertex &getOrientedQuadsAroundVertex(PointID i);
 
-protected:
+    
+    // test whether p0p1 has the same orientation as triangle t
+    // opposite dirction: return -1
+    // same direction: return 1
+    // otherwise: return 0
+    int computeRelativeOrientationInTri(const unsigned int ind_p0, const unsigned int ind_p1, const unsigned int ind_t);
+    
+    // test whether p0p1 has the same orientation as triangle t
+    // opposite dirction: return -1
+    // same direction: return 1
+    // otherwise: return 0
+    int computeRelativeOrientationInQuad(const unsigned int ind_p0, const unsigned int ind_p1, const unsigned int ind_q);
+
+
+    // functions returning border elements. To be moved in a mapping.
+    //virtual const sofa::helper::vector <TriangleID>& getTrianglesOnBorder();
+    
+    //virtual const sofa::helper::vector <EdgeID>& getEdgesOnBorder();
+    
+    //virtual const sofa::helper::vector <PointID>& getPointsOnBorder();
+
+ protected:
 	int nbPoints;
 	Data< vector< defaulttype::Vec<3,SReal> > > seqPoints;
 	
@@ -191,224 +207,273 @@ protected:
 	Data<SeqQuads>       seqQuads;
 	bool         validQuads;
 	
-	//SeqTetras      seqTetras;
-	Data<SeqTetras>      seqTetras;
+	//SeqTetrahedra      seqTetras;
+	Data<SeqTetrahedra>      seqTetras;
 	bool         validTetras;
 	
 #ifdef SOFA_NEW_HEXA
-	//SeqHexas	   seqHexas;
-	Data<SeqHexas>	   seqHexas;
+	//SeqHexahedra	   seqHexas;
+	Data<SeqHexahedra>	   seqHexas;
 #else
 	Data<SeqCubes>       seqHexas;
 #endif
 	bool         validHexas;
 
 	/** the array that stores the set of edge-vertex shells, ie for each vertex gives the set of adjacent edges */
-	vector< VertexEdges > m_edgeVertexShell;
+	vector< EdgesAroundVertex > m_edgesAroundVertex;
 
 	/** the array that stores the set of oriented edge-vertex shells, ie for each vertex gives the set of adjacent edges */
-	vector< VertexEdges > m_orientedEdgeVertexShell;
+	vector< EdgesAroundVertex > m_orientedEdgesAroundVertex;
 
 	/** the array that stores the set of edge-triangle shells, ie for each triangle gives the 3 adjacent edges */
-	vector< TriangleEdges > m_edgeTriangleShell;
+	vector< EdgesInTriangle > m_edgesInTriangle;
 
 	/// provides the 4 edges in each quad
-	vector< QuadEdges > m_edgeQuadShell;
+	vector< EdgesInQuad > m_edgesInQuad;
 
 	/// provides the set of edges for each tetrahedron
-	vector< TetraEdges > m_edgeTetraShell;
+	vector< EdgesInTetrahedron > m_edgesInTetrahedron;
 
 	/// provides the set of edges for each hexahedron
-	vector< HexaEdges > m_edgeHexaShell;
+	vector< EdgesInHexahedron > m_edgesInHexahedron;
 
 	/// for each vertex provides the set of triangles adjacent to that vertex
-	vector< VertexTriangles > m_triangleVertexShell;
+	vector< TrianglesAroundVertex > m_trianglesAroundVertex;
 
 	/// for each vertex provides the set of oriented triangles adjacent to that vertex
-	vector< VertexTriangles > m_orientedTriangleVertexShell;
+	vector< TrianglesAroundVertex > m_orientedTrianglesAroundVertex;
 
 	/// for each edge provides the set of triangles adjacent to that edge
-	vector< EdgeTriangles > m_triangleEdgeShell;
+	vector< TrianglesAroundEdge > m_trianglesAroundEdge;
 	
 	/// provides the set of triangles adjacent to each tetrahedron
-	vector< TetraTriangles > m_triangleTetraShell;
+	vector< TrianglesInTetrahedron > m_trianglesInTetrahedron;
 
 	/// for each vertex provides the set of quads adjacent to that vertex
-	vector< VertexQuads > m_quadVertexShell;
+	vector< QuadsAroundVertex > m_quadsAroundVertex;
 
 	/// for each vertex provides the set of oriented quads adjacent to that vertex
-	vector< VertexQuads > m_orientedQuadVertexShell;
+	vector< QuadsAroundVertex > m_orientedQuadsAroundVertex;
 	
 	/// for each edge provides the set of quads adjacent to that edge
-	vector< EdgeQuads > m_quadEdgeShell;
+	vector< QuadsAroundEdge > m_quadsAroundEdge;
 	
 	/// provides the set of quads adjacents to each hexahedron
-	vector< HexaQuads > m_quadHexaShell;
+	vector< QuadsInHexahedron > m_quadsInHexahedron;
 	
 	/// provides the set of tetrahedrons adjacents to each vertex
-	vector< VertexTetras> m_tetraVertexShell;
+	vector< TetrahedraAroundVertex> m_tetrahedraAroundVertex;
 
 	/// for each edge provides the set of tetras adjacent to that edge
-	vector< EdgeTetras > m_tetraEdgeShell;
+	vector< TetrahedraAroundEdge > m_tetrahedraAroundEdge;
 	
 	/// for each triangle provides the set of tetrahedrons adjacent to that triangle
-	vector< TriangleTetras > m_tetraTriangleShell;
+	vector< TetrahedraAroundTriangle > m_tetrahedraAroundTriangle;
 
 	/// provides the set of hexahedrons for each vertex
-	vector< VertexHexas > m_hexaVertexShell;
+	vector< HexahedraAroundVertex > m_hexahedraAroundVertex;
 	
 	/// for each edge provides the set of tetras adjacent to that edge
-	vector< EdgeHexas > m_hexaEdgeShell;
+	vector< HexahedraAroundEdge > m_hexahedraAroundEdge;
 	
 	/// for each quad provides the set of hexahedrons adjacent to that quad
-	vector< QuadHexas > m_hexaQuadShell;
+	vector< HexahedraAroundQuad > m_hexahedraAroundQuad;
 
 	/** \brief Creates the EdgeSetIndex.
 	 *
-	 * This function is only called if the EdgeVertexShell member is required.
-	 * m_edgeVertexShell[i] contains the indices of all edges having the ith DOF as
+	 * This function is only called if the EdgesAroundVertex member is required.
+	 * m_edgesAroundVertex[i] contains the indices of all edges having the ith DOF as
 	 * one of their ends.
 	 */
-	void createEdgeVertexShellArray();
+	void createEdgesAroundVertexArray();
 
-	/** \brief Creates the array of edge indices for each triangle 
+	/** \brief Creates the array of edge indices for each triangle.
 	 *
-	 * This function is only called if the EdgeTriangleShell array is required.
-	 * m_edgeTriangleShell[i] contains the 3 indices of the 3 edges opposite to the ith triangle 
+	 * This function is only called if the EdgesInTriangle array is required.
+	 * m_edgesInTriangle[i] contains the 3 indices of the 3 edges composing the ith triangle. 
 	 */
-	void createEdgeTriangleShellArray();
+	void createEdgesInTriangleArray();
 
-	/** \brief Creates the array of edge indices for each quad 
+	/** \brief Creates the array of edge indices for each quad.
 	 *
-	 * This function is only called if the EdgeQuadShell array is required.
-	 * m_edgeQuadShell[i] contains the 4 indices of the 4 edges opposite to the ith Quad 
+	 * This function is only called if the EdgesInQuad array is required.
+	 * m_edgesInQuad[i] contains the 4 indices of the 4 edges composing the ith quad.
 	 */
-	void createEdgeQuadShellArray();
+	void createEdgesInQuadArray();
 
-	/** \brief Creates the array of edge indices for each tetrahedron 
+	/** \brief Creates the array of edge indices for each tetrahedron.
 	 *
-	 * This function is only called if the EdgeTetraShell array is required.
-	 * m_edgeTetraShell[i] contains the indices of the edges to the ith tetrahedron 
-	 */
-	void createEdgeTetraShellArray();
+	 * This function is only called if the EdgesInTetrahedrone array is required.
+	 * m_edgesInTetrahedron[i] contains the 6 indices of the 6 edges of each tetrahedron
+	 The number of each edge is the following : edge 0 links vertex 0 and 1, edge 1 links vertex 0 and 2,
+	 edge 2 links vertex 0 and 3, edge 3 links vertex 1 and 2, edge 4 links vertex 1 and 3,
+	 edge 5 links vertex 2 and 3  
+	*/
+	void createEdgesInTetrahedronArray();
 
-	/** \brief Creates the array of edge indices for each hexahedrom 
+	/** \brief Creates the array of edge indices for each hexahedron.
 	 *
-	 * This function is only called if the EdgeHexaShell array is required.
-	 * m_edgeHexaShell[i] contains the indices of the edges to the ith hexahedrom 
+	 * This function is only called if the EdgesInHexahedron array is required.
+	 * m_edgesInHexahedron[i] contains the 12 indices of the 12 edges of each hexahedron.
 	 */
-	void createEdgeHexaShellArray();
+	void createEdgesInHexahedronArray();
 
-	/** \brief Creates the Triangle Vertex Shell Array
+	/** \brief Creates the TrianglesAroundVertex Array.
 	 *
-	 * This function is only called if the TriangleVertexShell array is required.
-	 * m_triangleVertexShell[i] contains the indices of all triangles adjacent to the ith vertex 
+	 * This function is only called if the TrianglesAroundVertex array is required.
+	 * m_trianglesAroundVertex[i] contains the indices of all triangles adjacent to the ith DOF.
 	 */
-	void createTriangleVertexShellArray();
+	void createTrianglesAroundVertexArray();
 
 	/** \brief Creates the oriented Triangle Vertex Shell Array
 	*
-	* This function is only called if the OrientedTriangleVertexShell array is required.
-	* m_orientedTriangleVertexShell[i] contains the indices of all triangles adjacent to the ith vertex 
+	* This function is only called if the OrientedTrianglesAroundVertex array is required.
+	* m_orientedTrianglesAroundVertex[i] contains the indices of all triangles adjacent to the ith vertex 
 	*/
-	void createOrientedTriangleVertexShellArray();
+	void createOrientedTrianglesAroundVertexArray();
 
-	/** \brief Creates the Triangle Edge Shell Array
+	/** \brief Creates the TrianglesAroundEdge Array.
 	 *
-	 * This function is only called if the TriangleEdgeShell array is required.
-	 * m_triangleEdgeShell[i] contains the indices of all triangles adjacent to the ith edge 
+	 * This function is only called if the TrianglesAroundVertex array is required.
+	 * m_trianglesAroundEdge[i] contains the indices of all triangles adjacent to the ith edge.
 	 */
-	void createTriangleEdgeShellArray();
+	void createTrianglesAroundEdgeArray();
 
-	/** \brief Creates the array of triangle indices for each tetrahedron 
+	/** \brief Creates the array of triangle indices for each tetrahedron.
 	 *
-	 * This function is only called if the TriangleTetraShell array is required.
-	 * m_triangleTetraShell[i] contains the indices of the triangles to the ith tetrahedron 
+	 * This function is only called if the TrianglesInTetrahedron array is required.
+	 * m_trianglesInTetrahedron[i] contains the 4 indices of the 4 triangles composing the ith tetrahedron. 
 	 */
-	void createTriangleTetraShellArray ();
+	void createTrianglesInTetrahedronArray ();
+
+	/** \brief Creates the QuadsAroundVertex Array.
+	 *
+	 * This function is only called if the QuadsAroundVertex array is required.
+	 * m_quadsAroundVertex[i] contains the indices of all quads adjacent to the ith vertex. 
+	 */
+	void createQuadsAroundVertexArray ();
 
 	/** \brief Creates the Quad Vertex Shell Array
 	 *
-	 * This function is only called if the QuadVertexShell array is required.
-	 * m_quadVertexShell[i] contains the indices of all quads adjacent to the ith vertex 
+	 * This function is only called if the QuadsAroundVertex array is required.
+	 * m_quadsAroundVertex[i] contains the indices of all quads adjacent to the ith vertex 
 	 */
-	void createQuadVertexShellArray ();
+	void createOrientedQuadsAroundVertexArray ();
 
-	/** \brief Creates the Quad Vertex Shell Array
+	/** \brief Creates the quadsAroundEdge Array.
 	 *
-	 * This function is only called if the QuadVertexShell array is required.
-	 * m_quadVertexShell[i] contains the indices of all quads adjacent to the ith vertex 
+	 * This function is only called if the QuadsAroundVertex array is required.
+	 * m_quadsAroundEdge[i] contains the indices of all quads adjacent to the ith edge 
 	 */
-	void createOrientedQuadVertexShellArray ();
+	void createQuadsAroundEdgeArray();
 
-	/** \brief Creates the Quad Edge Shell Array
+	/** \brief Creates the array of quad indices for each hexahedron. 
 	 *
-	 * This function is only called if the QuadEdgeShell array is required.
-	 * m_quadEdgeShell[i] contains the indices of all quads adjacent to the ith edge 
+	 * This function is only called if the QuadsInHexahedron array is required.
+	 * m_quadsInHexahedron[i] contains the 6 indices of the 6 quads of each hexahedron. 
 	 */
-	void createQuadEdgeShellArray();
+	void createQuadsInHexahedronArray ();
 
-	/** \brief Creates the array of quad indices for each hexahedrom 
+	/** \brief Creates the TetrahedraAroundVertex Array.
 	 *
-	 * This function is only called if the QuadHexaShell array is required.
-	 * m_quadHexaShell[i] contains the indices of the quads to the ith hexahedrom 
+	 * This function is only called if the TetrahedraAroundVertex array is required.
+	 * m_tetrahedraAroundVertex[i] contains the indices of all tetrahedra adjacent to the ith vertex. 
 	 */
-	void createQuadHexaShellArray ();
+	void createTetrahedraAroundVertexArray ();
 
-	/** \brief Creates the array of tetrahedron indices for each vertex 
+	/** \brief Creates the TetrahedraAroundEdge Array.
 	 *
-	 * This function is only called if the TetraVertexShell array is required.
-	 * m_tetraVertexShell[i] contains the indices of the tetras to the ith vertex 
+	 * This function is only called if the TetrahedraAroundEdge array is required.
+	 * m_tetrahedraAroundEdge[i] contains the indices of all tetrahedra adjacent to the ith edge.
 	 */
-	void createTetraVertexShellArray ();
+	void createTetrahedraAroundEdgeArray();
 
-	/** \brief Creates the array of tetrahedron indices for each edge 
+	/** \brief Creates the TetrahedraAroundTriangle Array.
 	 *
-	 * This function is only called if the TetraEdgeShell array is required.
-	 * m_tetraEdgeShell[i] contains the indices of the tetrahedrons to the ith edge 
+	 * This function is only called if the TetrahedraAroundTriangle array is required.
+	 * m_tetrahedraAroundTriangle[i] contains the indices of all tetrahedra adjacent to the ith triangle.
 	 */
-	void createTetraEdgeShellArray();
+	void createTetrahedraAroundTriangleArray();
 
-	/** \brief Creates the array of tetrahedron indices adjacent to each triangle 
+	/** \brief Creates the HexahedraAroundVertex Array.
 	 *
-	 * This function is only called if the TetraTriangleShell array is required.
-	 * m_tetraTriangleShell[i] contains the indices of the tetrahedrons adjacent to the ith triangle 
+	 * This function is only called if the HexahedraAroundVertex array is required.
+	 * m_hexahedraAroundVertex[i] contains the indices of all hexahedra adjacent to the ith vertex.
 	 */
-	void createTetraTriangleShellArray();
+	void createHexahedraAroundVertexArray();
 
-	/** \brief Creates the array of hexahedron indices for each vertex 
+	/** \brief Creates the HexahedraAroundEdge Array.
 	 *
-	 * This function is only called if the HexaVertexShell array is required.
-	 * m_hexaVertexShell[i] contains the indices of the hexas to the ith vertex 
+	 * This function is only called if the HexahedraAroundEdge array is required.
+	 * m_hexahedraAroundEdge[i] contains the indices of all hexahedra adjacent to the ith edge.
 	 */
-	void createHexaVertexShellArray();
+	void createHexahedraAroundEdgeArray ();
 
-	/** \brief Creates the array of hexahedron indices for each edge 
+	/** \brief Creates the HexahedraAroundQuad Array.
 	 *
-	 * This function is only called if the HexaEdgeShell array is required.
-	 * m_hexaEdgeShell[i] contains the indices of the hexahedrons to the ith edge 
+	 * This function is only called if the HexahedraAroundQuad array is required.
+	 * m_hexahedraAroundQuad[i] contains the indices of all hexahedra adjacent to the ith quad. 
 	 */
-	void createHexaEdgeShellArray ();
-
-	/** \brief Creates the array of hexahedron indices adjacent to each quad 
-	 *
-	 * This function is only called if the HexaQuadShell array is required.
-	 * m_hexaQuadShell[i] contains the indices of the hexahedrons adjacent to the ith quad 
-	 */
-	void createHexaQuadShellArray();
+	void createHexahedraAroundQuadArray();
 
 
 
-	/** \brief Returns the Triangle Vertex Shells array.
-	 *
-	 */
-	const vector< VertexTriangles > &getTriangleVertexShellArray() ;
 
-	/** \brief Returns the Quad Vertex Shells array.
-	 *
-	 */	
-	const vector< VertexQuads >& getQuadVertexShellArray();
+	/** \brief Returns the EdgesInTriangle array (i.e. provide the 3 edge indices for each triangle). */
+	const sofa::helper::vector< EdgesInTriangle > &getEdgesInTriangleArray();
+	
+	/** \brief Returns the TrianglesAroundVertex array (i.e. provide the triangles indices adjacent to each vertex). */ 
+	const sofa::helper::vector< TrianglesAroundVertex > &getTrianglesAroundVertexArray();
 
+	/** \brief Returns the TrianglesAroundEdge array (i.e. provide the triangles indices adjacent to each edge). */
+	const sofa::helper::vector< TrianglesAroundEdge > &getTrianglesAroundEdgeArray();
+
+	
+
+	/** \brief Returns the EdgesInQuadArray array (i.e. provide the 4 edge indices for each quad) */
+	const sofa::helper::vector< EdgesInQuad > &getEdgesInQuadArray();
+
+	/** \brief Returns the QuadsAroundVertex array (i.e. provide the quad indices adjacent to each vertex). */
+	const sofa::helper::vector< QuadsAroundVertex > &getQuadsAroundVertexArray();
+	
+	/** \brief Returns the QuadsAroundEdge array (i.e. provide the quad indices adjacent to each edge). */
+	const sofa::helper::vector< QuadsAroundEdge > &getQuadsAroundEdgeArray();
+
+	
+
+	/** \brief Returns the EdgesInHexahedron array (i.e. provide the 12 edge indices for each hexahedron).	*/
+	const sofa::helper::vector< EdgesInHexahedron > &getEdgesInHexahedronArray();
+
+	/** \brief Returns the QuadsInHexahedron array (i.e. provide the 8 quad indices for each hexahedron).	*/
+	const sofa::helper::vector< QuadsInHexahedron > &getQuadsInHexahedronArray();
+		
+	/** \brief Returns the HexahedraAroundVertex array (i.e. provide the hexahedron indices adjacent to each vertex).*/
+	const sofa::helper::vector< HexahedraAroundVertex > &getHexahedraAroundVertexArray();
+
+	/** \brief Returns the HexahedraAroundEdge array (i.e. provide the hexahedron indices adjacent to each edge). */
+	const sofa::helper::vector< HexahedraAroundEdge > &getHexahedraAroundEdgeArray();
+	
+	/** \brief Returns the HexahedraAroundQuad array (i.e. provide the hexahedron indices adjacent to each quad). */
+	const sofa::helper::vector< HexahedraAroundQuad > &getHexahedraAroundQuadArray();
+
+
+	
+	/** \brief Returns the EdgesInTetrahedron array (i.e. provide the 6 edge indices for each tetrahedron). */
+	const sofa::helper::vector< EdgesInTetrahedron > &getEdgesInTetrahedronArray();
+	
+	/** \brief Returns the TrianglesInTetrahedron array (i.e. provide the 4 triangle indices for each tetrahedron). */
+	const sofa::helper::vector< TrianglesInTetrahedron > &getTrianglesInTetrahedronArray();
+	
+	/** \brief Returns the TetrahedraAroundVertex array (i.e. provide the tetrahedron indices adjacent to each vertex). */
+	const sofa::helper::vector< TetrahedraAroundVertex > &getTetrahedraAroundVertexArray();
+	
+	/** \brief Returns the TetrahedraAroundEdge array (i.e. provide the tetrahedron indices adjacent to each edge). */
+	const sofa::helper::vector< TetrahedraAroundEdge > &getTetrahedraAroundEdgeArray();
+
+	/** \brief Returns the TetrahedraAroundTriangle array (i.e. provide the tetrahedron indices adjacent to each triangle). */
+	const sofa::helper::vector< TetrahedraAroundTriangle > &getTetrahedraAroundTriangleArray();
+
+	
 
 public:
 	/** \brief Returns the index of the edge joining vertex v1 and vertex v2; returns -1 if no edge exists 
@@ -416,7 +481,6 @@ public:
 	 */
 	int getEdgeIndex(PointID v1, PointID v2);
 
-protected:	
 	/** Returns the indices of a triangle given three vertex indices : returns -1 if none */
 	int getTriangleIndex(PointID v1, PointID v2, PointID v3);
 		
@@ -444,17 +508,17 @@ protected:
 	/** \brief Returns the index (either 0, 1 ,2) of the edge whose global index is edgeIndex. Returns -1 if none 
 	*
 	*/
-	int getEdgeIndexInTriangle(const TriangleEdges &t, EdgeID edgeIndex) const;
+	int getEdgeIndexInTriangle(const EdgesInTriangle &t, EdgeID edgeIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2 or 3) of the vertex whose global index is vertexIndex. Returns -1 if none 
 	*
 	*/
-	int getVertexIndexInQuad(Quad &t, PointID vertexIndex) const;
+	int getVertexIndexInQuad(const Quad &t, PointID vertexIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2, 3) of the edge whose global index is edgeIndex. Returns -1 if none 
 	*
 	*/
-	int getEdgeIndexInQuad(QuadEdges &t, EdgeID edgeIndex) const;
+	int getEdgeIndexInQuad(const EdgesInQuad &t, EdgeID edgeIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2 or 3) of the vertex whose global index is vertexIndex. Returns -1 if none 
 	*
@@ -464,32 +528,36 @@ protected:
 	/** \brief Returns the index (either 0, 1 ,2 ,3, 4, 5) of the edge whose global index is edgeIndex. Returns -1 if none 
 	*
 	*/
-	int getEdgeIndexInTetrahedron(const TetraEdges &t, EdgeID edgeIndex) const;
+	int getEdgeIndexInTetrahedron(const EdgesInTetrahedron &t, EdgeID edgeIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2 ,3) of the triangle whose global index is triangleIndex. Returns -1 if none 
 	*
 	*/
-	int getTriangleIndexInTetrahedron(const TetraTriangles &t, TriangleID triangleIndex) const;
+	int getTriangleIndexInTetrahedron(const TrianglesInTetrahedron &t, TriangleID triangleIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2, 3, 4, 5, 6, or 7) of the vertex whose global index is vertexIndex. Returns -1 if none 
 	*
 	*/
-	int getVertexIndexInHexahedron(Hexa &t, PointID vertexIndex) const;
+	int getVertexIndexInHexahedron(const Hexa &t, PointID vertexIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2 ,3, 4, 5, 6, 7, 8, 9, 10, 11) of the edge whose global index is edgeIndex. Returns -1 if none 
 	*
 	*/
-	int getEdgeIndexInHexahedron(const HexaEdges &t, EdgeID edgeIndex) const;
+	int getEdgeIndexInHexahedron(const EdgesInHexahedron &t, EdgeID edgeIndex) const;
 
 	/** \brief Returns the index (either 0, 1 ,2 ,3, 4, 5) of the quad whose global index is quadIndex. Returns -1 if none 
 	*
 	*/
-	int getQuadIndexInHexahedron(const HexaQuads &t, QuadID quadIndex) const;
+	int getQuadIndexInHexahedron(const QuadsInHexahedron &t, QuadID quadIndex) const;
 
 	/** \brief Returns for each index (between 0 and 5) the two vertex indices that are adjacent to that edge 
 	*
 	*/
-	Edge getLocalTetrahedronEdges (const unsigned int i) const;
+	Edge getLocalEdgesInTetrahedron (const unsigned int i) const;
+
+	/** \brief Returns for each index (between 0 and 12) the two vertex indices that are adjacent to that edge */
+	Edge getLocalEdgesInHexahedron (const unsigned int i) const;
+
 
 	int revision;
 
@@ -504,7 +572,7 @@ protected:
 	virtual void updateHexas();
 
 	protected:
-		virtual void loadFromMeshLoader(sofa::component::MeshLoader* loader);
+        virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
 };
 
 } // namespace topology

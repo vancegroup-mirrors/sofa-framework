@@ -61,7 +61,7 @@ class CudaBaseMatrix : public BaseMatrix {
 		}
 
 		SReal element(int i, int j) const {
-			return m[i][j];
+			return m[j][i];
 		}
 
 		const T* operator[] ( int i ) const {
@@ -76,7 +76,7 @@ class CudaBaseMatrix : public BaseMatrix {
 			}
 		}
 
-		void set(int j, int i, double v) {
+		void set(int i, int j, double v) {
 #ifdef DEBUG_BASE
 			if ((j>=rowSize()) || (i>=colSize())) {
 				printf("forbidden acces %d %d\n",j,i);
@@ -86,7 +86,7 @@ class CudaBaseMatrix : public BaseMatrix {
 			m[j][i] = (T)v;
 		}
 
-		void add(int j, int i, double v) {
+		void add(int i, int j, double v) {
 #ifdef DEBUG_BASE
 			if ((j>=rowSize()) || (i>=colSize())) {
 				printf("forbidden acces %d %d\n",j,i);

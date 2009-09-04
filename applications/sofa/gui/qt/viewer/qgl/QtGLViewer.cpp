@@ -152,39 +152,16 @@ namespace sofa
 
 	    sceneBBoxIsValid = false;
 	    texLogo = NULL;
-
+            _waitForRender=false;
 
 	    /*_surfaceModel = NULL;
 	      _springMassView = NULL;
 	      _mapView = NULL;
 	      sphViewer = NULL;
 	    */
-	    _arrow = gluNewQuadric();
-	    gluQuadricDrawStyle(_arrow, GLU_FILL);
-	    gluQuadricOrientation(_arrow, GLU_OUTSIDE);
-	    gluQuadricNormals(_arrow, GLU_SMOOTH);
-
-	    _tube = gluNewQuadric();
-	    gluQuadricDrawStyle(_tube, GLU_FILL);
-	    gluQuadricOrientation(_tube, GLU_OUTSIDE);
-	    gluQuadricNormals(_tube, GLU_SMOOTH);
-
-	    _sphere = gluNewQuadric();
-	    gluQuadricDrawStyle(_sphere, GLU_FILL);
-	    gluQuadricOrientation(_sphere, GLU_OUTSIDE);
-	    gluQuadricNormals(_sphere, GLU_SMOOTH);
-
-	    _disk = gluNewQuadric();
-	    gluQuadricDrawStyle(_disk, GLU_FILL);
-	    gluQuadricOrientation(_disk, GLU_OUTSIDE);
-	    gluQuadricNormals(_disk, GLU_SMOOTH);
-
-
 
 	    //////////////////////
 
-
-	    interactor = NULL;
 	    _mouseInteractorMoving = false;
 	    _mouseInteractorSavedPosX = 0;
 	    _mouseInteractorSavedPosY = 0;
@@ -262,11 +239,11 @@ namespace sofa
 		specref[3] = 1.0f;
 
 		// Here we initialize our multi-texturing functions
-#ifdef SOFA_HAVE_GLEW
+#if 0
                   glewInit();
                   if (!GLEW_ARB_multitexture)
                       std::cerr << "Error: GL_ARB_multitexture not supported\n";
-#else
+
                   glActiveTextureARB        = (PFNGLACTIVETEXTUREARBPROC)        glewGetProcAddress("glActiveTextureARB");
                   glMultiTexCoord2fARB    = (PFNGLMULTITEXCOORD2FARBPROC)        glewGetProcAddress("glMultiTexCoord2fARB");
 
@@ -323,6 +300,27 @@ namespace sofa
 		//glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		//glEnable(GL_COLOR_MATERIAL);
+
+		//init Quadrics
+	    _arrow = gluNewQuadric();
+	    gluQuadricDrawStyle(_arrow, GLU_FILL);
+	    gluQuadricOrientation(_arrow, GLU_OUTSIDE);
+	    gluQuadricNormals(_arrow, GLU_SMOOTH);
+
+	    _tube = gluNewQuadric();
+	    gluQuadricDrawStyle(_tube, GLU_FILL);
+	    gluQuadricOrientation(_tube, GLU_OUTSIDE);
+	    gluQuadricNormals(_tube, GLU_SMOOTH);
+
+	    _sphere = gluNewQuadric();
+	    gluQuadricDrawStyle(_sphere, GLU_FILL);
+	    gluQuadricOrientation(_sphere, GLU_OUTSIDE);
+	    gluQuadricNormals(_sphere, GLU_SMOOTH);
+
+	    _disk = gluNewQuadric();
+	    gluQuadricDrawStyle(_disk, GLU_FILL);
+	    gluQuadricOrientation(_disk, GLU_OUTSIDE);
+	    gluQuadricNormals(_disk, GLU_SMOOTH);
 
 		// change status so we only do this stuff once
 		initialized = true;
@@ -394,80 +392,10 @@ namespace sofa
 	  void QtGLViewer::DrawAxis(double xpos, double ypos, double zpos,
 				    double arrowSize)
 	  {
-	    float	fontScale	= (float) (arrowSize / 600.0);
-
-	    Enable<GL_DEPTH_TEST> depth;
-	    Enable<GL_LIGHTING> lighting;
-	    Enable<GL_COLOR_MATERIAL> colorMat;
-
-	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	    glShadeModel(GL_SMOOTH);
-
-	    // --- Draw the "X" axis in red
-	    glPushMatrix();
-	    glColor3f(1.0, 0.0, 0.0);
-	    glTranslated(xpos, ypos, zpos);
-	    glRotatef(90.0f, 0.0, 1.0, 0.0);
-	    gluCylinder(_tube, arrowSize / 50.0, arrowSize / 50.0, arrowSize, 10, 10);
-	    glTranslated(0.0, 0.0, arrowSize);
-	    gluCylinder(_arrow, arrowSize / 15.0, 0.0, arrowSize / 5.0, 10, 10);
-	    // ---- Display a "X" near the tip of the arrow
-	    glTranslated(-0.5 * fontScale * (double)
-			 glutStrokeWidth(GLUT_STROKE_ROMAN, 88),
-			 arrowSize / 15.0, arrowSize /
-			 5.0);
-	    glLineWidth(3.0);
-	    glScalef(fontScale, fontScale, fontScale);
-	    glutStrokeCharacter(GLUT_STROKE_ROMAN, 88);
-	    glScalef(1.0f / fontScale, 1.0f / fontScale, 1.0f / fontScale);
-	    glLineWidth(1.0f);
-	    // --- Undo transforms
-	    glTranslated(-xpos, -ypos, -zpos);
-	    glPopMatrix();
-
-	    // --- Draw the "Y" axis in green
-	    glPushMatrix();
-	    glColor3f(0.0, 1.0, 0.0);
-	    glTranslated(xpos, ypos, zpos);
-	    glRotatef(-90.0f, 1.0, 0.0, 0.0);
-	    gluCylinder(_tube, arrowSize / 50.0, arrowSize / 50.0, arrowSize, 10, 10);
-	    glTranslated(0.0, 0.0, arrowSize);
-	    gluCylinder(_arrow, arrowSize / 15.0, 0.0, arrowSize / 5.0, 10, 10);
-	    // ---- Display a "Y" near the tip of the arrow
-	    glTranslated(-0.5 * fontScale * (double)
-			 glutStrokeWidth(GLUT_STROKE_ROMAN, 89),
-			 arrowSize / 15.0, arrowSize /
-			 5.0);
-	    glLineWidth(3.0);
-	    glScalef(fontScale, fontScale, fontScale);
-	    glutStrokeCharacter(GLUT_STROKE_ROMAN, 89);
-	    glScalef(1.0f / fontScale, 1.0f / fontScale, 1.0f / fontScale);
-	    glLineWidth(1.0);
-	    // --- Undo transforms
-	    glTranslated(-xpos, -ypos, -zpos);
-	    glPopMatrix();
-
-	    // --- Draw the "Z" axis in blue
-	    glPushMatrix();
-	    glColor3f(0.0, 0.0, 1.0);
-	    glTranslated(xpos, ypos, zpos);
-	    glRotatef(0.0f, 1.0, 0.0, 0.0);
-	    gluCylinder(_tube, arrowSize / 50.0, arrowSize / 50.0, arrowSize, 10, 10);
-	    glTranslated(0.0, 0.0, arrowSize);
-	    gluCylinder(_arrow, arrowSize / 15.0, 0.0, arrowSize / 5.0, 10, 10);
-	    // ---- Display a "Z" near the tip of the arrow
-	    glTranslated(-0.5 * fontScale * (double)
-			 glutStrokeWidth(GLUT_STROKE_ROMAN, 90),
-			 arrowSize / 15.0, arrowSize /
-			 5.0);
-	    glLineWidth(3.0);
-	    glScalef(fontScale, fontScale, fontScale);
-	    glutStrokeCharacter(GLUT_STROKE_ROMAN, 90);
-	    glScalef(1.0f / fontScale, 1.0f / fontScale, 1.0f / fontScale);
-	    glLineWidth(1.0);
-	    // --- Undo transforms
-	    glTranslated(-xpos, -ypos, -zpos);
-	    glPopMatrix();
+		  glPushMatrix();
+		  glTranslatef(xpos, ypos,zpos);
+		  QGLViewer::drawAxis(arrowSize);
+		  glPopMatrix();
 	  }
 
 	  // ---------------------------------------------------
@@ -739,7 +667,12 @@ namespace sofa
 		  simulation::getSimulation()->draw(groot, &visualParameters);
 		if (_axis)
 		  {
-		    DrawAxis(0.0, 0.0, 0.0, 10.0);
+			this->setSceneBoundingBox(qglviewer::Vec(visualParameters.minBBox[0], visualParameters.minBBox[1], visualParameters.minBBox[2]),
+									  qglviewer::Vec(visualParameters.maxBBox[0], visualParameters.maxBBox[1], visualParameters.maxBBox[2]));
+
+		    //DrawAxis(0.0, 0.0, 0.0, 10.0);
+			DrawAxis(0.0, 0.0, 0.0, this->sceneRadius());
+
 		    if (visualParameters.minBBox[0] < visualParameters.maxBBox[0])
 		      DrawBox(visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr());
 		  }
@@ -994,11 +927,7 @@ namespace sofa
 		moveLaparoscopic(e);
 		return true;
 	      }
-	    else
-            {
-		if (interactor!=NULL)
-		  interactor->newEvent("hide");
-              }
+
 	    return false;
 	  }
 
@@ -1046,8 +975,13 @@ namespace sofa
 	    transform[2][3] = p0[2];
 	    Mat3x3d mat; mat = transform;
 	    Quat q; q.fromMatrix(mat);
-	    interactor->newPosition(p0, q, transform);
-	    interactor->setRayRadius(r0, r1);
+
+
+            Vec3d position, direction;
+            position  = transform*Vec4d(0,0,0,1);
+            direction = transform*Vec4d(0,0,1,0);
+            direction.normalize();
+            pick.updateRay(position, direction);
 	  }
 
 	  // -------------------------------------------------------------------
@@ -1097,21 +1031,21 @@ namespace sofa
 			in >> pos[0];
 			in >> pos[1];
 			in >> pos[2];
-			
+
 			qglviewer::Quaternion q;
 			in >> q[0];
 			in >> q[1];
 			in >> q[2];
 			in >> q[3];
 			q.normalize();
-			
+
 			camera()->setOrientation(q);
 			camera()->setPosition(pos);
 			camera()->showEntireScene();
-			
+
 			in.close();
 			update();
-			
+
 			return;
 		      }
 		  }
@@ -1156,7 +1090,7 @@ namespace sofa
 		  texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile(imageFileName) ));
 		  texLogo->init();
 	  }
-	  
+
 
 	  QString QtGLViewer::helpString()
 	  {

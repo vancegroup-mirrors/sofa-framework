@@ -8,6 +8,7 @@ SUBDIRS += runSofa
 SUBDIRS += meshconv
 SUBDIRS += generateDoc
 SUBDIRS += GenerateRigid
+SUBDIRS += generateTypedefs
 
  
 SUBDIRS += Modeler

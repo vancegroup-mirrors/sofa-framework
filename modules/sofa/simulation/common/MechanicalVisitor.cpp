@@ -25,14 +25,14 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/Node.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
 
 namespace sofa
 {
 
 namespace simulation
 {
+using std::cerr;
+using std::endl;
 //Max size for vector to be allowed to be dumped
 #define DUMP_VISITOR_MAX_SIZE_VECTOR 20
 
@@ -137,56 +137,45 @@ void MechanicalVisitor::processNodeBottomUp(simulation::Node* node)
 				this->bwdOdeSolver(node, node->solver[i]);
         }
 }
-#ifdef DUMP_VISITOR_INFO
-void MechanicalVisitor::printReadVectors(core::componentmodel::behavior::BaseMechanicalState* mm, std::string &info)
+#ifdef SOFA_DUMP_VISITOR_INFO
+void MechanicalVisitor::printReadVectors(core::componentmodel::behavior::BaseMechanicalState* mm)
 {
   if (!mm || !readVector.size() || !Visitor::printActivated) return;
 
-
-  for (unsigned int i=0;i<Visitor::depthLevel;++i) info += "\t";
-  info += "<Input>\n";
+  printNode("Input");
 
   for (unsigned int i=0;i<readVector.size();++i)
     {
       std::ostringstream infoStream;
-      for (unsigned int j=0;j<Visitor::depthLevel+1;++j) info += "\t";
-
-      info += "<Vector name=\"" + readVector[i].getName() + "\"";
+      TRACE_ARGUMENT arg;
       if (mm->getSize() < DUMP_VISITOR_MAX_SIZE_VECTOR)
-      {
-        mm->printDOF(readVector[i], infoStream);
-        info += "value=\"" + infoStream.str() + "\"";
-      }
-      info += "/>\n";
+        arg.push_back(std::make_pair("value", infoStream.str()));
+      
+      printNode("Vector", readVector[i].getName(), arg); 
+      printCloseNode("Vector");
     }
 
-  for (unsigned int i=0;i<Visitor::depthLevel;++i) info += "\t";
-  info += "</Input>\n";
+  printCloseNode("Input");
 }
 
-void MechanicalVisitor::printWriteVectors(core::componentmodel::behavior::BaseMechanicalState* mm, std::string &info)
+void MechanicalVisitor::printWriteVectors(core::componentmodel::behavior::BaseMechanicalState* mm)
 {
   if (!mm || !writeVector.size() || !Visitor::printActivated) return;
 
-  for (unsigned int i=0;i<Visitor::depthLevel;++i) info += "\t";
-  info += "<Output>\n";
+  printNode("Output");
 
   for (unsigned int i=0;i<writeVector.size();++i)
     {
       std::ostringstream infoStream;
-      for (unsigned int j=0;j<Visitor::depthLevel+1;++j) info += "\t";
-      info += "<Vector name=\"" + writeVector[i].getName() + "\"";
-
+      TRACE_ARGUMENT arg;
       if (mm->getSize() < DUMP_VISITOR_MAX_SIZE_VECTOR)
-      {
-        mm->printDOF(writeVector[i], infoStream);
-        info += "value=\"" + infoStream.str() + "\"";
-      }
-      info += "/>\n";
+        arg.push_back(std::make_pair("value", infoStream.str()));
+      
+      printNode("Vector", writeVector[i].getName(), arg);
+      printCloseNode("Vector");
     }
 
-  for (unsigned int i=0;i<Visitor::depthLevel;++i) info += "\t";
-  info += "</Output>\n";
+  printCloseNode("Output");
 }
 
 void MechanicalVisitor::printReadVectors(simulation::Node* node, core::objectmodel::BaseObject* obj)
@@ -194,7 +183,6 @@ void MechanicalVisitor::printReadVectors(simulation::Node* node, core::objectmod
   if (!Visitor::printActivated) return;
   if (readVector.size())
     {
-      std::string info;
       core::componentmodel::behavior::BaseMechanicalState *dof1, *dof2;
       if ( sofa::core::componentmodel::behavior::InteractionForceField* interact = dynamic_cast<sofa::core::componentmodel::behavior::InteractionForceField*> (obj))
 	{
@@ -213,22 +201,21 @@ void MechanicalVisitor::printReadVectors(simulation::Node* node, core::objectmod
         }
       else
 	{
-	  printReadVectors(node->mechanicalState, info);
-          dumpInfo(info);
+	  printReadVectors(node->mechanicalState);
           return;
 	}
-          for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-          info +="<Components type=\"" + dof1->getClassName() + "\" name=\"" + dof1->getName() + "\">\n";
-          printReadVectors(dof1,info);
-          for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-          info +="</Components>\n";
 
-          for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-          info +="<Components type=\"" + dof2->getClassName() + "\" name=\"" + dof2->getName() + "\">\n";
-          printReadVectors(dof2,info);
-          for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-          info +="</Components>\n";
-          dumpInfo(info);
+      TRACE_ARGUMENT arg1;
+      arg1.push_back(std::make_pair("type", dof1->getClassName()));
+      printNode("Components", dof1->getName(), arg1);
+      printReadVectors(dof1);
+      printCloseNode("Components");
+
+      TRACE_ARGUMENT arg2;
+      arg2.push_back(std::make_pair("type", dof2->getClassName()));
+      printNode("Components", dof2->getName(), arg2);
+      printReadVectors(dof2);
+      printCloseNode("Components");
     }
 }
 void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmodel::BaseObject* obj)
@@ -236,7 +223,6 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
   if (!Visitor::printActivated) return;
   if (writeVector.size())
     {
-      std::string info;
       core::componentmodel::behavior::BaseMechanicalState *dof1, *dof2;
       if ( sofa::core::componentmodel::behavior::InteractionForceField* interact = dynamic_cast<sofa::core::componentmodel::behavior::InteractionForceField*> (obj))
 	{
@@ -255,23 +241,21 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
         }
       else
 	{
-          printWriteVectors(node->mechanicalState, info);
-          dumpInfo(info);
+          printWriteVectors(node->mechanicalState);
           return;
 	}
 
-        for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-        info +="<Components type=\"" + dof1->getClassName() + "\" name=\"" + dof1->getName() + "\">\n";
-        printWriteVectors(dof1,info);
-        for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-        info +="</Components>\n";
+          TRACE_ARGUMENT arg1;
+          arg1.push_back(std::make_pair("type", dof1->getClassName()));
+          printNode("Components", dof1->getName(), arg1);
+          printWriteVectors(dof1);
+          printCloseNode("Components");
 
-        for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-        info +="<Components type=\"" + dof2->getClassName() + "\" name=\"" + dof2->getName() + "\">\n";
-        printWriteVectors(dof2,info);
-        for (unsigned int i=0;i<Visitor::depthLevel;++i) info +="\t";
-        info +="</Components>\n";
-        dumpInfo(info);
+          TRACE_ARGUMENT arg2;
+          arg2.push_back(std::make_pair("type", dof2->getClassName()));
+          printNode("Components", dof2->getName(), arg2);
+          printWriteVectors(dof2);
+          printCloseNode("Components");
     }
 }
 #endif
@@ -280,7 +264,7 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
     simulation::Node::ctime_t MechanicalVisitor::beginProcess(simulation::Node* node, core::objectmodel::BaseObject* obj)
     {
       ctime_t t=begin(node, obj);
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
       printReadVectors(node, obj);
 #endif
       return t;
@@ -288,7 +272,7 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
 
     void MechanicalVisitor::endProcess(simulation::Node* node, core::objectmodel::BaseObject* obj, ctime_t t0)
     {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
       printWriteVectors(node, obj);
 #endif
       return end(node, obj, t0);
@@ -304,13 +288,15 @@ Visitor::Result MechanicalIntegrationVisitor::fwdOdeSolver(simulation::Node* nod
 	node->execute(&beginVisitor);
 
 	//cerr<<"MechanicalIntegrationVisitor::fwdOdeSolver start solve obj"<<endl;
-	obj->solve(dt);
+        obj->solve(dt);
+// 	cerr<<"MechanicalIntegrationVisitor::fwdOdeSolver endVisitor ok"<<endl;
+
 	//cerr<<"MechanicalIntegrationVisitor::fwdOdeSolver end solve obj"<<endl;
 	obj->propagatePositionAndVelocity(nextTime,core::componentmodel::behavior::OdeSolver::VecId::position(),core::componentmodel::behavior::OdeSolver::VecId::velocity());
 
-	MechanicalEndIntegrationVisitor endVisitor(dt);
-	node->execute(&endVisitor);
-// 	cerr<<"MechanicalIntegrationVisitor::fwdOdeSolver endVisitor ok"<<endl;
+        MechanicalEndIntegrationVisitor endVisitor(dt);
+        node->execute(&endVisitor);
+
         endProcess(node, obj, t0);
 	return RESULT_PRUNE;
 }
@@ -418,10 +404,47 @@ Visitor::Result MechanicalVDotVisitor::processNodeTopDown(simulation::Node* node
     Visitor::Result MechanicalPropagateDxVisitor::fwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
     {
       ctime_t t0 = beginProcess(node, map);
+        core::componentmodel::behavior::BaseMechanicalState* dofTo = map->getMechTo();
+        bool isActive=dofTo->forceMask.isActive();
+        dofTo->forceMask.activate(false);
         map->propagateDx();
+        dofTo->forceMask.activate(isActive);
 	endProcess(node, map, t0);
         return RESULT_CONTINUE;
     }
+    Visitor::Result MechanicalPropagateVVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
+    {
+      ctime_t t0 = beginProcess(node, mm);
+      mm->setV(v);
+      endProcess(node, mm, t0);
+      return RESULT_CONTINUE;
+    }
+    Visitor::Result MechanicalPropagateVVisitor::fwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
+    {
+      ctime_t t0 = beginProcess(node, map);
+        core::componentmodel::behavior::BaseMechanicalState* dofTo = map->getMechTo();
+        bool isActive=dofTo->forceMask.isActive();
+        dofTo->forceMask.activate(false);
+        map->propagateV();
+        dofTo->forceMask.activate(isActive);
+	endProcess(node, map, t0);
+        return RESULT_CONTINUE;
+    }
+    Visitor::Result MechanicalPropagateXVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
+    {
+		ctime_t t0 = beginProcess(node, mm);
+		mm->setX(x);
+		endProcess(node, mm, t0);
+		return RESULT_CONTINUE;
+    }
+    Visitor::Result MechanicalPropagateXVisitor::fwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
+    {
+		ctime_t t0 = beginProcess(node, map);
+		map->propagateX();
+		endProcess(node, map, t0);
+        return RESULT_CONTINUE;
+    }
+
 
 Visitor::Result MechanicalPropagateDxAndResetForceVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
 {
@@ -446,21 +469,6 @@ Visitor::Result MechanicalPropagateDxAndResetForceVisitor::fwdMappedMechanicalSt
     endProcess(node, mm, t0);
     return RESULT_CONTINUE;
 }
-
-    Visitor::Result MechanicalPropagateXVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
-    {
-		ctime_t t0 = beginProcess(node, mm);
-		mm->setX(x);
-		endProcess(node, mm, t0);
-		return RESULT_CONTINUE;
-    }
-    Visitor::Result MechanicalPropagateXVisitor::fwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
-    {
-		ctime_t t0 = beginProcess(node, map);
-		map->propagateX();
-		endProcess(node, map, t0);
-        return RESULT_CONTINUE;
-    }
 
 Visitor::Result MechanicalPropagateXAndResetForceVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
 {
@@ -540,7 +548,7 @@ Visitor::Result MechanicalAddMDxVisitor::fwdMechanicalState(simulation::Node* no
 #ifdef SOFA_SUPPORT_MAPPED_MASS
 MechanicalPropagatePositionAndVelocityVisitor::MechanicalPropagatePositionAndVelocityVisitor(double t, VecId x, VecId v, VecId a) : t(t), x(x), v(v), a(a)
 {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
   setReadWriteVectors();
 #endif
     //cerr<<"::MechanicalPropagatePositionAndVelocityVisitor"<<endl;
@@ -548,7 +556,7 @@ MechanicalPropagatePositionAndVelocityVisitor::MechanicalPropagatePositionAndVel
 #else
 MechanicalPropagatePositionAndVelocityVisitor::MechanicalPropagatePositionAndVelocityVisitor(double t, VecId x, VecId v) : t(t), x(x), v(v)
 {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
   setReadWriteVectors();
 #endif
     //cerr<<"::MechanicalPropagatePositionAndVelocityVisitor"<<endl;
@@ -557,7 +565,7 @@ MechanicalPropagatePositionAndVelocityVisitor::MechanicalPropagatePositionAndVel
 
 MechanicalPropagatePositionVisitor::MechanicalPropagatePositionVisitor(double t, VecId x) : t(t), x(x)
 {
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
   setReadWriteVectors();
 #endif
     //cerr<<"::MechanicalPropagatePositionAndVelocityVisitor"<<endl;
@@ -671,11 +679,18 @@ Visitor::Result MechanicalPropagatePositionAndVelocityVisitor::fwdMechanicalStat
     Visitor::Result MechanicalPropagatePositionAndVelocityVisitor::fwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
     {
       ctime_t t0 = beginProcess(node, map);
+      map->getMechFrom()->forceMask.activate(false);
+      map->getMechTo()->forceMask.activate(false);
+
       map->propagateX();
       map->propagateV();
 #ifdef SOFA_SUPPORT_MAPPED_MASS
       map->propagateA();
 #endif
+
+      map->getMechFrom()->forceMask.activate(true);
+      map->getMechTo()->forceMask.activate(true);
+
       endProcess(node, map, t0);
         return RESULT_CONTINUE;
     }
@@ -721,24 +736,25 @@ Visitor::Result MechanicalPropagateFreePositionVisitor::processNodeTopDown(simul
 
 Visitor::Result MechanicalResetForceVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {
-		ctime_t t0 = beginProcess(node, mm);
-		mm->setF(res);
-		if (!onlyMapped)
-			mm->resetForce();
-		endProcess(node, mm, t0);
+        ctime_t t0 = beginProcess(node, mm);
+        mm->setF(res);
+        if (!onlyMapped)
+          mm->resetForce();
+        endProcess(node, mm, t0);
         return RESULT_CONTINUE;
     }
     Visitor::Result MechanicalResetForceVisitor::fwdMappedMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {
-	  ctime_t t0 = beginProcess(node, mm);
-	  mm->resetForce();
-	  endProcess(node, mm, t0);
-      return RESULT_CONTINUE;
+	ctime_t t0 = beginProcess(node, mm);
+        mm->resetForce();
+        endProcess(node, mm, t0);
+        return RESULT_CONTINUE;
     }
 
 Visitor::Result MechanicalComputeForceVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {
 		ctime_t t0 = beginProcess(node, mm);
+                mm->forceMask.activate(true);
 		mm->setF(res);
 		mm->accumulateForce();
 		endProcess(node, mm, t0);
@@ -746,7 +762,8 @@ Visitor::Result MechanicalComputeForceVisitor::fwdMechanicalState(simulation::No
     }
 Visitor::Result MechanicalComputeForceVisitor::fwdMappedMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {
-	  ctime_t t0 = beginProcess(node, mm);
+	  ctime_t t0 = beginProcess(node, mm);   
+          mm->forceMask.activate(true);
 	  mm->accumulateForce();
 	  endProcess(node, mm, t0);
       return RESULT_CONTINUE;
@@ -763,13 +780,13 @@ Visitor::Result MechanicalComputeForceVisitor::fwdMappedMechanicalState(simulati
 
     void MechanicalComputeForceVisitor::bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
     {
-			//cerr<<"MechanicalComputeForceVisitor::bwdMechanicalMapping "<<map->getName()<<endl;
-		if (accumulate)
-		  {
-			ctime_t t0 = beginProcess(node, map);
-			map->accumulateForce();
-			endProcess(node, map, t0);
-		  }
+//       cerr<<"MechanicalComputeForceVisitor::bwdMechanicalMapping "<<map->getName()<<endl;
+      if (accumulate)
+        {
+          ctime_t t0 = beginProcess(node, map);
+          map->accumulateForce();
+          endProcess(node, map, t0);
+        }
     }
 
     Visitor::Result MechanicalComputeDfVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
@@ -867,7 +884,7 @@ Visitor::Result MechanicalAccumulateLMConstraint::fwdLMConstraint(simulation::No
     {
 
         ctime_t t0 = beginProcess(node, c);
-        c->writeConstraintEquations();
+        c->writeConstraintEquations(id);
 
 	datasC.push_back(ConstraintData());
 	ConstraintData &entry=datasC[datasC.size()-1];
@@ -875,6 +892,9 @@ Visitor::Result MechanicalAccumulateLMConstraint::fwdLMConstraint(simulation::No
 	//get the corrections to apply
 	entry.independentMState[0]=c->getMechModel1();
 	entry.independentMState[1]=c->getMechModel2();
+
+        c->getMechModel1()->forceMask.setInUse(c->useMask());
+        c->getMechModel2()->forceMask.setInUse(c->useMask());
 
 	entry.data=c;
 	endProcess(node, c, t0);
@@ -939,13 +959,15 @@ Visitor::Result MechanicalApplyConstraintsVisitor::fwdMechanicalState(simulation
 Visitor::Result MechanicalBeginIntegrationVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {
         ctime_t t0 = beginProcess(node, mm);
+        mm->forceMask.activate(true);
         mm->beginIntegration(dt);
 	endProcess(node, mm, t0);
         return RESULT_CONTINUE;
     }
-     Visitor::Result MechanicalBeginIntegrationVisitor::fwdMappedMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
+Visitor::Result MechanicalBeginIntegrationVisitor::fwdMappedMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {
-      ctime_t t0 = beginProcess(node, mm);
+        ctime_t t0 = beginProcess(node, mm);
+        mm->forceMask.activate(true);
         mm->beginIntegration(dt);
 	endProcess(node, mm, t0);
         return RESULT_CONTINUE;
@@ -956,6 +978,7 @@ Visitor::Result MechanicalEndIntegrationVisitor::fwdMechanicalState(simulation::
     {
         ctime_t t0 = beginProcess(node, mm);
         mm->endIntegration(dt);
+        mm->forceMask.activate(false);
 	endProcess(node, mm, t0);
         return RESULT_CONTINUE;
     }
@@ -963,6 +986,7 @@ Visitor::Result MechanicalEndIntegrationVisitor::fwdMechanicalState(simulation::
     {
         ctime_t t0 = beginProcess(node, mm);
         mm->endIntegration(dt);
+        mm->forceMask.activate(false);
 	endProcess(node, mm, t0);
         return RESULT_CONTINUE;
     }

@@ -125,6 +125,60 @@ namespace topology
 				 remove( tab );
 				 break;
 			 }
+			 case core::componentmodel::topology::EDGESMOVED_REMOVING:
+			 {
+			   const sofa::helper::vector< unsigned int >& edgeList = ( static_cast< const EdgesMoved_Removing *>( *changeIt ) )->edgesAroundVertexMoved;
+			   sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			  
+			   for (unsigned int i = 0; i <edgeList.size(); i++)
+			    m_destroyFunc( edgeList[i], m_destroyParam, data[edgeList[i]] );
+
+			   this->endEdit();
+			   break;
+			 }
+			 case core::componentmodel::topology::EDGESMOVED_ADDING:
+			 {
+			  const sofa::helper::vector< unsigned int >& edgeList = ( static_cast< const EdgesMoved_Adding *>( *changeIt ) )->edgesAroundVertexMoved;
+			  const sofa::helper::vector< Edge >& edgeArray = ( static_cast< const EdgesMoved_Adding *>( *changeIt ) )->edgeArray2Moved;
+			  sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+			  // Recompute data
+			  sofa::helper::vector< unsigned int > ancestors;
+			  sofa::helper::vector< double >  coefs;
+			  coefs.push_back (1.0);
+			  ancestors.resize(1);
+			  
+			  for (unsigned int i = 0; i <edgeList.size(); i++)
+			  {
+			    ancestors[0] = edgeList[i];
+			    m_createFunc( edgeList[i], m_createParam, data[edgeList[i]], edgeArray[i], ancestors, coefs );
+			  }
+			  
+			  this->endEdit();
+			  break;
+			 }
+			 case core::componentmodel::topology::TRIANGLESMOVED_REMOVING:
+			 {
+			   if (m_destroyTriangleFunc) 
+			   {
+			     const TrianglesMoved_Removing *tm=static_cast< const TrianglesMoved_Removing* >( *changeIt );
+			     (*m_destroyTriangleFunc)(tm->trianglesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
+			     this->endEdit();
+			   }
+			   
+			   break;
+			 }
+			 case core::componentmodel::topology::TRIANGLESMOVED_ADDING:
+			 {
+			   if (m_createTriangleFunc) 
+			   {
+			     const TrianglesMoved_Adding *tm=static_cast< const TrianglesMoved_Adding * >( *changeIt );
+			     (*m_createTriangleFunc)(tm->trianglesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
+			     this->endEdit();
+			   }
+
+			   break;
+			 }
 			 default:
 				 // Ignore events that are not Edge or Point related.
 				 break;

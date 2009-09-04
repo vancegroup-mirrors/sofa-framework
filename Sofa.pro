@@ -6,10 +6,14 @@ include($${SOFA_DIR}/sofa.cfg)
 SUBDIRS += extlibs/newmat
 
 
-SUBDIRS += extlibs/qwt
+SUBDIRS += extlibs/qwt-5.2.0/src
 
 contains(DEFINES,SOFA_XML_PARSER_TINYXML){
   SUBDIRS += extlibs/tinyxml
+}
+
+contains(DEFINES,SOFA_HAVE_ARTRACK){
+  SUBDIRS += extlibs/ARTrack
 }
 
 # FlowVR
@@ -28,7 +32,11 @@ contains(DEFINES,SOFA_HAVE_CSPARSE){
 #QGLViewer
 
 contains(DEFINES,SOFA_GUI_QGLVIEWER){
-	SUBDIRS += extlibs/libQGLViewer/QGLViewer
+	SUBDIRS += extlibs/libQGLViewer-2.3.3/QGLViewer
+}
+
+contains(DEFINES,SOFA_HAVE_COLLADADOM){
+	SUBDIRS += extlibs/colladadom/dom/colladadom.pro
 }
 
 # PML
@@ -37,6 +45,17 @@ contains(DEFINES,SOFA_GUI_QGLVIEWER){
 !contains(DEFINES,SOFA_PML){
 	SUBDIRS -= extlibs/PML
 	SUBDIRS -= extlibs/LML
+}
+
+#FISHPACK
+contains(DEFINES,SOFA_HAVE_FISHPACK){
+	SUBDIRS += extlibs/fftpack
+	SUBDIRS += extlibs/fishpack
+}
+
+# MUPARSER
+contains(DEFINES,MUPARSER){
+	SUBDIRS += extlibs/muparser
 }
 
 SUBDIRS += framework

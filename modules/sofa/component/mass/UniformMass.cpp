@@ -114,10 +114,9 @@ void UniformMass<Rigid3dTypes, Rigid3dMass>::loadRigidMass(std::string filename)
         {
           if (!strcmp(cmd,"inrt"))
           {
-            for (int i = 0; i < 9; i++)
-            {
-              result=fscanf(file, "%lf", &(m.inertiaMatrix.ptr()[i]));
-            }
+            for (int i = 0; i < 3; i++)
+              for (int j = 0; j < 3; j++)
+                result=fscanf(file, "%lf", &(m.inertiaMatrix[i][j]));
           }
           else if (!strcmp(cmd,"cntr") || !strcmp(cmd,"center") )
           {
@@ -296,17 +295,6 @@ template <> SOFA_COMPONENT_MASS_API
   return e;
 }
 
-template <> SOFA_COMPONENT_MASS_API
-    double UniformMass<Rigid3dTypes,Rigid3dMass>::getElementMass(unsigned int )
-{
-  return (mass.getValue().mass);
-}
-
-template <> SOFA_COMPONENT_MASS_API
-    sofa::defaulttype::Vector3::value_type UniformMass<Rigid2dTypes,Rigid2dMass>::getElementMass(unsigned int )
-{
-  return (mass.getValue().mass);
-}
 
 
 template <> SOFA_COMPONENT_MASS_API
@@ -404,10 +392,9 @@ void UniformMass<Rigid3fTypes, Rigid3fMass>::loadRigidMass(std::string filename)
         {
           if (!strcmp(cmd,"inrt"))
           {
-            for (int i = 0; i < 9; i++)
-            {
-              result=fscanf(file, "%f", &(m.inertiaMatrix.ptr()[i]));
-            }
+            for (int i = 0; i < 3; i++)
+              for (int j = 0; j < 3; j++)
+                result=fscanf(file, "%f", &(m.inertiaMatrix[i][j]));
           }
           else if (!strcmp(cmd,"cntr"))
           {
@@ -575,18 +562,7 @@ template <> SOFA_COMPONENT_MASS_API
   return e;
 }
 
-template <> SOFA_COMPONENT_MASS_API
-    double UniformMass<Rigid3fTypes,Rigid3fMass>::getElementMass(unsigned int )
-{
-  return (double)(mass.getValue().mass);
-}
 
-
-template <>
-    double UniformMass<Rigid2fTypes,Rigid2fMass>::getElementMass(unsigned int )
-{
-  return (double)(mass.getValue().mass);
-}
 
 template <> SOFA_COMPONENT_MASS_API
     void UniformMass<Vec6fTypes, float>::draw()

@@ -54,7 +54,7 @@ namespace sofa
 
           virtual void reinit();
 
-          // TODO 
+          // TODO
           // if attributes are not static, need to update buffer
           bool updateABO();
 
@@ -64,7 +64,10 @@ namespace sofa
           void setValue( const ResizableExtVector<DataTypes>& value);
           void enable();
           void disable();
-          virtual void draw();
+          virtual void bwdDraw(Pass);
+          virtual void fwdDraw(Pass);
+
+		  void setUsage(unsigned int usage) { _usage = usage; }
 
           // handle topological changes
           virtual void handleTopologyChange();
@@ -76,7 +79,7 @@ namespace sofa
             // memory index of the attribute into the graphics memory
             GLuint _index;
 
-            unsigned int usage;
+            unsigned int _usage;
 
             Data<ResizableExtVector<DataTypes> > value;
 

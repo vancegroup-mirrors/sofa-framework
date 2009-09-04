@@ -176,25 +176,6 @@ namespace sofa
 	      _mapView = NULL;
 	      sphViewer = NULL;
 	    */
-	    _arrow = gluNewQuadric();
-	    gluQuadricDrawStyle(_arrow, GLU_FILL);
-	    gluQuadricOrientation(_arrow, GLU_OUTSIDE);
-	    gluQuadricNormals(_arrow, GLU_SMOOTH);
-
-	    _tube = gluNewQuadric();
-	    gluQuadricDrawStyle(_tube, GLU_FILL);
-	    gluQuadricOrientation(_tube, GLU_OUTSIDE);
-	    gluQuadricNormals(_tube, GLU_SMOOTH);
-
-	    _sphere = gluNewQuadric();
-	    gluQuadricDrawStyle(_sphere, GLU_FILL);
-	    gluQuadricOrientation(_sphere, GLU_OUTSIDE);
-	    gluQuadricNormals(_sphere, GLU_SMOOTH);
-
-	    _disk = gluNewQuadric();
-	    gluQuadricDrawStyle(_disk, GLU_FILL);
-	    gluQuadricOrientation(_disk, GLU_OUTSIDE);
-	    gluQuadricNormals(_disk, GLU_SMOOTH);
 
 	    // init trackball rotation matrix / quaternion
 	    _newTrackball.ComputeQuaternion(0.0, 0.0, 0.0, 0.0);
@@ -217,9 +198,7 @@ namespace sofa
 #endif // TRACKING
 	    _mouseInteractorTrackball.ComputeQuaternion(0.0, 0.0, 0.0, 0.0);
 	    _mouseInteractorNewQuat = _mouseInteractorTrackball.GetQuaternion();
-
-	    interactor = NULL;
-
+       
 	  }
 
 
@@ -332,6 +311,28 @@ namespace sofa
 		//glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		//glEnable(GL_COLOR_MATERIAL);
+
+		//init Quadrics
+	    _arrow = gluNewQuadric();
+	    gluQuadricDrawStyle(_arrow, GLU_FILL);
+	    gluQuadricOrientation(_arrow, GLU_OUTSIDE);
+	    gluQuadricNormals(_arrow, GLU_SMOOTH);
+
+	    _tube = gluNewQuadric();
+	    gluQuadricDrawStyle(_tube, GLU_FILL);
+	    gluQuadricOrientation(_tube, GLU_OUTSIDE);
+	    gluQuadricNormals(_tube, GLU_SMOOTH);
+
+	    _sphere = gluNewQuadric();
+	    gluQuadricDrawStyle(_sphere, GLU_FILL);
+	    gluQuadricOrientation(_sphere, GLU_OUTSIDE);
+	    gluQuadricNormals(_sphere, GLU_SMOOTH);
+
+	    _disk = gluNewQuadric();
+	    gluQuadricDrawStyle(_disk, GLU_FILL);
+	    gluQuadricOrientation(_disk, GLU_OUTSIDE);
+	    gluQuadricNormals(_disk, GLU_SMOOTH);
+
 
 		// change status so we only do this stuff once
 		initialized = true;
@@ -1472,8 +1473,6 @@ namespace sofa
 	      }
 	    else
 	      {
-		if (interactor!=NULL)
-		  interactor->newEvent("hide");
 		switch (e->type())
 		  {
 		  case QEvent::MouseButtonPress:
@@ -1612,9 +1611,12 @@ namespace sofa
 	    transform[2][3] = p0[2];
 	    Mat3x3d mat; mat = transform;
 	    Quat q; q.fromMatrix(mat);
-	    //std::cout << p0[0]<<' '<<p0[1]<<' '<<p0[2] << " -> " << pz[0]<<' '<<pz[1]<<' '<<pz[2] << std::endl;
-	    interactor->newPosition(p0, q, transform);
-	    interactor->setRayRadius(r0, r1);
+
+            Vec3d position, direction;
+            position  = transform*Vec4d(0,0,0,1);
+            direction = transform*Vec4d(0,0,1,0);
+            direction.normalize();
+            pick.updateRay(position, direction);
 	  }
 
 	  // -------------------------------------------------------------------
@@ -1750,7 +1752,7 @@ namespace sofa
 		  texLogo = new helper::gl::Texture(new helper::io::ImageBMP( sofa::helper::system::DataRepository.getFile(imageFileName) ));
 		  texLogo->init();
 	  }
-	  
+
 
 	  QString QtViewer::helpString()
 	  {

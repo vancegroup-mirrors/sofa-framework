@@ -119,6 +119,42 @@ namespace topology
 		sofa::helper::vector<unsigned int> removedTrianglesArray;
 	};
 
+
+	/** indicates that some triangles are about to be moved (i.e some/all of their vertices have just been moved)
+	 * TrianglesMoved_Removing First part, remove element concerned to force object to recompute global state with current positions
+	 */
+	class TrianglesMoved_Removing : public core::componentmodel::topology::TopologyChange  
+	{
+	public:
+	  TrianglesMoved_Removing (const sofa::helper::vector< unsigned int >& triangleShell)
+	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::TRIANGLESMOVED_REMOVING),
+	    trianglesAroundVertexMoved (triangleShell)
+	  {}
+
+	public:
+	  sofa::helper::vector< unsigned int > trianglesAroundVertexMoved;
+	};
+
+	
+	/** indicates that some triangles are about to be moved (i.e some/all of their vertices have just been moved)
+	 * TrianglesMoved_Adding Second part, recompute state of all elements previously removed, with new positions points
+	 */
+	class TrianglesMoved_Adding : public core::componentmodel::topology::TopologyChange  
+	{
+	public:
+	  TrianglesMoved_Adding (const sofa::helper::vector< unsigned int >& triangleShell,
+				 const sofa::helper::vector< Triangle >& triangleArray)
+	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::TRIANGLESMOVED_ADDING),
+	    trianglesAroundVertexMoved (triangleShell), triangleArray2Moved (triangleArray)
+	  {}
+
+	public:
+	  sofa::helper::vector< unsigned int > trianglesAroundVertexMoved;
+	  const sofa::helper::vector< Triangle > triangleArray2Moved;
+	};
+
+	
+
 } // namespace topology
 
 } // namespace component

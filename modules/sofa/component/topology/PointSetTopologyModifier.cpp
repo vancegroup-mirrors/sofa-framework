@@ -38,43 +38,43 @@ namespace component
 namespace topology
 {
   SOFA_DECL_CLASS(PointSetTopologyModifier)
-  int PointSetTopologyModifierClass = core::RegisterObject("Point set topology modifier")	
+  int PointSetTopologyModifierClass = core::RegisterObject("Point set topology modifier")
     .add< PointSetTopologyModifier >();
 
 	using namespace std;
     using namespace sofa::defaulttype;
     using namespace sofa::core::componentmodel::behavior;
 
-	
+
 	void PointSetTopologyModifier::init()
 	{
-		core::componentmodel::topology::TopologyModifier::init();		
+		core::componentmodel::topology::TopologyModifier::init();
 		this->getContext()->get(m_container);
 	}
 
-	
-	void PointSetTopologyModifier::swapPoints(const int i1, const int i2) 
+
+	void PointSetTopologyModifier::swapPoints(const int i1, const int i2)
 	{
 		PointsIndicesSwap *e2 = new PointsIndicesSwap( i1, i2 );
-		addStateChange(e2);		
+		addStateChange(e2);
 		propagateStateChanges();
 
-		PointsIndicesSwap *e = new PointsIndicesSwap( i1, i2 ); 
+		PointsIndicesSwap *e = new PointsIndicesSwap( i1, i2 );
 		this->addTopologyChange(e);
 	}
 
-	
-	void PointSetTopologyModifier::addPointsProcess(const unsigned int nPoints) 
+
+	void PointSetTopologyModifier::addPointsProcess(const unsigned int nPoints)
 	{
 		m_container->addPoints(nPoints);
 	}
 
-	void PointSetTopologyModifier::addPointsWarning(const unsigned int nPoints, const bool addDOF) 
+	void PointSetTopologyModifier::addPointsWarning(const unsigned int nPoints, const bool addDOF)
 	{
 		if(addDOF)
-		{		                	   
+		{
 			PointsAdded *e2 = new PointsAdded(nPoints);
-			addStateChange(e2);		
+			addStateChange(e2);
 			propagateStateChanges();
 		}
 
@@ -83,16 +83,16 @@ namespace topology
 		this->addTopologyChange(e);
 	}
 
-	
-	void PointSetTopologyModifier::addPointsWarning(const unsigned int nPoints, 
+
+	void PointSetTopologyModifier::addPointsWarning(const unsigned int nPoints,
 		const sofa::helper::vector< sofa::helper::vector< unsigned int > > &ancestors,
-		const sofa::helper::vector< sofa::helper::vector< double       > >& coefs, 
-		const bool addDOF) 
+		const sofa::helper::vector< sofa::helper::vector< double       > >& coefs,
+		const bool addDOF)
 	{
 		if(addDOF)
-		{		                	   
+		{
 			PointsAdded *e2 = new PointsAdded(nPoints, ancestors, coefs);
-			addStateChange(e2);		
+			addStateChange(e2);
 			propagateStateChanges();
 		}
 
@@ -101,27 +101,46 @@ namespace topology
 		this->addTopologyChange(e);
 	}
 
-	
-	void PointSetTopologyModifier::removePointsWarning(sofa::helper::vector<unsigned int> &indices, 
-													const bool removeDOF) 
-	{ 
+
+	void PointSetTopologyModifier::movePointsProcess (const sofa::helper::vector <unsigned int>& id,
+                                                          const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+                                                          const sofa::helper::vector< sofa::helper::vector< double > >& coefs,
+                                                          const bool moveDOF)
+	{
+	  if(moveDOF)
+	  {
+	    PointsMoved *ev = new PointsMoved(id, ancestors, coefs);
+	    addStateChange(ev);
+	    propagateStateChanges();
+	  }
+
+	  // Warning that vertices just been moved
+	  PointsMoved *ev2 = new PointsMoved(id, ancestors, coefs);
+	  this->addTopologyChange(ev2);
+        }
+
+
+
+	void PointSetTopologyModifier::removePointsWarning(sofa::helper::vector<unsigned int> &indices,
+													const bool removeDOF)
+	{
 		// sort points so that they are removed in a descending order
-		std::sort( indices.begin(), indices.end(), std::greater<unsigned int>() );  
+		std::sort( indices.begin(), indices.end(), std::greater<unsigned int>() );
 
 		// Warning that these vertices will be deleted
 		PointsRemoved *e = new PointsRemoved(indices);
 		this->addTopologyChange(e);
 
 		if(removeDOF)
-		{		
+		{
 			PointsRemoved *e2 = new PointsRemoved(indices);
 			addStateChange(e2);
 		}
 	}
 
-	
+
 	void PointSetTopologyModifier::removePointsProcess(const sofa::helper::vector<unsigned int> & indices,
-																const bool removeDOF) 
+																const bool removeDOF)
 	{
 		if(removeDOF)
 		{
@@ -130,9 +149,9 @@ namespace topology
 		m_container->removePoints(indices.size());
 	}
 
-	
-	void PointSetTopologyModifier::renumberPointsWarning( const sofa::helper::vector<unsigned int> &index, 
-														const sofa::helper::vector<unsigned int> &inv_index, 
+
+	void PointSetTopologyModifier::renumberPointsWarning( const sofa::helper::vector<unsigned int> &index,
+														const sofa::helper::vector<unsigned int> &inv_index,
 														const bool renumberDOF)
 	{
 		// Warning that these vertices will be deleted
@@ -146,14 +165,14 @@ namespace topology
 		}
 	}
 
-	
-	void PointSetTopologyModifier::renumberPointsProcess( const sofa::helper::vector<unsigned int> &/*index*/, 
-														const sofa::helper::vector<unsigned int> &/*inv_index*/, 
-														const bool renumberDOF) 
+
+	void PointSetTopologyModifier::renumberPointsProcess( const sofa::helper::vector<unsigned int> &/*index*/,
+														const sofa::helper::vector<unsigned int> &/*inv_index*/,
+														const bool renumberDOF)
 	{
 		if(renumberDOF)
 		{
-			propagateStateChanges();		  								
+			propagateStateChanges();
 		}
 	}
 
@@ -182,7 +201,7 @@ namespace topology
 		m_container->resetStateChangeList();
 	}
 
-	void PointSetTopologyModifier::notifyEndingEvent() 
+	void PointSetTopologyModifier::notifyEndingEvent()
 	{
 		sofa::core::componentmodel::topology::EndingEvent *e=new sofa::core::componentmodel::topology::EndingEvent();
 		m_container->addTopologyChange(e);

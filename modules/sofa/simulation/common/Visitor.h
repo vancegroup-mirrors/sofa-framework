@@ -34,7 +34,7 @@
 #include <sofa/helper/set.h>
 #include <iostream>
 
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
 #include <sofa/helper/system/thread/CTime.h>
 #endif
 
@@ -49,12 +49,20 @@ class LocalStorage;
 /// Base class for visitors propagated recursively through the scenegraph
 class SOFA_SIMULATION_COMMON_API Visitor
 {
+protected:
+    bool prefetching;
 public:
-#ifdef DUMP_VISITOR_INFO   
+#ifdef SOFA_DUMP_VISITOR_INFO   
         typedef sofa::helper::system::thread::CTime CTime; 
-
-        Visitor() {enteringBase=NULL; infoPrinted=false; }
 #endif
+
+        Visitor()
+	: prefetching(false)
+	{
+#ifdef SOFA_DUMP_VISITOR_INFO   
+	    enteringBase=NULL; infoPrinted=false;
+#endif
+	}
 	virtual ~Visitor() {}
         typedef simulation::Node::ctime_t ctime_t;
 
@@ -162,6 +170,7 @@ public:
 	  // or if no tag is set to the visitor
 	bool testTags(core::objectmodel::BaseObject* obj)
 	{
+	    if (prefetching && !obj->canPrefetch()) return false;
 		if(subsetsToManage.empty())
 			return true;
 		else{
@@ -186,9 +195,10 @@ public:
 
 
 	/// Alias for context->executeVisitor(this)
-	void execute(core::objectmodel::BaseContext*);
+	virtual void execute(core::objectmodel::BaseContext* node, bool doPrefetch);
+	virtual void execute(core::objectmodel::BaseContext* node) { execute(node, false); }
 	ctime_t begin(simulation::Node* node, core::objectmodel::BaseObject*
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
                       obj
 #endif
                       );
@@ -216,7 +226,7 @@ public:
     Visitor& addTag(Tag t) { subsetsToManage.insert(t); return *this; }
     Visitor& removeTag(Tag t) { subsetsToManage.erase(t); return *this; }
 
-#ifdef DUMP_VISITOR_INFO
+#ifdef SOFA_DUMP_VISITOR_INFO
         //DEBUG Purposes
     static double getTimeSpent(ctime_t initTime, ctime_t endTime)
     {
@@ -226,40 +236,38 @@ public:
     
         static std::ostream *outputVisitor;  //Ouput stream to dump the info
         static bool printActivated;          //bool to know if the stream is opened or not
-        static unsigned int depthLevel;      //Level in the hierarchy
         static ctime_t initDumpTime;
+        static std::vector< ctime_t > initNodeTime;
 
         core::objectmodel::Base* enteringBase;
         bool infoPrinted;
 
-        ctime_t initVisitTime;
-        ctime_t initComponentTime;
-/*         std::list<ctime_t> initComponentTime; */
   public:
         static void startDumpVisitor(std::ostream *s, double time)
         {
-	  depthLevel=0;
           initDumpTime = sofa::helper::system::thread::CTime::getRefTime();
           printActivated=true; outputVisitor=s;
           std::string initDump;
           std::ostringstream ff; ff << "<TraceVisitor time=\"" << time << "\">\n";
-          dumpInfo(ff.str()); depthLevel++;
+          dumpInfo(ff.str()); 
         };
         static void stopDumpVisitor()
         {
           std::ostringstream s;
           s << "<TotalTime value=\"" << getTimeSpent(initDumpTime, sofa::helper::system::thread::CTime::getRefTime()) << "\" />\n";
           s << "</TraceVisitor>\n";
-          depthLevel--;  dumpInfo(s.str());
+          dumpInfo(s.str());
           printActivated=false;
-	  depthLevel=0;
         };
-        static void dumpInfo( const std::string &info){ if (printActivated) {(*outputVisitor) << info; outputVisitor->flush();}}
+
+        typedef std::vector< std::pair< std::string,std::string > > TRACE_ARGUMENT;
         static void printComment(const std::string &s) ;
-        static unsigned int getLevel(){return depthLevel;};
-        static void resetLevel(){depthLevel=0;};
+        static void printNode(const std::string &type, const std::string &name=std::string(), const TRACE_ARGUMENT &arguments=TRACE_ARGUMENT() ) ;
+        static void printCloseNode(const std::string &type) ;
         virtual void printInfo(const core::objectmodel::BaseContext* context, bool dirDown);
         void setNode(core::objectmodel::Base* c);
+ private:
+        static void dumpInfo( const std::string &info){ if (printActivated) {(*outputVisitor) << info; outputVisitor->flush();}}
 #endif
 };
 } // namespace simulation

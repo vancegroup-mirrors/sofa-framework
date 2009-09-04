@@ -35,6 +35,7 @@
 #include <sofa/core/objectmodel/Base.h>
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/defaulttype/SparseConstraintTypes.h>
 #include <iostream>
 
 namespace sofa
@@ -127,6 +128,10 @@ public:
     size_type size() const
     {
         return vectorSize;
+    }
+    size_type capacity() const
+    {
+        return allocSize;
     }
     bool empty() const
     {
@@ -332,6 +337,12 @@ public:
         return hostPointer[i];
     }
 
+    const T& getSingle ( size_type i ) const
+    {
+        copyToHostSingle(i);
+        return hostPointer[i];
+    }
+
     /// Output stream
     inline friend std::ostream& operator<< ( std::ostream& os, const CudaVector<T>& vec )
     {
@@ -382,6 +393,21 @@ protected:
 //#endif
         mycudaMemcpyHostToDevice ( devicePointer, hostPointer, vectorSize*sizeof ( T ) );
         deviceIsValid = true;
+    }
+    void copyToHostSingle(size_type i) const
+    {
+        if ( hostIsValid ) return;
+//#ifndef NDEBUG
+        if (mycudaVerboseLevel>=LOG_TRACE)
+        {
+            std::cout << "CUDA: GPU->CPU single copy of "<<sofa::core::objectmodel::Base::decodeTypeName ( typeid ( *this ) ) <<": "<<sizeof ( T ) <<" B"<<std::endl;
+            //sofa::helper::BackTrace::dump();
+        }
+//#endif
+	if (bufferObject)
+	    mapBuffer();
+        mycudaMemcpyDeviceToHost ( ((T*)hostPointer)+i, ((const T*)devicePointer)+i, sizeof ( T ) );
+        //hostIsValid = true;
     }
 #ifdef NDEBUG
     void checkIndex ( size_type ) const
@@ -683,36 +709,8 @@ public:
     static const DPos& getDPos(const Deriv& d) { return d; }
     static void setDPos(Deriv& d, const DPos& v) { d = v; }
 
-        /// Data Structure to store lines of the matrix L.
-        template <class T>
-        class SparseConstraint
-        {
-          public:
-          SparseConstraint(){};
-          void insert( unsigned int index, const T &value)
-          {
-            data[index] += value;
-          }
-          void set( unsigned int index, const T &value)
-          {
-            data[index] = value;
-          }
-          T& getDataAt(unsigned int index)
-            {
-              typename std::map< unsigned int, T >::iterator it = data.find(index);
-              static T zeroValue=T();
-              if (it != data.end()) return it->second;
-              else return zeroValue;
-            };
-
-          std::map< unsigned int, T > &getData() {return data;};
-          const std::map< unsigned int, T > &getData() const {return data;};
-        protected:
-          std::map< unsigned int, T > data;
-        };
-
-	typedef SparseConstraint<Coord> SparseVecCoord;
-	typedef SparseConstraint<Deriv> SparseVecDeriv;
+    typedef sofa::defaulttype::SparseConstraint<Coord> SparseVecCoord;
+    typedef sofa::defaulttype::SparseConstraint<Deriv> SparseVecDeriv;
 
         //! All the Constraints applied to a state Vector
         typedef    sofa::helper::vector<SparseVecDeriv> VecConst;
@@ -1026,36 +1024,8 @@ public:
 	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
 	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
 
-        /// Data Structure to store lines of the matrix L.
-        template <class T>
-        class SparseConstraint
-        {
-          public:
-          SparseConstraint(){};
-          void insert( unsigned int index, const T &value)
-          {
-            data[index] += value;
-          }
-          void set( unsigned int index, const T &value)
-          {
-            data[index] = value;
-          }
-          T& getDataAt(unsigned int index)
-            {
-              typename std::map< unsigned int, T >::iterator it = data.find(index);
-              static T zeroValue=T();
-              if (it != data.end()) return it->second;
-              else return zeroValue;
-            };
-
-          std::map< unsigned int, T > &getData() {return data;};
-          const std::map< unsigned int, T > &getData() const {return data;};
-        protected:
-          std::map< unsigned int, T > data;
-        };
-
-	typedef SparseConstraint<Coord> SparseVecCoord;
-	typedef SparseConstraint<Deriv> SparseVecDeriv;
+	typedef sofa::defaulttype::SparseConstraint<Coord> SparseVecCoord;
+	typedef sofa::defaulttype::SparseConstraint<Deriv> SparseVecDeriv;
 
 
     //! All the Constraints applied to a state Vector

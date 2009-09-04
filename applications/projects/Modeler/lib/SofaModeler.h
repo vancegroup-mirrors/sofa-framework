@@ -31,6 +31,8 @@
 
 #include "Modeler.h"
 #include "GraphModeler.h"
+#include "FilterLibrary.h"
+
 #include <map>
 #include <vector>
 #include <string>
@@ -39,7 +41,10 @@
 #include <sofa/gui/SofaGUI.h>
 #include <sofa/gui/qt/RealGUI.h>
 
+
+
 #ifdef SOFA_QT4
+#include "QSofaTreeLibrary.h"
 #include <Q3ListView>
 #include <Q3TextDrag>
 #include <QPushButton>
@@ -50,6 +55,7 @@
 #include <QComboBox>
 #include <Q3Process>
 #else
+#include "QSofaLibrary.h"
 #include <qlistview.h>
 #include <qdragobject.h>
 #include <qpushbutton.h>
@@ -77,8 +83,8 @@ namespace sofa
       typedef QPopupMenu Q3PopupMenu;
 #endif
 
-      typedef sofa::core::ObjectFactory::ClassEntry ClassInfo;
-      typedef sofa::core::ObjectFactory::Creator    ClassCreator;
+      typedef sofa::core::ObjectFactory::ClassEntry ClassEntry;
+      typedef sofa::core::ObjectFactory::Creator    Creator;
 
       using sofa::simulation::tree::GNode;
 
@@ -95,14 +101,12 @@ namespace sofa
 	  /// Create a new empty Tab
 	  void createTab();
 	  /// Change the content of the description box. Happens when the user has clicked on a component
- 	  void changeComponent(ClassInfo *currentComponent); 
+ 	  void changeComponent(const std::string &description); 
 	  void fileOpen(std::string filename);	
 	  void fileSave(std::string filename);  
 
 	  /// Change the name of the main window
 	  void changeNameWindow(std::string filename);
-	  /// From the name of the type of a component, gives serveral information
-	  ClassInfo* getInfoFromName(std::string name);
 	  /// Update the menu Recently Opened Files...
 	  void updateRecentlyOpened(std::string fileLoaded);
 
@@ -110,8 +114,6 @@ namespace sofa
 	  void loadPresetGraph(std::string);
 
 	  public slots:
-	  /// When dropping a dragged element, this method set the button pushed to its initial state
-	  void releaseButton();
 	  /// Change the state of the Undo button
 	  void updateUndo(bool v){this->editUndoAction->setEnabled(v);}
 	  /// Change the state of the Redo button
@@ -122,12 +124,16 @@ namespace sofa
 #else
 	  void changeInformation(QListViewItem *);
 #endif
-	  /// Change the main library label, it happens when the user open a new class of component from the library
-	  void changeLibraryLabel(int index);
 	  /// Dropping a Node in the Graph
 	  void newGNode();
-	  /// Dropping a component in the Graph
-	  void newComponent();	  
+
+          /// Reception of a click on the Sofa library
+          void componentDraggedReception( std::string description, std::string categoryName, std::string templateName, ClassEntry* componentEntry);
+          /// Build from scratch the Sofa Library
+          void rebuildLibrary();
+          /// when the GNodeButton is pressed
+          void pressedGNodeButton();
+
 
 	  //File Menu
 	  /// Creation of a new scene (new tab will be created)
@@ -187,7 +193,7 @@ namespace sofa
 	  void fileRecentlyOpened(int id);
 	  
 	  /// Filter in the library all the components containing the text written
-	  void searchText(const QString&);
+	  void searchText(const FilterQuery&);
 
 	  void changeSofaBinary();
 	  void GUIChanged();
@@ -196,51 +202,58 @@ namespace sofa
 
 	  ///display the plugin manager window, to add/remove some external dynamic libraries
 	  void showPluginManager();
-
-	  ///update the list of components available in Sofa
-	  void updateComponentList();
-
+          
 	protected:
+          //********************************************
+          //Left Part
+/*           QToolBox     *containerLibrary; */
+          SofaLibrary  *library;
+          FilterLibrary *filterLibrary;
+
+          //********************************************
+          //Right Part
 	  /// Widget containing all the graphs
 	  QTabWidget *sceneTab;	
 	  /// Current in-use graph 
 	  GraphModeler *graph; //currentGraph in Use
 	  /// Current opened Tab
 	  QWidget *tabGraph;
+
+
+          //********************************************
 	  /// Menu runSofa for the GUI
-	  std::vector< QAction* > listActionGUI;
+	  std::vector< QAction* > listActionGUI;         
 	  /// Menu preset
 	  Q3PopupMenu *preset;
 	  /// Menu containing the opened simulations in the Modeler
 	  Q3PopupMenu *windowMenu;
 	  /// Correspondance between a name clicked in the menu and a path to the preset
 	  std::map< std::string, std::string > mapPreset;
-	  /// Is ready to do a paste operation?
-	  bool isPasteReady;
-
-	  /// plugin manager window		
-	  SofaPluginManager* pluginManager;
 
 
-	  /// Main Sofa Ressources: contains all the component, with many info, and creators
-	  typedef std::map<  const QObject* , std::pair<ClassInfo*, QObject*> >::const_iterator libraryIterator;
- 	  std::map<  const QObject* , std::pair<ClassInfo*, QObject*> > mapComponents; 
-	  /// Number of components currently displayed in the library
-	  unsigned int displayComponents;
 	  /// Map between a tabulation from the modeler to an object of type GraphModeler
 	  std::map<  const QWidget*, GraphModeler*> mapGraph;
 	  /// Map between a tabulation from the modeler to a Sofa Application
 	  std::multimap<  const QWidget*, Q3Process*> mapSofa;
 	  /// Map between an index of tabulation to the tabulation itself
 	  std::map< int, QWidget*> mapWindow;
-	  /// Map between a widget corresponding to a tab of the library, and a pair of button and combo box, corresponding to a component and its template
-	  std::vector< std::multimap< QWidget*, std::pair< QPushButton*, QComboBox*> > > pages;
+
+
+
+	  /// Is ready to do a paste operation?
+	  bool isPasteReady;
+
+	  /// Number of components currently displayed in the library
+	  unsigned int displayComponents;
+
+
 	private:
 	  std::string sofaBinary;
 	  std::string presetPath;
 	  std::string examplePath;
 	  std::string binPath;
 	  char count;
+          std::vector< std::string > exampleFiles;
 	};
     }
   }

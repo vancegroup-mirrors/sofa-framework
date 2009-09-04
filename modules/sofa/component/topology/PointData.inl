@@ -145,6 +145,66 @@ namespace topology
 				 renumber( tab );
 				 break;
 			 }
+			 case core::componentmodel::topology::POINTSMOVED:
+			 {
+			   const sofa::helper::vector< unsigned int >& indexList = ( static_cast< const PointsMoved * >( *changeIt ) )->indicesList;
+			   const sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsMoved * >( *changeIt ) )->ancestorsList;
+			   sofa::helper::vector< sofa::helper::vector< double > > coefs = ( static_cast< const PointsMoved * >( *changeIt ) )->baryCoefsList;
+			   sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+			   for (unsigned int i = 0; i <indexList.size(); i++)
+			   {
+			     m_destroyFunc( indexList[i], m_destroyParam, data[indexList[i]] );  
+			     m_createFunc( indexList[i], m_createParam, data[indexList[i]], ancestors[i], coefs[i] );
+			   }
+
+			   this->endEdit();
+			   break;
+			 }
+			 case core::componentmodel::topology::EDGESMOVED_REMOVING:
+			 {
+			   if (m_destroyEdgeFunc) 
+			   {
+			     const EdgesMoved_Removing *em=static_cast< const EdgesMoved_Removing * >( *changeIt );
+			     (*m_destroyEdgeFunc)(em->edgesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
+			     this->endEdit();
+			   }
+
+			   break;
+			 }
+			 case core::componentmodel::topology::EDGESMOVED_ADDING:
+			 {
+			   if (m_createEdgeFunc) 
+			   {
+			     const EdgesMoved_Adding *em=static_cast< const EdgesMoved_Adding* >( *changeIt );
+			     (*m_createEdgeFunc)(em->edgesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
+			     this->endEdit();
+			   }
+
+			   break;
+			 }
+			 case core::componentmodel::topology::TRIANGLESMOVED_REMOVING:
+			 {
+			   if (m_destroyTriangleFunc) 
+			   {
+			     const TrianglesMoved_Removing *tm=static_cast< const TrianglesMoved_Removing* >( *changeIt );
+			     (*m_destroyTriangleFunc)(tm->trianglesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
+			     this->endEdit();
+			   }
+			   
+			   break;
+			 }
+			 case core::componentmodel::topology::TRIANGLESMOVED_ADDING:
+			 {
+			   if (m_createTriangleFunc) 
+			   {
+			     const TrianglesMoved_Adding *tm=static_cast< const TrianglesMoved_Adding * >( *changeIt );
+			     (*m_createTriangleFunc)(tm->trianglesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
+			     this->endEdit();
+			   }
+
+			   break;
+			 }
 			 default:
 				 // Ignore events that are not point related.
 				 break;

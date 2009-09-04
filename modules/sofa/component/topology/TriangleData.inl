@@ -71,7 +71,7 @@ namespace topology
 				break;
 			}		
 			case core::componentmodel::topology::TRIANGLESADDED:
-			{
+			  {
 				const TrianglesAdded *ta = static_cast< const TrianglesAdded * >( *changeIt );
 				add( ta->getNbAddedTriangles(), ta->triangleArray, ta->ancestorsList, ta->coefs );
 				break;
@@ -83,7 +83,38 @@ namespace topology
 				remove( tab );
 				break;
 			}
+			case core::componentmodel::topology::TRIANGLESMOVED_REMOVING:
+			{
+			  const sofa::helper::vector< unsigned int >& triList = ( static_cast< const TrianglesMoved_Removing *>( *changeIt ) )->trianglesAroundVertexMoved;
+			  sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			  
+			  for (unsigned int i = 0; i <triList.size(); i++)
+			    m_destroyFunc( triList[i], m_destroyParam, data[triList[i]] );
 
+			  this->endEdit();
+			  break;
+			}
+			case core::componentmodel::topology::TRIANGLESMOVED_ADDING:
+			{
+			  const sofa::helper::vector< unsigned int >& triList = ( static_cast< const TrianglesMoved_Adding *>( *changeIt ) )->trianglesAroundVertexMoved;
+			  const sofa::helper::vector< Triangle >& triArray = ( static_cast< const TrianglesMoved_Adding *>( *changeIt ) )->triangleArray2Moved;
+			  sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+
+			  // Recompute data
+			  sofa::helper::vector< unsigned int > ancestors;
+			  sofa::helper::vector< double >  coefs;
+			  coefs.push_back (1.0);
+			  ancestors.resize(1);
+			  
+			  for (unsigned int i = 0; i <triList.size(); i++)
+			  {
+			    ancestors[0] = triList[i];
+			    m_createFunc( triList[i], m_createParam, data[triList[i]], triArray[i], ancestors, coefs );
+			  }
+			  
+			  this->endEdit();
+			  break;
+			}
 			default:
 			// Ignore events that are not Triangle or Point related.
 			break;

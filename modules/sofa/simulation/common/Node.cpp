@@ -42,8 +42,6 @@
 #include <sofa/simulation/common/VisualVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
 #include <iostream>
-using std::cerr;
-using std::endl;
 
 #include <boost/graph/adjacency_list.hpp>
 //#include <sofa/core/objectmodel/BaseObject.h>
@@ -55,6 +53,8 @@ namespace sofa
 
 namespace simulation
 {
+using std::cerr;
+using std::endl;
 using core::objectmodel::BaseNode;
 using core::objectmodel::BaseObject;
 using helper::system::thread::CTime;
@@ -107,22 +107,6 @@ void Node::glDraw()
 }
 
 
-
-void Node::addChild(Node* )
-{
-  serr << "addChild NOT IMPLEMENTED" << sendl;
-}
-
-void Node::removeChild(Node* )
-{
-  serr << "removeChild NOT IMPLEMENTED" << sendl;
-}
-
-void Node::moveChild(Node* )
-{
-  serr << "moveChild NOT IMPLEMENTED" << sendl;
-}
-
 /// Add an object. Detect the implemented interfaces and add the object to the corresponding lists.
 bool Node::addObject(BaseObject* obj)
 {
@@ -155,6 +139,64 @@ void Node::moveObject(BaseObject* obj)
         doAddObject(obj);
     }
 }
+
+
+
+  void Node::notifyAddChild(Node* node)
+  {
+    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
+      (*it)->addChild(this, node);
+  }
+
+
+  void Node::notifyRemoveChild(Node* node)
+  {
+	for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
+		(*it)->removeChild(this, node);
+  }
+
+
+  void Node::notifyMoveChild(Node* node, Node* prev)
+  {
+	for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
+		(*it)->moveChild(prev, this, node);
+  }
+
+
+  void Node::notifyAddObject(core::objectmodel::BaseObject* obj)
+  {
+    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
+      (*it)->addObject(this, obj);
+  }
+
+  void Node::notifyRemoveObject(core::objectmodel::BaseObject* obj)
+  {
+    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
+      (*it)->removeObject(this, obj);
+  }
+
+  void Node::notifyMoveObject(core::objectmodel::BaseObject* obj, Node* prev)
+  {
+    for (Sequence<MutationListener>::iterator it = listener.begin(); it != listener.end(); ++it)
+      (*it)->moveObject(prev, this, obj);
+  }
+
+
+void Node::addListener(MutationListener* obj)
+{
+    // make sure we don't add the same listener twice
+    Sequence< MutationListener >::iterator it = listener.begin();
+    while (it != listener.end() && (*it)!=obj)
+        ++it;
+    if (it == listener.end())
+        listener.add(obj);
+}
+
+void Node::removeListener(MutationListener* obj)
+{
+    listener.remove(obj);
+}
+
 
 /// Find an object given its name
 core::objectmodel::BaseObject* Node::getObject(const std::string& name) const
@@ -253,30 +295,87 @@ void Node::doRemoveObject(BaseObject* obj)
 }
 
 
-
 /// Topology
 core::componentmodel::topology::Topology* Node::getTopology() const
 {
-    return this->topology;
+    // return this->topology;
+    if (this->topology)
+        return this->topology;
+    else
+        return get<core::componentmodel::topology::Topology>();
 }
 
 /// Mesh Topology (unified interface for both static and dynamic topologies)
 core::componentmodel::topology::BaseMeshTopology* Node::getMeshTopology() const
 {
-    return this->meshTopology;
+    if (this->meshTopology)
+        return this->meshTopology;
+    else
+        return get<core::componentmodel::topology::BaseMeshTopology>();
 }
 
 /// Shader
 core::objectmodel::BaseObject* Node::getShader() const
 {
-    return shader;
+    if (shader)
+        return shader;
+    else
+        return get<core::Shader>();
 }
 
 /// Mechanical Degrees-of-Freedom
 core::objectmodel::BaseObject* Node::getMechanicalState() const
 {
-    return this->mechanicalState;
+    // return this->mechanicalModel;
+ 	if (this->mechanicalState)
+		return this->mechanicalState;
+        else
+          return get<core::componentmodel::behavior::BaseMechanicalState>();
 }
+
+
+
+/// Find a child node given its name
+Node* Node::getChild(const std::string& name) const
+{
+  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
+    if ((*it)->getName() == name)
+      return (*it);
+  return NULL;
+}
+  
+/// Get a descendant node given its name
+Node* Node::getTreeNode(const std::string& name) const
+{
+  Node* result = NULL;
+  result = getChild(name);
+  for (ChildIterator it = child.begin(), itend = child.end(); result == NULL && it != itend; ++it)
+    result = (*it)->getTreeNode(name);
+  return result;
+}
+
+sofa::helper::vector< core::objectmodel::BaseNode* > Node::getChildren()
+{
+  sofa::helper::vector< core::objectmodel::BaseNode* > list_children;
+  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
+    {
+      list_children.push_back((*it));
+    }
+  return list_children;
+}
+
+/// Get parent node (or NULL if no hierarchy or for root node)
+const sofa::helper::vector< core::objectmodel::BaseNode* > Node::getChildren() const
+{
+  sofa::helper::vector< core::objectmodel::BaseNode* > list_children;
+  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
+    {
+      list_children.push_back((*it));
+    }
+  return list_children;
+}
+
+
 
 
 void Node::setLogTime(bool b)
@@ -434,23 +533,22 @@ void Node::initialize()
 
 void Node::updateContext()
 {
-
-        for ( unsigned i=0; i<contextObject.size(); ++i )
-        {
-            contextObject[i]->init();
-            contextObject[i]->apply();
-            //cerr<<"Node::updateContext, modified by node = "<<contextObject[i]->getName()<<endl;
-        }
-
-    if ( debug_ ) std::cerr<<"Node::updateContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
+  updateSimulationContext();
+  updateVisualContext();
+  if ( debug_ ) std::cerr<<"Node::updateContext, node = "<<getName()<<", updated context = "<< *static_cast<core::objectmodel::Context*>(this) << endl;
 }
 
 void Node::updateSimulationContext()
 {
-    updateContext();
+  for ( unsigned i=0; i<contextObject.size(); ++i )
+    {
+      contextObject[i]->init();
+      contextObject[i]->apply();
+//       cerr<<"Node::updateContext, modified by node = "<<contextObject[i]->getName()<<endl;
+    }
 }
 
-void Node::updateVisualContext(int/* FILTER*/)
+void Node::updateVisualContext(VISUAL_FLAG/* FILTER*/)
 {
     // Apply local modifications to the context
     if (getLogTime())

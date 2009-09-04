@@ -78,7 +78,7 @@ void SolverImpl::v_eq(VecId v, VecId a) ///< v=a
 
 void SolverImpl::v_peq(VecId v, VecId a, double f) ///< v+=f*a
 {
-    MechanicalVOpVisitor(v,v,a,f).setTags(this->getTags()).execute( getContext() );
+    MechanicalVOpVisitor(v,v,a,f).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 }
 void SolverImpl::v_teq(VecId v, double f) ///< v*=f
 {
@@ -86,13 +86,13 @@ void SolverImpl::v_teq(VecId v, double f) ///< v*=f
 }
 void SolverImpl::v_op(VecId v, VecId a, VecId b, double f) ///< v=a+b*f
 {
-    MechanicalVOpVisitor(v,a,b,f).setTags(this->getTags()).execute( getContext() );
+    MechanicalVOpVisitor(v,a,b,f).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 }
 
 void SolverImpl::v_dot(VecId a, VecId b) ///< a dot b ( get result using finish )
 {
     result = 0;
-    MechanicalVDotVisitor(a,b,&result).setTags(this->getTags()).execute( getContext() );
+    MechanicalVDotVisitor(a,b,&result).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 }
 
 void SolverImpl::v_threshold(VecId a, double t)
@@ -107,7 +107,7 @@ void SolverImpl::propagateDx(VecId dx)
 
 void SolverImpl::propagateDxAndResetDf(VecId dx, VecId df)
 {
-    MechanicalPropagateDxAndResetForceVisitor(dx,df).setTags(this->getTags()).execute( getContext() );
+    MechanicalPropagateDxAndResetForceVisitor(dx,df).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
     finish();
 }
 
@@ -146,10 +146,10 @@ void SolverImpl::computeForce(VecId result, bool clear, bool accumulate)
 {
     if (clear)
     {
-	MechanicalResetForceVisitor(result, false).setTags(this->getTags()).execute( getContext());
+	MechanicalResetForceVisitor(result, false).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 	finish();
     }
-    MechanicalComputeForceVisitor(result, accumulate).setTags(this->getTags()).execute( getContext() );
+    MechanicalComputeForceVisitor(result, accumulate).setTags(this->getTags()).execute( getContext() , true ); // enable prefetching
 }
 
 void SolverImpl::computeDf(VecId df, bool clear, bool accumulate)
@@ -179,7 +179,7 @@ void SolverImpl::addMBKdx(VecId df, double m, double b, double k, bool clear, bo
 	MechanicalResetForceVisitor(df, true).setTags(this->getTags()).execute( getContext() );
 	finish();
     }
-    MechanicalAddMBKdxVisitor(df,m,b,k, false, accumulate).setTags(this->getTags()).execute( getContext() );
+    MechanicalAddMBKdxVisitor(df,m,b,k, false, accumulate).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 }
 
 void SolverImpl::addMBKv(VecId df, double m, double b, double k, bool clear, bool accumulate)

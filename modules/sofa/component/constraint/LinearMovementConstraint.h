@@ -33,6 +33,8 @@
 #include <sofa/defaulttype/BaseVector.h>
 #include <sofa/helper/vector.h>
 #include <sofa/component/topology/PointSubset.h>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 #include <set>
 
 namespace sofa
@@ -120,7 +122,36 @@ protected:
 	/// Define RemovalFunction (for topology changes)
 	static void FCRemovalFunction ( int , void*);
 
+private:
+
+  /// to keep the time corresponding to the key times
+  Real currentTime;
+
+  /// to know if we found the key times
+  bool finished;
+
+  /// find previous and next time keys
+  void findKeyTimes();
 };
+
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_CPP)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec6dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Rigid3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Vec6fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API LinearMovementConstraint<defaulttype::Rigid3fTypes>;
+#endif
+#endif
+
 
 } // namespace constraint
 

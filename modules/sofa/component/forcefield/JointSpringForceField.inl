@@ -50,17 +50,19 @@ namespace forcefield
 template<class DataTypes>
 JointSpringForceField<DataTypes>::JointSpringForceField(MechanicalState* object1, MechanicalState* object2)
 : Inherit(object1, object2)
-  , springs(initData(&springs,"spring","pairs of indices, stiffness, damping, rest length"))
-  , showLawfulTorsion(initData(&showLawfulTorsion, false, "show lawful Torsion", "dislpay the lawful part of the joint rotation"))
-  , showExtraTorsion(initData(&showExtraTorsion, false, "show illicit Torsion", "dislpay the illicit part of the joint rotation"))
+, springs(initData(&springs,"spring","pairs of indices, stiffness, damping, rest length"))
+, showLawfulTorsion(initData(&showLawfulTorsion, false, "showLawfulTorsion", "display the lawful part of the joint rotation"))
+, showExtraTorsion(initData(&showExtraTorsion, false, "showExtraTorsion", "display the illicit part of the joint rotation"))
+, showFactorSize(initData(&showFactorSize, 1.0f, "showFactorSize", "modify the size of the debug information of a given factor" ))
 {
 }
 	
 template<class DataTypes>
 JointSpringForceField<DataTypes>::JointSpringForceField()
 : springs(initData(&springs,"spring","pairs of indices, stiffness, damping, rest length"))
-, showLawfulTorsion(initData(&showLawfulTorsion, false, "show lawful Torsion", "dislpay the lawful part of the joint rotation"))
-, showExtraTorsion(initData(&showExtraTorsion, false, "show illicit Torsion", "dislpay the illicit part of the joint rotation"))
+, showLawfulTorsion(initData(&showLawfulTorsion, false, "showLawfulTorsion", "display the lawful part of the joint rotation"))
+, showExtraTorsion(initData(&showExtraTorsion, false, "showExtraTorsion", "display the illicit part of the joint rotation"))
+, showFactorSize(initData(&showFactorSize, 1.0f, "showFactorSize", "modify the size of the debug information of a given factor" ))
 {
 }
 
@@ -70,17 +72,36 @@ JointSpringForceField<DataTypes>::~JointSpringForceField()
 }
 
 template <class DataTypes>
-void JointSpringForceField<DataTypes>::init()
+void JointSpringForceField<DataTypes>::bwdInit()
 {
-    this->Inherit::init();
+  this->Inherit::bwdInit();
+  
+  const VecCoord& x1= *this->mstate1->getX();
+
+  const VecCoord& x2= *this->mstate2->getX();
+  sofa::helper::vector<Spring> &springsVector=*(springs.beginEdit());
+  for (unsigned int i=0;i<springs.getValue().size();++i)
+    {
+      Spring &s=springsVector[i];
+      if (s.needToInitializeTrans)
+        {
+          s.initTrans = x2[s.m2].getCenter() - x1[s.m1].getCenter();
+        }
+      if (s.needToInitializeRot)
+        {
+          s.initRot   = x2[s.m2].getOrientation()*x1[s.m1].getOrientation().inverse();
+        }
+    }
+  springs.endEdit();
 }
+
 
 template<class DataTypes>
 void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy*/, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int , /*const*/ Spring& spring)
 {
 	int a = spring.m1;
-    int b = spring.m2;
-
+        int b = spring.m2;
+    
 	Mat Mr01, Mr10;
 	p1[a].writeRotationMatrix(Mr01);
 	invertMatrix(Mr10, Mr01);
@@ -145,7 +166,9 @@ void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy
 	const Deriv force(fT0, fR0 );
 	//affect forces
 	f1[a] += force;
+        this->mask1->insertEntry(a);
 	f2[b] -= force;
+        this->mask2->insertEntry(b);
 
 }
 
@@ -242,20 +265,20 @@ void JointSpringForceField<DataTypes>::draw()
 		glEnd();
 
 		if(springs[i].freeMovements[3] == 1){
-			helper::gl::Cylinder::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation(), Vector(1,0,0));
+			helper::gl::Cylinder::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation(), Vector((Real)(1.0*showFactorSize.getValue()),0,0));
 		}
 		if(springs[i].freeMovements[4] == 1){
-			helper::gl::Cylinder::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation(), Vector(0,1,0));
+			helper::gl::Cylinder::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation(), Vector(0,1*showFactorSize.getValue(),0));
 		}
 		if(springs[i].freeMovements[5] == 1){
-			helper::gl::Cylinder::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation(), Vector(0,0,1));
+			helper::gl::Cylinder::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation(), Vector(0,0,1*showFactorSize.getValue()));
 		}
 
 		//---debugging
 		if (showLawfulTorsion.getValue())
-			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].lawfulTorsion, 0.5);
+			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].lawfulTorsion, 0.5*showFactorSize.getValue());
 		if (showExtraTorsion.getValue())
-			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].extraTorsion, 0.5);
+			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].extraTorsion, 0.5*showFactorSize.getValue());
 	}
 
 }

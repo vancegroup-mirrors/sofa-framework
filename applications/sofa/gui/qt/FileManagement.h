@@ -27,6 +27,7 @@
 #ifndef SOFA_GUI_FILEMANAGEMENT_H
 #define SOFA_GUI_FILEMANAGEMENT_H
 
+#include <vector>
 
 #ifdef SOFA_QT4
 #include <Q3FileDialog>
@@ -55,6 +56,9 @@ namespace sofa
       
       QString getSaveFileName ( QWidget* parent, const QString & startWith = QString(), const QString & filter = QString(), const char * name = 0, const QString & caption = QString(), QString * selectedFilter = 0 );
       
+
+      void getFilesInDirectory( const QString &path, std::vector< QString > &files, bool recursive=true, const std::vector< QString > &filter=std::vector< QString >() );
+
     } // namespace qt
 
   } // namespace gui

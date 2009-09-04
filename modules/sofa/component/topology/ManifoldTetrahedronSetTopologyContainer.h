@@ -39,23 +39,23 @@ namespace sofa
 
       using core::componentmodel::topology::BaseMeshTopology;
 
-      typedef BaseMeshTopology::PointID		PointID;
-      typedef BaseMeshTopology::EdgeID		EdgeID;
-      typedef BaseMeshTopology::TriangleID	TriangleID;
-      typedef BaseMeshTopology::TetraID		TetraID;
-      typedef BaseMeshTopology::Edge		Edge;
-      typedef BaseMeshTopology::Triangle	Triangle;
-      typedef BaseMeshTopology::Tetra		Tetra;
-      typedef BaseMeshTopology::SeqTetras	SeqTetras;
-      typedef BaseMeshTopology::VertexTetras	VertexTetras;
-      typedef BaseMeshTopology::EdgeTetras	EdgeTetras;
-      typedef BaseMeshTopology::TriangleTetras	TriangleTetras;
-      typedef BaseMeshTopology::TetraEdges	TetraEdges;
-      typedef BaseMeshTopology::TetraTriangles	TetraTriangles;
+      typedef BaseMeshTopology::PointID	                     	PointID;
+      typedef BaseMeshTopology::EdgeID		                EdgeID;
+      typedef BaseMeshTopology::TriangleID               	TriangleID;
+      typedef BaseMeshTopology::TetraID	                  	TetraID;
+      typedef BaseMeshTopology::Edge                    	Edge;
+      typedef BaseMeshTopology::Triangle                 	Triangle;
+      typedef BaseMeshTopology::Tetra        	        	Tetra;
+      typedef BaseMeshTopology::SeqTetrahedra           	SeqTetrahedra;
+      typedef BaseMeshTopology::TetrahedraAroundVertex          TetrahedraAroundVertex;
+      typedef BaseMeshTopology::TetrahedraAroundEdge     	TetrahedraAroundEdge;
+      typedef BaseMeshTopology::TetrahedraAroundTriangle	TetrahedraAroundTriangle;
+      typedef BaseMeshTopology::EdgesInTetrahedron       	EdgesInTetrahedron;
+      typedef BaseMeshTopology::TrianglesInTetrahedron      	TrianglesInTetrahedron;
 
       typedef Tetra		Tetrahedron;
-      typedef TetraEdges	TetrahedronEdges;
-      typedef TetraTriangles	TetrahedronTriangles;
+      typedef EdgesInTetrahedron	EdgesInTetrahedron;
+      typedef TrianglesInTetrahedron	TrianglesInTetrahedron;
 
       
       /** a class that stores a set of tetrahedra and provides access with adjacent triangles, edges and vertices */
@@ -64,89 +64,86 @@ namespace sofa
 	friend class TetrahedronSetTopologyModifier; // To be change to manifold one
         
       public:
-	typedef Tetra		Tetrahedron;
-	typedef TetraEdges	TetrahedronEdges;
-	typedef TetraTriangles	TetrahedronTriangles;
 
 	ManifoldTetrahedronSetTopologyContainer();
 
 	ManifoldTetrahedronSetTopologyContainer(const sofa::helper::vector< Tetrahedron >& tetrahedra );
 
 	virtual ~ManifoldTetrahedronSetTopologyContainer(){}
+
+	virtual void init();
+	virtual void reinit();
+
 	
 	/// Procedural creation methods
 	/// @{
 	virtual void clear();
 	/// @}
 
-	virtual void init();
-
-	virtual void reinit();
-		
-	/// BaseMeshTopology API
-	/// @{
-
-	/// @}
 
 	/** \brief Checks if the topology is coherent
 	 *
-	 * Check if the shell arrays are coherent
+	 * TODO: like in ManifoldTriangles, test the topology
 	 */
 	virtual bool checkTopology() const;
 	/** \brief Returns the Tetrahedron array.
 	 *
 	 */
 
-	virtual void draw();
-	
-
-      protected:
-
-	Data<bool> debugViewIndices;
-	Data<bool> debugViewIndicesTetra;
-	Data<bool> shellDisplay;
-	
-	/** \brief Creates the Tetrahedron Vertex Shell Array
-	 *
-	 * This function is only called if the TetrahedronVertexShell array is required.
-	 * m_tetrahedronVertexShell[i] contains the indices of all tetrahedra adjacent to the ith vertex 
-	 */
-	virtual void createTetrahedronVertexShellArray();
-
-	/** \brief Creates the Tetrahedron Edge Shell Array
-	 *
-	 * This function is only called if the TetrahedronEdheShell array is required.
-	 * m_tetrahedronEdgeShell[i] contains the indices of all tetrahedra adjacent to the ith edge 
-	 */
-	virtual void createTetrahedronEdgeShellArray();
-
-	/** \brief Creates the Tetrahedron Triangle Shell Array
-	 *
-	 * This function is only called if the TetrahedronTriangleShell array is required.
-	 * m_tetrahedronTriangleShell[i] contains the indices of all tetrahedra adjacent to the ith edge 
-	 */
-	virtual void createTetrahedronTriangleShellArray();
-
 	/** \brief return if the tetrahedron is ine the same orientation as the one of reference
-	 * 1 if tetrahedrons have same orientation
-	 * 0 if tetrahedrons don't have same orientation
-	 * -1 if tetrahedrons don't share the same 4 vertices
+	 *
+	 * @param Ref to the tetrahedron of reference
+	 * @parem Ref to the tetrahedron to test.
+	 * @return 1 if tetrahedrons have same orientation
+	 * @return 0 if tetrahedrons don't have same orientation
+	 * @return -1 if tetrahedrons don't share the same 4 vertices
 	 */
 	int getTetrahedronOrientation(const Tetrahedron &t, const Tetrahedron &t_test );
 
 	/** \brief return the orientation of a triangle relatively to one tetrahedron
-	 * 1 if good orientation
-	 * 0 if other orientation
-	 * -1 if triangle does'nt belongs to this tetrahedron
+	 *
+	 * @param Ref to the tetrahedron of reference
+	 * @parem Ref to the triangle to test.
+	 * @return 1 if good orientation
+	 * @return 0 if other orientation
+	 * @return -1 if triangle does'nt belongs to this tetrahedron
 	 */
 	int getTriangleTetrahedronOrientation(const Tetrahedron &t, const Triangle &tri );
-	
-      private:
 
 	
-
 
       protected:
+
+	/** \brief Creates the Tetrahedron Vertex Shell Array
+	 *
+	 * This function is only called if the TetrahedraAroundVertex array is required.
+	 * m_tetrahedraAroundVertex[i] contains the indices of all tetrahedra adjacent to the ith vertex 
+	 */
+	virtual void createTetrahedraAroundVertexArray();
+
+	/** \brief Creates the Tetrahedron Edge Shell Array
+	 *
+	 * This function is only called if the TetrahedronEdheShell array is required.
+	 * m_tetrahedraAroundEdge[i] contains the indices of all tetrahedra adjacent to the ith edge 
+	 */
+	virtual void createTetrahedraAroundEdgeArray();
+
+	/** \brief Creates the Tetrahedron Triangle Shell Array
+	 *
+	 * This function is only called if the TetrahedraAroundTriangle array is required.
+	 * m_tetrahedraAroundTriangle[i] contains the indices of all tetrahedra adjacent to the ith edge 
+	 */
+	virtual void createTetrahedraAroundTriangleArray();
+
+	
+      
+      protected:
+	
+	Data<bool> debugViewIndices;
+	Data<bool> debugViewIndicesTetra;
+	Data<bool> shellDisplay;
+	
+
       };
 
     } // namespace topology

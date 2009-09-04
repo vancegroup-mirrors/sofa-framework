@@ -41,9 +41,9 @@ namespace topology
 	typedef BaseMeshTopology::QuadID QuadID;
 	typedef BaseMeshTopology::Quad Quad;
 	typedef BaseMeshTopology::SeqQuads SeqQuads;
-	typedef BaseMeshTopology::VertexQuads VertexQuads;
-	typedef BaseMeshTopology::EdgeQuads EdgeQuads;
-	typedef BaseMeshTopology::QuadEdges QuadEdges;
+	typedef BaseMeshTopology::QuadsAroundVertex QuadsAroundVertex;
+	typedef BaseMeshTopology::QuadsAroundEdge QuadsAroundEdge;
+	typedef BaseMeshTopology::EdgesInQuad EdgesInQuad;
 	
 	/** 
 	* A class that modifies the topology by adding and removing quads

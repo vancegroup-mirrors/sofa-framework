@@ -85,20 +85,22 @@ public:
 class SOFA_COMPONENT_MISC_API CompareStateCreator: public Visitor
 {
 public:
-    CompareStateCreator() : sceneName(""), counterCompareState(0), createInMapping(false) {}
-    CompareStateCreator(std::string &n, bool i=true, int c=0 ) { sceneName=n;init=i; counterCompareState=c; }
+    CompareStateCreator();
+    CompareStateCreator(const std::string &n, bool i=true, int c=0);
     virtual Result processNodeTopDown( simulation::Node*  );
 
     void setSceneName(std::string &n) { sceneName = n; }
     void setCounter(int c) { counterCompareState = c; }
     void setCreateInMapping(bool b) { createInMapping=b; }
+    virtual const char* getClassName() const { return "CompareStateCreator"; }
 
 protected:
     void addCompareState(sofa::core::componentmodel::behavior::BaseMechanicalState *ms, simulation::Node* gnode);
-    bool init;
     std::string sceneName;
-    int counterCompareState; //avoid to have two same files if two mechanical objects has the same name
+    std::string extension;
     bool createInMapping;
+    bool init;
+    int counterCompareState; //avoid to have two same files if two mechanical objects has the same name
 };
 
 class SOFA_COMPONENT_MISC_API CompareStateResult: public Visitor
@@ -110,6 +112,7 @@ public:
     double getTotalError() { return error; }
     double getErrorByDof() { return errorByDof; }
     unsigned int getNumCompareState() { return numCompareState; }
+    virtual const char* getClassName() const { return "CompareStateResult"; }
 protected:
     double error;
     double errorByDof;

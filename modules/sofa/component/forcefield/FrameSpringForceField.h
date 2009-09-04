@@ -31,17 +31,17 @@
 #include <sofa/defaulttype/Vec.h>
 #include <vector>
 #include <sofa/defaulttype/Mat.h>
-using namespace sofa::defaulttype;
 
 namespace sofa
 {
-
+  
   namespace component
   {
 
     namespace forcefield
     {
 
+      using namespace sofa::defaulttype;
       template<class DataTypes>
       class FrameSpringForceFieldInternalData
       {

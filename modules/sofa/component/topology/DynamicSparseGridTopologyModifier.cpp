@@ -41,17 +41,16 @@ namespace sofa
               .add< DynamicSparseGridTopologyModifier >();
 
 
-
       void DynamicSparseGridTopologyModifier::init()
       {
         HexahedronSetTopologyModifier::init();
         this->getContext()->get ( m_DynContainer );
         if ( ! m_DynContainer )
         {
-          std::cerr << "ERROR in DynamicSparseGridTopologyModifier::init(): DynamicSparseGridTopologyContainer was not found !" << std::endl;
+          serr << "ERROR in DynamicSparseGridTopologyModifier::init(): DynamicSparseGridTopologyContainer was not found !" << sendl;
         }
+        everRenumbered = false;
       }
-
 
 
       //TODO// find a solution for this case !!!! Modifier can not access to the DOF and can not compute the indices of the added hexas.
@@ -83,7 +82,17 @@ namespace sofa
         m_DynContainer->idxInRegularGrid.endEdit();
       }
 
-      void DynamicSparseGridTopologyModifier::removeHexahedraWarning ( sofa::helper::vector<unsigned int> &hexahedra )
+
+      void DynamicSparseGridTopologyModifier::removeHexahedraProcess( const sofa::helper::vector<unsigned int> &indices, const bool removeIsolatedItems)
+      {
+      	if( !everRenumbered) renumberAttributes( indices);
+      	everRenumbered = false;
+
+      	HexahedronSetTopologyModifier::removeHexahedraProcess( indices, removeIsolatedItems);
+      }
+
+
+      void DynamicSparseGridTopologyModifier::renumberAttributes( const sofa::helper::vector<unsigned int> &hexahedra )
       {
         helper::vector<BaseMeshTopology::HexaID>& iirg = *m_DynContainer->idxInRegularGrid.beginEdit();
 
@@ -106,7 +115,7 @@ namespace sofa
           {
             regularG2Topo.erase( itMap);
           }
-          // Then, we change the id of the last elt moved in the topology. 
+          // Then, we change the id of the last elt moved in the topology.
           itMap = regularG2Topo.find( iirg[nbElt]);// Index in the regular grid of the last elt in the topology
           if( itMap != regularG2Topo.end())
           {
@@ -118,10 +127,10 @@ namespace sofa
         }
         iirg.resize( nbElt);
 
-       m_DynContainer->idInRegularGrid2IndexInTopo.endEdit();
-       m_DynContainer->idxInRegularGrid.endEdit();
-        HexahedronSetTopologyModifier::removeHexahedraWarning ( hexahedra );
+        m_DynContainer->idInRegularGrid2IndexInTopo.endEdit();
+        m_DynContainer->idxInRegularGrid.endEdit();
 
+        everRenumbered = true;
       }
 
     } // namespace topology

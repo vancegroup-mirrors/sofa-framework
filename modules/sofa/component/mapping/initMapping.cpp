@@ -72,7 +72,3 @@ SOFA_LINK_CLASS(SubsetMapping)
 SOFA_LINK_CLASS(TubularMapping)
 SOFA_LINK_CLASS(VoidMapping)
 
-
-#ifdef SOFA_HAVE_ARBORIS
-SOFA_LINK_CLASS(ArborisMapping)
-#endif //SOFA_HAVE_ARBORIS

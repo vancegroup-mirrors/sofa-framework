@@ -119,6 +119,25 @@ namespace topology
 	};
 
 
+	/** indicates that some points were moved */
+	class PointsMoved : public core::componentmodel::topology::TopologyChange
+	{
+	public:
+
+	  PointsMoved(const sofa::helper::vector<unsigned int>& indices,
+                      const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+                      const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs)
+	  : core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSMOVED)
+	  , indicesList(indices), ancestorsList(ancestors), baryCoefsList(baryCoefs)
+	  {}
+
+	public:
+          sofa::helper::vector<unsigned int> indicesList;
+          sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestorsList;
+          sofa::helper::vector< sofa::helper::vector< double > > baryCoefsList;
+	};
+
+
 } // namespace topology
 
 } // namespace component

@@ -244,7 +244,7 @@ SensAble::~SensAble()
 void SensAble::init()
 {
 	cout << "init called";
-	rigidModel = dynamic_cast<sofa::component::MechanicalObject<RigidTypes>*>(getContext()->getMechanicalState());
+	rigidModel = dynamic_cast<sofa::component::container::MechanicalObject<RigidTypes>*>(getContext()->getMechanicalState());
 	reinit();
 }
 

@@ -22,7 +22,6 @@ LIBS += -lsofacomponentfem$$LIBSUFFIX
 LIBS += -lsofacomponentinteractionforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentcontextobject$$LIBSUFFIX
 LIBS += -lsofacomponentbehaviormodel$$LIBSUFFIX
-LIBS += -lsofacomponentengine$$LIBSUFFIX
 LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
 LIBS += -lsofacomponentodesolver$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
@@ -34,6 +33,7 @@ LIBS += -lsofacomponentmapping$$LIBSUFFIX
 LIBS += -lsofacomponentconstraint$$LIBSUFFIX
 LIBS += -lsofacomponentcollision$$LIBSUFFIX
 LIBS += -lsofacomponentmisc$$LIBSUFFIX
+LIBS += -lsofacomponentengine$$LIBSUFFIX
 
 LIBS += $$SOFA_EXT_LIBS 
 

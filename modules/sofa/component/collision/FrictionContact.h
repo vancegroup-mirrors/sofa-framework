@@ -65,9 +65,9 @@ public:
 	}
 
 protected:
-	static unsigned int cpt;
-	unsigned int id;
-	static std::list<unsigned int> availableId;
+	static sofa::core::componentmodel::collision::DetectionOutput::ContactId cpt;
+	sofa::core::componentmodel::collision::DetectionOutput::ContactId id;
+	static std::list<sofa::core::componentmodel::collision::DetectionOutput::ContactId> availableId;
 };
 
 
@@ -91,14 +91,14 @@ protected:
 	CollisionModel1* model1;
 	CollisionModel2* model2;
 	Intersection* intersectionMethod;
-
+    bool selfCollision; ///< true if model1==model2 (in this case, only mapper1 is used)
 	ContactMapper<CollisionModel1,DataTypes1> mapper1;
 	ContactMapper<CollisionModel2,DataTypes2> mapper2;
 
 	constraint::UnilateralInteractionConstraint<Vec3Types>* c;
 	core::objectmodel::BaseContext* parent;
 
-	double mu;
+    Data<double> mu;
 
 public:
 
@@ -116,10 +116,10 @@ public:
 	void removeResponse();
 };
 
-long cantorPolynomia(unsigned long x, unsigned long y)
+long cantorPolynomia(sofa::core::componentmodel::collision::DetectionOutput::ContactId x, sofa::core::componentmodel::collision::DetectionOutput::ContactId y)
 {
 	// Polynome de Cantor de N� sur N bijectif f(x,y)=((x+y)^2+3x+y)/2
-	return ((x+y)*(x+y)+3*x+y)/2;
+  return (long)(((x+y)*(x+y)+3*x+y)/2);
 }
 
 } // collision

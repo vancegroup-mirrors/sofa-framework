@@ -44,7 +44,8 @@ using namespace core::componentmodel::behavior;
 SOFA_DECL_CLASS(SPHFluidSurfaceMapping)
 
 // Register in the Factory
-    int SPHFluidSurfaceMappingClass = core::RegisterObject("TODO-SPHFluidSurfaceMappingClass")
+int SPHFluidSurfaceMappingClass = core::RegisterObject("TODO-SPHFluidSurfaceMappingClass")
+.addAlias("MarchingCubeMapping")
 #ifndef SOFA_FLOAT
 .add< SPHFluidSurfaceMapping< State<Vec3dTypes>, MappedModel<Vec3dTypes> > >()
 // .add< SPHFluidSurfaceMapping< State<Vec3dTypes>, MappedModel<ExtVec3dTypes> > >()
@@ -72,7 +73,7 @@ template class SPHFluidSurfaceMapping< State<Vec3dTypes>, MappedModel<ExtVec3fTy
 #ifndef SOFA_DOUBLE
 template class SPHFluidSurfaceMapping< State<Vec3fTypes>, MappedModel<Vec3fTypes> >;
 template class SPHFluidSurfaceMapping< State<Vec3fTypes>, MappedModel<ExtVec3fTypes> >;
-// template class SPHFluidSurfaceMapping< State<Vec3fTypes>, MappedModel<ExtVec3dTypes> >; 
+// template class SPHFluidSurfaceMapping< State<Vec3fTypes>, MappedModel<ExtVec3dTypes> >;
 #endif
 
 #ifndef SOFA_FLOAT

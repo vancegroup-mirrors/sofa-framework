@@ -63,7 +63,7 @@ SphereTreeModel::SphereTreeModel(double radius)
 
 void SphereTreeModel::resize(int size)
 {   // Correcting sizes
-	this->component::MechanicalObject<Vec3Types>::resize(size);
+	this->component::container::MechanicalObject<Vec3Types>::resize(size);
 	this->core::CollisionModel::resize(size);
 	//this->elems.resize(size);
 	

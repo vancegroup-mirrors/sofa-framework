@@ -43,6 +43,7 @@
 #endif
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h> 
+#include <sofa/gui/PickHandler.h>
 
 
 
@@ -51,7 +52,6 @@
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/objectmodel/MouseEvent.h>
 #include <sofa/core/componentmodel/collision/Pipeline.h>
-#include <sofa/component/collision/RayPickInteractor.h>
 
 //instruments handling
 #include <sofa/component/controller/Controller.h>
@@ -109,10 +109,7 @@ namespace sofa
 	    virtual void setup() {}
 	    virtual void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool /*keepParams*/=false)
             {
-//               if (interactor != NULL) delete interactor;
-              //interactor = NULL;
-
-              if (scene) scene->getContext()->get( interactor);
+              
               std::string file = filename ? sofa::helper::system::SetDirectory::GetFileName(filename) : std::string();
               std::string screenshotPrefix=sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/share/screenshots/" ) + file + std::string("_");
               capture.setPrefix(screenshotPrefix);
@@ -120,6 +117,8 @@ namespace sofa
               groot = scene;
               initTexturesDone = false;
               sceneBBoxIsValid = false;
+
+              pick.reset();
                //if (!keepParams) resetView();
             }
             
@@ -153,26 +152,31 @@ namespace sofa
 	      backgroundColour[2]=b;
 	    }
 		
-		virtual void setBackgroundImage(std::string imageFileName)
-		{
-			_background=0;
-			backgroundImage = imageFileName;
-		}
+            virtual void setBackgroundImage(std::string imageFileName)
+            {
+              _background=0;
+              backgroundImage = imageFileName;
+            }
 	    
-		std::string getBackgroundImage()
-		{
-			return backgroundImage;
-		}
-		
-	  protected:
+            std::string getBackgroundImage()
+              {
+                return backgroundImage;
+              }
+            PickHandler* getPickHandler(){  return &pick;}
 
+	  protected:
+                
 
 
 	    // ---------------------- Here are the Keyboard controls   ----------------------
 	    void keyPressEvent ( QKeyEvent * e )
 	    {
+
 	      switch(e->key())
 		{
+                case Qt::Key_Shift:
+                  pick.activateRay(true);
+                  break;                 
 		case Qt::Key_B:
 		  // --- change background
 		  {
@@ -232,31 +236,34 @@ namespace sofa
 
 	    
 	    void keyReleaseEvent ( QKeyEvent * e )
-	    {
-			
-			switch(e->key())
-			{
-				case Qt::Key_Control:
-				{
-					m_isControlPressed = false;
+	    {              
+              switch(e->key())
+                {
+                case Qt::Key_Shift:
+                  pick.activateRay(false);
+                  break;                 
+                case Qt::Key_Control:
+                  {
+                    m_isControlPressed = false;
 
-					// Send Control Release Info to a potential ArticulatedRigid Instrument
-					sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Reset);
-					if (groot)
-						groot->propagateEvent(&mouseEvent);
-				}
-				default:
-				{
-					e->ignore();
-				}
-			}
+                    // Send Control Release Info to a potential ArticulatedRigid Instrument
+                    sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Reset);
+                    if (groot)
+                      groot->propagateEvent(&mouseEvent);
+                  }
+                default:
+                  {
+                    e->ignore();
+                  }
+                }
 
-			if( isControlPressed() )
-			{
-				sofa::core::objectmodel::KeyreleasedEvent keyEvent(e->key());
-				if (groot) 
-					groot->propagateEvent(&keyEvent);
-			}
+
+              if( isControlPressed() )
+                {
+                  sofa::core::objectmodel::KeyreleasedEvent keyEvent(e->key());
+                  if (groot) 
+                    groot->propagateEvent(&keyEvent);
+                }
 	    }
 
 	  
@@ -274,49 +281,52 @@ namespace sofa
 	    {
 	      if (e->state()&Qt::ShiftButton)
 		{
-		  //_sceneTransform.ApplyInverse();
-		  if (interactor==NULL)
-		    {
-		      interactor = new sofa::component::collision::RayPickInteractor();
-		      interactor->setName("mouse");
-		      if (groot)
-			{
-			    if (!groot->get<core::componentmodel::collision::Pipeline>(core::objectmodel::BaseContext::SearchRoot))
-				interactor->useCollisions.setValue(false);
-			  simulation::Node* child = simulation::getSimulation()->newNode("mouse");
-			  groot->addChild(child);
 
-			  child->addObject(interactor);
-			}
-		      interactor->init();
-		    }
-		  interactor->newEvent("show");
+                  pick.activateRay(true);
+		  //_sceneTransform.ApplyInverse();
 		  switch (e->type())
 		    {
 		    case QEvent::MouseButtonPress:
-		      if (e->button() == Qt::LeftButton)
+		      
+                      if (e->button() == Qt::LeftButton)
 			{
-			  interactor->newEvent("pick"); // Shift+Leftclick to deform the mesh
+                          pick.handleMouseEvent(PRESSED, LEFT);
 			}
 		      else if (e->button() == Qt::RightButton) // Shift+Rightclick to remove triangles
 			{
-			  interactor->newEvent("pick2");
+                          pick.handleMouseEvent(PRESSED, RIGHT);
 			}
 		      else if (e->button() == Qt::MidButton) // Shift+Midclick (by 2 steps defining 2 input points) to cut from one point to another
 			{
-			  interactor->newEvent("pick3");
+                          pick.handleMouseEvent(PRESSED, MIDDLE);
 			}
 		      break;
 		    case QEvent::MouseButtonRelease:
 		      //if (e->button() == Qt::LeftButton)
 		      {
-			interactor->newEvent("release");
+                        
+                      if (e->button() == Qt::LeftButton)
+			{
+                          pick.handleMouseEvent(RELEASED, LEFT);
+			}
+		      else if (e->button() == Qt::RightButton)
+			{
+                          pick.handleMouseEvent(RELEASED, RIGHT);
+			}
+		      else if (e->button() == Qt::MidButton)
+			{
+                          pick.handleMouseEvent(RELEASED, MIDDLE);
+			}
 		      }
 		      break;
 		    default: break;
 		    }
 		  moveRayPickInteractor(e->x(), e->y());
 		}
+              else
+                {
+                  pick.activateRay(false);
+                }
 
 	    }
 
@@ -556,9 +566,11 @@ namespace sofa
             bool sceneBBoxIsValid;
 
 	    Vector3 backgroundColour;
-		std::string backgroundImage;
+            std::string backgroundImage;
 	    Vector3 ambientColour;
-	    sofa::component::collision::RayPickInteractor* interactor;
+
+    
+            PickHandler pick;
 
 	    //instruments handling
 	    int	_navigationMode;

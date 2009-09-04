@@ -27,9 +27,7 @@
 
 #include <sofa/core/componentmodel/collision/CollisionGroupManager.h>
 #include <sofa/simulation/common/Node.h>
-#include <sofa/simulation/tree/GNode.h>
 #include <sofa/component/component.h>
-#include <set>
 
 
 namespace sofa
@@ -62,7 +60,7 @@ public:
 	virtual simulation::Node* buildCollisionGroup();
 
 protected:
-	virtual simulation::tree::GNode* getIntegrationNode(core::CollisionModel* model);
+        virtual simulation::Node* getIntegrationNode(core::CollisionModel* model);
 
 	std::map<Instance,GroupSet> storedGroupSet;
 

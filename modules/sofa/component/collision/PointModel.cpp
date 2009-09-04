@@ -34,6 +34,7 @@
 
 
 #include <sofa/component/collision/PointModel.h>
+#include <sofa/component/collision/PointLocalMinDistanceFilter.h>
 #include <sofa/component/collision/CubeModel.h>
 #include <sofa/core/ObjectFactory.h>
 #include <vector>
@@ -71,6 +72,8 @@ int PointModelClass = core::RegisterObject("Collision model which represents a s
 PointModel::PointModel()
 : mstate(NULL)
 , computeNormals( initData(&computeNormals, false, "computeNormals", "activate computation of normal vectors (required for some collision detection algorithms)") )
+, PointActiverEngine(initData(&PointActiverEngine,"PointActiverEngine", "path of a component PointActiver that activate or desactivate collision point during execution") ) 
+, m_lmdFilter( NULL )
 {
 }
 
@@ -90,14 +93,45 @@ void PointModel::init()
 		return;
 	}
 
+	simulation::Node* node = dynamic_cast< simulation::Node* >(this->getContext());
+	if (node != 0)
+	{
+		m_lmdFilter = node->getNodeObject< PointLocalMinDistanceFilter >();
+	}
+
 	const int npoints = mstate->getX()->size();
 	resize(npoints);
     if (computeNormals.getValue()) updateNormals();
+	
+	
+	
+	const std::string path = PointActiverEngine.getValue();
+	
+	if (path.size()==0)
+	{
+		myActiver = new PointActiver();
+		std::cout<<"no Point Activer founded path ="<<path<<std::endl;
+	}
+	else
+	{
+		this->getContext()->get(myActiver ,path  );
+		
+		if (myActiver==NULL)
+		{
+			myActiver = new PointActiver();
+			std::cout<<"wrong path for Point Activer  "<<std::endl;
+		}
+		else
+			std::cout<<"Point Activer founded if founded !"<<std::endl;
+	}
+	
 }
 
 void PointModel::draw(int index)
 {
     Point t(this,index);
+	if (!t.activated)
+		return;
     glBegin(GL_POINTS);
     helper::gl::glVertexT(t.p());
     glEnd();
@@ -129,19 +163,22 @@ void PointModel::draw()
 		std::vector< Vector3 > pointsL;
 		for (int i = 0; i < size; i++)
 		{
-		  Point t(this,i);
-		  pointsP.push_back(t.p());
-		  if ((unsigned)i < normals.size())
-		    {
-		      pointsL.push_back(t.p());
-		      pointsL.push_back(t.p()+normals[i]*0.1f);
-		    }
+			Point t(this,i);
+			if (t.activated)
+			{
+				pointsP.push_back(t.p());
+				if ((unsigned)i < normals.size())
+				{
+					pointsL.push_back(t.p());
+					pointsL.push_back(t.p()+normals[i]*0.1f);
+				}
+			}
 		}
 		simulation::getSimulation()->DrawUtility.drawPoints(pointsP, 3, Vec<4,float>(getColor4f()));
 		simulation::getSimulation()->DrawUtility.drawLines(pointsL, 1, Vec<4,float>(getColor4f()));
-
+		
 		if (getContext()->getShowWireFrame())
-		  simulation::getSimulation()->DrawUtility.setPolygonMode(0,false);
+			simulation::getSimulation()->DrawUtility.setPolygonMode(0,false);
 	}
 	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
 		getPrevious()->draw();
@@ -187,6 +224,11 @@ void PointModel::computeBoundingTree(int maxDepth)
 			cubeModel->setParentOf(i, pt, pt);
 		}
 		cubeModel->computeBoundingTree(maxDepth);
+	}
+
+	if (m_lmdFilter != 0)
+	{
+		m_lmdFilter->invalidate();
 	}
 }
 
@@ -240,11 +282,11 @@ void PointModel::updateNormals()
         normals[i].clear();
     }
     core::componentmodel::topology::BaseMeshTopology* mesh = getContext()->getMeshTopology();
-    if (mesh->getNbTetras()+mesh->getNbHexas() > 0)
+    if (mesh->getNbTetrahedra()+mesh->getNbHexahedra() > 0)
     {
-        if (mesh->getNbTetras()>0)
+        if (mesh->getNbTetrahedra()>0)
         {
-            const core::componentmodel::topology::BaseMeshTopology::SeqTetras &elems = mesh->getTetras();
+            const core::componentmodel::topology::BaseMeshTopology::SeqTetrahedra &elems = mesh->getTetrahedra();
             for (unsigned int i=0; i < elems.size(); ++i)
             {
                 const core::componentmodel::topology::BaseMeshTopology::Tetra &e = elems[i];
@@ -334,31 +376,32 @@ void PointModel::updateNormals()
 
 bool Point::testLMD(const Vector3 &PQ, double &coneFactor, double &coneExtension)
 {
+
 	Vector3 pt = p();
 
 	sofa::core::componentmodel::topology::BaseMeshTopology* mesh = model->getMeshTopology();
 	helper::vector<Vector3> x = (*model->mstate->getX());
 
-	const helper::vector <unsigned int>& triangleVertexShell = mesh->getTriangleVertexShell(index);
-	const helper::vector <unsigned int>& edgeVertexShell = mesh->getEdgeVertexShell(index);
+	const helper::vector <unsigned int>& trianglesAroundVertex = mesh->getTrianglesAroundVertex(index);
+	const helper::vector <unsigned int>& edgesAroundVertex = mesh->getEdgesAroundVertex(index);
 
 
 	Vector3 nMean;
 
-	for (unsigned int i=0; i<triangleVertexShell.size(); i++)
+	for (unsigned int i=0; i<trianglesAroundVertex.size(); i++)
 	{
-		unsigned int t = triangleVertexShell[i];
+		unsigned int t = trianglesAroundVertex[i];
 		const fixed_array<unsigned int,3>& ptr = mesh->getTriangle(t);
 		Vector3 nCur = (x[ptr[1]]-x[ptr[0]]).cross(x[ptr[2]]-x[ptr[0]]);
 		nCur.normalize();
 		nMean += nCur;
 	}
 
-	if (triangleVertexShell.size()==0)
+	if (trianglesAroundVertex.size()==0)
 	{
-		for (unsigned int i=0; i<edgeVertexShell.size(); i++)
+		for (unsigned int i=0; i<edgesAroundVertex.size(); i++)
 		{
-			unsigned int e = edgeVertexShell[i];
+			unsigned int e = edgesAroundVertex[i];
 			const fixed_array<unsigned int,2>& ped = mesh->getEdge(e);
 			Vector3 l = (pt - x[ped[0]]) + (pt - x[ped[1]]);
 			l.normalize();
@@ -370,9 +413,9 @@ bool Point::testLMD(const Vector3 &PQ, double &coneFactor, double &coneExtension
 		nMean.normalize();
 
 
-	for (unsigned int i=0; i<edgeVertexShell.size(); i++)
+	for (unsigned int i=0; i<edgesAroundVertex.size(); i++)
 	{
-		unsigned int e = edgeVertexShell[i];
+		unsigned int e = edgesAroundVertex[i];
 		const fixed_array<unsigned int,2>& ped = mesh->getEdge(e);
 		Vector3 l = (pt - x[ped[0]]) + (pt - x[ped[1]]);
 		l.normalize();
@@ -389,10 +432,16 @@ bool Point::testLMD(const Vector3 &PQ, double &coneFactor, double &coneExtension
 }
 
 
+PointLocalMinDistanceFilter *PointModel::getFilter() const
+{
+	return m_lmdFilter;
+}
 
 
-
-
+void PointModel::setFilter(PointLocalMinDistanceFilter *lmdFilter)
+{
+	m_lmdFilter = lmdFilter;
+}
 
 
 } // namespace collision

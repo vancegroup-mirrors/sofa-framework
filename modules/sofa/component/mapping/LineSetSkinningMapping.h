@@ -43,7 +43,7 @@ namespace component
 namespace mapping
 {
 
-using namespace sofa::defaulttype;
+using namespace sofa::defaulttype; 
 
 template <class BasicMapping>
 class LineSetSkinningMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
@@ -56,8 +56,9 @@ public:
     typedef typename Out::VecDeriv OutVecDeriv;
     typedef typename Out::Coord OutCoord;
     typedef typename Out::Deriv OutDeriv;
-    typedef typename Out::SparseVecDeriv OutSparseVecDeriv;
-    typedef typename std::map<unsigned int, OutDeriv>::const_iterator OutConstraintIterator;        
+    typedef typename Out::SparseVecDeriv OutSparseVecDeriv; 
+    typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
+    typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
 
     typedef typename In::VecCoord InVecCoord;
     typedef typename In::VecDeriv InVecDeriv;
@@ -93,6 +94,46 @@ public:
 	void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 
 	void draw();
+	
+	/**
+	 * @name
+	 */
+	//@{
+	/**
+	 * @brief
+	 */
+	void propagateX();
+
+	/**
+	 * @brief
+	 */
+	void propagateXfree();
+
+
+	/**
+	 * @brief
+	 */
+	void propagateV();
+
+	/**
+	 * @brief
+	 */
+	void propagateDx();
+
+	/**
+	 * @brief
+	 */
+	void accumulateForce();
+
+	/**
+	 * @brief
+	 */
+	void accumulateDf();
+
+	/**
+	 * @brief
+	 */
+	void accumulateConstraint();	
 
 protected:
 

@@ -33,6 +33,9 @@
 
 //#define NO_CUDA
 
+cudaDeviceProp mycudaDeviceProp;
+
+
 #if defined(__cplusplus)
 namespace sofa
 {
@@ -139,6 +142,17 @@ int mycudaInit(int device)
 {
 	int deviceCount = 0;
 	cudaInitCalled = true;
+	{
+	    const char* var = mygetenv("CUDA_MULTIOPS");
+	    if (var && *var)
+	    {
+		mycudaMultiOpMax = atoi(var);
+		if (mycudaMultiOpMax)
+		    myprintf("CUDA: Merging of up to %d identical operations enabled.\n", mycudaMultiOpMax);
+		else
+		    myprintf("CUDA: Merging of identical operations disabled.\n", mycudaMultiOpMax);
+	    }
+	}
 	cudaCheck(cudaGetDeviceCount(&deviceCount),"cudaGetDeviceCount");
 	myprintf("CUDA: %d device(s) found.\n", deviceCount);
 	for (int i=0;i<deviceCount;i++)
@@ -157,7 +171,7 @@ int mycudaInit(int device)
 #if CUDA_VERSION >= 2010
 		myprintf("CUDA:  %d : \"%s\", %d MB, %d cores at %.3f GHz, revision %d.%d",i,dev.name, dev.totalGlobalMem/(1024*1024), dev.multiProcessorCount*8, dev.clockRate * 1e-6f, dev.major, dev.minor);
 		if (dev.kernelExecTimeoutEnabled)
-		    myprintf(" timeout %d s", dev.kernelExecTimeoutEnabled);
+		    myprintf(", timeout enabled", dev.kernelExecTimeoutEnabled);
 		myprintf("\n");
 #elif CUDA_VERSION >= 2000
 		myprintf("CUDA:  %d : \"%s\", %d MB, %d cores at %.3f GHz, revision %d.%d\n",i,dev.name, dev.totalGlobalMem/(1024*1024), dev.multiProcessorCount*8, dev.clockRate * 1e-6f, dev.major, dev.minor);
@@ -179,12 +193,13 @@ int mycudaInit(int device)
 	}
 	else
 	{
-		cudaDeviceProp dev;
+		cudaDeviceProp& dev = mycudaDeviceProp;
 		cudaCheck(cudaGetDeviceProperties(&dev,device));
 		myprintf("CUDA: Using device %d : \"%s\"\n",device,dev.name);
 		cudaCheck(cudaSetDevice(device));
 		return 1;
 	}
+
 }
 
 void mycudaMalloc(void **devPtr, size_t size)

@@ -35,6 +35,10 @@
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/component/component.h>
 
+#ifdef SOFA_HAVE_ZLIB
+#include <zlib.h>
+#endif
+
 #include <fstream>
 
 namespace sofa
@@ -69,6 +73,9 @@ public:
 protected:
     core::componentmodel::behavior::BaseMechanicalState* mmodel;
     std::ofstream* outfile;
+#ifdef SOFA_HAVE_ZLIB
+    gzFile gzfile;
+#endif
     unsigned int nextTime;
     double lastTime;
     bool kineticEnergyThresholdReached;
@@ -103,9 +110,8 @@ public:
 class SOFA_COMPONENT_MISC_API WriteStateCreator: public Visitor
 {
 public:
-    WriteStateCreator(): sceneName(""), recordX(true),recordV(true), createInMapping(false), counterWriteState(0){};
-    WriteStateCreator(std::string &n, bool _recordX, bool _recordV, bool _createInMapping, int c=0) :
-    sceneName(n),recordX(_recordX),recordV(_recordV),createInMapping(_createInMapping),counterWriteState(c) { };
+    WriteStateCreator();
+    WriteStateCreator(const std::string &n, bool _recordX, bool _recordV, bool _createInMapping, int c=0);
     virtual Result processNodeTopDown( simulation::Node*  );
 
     void setSceneName(std::string &n) { sceneName = n; }
@@ -113,8 +119,10 @@ public:
     void setRecordV(bool b) {recordV=b;}
     void setCreateInMapping(bool b) { createInMapping=b; }
     void setCounter(int c) { counterWriteState = c; }
+    virtual const char* getClassName() const { return "WriteStateCreator"; }
 protected:
     std::string sceneName;
+    std::string extension;
     bool recordX,recordV;
     bool createInMapping;
 
@@ -132,6 +140,7 @@ public:
 
     bool getState() const { return state; }
     void setState(bool active) { state=active; }
+    virtual const char* getClassName() const { return "WriteStateActivator"; }
 protected:
     void changeStateWriter(sofa::component::misc::WriteState *ws);
 

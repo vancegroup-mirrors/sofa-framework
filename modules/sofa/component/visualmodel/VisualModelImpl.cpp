@@ -95,11 +95,22 @@ void VisualModelImpl::parse(core::objectmodel::BaseObjectDescription* arg)
     }
 
     if (arg->getAttribute("rx")!=NULL || arg->getAttribute("ry")!=NULL || arg->getAttribute("rz")!=NULL) {
-	rotation.setValue(Vector3((SReal)(atof(arg->getAttribute("rx","0.0"))),(SReal)(atof(arg->getAttribute("ry","0.0"))),(SReal)(atof(arg->getAttribute("rz","0.0")))));
+      rotation.setValue(Vector3((SReal)(atof(arg->getAttribute("rx","0.0"))),(SReal)(atof(arg->getAttribute("ry","0.0"))),(SReal)(atof(arg->getAttribute("rz","0.0")))));
     }
     if (arg->getAttribute("dx")!=NULL || arg->getAttribute("dy")!=NULL || arg->getAttribute("dz")!=NULL) {
       translation.setValue(Vector3((SReal)atof(arg->getAttribute("dx","0.0")), (SReal)atof(arg->getAttribute("dy","0.0")), (SReal)atof(arg->getAttribute("dz","0.0"))));
     }
+
+	if (arg->getAttribute("scale")!=NULL) {
+		scale.setValue(Vector3((SReal)atof(arg->getAttribute("scale","0.0")), (SReal)atof(arg->getAttribute("scale","0.0")), (SReal)atof(arg->getAttribute("scale","0.0"))));
+	}
+	else
+	{
+		if (arg->getAttribute("sx")!=NULL || arg->getAttribute("sy")!=NULL || arg->getAttribute("sz")!=NULL) {
+			scale.setValue(Vector3((SReal)atof(arg->getAttribute("sx","1.0")), (SReal)atof(arg->getAttribute("sy","1.0")), (SReal)atof(arg->getAttribute("sz","1.0"))));
+		}
+	}
+
 }
 
   SOFA_DECL_CLASS(VisualModelImpl)
@@ -111,22 +122,28 @@ void VisualModelImpl::parse(core::objectmodel::BaseObjectDescription* arg)
 
 VisualModelImpl::VisualModelImpl() //const std::string &name, std::string filename, std::string loader, std::string textureName)
   :  useTopology(false), lastMeshRev(-1), useNormals(true), castShadow(true),
-
+     f_useNormals      (initDataPtr(&f_useNormals, &useNormals, "useNormals", "True if normal smoothing groups should be read from file")),
+     updateNormals     (initData   (&updateNormals, true, "updateNormals", "True if normals should be updated at each iteration")),
      field_vertices    (initDataPtr(&field_vertices,&vertices,  "position",   "vertices of the model") ),
-     field_vnormals    (initDataPtr(&field_vnormals, &vnormals, "normals",   "normals of the model") ),
+     field_vnormals    (initDataPtr(&field_vnormals, &vnormals, "normal",   "normals of the model") ),
      field_vtexcoords  (initDataPtr(&field_vtexcoords, &vtexcoords, "texcoords",  "coordinates of the texture") ),
      field_triangles   (initDataPtr(&field_triangles, &triangles,"triangles" ,  "triangles of the model") ),
      field_quads       (initDataPtr(&field_quads, &quads,   "quads",    "quads of the model") ),
      fileMesh          (initData   (&fileMesh,    "fileMesh","Path to the model")),
-     texturename       (initData                            (&texturename, "texturename","Name of the Texture")),
+     texturename       (initData   (&texturename, "texturename","Name of the Texture")),
      translation       (initData   (&translation, Vector3(), "translation", "Initial Translation of the object")),
      rotation          (initData   (&rotation, Vector3(), "rotation", "Initial Rotation of the object")),
-     scale             (initData   (&scale, (SReal)(1.0), "scale", "Initial Scale of the object")),
+     scale             (initData   (&scale, Vector3(1.0,1.0,1.0), "scales", "Initial Scale of the object")),
      scaleTex          (initData   (&scaleTex, TexCoord(1.0,1.0), "scaleTex", "Scale of the texture")),
      translationTex    (initData   (&translationTex, TexCoord(1.0,1.0), "translationTex", "Translation of the texture")),
-     material(initData(&material,"material","Material")) //, tex(NULL)
+     material(initData(&material,"material","Material")), // tex(NULL)
+     putOnlyTexCoords(initData(&putOnlyTexCoords, (bool) false, "putOnlyTexCoords", "Give Texture Coordinates without the texture binding"))
 {
   inputVertices = &vertices;
+  inputNormals = &vnormals;
+  _topology = 0;
+
+  addAlias(&f_useNormals, "normals");
   addAlias(&fileMesh, "filename");
 }
 
@@ -213,7 +230,7 @@ void VisualModelImpl::setMesh(helper::io::Mesh &objLoader, bool tex)
   vertices.resize(nbVOut);
   vnormals.resize(nbVOut);
 
-  if (tex)
+  //if (tex)
     vtexcoords.resize(nbVOut);
 
   if (vsplit)
@@ -311,7 +328,7 @@ void VisualModelImpl::setMesh(helper::io::Mesh &objLoader, bool tex)
 
 bool VisualModelImpl::load(const std::string& filename, const std::string& loader, const std::string& textureName)
 {
-    bool tex = !textureName.empty();
+    bool tex = !textureName.empty() || putOnlyTexCoords.getValue();
     if (!textureName.empty() )
     {
       std::string textureFilename(textureName);
@@ -320,7 +337,6 @@ bool VisualModelImpl::load(const std::string& filename, const std::string& loade
       else
           serr <<"Texture \""<<textureName <<"\" not found" << sendl;
     }
-    tex = !textureName.empty();
 
     if (!filename.empty() && vertices.size() == 0)
     {
@@ -340,7 +356,8 @@ bool VisualModelImpl::load(const std::string& filename, const std::string& loade
         }
         else
         {
-	  setMesh(*objLoader,tex);
+        setMesh(*objLoader,tex);
+        //setMesh(*objLoader,true);
 	  //sout << "VisualModel::load, vertices.size = "<< vertices.size() <<sendl;
 	}
       }
@@ -402,12 +419,14 @@ void VisualModelImpl::applyRotation(const Quat q)
     updateVisual();
 }
 
-void VisualModelImpl::applyScale(const double scale)
+void VisualModelImpl::applyScale(const double sx, const double sy, const double sz)
 {
     VecCoord& x = *getVecX();
     for (unsigned int i = 0; i < x.size(); i++)
     {
-        x[i] *= (GLfloat) scale;
+        x[i][0] *= (GLfloat) sx;
+        x[i][1] *= (GLfloat) sy;
+        x[i][2] *= (GLfloat) sz;
     }
     updateVisual();
 }
@@ -432,9 +451,15 @@ void VisualModelImpl::applyUVScale(const double scaleU, const double scaleV)
 
 void VisualModelImpl::init()
 {
+	load(fileMesh.getFullPath(), "", texturename.getFullPath());
+	_topology = getContext()->getMeshTopology();
 
-  load(fileMesh.getFullPath(), "", texturename.getFullPath());
-  _topology = getContext()->getMeshTopology();
+	if (_topology == 0)
+	{
+		// Fixes bug when neither an .obj file nor a topology is present in the VisualModel Node.
+		// Thus nothing will be displayed.
+		useTopology = false;
+	}
 
     field_vertices.beginEdit();
     field_vnormals.beginEdit();
@@ -442,22 +467,21 @@ void VisualModelImpl::init()
     field_triangles.beginEdit();
     field_quads.beginEdit();
 
-
-
-    applyScale(scale.getValue());
+    applyScale(scale.getValue()[0], scale.getValue()[1], scale.getValue()[2]);
     applyRotation(rotation.getValue()[0],rotation.getValue()[1],rotation.getValue()[2]);
     applyTranslation(translation.getValue()[0],translation.getValue()[1],translation.getValue()[2]);
 
 
     translation.setValue(Vector3());
     rotation.setValue(Vector3());
-    scale.setValue((SReal)1.0);
+    scale.setValue(Vector3());
     VisualModel::init();
     updateVisual();
 }
 
 void VisualModelImpl::computeNormals()
 {
+    if (!updateNormals.getValue() && vnormals.size() != vertices.size()) return;
     if (vertNormIdx.empty())
     {
         int nbn = vertices.size();
@@ -964,7 +988,7 @@ void VisualModelImpl::handleTopologyChange() {
 										lastIndexVec[i_next] = lastIndexVec[i];
 									}
 
-									const sofa::helper::vector<unsigned int> &shell= _topology->getTriangleVertexShell(lastIndexVec[i]);
+									const sofa::helper::vector<unsigned int> &shell= _topology->getTrianglesAroundVertex(lastIndexVec[i]);
 									for (j=0;j<shell.size();++j) {
 
 											unsigned int ind_j = shell[j];
@@ -1065,7 +1089,7 @@ void VisualModelImpl::handleTopologyChange() {
 
 										}
 
-										const sofa::helper::vector<unsigned int> &shell= _topology->getQuadVertexShell(lastIndexVec[i]);
+										const sofa::helper::vector<unsigned int> &shell= _topology->getQuadsAroundVertex(lastIndexVec[i]);
 										for (j=0;j<shell.size();++j) {
 
 												unsigned int ind_j = shell[j];
@@ -1137,6 +1161,12 @@ void VisualModelImpl::handleTopologyChange() {
 
 						break;
 
+					}
+
+					case core::componentmodel::topology::POINTSMOVED:
+					{
+					  updateVisual();
+					  break;
 					}
 
 				default:

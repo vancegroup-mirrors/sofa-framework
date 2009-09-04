@@ -15,9 +15,13 @@ HEADERS +=  initConstraint.h \
            DistanceConstraint.h \
            DistanceConstraint.inl \
            FixedConstraint.h \
-           FixedConstraint.inl \
+           FixedConstraint.inl \  
            FixedPlaneConstraint.h \
            FixedPlaneConstraint.inl \
+           FixedRotationConstraint.h \
+           FixedRotationConstraint.inl \
+           FixedTranslationConstraint.h \
+           FixedTranslationConstraint.inl \
            HermiteSplineConstraint.h \
            HermiteSplineConstraint.inl \
            OscillatorConstraint.h \
@@ -33,13 +37,17 @@ HEADERS +=  initConstraint.h \
            UnilateralInteractionConstraint.h \
            UnilateralInteractionConstraint.inl \
            LinearMovementConstraint.h \
-           LinearMovementConstraint.inl
+           LinearMovementConstraint.inl \
+           LinearVelocityConstraint.h \
+           LinearVelocityConstraint.inl
 
 SOURCES += initConstraint.cpp \
            AttachConstraint.cpp \
            DistanceConstraint.cpp \
            FixedConstraint.cpp \
            FixedPlaneConstraint.cpp \
+           FixedRotationConstraint.cpp \
+           FixedTranslationConstraint.cpp \
            HermiteSplineConstraint.cpp \
            OscillatorConstraint.cpp \
            LinearSolverConstraintCorrection.cpp \
@@ -47,7 +55,8 @@ SOURCES += initConstraint.cpp \
            PrecomputedConstraintCorrection.cpp \
            UncoupledConstraintCorrection.cpp \
            UnilateralInteractionConstraint.cpp \
-           LinearMovementConstraint.cpp 
+           LinearMovementConstraint.cpp  \
+           LinearVelocityConstraint.cpp 
 
 
 

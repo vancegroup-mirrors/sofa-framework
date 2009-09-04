@@ -38,6 +38,10 @@ namespace sofa
 
   namespace component
   {
+
+  namespace container
+  {
+
     using namespace sofa::defaulttype;
 
     SOFA_DECL_CLASS ( VoxelGridLoader );
@@ -359,6 +363,22 @@ namespace sofa
 		return image->getData();
 	}
 
+  unsigned char * VoxelGridLoader::getSegmentID()
+  {
+    if( segmentation)
+      return segmentation->getData();
+    else
+      return NULL;
+  }
+
+  const unsigned char * VoxelGridLoader::getSegmentID() const
+  {
+    if( segmentation)
+      return segmentation->getData();
+    else
+      return NULL;
+  }
+
   VoxelGridLoader::Vec6i VoxelGridLoader::getROI() const
   {
     return roi.getValue();
@@ -423,6 +443,8 @@ namespace sofa
 			(*textureData)[idxTexture] = data[idxData];
 		}
 	}
+
+  }
 
   } // namespace component
 

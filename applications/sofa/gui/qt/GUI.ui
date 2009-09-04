@@ -50,6 +50,12 @@
                 <property name="name">
                     <cstring>layout6</cstring>
                 </property>
+                <property name="minimumSize">
+                  <size>
+                    <width>200</width>
+                    <height>400</height>
+                  </size>
+                </property>
                 <vbox>
                     <property name="name">
                         <cstring>unnamed</cstring>
@@ -195,7 +201,7 @@
                                     <cstring>screenshotButton</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Save &amp;Caption</string>
+                                    <string>Save S&amp;creenshot</string>
                                 </property>
                                 <property name="accel">
                                     <string>Alt+C</string>
@@ -570,7 +576,7 @@
                                     </property>
                                     <property name="minimumSize">
                                         <size>
-                                            <width>120</width>
+                                            <width>20</width>
                                             <height>0</height>
                                         </size>
                                     </property>
@@ -626,7 +632,9 @@
     <item text="&amp;Edit" name="editMenu">
         <action name="editRecordDirectoryAction"/>
         <action name="editGnuplotDirectoryAction"/>
+        <separator/>
         <action name="PluginManagerAction"/>
+        <action name="MouseManagerAction"/>
     </item>
     <item text="&amp;View" name="View">
         <action name="viewerOpenGLAction"/>
@@ -1014,6 +1022,17 @@
       </property>
     </action>
     <action>
+      <property name="name">
+        <cstring>MouseManagerAction</cstring>
+      </property>
+      <property name="text">
+        <string>Mouse Manager...</string>
+      </property>
+      <property name="menuText">
+        <string>Mouse Manager...</string>
+      </property>
+    </action>
+    <action>
         <property name="name">
             <cstring>Action</cstring>
         </property>
@@ -1208,6 +1227,12 @@
       <slot>showPluginManager()</slot>
     </connection>
     <connection>
+      <sender>MouseManagerAction</sender>
+      <signal>activated()</signal>
+      <receiver>GUI</receiver>
+      <slot>showMouseManager()</slot>
+    </connection>
+    <connection>
         <sender>editGnuplotDirectoryAction</sender>
         <signal>activated()</signal>
         <receiver>GUI</receiver>
@@ -1246,6 +1271,7 @@
     <slot>editRecordDirectory()</slot>
     <slot>editGnuplotDirectory()</slot>
     <slot>showPluginManager()</slot>
+    <slot>showMouseManager()</slot>
     <slot>showVisualModels()</slot>
     <slot>hideVisualModels()</slot>
     <slot>showBehaviorModels()</slot>

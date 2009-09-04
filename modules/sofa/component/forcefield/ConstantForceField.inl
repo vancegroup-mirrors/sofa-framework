@@ -32,7 +32,7 @@
 #include <sofa/helper/gl/template.h>
 #include <assert.h>
 #include <iostream>
-#include <sofa/helper/gl/BasicShapes.h>
+//#include <sofa/helper/gl/BasicShapes.h>
 #include <sofa/simulation/common/Simulation.h>
 
 

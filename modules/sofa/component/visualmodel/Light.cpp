@@ -36,6 +36,7 @@
 
 #include <sofa/component/visualmodel/Light.h>
 #include <sofa/component/visualmodel/LightManager.h>
+#include <sofa/helper/system/glu.h>
 #include <sofa/core/ObjectFactory.h>
 
 namespace sofa
@@ -68,12 +69,14 @@ int SpotLightClass = core::RegisterObject("Spot Light")
 ;
 
 Light::Light()
-: color(initData(&color, (Vector3) Vector3(1,1,1), "color", "Set the color of the light"))
+: lightID(0), shadowTexWidth(0),shadowTexHeight(0)
+, color(initData(&color, (Vector3) Vector3(1,1,1), "color", "Set the color of the light"))
 , zNear(initData(&zNear, (float) 4.0, "zNear", "Set minimum distance for view field"))
-, zFar(initData(&zFar, (float) 50.0, "zFar", "Set minimum distance for view field"))
-
+, zFar(initData(&zFar, (float) 50.0, "zFar", "Set maximum distance for view field"))
+, shadowTextureSize (initData(&shadowTextureSize, (GLuint) 0, "shadowTextureSize", "Set size for shadow texture "))
+, enableShadow(initData(&enableShadow, (bool) true, "enableShadow", "Enable Shadow from this light"))
 {
-	lightID = 0;
+
 }
 
 Light::~Light()
@@ -108,8 +111,9 @@ void Light::initVisual()
 	computeShadowMapSize();
 	//Shadow part
 	//Shadow texture init
+#ifdef SOFA_HAVE_GLEW
 	shadowFBO.init(shadowTexWidth, shadowTexHeight);
-
+#endif
 }
 
 void Light::reinit()
@@ -126,20 +130,22 @@ void Light::drawLight()
 
 void Light::preDrawShadow()
 {
-	computeShadowMapSize();
-
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 
+#ifdef SOFA_HAVE_GLEW
 	shadowFBO.start();
+#endif
 }
 
 void Light::postDrawShadow()
-{
+{	
+#ifdef SOFA_HAVE_GLEW
 	//Unbind fbo
 	shadowFBO.stop();
+#endif
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -155,19 +161,24 @@ void Light::computeShadowMapSize()
 	GLint windowWidth = viewport[2];
 	GLint windowHeight = viewport[3];
 
-	//Get the size of the shadow map
-	if (windowWidth >= 1024 && windowHeight >= 1024) {
-		shadowTexWidth = shadowTexHeight = 1024;
+	if (shadowTextureSize.getValue() <= 0)
+	{
+		//Get the size of the shadow map
+		if (windowWidth >= 1024 && windowHeight >= 1024) {
+			shadowTexWidth = shadowTexHeight = 1024;
+		}
+		else if (windowWidth >= 512 && windowHeight >= 512) {
+			shadowTexWidth = shadowTexHeight = 512;
+		}
+		else if (windowWidth >= 256 && windowHeight >= 256) {
+			shadowTexWidth = shadowTexHeight = 256;
+		}
+		else {
+			shadowTexWidth = shadowTexHeight = 128;
+		}
 	}
-	else if (windowWidth >= 512 && windowHeight >= 512) {
-		shadowTexWidth = shadowTexHeight = 512;
-	}
-	else if (windowWidth >= 256 && windowHeight >= 256) {
-		shadowTexWidth = shadowTexHeight = 256;
-	}
-	else {
-		shadowTexWidth = shadowTexHeight = 128;
-	}
+	else
+		shadowTexWidth = shadowTexHeight = shadowTextureSize.getValue();
 }
 
 
@@ -317,6 +328,7 @@ void SpotLight::preDrawShadow()
 	//glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, shadowFBO);
 
 	glViewport(0, 0, shadowTexWidth, shadowTexHeight);
+
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 }
@@ -325,7 +337,11 @@ GLuint SpotLight::getShadowTexture()
 {
 	//return debugVisualShadowTexture;
 	//return shadowTexture;
+#ifdef SOFA_HAVE_GLEW
 	return shadowFBO.getDepthTexture();
+#else
+	return 0;
+#endif
 }
 
 GLfloat* SpotLight::getProjectionMatrix()

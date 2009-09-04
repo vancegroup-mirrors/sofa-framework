@@ -16,6 +16,8 @@ HEADERS += initForceField.h \
            BoxStiffSpringForceField.inl \
            ConstantForceField.h \
            ConstantForceField.inl \
+           DistanceGridForceField.h \
+           DistanceGridForceField.inl \
            EdgePressureForceField.h \
            EdgePressureForceField.inl \
            FrameSpringForceField.h \
@@ -89,6 +91,7 @@ SOURCES += initForceField.cpp \
            BeamFEMForceField.cpp \
            BoxStiffSpringForceField.cpp \
            ConstantForceField.cpp \
+           DistanceGridForceField.cpp \
            EdgePressureForceField.cpp \
            LennardJonesForceField.cpp \
            PlaneForceField.cpp \

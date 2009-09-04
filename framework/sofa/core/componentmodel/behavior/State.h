@@ -55,7 +55,7 @@ namespace behavior
  *  \li \code Deriv \endcode : derivative values (velocity).
  *  \li \code VecReal \endcode : container of scalar values with the same API as sofa::helper::vector.
  *  \li \code VecCoord \endcode : container of Coord values with the same API as sofa::helper::vector.
- *  \li \code VecDeriv \endcode : container of Deriv values with the same API as sofa::helper::vector 
+ *  \li \code VecDeriv \endcode : container of Deriv values with the same API as sofa::helper::vector
  *  \li \code SparseVecDeriv \endcode : sparse vector of Deriv values (defining coefficient of a constraint).
  *  \li \code VecConst \endcode : vector of constraints (i.e. of SparseVecDeriv).
  *
@@ -90,11 +90,23 @@ public:
     virtual VecCoord* getX() = 0;
     /// Return the current velocity vector (read-write access).
     virtual VecDeriv* getV() = 0;
+    /// Return the current rest position vector (read-write access)
+    /// (return NULL if the state does not store rest position .
+    virtual VecCoord* getX0() = 0;
+    /// Return the current velocity vector (read-write access).
+    /// (return NULL if the state does not store normal .
+    virtual VecCoord* getN() = 0;
 
     /// Return the current position vector (read-only access).
     virtual const VecCoord* getX()  const = 0;
     /// Return the current velocity vector (read-only access).
     virtual const VecDeriv* getV()  const = 0;
+    /// Return the current rest position vector (read-only access)
+    /// (return NULL if the state does not store rest position .
+    virtual const VecCoord* getX0() const = 0;
+    /// Return the current velocity vector (read-only access).
+    /// (return NULL if the state does not store normal .
+    virtual const VecCoord* getN() const = 0;
 
     virtual std::string getTemplateName() const
     {

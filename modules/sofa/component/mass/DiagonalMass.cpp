@@ -75,18 +75,6 @@ template <>
 }
 
 
-template <>
-    double DiagonalMass<Rigid3dTypes, Rigid3dMass>::getElementMass(unsigned int index)
-{
-  return (f_mass.getValue()[index].mass);
-}
-
-  template <>
-      double DiagonalMass<Rigid2dTypes, Rigid2dMass>::getElementMass(unsigned int index)
-  {
-    return (f_mass.getValue()[index].mass);
-  }
-
 /*
   template <>
   void MassEdgeDestroyFunction<Rigid3dTypes, Rigid3dMass>(const sofa::helper::vector<unsigned int> &, 
@@ -223,20 +211,6 @@ template <>
     return e;
   }
 
-
-	
-  template <>
-      double DiagonalMass<Rigid3fTypes, Rigid3fMass>::getElementMass(unsigned int index)
-  {
-    return (double)(f_mass.getValue()[index].mass);
-  }
-
-
-  template <>
-      double DiagonalMass<Rigid2fTypes, Rigid2fMass>::getElementMass(unsigned int index)
-  {
-    return (double)(f_mass.getValue()[index].mass);
-  }
 
 
 

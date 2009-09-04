@@ -103,12 +103,13 @@ void Hexa2QuadTopologicalMapping::init()
 			
 			unsigned int nb_visible_quads = 0;
 
+			sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
 			Loc2GlobVec.clear();
 			Glob2LocMap.clear();
 
 			for (unsigned int i=0; i<quadArray.size(); ++i) {
 					
-					if (fromModel->getHexaQuadShell(i).size()==1) {			
+					if (fromModel->getHexahedraAroundQuad(i).size()==1) {			
 							
 							to_tstm->addQuadProcess(quadArray[i]);
 
@@ -122,6 +123,7 @@ void Hexa2QuadTopologicalMapping::init()
 			//to_tstm->propagateTopologicalChanges();
 			to_tstm->notifyEndingEvent();
 			//to_tstm->propagateTopologicalChanges();
+			Loc2GlobDataVec.endEdit();
 		}
 		
 	}
@@ -129,8 +131,8 @@ void Hexa2QuadTopologicalMapping::init()
 
 unsigned int Hexa2QuadTopologicalMapping::getFromIndex(unsigned int ind){
 
-	if(fromModel->getHexaQuadShell(ind).size()==1){
-		return fromModel->getHexaQuadShell(ind)[0];
+	if(fromModel->getHexahedraAroundQuad(ind).size()==1){
+		return fromModel->getHexahedraAroundQuad(ind)[0];
 	}else{
 		return 0;
 	}	
@@ -149,6 +151,8 @@ void Hexa2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 
 			std::list<const TopologyChange *>::const_iterator itBegin=fromModel->firstChange();
 			std::list<const TopologyChange *>::const_iterator itEnd=fromModel->lastChange();
+
+			sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
 
 			while( itBegin != itEnd )
 			{
@@ -252,7 +256,7 @@ void Hexa2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 
 						if (fromModel) {
 
-							const sofa::helper::vector<Hexahedron> &hexahedronArray=fromModel->getHexas();
+							const sofa::helper::vector<Hexahedron> &hexahedronArray=fromModel->getHexahedra();
 
 							const sofa::helper::vector<unsigned int> &tab = ( static_cast< const HexahedraRemoved *>( *itBegin ) )->getArray();
 
@@ -265,22 +269,22 @@ void Hexa2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 
 								for (unsigned int j = 0; j < 6; ++j)
 								{								
-									unsigned int k = (fromModel->getQuadHexaShell(tab[i]))[j];
+									unsigned int k = (fromModel->getQuadsInHexahedron(tab[i]))[j];
 
-									if (fromModel->getHexaQuadShell(k).size()==1) { // remove as visible the quad indexed by k
+									if (fromModel->getHexahedraAroundQuad(k).size()==1) { // remove as visible the quad indexed by k
 
 										// do nothing
 
-									}else{ // fromModel->getHexaQuadShell(k).size()==2 // add as visible the quad indexed by k
+									}else{ // fromModel->getHexahedraAroundQuad(k).size()==2 // add as visible the quad indexed by k
 
 										unsigned int ind_test;
-										if(tab[i] == fromModel->getHexaQuadShell(k)[0]){
+										if(tab[i] == fromModel->getHexahedraAroundQuad(k)[0]){
 
-											ind_test = fromModel->getHexaQuadShell(k)[1];
+											ind_test = fromModel->getHexahedraAroundQuad(k)[1];
 
-										}else{ // tab[i] == fromModel->getHexaQuadShell(k)[1] 
+										}else{ // tab[i] == fromModel->getHexahedraAroundQuad(k)[1] 
 
-											ind_test = fromModel->getHexaQuadShell(k)[0];
+											ind_test = fromModel->getHexahedraAroundQuad(k)[0];
 										}
 
 										bool is_present = false;
@@ -294,8 +298,8 @@ void Hexa2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 											Quad t;
 
 											const Hexahedron &te=hexahedronArray[ind_test];
-											int h = fromModel->getQuadIndexInHexahedron(fromModel->getQuadHexaShell(ind_test),k);											
-											//unsigned int hh = (fromModel->getQuadHexaShell(ind_test))[h];
+											int h = fromModel->getQuadIndexInHexahedron(fromModel->getQuadsInHexahedron(ind_test),k);											
+											//unsigned int hh = (fromModel->getQuadsInHexahedron(ind_test))[h];
 														
 											//t=from_qstc->getQuad(hh);
 
@@ -442,6 +446,7 @@ void Hexa2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 				++itBegin;
 			}
 			to_tstm->propagateTopologicalChanges();
+			Loc2GlobDataVec.endEdit();
 		}
 	}
 

@@ -439,6 +439,68 @@ void OglShader::setFloatVector4(const unsigned int index, const char* name, int 
 	stop();
 }
 
+void OglShader::setMatrix2(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix2(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix3(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix3(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix4(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix4(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix2x3(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix2x3(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix3x2(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix3x2(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix2x4(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix2x4(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix4x2(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix4x2(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix3x4(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix3x4(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
+
+void OglShader::setMatrix4x3(const unsigned int index, const char* name, int count, bool transpose, const float* f)
+{
+	start();
+	shaderVector[index]->SetMatrix4x3(shaderVector[index]->GetVariable(name), count, transpose, f);
+	stop();
+}
 
 GLint OglShader::getAttribute(const unsigned int index, const char* name)
 {
@@ -488,7 +550,7 @@ void  OglShader::setGeometryVerticesOut(const unsigned int index, GLint v)
 }
 
 OglShaderElement::OglShaderElement()
-: id(initData(&id, (std::string) "id", "id", "Set an ID name"))
+: id(initData(&id, std::string(""), "id", "Set an ID name"))
 , indexShader(initData(&indexShader, (unsigned int) 0, "indexShader", "Set the index of the desired shader you want to apply this parameter"))
 {
 
@@ -504,6 +566,8 @@ void OglShaderElement::init()
 		serr << "OglShaderElement: shader not found "<< sendl;
 		return;
 	}
+	if (id.getValue().empty())
+	    id.setValue(this->getName());
 }
 
 

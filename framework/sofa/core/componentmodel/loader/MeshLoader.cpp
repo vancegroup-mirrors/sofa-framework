@@ -41,7 +41,7 @@ namespace loader
   using namespace sofa::defaulttype;
 
   MeshLoader::MeshLoader() : BaseLoader()
-			   , positions(initData(&positions,"vertices","Vertices of the mesh loaded"))
+			   , positions(initData(&positions,"position","Vertices of the mesh loaded"))
 			   , edges(initData(&edges,"edges","Edges of the mesh loaded"))
 			   , triangles(initData(&triangles,"triangles","Triangles of the mesh loaded"))
 			   , quads(initData(&quads,"quads","Quads of the mesh loaded"))
@@ -53,7 +53,9 @@ namespace loader
 			   , texCoords(initData(&texCoords,"texCoords","TexCoords of the mesh loaded")) 
 			   , normals(initData(&normals,"normals","Normals of the mesh loaded")) 
 			     //, facets(initData(&facets,"facets","Facets of the mesh loaded")) 
-  {
+{
+    addAlias(&tetrahedra,"tetras");
+    addAlias(&hexahedra,"hexas");
     //TODO: check if necessary!
     positions.setPersistent(false);
     edges.setPersistent(false);
@@ -64,7 +66,7 @@ namespace loader
     hexahedra.setPersistent(false);
     texCoords.setPersistent(false);
     normals.setPersistent(false);
-  }
+}
   
 
   void MeshLoader::init()

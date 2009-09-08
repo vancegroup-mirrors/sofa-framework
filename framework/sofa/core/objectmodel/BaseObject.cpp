@@ -62,14 +62,16 @@ void BaseObject::parse( BaseObjectDescription* arg )
   std::vector< std::string > attributeList;
   arg->getAttributeList(attributeList);
   for (unsigned int i=0;i<attributeList.size();++i)
-    {
+  {
+    
+      
         std::vector< BaseData* > dataModif = findGlobalField(attributeList[i]);
         for (unsigned int d=0;d<dataModif.size();++d)
         {
             const char* val = arg->getAttribute(attributeList[i]);
             if (val)
             {
-                std::string valueString(val);
+	      std::string valueString(val);
 
                 /* test if data is a link */
                 if (valueString[0] == '@')

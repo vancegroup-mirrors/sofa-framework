@@ -49,7 +49,7 @@ namespace sofa
       public:
       ComponentMouseInteraction();
 
-        virtual ~ComponentMouseInteraction(){};
+        virtual ~ComponentMouseInteraction();
 
         virtual void init(simulation::Node* node);
 
@@ -88,8 +88,7 @@ namespace sofa
         typedef sofa::component::mapping::IdentityMapping<sofa::core::componentmodel::behavior::MechanicalMapping<sofa::core::componentmodel::behavior::MechanicalState< defaulttype::Vec3Types>, sofa::core::componentmodel::behavior::MechanicalState< DataTypes > > > IdentityMechanicalMapping;
 
       public:
-
-
+ 
         void init(simulation::Node* node);    
             
         bool isCompatible( core::objectmodel::BaseContext *context) const;

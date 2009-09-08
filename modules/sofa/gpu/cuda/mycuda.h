@@ -58,6 +58,8 @@ extern void SOFA_GPU_CUDA_API mycudaGLUnregisterBufferObject(int id);
 extern void SOFA_GPU_CUDA_API mycudaGLMapBufferObject(void** ptr, int id);
 extern void SOFA_GPU_CUDA_API mycudaGLUnmapBufferObject(int id);
 
+extern void SOFA_GPU_CUDA_API mycudaMemset(void * devPtr, int val , size_t size);
+
 extern void SOFA_GPU_CUDA_API mycudaLogError(const char* err, const char* src);
 extern int myprintf(const char* fmt, ...);
 extern const char* mygetenv(const char* name);

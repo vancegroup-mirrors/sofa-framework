@@ -130,8 +130,8 @@ void MeshLoader::clear()
 	seqEdges.clear(); 
         seqTriangles.clear();
 	seqQuads.clear();
-	seqTetras.clear();
-	seqHexas.clear();
+	seqTetrahedra.clear();
+	seqHexahedra.clear();
 }
 
 bool MeshLoader::load(const char* filename)
@@ -162,7 +162,7 @@ void MeshLoader::addTriangle( int a, int b, int c )
 
 void MeshLoader::addTetra( int a, int b, int c, int d )
 {
-    seqTetras.push_back( Tetra(a,b,c,d) );
+    seqTetrahedra.push_back( Tetrahedron(a,b,c,d) );
 }
 
 void MeshLoader::addQuad(int p1, int p2, int p3, int p4)
@@ -179,9 +179,9 @@ void MeshLoader::addQuad(int p1, int p2, int p3, int p4)
 void MeshLoader::addCube(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8)
 {
 #ifdef SOFA_NEW_HEXA
-	seqHexas.push_back(Hexa(p1,p2,p3,p4,p5,p6,p7,p8));
+	seqHexahedra.push_back(Hexahedron(p1,p2,p3,p4,p5,p6,p7,p8));
 #else
-	seqHexas.push_back(Hexa(p1,p2,p4,p3,p5,p6,p8,p7));
+	seqHexahedra.push_back(Hexahedron(p1,p2,p4,p3,p5,p6,p8,p7));
 #endif
 }
 
@@ -205,14 +205,14 @@ void MeshLoader::getQuads(MeshLoader::SeqQuads& quads) const
 	return quads.assign(seqQuads.begin(), seqQuads.end());
 }
 
-void MeshLoader::getTetrahedra(MeshLoader::SeqTetrahedra& tetras) const
+void MeshLoader::getTetrahedra(MeshLoader::SeqTetrahedra& tetrahedra) const
 {
-	return tetras.assign(seqTetras.begin(), seqTetras.end());
+	return tetrahedra.assign(seqTetrahedra.begin(), seqTetrahedra.end());
 }
 
-void  MeshLoader::getHexahedra(MeshLoader::SeqHexahedra& hexas) const
+void  MeshLoader::getHexahedra(MeshLoader::SeqHexahedra& hexahedra) const
 {  
-	return hexas.assign(seqHexas.begin(), seqHexas.end());
+	return hexahedra.assign(seqHexahedra.begin(), seqHexahedra.end());
 }
 
 int MeshLoader::getNbPoints() const

@@ -59,15 +59,15 @@ public:
     typedef helper::fixed_array<PointID,2> Edge;
     typedef helper::fixed_array<PointID,3> Triangle;
     typedef helper::fixed_array<PointID,4> Quad;
-    typedef helper::fixed_array<PointID,4> Tetra;
-    typedef helper::fixed_array<PointID,8> Hexa;
+    typedef helper::fixed_array<PointID,4> Tetrahedron;
+    typedef helper::fixed_array<PointID,8> Hexahedron;
 
     typedef helper::vector<Point> SeqPoints;
     typedef helper::vector<Edge> SeqEdges;
     typedef helper::vector<Triangle> SeqTriangles;
     typedef helper::vector<Quad> SeqQuads;
-    typedef helper::vector<Tetra> SeqTetrahedra;
-    typedef helper::vector<Hexa> SeqHexahedra;
+    typedef helper::vector<Tetrahedron> SeqTetrahedra;
+    typedef helper::vector<Hexahedron> SeqHexahedra;
 
 	MeshLoader();
 
@@ -119,8 +119,8 @@ protected:
 	SeqEdges		seqEdges;
 	SeqTriangles            seqTriangles;
 	SeqQuads		seqQuads;
-	SeqTetrahedra		seqTetras;
-	SeqHexahedra		seqHexas;
+	SeqTetrahedra		seqTetrahedra;
+	SeqHexahedra		seqHexahedra;
 
 	sofa::core::objectmodel::DataFileName filename;
 	Data< bool > triangulate;

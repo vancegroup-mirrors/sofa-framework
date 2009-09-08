@@ -107,7 +107,7 @@ namespace sofa
 	void VoxelGridLoader::reinit()
 	{
       seqPoints.clear();
-	  seqHexas.clear();
+	  seqHexahedra.clear();
 	  _idxInRegularGrid.clear();
 
 	  const Vec6i&	ROI = roi.getValue();
@@ -186,15 +186,15 @@ namespace sofa
 				  }
 
 	#ifdef SOFA_NEW_HEXA
-				  seqHexas.push_back ( Hexa ( p[0], p[1], p[3], p[2], p[4], p[5], p[7], p[6] ) );
+				  seqHexahedra.push_back ( Hexahedron ( p[0], p[1], p[3], p[2], p[4], p[5], p[7], p[6] ) );
 	#else
-				  seqHexas.push_back ( Hexa ( p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] ) );
+				  seqHexahedra.push_back ( Hexahedron ( p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] ) );
 	#endif
 				  _idxInRegularGrid.push_back ( idx );
 				}
 			  }
 
-		  std::cout << "done. (" << seqHexas.size() << ")" << std::endl;
+		  std::cout << "done. (" << seqHexahedra.size() << ")" << std::endl;
 	  }
 	  else
 	  {

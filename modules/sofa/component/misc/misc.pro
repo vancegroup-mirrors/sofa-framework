@@ -28,7 +28,8 @@ HEADERS += initMisc.h \
            EvalPointsDistance.h \
            EvalPointsDistance.inl \
            EvalSurfaceDistance.h \
-           EvalSurfaceDistance.inl
+           EvalSurfaceDistance.inl \
+           MeshTetraStuffing.h
 
 
 SOURCES += initMisc.cpp \
@@ -43,7 +44,8 @@ SOURCES += initMisc.cpp \
            ReadState.cpp \
            WriteState.cpp \
            EvalPointsDistance.cpp \
-           EvalSurfaceDistance.cpp
+           EvalSurfaceDistance.cpp \
+           MeshTetraStuffing.cpp 
 
 
 

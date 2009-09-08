@@ -55,8 +55,6 @@ namespace sofa
 
       ManifoldTetrahedronSetTopologyContainer::ManifoldTetrahedronSetTopologyContainer()
 	: TetrahedronSetTopologyContainer()// draw to be restored 
-	  //, d_tetrahedron(initDataPtr(&d_tetrahedron, &m_tetrahedron, "tetras", "List of tetrahedron indices"))
-	  //, _draw(initData(&_draw, false, "drawTetras","if true, draw the tetr46ahedrons in the topology"))
       {
 	debugViewIndices=this->initData(&debugViewIndices, (bool) false, "debugViewTriangleIndices", "Debug : view triangles indices");
 	debugViewIndicesTetra=this->initData(&debugViewIndicesTetra, (bool) false, "debugViewTetraIndices", "Debug : view tetra indices");
@@ -65,10 +63,10 @@ namespace sofa
 
       ManifoldTetrahedronSetTopologyContainer::ManifoldTetrahedronSetTopologyContainer(const sofa::helper::vector< Tetrahedron >& tetrahedra )
   : TetrahedronSetTopologyContainer( tetrahedra)
-    //, m_tetrahedron( tetrahedra )
-    //, d_tetrahedron(initDataPtr(&d_tetrahedron, &m_tetrahedron, "tetras", "List of tetrahedron indices"))
       {
-
+	debugViewIndices=this->initData(&debugViewIndices, (bool) false, "debugViewTriangleIndices", "Debug : view triangles indices");
+	debugViewIndicesTetra=this->initData(&debugViewIndicesTetra, (bool) false, "debugViewTetraIndices", "Debug : view tetra indices");
+	shellDisplay=this->initData(&shellDisplay, (bool) false, "debugViewShells", "Debug : view shells tetra");
       }
 
 
@@ -462,7 +460,7 @@ namespace sofa
     
 
     
-	  for(TetraID i = 0; i < m_nbTetras; ++i)
+	  for(TetraID i = 0; i < m_nbTetrahedra; ++i)
 	  {
 	  const Tetra& t = m_topo->getTetrahedron(i);
 	  const TrianglesInTetrahedron& tFaces = m_topo->getTrianglesInTetrahedron(i);

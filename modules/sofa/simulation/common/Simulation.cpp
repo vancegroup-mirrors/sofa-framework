@@ -122,7 +122,7 @@ Simulation::~Simulation(){
 				//Get the list of instruments present in the scene graph
 				getInstruments(root);
 
-        nbSteps = 0;
+                                nbSteps = 0;
 			}
 
 			void Simulation::getInstruments( Node *node)
@@ -183,7 +183,7 @@ Simulation::~Simulation(){
 #ifdef SOFA_DUMP_VISITOR_INFO
 				simulation::Visitor::printComment(std::string("End Step"));
 #endif
-        nbSteps++;
+                                nbSteps++;
 			}
 
 
@@ -195,9 +195,9 @@ Simulation::~Simulation(){
 				root->execute<ResetVisitor>();
 				root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
 				root->execute<UpdateMappingVisitor>();
-        root->execute<VisualUpdateVisitor>();
+                                root->execute<VisualUpdateVisitor>();
 
-        nbSteps = 0;
+                                nbSteps = 0;
 			}
 
 /// Initialize the textures

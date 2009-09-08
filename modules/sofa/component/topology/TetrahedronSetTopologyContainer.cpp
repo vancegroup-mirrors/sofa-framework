@@ -49,16 +49,18 @@ const unsigned int edgesInTetrahedronArray[6][2] = {{0,1}, {0,2}, {0,3}, {1,2}, 
 
 TetrahedronSetTopologyContainer::TetrahedronSetTopologyContainer()
 : TriangleSetTopologyContainer() 
-, d_tetrahedron(initDataPtr(&d_tetrahedron, &m_tetrahedron, "tetras", "List of tetrahedron indices"))
+, d_tetrahedron(initDataPtr(&d_tetrahedron, &m_tetrahedron, "tetrahedra", "List of tetrahedron indices"))
 {
+    addAlias(&d_tetrahedron, "tetras");
 }
   
 
 TetrahedronSetTopologyContainer::TetrahedronSetTopologyContainer(const sofa::helper::vector< Tetrahedron >& tetrahedra )
 : TriangleSetTopologyContainer()
 , m_tetrahedron( tetrahedra )
-, d_tetrahedron(initDataPtr(&d_tetrahedron, &m_tetrahedron, "tetras", "List of tetrahedron indices"))
+, d_tetrahedron(initDataPtr(&d_tetrahedron, &m_tetrahedron, "tetrahedra", "List of tetrahedron indices"))
 {
+    addAlias(&d_tetrahedron, "tetras");
     for (unsigned int i=0; i<m_tetrahedron.size(); ++i)
     {
         for(unsigned int j=0; j<4; ++j)

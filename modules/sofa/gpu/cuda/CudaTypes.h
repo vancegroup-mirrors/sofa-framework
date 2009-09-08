@@ -176,7 +176,7 @@ public:
             mycudaFreeHost ( prevHostPointer );
     }
     /// resize the vector without calling constructors or destructors, and without synchronizing the device and host copy
-	 void fastResize ( size_type s,size_type WARP_SIZE=BSIZE)
+    void fastResize ( size_type s,size_type WARP_SIZE=BSIZE)
     {
         if ( s == vectorSize ) return;
 		  reserve ( s,WARP_SIZE);
@@ -188,7 +188,20 @@ public:
             hostIsValid = true;
         }
     }
-	 void resize ( size_type s,size_type WARP_SIZE=BSIZE)
+    /// resize the vector discarding any old values, without calling constructors or destructors, and without synchronizing the device and host copy
+    void recreate( size_type s,size_type WARP_SIZE=BSIZE)
+    {
+        clear();
+        fastResize(s,WARP_SIZE);
+    }
+
+    void memsetDevice(int v = 0) {
+	mycudaMemset(devicePointer, v, vectorSize*sizeof(T));
+	hostIsValid = false;
+	deviceIsValid = true;
+    }
+
+    void resize ( size_type s,size_type WARP_SIZE=BSIZE)
     {
         if ( s == vectorSize ) return;
 		  reserve ( s,WARP_SIZE);

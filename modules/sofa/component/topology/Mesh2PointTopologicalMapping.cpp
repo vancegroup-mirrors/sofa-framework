@@ -348,7 +348,7 @@ void Mesh2PointTopologicalMapping::updateTopologicalMappingTopDown()
 			case core::componentmodel::topology::TETRAHEDRAREMOVED:
 			{
 				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const TetrahedraRemoved *>( *changeIt ) )->getArray();
-//				sout << "INPUT REMOVE TETRAS "<<tab << sendl;
+//				sout << "INPUT REMOVE TETRAHEDRA "<<tab << sendl;
 				removeInput(TETRA, tab );
 				break;
 			}
@@ -360,7 +360,7 @@ void Mesh2PointTopologicalMapping::updateTopologicalMappingTopDown()
 			case core::componentmodel::topology::HEXAHEDRAREMOVED:
 			{
 				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const HexahedraRemoved *>( *changeIt ) )->getArray();
-//				sout << "INPUT REMOVE HEXAS "<<tab << sendl;
+//				sout << "INPUT REMOVE HEXAHEDRA "<<tab << sendl;
 				removeInput(HEXA, tab );
 				break;
 			}

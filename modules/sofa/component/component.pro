@@ -22,6 +22,5 @@ SUBDIRS += constraint
 SUBDIRS += collision
 SUBDIRS += misc
 SUBDIRS += engine
-
 SUBDIRS += libcomponent.pro
 

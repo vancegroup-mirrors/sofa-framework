@@ -25,7 +25,8 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#include <sofa/gui/qt/ModifyObject.h>
+#include "ModifyObject.h"
+#include "DataWidget.h"
 #include <iostream>
 #ifdef SOFA_QT4
 #include <QPushButton>
@@ -78,471 +79,481 @@ using sofa::core::objectmodel::BaseData;
 typedef QScrollView Q3ScrollView;
 #endif
 
-ModifyObject::ModifyObject(void *Id_, core::objectmodel::Base* node_clicked, Q3ListViewItem* item_clicked,  QWidget* parent_, const char* name, bool, Qt::WFlags /*f*/ )
-: parent(parent_), node(NULL), Id(Id_),visualContentModified(false)
+ModifyObject::ModifyObject(
+                           void *Id_, 
+                           core::objectmodel::Base* node_clicked, 
+                           Q3ListViewItem* item_clicked,  
+                           QWidget* parent_,
+                           const ModifyObjectFlags& dialogFlags,
+                           const char* name, 
+                           bool modal, Qt::WFlags f )
+:ModifyObjectModel(Id_,item_clicked,parent_,name,modal,f),
+node(node_clicked),
+dialogFlags_(dialogFlags),
+outputTab(NULL),
+warningTab(NULL),
+logOutputEdit(NULL),
+logWarningEdit(NULL),
+graphEnergy(NULL),
+visualContentModified(false)
 {
-	//Title of the Dialog
-	setCaption(name);
-
-	HIDE_FLAG = true;
-	READONLY_FLAG = true;
-	EMPTY_FLAG = false;
-	RESIZABLE_FLAG = false;
-	REINIT_FLAG = true;
-        LINKPATH_MODIFIABLE_FLAG = false;
-
-        outputTab = warningTab = NULL;
 	energy_curve[0]=NULL;	        energy_curve[1]=NULL;	        energy_curve[2]=NULL;
-
-	logWarningEdit=NULL; logOutputEdit=NULL;
-
 	//Initialization of the Widget
-	setNode(node_clicked, item_clicked);
- 	connect ( this, SIGNAL( objectUpdated() ), parent_, SLOT( redraw() ));
-	connect ( this, SIGNAL( dialogClosed(void *) ) , parent_, SLOT( modifyUnlock(void *)));
+	setNode();
 }
 
 //Set the default file
-void ModifyObject::setNode(core::objectmodel::Base* node_clicked, Q3ListViewItem* item_clicked)
+void ModifyObject::setNode()
 {
-	node = node_clicked;
-	item = item_clicked;
-	//Layout to organize the whole window
-	QVBoxLayout *generalLayout = new QVBoxLayout(this, 0, 1, "generalLayout");
+  //Layout to organize the whole window
+  QVBoxLayout *generalLayout = new QVBoxLayout(this, 0, 1, "generalLayout");
 
-	//Tabulation widget
-	dialogTab = new QTabWidget(this);
-	generalLayout->addWidget(dialogTab);
-	connect(dialogTab, SIGNAL( currentChanged( QWidget*)), this, SLOT( updateTables()));
+  //Tabulation widget
+  dialogTab = new QTabWidget(this);
+  generalLayout->addWidget(dialogTab);
+  connect(dialogTab, SIGNAL( currentChanged( QWidget*)), this, SLOT( updateTables()));
 
-	//Each tab
-        counterWidget=0;
+  //Each tab
+  counterWidget=0;
 
-        unsigned int counterTab=0;
-	QWidget *currentTab=NULL;
-	QWidget *currentTab_save=NULL;
-        bool emptyTab = false;
+  unsigned int counterTab=0;
+  QWidget *currentTab=NULL;
+  QWidget *currentTab_save=NULL;
+  bool emptyTab = false;
 
 
-	bool visualTab = false;
-	bool isNode = (dynamic_cast< Node *>(node_clicked) != NULL);
-	QWidget *tabVisualization = NULL; //tab for visualization info: only created if needed ( boolean visualTab gives this answer ).
+  bool visualTab = false;
+  bool isNode = (dynamic_cast< Node *>(node) != NULL);
+  QWidget *tabVisualization = NULL; //tab for visualization info: only created if needed ( boolean visualTab gives this answer ).
 
-	QVBoxLayout *currentTabLayout = NULL;
-	QVBoxLayout *tabPropertiesLayout=NULL;
-	QVBoxLayout *tabVisualizationLayout = NULL;
+  QVBoxLayout *currentTabLayout = NULL;
+  QVBoxLayout *tabPropertiesLayout=NULL;
+  QVBoxLayout *tabVisualizationLayout = NULL;
 
-	// displayWidget
-	if (node_clicked)
-	  {
-	    //If the current element is a node, we add a box to perform geometric transformation: translation, rotation, scaling
-	    if(REINIT_FLAG && isNode)
-	      {
-		emptyTab = false;
-		currentTab_save  = currentTab= new QWidget();
-		currentTabLayout = tabPropertiesLayout = new QVBoxLayout( currentTab, 0, 1, QString("tabPropertiesLayout") + QString::number(counterWidget));
-		counterWidget = 2;
+  // displayWidget
+  if (node)
+  {
+    //If the current element is a node, we add a box to perform geometric transformation: translation, rotation, scaling
+    if(dialogFlags_.REINIT_FLAG && isNode)
+    {
+      emptyTab = false;
+      currentTab_save  = currentTab= new QWidget();
+      currentTabLayout = tabPropertiesLayout = new QVBoxLayout( currentTab, 0, 1, QString("tabPropertiesLayout") + QString::number(counterWidget));
+      counterWidget = 2;
 
-		dialogTab->addTab(currentTab, QString("Properties ") + QString::number(counterWidget/WIDGET_BY_TAB));
- 		++counterTab;
+      dialogTab->addTab(currentTab, QString("Properties ") + QString::number(counterWidget/WIDGET_BY_TAB));
+      ++counterTab;
 
-		Q3GroupBox *box = new Q3GroupBox(currentTab, QString("Transformation"));
-		box->setColumns(4);
-		box->setTitle(QString("Transformation"));
-		//********************************************************************************
-		//Translation
-		new QLabel(QString("Translation"), box);
-		transformation[0] = new WFloatLineEdit( box, "editTranslationX" );
-		transformation[0]->setMinFloatValue( (float)-INFINITY );
-		transformation[0]->setMaxFloatValue( (float)INFINITY );
+      Q3GroupBox *box = new Q3GroupBox(currentTab, QString("Transformation"));
+      box->setColumns(4);
+      box->setTitle(QString("Transformation"));
+      //********************************************************************************
+      //Translation
+      new QLabel(QString("Translation"), box);
+      transformation[0] = new WFloatLineEdit( box, "editTranslationX" );
+      transformation[0]->setMinFloatValue( (float)-INFINITY );
+      transformation[0]->setMaxFloatValue( (float)INFINITY );
 
-		transformation[1] = new WFloatLineEdit( box, "transformation[1]" );
-		transformation[1]->setMinFloatValue( (float)-INFINITY );
-		transformation[1]->setMaxFloatValue( (float)INFINITY );
+      transformation[1] = new WFloatLineEdit( box, "transformation[1]" );
+      transformation[1]->setMinFloatValue( (float)-INFINITY );
+      transformation[1]->setMaxFloatValue( (float)INFINITY );
 
-		transformation[2] = new WFloatLineEdit( box, "transformation[2]" );
-		transformation[2]->setMinFloatValue( (float)-INFINITY );
-		transformation[2]->setMaxFloatValue( (float)INFINITY );
-
-
-		//********************************************************************************
-		//Rotation
-		new QLabel(QString("Rotation"), box);
-		transformation[3] = new WFloatLineEdit( box, "transformation[3]" );
-		transformation[3]->setMinFloatValue( (float)-INFINITY );
-		transformation[3]->setMaxFloatValue( (float)INFINITY );
-
-		transformation[4] = new WFloatLineEdit( box, "transformation[4]" );
-		transformation[4]->setMinFloatValue( (float)-INFINITY );
-		transformation[4]->setMaxFloatValue( (float)INFINITY );
-
-		transformation[5] = new WFloatLineEdit( box, "transformation[5]" );
-		transformation[5]->setMinFloatValue( (float)-INFINITY );
-		transformation[5]->setMaxFloatValue( (float)INFINITY );
+      transformation[2] = new WFloatLineEdit( box, "transformation[2]" );
+      transformation[2]->setMinFloatValue( (float)-INFINITY );
+      transformation[2]->setMaxFloatValue( (float)INFINITY );
 
 
-		//********************************************************************************
-		//Scale
-		QLabel *textScale = new QLabel(QString("Scale"), box);
-		transformation[6] = new WFloatLineEdit( box, "transformation[6]" );
-		transformation[6]->setMinFloatValue( (float)-INFINITY );
-		transformation[6]->setMaxFloatValue( (float)INFINITY );
+      //********************************************************************************
+      //Rotation
+      new QLabel(QString("Rotation"), box);
+      transformation[3] = new WFloatLineEdit( box, "transformation[3]" );
+      transformation[3]->setMinFloatValue( (float)-INFINITY );
+      transformation[3]->setMaxFloatValue( (float)INFINITY );
+
+      transformation[4] = new WFloatLineEdit( box, "transformation[4]" );
+      transformation[4]->setMinFloatValue( (float)-INFINITY );
+      transformation[4]->setMaxFloatValue( (float)INFINITY );
+
+      transformation[5] = new WFloatLineEdit( box, "transformation[5]" );
+      transformation[5]->setMinFloatValue( (float)-INFINITY );
+      transformation[5]->setMaxFloatValue( (float)INFINITY );
 
 
-		//********************************************************************************
-		//Default values
-		transformation[0]->setFloatValue(0);
-		transformation[1]->setFloatValue(0);
-		transformation[2]->setFloatValue(0);
+      //********************************************************************************
+      //Scale
+      QLabel *textScale = new QLabel(QString("Scale"), box);
+      transformation[6] = new WFloatLineEdit( box, "transformation[6]" );
+      transformation[6]->setMinFloatValue( (float)-INFINITY );
+      transformation[6]->setMaxFloatValue( (float)INFINITY );
 
-		transformation[3]->setFloatValue(0);
-		transformation[4]->setFloatValue(0);
-		transformation[5]->setFloatValue(0);
+      transformation[7] = new WFloatLineEdit( box, "transformation[7]" );
+      transformation[7]->setMinFloatValue( (float)-INFINITY );
+      transformation[7]->setMaxFloatValue( (float)INFINITY );
 
-		transformation[6]->setFloatValue(1);
-
-		connect( transformation[0], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-		connect( transformation[1], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-		connect( transformation[2], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-		connect( transformation[3], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-		connect( transformation[4], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-		connect( transformation[5], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-		connect( transformation[6], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
-
-		//Option still experimental : disabled !!!!
- 		textScale->hide();
- 		transformation[6]->hide();
+      transformation[8] = new WFloatLineEdit( box, "transformation[8]" );
+      transformation[8]->setMinFloatValue( (float)-INFINITY );
+      transformation[8]->setMaxFloatValue( (float)INFINITY );
 
 
-		tabPropertiesLayout->addWidget( box );
-	      }
+      //********************************************************************************
+      //Default values
+      transformation[0]->setFloatValue(0);
+      transformation[1]->setFloatValue(0);
+      transformation[2]->setFloatValue(0);
 
-	    //All the pointers to the QObjects will be kept in memory in list_Object
+      transformation[3]->setFloatValue(0);
+      transformation[4]->setFloatValue(0);
+      transformation[5]->setFloatValue(0);
 
-	    const std::vector< std::pair<std::string, BaseData*> >& fields = node->getFields();
+      transformation[6]->setFloatValue(1);
+      transformation[7]->setFloatValue(1);
+      transformation[8]->setFloatValue(1);
 
-	    int i=0;
-	    for( std::vector< std::pair<std::string, BaseData*> >::const_iterator it = fields.begin();it!=fields.end();++it)
-	      {
-		currentTab = currentTab_save; //in case we modified currentTab to the visualTab
-		currentTabLayout = tabPropertiesLayout;
-                if (!emptyTab && counterWidget/WIDGET_BY_TAB==counterTab)
-		  {
-		    emptyTab = true;
-		    if (tabPropertiesLayout!= NULL) tabPropertiesLayout->addStretch();
-		    currentTab_save  = currentTab= new QWidget();
-		    currentTabLayout = tabPropertiesLayout = new QVBoxLayout( currentTab, 0, 1, QString("tabPropertiesLayout") + QString::number(counterWidget));
-		  }
-  		//For each element, we create a layout
-		std::ostringstream oss;
-		oss << "itemLayout_" << i;
-		Q3GroupBox *box = NULL;;
-		// The label
-		//QLabel *label = new QLabel(QString((*it).first.c_str()), box,0);
-		//label->setGeometry( 10, i*25+5, 200, 20 );
+      connect( transformation[0], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[1], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[2], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[3], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[4], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[5], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[6], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[7], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
+      connect( transformation[8], SIGNAL( textChanged(const QString&) ), this, SLOT( changeValue() ) );
 
-		// 		const std::string& fieldname = (*it).second->getValueTypeString();
-		std::string name((*it).first);
-		name.resize(4);
-		if (name == "show")
-		  {
-		    if (!visualTab)
-		      {
-			visualTab = true;
-			tabVisualization = new QWidget();
-			tabVisualizationLayout = new QVBoxLayout( tabVisualization, 0, 1, "tabVisualizationLayout");
-		      }
+      //Option still experimental : disabled !!!!
+      textScale->hide();
+      transformation[6]->hide();
+      transformation[7]->hide();
+      transformation[8]->hide();
 
-		    currentTab = tabVisualization;
-		    currentTabLayout = tabVisualizationLayout;
 
-		    if ( dynamic_cast< Data<int> * >( (*it).second )
-			&&
-		        (
-			 (*it).first == "showVisualModels" ||
-			 (*it).first == "showBehaviorModels" ||
-			 (*it).first == "showCollisionModels" ||
-			 (*it).first == "showBoundingCollisionModels" ||
-			 (*it).first == "showMappings" ||
-			 (*it).first == "showMechanicalMappings" ||
-			 (*it).first == "showForceFields" ||
-			 (*it).first == "showInteractionForceFields" ||
-			 (*it).first == "showWireFrame" ||
-			 (*it).first == "showNormals"
-			 )
-			)
-		      {
+      tabPropertiesLayout->addWidget( box );
+    }
 
-			box = new Q3GroupBox(tabVisualization, QString("Tri State"));
-			tabVisualizationLayout->addWidget( box );
+    //All the pointers to the QObjects will be kept in memory in list_Object
 
-			box->setColumns(2);
-			box->setTitle(QString("Visualization Flags"));
+    const std::vector< std::pair<std::string, BaseData*> >& fields = node->getFields();
 
-			displayFlag = new DisplayFlagWidget(box);
+    int i=0;
+    for( std::vector< std::pair<std::string, BaseData*> >::const_iterator it = fields.begin();it!=fields.end();++it)
+    {
+      currentTab = currentTab_save; //in case we modified currentTab to the visualTab
+      currentTabLayout = tabPropertiesLayout;
+      if (!emptyTab && counterWidget/WIDGET_BY_TAB==counterTab)
+      {
+        emptyTab = true;
+        if (tabPropertiesLayout!= NULL) tabPropertiesLayout->addStretch();
+        currentTab_save  = currentTab= new QWidget();
+        currentTabLayout = tabPropertiesLayout = new QVBoxLayout( currentTab, 0, 1, QString("tabPropertiesLayout") + QString::number(counterWidget));
+      }
+      //For each element, we create a layout
+      std::ostringstream oss;
+      oss << "itemLayout_" << i;
+      Q3GroupBox *box = NULL;;
+      // The label
+      //QLabel *label = new QLabel(QString((*it).first.c_str()), box,0);
+      //label->setGeometry( 10, i*25+5, 200, 20 );
 
-			connect( displayFlag, SIGNAL( change(int,bool)), this, SLOT(changeVisualValue() ));
-
-			  Data<int> *ff;
-
-			  for (unsigned int i=0;i<10;++i)
-			    {
-			      ff=dynamic_cast< Data<int> * >( (*it).second);
-			      objectGUI.push_back(std::make_pair( (*it).second,  (QObject *) displayFlag));
-			      if (i!=0) displayFlag->setFlag(i,(ff->getValue()==1));
-			      else      displayFlag->setFlag(i,(ff->getValue()!=0));
-			      it++;
-			    }
-			it--;
-			continue;
-		      }
-		  }
-		else if ((*it).second->getGroup() == std::string("BIG"))
+      // 		const std::string& fieldname = (*it).second->getValueTypeString();
+      std::string name((*it).first);
+      name.resize(4);
+      if (name == "show")
+      {
+        if (!visualTab)
         {
-			std::cout << (*it).first << " in new tab" << std::endl;
-		    emptyTab = true;
-		    currentTab= new QWidget();
-		    currentTabLayout = new QVBoxLayout( currentTab, 0, 1, QString("tabBIGLayout") + QString::number(counterWidget));
-			dialogTab->addTab(currentTab, QString((*it).first.c_str()));
+          visualTab = true;
+          tabVisualization = new QWidget();
+          tabVisualizationLayout = new QVBoxLayout( tabVisualization, 0, 1, "tabVisualizationLayout");
         }
 
-		{
- 		  if (hideData(it->second)) continue;
-		  std::string box_name(oss.str());
-		  box = new Q3GroupBox(currentTab, QString(box_name.c_str()));
-		  box->setColumns(4);
-		  box->setTitle(QString((*it).first.c_str()));
+        currentTab = tabVisualization;
+        currentTabLayout = tabVisualizationLayout;
 
-		  std::string label_text=(*it).second->getHelp();
-		  std::string final_text;
-		  unsigned int number_line=0;
-		  while (!label_text.empty())
-		    {
-		      std::string::size_type pos = label_text.find('\n');
-		      std::string current_sentence;
-		      if (pos != std::string::npos)
-			current_sentence  = label_text.substr(0,pos+1);
-		      else
-			current_sentence = label_text;
+        if ( dynamic_cast< Data<int> * >( (*it).second )
+          &&
+          (
+          (*it).first == "showVisualModels" ||
+          (*it).first == "showBehaviorModels" ||
+          (*it).first == "showCollisionModels" ||
+          (*it).first == "showBoundingCollisionModels" ||
+          (*it).first == "showMappings" ||
+          (*it).first == "showMechanicalMappings" ||
+          (*it).first == "showForceFields" ||
+          (*it).first == "showInteractionForceFields" ||
+          (*it).first == "showWireFrame" ||
+          (*it).first == "showNormals"
+          )
+          )
+        {
 
+          box = new Q3GroupBox(tabVisualization, QString("Tri State"));
+          tabVisualizationLayout->addWidget( box );
 
-		      if (current_sentence.size() > SIZE_TEXT)
-			{
-			  unsigned int index_cut;
-			  unsigned int cut = current_sentence.size()/SIZE_TEXT;
-			  for (index_cut=1;index_cut<=cut;index_cut++)
-			    {
-			      std::string::size_type numero_char=current_sentence.rfind(' ',SIZE_TEXT*index_cut);
-			      current_sentence = current_sentence.insert(numero_char+1,1,'\n');
-			      number_line++;
-			    }
-			}
-		      if (pos != std::string::npos) label_text = label_text.substr(pos+1);
-		      else label_text = "";
-		      final_text += current_sentence;
-		      number_line++;
-		    }
-		  counterWidget += number_line/3; //each 3lines, a new widget is counted
-                  if (label_text != "TODO") new QDisplayDataInfoWidget(box,final_text,(*it).second,LINKPATH_MODIFIABLE_FLAG);
-     
-     
-		  DataWidget::CreatorArgument dwarg;
-		  dwarg.node = node;
-		  dwarg.name = (*it).first;
-		  dwarg.data = (*it).second;
-		  dwarg.readOnly = (dwarg.data->isReadOnly() && READONLY_FLAG);
-		  dwarg.dialog = this;
-		  dwarg.parent = box;
-		  std::string widget = dwarg.data->getWidget();
-		  box->setColumns(2);
-		  DataWidget* dw;
-		  if (widget.empty())
-		      dw = DataWidgetFactory::CreateAnyObject(dwarg);
-		  else
-		      dw = DataWidgetFactory::CreateObject(dwarg.data->getWidget(), dwarg);
-		  if (dw == NULL)
-		  {
-		      box->setColumns(4);
-		      std::cout << "WIDGET FAILED for data " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
-		  }
-		  if (dw != NULL)
-		  {
-                      //std::cout << "WIDGET created for data " << dwarg.data << " : " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
-		      dataWidgets[dwarg.data] = dw;
-		      counterWidget+=dw->sizeWidget();
-		  }
-		  //********************************************************************************************************//
-		  //Types that needs a QTable: vector of elements
-		  else if (createTable( (*it).second, box))
-		    {
-		      ++counterWidget; //count for two classic widgets
-		    }
-		  else
-		    {
-		      Q3TextEdit* textedit = new Q3TextEdit(box);
-		      // 		      objectGUI.push_back(std::make_pair( (*it).second,  (QObject *) textedit);
+          box->setColumns(2);
+          box->setTitle(QString("Visualization Flags"));
 
-		      textedit->setText(QString((*it).second->getValueString().c_str()));
-		      //if empty field, we don't display it
+          displayFlag = new DisplayFlagWidget(box);
 
-		      if ((*it).second->getValueString().empty() && !EMPTY_FLAG)
-			{
-			  box->hide();
-			  std::cerr << (*it).first << " : " << (*it).second->getValueTypeString() << " Not added because empty \n";
-			  --counterWidget;
-			}
-		      else
-			{
-			  list_TextEdit.push_back(std::make_pair(textedit, (*it).second));
-			  ++counterWidget; //count for two classic widgets
-			  connect( textedit, SIGNAL( textChanged() ), this, SLOT( changeValue() ) );
-			}
-		    }
-		}
-		++i;
-		if (box != NULL)
-		  {
-                    if (currentTab == currentTab_save && emptyTab && counterWidget/WIDGET_BY_TAB == counterTab)
-		      {
-			dialogTab->addTab(currentTab, QString("Properties ") + QString::number(counterWidget/WIDGET_BY_TAB));
-			++counterTab;
-			emptyTab = false;
-		      }
+          connect( displayFlag, SIGNAL( change(int,bool)), this, SLOT(changeVisualValue() ));
 
-		    dataIndexTab.insert(std::make_pair((*it).second, dialogTab->count()-1));
-                    ++counterWidget;
-		    currentTabLayout->addWidget( box );
-		  }
-              }
+          Data<int> *ff;
 
-            if (tabPropertiesLayout!= NULL) tabPropertiesLayout->addStretch();
-            if (tabVisualization != NULL )
-	      {
-		dialogTab->addTab(tabVisualization, QString("Visualization"));
-		if ( !isNode) tabVisualizationLayout->addStretch();
-	      }
-            for (unsigned int indexTab = 0; indexTab<counterTab;indexTab++)
-	      {
-		if (counterTab == 1)
-		  dialogTab->setTabLabel(dialogTab->page(indexTab),
-					 QString("Properties"));
-		else
-		  dialogTab->setTabLabel(dialogTab->page(indexTab),
-					 QString("Properties ") + QString::number(indexTab+1) + QString("/") + QString::number(counterTab));
-	      }
+          for (unsigned int i=0;i<10;++i)
+          {
+            ff=dynamic_cast< Data<int> * >( (*it).second);
+            objectGUI.push_back(std::make_pair( (*it).second,  (QObject *) displayFlag));
+            if (i!=0) displayFlag->setFlag(i,(ff->getValue()==1));
+            else      displayFlag->setFlag(i,(ff->getValue()!=0));
+            it++;
+          }
+          it--;
+          continue;
+        }
+      }
+      else if ((*it).second->getGroup() == std::string("BIG"))
+      {
+        std::cout << (*it).first << " in new tab" << std::endl;
+        emptyTab = true;
+        currentTab= new QWidget();
+        currentTabLayout = new QVBoxLayout( currentTab, 0, 1, QString("tabBIGLayout") + QString::number(counterWidget));
+        dialogTab->addTab(currentTab, QString((*it).first.c_str()));
+      }
 
-	    if (Node* node = dynamic_cast< Node* >(node_clicked))
-	      {
-		if (REINIT_FLAG && (node->mass!= NULL || node->forceField.size()!=0 ) )
-		{
-		  createGraphMass(dialogTab);
-		}
-	      }
+      {
+        if (hideData(it->second)) continue;
+        std::string box_name(oss.str());
+        box = new Q3GroupBox(currentTab, QString(box_name.c_str()));
+        box->setColumns(4);
+        box->setTitle(QString((*it).first.c_str()));
 
-	    // Info tab
-	    {
-		emptyTab = false;
-		QWidget* tab = new QWidget();
-		QVBoxLayout* tabLayout = new QVBoxLayout( tab, 0, 1, QString("tabInfoLayout"));
-
-		dialogTab->addTab(tab, QString("Infos"));
- 		++counterTab;
-		//Instance
-		{
-		    Q3GroupBox *box = new Q3GroupBox(tab, QString("Instance"));
-		    box->setColumns(2);
-		    box->setTitle(QString("Instance"));
-		    new QLabel(QString("Name"), box);
-		    new QLabel(QString(node_clicked->getName().c_str()), box);
-		    new QLabel(QString("Class"), box);
-		    new QLabel(QString(node_clicked->getClassName().c_str()), box);
-		    std::string namespacename = node_clicked->decodeNamespaceName(typeid(*node_clicked));
-		    if (!namespacename.empty())
-		    {
-			new QLabel(QString("Namespace"), box);
-			new QLabel(QString(namespacename.c_str()), box);
-		    }
-		    if (!node_clicked->getTemplateName().empty())
-		    {
-			new QLabel(QString("Template"), box);
-			new QLabel(QString(node_clicked->getTemplateName().c_str()), box);
-		    }
-
-		    tabLayout->addWidget( box );
-		}
-
-		//Class description
-		core::ObjectFactory::ClassEntry* entry = core::ObjectFactory::getInstance()->getEntry(node_clicked->getClassName());
-		if (entry != NULL && ! entry->creatorList.empty())
-		{
-		    Q3GroupBox *box = new Q3GroupBox(tab, QString("Class"));
-		    box->setColumns(2);
-		    box->setTitle(QString("Class"));
-		    if (!entry->description.empty() && entry->description != std::string("TODO"))
-		    {
-			new QLabel(QString("Description"), box);
-			new QLabel(QString(entry->description.c_str()), box);
-		    }
-                    std::map<std::string, core::ObjectFactory::Creator*>::iterator it = entry->creatorMap.find(node_clicked->getTemplateName());
-                    if (it != entry->creatorMap.end() && *it->second->getTarget())
-                    {
-                        new QLabel(QString("Provided by"), box);
-                        new QLabel(QString(it->second->getTarget()), box);
-                    }
-
-		    if (!entry->authors.empty() && entry->authors != std::string("TODO"))
-		    {
-			new QLabel(QString("Authors"), box);
-			new QLabel(QString(entry->authors.c_str()), box);
-		    }
-		    if (!entry->license.empty() && entry->license != std::string("TODO"))
-		    {
-			new QLabel(QString("License"), box);
-			new QLabel(QString(entry->license.c_str()), box);
-		    }
-		    tabLayout->addWidget( box );
-		}
-
-		
-		tabLayout->addStretch();
-
-		updateConsole();
-                if (outputTab)  dialogTab->addTab(outputTab,  QString("Outputs"));
-                if (warningTab) dialogTab->addTab(warningTab, QString("Warnings"));
-	    }
-
-	    //Adding buttons at the bottom of the dialog
-	    QHBoxLayout *lineLayout = new QHBoxLayout( 0, 0, 6, "Button Layout");
-
-	    buttonUpdate = new QPushButton( this, "buttonUpdate" );
-	    lineLayout->addWidget(buttonUpdate);
-	    buttonUpdate->setText("&Update");
-	    buttonUpdate->setEnabled(false);
-
-	    QSpacerItem *Horizontal_Spacing = new QSpacerItem( 20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum );
-	    lineLayout->addItem( Horizontal_Spacing );
-
-	    QPushButton *buttonOk = new QPushButton( this, "buttonOk" );
-	    lineLayout->addWidget(buttonOk);
-	    buttonOk->setText( tr( "&OK" ) );
-
-	    QPushButton *buttonCancel = new QPushButton( this, "buttonCancel" );
-	    lineLayout->addWidget(buttonCancel);
-	    buttonCancel->setText( tr( "&Cancel" ) );
-
-	    generalLayout->addLayout( lineLayout );
+        std::string label_text=(*it).second->getHelp();
+        std::string final_text;
+        unsigned int number_line=0;
+        while (!label_text.empty())
+        {
+          std::string::size_type pos = label_text.find('\n');
+          std::string current_sentence;
+          if (pos != std::string::npos)
+            current_sentence  = label_text.substr(0,pos+1);
+          else
+            current_sentence = label_text;
 
 
+          if (current_sentence.size() > SIZE_TEXT)
+          {
+            unsigned int index_cut;
+            unsigned int cut = current_sentence.size()/SIZE_TEXT;
+            for (index_cut=1;index_cut<=cut;index_cut++)
+            {
+              std::string::size_type numero_char=current_sentence.rfind(' ',SIZE_TEXT*index_cut);
+              current_sentence = current_sentence.insert(numero_char+1,1,'\n');
+              number_line++;
+            }
+          }
+          if (pos != std::string::npos) label_text = label_text.substr(pos+1);
+          else label_text = "";
+          final_text += current_sentence;
+          number_line++;
+        }
+        counterWidget += number_line/3; //each 3lines, a new widget is counted
+        if (label_text != "TODO") new QDisplayDataInfoWidget(box,final_text,(*it).second,dialogFlags_.LINKPATH_MODIFIABLE_FLAG);
 
-	    //Signals and slots connections
-	    connect( buttonUpdate,   SIGNAL( clicked() ), this, SLOT( updateValues() ) );
-	    connect( buttonOk,       SIGNAL( clicked() ), this, SLOT( accept() ) );
-	    connect( buttonCancel,   SIGNAL( clicked() ), this, SLOT( reject() ) );
+
+        DataWidget::CreatorArgument dwarg;
+        dwarg.name = (*it).first;
+        dwarg.data = (*it).second;
+        dwarg.readOnly = (dwarg.data->isReadOnly() && dialogFlags_.READONLY_FLAG);
+        dwarg.dialog = this;
+        dwarg.parent = box;
+        std::string widget = dwarg.data->getWidget();
+        box->setColumns(2);
+        DataWidget* dw;
+        if (widget.empty())
+          dw = DataWidgetFactory::CreateAnyObject(dwarg);
+        else
+          dw = DataWidgetFactory::CreateObject(dwarg.data->getWidget(), dwarg);
+        if (dw == NULL)
+        {
+          box->setColumns(4);
+          std::cout << "WIDGET FAILED for data " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
+        }
+        if (dw != NULL)
+        {
+          //std::cout << "WIDGET created for data " << dwarg.data << " : " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
+          dataWidgets[dwarg.data] = dw;
+          counterWidget+=dw->sizeWidget();
+        }
+        //********************************************************************************************************//
+        //Types that needs a QTable: vector of elements
+        else if (createTable( (*it).second, box))
+        {
+          ++counterWidget; //count for two classic widgets
+        }
+        else
+        {
+          Q3TextEdit* textedit = new Q3TextEdit(box);
+          // 		      objectGUI.push_back(std::make_pair( (*it).second,  (QObject *) textedit);
+
+          textedit->setText(QString((*it).second->getValueString().c_str()));
+          //if empty field, we don't display it
+
+          if ((*it).second->getValueString().empty() && !dialogFlags_.EMPTY_FLAG)
+          {
+            box->hide();
+            std::cerr << (*it).first << " : " << (*it).second->getValueTypeString() << " Not added because empty \n";
+            --counterWidget;
+          }
+          else
+          {
+            list_TextEdit.push_back(std::make_pair(textedit, (*it).second));
+            ++counterWidget; //count for two classic widgets
+            connect( textedit, SIGNAL( textChanged() ), this, SLOT( changeValue() ) );
+          }
+        }
+      }
+      ++i;
+      if (box != NULL)
+      {
+        if (currentTab == currentTab_save && emptyTab && counterWidget/WIDGET_BY_TAB == counterTab)
+        {
+          dialogTab->addTab(currentTab, QString("Properties ") + QString::number(counterWidget/WIDGET_BY_TAB));
+          ++counterTab;
+          emptyTab = false;
+        }
+
+        dataIndexTab.insert(std::make_pair((*it).second, dialogTab->count()-1));
+        ++counterWidget;
+        currentTabLayout->addWidget( box );
+      }
+    }
+
+    if (tabPropertiesLayout!= NULL) tabPropertiesLayout->addStretch();
+    if (tabVisualization != NULL )
+    {
+      dialogTab->addTab(tabVisualization, QString("Visualization"));
+      if ( !isNode) tabVisualizationLayout->addStretch();
+    }
+    for (unsigned int indexTab = 0; indexTab<counterTab;indexTab++)
+    {
+      if (counterTab == 1)
+        dialogTab->setTabLabel(dialogTab->page(indexTab),
+        QString("Properties"));
+      else
+        dialogTab->setTabLabel(dialogTab->page(indexTab),
+        QString("Properties ") + QString::number(indexTab+1) + QString("/") + QString::number(counterTab));
+    }
+
+    if (Node* real_node = dynamic_cast< Node* >(node))
+    {
+      if (dialogFlags_.REINIT_FLAG && (real_node->mass!= NULL || real_node->forceField.size()!=0 ) )
+      {
+        createGraphMass(dialogTab);
+      }
+    }
+
+    // Info tab
+    {
+      emptyTab = false;
+      QWidget* tab = new QWidget();
+      QVBoxLayout* tabLayout = new QVBoxLayout( tab, 0, 1, QString("tabInfoLayout"));
+
+      dialogTab->addTab(tab, QString("Infos"));
+      ++counterTab;
+      //Instance
+      {
+        Q3GroupBox *box = new Q3GroupBox(tab, QString("Instance"));
+        box->setColumns(2);
+        box->setTitle(QString("Instance"));
+        new QLabel(QString("Name"), box);
+        new QLabel(QString(node->getName().c_str()), box);
+        new QLabel(QString("Class"), box);
+        new QLabel(QString(node->getClassName().c_str()), box);
+        std::string namespacename = node->decodeNamespaceName(typeid(*node));
+        if (!namespacename.empty())
+        {
+          new QLabel(QString("Namespace"), box);
+          new QLabel(QString(namespacename.c_str()), box);
+        }
+        if (!node->getTemplateName().empty())
+        {
+          new QLabel(QString("Template"), box);
+          new QLabel(QString(node->getTemplateName().c_str()), box);
+        }
+
+        tabLayout->addWidget( box );
+      }
+
+      //Class description
+      core::ObjectFactory::ClassEntry* entry = core::ObjectFactory::getInstance()->getEntry(node->getClassName());
+      if (entry != NULL && ! entry->creatorList.empty())
+      {
+        Q3GroupBox *box = new Q3GroupBox(tab, QString("Class"));
+        box->setColumns(2);
+        box->setTitle(QString("Class"));
+        if (!entry->description.empty() && entry->description != std::string("TODO"))
+        {
+          new QLabel(QString("Description"), box);
+          new QLabel(QString(entry->description.c_str()), box);
+        }
+        std::map<std::string, core::ObjectFactory::Creator*>::iterator it = entry->creatorMap.find(node->getTemplateName());
+        if (it != entry->creatorMap.end() && *it->second->getTarget())
+        {
+          new QLabel(QString("Provided by"), box);
+          new QLabel(QString(it->second->getTarget()), box);
+        }
+
+        if (!entry->authors.empty() && entry->authors != std::string("TODO"))
+        {
+          new QLabel(QString("Authors"), box);
+          new QLabel(QString(entry->authors.c_str()), box);
+        }
+        if (!entry->license.empty() && entry->license != std::string("TODO"))
+        {
+          new QLabel(QString("License"), box);
+          new QLabel(QString(entry->license.c_str()), box);
+        }
+        tabLayout->addWidget( box );
+      }
+
+
+      tabLayout->addStretch();
+
+      updateConsole();
+      if (outputTab)  dialogTab->addTab(outputTab,  QString("Outputs"));
+      if (warningTab) dialogTab->addTab(warningTab, QString("Warnings"));
+    }
+
+    //Adding buttons at the bottom of the dialog
+    QHBoxLayout *lineLayout = new QHBoxLayout( 0, 0, 6, "Button Layout");
+
+    buttonUpdate = new QPushButton( this, "buttonUpdate" );
+    lineLayout->addWidget(buttonUpdate);
+    buttonUpdate->setText("&Update");
+    buttonUpdate->setEnabled(false);
+
+    QSpacerItem *Horizontal_Spacing = new QSpacerItem( 20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum );
+    lineLayout->addItem( Horizontal_Spacing );
+
+    QPushButton *buttonOk = new QPushButton( this, "buttonOk" );
+    lineLayout->addWidget(buttonOk);
+    buttonOk->setText( tr( "&OK" ) );
+
+    QPushButton *buttonCancel = new QPushButton( this, "buttonCancel" );
+    lineLayout->addWidget(buttonCancel);
+    buttonCancel->setText( tr( "&Cancel" ) );
+
+    generalLayout->addLayout( lineLayout );
 
 
 
-	    resize( QSize(553, 130).expandedTo(minimumSizeHint()) );
-	  }
+    //Signals and slots connections
+    connect( buttonUpdate,   SIGNAL( clicked() ), this, SLOT( updateValues() ) );
+    connect( buttonOk,       SIGNAL( clicked() ), this, SLOT( accept() ) );
+    connect( buttonCancel,   SIGNAL( clicked() ), this, SLOT( reject() ) );
+
+
+
+    resize( QSize(553, 130).expandedTo(minimumSizeHint()) );
+  }
 
 
       }
@@ -640,7 +651,7 @@ void ModifyObject::changeVisualValue()
 	  {
 	      std::string oldName = node->getName();
 	    //If the current element is a node of the graph, we first apply the transformations
-	    if (REINIT_FLAG && dynamic_cast< Node *>(node))
+	    if (dialogFlags_.REINIT_FLAG && dynamic_cast< Node *>(node))
 	      {
 		Node* current_node = dynamic_cast< Node *>(node);
 		if (!(transformation[0]->getFloatValue() == 0 &&
@@ -649,13 +660,15 @@ void ModifyObject::changeVisualValue()
 		      transformation[3]->getFloatValue() == 0 &&
 		      transformation[4]->getFloatValue() == 0 &&
 		      transformation[5]->getFloatValue() == 0 &&
-		      transformation[6]->getFloatValue() == 1 ))
+                      transformation[6]->getFloatValue() == 1 &&
+                      transformation[7]->getFloatValue() == 1 &&
+                      transformation[8]->getFloatValue() == 1 ))
 		  {
 
 		    sofa::simulation::TransformationVisitor transform;
 		    transform.setTranslation(transformation[0]->getFloatValue(),transformation[1]->getFloatValue(),transformation[2]->getFloatValue());
 		    transform.setRotation(transformation[3]->getFloatValue(),transformation[4]->getFloatValue(),transformation[5]->getFloatValue());
-		    transform.setScale(transformation[6]->getFloatValue());
+                    transform.setScale(transformation[6]->getFloatValue(),transformation[7]->getFloatValue(),transformation[8]->getFloatValue());
 		    transform.execute(current_node);
 
 		    transformation[0]->setFloatValue(0);
@@ -667,6 +680,8 @@ void ModifyObject::changeVisualValue()
 		    transformation[5]->setFloatValue(0);
 
 		    transformation[6]->setFloatValue(1);
+                    transformation[7]->setFloatValue(1);
+                    transformation[8]->setFloatValue(1);
 
 		  }
 	      }
@@ -694,20 +709,20 @@ void ModifyObject::changeVisualValue()
 	      {
 		  if( !dynamic_cast< Node *>(node))
 		  {
-		      std::string name=item->text(0).ascii();
+		      std::string name=item_->text(0).ascii();
 		      std::string::size_type pos = name.find(' ');
 		      if (pos != std::string::npos)
 			  name.resize(pos);
 		      name += "  ";
 
 		      name+=newName;
-		      item->setText(0,name.c_str());
+		      item_->setText(0,name.c_str());
 		  }
 		  else if (dynamic_cast< Node *>(node))
-		      item->setText(0,newName.c_str());
+		      item_->setText(0,newName.c_str());
 	      }
 
-	    if (REINIT_FLAG)
+	    if (dialogFlags_.REINIT_FLAG)
 	      {
 			  if (sofa::core::objectmodel::BaseObject *obj = dynamic_cast< sofa::core::objectmodel::BaseObject* >(node)){
 				obj->reinit();
@@ -740,6 +755,11 @@ void ModifyObject::changeVisualValue()
       {
 	if (node == NULL) return;
 	node->execute< sofa::simulation::UpdateVisualContextVisitor >();
+        if (!node->nodeInVisualGraph.empty())
+          {
+            node->nodeInVisualGraph->copyContext((core::objectmodel::Context&) *(node->getContext()));
+            node->nodeInVisualGraph->execute< sofa::simulation::UpdateVisualContextVisitor >();
+          }
       }
 
 
@@ -948,7 +968,7 @@ void ModifyObject::changeVisualValue()
 		if (!vectorTable || !vectorTable2 || !vectorTable3)
 		{
 			if (!MonitorDataTemp.sizeIdxPos() && !MonitorDataTemp.sizeIdxVels()
-				&& !MonitorDataTemp.sizeIdxForces() && !EMPTY_FLAG )
+				&& !MonitorDataTemp.sizeIdxForces() && !dialogFlags_.EMPTY_FLAG )
 				return false;
 
 			box->setColumns(2);
@@ -1242,12 +1262,12 @@ void ModifyObject::changeVisualValue()
 
       void ModifyObject::readOnlyData(Q3Table *widget, core::objectmodel::BaseData* data)
       {
-        widget->setReadOnly(( (data->isReadOnly()) && READONLY_FLAG));
+        widget->setReadOnly(( (data->isReadOnly()) && dialogFlags_.READONLY_FLAG));
       }
 
       void ModifyObject::readOnlyData(QWidget *widget, core::objectmodel::BaseData* data)
       {
-        widget->setEnabled(!( (data->isReadOnly()) && READONLY_FLAG));
+        widget->setEnabled(!( (data->isReadOnly()) && dialogFlags_.READONLY_FLAG));
       }
 
 
@@ -1298,6 +1318,21 @@ void QDisplayDataInfoWidget::linkEdited()
 {
   std::cerr << "linkEdited " << linkpath_edit->text().ascii() << std::endl;
   data->setLinkPath(linkpath_edit->text().ascii() );
+}
+
+void QPushButtonUpdater::setDisplayed(bool b)
+{
+
+  if (b)
+  {
+      this->setText(QString("Click to hide the values"));
+      widget->readFromData();
+  }
+  else
+  {
+      this->setText(QString("Click to display the values"));
+  }
+
 }
 
 } // namespace qt

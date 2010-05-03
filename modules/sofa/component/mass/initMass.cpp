@@ -55,4 +55,5 @@ void initMass()
 SOFA_LINK_CLASS(DiagonalMass)
 SOFA_LINK_CLASS(UniformMass)
 SOFA_LINK_CLASS(MatrixMass)
+SOFA_LINK_CLASS(MeshMatrixMass)
 

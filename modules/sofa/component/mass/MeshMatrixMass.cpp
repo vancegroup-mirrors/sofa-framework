@@ -16,32 +16,59 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-
-#include <sofa/core/objectmodel/DataEngine.h>
+#define SOFA_COMPONENT_MASS_MESHMATRIXMASS_CPP
+#include <sofa/component/mass/MeshMatrixMass.inl>
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/helper/gl/Axis.h>
 
 namespace sofa
 {
 
-namespace core
+namespace component
 {
 
-namespace objectmodel
+namespace mass
 {
 
-    DataEngine::DataEngine(){}
+using namespace sofa::defaulttype;
 
-    DataEngine::~DataEngine(){}
+  SOFA_DECL_CLASS(MeshMatrixMass)
 
-} // namespace objectmodel
+  // Register in the Factory
+  int MeshMatrixMassClass = core::RegisterObject("Define a specific mass for each particle") 
+#ifndef SOFA_FLOAT
+    .add< MeshMatrixMass<Vec3dTypes,double> >()
+    .add< MeshMatrixMass<Vec2dTypes,double> >()
+    .add< MeshMatrixMass<Vec1dTypes,double> >()
+#endif
+#ifndef SOFA_DOUBLE
+    .add< MeshMatrixMass<Vec3fTypes,float> >()
+    .add< MeshMatrixMass<Vec2fTypes,float> >()
+    .add< MeshMatrixMass<Vec1fTypes,float> >()
+#endif
+    ;
 
-} // namespace core
+#ifndef SOFA_FLOAT
+  template class SOFA_COMPONENT_MASS_API MeshMatrixMass<Vec3dTypes,double>;
+  template class SOFA_COMPONENT_MASS_API MeshMatrixMass<Vec2dTypes,double>;
+  template class SOFA_COMPONENT_MASS_API MeshMatrixMass<Vec1dTypes,double>;
+#endif
+#ifndef SOFA_DOUBLE
+  template class SOFA_COMPONENT_MASS_API MeshMatrixMass<Vec3fTypes,float>;
+  template class SOFA_COMPONENT_MASS_API MeshMatrixMass<Vec2fTypes,float>;
+  template class SOFA_COMPONENT_MASS_API MeshMatrixMass<Vec1fTypes,float>;
+#endif
+
+
+} // namespace mass
+
+} // namespace component
 
 } // namespace sofa
+

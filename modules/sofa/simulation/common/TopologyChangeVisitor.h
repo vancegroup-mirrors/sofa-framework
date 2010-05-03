@@ -45,7 +45,8 @@ public:
 
 		virtual ~TopologyChangeVisitor(){}
 
-		virtual void processTopologyChange(core::objectmodel::BaseObject* obj);
+                virtual void processTopologyChangeNoCheck(simulation::Node* node, core::objectmodel::BaseObject* obj);
+                virtual void processTopologyChange(simulation::Node* node, core::objectmodel::BaseObject* obj);
 
 		virtual Result processNodeTopDown(simulation::Node* node);
 		virtual void processNodeBottomUp(simulation::Node* node);
@@ -65,7 +66,6 @@ protected:
 
     core::componentmodel::topology::Topology* source;
 };
-
 //Only triggers the handleTopologyChange method
 class SOFA_SIMULATION_COMMON_API HandleTopologyChangeVisitor: public Visitor
 {
@@ -78,7 +78,6 @@ public:
                 virtual const char* getCategoryName() const { return "topologyChange"; }
                 virtual const char* getClassName() const { return "HandleTopologyChangeVisitor"; }
 };
-
 
 
 

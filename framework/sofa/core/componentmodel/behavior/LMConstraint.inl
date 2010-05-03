@@ -54,7 +54,6 @@ namespace sofa
             //VecConst interface:
             //index where the direction will be found
           unsigned int id=constrainedObject1->getCSize();
-
           constrainedObject1->getC()->push_back(C1);
           linesInSimulatedObject1.insert(std::make_pair(id,id));
           return id;
@@ -66,7 +65,6 @@ namespace sofa
             //VecConst interface:
             //index where the direction will be found
           unsigned int id=constrainedObject2->getCSize();
-
           constrainedObject2->getC()->push_back(C2);
           linesInSimulatedObject2.insert(std::make_pair(id,id));
           return id;
@@ -79,6 +77,7 @@ namespace sofa
           BaseMechanicalState *mstate;
 
           mstate=constrainedObject1;
+          mstate->forceMask.setInUse(this->useMask());
           while (mstate != simulatedObject1)
             {                  
               core::componentmodel::behavior::BaseMechanicalMapping* mapping;
@@ -89,6 +88,7 @@ namespace sofa
             }
           
           mstate=constrainedObject2;
+          mstate->forceMask.setInUse(this->useMask());
           while (mstate != simulatedObject2)
             {                  
               core::componentmodel::behavior::BaseMechanicalMapping* mapping;

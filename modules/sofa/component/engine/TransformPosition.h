@@ -30,7 +30,7 @@
 #endif
 
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/core/objectmodel/DataEngine.h>
+#include <sofa/core/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/component/topology/PointSubset.h>
@@ -55,10 +55,10 @@ This transformation can be either : projection on a plane (plane defined by an o
 translation, rotation, scale and some combinations of translation, rotation and scale
  */
 template <class DataTypes>
-class TransformPosition : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
+class TransformPosition : public core::DataEngine
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(TransformPosition,DataTypes),core::objectmodel::BaseObject);
+  SOFA_CLASS(SOFA_TEMPLATE(TransformPosition,DataTypes),core::DataEngine);
 	typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;
@@ -119,21 +119,15 @@ public:
 protected:
 
 	TransformationMethod transformationMethod;
-    DataPtr<Coord> originPtr; // origin used by projectOnPlane
+    Data<Coord> f_origin; // origin used by projectOnPlane
     Data<VecCoord> f_inputX; // input position
     Data<VecCoord> f_outputX; // ouput position
-    DataPtr<Coord> normalPtr; // normal used by projectOnPlane
-    DataPtr<Coord> translationPtr; // translation 
-    DataPtr<Coord> rotationPtr; // rotation
-    DataPtr<Real> scalePtr; // scale
+    Data<Coord> f_normal; // normal used by projectOnPlane
+    Data<Coord> f_translation; // translation 
+    Data<Coord> f_rotation; // rotation
+    Data<Real> f_scale; // scale
     Data<std::string> method; // the method of the transformation
     
-    Coord origin;
-    Coord normal;
-    Coord translation;
-    Coord rotation;
-    Real scale;
-
     MechanicalState<DataTypes>* mstate;
     const VecCoord* x0;
 

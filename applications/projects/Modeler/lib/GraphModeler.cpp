@@ -30,6 +30,7 @@
 
 
 #include <sofa/simulation/common/Simulation.h>
+#include <sofa/gui/qt/ModifyObject.h>
 #include <sofa/gui/qt/FileManagement.h> //static functions to manage opening/ saving of files
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
@@ -329,8 +330,9 @@ namespace sofa
 	    (*testWindow).second->raise();
 	    return;
 	  }
-
-	ModifyObjectModeler *dialogModify = new ModifyObjectModeler ( current_Id_modifyDialog, it->first, item,this,item->text(0));
+  ModifyObjectFlags dialogFlags = ModifyObjectFlags();
+  dialogFlags.setFlagsForModeler();
+	ModifyObject *dialogModify = new ModifyObject( current_Id_modifyDialog, it->first, item,this,dialogFlags,item->text(0));
 	map_modifyObjectWindow.insert( std::make_pair(current_Id_modifyDialog, dialogModify));
 	//If the item clicked is a node, we add it to the list of the element modified
 
@@ -522,13 +524,18 @@ namespace sofa
 	    elem->setAttribute(nameAttribute, valueAttribute.c_str());
 	  }
 
+        
 	std::vector< std::pair<std::string, BaseData*> > vecDatas=b->getFields();
 	for (unsigned int i=0;i<vecDatas.size();++i)
 	  {
 	    std::string result = elem->getAttribute(vecDatas[i].first, "");
+
 	    if (!result.empty())
 	      {
-		vecDatas[i].second->read(result);
+                if (result[0] == '@')
+                  vecDatas[i].second->setLinkPath(result);
+                else
+                  vecDatas[i].second->read(result);
 	      }
 	  }
       }

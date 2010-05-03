@@ -1143,33 +1143,18 @@ public:
 
 class SOFA_SIMULATION_COMMON_API MechanicalExpressJacobianVisitor: public MechanicalVisitor
 {
- public:
- MechanicalExpressJacobianVisitor(){
-#ifdef SOFA_DUMP_VISITOR_INFO
-    setReadWriteVectors();
-#endif
-        };
-
-
-  virtual Result fwdLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* c);
- virtual void bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map);
-
-  /// Return a class name for this visitor
-  /// Only used for debugging / profiling purposes
-  virtual const char* getClassName() const { return "MechanicalExpressJacobianVisitor"; }
-
-  virtual bool isThreadSafe() const
-  {
-    return false;
-  }
+public:
+    MechanicalExpressJacobianVisitor(simulation::Node* n);
+    virtual void bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map);
+    /// Return a class name for this visitor
+    /// Only used for debugging / profiling purposes
+    virtual const char* getClassName() const { return "MechanicalExpressJacobianVisitor"; }
+    virtual bool isThreadSafe() const{ return false;}
 #ifdef SOFA_DUMP_VISITOR_INFO
     void setReadWriteVectors()
     {
     }
 #endif
-
- protected:
-    helper::vector< core::componentmodel::behavior::BaseLMConstraint* > constraintUsed;
 };
 
 
@@ -1189,6 +1174,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalSolveLMConstraintVisitor: public Mech
   /// Return a class name for this visitor
   /// Only used for debugging / profiling purposes
   virtual const char* getClassName() const { return "MechanicalSolveLMConstraintVisitor"; }
+  virtual std::string getInfos() const { std::string name= "["+state.getName()+"]"; return name; }
 
   virtual bool isThreadSafe() const
   {

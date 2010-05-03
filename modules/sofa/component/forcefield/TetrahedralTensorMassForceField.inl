@@ -126,7 +126,7 @@ void TetrahedralTensorMassForceField<DataTypes>::TetrahedralTMTetrahedronCreatio
 				// print if obtuse tetrahedron along that edge
 				if (ff->f_printLog.getValue()) {
 					if (val1<0) 
-					  std::cerr<<"negative cotangent["<<tetrahedronAdded[i]<<"]["<<j<<"]"<<std::endl;
+                                          ff->serr<<"negative cotangent["<<tetrahedronAdded[i]<<"]["<<j<<"]"<<ff->sendl;
 				}
 
 				if (ff->_topology->getEdge(te[j])[0]!=t[l]) {
@@ -203,7 +203,7 @@ void TetrahedralTensorMassForceField<DataTypes>::TetrahedralTMTetrahedronDestruc
 				// print if obtuse tetrahedron along that edge
 				if (ff->f_printLog.getValue()) {
 					if (val1<0) 
-					  std::cerr<<"negative cotangent["<<tetrahedronRemoved[i]<<"]["<<j<<"]"<<std::endl;
+                                          ff->serr<<"negative cotangent["<<tetrahedronRemoved[i]<<"]["<<j<<"]"<<ff->sendl;
 				}
 
 				if (ff->_topology->getEdge(te[j])[0]!=t[l]) {

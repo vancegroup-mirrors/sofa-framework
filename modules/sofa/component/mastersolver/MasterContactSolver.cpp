@@ -92,6 +92,7 @@ MasterContactSolver::MasterContactSolver()
 , lcp3(MAX_NUM_CONSTRAINTS)
 , _W(&lcp1.W)
 , lcp(&lcp1)
+,last_lcp(0)
 , _dFree(&lcp1.dFree)
 , _result(&lcp1.f)
 {
@@ -290,6 +291,7 @@ void MasterContactSolver::keepContactForcesValue()
 
 void MasterContactSolver::step(double dt)
 {
+	last_lcp = lcp;
 
 	context = dynamic_cast<simulation::Node *>(this->getContext()); // access to current node
 	CTime *timer;
@@ -1039,7 +1041,7 @@ int MasterContactSolver::lcp_gaussseidel_unbuilt(double *dfree, double *f)
 
 LCP* MasterContactSolver::getLCP()
 {
-	return lcp;
+	return last_lcp;
 }
 
 void MasterContactSolver::lockLCP(LCP* l1, LCP* l2)

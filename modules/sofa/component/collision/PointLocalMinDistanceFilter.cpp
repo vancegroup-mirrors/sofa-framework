@@ -74,7 +74,7 @@ void PointInfo::buildFilter(unsigned int p_index)
 
 	if(edgesAroundVertex.size() ==0)
 	{
-		std::cerr<<"WARNING no topology defined: no filtering"<<std::endl;
+                std::cerr<<"WARNING no topology defined: no filtering"<<std::endl;
 		std::cout<<"Mesh Topology found :"<<bmt->getName()<<std::endl;
 		m_noLineModel = true;
 		setValid();
@@ -120,7 +120,7 @@ void PointInfo::buildFilter(unsigned int p_index)
 		nMean.normalize();
 	else
 	{
-		std::cerr << "WARNING PointInfo m_nMean is null" << std::endl;
+                std::cerr << "WARNING PointInfo m_nMean is null" << std::endl;
 	}
 
 	if (debug)

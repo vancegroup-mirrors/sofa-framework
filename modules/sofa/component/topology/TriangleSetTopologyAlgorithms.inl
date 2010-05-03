@@ -2152,7 +2152,7 @@ namespace sofa
 	  }
 	}
     
-	this->serr << "Points on the path: " << init_points << this->sendl;
+	//this->serr << "Points on the path: " << init_points << this->sendl;
 
 	sofa::helper::vector< std::pair<TriangleID,TriangleID> > init_triangles;
 	for (int i=0; i<nbEdges; ++i)

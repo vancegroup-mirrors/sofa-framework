@@ -199,7 +199,7 @@ template<class DataTypes>
 					  initRotFound=true;
 				  }
 				else{
-				  std::cerr<<"Error parsing Spring : Unknown Attribute "<<str<<std::endl;
+                                    std::cerr<<"Error parsing Spring : Unknown Attribute "<<str<<std::endl;
 					  return in;
 				}
 
@@ -357,7 +357,7 @@ public:
           s.initTrans = x2[m2].getCenter() - x1[m1].getCenter(); 
           s.initRot = x2[m2].getOrientation()*x1[m1].getOrientation().inverse();
           
-          std::cerr << s.initTrans << " =T  : " << s.initRot << " = R\n";
+          sout << s.initTrans << " =T  : " << s.initRot << " = R" << sendl;
           springs.beginEdit()->push_back(s);
           springs.endEdit();
 	}

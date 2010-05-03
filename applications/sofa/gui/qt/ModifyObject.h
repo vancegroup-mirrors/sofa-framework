@@ -28,6 +28,7 @@
 #define SOFA_GUI_QT_MODIFYOBJECT_H
  
 #include "SofaGUIQt.h"
+#include "ModifyObjectModel.h"
 #include <sofa/core/objectmodel/BaseObject.h>
 
 #include <sofa/defaulttype/Vec.h>
@@ -35,9 +36,8 @@
 #include <sofa/helper/fixed_array.h>
 #include <sofa/simulation/common/Node.h>
 #include <sofa/component/misc/Monitor.h>
-#include <sofa/helper/Factory.h>
 
-#include <qglobal.h>
+
 #ifdef SOFA_QT4
 #include <QDialog>
 #include <QWidget>
@@ -108,38 +108,82 @@ typedef QGrid       Q3Grid;
 
 class DataWidget;
 
+typedef struct ModifyObjectFlags
+{
+ 
+  bool HIDE_FLAG; //if we allow to hide Datas  
+  bool READONLY_FLAG; //if we allow  ReadOnly Datas
+  bool EMPTY_FLAG;//if we allow empty datas
+  bool RESIZABLE_FLAG;
+  bool REINIT_FLAG;
+  bool LINKPATH_MODIFIABLE_FLAG; //if we allow to modify the links of the Data
 
-class SOFA_SOFAGUIQT_API ModifyObject : public QDialog
+  explicit ModifyObjectFlags():
+  HIDE_FLAG(true),
+  READONLY_FLAG(true),
+  EMPTY_FLAG(false),
+  RESIZABLE_FLAG(false),
+  REINIT_FLAG(true),
+  LINKPATH_MODIFIABLE_FLAG(false){};
+
+  void setFlagsForSofa()
+  {
+    HIDE_FLAG = true;
+    READONLY_FLAG = true;
+    EMPTY_FLAG = false;
+    RESIZABLE_FLAG = true;
+    REINIT_FLAG = true;
+    LINKPATH_MODIFIABLE_FLAG = false;
+  };
+
+  void setFlagsForModeler()
+  {
+    HIDE_FLAG = false;
+    READONLY_FLAG=false; //everything will be editable
+    EMPTY_FLAG = true;
+    RESIZABLE_FLAG = true; 
+    REINIT_FLAG = false;            
+    LINKPATH_MODIFIABLE_FLAG = true;
+  };
+}ModifyDialogFlags;
+ 
+
+class SOFA_SOFAGUIQT_API ModifyObject : public ModifyObjectModel
 {
     Q_OBJECT
 public:
 
-	ModifyObject(){};
-	ModifyObject( void *Id, core::objectmodel::Base* node, Q3ListViewItem* item_clicked, QWidget* parent, const char* name= 0, bool  modal= FALSE, Qt::WFlags f= 0 );
+	explicit ModifyObject( void *Id, 
+    core::objectmodel::Base* node, 
+    Q3ListViewItem* item_clicked, 
+    QWidget* parent, 
+    const ModifyObjectFlags& dialogFlags,
+    const char* name= 0, 
+    bool  modal= FALSE, 
+    Qt::WFlags f= 0 );
+
 	~ModifyObject()
 	  {
 	    delete buttonUpdate;
 	  }
 
-	void setNode(core::objectmodel::Base* node, Q3ListViewItem* item_clicked=NULL); //create all the widgets of the dialog window
+	void setNode(); //create all the widgets of the dialog window
 
-	bool hideData(core::objectmodel::BaseData* data){ return (!data->isDisplayed()) && HIDE_FLAG;};
+	bool hideData(core::objectmodel::BaseData* data){ return (!data->isDisplayed()) && dialogFlags_.HIDE_FLAG;};
 	void readOnlyData(Q3Table *widget, core::objectmodel::BaseData* data);
 	void readOnlyData(QWidget *widget, core::objectmodel::BaseData* data);
 
 
 public slots:
-	void updateValues();              //update the node with the values of the field
+	virtual void updateValues();              //update the node with the values of the field
 	void updateTextEdit();            //update the text fields due to unknown data field
 	void updateConsole();             //update the console log of warnings and outputs
 	void updateTables();              //update the tables of value at each step of the simulation
 	void saveTables();                //Save in datafield the content of a QTable
 	void saveTextEdit();                //Save in datafield the content of a QTextEdit
-	void changeValue();               //each time a field is modified
+	virtual void changeValue();               //each time a field is modified
 	void changeVisualValue();               //each time a field of the Visualization tab is modified
 	void closeNow (){emit(reject());} //called from outside to close the current widget
-	void reject   (){                 emit(dialogClosed(Id)); deleteLater();QDialog::reject();} //When closing a window, inform the parent.
-	void accept   (){ updateValues(); emit(dialogClosed(Id)); deleteLater();QDialog::accept();} //if closing by using Ok button, update the values
 	void resizeTable(int);
 	void clearWarnings(){node->clearWarnings(); logWarningEdit->clear();}
 	void clearOutputs(){node->clearOutputs(); logOutputEdit->clear();}
@@ -160,7 +204,7 @@ protected:
 	void createGraphMass(QTabWidget *);
 	void updateHistory();
 	void updateEnergy();
-
+  
 	bool createTable(core::objectmodel::BaseData* field, Q3GroupBox *box=NULL, Q3Table* vectorTable=NULL, Q3Table* vectorTable2=NULL, Q3Table* vectorTable3=NULL );
 	void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_list_table);
 
@@ -174,13 +218,10 @@ protected:
 	//*********************************************************
 
 	Q3Table* addResizableTable(Q3GroupBox *box,int size, int column=1);
-
-	QWidget *parent;
 	QTabWidget *dialogTab;
 	core::objectmodel::Base* node;
-	Q3ListViewItem * item;
 	QPushButton *buttonUpdate;
-
+        ModifyObjectFlags dialogFlags_;
 	std::vector<std::pair< core::objectmodel::BaseData*,  QObject*> >  objectGUI;  //vector of all the Qt Object added in the window
 
 	std::set< const core::objectmodel::BaseData* >                     setUpdates; //set of objects that have been modified
@@ -189,180 +230,26 @@ protected:
 	std::map< core::objectmodel::BaseData*, int >                      dataIndexTab;
 	std::map< QSpinBox*, Q3Table* >                                    resizeMap;
 	std::set< Q3Table* >                                               setResize;
-	WFloatLineEdit* transformation[7]; //Data added to manage transformation of a whole node
+        WFloatLineEdit* transformation[9]; //Data added to manage transformation of a whole node
 
-        QWidget *warningTab;
-	Q3TextEdit *logWarningEdit;
         QWidget *outputTab;
+        QWidget *warningTab;
 	Q3TextEdit *logOutputEdit;
-
-    typedef std::map<core::objectmodel::BaseData*, DataWidget*> DataWidgetMap;
-    DataWidgetMap dataWidgets;
-
-	void *Id;
-	bool visualContentModified;
-
-	//Visual Flags
-	DisplayFlagWidget *displayFlag;
-
+	Q3TextEdit *logWarningEdit;
 	std::vector< double > history;
 	std::vector< double > energy_history[3];
 	QwtPlot *graphEnergy;
 	QwtPlotCurve *energy_curve[3];
+
+    typedef std::map<core::objectmodel::BaseData*, DataWidget*> DataWidgetMap;
+    DataWidgetMap dataWidgets;
+
+	bool visualContentModified;
+  
+	//Visual Flags
+	DisplayFlagWidget *displayFlag;
+
 	unsigned int counterWidget;
-
-	bool HIDE_FLAG; //if we allow to hide Datas
-	bool READONLY_FLAG; //if we allow  ReadOnly Datas
-	bool EMPTY_FLAG;//if we allow empty datas
-	bool RESIZABLE_FLAG;
-	bool REINIT_FLAG;
-        bool LINKPATH_MODIFIABLE_FLAG; //if we allow to modify the links of the Data
-};
-
-class DataWidget
-{
-protected:
-    core::objectmodel::Base* node;
-    core::objectmodel::BaseData* baseData;
-    QWidget* parent;
-    ModifyObject* dialog;
-    std::string name;
-    bool readOnly;
-public:
-    typedef core::objectmodel::BaseData MyData;
-
-    DataWidget(MyData* d) : node(NULL), baseData(d), dialog(NULL), readOnly(false) {}
-    virtual ~DataWidget() {}
-    void setNode(core::objectmodel::Base* n) { node = n; }
-    void setDialog(ModifyObject* d) { dialog = d; }
-    void setReadOnly(bool b) { readOnly = b; }
-    void setParent(QWidget *p) { parent=p; }
-    void setName(std::string n){ name = n;};
-    virtual bool createWidgets(QWidget* parent) = 0;
-    virtual void readFromData() = 0;
-    virtual void writeToData() {}
-    virtual bool processChange(const QObject* /*sender*/) { return false; }
-    virtual bool isModified() { return false; }
-    std::string getName() { return name;};
-    virtual void update()
-    {
-	readFromData();
-    }
-    virtual void updateVisibility()
-    {
-      parent->setShown(baseData->isDisplayed());
-    };
-    
-    virtual unsigned int sizeWidget(){return 1;}
-    //
-    // Factory related code
-    //
-
-    struct CreatorArgument
-    {
-	core::objectmodel::Base* node;
-	std::string name;
-	core::objectmodel::BaseData* data;
-	ModifyObject* dialog;
-	QWidget* parent;
-	bool readOnly;
-    };
-
-    template<class T>
-    static void create(T*& instance, const CreatorArgument& arg)
-    {
-	typename T::MyData* data = dynamic_cast<typename T::MyData*>(arg.data);
-	if (!data) return;
-	instance = new T(data);
-	instance->setNode(arg.node);
-	instance->setDialog(arg.dialog);
-	instance->setReadOnly(arg.readOnly);
-	instance->setParent(arg.parent);
-        instance->setName(arg.name);
-	if (!instance->createWidgets(arg.parent))
-	{
-	    delete instance;
-	    instance = NULL;
-	}
-	else instance->updateVisibility();
-    }
-};
-
-typedef sofa::helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument> DataWidgetFactory;
-
-class DefaultDataWidget : public DataWidget
-{
-protected:
-    typedef QLineEdit Widget;
-    MyData* data;
-    Widget* w;
-    int counter;
-    bool modified;
-public:
-    DefaultDataWidget(MyData* d) : DataWidget(d), data(d), w(NULL), counter(-1), modified(false) {}
-    virtual bool createWidgets(QWidget* parent)
-    {
-	w = new QLineEdit(parent);
-	if (w == NULL) return false;
-	std::string s = data->getValueString();
-	w->setText(QString(s.c_str()));
-	counter = data->getCounter();
-	if (this->readOnly)
-	    w->setEnabled(false);
-	else
-	    dialog->connect(w, SIGNAL( textChanged(const QString&) ), dialog, SLOT( changeValue() ));
-	return true;
-    }
-    virtual void readFromData()
-    {
-	std::string s = data->getValueString();
-	w->setText(QString(s.c_str()));
-	modified = false;
-	counter = data->getCounter();
-    }
-    virtual bool isModified() { return modified; }
-    virtual void writeToData()
-    {
-	if (!modified) return;
-	std::string s = w->text().ascii();
-	data->read(s);
-	counter = data->getCounter();
-    }
-    virtual bool processChange(const QObject* sender)
-    {
-	if (sender == w)
-	{
-	    modified = true;
-	    return true;
-	}
-	else return false;
-    }
-    virtual void update()
-    {
-	if (counter != data->getCounter())
-	    readFromData();
-    }
-};
-
-
-
-//TODO Move to a separate file
-  class QTableUpdater : virtual public Q3Table
-{
-    Q_OBJECT
-public:
-    QTableUpdater ( int numRows, int numCols, QWidget * parent = 0, const char * name = 0 ):
-#ifdef SOFA_QT4
-Q3Table(numRows, numCols, parent, name)
-#else
-QTable(numRows, numCols, parent, name)
-#endif
-{};
-
-public slots:
-    void setDisplayed(bool b){this->setShown(b);}
-public slots:
-
 };
 
 class QPushButtonUpdater: public QPushButton
@@ -373,18 +260,7 @@ public:
     QPushButtonUpdater( DataWidget *d, const QString & text, QWidget * parent = 0 ): QPushButton(text,parent),widget(d){};
 
 public slots:
-    void setDisplayed(bool b)
-    {
-        if (b)
-        {
-            this->setText(QString("Click to hide the values"));
-            widget->readFromData();
-        }
-        else
-        {
-            this->setText(QString("Click to display the values"));
-        }
-    }
+    void setDisplayed(bool b);
 protected:
     DataWidget *widget;
 

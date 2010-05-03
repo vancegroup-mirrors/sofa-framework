@@ -13,6 +13,7 @@ DEFINES += SOFA_BUILD_COMPONENT_LOADER
 HEADERS += initLoader.h \
            MeshGmshLoader.h \
            MeshObjLoader.h \
+           MeshOffLoader.h \
            MeshTrianLoader.h \
            MeshVTKLoader.h \
            MeshXspLoader.h 
@@ -21,6 +22,7 @@ HEADERS += initLoader.h \
 SOURCES += initLoader.cpp \
            MeshGmshLoader.cpp \
            MeshObjLoader.cpp \
+           MeshOffLoader.cpp \
            MeshTrianLoader.cpp \
            MeshVTKLoader.cpp \
            MeshXspLoader.cpp 

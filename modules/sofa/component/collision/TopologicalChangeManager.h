@@ -59,56 +59,102 @@ namespace collision
   using namespace sofa::defaulttype;
   using namespace sofa::core::componentmodel::topology;
 
-class TopologicalChangeManager
-{
-public:
+  class TopologicalChangeManager
+  {
+  public:
     TopologicalChangeManager();
     ~TopologicalChangeManager();
 
-	/// Handles Removing of topological element (from any type of topology)
-	void removeItemsFromCollisionModel(sofa::core::CollisionElementIterator) const;
-	void removeItemsFromCollisionModel(sofa::core::CollisionModel* model, const std::vector<int>& indices) const;
+    /// Handles Removing of topological element (from any type of topology)
+    void removeItemsFromCollisionModel(sofa::core::CollisionElementIterator) const;
+    void removeItemsFromCollisionModel(sofa::core::CollisionModel* model, const std::vector<int>& indices) const;
 
-	/// Handles Cutting (activated only for a triangular topology), using global variables to register the two last input points
-	bool incisionCollisionModel(sofa::core::CollisionElementIterator, Vector3&, bool, bool);
- 
-        bool incisionCollisionModel(sofa::core::CollisionModel* model1, unsigned int idx1, const Vector3& firstPoint, 
-                                       sofa::core::CollisionModel *model2, unsigned int idx2, const Vector3& secondPoint ) const;
-	
-protected:
+    
+    /** Handles Cutting (activated only for a triangular topology)
+     *
+     * Only one model is given. This function perform incision beetween input point and stocked
+     * informations. If it is the first point of the incision, these informations are stocked.
+     * i.e element index and picked point coordinates.
+     *
+     * \sa incisionTriangleSetTopology
+     *
+     * @param elem - iterator to collision model.
+     * @param pos - picked point coordinates.
+     * @param firstInput - bool, if yes this is the first incision point.
+     * @param snapingValue - threshold distance from point to incision path where point has to be snap on incision path.
+     * @param snapingBorderValue - threshold distance from point to mesh border where incision is considered to reach the border..
+     *
+     * @return bool - true if incision has been performed.
+     */
+    bool incisionCollisionModel(sofa::core::CollisionElementIterator elem, Vector3& pos, bool firstInput,
+				int snapingValue = 0, int snapingBorderValue = 0);
 
-private:  
-        bool incisionTriangleModel(TriangleModel* model1, unsigned int idx1, const Vector3& firstPoint, 
-                                                        TriangleModel *model2, unsigned int idx2, const Vector3& secondPoint ) const;
-  	bool incisionTriangleModel(sofa::core::CollisionElementIterator, Vector3&, bool, bool);
-	/// Intermediate method to handle cutting
-	bool incisionTriangleSetTopology(sofa::core::componentmodel::topology::BaseMeshTopology*);
-	bool incisionTriangleSetTopology(sofa::core::CollisionElementIterator, Vector3&, bool, bool, sofa::core::componentmodel::topology::BaseMeshTopology*);
+    
+    /** Handles Cutting for general model collision (activated only for a triangular topology for the moment).
+     *
+     * Given two collision model, perform an incision between two points.
+     * \sa incisionTriangleSetTopology
+     *
+     * @param model1 - first collision model.
+     * @param idx1 - first element index.
+     * @param firstPoint - first picked point coordinates.
+     * @param model2 - second collision model.
+     * @param idx2 - second element index.
+     * @param secondPoint - second picked point coordinates.
+     * @param snapingValue - threshold distance from point to incision path where point has to be snap on incision path.
+     * @param snapingBorderValue - threshold distance from point to mesh border where incision is considered to reach the border..
+     *
+     * @return bool - true if incision has been performed.
+     */
+    bool incisionCollisionModel(sofa::core::CollisionModel* model1, unsigned int idx1, const Vector3& firstPoint, 
+				sofa::core::CollisionModel *model2, unsigned int idx2, const Vector3& secondPoint,
+				int snapingValue = 0, int snapingBorderValue = 0);
 
-	void removeItemsFromTriangleModel(sofa::component::collision::TriangleModel* model, const std::vector<int>& indices) const;
-	void removeItemsFromSphereModel(sofa::component::collision::SphereModel* model, const std::vector<int>& indices) const;
+  protected:
 
-private:
-	/// Global variables to register the two last input points (for incision along one segment in a triangular mesh)
-	struct Incision{
-		Vector3 a_init;
-		Vector3 b_init;
-		unsigned int ind_ta_init;
-		unsigned int ind_tb_init;
-	  
-		bool is_first_cut;
-	  bool is_cut_completed;
+  private:
 
-		unsigned int b_last_init;
-		sofa::helper::vector< unsigned int > b_p12_last_init;
-		sofa::helper::vector< unsigned int > b_i123_last_init;
+    /** Perform incision from point to point in a triangular mesh.
+     *
+     * \sa incisionCollisionModel
+     *
+     * @param model1 - first triangle collision model.
+     * @param idx1 - first triangle index.
+     * @param firstPoint - first picked point coordinates.
+     * @param model2 - second triangle collision model.
+     * @param idx2 - second triangle index.
+     * @param secondPoint - second picked point coordinates.
+     * @param snapingValue - threshold distance from point to incision path where point has to be snap on incision path.
+     * @param snapingBorderValue - threshold distance from point to mesh border where incision is considered to reach the border..
+     *
+     * @return bool - true if incision has been performed.
+     */
+    bool incisionTriangleModel(TriangleModel* model1, unsigned int idx1, const Vector3& firstPoint, 
+			       TriangleModel *model2, unsigned int idx2, const Vector3& secondPoint,
+			       int snapingValue = 0, int snapingBorderValue = 0);
+    
+    void removeItemsFromTriangleModel(sofa::component::collision::TriangleModel* model, const std::vector<int>& indices) const;
 
-		unsigned int a_last_init;
-		sofa::helper::vector< unsigned int >  a_p12_last_init;
-		sofa::helper::vector< unsigned int >  a_i123_last_init;
+    void removeItemsFromSphereModel(sofa::component::collision::SphereModel* model, const std::vector<int>& indices) const;
 
-	}	incision;
-};
+  private:
+    /// Global variables to register intermediate informations for point to point incision.(incision along one segment in a triangular mesh)
+    struct Incision{
+      /// Temporary point index for successive incisions
+      BaseMeshTopology::PointID indexPoint;
+
+      /// Temporary point coordinate for successive incisions
+      Vector3 coordPoint;
+
+      /// Temporary triangle index for successive incisions
+      BaseMeshTopology::TriangleID indexTriangle;
+
+      /// Information of first incision for successive incisions
+      bool firstCut;
+
+      
+    }	incision;
+  };
 
 } // namespace collision
 

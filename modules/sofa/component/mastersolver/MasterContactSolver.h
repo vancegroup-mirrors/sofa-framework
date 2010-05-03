@@ -247,7 +247,7 @@ public:
         virtual void init();
         //LCP* getLCP(void) {return (lcp == &lcp1) ? &lcp2 : &lcp1;};
 		LCP* getLCP();
-		void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCP until the next call to the function
+		void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCPs until the next call to this function. This is used to prevent concurent access to the LCP when using a LCPForceFeedback through an haptic thread
 
 private:
         std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> constraintCorrections;
@@ -260,9 +260,9 @@ private:
 
  		/// for built lcp ///
         void build_LCP();
-        LCP lcp1, lcp2, lcp3;
+        LCP lcp1, lcp2, lcp3; // Triple buffer for LCP.
         LPtrFullMatrix<double>  *_W;
-        LCP *lcp;
+        LCP *lcp,*last_lcp; /// use of last_lcp allows several LCPForceFeedback to be used in the same scene
 		
 		/// common built-unbuilt
         simulation::Node *context;

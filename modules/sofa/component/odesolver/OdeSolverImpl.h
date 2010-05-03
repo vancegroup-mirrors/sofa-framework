@@ -28,6 +28,7 @@
 #include <sofa/simulation/common/SolverImpl.h>
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
 #include <sofa/core/componentmodel/behavior/LinearSolver.h>
+#include <sofa/core/componentmodel/behavior/BaseConstraintCorrection.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
@@ -87,6 +88,7 @@ public:
 typedef Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
 typedef Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
 typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
+typedef std::map< sofa::core::componentmodel::behavior::BaseMechanicalState *, SparseMatrixEigen > DofToMatrix;
 
     /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
     bool needPriorStatePropagation();
@@ -96,6 +98,9 @@ typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
     void solveConstraint(bool priorStatePropagation, VecId Id, bool isPositionChangesUpdateVelocity=true);
 
  protected:
+
+    void buildLMatrix( sofa::core::componentmodel::behavior::BaseMechanicalState *dof,SparseMatrixEigen& L, sofa::helper::set< unsigned int > &dofUsed,
+                       const std::list<unsigned int> &idxEquations,unsigned int constraintOffset);
     /// Construct the Right hand term of the system
     void buildRightHandTerm( ConstOrder Order, const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, VectorEigen &c);
     /** Apply the correction to the state corresponding
@@ -108,31 +113,8 @@ typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
     void constraintStateCorrection(VecId &id, sofa::core::componentmodel::behavior::BaseMechanicalState* dof,
                                    const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool isPositionChangesUpdateVelocity);
 
-
- template <class T>
-   class DofToMatrix
-   {
-   public:
-   DofToMatrix(sofa::core::componentmodel::behavior::BaseMechanicalState *d,T m):dof(d), matrix(m)
-     {}
-
-     bool operator== (const sofa::core::componentmodel::behavior::BaseMechanicalState *other)
-     {       
-       if (other==dof) return true;
-       else return false;
-     }
-     bool operator== (const DofToMatrix<T>& other)
-     {
-       if (&other != this)
-         return dof == other.dof;
-       else
-         return true;
-     }
-     sofa::core::componentmodel::behavior::BaseMechanicalState *dof;
-     T matrix;
-   };
- 
- std::vector< DofToMatrix< SparseMatrixEigen > > invMassMatrix;
+    DofToMatrix invMassMatrix;
+    helper::vector< core::componentmodel::behavior::BaseConstraintCorrection*> constraintCorrections;
 
 #endif
 

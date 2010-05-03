@@ -43,8 +43,6 @@ namespace componentmodel
 
 namespace behavior
 {
-using std::cerr;
-using std::endl;
 
 
 template <class In, class Out>

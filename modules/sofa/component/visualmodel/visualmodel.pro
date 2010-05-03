@@ -15,19 +15,21 @@ HEADERS += initVisualModel.h \
            ClipPlane.h \
            DrawV.h \
            OglModel.h \
+           OglViewport.h \
            VisualModelImpl.h \
            Light.h \
            LightManager.h \
-	     PointSplatModel.h
+	       PointSplatModel.h
 
 SOURCES += initVisualModel.cpp \
            ClipPlane.cpp \
            DrawV.cpp \
            OglModel.cpp \
+           OglViewport.cpp \
            VisualModelImpl.cpp \
            Light.cpp \
            LightManager.cpp \
-		   PointSplatModel.cpp 
+		   PointSplatModel.cpp \
 
 
 contains(DEFINES,SOFA_HAVE_GLEW){

@@ -60,6 +60,7 @@ namespace sofa
         void start();
         void execute();
         void draw();
+        void clear();
 
       protected:
         MouseContactMapper   *mapper;   

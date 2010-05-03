@@ -51,12 +51,14 @@ namespace sofa
       }
 
       template < class DataTypes >
-      HexaID DynamicSparseGridGeometryAlgorithms<DataTypes>::getTopoIndexFromRegularGridIndex ( unsigned int index )
+      HexaID DynamicSparseGridGeometryAlgorithms<DataTypes>::getTopoIndexFromRegularGridIndex ( unsigned int index, bool& existing )
       {
         std::map< unsigned int, BaseMeshTopology::HexaID>::const_iterator it = topoContainer->idInRegularGrid2IndexInTopo.getValue().find( index);
-        if( it == topoContainer->idInRegularGrid2IndexInTopo.getValue().end())
+        existing = !(it == topoContainer->idInRegularGrid2IndexInTopo.getValue().end());
+        if( !existing)
         {
-          serr << "getTopoIndexFromRegularGridIndex(): Warning ! unexisting given index " << index << " !" << sendl;
+          //serr << "getTopoIndexFromRegularGridIndex(): Warning ! unexisting given index " << index << " !" << sendl;
+          return 0;
         }
         return it->second;
       }
@@ -128,6 +130,22 @@ namespace sofa
 
         return index;
       }
+
+#ifndef SOFA_FLOAT
+	template <>
+	int DynamicSparseGridGeometryAlgorithms<Vec2dTypes>::findNearestElementInRestPos(const Coord& pos, Vector3& baryC, Real& distance) const;
+
+	template <>
+	int DynamicSparseGridGeometryAlgorithms<Vec1dTypes>::findNearestElementInRestPos(const Coord& pos, Vector3& baryC, Real& distance) const;
+#endif
+
+#ifndef SOFA_DOUBLE
+	template <>
+	int DynamicSparseGridGeometryAlgorithms<Vec2fTypes>::findNearestElementInRestPos(const Coord& pos, Vector3& baryC, Real& distance) const;
+
+	template <>
+	int DynamicSparseGridGeometryAlgorithms<Vec1fTypes>::findNearestElementInRestPos(const Coord& pos, Vector3& baryC, Real& distance) const;
+#endif
 
     } // namespace topology
 

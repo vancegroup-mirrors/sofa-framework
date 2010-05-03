@@ -186,10 +186,7 @@ namespace topology
 // for( std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator it = m_container->firstChange(); it != m_container->lastChange(); it++)
 // std:: cout << (*it)->getChangeType() << std::endl;
 
-		getContext()->executeVisitor(&a);
-                //need to propagate the topology changes to the Visual Graph: VisualModels have to be updated
-                simulation::getSimulation()->getVisualRoot()->execute<simulation::HandleTopologyChangeVisitor>();
-
+                getContext()->executeVisitor(&a);
 		// remove the changes we just propagated, so that we don't send then again next time
 		m_container->resetTopologyChangeList();
 	}

@@ -16,52 +16,36 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_OBJECTMODEL_DATAENGINE_H
-#define SOFA_CORE_OBJECTMODEL_DATAENGINE_H
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+#ifndef SOFA_SIMULATION_COLLISIONENDEVENT_H
+#define SOFA_SIMULATION_COLLISIONENDEVENT_H
 
-#include <sofa/core/core.h>
-#include <sofa/core/objectmodel/DDGNode.h>
-#include <list>
+#include <sofa/core/objectmodel/Event.h>
+#include <sofa/simulation/common/common.h>
 
 namespace sofa
 {
 
-namespace core
+namespace simulation
 {
 
-namespace objectmodel
-{
 
 /**
- *  \brief from a set of Data inputs computes a set of Data outputs
- *
- */
-class SOFA_CORE_API DataEngine : public DDGNode
+  Event fired by CollisionVisitor after performing the collision detection step.
+*/
+class SOFA_SIMULATION_COMMON_API CollisionEndEvent : public sofa::core::objectmodel::Event
 {
 public:
-
-    /// Constructor
-    DataEngine();
-
-    /// Destructor. Do nothing
-    virtual ~DataEngine();
+    virtual const char* getClassName() const { return "CollisionEndEvent"; }
 };
 
-} // namespace objectmodel
-
-} // namespace core
+} // namespace simulation
 
 } // namespace sofa
 

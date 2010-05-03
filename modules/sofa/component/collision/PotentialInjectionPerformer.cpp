@@ -49,7 +49,7 @@ namespace sofa
 	
         if (picked.body == NULL || CollisionModel == NULL)
 	{
-	  std::cerr << "Error: PotentialInjectionPerformer no picked body;" << std::endl;
+          this->interactor->serr << "Error: PotentialInjectionPerformer no picked body;" << this->interactor->sendl;
 	  return;
 	}
 
@@ -61,7 +61,7 @@ namespace sofa
 
 	if (MechanicalObject == NULL || PotentialObjectContainer == NULL)
 	{
-	  std::cerr << "Error, can't find mechanicalObjects" << std::endl;
+          this->interactor->serr << "Error, can't find mechanicalObjects" << this->interactor->sendl;
 	  return;
 	}
 	

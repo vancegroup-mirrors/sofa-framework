@@ -85,7 +85,7 @@ namespace sofa
         if (found == performers.end()) return false;
         else 
           {
-            delete *found;
+//            delete *found; //Only remove the Performer from the Interactor, do not delete it!
             performers.erase(found);
             return true;
           }

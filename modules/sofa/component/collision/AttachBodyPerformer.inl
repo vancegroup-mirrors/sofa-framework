@@ -38,6 +38,12 @@ namespace sofa
       template <class DataTypes>
       void AttachBodyPerformer<DataTypes>::start()
       {
+          if (forcefield)
+          {
+              clear();
+              return;
+          }
+
         BodyPicked picked=this->interactor->getBodyPicked();
         if (!picked.body && !picked.mstate) return;
         core::componentmodel::behavior::MechanicalState<DataTypes>* mstateCollision=NULL;
@@ -49,7 +55,7 @@ namespace sofa
 
           if (!mapper)
           {
-            std::cerr << "Problem with Mouse Mapper creation : " << std::endl;
+            this->interactor->serr << "Problem with Mouse Mapper creation : " << this->interactor->sendl;
             return;
           }
           std::string name = "contactMouse";
@@ -116,26 +122,34 @@ namespace sofa
       {
       }
 
+      template <class DataTypes>
+      void AttachBodyPerformer<DataTypes>::clear()
+      {
+          if (forcefield)
+            {
+              forcefield->cleanup();
+              forcefield->getContext()->removeObject(forcefield);
+              delete forcefield; forcefield=NULL;
+            }
+
+          if (mapper)
+            {
+              mapper->cleanup();
+              delete mapper; mapper=NULL;
+            }
+
+          this->interactor->setDistanceFromMouse(0);
+          this->interactor->setMouseAttached(false);
+      }
+
 
       template <class DataTypes>
       AttachBodyPerformer<DataTypes>::~AttachBodyPerformer()
       {
-        if (forcefield)
-          {
-            forcefield->cleanup();
-            forcefield->getContext()->removeObject(forcefield);
-            delete forcefield; forcefield=NULL;        
-          }
-        
-        if (mapper)
-          {
-            mapper->cleanup();
-            delete mapper; mapper=NULL;
-          }
-        
-        this->interactor->setDistanceFromMouse(0);
-        this->interactor->setMouseAttached(false);
+          clear();
       };
+
+
 /*
 #ifdef WIN32
 #ifndef SOFA_DOUBLE

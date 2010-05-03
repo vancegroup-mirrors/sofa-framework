@@ -56,18 +56,25 @@ namespace sofa
 
   namespace gui
   {
+
+
+      AttachOperation::AttachOperation():stiffness(1000.0)
+      {
+      };
     //*******************************************************************************************
     void AttachOperation::start()
     {
-      //Creation
-      performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("AttachBody", pickHandle->getInteraction()->mouseInteractor);
-      pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
-      //Configuration
-      component::collision::AttachBodyPerformerConfiguration *performerConfiguration=dynamic_cast<component::collision::AttachBodyPerformerConfiguration*>(performer);
-      performerConfiguration->setStiffness(getStiffness());
-
-      //Start
-      performer->start();
+        if (!performer)
+        {
+            //Creation
+            performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("AttachBody", pickHandle->getInteraction()->mouseInteractor);
+            pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+            //Configuration
+            component::collision::AttachBodyPerformerConfiguration *performerConfiguration=dynamic_cast<component::collision::AttachBodyPerformerConfiguration*>(performer);
+            performerConfiguration->setStiffness(getStiffness());
+            //Start
+            performer->start();
+        }
     }
 
     void AttachOperation::execution()
@@ -76,6 +83,12 @@ namespace sofa
     }
 
     void AttachOperation::end() 
+    {
+      pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+      delete performer; performer=0;
+    }
+
+    void AttachOperation::endOperation()
     {
       pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
     }
@@ -119,6 +132,7 @@ namespace sofa
     void RemoveOperation::end() 
     {
       pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+      delete performer; performer=0;
     }
 
 
@@ -126,20 +140,66 @@ namespace sofa
     //*******************************************************************************************
     void InciseOperation::start()
     {
-      performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("InciseAlongPath", pickHandle->getInteraction()->mouseInteractor);
-      pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
-      performer->start();
+      int currentMethod = getIncisionMethod();
+
+      if (currentMethod == 0) // incision clic by clic.
+      {
+	if (cpt == 0) // First clic => initialisation
+	{
+	  performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("InciseAlongPath", pickHandle->getInteraction()->mouseInteractor);
+	  
+	  component::collision::InciseAlongPathPerformerconfiguration *performerConfiguration=dynamic_cast<component::collision::InciseAlongPathPerformerconfiguration*>(performer);
+	  performerConfiguration->setIncisionMethod(getIncisionMethod());
+	  performerConfiguration->setSnapingBorderValue(getSnapingBorderValue());
+	  performerConfiguration->setSnapingValue(getSnapingValue());
+
+	  pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+	  performer->start();
+	  cpt++;
+	}
+	else // Second clic(s) only perform start() method
+	{
+	  performer->start();
+	}
+      }
+      else
+      {
+	if (cpt != 0)
+          {
+            pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+            delete performer; performer=0;
+          }
+	
+	performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("InciseAlongPath", pickHandle->getInteraction()->mouseInteractor);
+	
+	component::collision::InciseAlongPathPerformerconfiguration *performerConfiguration=dynamic_cast<component::collision::InciseAlongPathPerformerconfiguration*>(performer);
+	performerConfiguration->setIncisionMethod(getIncisionMethod());
+	performerConfiguration->setSnapingBorderValue(getSnapingBorderValue());
+	performerConfiguration->setSnapingValue(getSnapingValue());
+	
+	pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+	performer->start();
+	cpt++;
+      }
     }
 
 
     void InciseOperation::execution()
     {
-//       performer->execute();
     }
 
-    void InciseOperation::end() 
+    void InciseOperation::end()
     {
     }
+
+    void InciseOperation::endOperation()
+    {
+      cpt = 0; //reinitialization
+      pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+      delete performer; performer=0;
+    }
+
+    
 
    //*******************************************************************************************
     void InjectOperation::start()
@@ -165,7 +225,8 @@ namespace sofa
     void InjectOperation::end() 
     {
       //   execution();
-      //  pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+      pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+      delete performer; performer=0;
     }
 
   }

@@ -98,7 +98,7 @@ namespace engine
 	maxVal = _maxVal.getValue();
       }
       else
-	std::cerr << "Error: in scale for TextureInterpolation, min_value is not smaller than max_value." << std::endl;
+        serr << "Error: in scale for TextureInterpolation, min_value is not smaller than max_value." << sendl;
     } else {
       Coord min_tmp = *(std::min_element (inputs.begin(), inputs.end())); 
       Coord max_tmp = *(std::max_element (inputs.begin(), inputs.end()));

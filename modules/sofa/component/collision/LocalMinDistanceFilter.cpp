@@ -74,7 +74,7 @@ bool InfoFilter::isValid(void)
 //		std::cout<<"m_revision= "<<m_revision<<std::endl;
 		if (m_lmdFilters==NULL)
 		{
-			std::cerr<<"WARNING pointer m_lmdFilters is null"<<std::endl;
+                        std::cerr<<"WARNING pointer m_lmdFilters is null"<<std::endl;
 			return false;
 		}
 

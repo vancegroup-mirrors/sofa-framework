@@ -26,6 +26,10 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/CollisionVisitor.h>
 
+#include <sofa/simulation/common/PropagateEventVisitor.h>
+#include <sofa/simulation/common/CollisionBeginEvent.h>
+#include <sofa/simulation/common/CollisionEndEvent.h>
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -46,9 +50,23 @@ MasterSolverImpl::~MasterSolverImpl()
 void MasterSolverImpl::computeCollision()
 {
     if (this->f_printLog.getValue()) std::cerr<<"MasterSolverImpl::computeCollision()"<<endl;
-	CollisionVisitor act;
+
+
+    {
+        CollisionBeginEvent evBegin;
+        PropagateEventVisitor eventPropagation(&evBegin);
+        eventPropagation.execute(getContext());
+    }
+
+    CollisionVisitor act;
     act.setTags(this->getTags());
     act.execute( getContext() );
+
+    {
+        CollisionEndEvent evEnd;
+        PropagateEventVisitor eventPropagation(&evEnd);
+        eventPropagation.execute(getContext());
+    }
 }
 
 void MasterSolverImpl::integrate(double dt)

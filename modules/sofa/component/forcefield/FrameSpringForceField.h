@@ -123,7 +123,7 @@ namespace sofa
                       in>>s.vec2;
                     else
                     {
-		      std::cerr<<"Error parsing Spring : Unknown Attribute "<<str<<std::endl;
+                      std::cerr<<"Error parsing Spring : Unknown Attribute "<<str<<std::endl;
                       return in;
                     }
 
@@ -138,15 +138,15 @@ namespace sofa
               {
                 out<<"BEGIN_SPRING  "<<s.m1<<" "<<s.m2<<"  ";
 
-                if ( s.stiffnessTrans != 0.0 )
+                //if ( s.stiffnessTrans != 0.0 )
                   out<<"KS_T "<<s.stiffnessTrans<<"  ";
-                if ( s.stiffnessRot != 0.0 )
+                //if ( s.stiffnessRot != 0.0 )
                   out<<"KS_R "<<s.stiffnessRot<<"  ";
-                if ( s.kd != 0.0 )
+                //if ( s.kd != 0.0 )
                   out<<"KD "<<s.kd<<"  ";
-                if ( s.vec1!= VecN ( 0, 0, 0 ) )
+                //if ( s.vec1!= VecN ( 0, 0, 0 ) )
                   out<<"VEC1 "<<s.vec1<<"  ";
-                if ( s.vec2!= VecN ( 0, 0, 0 ) )
+                //if ( s.vec2!= VecN ( 0, 0, 0 ) )
                   out<<"VEC2 "<<s.vec2<<"  ";
 
                 out<<"END_SPRING"<<std::endl;
@@ -173,9 +173,9 @@ namespace sofa
 
 
           /// Accumulate the spring force and compute and store its stiffness
-          void addSpringForce ( double& potentialEnergy, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int i, /*const*/ Spring& spring );
+          void addSpringForce ( double& potentialEnergy, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int i, const Spring& spring );
           /// Apply the stiffness, i.e. accumulate df given dx
-          void addSpringDForce ( VecDeriv& df1, const VecDeriv& dx1, VecDeriv& df2, const VecDeriv& dx2, int i, /*const*/ Spring& spring );
+          void addSpringDForce ( VecDeriv& df1, const VecDeriv& dx1, VecDeriv& df2, const VecDeriv& dx2, int i, const Spring& spring );
 
 
 

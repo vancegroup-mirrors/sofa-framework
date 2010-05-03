@@ -385,7 +385,7 @@ public:
 
     /// Set from the given matrix
     template<class Mat>
-    void fromMatrix(const Mat& m) const
+    void fromMatrix(const Mat& m)
     {
         center[0] = m[0][3];
         center[1] = m[1][3];
@@ -982,7 +982,7 @@ public:
 
     /// Set from the given matrix
     template<class Mat>
-    void fromMatrix(const Mat& m) const
+    void fromMatrix(const Mat& m)
     {
         center[0] = m[0][2];
         center[1] = m[1][2];

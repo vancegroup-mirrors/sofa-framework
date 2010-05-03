@@ -30,7 +30,7 @@
 #endif
 
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/core/objectmodel/DataEngine.h>
+#include <sofa/core/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
@@ -55,10 +55,10 @@ using namespace core::objectmodel;
  * This class find all the points located inside a given sphere.
  */
 template <class DataTypes>
-class TrianglesInSphereROI : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
+class TrianglesInSphereROI : public core::DataEngine
 {
 public:
-   SOFA_CLASS(SOFA_TEMPLATE(TrianglesInSphereROI,DataTypes),core::objectmodel::BaseObject);
+   SOFA_CLASS(SOFA_TEMPLATE(TrianglesInSphereROI,DataTypes),core::DataEngine);
 	typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;
@@ -112,6 +112,10 @@ public:
 	Data<bool> isVisible;
     Data< helper::vector<Vec3> > centers;
     Data< helper::vector<Real> > radii;
+
+    Data< Vec3 > normal;
+    Data< Real > angle;
+
     Data<VecCoord> f_X0;
     Data< helper::vector<BaseMeshTopology::Triangle> > f_triangles;
     Data<SetTriangle> f_indices;

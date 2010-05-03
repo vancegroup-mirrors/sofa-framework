@@ -278,7 +278,7 @@ const helper::vector<typename RotationFinder<DataTypes>::Mat3x3>& RotationFinder
 
 	if (currentPositions.size() < 3)
 	{
-		std::cerr << "RotationFinder : problem with mechanical state; return ID matrix..." << std::endl;
+                serr << "RotationFinder : problem with mechanical state; return ID matrix..." << sendl;
 		rotations.clear();
 		return rotations;
 	}

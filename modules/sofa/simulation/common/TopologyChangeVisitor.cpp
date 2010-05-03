@@ -42,14 +42,22 @@ using namespace sofa::core::componentmodel::topology;
 using namespace sofa::core;
 
 
-void TopologyChangeVisitor::processTopologyChange(core::objectmodel::BaseObject* obj)
+void TopologyChangeVisitor::processTopologyChange(simulation::Node *node, core::objectmodel::BaseObject* obj)
 {
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printComment("processTopologyChange");
 #endif
-    simulation::Node* node=(simulation::Node*)obj->getContext();
     ctime_t t0=begin(node,obj);
-    obj->handleTopologyChange(source);
+    obj->handleTopologyChange(source); //why was it necessary to check for each object if it exists a topology inside the current node?
+    end(node,obj,t0);
+}
+void TopologyChangeVisitor::processTopologyChangeNoCheck(simulation::Node *node, core::objectmodel::BaseObject* obj)
+{
+#ifdef SOFA_DUMP_VISITOR_INFO
+    simulation::Visitor::printComment("processTopologyChangeNoCheck");
+#endif
+    ctime_t t0=begin(node,obj);
+    obj->handleTopologyChange();
     end(node,obj,t0);
 }
 
@@ -79,10 +87,16 @@ Visitor::Result TopologyChangeVisitor::processNodeTopDown(simulation::Node* node
 	//return RESULT_PRUNE; // stop the propagation of topological changes
     }
 
-    for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
+    for_each(this, node, node->object,  &TopologyChangeVisitor::processTopologyChange);
+
+    //Propagate the topology changes to the Visual Graph components
+    for_each(this, node, node->componentInVisualGraph,  &TopologyChangeVisitor::processTopologyChangeNoCheck);
+    for (simulation::Node::ChildIterator itChild = node->childInVisualGraph.begin(); itChild != node->childInVisualGraph.end(); ++itChild)
     {
-	this->processTopologyChange(*it);
+        simulation::Node *child=*itChild;        
+        child->execute<HandleTopologyChangeVisitor>();
     }
+
     return RESULT_CONTINUE;
 }
 
@@ -101,12 +115,14 @@ void TopologyChangeVisitor::processNodeBottomUp(simulation::Node* node)
     }
 }
 
-
 Visitor::Result HandleTopologyChangeVisitor::processNodeTopDown(simulation::Node* node)
-{    
+{
     for (simulation::Node::ObjectIterator it = node->object.begin(); it != node->object.end(); ++it)
     {
-        (*it)->handleTopologyChange();
+        core::objectmodel::BaseObject* obj=*it;
+        ctime_t t0=begin(node,obj);
+        obj->handleTopologyChange();
+        end(node,obj,t0);
     }
 
     return RESULT_CONTINUE;

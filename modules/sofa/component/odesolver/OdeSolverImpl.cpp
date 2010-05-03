@@ -26,6 +26,7 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/MechanicalMatrixVisitor.h>
 #include <sofa/simulation/common/MechanicalVPrintVisitor.h>
+#include <sofa/simulation/common/PrintVisitor.h>
 #include <sofa/simulation/common/VelocityThresholdVisitor.h>
 #include <sofa/core/componentmodel/behavior/LinearSolver.h>
 
@@ -55,9 +56,12 @@ namespace odesolver
   }
 
 void OdeSolverImpl::init()
-{
+{  
   OdeSolver::init();
   SolverImpl::init();
+#ifdef SOFA_HAVE_EIGEN2
+  ((simulation::Node*) getContext())->get<core::componentmodel::behavior::BaseConstraintCorrection>(&constraintCorrections, core::objectmodel::BaseContext::SearchDown);
+#endif
   reinit();
 }
 
@@ -155,6 +159,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
             simulation::MechanicalPropagateVVisitor propagateState(Order,false);
             propagateState.execute(this->getContext());
           }
+
         // calling writeConstraintEquations
         LMConstraintVisitor.setOrder(orderState);
         LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
@@ -215,40 +220,19 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     //Dofs to be constrained
     typedef std::set< sofa::core::componentmodel::behavior::BaseMechanicalState* >::const_iterator DofIterator;
     std::set< sofa::core::componentmodel::behavior::BaseMechanicalState* > setDofs;
-    //Store the matrix M^-1.L^T for each dof in order to apply the modification of the state
-    std::vector< DofToMatrix< SparseMatrixEigen > > invMass_Ltrans;
-    //To Build L.M^-1.L^T, we need to know what line of the VecConst will be used
-    std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::vector< sofa::helper::vector< unsigned int > > > indicesUsedSystem;
-    //To Build L.M^-1.L^T, we need to know to what system of contraint: the offset helps to write the matrix J
-    std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::vector< unsigned int > > offsetSystem;
-    std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::set< unsigned int > > dofUsed;
 
-    unsigned int offset;
-    //************************************************************
-    // Gather the information from all the constraint components
-    //************************************************************
-    unsigned constraintOffset=0;
+
     for (unsigned int mat=0;mat<LMConstraints.size();++mat)
-      {   
-	BaseLMConstraint *constraint=LMConstraints[mat];
+    {
+        BaseLMConstraint *constraint=LMConstraints[mat];
+        setDofs.insert(constraint->getSimulatedMechModel1());
+        setDofs.insert(constraint->getSimulatedMechModel2());
+    }
 
-	sofa::helper::vector< unsigned int > indicesUsed[2];
-	constraint->getIndicesUsed1(orderState, indicesUsed[0]);
-	constraint->getIndicesUsed2(orderState, indicesUsed[1]);
 
-
-	unsigned int currentNumConstraint=constraint->getNumConstraint(orderState);
-	setDofs.insert(constraint->getSimulatedMechModel1());
-	setDofs.insert(constraint->getSimulatedMechModel2());
-
-	indicesUsedSystem[constraint->getSimulatedMechModel1()].push_back(indicesUsed[0]);
-	indicesUsedSystem[constraint->getSimulatedMechModel2()].push_back(indicesUsed[1]);
-	
-	offsetSystem[constraint->getSimulatedMechModel1()].push_back(constraintOffset);
-	offsetSystem[constraint->getSimulatedMechModel2()].push_back(constraintOffset);
-
-	constraintOffset += currentNumConstraint;
-      }
+    //Store the matrix M^-1.L^T for each dof in order to apply the modification of the state
+    DofToMatrix invMass_Ltrans;
+    std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::set< unsigned int > > dofUsed;
 
     //************************************************************
     // Build the Right Hand Term
@@ -260,21 +244,17 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     //************************************************************
     SparseMatrixEigen AEi((int)numConstraint,(int)numConstraint);
 
-    std::vector< DofToMatrix< SparseMatrixEigen > >::iterator invMass;
-
     for (DofIterator itDofs=setDofs.begin(); itDofs!=setDofs.end();itDofs++)
       {
         sofa::core::componentmodel::behavior::BaseMechanicalState* dofs=*itDofs;
         const unsigned int dimensionDofs=dofs->getDerivDimension();
         
-
-
         //************************************************************
         //Find FixedPoints M^-1
         //Apply Constraint on the inverse of the mass matrix: should maybe need a better interface
         FullVector<double>  FixedPoints(dofs->getSize());
         for (unsigned int i=0;i<FixedPoints.size();++i) FixedPoints.set(i,1.0);
-        offset=0;
+        unsigned int offset=0;
         sofa::helper::vector< core::componentmodel::behavior::BaseConstraint *> listConstraintComponent;
         dofs->getContext()->get<core::componentmodel::behavior::BaseConstraint>(&listConstraintComponent, core::objectmodel::BaseContext::Local);
         //Set to zero all the particles fixed
@@ -290,164 +270,159 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	core::componentmodel::behavior::BaseMass *mass=dynamic_cast< core::componentmodel::behavior::BaseMass *>(dofs->getContext()->getMass());
 
 
-        //Verify if the Big M^-1 matrix has not already been computed and stored in memory
-        invMass = std::find(invMassMatrix.begin(),invMassMatrix.end(),dofs);
+        //Verify if the Big M^-1 matrix has not already been computed and stored in memory        
+        DofToMatrix::iterator mFound = invMassMatrix.find(dofs);
+        bool needToConstructMassMatrix = true;
 
-        if (invMass == invMassMatrix.end())
+        if (mFound != invMassMatrix.end())
+        {
+            //WARNING HACK! we should find a way to know when the Mass changed: in some case the number of Dof can be the same, but the mass changed
+            if ((int) (dofs->getSize()*dimensionDofs) != mFound->second.rows())
+                needToConstructMassMatrix=true;
+            else
+                needToConstructMassMatrix=false;
+        }
+
+        if (needToConstructMassMatrix)
           {
-            unsigned int dim=dimensionDofs;
-//             if (dofs->getDerivDimension() == 6 && dofs->getCoordDimension() == 7) dim=3;
-
-
-            //Build M, using blocks of [ dim x dim ] given for each particle
-            SparseMatrixEigen MEigen(dofs->getSize()*dim, dofs->getSize()*dim);
-            MEigen.startFill(dofs->getSize()*dim*dim);
-            if (mass)
-              {
-                //computationM is a block corresponding the mass matrix of a particle
-                FullMatrix<SReal> computationM(dim, dim);
-                MatrixEigen invMEigen((int)dim,(int)dim);
-
-                for (int i=0;i<dofs->getSize();++i)
+            //Bool informing if the inverse of the Mass Matrix has been computed using the BaseConstraintCorrection component
+            bool computationDone=false;
+            for (unsigned int i=0;i<constraintCorrections.size();i++)
+              {                
+                core::componentmodel::behavior::BaseMechanicalState* constrainedDof;
+                constraintCorrections[i]->getContext()->get(constrainedDof);
+                if (dofs == constrainedDof)
                   {
-
-                    if (!FixedPoints[i]) continue;
-                    mass->getElementMass(i,&computationM);
-
-
-                    //Translate the FullMatrix into a Eigen Matrix to invert it
-                    MatrixEigen mapMEigen=Eigen::Map<MatrixEigen>(computationM[0],(int)computationM.rowSize(),(int)computationM.colSize());
-                    mapMEigen.computeInverse(&invMEigen);
-
-
-                    //Store into the sparse matrix the block corresponding to the inverse of the mass matrix of a particle
-                    for (unsigned int r=0;r<dim;++r)
-                      {
-                        for (unsigned int c=0;c<dim;++c)
+                    //Get the Full Matrix from the constraint correction
+                    FullMatrix<SReal> computationInvM;
+                    core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+                    cc->getComplianceMatrix(&computationInvM);
+                    
+                    //Then convert it into a Sparse Matrix: as it is done only at the init, or when topological changes occur, this should not be a burden for the framerate
+                    SparseMatrixEigen invMass(dofs->getSize()*dimensionDofs, dofs->getSize()*dimensionDofs);
+                    invMass.startFill(dofs->getSize()*dimensionDofs*dimensionDofs);
+                    for (unsigned int i=0;i<computationInvM.rowSize();++i)
+                      {                    
+                        for (unsigned int j=0;j<computationInvM.colSize();++j)
                           {
-                            if (invMEigen(r,c) != 0)
-                              MEigen.fill(i*dim+r,i*dim+c)=invMEigen(r,c);
-                          }
+                            SReal value=computationInvM.element(i,j);
+                            if (value != 0) invMass.fill(i,j)=value;
+                          }                    
                       }
+                    invMass.endFill();
+                    computationDone=true;
+
+                    //Store the matrix in memory
+                    if (mFound != invMassMatrix.end())
+                        invMassMatrix[dofs]=invMass;
+                    else
+                        invMassMatrix.insert( std::make_pair(dofs,invMass) );
                   }
               }
-            MEigen.endFill();
-            //Store the matrix in memory
-            invMassMatrix.push_back( DofToMatrix< SparseMatrixEigen >(dofs,MEigen) );
-            invMass = invMassMatrix.end()-1;
-          }
 
-
-        if (!mass) continue;
-
-        //************************************************************
-        //Building L 
-        typedef core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
-         std::set< unsigned int > &usage=dofUsed[dofs];
-
-        SparseMatrixEigen L(numConstraint,dofs->getSize()*dofs->getDerivDimension());
-        L.startFill(numConstraint*(1+dofs->getSize())); //TODO: give a better estimation of non-zero coefficients
-        //number of constraint expressed with the current dof
-        for (unsigned int idConstraint=0;idConstraint<indicesUsedSystem[dofs].size();++idConstraint)
-          {
-            const unsigned int line=offsetSystem[dofs][idConstraint];
-            //Ask the dof to give the content of a list of VecConst, organized into blocks
-            std::list<unsigned int > entries(indicesUsedSystem[dofs][idConstraint].begin(),indicesUsedSystem[dofs][idConstraint].end()); 
-            const unsigned int numLines=entries.size();
-
-            std::list< ConstraintBlock > blocks=dofs->constraintBlocks( entries );
-            if (blocks.empty()) continue;
-            std::list< ConstraintBlock > blocks2;
-            if (idConstraint+1 < indicesUsedSystem[dofs].size() && offsetSystem[dofs][idConstraint+1]==line)
+            if (!computationDone)
               {
-                std::list<unsigned int > entries(indicesUsedSystem[dofs][idConstraint+1].begin(),indicesUsedSystem[dofs][idConstraint+1].end()); 
-                blocks2=dofs->constraintBlocks( entries );
-                ++idConstraint;
-              }
+                //Build M, using blocks of [ dimensionDofs x dimensionDofs ] given for each particle
+                SparseMatrixEigen invMass(dofs->getSize()*dimensionDofs, dofs->getSize()*dimensionDofs);
+                invMass.startFill(dofs->getSize()*dimensionDofs*dimensionDofs);
 
-            //A block has as many lines as constraints for the current dof.           
-            if (!blocks2.empty())
-              {
-                std::list< ConstraintBlock >::iterator itBlock=blocks.begin();
-                std::list< ConstraintBlock >::iterator itBlock2=blocks2.begin();
-                for (;itBlock!=blocks.end();++itBlock)
+                if (mass)
                   {
-                    ConstraintBlock &b=(*itBlock);
-                    const unsigned int column=b.getColumn();
-                    for (;itBlock2!=blocks2.end();++itBlock2)
+                    //computationM is a block corresponding the mass matrix of a particle
+                    FullMatrix<SReal> computationM(dimensionDofs, dimensionDofs);
+                    MatrixEigen invMEigen((int)dimensionDofs,(int)dimensionDofs);
+
+                    for (int i=0;i<dofs->getSize();++i)
                       {
-                        const ConstraintBlock &b2=(*itBlock2);
-                        const unsigned int column2=b2.getColumn();
-                        if (column2 < column)
+
+                        if (!FixedPoints[i]) continue;
+                        mass->getElementMass(i,&computationM);
+
+
+                        //Translate the FullMatrix into a Eigen Matrix to invert it
+                        MatrixEigen mapMEigen=Eigen::Map<MatrixEigen>(computationM[0],(int)computationM.rowSize(),(int)computationM.colSize());
+                        mapMEigen.computeInverse(&invMEigen);
+
+
+                        //Store into the sparse matrix the block corresponding to the inverse of the mass matrix of a particle
+                        for (unsigned int r=0;r<dimensionDofs;++r)
                           {
-                            blocks.insert(itBlock, b2);
-                          }
-                        else if (column2 > column)
-                          {
-                            ++itBlock2;
-                            break;
-                          }
-                        else if (column2 == column)
-                          {
-                            defaulttype::BaseMatrix &m =*(b.getMatrix()); 
-                            const defaulttype::BaseMatrix &m2=b2.getMatrix(); 
-                            for (unsigned int i=0;i<m.rowSize();++i)
+                            for (unsigned int c=0;c<dimensionDofs;++c)
                               {
-                                for (unsigned int j=0;j<m.colSize();++j)
-                                  {
-                                    m.add(i,j,m2.element(i,j));
-                                  }
+                                if (invMEigen(r,c) != 0)
+                                  invMass.fill(i*dimensionDofs+r,i*dimensionDofs+c)=invMEigen(r,c);
                               }
-                            delete itBlock2->getMatrix();
-                            ++itBlock2;
-                            break;
-                          }                        
-                      }
-                  }
-                for (;itBlock2!=blocks2.end();++itBlock2)
-                  {                    
-                    const ConstraintBlock &b2=(*itBlock2);
-                    blocks.insert(blocks.end(), b2);
-                  }
-              }
-            
-            std::list< ConstraintBlock >::iterator itBlock;
-            for (unsigned int i=0;i<numLines;++i)
-              {          
-                for (itBlock=blocks.begin();itBlock!=blocks.end();itBlock++)
-                  {                
-                    const ConstraintBlock &b=(*itBlock);
-                    const defaulttype::BaseMatrix &m=b.getMatrix(); 
-                    const unsigned int column=b.getColumn()*dimensionDofs;
-                    for (unsigned int j=0;j<m.colSize();++j)
-                      { 
-                        SReal value=m.element(i,j);
-                        if (value!=0)
-                          {
-                            // Use fill!
-                            L.fill(line+i, column+j) = m.element(i,j);
-                            usage.insert((column+j)/dimensionDofs);
                           }
                       }
                   }
-              }
+                invMass.endFill();
 
-            for (itBlock=blocks.begin();itBlock!=blocks.end();++itBlock)
-              {
-                delete itBlock->getMatrix();
+                //Store the matrix in memory
+                if (mFound != invMassMatrix.end())
+                    invMassMatrix[dofs]=invMass;
+                else
+                    invMassMatrix.insert( std::make_pair(dofs,invMass) );
               }
           }
+    }
+
+    //************************************************************
+    //Building L
+
+    typedef core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
+    DofToMatrix matrixL;
+
+    for (DofToMatrix::iterator it=invMassMatrix.begin();it!=invMassMatrix.end();++it)
+    {
+        core::componentmodel::behavior::BaseMechanicalState* dofs=it->first;        
+        SparseMatrixEigen L(numConstraint,dofs->getSize()*dofs->getDerivDimension());
+        L.startFill(numConstraint*(1+dofs->getSize()));//TODO: give a better estimation of non-zero coefficients
+        matrixL.insert(std::make_pair(dofs, L));
+    }
+
+    unsigned constraintOffset=0;
+    //We Take one by one the constraint, and write their equations in the corresponding matrix L
+    for (unsigned int mat=0;mat<LMConstraints.size();++mat)
+    {
+        BaseLMConstraint *constraint=LMConstraints[mat];
+
+        core::componentmodel::behavior::BaseMechanicalState *dof1=constraint->getSimulatedMechModel1();
+        core::componentmodel::behavior::BaseMechanicalState *dof2=constraint->getSimulatedMechModel2();
+
+        //Get the entries in the Vector of constraints corresponding to the constraint equations
+        std::list< unsigned int > indicesUsed[2];
+        constraint->getIndicesUsed1(orderState, indicesUsed[0]);
+
+        DofToMatrix::iterator itL1=matrixL.find(dof1);
+        if (itL1 != matrixL.end())
+            buildLMatrix(itL1->first,itL1->second,dofUsed[dof1], indicesUsed[0],constraintOffset);
+
+        DofToMatrix::iterator itL2=matrixL.find(dof2);
+        if (dof1 != dof2 && itL2 != matrixL.end())
+        {
+            constraint->getIndicesUsed2(orderState, indicesUsed[1]);
+            buildLMatrix(itL2->first,itL2->second,dofUsed[dof2], indicesUsed[1],constraintOffset);
+        }
+        constraintOffset += indicesUsed[0].size();
+    }
+
+    for (DofToMatrix::iterator itDofs=invMassMatrix.begin(); itDofs!=invMassMatrix.end();itDofs++)
+      {
+        sofa::core::componentmodel::behavior::BaseMechanicalState* dofs=itDofs->first;
+        const unsigned int dimensionDofs=dofs->getDerivDimension();
+        SparseMatrixEigen &invMass=itDofs->second;
+        SparseMatrixEigen &L=matrixL[dofs];
         L.endFill();
-         if (f_printLog.getValue()) sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
+        if (f_printLog.getValue()) sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
         //************************************************************
         //Accumulation
         //Simple way to compute
         //const SparseMatrixEigen &invM_LtransMatrix = invMass->matrix*L.transpose();
-        if (f_printLog.getValue())  sout << "Matrix M-1 for " << dofs->getName() << "\n" << invMass->matrix << sendl;
+        if (f_printLog.getValue())  sout << "Matrix M-1 for " << dofs->getName() << "\n" << invMass << sendl;
 
-        //Taking into account that invM is block diagonal
+        //Taking into account that invM is block tridiagonal
 
-        SparseMatrixEigen invM_LtransMatrix(L.rows(),invMass->matrix.rows());
+        SparseMatrixEigen invM_LtransMatrix(L.rows(),invMass.rows());
         invM_LtransMatrix.startFill(L.nonZeros()*dimensionDofs);
         for (int k=0; k<L.outerSize(); ++k)
           {
@@ -471,7 +446,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
                         SReal finalValue=SReal(0);
                         for (unsigned int iL=0;iL<dimensionDofs;++iL)
                           {
-                            finalValue += invMass->matrix.coeff(dimensionDofs*accumulatingDof+iM,dimensionDofs*accumulatingDof+iL) * value[iL];
+                            finalValue += invMass.coeff(dimensionDofs*accumulatingDof+iM,dimensionDofs*accumulatingDof+iL) * value[iL];
                           }
                         invM_LtransMatrix.fill(column,dimensionDofs*accumulatingDof+iM)=finalValue;
                       }
@@ -490,7 +465,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
                     SReal finalValue=SReal(0);
                     for (unsigned int iL=0;iL<dimensionDofs;++iL)
                       {
-                        finalValue += invMass->matrix.coeff(dimensionDofs*accumulatingDof+iM,dimensionDofs*accumulatingDof+iL) * value[iL];
+                        finalValue += invMass.coeff(dimensionDofs*accumulatingDof+iM,dimensionDofs*accumulatingDof+iL) * value[iL];
                       }
                     invM_LtransMatrix.fill(column,dimensionDofs*accumulatingDof+iM)=finalValue;
                   }
@@ -501,9 +476,9 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
         //The simple way would be
         //invMass_Ltrans.push_back( DofToMatrix< SparseMatrixEigen >(dofs,invM_LtransMatrix) );
         //Optimized way is
-        invMass_Ltrans.push_back( DofToMatrix< SparseMatrixEigen >(dofs,invM_LtransMatrix.transpose()) );
+        invMass_Ltrans.insert( std::make_pair(dofs,invM_LtransMatrix.transpose()) );
 
-        AEi = AEi + L*invMass_Ltrans.back().matrix;
+        AEi = AEi + L*invMass_Ltrans[dofs];
       }  
 
 
@@ -654,9 +629,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
         core::componentmodel::behavior::BaseMass *mass=dynamic_cast< core::componentmodel::behavior::BaseMass *>(dofs->getContext()->getMass());
         if (!mass) continue;
-        std::vector< DofToMatrix<SparseMatrixEigen> >::const_iterator invM_LtransMatrix = std::find( invMass_Ltrans.begin(),invMass_Ltrans.end(), dofs);            
-
-        constraintStateCorrection(Order, dofs, invM_LtransMatrix->matrix , LambdaEigen, dofUsed[dofs],isPositionChangesUpdateVelocity);
+        constraintStateCorrection(Order, dofs, invMass_Ltrans[dofs] , LambdaEigen, dofUsed[dofs],isPositionChangesUpdateVelocity);
       }
 
 #ifdef SOFA_DUMP_VISITOR_INFO
@@ -668,7 +641,44 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
   }
 
 
+  void OdeSolverImpl::buildLMatrix( sofa::core::componentmodel::behavior::BaseMechanicalState *dof, SparseMatrixEigen& L, sofa::helper::set< unsigned int > &dofUsed,
+                                    const std::list<unsigned int> &idxEquations, unsigned int constraintOffset)
+  {
+      const unsigned int dimensionDofs=dof->getDerivDimension();
+      typedef core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
+      //Get blocks of values from the Mechanical States
+      std::list< ConstraintBlock > blocks;
+      blocks =dof->constraintBlocks( idxEquations );
 
+      std::list< ConstraintBlock >::iterator itBlock;
+      //Fill the matrices
+      const unsigned int numEquations=idxEquations.size();
+
+      for (unsigned int eq=0;eq<numEquations;++eq)
+      {
+          for (itBlock=blocks.begin();itBlock!=blocks.end();itBlock++)
+          {
+              const ConstraintBlock &b=(*itBlock);
+              const defaulttype::BaseMatrix &m=b.getMatrix();
+              const unsigned int column=b.getColumn()*dimensionDofs;
+              for (unsigned int j=0;j<m.colSize();++j)
+              {
+                  SReal value=m.element(eq,j);
+                  if (value!=0)
+                  {
+                      // Use fill!
+                      L.fill(constraintOffset+eq, column+j) = m.element(eq,j);
+                      dofUsed.insert((column+j)/dimensionDofs);
+                  }
+              }
+          }
+
+      }
+      for (itBlock=blocks.begin();itBlock!=blocks.end();++itBlock)
+      {
+          delete itBlock->getMatrix();
+      }
+  }
 
   void OdeSolverImpl::buildRightHandTerm( ConstOrder Order, const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, VectorEigen &c)
   {

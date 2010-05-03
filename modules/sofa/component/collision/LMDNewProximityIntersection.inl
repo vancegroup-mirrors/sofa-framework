@@ -244,7 +244,7 @@ inline int LMDNewProximityIntersection::doIntersectionTrianglePoint(double dist2
 
 	if(det==0.0)
 	{
-		std::cerr<<"WARNING: in doIntersectionTrianglePoint point is just on the triangle or the triangle do not exists: computation impossible"<<std::endl;
+                std::cerr<<"WARNING: in doIntersectionTrianglePoint point is just on the triangle or the triangle do not exists: computation impossible"<<std::endl;
 		return 0;
 	}
 

@@ -51,6 +51,8 @@ TrianglesInSphereROI<DataTypes>::TrianglesInSphereROI()
 : isVisible( initData (&isVisible, bool (true), "isVisible", "is Visible ?") )
 , centers( initData(&centers, "centers", "Center(s) of the sphere(s)") )
 , radii( initData(&radii, "radii", "Radius(i) of the sphere(s)") )
+, normal( initData(&normal, "normal", "Normal direction of the triangles (if angle > 0)") )
+, angle( initData(&angle, (Real)0, "angle", "Max angle between the normal of the selected triangle and the specified normal direction") )
 , f_X0( initData (&f_X0, "rest_position", "Rest position coordinates of the degrees of freedom") )
 , f_triangles(initData(&f_triangles, "triangles", "List of triangle indices"))
 , f_indices( initData(&f_indices,"indices","Indices of the triangles contained in the ROI") )
@@ -102,6 +104,10 @@ void TrianglesInSphereROI<DataTypes>::init()
 
     addInput(&f_X0);
     addInput(&f_triangles);
+    addInput(&centers);
+    addInput(&radii);
+    addInput(&normal);
+    addInput(&angle);
 
     addOutput(&f_indices);
     addOutput(&f_pointIndices);
@@ -133,14 +139,18 @@ void TrianglesInSphereROI<DataTypes>::update()
 {
     cleanDirty();
 
-    helper::vector<Vec3>& c = *(centers.beginEdit());
-    helper::vector<Real>& r = *(radii.beginEdit());
+    const helper::vector<Vec3>& c = (centers.getValue());
+    const helper::vector<Real>& r = (radii.getValue());
+    Real a = angle.getValue();
+    Coord norm = normal.getValue();
+    if (a>0)
+        norm.normalize();
 
     SetTriangle& indices = *(f_indices.beginEdit());
     SetIndex& pointIndices = *(f_pointIndices.beginEdit());
     
     indices.clear();
-    //pointIndices.clear();
+    pointIndices.clear();
 
     x0 = &f_X0.getValue();
 
@@ -148,23 +158,29 @@ void TrianglesInSphereROI<DataTypes>::update()
 
     if (c.size() == r.size())
     {
-		for(unsigned int i=0; i<triangles->size(); ++i)
-		{
-			for (unsigned int j=0;j<c.size();++j)
-			{
-				if (containsTriangle(c[j], r[j], (*triangles)[i]))
-				{
-					indices.push_back(i);
-                                        pointIndices.push_back((*triangles)[i][0]);
-                                        pointIndices.push_back((*triangles)[i][1]);
-                                        pointIndices.push_back((*triangles)[i][2]);
-				}
-			}
-		}
+        for(unsigned int i=0; i<triangles->size(); ++i)
+        {
+            const BaseMeshTopology::Triangle& triangle = (*triangles)[i];
+            bool inside = false;
+            for (unsigned int j=0;j<c.size();++j)
+                if (containsTriangle(c[j], r[j], triangle)) inside = true;
+            if (inside)
+            {
+                if (a > 0)
+                {
+                    Coord n = cross((*x0)[triangle[2]]-(*x0)[triangle[0]], (*x0)[triangle[1]]-(*x0)[triangle[0]]);
+                    n.normalize();
+                    if (dot(n,norm) < cos(a*M_PI/180.0)) continue;
+                }
+
+                indices.push_back(i);
+                pointIndices.push_back((*triangles)[i][0]);
+                pointIndices.push_back((*triangles)[i][1]);
+                pointIndices.push_back((*triangles)[i][2]);
+            }
+        }
     }
 
-    centers.endEdit();
-    radii.endEdit();
     f_indices.endEdit();
     f_pointIndices.endEdit();
 }
@@ -182,9 +198,15 @@ void TrianglesInSphereROI<DataTypes>::draw()
         const helper::vector<Real>& r=radii.getValue();
 
         for (unsigned int i=0;i<c.size() && i<r.size();++i)
+        {
         	helper::gl::drawWireSphere(c[i], (float)(r[i]/2.0));
-    }
 
+                if (angle.getValue() > 0)
+                {
+		  helper::gl::drawCone(c[i], c[i] + normal.getValue()*(cos(angle.getValue()*M_PI/180.0)*r[i]), 0, (float)sin(angle.getValue()*M_PI/180.0)*((float)r[i]));
+                }
+        }
+    }
 }
 
 } // namespace engine

@@ -1005,7 +1005,7 @@ void MechanicalAddMBKdxVisitor::bwdMechanicalMapping(simulation::Node* node, cor
       {
 	ctime_t t0 = beginProcess(node, map);
         map->getMechFrom()->forceMask.activate(true);
-        map->getMechTo()->forceMask.activate(true);
+        map->getMechTo()->forceMask.activate(true);        
         map->accumulateDf();
         map->getMechTo()->forceMask.activate(false);
 	endProcess(node, map, t0);
@@ -1046,27 +1046,34 @@ Visitor::Result MechanicalResetConstraintVisitor::fwdLMConstraint(simulation::No
 
 #ifdef SOFA_HAVE_EIGEN2
 
-Visitor::Result MechanicalExpressJacobianVisitor::fwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
+MechanicalExpressJacobianVisitor::MechanicalExpressJacobianVisitor(simulation::Node* n)
 {
-  ctime_t t0 = beginProcess(node, c);
-  c->buildJacobian();
-  constraintUsed.push_back(c);
-  endProcess(node, c, t0);
-  return RESULT_CONTINUE;
+#ifdef SOFA_DUMP_VISITOR_INFO
+   setReadWriteVectors();
+#endif
+   helper::vector<core::componentmodel::behavior::BaseLMConstraint*> listC;
+   n->get<core::componentmodel::behavior::BaseLMConstraint>(&listC, core::objectmodel::BaseContext::SearchDown);
+   for (unsigned int i=0;i<listC.size();++i)
+   {
+       simulation::Node *node=(simulation::Node*) listC[i]->getContext();
+       ctime_t t0 = beginProcess(node, listC[i]);
+       listC[i]->buildJacobian();
+       endProcess(node, listC[i], t0);
+   }
+   for (unsigned int i=0;i<listC.size();++i)
+   {
+       simulation::Node *node=(simulation::Node*) listC[i]->getContext();
+       ctime_t t0 = beginProcess(node, listC[i]);
+       listC[i]->propagateJacobian();
+       endProcess(node, listC[i], t0);
+   }
 }
 
 void MechanicalExpressJacobianVisitor::bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
 {
   ctime_t t0 = beginProcess(node, map);
 
-  if (!constraintUsed.empty())
-    {
-      for (unsigned int i=0;i<constraintUsed.size();++i) constraintUsed[i]->propagateJacobian();
-      constraintUsed.clear();
-    }
-
   map->accumulateConstraint();
-
   endProcess(node, map, t0);
 }
 

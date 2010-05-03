@@ -53,9 +53,10 @@ namespace sofa
     Operation(): pickHandle(NULL), performer(NULL),button(NONE){};
       virtual ~Operation(){};
       virtual void configure(PickHandler *picker, MOUSE_BUTTON b){pickHandle=picker; button=b; }
-      virtual void start() =0;
+      virtual void start() =0;                   /// This function is called each time the mouse is clicked.
       virtual void execution() =0; 
-      virtual void end()     =0;
+      virtual void end()     =0;                 /// This function is called after each mouse click.
+      virtual void endOperation(){this->end();}; /// This function is called when shift key is released.
       virtual void wait(){};
     protected:
       PickHandler *pickHandle;
@@ -68,15 +69,15 @@ protected:
     class SOFA_SOFAGUI_API AttachOperation : public Operation
     {
     public:
-    AttachOperation():stiffness(1000.0){};
+      AttachOperation();
       virtual ~AttachOperation(){};
       virtual void start() ;
       virtual void execution() ; 
       virtual void end() ;
+      virtual void endOperation() ;
 
       void setStiffness(double s){stiffness = s;}          
       virtual double getStiffness() const { return stiffness;}
-      static bool isModifiable(){return true;};
 
       static std::string getDescription() {return "Attach an object to the Mouse";}
     protected:
@@ -86,12 +87,27 @@ protected:
     class SOFA_SOFAGUI_API InciseOperation : public Operation
     {
     public:
+    InciseOperation():cpt (0){};
       virtual ~InciseOperation(){};
       virtual void start() ;
       virtual void execution() ; 
       virtual void end() ;
+      virtual void endOperation() ;
+
+      void setIncisionMethod (int m){method = m;}
+      void setSnapingBorderValue (int m){snapingBorderValue = m;}
+      void setSnapingValue (int m){snapingValue = m;}
+      
+      virtual int getIncisionMethod() const { return method;}
+      virtual int getSnapingBorderValue() const { return snapingBorderValue;}
+      virtual int getSnapingValue() const { return snapingValue;}      	      
+	
       static std::string getDescription() {return "Incise along a path";}
-      static bool isModifiable(){return false;};
+    protected:
+      int method;
+      int snapingBorderValue;
+      int snapingValue;
+      int cpt;
     };
 
     class SOFA_SOFAGUI_API RemoveOperation : public Operation
@@ -101,8 +117,7 @@ protected:
       virtual void start() ;
       virtual void execution() ; 
       virtual void end() ;
-      static std::string getDescription() {return "Remove a primitive";}
-      static bool isModifiable(){return false;};
+      static std::string getDescription() {return "Remove a primitive";}      
     };
         
     class SOFA_SOFAGUI_API FixOperation : public Operation
@@ -115,8 +130,7 @@ protected:
       virtual void end() ;
 
       void setStiffness(double s){stiffness = s;}          
-      virtual double getStiffness() const { return stiffness;}
-      static bool isModifiable(){return true;};
+      virtual double getStiffness() const { return stiffness;}      
 
       static std::string getDescription() {return "Fix Picked particle";}
     protected:
@@ -135,8 +149,7 @@ protected:
       void setPotentialValue(double f){potentialValue = f;}
       virtual double getPotentialValue() const {;return potentialValue;}
       void setStateTag(std::string s){stateTag = s;}
-      virtual std::string getStateTag() const {;return stateTag;}
-      static bool isModifiable(){return true;};
+      virtual std::string getStateTag() const {;return stateTag;}      
 
       static std::string getDescription() {return "Set action potential using the Mouse";}
     protected:

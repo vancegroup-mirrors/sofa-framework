@@ -22,97 +22,28 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_ENGINE_PROJECTONPLANE_INL
-#define SOFA_COMPONENT_ENGINE_PROJECTONPLANE_INL
+#ifndef SOFA_SIMULATION_COLLISIONBEGINEVENT_H
+#define SOFA_SIMULATION_COLLISIONBEGINEVENT_H
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+#include <sofa/core/objectmodel/Event.h>
+#include <sofa/simulation/common/common.h>
 
-#include <sofa/component/engine/ProjectOnPlane.h>
-#include <sofa/helper/gl/template.h>
-#include <math.h>
 namespace sofa
 {
 
-namespace component
+namespace simulation
 {
 
-namespace engine
+/**
+  Event fired by CollisionVisitor before performing the collision detection step.
+*/
+class SOFA_SIMULATION_COMMON_API CollisionBeginEvent : public sofa::core::objectmodel::Event
 {
+public:
+    virtual const char* getClassName() const { return "CollisionBeginEvent"; }
+};
 
-using namespace sofa::helper;
-using namespace sofa::defaulttype;
-using namespace core::objectmodel;
-
-template <class DataTypes>
-ProjectOnPlane<DataTypes>::ProjectOnPlane()
-: originPtr( initDataPtr(&originPtr,&origin, "origin", "a 3d point on the plane") )
-, f_inputX( initData (&f_inputX, "input_position", "input array of 3d points") )
-, f_outputX( initData (&f_outputX, "output_position", "output array of 3d points projected on a plane") )
-, normalPtr(initDataPtr(&normalPtr,&normal, "normal", "plane normal"))
-{
-}
-
-template <class DataTypes>
-void ProjectOnPlane<DataTypes>::init()
-{
-   /* if (!f_outputX.isSet())
-    {
-        BaseData* parent = mstate->findField("position");
-        f_outputX.setParent(parent);
-        f_outputX.setReadOnly(true);
-    } */
-
-    addInput(&f_inputX);
-    addOutput(&f_outputX);
-
-    setDirty();
-	/// check if the normal is of norm 1
-	if (fabs((normal.norm2()-1.0))>1e-10) {
-		normal/=normal.norm();
-	}
-}
-
-template <class DataTypes>
-void ProjectOnPlane<DataTypes>::reinit()
-{
-    update();
-}
-
-
-
-template <class DataTypes>
-void ProjectOnPlane<DataTypes>::update()
-{
-    cleanDirty();
-
-
-    const helper::vector<Coord>& in = f_inputX.getValue();
-    helper::vector<Coord>& out = *(f_outputX.beginEdit());
-
-	out.resize(in.size());
-
-    for (unsigned int i=0;i< in.size(); ++i)
-    {
-		out[i]=in[i]+normal*dot((origin-in[i]),normal);
-    }
-
-//   f_inputX.endEdit();
-   f_outputX.endEdit();
-
-}
-
-template <class DataTypes>
-void ProjectOnPlane<DataTypes>::draw()
-{
-
-}
-
-
-} // namespace engine
-
-} // namespace component
+} // namespace simulation
 
 } // namespace sofa
 

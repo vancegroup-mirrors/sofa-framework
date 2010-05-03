@@ -18,12 +18,15 @@ HEADERS += initMass.h \
            MatrixMass.h \
            MatrixMass.inl \
            UniformMass.h \
-           UniformMass.inl
+           UniformMass.inl \
+           MeshMatrixMass.h \
+           MeshMatrixMass.inl
 
 SOURCES += initMass.cpp \
            DiagonalMass.cpp \
            MatrixMass.cpp \
-           UniformMass.cpp
+           UniformMass.cpp \
+           MeshMatrixMass.cpp
 
 
 

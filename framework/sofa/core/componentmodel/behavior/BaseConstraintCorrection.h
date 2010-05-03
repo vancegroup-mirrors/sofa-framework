@@ -56,6 +56,8 @@ public:
     virtual ~BaseConstraintCorrection() {}
 
     virtual void getCompliance(defaulttype::BaseMatrix* W) = 0;
+    //Fill the matrix m with the full Compliance Matrix
+    virtual void getComplianceMatrix(defaulttype::BaseMatrix* m)=0;
 	
 
 
@@ -80,6 +82,7 @@ public:
 	virtual void getBlockDiagonalCompliance(defaulttype::BaseMatrix* /*W*/, int /*begin*/,int /*end*/) {
 				sout << "warning : getBlockDiagonalCompliance(defaulttype::BaseMatrix* W) is not implemented in " << this->getTypeName() << sendl;
 		}
+
 	/////////////////////////////////////////////////////////////////////////////////	
 
 };

@@ -49,23 +49,6 @@ MasterSolver::MasterSolver()
 MasterSolver::~MasterSolver()
 {}
 
-#if 0
-
-using namespace simulation::tree;
-
-void MasterSolver::computeCollision()
-{
-    CollisionVisitor act;
-    act.execute( getContext() );
-}
-
-void MasterSolver::integrate(double dt)
-{
-    MechanicalIntegrationVisitor act(dt);
-    act.execute( getContext() );
-}
-
-#endif
 
 } // namespace behavior
 

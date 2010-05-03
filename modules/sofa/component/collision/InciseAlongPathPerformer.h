@@ -38,39 +38,38 @@ namespace sofa
 
     namespace collision
     {
-      class SOFA_COMPONENT_COLLISION_API InciseAlongPathPerformer: public InteractionPerformer
+
+      class InciseAlongPathPerformerconfiguration
+      {
+      public:
+	void setIncisionMethod (int m){currentMethod=m;}
+	void setSnapingBorderValue (int m){snapingBorderValue = m;}
+	void setSnapingValue (int m){snapingValue = m;}
+
+      protected:
+	int currentMethod;
+	int snapingBorderValue;
+	int snapingValue;
+	
+      };
+
+      
+      class SOFA_COMPONENT_COLLISION_API InciseAlongPathPerformer: public InteractionPerformer, public InciseAlongPathPerformerconfiguration
       {          
       public:
       InciseAlongPathPerformer(BaseMouseInteractor *i):InteractionPerformer(i){};
 
-        void start(){previousBody=this->interactor->getBodyPicked();};
-        void execute()
-        {
-          
-          BodyPicked currentBody=this->interactor->getBodyPicked();
-          if (currentBody.body == NULL || previousBody.body == NULL) return;
+        void start();
 
-          sofa::core::componentmodel::topology::TopologyModifier* topologyModifier; 
-          previousBody.body->getContext()->get(topologyModifier);
-        
-          // Handle Removing of topological element (from any type of topology)
-          if(topologyModifier) 
-            {
-              std::cerr << "Cutting from " << previousBody.point << " -------> " << currentBody.point << "\n";
-              // core::componentmodel::topology::BaseMeshTopology::PointID point=
-              topologyChangeManager.incisionCollisionModel(previousBody.body, previousBody.indexCollisionElement, previousBody.point,
-                                                           currentBody.body,  currentBody.indexCollisionElement,  currentBody.point);
-            }
-          previousBody=currentBody;
-          
-          currentBody.body=NULL;
-          this->interactor->setBodyPicked(currentBody);
-        };
+        void execute();
+
         void draw(){};
 
       protected:
         TopologicalChangeManager topologyChangeManager;
-        BodyPicked previousBody;
+        BodyPicked startBody;
+	BodyPicked firstBody;
+	BodyPicked secondBody;
       };
     }
   }

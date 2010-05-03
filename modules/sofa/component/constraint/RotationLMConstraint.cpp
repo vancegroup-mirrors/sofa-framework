@@ -22,8 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#define SOFA_COMPONENT_ENGINE_PROJECTPLANE_CPP
-#include <sofa/component/engine/ProjectOnPlane.inl>
+#include <sofa/component/constraint/RotationLMConstraint.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/defaulttype/RigidTypes.h>
@@ -34,26 +33,30 @@ namespace sofa
 namespace component
 {
 
-namespace engine
+namespace constraint
 {
 
-SOFA_DECL_CLASS(ProjectOnPlane)
+using namespace sofa::defaulttype;
+using namespace sofa::helper;
 
-int ProjectOnPlaneClass = core::RegisterObject("Project points on a plane")
+SOFA_DECL_CLASS(RotationLMConstraint)
+
+int RotationLMConstraintClass = core::RegisterObject("Constrain the rotation of a given set of Rigid Bodies")
 #ifndef SOFA_FLOAT
-.add< ProjectOnPlane<Vec3dTypes> >()
-#endif //SOFA_FLOAT
+.add< RotationLMConstraint<Rigid3dTypes> >()
+#endif
 #ifndef SOFA_DOUBLE
-.add< ProjectOnPlane<Vec3fTypes> >()
-#endif //SOFA_DOUBLE
+.add< RotationLMConstraint<Rigid3fTypes> >()
+#endif
 ;
 
 #ifndef SOFA_FLOAT
-template class SOFA_COMPONENT_ENGINE_API ProjectOnPlane<Vec3dTypes>;
-#endif //SOFA_FLOAT
+template class RotationLMConstraint<Rigid3dTypes>;
+#endif
 #ifndef SOFA_DOUBLE
-template class SOFA_COMPONENT_ENGINE_API ProjectOnPlane<Vec3fTypes>;
-#endif //SOFA_DOUBLE
+template class RotationLMConstraint<Rigid3fTypes>;
+#endif
+
 
 
 } // namespace constraint

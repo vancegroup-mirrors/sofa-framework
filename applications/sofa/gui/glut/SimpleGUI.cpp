@@ -2511,6 +2511,7 @@ void SimpleGUI::resetScene()
     if (groot)
     {
         getSimulation()->reset(groot);
+        getSimulation()->reset(getSimulation()->getVisualRoot());
         redraw();
     }
 }

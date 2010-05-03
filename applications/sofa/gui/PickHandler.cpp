@@ -30,7 +30,6 @@
 #include <sofa/component/collision/RayContact.h>
 
 #include <sofa/simulation/common/InitVisitor.h>
-#include <sofa/simulation/common/DeleteVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
 #include <iostream>
@@ -109,9 +108,9 @@ namespace sofa
           mouseNode->detachFromGraph();
           
           
-          operations[LEFT]->end();
-          operations[MIDDLE]->end();
-          operations[RIGHT]->end();
+          operations[LEFT]->endOperation();
+          operations[MIDDLE]->endOperation();
+          operations[RIGHT]->endOperation();
 
           interaction->deactivate();
 

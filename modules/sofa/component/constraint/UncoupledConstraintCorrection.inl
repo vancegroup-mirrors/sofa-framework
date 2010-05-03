@@ -167,21 +167,36 @@ template<class DataTypes>
 	sout<<" : "<<sendl;
   }
 
-// debug : verifie qu'il n'y a pas de 0 sur la diagonale de W
-	//printf("\n index : ");
-	//for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	//{
-	//	int indexCurRowConst = mstate->getConstraintId()[curRowConst];
-	//	printf(" %d ",indexCurRowConst);
-	//	if(abs(W[indexCurRowConst][indexCurRowConst]) < 0.000000001)
-	//		printf("\n WARNING : there is a 0 on the diagonal of matrix W");
+  // debug : verifie qu'il n'y a pas de 0 sur la diagonale de W
+          //printf("\n index : ");
+          //for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
+          //{
+          //	int indexCurRowConst = mstate->getConstraintId()[curRowConst];
+          //	printf(" %d ",indexCurRowConst);
+          //	if(abs(W[indexCurRowConst][indexCurRowConst]) < 0.000000001)
+          //		printf("\n WARNING : there is a 0 on the diagonal of matrix W");
 
-	//	if(abs(W[curRowConst][curRowConst]) <0.000000001)
-	//		printf("\n stop");
-	//}
+          //	if(abs(W[curRowConst][curRowConst]) <0.000000001)
+          //		printf("\n stop");
+          //}
 
 
-}
+  }
+
+  template<class DataTypes>
+  void UncoupledConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix *m)
+  {
+      const VecReal &comp=compliance.getValue();
+      const unsigned int s=comp.size();
+      m->resize(s,s); //resize must set to zero the content of the matrix
+      for (unsigned int l=0;l<s;++l)
+      {
+          for (unsigned int c=0;c<s;++c)
+          {
+              if (l==c) m->set(l,c,comp[l]);
+          }
+      }
+  }
 
 template<class DataTypes>
     void UncoupledConstraintCorrection<DataTypes>::applyContactForce(const defaulttype::BaseVector *f){

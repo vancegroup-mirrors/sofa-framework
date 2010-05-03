@@ -35,7 +35,73 @@ namespace sofa
     namespace collision
     {
 
-      helper::Creator<InteractionPerformer::InteractionPerformerFactory, InciseAlongPathPerformer>  InciseAlongPathPerformerClass("InciseAlongPath"); 
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, InciseAlongPathPerformer>  InciseAlongPathPerformerClass("InciseAlongPath");
+
+
+      void InciseAlongPathPerformer::start()
+      {
+	startBody=this->interactor->getBodyPicked();
+      }
+
+      void InciseAlongPathPerformer::execute()
+      {
+	  if (currentMethod == 0) // incise from clic to clic
+	  {
+	    if (firstBody.body == NULL) // first clic
+	      firstBody=startBody;
+	    else
+	    {
+	      if (firstBody.indexCollisionElement != startBody.indexCollisionElement)
+		secondBody=startBody;
+	    }
+	    
+	       
+	    if (firstBody.body == NULL || secondBody.body == NULL) return;
+	    
+	    sofa::core::componentmodel::topology::TopologyModifier* topologyModifier; 
+	    firstBody.body->getContext()->get(topologyModifier);
+
+	    // Handle Removing of topological element (from any type of topology)
+	    if(topologyModifier) 
+	    {
+	      topologyChangeManager.incisionCollisionModel(firstBody.body, firstBody.indexCollisionElement, firstBody.point,
+							   secondBody.body,  secondBody.indexCollisionElement,  secondBody.point,
+							   snapingValue, snapingBorderValue );
+	    }
+	    
+	    firstBody = secondBody;
+	    secondBody.body = NULL;
+
+	    this->interactor->setBodyPicked(secondBody);
+	  }
+	  else
+	  {
+	    
+	    BodyPicked currentBody=this->interactor->getBodyPicked();
+	    if (currentBody.body == NULL || startBody.body == NULL) return;
+
+	    if (currentBody.indexCollisionElement == startBody.indexCollisionElement) return;
+
+	    sofa::core::componentmodel::topology::TopologyModifier* topologyModifier; 
+	    startBody.body->getContext()->get(topologyModifier);
+	    
+	    // Handle Removing of topological element (from any type of topology)
+	    if(topologyModifier) 
+            {
+              topologyChangeManager.incisionCollisionModel(startBody.body, startBody.indexCollisionElement, startBody.point,
+                                                           currentBody.body,  currentBody.indexCollisionElement,  currentBody.point,
+							   snapingValue, snapingBorderValue );
+            }
+	    startBody=currentBody;
+	    
+	    currentBody.body=NULL;
+	    this->interactor->setBodyPicked(currentBody);
+	  }
+	  
+	}
+
+
+      
     }
   }
 }

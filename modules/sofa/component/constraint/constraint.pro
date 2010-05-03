@@ -62,11 +62,14 @@ HEADERS += \
            DistanceConstraint.h \
            DistanceConstraint.inl \
            FixedLMConstraint.h \
-           FixedLMConstraint.inl 
+           FixedLMConstraint.inl \
+           RotationLMConstraint.h \
+           RotationLMConstraint.inl 
            
 SOURCES += \           
            DistanceConstraint.cpp \
-           FixedLMConstraint.cpp 
+           FixedLMConstraint.cpp \
+           RotationLMConstraint.cpp
 }
 
 

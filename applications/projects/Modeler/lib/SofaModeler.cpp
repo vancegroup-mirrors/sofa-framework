@@ -772,7 +772,7 @@ namespace sofa
         std::string copyBuffer(presetPath+"copyBuffer.scn");
 	//Delete Temporary file
 	::remove(filename.c_str());
-	filename += ".view";
+	filename += "." + std::string(sofa::gui::GUIManager::GetValidGUIName()) + ".view";
 	//Remove eventual .view file
 	::remove(filename.c_str()); 
         //Remove eventual copy buffer

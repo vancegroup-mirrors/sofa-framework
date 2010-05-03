@@ -25,7 +25,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/gui/qt/RealGUI.h>
-
+#include <sofa/core/objectmodel/Base.h>
 
 #ifdef SOFA_QT4
 #include <QWidget>
@@ -49,6 +49,7 @@
 #include <QButtonGroup>
 #include <QRadioButton>
 #include <QInputDialog>
+#include <Q3ListViewItemIterator>
 #else
 #include <qwidget.h>
 #include <qwidgetstack.h>
@@ -70,12 +71,17 @@
 #include <qbuttongroup.h>
 #include <qradiobutton.h>
 #include <qinputdialog.h>
+
 #endif
 
+#include <sofa/simulation/common/DeleteVisitor.h>
+#include <sofa/simulation/common/PrintVisitor.h>
+#include <sofa/simulation/common/DesactivatedNodeVisitor.h>
 
 namespace sofa
 {
 
+  using namespace core::objectmodel;
   namespace gui
   {
 
@@ -90,18 +96,6 @@ namespace sofa
 #endif
 
       using sofa::core::objectmodel::BaseContext;
-
-
-      void RealGUI::addInitialNodes( Node* node)
-      {
-        //Create the list of the object present at the beginning of the scene
-        for (Node::ChildIterator it = node->child.begin(); it!=node->child.end();it++)
-          {
-            Node *childNode = *it;
-            list_object_initial.push_back( std::make_pair( node, childNode ) );
-            addInitialNodes(childNode);
-          }          
-      }
       
       void RealGUI::clearGraph()
       {
@@ -117,9 +111,7 @@ namespace sofa
 	
         //Create Stats about the simulation
         graphCreateStats(rootNode);
-        
-        addInitialNodes(rootNode);
-        
+             
         if ( currentTab != TabGraph )
           {
             graphListener->freeze ( rootNode );
@@ -341,7 +333,6 @@ namespace sofa
 	graphModify();
       }
 
-
       /*****************************************************************************************************************/
       void RealGUI::RightClickedItemInSceneView ( QListViewItem *item, const QPoint& point, int index )
       {
@@ -361,24 +352,39 @@ namespace sofa
 	node_clicked = NULL;
 	if ( item_clicked == NULL ) return;
 
+        core::objectmodel::BaseData* data;
 
         GraphListenerQListView *listener=NULL;
         QPopupMenu *contextMenu=NULL;
         if (currentTab == TabGraph)
         {
             listener = graphListener;
+            data = listener->findData(item_clicked); 
+            if(data){
+              return;
+            }
              contextMenu= new QPopupMenu ( graphView, "ContextMenu" );
         }
         else if (currentTab == TabVisualGraph)
         {
             listener = visualGraphListener;
+            data = listener->findData(item_clicked); 
+            if(data){
+              return;
+            }
             contextMenu = new QPopupMenu ( visualGraphView, "ContextMenu" );
         }
 	std::map<core::objectmodel::Base*, QListViewItem* >::iterator graph_iterator;
-
-        for (graph_iterator = listener->items.begin(); graph_iterator != listener->items.end(); graph_iterator++)
+  bool item_hasData = false;
+  for (graph_iterator = listener->items.begin(); graph_iterator != listener->items.end(); graph_iterator++)
 	{
-          if ( (*graph_iterator).second == item) {node_clicked = dynamic_cast< Node* >( (*graph_iterator).first); break;}
+          if ( (*graph_iterator).second == item) {
+            node_clicked = dynamic_cast< Node* >( (*graph_iterator).first);
+            if(node_clicked == NULL){
+              item_hasData = (*graph_iterator).first->getFields().size() > 0 ? true : false;
+            }
+            break;
+          }
 	}
 
 
@@ -409,11 +415,56 @@ namespace sofa
 
 	}
 	contextMenu->insertItem ( "Modify", this, SLOT ( graphModify() ) );
+  if(item_hasData){
+    if(item_clicked->childCount() > 0){
+      contextMenu->insertItem("Hide Datas",this, SLOT ( graphHideDatas() ) );
+    }
+    else{
+      contextMenu->insertItem("Show Datas", this, SLOT ( graphShowDatas() ) );
+    }
+  }
 	contextMenu->popup ( point, index );
 
       }
 
-
+void RealGUI::graphHideDatas()
+{
+  GraphListenerQListView* listener=NULL;
+  Base* item;
+  if (currentTab == TabGraph) listener = graphListener;
+  else if (currentTab == TabVisualGraph) listener = visualGraphListener;
+  bool isAnimated = startButton->isOn();
+  BaseObject* obj = NULL;
+ 
+  if ( item_clicked != NULL){
+    item = listener->findObject(item_clicked);
+    obj = dynamic_cast<BaseObject*>(item);
+    if(obj != NULL){ //check we are not dealing with a Node
+       listener->removeDatas(obj);
+    }
+  }
+  playpauseGUI ( isAnimated );
+}
+void RealGUI::graphShowDatas()
+{
+  GraphListenerQListView* listener=NULL;
+  BaseObject* obj;
+  core::objectmodel::Base* item;
+  
+  if (currentTab == TabGraph) listener = graphListener;
+  else if (currentTab == TabVisualGraph) listener = visualGraphListener;
+  bool isAnimated = startButton->isOn();
+  playpauseGUI ( false );
+	if ( item_clicked != NULL )
+	{
+    
+    item = listener->findObject(item_clicked);
+    obj = dynamic_cast<core::objectmodel::BaseObject*>(item);
+    assert(obj != NULL);
+    listener->addDatas(obj); 
+  }
+  playpauseGUI ( isAnimated );
+}
       /*****************************************************************************************************************/
       void RealGUI::graphSaveObject()
       {
@@ -478,8 +529,7 @@ namespace sofa
 	  else
 	  {
             node_clicked->detachFromGraph();
-            graphListener->removeChild ( NULL, node_clicked );
-            list_object_removed.push_back ( node_clicked );
+            node_clicked->execute<simulation::DeleteVisitor>();
 	  }
 
 	  viewer->resetView();
@@ -506,7 +556,14 @@ namespace sofa
 	playpauseGUI ( false );
 	if ( item_clicked != NULL )
 	{
+
 	  core::objectmodel::Base* node=NULL;
+    core::objectmodel::BaseData* data=NULL;
+    data = listener->findData(item_clicked);
+    if (data){
+      //user clicked on a data nothing to display so far...
+      return;
+    }
 	  for ( std::map<core::objectmodel::Base*, QListViewItem* >::iterator it = listener->items.begin() ; it != listener->items.end() ; ++ it )
 	  {
 	    if ( ( *it ).second == item_clicked )
@@ -527,8 +584,9 @@ namespace sofa
 	    return;
 	  }
 
-
-	  ModifyObject *dialogModify = new ModifyObject ( current_Id_modifyDialog, node, item_clicked,this,item_clicked->text(0));
+    ModifyObjectFlags dialogFlags = ModifyObjectFlags();
+    dialogFlags.setFlagsForSofa();
+	  ModifyObject *dialogModify = new ModifyObject ( current_Id_modifyDialog, node, item_clicked,this,dialogFlags,item_clicked->text(0));
 
 	  map_modifyObjectWindow.insert( std::make_pair(current_Id_modifyDialog, dialogModify));
 
@@ -550,7 +608,7 @@ namespace sofa
 
 	  dialogModify->show();
 	  dialogModify->raise();
-
+    
 	  connect ( this, SIGNAL ( newScene() ), dialogModify, SLOT ( closeNow() ) );
 	  connect ( this, SIGNAL ( newStep() ),  dialogModify, SLOT ( updateTables() ) );
 	  item_clicked = NULL;
@@ -560,20 +618,110 @@ namespace sofa
 
 
       /*****************************************************************************************************************/
+      struct ActivationFunctor
+      {
+        ActivationFunctor(bool act, GraphListenerQListView* l):active(act), listener(l)
+        {
+          pixmap_filename= std::string("textures/media-record.png");
+          if ( sofa::helper::system::DataRepository.findFile ( pixmap_filename ) )
+            pixmap_filename = sofa::helper::system::DataRepository.getFile ( pixmap_filename );
+        }
+        void operator()(core::objectmodel::BaseNode* n)
+        {
+          if (active)
+            {
+              //Find the corresponding node in the Qt Graph
+              Q3ListViewItem *item=listener->items[n];  
+              //Remove the text
+              QString desact_text = item->text(0);
+              desact_text.remove(QString("Deactivated "), true);
+              item->setText(0,desact_text);
+              //Remove the icon
+              QPixmap *p = getPixmap(n);
+              item->setPixmap(0,*p);
+              item->setOpen(true);
+            }
+          else
+            {
+              //Find the corresponding node in the Qt Graph
+              Q3ListViewItem *item=listener->items[n];
+              //Remove the text
+              item->setText(0, QString("Deactivated ") + item->text(0));
+              //Remove the icon
+              item->setPixmap(0,QPixmap(QImage(pixmap_filename.c_str())));
+              item->setOpen(false);
+            }
+        }
+      protected:
+        std::string pixmap_filename;
+        bool active;
+        GraphListenerQListView* listener;
+
+      };
+
+      void RealGUI::graphActivation(Node* node, GraphListenerQListView *listener, bool activate)
+      {
+        if (activate) node->setActive(true);
+
+        simulation::DesactivationVisitor v(activate);
+        node->executeVisitor(&v);
+        using core::objectmodel::BaseNode;
+        std::list< BaseNode* > nodeToProcess;
+        nodeToProcess.push_front((BaseNode*)node);
+        std::list< BaseNode* > visualNodeToProcess;
+
+        std::list< BaseNode* > nodeToChange;
+        //Breadth First approach to activate all the nodes
+        while (!nodeToProcess.empty())
+          {
+            //We take the first element of the list
+            Node* n= (Node*)nodeToProcess.front();
+            nodeToProcess.pop_front();
+
+            nodeToChange.push_front(n);
+            if (!n->nodeInVisualGraph.empty()) visualNodeToProcess.push_front( n->nodeInVisualGraph );
+              
+            //We add to the list of node to process all its children
+            std::copy(n->child.begin(), n->child.end(), std::back_inserter(nodeToProcess));
+            std::copy(n->childInVisualGraph.begin(), n->childInVisualGraph.end(), std::back_inserter(visualNodeToProcess));
+          }
+        {
+          ActivationFunctor activator(activate, listener);
+          std::for_each(nodeToChange.begin(),nodeToChange.end(),activator);
+        }
+
+        nodeToChange.clear();
+        while (!visualNodeToProcess.empty())
+          {
+            //We take the first element of the list
+            Node* n=(Node*)visualNodeToProcess.front();
+            visualNodeToProcess.pop_front();
+
+            nodeToChange.push_front(n);
+
+            //We add to the list of node to process all its children
+            core::objectmodel::BaseNode::Children children=n->getChildren();
+            std::copy(children.begin(), children.end(), std::back_inserter(visualNodeToProcess));
+          }
+        {
+          ActivationFunctor activator(activate, visualGraphListener);
+          std::for_each(nodeToChange.begin(),nodeToChange.end(),activator);
+        }     
+
+        if (listener == graphListener && activate) simulation::getSimulation()->init(node);
+      }
+
+
       void RealGUI::graphDesactivateNode()
       {
-        item_clicked->setText(0, QString("Deactivated ") + item_clicked->text(0));
-	item_clicked->setOpen(false);
+        GraphListenerQListView *listener=NULL;
+        if (currentTab == TabGraph) listener=graphListener;
+        else if (currentTab == TabVisualGraph) listener=visualGraphListener;
 
-	std::string pixmap_filename("textures/media-record.png");
-	if ( sofa::helper::system::DataRepository.findFile ( pixmap_filename ) )
-	  pixmap_filename = sofa::helper::system::DataRepository.getFile ( pixmap_filename );
+        graphActivation(node_clicked, listener, false);
+        item_clicked->setOpen(false);
 
-	item_clicked->setPixmap(0,QPixmap(QImage(pixmap_filename.c_str())));
-	node_clicked->setActive(false);
-	viewer->getQWidget()->update();
-	node_clicked->reinit();
-
+        viewer->getQWidget()->update();
 	graphCreateStats(viewer->getScene());
       }
 
@@ -583,44 +731,9 @@ namespace sofa
           if (currentTab == TabGraph) listener=graphListener;
           else if (currentTab == TabVisualGraph) listener=visualGraphListener;
 
-          using core::objectmodel::BaseNode;
-          std::list< BaseNode* > nodeToProcess;
-          nodeToProcess.push_front((BaseNode*)node_clicked);
-
-          //We must activate the nodes from the leaves to the root
-          std::list< Node* > nodeToActivate;
-
-          //Breadth First approach to activate all the nodes
-          while (!nodeToProcess.empty())
-          {
-              //We take the first element of the list
-              BaseNode* n=nodeToProcess.front();
-              nodeToProcess.pop_front();
-
-              nodeToActivate.push_front((Node*) n);
-
-              //Find the corresponding node in the Qt Graph
-              Q3ListViewItem *item=listener->items[n];
-              //Remove the text
-              QString desact_text = item->text(0);
-              desact_text.remove(QString("Deactivated "), true);
-              item->setText(0,desact_text);
-              //Remove the icon
-              QPixmap *p = getPixmap(n);
-              item->setPixmap(0,*p);
-
-              //We add to the list of node to process all its children
-              core::objectmodel::BaseNode::Children children=n->getChildren();
-              std::copy(children.begin(), children.end(), std::back_inserter(nodeToProcess));
-          }
-
-          for (std::list<Node*>::iterator it=nodeToActivate.begin();it!=nodeToActivate.end();++it)
-              (*it)->setActive(true);
-
+          graphActivation(node_clicked, listener, true);
 
           viewer->getQWidget()->update();
-          node_clicked->init();
-
           graphCreateStats(viewer->getScene());
       }
 

@@ -1389,7 +1389,8 @@ namespace topology
 										unsigned int& ind_tb,
 										sofa::helper::vector< unsigned int > &triangles_list, 
 										sofa::helper::vector<unsigned int> &edges_list, 
-										sofa::helper::vector< double >& coords_list, bool& is_on_boundary) const
+										sofa::helper::vector< double >& coords_list,
+										bool& is_on_boundary) const
   {
     
     bool is_validated=true;
@@ -1435,6 +1436,15 @@ namespace topology
       }
     }
     
+    if (ind_ta == ind_tb)
+    {
+#ifndef NDEBUG
+      std::cout << "INFO_print - TriangleSetTopology.inl : Cut is not reached because inputs elements are the same element." << std::endl;
+#endif
+      return false;
+    }
+    
+
     /*
       std::cout << "*********************************" << std::endl;
       std::cout << "ind_t_current: " << ind_t_current << std::endl;
@@ -1675,6 +1685,7 @@ namespace topology
 
     bool is_reached = (ind_tb==ind_triangle && coord_k_test>=1.0);
 
+#ifndef NDEBUG
     if(is_reached)
     {
       std::cout << "INFO_print - TriangleSetTopology.inl : Cut is reached" << std::endl;
@@ -1682,12 +1693,17 @@ namespace topology
 
     if(is_on_boundary)
     {
+      
       std::cout << "INFO_print - TriangleSetTopology.inl : Cut meets a mesh boundary" << std::endl;
     }
+#endif
+
 
     if(!is_reached && !is_on_boundary)
     {
+#ifndef NDEBUG
       std::cout << "INFO_print - TriangleSetTopology.inl : Cut is not reached" << std::endl;
+#endif
       ind_tb=ind_triangle;
     }
 
@@ -1713,9 +1729,9 @@ namespace topology
     sofa::helper::vector<unsigned int> triangles_list;
     sofa::helper::vector<unsigned int> edges_list;
     sofa::helper::vector< double > coordsEdge_list;
-    bool is_on_boundary = false;
     bool pathOK;
     bool isOnPoint = false;
+    bool is_on_boundary = false;
     
     // using old function:
     pathOK = this->computeIntersectedPointsList (last_point, a, b, ind_ta, ind_tb, triangles_list, edges_list, coordsEdge_list, is_on_boundary);

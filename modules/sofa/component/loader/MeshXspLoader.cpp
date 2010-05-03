@@ -55,17 +55,18 @@ using namespace sofa::defaulttype;
   bool MeshXspLoader::load()
   {
     
-    std::cout << "Loading Xsp file: " << m_filename << std::endl;
+    sout << "Loading Xsp file: " << m_filename << sendl;
 
     FILE* file;
     char cmd[1024];
     bool fileRead = false;
     
     // -- Loading file
-    const char* filename = m_filename.getFullPath().c_str();
+	const char* filename = m_filename.getFullPath().c_str();
+	
     if ((file = fopen(filename, "r")) == NULL)
     {
-      std::cerr << "Error: MeshXspLoader: Cannot read file '" << m_filename << "'." << std::endl;
+      serr << "Error: MeshXspLoader: Cannot read file '" << m_filename << "'." << sendl;
       return false;
     }
 
@@ -73,7 +74,7 @@ using namespace sofa::defaulttype;
     // -- Check first line.
     if (!readLine(cmd, sizeof(cmd), file))
     {
-      std::cerr << "Error: MeshXspLoader: Cannot read first line in file '" << m_filename << "'." << std::endl;
+      serr << "Error: MeshXspLoader: Cannot read first line in file '" << m_filename << "'." << sendl;
       fclose(file);
       return false;
     }
@@ -92,7 +93,7 @@ using namespace sofa::defaulttype;
     }
     else
     {
-      std::cerr << "Error: MeshXspLoader: File '" << m_filename << "' finally appears not to be a Xsp file." << std::endl;
+      serr << "Error: MeshXspLoader: File '" << m_filename << "' finally appears not to be a Xsp file." << sendl;
       fclose(file);
       return false;
       
@@ -106,7 +107,7 @@ using namespace sofa::defaulttype;
   
   bool MeshXspLoader::readXsp (FILE *file, bool vector_spring)
   {
-    std::cout << "Reading Xsp file: " << vector_spring << std::endl;
+    sout << "Reading Xsp file: " << vector_spring << sendl;
 
     
     char cmd[1024];
@@ -120,13 +121,15 @@ using namespace sofa::defaulttype;
     // then find out number of masses and springs
     if (fscanf(file, "%s", cmd) != EOF && !strcmp(cmd,"numm"))
     {
-      fscanf(file, "%d", &totalNumMasses);
+      if( fscanf(file, "%d", &totalNumMasses) == EOF)
+	serr << "Error: MeshXspLoader: fscanf function can't read element for total number of mass." << sendl;
       npoints=totalNumMasses;
     }
 
     if (fscanf(file, "%s", cmd) != EOF && !strcmp(cmd,"nums"))
     {
-      fscanf(file, "%d", &totalNumSprings);
+      if( fscanf(file, "%d", &totalNumSprings) == EOF)
+	serr << "Error: MeshXspLoader: fscanf function can't read element for total number of springs." << sendl;
       nlines=totalNumSprings;
     }
 
@@ -145,11 +148,12 @@ using namespace sofa::defaulttype;
 	char location;
 	double px,py,pz,vx,vy,vz,mass=0.0,elastic=0.0;
 	bool fixed=false;
-	fscanf(file, "%d %c %lf %lf %lf %lf %lf %lf %lf %lf\n",
+	if (fscanf(file, "%d %c %lf %lf %lf %lf %lf %lf %lf %lf\n",
 	       &index, &location,
 	       &px, &py, &pz, &vx, &vy, &vz,
-	       &mass, &elastic);
-
+	       &mass, &elastic) == EOF)
+	  serr << "Error: MeshXspLoader: fscanf function can't read elements in main loop." << sendl;
+	
 	if (mass < 0)
 	{
 	  // fixed point initialization 						
@@ -167,26 +171,35 @@ using namespace sofa::defaulttype;
 	double ks=0.0,kd=0.0,initpos=-1;
 	double restx=0.0,resty=0.0,restz=0.0;
 	if (vector_spring)
-	  fscanf(file, "%d %d %d %lf %lf %lf %lf %lf %lf\n",
-		 &index,&m[0],&m[1],&ks,&kd,&initpos, &restx,&resty,&restz);
+	{
+	  if(fscanf(file, "%d %d %d %lf %lf %lf %lf %lf %lf\n",
+		    &index,&m[0],&m[1],&ks,&kd,&initpos, &restx,&resty,&restz) == EOF)
+	    serr << "Error: MeshXspLoader: fscanf function can't read elements for linear springs connectors (vector_spring case)." << sendl;
+	}
 	else 
-	  fscanf(file, "%d %d %d %lf %lf %lf\n",
-		 &index,&m[0],&m[1],&ks,&kd,&initpos);
+	{
+	  if (fscanf(file, "%d %d %d %lf %lf %lf\n",
+		     &index,&m[0],&m[1],&ks,&kd,&initpos) == EOF)
+	    serr << "Error: MeshXspLoader: fscanf function can't read element for linear springs connectors." << sendl;
+	}
+	
 	--m[0];
 	--m[1];
 	
-	my_edges.push_back (m);
+	addEdge(&my_edges, m);
       }
       else if (!strcmp(cmd,"grav"))
       {
 	double gx,gy,gz;
-	fscanf(file, "%lf %lf %lf\n", &gx, &gy, &gz);
+	if ( fscanf(file, "%lf %lf %lf\n", &gx, &gy, &gz) == EOF)
+	  serr << "Error: MeshXspLoader: fscanf function can't read element for gravity." << sendl;
 	my_gravity.push_back(Vector3(gx, gy, gz));
       }
       else if (!strcmp(cmd,"visc"))
       {
 	double visc;
-	fscanf(file, "%lf\n", &visc);
+	if ( fscanf(file, "%lf\n", &visc) == EOF)
+	  serr << "Error: MeshXspLoader: fscanf function can't read element for viscosity." << sendl;
 	my_viscosity.push_back (visc);
       }
       else if (!strcmp(cmd,"step"))
@@ -204,7 +217,7 @@ using namespace sofa::defaulttype;
       }
       else		// it's an unknown keyword
       {
-	std::cerr << "Error: MeshXspLoader: Unknown MassSpring keyword '" << cmd << "'." << std::endl;
+	serr << "Error: MeshXspLoader: Unknown MassSpring keyword '" << cmd << "'." << sendl;
 	skipToEOL(file);
 	fclose(file);
 	positions.endEdit();

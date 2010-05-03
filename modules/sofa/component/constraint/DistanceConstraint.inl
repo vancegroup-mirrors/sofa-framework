@@ -124,7 +124,7 @@ namespace sofa
 
 
       template<class DataTypes>
-      void DistanceConstraint<DataTypes>::writeConstraintEquations(ConstId Id)
+      void DistanceConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
       {
         const VecCoord &x1=*(this->object1->getX());
         const VecCoord &x2=*(this->object2->getX());
@@ -144,9 +144,9 @@ namespace sofa
 
             Deriv V12 = getDirection(edges[i], x1, x2);
 
-            core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraint = this->addGroupConstraint(Id);
+            core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraint = this->addGroupConstraint(Order);
             SReal correction=0;
-            switch(Id)
+            switch(Order)
               {
               case core::componentmodel::behavior::BaseLMConstraint::ACC :
                 {
@@ -181,7 +181,7 @@ namespace sofa
             //             if (this->object1 != this->object2)
             //             {
             SparseVecDeriv V2;
-            V2.add(idx2,V12);c2.push_back(V2);
+            V2.add(idx2,-V12);c2.push_back(V2);
             //             }
             constraint->addConstraint( idxInVecConst[0], idxInVecConst[1], correction, core::componentmodel::behavior::BaseLMConstraint::BILATERAL);
 

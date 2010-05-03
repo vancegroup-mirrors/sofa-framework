@@ -33,13 +33,19 @@
 #include <sofa/simulation/common/Node.h>
 
 #include <sofa/component/container/MechanicalObject.h>
+
 #include <sofa/component/collision/RayModel.h>
-#include <sofa/component/collision/ComponentMouseInteraction.h>
+#include <sofa/component/collision/MouseInteractor.h>
 
 #include <sofa/helper/fixed_array.h>
 
 namespace sofa
 {
+  namespace component{
+    namespace collision{
+      class ComponentMouseInteraction;
+    }
+  }
 
   namespace gui
   {
@@ -69,13 +75,21 @@ namespace sofa
       void init();
       void reset();
 
-      void changeOperation(MOUSE_BUTTON button, const std::string &op)
+
+      Operation *getOperation(MOUSE_BUTTON button){return operations[button];}
+      Operation *changeOperation(MOUSE_BUTTON button, const std::string &op)
       {
         if (operations[button]) delete operations[button];
-        operations[button] = OperationFactory::Instanciate(op);
-        operations[button]->configure(this,button);
+        Operation *mouseOp=OperationFactory::Instanciate(op);
+        mouseOp->configure(this,button);
+        operations[button]=mouseOp;
+        return mouseOp;
       }
       
+
+      static BodyPicked findCollisionUsingBruteForce(const defaulttype::Vector3& origin, const defaulttype::Vector3& direction, double maxLength);
+
+
       ComponentMouseInteraction           *getInteraction();
       BodyPicked                          *getLastPicked(){return &lastPicked;};
 
@@ -89,6 +103,7 @@ namespace sofa
       BodyPicked findCollision();
       BodyPicked findCollisionUsingPipeline();
       BodyPicked findCollisionUsingBruteForce();
+
       bool needToCastRay();     
       void setCompatibleInteractor();
 
@@ -99,10 +114,11 @@ namespace sofa
           
       BodyPicked lastPicked;
 
-      MOUSE_BUTTON mouseButton;
       MOUSE_STATUS mouseStatus;
+      MOUSE_BUTTON mouseButton;
 
-      helper::fixed_array< Operation*,3 > operations;
+      //NONE is the number of Operations in use.
+      helper::fixed_array< Operation*,NONE > operations;
       bool useCollisions;
     };
   }

@@ -26,28 +26,40 @@
 ******************************************************************************/
 #include <sofa/gui/PickHandler.h>
 
+#include <sofa/component/collision/ComponentMouseInteraction.h>
 #include <sofa/component/collision/RayContact.h>
 
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/DeleteVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
+#include <sofa/helper/Factory.inl>
 
 #include <iostream>
 
-#include <sofa/helper/Factory.inl>
-#include <sofa/component/collision/ComponentMouseInteraction.inl>
+
+
 
 
 namespace sofa
 {
+  using namespace component::collision;
+  #ifndef SOFA_FLOAT
+  helper::Creator<ComponentMouseInteraction::ComponentMouseInteractionFactory,TComponentMouseInteraction<defaulttype::Vec3dTypes> > ComponentMouseInteractionVec3dClass ("MouseSpringVec3d",true);
+  #endif
+  #ifndef SOFA_DOUBLE
+  helper::Creator<ComponentMouseInteraction::ComponentMouseInteractionFactory, TComponentMouseInteraction<defaulttype::Vec3fTypes> > ComponentMouseInteractionVec3fClass ("MouseSpringVec3f",true);
+  #endif
 
   namespace gui
   {
 
-    PickHandler::PickHandler():interactorInUse(false), mouseStatus(DEACTIVATED)
+    PickHandler::PickHandler():interactorInUse(false), mouseStatus(DEACTIVATED),mouseButton(NONE)
     {
-      operations[0] = operations[1] = operations[2] = NULL;
+      operations[NONE] = 
+        operations[LEFT] = 
+        operations[MIDDLE] = 
+        operations[RIGHT] = NULL;
 
       mouseNode = simulation::getSimulation()->newNode("Mouse");
 
@@ -96,7 +108,7 @@ namespace sofa
     void PickHandler::reset()
     {
       activateRay(false);
-
+      mouseButton = NONE;
       for (unsigned int i=0;i<instanceComponents.size();++i) instanceComponents[i]->reset();
     }
 
@@ -105,8 +117,14 @@ namespace sofa
       if (interactorInUse && !act)
         {
           mouseNode->detachFromGraph();
+          
+          
+          operations[LEFT]->end();
+          operations[MIDDLE]->end();
+          operations[RIGHT]->end();
 
           interaction->deactivate();
+
           interactorInUse=false;
         }
       else if (!interactorInUse && act)
@@ -179,30 +197,32 @@ namespace sofa
           interaction->mouseInteractor->setBodyPicked(lastPicked);
         }
 
-
-      switch (mouseStatus)
-        {
-        case PRESSED:
+      
+      if(mouseButton != NONE){
+        switch (mouseStatus)
           {
-            operations[mouseButton]->start();
-            mouseStatus=ACTIVATED;
-            break;
+          case PRESSED:
+            {
+              operations[mouseButton]->start();
+              mouseStatus=ACTIVATED;
+              break;
+            }
+          case RELEASED:
+            {
+              operations[mouseButton]->end();
+              mouseStatus=DEACTIVATED;
+              break;
+            }
+          case ACTIVATED:
+            {
+              operations[mouseButton]->execution();
+            }
+          case DEACTIVATED:
+            {
+              operations[mouseButton]->wait();
+            }
           }
-        case RELEASED:
-          {
-            operations[mouseButton]->end();
-            mouseStatus=DEACTIVATED;
-            break;
-          }
-        case ACTIVATED:
-          {
-            operations[mouseButton]->execution();
-          }
-        case DEACTIVATED:
-          {
-            //Nothing to do
-          }
-        }
+      }
     }
 
     //Clear the node create, and destroy all its components
@@ -287,6 +307,14 @@ namespace sofa
       const defaulttype::Vector3& direction       = mouseCollision->getRay(0).direction();
       const double& maxLength                     = mouseCollision->getRay(0).l();
 
+      return findCollisionUsingBruteForce(origin, direction, maxLength);
+      }
+
+    
+    component::collision::BodyPicked PickHandler::findCollisionUsingBruteForce(const defaulttype::Vector3& origin,
+                                                                               const defaulttype::Vector3& direction,
+                                                                               double maxLength)
+    {
       BodyPicked result;
       // Look for particles hit by this ray
       simulation::MechanicalPickParticlesVisitor picker(origin, direction, maxLength, 0);
@@ -296,7 +324,7 @@ namespace sofa
       else std::cerr << "ERROR: root node not found." << std::endl;
 
       if (!picker.particles.empty())
-        {
+        {       
           core::componentmodel::behavior::BaseMechanicalState *mstate = picker.particles.begin()->second.first;
           result.mstate=mstate;
           result.indexCollisionElement = picker.particles.begin()->second.second;
@@ -307,8 +335,7 @@ namespace sofa
           result.rayLength = (result.point-origin)*direction;
         }
       return result;
-      }
-
+    }
 
   }
 }

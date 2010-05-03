@@ -93,16 +93,17 @@ SOFA_DECL_CLASS(MeshObjLoader)
   
   bool MeshObjLoader::load()
   {
-    std::cout << "Loading OBJ file: " << m_filename << std::endl;
+    sout << "Loading OBJ file: " << m_filename << sendl;
 
     FILE* file;
     bool fileRead = false;
 
     // -- Loading file
-    const char* filename = m_filename.getFullPath().c_str();
+	const char* filename = m_filename.getFullPath().c_str();
+
     if ((file = fopen(filename, "r")) == NULL)
     {
-      std::cerr << "Error: MeshObjLoader: Cannot read file '" << m_filename << "'." << std::endl;
+      serr << "Error: MeshObjLoader: Cannot read file '" << m_filename << "'." << sendl;
       return false;
     }
 
@@ -117,7 +118,7 @@ SOFA_DECL_CLASS(MeshObjLoader)
   
   bool MeshObjLoader::readOBJ (FILE* file, const char* filename)
   {
-    std::cout << "MeshObjLoader::readOBJ" << std::endl;
+    sout << "MeshObjLoader::readOBJ" << sendl;
     
     
     helper::vector<sofa::defaulttype::Vector3>& my_positions = *(positions.beginEdit());
@@ -150,9 +151,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	    if ( fgets(buf, sizeof(buf), file) == NULL)
 	    {
 	      if (feof (file) )
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case #." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case #." << sendl;
 	      else
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case #." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter an error. case #." << sendl;
 	    }
 	    	    
 	    break;
@@ -166,9 +167,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 		  if ( fgets(buf, sizeof(buf), file) == NULL)
 		  {
 		    if (feof (file) )
-		      std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case \0." << std::endl;
+		      serr << "Error: MeshObjLoader: fgets function has encounter end of file. case \0." << sendl;
 		    else
-		      std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case \0." << std::endl;
+		      serr << "Error: MeshObjLoader: fgets function has encounter an error. case \0." << sendl;
 		  }
 		  		  
 		  sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
@@ -180,9 +181,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 		  if ( fgets(buf, sizeof(buf), file) == NULL)
 		  {
 		    if (feof (file) )
-		      std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case n." << std::endl;
+		      serr << "Error: MeshObjLoader: fgets function has encounter end of file. case n." << sendl;
 		    else
-		      std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case n." << std::endl;
+		      serr << "Error: MeshObjLoader: fgets function has encounter an error. case n." << sendl;
 		  }
 		  
 		    
@@ -195,9 +196,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 		  if ( fgets(buf, sizeof(buf), file) == NULL)
 		  {
 		    if (feof (file) )
-		      std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case t." << std::endl;
+		      serr << "Error: MeshObjLoader: fgets function has encounter end of file. case t." << sendl;
 		    else
-		      std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case t." << std::endl;
+		      serr << "Error: MeshObjLoader: fgets function has encounter an error. case t." << sendl;
 		  }
 
 		  sscanf (buf, "%lf %lf", &result[0], &result[1]);
@@ -214,17 +215,17 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	      if ( fgets(buf, sizeof(buf), file) == NULL)
 	      {
 		if (feof (file) )
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case m." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case m." << sendl;
 		else
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case m." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case m." << sendl;
 	      }
 	      
 	      sscanf(buf, "%s %s", buf, buf);
 	      //mtllibname = strdup(buf);
 	      //fscanf(file, "%s", buf);
 	      std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(buf, filename);
-	      //std::cerr << "Buf = " << buf << std::endl;
-	      //std::cerr << "Filename = " << filename << std::endl;
+	      //serr << "Buf = " << buf << sendl;
+	      //serr << "Filename = " << filename << sendl;
 	      this->readMTL(mtlfile.c_str(), my_materials);
 	    }
 	    break;
@@ -234,9 +235,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	      if ( fgets(buf, sizeof(buf), file) == NULL)
 	      {
 		if (feof (file) )
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case u." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case u." << sendl;
 		else
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case u." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case u." << sendl;
 	      }
 	      
 	      sscanf(buf, "%s", matName);
@@ -246,7 +247,7 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	      {
 		if (it->name == matName)
 		{
-		  //  							std::cout << "Using material "<<it->name<<std::endl;
+		  //  							sout << "Using material "<<it->name<<sendl;
 		  (*it).activated = true;
 		  material = *it;
 		}
@@ -259,9 +260,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	    if ( fgets(buf, sizeof(buf), file) == NULL)
 	    {
 	      if (feof (file) )
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case g." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case g." << sendl;
 	      else
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case g." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter an error. case g." << sendl;
 	    }
 	    
 	    sscanf(buf, "%s", buf);
@@ -272,9 +273,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	    if ( fgets(buf, sizeof(buf), file) == NULL)
 	    {
 	      if (feof (file) )
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case f." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case f." << sendl;
 	      else
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case f." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter an error. case f." << sendl;
 	    }
 	    token = strtok(buf, " ");
 				
@@ -309,18 +310,18 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	    if (nodes.size() == 2) // Edge
 	    {
 	      if (nodes[0]<nodes[1])
-                my_edges.push_back (helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
+                addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
 	      else
-                my_edges.push_back (helper::fixed_array <unsigned int,2>(nodes[1], nodes[0]));
+                addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[1], nodes[0]));
 	    }
 	    else if (nodes.size()==4) // Quad
 	    { 
-	      my_quads.push_back (helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
+	      addQuad(&my_quads, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
 	    }
 	    else // Triangularize
 	    { 
 	      for (unsigned int j=2; j<nodes.size(); j++)
-		my_triangles.push_back (helper::fixed_array <unsigned int,3>(nodes[0], nodes[j-1], nodes[j]));
+		addTriangle(&my_triangles, helper::fixed_array <unsigned int,3>(nodes[0], nodes[j-1], nodes[j]));
 	    }
 	    
 	    break;
@@ -332,18 +333,18 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	    if ( fgets(buf, sizeof(buf), file) == NULL)
 	    {
 	      if (feof (file) )
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case default." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case default." << sendl;
 	      else
-		std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case default." << std::endl;
+		serr << "Error: MeshObjLoader: fgets function has encounter an error. case default." << sendl;
 	    }
 	    break;
       }
     }
     // announce the model statistics 
-    // 	std::cout << " Vertices: " << vertices.size() << std::endl;
-    // 	std::cout << " Normals: " << normals.size() << std::endl;
-    // 	std::cout << " Texcoords: " << texCoords.size() << std::endl;
-    // 	std::cout << " Triangles: " << facets.size() << std::endl;
+    // 	sout << " Vertices: " << vertices.size() << sendl;
+    // 	sout << " Normals: " << normals.size() << sendl;
+    // 	sout << " Texcoords: " << texCoords.size() << sendl;
+    // 	sout << " Triangles: " << facets.size() << sendl;
 //     if (my_positions.size()>0)
 //     {
 //       // compute bbox
@@ -361,7 +362,7 @@ SOFA_DECL_CLASS(MeshObjLoader)
 // 	}
 //       }
 		
-//       //std::cout << "BBox: <"<<minBB[0]<<','<<minBB[1]<<','<<minBB[2]<<">-<"<<maxBB[0]<<','<<maxBB[1]<<','<<maxBB[2]<<">\n";
+//       //sout << "BBox: <"<<minBB[0]<<','<<minBB[1]<<','<<minBB[2]<<">-<"<<maxBB[0]<<','<<maxBB[1]<<','<<maxBB[2]<<">\n";
 //     }
 
 
@@ -392,13 +393,13 @@ SOFA_DECL_CLASS(MeshObjLoader)
   // -----------------------------------------------------
   bool MeshObjLoader::readMTL(const char* filename, helper::vector <Material>& materials)
   {
-    std::cout << "MeshObjLoader::readMTL" << std::endl;
+    sout << "MeshObjLoader::readMTL" << sendl;
     
     FILE* file;
     char buf[128];
     file = fopen(filename, "r");
     Material *mat = NULL;
-    if (!file);//std::cerr << "readMTL() failed: can't open material file " << filename << std::endl;
+    if (!file);//serr << "readMTL() failed: can't open material file " << filename << sendl;
     else
     {
       /* now, read in the data */
@@ -413,9 +414,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	      if ( fgets(buf, sizeof(buf), file) == NULL)
 	      {
 		if (feof (file) )
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case #." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case #." << sendl;
 		else
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case #." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case #." << sendl;
 	      }
 	      break;
 	    case 'n':
@@ -430,9 +431,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	      if ( fgets(buf, sizeof(buf), file) == NULL)
 	      {
 		if (feof (file) )
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case n." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case n." << sendl;
 		else
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case n." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case n." << sendl;
 	      }
 	      
 	      sscanf(buf, "%s %s", buf, buf);
@@ -444,12 +445,12 @@ SOFA_DECL_CLASS(MeshObjLoader)
 		    {
 		      float optical_density;
 		      if ( fscanf(file, "%f", &optical_density) == EOF )
-			std::cerr << "Error: MeshObjLoader: fscanf function has encounter an error. case N i." << std::endl;
+			serr << "Error: MeshObjLoader: fscanf function has encounter an error. case N i." << sendl;
 		      break;
 		    }
 		  case 's':
 		    if (fscanf(file, "%f", &mat->shininess) == EOF )
-		      std::cerr << "Error: MeshObjLoader: fscanf function has encounter an error. case N s." << std::endl;
+		      serr << "Error: MeshObjLoader: fscanf function has encounter an error. case N s." << sendl;
 		    // wavefront shininess is from [0, 1000], so scale for OpenGL
 		    //mat->shininess /= 1000.0;
 		    //mat->shininess *= 128.0;
@@ -460,9 +461,9 @@ SOFA_DECL_CLASS(MeshObjLoader)
 		    if ( fgets(buf, sizeof(buf), file) == NULL)
 		    {
 		      if (feof (file) )
-			std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case N." << std::endl;
+			serr << "Error: MeshObjLoader: fgets function has encounter end of file. case N." << sendl;
 		      else
-			std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case N." << std::endl;
+			serr << "Error: MeshObjLoader: fgets function has encounter an error. case N." << sendl;
 		    }
 		    break;
 	      }
@@ -471,30 +472,30 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	      switch (buf[1]) {
 		  case 'd':
 		    if ( fscanf(file, "%f %f %f", &mat->diffuse[0], &mat->diffuse[1], &mat->diffuse[2]) == EOF)
-		      std::cerr << "Error: MeshObjLoader: fscanf function has encounter an error. case K d." << std::endl;
+		      serr << "Error: MeshObjLoader: fscanf function has encounter an error. case K d." << sendl;
 		    mat->useDiffuse = true;
-		    /*std::cout << mat->name << " diffuse = "<<mat->diffuse[0]<<' '<<mat->diffuse[1]<<'*/ /*'<<mat->diffuse[2]<<std::endl;*/
+		    /*sout << mat->name << " diffuse = "<<mat->diffuse[0]<<' '<<mat->diffuse[1]<<'*/ /*'<<mat->diffuse[2]<<sendl;*/
 		    break;
 		  case 's':
 		    if ( fscanf(file, "%f %f %f", &mat->specular[0], &mat->specular[1], &mat->specular[2]) == EOF)
-		      std::cerr << "Error: MeshObjLoader: fscanf function has encounter an error. case K s." << std::endl;
+		      serr << "Error: MeshObjLoader: fscanf function has encounter an error. case K s." << sendl;
 		    mat->useSpecular = true;
-		    /*std::cout << mat->name << " specular = "<<mat->specular[0]<<' '<<mat->specular[1]<<'*/ /*'<<mat->specular[2]<<std::endl;*/
+		    /*sout << mat->name << " specular = "<<mat->specular[0]<<' '<<mat->specular[1]<<'*/ /*'<<mat->specular[2]<<sendl;*/
 		    break;
 		  case 'a':
 		    if ( fscanf(file, "%f %f %f", &mat->ambient[0], &mat->ambient[1], &mat->ambient[2]) == EOF)
-		      std::cerr << "Error: MeshObjLoader: fscanf function has encounter an error. case K a." << std::endl;
+		      serr << "Error: MeshObjLoader: fscanf function has encounter an error. case K a." << sendl;
 		    mat->useAmbient = true;
-		    /*std::cout << mat->name << " ambient = "<<mat->ambient[0]<<' '<<mat->ambient[1]<<'*/ /*'<<mat->ambient[2]<<std::endl;*/
+		    /*sout << mat->name << " ambient = "<<mat->ambient[0]<<' '<<mat->ambient[1]<<'*/ /*'<<mat->ambient[2]<<sendl;*/
 		    break;
 		  default:
 		    /* eat up rest of line */
 		    if ( fgets(buf, sizeof(buf), file) == NULL)
 		    {
 		      if (feof (file) )
-			std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case K." << std::endl;
+			serr << "Error: MeshObjLoader: fgets function has encounter end of file. case K." << sendl;
 		      else
-			std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case K." << std::endl;
+			serr << "Error: MeshObjLoader: fgets function has encounter an error. case K." << sendl;
 		    }
 		    break;
 	      }
@@ -503,16 +504,16 @@ SOFA_DECL_CLASS(MeshObjLoader)
 	    case 'T':
 	      // transparency value
 	      if ( fscanf(file, "%f", &mat->diffuse[3]) == EOF)
-		std::cerr << "Error: MeshObjLoader: fscanf function has encounter an error. case T i." << std::endl;
+		serr << "Error: MeshObjLoader: fscanf function has encounter an error. case T i." << sendl;
 	      break;
 	    default:
 	      /* eat up rest of line */
 	      if ( fgets(buf, sizeof(buf), file) == NULL)
 	      {
 		if (feof (file) )
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter end of file. case default." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case default." << sendl;
 		else
-		  std::cerr << "Error: MeshObjLoader: fgets function has encounter an error. case default." << std::endl;
+		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case default." << sendl;
 	      }
 	      break;
 	}

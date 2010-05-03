@@ -25,7 +25,6 @@
 #include <fstream>
 #include <string>
 
-#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/simulation/common/Node.h>
 #include <sofa/component/topology/SparseGridTopology.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
@@ -40,8 +39,6 @@
 
 
 using std::pair;
-
-using sofa::component::container::MechanicalObject;
 
 namespace sofa
 {
@@ -111,9 +108,10 @@ _fillWeighted(initData(&_fillWeighted, true, "fillWeighted", "Is quantity of mat
 	voxelSize(initData(&voxelSize, Vector3(1.0f,1.0f,1.0f), "voxelSize", "Dimension of one voxel")),
 	marchingCubeStep(initData(&marchingCubeStep, (unsigned int) 1, "marchingCubeStep", "Step of the Marching Cube algorithm")),
 	convolutionSize(initData(&convolutionSize, (unsigned int) 0, "convolutionSize", "Dimension of the convolution kernel to smooth the voxels. 0 if no smoothing is required.")),
-	vertices(initData(&vertices, "vertices", "Topology vertices")),
-	facets(initData(&facets, "facets", "Topology facets"))
-
+	vertices(initData(&vertices, "vertices", "Input mesh vertices")),
+	facets(initData(&facets, "facets", "Input mesh facets")),
+    input_triangles(initData(&input_triangles, "input_triangles", "Input mesh triangles")),
+    input_quads(initData(&input_quads, "input_quads", "Input mesh quads"))
 {
 	isVirtual = _isVirtual;
 	_alreadyInit = false;
@@ -221,7 +219,7 @@ void SparseGridTopology::buildAsFinest(  )
 	else
 	{
 		std::string _filename=fileTopology.getValue();
-		if (!vertices.isSet())
+		if (vertices.getValue().empty() )
 		{
 			if (_filename.empty())
 			{
@@ -534,7 +532,7 @@ void SparseGridTopology::updateMesh()
 	if ( collisionTopology != NULL && collisionTopology->getNbTriangles() == 0)
 	{
 #ifndef SOFA_FLOAT
-		MechanicalObject< Vec3dTypes > *mecha_tempd = collisionTopology->getContext()->get< MechanicalObject< Vec3dTypes > >();
+        core::componentmodel::behavior::MechanicalState< Vec3dTypes > *mecha_tempd = collisionTopology->getContext()->get< core::componentmodel::behavior::MechanicalState< Vec3dTypes > >();
 		if (mecha_tempd != NULL && mecha_tempd->getX()->size() < 2) //a triangle mesh has minimum 3elements
 		{
 
@@ -543,7 +541,7 @@ void SparseGridTopology::updateMesh()
 		}
 #endif
 #ifndef SOFA_DOUBLE
-		MechanicalObject< Vec3fTypes > *mecha_tempf = collisionTopology->getContext()->get< MechanicalObject< Vec3fTypes > >();
+		core::componentmodel::behavior::MechanicalState< Vec3fTypes > *mecha_tempf = collisionTopology->getContext()->get< core::componentmodel::behavior::MechanicalState< Vec3fTypes > >();
 		if (mecha_tempf != NULL && mecha_tempf->getX()->size() < 2) //a triangle mesh has minimum 3elements
 		{
 
@@ -628,10 +626,29 @@ void SparseGridTopology::buildFromTriangleMesh(const std::string& filename)
 		mesh = new helper::io::Mesh();
 		for (unsigned int i=0; i<vertices.getValue().size(); ++i)
 			mesh->getVertices().push_back(vertices.getValue()[i]);
-
-		mesh->getFacets().resize(facets.getValue().size());
-		for (unsigned int i=0; i<facets.getValue().size(); ++i)
-			mesh->getFacets()[i].push_back(facets.getValue()[i]);
+		const vector < vector <int> >& facets = this->facets.getValue();
+		const SeqTriangles& triangles = this->input_triangles.getValue();
+		const SeqQuads& quads = this->input_quads.getValue();
+		mesh->getFacets().resize(facets.size() + triangles.size() + quads.size());
+		for (unsigned int i=0; i<facets.size(); ++i)
+			mesh->getFacets()[i].push_back(facets[i]);
+		for (unsigned int i0 = facets.size(), i=0; i<triangles.size(); ++i)
+		{
+			mesh->getFacets()[i0+i].resize(1);
+			mesh->getFacets()[i0+i][0].resize(3);
+			mesh->getFacets()[i0+i][0][0] = triangles[i][0];
+			mesh->getFacets()[i0+i][0][1] = triangles[i][1];
+			mesh->getFacets()[i0+i][0][2] = triangles[i][2];
+		}
+		for (unsigned int i0 = facets.size()+triangles.size(), i=0; i<quads.size(); ++i)
+		{
+			mesh->getFacets()[i0+i].resize(1);
+			mesh->getFacets()[i0+i][0].resize(4);
+			mesh->getFacets()[i0+i][0][0] = quads[i][0];
+			mesh->getFacets()[i0+i][0][1] = quads[i][1];
+			mesh->getFacets()[i0+i][0][2] = quads[i][2];
+			mesh->getFacets()[i0+i][0][3] = quads[i][3];
+		}
 	}
 	else
 	{

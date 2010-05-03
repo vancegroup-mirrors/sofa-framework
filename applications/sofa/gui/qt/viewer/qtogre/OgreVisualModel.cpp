@@ -65,12 +65,27 @@ namespace sofa
 	    Ogre::MeshManager::getSingleton().remove(currentName+"MESH");
 	  }
       }
+      void OgreVisualModel::init()
+      {
+        sofa::component::visualmodel::VisualModelImpl::init();
+
+      }
+
       void OgreVisualModel::reinit()
       {
+        sofa::component::visualmodel::VisualModelImpl::reinit();
 	if (!currentMaterial.isNull())
 	  {
 	    updateMaterial();
 	  }
+      }
+
+      bool OgreVisualModel::loadTexture(const std::string& filename)
+      {      
+        std::string file=filename;
+        sofa::helper::system::DataRepository.findFile(file);
+        Inherit::loadTexture(file);
+        return true;
       }
 
       void OgreVisualModel::updateMaterial()
@@ -126,8 +141,7 @@ namespace sofa
 	    ogreObject->position(vertices[i][0],vertices[i][1],vertices[i][2]);
 	    ogreObject->normal(vnormals[i][0],vnormals[i][1],vnormals[i][2]);
 	    if (hasTexCoords) ogreObject->textureCoord(vtexcoords[i][0],vtexcoords[i][1]);
-	    
-// 	    s << "v " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << "\n";
+//          s << hasTexCoords << " v[" << i << "]" << vtexcoords[i][0] << " !!! " <<  vtexcoords[i][1] << std::endl;
 
 	  }
 
@@ -284,15 +298,15 @@ namespace sofa
 
       void OgreVisualModel::applyUVTransformation()
       {	
-	for (unsigned int i=0;i<vtexcoords.size();++i)
-	  {
-	    vtexcoords[i][0] = vtexcoords[i][0];
-	    vtexcoords[i][1] = 1-vtexcoords[i][1];
-	  }
+// 	for (unsigned int i=0;i<vtexcoords.size();++i)
+// 	  {
+// 	    vtexcoords[i][0] = vtexcoords[i][0];
+// 	    vtexcoords[i][1] = 1-vtexcoords[i][1];
+// 	  }
 	this->applyUVScale(scaleTex.getValue()[0], scaleTex.getValue()[1]);
 	this->applyUVTranslation(translationTex.getValue()[0],translationTex.getValue()[1]);
-	scaleTex.setValue(TexCoord(1,1));
-	translationTex.setValue(TexCoord(0,0));
+ 	scaleTex.setValue(TexCoord(1,1));
+ 	translationTex.setValue(TexCoord(0,0));
       }
       int OgreVisualModelClass = sofa::core::RegisterObject("OGRE 3D Visual Model")
 	.add < OgreVisualModel >();

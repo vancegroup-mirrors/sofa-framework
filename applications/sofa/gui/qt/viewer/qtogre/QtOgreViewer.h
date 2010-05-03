@@ -243,19 +243,7 @@ using namespace sofa::simulation;
 	      bool _waitForRender;
 	      float _factorWheel;
 
-	      void resize()
-	      {
-		if (mRenderWindow != NULL)
-		  {
-		    mRenderWindow->windowMovedOrResized();
-		    mRenderWindow->resize(width(), height());     
-		    mVp->setDimensions(0,0, 1.0, 1.0);
-		    mCamera->setAspectRatio(Ogre::Real(mVp->getActualWidth()) / Ogre::Real(mVp->getActualHeight()));
-		    update();
-		    emit(resizeW(width()));
-		    emit(resizeH(height()));
-		  }
-	      }
+	      void resize();	      	      
 
 	      bool updateInteractor( QMouseEvent * e );	
 				

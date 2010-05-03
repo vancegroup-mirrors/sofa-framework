@@ -77,7 +77,9 @@ HEADERS += mycuda.h \
            CudaVisualModel.h \
            CudaVisualModel.inl \
            CudaTetrahedralVisualModel.h \
-           CudaTetrahedralVisualModel.inl
+           CudaTetrahedralVisualModel.inl \
+           CudaParticleSource.h \
+           CudaParticleSource.inl
 
 SOURCES += mycuda.cpp \
            CudaBoxROI.cpp  \
@@ -101,7 +103,8 @@ SOURCES += mycuda.cpp \
            CudaPenalityContactForceField.cpp \
            CudaVisualModel.cpp \
            CudaTetrahedralVisualModel.cpp \
-           CudaSetTopology.cpp 
+           CudaSetTopology.cpp \
+           CudaParticleSource.cpp
 
 CUDA_SOURCES += mycuda.cu \
            CudaMechanicalObject.cu \
@@ -118,5 +121,6 @@ CUDA_SOURCES += mycuda.cu \
            CudaCollisionDetection.cu \
            CudaContactMapper.cu \
            CudaPenalityContactForceField.cu \
-           CudaVisualModel.cu
+           CudaVisualModel.cu \
+           CudaParticleSource.cu
 

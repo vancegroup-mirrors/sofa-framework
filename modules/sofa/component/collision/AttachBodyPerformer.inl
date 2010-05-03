@@ -137,11 +137,6 @@ namespace sofa
         this->interactor->setMouseAttached(false);
       };
 
-
-#ifdef WIN32
-      helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Vec3Types> >  AttachBodyPerformerVec3Class("AttachBody");
-#endif
-
     }
   }
 }

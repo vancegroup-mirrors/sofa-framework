@@ -19,6 +19,7 @@ HEADERS +=  \
            LULinearSolver.h \
            BTDLinearSolver.h \
            FullVector.h \
+           FullMatrix.h \
            SparseMatrix.h \
            CompressedRowSparseMatrix.h \
            MatrixLinearSolver.h \

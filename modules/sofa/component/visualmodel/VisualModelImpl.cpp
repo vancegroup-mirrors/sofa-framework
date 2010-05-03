@@ -102,7 +102,7 @@ void VisualModelImpl::parse(core::objectmodel::BaseObjectDescription* arg)
     }
 
 	if (arg->getAttribute("scale")!=NULL) {
-		scale.setValue(Vector3((SReal)atof(arg->getAttribute("scale","0.0")), (SReal)atof(arg->getAttribute("scale","0.0")), (SReal)atof(arg->getAttribute("scale","0.0"))));
+		scale.setValue(Vector3((SReal)atof(arg->getAttribute("scale","1.0")), (SReal)atof(arg->getAttribute("scale","1.0")), (SReal)atof(arg->getAttribute("scale","1.0"))));
 	}
 	else
 	{
@@ -133,7 +133,7 @@ VisualModelImpl::VisualModelImpl() //const std::string &name, std::string filena
      texturename       (initData   (&texturename, "texturename","Name of the Texture")),
      translation       (initData   (&translation, Vector3(), "translation", "Initial Translation of the object")),
      rotation          (initData   (&rotation, Vector3(), "rotation", "Initial Rotation of the object")),
-     scale             (initData   (&scale, Vector3(1.0,1.0,1.0), "scales", "Initial Scale of the object")),
+     scale             (initData   (&scale, Vector3(1.0,1.0,1.0), "scale3d", "Initial Scale of the object")),
      scaleTex          (initData   (&scaleTex, TexCoord(1.0,1.0), "scaleTex", "Scale of the texture")),
      translationTex    (initData   (&translationTex, TexCoord(1.0,1.0), "translationTex", "Translation of the texture")),
      material(initData(&material,"material","Material")), // tex(NULL)
@@ -338,6 +338,14 @@ bool VisualModelImpl::load(const std::string& filename, const std::string& loade
           serr <<"Texture \""<<textureName <<"\" not found" << sendl;
     }
 
+    // Make sure all Data are up-to-date
+    field_vertices.updateIfDirty();
+    field_vnormals.updateIfDirty();
+    field_vtexcoords.updateIfDirty();
+    field_triangles.updateIfDirty();
+    field_quads.updateIfDirty();
+
+
     if (!filename.empty() && vertices.size() == 0)
     {
       std::string meshFilename(filename);
@@ -461,6 +469,7 @@ void VisualModelImpl::init()
 		useTopology = false;
 	}
 
+	
     field_vertices.beginEdit();
     field_vnormals.beginEdit();
     field_vtexcoords.beginEdit();
@@ -474,7 +483,7 @@ void VisualModelImpl::init()
 
     translation.setValue(Vector3());
     rotation.setValue(Vector3());
-    scale.setValue(Vector3());
+    scale.setValue(Vector3(1,1,1));
     VisualModel::init();
     updateVisual();
 }
@@ -734,6 +743,12 @@ void VisualModelImpl::updateVisual()
         updateBuffers();
         modified = false;
     }
+    
+    field_vertices.updateIfDirty();
+    field_vnormals.updateIfDirty();
+    field_vtexcoords.updateIfDirty();
+    field_triangles.updateIfDirty();
+    field_quads.updateIfDirty();
 }
 
 

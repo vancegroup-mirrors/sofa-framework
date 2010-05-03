@@ -49,16 +49,19 @@ namespace sofa
 class OgreVisualModel : public sofa::component::visualmodel::VisualModelImpl
 {
 public:
+  typedef sofa::component::visualmodel::VisualModelImpl Inherit;
     OgreVisualModel();
     ~OgreVisualModel();
     void setOgreSceneManager(Ogre::SceneManager* m){mSceneMgr=m;}
  private:
     virtual void internalDraw();
  public:
+    virtual void init();
     virtual void reinit();
     virtual void initVisual(){internalDraw();}
     virtual void initTextures(){internalDraw();}
 
+    virtual bool loadTexture(const std::string& filename);
     virtual void applyUVTransformation();
 
 protected:

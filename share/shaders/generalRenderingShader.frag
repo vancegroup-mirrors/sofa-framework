@@ -293,14 +293,22 @@ void main()
 	color += texture2D(planarTextureX,vec2(pos0.y/scaleTexture.x,pos0.z/scaleTexture.y) ) * coefs.x;
 
 	color.rgb = showDebug * (vec3(1.0,1.0,1.0)-coefs) + (1.0-showDebug)*color.rgb;
-	color.a = 1.0;
+	color.a = diffuse.a;
 #endif
 
 #if defined (PERLIN_NOISE_COLOR) 
-
+	color.a = 1.0;
 	//color *= 0.8+0.2*noise(positionW*10);
 	//color *= 0.8+0.2*perlin_noise(positionW, 4, 1.0);
-	color += perlinColorFactor*(perlin_noise(positionW, perlinColorFrequency, perlinColorOctave, perlinColorPersistance));
+	
+	//color = perlinColorFactor + (perlin_noise(positionW, perlinColorFrequency, perlinColorOctave, perlinColorPersistance));
+	
+	float perlinColor = perlin_noise(positionW, perlinColorFrequency, perlinColorOctave, perlinColorPersistance);
+	color.rgb =  perlinColorFactor.rgb * (color.rgb+perlinColor);
+	//color.a += (perlinColor);
+	
+	//color *= vec4(0.0,0.0,0.0,0.0)*(perlin_noise(positionW, perlinColorFrequency, perlinColorOctave, perlinColorPersistance));
+	//color = perlinColorFactor;
 	//float t = perlin_noise(positionW, 4, 1.0);
 	//color.xyz = 0.8+vec3(t, t, t);
 #endif
@@ -368,15 +376,16 @@ void main()
 			//		gl_LightSource[0].linearAttenuation * dist +
 			//		gl_LightSource[0].quadraticAttenuation * dist * dist);
 	
-			phong_color += (diffuse * NdotL) /* * att */;
+			//phong_color += (diffuse * NdotL) /* * att */;
+			phong_color.rgb += (diffuse.rgb * NdotL) /* * att */;
 		}
 	}
 	
 	
 #if defined(TEXTURE_UNIT_0) || defined(TRI_TEXTURING)
-	color *= phong_color;
+	color.rgb *= phong_color.rgb;
 #else
-	color += phong_color;
+	color.rgb += phong_color.rgb;
 #endif
 
 	halfV = normalize(gl_LightSource[0].halfVector.xyz);
@@ -424,8 +433,7 @@ void main()
 
 	// Write the final pixel.
 	gl_FragColor = color;
+	//gl_FragColor = vec4(1.0,1.0,1.0,0.0);
 	//vec4 p = texture(perlinPermutationsTexture,gl_TexCoord[0].st);
-	//gl_FragColor = p;
 
-	
 }

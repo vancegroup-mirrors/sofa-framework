@@ -46,6 +46,7 @@ namespace loader
 			   , polygons(initData(&polygons,"polygons","Polygons of the mesh loaded"))
 			   , tetrahedra(initData(&tetrahedra,"tetrahedra","Tetrahedra of the mesh loaded"))
 			   , hexahedra(initData(&hexahedra,"hexahedra","Hexahedra of the mesh loaded"))
+			   , flipNormals(initData(&flipNormals, false,"flipNormals","Flip Normals"))
 			     //, triangulate(initData(&triangulate,false,"triangulate","Divide all polygons into triangles"))
 			     //, fillMState(initData(&fillMState,true,"fillMState","Must this mesh loader fill the mstate instead of manually or by using the topology"))
 			     //, facets(initData(&facets,"facets","Facets of the mesh loaded")) 
@@ -65,12 +66,12 @@ namespace loader
 
   void MeshLoader::init()
   {
-    std::cout << "MeshLoader::init()" << std::endl;
+    sout << "MeshLoader::init()" << sendl;
 
     if (canLoad())
       load(/*m_filename.getFullPath().c_str()*/);
     else
-      std::cout << "Doing nothing" << std::endl;
+      sout << "Doing nothing" << sendl;
   }
 
 
@@ -82,31 +83,32 @@ namespace loader
     // -- Check filename field:
     if(m_filename.getValue() == "")
     {
-      std::cerr << "Error: MeshLoader: No file name given." << std::endl;
+      serr << "Error: MeshLoader: No file name given." << sendl;
       return false;
     }
-          
+
+	  
     // -- Check if file exist:
-    const char* filename = m_filename.getFullPath().c_str();
-    std::string sfilename (filename);
-    
+	const char* filename = m_filename.getFullPath().c_str();
+	std::string sfilename (filename);
+
     if (!sofa::helper::system::DataRepository.findFile(sfilename))
     {
-      std::cerr << "Error: MeshLoader: File '" << m_filename << "' not found. " << std::endl;
+      serr << "Error: MeshLoader: File '" << m_filename << "' not found. " << sendl;
       return false;
     }
 
     // -- Check if file is readable:
     if ((file = fopen(filename, "r")) == NULL)
     {
-      std::cerr << "Error: MeshLoader: Cannot read file '" << m_filename << "'." << std::endl;
+      serr << "Error: MeshLoader: Cannot read file '" << m_filename << "'." << sendl;
       return false;
     }
     
     // -- Step 2.2: Check first line.
     if (!readLine(cmd, sizeof(cmd), file))
     {
-      std::cerr << "Error: MeshLoader: Cannot read first line in file '" << m_filename << "'." << std::endl;
+      serr << "Error: MeshLoader: Cannot read first line in file '" << m_filename << "'." << sendl;
       fclose(file);
       return false;
     }
@@ -115,7 +117,98 @@ namespace loader
     return true;
   }
   
-  
+  void addPosition(helper::vector<sofa::defaulttype::Vec<3,SReal> >* pPositions, const sofa::defaulttype::Vec<3,SReal> &p)
+  {
+	  pPositions->push_back(p);
+  }
+
+  void addPosition(helper::vector<sofa::defaulttype::Vec<3,SReal> >* pPositions,  SReal x, SReal y, SReal z)
+  {
+	  addPosition(pPositions, sofa::defaulttype::Vec<3,SReal>(x, y, z));
+  }
+
+
+  void MeshLoader::addEdge(helper::vector<helper::fixed_array <unsigned int,2> >* pEdges, const helper::fixed_array <unsigned int,2> &p)
+  {
+	  pEdges->push_back(p);
+  }
+
+  void MeshLoader::addEdge(helper::vector<helper::fixed_array <unsigned int,2> >* pEdges, unsigned int p0, unsigned int p1)
+  {
+	  addEdge(pEdges, helper::fixed_array <unsigned int,2>(p0, p1));
+  }
+
+  void MeshLoader::addTriangle(helper::vector<helper::fixed_array <unsigned int,3> >* pTriangles, const helper::fixed_array <unsigned int,3> &p)
+  {
+	  if (flipNormals.getValue())
+	  {
+		  helper::fixed_array <unsigned int,3> revertP;
+		  std::reverse_copy(p.begin(), p.end(), revertP.begin());
+
+		  pTriangles->push_back(revertP);
+	  }
+	  else
+		  pTriangles->push_back(p);
+  }
+
+  void MeshLoader::addTriangle(helper::vector<helper::fixed_array <unsigned int,3> >* pTriangles, unsigned int p0, unsigned int p1, unsigned int p2)
+  {
+	  addTriangle(pTriangles, helper::fixed_array <unsigned int,3>(p0, p1, p2));
+  }
+
+  void MeshLoader::addQuad(helper::vector<helper::fixed_array <unsigned int,4> >* pQuads, const helper::fixed_array <unsigned int,4> &p)
+  {
+	  if (flipNormals.getValue())
+	  {
+		  helper::fixed_array <unsigned int,4> revertP;
+		  std::reverse_copy(p.begin(), p.end(), revertP.begin());
+
+		  pQuads->push_back(revertP);
+	  }
+	  else
+		  pQuads->push_back(p);
+  }
+
+  void MeshLoader::addQuad(helper::vector<helper::fixed_array <unsigned int,4> >* pQuads, unsigned int p0, unsigned int p1, unsigned int p2, unsigned int p3)
+  {
+	  addQuad(pQuads, helper::fixed_array <unsigned int,4>(p0, p1, p2, p3));
+  }
+
+  void MeshLoader::addPolygon(helper::vector< helper::vector <unsigned int> >* pPolygons, const helper::vector<unsigned int> &p)
+  {
+	  if (flipNormals.getValue())
+	  {
+		  helper::vector<unsigned int> revertP(p.size());
+		  std::reverse_copy(p.begin(), p.end(), revertP.begin());
+
+		  pPolygons->push_back(revertP);
+	  }
+	  else
+		  pPolygons->push_back(p);
+  }
+
+
+  void MeshLoader::addTetrahedron(helper::vector< helper::fixed_array<unsigned int,4> >* pTetrahedra, const helper::fixed_array<unsigned int,4> &p)
+  {
+	  pTetrahedra->push_back(p);
+  }
+
+  void MeshLoader::addTetrahedron(helper::vector< helper::fixed_array<unsigned int,4> >* pTetrahedra, unsigned int p0, unsigned int p1, unsigned int p2, unsigned int p3)
+  {
+	  addTetrahedron(pTetrahedra, helper::fixed_array <unsigned int,4>(p0, p1, p2, p3));
+  }
+
+  void MeshLoader::addHexahedron(helper::vector< helper::fixed_array<unsigned int,8> >* pHexahedra,
+  		unsigned int p0, unsigned int p1, unsigned int p2, unsigned int p3,
+  		unsigned int p4, unsigned int p5, unsigned int p6, unsigned int p7)
+  {
+	  addHexahedron(pHexahedra, helper::fixed_array <unsigned int,8>(p0, p1, p2, p3, p4, p5, p6, p7));
+  }
+
+  void MeshLoader::addHexahedron(helper::vector< helper::fixed_array<unsigned int,8> >* pHexahedra, const helper::fixed_array<unsigned int,8> &p)
+  {
+	  pHexahedra->push_back(p);
+  }
 
 
 } // namespace loader

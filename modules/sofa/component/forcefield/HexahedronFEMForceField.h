@@ -26,7 +26,6 @@
 #define SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELD_H
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/SparseGridTopology.h>
 #include <sofa/helper/vector.h>
@@ -103,8 +102,6 @@ namespace sofa
 		
 
       protected:
-        //component::container::MechanicalObject<DataTypes>* object;
-		  
 
         typedef Vec<24, Real> Displacement;		///< the displacement vector
 
@@ -212,8 +209,6 @@ public:
 		void setUpdateStiffnessMatrix(bool val) { this->f_updateStiffnessMatrix.setValue(val); }
 
 		void setComputeGlobalMatrix(bool val) { this->f_assembling.setValue(val); }
-
-        //	component::container::MechanicalObject<DataTypes>* getObject() { return object; }
 
         virtual void init();
 		virtual void reinit();

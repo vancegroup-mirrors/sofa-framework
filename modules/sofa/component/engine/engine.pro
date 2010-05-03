@@ -18,6 +18,8 @@ HEADERS += initEngine.h \
            MergePoints.inl \
 	   TransformPosition.h \
 	   TransformPosition.inl \
+	   TransformEngine.h \
+	   TransformEngine.inl \
            PlaneROI.h \
            PlaneROI.inl \
            PointsFromIndices.h \
@@ -33,7 +35,9 @@ HEADERS += initEngine.h \
            TrianglesInPlaneROI.h \
            TrianglesInPlaneROI.inl \
            Vertex2Frame.h \
-           Vertex2Frame.inl
+           Vertex2Frame.inl \
+           TextureInterpolation.h \
+           TextureInterpolation.inl
 
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
@@ -41,17 +45,20 @@ SOURCES += initEngine.cpp \
            MergePoints.cpp \
            PlaneROI.cpp \
 	   TransformPosition.cpp \
+           TransformEngine.cpp \
            PointsFromIndices.cpp \
            RandomPointDistributionInSurface.cpp \
            Spiral.cpp \
            TrianglesInBoxROI.cpp \
            TrianglesInSphereROI.cpp \
            TrianglesInPlaneROI.cpp \
-           Vertex2Frame.cpp
+           Vertex2Frame.cpp \
+           TextureInterpolation.cpp
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentcollision$$LIBSUFFIX
+LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS
 
 macx : LIBS += -framework GLUT 

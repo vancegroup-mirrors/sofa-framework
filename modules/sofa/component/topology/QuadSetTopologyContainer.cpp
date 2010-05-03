@@ -76,10 +76,11 @@ void QuadSetTopologyContainer::addQuad( int a, int b, int c, int d )
     if (d >= getNbPoints()) nbPoints.setValue(d+1);
 }
 
-	void QuadSetTopologyContainer::init()
-	{
-		EdgeSetTopologyContainer::init();
-	}
+void QuadSetTopologyContainer::init()
+{
+    EdgeSetTopologyContainer::init();
+    d_quad.updateIfDirty(); // make sure m_quad is up to date
+}
 
         void QuadSetTopologyContainer::loadFromMeshLoader(sofa::component::container::MeshLoader* loader)
 	{
@@ -535,10 +536,11 @@ void QuadSetTopologyContainer::addQuad( int a, int b, int c, int d )
 	#endif
 	}
 
-	bool QuadSetTopologyContainer::hasQuads() const 
-	{
-		return !m_quad.empty();
-	}
+bool QuadSetTopologyContainer::hasQuads() const 
+{
+    d_quad.updateIfDirty();
+    return !m_quad.empty();
+}
 
 	bool QuadSetTopologyContainer::hasEdgesInQuad() const 
 	{

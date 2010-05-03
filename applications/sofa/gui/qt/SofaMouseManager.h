@@ -31,8 +31,6 @@
 
 #include "MouseManager.h"
 #include <sofa/gui/PickHandler.h>
-#include <qslider.h>
-#include <qspinbox.h>
 
 
 namespace sofa
@@ -62,8 +60,6 @@ namespace sofa
         public slots:
         void selectOperation(int);
         
-        void   setValue( MOUSE_BUTTON button, const char *text, double value);
-        double getValue( MOUSE_BUTTON button, const char *text) const;
       protected:
         void updateOperation( MOUSE_BUTTON button, const std::string &id);
 

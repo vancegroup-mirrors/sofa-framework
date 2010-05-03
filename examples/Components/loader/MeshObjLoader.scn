@@ -11,16 +11,16 @@
 	  
 	  <Node name="triangulation">
 	    <TriangleSetTopologyContainer name="triangles" src="@../ObjLoader" />
-	    <TriangleSetGeometryAlgorithms name="triGeo" />
+	    <TriangleSetGeometryAlgorithms name="triGeo" drawEdges="1" />
 	  </Node>
 			
 	  <Node name="quad_topology">
 	    <QuadSetTopologyContainer name="quads" src="@../ObjLoader" />
-	    <QuadSetGeometryAlgorithms name="quadGeo" />
+	    <QuadSetGeometryAlgorithms name="quadGeo" drawQuads="1" />
 	  </Node>
 
 	  <Node name="visu">
-	    <OglModel name="VisualModel" src="../@ObjLoader" texturename="textures/floor.bmp"/>
+	    <OglModel name="VisualModel" src="@../ObjLoader" texturename="textures/floor.bmp"/>
 	  </Node>
 
 	</Node>

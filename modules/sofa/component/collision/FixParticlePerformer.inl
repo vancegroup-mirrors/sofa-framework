@@ -137,11 +137,6 @@ namespace sofa
         
         fixationConstraint.clear();
       };
-
-
-#ifdef WIN32
-      helper::Creator<InteractionPerformer::InteractionPerformerFactory, FixParticlePerformer<defaulttype::Vec3Types> >  FixParticlePerformerVec3Class("FixParticle");
-#endif
     }
   }
 }

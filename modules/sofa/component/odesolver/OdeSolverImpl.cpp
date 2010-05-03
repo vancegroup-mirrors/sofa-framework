@@ -98,7 +98,8 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
   {    
     if (constraintPos.getValue())
       {
-	bool propagateCorrectOfPositionOnVelocity = !constraintVel.getValue();
+	bool propagateCorrectOfPositionOnVelocity =   true;// should not we always correct the velocity once the positions have been corrected?
+//         !constraintVel.getValue();        
 	solveConstraint(VecId::position(), propagateCorrectOfPositionOnVelocity);
       }
     if (constraintVel.getValue())
@@ -106,7 +107,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	solveConstraint(VecId::velocity());
       }
   }
-  void OdeSolverImpl::solveConstraint(VecId Id, bool propagateVelocityFromPosition)
+  void OdeSolverImpl::solveConstraint(VecId Order, bool propagateVelocityFromPosition)
   {
 
     //Get the matrices through mappings
@@ -120,32 +121,32 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     //************************************************************  
     sofa::simulation::MechanicalAccumulateLMConstraint LMConstraintVisitor;      
     using core::componentmodel::behavior::BaseLMConstraint ;
-    BaseLMConstraint::ConstId idxState;
-    if      (Id==VecId::dx())       
+    BaseLMConstraint::ConstOrder orderState;
+    if      (Order==VecId::dx())       
       {
-        idxState=BaseLMConstraint::ACC;
-        simulation::MechanicalPropagateDxVisitor propagateState(Id);
+        orderState=BaseLMConstraint::ACC;
+        simulation::MechanicalPropagateDxVisitor propagateState(Order);
         propagateState.execute(this->getContext());
         // calling writeConstraintEquations
-        LMConstraintVisitor.setId(idxState);
+        LMConstraintVisitor.setOrder(orderState);
         LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
       }
-    else if (Id==VecId::velocity()) 
+    else if (Order==VecId::velocity()) 
       {
-        idxState=BaseLMConstraint::VEL;
-        simulation::MechanicalPropagateVVisitor propagateState(Id);
+        orderState=BaseLMConstraint::VEL;
+        simulation::MechanicalPropagateVVisitor propagateState(Order);
         propagateState.execute(this->getContext());
         // calling writeConstraintEquations
-        LMConstraintVisitor.setId(idxState);
+        LMConstraintVisitor.setOrder(orderState);
         LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
       }
     else
       {
-        idxState=BaseLMConstraint::POS;
-        simulation::MechanicalPropagateXVisitor propagateState(Id);
+        orderState=BaseLMConstraint::POS;
+        simulation::MechanicalPropagateXVisitor propagateState(Order);
         propagateState.execute(this->getContext());
         // calling writeConstraintEquations
-        LMConstraintVisitor.setId(idxState);
+        LMConstraintVisitor.setOrder(orderState);
         LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
       }
 
@@ -156,16 +157,16 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     for (unsigned int mat=0;mat<LMConstraintVisitor.numConstraintDatas();++mat)
       {
 	ConstraintData& constraint=LMConstraintVisitor.getConstraint(mat);
-	numConstraint += constraint.data->getNumConstraint(idxState);
+	numConstraint += constraint.data->getNumConstraint(orderState);
       }
     if (numConstraint == 0) return; //Nothing to solve
 
 
     if (f_printLog.getValue()) 
       {
-        if (Id==VecId::dx())            sout << "Applying the constraint on the acceleration"<<sendl;
-        else if (Id==VecId::velocity()) sout << "Applying the constraint on the velocity"<<sendl;
-        else if (Id==VecId::position()) sout << "Applying the constraint on the position"<<sendl;
+        if (Order==VecId::dx())            sout << "Applying the constraint on the acceleration"<<sendl;
+        else if (Order==VecId::velocity()) sout << "Applying the constraint on the velocity"<<sendl;
+        else if (Order==VecId::position()) sout << "Applying the constraint on the position"<<sendl;
       }
 
     //Informations to build the matrices
@@ -178,7 +179,6 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::vector< sofa::helper::vector< unsigned int > > > indicesUsedSystem;
     //To Build L.M^-1.L^T, we need to know to what system of contraint: the offset helps to write the matrix J
     std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::vector< unsigned int > > offsetSystem;
-    std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::vector< double > > factorSystem;
     std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::set< unsigned int > > dofUsed;
 
 
@@ -192,10 +192,10 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	ConstraintData& constraint=LMConstraintVisitor.getConstraint(mat);
 
 	sofa::helper::vector< unsigned int > indicesUsed[2];
-	constraint.data->getIndicesUsed(idxState, indicesUsed[0], indicesUsed[1]);
+	constraint.data->getIndicesUsed(orderState, indicesUsed[0], indicesUsed[1]);
 
 
-	unsigned int currentNumConstraint=constraint.data->getNumConstraint(idxState);
+	unsigned int currentNumConstraint=constraint.data->getNumConstraint(orderState);
 	setDofs.insert(constraint.independentMState[0]);
 	setDofs.insert(constraint.independentMState[1]);
 
@@ -205,9 +205,6 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	offsetSystem[constraint.independentMState[0] ].push_back(constraintOffset);
 	offsetSystem[constraint.independentMState[1] ].push_back(constraintOffset);
 
-	factorSystem[constraint.independentMState[0] ].push_back( 1.0);
-	factorSystem[constraint.independentMState[1] ].push_back(-1.0);
-
 	constraintOffset += currentNumConstraint;
       }
 
@@ -216,7 +213,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     // Build the Right Hand Term
     //************************************************************
     VectorEigen cEigen((int)numConstraint);
-    buildRightHandTerm(idxState,LMConstraintVisitor, cEigen);
+    buildRightHandTerm(orderState,LMConstraintVisitor, cEigen);
     //************************************************************
     // Building A=J0.M0^-1.J0^T + J1.M1^-1.J1^T + ... and M^-1.J^T 
     //************************************************************
@@ -317,7 +314,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
             //Ask the dof to give the content of a list of VecConst, organized into blocks
             std::list<unsigned int > entries(indicesUsedSystem[dofs][idConstraint].begin(),indicesUsedSystem[dofs][idConstraint].end()); 
             typedef core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
-            std::list< ConstraintBlock > blocks=dofs->constraintBlocks( entries, factorSystem[dofs][idConstraint]);
+            std::list< ConstraintBlock > blocks=dofs->constraintBlocks( entries );
             
             std::list< ConstraintBlock >::iterator itBlock;
             for (unsigned int i=0;i<numConstraint;++i)
@@ -347,7 +344,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
               }
           }
         L.endFill();
-//         if (f_printLog.getValue())  sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
+        if (f_printLog.getValue())  sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
     //************************************************************
     //Accumulation
     //Simple way to compute
@@ -456,13 +453,13 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	      {
 		ConstraintData& constraint=LMConstraintVisitor.getConstraint(componentConstraint);
 		//Get the vector containing all the constraint stored in one component
-		const std::vector< BaseLMConstraint::constraintGroup* > &constraintId=constraint.data->getConstraintsId(idxState); 
+		const std::vector< BaseLMConstraint::constraintGroup* > &constraintOrder=constraint.data->getConstraintsOrder(orderState); 
 
-		for (unsigned int constraintEntry=0;constraintEntry<constraintId.size();++constraintEntry)
+		for (unsigned int constraintEntry=0;constraintEntry<constraintOrder.size();++constraintEntry)
 		  {
 		    //-------------------------------------
 		    //Initialize the variables, and store X^(k-1) in previousIteration
-		    unsigned int numConstraintToProcess=constraintId[constraintEntry]->getNumConstraint();
+		    unsigned int numConstraintToProcess=constraintOrder[constraintEntry]->getNumConstraint();
                     varEigen = VectorEigen::Zero(numConstraintToProcess);
                     previousIterationEigen = VectorEigen::Zero(numConstraintToProcess);
 		    for (unsigned int i=0;i<numConstraintToProcess;++i)
@@ -480,7 +477,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 		      {
 			//X^(k)= (c^(0)-A[c,c]*X^(k-1))/A[c,c]
                         LambdaEigen(idxConstraint+i)=(cEigen(idxConstraint+i) - varEigen(i))/AEigen(idxConstraint+i,idxConstraint+i);
-                        if (constraintId[constraintEntry]->getNature(i) == BaseLMConstraint::UNILATERAL && LambdaEigen(idxConstraint+i) < 0) 
+                        if (constraintOrder[constraintEntry]->getNature(i) == BaseLMConstraint::UNILATERAL && LambdaEigen(idxConstraint+i) < 0) 
                           {
                             groupDesactivated=true;
                             if (f_printLog.getValue()) sout << "Constraint : " << i << " from group " << idxConstraint << " Desactivated" << sendl;
@@ -520,7 +517,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 		      }
 		    idxConstraint+=numConstraintToProcess;
 		  }
-	      } 
+	      }
 	    if (this->f_printLog.getValue()) 
  	      {
                 if (f_printLog.getValue()) sout << "ITERATION " << iteration << " ENDED\n"<<sendl;
@@ -528,8 +525,8 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	  }
         if (iteration == numIterations.getValue())
           {
-            serr << error << " : no convergence in Gauss-Seidel"<<sendl;
-//              return;
+            serr << "no convergence in Gauss-Seidel"<<sendl;
+            return;
           }
 
 	if (f_printLog.getValue()) sout << "Gauss-Seidel done in " << iteration << " iterations "<<sendl;
@@ -556,7 +553,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
             if (!mass) continue;
             std::vector< DofToMatrix<SparseMatrixEigen> >::const_iterator invM_LtransMatrix = std::find( invMass_Ltrans.begin(),invMass_Ltrans.end(), dofs);            
 
-            constraintStateCorrection(Id, dofs, invM_LtransMatrix->matrix , LambdaEigen, dofUsed[dofs], propagateVelocityFromPosition);
+            constraintStateCorrection(Order, dofs, invM_LtransMatrix->matrix , LambdaEigen, dofUsed[dofs], propagateVelocityFromPosition);
 	  }
   }
 
@@ -565,7 +562,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
 
 
-  void OdeSolverImpl::buildRightHandTerm(ConstId Id,sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, VectorEigen  &c)
+  void OdeSolverImpl::buildRightHandTerm(ConstOrder Order,sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, VectorEigen  &c)
   {
     using core::componentmodel::behavior::BaseLMConstraint ;
 
@@ -573,7 +570,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     for (unsigned int mat=0;mat<LMConstraintVisitor.numConstraintDatas();++mat)
       {
 	ConstraintData& constraint=LMConstraintVisitor.getConstraint(mat);
-        std::vector<SReal> correction; constraint.data->getCorrections(Id,correction);
+        helper::vector<SReal> correction; constraint.data->getCorrections(Order,correction);
         for (unsigned int numC=0;numC<correction.size();++numC)
           {
             c(offset+numC)=correction[numC];
@@ -587,7 +584,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
 
 
-  void OdeSolverImpl::constraintStateCorrection(VecId &Id, sofa::core::componentmodel::behavior::BaseMechanicalState* dofs, 
+  void OdeSolverImpl::constraintStateCorrection(VecId &Order, sofa::core::componentmodel::behavior::BaseMechanicalState* dofs, 
                                                 const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool propageVelocityChange)
   {
 
@@ -605,7 +602,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
     unsigned int offset=0;
     //In case of position correction, we need to update the velocities
-    if (Id==VecId::position())
+    if (Order==VecId::position())
       {
 	//Detect Rigid Bodies
         if (dofs->getCoordDimension() == 7 && dofs->getDerivDimension() == 6)
@@ -667,7 +664,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
           {
             unsigned int offset=(*it);
             FullVector<SReal> v(&(A.data()[offset*dimensionDofs]),dimensionDofs);
-            dofs->addVectorToState(Id,&v,offset );
+            dofs->addVectorToState(Order,&v,offset );
           }
 
       }

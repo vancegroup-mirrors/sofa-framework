@@ -1025,9 +1025,8 @@ typedef QApplication QSOFAApplication;
             std::string extension=sofa::helper::system::SetDirectory::GetExtension(filename);
             std::string htmlFile=filename;htmlFile.resize(htmlFile.size()-extension.size()-1);
             htmlFile+=".html";          
-            if (sofa::helper::system::DataRepository.findFile (htmlFile)) 
+            if (sofa::helper::system::DataRepository.findFile (htmlFile,"",NULL)) 
               {
-				  htmlFile = sofa::helper::system::DataRepository.getFile (htmlFile);
 #ifdef WIN32
 				  htmlFile = "file:///"+htmlFile;
 #endif
@@ -1724,9 +1723,9 @@ typedef QApplication QSOFAApplication;
 
       //*****************************************************************************************
       //
-#ifdef SOFA_DUMP_VISITOR_INFO
       void RealGUI::setExportVisitor ( bool exp )
       {
+#ifdef SOFA_DUMP_VISITOR_INFO
 	if (exp)
 	  {
 	    windowTraceVisitor->show();
@@ -1736,8 +1735,8 @@ typedef QApplication QSOFAApplication;
 	  {
 	    windowTraceVisitor->hide();
 	  }
-      }
 #endif
+      }
 
       //*****************************************************************************************
       //

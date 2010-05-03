@@ -63,16 +63,17 @@ SOFA_DECL_CLASS(MeshTrianLoader)
 
 bool MeshTrianLoader::load()
 {
-  std::cout << "Loading Trian file: " << m_filename << std::endl;
+  sout << "Loading Trian file: " << m_filename << sendl;
 
   FILE* file;
   bool fileRead = false;
   
   // -- Loading file
   const char* filename = m_filename.getFullPath().c_str();
+  
   if ((file = fopen(filename, "r")) == NULL)
   {
-    std::cerr << "Error: MeshTrianLoader: Cannot read file '" << m_filename << "'." << std::endl;
+    serr << "Error: MeshTrianLoader: Cannot read file '" << m_filename << "'." << sendl;
     return false;
   }
 
@@ -129,7 +130,7 @@ bool MeshTrianLoader::load()
 
       // set 3 triangle vertices  ==>> Dans le MeshLoader?
 
-      my_triangles.push_back (nodes);
+      addTriangle(&my_triangles, nodes);
       my_neighborTable.push_back (ngh);
 
       // if we have a boundary edge store it in the m_edgeOnBorder array:
@@ -171,7 +172,7 @@ bool MeshTrianLoader::load()
       /*
       if ((v0<v1)|| (ngh2== -1))
       {
-	std::cout << " ((v0<v1)|| (ngh2== -1)) " << std::endl;
+	sout << " ((v0<v1)|| (ngh2== -1)) " << sendl;
 	
 	e=new E(trian,vertexTable[v0],vertexTable[v1],t,0);
 	t->setEdge(2,e);
@@ -184,7 +185,7 @@ bool MeshTrianLoader::load()
       }
       if ((v1<v2) | (ngh0== -1))
       {
-	std::cout << " ((v1<v2) | (ngh0== -1)) " << std::endl;
+	sout << " ((v1<v2) | (ngh0== -1)) " << sendl;
 	e=new E(trian,vertexTable[v1],vertexTable[v2],
 		t,0);
 	t->setEdge(0,e);
@@ -198,7 +199,7 @@ bool MeshTrianLoader::load()
       }
       if ((v2<v0)| (ngh1== -1))
       {
-	std::cout << " ((v2<v0)| (ngh1== -1)) " << std::endl;
+	sout << " ((v2<v0)| (ngh1== -1)) " << sendl;
 	e=new E(trian,vertexTable[v2],vertexTable[v0],
 		t,0);
 	t->setEdge(1,e);

@@ -205,12 +205,12 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
   return true; 
 }
 
-void SphereTreeModel::applyScale(const double s)
+void SphereTreeModel::applyScale(const double sx,const double sy,const double sz)
 {
-	Inherit::applyScale(s);
-	sout << "Applying scale " << s << " to " << size << " spheres" << sendl;
+        Inherit::applyScale(sx,sy,sz);
+        sout << "Applying scale " << sx << " to " << size << " spheres" << sendl;
 	for (int i=0;i<size;i++)
-		radius[i] *= s;
+                radius[i] *= sx;
 }
 
 

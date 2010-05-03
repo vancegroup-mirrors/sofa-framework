@@ -80,7 +80,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 
   void EdgeSetTopologyContainer::init()
   {
-    d_edge.getValue(); // make sure m_edge is up to date
+    d_edge.updateIfDirty(); // make sure m_edge is up to date
         
     if (!m_edge.empty())
     {
@@ -261,6 +261,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 
 	unsigned int EdgeSetTopologyContainer::getNumberOfEdges() const
 	{
+        d_edge.updateIfDirty();
 		return m_edge.size();
 	}
 
@@ -311,10 +312,11 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer(const sofa::helper::vector< E
 
 
 
-	bool EdgeSetTopologyContainer::hasEdges() const 
-	{
-		return !m_edge.empty();
-	}
+bool EdgeSetTopologyContainer::hasEdges() const 
+{
+    d_edge.updateIfDirty();
+    return !m_edge.empty();
+}
 
 	bool EdgeSetTopologyContainer::hasEdgesAroundVertex() const 
 	{

@@ -62,7 +62,7 @@ public:
 };
 
 template <class DataTypes>
-class MechanicalObject : public MechanicalState<DataTypes>
+class MechanicalObject : public MechanicalState<DataTypes>, public virtual sofa::core::objectmodel::BaseObject
 {
 public:
     typedef MechanicalState<DataTypes> Inherited;
@@ -102,11 +102,12 @@ protected:
 	bool initialized;
 	Data< Vector3 > translation;
 	Data< Vector3> rotation;
-	Data< SReal > scale;
+        Data< Vector3 > scale;
 	Data< Vector3 > translation2;
 	Data< Vector3> rotation2;
-        sofa::core::objectmodel::DataFileName filename;
-  Data< bool> ignoreLoader;
+    sofa::core::objectmodel::DataFileName filename;
+    Data< bool> ignoreLoader;
+    Data<int> f_reserve;
 
 	/// @name Integration-related data
 	/// @{
@@ -180,7 +181,7 @@ public:
 	virtual const VecCoord* getXfree() const { return xfree; }
 	virtual const VecDeriv* getVfree()  const { return vfree;  }
 
-	virtual double getScale() const {return scale.getValue();};
+        virtual Vector3 getScale() const {return scale.getValue();};
 
 	virtual void init();
 	virtual void reinit();
@@ -200,10 +201,11 @@ public:
 
 	virtual void writeState( std::ostream& out );
 
-        virtual void initGnuplot(const std::string path);
-        virtual void exportGnuplot(Real time);
+    virtual void initGnuplot(const std::string path);
+    virtual void exportGnuplot(Real time);
 
     virtual void resize( int vsize);
+    virtual void reserve(int vsize);
 
     virtual bool addBBox(double* minBBox, double* maxBBox);
 
@@ -258,7 +260,7 @@ public:
 
 	virtual void applyRotation (const defaulttype::Quat q);
 
-	virtual void applyScale (const double s);
+        virtual void applyScale (const double sx,const double sy,const double sz);
 
 	/// Get the indices of the particles located in the given bounding box
 	void getIndicesInSpace(sofa::helper::vector<unsigned>& indices, Real xmin, Real xmax, Real ymin, Real ymax, Real zmin, Real zmax) const;
@@ -290,12 +292,12 @@ public:
 
 
         /// Express the matrix L in term of block of matrices, using the indices of the lines in the VecConst container
-        virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &indices, double factor ) const;
+        virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &indices) const;
 
         void setFilename(std::string s){filename.setValue(s);};
         void setTranslation(double dx,double dy,double dz){translation.setValue(Vector3(dx,dy,dz));};
         void setRotation(double rx,double ry,double rz){rotation.setValue(Vector3(rx,ry,rz));};
-        void setScale(double s){scale.setValue(s);};
+        void setScale(double sx, double sy, double sz){scale.setValue(Vector3(sx,sy,sz));};
         void setIgnoreLoader(bool b){ignoreLoader.setValue(b);}
 
 

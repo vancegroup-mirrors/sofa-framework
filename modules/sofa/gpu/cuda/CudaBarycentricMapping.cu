@@ -53,6 +53,22 @@ void RegularGridMapperCuda3f1_3f_apply(unsigned int size, const unsigned int* gr
 void RegularGridMapperCuda3f1_3f_applyJ(unsigned int size, const unsigned int* gridsize, const void* map, void* out, const void* in);
 void RegularGridMapperCuda3f1_3f_applyJT(unsigned int insize, unsigned int maxNOut, const unsigned int* gridsize, const void* mapT, void* out, const void* in);
 
+void SparseGridMapperCuda3f_apply(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f_applyJ(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in);
+
+void SparseGridMapperCuda3f1_apply(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f1_applyJ(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f1_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in);
+
+void SparseGridMapperCuda3f_3f1_apply(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f_3f1_applyJ(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f_3f1_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in);
+
+void SparseGridMapperCuda3f1_3f_apply(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f1_3f_applyJ(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in);
+void SparseGridMapperCuda3f1_3f_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in);
+
 
 void MeshMapperCuda3f_apply(unsigned int size, unsigned int maxN, const void* map, void* out, const void* in);
 void MeshMapperCuda3f1_apply(unsigned int size, unsigned int maxN, const void* map, void* out, const void* in);
@@ -77,6 +93,9 @@ struct __align__(8) GPULinearMap
     float f;
 };
 
+#define SPARSE_GRID_BSIZE 256
+#define SPARSE_GRID_MAX_CUBE 32
+
 //////////////////////
 // GPU-side methods //
 //////////////////////
@@ -86,12 +105,12 @@ __global__ void RegularGridMapperCuda3f_apply_kernel(unsigned int size, unsigned
 {
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
-    
+
     //! Dynamically allocated shared memory to reorder global memory access
     extern  __shared__  float temp[];
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
-    
+
     GPUCubeData c = map[index0+index1];
     if (index0+index1 < size)
     {
@@ -118,28 +137,29 @@ __global__ void RegularGridMapperCuda3f_apply_kernel(unsigned int size, unsigned
     }
 
     //__syncthreads();
-    
+
     const int index3 = umul24(3,index1);
-    
+
     temp[index3  ] = res.x;
     temp[index3+1] = res.y;
     temp[index3+2] = res.z;
-    
+
     __syncthreads();
-    
+
     out += umul24(index0,3);
     out[index1        ] = temp[index1        ];
     out[index1+  BSIZE] = temp[index1+  BSIZE];
     out[index1+2*BSIZE] = temp[index1+2*BSIZE];
 }
 
+
 template<class TIn>
 __global__ void RegularGridMapperCuda3f1_apply_kernel(unsigned int size, unsigned int nx, unsigned int nxny, const GPUCubeData* map, CudaVec4<float>* out, const TIn* in)
 {
     const int index = umul24(blockIdx.x,BSIZE) + threadIdx.x;
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
-    
+
     GPUCubeData c = map[index];
     if (index < size)
     {
@@ -173,14 +193,14 @@ __global__ void RegularGridMapperCuda3f_applyJT_kernel(unsigned int size, unsign
 {
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
-    
+
     //! Dynamically allocated shared memory to reorder global memory access
     extern  __shared__  float temp[];
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
     //res += *in * mapT[index0+index1].f;
 
-    mapT+=umul24(index0,maxNOut)+index1;    
+    mapT+=umul24(index0,maxNOut)+index1;
     for (int s = 0;s < maxNOut; s++)
     {
         GPULinearMap data = *mapT;
@@ -194,9 +214,9 @@ __global__ void RegularGridMapperCuda3f_applyJT_kernel(unsigned int size, unsign
     temp[index3  ] = res.x;
     temp[index3+1] = res.y;
     temp[index3+2] = res.z;
-    
+
     __syncthreads();
-    
+
     out += umul24(index0,3);
     out[index1        ] += temp[index1        ];
     out[index1+  BSIZE] += temp[index1+  BSIZE];
@@ -209,7 +229,7 @@ __global__ void RegularGridMapperCuda3f1_applyJT_kernel(unsigned int size, unsig
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
     const int index = index0+index1;
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
     //res += *in * mapT[index0+index1].f;
 
@@ -221,7 +241,7 @@ __global__ void RegularGridMapperCuda3f1_applyJT_kernel(unsigned int size, unsig
         if (data.i != -1)
             res += CudaVec3<float>::make(in [data.i]) * data.f;
     }
-    
+
     CudaVec4<float> o = out[index];
     o.x += res.x;
     o.y += res.y;
@@ -238,14 +258,14 @@ __global__ void MeshMapperCuda3f_apply_kernel(unsigned int size, unsigned int ma
 {
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
-    
+
     //! Dynamically allocated shared memory to reorder global memory access
     extern  __shared__  float temp[];
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
     //res += *in * mapT[index0+index1].f;
 
-    map+=umul24(index0,maxN)+index1;    
+    map+=umul24(index0,maxN)+index1;
     for (int s = 0;s < maxN; s++)
     {
         GPULinearMap data = *map;
@@ -259,9 +279,9 @@ __global__ void MeshMapperCuda3f_apply_kernel(unsigned int size, unsigned int ma
     temp[index3  ] = res.x;
     temp[index3+1] = res.y;
     temp[index3+2] = res.z;
-    
+
     __syncthreads();
-    
+
     out += umul24(index0,3);
     out[index1        ] = temp[index1        ];
     out[index1+  BSIZE] = temp[index1+  BSIZE];
@@ -274,11 +294,11 @@ __global__ void MeshMapperCuda3f1_apply_kernel(unsigned int size, unsigned int m
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
     const int index = index0+index1;
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
     //res += *in * mapT[index0+index1].f;
 
-    map+=umul24(index0,maxN)+index1;    
+    map+=umul24(index0,maxN)+index1;
     for (int s = 0;s < maxN; s++)
     {
         GPULinearMap data = *map;
@@ -286,7 +306,7 @@ __global__ void MeshMapperCuda3f1_apply_kernel(unsigned int size, unsigned int m
         if (data.i != 0)
             res += CudaVec3<float>::make(in[data.i-1]) * data.f;
     }
-    
+
     CudaVec4<float> o;
     o.x = res.x;
     o.y = res.y;
@@ -305,14 +325,14 @@ __global__ void MeshMapperCuda3f_applyPEq_kernel(unsigned int size, unsigned int
 {
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
-    
+
     //! Dynamically allocated shared memory to reorder global memory access
     extern  __shared__  float temp[];
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
     //res += *in * mapT[index0+index1].f;
 
-    map+=umul24(index0,maxN)+index1;    
+    map+=umul24(index0,maxN)+index1;
     for (int s = 0;s < maxN; s++)
     {
         GPULinearMap data = *map;
@@ -326,9 +346,9 @@ __global__ void MeshMapperCuda3f_applyPEq_kernel(unsigned int size, unsigned int
     temp[index3  ] = res.x;
     temp[index3+1] = res.y;
     temp[index3+2] = res.z;
-    
+
     __syncthreads();
-    
+
     out += umul24(index0,3);
     out[index1        ] += temp[index1        ];
     out[index1+  BSIZE] += temp[index1+  BSIZE];
@@ -341,11 +361,11 @@ __global__ void MeshMapperCuda3f1_applyPEq_kernel(unsigned int size, unsigned in
     const int index0 = umul24(blockIdx.x,BSIZE); //blockDim.x;
     const int index1 = threadIdx.x;
     const int index = index0+index1;
-    
+
     CudaVec3<float> res = CudaVec3<float>::make(0,0,0);
     //res += *in * mapT[index0+index1].f;
 
-    map+=umul24(index0,maxN)+index1;    
+    map+=umul24(index0,maxN)+index1;
     for (int s = 0;s < maxN; s++)
     {
         GPULinearMap data = *map;
@@ -353,12 +373,179 @@ __global__ void MeshMapperCuda3f1_applyPEq_kernel(unsigned int size, unsigned in
         if (data.i != 0)
             res += CudaVec3<float>::make(in[data.i-1]) * data.f;
     }
-    
+
     CudaVec4<float> o = out[index];
     o.x += res.x;
     o.y += res.y;
     o.z += res.z;
     out[index] = o;
+}
+
+template<class TIn>
+__global__ void SparseGridMapperCuda3f_apply_kernel(unsigned int size, const int * cudaHexa, const GPUCubeData* map, float* out, const TIn* in)
+{
+    const int index0 = umul24(blockIdx.x,SPARSE_GRID_BSIZE);
+    const int index1 = threadIdx.x;
+    const int index3 = umul24(3,index1);
+    out += umul24(index0,3);
+
+    if (index0+index1 < size)
+    {
+    	GPUCubeData c = map[index0+index1];
+	const int * cube = cudaHexa + c.i*8;
+    	CudaVec3<float> res = CudaVec3<float>::make(in [cube[0]]) * ((1-c.fx) * (1-c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[1]]) * ((  c.fx) * (1-c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[3]]) * ((1-c.fx) * (  c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[2]]) * ((  c.fx) * (  c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[4]]) * ((1-c.fx) * (1-c.fy) * (  c.fz))
+                            + CudaVec3<float>::make(in [cube[5]]) * ((  c.fx) * (1-c.fy) * (  c.fz))
+                            + CudaVec3<float>::make(in [cube[7]]) * ((1-c.fx) * (  c.fy) * (  c.fz))
+                            + CudaVec3<float>::make(in [cube[6]]) * ((  c.fx) * (  c.fy) * (  c.fz));
+
+	out[index3  ] = res.x;
+	out[index3+1] = res.y;
+	out[index3+2] = res.z;
+    }
+}
+
+template<class TIn>
+__global__ void SparseGridMapperCuda3f1_apply_kernel(unsigned int size, const int * cudaHexa, const GPUCubeData* map, CudaVec4<float>* out, const TIn* in)
+{
+    const int index0 = umul24(blockIdx.x,SPARSE_GRID_BSIZE);
+    const int index1 = threadIdx.x;
+
+    if (index0+index1 < size)
+    {
+    	GPUCubeData c = map[index0+index1];
+	const int * cube = cudaHexa + c.i*8;
+    	CudaVec3<float> res = CudaVec3<float>::make(in [cube[0]]) * ((1-c.fx) * (1-c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[1]]) * ((  c.fx) * (1-c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[3]]) * ((1-c.fx) * (  c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[2]]) * ((  c.fx) * (  c.fy) * (1-c.fz))
+                            + CudaVec3<float>::make(in [cube[4]]) * ((1-c.fx) * (1-c.fy) * (  c.fz))
+                            + CudaVec3<float>::make(in [cube[5]]) * ((  c.fx) * (1-c.fy) * (  c.fz))
+                            + CudaVec3<float>::make(in [cube[7]]) * ((1-c.fx) * (  c.fy) * (  c.fz))
+                            + CudaVec3<float>::make(in [cube[6]]) * ((  c.fx) * (  c.fy) * (  c.fz));
+	out[index0+index1] = CudaVec4<float>::make(res);
+    }
+}
+
+template<class TIn>
+__global__ void SparseGridMapperCuda3f_applyJT_kernel(unsigned int size, const unsigned * CudaTnb, const unsigned * CudaTst, const unsigned * CudaTid, const float * CudaTVal, float* out, const TIn* in)
+{
+    const int bi = blockIdx.x;
+    const int tx = threadIdx.x;
+
+    __shared__ CudaVec3<float> readValue[SPARSE_GRID_MAX_CUBE];
+    __shared__ unsigned sto;
+    __shared__ unsigned nbo;
+
+    if (!tx) {
+	sto = CudaTst[bi];
+	nbo = CudaTnb[bi];
+    }
+
+    __syncthreads();
+
+    readValue[tx] = CudaVec3<float>::make(0,0,0);
+
+    for (unsigned nx=sto+tx;nx<sto+nbo;nx+=SPARSE_GRID_MAX_CUBE) {
+	readValue[tx] += CudaVec3<float>::make(in[CudaTid[nx]]) * CudaTVal[nx];
+    }
+
+#if SPARSE_GRID_MAX_CUBE>128
+    __syncthreads();
+    if (tx<128) readValue[tx] += readValue[tx+128]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>64
+    __syncthreads();
+    if (tx<64) readValue[tx] += readValue[tx+64]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>32
+    __syncthreads();
+    if (tx<32) readValue[tx] += readValue[tx+32]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>16
+    if (tx<16) readValue[tx] += readValue[tx+16]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>8
+    if (tx<8) readValue[tx] += readValue[tx+8]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>4
+    if (tx<4) readValue[tx] += readValue[tx+4]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>2
+    if (tx<2) readValue[tx] += readValue[tx+2]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>1
+    if (tx<1) readValue[tx] += readValue[tx+1]; 
+#endif
+
+    if (tx<3) {
+	out += umul24(bi,3);
+	out[tx] += ((float*) &readValue[0])[tx];
+    }
+}
+
+template<class TIn>
+__global__ void SparseGridMapperCuda3f1_applyJT_kernel(unsigned int size, const unsigned * CudaTnb, const unsigned * CudaTst, const unsigned * CudaTid, const float * CudaTVal, CudaVec4<float>* out, const TIn* in)
+{
+    const int bi = blockIdx.x;
+    const int tx = threadIdx.x;
+
+    __shared__ CudaVec3<float> readValue[SPARSE_GRID_MAX_CUBE];
+    __shared__ unsigned sto;
+    __shared__ unsigned nbo;
+
+    if (!tx) {
+	sto = CudaTst[bi];
+	nbo = CudaTnb[bi];
+    }
+
+    __syncthreads();
+
+    readValue[tx] = CudaVec3<float>::make(0,0,0);
+
+    for (unsigned nx=sto+tx;nx<sto+nbo;nx+=SPARSE_GRID_MAX_CUBE) {
+	readValue[tx] += CudaVec3<float>::make(in[CudaTid[nx]]) * CudaTVal[nx];
+    }
+
+#if SPARSE_GRID_MAX_CUBE>128
+    __syncthreads();
+    if (tx<128) readValue[tx] += readValue[tx+128]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>64
+    __syncthreads();
+    if (tx<64) readValue[tx] += readValue[tx+64]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>32
+    __syncthreads();
+    if (tx<32) readValue[tx] += readValue[tx+32]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>16
+    if (tx<16) readValue[tx] += readValue[tx+16]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>8
+    if (tx<8) readValue[tx] += readValue[tx+8]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>4
+    if (tx<4) readValue[tx] += readValue[tx+4]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>2
+    if (tx<2) readValue[tx] += readValue[tx+2]; 
+#endif
+#if SPARSE_GRID_MAX_CUBE>1
+    if (tx<1) readValue[tx] += readValue[tx+1]; 
+#endif
+
+    
+    if (tx==0) {
+      CudaVec4<float> o = out[bi];
+      o.x += readValue[0].x;
+      o.y += readValue[0].y;
+      o.z += readValue[0].z;
+      out[bi] = o;
+    }
 }
 
 //////////////////////
@@ -385,7 +572,6 @@ void RegularGridMapperCuda3f_applyJT(unsigned int insize, unsigned int maxNOut, 
     dim3 grid((insize+BSIZE-1)/BSIZE,1);
     RegularGridMapperCuda3f_applyJT_kernel<CudaVec3<float> ><<< grid, threads, BSIZE*3*sizeof(float) >>>(insize, maxNOut, (const GPULinearMap*)mapT, (float*)out, (const CudaVec3<float>*)in);
 }
-
 
 void RegularGridMapperCuda3f1_apply(unsigned int size, const unsigned int* gridsize, const void* map, void* out, const void* in)
 {
@@ -451,6 +637,103 @@ void RegularGridMapperCuda3f1_3f_applyJT(unsigned int insize, unsigned int maxNO
     dim3 grid((insize+BSIZE-1)/BSIZE,1);
     RegularGridMapperCuda3f1_applyJT_kernel<CudaVec3<float> ><<< grid, threads >>>(insize, maxNOut, (const GPULinearMap*)mapT, (CudaVec4<float>*)out, (const CudaVec3<float>*)in);
 }
+
+
+
+
+
+void SparseGridMapperCuda3f_apply(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f_apply_kernel<CudaVec3<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (float*)out, (const CudaVec3<float>*)in);
+}
+
+void SparseGridMapperCuda3f_applyJ(unsigned int size, const void * cudaHexa,const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f_apply_kernel<CudaVec3<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (float*)out, (const CudaVec3<float>*)in);
+}
+
+void SparseGridMapperCuda3f_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_MAX_CUBE,1);
+    dim3 grid(size,1);
+    SparseGridMapperCuda3f_applyJT_kernel<CudaVec3<float> ><<< grid, threads >>>(size, (const unsigned *) CudaTnb, (const unsigned *) CudaTst, (const unsigned *) CudaTid, (const float *) CudaTVal, (float*)out, (const CudaVec3<float>*)in);
+}
+
+void SparseGridMapperCuda3f1_apply(unsigned int size, const void * cudaHexa, const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f1_apply_kernel<CudaVec4<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (CudaVec4<float>*)out, (const CudaVec4<float>*)in);
+}
+
+void SparseGridMapperCuda3f1_applyJ(unsigned int size, const void * cudaHexa, const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f1_apply_kernel<CudaVec4<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (CudaVec4<float>*)out, (const CudaVec4<float>*)in);
+}
+
+void SparseGridMapperCuda3f1_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid(size,1);
+    SparseGridMapperCuda3f1_applyJT_kernel<CudaVec4<float> ><<< grid, threads >>>(size,  (const unsigned *) CudaTnb, (const unsigned *) CudaTst, (const unsigned *) CudaTid, (const float *) CudaTVal, (CudaVec4<float>*)out, (const CudaVec4<float>*)in);
+}
+
+
+void SparseGridMapperCuda3f1_3f_apply(unsigned int size, const void * cudaHexa, const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f_apply_kernel<CudaVec4<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (float*)out, (const CudaVec4<float>*)in);
+}
+
+void SparseGridMapperCuda3f1_3f_applyJ(unsigned int size, const void * cudaHexa, const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f_apply_kernel<CudaVec4<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (float*)out, (const CudaVec4<float>*)in);
+}
+
+void SparseGridMapperCuda3f1_3f_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_MAX_CUBE,1);
+    dim3 grid(size,1);
+    SparseGridMapperCuda3f_applyJT_kernel<CudaVec4<float> ><<< grid, threads >>>(size,  (const unsigned *) CudaTnb, (const unsigned *) CudaTst, (const unsigned *) CudaTid, (const float *) CudaTVal, (float*)out, (const CudaVec4<float>*)in);
+}
+
+
+void SparseGridMapperCuda3f_3f1_apply(unsigned int size, const void * cudaHexa, const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f1_apply_kernel<CudaVec3<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (CudaVec4<float>*)out, (const CudaVec3<float>*)in);
+}
+
+void SparseGridMapperCuda3f_3f1_applyJ(unsigned int size, const void * cudaHexa, const void* map, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_BSIZE,1);
+    dim3 grid((size+SPARSE_GRID_BSIZE-1)/SPARSE_GRID_BSIZE,1);
+    SparseGridMapperCuda3f1_apply_kernel<CudaVec3<float> ><<< grid, threads >>>(size, (const int *) cudaHexa, (const GPUCubeData*)map, (CudaVec4<float>*)out, (const CudaVec3<float>*)in);
+}
+
+void SparseGridMapperCuda3f_3f1_applyJT(unsigned int size, const void * CudaTnb, const void * CudaTst, const void * CudaTid, const void * CudaTVal, void* out, const void* in)
+{
+    dim3 threads(SPARSE_GRID_MAX_CUBE,1);
+    dim3 grid(size,1);
+    SparseGridMapperCuda3f1_applyJT_kernel<CudaVec3<float> ><<< grid, threads >>>(size,  (const unsigned *) CudaTnb, (const unsigned *) CudaTst, (const unsigned *) CudaTid, (const float *) CudaTVal, (CudaVec4<float>*)out, (const CudaVec3<float>*)in);
+}
+
+
+
+
+
+
+
 
 
 

@@ -39,6 +39,7 @@
 
 #include <sofa/gpu/cuda/CudaSpatialGridContainer.h>
 #include <sofa/component/container/SpatialGridContainer.inl>
+#include <sofa/helper/gl/template.h>
 
 
 namespace sofa
@@ -113,6 +114,17 @@ void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3f1Types > >::kernel_upda
     gpu::cuda::SpatialGridContainer3f1_computeHash(cellBits, cellWidth, nbPoints, particleIndex, particleHash, x);
     gpu::cuda::SpatialGridContainer_findCellRange(cellBits, cellWidth, nbPoints, particleHash, cellRange, cellGhost);
 }
+
+#ifdef SOFA_GPU_CUDA_DOUBLE
+
+template<>
+void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3dTypes > >::kernel_updateGrid(int cellBits, float cellWidth, int nbPoints, void* particleIndex, void* particleHash, void* sortTmp, void* cellRange, void* cellGhost, const void* x)
+{
+	/// TODO
+}
+
+#endif // SOFA_GPU_CUDA_DOUBLE
+
 /*
 template<>
 void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3fTypes > >::kernel_reorderData(int nbPoints, const void* particleHash, void* sorted, const void* x)
@@ -175,7 +187,7 @@ void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TR
 	int b = (cell>>4)&3;
 	glColor4ub(63+r*64,63+g*64,63+b*64,255);
 	//glVertex3fv(sortedPos[i].ptr());
-	glVertex3fv((*lastX)[p].ptr());
+	helper::gl::glVertexT((*lastX)[p]);
     }
     glEnd();
     glPointSize(1);

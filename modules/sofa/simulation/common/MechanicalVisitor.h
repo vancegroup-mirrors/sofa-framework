@@ -1113,9 +1113,18 @@ class SOFA_SIMULATION_COMMON_API MechanicalAccumulateLMConstraint : public Mecha
  public:
   struct ConstraintData
   {
+    ConstraintData():data(NULL)
+    {
+        independentMState[0]=independentMState[1]=NULL;
+        constrainedMState[0]=constrainedMState[1]=NULL;
+    }
+
+
+
     core::componentmodel::behavior::BaseLMConstraint *data;
     //independent dofs associated
     core::componentmodel::behavior::BaseMechanicalState *independentMState[2]; //independentMechanicalState
+    core::componentmodel::behavior::BaseMechanicalState *constrainedMState[2]; //constrainedMechanicalStates
   };
 
 
@@ -1137,7 +1146,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalAccumulateLMConstraint : public Mecha
   virtual void clear(){datasC.clear();}
   virtual ConstraintData &getConstraint(unsigned int i){return datasC[i];}
   virtual unsigned int numConstraintDatas(){return datasC.size();}
-  virtual void setId(core::componentmodel::behavior::BaseLMConstraint::ConstId i){id=i;}
+  virtual void setOrder(core::componentmodel::behavior::BaseLMConstraint::ConstOrder i){order=i;}
 
   virtual bool isThreadSafe() const
   {
@@ -1149,10 +1158,10 @@ class SOFA_SIMULATION_COMMON_API MechanicalAccumulateLMConstraint : public Mecha
     }
 #endif
 
-    core::componentmodel::behavior::BaseLMConstraint::ConstId getId() const { return id; }
+    core::componentmodel::behavior::BaseLMConstraint::ConstOrder getOrder() const { return order; }
 
  protected:
-    core::componentmodel::behavior::BaseLMConstraint::ConstId id;
+    core::componentmodel::behavior::BaseLMConstraint::ConstOrder order;
     std::vector< ConstraintData > datasC;
   
 };

@@ -40,8 +40,42 @@ namespace odesolver
 
 using namespace sofa::defaulttype;
 
-/** Implicit time integrator using backward Euler scheme.
-*/
+/** Implicit time integrator using backward Euler scheme for first and second order. By default second.
+ *
+ *** 2nd Order ***
+ * 
+ * This integration scheme is based on the following equations:
+ *
+ *   $x_{t+h} = x_t + h v_{t+h}$
+ *   $v_{t+h} = v_t + h a_{t+h}$
+ *
+ * Applied to a mechanical system where $ M a_t + (B + r_M M + r_K K) v_t + K x_t = f_ext$, we need to solve the following system:
+ *
+ *   $ M a_{t+h} + (B + r_M M + r_K K) v_{t+h} + K x_{t+h} = f_ext $
+ *   $ M a_{t+h} + (B + r_M M + r_K K) ( v_t + h a_{t+h} ) + K ( x_t + h v_t + h^2 a_{t+h} ) = f_ext $
+ *   $ ( M + h (B + r_M M + r_K K) + h^2 K ) a_{t+h} = f_ext - (B + r_M M + r_K K) v_t - K ( x_t + h v_t ) $
+ *   $ ( M + h (B + r_M M + r_K K) + h^2 K ) a_{t+h} = f_ext - K x_t - B v_t - (r_M M + r_K K + h K) v_t $
+ *   $ ( M + h (B + r_M M + r_K K) + h^2 K ) a_{t+h} = f_t - (r_M M + r_K K + h K) v_t $
+ *
+ *
+ *** 1st Order ***
+ *
+ * This integration scheme is based on the following eqation:
+ *
+ *   $x_{t+h} = x_t + h v_{t+h}$
+ *
+ * Applied to this mechanical system:
+ *
+ *   $ M v_t = f_ext $
+ *
+ *   $ M v_{t+h} = f_ext{t+h} $
+ *   $           = f_ext{t} + h (df_ext/dt){t+h} $
+ *   $           = f_ext{t} + h (df_ext/dx){t+h} v_{t+h} $
+ *   $           = f_ext{t} - h K v_{t+h} $
+ *
+ *   $ ( M + h K ) v_{t+h} = f_ext $
+ *
+ */
  class SOFA_COMPONENT_ODESOLVER_API EulerImplicitSolver : public sofa::component::odesolver::OdeSolverImpl
 {
 public:
@@ -49,6 +83,7 @@ public:
     Data<double> f_rayleighStiffness;
     Data<double> f_rayleighMass;
     Data<double> f_velocityDamping;
+    Data<bool> f_firstOrder;
     Data<bool> f_verbose;
 
     EulerImplicitSolver();

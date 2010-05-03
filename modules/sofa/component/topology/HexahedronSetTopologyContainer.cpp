@@ -83,10 +83,11 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
     if (h >= getNbPoints()) nbPoints.setValue(h+1);
 }
 
-	void HexahedronSetTopologyContainer::init()
-	{
-		QuadSetTopologyContainer::init();
-	}
+void HexahedronSetTopologyContainer::init()
+{
+    QuadSetTopologyContainer::init();
+    d_hexahedron.updateIfDirty(); // make sure m_hexahedron is up to date
+}
 
         void HexahedronSetTopologyContainer::loadFromMeshLoader(sofa::component::container::MeshLoader* loader)
 	{
@@ -826,10 +827,11 @@ void HexahedronSetTopologyContainer::addHexa( int a, int b, int c, int d, int e,
 	#endif
 	}
 
-	bool HexahedronSetTopologyContainer::hasHexahedra() const
-	{
-		return !m_hexahedron.empty();
-	}
+bool HexahedronSetTopologyContainer::hasHexahedra() const
+{
+    d_hexahedron.updateIfDirty();
+    return !m_hexahedron.empty();
+}
 
 	bool HexahedronSetTopologyContainer::hasEdgesInHexahedron() const
 	{

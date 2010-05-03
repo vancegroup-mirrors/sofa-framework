@@ -81,7 +81,7 @@ namespace sofa
 			using namespace sofa::defaulttype;
 Simulation::Simulation()
 : numMechSteps( initData(&numMechSteps,(unsigned) 1,"numMechSteps","Number of mechanical steps within one update step. If the update time step is dt, the mechanical time step is dt/numMechSteps.") ),
-  nbSteps(0),
+  nbSteps( initData(&nbSteps, (unsigned)0, "nbSteps", "Steps number of computation", true, false)),
   needToPrefetch(false), 
   gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
   instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used"))
@@ -137,14 +137,13 @@ Simulation::~Simulation(){
                                 needToPrefetch = false;
 				root->execute<InitVisitor>();
 				// Save reset state for later uses in reset()
-				root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
+                                root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
 				root->execute<MechanicalPropagateFreePositionVisitor>();
 				root->execute<StoreResetStateVisitor>();
 
 				//Get the list of instruments present in the scene graph
 				getInstruments(root);
 
-                                nbSteps = 0;
 			}
 
 			void Simulation::getInstruments( Node *node)
@@ -185,9 +184,9 @@ Simulation::~Simulation(){
                                 {
                                         root->execute ( beh );
                                         root->execute ( act );
-					root->setTime ( startTime + (i+1)* act.getDt() );
+                                        root->setTime ( startTime + (i+1)* act.getDt() );
 					root->execute<UpdateSimulationContextVisitor>();
-				}
+                                }
 
                             {
                                 AnimateEndEvent ev ( dt );
@@ -205,7 +204,8 @@ Simulation::~Simulation(){
 #ifdef SOFA_DUMP_VISITOR_INFO
 				simulation::Visitor::printComment(std::string("End Step"));
 #endif
-                                nbSteps++;
+                                *(nbSteps.beginEdit()) = nbSteps.getValue() + 1;
+                                nbSteps.endEdit();
 			}
 
 
@@ -220,7 +220,8 @@ Simulation::~Simulation(){
 				root->execute<UpdateMappingVisitor>();
                                 root->execute<VisualUpdateVisitor>();
 
-                                nbSteps = 0;
+                                *(nbSteps.beginEdit()) = 0;
+                                nbSteps.endEdit();
 			}
 
 /// Initialize the textures

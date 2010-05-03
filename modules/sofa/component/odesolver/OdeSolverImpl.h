@@ -59,7 +59,7 @@ public:
     typedef sofa::core::componentmodel::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
     typedef sofa::core::componentmodel::behavior::MechanicalMatrix MechanicalMatrix;
     typedef sofa::simulation::MechanicalAccumulateLMConstraint::ConstraintData ConstraintData;
-    typedef sofa::core::componentmodel::behavior::BaseLMConstraint::ConstId ConstId;
+    typedef sofa::core::componentmodel::behavior::BaseLMConstraint::ConstOrder ConstOrder;
 
 
     OdeSolverImpl();
@@ -99,7 +99,7 @@ typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
 
  protected:
     /// Construct the Right hand term of the system
-    void buildRightHandTerm( ConstId Id, sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, VectorEigen &c);
+    void buildRightHandTerm( ConstOrder Order, sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, VectorEigen &c);
     /** Apply the correction to the state corresponding
      * @param id nature of the constraint, and correction to apply
      * @param dof MechanicalState to correct

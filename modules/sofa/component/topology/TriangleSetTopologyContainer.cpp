@@ -88,10 +88,11 @@ namespace sofa
     sout << "ADD TRIANGLE" << sendl;
       }
 
-      void TriangleSetTopologyContainer::init()
-      {
-	EdgeSetTopologyContainer::init();
-      }
+void TriangleSetTopologyContainer::init()
+{
+    EdgeSetTopologyContainer::init();
+    d_triangle.updateIfDirty(); // make sure m_triangle is up to date
+}
 
       void TriangleSetTopologyContainer::loadFromMeshLoader(sofa::component::container::MeshLoader* loader)
       {
@@ -421,8 +422,8 @@ namespace sofa
       }
      
 
-      const sofa::helper::vector<Triangle> & TriangleSetTopologyContainer::getTriangleArray()
-      {
+const sofa::helper::vector<Triangle> & TriangleSetTopologyContainer::getTriangleArray()
+{
 	if(!hasTriangles() && getNbPoints()>0) 
 	{
 #ifndef NDEBUG
@@ -432,7 +433,7 @@ namespace sofa
 	}
 
 	return m_triangle;
-      }
+}
 
 
       const Triangle TriangleSetTopologyContainer::getTriangle (TriangleID i)
@@ -767,10 +768,11 @@ namespace sofa
 #endif
       }
 
-      bool TriangleSetTopologyContainer::hasTriangles() const 
-      {
-	return !m_triangle.empty();
-      }
+bool TriangleSetTopologyContainer::hasTriangles() const 
+{
+    d_triangle.updateIfDirty();
+    return !m_triangle.empty();
+}
 
       bool TriangleSetTopologyContainer::hasEdgesInTriangle() const 
       {

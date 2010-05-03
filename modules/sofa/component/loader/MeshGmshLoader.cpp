@@ -45,7 +45,7 @@ namespace loader
 
   bool MeshGmshLoader::load()
   {
-    std::cout << "Loading Gmsh file: " << m_filename << std::endl;
+    sout << "Loading Gmsh file: " << m_filename << sendl;
     
     FILE* file;
     char cmd[1024];
@@ -53,10 +53,11 @@ namespace loader
     unsigned int gmshFormat = 0;
 
     // -- Loading file
-    const char* filename = m_filename.getFullPath().c_str();
+	const char* filename = m_filename.getFullPath().c_str();
+	
     if ((file = fopen(filename, "r")) == NULL)
     {
-      std::cerr << "Error: MeshGmshLoader: Cannot read file '" << m_filename << "'." << std::endl;
+      serr << "Error: MeshGmshLoader: Cannot read file '" << m_filename << "'." << sendl;
       return false;
     }
 
@@ -64,12 +65,12 @@ namespace loader
     if (!strncmp(cmd,"$MeshFormat",11)) // Reading gmsh 2.0 file
     {
       gmshFormat = 2;
-      // std::cout << "Gmsh format 2.0" << std::endl;
+      // sout << "Gmsh format 2.0" << sendl;
       readLine(cmd, sizeof(cmd), file); // we don't care about this line
       readLine(cmd, sizeof(cmd), file); 
       if (strncmp(cmd,"$EndMeshFormat",14)) // it should end with $EndMeshFormat
       {
-	std::cerr << "Error: MeshGmshLoader: File '" << m_filename << "' is empty." << std::endl;
+	serr << "Error: MeshGmshLoader: File '" << m_filename << "' is empty." << sendl;
 	fclose(file);
 	return false;
       }
@@ -79,7 +80,7 @@ namespace loader
     else 
     {
       gmshFormat = 1;
-      //std::cout << "Gmsh format 1.0" << std::endl;
+      //sout << "Gmsh format 1.0" << sendl;
     }
 
     // -- Reading file
@@ -90,7 +91,7 @@ namespace loader
     }
     else //if it enter this "else", it means there is a problem before in the factory or in canLoad()
     {
-      std::cerr << "Error: MeshGmshLoader: File '" << m_filename << "' finally appears not to be a Gmsh file." << std::endl;
+      serr << "Error: MeshGmshLoader: File '" << m_filename << "' finally appears not to be a Gmsh file." << sendl;
       fclose(file);
       return false;
     }
@@ -102,7 +103,7 @@ namespace loader
   
   bool MeshGmshLoader::readGmsh(FILE *file, const unsigned int gmshFormat)
   {
-    std::cout << "Reading Gmsh file: " << gmshFormat << std::endl;
+    sout << "Reading Gmsh file: " << gmshFormat << sendl;
         
     char cmd[1024];
 
@@ -117,7 +118,7 @@ namespace loader
 
     // --- Loading Vertices ---
     if ( fscanf(file, "%d\n", &npoints) == EOF) //Loading number of Point
-      std::cerr << "Error: MeshGmshLoader: fscanf function can't read number of point." << std::endl;
+      serr << "Error: MeshGmshLoader: fscanf function can't read number of point." << sendl;
     
     helper::vector<sofa::defaulttype::Vector3>& my_positions = *(positions.beginEdit());
     
@@ -127,7 +128,7 @@ namespace loader
       unsigned int index = i;
       double x,y,z;
       if ( fscanf(file, "%d %lf %lf %lf\n", &index, &x, &y, &z) == EOF )
-	std::cerr << "Error: MeshGmshLoader: fscanf function can't read vertices." << std::endl;
+	serr << "Error: MeshGmshLoader: fscanf function can't read vertices." << sendl;
       
       my_positions.push_back(Vector3(x, y, z));
 
@@ -135,14 +136,14 @@ namespace loader
 	pmap.resize(index+1);
 
       pmap[index] = i; // In case of hole or switch
-      //std::cout << "pmap[" << index << "] = " << pmap[index] << std::endl;
+      //sout << "pmap[" << index << "] = " << pmap[index] << sendl;
     }
     positions.endEdit();
    
     readLine(cmd, sizeof(cmd), file);
     if (strncmp(cmd,"$ENDNOD",7) && strncmp(cmd,"$EndNodes",9))
     {
-      std::cerr << "Error: MeshGmshLoader: '$ENDNOD' or '$EndNodes' expected, found '" << cmd << "'" << std::endl;
+      serr << "Error: MeshGmshLoader: '$ENDNOD' or '$EndNodes' expected, found '" << cmd << "'" << sendl;
       fclose(file);
       return false;
     }
@@ -152,13 +153,13 @@ namespace loader
     readLine(cmd, sizeof(cmd), file);
     if (strncmp(cmd,"$ELM",4) && strncmp(cmd,"$Elements",9))
     {
-      std::cerr << "Error: MeshGmshLoader: '$ELM' or '$Elements' expected, found '" << cmd << "'" << std::endl;
+      serr << "Error: MeshGmshLoader: '$ELM' or '$Elements' expected, found '" << cmd << "'" << sendl;
       fclose(file);
       return false;
     }
 
     if ( fscanf(file, "%d\n", &nelems) == EOF ) //Loading number of Element
-      std::cerr << "Error: MeshGmshLoader: fscanf function can't read number of element." << std::endl;
+      serr << "Error: MeshGmshLoader: fscanf function can't read number of element." << sendl;
         
     helper::vector<helper::fixed_array <unsigned int,2> >& my_edges = *(edges.beginEdit());
     helper::vector<helper::fixed_array <unsigned int,3> >& my_triangles = *(triangles.beginEdit());
@@ -176,19 +177,19 @@ namespace loader
 	// version 1.0 format is 
 	// elm-number elm-type reg-phys reg-elem number-of-nodes <node-number-list ...>
 	if ( fscanf(file, "%d %d %d %d %d", &index, &etype, &rphys, &relem, &nnodes) == EOF )
-	  std::cerr << "Error: MeshGmshLoader: fscanf function can't read elements in gmshFormat 1." << std::endl;
+	  serr << "Error: MeshGmshLoader: fscanf function can't read elements in gmshFormat 1." << sendl;
       }
       else if (gmshFormat == 2) 
       {
 	// version 2.0 format is
 	// elm-number elm-type number-of-tags < tag > ... node-number-list
 	if ( fscanf(file, "%d %d %d", &index, &etype, &ntags) == EOF )
-	  std::cerr << "Error: MeshGmshLoader: fscanf function can't read elements in gmshFormat 2." << std::endl;
+	  serr << "Error: MeshGmshLoader: fscanf function can't read elements in gmshFormat 2." << sendl;
 	
 	for (int t=0; t<ntags; t++)
 	{
 	  if ( fscanf(file, "%d", &tag) == EOF ) // read the tag but don't use it
-	    std::cerr << "Error: MeshGmshLoader: fscanf function can't read tag." << std::endl;
+	    serr << "Error: MeshGmshLoader: fscanf function can't read tag." << sendl;
 	}
 	
 	    
@@ -210,7 +211,7 @@ namespace loader
 	      nnodes = 8;
 	      break;
 	    default:
-	      std::cerr << "Error: MeshGmshLoader: Elements of type 1, 2, 3, 4, 5, or 6 expected. Element of type " << etype << " found." << std::endl;
+	      serr << "Error: MeshGmshLoader: Elements of type 1, 2, 3, 4, 5, or 6 expected. Element of type " << etype << " found." << sendl;
 	      nnodes = 0;
 	}
       }
@@ -223,35 +224,35 @@ namespace loader
       {
 	int t = 0;
 	if ( fscanf(file, "%d",&t) == EOF )
-	  std::cerr << "Error: MeshGmshLoader: fscanf function can't read element nodes." << std::endl;
+	  serr << "Error: MeshGmshLoader: fscanf function can't read element nodes." << sendl;
 	
 	nodes[n] = (((unsigned int)t)<pmap.size())?pmap[t]:0;
-	//std::cout << "nodes[" << n << "] = " << nodes[n] << std::endl;
+	//sout << "nodes[" << n << "] = " << nodes[n] << sendl;
       }
       
       switch (etype)
       {
 	  case 1: // Line
-	    my_edges.push_back (helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
+	    addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
 	    ++nlines;
 	    break;
 	  case 2: // Triangle
-	    my_triangles.push_back (helper::fixed_array <unsigned int,3>(nodes[0], nodes[1], nodes[2]));
+	    addTriangle(&my_triangles, helper::fixed_array <unsigned int,3>(nodes[0], nodes[1], nodes[2]));
 	    ++ntris;
 	    break;
 	  case 3: // Quad
-	    my_quads.push_back (helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
+	    addQuad(&my_quads, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
 	    ++nquads;
 	    break;
 	  case 4: // Tetra
-	    my_tetrahedra.push_back (helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
+	    addTetrahedron(&my_tetrahedra, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
 	    ++ntetrahedra;
 	    break;
 	  case 5: // Hexa
 	    helper::fixed_array <unsigned int,8> hexa;
 	    for (unsigned int n=0; n<8; n++)
 	      hexa[n] = nodes[n];
-	    my_hexahedra.push_back (hexa);
+	    addHexahedron(&my_hexahedra,hexa);
 	    ++ncubes;
 	    break;
       }
@@ -267,19 +268,19 @@ namespace loader
     readLine(cmd, sizeof(cmd), file);
     if (strncmp(cmd,"$ENDELM",7) && strncmp(cmd,"$EndElements",12))
     {
-      std::cerr << "Error: MeshGmshLoader: '$ENDELM' or '$EndElements' expected, found '" << cmd << "'" << std::endl;
+      serr << "Error: MeshGmshLoader: '$ENDELM' or '$EndElements' expected, found '" << cmd << "'" << sendl;
       fclose(file);
       return false;
     }
     
-    // 	std::cout << "Loading topology complete:";
-    // 	if (npoints>0) std::cout << ' ' << npoints << " points";
-    // 	if (nlines>0)  std::cout << ' ' << nlines  << " lines";
-    // 	if (ntris>0)   std::cout << ' ' << ntris   << " triangles";
-    // 	if (nquads>0)  std::cout << ' ' << nquads  << " quads";
-    // 	if (ntetrahedra>0) std::cout << ' ' << ntetrahedra << " tetrahedra";
-    // 	if (ncubes>0)  std::cout << ' ' << ncubes  << " cubes";
-    // 	std::cout << std::endl;
+    // 	sout << "Loading topology complete:";
+    // 	if (npoints>0) sout << ' ' << npoints << " points";
+    // 	if (nlines>0)  sout << ' ' << nlines  << " lines";
+    // 	if (ntris>0)   sout << ' ' << ntris   << " triangles";
+    // 	if (nquads>0)  sout << ' ' << nquads  << " quads";
+    // 	if (ntetrahedra>0) sout << ' ' << ntetrahedra << " tetrahedra";
+    // 	if (ncubes>0)  sout << ' ' << ncubes  << " cubes";
+    // 	sout << sendl;
         
     fclose(file);
     return true;

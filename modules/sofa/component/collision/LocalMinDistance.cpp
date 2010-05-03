@@ -148,12 +148,12 @@ bool LocalMinDistance::testIntersection(Line& e1, Line& e2)
 	double alpha = 0.5;
 	double beta = 0.5;
 
-	if (det < -1.0e-18 || det > 1.0e-18)
+	if (det < -1.0e-30 || det > 1.0e-30)
 	{
 		alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
 		beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
-		if (alpha < 0.000001 || alpha > 0.999999 ||
-		    beta  < 0.000001 || beta  > 0.999999 )
+		if (alpha < 1e-15 || alpha > (1.0-1e-15) ||
+		    beta  < 1e-15  || beta  > (1.0-1e-15) )
 			return false;
 	}
 
@@ -238,12 +238,12 @@ int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* cont
 	double alpha = 0.5;
 	double beta = 0.5;
 
-    if (det < -1.0e-15 || det > 1.0e-15)
+	if (det < -1.0e-30 || det > 1.0e-30)
 	{
 		alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
 		beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
-		if (alpha < 0.000001 || alpha > 0.999999 ||
-		    beta  < 0.000001 || beta  > 0.999999 )
+		if (alpha < 1e-15 || alpha > (1.0-1e-15) ||
+		    beta  < 1e-15  || beta  > (1.0-1e-15) )
 			return 0;
 	}
 	else
@@ -251,7 +251,7 @@ int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* cont
 		// several possibilities : 
 		// -one point in common (auto-collision) => return false !
 		// -no point in common but line are // => we can continue to test
-		if (debug)
+		
 			std::cout<<"WARNING det is null"<<std::endl;
 	}
 
@@ -1261,7 +1261,7 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
 		// which triangle is left ?		
 		const BaseMeshTopology::Triangle& triangle0 = topology->getTriangle(trianglesAroundEdge[0]);
 		bool triangle0_is_left=false;
-		if ( l.i1()==triangle0[0]&&l.i2()==triangle0[1] || l.i1()==triangle0[1]&&l.i2()==triangle0[2] || l.i1()==triangle0[2]&&l.i2()==triangle0[0] )
+		if ( (l.i1()==triangle0[0]&&l.i2()==triangle0[1]) || (l.i1()==triangle0[1]&&l.i2()==triangle0[2]) || (l.i1()==triangle0[2]&&l.i2()==triangle0[0]) )
 		{
 			triangle0_is_left=true;
 			//std::cout<<"triangle0_is_left"<<std::endl;
@@ -1326,17 +1326,20 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
 	{
 	
 		//std::cout<<"in test validity for segment,  trianglesAroundEdge.size() ="<<trianglesAroundEdge.size()<<std::endl;
+		
 		n1 = PQ;
 		n1.normalize();
 		// 
 		///////// ??? /////////
-		if (fabs(dot(AB,n1)) > angleCone.getValue() + 0.001)		// dot(AB,n1) should be equal to 0
-		{	
+		if (fabs(dot(AB,n1)) > angleCone.getValue() + 0.0001 )		// dot(AB,n1) should be equal to 0
+		{															// means that proximity was detected with a null determinant 
+																	// in function computeIntersection
 			if(debug)
 				std::cout<<"bad case detected  -  abs(dot(AB,n1)) ="<<fabs(dot(AB,n1))<<std::endl;
 			return false;
 		}
 		//////////////////////
+		
 	}
 	//sout<<"trianglesAroundEdge.size()"<<trianglesAroundEdge.size()<<sendl;
 	return true;

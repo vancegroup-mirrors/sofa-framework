@@ -116,7 +116,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
         virtual Node* newNode(const std::string& name)=0;
         
         /// During init, the components will tell if they need prefetch phase. If only one needs it, we have to use it.
-        void setPrefteching(bool b){ needToPrefetch |= b;};
+        void setPrefetching(bool b){ needToPrefetch |= b;};
         
         bool isPrefetchingUsed() const{ return needToPrefetch;};
 
@@ -124,7 +124,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	Data<unsigned> numMechSteps;
 
         /// Number of steps of simulation
-        unsigned nbSteps;
+        Data<unsigned> nbSteps;
 
         /// Need to launch prefetches during animating steps
         bool needToPrefetch;

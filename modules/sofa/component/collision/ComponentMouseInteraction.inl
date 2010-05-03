@@ -29,10 +29,10 @@
 
 #include <sofa/component/collision/ComponentMouseInteraction.h>
 
-#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/component/container/MechanicalObject.inl>
 #include <sofa/component/collision/RayModel.h>
-#include <sofa/component/collision/MouseInteractor.h>
-#include <sofa/component/mapping/IdentityMapping.h>
+#include <sofa/component/collision/MouseInteractor.inl>
+#include <sofa/component/mapping/IdentityMapping.inl>
 
 #include <sofa/simulation/common/InitVisitor.h>
 
@@ -91,14 +91,6 @@ namespace sofa
         {
           return (dynamic_cast<MouseContainer*>(context->getMechanicalState()) != NULL);
         }
-
-          
-      typedef helper::Factory<std::string, ComponentMouseInteraction, core::objectmodel::BaseContext*> ComponentMouseInteractionFactory;
-
-#ifdef WIN32
-      helper::Creator<ComponentMouseInteraction::ComponentMouseInteractionFactory, TComponentMouseInteraction<defaulttype::Vec3Types> > ComponentMouseInteractionVec3Class ("MouseSpringVec3d",true);
-#endif
-
     }
   }
 }

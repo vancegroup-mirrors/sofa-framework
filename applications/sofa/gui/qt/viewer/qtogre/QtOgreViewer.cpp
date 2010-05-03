@@ -260,11 +260,13 @@ namespace sofa
 #ifndef WIN32
 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation("/","FileSystem","General");
 #endif
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/config","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/textures","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/mesh","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials","FileSystem","General");
-	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/shaders","FileSystem","General");
+            const std::vector< std::string > &paths=sofa::helper::system::DataRepository.getPaths();
+            for (unsigned int i=0;i<paths.size();++i)
+              Ogre::ResourceGroupManager::getSingleton().addResourceLocation(paths[i] ,"FileSystem","General");
+ 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/config","FileSystem","General");
+ 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials","FileSystem","General");
+            Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+
 	  }
 
 
@@ -454,6 +456,7 @@ namespace sofa
 	  void QtOgreViewer::createScene()
 	  {
 
+            std::cerr << "CreateScene " << std::endl;
 	    using namespace Ogre;
 
 
@@ -608,6 +611,21 @@ namespace sofa
 	  }
 
 
+
+          void QtOgreViewer::resize()
+          {
+            if (mRenderWindow && mVp)
+              {
+                mRenderWindow->windowMovedOrResized();
+                mRenderWindow->resize(width(), height());     
+                mVp->setDimensions(0,0, 1.0, 1.0);
+                mCamera->setAspectRatio(Ogre::Real(mVp->getActualWidth()) / Ogre::Real(mVp->getActualHeight()));
+                
+                update();
+                emit(resizeW(width()));
+                emit(resizeH(height()));
+              }
+          }
 
 	  //*********************************Qt Control*******************************
 	  void QtOgreViewer::resizeEvent(QResizeEvent *)
@@ -781,6 +799,7 @@ namespace sofa
 	    sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
 	    sofa::simulation::getSimulation()->DrawUtility.setSceneMgr(mSceneMgr);
             updateIntern();
+            resize();
 	  }
 
 

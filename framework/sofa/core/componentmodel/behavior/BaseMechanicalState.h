@@ -96,7 +96,7 @@ public:
 	virtual double getPX(int /*i*/) const { return 0.0; }
 	virtual double getPY(int /*i*/) const { return 0.0; }
 	virtual double getPZ(int /*i*/) const { return 0.0; }
-	virtual double getScale() const { return 0.0; }
+        virtual defaulttype::Vector3 getScale() const { return defaulttype::Vector3(1.0,1.0,1.0); }
 
     /// @name Integration related methods
     /// @{
@@ -134,7 +134,7 @@ public:
     virtual void applyRotation(const defaulttype::Quat q)=0;
 
     /// Scale the current state
-    virtual void applyScale(const double s)=0;
+    virtual void applyScale(const double /*sx*/,const double /*sy*/,const double /*sz*/)=0;
 
     /// Renumber the constraint ids with the given permutation vector
     virtual void renumberConstraintId(const sofa::helper::vector<unsigned>& renumbering) = 0;
@@ -275,7 +275,7 @@ public:
 
 
     /// Express the matrix L in term of block of matrices, using the indices of the lines in the VecConst container
-    virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &/* indices */, double /* factor */) const {return std::list<ConstraintBlock>();};
+    virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &/* indices */) const {return std::list<ConstraintBlock>();};
     
     /// Utility to store only the modified indices of a mapped dof.
     /// This should allow to optimize the propagation of the forces from a mechanical state mapped, used as a collision model, to the independent dofs.

@@ -85,7 +85,7 @@ void TetrahedronSetTopologyContainer::addTetra( int a, int b, int c, int d )
 
 void TetrahedronSetTopologyContainer::init()
 {
-    d_tetrahedron.getValue(); // make sure m_tetrahedron is up to date
+    d_tetrahedron.updateIfDirty(); // make sure m_tetrahedron is up to date
     if (!m_tetrahedron.empty())
     {
         for (unsigned int i=0; i<m_tetrahedron.size(); ++i)
@@ -406,8 +406,8 @@ void TetrahedronSetTopologyContainer::init()
 		}
 	}
 
-	const sofa::helper::vector<Tetrahedron> &TetrahedronSetTopologyContainer::getTetrahedronArray()
-	{
+const sofa::helper::vector<Tetrahedron> &TetrahedronSetTopologyContainer::getTetrahedronArray()
+{
 		if (!hasTetrahedra() && getNbPoints()>0)
 		{
 	#ifndef NDEBUG
@@ -416,8 +416,8 @@ void TetrahedronSetTopologyContainer::init()
 			createTetrahedronSetArray();
 		}
 
-		return m_tetrahedron;
-	}
+	return m_tetrahedron;
+}
 
 
   const Tetrahedron TetrahedronSetTopologyContainer::getTetrahedron (TetraID i)
@@ -725,7 +725,7 @@ void TetrahedronSetTopologyContainer::init()
 
 	bool TetrahedronSetTopologyContainer::hasTetrahedra() const
 	{
-            d_tetrahedron.getValue(); // make sure m_tetrahedron is valid
+        d_tetrahedron.updateIfDirty(); // make sure m_tetrahedron is valid
 		return !m_tetrahedron.empty();
 	}
 

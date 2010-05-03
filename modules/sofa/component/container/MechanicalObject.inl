@@ -68,13 +68,14 @@ namespace sofa
     template <class DataTypes>
     MechanicalObject<DataTypes>::MechanicalObject()
       : x(new VecCoord), v(new VecDeriv), f(new VecDeriv), externalForces(new VecDeriv), dx(new VecDeriv), x0(new VecCoord),reset_position(NULL), v0(NULL), xfree(new VecCoord), vfree(new VecDeriv), c(new VecConst)
-      , translation(core::objectmodel::Base::initData(&translation, Vector3(), "translation", "Translation of the DOFs"))
-      , rotation(core::objectmodel::Base::initData(&rotation, Vector3(), "rotation", "Rotation of the DOFs"))
-      , scale(core::objectmodel::Base::initData(&scale, (SReal)1.0, "scale", "Scale of the DOFs"))
-      , translation2(core::objectmodel::Base::initData(&translation2, Vector3(), "translation2", "Translation of the DOFs, applied after the rest position has been computed"))
-      , rotation2(core::objectmodel::Base::initData(&rotation2, Vector3(), "rotation2", "Rotation of the DOFs, applied the after the rest position has been computed"))
-      , filename(core::objectmodel::Base::initData(&filename, std::string(""), "filename", "File corresponding to the Mechanical Object", false))
-      , ignoreLoader(core::objectmodel::Base::initData(&ignoreLoader, (bool) false, "ignoreLoader", "Is the Mechanical Object do not use a loader"))
+      , translation(initData(&translation, Vector3(), "translation", "Translation of the DOFs"))
+      , rotation(initData(&rotation, Vector3(), "rotation", "Rotation of the DOFs"))
+      , scale(initData(&scale, Vector3(1.0,1.0,1.0), "scale3d", "Scale of the DOFs in 3 dimensions"))
+      , translation2(initData(&translation2, Vector3(), "translation2", "Translation of the DOFs, applied after the rest position has been computed"))
+      , rotation2(initData(&rotation2, Vector3(), "rotation2", "Rotation of the DOFs, applied the after the rest position has been computed"))
+      , filename(initData(&filename, std::string(""), "filename", "File corresponding to the Mechanical Object", false))
+      , ignoreLoader(initData(&ignoreLoader, (bool) false, "ignoreLoader", "Is the Mechanical Object do not use a loader"))
+      , f_reserve(initData(&f_reserve, 0, "reserve", "Size to reserve when creating vectors"))
       , vsize(0), m_gnuplotFileX(NULL), m_gnuplotFileV(NULL)
       , f_X ( new XDataPtr<DataTypes>(&x,  "position coordinates of the degrees of freedom") )
       , f_V ( new VDataPtr<DataTypes>(&v,  "velocity coordinates of the degrees of freedom") )
@@ -84,9 +85,9 @@ namespace sofa
       , f_Xfree ( new XDataPtr<DataTypes>(&xfree,  "free position coordinates of the degrees of freedom") )
       , f_Vfree ( new VDataPtr<DataTypes>(&vfree,  "free velocity coordinates of the degrees of freedom") )
       , f_X0( new XDataPtr<DataTypes>(&x0, "rest position coordinates of the degrees of freedom") )
-      , restScale(core::objectmodel::Base::initData(&restScale, (SReal)1.0, "restScale","optional scaling of rest position coordinates (to simulated pre-existing internal tension)"))
-      , debugViewIndices(core::objectmodel::Base::initData(&debugViewIndices, (bool) false, "debugViewIndices", "Debug : view indices"))
-      , debugViewIndicesScale(core::objectmodel::Base::initData(&debugViewIndicesScale, (float) 0.0001, "debugViewIndicesScale", "Debug : scale for view indices"))
+      , restScale(initData(&restScale, (SReal)1.0, "restScale","optional scaling of rest position coordinates (to simulated pre-existing internal tension)"))
+      , debugViewIndices(initData(&debugViewIndices, (bool) false, "debugViewIndices", "Debug : view indices"))
+      , debugViewIndicesScale(initData(&debugViewIndicesScale, (float) 0.0001, "debugViewIndicesScale", "Debug : scale for view indices"))
     {
       //HACK
       if (!restScale.isSet())
@@ -210,28 +211,23 @@ namespace sofa
 	filename.setValue(std::string("")); //clear the field filename: When we save the scene, we don't need anymore the filename
       }
 
-//      unsigned int size0 = getX()->size();
       Inherited::parse(arg);
-//      if (arg->getAttribute("size")!=NULL) {
-//        resize( atoi(arg->getAttribute("size")) );
-//      }
-//      else if (getX()->size() != size0)
-//        resize( getX()->size() );
-//
-//      //obj->parseTransform(arg);
-//      if (arg->getAttribute("scale")!=NULL) {
-//	scale.setValue((SReal)atof(arg->getAttribute("scale")));
-//	//applyScale(scale.getValue());
-//      }
+
+      // DEPRECATED: Warning, you should not use these parameters, but a TransformEngine instead
+      if (arg->getAttribute("scale")!=NULL) {
+        SReal s=(SReal)atof(arg->getAttribute("scale","1.0"));
+        scale.setValue(Vector3(s,s,s));
+      }
+
+      if (arg->getAttribute("sx")!=NULL || arg->getAttribute("sy")!=NULL || arg->getAttribute("sz")!=NULL) {
+	scale.setValue(Vector3((SReal)(atof(arg->getAttribute("sx","1.0"))),(SReal)(atof(arg->getAttribute("sy","1.0"))),(SReal)(atof(arg->getAttribute("sz","1.0")))));
+      }
+
       if (arg->getAttribute("rx")!=NULL || arg->getAttribute("ry")!=NULL || arg->getAttribute("rz")!=NULL) {
 	rotation.setValue(Vector3((SReal)(atof(arg->getAttribute("rx","0.0"))),(SReal)(atof(arg->getAttribute("ry","0.0"))),(SReal)(atof(arg->getAttribute("rz","0.0")))));
-
-	//Quaternion q=helper::Quater<SReal>::createQuaterFromEuler( Vec<3,SReal>(rotation.getValue()[0],rotation.getValue()[1],rotation.getValue()[2]));
-	//applyRotation(q);
       }
       if (arg->getAttribute("dx")!=NULL || arg->getAttribute("dy")!=NULL || arg->getAttribute("dz")!=NULL) {
 	translation.setValue(Vector3((Real)atof(arg->getAttribute("dx","0.0")), (Real)atof(arg->getAttribute("dy","0.0")), (Real)atof(arg->getAttribute("dz","0.0"))));
-	//applyTranslation(translation.getValue()[0],translation.getValue()[1],translation.getValue()[2]);
       }
       if (arg->getAttribute("rx2")!=NULL || arg->getAttribute("ry2")!=NULL || arg->getAttribute("rz2")!=NULL) {
 	rotation2.setValue(Vector3((SReal)(atof(arg->getAttribute("rx2","0.0"))),(SReal)(atof(arg->getAttribute("ry2","0.0"))),(SReal)(atof(arg->getAttribute("rz2","0.0")))));
@@ -591,6 +587,33 @@ void renumber(V* v, V* tmp, const sofa::helper::vector< unsigned int > &index )
     }
 
 
+template <class DataTypes>
+void MechanicalObject<DataTypes>::reserve(const int size)
+{
+    if (size == 0) return;
+    (*x).reserve(size);
+    if (initialized && x0!=NULL)
+        (*x0).reserve(size);
+    (*v).reserve(size);
+    if (v0!=NULL)
+        (*v0).reserve(size);
+    (*f).reserve(size);
+    (*dx).reserve(size);
+    (*xfree).reserve(size);
+    (*vfree).reserve(size);
+    externalForces->reserve(size);
+    internalForces->reserve(size);
+    if (reset_position!=NULL)
+        (*reset_position).reserve(size);
+
+    for (unsigned int i=0;i<vectorsCoord.size();i++)
+        if (vectorsCoord[i]!=NULL)
+            vectorsCoord[i]->reserve(size);
+    for (unsigned int i=0;i<vectorsDeriv.size();i++)
+        if (vectorsDeriv[i]!=NULL)
+            vectorsDeriv[i]->reserve(size);
+}
+
 
     template <class DataTypes>
 	void MechanicalObject<DataTypes>::applyTranslation (const double dx,const double dy,const double dz)
@@ -631,7 +654,7 @@ void renumber(V* v, V* tmp, const sofa::helper::vector< unsigned int > &index )
 /*    template <>
 	bool MechanicalObject<Vec1dTypes>::addBBox(double* minBBox, double* maxBBox)*/;
 #endif
-#ifndef SOFA_Real
+#ifndef SOFA_DOUBLE
     template<>
     void MechanicalObject<defaulttype::Rigid3fTypes>::applyRotation (const defaulttype::Quat q);
 //     template <>
@@ -639,13 +662,16 @@ void renumber(V* v, V* tmp, const sofa::helper::vector< unsigned int > &index )
 #endif
 
     template <class DataTypes>
-    void MechanicalObject<DataTypes>::applyScale(const double s)
+    void MechanicalObject<DataTypes>::applyScale(const double sx,const double sy,const double sz)
     {
 //       std::cout << "MechanicalObject : applyScale " << this->getName() << " s=" << s << "\n";
       VecCoord& x = *this->getX();
+      const Vector3 s(sx,sy,sz);
       for (unsigned int i=0;i<x.size();i++)
 	{
-	  x[i] *= (Real)s;
+          x[i][0] = x[i][0]*sx;
+          x[i][1] = x[i][1]*sy;
+          x[i][2] = x[i][2]*sz;
 	}
     }
 
@@ -1164,6 +1190,9 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
 
       initialized = true;
 
+      if (f_reserve.getValue() > 0)
+          reserve(f_reserve.getValue());
+
       f_X->endEdit();
       f_V->endEdit();
       f_F->endEdit();
@@ -1181,10 +1210,10 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
       sofa::component::topology::RegularGridTopology *grid; this->getContext()->get(grid, BaseContext::Local);
       if (grid) p0 = grid->getP0();
 
-      if (scale.getValue() != (SReal)1.0)
+      if (scale.getValue() != Vector3(1.0,1.0,1.0))
       {
-	this->applyScale(scale.getValue());
-	p0 *= scale.getValue();
+        this->applyScale(scale.getValue()[0],scale.getValue()[1],scale.getValue()[2]);
+        p0 = p0.linearProduct(scale.getValue());
       }
 
       if (rotation.getValue()[0]!=0.0 || rotation.getValue()[1]!=0.0 || rotation.getValue()[2]!=0.0)
@@ -1210,7 +1239,7 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
 
       translation.setValue(Vector3());
       rotation.setValue(Vector3());
-      scale.setValue((SReal)1.0);
+      scale.setValue(Vector3(1.0,1.0,1.0));
     }
     template <class DataTypes>
     void MechanicalObject<DataTypes>::storeResetState()
@@ -1421,48 +1450,56 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
     }
 
 
-    template<class DataTypes>
-    typename MechanicalObject<DataTypes>::VecCoord* MechanicalObject<DataTypes>::getVecCoord(unsigned int index)
-    {
-
-      if (index>=vectorsCoord.size())
+template<class DataTypes>
+typename MechanicalObject<DataTypes>::VecCoord* MechanicalObject<DataTypes>::getVecCoord(unsigned int index)
+{
+    
+    if (index>=vectorsCoord.size())
         vectorsCoord.resize(index+1);
-      if (vectorsCoord[index]==NULL)
+    if (vectorsCoord[index]==NULL)
+    {
         vectorsCoord[index] = new VecCoord;
-      return vectorsCoord[index];
+        if (f_reserve.getValue() > 0)
+            vectorsCoord[index]->reserve(f_reserve.getValue());
     }
+    return vectorsCoord[index];
+}
 
-    template<class DataTypes>
-    const typename MechanicalObject<DataTypes>::VecCoord* MechanicalObject<DataTypes>::getVecCoord(unsigned int index) const
-    {
-      if (index>=vectorsCoord.size())
+template<class DataTypes>
+const typename MechanicalObject<DataTypes>::VecCoord* MechanicalObject<DataTypes>::getVecCoord(unsigned int index) const
+{
+    if (index>=vectorsCoord.size())
         return NULL;
-      if (vectorsCoord[index]==NULL)
+    if (vectorsCoord[index]==NULL)
         return NULL;
-      return vectorsCoord[index];
-    }
+    return vectorsCoord[index];
+}
 
-    template<class DataTypes>
-    typename MechanicalObject<DataTypes>::VecDeriv* MechanicalObject<DataTypes>::getVecDeriv(unsigned int index)
-    {
-      if (index>=vectorsDeriv.size())
+template<class DataTypes>
+typename MechanicalObject<DataTypes>::VecDeriv* MechanicalObject<DataTypes>::getVecDeriv(unsigned int index)
+{
+    if (index>=vectorsDeriv.size())
         vectorsDeriv.resize(index+1);
-      if (vectorsDeriv[index]==NULL)
-        vectorsDeriv[index] = new VecDeriv;
-
-      return vectorsDeriv[index];
-    }
-
-    template<class DataTypes>
-    const typename MechanicalObject<DataTypes>::VecDeriv* MechanicalObject<DataTypes>::getVecDeriv(unsigned int index) const
+    if (vectorsDeriv[index]==NULL)
     {
-      if (index>=vectorsDeriv.size())
-        return NULL;
-      if (vectorsDeriv[index]==NULL)
-        return NULL;
-
-      return vectorsDeriv[index];
+        vectorsDeriv[index] = new VecDeriv;
+        if (f_reserve.getValue() > 0)
+            vectorsDeriv[index]->reserve(f_reserve.getValue());
     }
+    
+    return vectorsDeriv[index];
+}
+
+template<class DataTypes>
+const typename MechanicalObject<DataTypes>::VecDeriv* MechanicalObject<DataTypes>::getVecDeriv(unsigned int index) const
+{
+    if (index>=vectorsDeriv.size())
+        return NULL;
+    if (vectorsDeriv[index]==NULL)
+        return NULL;
+    
+    return vectorsDeriv[index];
+}
 
     template<class DataTypes>
     typename MechanicalObject<DataTypes>::VecConst* MechanicalObject<DataTypes>::getVecConst(unsigned int index)
@@ -2226,7 +2263,7 @@ void MechanicalObject<DataTypes>::renumberConstraintId(const sofa::helper::vecto
 }
 
 template <class DataTypes>
-std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> MechanicalObject<DataTypes>::constraintBlocks( const std::list<unsigned int> &indices, double factor ) const
+std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> MechanicalObject<DataTypes>::constraintBlocks( const std::list<unsigned int> &indices) const
 {
   const unsigned int dimensionDeriv = defaulttype::DataTypeInfo< Deriv >::size();
   
@@ -2268,7 +2305,7 @@ std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> 
       // fill the right line of the block
       for( unsigned int i = 0; i < dimensionDeriv; ++i ) {
 	SReal value; defaulttype::DataTypeInfo< Deriv >::getValue(chunk->second, i, value); // somebody should pay for this
-	block.set(block_row, i, factor * value); 
+	block.set(block_row, i, value); 
       }
     }
   }

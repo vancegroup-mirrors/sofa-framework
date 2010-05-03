@@ -164,7 +164,7 @@ public:
     /// Scale the positions
     ///
     /// This method is optional, it is used when the user want to interactively change the position of an object
-    virtual void applyScale(const double /*s*/)
+    virtual void applyScale(const double /*sx*/,const double /*sy*/,const double /*sz*/)
     {
     }
 

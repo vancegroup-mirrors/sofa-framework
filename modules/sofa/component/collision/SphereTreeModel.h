@@ -120,7 +120,7 @@ public:
 		Windows executables to obtain the file are available at cesarmendoza_serrano@yahoo.fr*/
 	bool load(const char* filename);
 
-	void applyScale (const double s);
+        void applyScale (const double /*sx*/,const double /*sy*/,const double /*sz*/);
 
         sofa::core::componentmodel::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return this; }
 

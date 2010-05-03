@@ -49,22 +49,22 @@ namespace sofa
 	 *        They can be grouped or individual. The resolution is then done in the OdeSolver.
 	 **/
 	class SOFA_CORE_API BaseLMConstraint: public virtual core::objectmodel::BaseObject
-	  {   
-	  public:
+          {
+	  public:                  
 	    /// Description of the nature of the constraint 
-	    enum ConstId{POS,VEL,ACC};
+	    enum ConstOrder{POS,VEL,ACC};
 	    enum ConstNature{UNILATERAL,BILATERAL};
 
 	    /**
 	     * \brief Intern storage of the constraints.
 	     *         a constraintGroup is a list of constraint that will be solved together. 
 	     * 
-	     *  They are defined by a ConstId(position, velocity or acceleration), indices corresponding of the entries in the VecConst vector
+	     *  They are defined by a ConstOrder(position, velocity or acceleration), indices corresponding of the entries in the VecConst vector
 	     **/
 	    class constraintGroup
 	    {
 	    public:
-	    constraintGroup( ConstId idConstraint):Id(idConstraint){}
+            constraintGroup( ConstOrder idConstraint):Order(idConstraint){}
 	      /** 
 	       * Method to add a constraint to the group
 	       *
@@ -99,33 +99,36 @@ namespace sofa
               ConstNature getNature(unsigned int entry) const {return nature[entry];}
 
 	      ///Retrieves all the indices in the VecConst for the first object
-	      const std::vector< unsigned int > &getIndicesUsed0()   const {return index[0];}
+              const helper::vector< unsigned int > &getIndicesUsed0()   const {return index[0];}
 	      ///Retrieves all the indices in the VecConst for the second object
-	      const std::vector< unsigned int > &getIndicesUsed1()   const {return index[1];}
+              const helper::vector< unsigned int > &getIndicesUsed1()   const {return index[1];}
+
+              ///Retrieves all the indices in the VecConst for the first object
+              helper::vector< unsigned int > &getIndicesUsed0() {return index[0];}
+              ///Retrieves all the indices in the VecConst for the second object
+              helper::vector< unsigned int > &getIndicesUsed1() {return index[1];}
+
 	      ///Retrieves the correction for the constraint (corresponds to the Right Hand term of the equation)
-	      const std::vector< SReal >       &getCorrections()    const {return correction;}
-	      const std::vector< ConstNature > &getNatures()        const {return nature;}
-
-
+              const helper::vector< SReal >       &getCorrections()    const {return correction;}
+              const helper::vector< ConstNature > &getNatures()        const {return nature;}
 
 	      /// Return the number of constraint contained in this group
 	      std::size_t getNumConstraint() const { return correction.size();};
 
 	      /// Return the order of the constraint
-	      /// @see ConstId
-	      ConstId getId() const { return Id;};	      
+	      /// @see ConstOrder
+	      ConstOrder getOrder() const { return Order;};	      
 
-	    protected:
+            protected:
 	      /// Order of the constraint
-	      /// @see ConstId
-	      ConstId Id;
-	      /// Indices of the entries in the VecConst for the two objects
-	      std::vector< unsigned int > index[2]; 
+	      /// @see ConstOrder
+	      ConstOrder Order;
+              helper::vector< unsigned int > index[2];
               /// Right Hand Term
-              std::vector< SReal > correction;
+              helper::vector< SReal > correction;
 	      /// Nature of the constraints
 	      /// @see ConstNature
-              std::vector< ConstNature > nature;
+              helper::vector< ConstNature > nature;
 	    };
 
 	  public:
@@ -134,23 +137,25 @@ namespace sofa
 	    ~BaseLMConstraint(){};
 
 	    /// Called by MechanicalAccumulateLMConstaint: The Object will compute the constraints present in the current state, and create the constraintGroup related.
-	    virtual void writeConstraintEquations(ConstId id)=0;
+	    virtual void writeConstraintEquations(ConstOrder id)=0;
 	    /// Interface to construct a group of constraint: Giving the nature of these constraints, it returns a pointer to the structure
 	    /// @see constraintGroup
-	    virtual constraintGroup* addGroupConstraint( ConstId Id);
+	    virtual constraintGroup* addGroupConstraint( ConstOrder Order);
+
+            virtual void constraintTransmission(ConstOrder Order, BaseMechanicalState* state, unsigned int entry);
 
 	    /// Get the internal structure: return all the constraint stored by their nature in a map
-	    virtual void getConstraints( std::map< ConstId, std::vector< constraintGroup* > >  &i) { i=constraintId;}
+            virtual void getConstraints( std::map< ConstOrder, helper::vector< constraintGroup* > >  &i) { i=constraintOrder;}
 	    /// Get all the constraints stored of a given nature
-	    virtual const std::vector< constraintGroup* > &getConstraintsId(ConstId Id) { return constraintId[Id];}
+            virtual const helper::vector< constraintGroup* > &getConstraintsOrder(ConstOrder Order) { return constraintOrder[Order];}
 
-	    virtual void getIndicesUsed(ConstId Id, std::vector< unsigned int > &used0, std::vector< unsigned int > &used1);
-            virtual void getCorrections(ConstId Id, std::vector<SReal>& c);
+            virtual void getIndicesUsed(ConstOrder Order, helper::vector< unsigned int > &used0, helper::vector< unsigned int > &used1);
+            virtual void getCorrections(ConstOrder Order, helper::vector<SReal>& c);
 
 	    virtual BaseMechanicalState* getMechModel1()=0;
 	    virtual BaseMechanicalState* getMechModel2()=0;
 
-	    virtual unsigned int getNumConstraint(ConstId Id);
+	    virtual unsigned int getNumConstraint(ConstOrder Order);
 	    virtual double getError(){return 0;}
 
 	    virtual void clear();
@@ -167,7 +172,7 @@ namespace sofa
    
 	    /// Constraints stored depending on their nature
 	    /// @see constraintGroup
-	    std::map< ConstId, std::vector< constraintGroup* > > constraintId;
+            std::map< ConstOrder, helper::vector< constraintGroup* > > constraintOrder;
 	  };
       }
     }

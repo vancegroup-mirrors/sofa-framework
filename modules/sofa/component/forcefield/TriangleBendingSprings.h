@@ -37,7 +37,6 @@
 #define SOFA_COMPONENT_FORCEFIELD_TRIANGLEBENDINGSPRINGS_H
 
 #include <sofa/component/forcefield/StiffSpringForceField.h>
-#include <sofa/component/container/MechanicalObject.h>
 #include <map>
 
 namespace sofa
@@ -78,7 +77,6 @@ protected:
     typedef std::pair<unsigned,unsigned> IndexPair;
     void addSpring( unsigned, unsigned );
     void registerTriangle( unsigned, unsigned, unsigned, std::map<IndexPair, unsigned>& );
-    component::container::MechanicalObject<DataTypes>* dof;
 
 };
 

@@ -616,7 +616,6 @@ MechanicalPropagatePositionVisitor::MechanicalPropagatePositionVisitor(double t,
 Visitor::Result MechanicalPropagatePositionVisitor::processNodeTopDown(simulation::Node* node)
 {
 	//cerr<<" MechanicalPropagatePositionVisitor::processNodeTopDown "<<node->getName()<<endl;
-	node->setTime(t);
         node->updateSimulationContext();
         return MechanicalVisitor::processNodeTopDown( node);
 }
@@ -656,7 +655,6 @@ Visitor::Result MechanicalPropagatePositionVisitor::fwdMechanicalState(simulatio
 Visitor::Result MechanicalPropagatePositionAndVelocityVisitor::processNodeTopDown(simulation::Node* node)
 {
 	//cerr<<" MechanicalPropagatePositionAndVelocityVisitor::processNodeTopDown "<<node->getName()<<endl;
-	node->setTime(t);
         node->updateSimulationContext();
         return MechanicalVisitor::processNodeTopDown( node);
 }
@@ -711,7 +709,6 @@ Visitor::Result MechanicalPropagatePositionAndVelocityVisitor::fwdMechanicalStat
 
 Visitor::Result MechanicalPropagateFreePositionVisitor::processNodeTopDown(simulation::Node* node)
 	{
-		node->setTime(t);
 		node->updateSimulationContext();
 		return MechanicalVisitor::processNodeTopDown( node);
 	}
@@ -888,16 +885,16 @@ Visitor::Result MechanicalResetConstraintVisitor::fwdMechanicalState(simulation:
 
 Visitor::Result MechanicalAccumulateLMConstraint::fwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
     {
-
         ctime_t t0 = beginProcess(node, c);
-        c->writeConstraintEquations(id);
+        c->writeConstraintEquations(order);
 
 	datasC.push_back(ConstraintData());
 	ConstraintData &entry=datasC[datasC.size()-1];
 
-	//get the corrections to apply
-	entry.independentMState[0]=c->getMechModel1();
-	entry.independentMState[1]=c->getMechModel2();
+        //get the corrections to apply
+        entry.constrainedMState[0]=entry.independentMState[0]=c->getMechModel1();
+        entry.constrainedMState[1]=entry.independentMState[1]=c->getMechModel2();
+        //get the corrections to apply
 
         c->getMechModel1()->forceMask.setInUse(c->useMask());
         c->getMechModel2()->forceMask.setInUse(c->useMask());
@@ -909,10 +906,22 @@ Visitor::Result MechanicalAccumulateLMConstraint::fwdLMConstraint(simulation::No
 
 	void MechanicalAccumulateLMConstraint::bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
     {
-      ctime_t t0 = beginProcess(node, map);
-        map->accumulateConstraint();
+          ctime_t t0 = beginProcess(node, map);
 
-	for (unsigned int i=0;i<datasC.size();++i)
+          for (unsigned int i=0;i<datasC.size();++i)
+          {
+            //When we transmit a constraint equation through a mapping, we need to update the numero of the line in which will be store the equation
+            //corresponds to the entry in Vector C
+            if ( datasC[i].independentMState[0] == map->getMechTo())
+              datasC[i].data->constraintTransmission(order, datasC[i].constrainedMState[0],map->getMechFrom()->getCSize());
+
+            if ( datasC[i].independentMState[1] == map->getMechTo())
+              datasC[i].data->constraintTransmission(order, datasC[i].constrainedMState[1],map->getMechFrom()->getCSize());
+          }
+
+          map->accumulateConstraint();
+
+          for (unsigned int i=0;i<datasC.size();++i)
 	  {
 	    if ( datasC[i].independentMState[0] == map->getMechTo()) datasC[i].independentMState[0]=map->getMechFrom();
 	    if ( datasC[i].independentMState[1] == map->getMechTo()) datasC[i].independentMState[1]=map->getMechFrom();

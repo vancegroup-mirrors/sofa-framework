@@ -63,7 +63,89 @@ void BaseObject::parse( BaseObjectDescription* arg )
   arg->getAttributeList(attributeList);
   for (unsigned int i=0;i<attributeList.size();++i)
   {
-    
+    if (attributeList[i] == "src")
+    {
+      // Parse attribute 'src' for new MeshLoader architecture.
+	const char* val = arg->getAttribute(attributeList[i]);
+	std::string valueString(val);
+
+	if(!val)
+	{
+	  serr<<"ERROR: Missing argument for 'src' attribute in object: "<< this->getName() << sendl;
+	  break;
+	}
+	
+	if (valueString[0] != '@')
+	{
+	  serr<<"ERROR: 'src' attribute value should be a link using '@' in object "<< this->getName() << sendl;
+	  break;
+	}
+	
+	BaseObject* obj = this;
+	BaseObject* loader = NULL;
+		
+	std::size_t posAt = valueString.rfind('@');
+	if (posAt == std::string::npos) posAt = 0;
+	std::string objectName;
+	
+	objectName = valueString.substr(posAt+1);
+	loader = getContext()->get<BaseObject>(objectName);
+	
+	std::map < std::string, BaseData*> dataLoaderMap;
+	std::map < std::string, BaseData*>::iterator it_map;
+	
+	for (unsigned int j = 0; j<loader->m_fieldVec.size(); ++j)
+	{
+	  dataLoaderMap.insert (std::pair<std::string, BaseData*> (loader->m_fieldVec[j].first, loader->m_fieldVec[j].second));
+	}
+	    
+	for (unsigned int j = 0; j<attributeList.size(); ++j)
+	{
+	  it_map = dataLoaderMap.find (attributeList[j]);
+	  if (it_map != dataLoaderMap.end())
+	    dataLoaderMap.erase (it_map);
+	}
+
+	// -- Temporary patch, using exceptions. TODO: use a flag to set Data not to be automatically linked. --
+	//{
+	it_map = dataLoaderMap.find ("name");
+	if (it_map != dataLoaderMap.end())
+	  dataLoaderMap.erase (it_map);
+
+	it_map = dataLoaderMap.find ("type");
+	if (it_map != dataLoaderMap.end())
+	  dataLoaderMap.erase (it_map);
+
+	it_map = dataLoaderMap.find ("filename");
+	if (it_map != dataLoaderMap.end())
+	  dataLoaderMap.erase (it_map);
+	
+	it_map = dataLoaderMap.find ("tags");
+	if (it_map != dataLoaderMap.end())
+	  dataLoaderMap.erase (it_map);
+
+	it_map = dataLoaderMap.find ("printLog");
+	if (it_map != dataLoaderMap.end())
+	  dataLoaderMap.erase (it_map);
+
+	it_map = dataLoaderMap.find ("listening");
+	if (it_map != dataLoaderMap.end())
+	  dataLoaderMap.erase (it_map);
+	//}
+	
+
+	for (it_map =dataLoaderMap.begin(); it_map != dataLoaderMap.end(); ++it_map)
+	{
+	  BaseData* Data = obj->findField( (*it_map).first );
+
+	  if (Data != NULL)
+	  {
+	    Data->setParent( (*it_map).second);
+	  } 
+	}
+	
+      }
+   
       
         std::vector< BaseData* > dataModif = findGlobalField(attributeList[i]);
         for (unsigned int d=0;d<dataModif.size();++d)
@@ -160,12 +242,11 @@ void BaseObject::parse( BaseObjectDescription* arg )
                     }
 
                     /* set parent value to the child */
-                    if (!dataModif[d]->setParentValue(parentData))
+                    if (!dataModif[d]->setParent(parentData))
                     {
                         serr<<"could not copy value from parent Data "<< valueString << ". Incompatible Data types" << sendl;
                         break;
                     }
-                    parentData->addOutput(dataModif[d]);
                     /* children Data can be modified changing the parent Data value */
                     dataModif[d]->setReadOnly(true);
                     break;

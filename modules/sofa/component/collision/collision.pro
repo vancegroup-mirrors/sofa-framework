@@ -10,6 +10,8 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_COLLISION
 
 HEADERS += initCollision.h \
+           AttachBodyPerformer.h \
+           AttachBodyPerformer.inl \
            BarycentricContactMapper.h \
            BarycentricContactMapper.inl \
            BarycentricPenalityContact.h \
@@ -17,7 +19,7 @@ HEADERS += initCollision.h \
            BruteForceDetection.h \
            CarvingManager.h \
            ComponentMouseInteraction.h \
-		   ComponentMouseInteraction.inl \
+           ComponentMouseInteraction.inl \
            ContinuousIntersection.h \
            ContinuousTriangleIntersection.h \
            Cube.h \
@@ -29,13 +31,17 @@ HEADERS += initCollision.h \
            DiscreteIntersection.h \
            DiscreteIntersection.inl \
            DistanceGridCollisionModel.h \
+           FixParticlePerformer.h \
+           FixParticlePerformer.inl \
            FrictionContact.h \
            FrictionContact.inl \
+           InciseAlongPathPerformer.h \
+           InteractionPerformer.h \
            Line.h \
            LineLocalMinDistanceFilter.h \
            LineModel.h \
-		   LMDNewProximityIntersection.h \
-		   LMDNewProximityIntersection.inl \
+           LMDNewProximityIntersection.h \
+           LMDNewProximityIntersection.inl \
            LocalMinDistance.h \
 	   LocalMinDistanceFilter.h \
 	   LocalMinDistanceFilter.inl \
@@ -53,6 +59,7 @@ HEADERS += initCollision.h \
 #           RayPickInteractor.h \
 #           RayPickInteractor.inl \
            RayTriangleIntersection.h \
+           RemovePrimitivePerformer.h \
            RuleBasedContactManager.h \
            SolverMerger.h \
            SpatialGridPointModel.h \
@@ -60,6 +67,7 @@ HEADERS += initCollision.h \
            SphereModel.h \
            SphereTreeModel.h \
            TetrahedronModel.h \
+           TreeCollisionGroupManager.h \
            Triangle.h \
 	   TriangleLocalMinDistanceFilter.h \
            TriangleModel.h \
@@ -69,6 +77,7 @@ HEADERS += initCollision.h \
            TriangleOctreeModel.h
 
 SOURCES += initCollision.cpp \
+           AttachBodyPerformer.cpp \
            BarycentricContactMapper.cpp \
            BarycentricPenalityContact.cpp \
            BruteForceDetection.cpp \     
@@ -83,27 +92,31 @@ SOURCES += initCollision.cpp \
            DefaultPipeline.cpp \
            DiscreteIntersection.cpp \
            DistanceGridCollisionModel.cpp \
+           InciseAlongPathPerformer.cpp \
            LineModel.cpp \
-		   LMDNewProximityIntersection.cpp \
+           LMDNewProximityIntersection.cpp \
+           FixParticlePerformer.cpp \
            FrictionContact.cpp \
-		   LineLocalMinDistanceFilter.cpp \
+           LineLocalMinDistanceFilter.cpp \
            LocalMinDistance.cpp \
-	       LocalMinDistanceFilter.cpp \
+           LocalMinDistanceFilter.cpp \
            MinProximityIntersection.cpp \
            MouseInteractor.cpp \
            NewProximityIntersection.cpp \
-	       PointLocalMinDistanceFilter.cpp \
+           PointLocalMinDistanceFilter.cpp \
            PointModel.cpp \
            RayContact.cpp \
            RayModel.cpp \
-#           RayPickInteractor.cpp \
+#           RayPickInteractor.cpp \  
            RayTriangleIntersection.cpp \
+           RemovePrimitivePerformer.cpp \
            RuleBasedContactManager.cpp \
            SolverMerger.cpp \
            SpatialGridPointModel.cpp \
            SphereModel.cpp \
            SphereTreeModel.cpp \
            TetrahedronModel.cpp \
+           TreeCollisionGroupManager.cpp \
 	   TriangleLocalMinDistanceFilter.cpp \
            TriangleModel.cpp \
            TriangleModelInRegularGrid.cpp \

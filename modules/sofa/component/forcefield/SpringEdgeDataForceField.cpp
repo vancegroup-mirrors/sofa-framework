@@ -47,9 +47,9 @@ using namespace sofa::defaulttype;
 
 
 template<class DataTypes>
-void create(SpringEdgeDataForceField<DataTypes>*& obj, simulation::tree::xml::ObjectDescription* arg)
+void create(SpringEdgeDataForceField<DataTypes>*& obj, simulation::xml::ObjectDescription* arg)
 {
-	simulation::tree::xml::createWithParent< SpringEdgeDataForceField<DataTypes>, core::componentmodel::behavior::MechanicalState<DataTypes> >(obj, arg);
+        simulation::xml::createWithParent< SpringEdgeDataForceField<DataTypes>, core::componentmodel::behavior::MechanicalState<DataTypes> >(obj, arg);
 	if (obj != NULL)
 	{
 	    obj->parseFields( arg->getAttributeMap() );
@@ -58,11 +58,11 @@ void create(SpringEdgeDataForceField<DataTypes>*& obj, simulation::tree::xml::Ob
 	}
 }
 #ifndef SOFA_FLOAT
-Creator<simulation::tree::xml::ObjectFactory, SpringEdgeDataForceField<Vec3dTypes> > SpringEdgeDataForceFieldVec3dClass("SpringEdgeDataForceField", true);
+Creator<simulation::xml::ObjectFactory, SpringEdgeDataForceField<Vec3dTypes> > SpringEdgeDataForceFieldVec3dClass("SpringEdgeDataForceField", true);
 template class SpringEdgeDataForceField<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-Creator<simulation::tree::xml::ObjectFactory, SpringEdgeDataForceField<Vec3fTypes> > SpringEdgeDataForceFieldVec3fClass("SpringEdgeDataForceField", true);
+Creator<simulation::xml::ObjectFactory, SpringEdgeDataForceField<Vec3fTypes> > SpringEdgeDataForceFieldVec3fClass("SpringEdgeDataForceField", true);
 template class SpringEdgeDataForceField<Vec3fTypes>;
 #endif
 } // namespace forcefield

@@ -42,7 +42,6 @@
 #include <sofa/simulation/common/Simulation.h>
 
 #include <sofa/simulation/common/VisualVisitor.h>
-#include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/WriteStateVisitor.h>
 #include <sofa/simulation/common/UpdateContextVisitor.h>
 
@@ -74,8 +73,6 @@ namespace sofa
 
       using sofa::core::objectmodel::BaseObject;
 
-      using namespace sofa::simulation::tree;
-      
       void RealGUI::clearRecord()
       {			
 	timeSlider->setValue(0);	

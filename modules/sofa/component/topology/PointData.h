@@ -323,6 +323,21 @@ namespace topology
 
 } // namespace component
 
+/*
+// Specialization of the defaulttype::DataTypeInfo type traits template
+
+namespace defaulttype
+{
+
+template<class T, class Alloc>
+struct DataTypeInfo< sofa::component::topology::PointData<T,Alloc> > : public VectorTypeInfo<sofa::component::topology::PointData<T,Alloc> >
+{
+    static std::string name() { std::ostringstream o; o << "PointData<" << DataTypeName<T>::name() << ">"; return o.str(); }
+};
+
+} // namespace defaulttype
+*/
+
 } // namespace sofa
 
 #endif // _POINTDATA_H_

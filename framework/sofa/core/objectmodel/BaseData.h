@@ -36,6 +36,7 @@
 #include <typeinfo>
 #include <sofa/core/core.h>
 #include <sofa/core/objectmodel/DDGNode.h>
+#include <sofa/defaulttype/DataTypeInfo.h>
 
 namespace sofa
 {
@@ -46,6 +47,8 @@ namespace core
 namespace objectmodel
 {
 
+class Base;
+
 /**
  *  \brief Abstract base class for all fields, independently of their type.
  *
@@ -54,19 +57,12 @@ class SOFA_CORE_API BaseData : public DDGNode
 {
 public:
     /** Constructor
-     *  \param l long name
      *  \param h help
-     *  \param m true iff the argument is mandatory
      */
-    BaseData( const char* h, bool isDisplayed=true, bool isReadOnly=false )
-    : help(h), group(""), widget("")
-    , m_counter(0), m_isDisplayed(isDisplayed), m_isReadOnly(isReadOnly), m_isPersistent(true)/*, parent(NULL), writer(NULL)*/
-    {}
+    BaseData( const char* h, bool isDisplayed=true, bool isReadOnly=false, Base* owner=NULL, const char* name="");
 
     /// Base destructor
-    virtual ~BaseData()
-    {
-    }
+    virtual ~BaseData();
 
     /// Read the command line
     virtual bool read( std::string& str ) = 0;
@@ -79,6 +75,18 @@ public:
 
     /// Print the value type of the associated variable
     virtual std::string getValueTypeString() const=0;
+
+    /// Get info about the value type of the associated variable
+    virtual const sofa::defaulttype::AbstractTypeInfo* getValueTypeInfo() const=0;
+
+    /// Get current value as a void pointer (use getValueTypeInfo to find how to access it)
+    virtual const void* getValueVoidPtr() const=0;
+
+    /// Begin edit current value as a void pointer (use getValueTypeInfo to find how to access it)
+    virtual void* beginEditVoidPtr()=0;
+
+    /// End edit current value as a void pointer (use getValueTypeInfo to find how to access it)
+    virtual void endEditVoidPtr()=0;
 
     /// Get help message
     const char* getHelp() const { return help; }
@@ -123,32 +131,38 @@ public:
     /// Can dynamically change the status of a Data, by making it persistent
     void setPersistent(bool b){m_isPersistent = b;}
 
+    /// Return the Base component owning this Data
+    Base* getOwner() const { return m_owner; }
+    void setOwner(Base* o) { m_owner=o; }
+
+    /// Return the name of this Data within the Base component
+    const std::string& getName() const { return m_name; }
+    /// Set the name of this Data. Not that this methods should not be called directly, but the Data registration methods in Base should be used instead
+    void setName(const std::string& name) { m_name=name; }
+
     /// Return the number of changes since creation
     /// This can be used to efficiently detect changes
     int getCounter() const { return m_counter; }
 
-    /// Set for this Data the value of its parent value
-    virtual bool setParentValue(BaseData* parent) = 0;
+    /// Link to a parent data. The value of this data will automatically duplicate the value of the parent data.
+    virtual bool setParent(BaseData* parent);
+
+    /// Check if a given Data can be linked as a parent of this data
+    virtual bool validParent(BaseData* parent);
+
+    BaseData* getParent() const { return parentBaseData; }
 
     /// Update the value of this Data
-    void update()
-    {
-        dirty = false;
-        for(std::list<DDGNode*>::iterator it=inputs.begin(); it!=inputs.end(); ++it)
-        {
-            if ((*it)->isDirty())
-            {
-                (*it)->update();
-            }
-            if (updateFromParentValue(dynamic_cast<BaseData*>(*it)))
-                break;
-        }
-    }
+    void update();
 
 protected:
 
+    virtual void doSetParent(BaseData* parent);
+
+    virtual void doDelInput(DDGNode* n);
+
     /// Update this Data from the value of its parent
-    virtual bool updateFromParentValue(BaseData* parent) = 0;
+    virtual bool updateFromParentValue(BaseData* parent);
 
     /// Help message
     const char* help;
@@ -164,6 +178,13 @@ protected:
     bool m_isReadOnly;
     /// True if the Data contain persistent information
     bool m_isPersistent;
+    /// Return the Base component owning this Data
+    Base* m_owner;
+    /// Data name within the Base component
+    std::string m_name;
+    /// Parent Data
+    BaseData* parentBaseData;
+
     /// Helper method to decode the type name to a more readable form if possible
     static std::string decodeTypeName(const std::type_info& t);
 
@@ -171,7 +192,10 @@ protected:
     template<class T>
     static std::string typeName(const T* = NULL)
     {
-        return decodeTypeName(typeid(T));
+        if (defaulttype::DataTypeInfo<T>::ValidInfo)
+            return defaulttype::DataTypeName<T>::name();
+        else
+            return decodeTypeName(typeid(T));
     }
 };
 

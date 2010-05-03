@@ -31,6 +31,7 @@
 #include <sofa/simulation/common/DeleteVisitor.h>
 #include <sofa/simulation/common/Node.h>
 #include <sofa/component/collision/MouseInteractor.h>
+#include <sofa/component/mapping/IdentityMapping.h>
 
 #include <sofa/component/component.h>
 
@@ -70,11 +71,11 @@ namespace sofa
 
 
         //Components
-        simulation::Node                                                      *parentNode;
-        simulation::Node                                                      *nodeRayPick;
-        sofa::core::componentmodel::behavior::BaseMechanicalState *mouseInSofa;
+        simulation::Node                                            *parentNode;
+        simulation::Node                                            *nodeRayPick;
+        sofa::core::componentmodel::behavior::BaseMechanicalState   *mouseInSofa;
         sofa::core::componentmodel::behavior::BaseMechanicalMapping *mouseMapping;
-        sofa::component::collision::BaseMouseInteractor           *mouseInteractor;
+        sofa::component::collision::BaseMouseInteractor             *mouseInteractor;
       };
 
 

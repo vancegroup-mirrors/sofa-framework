@@ -27,8 +27,9 @@
 #include <iostream>
 #include <fstream>
 #include <sofa/helper/ArgumentParser.h>
-#include <sofa/simulation/tree/xml/initXml.h>
+#include <sofa/simulation/common/xml/initXml.h>
 #include <sofa/simulation/tree/TreeSimulation.h>
+#include <sofa/simulation/tree/GNode.h>
 #include <sofa/component/init.h>
 #include <sofa/helper/Factory.h>
 #include <sofa/helper/BackTrace.h>
@@ -53,10 +54,17 @@ bool loadPlugin(const char* filename)
   return true;
 }
 #else
-bool loadPlugin(const char* /*filename*/)
+bool loadPlugin(const char* filename)
 {
-	std::cerr << "Plugin loading not supported on this platform.\n";
-	return false;
+	HINSTANCE DLLHandle;
+    DLLHandle = LoadLibraryA(filename); //warning: issue between unicode and ansi encoding on Visual c++ -> force to ansi-> dirty!
+    if (DLLHandle == NULL)
+    {
+		std::cerr<<"Error loading plugin "<<filename<<std::endl;
+		return false;
+	}
+	std::cerr<<"Plugin "<<filename<<" loaded."<<std::endl;
+	return true;
 }
 #endif
 
@@ -103,7 +111,7 @@ int main(int argc, char** argv)
 
  	sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
 	sofa::component::init();
-	sofa::simulation::tree::xml::initXml();
+	sofa::simulation::xml::initXml();
 	
 	if (!files.empty()) fileName = files[0];
 

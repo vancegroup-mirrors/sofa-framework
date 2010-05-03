@@ -55,12 +55,13 @@ enum {
 	MASS = 13,
 	TOPOLOGY = 14,
 	VMODEL = 15,
+	LOADER = 16,
 };
 
 // See http://www.graphviz.org/doc/info/colors.html
 // The following is mostly the "set312" colors
 
-static const char* COLOR[16]={
+static const char* COLOR[17]={
 	/*Node                  =*/ "#dedede", // color 9
 	/*Object                =*/ "#ffffff", // white
 	/*Context               =*/ "#d7191c", // color spectral4/1
@@ -77,6 +78,7 @@ static const char* COLOR[16]={
 	/*Mass                  =*/ "#ffffb3", // color 2
 	/*Topology              =*/ "#ffed6f", // color 12
 	/*VisualModel           =*/ "#eefdea", // color 11 (brighter)
+	/*Loader                =*/ "#00daff", // cyan
 };
 
 inline const char* getColor(const char* classname)
@@ -98,6 +100,7 @@ inline const char* getColor(const char* classname)
     if (!strcmp(classname,"Mass")) return COLOR[MASS];
     if (!strcmp(classname,"Topology")) return COLOR[TOPOLOGY];
     if (!strcmp(classname,"VisualModel")) return COLOR[VMODEL];
+    if (!strcmp(classname,"Loader")) return COLOR[LOADER];
     return "";
 
 }

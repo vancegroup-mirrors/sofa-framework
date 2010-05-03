@@ -64,6 +64,41 @@ TrianglesInSphereROI<DataTypes>::TrianglesInSphereROI()
 template <class DataTypes>
 void TrianglesInSphereROI<DataTypes>::init()
 {
+    if (!f_X0.isSet())
+    {
+	MechanicalState<DataTypes>* mstate;
+	this->getContext()->get(mstate);
+	if (mstate)
+	{
+	    BaseData* parent = mstate->findField("rest_position");
+	    if (parent)
+	    {
+		f_X0.setParent(parent);
+		f_X0.setReadOnly(true);
+	    }
+	}
+    }
+    if (!f_triangles.isSet())
+    {
+        BaseMeshTopology* topology = dynamic_cast<BaseMeshTopology*>(getContext()->getTopology());
+        if (topology != NULL)
+        {
+            BaseData* parent = topology->findField("triangles");
+            if (parent != NULL)
+            {
+                f_triangles.setParent(parent);
+                f_triangles.setReadOnly(true);
+            }
+            else
+            {
+                sout << "ERROR: Topology " << topology->getName() << " does not contain triangles" << sendl;
+            }
+        }
+        else
+        {
+            sout << "ERROR: Topology not found. Triangles in sphere can not be computed" << sendl;
+        }
+    }
 
     addInput(&f_X0);
     addInput(&f_triangles);
@@ -71,7 +106,7 @@ void TrianglesInSphereROI<DataTypes>::init()
     addOutput(&f_indices);
     addOutput(&f_pointIndices);
 
-    setDirty();
+    setDirtyValue();
 }
 
 template <class DataTypes>
@@ -96,7 +131,7 @@ bool TrianglesInSphereROI<DataTypes>::containsTriangle(const Vec3& c, const Real
 template <class DataTypes>
 void TrianglesInSphereROI<DataTypes>::update()
 {
-    dirty = false;
+    cleanDirty();
     helper::vector<Vec3>& c = *(centers.beginEdit());
     helper::vector<Real>& r = *(radii.beginEdit());
 

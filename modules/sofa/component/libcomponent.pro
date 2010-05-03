@@ -16,6 +16,7 @@ SOURCES += init.cpp
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
+LIBS += -lsofacomponentloader$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentmastersolver$$LIBSUFFIX
 LIBS += -lsofacomponentfem$$LIBSUFFIX

@@ -35,69 +35,87 @@ namespace core
 namespace objectmodel
 {
 
-    DDGNode::~DDGNode()
+/// Constructor
+DDGNode::DDGNode()
+: dirtyValue(false)
+, dirtyOutputs(false)
+{
+}
+
+DDGNode::~DDGNode()
+{
+    for(std::list< DDGNode* >::iterator it=inputs.begin(); it!=inputs.end(); ++it)
+        (*it)->doDelOutput(this);
+    for(std::list< DDGNode* >::iterator it=outputs.begin(); it!=outputs.end(); ++it)
+        (*it)->doDelInput(this);
+}
+
+void DDGNode::setDirtyValue()
+{
+    if (!dirtyValue)
     {
+        dirtyValue = true;
+        setDirtyOutputs();
+    }
+}
+
+void DDGNode::setDirtyOutputs()
+{
+    if (!dirtyOutputs)
+    {
+        dirtyOutputs = true;
+        for(std::list<DDGNode*>::iterator it=outputs.begin(); it!=outputs.end(); ++it)
+        {
+            (*it)->setDirtyValue();
+        }
+    }
+}
+
+void DDGNode::cleanDirty()
+{
+    if (dirtyValue)
+    {
+        dirtyValue = false;
         for(std::list< DDGNode* >::iterator it=inputs.begin(); it!=inputs.end(); ++it)
-            (*it)->outputs.remove(this);
-        for(std::list< DDGNode* >::iterator it=outputs.begin(); it!=outputs.end(); ++it)
-            (*it)->inputs.remove(this);
+            (*it)->dirtyOutputs = false;
     }
+}
 
-    void DDGNode::setDirty()
-    {
-       if (!dirty)
-       {
-           dirty = true;
-           for(std::list<DDGNode*>::iterator it=outputs.begin(); it!=outputs.end(); ++it)
-           {
-               (*it)->setDirty();
-           }
-       }
-    }
+void DDGNode::addInput(DDGNode* n)
+{
+    doAddInput(n);
+    n->doAddOutput(this);
+    setDirtyValue();
+}
 
-    void DDGNode::cleanDirty()
-    {
-        dirty = false;
-    }
+void DDGNode::delInput(DDGNode* n)
+{
+    doDelInput(n);
+    n->doDelOutput(this);
+}
 
-    bool DDGNode::isDirty()
-    {
-        return dirty;
-    }
+void DDGNode::addOutput(DDGNode* n)
+{
+    doAddOutput(n);
+    n->doAddInput(this);
+    n->setDirtyValue();
+}
 
-    void DDGNode::addInput(DDGNode* n)
-    {
-       inputs.push_back(n);
-       n->outputs.push_back(this);
-    }
+void DDGNode::delOutput(DDGNode* n)
+{
+    doDelOutput(n);
+    n->doDelInput(this);
+}
 
-    void DDGNode::delInput(DDGNode* n)
-    {
-       inputs.remove(n);
-       n->outputs.remove(this);
-    }
+std::list<DDGNode*> DDGNode::getInputs()
+{
+    return inputs;
+}
 
-    void DDGNode::addOutput(DDGNode* n)
-    {
-       outputs.push_back(n);
-       n->inputs.push_back(this);
-    }
-
-    void DDGNode::delOutput(DDGNode* n)
-    {
-       outputs.remove(n);
-       n->inputs.remove(this);
-    }
-
-    std::list<DDGNode*> DDGNode::getInputs()
-    {
-        return inputs;
-    }
-
-    std::list<DDGNode*> DDGNode::getOutputs()
-    {
-        return outputs;
-    }
+std::list<DDGNode*> DDGNode::getOutputs()
+{
+    return outputs;
+}
 
 } // namespace objectmodel
 

@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_POINTSUBSET_H
 
 #include <sofa/helper/vector.h>
+#include <sofa/defaulttype/DataTypeInfo.h>
 #include <sofa/component/component.h>
 #include <list>
 #include <iostream>
@@ -66,7 +67,7 @@ namespace topology
 	class SOFA_COMPONENT_TOPOLOGY_API PointSubset 
 	{
 	public:
-		// forwardinging Commonvector methods and typdefs
+		// forwarding common vector methods and typedefs
 		typedef  helper::vector<unsigned int>::value_type                value_type;
 		typedef  helper::vector<unsigned int>::pointer                   pointer;
 		typedef  helper::vector<unsigned int>::reference                 reference;
@@ -79,7 +80,7 @@ namespace topology
 		typedef  helper::vector<unsigned int>::const_reverse_iterator    const_reverse_iterator;
 
 	public:
-		/// Optionnaly takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
+		/// Optionally takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
 		PointSubset( bool (*testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&)=ps_testNewPointFunc, 
 					void* testParam  = (void*)NULL, 
 					void (*removeFunc)(int, void*) = ps_removeFunc, 
@@ -226,6 +227,19 @@ namespace topology
 } // namespace topology
 
 } // namespace component
+
+// Specialization of the defaulttype::DataTypeInfo type traits template
+
+namespace defaulttype
+{
+
+template<>
+struct DataTypeInfo< sofa::component::topology::PointSubset > : public VectorTypeInfo<sofa::component::topology::PointSubset >
+{
+    static const char* name() { return "PointSubset"; }
+};
+
+} // namespace defaulttype
 
 } // namespace sofa
 

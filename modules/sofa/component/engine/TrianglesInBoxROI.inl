@@ -66,10 +66,17 @@ void TrianglesInBoxROI<DataTypes>::init()
 {
     if (!f_X0.isSet())
     {
-        BaseData* parent = mstate->findField("rest_position");
-        f_X0.setParentValue(parent);
-        parent->addOutput(&f_X0);
-        f_X0.setReadOnly(true);
+	MechanicalState<DataTypes>* mstate;
+	this->getContext()->get(mstate);
+	if (mstate)
+	{
+	    BaseData* parent = mstate->findField("rest_position");
+	    if (parent)
+	    {
+		f_X0.setParent(parent);
+		f_X0.setReadOnly(true);
+	    }
+	}
     }
     if (!f_triangles.isSet())
     {
@@ -79,8 +86,7 @@ void TrianglesInBoxROI<DataTypes>::init()
             BaseData* parent = topology->findField("triangles");
             if (parent != NULL)
             {
-                f_triangles.setParentValue(parent);
-                parent->addOutput(&f_triangles);
+                f_triangles.setParent(parent);
                 f_triangles.setReadOnly(true);
             }
             else
@@ -97,7 +103,7 @@ void TrianglesInBoxROI<DataTypes>::init()
     addInput(&f_triangles);
     addOutput(&f_indices);
 
-    setDirty();
+    setDirtyValue();
 }
 
 template <class DataTypes>
@@ -124,7 +130,7 @@ bool TrianglesInBoxROI<DataTypes>::containsTriangle(const Vec6& b, const BaseMes
 template <class DataTypes>
 void TrianglesInBoxROI<DataTypes>::update()
 {
-    dirty = false;
+    cleanDirty();
     helper::vector<Vec6>& vb = *(boxes.beginEdit());
 
     for (unsigned int bi=0;bi<vb.size();++bi)

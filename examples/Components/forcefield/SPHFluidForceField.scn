@@ -1,4 +1,4 @@
-<Node dt="0.005" showBehaviorModels="1" showCollisionModels="1" showMappings="1" showForceFields="1" gravity="0 -10 0" >
+<Node dt="0.005" showBehaviorModels="1" showCollisionModels="1" showMappings="0" showForceFields="1" gravity="0 -10 0" >
 	<Node>
 		<Object type="RungeKutta4"/>
 		<Object type="MechanicalObject" name="MModel" />
@@ -10,6 +10,7 @@
 			zmin="-1.5" zmax="0"
 		/>
 		<Object type="UniformMass" name="M1" mass="1" />
+		<Object type="SpatialGridContainer" cellWidth="0.75" />
 		<Object type="SPHFluidForceField" radius="0.75" density="15" viscosity="10" pressure="1000" surfaceTension="-1000" />
 		<!-- The following force fields handle collision with walls and an inclined floor -->
 		<Object type="PlaneForceField" normal="1 0 0" d="-4"/>

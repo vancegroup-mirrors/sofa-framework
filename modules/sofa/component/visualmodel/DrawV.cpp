@@ -48,7 +48,7 @@ int DrawVClass = core::RegisterObject("Visual model displaying velocity vectors 
 DrawV::DrawV()
 : castShadow( initData(&castShadow, false, "castShadow", "True if object cast shadows") )
 , useAlpha  ( initData(&useAlpha  , false, "useAlpha"  , "True if velocity displayed using alpha blending") )
-, vscale    ( initData(&vscale    ,   1.0, "vscale"    , "Scaling of veloity vectors") )
+, vscale    ( initData(&vscale    ,   1.0, "vscale"    , "Scaling of velocity vectors") )
 {
 }
 

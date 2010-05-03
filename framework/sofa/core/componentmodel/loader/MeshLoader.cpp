@@ -16,11 +16,9 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
@@ -50,8 +48,6 @@ namespace loader
 			   , hexahedra(initData(&hexahedra,"hexahedra","Hexahedra of the mesh loaded"))
 			     //, triangulate(initData(&triangulate,false,"triangulate","Divide all polygons into triangles"))
 			     //, fillMState(initData(&fillMState,true,"fillMState","Must this mesh loader fill the mstate instead of manually or by using the topology"))
-			   , texCoords(initData(&texCoords,"texCoords","TexCoords of the mesh loaded")) 
-			   , normals(initData(&normals,"normals","Normals of the mesh loaded")) 
 			     //, facets(initData(&facets,"facets","Facets of the mesh loaded")) 
 {
     addAlias(&tetrahedra,"tetras");
@@ -64,8 +60,6 @@ namespace loader
     polygons.setPersistent(false);
     tetrahedra.setPersistent(false);
     hexahedra.setPersistent(false);
-    texCoords.setPersistent(false);
-    normals.setPersistent(false);
 }
   
 

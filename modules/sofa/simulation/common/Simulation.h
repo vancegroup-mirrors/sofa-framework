@@ -30,6 +30,8 @@
 #include <sofa/helper/gl/VisualParameters.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/objectmodel/DataFileName.h>
+#include <sofa/simulation/common/xml/BaseElement.h>
+#include <sofa/simulation/common/xml/XML.h>
 
 namespace sofa
 {
@@ -99,10 +101,16 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	virtual void exportGnuplot( Node* root, double time );
 	
 	/// Load a scene from a file.
-	virtual Node* load(const char* /* filename */)=0;
+	virtual Node* load(const char* /* filename */);
 	/// Unload a scene from a Node.
-	virtual void unload(Node * /* root */)=0;
+	virtual void unload(Node * /* root */);
 	
+
+
+
+
+
+
 
         /// Create a new Node of the simulation
         virtual Node* newNode(const std::string& name)=0;
@@ -127,6 +135,15 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	Data< int > instrumentInUse;
 
 	sofa::helper::gl::DrawManager DrawUtility;
+
+
+	///load a scene from memory (typically : an xml into a string)
+	static Node* loadFromMemory ( const char *filename, const char *data, unsigned int size );
+	///load a scene from a file
+	static Node* loadFromFile ( const char *filename );
+	///generic function to process xml tree (after loading the xml structure from the 2 previous functions)
+	static Node* processXML(xml::BaseElement* xml, const char *filename);
+
 	static  Simulation* theSimulation;
 };
 

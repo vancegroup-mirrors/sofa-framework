@@ -60,8 +60,7 @@ void ProjectOnPlane<DataTypes>::init()
    /* if (!f_outputX.isSet())
     {
         BaseData* parent = mstate->findField("position");
-        f_outputX.setParentValue(parent);
-        parent->addOutput(&f_outputX);
+        f_outputX.setParent(parent);
         f_outputX.setReadOnly(true);
     } */
 
@@ -86,7 +85,7 @@ void ProjectOnPlane<DataTypes>::reinit()
 template <class DataTypes>
 void ProjectOnPlane<DataTypes>::update()
 {
-    dirty = false;
+    cleanDirty();
 
 
     const helper::vector<Coord>& in = f_inputX.getValue();

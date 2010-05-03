@@ -95,10 +95,6 @@ public:
     static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
         core::objectmodel::BaseObject::create(obj, context, arg);
-        if (context)
-        {
-            obj->mstate = dynamic_cast<MechanicalState<DataTypes>*>(context->getMechanicalState());
-        }
     }
 
     virtual std::string getTemplateName() const
@@ -116,7 +112,6 @@ public:
     Data< helper::vector<BaseMeshTopology::Triangle> > f_triangles;
     Data<SetTriangle> f_indices;
     Data<double> _drawSize;
-    MechanicalState<DataTypes>* mstate;
     const VecCoord* x0;
 
 protected:

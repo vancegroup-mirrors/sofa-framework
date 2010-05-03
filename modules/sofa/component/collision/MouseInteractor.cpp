@@ -22,6 +22,7 @@
  *                                                                             *
  * Contact information: contact@sofa-framework.org                             *
  ******************************************************************************/
+#define SOFA_COMPONENT_COLLISION_MOUSEINTERACTOR_CPP
 #include <sofa/component/collision/MouseInteractor.inl>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/ObjectFactory.h>
@@ -34,48 +35,57 @@ namespace sofa
 
     namespace collision
     {
-
+      
       SOFA_DECL_CLASS(MouseInteractor)
       
       int MouseInteractorClass = core::RegisterObject("Perform tasks related to the interaction with the mouse")
         .add< MouseInteractor<defaulttype::Vec3Types> >();
       
 
-      template class MouseInteractor<defaulttype::Vec3Types>;
+      template class SOFA_COMPONENT_COLLISION_API MouseInteractor<defaulttype::Vec3Types>;
 
 
+      void BaseMouseInteractor::cleanup()
+      { 
+        while (!performers.empty())
+          {
+            removeInteractionPerformer(*performers.begin()); 
+          }
+      };
 
+ 
+      void BaseMouseInteractor::handleEvent(core::objectmodel::Event *e)
+      {
+        VecPerformer::iterator it=performers.begin(), it_end=performers.end();
+        for (;it!=it_end;++it) 
+          {
+            (*it)->handleEvent(e);
+          }
+      }
+      
+      void BaseMouseInteractor::addInteractionPerformer( InteractionPerformer *perf)
+      {
+        performers.insert(performers.end(),perf);
+      }
+
+      bool BaseMouseInteractor::removeInteractionPerformer( InteractionPerformer *i)
+      {
+        VecPerformer::iterator found=std::find(performers.begin(), performers.end(), i);
+        if (found == performers.end()) return false;
+        else 
+          {
+            delete *found;
+            performers.erase(found);
+            return true;
+          }
+      }
 
       void BaseMouseInteractor::updatePosition( double )
       {          
-
-        if (isRemovingElement && collisionModel)
+        VecPerformer::iterator it=performers.begin(), it_end=performers.end();
+        for (; it!=it_end;++it)
           {
-            core::CollisionElementIterator collisionElement( collisionModel, indexCollisionElement);
-
-            sofa::core::componentmodel::topology::TopologyModifier* topologyModifier; 
-            collisionModel->getContext()->get(topologyModifier);
-          
-            // Handle Removing of topological element (from any type of topology)
-            if(topologyModifier) topologyChangeManager.removeItemsFromCollisionModel(collisionElement);
-            collisionModel=NULL;
-            isRemovingElement=false;
-          }
-        else if (isIncising)
-          {            
-            
-            sofa::core::componentmodel::topology::TopologyModifier* topologyModifier; 
-            elementsPicked[0].body->getContext()->get(topologyModifier);
-        
-            // Handle Removing of topological element (from any type of topology)
-            if(topologyModifier) 
-              {
-                std::cerr << "Cutting from " << elementsPicked[0].point << " -------> " << elementsPicked[1].point << "\n";
-                // core::componentmodel::topology::BaseMeshTopology::PointID point=
-                topologyChangeManager.incisionCollisionModel(elementsPicked[0].body, elementsPicked[0].indexCollisionElement, elementsPicked[0].point,
-                                                             elementsPicked[1].body, elementsPicked[1].indexCollisionElement, elementsPicked[1].point);
-              }
-            isIncising=false;
+            (*it)->execute();
           }
       }
 
@@ -83,7 +93,10 @@ namespace sofa
 
       void BaseMouseInteractor::draw()
       {
-        if (collisionModel) 
+        VecPerformer::iterator it=performers.begin(), it_end=performers.end();
+        for (;it!=it_end;++it) (*it)->draw();
+
+        if (lastPicked.body) 
           {           
             if (isAttached)
               glColor4f(1.0f,0.0f,0.0f,1.0f);
@@ -93,7 +106,7 @@ namespace sofa
             glDisable(GL_LIGHTING);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glLineWidth(3);
-            collisionModel->draw(indexCollisionElement);
+            lastPicked.body->draw(lastPicked.indexCollisionElement);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

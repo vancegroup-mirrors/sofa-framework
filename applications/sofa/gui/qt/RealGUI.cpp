@@ -54,7 +54,7 @@
 #include <sofa/component/visualmodel/VisualModelImpl.h>
 
 #include <sofa/simulation/common/Visitor.h>
-#include <sofa/simulation/tree/xml/XML.h>
+#include <sofa/simulation/common/xml/XML.h>
 #include <sofa/simulation/common/TransformationVisitor.h>
 #include <sofa/helper/system/FileRepository.h>
 
@@ -208,7 +208,7 @@ protected:
 typedef QApplication QSOFAApplication;
 #endif
 
-      SofaGUI* RealGUI::CreateGUI ( const char* name, const std::vector<std::string>& options, sofa::simulation::Node* node, const char* filename )
+      SofaGUI* RealGUI::CreateGUI ( const char* name, const std::vector<std::string>& options, sofa::simulation::Node* root, const char* filename )
       {
 	{
 	  int  *argc = new int;
@@ -221,11 +221,7 @@ typedef QApplication QSOFAApplication;
 	}
 	// create interface
 	gui = new RealGUI ( name, options );
-	Node *root = dynamic_cast< Node* >(node);
-	if ( !root )
-          root = simulation::getSimulation()->newNode("Root");
-
-        gui->setScene ( root, filename );
+        if ( root ) gui->setScene ( root, filename );
 
 	//gui->viewer->resetView();
 
@@ -579,6 +575,7 @@ typedef QApplication QSOFAApplication;
 	delete handleTraceVisitor;
 #endif
 	if (dialog) delete dialog;
+        delete viewer;
       }
 
       void RealGUI::init()
@@ -908,7 +905,7 @@ typedef QApplication QSOFAApplication;
 	startDumpVisitor();
 
 	frameCounter = 0;
-	sofa::simulation::tree::xml::numDefault = 0;
+        sofa::simulation::xml::numDefault = 0;
 	list_object_added.clear();
 	list_object_removed.clear();
 	list_object_initial.clear();
@@ -922,7 +919,7 @@ typedef QApplication QSOFAApplication;
 
 	if ( viewer->getScene() !=NULL )
 	{
-          viewer->getPickHandler()->activateRay(false);
+          viewer->getPickHandler()->reset();//activateRay(false);
           simulation::getSimulation()->unload ( viewer->getScene() );
 	  if ( graphListener!=NULL )
 	  {
@@ -1379,36 +1376,6 @@ typedef QApplication QSOFAApplication;
       {
 	textEdit1->setText ( viewer->helpString() );
  	connect ( this, SIGNAL( newStep()), viewer->getQWidget(), SLOT( update()));
-/*
-#ifdef SOFA_GUI_QTOGREVIEWER
-	//Hide unused options
-	if ( !strcmp ( viewerName,"ogre" ) )
-	  {
-	    showVisual->hide();
-	    showBehavior->hide();
-	    showCollision->hide();
-	    showBoundingCollision->hide();
-	    showMapping->hide();
-	    showMechanicalMapping->hide();
-	    showForceField->hide();
-	    showInteractionForceField->hide();
-	    showWireFrame->hide();
-	    showNormals->hide();
-	  }
-	else
-	  {
-	    showVisual->show();
-	    showBehavior->show();
-	    showCollision->show();
-	    showBoundingCollision->show();
-	    showMapping->show();
-	    showMechanicalMapping->show();
-	    showForceField->show();
-	    showInteractionForceField->show();
-	    showWireFrame->show();
-	    showNormals->show();
-	  }
-#endif*/
       }
       //###################################################################################################################
 
@@ -1695,11 +1662,9 @@ typedef QApplication QSOFAApplication;
 	    root->setTime(initial_time);
 	    eventNewTime();
 
-	    //viewer->resetView();
 	    emit newStep();
-// 	    viewer->getQWidget()->update();
 	  }
-
+        viewer->getPickHandler()->reset();
 	stopDumpVisitor();
 
       }
@@ -1915,7 +1880,7 @@ typedef QApplication QSOFAApplication;
 	  graphListener->unfreeze ( node_clicked );
 
 	//Loading of the xml file
-	simulation::tree::xml::BaseElement* xml = simulation::tree::xml::loadFromFile ( path.c_str() );
+        simulation::xml::BaseElement* xml = simulation::xml::loadFromFile ( path.c_str() );
 	if ( xml == NULL ) return;
 
 

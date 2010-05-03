@@ -28,10 +28,17 @@
 #define SOFA_GUI_MOUSEOPERATIONS_H
 
 #include <iostream>
+#include <vector>
 
 namespace sofa
 {
-
+  namespace component
+  {
+    namespace collision
+    {
+      class InteractionPerformer;
+    }
+  }
   namespace gui
   {
     enum MOUSE_BUTTON{LEFT, MIDDLE, RIGHT};
@@ -46,11 +53,12 @@ namespace sofa
       virtual ~Operation(){};
       virtual void configure(PickHandler *picker, MOUSE_BUTTON b){pickHandle=picker; button=b; }
       virtual void start() =0;
-      virtual void execution() =0;
+      virtual void execution() =0; 
       virtual void end()     =0;
     protected:
       PickHandler *pickHandle;
       MOUSE_BUTTON button;
+      sofa::component::collision::InteractionPerformer *performer;
     };
            
     class AttachOperation : public Operation
@@ -59,13 +67,12 @@ namespace sofa
     AttachOperation():stiffness(1000.0){};
       virtual ~AttachOperation(){};
       virtual void start() ;
-      virtual void execution() ;
+      virtual void execution() ; 
       virtual void end() ;
 
       void setStiffness(double s){stiffness = s;}          
       virtual double getStiffness() const { return stiffness;}
       static bool isModifiable(){return true;};
-
 
       static std::string getDescription() {return "Attach an object to the Mouse";}
     protected:
@@ -77,7 +84,7 @@ namespace sofa
     public:
       virtual ~InciseOperation(){};
       virtual void start() ;
-      virtual void execution() ;
+      virtual void execution() ; 
       virtual void end() ;
       static std::string getDescription() {return "Incise along a path";}
       static bool isModifiable(){return false;};
@@ -88,7 +95,7 @@ namespace sofa
     public:
       virtual ~RemoveOperation(){};
       virtual void start() ;
-      virtual void execution() ;
+      virtual void execution() ; 
       virtual void end() ;
       static std::string getDescription() {return "Remove a primitive";}
       static bool isModifiable(){return false;};
@@ -100,18 +107,38 @@ namespace sofa
     FixOperation():stiffness(10000.0){};
       virtual ~FixOperation(){};
       virtual void start() ;
-      virtual void execution() ;
+      virtual void execution() ; 
       virtual void end() ;
 
       void setStiffness(double s){stiffness = s;}          
       virtual double getStiffness() const { return stiffness;}
       static bool isModifiable(){return true;};
 
-
       static std::string getDescription() {return "Fix Picked particle";}
     protected:
       double stiffness;
     };  
+
+    class SculptOperation : public Operation
+    {
+    public:
+    SculptOperation():force(50), scale(50){};
+      virtual ~SculptOperation(){};
+      virtual void start() ;
+      virtual void execution() ;
+      virtual void end() ;
+
+      void setForce(double f){force = f;}
+      virtual double getForce() const { return force;}
+      void setScale(double s){scale = s;}
+      double getScale() const {return scale;}
+      static bool isModifiable(){return false;};
+
+      static std::string getDescription() {return "Sculpt an object using the Mouse";}
+    protected:
+      double force, scale;
+    };
+
   }
 }
 

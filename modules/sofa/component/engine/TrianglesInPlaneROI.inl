@@ -66,10 +66,17 @@ void TrianglesInPlaneROI<DataTypes>::init()
 {
     if (!f_X0.isSet())
     {
-        BaseData* parent = mstate->findField("rest_position");
-        f_X0.setParentValue(parent);
-        parent->addOutput(&f_X0);
-        f_X0.setReadOnly(true);
+	MechanicalState<DataTypes>* mstate;
+	this->getContext()->get(mstate);
+	if (mstate)
+	{
+	    BaseData* parent = mstate->findField("rest_position");
+	    if (parent)
+	    {
+		f_X0.setParent(parent);
+		f_X0.setReadOnly(true);
+	    }
+	}
     }
     if (!f_triangles.isSet())
     {
@@ -79,8 +86,7 @@ void TrianglesInPlaneROI<DataTypes>::init()
             BaseData* parent = topology->findField("triangles");
             if (parent != NULL)
             {
-                f_triangles.setParentValue(parent);
-                parent->addOutput(&f_triangles);
+                f_triangles.setParent(parent);
                 f_triangles.setReadOnly(true);
             }
             else
@@ -98,7 +104,7 @@ void TrianglesInPlaneROI<DataTypes>::init()
     addInput(&f_triangles);
     addOutput(&f_indices);
 
-    setDirty();
+    setDirtyValue();
 }
 
 template <class DataTypes>
@@ -144,7 +150,7 @@ bool TrianglesInPlaneROI<DataTypes>::containsTriangle(const BaseMeshTopology::Tr
 template <class DataTypes>
 void TrianglesInPlaneROI<DataTypes>::update()
 {
-    dirty = false;
+    cleanDirty();
 
     SetTriangle& indices = *(f_indices.beginEdit());
     indices.clear();

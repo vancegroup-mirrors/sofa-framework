@@ -54,8 +54,8 @@ public:
     \param t a pointer to the value
     \param h help on the field
     */
-    DataPtr( T* t, const char* h, bool isDisplayed=true, bool isReadOnly=false )
-    : TData<T>(h, isDisplayed, isReadOnly)
+    DataPtr( T* t, const char* h, bool isDisplayed=true, bool isReadOnly=false, Base* owner=NULL, const char* name="")
+    : TData<T>(h, isDisplayed, isReadOnly, owner, name)
     , ptr(t)
     {
     }
@@ -65,17 +65,13 @@ public:
 
     inline T* beginEdit()
     {
-        if (this->dirty)
-        {
-           DataPtr* data = const_cast <DataPtr*> (this);
-           data->update();
-        }
+	this->updateIfDirty();
         ++this->m_counter;
+        BaseData::setDirtyOutputs();
         return ptr;
     }
     inline void endEdit()
     {
-        BaseData::setDirty();
     }
     inline void setPointer(T* p )
     {
@@ -88,11 +84,7 @@ public:
     }
     inline const T& getValue() const
     {
-        if (this->dirty)
-        {
-           DataPtr* data = const_cast <DataPtr*> (this);
-           data->update();
-        }
+	this->updateIfDirty();
         return *ptr;
     }
     /// The value stored in counter can be false, as the pointer can be modified without using the BaseData API. The counter doesn't mean anything in that case
@@ -102,20 +94,12 @@ protected:
     T* ptr;
     const T& value() const 
     {
-        if (this->dirty)
-        {
-           DataPtr* data = const_cast <DataPtr*> (this);
-           data->update();
-        }
+	this->updateIfDirty();
         return *ptr;
     }
     T& value()
     {
-        if (this->dirty)
-        {
-           DataPtr* data = const_cast <DataPtr*> (this);
-           data->update();
-        }
+	this->updateIfDirty();
         return *ptr;
     }
 };

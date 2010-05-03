@@ -85,7 +85,7 @@ class CenterOfMassMapping : public BasicMapping, public virtual core::objectmode
 	double totalMass;
 
 };
-
+using namespace sofa::defaulttype;
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_CENTEROFMASSMAPPING_CPP)
 #pragma warning(disable : 4231)
 #ifndef SOFA_FLOAT

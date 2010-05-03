@@ -6,6 +6,7 @@ include($${SOFA_DIR}/sofa.cfg)
 SUBDIRS += libbase.pro
 
 
+SUBDIRS += loader
 SUBDIRS += forcefield
 SUBDIRS += linearsolver
 SUBDIRS += mastersolver

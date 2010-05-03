@@ -34,6 +34,8 @@
 //
 //
 #include "Node.h"
+#include <sofa/simulation/common/Simulation.h>
+#include <sofa/simulation/common/xml/NodeElement.h>
 #include <sofa/simulation/common/PropagateEventVisitor.h>
 #include <sofa/simulation/common/UpdateMappingEndEvent.h>
 #include <sofa/simulation/common/AnimateVisitor.h>
@@ -41,6 +43,8 @@
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/VisualVisitor.h>
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
+
+#include <sofa/helper/Factory.inl>
 #include <iostream>
 
 #include <boost/graph/adjacency_list.hpp>
@@ -356,22 +360,16 @@ Node* Node::getTreeNode(const std::string& name) const
 
 sofa::core::objectmodel::BaseNode::Children Node::getChildren()
 {
-  sofa::helper::vector< core::objectmodel::BaseNode* > list_children;
-  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
-    {
-      list_children.push_back((*it));
-    }
+  Children list_children; 
+  std::copy(child.begin(), child.end(), std::back_inserter(list_children));
   return list_children;
 }
 
 /// Get parent node (or NULL if no hierarchy or for root node)
 const sofa::core::objectmodel::BaseNode::Children Node::getChildren() const
 {
-  sofa::helper::vector< core::objectmodel::BaseNode* > list_children;
-  for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
-    {
-      list_children.push_back((*it));
-    }
+  Children list_children; 
+  std::copy(child.begin(), child.end(), std::back_inserter(list_children));
   return list_children;
 }
 
@@ -728,11 +726,20 @@ void Node::sortComponents()
         //cerr << component_from_vertex[*ii]->getName() << " ";
     }
     //cerr << endl;
-}
-
 
 }
 
+template <class RealObject>
+void Node::create( RealObject*& obj, sofa::simulation::xml::Element<sofa::core::objectmodel::BaseNode>*& arg)
+{
+  obj=(RealObject*)getSimulation()->newNode(arg->getName());
+  obj->parse(arg);
 }
 
+SOFA_DECL_CLASS(Node)
+//create method of Node called if the user wants the default node. The object created will depend on the simulation currently in use.
+helper::Creator<xml::NodeElement::Factory, Node> NodeClass("default");
 
+}
+
+}

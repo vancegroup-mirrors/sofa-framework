@@ -112,17 +112,25 @@ public:
     Real getCellWidth() const { return cellWidth; }
     Real getInvCellWidth() const { return invCellWidth; }
 
+    int getCellBits() const { return cellBits; }
+    int getNbCells() const { return nbCells; }
+
+    const sofa::gpu::cuda::CudaVector< unsigned int >& getParticleIndexVector() const { return particleIndex; }
+    const sofa::gpu::cuda::CudaVector< sofa::helper::fixed_array<int,2> >& getCellRangeVector() const { return cellRange; }
+    const sofa::gpu::cuda::CudaVector< int >& getCellGhostVector() const { return cellGhost; }    
+
 protected:
     const Real cellWidth;
     const Real invCellWidth;
     int cellBits, nbCells;
-    sofa::gpu::cuda::CudaVector< sofa::helper::fixed_array<int,2> > particleHash, sortTmp;
-    sofa::gpu::cuda::CudaVector<int> cellStart;
+    sofa::gpu::cuda::CudaVector< unsigned int > particleIndex, particleHash, sortTmp;
+    sofa::gpu::cuda::CudaVector< sofa::helper::fixed_array<int,2> > cellRange;
+    sofa::gpu::cuda::CudaVector< int > cellGhost;
     sofa::gpu::cuda::CudaVector< sofa::gpu::cuda::Vec3f1 > sortedPos;
     const VecCoord* lastX;
 
-    static void kernel_updateGrid(int cellBits, float cellWidth, int nbPoints, void* particleHash, void* sortTmp, void* cellStart, const void* x);
-    static void kernel_reorderData(int nbPoints, const void* particleHash, void* sorted, const void* x);
+    static void kernel_updateGrid(int cellBits, float cellWidth, int nbPoints, void* particleIndex, void* particleHash, void* sortTmp, void* cellRange, void* cellGhost, const void* x);
+    //static void kernel_reorderData(int nbPoints, const void* particleIndex, const void* particleHash, void* sorted, const void* x);
 
 };
 

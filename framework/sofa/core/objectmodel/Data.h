@@ -60,8 +60,8 @@ class TData : public sofa::core::objectmodel::BaseData
 public:
     typedef T value_type;
 
-    TData( const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false )
-    : BaseData(helpMsg, isDisplayed, isReadOnly)
+    TData( const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false, Base* owner=NULL, const char* name="")
+    : BaseData(helpMsg, isDisplayed, isReadOnly, owner, name), parentData(NULL)
     {
     }
 
@@ -72,20 +72,15 @@ public:
     inline std::string getValueString() const;
     inline std::string getValueTypeString() const; // { return std::string(typeid(m_value).name()); }
 
-    inline bool setParentValue(BaseData* parent)
+    /// Get info about the value type of the associated variable
+    virtual const sofa::defaulttype::AbstractTypeInfo* getValueTypeInfo() const
     {
-	updateFromParentValue(parent);
-	BaseData::setDirty();
-        return true;
+        return sofa::defaulttype::VirtualTypeInfo<T>::get();
     }
 
     const T& virtualGetValue() const
     {
-        if (this->dirty)
-        {
-           TData* data = const_cast <TData*> (this);
-           data->update();
-        }
+	this->updateIfDirty();
         return value();
     }
 
@@ -93,7 +88,37 @@ public:
     {
         ++this->m_counter;
         value() = v;
-        BaseData::setDirty();
+        BaseData::setDirtyOutputs();
+    }
+
+    virtual T* virtualBeginEdit()
+    {
+        this->updateIfDirty();
+        ++this->m_counter;
+        BaseData::setDirtyOutputs();
+        return &(value());
+    }
+
+    virtual void virtualEndEdit()
+    {
+    }
+
+    /// Get current value as a void pointer (use getValueTypeInfo to find how to access it)
+    virtual const void* getValueVoidPtr() const
+    {
+        return &(virtualGetValue());
+    }
+
+    /// Begin edit current value as a void pointer (use getValueTypeInfo to find how to access it)
+    virtual void* beginEditVoidPtr()
+    {
+        return virtualBeginEdit();
+    }
+
+    /// End edit current value as a void pointer (use getValueTypeInfo to find how to access it)
+    virtual void endEditVoidPtr()
+    {
+        virtualEndEdit();
     }
 
     /** Try to read argument value from an input stream.
@@ -101,41 +126,56 @@ public:
      */
     virtual bool read( std::string& s )
     {
-	if (s.empty())
-	    return false;
+        if (s.empty())
+            return false;
         //serr<<"Field::read "<<s.c_str()<<sendl;
-	std::istringstream istr( s.c_str() );
-	istr >> value();
-	if( istr.fail() )
+        std::istringstream istr( s.c_str() );
+        istr >> value();
+        if( istr.fail() )
 	{
 	    return false;
 	}
 	else
 	{
 	    ++this->m_counter;
-            BaseData::setDirty();
+            BaseData::setDirtyOutputs();
 	    return true;
 	}
     }
     
-    virtual bool isCounterValid() const {return true;};
+    virtual bool isCounterValid() const {return true;}
+
 protected:
 
-
-    inline bool updateFromParentValue(BaseData* parent)
+    bool validParent(BaseData* parent)
     {
-        TData<T>* tData = dynamic_cast< TData<T>* >(parent);
-        if (tData)
+	if (dynamic_cast<TData<T>*>(parent))
+	    return true;
+	return BaseData::validParent(parent);
+    }
+
+    void doSetParent(BaseData* parent)
+    {
+	parentData = dynamic_cast<TData<T>*>(parent);
+	BaseData::doSetParent(parent);
+    }
+
+    bool updateFromParentValue(BaseData* parent)
+    {
+	if (parent == parentData)
         {
-            value() = tData->value();
+            value() = parentData->value();
             ++this->m_counter;
             return true;
         }
-        return false;
+	else
+	    return BaseData::updateFromParentValue(parent);
     }
 
     virtual const T& value() const = 0;
     virtual T& value() = 0;
+
+    TData<T>* parentData;
 };
 
 /**
@@ -150,8 +190,8 @@ public:
     /** Constructor
     \param helpMsg help on the field
      */
-    Data( const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false )
-    : TData<T>(helpMsg, isDisplayed, isReadOnly)
+    Data( const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false, Base* owner=NULL, const char* name="")
+    : TData<T>(helpMsg, isDisplayed, isReadOnly, owner, name)
     , m_value(T())// BUGFIX (Jeremie A.): Force initialization of basic types to 0 (bool, int, float, etc).
     {
     }
@@ -160,8 +200,8 @@ public:
     \param value default value
     \param helpMsg help on the field
      */
-    Data( const T& value, const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false  )
-    : TData<T>(helpMsg, isDisplayed, isReadOnly)
+    Data( const T& value, const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false, Base* owner=NULL, const char* name="")
+    : TData<T>(helpMsg, isDisplayed, isReadOnly, owner, name)
     , m_value(value)
     {
     }
@@ -171,17 +211,13 @@ public:
 
     inline T* beginEdit()
     {
-        if (this->dirty)
-        {
-           Data* data = const_cast <Data*> (this);
-           data->update();
-        }
+        this->updateIfDirty();
         ++this->m_counter;
+        BaseData::setDirtyOutputs();
         return &m_value;
     }
     inline void endEdit()
     {
-        BaseData::setDirty();
     }
     inline void setValue(const T& value )
     {
@@ -190,11 +226,7 @@ public:
     }
     inline const T& getValue() const
     {
-        if (this->dirty)
-        {
-           Data* data = const_cast <Data*> (this);
-           data->update();
-        }
+	this->updateIfDirty();
         return m_value;
     }
 
@@ -224,23 +256,13 @@ protected:
     T m_value;
     const T& value() const
     { 
-        if (this->dirty)
-        {
-           Data* data = const_cast <Data*> (this);
-           data->update();
-        }
-
+	this->updateIfDirty();
         return m_value; 
     }
 
     T& value()
     {
-        if (this->dirty)
-        {
-           Data* data = const_cast <Data*> (this);
-           data->update();
-        }
-
+	this->updateIfDirty();
         return m_value;
     }
 };

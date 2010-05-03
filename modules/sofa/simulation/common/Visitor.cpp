@@ -27,6 +27,7 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/Simulation.h>
 
+
 namespace sofa
 {
 
@@ -55,8 +56,8 @@ void Visitor::execute(sofa::core::objectmodel::BaseContext* c, bool doPrefetch)
     c->executeVisitor(this);
 }
 #ifdef SOFA_DUMP_VISITOR_INFO
-  simulation::Node::ctime_t Visitor::initDumpTime;
-  std::vector< simulation::Node::ctime_t  > Visitor::initNodeTime=std::vector< simulation::Node::ctime_t >();
+  Visitor::ctime_t Visitor::initDumpTime;
+  std::vector< Visitor::ctime_t  > Visitor::initNodeTime=std::vector< Visitor::ctime_t >();
   bool Visitor::printActivated=false;
   std::ostream *Visitor::outputVisitor=NULL;
 
@@ -117,16 +118,42 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
 }
 
   void Visitor::printComment(const std::string &s)
-{
-  if (Visitor::printActivated)
-    {
-      std::string info;
-      info+= "<!--";
-      info+=  s + " -->\n";
-      dumpInfo(info);
-    }
-}
+  {
+    if (Visitor::printActivated)
+      {
+        std::string info;
+        info+= "<!--";
+        info+=  s + " -->\n";
+        dumpInfo(info);
+      }
+  }
+  
+  void Visitor::dumpInfo( const std::string &info)
+ {
+   if (printActivated) {(*outputVisitor) << info; outputVisitor->flush();}
+ }
 
+  void Visitor::startDumpVisitor(std::ostream *s, double time)
+  {
+    initDumpTime = sofa::helper::system::thread::CTime::getRefTime();
+    printActivated=true; outputVisitor=s;
+    std::string initDump;
+    std::ostringstream ff; ff << "<TraceVisitor time=\"" << time << "\">\n";
+    dumpInfo(ff.str()); 
+  };
+  void Visitor::stopDumpVisitor()
+  {
+    std::ostringstream s;
+    s << "<TotalTime value=\"" << getTimeSpent(initDumpTime,  sofa::helper::system::thread::CTime::getRefTime() ) << "\" />\n";
+    s << "</TraceVisitor>\n";
+    dumpInfo(s.str());
+    printActivated=false;
+  };
+
+  double Visitor::getTimeSpent(ctime_t initTime, ctime_t endTime)
+  {
+    return endTime-initTime;
+  }
 
   void Visitor::printNode(const std::string &type, const std::string &name, const TRACE_ARGUMENT &arguments) 
  {

@@ -149,7 +149,10 @@ void MechanicalVisitor::printReadVectors(core::componentmodel::behavior::BaseMec
       std::ostringstream infoStream;
       TRACE_ARGUMENT arg;
       if (mm->getSize() < DUMP_VISITOR_MAX_SIZE_VECTOR)
-        arg.push_back(std::make_pair("value", infoStream.str()));
+        {
+          mm->printDOF(readVector[i], infoStream);
+          arg.push_back(std::make_pair("value", infoStream.str()));
+        }
       
       printNode("Vector", readVector[i].getName(), arg); 
       printCloseNode("Vector");
@@ -169,7 +172,10 @@ void MechanicalVisitor::printWriteVectors(core::componentmodel::behavior::BaseMe
       std::ostringstream infoStream;
       TRACE_ARGUMENT arg;
       if (mm->getSize() < DUMP_VISITOR_MAX_SIZE_VECTOR)
-        arg.push_back(std::make_pair("value", infoStream.str()));
+        {
+          mm->printDOF(writeVector[i], infoStream);
+          arg.push_back(std::make_pair("value", infoStream.str()));
+        }
       
       printNode("Vector", writeVector[i].getName(), arg);
       printCloseNode("Vector");

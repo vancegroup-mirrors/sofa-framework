@@ -43,7 +43,7 @@
 #include <sofa/component/topology/initTopology.h>
 #include <sofa/component/visualmodel/initVisualModel.h>
 #include <sofa/component/init.h>
-
+#include <sofa/component/loader/initLoader.h>
 
 namespace sofa
 {
@@ -75,7 +75,7 @@ void init()
     	initOdeSolver();
     	initTopology();
     	initVisualModel();
-
+	initLoader();
 
         first = false;
     }

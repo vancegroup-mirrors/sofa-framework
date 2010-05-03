@@ -93,9 +93,8 @@ namespace sofa
       class ChartsWidget: public QWidget
       {
       public:
-        ChartsWidget(QWidget *parent);
+        ChartsWidget(const std::string &name, QWidget *parent);
 
-        
         void setChart( std::vector< dataTime >& value, unsigned int s);
         void clear();
       protected:

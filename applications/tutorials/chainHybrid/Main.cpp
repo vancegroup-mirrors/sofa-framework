@@ -177,7 +177,6 @@ simulationType
     visualFixed->setColor("gray");
     torusFixed->addObject(visualFixed);
 
-
     //************************************
     //Torus FEM
     Node* torusFEM = getSimulation()->newNode("FEM");
@@ -491,8 +490,6 @@ simulationType
 
     RigidMechanicalMappingRigid3_to_3* mechaMappingRigid = new RigidMechanicalMappingRigid3_to_3(dofRigid, dofRigid_surf);
     RigidCollisionNode->addObject(mechaMappingRigid);
-#if 0
-#endif
 
     return root;
 }

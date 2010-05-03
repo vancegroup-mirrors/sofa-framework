@@ -131,19 +131,18 @@ Simulation::~Simulation(){
 /// Initialize the scene.
 			void Simulation::init ( Node* root )
 			{
-				//cerr<<"Simulation::init"<<endl;
-				setContext( root->getContext());
+                                //cerr<<"Simulation::init"<<endl;
+                                setContext( root->getContext());
 				if ( !root ) return;
                                 needToPrefetch = false;
-				root->execute<InitVisitor>();
+                                root->execute<InitVisitor>();
 				// Save reset state for later uses in reset()
                                 root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
 				root->execute<MechanicalPropagateFreePositionVisitor>();
 				root->execute<StoreResetStateVisitor>();
 
 				//Get the list of instruments present in the scene graph
-				getInstruments(root);
-
+                                getInstruments(root);
 			}
 
 			void Simulation::getInstruments( Node *node)
@@ -161,7 +160,7 @@ Simulation::~Simulation(){
 					return;
 
 #ifdef SOFA_DUMP_VISITOR_INFO
-				simulation::Visitor::printComment(std::string("Begin Step"));
+                                simulation::Visitor::printNode(std::string("Step"));
 #endif
 				{
 					AnimateBeginEvent ev ( dt );
@@ -194,20 +193,37 @@ Simulation::~Simulation(){
                                 root->execute ( act );
                             }
 
-				root->execute<UpdateMappingVisitor>();
+                            //Visual Information update: Ray Pick add a MechanicalMapping used as VisualMapping
+                            root->execute<UpdateMappingVisitor>();
                             {
                                 UpdateMappingEndEvent ev ( dt );
                                 PropagateEventVisitor act ( &ev );
                                 root->execute ( act );
                             }
-				root->execute<VisualUpdateVisitor>();
 #ifdef SOFA_DUMP_VISITOR_INFO
-				simulation::Visitor::printComment(std::string("End Step"));
+                                simulation::Visitor::printCloseNode(std::string("Step"));
 #endif
                                 *(nbSteps.beginEdit()) = nbSteps.getValue() + 1;
                                 nbSteps.endEdit();
 			}
 
+
+                        void Simulation::updateVisual ( Node* root, double dt )
+                        {
+#ifdef SOFA_DUMP_VISITOR_INFO
+                            simulation::Visitor::printNode(std::string("UpdateVisual"));
+#endif
+                            root->execute<UpdateMappingVisitor>();
+                            {
+                                UpdateMappingEndEvent ev ( dt );
+                                PropagateEventVisitor act ( &ev );
+                                root->execute ( act );
+                            }
+                            root->execute<VisualUpdateVisitor>();
+#ifdef SOFA_DUMP_VISITOR_INFO
+                            simulation::Visitor::printCloseNode(std::string("UpdateVisual"));
+#endif
+                        }
 
 /// Reset to initial state
 			void Simulation::reset ( Node* root )
@@ -219,6 +235,8 @@ Simulation::~Simulation(){
 				root->execute<MechanicalPropagatePositionAndVelocityVisitor>();
 				root->execute<UpdateMappingVisitor>();
                                 root->execute<VisualUpdateVisitor>();
+                                if (root != getVisualRoot())
+                                    getVisualRoot()->execute<VisualUpdateVisitor>();
 
                                 *(nbSteps.beginEdit()) = 0;
                                 nbSteps.endEdit();
@@ -228,25 +246,41 @@ Simulation::~Simulation(){
 			void Simulation::initTextures ( Node* root )
 			{
 				if ( !root ) return;
-				root->execute<VisualInitVisitor>();
+                                root->execute<VisualInitVisitor>();
+                                if (root != getVisualRoot())
+                                    getVisualRoot()->execute<VisualInitVisitor>();
 				// Do a visual update now as it is not done in load() anymore
 				/// \todo Separate this into another method?
-				root->execute<VisualUpdateVisitor>();
+                                root->execute<VisualUpdateVisitor>();
+                                if (root != getVisualRoot())
+                                    getVisualRoot()->execute<VisualUpdateVisitor>();
 			}
 
 
 /// Compute the bounding box of the scene.
-			void Simulation::computeBBox ( Node* root, SReal* minBBox, SReal* maxBBox )
+                        void Simulation::computeBBox ( Node* root, SReal* minBBox, SReal* maxBBox, bool init )
 			{
 				VisualComputeBBoxVisitor act;
 				if ( root )
 					root->execute ( act );
-				minBBox[0] = (SReal)(act.minBBox[0]);
-				minBBox[1] = (SReal)(act.minBBox[1]);
-				minBBox[2] = (SReal)(act.minBBox[2]);
-				maxBBox[0] = (SReal)(act.maxBBox[0]);
-				maxBBox[1] = (SReal)(act.maxBBox[1]);
-				maxBBox[2] = (SReal)(act.maxBBox[2]);
+                                if (init)
+                                {
+                                    minBBox[0] = (SReal)(act.minBBox[0]);
+                                    minBBox[1] = (SReal)(act.minBBox[1]);
+                                    minBBox[2] = (SReal)(act.minBBox[2]);
+                                    maxBBox[0] = (SReal)(act.maxBBox[0]);
+                                    maxBBox[1] = (SReal)(act.maxBBox[1]);
+                                    maxBBox[2] = (SReal)(act.maxBBox[2]);
+                                }
+                                else
+                                {
+                                    if ((SReal)(act.minBBox[0]) < minBBox[0] ) minBBox[0] = (SReal)(act.minBBox[0]);
+                                    if ((SReal)(act.minBBox[1]) < minBBox[1] ) minBBox[1] = (SReal)(act.minBBox[1]);
+                                    if ((SReal)(act.minBBox[2]) < minBBox[2] ) minBBox[2] = (SReal)(act.minBBox[2]);
+                                    if ((SReal)(act.maxBBox[0]) > maxBBox[0] ) maxBBox[0] = (SReal)(act.maxBBox[0]);
+                                    if ((SReal)(act.maxBBox[1]) > maxBBox[1] ) maxBBox[1] = (SReal)(act.maxBBox[1]);
+                                    if ((SReal)(act.maxBBox[2]) > maxBBox[2] ) maxBBox[2] = (SReal)(act.maxBBox[2]);
+                                }
 			}
 
 /// Update contexts. Required before drawing the scene if root flags are modified.
@@ -259,15 +293,14 @@ Simulation::~Simulation(){
 /// Update only Visual contexts. Required before drawing the scene if root flags are modified.( can filter by specifying a specific element)
                         void Simulation::updateVisualContext ( Node* root, Node::VISUAL_FLAG FILTER)
 			{
-			  if ( !root ) return;
+			  if ( !root ) return;                          
 			  UpdateVisualContextVisitor vis(FILTER);
 			  vis.execute(root);
 			}
 /// Render the scene
 			void Simulation::draw ( Node* root, helper::gl::VisualParameters* params )
 			{
-				if ( !root ) return;
-
+				if ( !root ) return;                                
 				if (root->visualManager.empty())
 				{
 					VisualDrawVisitor act ( core::VisualModel::Std );
@@ -507,11 +540,12 @@ Simulation::~Simulation(){
               {
                 instruments.clear();
                 instrumentInUse.setValue(-1);
+                this->setContext(0);
               }
             root->detachFromGraph();
             root->execute<CleanupVisitor>();
-            root->execute<DeleteVisitor>();            
-            delete root;
+            root->execute<DeleteVisitor>();
+            //delete root; //We unload only, and don't destrory the Node
           }
 //      void Simulation::addStep ( )
 //      {

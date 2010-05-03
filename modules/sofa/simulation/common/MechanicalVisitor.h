@@ -1177,7 +1177,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalExpressJacobianVisitor: public Mechan
 class SOFA_SIMULATION_COMMON_API MechanicalSolveLMConstraintVisitor: public MechanicalVisitor
 {
  public:
- MechanicalSolveLMConstraintVisitor(VecId v,bool priorStatePropagation):state(v), propagateState(priorStatePropagation){
+ MechanicalSolveLMConstraintVisitor(VecId v,bool priorStatePropagation,bool updateVelocity=true):state(v), propagateState(priorStatePropagation),isPositionChangeUpdateVelocity(updateVelocity){
 #ifdef SOFA_DUMP_VISITOR_INFO
     setReadWriteVectors();
 #endif
@@ -1201,6 +1201,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalSolveLMConstraintVisitor: public Mech
 #endif
     VecId state;
     bool propagateState;
+    bool isPositionChangeUpdateVelocity;
 };
 
 class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public MechanicalVisitor

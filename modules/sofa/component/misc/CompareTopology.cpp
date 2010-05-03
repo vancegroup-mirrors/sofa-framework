@@ -112,7 +112,7 @@ void CompareTopology::processCompareTopology()
       if (nbr != 0)
       {
 	const helper::vector <helper::fixed_array <unsigned int,2> >& SeqEdges = topo->getEdges();
-
+	
 	if ((unsigned int)topo->getNbEdges() != nbr)
 	{
 	  tmp = nbr - topo->getNbEdges();

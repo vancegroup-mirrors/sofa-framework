@@ -668,7 +668,10 @@ namespace sofa
 	      }
 
 	      {
-		  simulation::getSimulation()->draw(groot, &visualParameters);
+                //Draw Debug information of the components
+                simulation::getSimulation()->draw(groot, &visualParameters);
+                //Draw Visual Models
+                simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot(), &visualParameters);
 		if (_axis)
 		  {
 			this->setSceneBoundingBox(qglviewer::Vec(visualParameters.minBBox[0], visualParameters.minBBox[1], visualParameters.minBBox[2]),
@@ -754,18 +757,21 @@ namespace sofa
 	  }
 
 	  void QtGLViewer::viewAll()
-	  {
-	    getSimulation()->computeBBox(groot, visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr());
-	    sceneBBoxIsValid =  visualParameters.minBBox[0] <  visualParameters.maxBBox[0];
+          {
+              if (!groot) return;
 
-	    QGLViewer::setSceneBoundingBox(   qglviewer::Vec(visualParameters.minBBox.ptr()),qglviewer::Vec(visualParameters.maxBBox.ptr()) );
+              getSimulation()->computeBBox(groot, visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr());
+              getSimulation()->computeBBox(getSimulation()->getVisualRoot(), visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr(),false);
+              sceneBBoxIsValid =  visualParameters.minBBox[0] <  visualParameters.maxBBox[0];
 
-	    qglviewer::Vec pos;
-	    pos[0] = 0.0;
-	    pos[1] = 0.0;
-	    pos[2] = 75.0;
-	    camera()->setPosition(pos);
-	    camera()->showEntireScene();
+              QGLViewer::setSceneBoundingBox(   qglviewer::Vec(visualParameters.minBBox.ptr()),qglviewer::Vec(visualParameters.maxBBox.ptr()) );
+
+              qglviewer::Vec pos;
+              pos[0] = 0.0;
+              pos[1] = 0.0;
+              pos[2] = 75.0;
+              camera()->setPosition(pos);
+              camera()->showEntireScene();
 	  }
 
 

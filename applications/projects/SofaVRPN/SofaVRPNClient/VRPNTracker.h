@@ -5,8 +5,8 @@
  *      Author: froy
  */
 
-#ifndef VRPNTRACKER_H_
-#define VRPNTRACKER_H_
+#ifndef SOFAVRPNCLIENT_VRPNTRACKER_H_
+#define SOFAVRPNCLIENT_VRPNTRACKER_H_
 
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/defaulttype/Vec.h>
@@ -35,11 +35,11 @@ private:
 	vrpn_Tracker_Remote* tkr;
 
 	bool connectToServer();
-	void handleEvent(sofa::core::objectmodel::Event *);
+	void update();
 };
 
 }
 
 }
 
-#endif /* VRPNTRACKER_H_ */
+#endif /* SOFAVRPNCLIENT_VRPNTRACKER_H_ */

@@ -58,6 +58,7 @@ using std::string;
 Base::Base()
 : name(initData(&name,std::string("unnamed"),"name","object name"))
 , f_printLog(initData(&f_printLog, false, "printLog", "if true, print logs at run-time"))
+, f_tags(initData( &f_tags, "tags", "list of the subsets the objet belongs to"))
 {
     name.setGroup("Base");
     f_printLog.setGroup("Base");
@@ -83,7 +84,7 @@ void Base::processStream(std::ostream& out)
     if (&out == &serr)
     {	    
         serr << "\n";
-         if (f_printLog.getValue())
+         //if (f_printLog.getValue())
         std::cerr<< "WARNING[" << getName() << "(" << getClassName() << ")]: "<<serr.str();
         warnings += serr.str();
         serr.str("");
@@ -115,6 +116,25 @@ void Base::clearWarnings()
 void Base::clearOutputs()
 {
     outputs.clear();
+}
+
+
+bool Base::hasTag(Tag t) const
+{
+    return (f_tags.getValue().count( t ) > 0 );
+}
+
+
+void Base::addTag(Tag t)
+{
+    f_tags.beginEdit()->insert(t);
+    f_tags.endEdit();
+}
+
+void Base::removeTag(Tag t)
+{
+    f_tags.beginEdit()->erase(t);
+    f_tags.endEdit();
 }
 
 
@@ -529,16 +549,16 @@ void  Base::xmlWriteDatas ( std::ostream& out, unsigned level, bool compact )
     {
       BaseData* field = m_fieldVec[ i ].second;
 
-      if(  field->isPersistent() && field->isSet() )
+      if (!field->getLinkPath().empty() )
       {
-          if (field->getLinkPath().empty() )
+          out << " " << m_fieldVec[ i ].first << "=\""<< field->getLinkPath() << "\" ";
+      }
+      else
+      {
+          if(  field->isPersistent() && field->isSet())
           {
-              if (!field->getValueString().empty())
+              if (!field->getValueString().empty() )
                   out << " " <<m_fieldVec[ i ].first << "=\""<< field->getValueString() << "\" ";
-          }
-          else
-          {
-              out << " " << m_fieldVec[ i ].first << "=\""<< field->getLinkPath() << "\" ";
           }
       }
     }

@@ -3518,7 +3518,7 @@ int vrpn_Generic_Server_Object::setup_WiiMote(char * & pch, char * line, FILE * 
   }
 
   // Make sure there's room for a new WiiMote
-  if (num_XInputPads >= VRPN_GSO_MAX_WIIMOTES) {
+  if (num_wiimotes >= VRPN_GSO_MAX_WIIMOTES) {
     fprintf(stderr,"Too many WiiMotes in config file");
     return -1;
   }

@@ -143,6 +143,9 @@ void vrpn_WiiMote::initialize_wiimote_state(void)
   // Turn off rumbling
   wiiuse_rumble(wiimote->device, 0);
 
+  //F.ROY : Change sensivity
+  wiiuse_set_ir_sensitivity(wiimote->device, 5);
+
   // Turn on IR sensing
   wiiuse_set_ir(wiimote->device, 1);
 }

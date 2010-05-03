@@ -71,9 +71,10 @@ namespace sofa
           , repartition ( initData ( &repartition,"repartition","repartition between input DOFs and skinned vertices" ) )
           , coefs ( initData ( &coefs,"coefs","weights list for the influences of the references Dofs" ) )
           , nbRefs ( initData ( &nbRefs, ( unsigned ) 3,"nbRefs","nb references for skinning" ) )
+					, displayBlendedFrame ( initData ( &displayBlendedFrame,"1", "displayBlendedFrame","weights list for the influences of the references Dofs" ) )
           , computeWeights ( true )
           , wheighting ( WEIGHT_INVDIST )
-          , interpolation ( INTERPOLATION_LINEAR )
+					, interpolation ( INTERPOLATION_LINEAR )
       {
         maskFrom = NULL;
         if (core::componentmodel::behavior::BaseMechanicalState *stateFrom = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *>(from))
@@ -100,7 +101,6 @@ namespace sofa
         VecCoord& xto = *this->toModel->getX();
         const VecInCoord& xfrom = *this->fromModel->getX();
         initPosDOFs.resize ( xfrom.size() );
-        initPos.resize ( xto.size() * nbRefs.getValue() );
 
         sofa::helper::vector<double> m_coefs = coefs.getValue();
         sofa::helper::vector<unsigned int> m_reps = repartition.getValue();
@@ -114,13 +114,12 @@ namespace sofa
         {
           case INTERPOLATION_LINEAR:
           {
+            initPos.resize ( xto.size() * nbRefs.getValue() );
             for ( unsigned int i = 0; i < xto.size(); i++ )
-            {
               for ( unsigned int m = 0; m < nbRefs.getValue(); m++ )
               {
                 initPos[nbRefs.getValue() *i+m] = xfrom[m_reps[nbRefs.getValue() *i+m]].getOrientation().inverseRotate ( xto[i] - xfrom[m_reps[nbRefs.getValue() *i+m]].getCenter() );
               }
-            }
             break;
           }
           default:{}
@@ -346,13 +345,13 @@ namespace sofa
       {
         const sofa::helper::vector<unsigned int>& m_reps = repartition.getValue();
         const sofa::helper::vector<double>& m_coefs = coefs.getValue();
-        out.resize ( initPos.size() / nbRefs.getValue() );
-        rotatedPoints.resize ( initPos.size() );
 
         switch ( interpolation )
         {
           case INTERPOLATION_LINEAR:
           {
+            rotatedPoints.resize ( initPos.size() );
+            out.resize ( initPos.size() / nbRefs.getValue() );
             for ( unsigned int i=0 ; i<out.size(); i++ )
             {
               out[i] = Coord();
@@ -380,25 +379,42 @@ namespace sofa
       {
         const sofa::helper::vector<unsigned int>& m_reps = repartition.getValue();
         const sofa::helper::vector<double>& m_coefs = coefs.getValue();
+				VecCoord& xto = *this->toModel->getX();
+				out.resize ( xto.size() );
+				Deriv v,omega;
 
-        Deriv v,omega;
-        out.resize ( initPos.size() / nbRefs.getValue() );
+				/*
+				vector<double> dqTest; //TODO to remove after the convergence test
+				dqTest.resize( out.size()); //TODO to remove after the convergence test
+				vector<Vec3d> dqJiWi; //TODO to remove after the convergence test
+				dqJiWi.resize( out.size()); //TODO to remove after the convergence test
+				vector<Mat81> dqLi; //TODO to remove after the convergence test
+				dqLi.resize( out.size() * nbRefs.getValue()); //TODO to remove after the convergence test
+				*/
 
         if (!(maskTo->isInUse()) )
           {
-            for ( unsigned int i=0;i<out.size();i++ )
-              {
-                out[i] = Deriv();
-                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
-                  {
-                    const int idx=nbRefs.getValue() *i+m;
-                    const int idxReps=m_reps[idx];
+						switch ( interpolation )
+						{
+							case INTERPOLATION_LINEAR:
+							{
+								for ( unsigned int i=0;i<out.size();i++ )
+								{
+									out[i] = Deriv();
+									for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+									{
+										const int idx=nbRefs.getValue() *i+m;
+										const int idxReps=m_reps[idx];
 
-                    v = in[idxReps].getVCenter();
-                    omega = in[idxReps].getVOrientation();
-                    out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_coefs[idx];
-                  }
-              }
+										v = in[idxReps].getVCenter();
+										omega = in[idxReps].getVOrientation();
+										out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_coefs[idx];
+									}
+								}
+								break;
+							}
+							default:{}
+						}
           }
         else
           {
@@ -406,22 +422,30 @@ namespace sofa
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
             ParticleMask::InternalStorage::const_iterator it;
-            for (it=indices.begin();it!=indices.end();it++)
-              {
-                const int i=(int)(*it);
-                out[i] = Deriv();
-                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
-                  {
-                    const int idx=nbRefs.getValue() *i+m;
-                    const int idxReps=m_reps[idx];
+						switch ( interpolation )
+						{
+							case INTERPOLATION_LINEAR:
+							{
+								for (it=indices.begin();it!=indices.end();it++)
+									{
+										const int i=(int)(*it);
+										out[i] = Deriv();
+										for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+											{
+												const int idx=nbRefs.getValue() *i+m;
+												const int idxReps=m_reps[idx];
 
-                    v = in[idxReps].getVCenter();
-                    omega = in[idxReps].getVOrientation();
-                    out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_coefs[idx];
-                  }
-              }
+												v = in[idxReps].getVCenter();
+												omega = in[idxReps].getVOrientation();
+												out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_coefs[idx];
+											}
+									}
+								break;
+							}
+							default:{}
+						}
           }
-      }
+			}
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
@@ -431,45 +455,60 @@ namespace sofa
 
         Deriv v,omega;
         if ( !(maskTo->isInUse()) )
-          {	
-            maskFrom->setInUse(false);
-            for ( unsigned int i=0;i<in.size();i++ )
-              {
-                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
-                  {
-                    Deriv f = in[i];
-                    v = f;
-                    const int idx=nbRefs.getValue() *i+m;
-                    const int idxReps=m_reps[idx];
-                    omega = cross ( rotatedPoints[idx],f );
-                    out[idxReps].getVCenter() += v * m_coefs[idx];
-                    out[idxReps].getVOrientation() += omega * m_coefs[idx];
-                  }
-              }
+          {
+						switch ( interpolation )
+						{
+							case INTERPOLATION_LINEAR:
+							{
+								maskFrom->setInUse(false);
+								for ( unsigned int i=0;i<in.size();i++ )
+									{
+										for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+											{
+												Deriv f = in[i];
+												v = f;
+												const int idx=nbRefs.getValue() *i+m;
+												const int idxReps=m_reps[idx];
+												omega = cross ( rotatedPoints[idx],f );
+												out[idxReps].getVCenter() += v * m_coefs[idx];
+												out[idxReps].getVOrientation() += omega * m_coefs[idx];
+											}
+									}
+								break;
+							}
+							default:{}
+						}
           }
         else
           {
-
             typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
             ParticleMask::InternalStorage::const_iterator it;
-            for (it=indices.begin();it!=indices.end();it++)
-              {
-                const int i=(int)(*it);
-                for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
-                  {
-                    Deriv f = in[i];
-                    v = f;
-                    const int idx=nbRefs.getValue() *i+m;
-                    const int idxReps=m_reps[idx];
-                    omega = cross ( rotatedPoints[idx],f );
-                    out[idxReps].getVCenter() += v * m_coefs[idx];
-                    out[idxReps].getVOrientation() += omega * m_coefs[idx];
+						switch ( interpolation )
+						{
+							case INTERPOLATION_LINEAR:
+							{
+								for (it=indices.begin();it!=indices.end();it++)
+								{
+									const int i=(int)(*it);
+									for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+									{
+										Deriv f = in[i];
+										v = f;
+										const int idx=nbRefs.getValue() *i+m;
+										const int idxReps=m_reps[idx];
+										omega = cross ( rotatedPoints[idx],f );
+										out[idxReps].getVCenter() += v * m_coefs[idx];
+										out[idxReps].getVOrientation() += omega * m_coefs[idx];
 
-                    maskFrom->insertEntry(idxReps);
-                  }
-              }
+										maskFrom->insertEntry(idxReps);
+									}
+								}
+								break;
+							}
+							default:{}
+						}
           }
 
       }
@@ -486,6 +525,10 @@ namespace sofa
         sofa::helper::vector<bool> flags;
         int outSize = out.size();
         out.resize ( in.size() + outSize ); // we can accumulate in "out" constraints from several mappings
+						switch ( interpolation )
+						{
+							case INTERPOLATION_LINEAR:
+							{
         for ( unsigned int i=0;i<in.size();i++ )
         {
           v.clear();
@@ -515,6 +558,10 @@ namespace sofa
               out[outSize+i].add (j,v[j] );
           }
         }
+								break;
+							}
+							default:{}
+						}
       }
 
       template <class BasicMapping>
@@ -549,6 +596,7 @@ namespace sofa
         }
 
       }
+
 
     } // namespace mapping
 

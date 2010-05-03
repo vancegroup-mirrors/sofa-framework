@@ -77,8 +77,7 @@ namespace loader
 
   bool MeshLoader::canLoad()
   {
-    FILE* file;
-    char cmd[1024];
+    std::string cmd;
 
     // -- Check filename field:
     if(m_filename.getValue() == "")
@@ -89,8 +88,8 @@ namespace loader
 
 	  
     // -- Check if file exist:
-	const char* filename = m_filename.getFullPath().c_str();
-	std::string sfilename (filename);
+    const char* filename = m_filename.getFullPath().c_str();
+    std::string sfilename (filename);
 
     if (!sofa::helper::system::DataRepository.findFile(sfilename))
     {
@@ -98,22 +97,25 @@ namespace loader
       return false;
     }
 
+    std::ifstream file(filename);
+    
     // -- Check if file is readable:
-    if ((file = fopen(filename, "r")) == NULL)
+    if (!file.good())
     {
       serr << "Error: MeshLoader: Cannot read file '" << m_filename << "'." << sendl;
       return false;
     }
     
     // -- Step 2.2: Check first line.
-    if (!readLine(cmd, sizeof(cmd), file))
+    file >> cmd;
+    if (cmd.empty())
     {
       serr << "Error: MeshLoader: Cannot read first line in file '" << m_filename << "'." << sendl;
-      fclose(file);
+      file.close();
       return false;
     }
 
-    fclose(file);
+    file.close();
     return true;
   }
   

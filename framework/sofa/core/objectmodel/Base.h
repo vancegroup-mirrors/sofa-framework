@@ -34,6 +34,7 @@
 #include <sofa/core/objectmodel/DataPtr.h>
 #include <sofa/core/objectmodel/Data.h>
 #include <sofa/core/objectmodel/BaseObjectDescription.h>
+#include <sofa/core/objectmodel/Tag.h>
 #include <string>
 #include <map>
 
@@ -56,7 +57,7 @@ namespace objectmodel
  *  Most importantly it defines how to retrieve information about an object (name, type, fields).
  *
  */
-class SOFA_CORE_API Base : public helper::system::SofaOStreamContainer
+class SOFA_CORE_API Base
 {
 public:
     typedef TClass< Base, void > MyClass;
@@ -65,6 +66,13 @@ public:
 
     Base();
     virtual ~Base();
+
+private:
+
+    /// Copy constructor is not allowed
+    Base(const Base& b);
+
+public:
 
     /// Accessor to the object name
     std::string getName() const;
@@ -210,6 +218,25 @@ public:
       m_aliasData.insert(std::make_pair(std::string(alias),field));
     }
 
+
+    /// @name tags
+    ///   Methods related to subsets belonging
+    /// @{
+
+    /// Represents the subsets the object belongs to
+
+    const sofa::core::objectmodel::TagSet& getTags() const { return f_tags.getValue(); }
+
+    /// Return true if the object belong to the given subset
+    bool hasTag( Tag t ) const;
+
+    /// Add a subset qualification to the object
+    void addTag(Tag t);
+    /// Remove a subset qualification to the object
+    void removeTag(Tag t);
+
+    /// @}
+
     /// Parse the given description to assign values to this object's fields and potentially other parameters
     virtual void parse ( BaseObjectDescription* arg );
 
@@ -218,7 +245,7 @@ public:
     /// Accessor to the map containing all the aliases of this object
     const std::multimap< std::string, BaseData* >& getAliases() const { return m_aliasData; }
 
-    mutable sofa::helper::system::SofaOStream sendl;
+    mutable sofa::helper::system::SofaOStream<Base> sendl;
     mutable std::ostringstream                serr;
     mutable std::ostringstream                sout;
 
@@ -228,9 +255,9 @@ public:
     void clearWarnings();
     void clearOutputs();
 
-protected:
-
     void processStream(std::ostream& out);
+
+protected:
 
     std::string warnings;
     std::string outputs;
@@ -286,6 +313,8 @@ public:
     Data<std::string> name;
 
     Data<bool> f_printLog;
+
+    Data< sofa::core::objectmodel::TagSet > f_tags;
 };
 
 } // namespace objectmodel

@@ -96,25 +96,32 @@ public:
 #endif /* __STL_MEMBER_TEMPLATES */
 
 
+#ifndef SOFA_NO_VECTOR_ACCESS_FAILURE
+
 /// Read/write random access 
-reference operator[](size_type n) { 
+reference operator[](size_type n) 
+{ 
 #ifndef NDEBUG
 	if (n>=this->size())
 		vector_access_failure(this, this->size(), n, typeid(T));
 	//assert( n<this->size() );
 #endif
   	return *(this->begin() + n); 
-  }
+}
 
 /// Read-only random access
-const_reference operator[](size_type n) const { 
+const_reference operator[](size_type n) const 
+{ 
 #ifndef NDEBUG
 	if (n>=this->size())
 		vector_access_failure(this, this->size(), n, typeid(T));
 	//assert( n<this->size() );
 #endif
   	return *(this->begin() + n); 
-  }
+}
+
+#endif // SOFA_NO_VECTOR_ACCESS_FAILURE
+
 
   std::ostream& write(std::ostream& os) const
   {
@@ -345,7 +352,7 @@ void removeValue( T1& v, const T2& elem )
 template<class T, class TT> 
 void removeIndex( std::vector<T,TT>& v, size_t index )
 {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(SOFA_NO_VECTOR_ACCESS_FAILURE)
 	//assert( 0<= static_cast<int>(index) && index <v.size() );
 	if (index>=v.size())
 		vector_access_failure(&v, v.size(), index, typeid(T));

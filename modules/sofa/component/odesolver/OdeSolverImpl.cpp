@@ -115,7 +115,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
   }
 
 
-  void OdeSolverImpl::solveConstraint(bool priorStatePropagation, VecId Order)
+  void OdeSolverImpl::solveConstraint(bool priorStatePropagation, VecId Order, bool isPositionChangesUpdateVelocity)
   {
     //Get the matrices through mappings
     //************************************************************
@@ -656,7 +656,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
         if (!mass) continue;
         std::vector< DofToMatrix<SparseMatrixEigen> >::const_iterator invM_LtransMatrix = std::find( invMass_Ltrans.begin(),invMass_Ltrans.end(), dofs);            
 
-        constraintStateCorrection(Order, dofs, invM_LtransMatrix->matrix , LambdaEigen, dofUsed[dofs]);
+        constraintStateCorrection(Order, dofs, invM_LtransMatrix->matrix , LambdaEigen, dofUsed[dofs],isPositionChangesUpdateVelocity);
       }
 
 #ifdef SOFA_DUMP_VISITOR_INFO
@@ -692,7 +692,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
 
   void OdeSolverImpl::constraintStateCorrection(VecId &Order, sofa::core::componentmodel::behavior::BaseMechanicalState* dofs, 
-                                                const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed)
+                                                const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool isPositionChangesUpdateVelocity)
   {
 
     //Correct Dof
@@ -750,6 +750,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
               }
 	  }
 
+        if (isPositionChangesUpdateVelocity)
           {
             const double h=1.0/getContext()->getDt();
 

@@ -36,7 +36,8 @@ HEADERS += initMisc.h \
            EvalPointsDistance.inl \
            EvalSurfaceDistance.h \
            EvalSurfaceDistance.inl \
-           MeshTetraStuffing.h
+           MeshTetraStuffing.h \
+           TopologicalChangeProcessor.h
 
 
 SOURCES += initMisc.cpp \
@@ -55,7 +56,8 @@ SOURCES += initMisc.cpp \
            WriteTopology.cpp \
            EvalPointsDistance.cpp \
            EvalSurfaceDistance.cpp \
-           MeshTetraStuffing.cpp 
+           MeshTetraStuffing.cpp \
+           TopologicalChangeProcessor.cpp
 
 
 

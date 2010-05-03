@@ -93,7 +93,7 @@ typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
     /** Find all the LMConstraint present in the scene graph and solve a part of them
      * @param Id nature of the constraint to be solved
      **/
-    void solveConstraint(bool priorStatePropagation, VecId Id);
+    void solveConstraint(bool priorStatePropagation, VecId Id, bool isPositionChangesUpdateVelocity=true);
 
  protected:
     /// Construct the Right hand term of the system
@@ -106,7 +106,7 @@ typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
      * @param propageVelocityChange need to propagate the correction done to the velocity for the position
      **/
     void constraintStateCorrection(VecId &id, sofa::core::componentmodel::behavior::BaseMechanicalState* dof,
-                                   const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed);
+                                   const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool isPositionChangesUpdateVelocity);
 
 
  template <class T>

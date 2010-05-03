@@ -98,6 +98,7 @@
 #include <qbuttongroup.h>
 #include <qradiobutton.h>
 #include <qinputdialog.h>
+#include <qmime.h>
 #endif
 
 #include <GenGraphForm.h>
@@ -291,10 +292,8 @@ typedef QApplication QSOFAApplication;
 
 
       RealGUI::RealGUI ( const char* viewername, const std::vector<std::string>& /*options*/ )
-	: viewerName ( viewername ), viewer ( NULL ), currentTab ( NULL ), tabInstrument (NULL),  graphListener ( NULL ), dialog ( NULL )
+	: viewerName ( viewername ), viewer ( NULL ), currentTab ( NULL ), tabInstrument (NULL),  graphListener ( NULL ), dialog ( NULL ), saveReloadFile(false)
       {
-
-
 
 	connect(this, SIGNAL(quit()), this, SLOT(fileExit()));
 
@@ -388,6 +387,7 @@ typedef QApplication QSOFAApplication;
 	connect ( dtEdit, SIGNAL ( textChanged ( const QString& ) ), this, SLOT ( setDt ( const QString& ) ) );
 	connect ( stepButton, SIGNAL ( clicked() ), this, SLOT ( step() ) );
 	connect ( ExportGraphButton, SIGNAL ( clicked() ), this, SLOT ( exportGraph() ) );
+        connect ( ExportVisualGraphButton, SIGNAL ( clicked() ), this, SLOT ( exportGraph() ) );
 	connect ( dumpStateCheckBox, SIGNAL ( toggled ( bool ) ), this, SLOT ( dumpState ( bool ) ) );
 	connect ( displayComputationTimeCheckBox, SIGNAL ( toggled ( bool ) ), this, SLOT ( displayComputationTime ( bool ) ) );
 	connect ( exportGnuplotFilesCheckbox, SIGNAL ( toggled ( bool ) ), this, SLOT ( setExportGnuplot ( bool ) ) );
@@ -430,7 +430,7 @@ typedef QApplication QSOFAApplication;
 	//ADD GUI for Background
 	//------------------------------------------------------------------------
 	//Informations
-	Q3GroupBox *groupInfo = new Q3GroupBox(QString("Background"), tabs->page(3));
+	Q3GroupBox *groupInfo = new Q3GroupBox(QString("Background"), TabPage);
 	groupInfo->setColumns(4);
 	QWidget     *global    = new QWidget(groupInfo);
 	QGridLayout *globalLayout = new QGridLayout(global);
@@ -459,18 +459,16 @@ typedef QApplication QSOFAApplication;
 	  globalLayout2->addWidget(backgroundImage,2,1);
 	  connect( backgroundImage, SIGNAL( returnPressed() ), this, SLOT( updateBackgroundImage() ) );
 
-
-#ifdef SOFA_QT4
-	vboxLayout4->insertWidget(1,groupInfo);
-#else
-	TabPageLayout->insertWidget(1,groupInfo);
-#endif
+          ((QVBoxLayout*)(TabPage->layout()))->insertWidget(1,groupInfo);
 
 	//---------------------------------------------------------------------------------------------------
 #ifdef SOFA_PML
 	pmlreader = NULL;
 	lmlreader = NULL;
 #endif
+
+        graphListener = new GraphListenerQListView( graphView );
+        visualGraphListener = new GraphListenerQListView( visualGraphView);
 
 	//Center the application
 	const QRect screen = QApplication::desktop()->availableGeometry(QApplication::desktop()->primaryScreen());
@@ -613,7 +611,13 @@ typedef QApplication QSOFAApplication;
         QVBoxLayout *descriptionLayout = new QVBoxLayout(descriptionScene);
         htmlPage = new QTextBrowser(descriptionScene);
         descriptionLayout->addWidget(htmlPage);
+#ifdef SOFA_QT4
         connect(htmlPage, SIGNAL(sourceChanged(const QUrl&)), this, SLOT(changeHtmlPage(const QUrl&)));
+#else 
+        // QMimeSourceFactory::defaultFactory()->setExtensionType("html", "text/utf8");
+        htmlPage->mimeSourceFactory()->setExtensionType("html", "text/utf8");;
+        connect(htmlPage, SIGNAL(sourceChanged(const QString&)), this, SLOT(changeHtmlPage(const QString&)));
+#endif
 	//--------
         SofaPluginManager::getInstance()->hide();        
         SofaMouseManager::getInstance()->hide();
@@ -804,20 +808,26 @@ typedef QApplication QSOFAApplication;
 	std::string filename = viewer->getSceneFileName();
 
 	if ( viewer->getScene() !=NULL )
-	{
-		simulation::getSimulation()->unload ( viewer->getScene() );
-	  if ( graphListener!=NULL )
-	  {
-	    delete graphListener;
-	    graphListener = NULL;
-	  }
+        {
+            simulation::getSimulation()->unload ( viewer->getScene() ); delete viewer->getScene() ;
+            simulation::getSimulation()->unload ( simulation::getSimulation()->getVisualRoot() );
+
+            if ( graphListener!=NULL )
+            {
+                delete graphListener;
+                graphListener = new GraphListenerQListView( graphView );
+                simulation::getSimulation()->getVisualRoot()->removeListener(visualGraphListener);
+                delete visualGraphListener;
+                visualGraphListener = new GraphListenerQListView( visualGraphView );
+
+            }
 	  graphView->clear();
+          visualGraphView->clear();
 	}
 
 // 	fileOpen(filename);
 // 	GNode* groot = new GNode; // empty scene to do the transition
 // 	setScene ( groot,filename.c_str() ); // keep the current display flags
-
 
 	viewer->removeViewerTab(tabs);
 
@@ -869,7 +879,6 @@ typedef QApplication QSOFAApplication;
 	      }
 #endif
 
-
 	viewerName = name;
 
 	addViewer();
@@ -877,17 +886,16 @@ typedef QApplication QSOFAApplication;
 	viewer->configureViewerTab(tabs);
 
 
-
 	if (filename.rfind(".simu") != std::string::npos)
 	  fileOpenSimu(filename.c_str() );
 	//else if (filename.rfind(".pscn") != std::string::npos)
 	//  fileOpenScript(filename.c_str(), PHP );
 	//else
-		fileOpen ( filename.c_str() ); // keep the current display flags
+        fileOpen ( filename.c_str() ); // keep the current display flags
 	return true;
       }
 
-      void RealGUI::fileOpen ( std::string filename )
+      void RealGUI::fileOpen ( std::string filename, bool temporaryFile )
       {
         if (filename.substr(filename.size()-5) == ".simu") 
           {
@@ -920,28 +928,35 @@ typedef QApplication QSOFAApplication;
 	if ( viewer->getScene() !=NULL )
 	{
           viewer->getPickHandler()->reset();//activateRay(false);
-          simulation::getSimulation()->unload ( viewer->getScene() );
+
+          simulation::getSimulation()->unload ( viewer->getScene() ); delete viewer->getScene() ;
+          simulation::getSimulation()->unload ( getSimulation()->getVisualRoot() );
+
 	  if ( graphListener!=NULL )
-	  {
-	    delete graphListener;
-	    graphListener = NULL;
-	  }
+          {              
+            delete graphListener;
+            graphListener = new GraphListenerQListView( graphView );            
+            simulation::getSimulation()->getVisualRoot()->removeListener(visualGraphListener);
+            delete visualGraphListener;
+            visualGraphListener = new GraphListenerQListView( visualGraphView );
+          }
 	  graphView->clear();
+          visualGraphView->clear();
         }
+
+
 	//Clear the list of modified dialog opened
 	current_Id_modifyDialog=0;
-	map_modifyDialogOpened.clear();
-
-	simulation::Node* root = simulation::getSimulation()->load ( filename.c_str() );
+        map_modifyDialogOpened.clear();
+        simulation::Node* root = simulation::getSimulation()->load ( filename.c_str() );
         simulation::getSimulation()->init ( root );
 	if ( root == NULL )
 	  {
 	    qFatal ( "Failed to load %s",filename.c_str() );
 	    stopDumpVisitor();
 	    return;
-	  }
-
-	setScene ( root, filename.c_str() );
+          }
+        setScene ( root, filename.c_str(), temporaryFile );
         //need to create again the output streams !!
 	simulation::getSimulation()->gnuplotDirectory.setValue(gnuplot_directory);
         setExportGnuplot(exportGnuplotFilesCheckbox->isChecked());
@@ -960,13 +975,18 @@ typedef QApplication QSOFAApplication;
 	  }
 	if ( viewer->getScene() !=NULL )
 	{
-	  simulation::getSimulation()->unload ( viewer->getScene() );
+          simulation::getSimulation()->unload ( viewer->getScene() ); delete viewer->getScene() ;
+          simulation::getSimulation()->unload ( simulation::getSimulation()->getVisualRoot() );
 	  if ( graphListener!=NULL )
-	  {
-	    delete graphListener;
-	    graphListener = NULL;
+          {
+              delete graphListener;
+              graphListener = new GraphListenerQListView( graphView );              
+              simulation::getSimulation()->getVisualRoot()->removeListener(visualGraphListener);
+              delete visualGraphListener;
+              visualGraphListener = new GraphListenerQListView( visualGraphView);
 	  }
 	  graphView->clear();
+          visualGraphView->clear();
 	}
 	GNode *simuNode = dynamic_cast< GNode *> (simulation::getSimulation()->load ( scene.c_str() ));
         getSimulation()->init(simuNode);
@@ -1013,6 +1033,18 @@ typedef QApplication QSOFAApplication;
 	   }
 	  }
 	}
+        for (graph_iterator = visualGraphListener->items.begin(); graph_iterator != visualGraphListener->items.end(); graph_iterator++)
+        {
+          node_clicked = dynamic_cast< Node* >(graph_iterator->first);
+          if (node_clicked!=NULL )
+          {
+           if (!node_clicked->isActive() )
+           {
+             item_clicked =  visualGraphListener->items[node_clicked];
+             graphDesactivateNode();
+           }
+          }
+        }
       }
 
 
@@ -1022,6 +1054,7 @@ typedef QApplication QSOFAApplication;
           {
             if (!temporaryFile) updateRecentlyOpened(filename);
             setTitle ( filename );
+            saveReloadFile=temporaryFile;
             std::string extension=sofa::helper::system::SetDirectory::GetExtension(filename);
             std::string htmlFile=filename;htmlFile.resize(htmlFile.size()-extension.size()-1);
             htmlFile+=".html";          
@@ -1031,7 +1064,13 @@ typedef QApplication QSOFAApplication;
 				  htmlFile = "file:///"+htmlFile;
 #endif
                 descriptionScene->show();
+#ifdef SOFA_QT4
                 htmlPage->setSource(QUrl(QString(htmlFile.c_str())));
+#else
+                htmlPage->mimeSourceFactory()->setFilePath(QString(htmlFile.c_str()));    
+                htmlPage->setSource(QString(htmlFile.c_str()));
+#endif
+
               }
 
           }
@@ -1043,8 +1082,6 @@ typedef QApplication QSOFAApplication;
 	  tabInstrument = NULL;
 	}
 
-
-	graphView->clear();
 	viewer->setScene ( root, filename );
  	viewer->resetView();
 	initial_time = (root != NULL)?root->getTime():0;
@@ -1250,21 +1287,26 @@ typedef QApplication QSOFAApplication;
 	    else if (s.endsWith( ".simu") )
 	      fileOpenSimu(filename);
 	    else
-	      fileOpen ( filename );
+	      fileOpen ( filename, saveReloadFile);
 	  }
 #else
 	if (s.endsWith( ".simu") )
 	  fileOpenSimu(s.ascii());
 	else
-	  fileOpen ( s.ascii() );
+	  fileOpen ( s.ascii(),saveReloadFile );
 #endif
 
       }
 
       void RealGUI::fileSave()
       {
-	Node *node = viewer->getScene();
 	std::string filename = viewer->getSceneFileName();
+        std::string message="You are about to overwrite your current scene: "  + filename + "\nAre you sure you want to do that ?";
+
+          if ( QMessageBox::warning ( this, "Saving the Scene",message.c_str(), QMessageBox::Yes | QMessageBox::Default, QMessageBox::No ) != QMessageBox::Yes )
+            return;
+
+	Node *node = viewer->getScene();
 	fileSaveAs ( node,filename.c_str() );
       }
 
@@ -1420,7 +1462,10 @@ typedef QApplication QSOFAApplication;
 
 
 	    //root->setLogTime(true);
-		simulation::getSimulation()->animate ( root, root->getDt() );
+            //T=T+DT
+            SReal dt=root->getDt();
+            simulation::getSimulation()->animate ( root, dt );
+            simulation::getSimulation()->updateVisual( simulation::getSimulation()->getVisualRoot() , dt );
 
 	    if ( m_dumpState )
 	      simulation::getSimulation()->dumpState ( root, *m_dumpStateStream );
@@ -1658,6 +1703,7 @@ typedef QApplication QSOFAApplication;
 	if ( root )
 	  {
 	    simulation::getSimulation()->reset ( root );
+	    simulation::getSimulation()->reset ( simulation::getSimulation()->getVisualRoot() );
 	    root->setTime(initial_time);
 	    eventNewTime();
 
@@ -1673,7 +1719,10 @@ typedef QApplication QSOFAApplication;
       //
       void RealGUI::exportGraph()
       {
-	exportGraph ( getScene() );
+          if (currentTab == TabGraph)
+              exportGraph ( getScene() );
+          else if (currentTab == TabVisualGraph)
+              exportGraph ( getSimulation()->getVisualRoot());
       }
 
 
@@ -1960,14 +2009,19 @@ typedef QApplication QSOFAApplication;
 	  else  	                                    fileOpen(filename);
       }
       
-
+#ifdef SOFA_QT4
       void RealGUI::changeHtmlPage( const QUrl& u)
       {
         std::string path=u.path().ascii();
 #ifdef WIN32
-	  path = path.substr(1); 
+        path = path.substr(1); 
 #endif
-	  path  = sofa::helper::system::DataRepository.getFile(path);
+#else
+      void RealGUI::changeHtmlPage( const QString& u)
+      {
+        std::string path=u.ascii();
+#endif
+        path  = sofa::helper::system::DataRepository.getFile(path);
         std::string extension=sofa::helper::system::SetDirectory::GetExtension(path.c_str());
         if (extension == "xml" || extension == "scn") fileOpen(path);
       }
@@ -2005,19 +2059,78 @@ typedef QApplication QSOFAApplication;
 		root->getContext()->setShowMechanicalMappings ( value );
 		root->getContext()->setShowForceFields ( value );
 		root->getContext()->setShowInteractionForceFields ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowVisualModels ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowBehaviorModels ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowCollisionModels ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowBoundingCollisionModels ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowMappings ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowMechanicalMappings ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowForceFields ( value );
+		sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowInteractionForceFields ( value );
 		break;
-	      case  Node::VISUALMODELS:            root->getContext()->setShowVisualModels ( value ); break;
-	      case  Node::BEHAVIORMODELS:          root->getContext()->setShowBehaviorModels ( value ); break;
-	      case  Node::COLLISIONMODELS:         root->getContext()->setShowCollisionModels ( value ); break;
-	      case  Node::BOUNDINGCOLLISIONMODELS: root->getContext()->setShowBoundingCollisionModels ( value );  break;
-	      case  Node::MAPPINGS:                root->getContext()->setShowMappings ( value ); break;
-	      case  Node::MECHANICALMAPPINGS:      root->getContext()->setShowMechanicalMappings ( value ); break;
-	      case  Node::FORCEFIELDS:             root->getContext()->setShowForceFields ( value ); break;
-	      case  Node::INTERACTIONFORCEFIELDS:  root->getContext()->setShowInteractionForceFields ( value );break;
-	      case  Node::WIREFRAME:               root->getContext()->setShowWireFrame ( value );break;
-	      case  Node::NORMALS:                 root->getContext()->setShowNormals ( value );break;
+	      case  Node::VISUALMODELS:            
+                {
+                  root->getContext()->setShowVisualModels ( value ); 
+                  sofa::simulation::getSimulation()->getVisualRoot()->setShowVisualModels( value);
+                  break;
+                }
+	      case  Node::BEHAVIORMODELS:
+                {
+                  root->getContext()->setShowBehaviorModels ( value ); 
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowBehaviorModels ( value ); 
+                  break;
+                }
+	      case  Node::COLLISIONMODELS:
+                {
+                  root->getContext()->setShowCollisionModels ( value ); 
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowCollisionModels ( value ); 
+                  break;
+                }
+	      case  Node::BOUNDINGCOLLISIONMODELS:
+                {
+                  root->getContext()->setShowBoundingCollisionModels ( value );  
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowBoundingCollisionModels ( value );  
+                  break;
+                }
+	      case  Node::MAPPINGS: 
+                {
+                  root->getContext()->setShowMappings ( value );
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowMappings ( value );
+                  break;
+                }
+	      case  Node::MECHANICALMAPPINGS:
+                {
+                  root->getContext()->setShowMechanicalMappings ( value ); 
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowMechanicalMappings ( value ); 
+                  break;
+                }
+	      case  Node::FORCEFIELDS: 
+                {
+                  root->getContext()->setShowForceFields ( value ); 
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowForceFields ( value ); 
+                  break;
+                }
+	      case  Node::INTERACTIONFORCEFIELDS: 
+                {
+                  root->getContext()->setShowInteractionForceFields ( value );
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowWireFrame ( value );
+                  break;
+                }
+	      case  Node::WIREFRAME:               
+                {
+                  root->getContext()->setShowWireFrame ( value );
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowWireFrame ( value );
+                  break;
+                }
+	      case  Node::NORMALS:  
+                {
+                  root->getContext()->setShowNormals ( value );
+                  sofa::simulation::getSimulation()->getVisualRoot()->getContext()->setShowNormals ( value );
+                  break;
+                }
 	      }
             sofa::simulation::getSimulation()->updateVisualContext ( root, (simulation::Node::VISUAL_FLAG) FILTER );
+            sofa::simulation::getSimulation()->updateVisualContext ( sofa::simulation::getSimulation()->getVisualRoot(), (simulation::Node::VISUAL_FLAG) FILTER );
 	  }
 	viewer->getQWidget()->update();
       }

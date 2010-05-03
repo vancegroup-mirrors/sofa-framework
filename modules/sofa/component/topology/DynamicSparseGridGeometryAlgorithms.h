@@ -58,7 +58,8 @@ namespace sofa
 
           virtual void init();
 
-          unsigned int getTopoIndexFromRegularGridIndex ( unsigned int index );
+          HexaID getTopoIndexFromRegularGridIndex ( unsigned int index );
+          unsigned int getRegularGridIndexFromTopoIndex ( HexaID index );
 
         protected:
           DynamicSparseGridTopologyContainer* topoContainer;

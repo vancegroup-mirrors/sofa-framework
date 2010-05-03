@@ -40,45 +40,57 @@ using namespace sofa::simulation;
 namespace sofa
 {
   
-  namespace component
-  {
+namespace component
+{
 
-    namespace collision
+namespace collision
+{
+
+
+  ComponentMouseInteraction::ComponentMouseInteraction():parentNode(NULL), nodeRayPick(NULL), mouseInteractor(NULL)/* ,mouseCollision(NULL) */
+{          
+}
+
+ComponentMouseInteraction::~ComponentMouseInteraction()
+{
+    if (nodeRayPick)
     {
-      
-	  	
-		ComponentMouseInteraction::ComponentMouseInteraction():parentNode(NULL), nodeRayPick(NULL)/* ,mouseCollision(NULL) */
-		{          
-		}
-
-                ComponentMouseInteraction::~ComponentMouseInteraction()
-		{          
-                  nodeRayPick->execute< simulation::DeleteVisitor >();
-                  delete nodeRayPick;
-		}
+        nodeRayPick->execute< simulation::DeleteVisitor >();
+        delete nodeRayPick;
+    }
+}
 
 
-		void ComponentMouseInteraction::init(Node* node)
-		{
-		  parentNode = node;
-		  nodeRayPick = simulation::getSimulation()->newNode("RayPick");
-		}
+void ComponentMouseInteraction::init(Node* node)
+{
+    parentNode = node;
+    //nodeRayPick = simulation::getSimulation()->newNode("RayPick");
+}
 
-		void ComponentMouseInteraction::activate()
-		{
-		  parentNode->addChild(nodeRayPick);
-                  nodeRayPick->updateContext();
-		}
+void ComponentMouseInteraction::createRayPickNode(Node* /*node*/)
+{
+    //parentNode = node;
+    nodeRayPick = simulation::getSimulation()->newNode("RayPick");
+}
 
-		void ComponentMouseInteraction::deactivate()
-		{
-		  nodeRayPick->detachFromGraph();
-		}
+void ComponentMouseInteraction::activate()
+{
+    if (!nodeRayPick) createRayPickObjects(parentNode);
+    parentNode->addChild(nodeRayPick);
+    nodeRayPick->updateContext();
+}
 
-		void ComponentMouseInteraction::reset()
-		{
-		  mouseInteractor->cleanup();
-		}
+void ComponentMouseInteraction::deactivate()
+{
+    if (nodeRayPick)
+        nodeRayPick->detachFromGraph();
+}
+
+void ComponentMouseInteraction::reset()
+{
+    if (mouseInteractor)
+        mouseInteractor->cleanup();
+}
 
 #ifndef SOFA_DOUBLE
    template class TComponentMouseInteraction<defaulttype::Vec3fTypes>;

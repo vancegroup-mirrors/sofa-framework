@@ -48,8 +48,12 @@ Derives from BaseObject in order to model the parameters as Datas, which makes t
 
       TreeSimulation();
 
+      Node *getVisualRoot();
+
       /// Create a new Node of the simulation
-      Node* newNode(const std::string& name);            
+      Node* newNode(const std::string& name);
+    protected:
+      Node *visualNode;
     };
 
 /** Get the (unique) simulation which controls the scene.

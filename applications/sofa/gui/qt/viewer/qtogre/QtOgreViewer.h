@@ -255,6 +255,7 @@ using namespace sofa::simulation;
 	      virtual void timerEvent(QTimerEvent * event){Q_UNUSED(event);updateIntern();}
 
 	      virtual void keyPressEvent ( QKeyEvent * e );
+              virtual void keyReleaseEvent ( QKeyEvent * e );
 	      virtual void mousePressEvent(QMouseEvent* evt);
 	      virtual void mouseReleaseEvent(QMouseEvent* evt);
 	      virtual void mouseMoveEvent(QMouseEvent* evt);

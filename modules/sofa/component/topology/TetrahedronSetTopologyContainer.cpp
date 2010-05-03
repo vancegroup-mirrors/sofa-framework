@@ -644,6 +644,7 @@ const sofa::helper::vector<Tetrahedron> &TetrahedronSetTopologyContainer::getTet
 	{
 #ifndef NDEBUG
 		bool ret = true;
+		helper::ReadAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = d_tetrahedron;
 
 		if(hasTetrahedraAroundVertex()) 
 		{

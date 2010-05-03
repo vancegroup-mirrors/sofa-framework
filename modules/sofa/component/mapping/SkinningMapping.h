@@ -71,11 +71,18 @@ namespace sofa
           typedef typename Coord::value_type Real;
           enum { N=Coord::static_size };
           typedef defaulttype::Mat<N,N,Real> Mat;
+          typedef defaulttype::Mat<8,8,Real> Mat88;
+          typedef defaulttype::Mat<3,8,Real> Mat38;
+          typedef defaulttype::Mat<8,6,Real> Mat86;
+          typedef defaulttype::Mat<3,6,Real> Mat36;
+          typedef defaulttype::Mat<6,1,Real> Mat61;
+          typedef defaulttype::Mat<6,3,Real> Mat63;
+          typedef defaulttype::Mat<3,1,Real> Mat31;
+          typedef defaulttype::Mat<8,1,Real> Mat81;
 
         protected:
           sofa::helper::vector<InCoord> initPosDOFs; // translation and rotation of the blended reference frame i, where i=0..n.
-          sofa::helper::vector<Coord> initPos; // pos: point coord in  the reference frame i, where i=0..n ( + 1 for the blended reference frame)
-          sofa::helper::vector<Coord> initBlendedPos; // pos: point coord in  the blended reference frames, where i=0..n ( + 1 for the blended reference frame)
+          sofa::helper::vector<Coord> initPos; // pos: point coord in the world reference frame
           sofa::helper::vector<Coord> rotatedPoints;
 
           core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskFrom;
@@ -84,10 +91,17 @@ namespace sofa
           Data<sofa::helper::vector<unsigned int> > repartition;
           Data<sofa::helper::vector<double> >  coefs;
           Data<unsigned int> nbRefs;
+					Data<bool> displayBlendedFrame;
+					Data<sofa::helper::vector<Mat36> > matJ;
 
           bool computeWeights;
           WeightingType wheighting;
           InterpolationType interpolation;
+					//typename Out::VecCoord x1; //TODO remove after test
+					//typename Out::VecCoord x2; //TODO remove after test
+					//vector<DualQuat> q1; //TODO remove after test
+					//vector<DualQuat> q2; //TODO remove after test
+					//vector<Mat86> L; 
 
           class Loader;
           void load ( const char* filename );
@@ -128,7 +142,8 @@ namespace sofa
           const sofa::helper::vector<double>& getWeightCoefs() { return coefs.getValue(); }
           const sofa::helper::vector<unsigned int>& getRepartition() { return repartition.getValue(); }
           bool getComputeWeights() { return computeWeights; }
-      };
+					
+			};
 
 using core::Mapping;
 using core::componentmodel::behavior::MechanicalMapping;

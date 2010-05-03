@@ -102,7 +102,7 @@ namespace sofa
       template <class In, class Out>
       void BarycentricMapperRegularGridTopology<In,Out>::init ( const typename Out::VecCoord& out, const typename In::VecCoord& /*in*/ )
       {
-        if ( map.size() != 0 ) return;
+        //if ( map.size() != 0 ) return;
 
         int outside = 0;
         clear ( out.size() );
@@ -111,11 +111,11 @@ namespace sofa
           for ( unsigned int i=0;i<out.size();i++ )
           {
             Vector3 coefs;
-            int cube = topology->findCube ( Vector3 ( out[i] ), coefs[0], coefs[1], coefs[2] );
+            int cube = topology->findCube ( Vector3 ( Out::getCPos(out[i]) ), coefs[0], coefs[1], coefs[2] );
             if ( cube==-1 )
             {
               ++outside;
-              cube = topology->findNearestCube ( Vector3 ( out[i] ), coefs[0], coefs[1], coefs[2] );
+              cube = topology->findNearestCube ( Vector3 ( Out::getCPos(out[i]) ), coefs[0], coefs[1], coefs[2] );
             }
 
             this->addPointInCube ( cube, coefs.ptr() );
@@ -154,11 +154,11 @@ namespace sofa
           for ( unsigned int i=0;i<out.size();i++ )
           {
             Vector3 coefs;
-            int cube = topology->findCube ( Vector3 ( out[i] ), coefs[0], coefs[1], coefs[2] );
+            int cube = topology->findCube ( Vector3 ( Out::getCPos(out[i]) ), coefs[0], coefs[1], coefs[2] );
             if ( cube==-1 )
             {
               ++outside;
-              cube = topology->findNearestCube ( Vector3 ( out[i] ), coefs[0], coefs[1], coefs[2] );
+              cube = topology->findNearestCube ( Vector3 ( Out::getCPos(out[i]) ), coefs[0], coefs[1], coefs[2] );
             }
             Vector3 baryCoords = coefs;
             this->addPointInCube ( cube, baryCoords.ptr() );
@@ -255,7 +255,7 @@ namespace sofa
         const sofa::core::componentmodel::topology::BaseMeshTopology::Line& elem = this->topology->getLine ( lineIndex );
         const typename In::Coord p0 = ( *points ) [elem[0]];
         const typename In::Coord pA = ( *points ) [elem[1]] - p0;
-        typename In::Coord pos = p - p0;
+        typename In::Coord pos = Out::getCPos(p) - p0;
         baryCoords[0] = ( ( pos*pA ) /pA.norm2() );
         return this->addPointInLine ( lineIndex, baryCoords );
       }
@@ -268,7 +268,7 @@ namespace sofa
         const typename In::Coord p0 = ( *points ) [elem[0]];
         const typename In::Coord pA = ( *points ) [elem[1]] - p0;
         const typename In::Coord pB = ( *points ) [elem[2]] - p0;
-        typename In::Coord pos = p - p0;
+        typename In::Coord pos = Out::getCPos(p) - p0;
         // First project to plane
         typename In::Coord normal = cross ( pA, pB );
         Real norm2 = normal.norm2();
@@ -286,7 +286,7 @@ namespace sofa
         const typename In::Coord p0 = ( *points ) [elem[0]];
         const typename In::Coord pA = ( *points ) [elem[1]] - p0;
         const typename In::Coord pB = ( *points ) [elem[3]] - p0;
-        typename In::Coord pos = p - p0;
+        typename In::Coord pos = Out::getCPos(p) - p0;
         Mat<3,3,typename In::Real> m,mt,base;
         m[0] = pA;
         m[1] = pB;
@@ -346,7 +346,7 @@ namespace sofa
                 SReal lengthEdge = lengthEdges[e];
                 Vector3 V12 =unitaryVectors[e];
 
-                coef = ( V12 ) *Vector3 ( out[i]-in[edges[e][0]] ) /lengthEdge;
+                coef = ( V12 ) *Vector3 ( Out::getCPos(out[i])-in[edges[e][0]] ) /lengthEdge;
                 if ( coef >= 0 && coef <= 1 ) {addPointInLine ( e,&coef );  break; }
 
               }
@@ -384,7 +384,7 @@ namespace sofa
             }
             for ( unsigned int i=0;i<out.size();i++ )
             {
-              Vector3 pos = out[i];
+              Vector3 pos = Out::getCPos(out[i]);
               Vector3 coefs;
               int index = -1;
               double distance = 1e10;
@@ -446,7 +446,7 @@ namespace sofa
           }
           for ( unsigned int i=0;i<out.size();i++ )
           {
-            Vector3 pos = out[i];
+            Vector3 pos = Out::getCPos(out[i]);
             Vector3 coefs;
             int index = -1;
             double distance = 1e10;
@@ -504,7 +504,7 @@ namespace sofa
         const topology::Edge& elem = this->topology->getEdge ( edgeIndex );
         const typename In::Coord p0 = ( *points ) [elem[0]];
         const typename In::Coord pA = ( *points ) [elem[1]] - p0;
-        typename In::Coord pos = p - p0;
+        typename In::Coord pos = Out::getCPos(p) - p0;
         baryCoords[0] = dot ( pA,pos ) /dot ( pA,pA );
         return this->addPointInLine ( edgeIndex, baryCoords );
       }
@@ -547,7 +547,7 @@ namespace sofa
         const typename In::Coord p0 = ( *points ) [elem[0]];
         const typename In::Coord pA = ( *points ) [elem[1]] - p0;
         const typename In::Coord pB = ( *points ) [elem[2]] - p0;
-        typename In::Coord pos = p - p0;
+        typename In::Coord pos = Out::getCPos(p) - p0;
         // First project to plane
         typename In::Coord normal = cross ( pA, pB );
         Real norm2 = normal.norm2();
@@ -586,7 +586,7 @@ namespace sofa
 
         for ( unsigned int i=0;i<out.size();i++ )
         {
-          Vec3d pos = out[i];
+          Vec3d pos = Out::getCPos(out[i]);
           Vector3 coefs;
           int index = -1;
           double distance = 1e10;
@@ -634,7 +634,7 @@ namespace sofa
         const typename In::Coord p0 = ( *points ) [elem[0]];
         const typename In::Coord pA = ( *points ) [elem[1]] - p0;
         const typename In::Coord pB = ( *points ) [elem[3]] - p0;
-        typename In::Coord pos = p - p0;
+        typename In::Coord pos = Out::getCPos(p) - p0;
         Mat<3,3,typename In::Real> m,mt,base;
         m[0] = pA;
         m[1] = pB;
@@ -676,7 +676,7 @@ namespace sofa
 
         for ( unsigned int i=0;i<out.size();i++ )
         {
-          Vec3d pos = out[i];
+          Vec3d pos = Out::getCPos(out[i]);
           Vector3 coefs;
           int index = -1;
           double distance = 1e10;
@@ -750,7 +750,7 @@ namespace sofa
 
         for ( unsigned int i=0;i<out.size();i++ )
         {
-          Vec3d pos = out[i];
+          Vec3d pos = Out::getCPos(out[i]);
           Vector3 coefs;
           int index = -1;
           double distance = 1e10;
@@ -841,7 +841,7 @@ namespace sofa
 
         //coord.assign(out.begin(), out.end());
         coord.resize ( out.size() );
-        for ( unsigned int i=0;i<out.size();++i ) coord[i] = out[i];
+        for ( unsigned int i=0;i<out.size();++i ) coord[i] = Out::getCPos(out[i]);
 
         _geomAlgo->findNearestElementsInRestPos ( coord, elements, coefs, distances );
 
@@ -989,6 +989,16 @@ namespace sofa
 
       }
 
+	  template <class BasicMapping>
+      void BarycentricMapping<BasicMapping>::reinit()
+      {
+		if ( mapper != NULL )
+        {
+		  mapper->clear();
+          mapper->init ( *((const Out *)this->toModel)->getX(), *((const In *)this->fromModel)->getX() );
+        }
+	  }
+
       template <class BasicMapping>
       void BarycentricMapping<BasicMapping>::apply ( typename Out::VecCoord& out, const typename In::VecCoord& in )
       {
@@ -1017,8 +1027,8 @@ namespace sofa
             int index = map1d[i].in_index;
             {
               const sofa::core::componentmodel::topology::BaseMeshTopology::Line& line = lines[index];
-              out[i] = in[line[0]] * ( 1-fx )
-                       + in[line[1]] * fx;
+              Out::setCPos(out[i] , in[line[0]] * ( 1-fx )
+                           + in[line[1]] * fx );
             }
           }
         }
@@ -1034,17 +1044,17 @@ namespace sofa
             if ( index<c0 )
             {
               const sofa::core::componentmodel::topology::BaseMeshTopology::Triangle& triangle = triangles[index];
-              out[i+i0] = in[triangle[0]] * ( 1-fx-fy )
-                          + in[triangle[1]] * fx
-                          + in[triangle[2]] * fy;
+              Out::setCPos(out[i+i0] , in[triangle[0]] * ( 1-fx-fy )
+                           + in[triangle[1]] * fx
+                           + in[triangle[2]] * fy );
             }
             else
             {
               const sofa::core::componentmodel::topology::BaseMeshTopology::Quad& quad = quads[index-c0];
-              out[i+i0] = in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
+              Out::setCPos(out[i+i0] , in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
                           + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
                           + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
-                          + in[quad[2]] * ( ( fx ) * ( fy ) );
+                           + in[quad[2]] * ( ( fx ) * ( fy ) ) );
             }
           }
         }
@@ -1061,10 +1071,10 @@ namespace sofa
             if ( index<c0 )
             {
               const sofa::core::componentmodel::topology::BaseMeshTopology::Tetra& tetra = tetrahedra[index];
-              out[i+i0] = in[tetra[0]] * ( 1-fx-fy-fz )
+              Out::setCPos(out[i+i0] , in[tetra[0]] * ( 1-fx-fy-fz )
                           + in[tetra[1]] * fx
                           + in[tetra[2]] * fy
-                          + in[tetra[3]] * fz;
+                           + in[tetra[3]] * fz );
             }
             else
             {
@@ -1073,23 +1083,23 @@ namespace sofa
 #else
               const sofa::core::componentmodel::topology::BaseMeshTopology::Cube& cube = cubes[index-c0];
 #endif
-              out[i+i0] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                          + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+              Out::setCPos(out[i+i0] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                           + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                          + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                          + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                           + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                           + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                          + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                          + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                           + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                           + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                          + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                          + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                           + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                           + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                          + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                          + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                           + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                           + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                          + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                          + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                           + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                           + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
             }
           }
@@ -1110,7 +1120,7 @@ namespace sofa
           const Real fx = map[i].baryCoords[0];
           const Real fy = map[i].baryCoords[1];
           const Real fz = map[i].baryCoords[2];
-          out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+          Out::setCPos(out[i] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
                    + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
                    + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
@@ -1123,10 +1133,10 @@ namespace sofa
                    + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
                    + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                   + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                   + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
                    + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                   + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                   + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
         }
       }
@@ -1155,7 +1165,7 @@ namespace sofa
 			const Real fy = it->baryCoords[1];
 			const Real fz = it->baryCoords[2];
 		
-			out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+			Out::setCPos(out[i] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
 				+ in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
 				+ in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
@@ -1168,10 +1178,10 @@ namespace sofa
 				+ in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
 				+ in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-				+ in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+				+ in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
 				+ in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-				+ in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                                + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
 			++it;
 			++i;
@@ -1191,8 +1201,8 @@ namespace sofa
           const Real fx = vectorData[i].baryCoords[0];
           int index = vectorData[i].in_index;
           const topology::Edge& edge = edges[index];
-          out[i] = in[edge[0]] * ( 1-fx )
-                   + in[edge[1]] * fx;
+          Out::setCPos(out[i] , in[edge[0]] * ( 1-fx )
+                       + in[edge[1]] * fx );
         }
       }
 
@@ -1207,9 +1217,9 @@ namespace sofa
           const Real fy = map.getValue()[i].baryCoords[1];
           int index = map.getValue()[i].in_index;
           const topology::Triangle& triangle = triangles[index];
-          out[i] = in[triangle[0]] * ( 1-fx-fy )
+          Out::setCPos(out[i] , in[triangle[0]] * ( 1-fx-fy )
                    + in[triangle[1]] * fx
-                   + in[triangle[2]] * fy;
+                       + in[triangle[2]] * fy );
         }
       }
 
@@ -1224,10 +1234,10 @@ namespace sofa
           const Real fy = map.getValue()[i].baryCoords[1];
           int index = map.getValue()[i].in_index;
           const topology::Quad& quad = quads[index];
-          out[i] = in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
+          Out::setCPos(out[i] , in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
                    + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
                    + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
-                   + in[quad[2]] * ( ( fx ) * ( fy ) );
+                       + in[quad[2]] * ( ( fx ) * ( fy ) ) );
         }
       }
 
@@ -1243,10 +1253,10 @@ namespace sofa
           const Real fz = map.getValue()[i].baryCoords[2];
           int index = map.getValue()[i].in_index;
           const topology::Tetrahedron& tetra = tetrahedra[index];
-          out[i] = in[tetra[0]] * ( 1-fx-fy-fz )
+          Out::setCPos(out[i] , in[tetra[0]] * ( 1-fx-fy-fz )
                    + in[tetra[1]] * fx
                    + in[tetra[2]] * fy
-                   + in[tetra[3]] * fz;
+                       + in[tetra[3]] * fz );
         }
         //serr<<"BarycentricMapperTetrahedronSetTopology<In,Out>::apply, in = "<<in<<sendl;
         //serr<<"BarycentricMapperTetrahedronSetTopology<In,Out>::apply, out = "<<out<<sendl;
@@ -1264,14 +1274,14 @@ namespace sofa
           const Real fz = map.getValue()[i].baryCoords[2];
           int index = map.getValue()[i].in_index;
           const topology::Hexahedron& cube = cubes[index];
-          out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+          Out::setCPos(out[i] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
                    + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
                    + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
                    + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
                    + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
                    + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
                    + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                   + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                       + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
         }
       }
 
@@ -1287,14 +1297,14 @@ namespace sofa
           const Real fz = map.getValue()[hexaPointId].baryCoords[2];
           int index = map.getValue()[hexaPointId].in_index;
           const topology::Hexahedron& cube = cubes[index];
-          out[hexaPointId] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+          Out::setCPos(out[hexaPointId] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
                    + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
                    + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
                    + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
                    + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
                    + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
                    + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                   + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                       + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 	  }
 	  //--
 
@@ -1331,8 +1341,8 @@ namespace sofa
                     int index = map1d[i].in_index;
                     {
                       const sofa::core::componentmodel::topology::BaseMeshTopology::Line& line = lines[index];
-                      out[i] = in[line[0]] * ( 1-fx )
-                        + in[line[1]] * fx;
+                      Out::setDPos(out[i] , in[line[0]] * ( 1-fx )
+                                   + in[line[1]] * fx );
                     }
                   }
               }
@@ -1348,17 +1358,17 @@ namespace sofa
                     if ( index<c0 )
                       {
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Triangle& triangle = triangles[index];
-                        out[i+i0] = in[triangle[0]] * ( 1-fx-fy )
-                          + in[triangle[1]] * fx
-                          + in[triangle[2]] * fy;
+                        Out::setDPos(out[i+i0] , in[triangle[0]] * ( 1-fx-fy )
+                                     + in[triangle[1]] * fx
+                                     + in[triangle[2]] * fy );
                       }
                     else
                       {
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Quad& quad = quads[index-c0];
-                        out[i+i0] = in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
-                          + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
-                          + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
-                          + in[quad[2]] * ( ( fx ) * ( fy ) );
+                        Out::setDPos(out[i+i0] , in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
+                                     + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
+                                     + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
+                                     + in[quad[2]] * ( ( fx ) * ( fy ) ) );
                       }
                   }
               }
@@ -1375,10 +1385,10 @@ namespace sofa
                     if ( index<c0 )
                       {
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Tetra& tetra = tetrahedra[index];
-                        out[i+i0] = in[tetra[0]] * ( 1-fx-fy-fz )
-                          + in[tetra[1]] * fx
-                          + in[tetra[2]] * fy
-                          + in[tetra[3]] * fz;
+                        Out::setDPos(out[i+i0] , in[tetra[0]] * ( 1-fx-fy-fz )
+                                     + in[tetra[1]] * fx
+                                     + in[tetra[2]] * fy
+                                     + in[tetra[3]] * fz );
                       }
                     else
                       {
@@ -1387,23 +1397,23 @@ namespace sofa
 #else
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Cube& cube = cubes[index-c0];
 #endif
-                        out[i+i0] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                          + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                        Out::setDPos(out[i+i0] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                                     + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                          + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                          + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                          + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                          + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                          + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                          + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                                     + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                                     + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                          + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                          + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                                     + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                                     + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                        + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                          + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                                     + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                                     + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
                       }
                   }
@@ -1433,8 +1443,8 @@ namespace sofa
                     int index = map1d[i].in_index;
                     {
                       const sofa::core::componentmodel::topology::BaseMeshTopology::Line& line = lines[index];
-                      out[i] = in[line[0]] * ( 1-fx )
-                        + in[line[1]] * fx;
+                      Out::setDPos(out[i] , in[line[0]] * ( 1-fx )
+                                   + in[line[1]] * fx );
                     }
                   }
                 // 2D elements
@@ -1450,17 +1460,17 @@ namespace sofa
                     if ( index<c0 )
                       {
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Triangle& triangle = triangles[index];
-                        out[i] = in[triangle[0]] * ( 1-fx-fy )
-                          + in[triangle[1]] * fx
-                          + in[triangle[2]] * fy;   
+                        Out::setDPos(out[i] , in[triangle[0]] * ( 1-fx-fy )
+                                     + in[triangle[1]] * fx
+                                     + in[triangle[2]] * fy );
                       }
                     else
                       {
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Quad& quad = quads[index-c0];
-                        out[i] = in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
-                          + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
-                          + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
-                          + in[quad[2]] * ( ( fx ) * ( fy ) );
+                        Out::setDPos(out[i] , in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
+                                     + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
+                                     + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
+                                     + in[quad[2]] * ( ( fx ) * ( fy ) ) );
                       }
                   }
                 // 3D elements
@@ -1475,10 +1485,10 @@ namespace sofa
                     if ( index<c0 )
                       {
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Tetra& tetra = tetrahedra[index];
-                        out[i] = in[tetra[0]] * ( 1-fx-fy-fz )
-                          + in[tetra[1]] * fx
-                          + in[tetra[2]] * fy
-                          + in[tetra[3]] * fz;
+                        Out::setDPos(out[i] , in[tetra[0]] * ( 1-fx-fy-fz )
+                                     + in[tetra[1]] * fx
+                                     + in[tetra[2]] * fy
+                                     + in[tetra[3]] * fz );
                       }
                     else
                       {
@@ -1487,23 +1497,23 @@ namespace sofa
 #else
                         const sofa::core::componentmodel::topology::BaseMeshTopology::Cube& cube = cubes[index-c0];
 #endif
-                        out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                          + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                        Out::setDPos(out[i] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                                     + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                          + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                          + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                          + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                          + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                                     + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                          + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                          + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                                     + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                                     + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                          + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                          + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                                     + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                                     + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                        + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                          + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                                     + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                                     + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
                       }
                   }
@@ -1526,23 +1536,23 @@ namespace sofa
                 const Real fx = map[i].baryCoords[0];
                 const Real fy = map[i].baryCoords[1];
                 const Real fz = map[i].baryCoords[2];
-                out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                Out::setDPos(out[i] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                  + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                  + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
               }
           }
@@ -1565,23 +1575,23 @@ namespace sofa
                 const Real fx = map[index].baryCoords[0];
                 const Real fy = map[index].baryCoords[1];
                 const Real fz = map[index].baryCoords[2];
-                out[index] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                Out::setDPos(out[index] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                  + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                  + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
               }
           }
@@ -1602,23 +1612,23 @@ namespace sofa
                 const Real fx = map[i].baryCoords[0];
                 const Real fy = map[i].baryCoords[1];
                 const Real fz = map[i].baryCoords[2];
-                out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                Out::setDPos(out[i] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                  + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                  + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
               }
           }
@@ -1641,23 +1651,23 @@ namespace sofa
                 const Real fx = map[index].baryCoords[0];
                 const Real fy = map[index].baryCoords[1];
                 const Real fz = map[index].baryCoords[2];
-                out[index] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                Out::setDPos(out[index] , in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #else
-                  + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
 #endif
-                  + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
 #ifdef SOFA_NEW_HEXA
-                  + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #else
-                + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) );
+                             + in[cube[6]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[7]] * ( ( fx ) * ( fy ) * ( fz ) ) );
 #endif
               }
           }
@@ -1676,8 +1686,8 @@ namespace sofa
                 const Real fx = map.getValue()[i].baryCoords[0];
                 int index = map.getValue()[i].in_index;
                 const topology::Edge& edge = edges[index];
-                out[i] = in[edge[0]] * ( 1-fx )
-                  + in[edge[1]] * fx;
+                Out::setDPos(out[i] , in[edge[0]] * ( 1-fx )
+                             + in[edge[1]] * fx );
               }
           }
         else
@@ -1693,8 +1703,8 @@ namespace sofa
                 const Real fx = map.getValue()[i].baryCoords[0];
                 int index = map.getValue()[i].in_index;
                 const topology::Edge& edge = edges[index];
-                out[i] = in[edge[0]] * ( 1-fx )
-                  + in[edge[1]] * fx;
+                Out::setDPos(out[i] , in[edge[0]] * ( 1-fx )
+                             + in[edge[1]] * fx);
               }
           }
       }
@@ -1714,9 +1724,9 @@ namespace sofa
                 const Real fy = map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
                 const topology::Triangle& triangle = triangles[index];
-                out[i] = in[triangle[0]] * ( 1-fx-fy )
-                  + in[triangle[1]] * fx
-                  + in[triangle[2]] * fy;
+                Out::setDPos(out[i] , in[triangle[0]] * ( 1-fx-fy )
+                             + in[triangle[1]] * fx
+                             + in[triangle[2]] * fy);
               }
           }
         else
@@ -1734,9 +1744,9 @@ namespace sofa
                 const Real fy = map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
                 const topology::Triangle& triangle = triangles[index];
-                out[i] = in[triangle[0]] * ( 1-fx-fy )
-                  + in[triangle[1]] * fx
-                  + in[triangle[2]] * fy;
+                Out::setDPos(out[i] , in[triangle[0]] * ( 1-fx-fy )
+                             + in[triangle[1]] * fx
+                             + in[triangle[2]] * fy);
               }
           }
       }
@@ -1756,10 +1766,10 @@ namespace sofa
                 const Real fy = map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
                 const topology::Quad& quad = quads[index];
-                out[i] = in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
-                  + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
-                  + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
-                  + in[quad[2]] * ( ( fx ) * ( fy ) );
+                Out::setDPos(out[i] , in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
+                             + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
+                             + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
+                             + in[quad[2]] * ( ( fx ) * ( fy ) ));
               }
           }
         else
@@ -1777,10 +1787,10 @@ namespace sofa
                 const Real fy = map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
                 const topology::Quad& quad = quads[index];
-                out[i] = in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
-                  + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
-                  + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
-                  + in[quad[2]] * ( ( fx ) * ( fy ) );
+                Out::setDPos(out[i] , in[quad[0]] * ( ( 1-fx ) * ( 1-fy ) )
+                             + in[quad[1]] * ( ( fx ) * ( 1-fy ) )
+                             + in[quad[3]] * ( ( 1-fx ) * ( fy ) )
+                             + in[quad[2]] * ( ( fx ) * ( fy ) ) );
               }
           }
       }
@@ -1801,10 +1811,10 @@ namespace sofa
                 const Real fz = map.getValue()[i].baryCoords[2];
                 int index = map.getValue()[i].in_index;
                 const topology::Tetrahedron& tetra = tetrahedra[index];
-                out[i] = in[tetra[0]] * ( 1-fx-fy-fz )
-                  + in[tetra[1]] * fx
-                  + in[tetra[2]] * fy
-                  + in[tetra[3]] * fz;
+                Out::setDPos(out[i] , in[tetra[0]] * ( 1-fx-fy-fz )
+                             + in[tetra[1]] * fx
+                             + in[tetra[2]] * fy
+                             + in[tetra[3]] * fz );
               }
           }
         else
@@ -1822,10 +1832,10 @@ namespace sofa
                 const Real fz = map.getValue()[i].baryCoords[2];
                 int index = map.getValue()[i].in_index;
                 const topology::Tetrahedron& tetra = tetrahedra[index];
-                out[i] = in[tetra[0]] * ( 1-fx-fy-fz )
-                  + in[tetra[1]] * fx
-                  + in[tetra[2]] * fy
-                  + in[tetra[3]] * fz;
+                Out::setDPos(out[i] , in[tetra[0]] * ( 1-fx-fy-fz )
+                             + in[tetra[1]] * fx
+                             + in[tetra[2]] * fy
+                             + in[tetra[3]] * fz );
               }
           }
       }
@@ -1846,14 +1856,15 @@ namespace sofa
                 const Real fz = map.getValue()[i].baryCoords[2];
                 int index = map.getValue()[i].in_index;
                 const topology::Hexahedron& cube = cubes[index];
-                out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                Out::setDPos(out[i] ,
+                             in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
               }
           }
         else
@@ -1871,14 +1882,15 @@ namespace sofa
                 const Real fz = map.getValue()[i].baryCoords[2];
                 int index = map.getValue()[i].in_index;
                 const topology::Hexahedron& cube = cubes[index];
-                out[i] = in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
-                  + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
-                  + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
-                  + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
-                  + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) );
+                Out::setDPos(out[i] ,
+                             in[cube[0]] * ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[1]] * ( ( fx ) * ( 1-fy ) * ( 1-fz ) )
+                             + in[cube[3]] * ( ( 1-fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[2]] * ( ( fx ) * ( fy ) * ( 1-fz ) )
+                             + in[cube[4]] * ( ( 1-fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[5]] * ( ( fx ) * ( 1-fy ) * ( fz ) )
+                             + in[cube[7]] * ( ( 1-fx ) * ( fy ) * ( fz ) )
+                             + in[cube[6]] * ( ( fx ) * ( fy ) * ( fz ) ) );
               }
           }
       }
@@ -1914,7 +1926,7 @@ namespace sofa
             {
               for ( unsigned int i=0;i<map1d.size();i++ )
                 {
-                  const typename Out::Deriv v = in[i];
+                  const typename Out::DPos v = Out::getDPos(in[i]);
                   const OutReal fx = ( OutReal ) map1d[i].baryCoords[0];
                   int index = map1d[i].in_index;
                   {
@@ -1930,7 +1942,7 @@ namespace sofa
               const int c0 = triangles.size();
               for ( unsigned int i=0;i<map2d.size();i++ )
                 {
-                  const typename Out::Deriv v = in[i+i0];
+                  const typename Out::DPos v = Out::getDPos(in[i+i0]);
                   const OutReal fx = ( OutReal ) map2d[i].baryCoords[0];
                   const OutReal fy = ( OutReal ) map2d[i].baryCoords[1];
                   int index = map2d[i].in_index;
@@ -1957,7 +1969,7 @@ namespace sofa
               const int c0 = tetrahedra.size();
               for ( unsigned int i=0;i<map3d.size();i++ )
                 {
-                  const typename Out::Deriv v = in[i+i0];
+                  const typename Out::DPos v = Out::getDPos(in[i+i0]);
                   const OutReal fx = ( OutReal ) map3d[i].baryCoords[0];
                   const OutReal fy = ( OutReal ) map3d[i].baryCoords[1];
                   const OutReal fz = ( OutReal ) map3d[i].baryCoords[2];
@@ -2017,7 +2029,7 @@ namespace sofa
                 // 1D elements
                 if (i < i1d)
                   {
-                    const typename Out::Deriv v = in[i];
+                    const typename Out::DPos v = Out::getDPos(in[i]);
                     const OutReal fx = ( OutReal ) map1d[i].baryCoords[0];
                     int index = map1d[i].in_index;
                     {
@@ -2033,7 +2045,7 @@ namespace sofa
                   {
                     const int i0 = map1d.size();
                     const int c0 = triangles.size();
-                    const typename Out::Deriv v = in[i];
+                    const typename Out::DPos v = Out::getDPos(in[i]);
                     const OutReal fx = ( OutReal ) map2d[i-i0].baryCoords[0];
                     const OutReal fy = ( OutReal ) map2d[i-i0].baryCoords[1];
                     int index = map2d[i-i0].in_index;
@@ -2065,7 +2077,7 @@ namespace sofa
                   {
                     const int i0 = map1d.size() + map2d.size();
                     const int c0 = tetrahedra.size();
-                    const typename Out::Deriv v = in[i];
+                    const typename Out::DPos v = Out::getDPos(in[i]);
                     const OutReal fx = ( OutReal ) map3d[i-i0].baryCoords[0];
                     const OutReal fy = ( OutReal ) map3d[i-i0].baryCoords[1];
                     const OutReal fz = ( OutReal ) map3d[i-i0].baryCoords[2];
@@ -2133,7 +2145,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
 #ifdef SOFA_NEW_HEXA
                 const topology::RegularGridTopology::Hexa cube = this->topology->getHexaCopy ( this->map[i].in_index );
 #else
@@ -2173,7 +2185,7 @@ namespace sofa
             for (it=indices.begin();it!=indices.end();it++)
               {
                 const unsigned int index=(*it);
-                const typename Out::Deriv v = in[index];
+                const typename Out::DPos v = Out::getDPos(in[index]);
 #ifdef SOFA_NEW_HEXA
                 const topology::RegularGridTopology::Hexa cube = this->topology->getHexaCopy ( this->map[index].in_index );
 #else
@@ -2220,7 +2232,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
 #ifdef SOFA_NEW_HEXA
                 const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[i].in_index );
 #else
@@ -2259,7 +2271,7 @@ namespace sofa
             for (it=indices.begin();it!=indices.end();it++)
               {
                 const unsigned int index=(*it);
-                const typename Out::Deriv v = in[index];
+                const typename Out::DPos v = Out::getDPos(in[index]);
 #ifdef SOFA_NEW_HEXA
                 const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[index].in_index );
 #else
@@ -2309,7 +2321,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.getValue().size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 int index = map.getValue()[i].in_index;
                 const topology::Edge& edge = edges[index];
@@ -2327,7 +2339,7 @@ namespace sofa
             for (it=indices.begin();it!=indices.end();it++)
               {
                 const int i=(int)(*it);
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 int index = map.getValue()[i].in_index;
                 const topology::Edge& edge = edges[index];
@@ -2350,7 +2362,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.getValue().size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
@@ -2370,7 +2382,7 @@ namespace sofa
             for (it=indices.begin();it!=indices.end();it++)
               {
                 const int i=(int)(*it);
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
@@ -2395,7 +2407,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.getValue().size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
@@ -2417,7 +2429,7 @@ namespace sofa
               {
                 const int i=(int)(*it);
 
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 int index = map.getValue()[i].in_index;
@@ -2444,7 +2456,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.getValue().size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 const OutReal fz = ( OutReal ) map.getValue()[i].baryCoords[2];
@@ -2466,7 +2478,7 @@ namespace sofa
             for (it=indices.begin();it!=indices.end();it++)
               {
                 const int i=(int)(*it);
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 const OutReal fz = ( OutReal ) map.getValue()[i].baryCoords[2];
@@ -2503,7 +2515,7 @@ namespace sofa
             maskFrom->setInUse(false);
             for ( unsigned int i=0;i<map.getValue().size();i++ )
               {
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 const OutReal fz = ( OutReal ) map.getValue()[i].baryCoords[2];
@@ -2529,7 +2541,7 @@ namespace sofa
             for (it=indices.begin();it!=indices.end();it++)
               {
                 const int i=(int)(*it);
-                const typename Out::Deriv v = in[i];
+                const typename Out::DPos v = Out::getDPos(in[i]);
                 const OutReal fx = ( OutReal ) map.getValue()[i].baryCoords[0];
                 const OutReal fy = ( OutReal ) map.getValue()[i].baryCoords[1];
                 const OutReal fz = ( OutReal ) map.getValue()[i].baryCoords[2];
@@ -2566,7 +2578,7 @@ namespace sofa
         std::vector< Vector3 > points;
         for ( unsigned int i=0; i<out.size(); i++ )
         {
-          points.push_back ( out[i] );
+          points.push_back ( OutDataTypes::getCPos(out[i]) );
         }
         glEnd();
         const InVecCoord& in = *this->fromModel->getX();
@@ -2605,7 +2617,7 @@ namespace sofa
                 if ( f[j]<=-0.0001 || f[j]>=0.0001 )
                 {
 //                         glColor3f((float)f[j],1,(float)f[j]);
-                  points.push_back ( out[i+i0] );
+                  points.push_back ( Out::getCPos(out[i+i0]) );
                   points.push_back ( in[line[j]] );
                 }
               }
@@ -2633,7 +2645,7 @@ namespace sofa
                 if ( f[j]<=-0.0001 || f[j]>=0.0001 )
                 {
 //                         glColor3f((float)f[j],1,(float)f[j]);
-                  points.push_back ( out[i+i0] );
+                  points.push_back ( Out::getCPos(out[i+i0]) );
                   points.push_back ( in[triangle[j]] );
                 }
               }
@@ -2651,7 +2663,7 @@ namespace sofa
                 if ( f[j]<=-0.0001 || f[j]>=0.0001 )
                 {
 //                         glColor3f((float)f[j],1,(float)f[j]);
-                  points.push_back ( out[i+i0] );
+                  points.push_back ( Out::getCPos(out[i+i0]) );
                   points.push_back ( in[quad[j]] );
                 }
               }
@@ -2681,7 +2693,7 @@ namespace sofa
                 if ( f[j]<=-0.0001 || f[j]>=0.0001 )
                 {
 //                         glColor3f((float)f[j],1,(float)f[j]);
-                  points.push_back ( out[i+i0] );
+                  points.push_back ( Out::getCPos(out[i+i0]) );
                   points.push_back ( in[tetra[j]] );
                 }
               }
@@ -2717,7 +2729,7 @@ namespace sofa
                 if ( f[j]<=-0.0001 || f[j]>=0.0001 )
                 {
 //                         glColor3f((float)f[j],1,1);
-                  points.push_back ( out[i+i0] );
+                  points.push_back ( Out::getCPos(out[i+i0]) );
                   points.push_back ( in[cube[j]] );
                 }
               }
@@ -2766,7 +2778,7 @@ namespace sofa
             if ( f[j]<=-0.0001 || f[j]>=0.0001 )
             {
               //glColor3f((float)f[j],(float)f[j],1);
-              points.push_back ( out[i] );
+              points.push_back ( Out::getCPos(out[i]) );
               points.push_back ( in[cube[j]] );
             }
           }
@@ -2813,7 +2825,7 @@ namespace sofa
             if ( f[j]<=-0.0001 || f[j]>=0.0001 )
             {
               //glColor3f((float)f[j],(float)f[j],1);
-              points.push_back ( out[i] );
+              points.push_back ( Out::getCPos(out[i]) );
               points.push_back ( in[cube[j]] );
             }
           }
@@ -2839,7 +2851,7 @@ namespace sofa
               if ( f<=-0.0001 || f>=0.0001 )
               {
 //                     glColor3f((float)f,1,(float)f);
-                points.push_back ( out[i] );
+                points.push_back ( Out::getCPos(out[i]) );
                 points.push_back ( in[edge[0]] );
               }
             }
@@ -2848,7 +2860,7 @@ namespace sofa
               if ( f<=-0.0001 || f>=0.0001 )
               {
 //                     glColor3f((float)f,1,(float)f);
-                points.push_back ( out[i] );
+                points.push_back ( Out::getCPos(out[i]) );
                 points.push_back ( in[edge[1]] );
               }
             }
@@ -2879,7 +2891,7 @@ namespace sofa
               if ( f[j]<=-0.0001 || f[j]>=0.0001 )
               {
 //                     glColor3f((float)f[j],1,(float)f[j]);
-                points.push_back ( out[i] );
+                points.push_back ( Out::getCPos(out[i]) );
                 points.push_back ( in[triangle[j]] );
               }
             }
@@ -2910,7 +2922,7 @@ namespace sofa
               if ( f[j]<=-0.0001 || f[j]>=0.0001 )
               {
 //                     glColor3f((float)f[j],1,(float)f[j]);
-                points.push_back ( out[i] );
+                points.push_back ( Out::getCPos(out[i]) );
                 points.push_back ( in[quad[j]] );
               }
             }
@@ -2943,7 +2955,7 @@ namespace sofa
               if ( f[j]<=-0.0001 || f[j]>=0.0001 )
               {
 //                     glColor3f((float)f[j],1,(float)f[j]);
-                points.push_back ( out[i] );
+                points.push_back ( Out::getCPos(out[i]) );
                 points.push_back ( in[tetra[j]] );
               }
             }
@@ -2980,7 +2992,7 @@ namespace sofa
               if ( f[j]<=-0.0001 || f[j]>=0.0001 )
               {
 //                     glColor3f((float)f[j],1,1);
-                points.push_back ( out[i] );
+                  points.push_back ( Out::getCPos(out[i]) );
                 points.push_back ( in[cube[j]] );
               }
             }
@@ -3039,7 +3051,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
             // 1D elements
             if ( indexIn < i1d )
             {
@@ -3135,7 +3147,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 #ifdef SOFA_NEW_HEXA
             const topology::RegularGridTopology::Hexa cube = this->topology->getHexaCopy ( this->map[indexIn].in_index );
 #else
@@ -3184,7 +3196,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 
 #ifdef SOFA_NEW_HEXA
             const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[indexIn].in_index );
@@ -3286,7 +3298,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 
             const topology::Edge edge = edges[this->map.getValue()[indexIn].in_index];
             const OutReal fx = ( OutReal ) map.getValue()[indexIn].baryCoords[0];
@@ -3312,7 +3324,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 
             const topology::Triangle triangle = triangles[this->map.getValue()[indexIn].in_index];
             const OutReal fx = ( OutReal ) map.getValue()[indexIn].baryCoords[0];
@@ -3340,7 +3352,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 
             const OutReal fx = ( OutReal ) map.getValue()[indexIn].baryCoords[0];
             const OutReal fy = ( OutReal ) map.getValue()[indexIn].baryCoords[1];
@@ -3368,7 +3380,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 
             const OutReal fx = ( OutReal ) map.getValue()[indexIn].baryCoords[0];
             const OutReal fy = ( OutReal ) map.getValue()[indexIn].baryCoords[1];
@@ -3398,7 +3410,7 @@ namespace sofa
           for (itOut=iter.first;itOut!=iter.second;itOut++)
           {
             unsigned int indexIn = itOut->first;
-            InDeriv data = (InDeriv) itOut->second;
+            InDeriv data = (InDeriv) Out::getDPos(itOut->second);
 
             const OutReal fx = ( OutReal ) map.getValue()[indexIn].baryCoords[0];
             const OutReal fy = ( OutReal ) map.getValue()[indexIn].baryCoords[1];

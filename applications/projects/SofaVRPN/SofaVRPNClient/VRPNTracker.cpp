@@ -42,8 +42,6 @@ VRPNTracker::~VRPNTracker()
 
 bool VRPNTracker::connectToServer()
 {
-	std::cout << "Opening: " << deviceURL << " ." << std::endl;
-
 	tkr = new vrpn_Tracker_Remote(deviceURL.c_str());
 	tkr->register_change_handler(NULL, handle_tracker);
 
@@ -51,18 +49,13 @@ bool VRPNTracker::connectToServer()
 
 	//main interactive loop
 
-	while (1) {
-	 // Let the tracker do its thing
-	 tkr->mainloop();
-	}
+	// Let the tracker do its thing
+		tkr->mainloop();
 
 	return true;
 }
 
-
-
-
-void VRPNTracker::handleEvent(sofa::core::objectmodel::Event *event)
+void VRPNTracker::update()
 {
 //	if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
 //	{

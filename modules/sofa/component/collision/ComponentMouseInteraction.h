@@ -55,6 +55,10 @@ namespace sofa
 
         virtual void init(simulation::Node* node);
 
+        void createRayPickNode(simulation::Node* node);
+
+        virtual void createRayPickObjects(simulation::Node* node) = 0;
+
         void activate();
 
         void deactivate();
@@ -91,7 +95,8 @@ namespace sofa
 
       public:
  
-        void  init(simulation::Node* node);    
+
+        void createRayPickObjects(simulation::Node* node);
             
         bool  isCompatible( core::objectmodel::BaseContext *context) const;
 

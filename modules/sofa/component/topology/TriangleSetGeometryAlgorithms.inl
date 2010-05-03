@@ -1414,8 +1414,9 @@ namespace topology
     TriangleID ind_triangle = ind_ta;
     is_intersected=computeSegmentTriangleIntersection(false, p_current, b, (const unsigned int) ind_t_current, indices, coord_t, coord_k);
 
+
     // In case the ind_t is not the good one.
-    if ( (!is_intersected || indices[0] == last_point || indices[1] == last_point) && (last_point != (unsigned int)-1)) 
+    if ( (!is_intersected || indices[0] == last_point || indices[1] == last_point) && (last_point != BaseMeshTopology::InvalidID))
     {
       
       const sofa::helper::vector< unsigned int >& shell = this->m_topology->getTrianglesAroundVertex (last_point);
@@ -1669,7 +1670,7 @@ namespace topology
       }
     }
         
-    if (ind_tb == (unsigned int)-1)
+    if (ind_tb == BaseMeshTopology::InvalidID)
       ind_tb = ind_triangle;
 
     bool is_reached = (ind_tb==ind_triangle && coord_k_test>=1.0);
@@ -1725,7 +1726,7 @@ namespace topology
       Vec<3,double> baryCoords;
       
       // 1 - First point a (for the moment: always a point in a triangle)
-      if (last_point != (unsigned int)-1)
+      if (last_point != BaseMeshTopology::InvalidID)
       {
 	  topoPath_list.push_back (core::componentmodel::topology::POINT);
 	  indices_list.push_back (last_point);

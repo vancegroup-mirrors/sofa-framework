@@ -93,22 +93,22 @@ namespace sofa
 	  // Resize
 	  void QtOgreViewer::setSizeW( int size )
 	  {
+	    update();
 	    if (mRenderWindow != NULL){
 	      mRenderWindow->resize( size, mRenderWindow->getHeight());
 	      mRenderWindow->windowMovedOrResized();
 	    }
-	    QWidget::resize(size,mRenderWindow->getHeight());
-	    update();
+            QWidget::resize(size,this->height()); 
 	  }
 
 	  void QtOgreViewer::setSizeH( int size )
-	  {
+	  {         
+	    update();
 	    if (mRenderWindow != NULL){
 	      mRenderWindow->resize( mRenderWindow->getWidth(), size);
-	      mRenderWindow->windowMovedOrResized();
+	      mRenderWindow->windowMovedOrResized(); 
 	    }
-	    QWidget::resize(mRenderWindow->getWidth(),size);
-	    update();
+            QWidget::resize(this->width(),size);
 	  }
 
 

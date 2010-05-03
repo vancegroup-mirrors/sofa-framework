@@ -22,6 +22,7 @@ HEADERS +=  \
            BTDLinearSolver.h \
            FullVector.h \
            FullMatrix.h \
+	   DiagonalMatrix.h \
            SparseMatrix.h \
            CompressedRowSparseMatrix.h \
            MatrixLinearSolver.h \

@@ -59,28 +59,28 @@ public:
 public:
 	
 	Data< VecIndex > points;
-        Data< VecDeriv > forces;
-        Data< Deriv > force;
-		Data< double > arrowSizeCoef; // for drawing. The sign changes the direction, 0 doesn't draw arrow
-	
-        ConstantForceField();
-		
-		/// Set a force to a given particle
-		void setForce( unsigned i, const Deriv& f );
-	
-        /// Add the forces
-        virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
-	
-        /// Constant force has null variation
-        virtual void addDForce (VecDeriv& , const VecDeriv& ){}
+	Data< VecDeriv > forces;
+	Data< Deriv > force;
+	Data< double > arrowSizeCoef; // for drawing. The sign changes the direction, 0 doesn't draw arrow
+	/// Concerned DOFs indices are numbered from the end of the MState DOFs vector
+	Data< bool > indexFromEnd;
+
+	ConstantForceField();
+
+	/// Set a force to a given particle
+	void setForce( unsigned i, const Deriv& f );
+
+	/// Add the forces
+	virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+
+	/// Constant force has null variation
+	virtual void addDForce (VecDeriv& , const VecDeriv& ){}
 	
         
 	virtual double getPotentialEnergy(const VecCoord& x);
 	
-	
 	void draw();
 	bool addBBox(double* minBBox, double* maxBBox);
-
 };
 
 } // namespace forcefield

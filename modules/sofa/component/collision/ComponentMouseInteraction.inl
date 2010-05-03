@@ -57,13 +57,12 @@ namespace sofa
 
 
 		template <class DataTypes>
-		void TComponentMouseInteraction<DataTypes>::init(Node* node)
-		{          
-			ComponentMouseInteraction::init(node);
-      nodeRayPick->setName(nodeRayPick->getName() + "_" + DataTypes::Name());
+		void TComponentMouseInteraction<DataTypes>::createRayPickObjects(Node* node)
+		{
+                    ComponentMouseInteraction::createRayPickNode(node);
+                        nodeRayPick->setName(nodeRayPick->getName() + "_" + DataTypes::Name());
 			parentNode->addChild(nodeRayPick);
 
-			mouseInSofa =  new MouseContainer; 
 			mouseInSofa = new MouseContainer; mouseInSofa->resize(1);
 			mouseInSofa->setName("MousePosition");
 			nodeRayPick->addObject(mouseInSofa);
@@ -78,10 +77,12 @@ namespace sofa
 
 			mouseMapping->setMechanical(false);
 
-      parentNode->execute<simulation::InitVisitor>(); 
+                        mouseInSofa->init();
+                        mouseInteractor->init();                        
+                        mouseMapping->init();
+
 			parentNode->removeChild(nodeRayPick);
 		}
-
 
         template <class DataTypes>
 		bool TComponentMouseInteraction<DataTypes>::isCompatible( core::objectmodel::BaseContext *context) const

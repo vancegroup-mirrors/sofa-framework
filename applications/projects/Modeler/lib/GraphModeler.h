@@ -104,7 +104,7 @@ namespace sofa
 	  {
 	    for (unsigned int i=0;i<historyOperation.size();++i) editUndo();
 	    simulation::getSimulation()->unload(getRoot());
-
+            delete getRoot();
 	    delete graphListener;
 	    if (DialogAdd) delete DialogAdd;
 	  }
@@ -310,7 +310,9 @@ namespace sofa
 	    READONLY_FLAG=false; //everything will be editable
 	    EMPTY_FLAG = true;
 	    RESIZABLE_FLAG = true; 
-	    REINIT_FLAG = false;	
+	    REINIT_FLAG = false;            
+            LINKPATH_MODIFIABLE_FLAG = true;
+	
 	    //remove the qwt graphes
 	    energy_curve[0]=energy_curve[1]=energy_curve[2]=NULL;
             outputTab = warningTab = NULL;

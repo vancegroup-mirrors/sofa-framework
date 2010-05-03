@@ -40,6 +40,7 @@
 #include <qglobal.h>
 #ifdef SOFA_QT4
 #include <QDialog>
+#include <QWidget>
 #include <Q3ListViewItem>
 #include <Q3ListView>
 #include <Q3Table>
@@ -53,8 +54,10 @@
 #include <QCheckBox>
 #include <QSpinBox>
 #include <Q3CheckListItem>
+#include <QVBoxLayout>
 #else
 #include <qdialog.h>
+#include <qwidget.h>
 #include <qlistview.h>
 #include <qtable.h>
 #include <qgroupbox.h>
@@ -66,6 +69,7 @@
 #include <qlineedit.h>
 #include <qcheckbox.h>
 #include <qspinbox.h>
+#include <qlayout.h>
 #endif
 
 #include "WFloatLineEdit.h"
@@ -74,7 +78,7 @@
 
 #include <qwt_plot_curve.h>
 #include <sofa/gui/qt/DisplayFlagWidget.h>
-
+#include <string>
 #if !defined(INFINITY)
 #define INFINITY 9.0e10
 #endif
@@ -103,6 +107,7 @@ typedef QGrid       Q3Grid;
 #endif
 
 class DataWidget;
+
 
 class SOFA_SOFAGUIQT_API ModifyObject : public QDialog
 {
@@ -211,6 +216,7 @@ protected:
 	bool EMPTY_FLAG;//if we allow empty datas
 	bool RESIZABLE_FLAG;
 	bool REINIT_FLAG;
+        bool LINKPATH_MODIFIABLE_FLAG; //if we allow to modify the links of the Data
 };
 
 class DataWidget
@@ -337,6 +343,67 @@ public:
 	    readFromData();
     }
 };
+
+
+
+//TODO Move to a separate file
+  class QTableUpdater : virtual public Q3Table
+{
+    Q_OBJECT
+public:
+    QTableUpdater ( int numRows, int numCols, QWidget * parent = 0, const char * name = 0 ):
+#ifdef SOFA_QT4
+Q3Table(numRows, numCols, parent, name)
+#else
+QTable(numRows, numCols, parent, name)
+#endif
+{};
+
+public slots:
+    void setDisplayed(bool b){this->setShown(b);}
+public slots:
+
+};
+
+class QPushButtonUpdater: public QPushButton
+{
+    Q_OBJECT
+public:
+
+    QPushButtonUpdater( DataWidget *d, const QString & text, QWidget * parent = 0 ): QPushButton(text,parent),widget(d){};
+
+public slots:
+    void setDisplayed(bool b)
+    {
+        if (b)
+        {
+            this->setText(QString("Click to hide the values"));
+            widget->readFromData();
+        }
+        else
+        {
+            this->setText(QString("Click to display the values"));
+        }
+    }
+protected:
+    DataWidget *widget;
+
+};
+
+//Widget used to display the name of a Data and if needed the link to another Data
+ class QDisplayDataInfoWidget: public QWidget
+ {
+     Q_OBJECT
+  public:
+    QDisplayDataInfoWidget(QWidget* parent, const std::string& helper, core::objectmodel::BaseData* d, bool modifiable);   
+    public slots:
+    void linkModification();
+    void linkEdited();
+ protected:
+    core::objectmodel::BaseData* data;
+    QLineEdit *linkpath_edit;
+ };
+
 
 
 } // namespace qt

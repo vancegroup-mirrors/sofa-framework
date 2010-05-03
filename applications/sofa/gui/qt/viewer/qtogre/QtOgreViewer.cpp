@@ -230,7 +230,6 @@ namespace sofa
 	    Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
 	    loadResources();
-
 	  }
 
 
@@ -327,7 +326,8 @@ namespace sofa
 		}
 	      //Not optimal, clear all the datas
 	      sofa::simulation::getSimulation()->DrawUtility.clear();
-	      sofa::simulation::getSimulation()->draw(groot);
+              sofa::simulation::getSimulation()->draw(groot);
+              sofa::simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot());
 	      //Remove previous mesh and entity
 	      if (mSceneMgr->hasEntity("drawUtilityENTITY"))
 		{
@@ -386,7 +386,8 @@ namespace sofa
 
             //The external windows handle parameters are platform-specific
             Ogre::String externalWindowHandleParams;
-            
+
+#ifdef SOFA_QT4            
 #if defined(WIN32)
             //positive integer for W32 (HWND handle) - According to Ogre Docs
 			externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(this->parentWidget()->winId()));
@@ -400,11 +401,19 @@ namespace sofa
             externalWindowHandleParams += Ogre::StringConverter::toString((unsigned long)(winId()));
             externalWindowHandleParams += ":";
             externalWindowHandleParams += Ogre::StringConverter::toString((unsigned long)(info.visual()));
-#endif
-
+#endif            
             //Add the extrenal window handle parameters to the existing params set.
             params["externalWindowHandle"] = externalWindowHandleParams;
+#else
+            Display* display = qt_xdisplay(); 
+            int screen = qt_xscreen(); 
 
+            params["parentWindowHandle"] =
+              Ogre::StringConverter::toString ((unsigned long)display) +
+              ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
+              ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
+
+#endif
             //Finally create our window.
             mRenderWindow = mRoot->createRenderWindow("OgreWindow", width(), height(), false, &params);
 
@@ -413,9 +422,11 @@ namespace sofa
             WId ogreWinId = 0x0;
             mRenderWindow->getCustomAttribute( "WINDOW", &ogreWinId );
             this->create( ogreWinId );
+            
+#ifdef SOFA_QT4
             setAttribute( Qt::WA_PaintOnScreen, true );
             setAttribute( Qt::WA_NoBackground );
-
+#endif
             _beginTime = CTime::getTime();
 	  }
 
@@ -538,7 +549,7 @@ namespace sofa
 
 	    //In case new Visual Model appeared
 	    std::vector<OgreVisualModel*> visualModels;
-	    groot->getTreeObjects<OgreVisualModel>(&visualModels);
+            simulation::getSimulation()->getVisualRoot()->getTreeObjects<OgreVisualModel>(&visualModels);
 
 	    for (unsigned int i=0; i<visualModels.size(); i++)
 	      {
@@ -553,6 +564,7 @@ namespace sofa
 	    sofa::defaulttype::Vector3 sceneMinBBox;
 	    sofa::defaulttype::Vector3 sceneMaxBBox;
 	    simulation::getSimulation()->computeBBox(groot, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
+            simulation::getSimulation()->computeBBox(simulation::getSimulation()->getVisualRoot(), sceneMinBBox.ptr(), sceneMaxBBox.ptr(),false);
 
 	    Ogre::Vector3 size_world(sceneMaxBBox[0] - sceneMinBBox[0],sceneMaxBBox[1] - sceneMinBBox[1],sceneMaxBBox[2] - sceneMinBBox[2]);
 	    float max = std::max(std::max(size_world.x,size_world.y),size_world.z);
@@ -586,14 +598,12 @@ namespace sofa
           {
             if (mRenderWindow && mVp)
               {
-                mRenderWindow->windowMovedOrResized();
-                mRenderWindow->resize(width(), height());     
+                emit(resizeW(width())); emit(resizeH(height()));               
+                mRenderWindow->windowMovedOrResized();    
                 mVp->setDimensions(0,0, 1.0, 1.0);
-                mCamera->setAspectRatio(Ogre::Real(mVp->getActualWidth()) / Ogre::Real(mVp->getActualHeight()));
-                
+                mCamera->setAspectRatio(Ogre::Real(width()) / Ogre::Real(height()));
+                mRenderWindow->resize(width(), height()); 
                 update();
-                emit(resizeW(width()));
-                emit(resizeH(height()));
               }
           }
 
@@ -676,6 +686,10 @@ namespace sofa
 	    updateIntern();
 	  }
 
+          void QtOgreViewer::keyReleaseEvent ( QKeyEvent * e )
+          {
+              SofaViewer::keyReleaseEvent(e);
+          }
 
 	  //*****************************************************************************************
 	  //Mouse Events
@@ -776,7 +790,7 @@ namespace sofa
 	  bool QtOgreViewer::updateInteractor(QMouseEvent * e)
 	  {
 	    if(e->state()&Qt::ShiftButton)
-	      {
+	      {                
 		SofaViewer::mouseEvent(e);
 		return true;
 	      }

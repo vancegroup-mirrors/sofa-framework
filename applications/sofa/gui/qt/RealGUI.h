@@ -134,8 +134,8 @@ public:
 	  ~RealGUI();
 
 
-	  virtual void fileOpen(std::string filename); //, int TYPE=NORMAL);
-      	  virtual void fileOpenSimu(std::string filename); //, int TYPE=NORMAL);
+	  virtual void fileOpen(std::string filename, bool temporaryFile=false);
+      	  virtual void fileOpenSimu(std::string filename);
 	  virtual void setScene(Node* groot, const char* filename=NULL, bool temporaryFile=false);
           virtual void setDimension(int w, int h);
           virtual void setFullScreen();
@@ -197,7 +197,11 @@ public:
 	  void updateBackgroundColour();
 	  void updateBackgroundImage();
 
+#ifdef SOFA_QT4
           void changeHtmlPage( const QUrl&);
+#else
+          void changeHtmlPage( const QString&);
+#endif
 	  void changeInstrument(int);
   
 	  void clearGraph();
@@ -267,6 +271,7 @@ public:
 	  QWidget *tabInstrument;
 	  
 	  GraphListenerQListView* graphListener;
+          GraphListenerQListView* visualGraphListener;
 	  QListViewItem *item_clicked;
 	  Node *node_clicked;
 	  QTimer* timerStep;
@@ -332,6 +337,8 @@ public:
  
 	  //currently unused: scale is experimental
  	  float object_Scale[2]; 
+          bool saveReloadFile;
+
 
 	  float initial_time;
 	  int frameCounter;

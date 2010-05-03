@@ -32,6 +32,7 @@
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/component/topology/PointData.h>
 
+
 //If a table has higher than MAX_NUM_ELEM, its data won't be loaded at the creation of the window
 //user has to click on the button update to see the content
 #define MAX_NUM_ELEM 100
@@ -50,12 +51,14 @@ enum {
     TYPE_VECTOR = 1,
     TYPE_STRUCT = 2,
 };
+
 template<class T, int TYPE>
 class flat_data_trait;
 
 template<class T>
-class default_flat_data_trait : public flat_data_trait< T, ((struct_data_trait<T>::NVAR>1) ? TYPE_STRUCT : (vector_data_trait<T>::NDIM>0) ? TYPE_VECTOR : TYPE_SINGLE) >
-{};
+  class default_flat_data_trait : public flat_data_trait< T,  (  (struct_data_trait<T>::NVAR >1 ) ?      TYPE_STRUCT :     (       (vector_data_trait<T>::NDIM > 0) ?       TYPE_VECTOR :       TYPE_SINGLE ) ) >{};
+
+
 
 template<class T> inline std::string toString(const T& v)
 {
@@ -290,12 +293,14 @@ public:
     typedef typename vhelper::value_type value_type;
 
     QSpinBox* wSize;
-    Q3Table* wTable;
-    QPushButton* wDisplay;
+    QTableUpdater* wTable;
+    QPushButtonUpdater* wDisplay;
+    DataWidget *widget;
 
-    table_data_widget_container() : wSize(NULL), wTable(NULL), wDisplay(NULL) {}
+    table_data_widget_container() : wSize(NULL), wTable(NULL), wDisplay(NULL), widget(NULL){}
     int rows;
     int cols;
+
 
     void setRowHeader(int r, const std::string& s)
     {
@@ -320,10 +325,15 @@ public:
     }
     std::string getCellText(int r, int c)
     {
-	if (FLAGS & TABLE_HORIZONTAL)
-	    return std::string(wTable->text(c, r).ascii());
-	else
-	    return std::string(wTable->text(r, c).ascii());
+      QString text;
+      if (FLAGS & TABLE_HORIZONTAL)
+        text=wTable->text(c, r);     
+      else
+        text=wTable->text(r, c);
+      if (!text.isNull())
+        return std::string(text.ascii());
+      else
+        return std::string("");
     }
     template<class V>
     void setCell(int r, int c, const V& v)
@@ -350,7 +360,7 @@ public:
 
 
     template<class Dialog, class Slot>
-    bool createWidgets(Dialog* dialog, Slot s, QWidget* parent, const data_type& d, bool readOnly)
+    bool createWidgets(DataWidget *_widget, Dialog* dialog, Slot s, QWidget* parent, const data_type& d, bool readOnly)
     {        
         rows = 0;  
         int dataRows = rhelper::size(d);
@@ -361,15 +371,16 @@ public:
 	    cols = vhelper::size(row_type());
 	wSize = new QSpinBox(0, INT_MAX, 1, parent);
 	if (FLAGS & TABLE_HORIZONTAL)
-	    wTable = new Q3Table(cols, 0, parent);
+            wTable = new QTableUpdater(cols, 0, parent);
 	else
-	    wTable = new Q3Table(0, cols, parent);
+            wTable = new QTableUpdater(0, cols, parent);
 
-        wDisplay = new QPushButton( QString("Click to display the values"), parent);
+        widget=_widget;
+
+        wDisplay = new QPushButtonUpdater( _widget, QString("Click to display the values"), parent);
         wDisplay->setToggleButton(true);
         wDisplay->setOn(dataRows < MAX_NUM_ELEM && dataRows != 0 );
-
-        updateVisibilityTable();
+        wDisplay->setAutoDefault(false);
 
         wSize->setValue(dataRows);
 
@@ -379,7 +390,7 @@ public:
             fillTable(d);
             rows = dataRows;
           }
-
+        wTable->setDisplayed(isDisplayed()); 
 
 	if (readOnly)
 	{
@@ -398,8 +409,8 @@ public:
 	    }
 	    dialog->connect(wTable, SIGNAL( valueChanged(int,int) ), dialog, s);
 	}
-        dialog->connect(wDisplay, SIGNAL( clicked() ), dialog, s);
-
+        dialog->connect(wDisplay, SIGNAL( toggled(bool) ), wTable,   SLOT(setDisplayed(bool)));
+        dialog->connect(wDisplay, SIGNAL( toggled(bool) ), wDisplay, SLOT(setDisplayed(bool)));
 	return true;
     }
     void setReadOnly(bool readOnly)
@@ -413,30 +424,12 @@ public:
       return (wDisplay->isOn());
     }
 
-    void updateVisibilityTable()
-    {
-      setDisplayed(wDisplay->isOn());
-    }
-
-    void setDisplayed( bool disp)
-    {
-      if (disp)
-      {
-        wDisplay->setText(QString("Click to hide the values"));
-      }
-      else
-      {
-        wDisplay->setText(QString("Click to display the values"));
-      }
-
-      wTable->setShown(disp);
-    }
 
     void readFromData(const data_type& d)
     {
       int newRows = rhelper::size(d);
       wSize->setValue(newRows);
-      
+
       if (isDisplayed())
         {
           int newCols;
@@ -459,13 +452,10 @@ public:
             {
               rhelper::resize(rows, d);
             }
-
-        if (isDisplayed())
-          {
           int newRows = rhelper::size(d);
           if (rows != newRows)
             { // resize failed -> conform to the real size
-              std::cout << "Resize to " << rows << " failed. New size is " << newRows << std::endl;
+              /* std::cout << "Resize to " << rows << " failed. New size is " << newRows << std::endl; */
               wSize->setValue(newRows);
               if (FLAGS & TABLE_HORIZONTAL)
                 wTable->setNumCols(newRows);
@@ -475,9 +465,13 @@ public:
             }
           else
             {
-              std::cout << "Resize to " << rows << " succeeded." << std::endl;
+              int widgetSize=wSize->value();
+              if (widgetSize != rows)
+              {
+                rhelper::resize(widgetSize, d);
+              }
+              /* std::cout << "Resize to " << widgetSize<< " succeeded." << std::endl; */
             }
-          }
         }
 
       if (isDisplayed())
@@ -555,7 +549,6 @@ public:
     
     bool processChange(const QObject* sender)
     {
-      updateVisibilityTable();
       data_type d=data_type();
 
       if (isDisplayed()) processTableModifications(d);
@@ -580,7 +573,7 @@ public:
     typedef SimpleDataWidget<T, table_data_widget_container< T , FLAGS > > Inherit;
     typedef sofa::core::objectmodel::TData<T> MyData;
 public:
-    TableDataWidget(MyData* d) : Inherit(d) {}
+    TableDataWidget(MyData* d) : Inherit(d){}
     virtual unsigned int sizeWidget(){return 3;}
 };
 
@@ -770,6 +763,7 @@ public:
 	//d.resize(s);
     }
 };
+
 
 } // namespace qt
 

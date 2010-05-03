@@ -53,6 +53,7 @@ HEADERS +=  initMapping.h \
 SOURCES += initMapping.cpp \
            ArticulatedSystemMapping.cpp \
            BarycentricMapping.cpp \
+           BarycentricMappingRigid.cpp \
            BeamLinearMapping.cpp \
            CenterOfMassMapping.cpp \
 		   CenterPointMechanicalMapping.cpp \

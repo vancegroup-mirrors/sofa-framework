@@ -1,0 +1,17 @@
+<Node name="root" dt="0.01" gravity="0 -9.81 0" showBehaviorModels="0" showCollisionModels="1" showVisualModels="0">
+	<Node name="tracking">
+		<VRPNAnalog name="analogL" deviceName="LeftWiimote" serverName="localhost" serverPort="3883" listening="true"/>
+		<WiimoteDriver name="wiimoteL" channels="@analogL.channels" />
+		
+		<VRPNAnalog name="analogR" deviceName="RightWiimote" serverName="localhost" serverPort="3884" listening="true"/>
+		<WiimoteDriver name="wiimoteR" channels="@analogR.channels"/>
+		
+		<IRTracker name="irtracker" leftDots="@wiimoteL.dots" rightDots="@wiimoteR.dots" distance="0.297" scale="10.0"/>
+	</Node>
+	<Node>
+		<MechanicalObject position="@../tracking/irtracker.points" />
+		<MMechanicalObject position="0 0 0 1 1 1" />
+		<SphereModel radius="0.05" active="0" />
+	</Node>
+	<OglModel filename="mesh/dragon.obj"/>
+</Node>

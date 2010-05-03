@@ -576,6 +576,7 @@ namespace gl
     switch(SystemDraw)
       {
       case OPENGL:
+		  {
 	glColor4f(colour[0],colour[1],colour[2],colour[3]);
 	glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &colour[0]);
 	static const float emissive[4] = { 0.0f, 0.0f, 0.0f, 0.0f};
@@ -595,8 +596,10 @@ namespace gl
 	    glDepthMask(1);
 	  }
 	break;
+		  }
 #ifdef SOFA_GUI_QTOGREVIEWER
       case OGRE:
+		  {
 	//Get the Material
 	if (name.empty())
 	  {
@@ -646,6 +649,7 @@ namespace gl
 	currentMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(1,1,1,1)); 
 	currentMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
 	break;
+		  }
 #endif
       }
   }

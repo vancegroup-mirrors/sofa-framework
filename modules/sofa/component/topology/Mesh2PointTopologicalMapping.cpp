@@ -136,7 +136,7 @@ void Mesh2PointTopologicalMapping::init()
 						Vec3d p0(fromModel->getPX(t[0]), fromModel->getPY(t[0]), fromModel->getPZ(t[0]));
 						Vec3d p1(fromModel->getPX(t[1]), fromModel->getPY(t[1]), fromModel->getPZ(t[1]));
 						Vec3d p2(fromModel->getPX(t[2]), fromModel->getPY(t[2]), fromModel->getPZ(t[2]));
-
+                                                
 						double fx = triangleBaryCoords.getValue()[j][0];
 						double fy = triangleBaryCoords.getValue()[j][1];
 
@@ -366,7 +366,7 @@ void Mesh2PointTopologicalMapping::updateTopologicalMappingTopDown()
 			}
 			case core::componentmodel::topology::ENDING_EVENT:
 			{
-				pointsToRemove.erase((unsigned int)-1);
+                            pointsToRemove.erase(BaseMeshTopology::InvalidID);
 			    if (to_pstm != NULL && !pointsToRemove.empty())
 			    {
 				sofa::helper::vector<unsigned int> vitems;

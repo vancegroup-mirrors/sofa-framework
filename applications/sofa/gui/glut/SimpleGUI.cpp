@@ -1071,10 +1071,17 @@ void SimpleGUI::DisplayOBJs(bool shadowPass)
     }
 
     {
+        Node *visualRoot = simulation::getSimulation()->getVisualRoot();
         if (shadowPass)
+        {
             getSimulation()->drawShadows(groot);
+            getSimulation()->drawShadows(visualRoot);
+        }
         else
+        {
             getSimulation()->draw(groot);
+            getSimulation()->draw(visualRoot);
+        }
         if (_axis)
         {
             DrawAxis(0.0, 0.0, 0.0, 10.0);
@@ -1370,6 +1377,7 @@ void SimpleGUI::calcProjection()
     //if (!sceneBBoxIsValid)
     {
         getSimulation()->computeBBox(groot, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
+        getSimulation()->computeBBox(getSimulation()->getVisualRoot(), sceneMinBBox.ptr(), sceneMaxBBox.ptr());
         sceneBBoxIsValid = true;
     }
     //std::cout << "Scene BBox = "<<sceneMinBBox<<" - "<<sceneMaxBBox<<"\n";
@@ -2440,6 +2448,7 @@ void SimpleGUI::step()
         //groot->setLogTime(true);
 
         getSimulation()->animate(groot);
+        getSimulation()->updateVisual(getSimulation()->getVisualRoot());
 
         if( m_dumpState )
           getSimulation()->dumpState( groot, *m_dumpStateStream );

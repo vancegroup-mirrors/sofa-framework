@@ -62,6 +62,9 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Execute one timestep. If dt is 0, the dt parameter in the graph will be used
 	virtual void animate(Node* root, double dt=0.0);
 
+        /// Update the Visual Models: triggers the Mappings
+        virtual void updateVisual(Node* root, double dt=0.0);
+
 	/// Reset to initial state
 	virtual void reset(Node* root);
 
@@ -74,8 +77,8 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Update contexts. Required before drawing the scene if root flags are modified.
 	virtual void updateVisualContext(Node* root,Node::VISUAL_FLAG FILTER=Node::ALLFLAGS);
 
-	/// Compute the bounding box of the scene.
-	virtual void computeBBox(Node* root, SReal* minBBox, SReal* maxBBox);
+        /// Compute the bounding box of the scene. If init is set to "true", then minBBox and maxBBox will be initialised to a default value
+        virtual void computeBBox(Node* root, SReal* minBBox, SReal* maxBBox, bool init=true);
 
 	/// Render the scene
 	virtual void draw(Node* root, helper::gl::VisualParameters* params = NULL);
@@ -103,6 +106,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	virtual void unload(Node * /* root */);
 	
 
+        virtual Node *getVisualRoot()=0;
 
 
 

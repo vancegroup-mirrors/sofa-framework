@@ -85,9 +85,6 @@ public:
     /// This method must be reimplemented by all mappings if they need to support constraints.
     virtual void applyJT( typename In::VecConst& /*out*/, const typename Out::VecConst& /*in*/ ) {}
 
-    /// This method must be reimplemented by all mappings if they need to support mask.
-    virtual void applyJT( BaseMechanicalState::ParticleMask& /*out*/, const BaseMechanicalState::ParticleMask& /*in*/ ) {}
-
     /// If the mapping input has a rotation velocity, it computes the subsequent acceleration
     /// created by the derivative terms
     /// $ a_out = w^(w^rel_pos)	$

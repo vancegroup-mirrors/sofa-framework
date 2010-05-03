@@ -95,13 +95,13 @@ SOFA_DECL_CLASS(MeshObjLoader)
   {
     sout << "Loading OBJ file: " << m_filename << sendl;
 
-    FILE* file;
     bool fileRead = false;
 
     // -- Loading file
-	const char* filename = m_filename.getFullPath().c_str();
-
-    if ((file = fopen(filename, "r")) == NULL)
+    const char* filename = m_filename.getFullPath().c_str();
+    std::ifstream file(filename);
+	
+    if (!file.good())
     {
       serr << "Error: MeshObjLoader: Cannot read file '" << m_filename << "'." << sendl;
       return false;
@@ -109,14 +109,14 @@ SOFA_DECL_CLASS(MeshObjLoader)
 
     // -- Reading file
     fileRead = this->readOBJ (file,filename);
-    fclose(file);
+    file.close();
     
     return fileRead;
   }
 
   
   
-  bool MeshObjLoader::readOBJ (FILE* file, const char* filename)
+  bool MeshObjLoader::readOBJ (std::ifstream &file, const char* filename)
   {
     sout << "MeshObjLoader::readOBJ" << sendl;
     
@@ -134,212 +134,135 @@ SOFA_DECL_CLASS(MeshObjLoader)
     helper::vector<helper::fixed_array <unsigned int,3> >& my_triangles = *(triangles.beginEdit());
     helper::vector<helper::fixed_array <unsigned int,4> >& my_quads = *(quads.beginEdit());
   
-
     int vtn[3];
-    char buf[128], matName[1024];
     Vec3d result;
-    const char *token;
-
+    std::string line;
     std::string face, tmp;
-    while (fscanf(file, "%s", buf) != EOF)
+    while( std::getline(file,line) )
     {
-      switch (buf[0])
-      {
-	  case '#':
-	    /* comment */
-	    /* eat up rest of line */
-	    if ( fgets(buf, sizeof(buf), file) == NULL)
+	if (line.empty()) continue;
+	std::istringstream values(line);
+        std::string token;
+	
+	values >> token;
+        if (token == "#")
+	{
+	  /* comment */
+	}
+        else if (token == "v")
+	{
+	  /* vertex */
+	  values >> result[0] >> result[1] >> result[2];
+	  my_positions.push_back(Vector3(result[0],result[1], result[2]));
+	}
+        else if (token == "vn")
+	{
+            /* normal */
+	  values >> result[0] >> result[1] >> result[2];
+	  my_normals.push_back(Vector3(result[0],result[1], result[2]));
+	}
+        else if (token == "vt")
+	{
+	  /* texcoord */
+	  values >> result[0] >> result[1];
+	  my_texCoords.push_back(Vector2(result[0],result[1]));
+	}
+        else if (token == "mtllib")
+	{
+	  while (!values.eof())
+	  {
+	    std::string materialLibaryName;
+	    values >> materialLibaryName;
+	    std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(materialLibaryName.c_str(), filename);
+	    this->readMTL(mtlfile.c_str(), my_materials);
+	  }
+	}
+        else if (token == "usemtl")
+	{
+            std::string materialName;
+            values >> materialName;
+	    helper::vector<MeshObjLoader::Material>::iterator it = my_materials.begin();
+	    helper::vector<MeshObjLoader::Material>::iterator itEnd = my_materials.end();
+            for (; it != itEnd; it++)
 	    {
-	      if (feof (file) )
-		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case #." << sendl;
-	      else
-		serr << "Error: MeshObjLoader: fgets function has encounter an error. case #." << sendl;
-	    }
-	    	    
-	    break;
-	  case 'v':
-	    /* v, vn, vt */
-	    switch (buf[1])
-	    {
-		case '\0':
-		  /* vertex */
-		  /* eat up rest of line */
-		  if ( fgets(buf, sizeof(buf), file) == NULL)
-		  {
-		    if (feof (file) )
-		      serr << "Error: MeshObjLoader: fgets function has encounter end of file. case \0." << sendl;
-		    else
-		      serr << "Error: MeshObjLoader: fgets function has encounter an error. case \0." << sendl;
-		  }
-		  		  
-		  sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
-		  my_positions.push_back(Vector3(result[0],result[1], result[2]));
-		  break;
-		case 'n':
-		  /* normal */
-		  /* eat up rest of line */
-		  if ( fgets(buf, sizeof(buf), file) == NULL)
-		  {
-		    if (feof (file) )
-		      serr << "Error: MeshObjLoader: fgets function has encounter end of file. case n." << sendl;
-		    else
-		      serr << "Error: MeshObjLoader: fgets function has encounter an error. case n." << sendl;
-		  }
-		  
-		    
-		  sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
-		  my_normals.push_back(Vector3(result[0],result[1], result[2]));
-		  break;
-		case 't':
-		  /* texcoord */
-		  /* eat up rest of line */
-		  if ( fgets(buf, sizeof(buf), file) == NULL)
-		  {
-		    if (feof (file) )
-		      serr << "Error: MeshObjLoader: fgets function has encounter end of file. case t." << sendl;
-		    else
-		      serr << "Error: MeshObjLoader: fgets function has encounter an error. case t." << sendl;
-		  }
-
-		  sscanf (buf, "%lf %lf", &result[0], &result[1]);
-		  my_texCoords.push_back(Vector2(result[0],result[1]));
-		  break;
-		default:
-		  printf("readObj : Unknown token \"%s\".\n", buf);
-		  exit(1);
-		  break;
-	    }
-	    break;
-	  case 'm':
-	    {
-	      if ( fgets(buf, sizeof(buf), file) == NULL)
+	      if (it->name == materialName)
 	      {
-		if (feof (file) )
-		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case m." << sendl;
-		else
-		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case m." << sendl;
-	      }
-	      
-	      sscanf(buf, "%s %s", buf, buf);
-	      //mtllibname = strdup(buf);
-	      //fscanf(file, "%s", buf);
-	      std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(buf, filename);
-	      //serr << "Buf = " << buf << sendl;
-	      //serr << "Filename = " << filename << sendl;
-	      this->readMTL(mtlfile.c_str(), my_materials);
-	    }
-	    break;
-	  case 'u':
-	    {
-	      /* eat up rest of line */
-	      if ( fgets(buf, sizeof(buf), file) == NULL)
-	      {
-		if (feof (file) )
-		  serr << "Error: MeshObjLoader: fgets function has encounter end of file. case u." << sendl;
-		else
-		  serr << "Error: MeshObjLoader: fgets function has encounter an error. case u." << sendl;
-	      }
-	      
-	      sscanf(buf, "%s", matName);
-	      helper::vector<MeshObjLoader::Material>::iterator it = my_materials.begin();
-	      helper::vector<MeshObjLoader::Material>::iterator itEnd = my_materials.end();
-	      for (; it != itEnd; it++)
-	      {
-		if (it->name == matName)
-		{
-		  //  							sout << "Using material "<<it->name<<sendl;
-		  (*it).activated = true;
-		  material = *it;
-		}
+		// std::cout << "Using material "<<it->name<<std::endl;
+		(*it).activated = true;
+		material = *it;
 	      }
 	    }
-	    break;
-	  case 'g':
-	    /* group */
-	    /* eat up rest of line */
-	    if ( fgets(buf, sizeof(buf), file) == NULL)
+	}
+        else if (token == "g")
+          {
+            while (!values.eof())
 	    {
-	      if (feof (file) )
-		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case g." << sendl;
-	      else
-		serr << "Error: MeshObjLoader: fgets function has encounter an error. case g." << sendl;
+	      std::string groupName;
+	      values >> groupName;
+	      //Do Nothing....
 	    }
-	    
-	    sscanf(buf, "%s", buf);
-	    break;
-	  case 'l': // for now we consider a line as a 2-vertices face
-	  case 'f':
-	    // face 
-	    if ( fgets(buf, sizeof(buf), file) == NULL)
-	    {
-	      if (feof (file) )
-		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case f." << sendl;
-	      else
-		serr << "Error: MeshObjLoader: fgets function has encounter an error. case f." << sendl;
-	    }
-	    token = strtok(buf, " ");
-				
-	    nodes.clear();
-	    nIndices.clear();
-	    tIndices.clear();
+          }
+        else if (token == "l" || token == "f")
+	{
+	  /* face */
+	  nodes.clear();
+	  nIndices.clear();
+	  tIndices.clear();
 
-	    while(token!=NULL && token[0]>='0' && token[0]<='9')
+	  while (!values.eof())
+	  {
+	    std::string face;
+	    values >> face;
+	    if (face.empty()) continue;
+	    for (int j = 0; j < 3; j++)
 	    {
-	      face = token;
-	      for (int j = 0; j < 3; j++)
+	      vtn[j] = 0;
+	      std::string::size_type pos = face.find('/');
+	      std::string tmp = face.substr(0, pos);
+	      if (pos == std::string::npos)
+		face = "";
+	      else
 	      {
-		vtn[j] = 0;
-		std::string::size_type pos = face.find('/');
-		tmp = face.substr(0, pos);
-		if (tmp != "")
-		  vtn[j] = atoi(tmp.c_str()) - 1; // -1 because the numerotation begins at 1 and a vector begins at 0
-		if (pos == std::string::npos)
-		  face = "";
-		else
-		  face = face.substr(pos + 1);
+		face = face.substr(pos + 1);
 	      }
 
-	      nodes.push_back(vtn[0]);
-	      nIndices.push_back(vtn[1]);
-	      tIndices.push_back(vtn[2]);
-	      token = strtok(NULL, " ");
+	      if (!tmp.empty())
+		vtn[j] = atoi(tmp.c_str()) - 1; // -1 because the numerotation begins at 1 and a vector begins at 0
 	    }
-	    my_normalsList.push_back(nIndices);
-	    my_texturesList.push_back(tIndices);
 
-	    if (nodes.size() == 2) // Edge
-	    {
-	      if (nodes[0]<nodes[1])
-                addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
-	      else
-                addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[1], nodes[0]));
-	    }
-	    else if (nodes.size()==4) // Quad
-	    { 
-	      addQuad(&my_quads, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
-	    }
-	    else // Triangularize
-	    { 
-	      for (unsigned int j=2; j<nodes.size(); j++)
-		addTriangle(&my_triangles, helper::fixed_array <unsigned int,3>(nodes[0], nodes[j-1], nodes[j]));
-	    }
-	    
-	    break;
+	    nodes.push_back(vtn[0]);
+	    nIndices.push_back(vtn[1]);
+	    tIndices.push_back(vtn[2]);  
+	  }
 
-	    
-	    
-	  default:
-	    // eat up rest of line 
-	    if ( fgets(buf, sizeof(buf), file) == NULL)
-	    {
-	      if (feof (file) )
-		serr << "Error: MeshObjLoader: fgets function has encounter end of file. case default." << sendl;
-	      else
-		serr << "Error: MeshObjLoader: fgets function has encounter an error. case default." << sendl;
-	    }
-	    break;
+	  my_normalsList.push_back(nIndices);
+	  my_texturesList.push_back(tIndices);
+
+	  if (nodes.size() == 2) // Edge
+	  {
+	    if (nodes[0]<nodes[1])
+	      addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
+	    else
+	      addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[1], nodes[0]));
+	  }
+	  else if (nodes.size()==4) // Quad
+	  { 
+	    addQuad(&my_quads, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
+	  }
+	  else // Triangularize
+	  { 
+	    for (unsigned int j=2; j<nodes.size(); j++)
+	      addTriangle(&my_triangles, helper::fixed_array <unsigned int,3>(nodes[0], nodes[j-1], nodes[j]));
+	  }
+	  	  
+	}
+        else
+	{
+	  // std::cerr << "readObj : Unknown token for line " << line << std::endl;
+	}
       }
-    }
+    
+    
     // announce the model statistics 
     // 	sout << " Vertices: " << vertices.size() << sendl;
     // 	sout << " Normals: " << normals.size() << sendl;

@@ -42,7 +42,9 @@ class SparseGridSpringForceField : public StiffSpringForceField<DataTypes>
 {
 	/// make the spring force field of a sparsegrid
 public:
-    typedef StiffSpringForceField<DataTypes> Inherit;
+  SOFA_CLASS(SOFA_TEMPLATE(SparseGridSpringForceField, DataTypes), SOFA_TEMPLATE(StiffSpringForceField, DataTypes));
+
+  typedef StiffSpringForceField<DataTypes> Inherit;
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
 	typedef typename DataTypes::Coord Coord;

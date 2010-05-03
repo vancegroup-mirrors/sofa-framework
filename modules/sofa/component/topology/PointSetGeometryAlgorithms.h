@@ -27,6 +27,7 @@
 
 #include <sofa/core/componentmodel/topology/BaseTopology.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/component/component.h>
@@ -34,10 +35,6 @@
 
 namespace sofa
 {
-    namespace core { namespace componentmodel { namespace behavior {
-    template <class DataTypes>
-    class MechanicalState;
-    }}}
 
 namespace component
 {
@@ -54,7 +51,9 @@ namespace topology
 	template<class DataTypes>
 	class PointSetGeometryAlgorithms : public core::componentmodel::topology::GeometryAlgorithms
 	{
-	public:		
+	public:
+        SOFA_CLASS(SOFA_TEMPLATE(PointSetGeometryAlgorithms,DataTypes),core::componentmodel::topology::GeometryAlgorithms);
+		
 		typedef typename DataTypes::Real Real;
 		typedef typename DataTypes::Coord Coord;
 		typedef typename DataTypes::VecCoord VecCoord;

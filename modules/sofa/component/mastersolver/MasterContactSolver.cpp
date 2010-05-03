@@ -89,6 +89,7 @@ MasterContactSolver::MasterContactSolver()
 ,_mu(0.6)
 , lcp1(MAX_NUM_CONSTRAINTS)
 , lcp2(MAX_NUM_CONSTRAINTS)
+, lcp3(MAX_NUM_CONSTRAINTS)
 , _W(&lcp1.W)
 , lcp(&lcp1)
 , _dFree(&lcp1.dFree)
@@ -334,7 +335,7 @@ void MasterContactSolver::step(double dt)
 
 	core::componentmodel::behavior::BaseMechanicalState::VecId dx_id = core::componentmodel::behavior::BaseMechanicalState::VecId::dx();
 	simulation::MechanicalVOpVisitor(dx_id).execute( context);
-	simulation::MechanicalPropagateDxVisitor(dx_id).execute( context);
+        simulation::MechanicalPropagateDxVisitor(dx_id,true).execute( context); //ignore the mask here (is it necessary?)
 	simulation::MechanicalVOpVisitor(dx_id).execute( context);
 
 	if ( displayTime.getValue() )
@@ -491,10 +492,10 @@ void MasterContactSolver::step(double dt)
 
 	if(build_lcp.getValue())
 	{
-		lcp = (lcp == &lcp1) ? &lcp2 : &lcp1;
-		_W = &lcp->W;
-		_dFree = &lcp->dFree;
-		_result = &lcp->f;
+		//lcp = (lcp == &lcp1) ? &lcp2 : &lcp1;
+// 		_W = &lcp->W;
+// 		_dFree = &lcp->dFree;
+// 		_result = &lcp->f;
 	}
 
 
@@ -1035,6 +1036,31 @@ int MasterContactSolver::lcp_gaussseidel_unbuilt(double *dfree, double *f)
     //afficheLCP(dfree,W,f,dim);
     return 0;
 }
+
+LCP* MasterContactSolver::getLCP()
+{
+	return lcp;
+}
+
+void MasterContactSolver::lockLCP(LCP* l1, LCP* l2)
+{
+	if((lcp!=l1)&&(lcp!=l2)) // Le lcp courrant n'est pas locké
+		return;
+
+	if((&lcp1!=l1)&&(&lcp1!=l2)) // lcp1 n'est pas locké
+		lcp = &lcp1;
+	else if((&lcp2!=l1)&&(&lcp2!=l2)) // lcp2 n'est pas locké
+		lcp = &lcp2;
+	else
+		lcp = &lcp3; // lcp1 et lcp2 sont lockés, donc lcp3 n'est pas locké
+
+	// Mise à jour de _W _dFree et _result
+	_W = &lcp->W;
+	_dFree = &lcp->dFree;
+	_result = &lcp->f;
+}
+
+
 
 SOFA_DECL_CLASS(MasterContactSolver)
 

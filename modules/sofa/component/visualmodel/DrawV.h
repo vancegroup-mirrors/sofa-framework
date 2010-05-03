@@ -45,9 +45,11 @@ namespace visualmodel
 
 using namespace sofa::defaulttype;
 
-class SOFA_COMPONENT_VISUALMODEL_API DrawV : public core::VisualModel, public core::componentmodel::behavior::MappedModel< ExtVectorTypes< Vec<3,GLfloat>, Vec<3,GLfloat> > >
+class SOFA_COMPONENT_VISUALMODEL_API DrawV : public core::VisualModel, public core::componentmodel::behavior::MappedModel< ExtVec3fTypes >
 {
 public:
+    SOFA_CLASS2(DrawV, core::VisualModel, SOFA_TEMPLATE(core::componentmodel::behavior::MappedModel, ExtVec3fTypes));
+
     Data<bool> castShadow; ///< True if object cast shadows
     Data<bool> useAlpha; ///< True if velocity displayed using alpha blending
     Data<double> vscale; ///< Scaling of veloity vectors

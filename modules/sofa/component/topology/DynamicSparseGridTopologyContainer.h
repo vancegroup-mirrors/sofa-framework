@@ -44,6 +44,8 @@ namespace sofa
           friend class DynamicSparseGridTopologyModifier;
 
         public:
+          SOFA_CLASS(DynamicSparseGridTopologyContainer,HexahedronSetTopologyContainer);
+
           typedef Hexa Hexahedron;
           typedef EdgesInHexahedron EdgesInHexahedron;
           typedef QuadsInHexahedron QuadsInHexahedron;
@@ -58,7 +60,6 @@ namespace sofa
           Data< defaulttype::Vector3 > voxelSize;
 
           DynamicSparseGridTopologyContainer();
-          DynamicSparseGridTopologyContainer ( const sofa::helper::vector< Hexahedron > &hexahedra );
           virtual ~DynamicSparseGridTopologyContainer() {}
 
         protected:

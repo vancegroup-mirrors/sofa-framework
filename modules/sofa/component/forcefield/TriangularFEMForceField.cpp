@@ -203,7 +203,7 @@ void TriangularFEMForceField<DataTypes>::init()
 	serr << "initializing TriangularFEMForceField" << sendl;
 	this->Inherited::init();
 
-	_topology = getContext()->getMeshTopology();
+	_topology = this->getContext()->getMeshTopology();
 
 	if (f_method.getValue() == "small")
 		method = SMALL;
@@ -1333,10 +1333,10 @@ int TriangularFEMForceField<DataTypes>::getFracturedEdge()
 template<class DataTypes>
 void TriangularFEMForceField<DataTypes>::draw()
 {
-  if (!getContext()->getShowForceFields())
+  if (!this->getContext()->getShowForceFields())
      return;
 
-  if (getContext()->getShowWireFrame())
+  if (this->getContext()->getShowWireFrame())
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
 	const VecCoord& x = *this->mstate->getX();
@@ -1462,7 +1462,7 @@ void TriangularFEMForceField<DataTypes>::draw()
 */
 //	}
 	triangleInfo.endEdit();
-    if (getContext()->getShowWireFrame())
+    if (this->getContext()->getShowWireFrame())
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 

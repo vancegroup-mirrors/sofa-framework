@@ -31,8 +31,9 @@
 #pragma once
 #endif
 
-#include <sofa/core/objectmodel/BaseData.h>
 #include <sofa/core/core.h>
+#include <sofa/core/objectmodel/BaseData.h>
+#include <sofa/helper/accessor.h>
 #include <stdlib.h>
 #include <string>
 #include <sstream>
@@ -59,6 +60,11 @@ class TData : public sofa::core::objectmodel::BaseData
 {
 public:
     typedef T value_type;
+
+    explicit TData(const BaseInitData& init)
+    : BaseData(init), parentData(NULL)
+    {
+    }
 
     TData( const char* helpMsg=0, bool isDisplayed=true, bool isReadOnly=false, Base* owner=NULL, const char* name="")
     : BaseData(helpMsg, isDisplayed, isReadOnly, owner, name), parentData(NULL)
@@ -145,6 +151,23 @@ public:
     
     virtual bool isCounterValid() const {return true;}
 
+    bool copyValue(const TData<T>* parent)
+    {
+        virtualSetValue(parent->virtualGetValue());
+        return true;
+    }
+
+    virtual bool copyValue(const BaseData* parent)
+    {
+        const TData<T>* p = dynamic_cast<const TData<T>*>(parent);
+        if (p)
+        {
+            virtualSetValue(p->virtualGetValue());
+            return true;
+        }
+        return BaseData::copyValue(parent);
+    }
+
 protected:
 
     bool validParent(BaseData* parent)
@@ -160,7 +183,7 @@ protected:
 	BaseData::doSetParent(parent);
     }
 
-    bool updateFromParentValue(BaseData* parent)
+    bool updateFromParentValue(const BaseData* parent)
     {
 	if (parent == parentData)
         {
@@ -186,6 +209,35 @@ template < class T = void* >
 class Data : public TData<T>
 {
 public:
+
+    /// This internal class is used by the initData() methods to store initialization parameters of a Data
+    class InitData : public BaseData::BaseInitData
+    {
+    public:
+        InitData() : value(T()) {}
+        InitData(const T& v) : value(v) {}
+        InitData(const BaseData::BaseInitData& i) : BaseData::BaseInitData(i), value(T()) {}
+
+        T value;
+    };
+
+    /** Constructor
+        this constructor should be used through the initData() methods
+     */
+    explicit Data(const BaseData::BaseInitData& init)
+    : TData<T>(init)
+    , m_value(T())// BUGFIX (Jeremie A.): Force initialization of basic types to 0 (bool, int, float, etc).
+    {
+    }
+
+    /** Constructor
+        this constructor should be used through the initData() methods
+     */
+    explicit Data(const InitData& init)
+    : TData<T>(init)
+    , m_value(init.value)
+    {
+    }
 
     /** Constructor
     \param helpMsg help on the field
@@ -232,7 +284,7 @@ public:
 
     inline friend std::ostream & operator << (std::ostream &out, const Data& df)
     {
-        out<<df.getValue();
+            out<<df.getValue();
         return out;
     }
 
@@ -291,7 +343,7 @@ template<class T>
 inline
 void TData<T>::printValue( std::ostream& out=std::cout ) const
 {
-    out << value() << " ";
+  out << value() << " ";
 }
 
 /// General case for printing default value
@@ -315,6 +367,96 @@ std::string TData<T>::getValueTypeString() const
 } // namespace objectmodel
 
 } // namespace core
+
+// Overload helper::ReadAccessor and helper::WriteAccessor
+
+namespace helper
+{
+
+template<class T>
+class ReadAccessor< core::objectmodel::Data<T> >
+{
+public:
+    typedef core::objectmodel::Data<T> data_container_type;
+    typedef T container_type;
+    typedef typename container_type::size_type size_type;
+    typedef typename container_type::value_type value_type;
+    typedef typename container_type::reference reference;
+    typedef typename container_type::const_reference const_reference;
+    typedef typename container_type::iterator iterator;
+    typedef typename container_type::const_iterator const_iterator;
+
+protected:
+    const data_container_type& data;
+    const container_type& ref;
+public:
+    ReadAccessor(const data_container_type& d) : data(d), ref(d.getValue()) {}
+    ~ReadAccessor() {}
+
+    size_type size() const { return ref.size(); }
+    bool empty() const { return ref.empty(); }
+
+    const_reference operator[](size_type i) const { return ref[i]; }
+
+    const_iterator begin() const { return ref.begin(); }
+    const_iterator end() const { return ref.end(); }
+
+    inline friend std::ostream& operator<< ( std::ostream& os, const ReadAccessor<data_container_type>& vec )
+    {
+        return os << vec.ref;
+    }
+};
+
+template<class T>
+class WriteAccessor< core::objectmodel::Data<T> >
+{
+public:
+    typedef core::objectmodel::Data<T> data_container_type;
+    typedef T container_type;
+    typedef typename container_type::size_type size_type;
+    typedef typename container_type::value_type value_type;
+    typedef typename container_type::reference reference;
+    typedef typename container_type::const_reference const_reference;
+    typedef typename container_type::iterator iterator;
+    typedef typename container_type::const_iterator const_iterator;
+
+protected:
+    data_container_type& data;
+    container_type& ref;
+
+public:
+    WriteAccessor(data_container_type& d) : data(d), ref(*d.beginEdit()) {}
+    ~WriteAccessor() { data.endEdit(); }
+
+    size_type size() const { return ref.size(); }
+    bool empty() const { return ref.empty(); }
+
+    const_reference operator[](size_type i) const { return ref[i]; }
+    reference operator[](size_type i) { return ref[i]; }
+
+    const_iterator begin() const { return ref.begin(); }
+    iterator begin() { return ref.begin(); }
+    const_iterator end() const { return ref.end(); }
+    iterator end() { return ref.end(); }
+
+    void clear() { ref.clear(); }
+    void resize(size_type s, bool /*init*/ = true) { /*if (init)*/ ref.resize(s); /*else ref.fastResize(s);*/ }
+    void reserve(size_type s) { ref.reserve(s); }
+    void push_back(const_reference v) { ref.push_back(v); }
+
+    inline friend std::ostream& operator<< ( std::ostream& os, const WriteAccessor<data_container_type>& vec )
+    {
+        return os << vec.ref;
+    }
+
+    inline friend std::istream& operator>> ( std::istream& in, WriteAccessor<data_container_type>& vec )
+    {
+        return in >> vec.ref;
+    }
+
+};
+
+} // namespace helper
 
 } // namespace sofa
 

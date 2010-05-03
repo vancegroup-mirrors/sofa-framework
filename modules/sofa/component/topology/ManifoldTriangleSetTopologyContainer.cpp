@@ -52,12 +52,6 @@ namespace sofa
 
 
   
-      ManifoldTriangleSetTopologyContainer::ManifoldTriangleSetTopologyContainer(const sofa::helper::vector< Triangle > &triangles )
-	: TriangleSetTopologyContainer(triangles)
-      {
-      }
-  
-
   
       bool ManifoldTriangleSetTopologyContainer::checkTopology() const
       {
@@ -262,8 +256,6 @@ namespace sofa
       void ManifoldTriangleSetTopologyContainer::createEdgeSetArray()
       {
 
-	d_edge.beginEdit();
-    
 	if(!hasTriangles()) // this method should only be called when triangles exist
 	{
 #ifndef NDEBUG
@@ -291,6 +283,8 @@ namespace sofa
     
 	// create a temporary map to find redundant edges
 	std::map<Edge, unsigned int> edgeMap;
+	helper::WriteAccessor< Data< sofa::helper::vector<Edge> > > m_edge = d_edge;
+	helper::ReadAccessor< Data< sofa::helper::vector<Triangle> > > m_triangle = d_triangle;
 
 	for (unsigned int i=0; i<m_triangle.size(); ++i)
 	{
@@ -315,7 +309,6 @@ namespace sofa
 	  }
 	}
     
-	d_edge.endEdit();
       }
   
 
@@ -357,7 +350,8 @@ namespace sofa
     
 	std::multimap<unsigned int, unsigned int>::iterator it_multimap;
 	std::map<unsigned int, unsigned int>::iterator it_map;
-    
+
+	helper::ReadAccessor< Data< sofa::helper::vector<Edge> > > m_edge = d_edge;
     
 	m_edgesAroundVertex.resize(nbrVertices);
 	map_Adjacents.resize(nbrVertices);
@@ -590,7 +584,8 @@ namespace sofa
 	std::multimap<unsigned int, unsigned int> map_edgesInTriangle;
 	std::multimap<unsigned int, unsigned int>::iterator it;
 	std::pair< std::multimap <unsigned int, unsigned int>::iterator, std::multimap <unsigned int, unsigned int>::iterator> pair_equal_range;
-
+	helper::ReadAccessor< Data< sofa::helper::vector<Edge> > > m_edge = d_edge;
+	helper::ReadAccessor< Data< sofa::helper::vector<Triangle> > > m_triangle = d_triangle;
 
 	m_trianglesAroundEdge.resize(nbrEdges);
 	
@@ -631,7 +626,7 @@ namespace sofa
 	  {
 	    pair_equal_range = map_edgesInTriangle.equal_range(indexEdge);
 	    it = pair_equal_range.first;
-
+	    
 	    firstVertex = m_edge[indexEdge][0];
 
 	    vertexTriangle = m_triangle[(*it).second];
@@ -679,7 +674,7 @@ namespace sofa
 	  return -2;
 	}
     
-	if( triangleIndex >= m_triangle.size())
+	if( triangleIndex >= (d_triangle.getValue()).size())
 	{
 #ifndef NDEBUG
 	  std::cout << "Error. [ManifoldTriangleSetTopologyContainer::getNextTrianglesAroundVertex] Triangle index out of bounds." << std::endl;
@@ -752,7 +747,7 @@ namespace sofa
 	  return -2;
 	}
 	
-	if( triangleIndex >= m_triangle.size())
+	if( triangleIndex >= (d_triangle.getValue()).size())
 	{
 #ifndef NDEBUG
 	  std::cout << "Error. [ManifoldTriangleSetTopologyContainer::getPreviousTrianglesAroundVertex] Triangle index out of bounds." << std::endl;
@@ -825,7 +820,7 @@ namespace sofa
 	  return -2;
 	}
 
-	if (triangleIndex >= m_triangle.size())
+	if (triangleIndex >= (d_triangle.getValue()).size())
 	{
 #ifndef NDEBUG
 	  std::cout << "Error. [ManifoldTriangleSetTopologyContainer::getNextTrianglesAroundVertex] Triangle index out of bounds." << std::endl;
@@ -871,7 +866,10 @@ namespace sofa
   
       int ManifoldTriangleSetTopologyContainer::getNextEdgesAroundVertex(PointID vertexIndex, EdgeID edgeIndex)
       {
-    
+
+	helper::ReadAccessor< Data< sofa::helper::vector<Edge> > > m_edge = d_edge;
+	helper::ReadAccessor< Data< sofa::helper::vector<Triangle> > > m_triangle = d_triangle;
+	
 	if(!hasEdgesAroundVertex())	// this method should only be called when the shell array exists
 	{
 #ifndef NDEBUG
@@ -967,7 +965,9 @@ namespace sofa
 
       int ManifoldTriangleSetTopologyContainer::getPreviousEdgesAroundVertex(PointID vertexIndex, EdgeID edgeIndex)
       {
-
+	helper::ReadAccessor< Data< sofa::helper::vector<Edge> > > m_edge = d_edge;
+	helper::ReadAccessor< Data< sofa::helper::vector<Triangle> > > m_triangle = d_triangle;
+	
 	if(!hasEdgesAroundVertex())	// this method should only be called when the shell array exists
 	{
 #ifndef NDEBUG

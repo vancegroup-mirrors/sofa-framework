@@ -135,7 +135,7 @@ template <class DataTypes>
 void SpringEdgeDataForceField<DataTypes>::init()
 {
 	ForceField<DataTypes>::init();
-	topology = dynamic_cast<sofa::component::topology::EdgeSetTopology<DataTypes>*>(getContext()->getMainTopology());
+	topology = dynamic_cast<sofa::component::topology::EdgeSetTopology<DataTypes>*>(this->getContext()->getMainTopology());
 	assert(topology!=0);
 	/// check that the filename as changed
 	if (m_filename.getValue()!="untitled")
@@ -195,8 +195,8 @@ void SpringEdgeDataForceField<DataTypes>::handleEvent( Event* e )
 	} else {
 		component::topology::TopologyChangedEvent *tce=dynamic_cast<component::topology::TopologyChangedEvent *>(e);
 		/// test that the event is a change of topology and that it
-		if ((tce) && (tce->getTopology()== getContext()->getMainTopology())) {
-			core::componentmodel::topology::BaseTopology *topology = static_cast<core::componentmodel::topology::BaseTopology *>(getContext()->getMainTopology());
+		if ((tce) && (tce->getTopology()== this->getContext()->getMainTopology())) {
+			core::componentmodel::topology::BaseTopology *topology = static_cast<core::componentmodel::topology::BaseTopology *>(this->getContext()->getMainTopology());
 
 			std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itBegin=topology->firstChange();
 			std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itEnd=topology->lastChange();
@@ -297,7 +297,7 @@ void SpringEdgeDataForceField<DataTypes>::addDForce(VecDeriv& df, const VecDeriv
 template<class DataTypes>
 void SpringEdgeDataForceField<DataTypes>::draw()
 {
-	if (getContext()->getShowForceFields()==false)
+	if (this->getContext()->getShowForceFields()==false)
 		return;
 	const VecCoord& p = *this->object->getX();
 	component::topology::EdgeSetTopologyContainer *container=topology->getEdgeSetTopologyContainer();

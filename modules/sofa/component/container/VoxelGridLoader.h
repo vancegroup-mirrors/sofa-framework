@@ -44,6 +44,8 @@ namespace sofa
     class SOFA_COMPONENT_CONTAINER_API VoxelGridLoader : public MeshLoader
     {
       public:
+    	SOFA_CLASS(VoxelGridLoader,MeshLoader);
+
         typedef defaulttype::Vec<3, int> Vec3i;
         typedef defaulttype::Vec<6, int> Vec6i;
 

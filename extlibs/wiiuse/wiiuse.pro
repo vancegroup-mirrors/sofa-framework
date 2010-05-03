@@ -2,9 +2,10 @@
 
 SOFA_DIR = ../..
 TEMPLATE = lib
+TARGET = wiiuse
+
 include($${SOFA_DIR}/sofa.cfg)
 
-TARGET = wiiuse$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
 
 LIBS += -lbluetooth

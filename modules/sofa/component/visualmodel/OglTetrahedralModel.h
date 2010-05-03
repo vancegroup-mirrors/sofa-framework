@@ -53,12 +53,14 @@ template<class DataTypes>
 class OglTetrahedralModel : public core::VisualModel
 {
 public:
+	SOFA_CLASS(OglTetrahedralModel, core::VisualModel);
+
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::VecCoord VecCoord;
 
 private:
-	core::componentmodel::topology::BaseMeshTopology* topo;
 	core::componentmodel::behavior::MechanicalState<DataTypes>* nodes;
+	core::componentmodel::topology::BaseMeshTopology* topo;
 
 	Data<bool> depthTest;
 	Data<bool> blending;

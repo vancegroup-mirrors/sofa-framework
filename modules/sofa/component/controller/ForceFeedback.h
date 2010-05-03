@@ -44,7 +44,7 @@ namespace controller
 {
 
 public:
-
+  SOFA_CLASS(ForceFeedback,core::componentmodel::behavior::BaseController);
 	Data<bool> f_activate;
 
 	simulation::Node *context;

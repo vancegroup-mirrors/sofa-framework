@@ -1,7 +1,9 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentconstraint
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentconstraint$$LIBSUFFIX
+
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib
@@ -57,15 +59,12 @@ SOURCES += initConstraint.cpp \
 
 contains(DEFINES,SOFA_HAVE_EIGEN2){ 
 HEADERS += \
-           BaseProjectiveLMConstraint.h \
-           BaseProjectiveLMConstraint.inl \
            DistanceConstraint.h \
            DistanceConstraint.inl \
            FixedLMConstraint.h \
            FixedLMConstraint.inl 
            
 SOURCES += \           
-           BaseProjectiveLMConstraint.cpp \
            DistanceConstraint.cpp \
            FixedLMConstraint.cpp 
 }

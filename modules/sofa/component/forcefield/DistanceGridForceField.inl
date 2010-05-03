@@ -390,7 +390,7 @@ template <class DataTypes>
 template<class DataTypes>
 void DistanceGridForceField<DataTypes>::draw()
 {
-	if (!getContext()->getShowForceFields()) return;
+	if (!this->getContext()->getShowForceFields()) return;
 	drawDistanceGrid();
 }
 

@@ -49,6 +49,7 @@ using namespace sofa::defaulttype;
  class SOFA_COMPONENT_LOADER_API MeshTrianLoader : public sofa::core::componentmodel::loader::MeshLoader
 {
  public:
+  SOFA_CLASS(MeshTrianLoader,sofa::core::componentmodel::loader::MeshLoader);
 
   MeshTrianLoader();
   
@@ -57,7 +58,7 @@ using namespace sofa::defaulttype;
   template <class T>
     static bool canCreate ( T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg )
   {
-    std::cout << "MeshTrianLoader::cancreate()" << std::endl;
+    //std::cout << "MeshTrianLoader::cancreate()" << std::endl;
     
     //      std::cout << BaseLoader::m_filename << " is not an Gmsh file." << std::endl;
     //    BaseObjectDescription, i.e. arg->getAttribute("filename")

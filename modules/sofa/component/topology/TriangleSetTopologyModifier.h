@@ -49,6 +49,8 @@ namespace sofa
       class SOFA_COMPONENT_CONTAINER_API TriangleSetTopologyModifier : public EdgeSetTopologyModifier
       {
       public:
+        SOFA_CLASS(TriangleSetTopologyModifier,EdgeSetTopologyModifier);
+
 	TriangleSetTopologyModifier(){}
 
 	virtual ~TriangleSetTopologyModifier() {}

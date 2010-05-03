@@ -82,6 +82,8 @@ public:
 
 class SOFA_COMPONENT_COLLISION_API LineModel : public core::CollisionModel
 {
+public :
+	SOFA_CLASS(LineModel,sofa::core::CollisionModel);
 protected:
 	struct LineData
 	{
@@ -142,6 +144,9 @@ public:
 	//}
 
 	void setFilter(LineLocalMinDistanceFilter * /*lmdFilter*/);
+
+	Data<bool> bothSide; // to activate collision on both-side of the both side of the line model (when surface normals are defined on these lines)
+
 
 protected:
 

@@ -57,6 +57,7 @@ template <class DataTypes>
 class TrianglesInBoxROI : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(TrianglesInBoxROI,DataTypes),core::objectmodel::BaseObject);
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;
     typedef defaulttype::Vec<6,Real> Vec6;

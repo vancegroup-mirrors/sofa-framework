@@ -1,7 +1,9 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentmisc
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentmisc$$LIBSUFFIX
+
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib
@@ -11,20 +13,25 @@ DEFINES += SOFA_BUILD_COMPONENT_MISC
 
 HEADERS += initMisc.h \
            CompareState.h \
-	       DevAngleCollisionMonitor.h \
-	       DevAngleCollisionMonitor.inl \
+           CompareTopology.h \
+           DevAngleCollisionMonitor.h \
+           DevAngleCollisionMonitor.inl \
            DevTensionMonitor.h \
            DevTensionMonitor.inl \
            DevMonitorManager.h \
-	       InputEventReader.h \
+           InputEventReader.h \
            Monitor.h \
            Monitor.inl \
            ParticleSink.h \
            ParticleSource.h \
            ReadState.h \
            ReadState.inl \
+           ReadTopology.h \
+           ReadTopology.inl \
            WriteState.h \
            WriteState.inl \
+           WriteTopology.h \
+           WriteTopology.inl \
            EvalPointsDistance.h \
            EvalPointsDistance.inl \
            EvalSurfaceDistance.h \
@@ -34,15 +41,18 @@ HEADERS += initMisc.h \
 
 SOURCES += initMisc.cpp \
            CompareState.cpp \
-	       DevAngleCollisionMonitor.cpp \
+           CompareTopology.cpp \
+           DevAngleCollisionMonitor.cpp \
            DevTensionMonitor.cpp \
            DevMonitorManager.cpp \
-	       InputEventReader.cpp \
+           InputEventReader.cpp \
            Monitor.cpp \
            ParticleSink.cpp \
            ParticleSource.cpp \
            ReadState.cpp \
+           ReadTopology.cpp \
            WriteState.cpp \
+           WriteTopology.cpp \
            EvalPointsDistance.cpp \
            EvalSurfaceDistance.cpp \
            MeshTetraStuffing.cpp 

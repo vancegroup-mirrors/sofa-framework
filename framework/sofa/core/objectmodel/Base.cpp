@@ -55,15 +55,18 @@ namespace objectmodel
 
 using std::string;
 
-  Base::Base():sendl(f_printLog.getValue())
-      , serr(*(sendl.serr)), sout(*(sendl.sout))
-  {
-    name = initData(&name,std::string("unnamed"),"name","object name");
-    f_printLog = initData( &f_printLog, false, "printLog", "if true, print logs at run-time");
-  }
+Base::Base()
+: name(initData(&name,std::string("unnamed"),"name","object name"))
+, f_printLog(initData(&f_printLog, false, "printLog", "if true, print logs at run-time"))
+{
+    name.setGroup("Base");
+    f_printLog.setGroup("Base");
+    sendl.setParent(this);
+}
 
 Base::~Base()
-{}
+{
+}
 
 std::string Base::getName() const
 {
@@ -73,8 +76,45 @@ std::string Base::getName() const
 void Base::setName(const std::string& na)
 {
     name.setValue(na);
-    sendl.nameComponent = na;
-    sendl.nameClass = getClassName();
+}
+
+void Base::processStream(std::ostream& out)
+{
+    if (&out == &serr)
+    {	    
+        serr << "\n";
+         if (f_printLog.getValue())
+        std::cerr<< "WARNING[" << getName() << "(" << getClassName() << ")]: "<<serr.str();
+        warnings += serr.str();
+        serr.str("");
+    }
+    else if (&out == &sout)
+    {
+        sout << "\n";
+        if (f_printLog.getValue()) std::cout<< "[" << getName() << "(" << getClassName() << ")]: "<< sout.str();
+        outputs += sout.str();
+        sout.str("");
+    }
+}
+
+const std::string& Base::getWarnings() const
+{
+    return warnings;
+}
+
+const std::string& Base::getOutputs() const
+{
+    return outputs;	
+}
+
+void Base::clearWarnings()
+{
+    warnings.clear();
+}
+
+void Base::clearOutputs()
+{
+    outputs.clear();
 }
 
 
@@ -466,8 +506,17 @@ void Base::xmlWriteNodeDatas (std::ostream& out, unsigned /*level*/ )
   for (unsigned int i=0;i<m_fieldVec.size();i++)
   {
     BaseData* field = m_fieldVec[ i ].second;
-    if(  field->isPersistent() && field->isSet() && !field->getValueString().empty()){
-      out << m_fieldVec[ i ].first << "=\""<< field->getValueString() << "\" ";
+    if(  field->isPersistent() && field->isSet() )
+    {
+        if (field->getLinkPath().empty() )
+        {
+            if (!field->getValueString().empty())
+                out << m_fieldVec[ i ].first << "=\""<< field->getValueString() << "\" ";
+        }
+        else
+        {
+            out << m_fieldVec[ i ].first << "=\""<< field->getLinkPath() << "\" ";
+        }
     }
   }
 }
@@ -479,8 +528,19 @@ void  Base::xmlWriteDatas ( std::ostream& out, unsigned level, bool compact )
     for (unsigned int i=0;i<m_fieldVec.size();i++)
     {
       BaseData* field = m_fieldVec[ i ].second;
-      if( field->isPersistent() && field->isSet() && !field->getValueString().empty())
-        out << " " << m_fieldVec[ i ].first << "=\""<< field->getValueString() << "\"";
+
+      if(  field->isPersistent() && field->isSet() )
+      {
+          if (field->getLinkPath().empty() )
+          {
+              if (!field->getValueString().empty())
+                  out << " " <<m_fieldVec[ i ].first << "=\""<< field->getValueString() << "\" ";
+          }
+          else
+          {
+              out << " " << m_fieldVec[ i ].first << "=\""<< field->getLinkPath() << "\" ";
+          }
+      }
     }
   }
   else
@@ -488,12 +548,15 @@ void  Base::xmlWriteDatas ( std::ostream& out, unsigned level, bool compact )
     for (unsigned int i=0;i<m_fieldVec.size();i++)
     {
       BaseData* field = m_fieldVec[ i ].second;
-      if( field->isPersistent() && field->isSet() && !field->getValueString().empty()){
+      if( field->isPersistent() && field->isSet() && (!field->getValueString().empty() || !field->getLinkPath().empty() ) ){
         for (unsigned l=0;l<level;l++) out << "\t";
         out << "<Attribute type=\"" << m_fieldVec[ i ].first << "\">\n" ;
 
         for (unsigned l=0;l<=level;l++) out << "\t";
-        out  << "<Data value=\"" << field->getValueString() << "\"/>\n";
+        if (field->getLinkPath().empty())
+            out  << "<Data value=\"" << field->getValueString() << "\"/>\n";
+        else
+            out  << "<Data value=\"" << field->getLinkPath() << "\"/>\n";
 
         for (unsigned l=0;l<level;l++) out << "\t";
         out << "</Attribute>\n";

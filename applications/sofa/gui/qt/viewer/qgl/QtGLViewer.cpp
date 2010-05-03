@@ -648,6 +648,8 @@ namespace sofa
 	  {
 	    if (!groot) return;
 
+            if (!sceneBBoxIsValid) viewAll();
+
 	    Enable<GL_LIGHTING> light;
 	    Enable<GL_DEPTH_TEST> depth;
 
@@ -754,8 +756,8 @@ namespace sofa
 	  void QtGLViewer::viewAll()
 	  {
 	    getSimulation()->computeBBox(groot, visualParameters.minBBox.ptr(), visualParameters.maxBBox.ptr());
+	    sceneBBoxIsValid =  visualParameters.minBBox[0] <  visualParameters.maxBBox[0];
 
-	    sceneBBoxIsValid = true;
 	    QGLViewer::setSceneBoundingBox(   qglviewer::Vec(visualParameters.minBBox.ptr()),qglviewer::Vec(visualParameters.maxBBox.ptr()) );
 
 	    qglviewer::Vec pos;

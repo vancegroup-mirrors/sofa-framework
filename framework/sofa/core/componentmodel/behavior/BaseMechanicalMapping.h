@@ -64,6 +64,8 @@ class BaseMechanicalState;
 class BaseMechanicalMapping : public virtual objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(BaseMechanicalMapping, objectmodel::BaseObject);
+
     virtual ~BaseMechanicalMapping() { }
 
     /// Get the source (upper) model.

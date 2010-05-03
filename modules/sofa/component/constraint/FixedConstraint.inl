@@ -136,7 +136,7 @@ void FixedConstraint<DataTypes>::init()
 {
     this->core::componentmodel::behavior::Constraint<DataTypes>::init();
 
-	topology = getContext()->getMeshTopology();
+	topology = this->getContext()->getMeshTopology();
 
 	// Initialize functions and parameters
 	topology::PointSubset my_subset = f_indices.getValue();
@@ -252,7 +252,7 @@ void FixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseVector *vect, 
 template <class DataTypes>
 void FixedConstraint<DataTypes>::draw()
 {
-    if (!getContext()->
+    if (!this->getContext()->
             getShowBehaviorModels()) return;
     if (!this->isActive()) return;
     const VecCoord& x = *this->mstate->getX();

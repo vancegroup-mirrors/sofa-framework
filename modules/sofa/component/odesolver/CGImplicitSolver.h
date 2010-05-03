@@ -47,6 +47,7 @@ using namespace sofa::defaulttype;
 class SOFA_COMPONENT_ODESOLVER_API CGImplicitSolver : public OdeSolverImpl
 {
 public:
+        SOFA_CLASS(CGImplicitSolver, sofa::component::odesolver::OdeSolverImpl);
 
 	CGImplicitSolver();
         

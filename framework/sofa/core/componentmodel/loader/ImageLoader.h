@@ -39,11 +39,12 @@ namespace componentmodel
 namespace loader
 {
 
-  /// This class
-  class ImageLoader : public core::componentmodel::loader::BaseLoader
-  {
-    
-  };
+class ImageLoader : public BaseLoader
+{
+public:
+    SOFA_CLASS(ImageLoader, BaseLoader);
+
+};
 
 } // namespace loader
 

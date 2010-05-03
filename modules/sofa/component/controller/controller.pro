@@ -1,7 +1,9 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentcontroller
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentcontroller$$LIBSUFFIX
+
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib
@@ -20,7 +22,8 @@ HEADERS += initController.h \
            ForceFeedback.h \
            NullForceFeedback.h \
            EnslavementForceFeedback.h \
-           LCPForceFeedback.h
+           LCPForceFeedback.h \
+		   LCPForceFeedback.inl
 
 SOURCES += initController.cpp \
            ArticulatedHierarchyController.cpp \

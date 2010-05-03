@@ -184,10 +184,9 @@ namespace sofa
 				  {
 					p[q] = renumberingMap[ ( i + ( q % 2 ) ) + ( j + ( ( q & 2 ) >> 1 ) ) * numPointsX + ( k + ( q / 4 ) ) * numPointsX * numPointsY];
 				  }
-
 	#ifdef SOFA_NEW_HEXA
 				  seqHexahedra.push_back ( Hexahedron ( p[0], p[1], p[3], p[2], p[4], p[5], p[7], p[6] ) );
-	#else
+	#else                                  
 				  seqHexahedra.push_back ( Hexahedron ( p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] ) );
 	#endif
 				  _idxInRegularGrid.push_back ( idx );

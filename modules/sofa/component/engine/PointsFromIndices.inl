@@ -56,19 +56,19 @@ PointsFromIndices<DataTypes>::PointsFromIndices()
 template <class DataTypes>
 void PointsFromIndices<DataTypes>::init()
 {
-    if (!f_X.isSet())
+    if (f_X.getValue().empty())
     {
-	MechanicalState<DataTypes>* mstate;
-	this->getContext()->get(mstate);
-	if (mstate)
-	{
-	    BaseData* parent = mstate->findField("position");
-	    if (parent)
-	    {
-		f_X.setParent(parent);
-		f_X.setReadOnly(true);
-	    }
-	}
+		MechanicalState<DataTypes>* mstate;
+		this->getContext()->get(mstate);
+		if (mstate)
+		{
+			BaseData* parent = mstate->findField("position");
+			if (parent)
+			{
+				f_X.setParent(parent);
+				f_X.setReadOnly(true);
+			}
+		}
     }
     addInput(&f_X);
     addInput(&f_indices);
@@ -96,16 +96,21 @@ template <class DataTypes>
 void PointsFromIndices<DataTypes>::update()
 {
     cleanDirty();
-
     VecCoord& indices_position = *(f_indices_position.beginEdit());
     const SetIndex& indices = f_indices.getValue();
     const VecCoord& x = f_X.getValue();
-    indices_position.clear();
-    
-    for( unsigned i=0; i<indices.size(); ++i )
+
+    if(!x.empty())
     {
-         if (!contains(indices_position, x[indices[i]]))
-            indices_position.push_back(x[indices[i]]);
+    	indices_position.clear();
+    	//indices_position.resize(indices.size());
+
+		for( unsigned i=0; i<indices.size(); ++i )
+		{
+			 if (!contains(indices_position, x[indices[i]]))
+				 indices_position.push_back(x[indices[i]]);
+		}
+
     }
 
     f_indices_position.endEdit();

@@ -46,6 +46,8 @@ namespace collision
 class SOFA_COMPONENT_COLLISION_API LMDNewProximityIntersection : public DiscreteIntersection
 {
 public:
+	SOFA_CLASS(LMDNewProximityIntersection,DiscreteIntersection);
+
     Data<double> alarmDistance;
     Data<double> contactDistance;
 	Data<bool> useLineLine;
@@ -104,16 +106,16 @@ public:
     int computeIntersection(Ray&, Triangle&, OutputVector*);
 
 	template< class TFilter1, class TFilter2 >
-    static inline int doIntersectionLineLine(double dist2, const Vector3& p1, const Vector3& p2, const Vector3& q1, const Vector3& q2, OutputVector* contacts, int id, TFilter1 &f1, TFilter2 &f2);
+    static inline int doIntersectionLineLine(double dist2, const Vector3& p1, const Vector3& p2, const Vector3& q1, const Vector3& q2, OutputVector* contacts, int id, int indexLine1, int indexLine2, TFilter1 &f1, TFilter2 &f2);
 
 	template< class TFilter1, class TFilter2 >
-    static inline int doIntersectionLinePoint(double dist2, const Vector3& p1, const Vector3& p2, const Vector3& q, OutputVector* contacts, int id, TFilter1 &f1, TFilter2 &f2, bool swapElems = false);
+    static inline int doIntersectionLinePoint(double dist2, const Vector3& p1, const Vector3& p2, const Vector3& q, OutputVector* contacts, int id, int indexLine1, int indexPoint2, TFilter1 &f1, TFilter2 &f2, bool swapElems = false);
 
 	template< class TFilter1, class TFilter2 >
-    static inline int doIntersectionPointPoint(double dist2, const Vector3& p, const Vector3& q, OutputVector* contacts, int id, TFilter1 &f1, TFilter2 &f2);
+    static inline int doIntersectionPointPoint(double dist2, const Vector3& p, const Vector3& q, OutputVector* contacts, int id, int indexPoint1, int indexPoint2, TFilter1 &f1, TFilter2 &f2);
 
 	template< class TFilter1, class TFilter2 >
-    static inline int doIntersectionTrianglePoint(double dist2, int flags, const Vector3& p1, const Vector3& p2, const Vector3& p3, const Vector3& n, const Vector3& q, OutputVector* contacts, int id, TFilter1 &f1, TFilter2 &f2, bool swapElems = false);
+    static inline int doIntersectionTrianglePoint(double dist2, int flags, const Vector3& p1, const Vector3& p2, const Vector3& p3, const Vector3& n, const Vector3& q, OutputVector* contacts, int id, Triangle &e1, unsigned int *edgesIndices, int indexPoint2, TFilter1 &f1, TFilter2 &f2, bool swapElems = false);
 
 
 //	static inline int doIntersectionLineLine(double dist2, const Vector3& p1, const Vector3& p2, const Vector3& q1, const Vector3& q2, OutputVector* contacts, int id);

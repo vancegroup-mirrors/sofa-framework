@@ -35,13 +35,13 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace collision
-    {
+namespace collision
+{
 
-      using namespace sofa::defaulttype;
+using namespace sofa::defaulttype;
 
 /**
  *  \brief It is a Ray Trace based collision detection algorithm
@@ -50,10 +50,12 @@ namespace sofa
  *    up to find a triangle in the other object. Both triangles are tested to evaluate if they are in 
  * colliding state. It must be used with a TriangleOctreeModel,as an octree is used to traverse the object.
  */
-      class SOFA_COMPONENT_COLLISION_API RayTraceDetection :public core::componentmodel::collision::
-	BroadPhaseDetection,
-	public core::componentmodel::collision::NarrowPhaseDetection
-      {
+class SOFA_COMPONENT_COLLISION_API RayTraceDetection :public core::componentmodel::collision::BroadPhaseDetection,
+                                                      public core::componentmodel::collision::NarrowPhaseDetection
+{
+public:
+    SOFA_CLASS2(RayTraceDetection, core::componentmodel::collision::BroadPhaseDetection, core::componentmodel::collision::NarrowPhaseDetection);
+
       private:
 	sofa::helper::vector < core::CollisionModel * >collisionModels;
 	Data < bool > bDraw;

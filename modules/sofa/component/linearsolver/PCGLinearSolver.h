@@ -30,7 +30,7 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/helper/map.h>
 
-#define DISPLAY_TIME
+#define DISPLAY_TIME 200
 
 #include <math.h>
 
@@ -51,9 +51,11 @@ using sofa::helper::system::thread::CTime;
 
 /// Linear system solver using the conjugate gradient iterative algorithm
 template<class TMatrix, class TVector>
-class PCGLinearSolver : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>, public virtual sofa::core::objectmodel::BaseObject
+class PCGLinearSolver : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE2(PCGLinearSolver,TMatrix,TVector),SOFA_TEMPLATE2(sofa::component::linearsolver::MatrixLinearSolver,TMatrix,TVector));
+
     typedef TMatrix Matrix;
     typedef TVector Vector;
     typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;
@@ -72,7 +74,7 @@ public:
     , f_tolerance( initData(&f_tolerance,1e-5,"tolerance","desired precision of the Conjugate Gradient Solution (ratio of current residual norm over initial residual norm)") )
     , f_smallDenominatorThreshold( initData(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
     , f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
-    , f_refresh( initData(&f_refresh,"refresh","Refresh iterations") )
+    , f_refresh( initData(&f_refresh,0,"refresh","Refresh iterations") )
     , use_precond( initData(&use_precond,true,"precond","Use preconditioners") )
     , f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") )
     {
@@ -98,7 +100,10 @@ private :
 		double time1;
 		double time2;
 		double time3;
+		double time4;
 		double timeStamp;
+		int step_simu;
+		int it_simu;
 	#endif
 protected:
     /// This method is separated from the rest to be able to use custom/optimized versions depending on the types of vectors.

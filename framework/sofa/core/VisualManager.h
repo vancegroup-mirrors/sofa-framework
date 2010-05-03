@@ -39,6 +39,8 @@ namespace core
 class VisualManager : public virtual VisualModel
 {
 public:
+    SOFA_CLASS(VisualManager, VisualModel);
+
     /// Destructor
     virtual ~VisualManager() { }
 

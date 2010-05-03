@@ -1,7 +1,9 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentfem
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentfem$$LIBSUFFIX
+
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib

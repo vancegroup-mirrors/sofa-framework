@@ -61,6 +61,8 @@ template <class In, class Out>
 class MechanicalMapping : public Mapping<In,Out>, public BaseMechanicalMapping
 {
 public:
+    SOFA_CLASS2(SOFA_TEMPLATE2(MechanicalMapping,In,Out), SOFA_TEMPLATE2(Mapping,In,Out), BaseMechanicalMapping);
+
     Data<bool> f_isMechanical;
 
     MechanicalMapping(In* from, Out* to);

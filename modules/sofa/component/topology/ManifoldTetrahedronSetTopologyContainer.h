@@ -64,10 +64,9 @@ namespace sofa
 	friend class TetrahedronSetTopologyModifier; // To be change to manifold one
         
       public:
+        SOFA_CLASS(ManifoldTetrahedronSetTopologyContainer,TetrahedronSetTopologyContainer);
 
 	ManifoldTetrahedronSetTopologyContainer();
-
-	ManifoldTetrahedronSetTopologyContainer(const sofa::helper::vector< Tetrahedron >& tetrahedra );
 
 	virtual ~ManifoldTetrahedronSetTopologyContainer(){}
 

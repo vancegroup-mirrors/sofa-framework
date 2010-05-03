@@ -56,9 +56,10 @@ using helper::fixed_array;
 
 #define SOFA_NEW_HEXA
 
- class SOFA_CORE_API BaseMeshTopology : public core::componentmodel::topology::Topology
+class SOFA_CORE_API BaseMeshTopology : public core::componentmodel::topology::Topology
 {
 public:
+    SOFA_CLASS(BaseMeshTopology, core::componentmodel::topology::Topology);
     //typedef int index_type;
     typedef unsigned int index_type;
     enum { InvalidID = (unsigned)-1 };

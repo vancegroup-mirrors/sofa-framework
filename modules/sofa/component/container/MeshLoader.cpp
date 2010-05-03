@@ -24,7 +24,6 @@
 ******************************************************************************/
 #include <sofa/component/container/MeshLoader.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/core/componentmodel/topology/Topology.h>
 #include <iostream>
 
 namespace sofa
@@ -178,9 +177,9 @@ void MeshLoader::addQuad(int p1, int p2, int p3, int p4)
 
 void MeshLoader::addCube(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8)
 {
-#ifdef SOFA_NEW_HEXA
+#ifdef SOFA_NEW_HEXA    
 	seqHexahedra.push_back(Hexahedron(p1,p2,p3,p4,p5,p6,p7,p8));
-#else
+#else        
 	seqHexahedra.push_back(Hexahedron(p1,p2,p4,p3,p5,p6,p8,p7));
 #endif
 }

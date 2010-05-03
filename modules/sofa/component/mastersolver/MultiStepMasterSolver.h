@@ -43,6 +43,7 @@ namespace mastersolver
 class SOFA_COMPONENT_MASTERSOLVER_API MultiStepMasterSolver : public sofa::simulation::MasterSolverImpl
 {
 public:
+    SOFA_CLASS(MultiStepMasterSolver, sofa::simulation::MasterSolverImpl);
     MultiStepMasterSolver();
     virtual ~MultiStepMasterSolver();
     void step (double dt);

@@ -31,6 +31,7 @@
 #include <sofa/component/collision/ComponentMouseInteraction.h>
 #include <sofa/component/collision/AttachBodyPerformer.h>
 #include <sofa/component/collision/FixParticlePerformer.h>
+#include <sofa/component/collision/PotentialInjectionPerformer.h>
 #include <sofa/component/collision/RemovePrimitivePerformer.h>
 #include <sofa/component/collision/InciseAlongPathPerformer.h>
 
@@ -38,6 +39,20 @@ namespace sofa
 {
 
   using namespace component::collision;
+
+#ifdef WIN32
+#ifndef SOFA_DOUBLE
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Vec3fTypes> >  AttachBodyPerformerVec3fClass("AttachBody",true);
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, FixParticlePerformer<defaulttype::Vec3fTypes> >  FixParticlePerformerVec3fClass("FixParticle",true);
+#endif
+#ifndef SOFA_FLOAT
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Vec3dTypes> >  AttachBodyPerformerVec3dClass("AttachBody",true);
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, FixParticlePerformer<defaulttype::Vec3dTypes> >  FixParticlePerformerVec3dClass("FixParticle",true);
+#endif
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer >  RemovePrimitivePerformerClass("RemovePrimitive"); 
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, InciseAlongPathPerformer>  InciseAlongPathPerformerClass("InciseAlongPath");
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, PotentialInjectionPerformer> PotentialInjectionPerformerClass("SetActionPotential"); 
+#endif
 
   namespace gui
   {
@@ -124,30 +139,33 @@ namespace sofa
 
     void InciseOperation::end() 
     {
-      execution();
-      pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+    }
+
+   //*******************************************************************************************
+    void InjectOperation::start()
+    {
+      //Creation
+      performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("SetActionPotential", pickHandle->getInteraction()->mouseInteractor);
+      pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+
+      //Configuration
+      component::collision::PotentialInjectionPerformerConfiguration *performerConfiguration=dynamic_cast<component::collision::PotentialInjectionPerformerConfiguration*>(performer);
+      performerConfiguration->setPotentialValue(getPotentialValue());
+      performerConfiguration->setStateTag(getStateTag());
+      //Start
+      performer->start();
     }
 
 
-    //*******************************************************************************************
-    void SculptOperation::start()
+    void InjectOperation::execution()
     {
+//       performer->execute();
     }
 
-    void SculptOperation::execution() 
+    void InjectOperation::end() 
     {
-    }
-
-    void SculptOperation::end() 
-    {
-    }
-
-    void SculptOperation::wait() 
-    {
-    }
-
-    SculptOperation::~SculptOperation()
-    {
+      //   execution();
+      //  pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
     }
 
   }

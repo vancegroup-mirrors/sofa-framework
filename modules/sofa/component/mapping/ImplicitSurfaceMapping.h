@@ -37,15 +37,15 @@ namespace sofa
 namespace component
 {
 
-  namespace mapping
-  {
+namespace mapping
+{
 
-    //using namespace core::componentmodel::behavior;
+template <class In, class Out>
+class ImplicitSurfaceMapping : public core::Mapping<In, Out>, public topology::MeshTopology
+{
+public:
+    SOFA_CLASS2(SOFA_TEMPLATE2(ImplicitSurfaceMapping, In, Out), SOFA_TEMPLATE2(core::Mapping, In, Out), topology::MeshTopology);
 
-    template <class In, class Out>
-      class ImplicitSurfaceMapping : public core::Mapping<In, Out>, public topology::MeshTopology
-      {
-      public:
 	typedef core::Mapping<In, Out> Inherit;
 	typedef typename Out::VecCoord OutVecCoord;
 	typedef typename Out::VecDeriv OutVecDeriv;

@@ -1,11 +1,9 @@
-
 SOFA_DIR=../../../..
 TEMPLATE = app
-
+TARGET = SofaVRPNServer
 
 include($${SOFA_DIR}/sofa.cfg)
 
-TARGET = SofaVRPNServer$$SUFFIX
 DESTDIR = $$SOFA_DIR/bin
 
 DEPENDPATH += .

@@ -1,9 +1,9 @@
 SOFA_DIR=../../..
 TEMPLATE = app
+TARGET = sensAble
 
 include($${SOFA_DIR}/sofa.cfg)
 
-TARGET = sensAble$$SUFFIX
 DESTDIR = $$SOFA_DIR/bin
 CONFIG += $$CONFIGPROJECTGUI 
 LIBS += $$SOFA_GUI_LIBS

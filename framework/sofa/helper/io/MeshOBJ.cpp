@@ -27,10 +27,6 @@
 #include <sofa/helper/io/MeshOBJ.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
-#include <stdlib.h>
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
 
 namespace sofa
 {
@@ -54,233 +50,158 @@ void MeshOBJ::init (std::string filename)
 	std::cerr << "File " << filename << " not found " << std::endl;
 	return;
     }
-	FILE *f = fopen(filename.c_str(), "r");
-	if (f)
-	{
-		readOBJ (f,filename.c_str());
-		fclose(f);
-	}
-	else
-		std::cerr << "File " << filename << " not found " << std::endl;
+    std::ifstream file(filename.c_str());
+    readOBJ(file, filename);
+    file.close();
 }
 
-void MeshOBJ::readOBJ (FILE* file, const char* filename)
-{
-  std::cout << "MeshOBJ::readOBJ" <<std::endl;
-  
-	vector< vector<int> > vertNormTexIndices;
-	vector<int>vIndices, nIndices, tIndices;
-	int vtn[3];
-	char buf[128], matName[1024];
-	Vec3d result;
-	Vec3d texCoord;
-	Vec3d normal;
-	const char *token;
+  void MeshOBJ::readOBJ (std::ifstream &file, const std::string &filename)
+  {  
+    vector< vector<int> > vertNormTexIndices;
+    vector<int>vIndices, nIndices, tIndices;
+    int vtn[3];
+    Vec3d result;
+    Vec3d texCoord;
+    Vec3d normal;
 
-	std::string face, tmp;
+    std::string line;
 
-	while (fscanf(file, "%s", buf) != EOF)
-	{
-		switch (buf[0])
-		{
-			case '#':
-				/* comment */
-				/* eat up rest of line */
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-			  
-			  break;
-			case 'v':
-				/* v, vn, vt */
-				switch (buf[1])
-				{
-					case '\0':
-						/* vertex */
-						/* eat up rest of line */
-					  if ( fgets(buf, sizeof(buf), file) == NULL)
-					  {
-					    if (feof (file) )
-					      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-					    else
-					      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-					  }
-						sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
-						vertices.push_back(Vector3(result[0],result[1], result[2]));
-						break;
-					case 'n':
-						/* normal */
-  						/* eat up rest of line */
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-						sscanf(buf, "%lf %lf %lf", &result[0], &result[1], &result[2]);
-						normals.push_back(Vector3(result[0],result[1], result[2]));
-						break;
-					case 't':
-						/* texcoord */
-						/* eat up rest of line */
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-						sscanf (buf, "%lf %lf", &result[0], &result[1]);
-						texCoords.push_back(Vector3(result[0],result[1], result[2]));						
-						break;
-					default:
-						printf("readObj : Unknown token \"%s\".\n", buf);
-						exit(1);
-						break;
-				}
-				break;
-			case 'm':
-				{
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-					sscanf(buf, "%s %s", buf, buf);
-					//mtllibname = strdup(buf);
-					//fscanf(file, "%s", buf);
-					std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(buf, filename);
-//std::cerr << "Buf = " << buf << std::endl;
-//std::cerr << "Filename = " << filename << std::endl;
+    while( std::getline(file,line) )
+      {
+        if (line.empty()) continue;
+        std::istringstream values(line);
+        std::string token;
+        values >> token;
+        if (token == "#")
+          {
+            /* comment */
+          }
+        else if (token == "v")
+          {
+            /* vertex */
+            values >> result[0] >> result[1] >> result[2];
+            vertices.push_back(result);    
+          }
+        else if (token == "vn")
+          {
+            /* normal */
+            values >> result[0] >> result[1] >> result[2];
+            normals.push_back(result); 
+          }
+        else if (token == "vt")
+          {
+            /* texcoord */
+            values >> result[0] >> result[1];
+            texCoords.push_back(result);
+          }
+        else if (token == "mtllib")
+          {
+            while (!values.eof())
+              {
+                std::string materialLibaryName;
+                values >> materialLibaryName;
+                std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(materialLibaryName.c_str(), filename.c_str());
+                readMTL(mtlfile.c_str());
+              }
+          }
+        else if (token == "usemtl")
+          {
+            std::string materialName;
+            values >> materialName;
+            vector<Material>::iterator it = materials.begin();
+            vector<Material>::iterator itEnd = materials.end();
+            for (; it != itEnd; it++)
+              {
+                if (it->name == materialName)
+                  {
+                    // std::cout << "Using material "<<it->name<<std::endl;
+                    (*it).activated = true;
+                    material = *it;
+                  }
+              }
+          }
+        else if (token == "g")
+          {
+            while (!values.eof())
+              {
+                std::string groupName;
+                values >> groupName;
+                //Do Nothing....
+              }
+          }
+        else if (token == "l" || token == "f")
+          {
+            /* face */
+            vIndices.clear();
+            nIndices.clear();
+            tIndices.clear();
+            vertNormTexIndices.clear();
 
-					readMTL(mtlfile.c_str());
-				}
-				break;
-			case 'u':
-				{
-					/* eat up rest of line */
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-					sscanf(buf, "%s", matName);
-					vector<Material>::iterator it = materials.begin();
-					vector<Material>::iterator itEnd = materials.end();
-					for (; it != itEnd; it++)
-					{
-						if (it->name == matName)
-						{
-//  							std::cout << "Using material "<<it->name<<std::endl;
-							(*it).activated = true;
-							material = *it;
-						}
-					}
-				}
-				break;
-			case 'g':
-				/* group */
-				/* eat up rest of line */
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-				sscanf(buf, "%s", buf);
-				break;
-			case 'l': // for now we consider a line as a 2-vertices face
-			case 'f':
-				// face 
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-				token = strtok(buf, " ");
-				
-				vIndices.clear();
-				nIndices.clear();
-				tIndices.clear();
-				vertNormTexIndices.clear();
-				
-				while(token!=NULL && token[0]>='0' && token[0]<='9')
-				{
-					face = token;
-					for (int j = 0; j < 3; j++)
-					{
-						vtn[j] = 0;
-						std::string::size_type pos = face.find('/');
-						tmp = face.substr(0, pos);
-						if (tmp != "")
-							vtn[j] = atoi(tmp.c_str()) - 1; // -1 because the numerotation begins at 1 and a vector begins at 0
-						if (pos == std::string::npos)
-							face = "";
-						else
-							face = face.substr(pos + 1);
-					}
-					vIndices.push_back(vtn[0]);
-					nIndices.push_back(vtn[1]);
-					tIndices.push_back(vtn[2]);
-					token = strtok(NULL, " ");
-				}
-				vertNormTexIndices.push_back (vIndices);
-				vertNormTexIndices.push_back (nIndices);
-				vertNormTexIndices.push_back (tIndices);
-				facets.push_back(vertNormTexIndices);
-				break;
+            while (!values.eof())
+              {
+                std::string face;
+                values >> face;
+                if (face.empty()) continue;
+                for (int j = 0; j < 3; j++)
+                  {
+                    vtn[j] = 0;
+                    std::string::size_type pos = face.find('/');
+                    std::string tmp = face.substr(0, pos);
+                    if (pos == std::string::npos)
+                      face = "";
+                    else
+                      {
+                        face = face.substr(pos + 1);
+                      }
 
-			default:
-				// eat up rest of line 
-			  if ( fgets(buf, sizeof(buf), file) == NULL)
-			  {
-			    if (feof (file) )
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered end of file." << std::endl;
-			    else
-			      std::cerr << "Error: MeshOBJ: fgets function has encountered an error." << std::endl;
-			  }
-				break;
-		}
-	}
+                    if (!tmp.empty())
+                      vtn[j] = atoi(tmp.c_str()) - 1; // -1 because the numerotation begins at 1 and a vector begins at 0
+                  }
 
-	// announce the model statistics 
-// 	std::cout << " Vertices: " << vertices.size() << std::endl;
-// 	std::cout << " Normals: " << normals.size() << std::endl;
-// 	std::cout << " Texcoords: " << texCoords.size() << std::endl;
-// 	std::cout << " Triangles: " << facets.size() << std::endl;
-	if (vertices.size()>0)
-	{
-		// compute bbox
-		Vector3 minBB = vertices[0];
-		Vector3 maxBB = vertices[0];
-		for (unsigned int i=1; i<vertices.size();i++)
-		{
-			Vector3 p = vertices[i];
-			for (int c=0;c<3;c++)
-			{
-				if (minBB[c] > p[c])
-					minBB[c] = p[c];
-				if (maxBB[c] < p[c])
-					maxBB[c] = p[c];
-			}
-		}
+                vIndices.push_back(vtn[0]);
+                nIndices.push_back(vtn[1]);
+                tIndices.push_back(vtn[2]);  
+              }
+
+            vertNormTexIndices.push_back (vIndices);
+            vertNormTexIndices.push_back (nIndices);
+            vertNormTexIndices.push_back (tIndices);
+            facets.push_back(vertNormTexIndices);       
+          }
+        else
+          {
+            // std::cerr << "readObj : Unknown token for line " << line << std::endl;
+          }
+      }
+
+
+    // announce the model statistics 
+    // std::cout << " Vertices: " << vertices.size() << std::endl;
+    // std::cout << " Normals: " << normals.size() << std::endl;
+    // std::cout << " Texcoords: " << texCoords.size() << std::endl;
+    // std::cout << " Triangles: " << facets.size() << std::endl;
+
+    if (vertices.size()>0)
+      {
+        // compute bbox
+        Vector3 minBB = vertices[0];
+        Vector3 maxBB = vertices[0];
+        for (unsigned int i=1; i<vertices.size();i++)
+          {
+            Vector3 p = vertices[i];
+            for (int c=0;c<3;c++)
+              {
+                if (minBB[c] > p[c])
+                  minBB[c] = p[c];
+                if (maxBB[c] < p[c])
+                  maxBB[c] = p[c];
+              }
+          }
 		
-// 		std::cout << "BBox: <"<<minBB[0]<<','<<minBB[1]<<','<<minBB[2]<<">-<"<<maxBB[0]<<','<<maxBB[1]<<','<<maxBB[2]<<">\n";
-	}
+        // 		std::cout << "BBox: <"<<minBB[0]<<','<<minBB[1]<<','<<minBB[2]<<">-<"<<maxBB[0]<<','<<maxBB[1]<<','<<maxBB[2]<<">\n";
+      }
 
-}
+  }
 
 // -----------------------------------------------------
 // readMTL: read a wavefront material library file
@@ -290,7 +211,6 @@ void MeshOBJ::readOBJ (FILE* file, const char* filename)
 // -----------------------------------------------------
 void MeshOBJ::readMTL(const char* filename)
 {
-  std::cout << "MeshOBJ::readMTL" << std::endl;
 	FILE* file;
 	char buf[128];
 	file = fopen(filename, "r");

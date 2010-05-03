@@ -48,6 +48,8 @@ namespace topology
 	class ManifoldEdgeSetGeometryAlgorithms : public EdgeSetGeometryAlgorithms<DataTypes>  
 	{
 	public:
+        SOFA_CLASS(SOFA_TEMPLATE(ManifoldEdgeSetGeometryAlgorithms,DataTypes),SOFA_TEMPLATE(EdgeSetGeometryAlgorithms,DataTypes));
+
 		typedef typename DataTypes::VecCoord VecCoord;
 		typedef typename DataTypes::Real Real;
 		typedef typename DataTypes::Coord Coord;

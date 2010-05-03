@@ -482,6 +482,13 @@ void ModifyObject::setNode(core::objectmodel::Base* node_clicked, Q3ListViewItem
 			new QLabel(QString("Description"), box);
 			new QLabel(QString(entry->description.c_str()), box);
 		    }
+                    std::map<std::string, core::ObjectFactory::Creator*>::iterator it = entry->creatorMap.find(node_clicked->getTemplateName());
+                    if (it != entry->creatorMap.end() && *it->second->getTarget())
+                    {
+                        new QLabel(QString("Provided by"), box);
+                        new QLabel(QString(it->second->getTarget()), box);
+                    }
+
 		    if (!entry->authors.empty() && entry->authors != std::string("TODO"))
 		    {
 			new QLabel(QString("Authors"), box);
@@ -544,7 +551,7 @@ void ModifyObject::setNode(core::objectmodel::Base* node_clicked, Q3ListViewItem
   void ModifyObject::updateConsole()
   {
     //Console Warnings
-    if ( !node->sendl.getWarnings().empty())
+    if ( !node->getWarnings().empty())
       {
 	if (!logWarningEdit)
 	  {
@@ -562,13 +569,13 @@ void ModifyObject::setNode(core::objectmodel::Base* node_clicked, Q3ListViewItem
 	    logWarningEdit->setReadOnly(true);
 	  }
 	
-	logWarningEdit->setText(QString(node->sendl.getWarnings().c_str()));
+	logWarningEdit->setText(QString(node->getWarnings().c_str()));
 	logWarningEdit->moveCursor(Q3TextEdit::MoveEnd, false);
 	logWarningEdit->ensureCursorVisible();
 
       }
     //Console Outputs
-    if ( !node->sendl.getOutputs().empty())
+    if ( !node->getOutputs().empty())
       {
 	if (!logOutputEdit)
 	  {
@@ -586,7 +593,7 @@ void ModifyObject::setNode(core::objectmodel::Base* node_clicked, Q3ListViewItem
 	    logOutputEdit->setReadOnly(true);
 	  }
 
-	logOutputEdit->setText(QString(node->sendl.getOutputs().c_str()));
+	logOutputEdit->setText(QString(node->getOutputs().c_str()));
 	logOutputEdit->moveCursor(Q3TextEdit::MoveEnd, false);
 	logOutputEdit->ensureCursorVisible();
       }

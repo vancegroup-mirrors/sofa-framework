@@ -219,9 +219,10 @@ private:
 
 
 
-class SOFA_COMPONENT_MASTERSOLVER_API MasterContactSolver : public sofa::simulation::MasterSolverImpl//, public sofa::component::odesolver::OdeSolverImpl
+class SOFA_COMPONENT_MASTERSOLVER_API MasterContactSolver : public sofa::simulation::MasterSolverImpl
 {
 public:
+	SOFA_CLASS(MasterContactSolver, sofa::simulation::MasterSolverImpl);
 		// for unbuilt lcp
 		// typedef Mat<3,3,double> Mat3x3;
 		typedef std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> list_cc;
@@ -244,7 +245,9 @@ public:
         //virtual void propagatePositionAndVelocity(double t, VecId x, VecId v);
 
         virtual void init();
-        LCP* getLCP(void) {return (lcp == &lcp1) ? &lcp2 : &lcp1;};
+        //LCP* getLCP(void) {return (lcp == &lcp1) ? &lcp2 : &lcp1;};
+		LCP* getLCP();
+		void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCP until the next call to the function
 
 private:
         std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> constraintCorrections;
@@ -257,9 +260,9 @@ private:
 
  		/// for built lcp ///
         void build_LCP();
-        LCP lcp1, lcp2;
+        LCP lcp1, lcp2, lcp3;
         LPtrFullMatrix<double>  *_W;
-        LCP* lcp;
+        LCP *lcp;
 		
 		/// common built-unbuilt
         simulation::Node *context;

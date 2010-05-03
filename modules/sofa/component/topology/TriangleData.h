@@ -82,7 +82,7 @@ namespace topology
 
 	public:
 		/// Constructor
-		TriangleData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+            TriangleData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
 			  void (*createFunc) (int, void*, T&, const Triangle &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,
 				void* createParam  = (void*)NULL,
 				void (*destroyFunc)(int, void*, T&) = trd_basicDestroyFunc,
@@ -192,6 +192,15 @@ namespace topology
 		{
 			m_destroyTetrahedronFunc=destroyTetrahedronFunc;
 		}
+
+		T& operator[](int i)
+    		{
+			sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			T& result = data[i];
+			this->endEdit();
+        		return result;
+    		}
+
 
 	private:
 		/// Swaps values at indices i1 and i2.

@@ -1,10 +1,10 @@
 SOFA_DIR=../../../..
 TEMPLATE = app
+EXEC = Haptic
+TARGET = Haptic
 
 include($${SOFA_DIR}/sofa.cfg)
 
-EXEC = Haptic
-TARGET = Haptic$$SUFFIX
 DESTDIR = $$SOFA_DIR/bin
 CONFIG += $$CONFIGPROJECTGUI
 LIBS += $$SOFA_GUI_LIBS

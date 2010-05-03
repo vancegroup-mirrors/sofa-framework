@@ -83,7 +83,7 @@ namespace topology
 
 	public:
 		/// Constructor
-		TetrahedronData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+            TetrahedronData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
 			  void (*createFunc) (int, void*, T&, const Tetrahedron &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = td_basicCreateFunc,
 				void* createParam  = (void*)NULL,
 				void (*destroyFunc)(int, void*, T&) = td_basicDestroyFunc,

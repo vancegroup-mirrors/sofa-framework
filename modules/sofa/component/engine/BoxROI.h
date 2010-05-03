@@ -56,6 +56,7 @@ template <class DataTypes>
 class BoxROI : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(BoxROI,DataTypes),core::objectmodel::BaseObject);
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;
     typedef defaulttype::Vec<6,Real> Vec6;

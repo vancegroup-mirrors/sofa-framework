@@ -68,7 +68,7 @@ protected:
     class SOFA_SOFAGUI_API AttachOperation : public Operation
     {
     public:
-    AttachOperation():stiffness(1000.0){};
+    AttachOperation():stiffness(1000.0){std::cout << "AttachOperation()" << std::endl;};
       virtual ~AttachOperation(){};
       virtual void start() ;
       virtual void execution() ; 
@@ -123,31 +123,26 @@ protected:
       double stiffness;
     };  
 
-    class SOFA_SOFAGUI_API SculptOperation : public Operation
+    class SOFA_SOFAGUI_API InjectOperation : public Operation
     {
     public:
-    SculptOperation():force(1), scale(50), checkedFix(false), animated(false){}
-      virtual ~SculptOperation();
-      virtual void start() ;
+    InjectOperation():potentialValue(100.0){};
+      virtual ~InjectOperation(){};
+      virtual void start();
       virtual void execution();
       virtual void end() ;
-      virtual void wait() ;
 
-      void setForce(double f){force = f;}
-      virtual double getForce() const { return force;}
-      void setScale(double s){scale = s;}
-      virtual double getScale() const {return scale;}
-      virtual bool isCheckedFix() const {return checkedFix;};
-      void setCheckedFix(bool b){checkedFix = b;};
-      virtual bool isAnimated() const {return animated;};
-      static bool isModifiable(){return false;};
+      void setPotentialValue(double f){potentialValue = f;}
+      virtual double getPotentialValue() const {;return potentialValue;}
+      void setStateTag(std::string s){stateTag = s;}
+      virtual std::string getStateTag() const {;return stateTag;}
+      static bool isModifiable(){return true;};
 
-      static std::string getDescription() {return "Sculpt an object using the Mouse";}
+      static std::string getDescription() {return "Set action potential using the Mouse";}
     protected:
-      double force, scale;
-      bool checkedFix, animated;
+      double potentialValue;
+      std::string stateTag;
     };
-
   }
 }
 

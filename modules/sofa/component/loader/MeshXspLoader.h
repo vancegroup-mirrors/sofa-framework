@@ -40,6 +40,7 @@ namespace loader
   class SOFA_COMPONENT_LOADER_API MeshXspLoader : public sofa::core::componentmodel::loader::MeshLoader
   {
   public:
+    SOFA_CLASS(MeshXspLoader,sofa::core::componentmodel::loader::MeshLoader);
 
     MeshXspLoader();
     
@@ -48,7 +49,7 @@ namespace loader
     template <class T>
       static bool canCreate ( T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg )
     {
-      std::cout << "MeshXspLoader::cancreate()" << std::endl;
+      //std::cout << "MeshXspLoader::cancreate()" << std::endl;
       
       //      std::cout << BaseLoader::m_filename << " is not an Gmsh file." << std::endl;
       //    BaseObjectDescription, i.e. arg->getAttribute("filename")

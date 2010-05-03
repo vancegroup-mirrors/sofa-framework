@@ -32,6 +32,7 @@
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/helper/io/MeshTopologyLoader.h>
+#include <sofa/core/componentmodel/topology/BaseMeshTopology.h> //Need to include this file in order to have the definition of SOFA_NEW_HEXA !
 #include <sofa/component/component.h>
 
 namespace sofa
@@ -47,6 +48,8 @@ class SOFA_COMPONENT_CONTAINER_API MeshLoader : public virtual core::objectmodel
 					public helper::io::MeshTopologyLoader
 {
 public:
+	SOFA_CLASS(MeshLoader,core::objectmodel::BaseObject);
+
 	typedef unsigned int index_type;
     typedef index_type PointID;
     typedef index_type EdgeID;

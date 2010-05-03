@@ -99,6 +99,8 @@ public:
 class SOFA_COMPONENT_COLLISION_API SphereTreeModel : public component::container::MechanicalObject<Vec3Types>, public core::CollisionModel
 {
 public:
+    SOFA_CLASS2(SphereTreeModel, SOFA_TEMPLATE(component::container::MechanicalObject, Vec3Types), core::CollisionModel);
+
 	typedef component::container::MechanicalObject<Vec3Types> Inherit;
 	typedef Vec3Types InDataTypes;
 	typedef Vec3Types DataTypes;

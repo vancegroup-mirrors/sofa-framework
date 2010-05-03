@@ -38,6 +38,8 @@ template <class DataTypes>
 class RotationFinder : public virtual sofa::core::objectmodel::BaseObject
 {
 public:
+	SOFA_CLASS(RotationFinder,sofa::core::objectmodel::BaseObject);
+
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
 	typedef typename DataTypes::Coord Coord;

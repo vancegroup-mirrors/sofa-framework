@@ -60,6 +60,8 @@ template<class DataTypes>
 class QuadularBendingSprings : public core::componentmodel::behavior::ForceField<DataTypes>
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(QuadularBendingSprings,DataTypes), SOFA_TEMPLATE(core::componentmodel::behavior::ForceField,DataTypes));
+
 	typedef core::componentmodel::behavior::ForceField<DataTypes> Inherited;
     //typedef typename DataTypes::Real Real;
     typedef typename DataTypes::VecCoord VecCoord;
@@ -69,10 +71,6 @@ public:
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
 
-
-	using Inherited::sout;
-	using Inherited::serr;
-	using Inherited::sendl;
 
 	enum { N=Coord::static_size };
   typedef defaulttype::Mat<N,N,Real> Mat;

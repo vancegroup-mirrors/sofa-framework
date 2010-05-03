@@ -762,7 +762,10 @@ namespace sofa
       {
 	if(m_container->hasEdges() && m_container->hasTrianglesAroundEdge()) 
 	{
-	  Edge the_edge = m_container->m_edge[edgeIndex];
+	  helper::WriteAccessor< Data< sofa::helper::vector<Edge> > > m_edge = m_container->d_edge;
+	  helper::ReadAccessor< Data< sofa::helper::vector<Triangle> > > m_triangle = m_container->d_triangle;
+
+	  Edge the_edge = m_edge[edgeIndex];
 	  unsigned int triangleIndex, edgeIndexInTriangle;
 	  EdgesInTriangle EdgesInTriangleArray;
 	  Triangle TriangleVertexArray;
@@ -776,11 +779,11 @@ namespace sofa
 	  }
 	  triangleIndex = m_container->m_trianglesAroundEdge[edgeIndex][0];
 	  EdgesInTriangleArray = m_container->getEdgesInTriangle( triangleIndex);
-	  TriangleVertexArray = m_container->m_triangle[triangleIndex];
+	  TriangleVertexArray = m_triangle[triangleIndex];
 	  edgeIndexInTriangle = m_container->getEdgeIndexInTriangle(EdgesInTriangleArray, edgeIndex);
 	  
-	  m_container->m_edge[edgeIndex][0] = TriangleVertexArray[ (edgeIndexInTriangle+1)%3 ];
-	  m_container->m_edge[edgeIndex][1] = TriangleVertexArray[ (edgeIndexInTriangle+2)%3 ];
+	  m_edge[edgeIndex][0] = TriangleVertexArray[ (edgeIndexInTriangle+1)%3 ];
+	  m_edge[edgeIndex][1] = TriangleVertexArray[ (edgeIndexInTriangle+2)%3 ];
 
 	} else {
 #ifndef NDEBUG
@@ -855,11 +858,13 @@ namespace sofa
 	  unsigned int cpt = 0;
 
 	  vertexTofind.resize (trianglesAroundVertex.size());
+	  helper::ReadAccessor< Data< sofa::helper::vector<Triangle> > > m_triangle = m_container->d_triangle;
+
 
 	  // Path to follow creation
 	  for (unsigned int triangleIndex = 0; triangleIndex < trianglesAroundVertex.size(); triangleIndex++)
 	  {
-	    Triangle vertexTriangle = m_container->m_triangle[ trianglesAroundVertex[triangleIndex] ];
+	    Triangle vertexTriangle = m_triangle[ trianglesAroundVertex[triangleIndex] ];
 	
 	    vertexTofind[triangleIndex].push_back( vertexTriangle[ ( m_container->getVertexIndexInTriangle(vertexTriangle, listVertex[vertexIndex] )+1 )%3 ]);
 	    vertexTofind[triangleIndex].push_back( vertexTriangle[ ( m_container->getVertexIndexInTriangle(vertexTriangle, listVertex[vertexIndex] )+2 )%3 ]);

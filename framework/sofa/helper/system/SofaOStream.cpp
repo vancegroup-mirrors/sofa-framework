@@ -32,50 +32,30 @@
 namespace sofa
 {
 
-  namespace helper
-  {
+namespace helper
+{
 
-    namespace system
-    {
+namespace system
+{
 
-      SofaOStream::SofaOStream(const bool &output):outputConsole(output)
-      {
-	serr = new std::ostringstream();
-	sout = new std::ostringstream();
-      }
-
-      void SofaOStream::processStream(std::ostream& out)
-      {
-	if (out == *serr)
-	  {	    
-	    *serr << "\n";
-	    // if (isOutputConsole())
-	      std::cerr<< "WARNING[" << nameComponent << "(" << nameClass << ")]: "<<serr->str();
-	    warnings += serr->str();
-	    serr->str("");
-	  }
-	else if (out == *sout)
-	  {	   
-	    *sout << "\n";
-            if (outputConsole) std::cout<< "[" << nameComponent << "(" << nameClass << ")]: "<< sout->str();
-	    outputs += sout->str();
-	    sout->str("");
-	  }
-      }
-      
-      std::string SofaOStream::getWarnings() const
-      {
-	return warnings;
-      }
- 
-      std::string SofaOStream::getOutputs() const
-      {
-	return outputs;	
-      }
-
-      void SofaOStream::clearWarnings(){warnings.clear();}
-      void SofaOStream::clearOutputs(){outputs.clear();}
-    }
-  }
+SofaOStreamContainer::~SofaOStreamContainer()
+{
 }
 
+SofaOStream::SofaOStream()
+: parent(NULL)
+{
+}
+
+SofaOStream::~SofaOStream()
+{
+}
+
+void SofaOStream::setParent(SofaOStreamContainer* p)
+{
+    parent = p;
+}
+
+}
+}
+}

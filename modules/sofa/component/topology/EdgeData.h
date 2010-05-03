@@ -83,7 +83,7 @@ namespace topology
 
 	public:
 		/// Constructor
-		EdgeData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+            EdgeData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
 			  void (*createFunc) (int, void*, T&, const Edge &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = ed_basicCreateFunc,
 				void* createParam  = (void*)NULL,
 				void (*destroyFunc)(int, void*, T&) = ed_basicDestroyFunc,
@@ -216,6 +216,14 @@ namespace topology
 		{
 			m_destroyTetrahedronFunc=destroyTetrahedronFunc;
 		}
+
+		T& operator[](int i)
+    		{
+			sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			T& result = data[i];
+			this->endEdit();
+        		return result;
+    		}
 
 	private:
 		/// Swaps values at indices i1 and i2.

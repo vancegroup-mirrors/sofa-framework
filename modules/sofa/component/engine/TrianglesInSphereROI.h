@@ -58,6 +58,7 @@ template <class DataTypes>
 class TrianglesInSphereROI : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
 {
 public:
+   SOFA_CLASS(SOFA_TEMPLATE(TrianglesInSphereROI,DataTypes),core::objectmodel::BaseObject);
 	typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;

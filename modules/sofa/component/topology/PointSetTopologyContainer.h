@@ -52,6 +52,7 @@ namespace topology
 	class SOFA_COMPONENT_CONTAINER_API PointSetTopologyContainer : public core::componentmodel::topology::TopologyContainer
 	{
     public:
+                SOFA_CLASS(PointSetTopologyContainer,core::componentmodel::topology::TopologyContainer);
 
 		PointSetTopologyContainer(int nPoints = 0);
 
@@ -151,8 +152,7 @@ namespace topology
 		
 	private:
 		typedef defaulttype::Vec3Types InitTypes;
-		InitTypes::VecCoord initPoints;
-                DataPtr<InitTypes::VecCoord> d_initPoints;
+                Data<InitTypes::VecCoord> d_initPoints;
         };
 
 } // namespace topology

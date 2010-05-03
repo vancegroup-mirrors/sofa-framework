@@ -140,7 +140,7 @@ template <class DataTypes>
 template<class DataTypes>
 void EllipsoidForceField<DataTypes>::draw()
 {
-    if (!getContext()->getShowForceFields()) return;
+    if (!this->getContext()->getShowForceFields()) return;
     if (!bDraw.getValue()) return;
 
     Real cx=0, cy=0, cz=0;

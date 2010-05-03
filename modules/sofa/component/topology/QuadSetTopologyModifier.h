@@ -50,7 +50,9 @@ namespace topology
 	*/
 	class SOFA_COMPONENT_CONTAINER_API QuadSetTopologyModifier : public EdgeSetTopologyModifier 
 	{
-	public:	
+	public:
+                SOFA_CLASS(QuadSetTopologyModifier,EdgeSetTopologyModifier);
+	
 		QuadSetTopologyModifier()
 		: EdgeSetTopologyModifier()
 		{ }

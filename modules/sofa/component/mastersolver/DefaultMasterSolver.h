@@ -43,6 +43,8 @@ namespace mastersolver
 class SOFA_COMPONENT_MASTERSOLVER_API DefaultMasterSolver : public sofa::simulation::MasterSolverImpl
 {
 public:
+  SOFA_CLASS(DefaultMasterSolver,sofa::simulation::MasterSolverImpl);
+
     DefaultMasterSolver();
 	virtual ~DefaultMasterSolver();
     void step (double dt);

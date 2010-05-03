@@ -49,6 +49,8 @@ namespace topology
 	class SOFA_COMPONENT_CONTAINER_API ManifoldEdgeSetTopologyModifier : public EdgeSetTopologyModifier
 	{	
 	public:
+                SOFA_CLASS(ManifoldEdgeSetTopologyModifier,EdgeSetTopologyModifier);
+
 		ManifoldEdgeSetTopologyModifier() 
 		: EdgeSetTopologyModifier()
 		{}

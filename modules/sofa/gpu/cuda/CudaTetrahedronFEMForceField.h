@@ -60,7 +60,7 @@ using namespace sofa::defaulttype;
 template <class TCoord, class TDeriv, class TReal>
 class TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >
 {
-public:
+public:  
     typedef gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> DataTypes;
     typedef TetrahedronFEMForceField<DataTypes> Main;
     typedef TetrahedronFEMForceFieldInternalData<DataTypes> Data;

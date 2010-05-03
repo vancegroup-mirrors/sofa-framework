@@ -86,7 +86,7 @@ public:
 
 typedef Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
 typedef Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
-typedef Eigen::DynamicSparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
+typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
 
     /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
     bool needPriorStatePropagation();

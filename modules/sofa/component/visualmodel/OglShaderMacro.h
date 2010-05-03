@@ -47,9 +47,9 @@ namespace visualmodel
  */
 
 class SOFA_COMPONENT_VISUALMODEL_API OglShaderMacro : public OglShaderElement {
-protected:
-
 public:
+	SOFA_CLASS(OglShaderMacro, OglShaderElement);
+
 	OglShaderMacro();
 	virtual ~OglShaderMacro();
 	virtual void init();
@@ -58,6 +58,8 @@ public:
 
 
 class SOFA_COMPONENT_VISUALMODEL_API OglShaderDefineMacro : public OglShaderMacro {
+public:
+	SOFA_CLASS(OglShaderDefineMacro, OglShaderMacro);
 protected:
 	Data<std::string> value;
 public:

@@ -56,6 +56,7 @@ namespace behavior
 class SOFA_CORE_API MasterSolver : public virtual objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(MasterSolver, objectmodel::BaseObject);
 
     MasterSolver();
 

@@ -60,7 +60,8 @@ public:
 	
     bool testLMD(const Vector3 &, double &, double &);
 	
-	bool activated;
+	bool activated; 
+
 };
 
 class PointActiver
@@ -74,6 +75,8 @@ public:
 class SOFA_COMPONENT_COLLISION_API PointModel : public core::CollisionModel
 {
 public:
+	SOFA_CLASS(PointModel, core::CollisionModel);
+
 	typedef Vec3Types InDataTypes;
 	typedef Vec3Types DataTypes;
 	typedef DataTypes::VecCoord VecCoord;
@@ -119,6 +122,8 @@ public:
 	//}
 
 	void setFilter(PointLocalMinDistanceFilter * /*lmdFilter*/);
+
+	Data<bool> bothSide; // to activate collision on both side of the point model (when surface normals are defined on these points)
 
 protected:
 

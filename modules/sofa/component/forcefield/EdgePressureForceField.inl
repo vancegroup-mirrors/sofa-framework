@@ -188,10 +188,10 @@ void EdgePressureForceField<DataTypes>::selectEdgesFromString()
 template<class DataTypes>
 void EdgePressureForceField<DataTypes>::draw()
 {
-	if (!getContext()->getShowForceFields()) return;
+	if (!this->getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
@@ -212,7 +212,7 @@ void EdgePressureForceField<DataTypes>::draw()
 	glEnd();
 
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 

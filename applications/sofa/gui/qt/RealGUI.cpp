@@ -689,6 +689,9 @@ typedef QApplication QSOFAApplication;
 		application->exit();
 	      }
 
+        //Specify the name of the viewer here
+        this->GetGUIName()=name;
+
 #ifdef SOFA_QT4
 	left_stack->addWidget ( viewer->getQWidget() );
 	left_stack->setCurrentWidget ( viewer->getQWidget() );

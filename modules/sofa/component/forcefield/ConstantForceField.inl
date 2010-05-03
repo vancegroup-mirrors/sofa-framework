@@ -126,7 +126,7 @@ namespace sofa
       template<class DataTypes>
       void ConstantForceField<DataTypes>::draw()
       {
-       if (!getContext()->getShowForceFields()) return;  /// \todo put this in the parent class
+       if (!this->getContext()->getShowForceFields()) return;  /// \todo put this in the parent class
         const VecIndex& indices = points.getValue();
         const VecDeriv& f = forces.getValue();
 	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);

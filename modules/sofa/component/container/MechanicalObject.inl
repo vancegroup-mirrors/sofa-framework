@@ -33,6 +33,8 @@
 #include <sofa/component/topology/RegularGridTopology.h>
 #include <sofa/helper/io/MassSpringLoader.h>
 
+#include <sofa/helper/accessor.h>
+
 #include <sofa/defaulttype/LaparoscopicRigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
@@ -45,7 +47,7 @@
 #include <sofa/simulation/common/Visitor.h>
 #endif
 
-#include <sofa/component/linearsolver/FullMatrix.h>
+#include <sofa/component/linearsolver/SparseMatrix.h>
 
 #include <assert.h>
 #include <iostream>
@@ -678,7 +680,8 @@ void MechanicalObject<DataTypes>::reserve(const int size)
     template <class DataTypes>
     void MechanicalObject<DataTypes>::getIndicesInSpace(sofa::helper::vector<unsigned>& indices, Real xmin, Real xmax, Real ymin, Real ymax, Real zmin, Real zmax) const
     {
-      const VecCoord& X = *getX();
+      //const VecCoord& X = *getX();
+      helper::ReadAccessor<VecCoord> X = *getX();
       for( unsigned i=0; i<X.size(); ++i )
 	{
 	  Real x=0.0,y=0.0,z=0.0;
@@ -941,31 +944,33 @@ void MechanicalObject<DataTypes>::loadInBaseVector(defaulttype::BaseVector * des
 {
     if (src.type == VecId::V_COORD)
     {
-        const VecCoord* vSrc = getVecCoord(src.index);
+        //const VecCoord* vSrc = getVecCoord(src.index);
+	helper::ReadAccessor<VecCoord> vSrc = *getVecCoord(src.index);
         const unsigned int coordDim = DataTypeInfo<Coord>::size();
 
-        for (unsigned int i=0; i<vSrc->size(); i++)
+        for (unsigned int i=0; i<vSrc.size(); i++)
             for (unsigned int j=0; j<coordDim; j++)
             {
                 Real tmp;
-                DataTypeInfo<Coord>::getValue((*vSrc)[i],j,tmp);
+                DataTypeInfo<Coord>::getValue(vSrc[i],j,tmp);
                 dest->set(offset + i * coordDim + j, tmp);
             }
-        offset += vSrc->size() * coordDim;
+        offset += vSrc.size() * coordDim;
     }
     else
     {
-        const VecDeriv* vSrc = getVecDeriv(src.index);
+        //const VecDeriv* vSrc = getVecDeriv(src.index);
+	helper::ReadAccessor<VecDeriv> vSrc = *getVecDeriv(src.index);
         const unsigned int derivDim = DataTypeInfo<Deriv>::size();
 
-        for (unsigned int i=0; i<vSrc->size(); i++)
+        for (unsigned int i=0; i<vSrc.size(); i++)
             for (unsigned int j=0; j<derivDim; j++)
             {
                 Real tmp;
-                DataTypeInfo<Deriv>::getValue((*vSrc)[i],j,tmp);
+                DataTypeInfo<Deriv>::getValue(vSrc[i],j,tmp);
                 dest->set(offset + i * derivDim + j, tmp);
             }
-        offset += vSrc->size() * derivDim;
+        offset += vSrc.size() * derivDim;
     }
 }
 
@@ -983,35 +988,37 @@ void MechanicalObject<DataTypes>::loadInBaseVector(defaulttype::BaseVector * des
     {
       if (dest.type == VecId::V_COORD)
 	{
-	  VecCoord* vDest = getVecCoord(dest.index);
+	  //VecCoord* vDest = getVecCoord(dest.index);
+	  helper::WriteAccessor<VecCoord> vDest = *getVecCoord(dest.index);
 	  const unsigned int coordDim = DataTypeInfo<Coord>::size();
 
-	  for (unsigned int i=0; i<vDest->size(); i++)
+	  for (unsigned int i=0; i<vDest.size(); i++)
 	    {
 	      for (unsigned int j=0; j<coordDim; j++)
 		{
 		  Real tmp;
-		  DataTypeInfo<Coord>::getValue((*vDest)[i],j,tmp);
-		  DataTypeInfo<Coord>::setValue((*vDest)[i], j, tmp + src->element(offset + i * coordDim + j));
+		  DataTypeInfo<Coord>::getValue(vDest[i],j,tmp);
+		  DataTypeInfo<Coord>::setValue(vDest[i], j, tmp + src->element(offset + i * coordDim + j));
 		}
 	    }
 
-	  offset += vDest->size() * coordDim;
+	  offset += vDest.size() * coordDim;
 	}
       else
 	{
-	  VecDeriv* vDest = getVecDeriv(dest.index);
+	  //VecDeriv* vDest = getVecDeriv(dest.index);
+	  helper::WriteAccessor<VecDeriv> vDest = *getVecDeriv(dest.index);
 	  const unsigned int derivDim = DataTypeInfo<Deriv>::size();
 
-	  for (unsigned int i=0; i<vDest->size(); i++)
+	  for (unsigned int i=0; i<vDest.size(); i++)
 	    for (unsigned int j=0; j<derivDim; j++)
 	      {
 		Real tmp;
-		DataTypeInfo<Deriv>::getValue((*vDest)[i],j,tmp);
-		DataTypeInfo<Deriv>::setValue((*vDest)[i], j, tmp + src->element(offset + i * derivDim + j));
+		DataTypeInfo<Deriv>::getValue(vDest[i],j,tmp);
+		DataTypeInfo<Deriv>::setValue(vDest[i], j, tmp + src->element(offset + i * derivDim + j));
 	      }
 
-	  offset += vDest->size() * derivDim;
+	  offset += vDest.size() * derivDim;
 	}
     }
 
@@ -1087,6 +1094,12 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
       f_Xfree->beginEdit();
       f_Vfree->beginEdit();
       f_X0->beginEdit();
+
+      //case if X0 has been set but not X
+      if (getX0()->size() > getX()->size())
+      {
+    	  *x = *x0;
+      }
 
       if (getX()->size() != (std::size_t)vsize || getV()->size() != (std::size_t)vsize)
         { // X and/or V where user-specified
@@ -2197,7 +2210,7 @@ void MechanicalObject<DataTypes>::vAvail(VecId& v)
     template <class DataTypes>
     void MechanicalObject<DataTypes>::resetForce()
     {
-      VecDeriv& f= *getF();
+	helper::WriteAccessor<VecDeriv> f= *getF();
        if (!this->forceMask.isInUse())
         {
           for( unsigned i=0; i<f.size(); ++i )
@@ -2219,10 +2232,9 @@ void MechanicalObject<DataTypes>::vAvail(VecId& v)
     void MechanicalObject<DataTypes>::resetAcc()
     {
 
-      VecDeriv& a= *getDx();
+      helper::WriteAccessor<VecDeriv> a= *getDx();
       for( unsigned i=0; i<a.size(); ++i )
         a[i] = Deriv();
-
     }
 
 
@@ -2268,7 +2280,7 @@ std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> 
   const unsigned int dimensionDeriv = defaulttype::DataTypeInfo< Deriv >::size();
   
   // simple column/block map
-  typedef sofa::component::linearsolver::FullMatrix<SReal> matrix_t;
+  typedef sofa::component::linearsolver::SparseMatrix<SReal> matrix_t;
   typedef std::map<unsigned int, matrix_t* > blocks_t;
  
   blocks_t blocks;
@@ -2291,11 +2303,11 @@ std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> 
 	matrix_t* mat = new matrix_t(indices.size(), dimensionDeriv);
 	blocks[column] = mat;
 	
-	for(unsigned int i = 0; i < mat->rowSize(); ++i) {
-	  for(unsigned int j = 0; j < mat->colSize(); ++j) { 
-	    mat->set(i, j, 0);
-	  }
-	}
+	// for(unsigned int i = 0; i < mat->rowSize(); ++i) {
+	//   for(unsigned int j = 0; j < mat->colSize(); ++j) { 
+	//     mat->set(i, j, 0);
+	//   }
+	// }
 
       }
 

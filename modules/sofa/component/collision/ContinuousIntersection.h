@@ -44,6 +44,8 @@ namespace collision
 class SOFA_COMPONENT_COLLISION_API ContinuousIntersection : public DiscreteIntersection
 {
 public:
+	SOFA_CLASS(ContinuousIntersection,DiscreteIntersection);
+
     ContinuousIntersection();
 
     /// returns true if algorithm uses continous detection

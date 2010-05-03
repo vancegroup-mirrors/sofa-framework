@@ -30,6 +30,7 @@
 #include <sofa/helper/system/config.h>
 #include <sofa/core/objectmodel/BaseObjectDescription.h>
 #include <sofa/core/objectmodel/BaseContext.h>
+/*
 #include <sofa/core/objectmodel/ContextObject.h>
 #include <sofa/core/VisualModel.h>
 #include <sofa/core/BehaviorModel.h>
@@ -50,6 +51,7 @@
 #include <sofa/core/componentmodel/topology/BaseTopologyObject.h>
 #include <sofa/core/componentmodel/behavior/BaseController.h>
 #include <sofa/core/componentmodel/loader/BaseLoader.h>
+*/
 
 #include <map>
 #include <iostream>
@@ -94,6 +96,12 @@ public:
 
         /// type_info structure associated with the type of intanciated objects.
         virtual const std::type_info& type() = 0;
+
+        /// BaseClass structure associated with the type of intanciated objects.
+        virtual const objectmodel::BaseClass* getClass() = 0;
+        
+        /// The name of the library or executable containing the binary code for this component
+        virtual const char* getTarget() = 0;
     };
 
     /// Record storing information about a class
@@ -204,6 +212,20 @@ public:
     {
         return typeid(RealObject);
     }
+    virtual const objectmodel::BaseClass* getClass()
+    {
+        return RealObject::GetClass();
+    }
+    /// The name of the library or executable containing the binary code for this component
+    virtual const char* getTarget()
+    {
+#ifdef SOFA_TARGET
+        return sofa_tostring(SOFA_TARGET);
+#else
+        return "";
+#endif
+    }
+
 };
 
 /**
@@ -246,11 +268,14 @@ public:
     /// Specify a license (LGPL, GPL, ...)
     RegisterObject& addLicense(std::string val);
 
+    /// Fill the base classes array using the BaseClass reflection system
+    RegisterObject& addBaseClasses(const core::objectmodel::BaseClass* mclass);
+
     /// Add a creator able to instance this class with the given templatename.
     ///
     /// See the add<RealObject>() method for an easy way to add a Creator.
     RegisterObject& addCreator(std::string classname, std::string templatename, ObjectFactory::Creator* creator);
-
+/*
     /// Test whether T* converts to U*,
     /// that is, if T is derived from U
     /// taken from Modern C++ Design
@@ -281,7 +306,7 @@ public:
         //    sout << "class "<<RealClass::typeName(p1)<<" does not implement "<<BaseClass::typeName(p2)<<sendl;
         return res;
     }
-
+*/
     /// Add a template instanciation of this class.
     ///
     /// \param defaultTemplate    set to true if this should be the default instance when no template name is given.
@@ -297,7 +322,7 @@ public:
 
         // This is the only place where we can test which base classes are implemented by this particular object, without having to create any instance
         // Unfortunately, we have to enumerate all classes we are interested in...
-
+/*
         if (implements<RealObject,objectmodel::ContextObject>())
             entry.baseClasses.insert("ContextObject");
         if (implements<RealObject,VisualModel>())
@@ -338,9 +363,8 @@ public:
 	  entry.baseClasses.insert("Controller");
 	if (implements<RealObject,core::componentmodel::loader::BaseLoader>())
 	  entry.baseClasses.insert("Loader");
-
-
-
+*/
+        addBaseClasses(RealObject::GetClass());
 
         return addCreator(classname, templatename, new ObjectCreator<RealObject>);
     }

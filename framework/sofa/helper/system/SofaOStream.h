@@ -34,50 +34,44 @@
 namespace sofa
 {
 
-  namespace helper
-  {
+namespace helper
+{
 
-    namespace system
+namespace system
+{
+
+class SOFA_HELPER_API SofaOStreamContainer
+{
+public:
+    virtual ~SofaOStreamContainer();
+    virtual void processStream(std::ostream& out) = 0;
+};
+
+class SOFA_HELPER_API SofaOStream
+{
+protected:
+    SofaOStreamContainer* parent;
+public: 
+    friend inline std::ostream &operator << (std::ostream& out, SofaOStream & s)
     {
-
-      class SOFA_HELPER_API SofaOStream{
-      public: 
-	friend inline std::ostream &operator << (std::ostream& out, SofaOStream & s)
-	  {
-	    s.processStream(out);
-	    return out;
-	  }
- 
-        SofaOStream(const bool &output);
-
-	~SofaOStream()
-	  {
-	    delete serr;
-	    delete sout;
-	  }
-    
-	std::string getWarnings() const; 
-	std::string getOutputs() const;
-
-	void clearWarnings();
-	void clearOutputs();
-
-	void processStream(std::ostream& out);
-
-	std::string nameComponent;
-	std::string nameClass;
-
-	std::ostringstream *serr;
-	std::ostringstream *sout;
-      protected:
-        const bool &outputConsole; //Need to output the stream into the console
-	std::string warnings;
-	std::string outputs;
-      }; 
+        if (s.parent)
+	    s.parent->processStream(out);
+        else out << std::endl;
+        return out;
     }
-  }
+    
+    SofaOStream();
+
+    ~SofaOStream();
+
+    void setParent(SofaOStreamContainer* p);
+}; 
+
+}
+
+}
+
 }
 
 
 #endif
-

@@ -57,10 +57,9 @@ namespace sofa
     	friend class ManifoldTriangleSetTopologyModifier;
 
        public:
+        SOFA_CLASS(ManifoldTriangleSetTopologyContainer,TriangleSetTopologyContainer);
 
 	ManifoldTriangleSetTopologyContainer();
-
-	ManifoldTriangleSetTopologyContainer(const sofa::helper::vector< Triangle > &triangles );
 
 	virtual ~ManifoldTriangleSetTopologyContainer() {}
 

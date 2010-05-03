@@ -66,7 +66,7 @@ template <class DataTypes> void TrianglePressureForceField<DataTypes>::init()
     //serr << "initializing TrianglePressureForceField" << sendl;
     this->core::componentmodel::behavior::ForceField<DataTypes>::init();
 
-	_topology = getContext()->getMeshTopology();
+	_topology = this->getContext()->getMeshTopology();
 
 	if (dmin.getValue()!=dmax.getValue()) {
 		selectTrianglesAlongPlane();
@@ -152,6 +152,7 @@ void TrianglePressureForceField<DataTypes>::selectTrianglesAlongPlane()
 		{
 			// insert a dummy element : computation of pressure done later
 			TrianglePressureInformation t;
+                        t.area = 0;
 			trianglePressureMap[n]=t;
 		}
 	}
@@ -166,7 +167,7 @@ void TrianglePressureForceField<DataTypes>::selectTrianglesFromString()
 		const char *str=inputString.c_str();
 		for(i=0;(i<inputString.length())&&(str[i]!=',');++i) ;
 		TrianglePressureInformation t;
-
+                t.area = 0;
 		if (i==inputString.length()) {
 			trianglePressureMap[(unsigned int)atoi(str)]=t;
 			inputString+=i;
@@ -181,10 +182,10 @@ void TrianglePressureForceField<DataTypes>::selectTrianglesFromString()
 template<class DataTypes>
 void TrianglePressureForceField<DataTypes>::draw()
 {
-	if (!getContext()->getShowForceFields()) return;
+	if (!this->getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
@@ -206,7 +207,7 @@ void TrianglePressureForceField<DataTypes>::draw()
 	glEnd();
 
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 

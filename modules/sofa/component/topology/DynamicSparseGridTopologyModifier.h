@@ -41,6 +41,8 @@ namespace sofa
       class SOFA_COMPONENT_CONTAINER_API DynamicSparseGridTopologyModifier : public HexahedronSetTopologyModifier
       {
         public:
+          SOFA_CLASS(DynamicSparseGridTopologyModifier,HexahedronSetTopologyModifier);
+
           DynamicSparseGridTopologyModifier()
               : HexahedronSetTopologyModifier()
           { }

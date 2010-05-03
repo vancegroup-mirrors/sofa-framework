@@ -64,7 +64,7 @@ TrianglesInSphereROI<DataTypes>::TrianglesInSphereROI()
 template <class DataTypes>
 void TrianglesInSphereROI<DataTypes>::init()
 {
-    if (!f_X0.isSet())
+    if (f_X0.getValue().empty())
     {
 	MechanicalState<DataTypes>* mstate;
 	this->getContext()->get(mstate);
@@ -78,7 +78,7 @@ void TrianglesInSphereROI<DataTypes>::init()
 	    }
 	}
     }
-    if (!f_triangles.isSet())
+    if (f_triangles.getValue().empty())
     {
         BaseMeshTopology* topology = dynamic_cast<BaseMeshTopology*>(getContext()->getTopology());
         if (topology != NULL)
@@ -132,6 +132,7 @@ template <class DataTypes>
 void TrianglesInSphereROI<DataTypes>::update()
 {
     cleanDirty();
+
     helper::vector<Vec3>& c = *(centers.beginEdit());
     helper::vector<Real>& r = *(radii.beginEdit());
 
@@ -139,6 +140,7 @@ void TrianglesInSphereROI<DataTypes>::update()
     SetIndex& pointIndices = *(f_pointIndices.beginEdit());
     
     indices.clear();
+    //pointIndices.clear();
 
     x0 = &f_X0.getValue();
 
@@ -181,8 +183,8 @@ void TrianglesInSphereROI<DataTypes>::draw()
 
         for (unsigned int i=0;i<c.size() && i<r.size();++i)
         	helper::gl::drawWireSphere(c[i], (float)(r[i]/2.0));
-
     }
+
 }
 
 } // namespace engine

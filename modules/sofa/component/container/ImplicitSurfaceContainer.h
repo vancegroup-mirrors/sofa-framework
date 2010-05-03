@@ -49,6 +49,8 @@ class SOFA_COMPONENT_CONTAINER_API ImplicitSurface : public virtual core::object
 {
 
 public:
+	SOFA_CLASS(ImplicitSurface,core::objectmodel::BaseObject);
+
 	ImplicitSurface( ){ }
 	virtual ~ImplicitSurface(){ }
     virtual double getValue(defaulttype::Vec3d& pos) = 0;
@@ -83,6 +85,8 @@ public:
 class SphereSurface  : public ImplicitSurface
 {
 public:
+	SOFA_CLASS(SphereSurface,ImplicitSurface);
+
 	SphereSurface()
 	: inside(initData(&inside, false, "inside", "if true the constraint object is inside the sphere"))
 	, radiusSphere(initData(&radiusSphere, 1.0, "radius", "Radius of the Sphere Surface"))

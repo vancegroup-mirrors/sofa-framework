@@ -135,7 +135,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
         orderState=BaseLMConstraint::ACC;
         if (priorStatePropagation)
           {
-            simulation::MechanicalPropagateDxVisitor propagateState(Order);
+            simulation::MechanicalPropagateDxVisitor propagateState(Order,false);
             propagateState.execute(this->getContext());
           }        
         // calling writeConstraintEquations
@@ -152,7 +152,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
         orderState=BaseLMConstraint::VEL;
         if (priorStatePropagation)
           {
-            simulation::MechanicalPropagateVVisitor propagateState(Order);
+            simulation::MechanicalPropagateVVisitor propagateState(Order,false);
             propagateState.execute(this->getContext());
           }
         // calling writeConstraintEquations
@@ -171,7 +171,7 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
         if (priorStatePropagation)
           {
-            simulation::MechanicalPropagateXVisitor propagateState(Order);
+            simulation::MechanicalPropagateXVisitor propagateState(Order,false);
             propagateState.execute(this->getContext());
           }
         // calling writeConstraintEquations
@@ -223,7 +223,6 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::vector< unsigned int > > offsetSystem;
     std::map< sofa::core::componentmodel::behavior::BaseMechanicalState*, sofa::helper::set< unsigned int > > dofUsed;
 
-
     unsigned int offset;
     //************************************************************
     // Gather the information from all the constraint components
@@ -251,7 +250,6 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 	constraintOffset += currentNumConstraint;
       }
 
-
     //************************************************************
     // Build the Right Hand Term
     //************************************************************
@@ -261,7 +259,6 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     // Building A=J0.M0^-1.J0^T + J1.M1^-1.J1^T + ... and M^-1.J^T 
     //************************************************************
     SparseMatrixEigen AEi((int)numConstraint,(int)numConstraint);
-
 
     std::vector< DofToMatrix< SparseMatrixEigen > >::iterator invMass;
 
@@ -295,7 +292,6 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
         //Verify if the Big M^-1 matrix has not already been computed and stored in memory
         invMass = std::find(invMassMatrix.begin(),invMassMatrix.end(),dofs);
-
 
         if (invMass == invMassMatrix.end())
           {
@@ -346,54 +342,103 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 
         //************************************************************
         //Building L 
-
+        typedef core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
          std::set< unsigned int > &usage=dofUsed[dofs];
 
         SparseMatrixEigen L(numConstraint,dofs->getSize()*dofs->getDerivDimension());
         L.startFill(numConstraint*(1+dofs->getSize())); //TODO: give a better estimation of non-zero coefficients
-
         //number of constraint expressed with the current dof
         for (unsigned int idConstraint=0;idConstraint<indicesUsedSystem[dofs].size();++idConstraint)
           {
+            const unsigned int line=offsetSystem[dofs][idConstraint];
             //Ask the dof to give the content of a list of VecConst, organized into blocks
             std::list<unsigned int > entries(indicesUsedSystem[dofs][idConstraint].begin(),indicesUsedSystem[dofs][idConstraint].end()); 
-            typedef core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
-           
-            //A block has as many lines as constraints for the current dof.
+            const unsigned int numLines=entries.size();
+
             std::list< ConstraintBlock > blocks=dofs->constraintBlocks( entries );
-            
+            if (blocks.empty()) continue;
+            std::list< ConstraintBlock > blocks2;
+            if (idConstraint+1 < indicesUsedSystem[dofs].size() && offsetSystem[dofs][idConstraint+1]==line)
+              {
+                std::list<unsigned int > entries(indicesUsedSystem[dofs][idConstraint+1].begin(),indicesUsedSystem[dofs][idConstraint+1].end()); 
+                blocks2=dofs->constraintBlocks( entries );
+                ++idConstraint;
+              }
 
-
-            const unsigned int line=offsetSystem[dofs][idConstraint];
+            //A block has as many lines as constraints for the current dof.           
+            if (!blocks2.empty())
+              {
+                std::list< ConstraintBlock >::iterator itBlock=blocks.begin();
+                std::list< ConstraintBlock >::iterator itBlock2=blocks2.begin();
+                for (;itBlock!=blocks.end();++itBlock)
+                  {
+                    ConstraintBlock &b=(*itBlock);
+                    const unsigned int column=b.getColumn();
+                    for (;itBlock2!=blocks2.end();++itBlock2)
+                      {
+                        const ConstraintBlock &b2=(*itBlock2);
+                        const unsigned int column2=b2.getColumn();
+                        if (column2 < column)
+                          {
+                            blocks.insert(itBlock, b2);
+                          }
+                        else if (column2 > column)
+                          {
+                            ++itBlock2;
+                            break;
+                          }
+                        else if (column2 == column)
+                          {
+                            defaulttype::BaseMatrix &m =*(b.getMatrix()); 
+                            const defaulttype::BaseMatrix &m2=b2.getMatrix(); 
+                            for (unsigned int i=0;i<m.rowSize();++i)
+                              {
+                                for (unsigned int j=0;j<m.colSize();++j)
+                                  {
+                                    m.add(i,j,m2.element(i,j));
+                                  }
+                              }
+                            delete itBlock2->getMatrix();
+                            ++itBlock2;
+                            break;
+                          }                        
+                      }
+                  }
+                for (;itBlock2!=blocks2.end();++itBlock2)
+                  {                    
+                    const ConstraintBlock &b2=(*itBlock2);
+                    blocks.insert(blocks.end(), b2);
+                  }
+              }
             
             std::list< ConstraintBlock >::iterator itBlock;
-            for (itBlock=blocks.begin();itBlock!=blocks.end();itBlock++)
-              {                
-                const ConstraintBlock &b=(*itBlock);
-                const defaulttype::BaseMatrix &m=b.getMatrix(); 
-                const unsigned int column=b.getColumn()*dimensionDofs;
-                    
-                for (unsigned int i=0;i<m.rowSize();++i)
-                  { 
+            for (unsigned int i=0;i<numLines;++i)
+              {          
+                for (itBlock=blocks.begin();itBlock!=blocks.end();itBlock++)
+                  {                
+                    const ConstraintBlock &b=(*itBlock);
+                    const defaulttype::BaseMatrix &m=b.getMatrix(); 
+                    const unsigned int column=b.getColumn()*dimensionDofs;
                     for (unsigned int j=0;j<m.colSize();++j)
                       { 
                         SReal value=m.element(i,j);
                         if (value!=0)
                           {
-                            L.coeffRef(line+i, column+j) += m.element(i,j);
+                            // Use fill!
+                            L.fill(line+i, column+j) = m.element(i,j);
                             usage.insert((column+j)/dimensionDofs);
                           }
                       }
                   }
               }
 
-            for (itBlock=blocks.begin();itBlock!=blocks.end();itBlock++)
+            for (itBlock=blocks.begin();itBlock!=blocks.end();++itBlock)
               {
                 delete itBlock->getMatrix();
               }
           }
         L.endFill();
-        if (f_printLog.getValue())  sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
+         if (f_printLog.getValue()) sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
         //************************************************************
         //Accumulation
         //Simple way to compute

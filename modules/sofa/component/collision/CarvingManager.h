@@ -50,6 +50,8 @@ namespace collision
 class SOFA_COMPONENT_COLLISION_API CarvingManager : public core::componentmodel::behavior::BaseController
 {
 public:
+	SOFA_CLASS(CarvingManager,sofa::core::componentmodel::behavior::BaseController);
+
 	typedef defaulttype::Vec3Types DataTypes;
     typedef DataTypes::Coord Coord;
     typedef DataTypes::Real Real;

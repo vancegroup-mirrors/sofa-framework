@@ -1,7 +1,9 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentcollision
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentcollision$$LIBSUFFIX
+
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib
@@ -44,7 +46,6 @@ HEADERS += initCollision.h \
            LMDNewProximityIntersection.inl \
            LocalMinDistance.h \
 	   LocalMinDistanceFilter.h \
-	   LocalMinDistanceFilter.inl \
            MinProximityIntersection.h \
            MouseInteractor.h \
            MouseInteractor.inl \
@@ -53,6 +54,7 @@ HEADERS += initCollision.h \
            Point.h \
 	   PointLocalMinDistanceFilter.h \
            PointModel.h \
+	     PotentialInjectionPerformer.h \
            Ray.h \
            RayContact.h \
            RayModel.h \
@@ -106,6 +108,7 @@ SOURCES += initCollision.cpp \
            NewProximityIntersection.cpp \
            PointLocalMinDistanceFilter.cpp \
            PointModel.cpp \
+	     PotentialInjectionPerformer.cpp \
            RayContact.cpp \
            RayModel.cpp \
 #           RayPickInteractor.cpp \  

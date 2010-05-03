@@ -53,6 +53,8 @@ namespace core
 class SOFA_CORE_API VisualModel : public virtual objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(VisualModel, objectmodel::BaseObject);
+
     /// Destructor
     virtual ~VisualModel() { }
 

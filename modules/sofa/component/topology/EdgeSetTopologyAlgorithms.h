@@ -55,6 +55,8 @@ namespace topology
 	class EdgeSetTopologyAlgorithms : public PointSetTopologyAlgorithms<DataTypes> 
 	{
     public:
+        SOFA_CLASS(SOFA_TEMPLATE(EdgeSetTopologyAlgorithms,DataTypes),SOFA_TEMPLATE(PointSetTopologyAlgorithms,DataTypes));
+
 		EdgeSetTopologyAlgorithms()
 		: PointSetTopologyAlgorithms<DataTypes>()
 		{}

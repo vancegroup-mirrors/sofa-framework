@@ -43,7 +43,9 @@
 #endif
 
 #ifdef SOFA_QT4
+#ifdef __linux__
 #include <QX11Info>
+#endif
 #include <QLabel>
 #include <QToolBox>
 #include <QVBoxLayout>
@@ -243,17 +245,17 @@ namespace sofa
 	    Ogre::String ogreLog;
 	    // only use plugins.cfg if not static
 #ifndef OGRE_STATIC_LIB
-
-
-	    ogrePath = sofa::helper::system::DataRepository.getFile("config/ogre.cfg");
+            ogreLog="config/Ogre.log";
+            if ( !sofa::helper::system::DataRepository.findFile ( ogreLog ) )
+              {
+		std::string fileToBeCreated = sofa::helper::system::DataRepository.getFirstPath() + "/" + ogreLog;
+		std::ofstream ofile(fileToBeCreated.c_str());
+		ofile << "";
+		ofile.close();
+              }
 	    ogreLog = sofa::helper::system::DataRepository.getFile("config/Ogre.log");
 
-#ifdef WIN32
-	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins.cfg");
-#else
-	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins_unix.cfg");
-#endif
-
+	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins.cfg");            
 #endif
 	    mRoot = new Ogre::Root(pluginsPath, ogrePath, ogreLog);
 	    Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
@@ -282,9 +284,6 @@ namespace sofa
 
 	    //RenderSystem
 	    mRoot->setRenderSystem(mRenderSystem);
-	    //Vsync
-	    mRenderSystem->setConfigOption("VSync", "No");
-
 	    mRenderSystem->validateConfigOptions();
 #endif
 	    mRoot->initialise(false, "SOFA - OGRE");
@@ -384,19 +383,13 @@ namespace sofa
 	  {
 
 	    Ogre::NameValuePairList params;
-#ifdef SOFA_QT4
-            //These attributes are the same as those use in a QGLWidget
-            setAttribute(Qt::WA_PaintOnScreen);
-            setAttribute(Qt::WA_NoSystemBackground);
-#endif
-
 
             //The external windows handle parameters are platform-specific
             Ogre::String externalWindowHandleParams;
             
 #if defined(WIN32)
             //positive integer for W32 (HWND handle) - According to Ogre Docs
-            externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(winId()));
+			externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(this->parentWidget()->winId()));
 #else
             //poslong:posint:poslong:poslong (display*:screen:windowHandle:XVisualInfo*) for GLX - According to Ogre Docs
             QX11Info info = x11Info();
@@ -415,9 +408,15 @@ namespace sofa
             //Finally create our window.
             mRenderWindow = mRoot->createRenderWindow("OgreWindow", width(), height(), false, &params);
 
+
+            mRenderWindow->setActive(true);
+            WId ogreWinId = 0x0;
+            mRenderWindow->getCustomAttribute( "WINDOW", &ogreWinId );
+            this->create( ogreWinId );
+            setAttribute( Qt::WA_PaintOnScreen, true );
+            setAttribute( Qt::WA_NoBackground );
+
             _beginTime = CTime::getTime();
-
-
 	  }
 
 
@@ -428,8 +427,6 @@ namespace sofa
 
 	  void QtOgreViewer::createScene()
 	  {
-
-            std::cerr << "CreateScene " << std::endl;
 	    using namespace Ogre;
 
 

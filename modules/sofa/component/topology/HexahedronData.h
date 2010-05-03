@@ -83,7 +83,7 @@ namespace topology
 		typedef typename sofa::helper::vector<T,Alloc>::const_iterator const_iterator;
 
 	public:
-		HexahedronData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+            HexahedronData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
 			  void (*createFunc) (int, void*, T&, const Hexahedron &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = td_basicCreateFunc,
 				void* createParam  = (void*)NULL,
 				void (*destroyFunc)(int, void*, T&) = hd_basicDestroyFunc,

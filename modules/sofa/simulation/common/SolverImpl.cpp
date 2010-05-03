@@ -102,23 +102,27 @@ void SolverImpl::v_threshold(VecId a, double t)
 
 void SolverImpl::propagateDx(VecId dx)
 {
-    MechanicalPropagateDxVisitor(dx).setTags(this->getTags()).execute( getContext() );
+    MechanicalPropagateDxVisitor(dx, false) //Don't ignore the masks
+            .setTags(this->getTags()).execute( getContext() );
 }
 
 void SolverImpl::propagateDxAndResetDf(VecId dx, VecId df)
 {
-    MechanicalPropagateDxAndResetForceVisitor(dx,df).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+    MechanicalPropagateDxAndResetForceVisitor(dx,df, false) //Don't ignore the masks
+            .setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
     finish();
 }
 
 void SolverImpl::propagateX(VecId x)
 {
-    MechanicalPropagateXVisitor(x).setTags(this->getTags()).execute( getContext() );
+    MechanicalPropagateXVisitor(x, false) //Don't ignore the masks
+            .setTags(this->getTags()).execute( getContext() );
 }
 
 void SolverImpl::propagateXAndResetF(VecId x, VecId f)
 {
-    MechanicalPropagateXAndResetForceVisitor(x,f).setTags(this->getTags()).execute( getContext() );
+    MechanicalPropagateXAndResetForceVisitor(x,f, false) //Don't ignore the masks
+            .setTags(this->getTags()).execute( getContext() );
     finish();
 }
 

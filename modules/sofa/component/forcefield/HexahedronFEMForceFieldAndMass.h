@@ -49,6 +49,8 @@ namespace sofa
       class HexahedronFEMForceFieldAndMass : virtual public Mass<DataTypes>, virtual public HexahedronFEMForceField<DataTypes>
       {
       public:
+          SOFA_CLASS2(SOFA_TEMPLATE(HexahedronFEMForceFieldAndMass,DataTypes), SOFA_TEMPLATE(Mass,DataTypes), SOFA_TEMPLATE(HexahedronFEMForceField,DataTypes));
+
         typedef HexahedronFEMForceField<DataTypes> HexahedronFEMForceFieldT;
         typedef Mass<DataTypes> MassT;
 
@@ -66,10 +68,6 @@ namespace sofa
 	typedef typename HexahedronFEMForceFieldT::ElementStiffness ElementMass;
 	typedef helper::vector<Real> MassVector;
 		
-		
-	using HexahedronFEMForceFieldT::sout;
-	using HexahedronFEMForceFieldT::serr;
-	using HexahedronFEMForceFieldT::sendl;
 
 		HexahedronFEMForceFieldAndMass();
 

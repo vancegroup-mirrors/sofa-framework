@@ -54,9 +54,9 @@ namespace topology
 		friend class QuadSetTopologyModifier;
         
 	public:
-		QuadSetTopologyContainer();
+                SOFA_CLASS(QuadSetTopologyContainer,EdgeSetTopologyContainer);
 
-		QuadSetTopologyContainer(const sofa::helper::vector< Quad >& quads );
+		QuadSetTopologyContainer();
 
 		virtual ~QuadSetTopologyContainer() {}
 
@@ -265,8 +265,7 @@ namespace topology
 	protected:
 
 		/// provides the set of quads.
-		sofa::helper::vector<Quad> m_quad;
-		DataPtr< sofa::helper::vector<Quad> > d_quad;
+		Data< sofa::helper::vector<Quad> > d_quad;
 		
 		/// provides the 4 edges in each quad.
 		sofa::helper::vector<EdgesInQuad> m_edgesInQuad;

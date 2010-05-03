@@ -48,9 +48,10 @@ namespace mapping
 	This allow to control an object by setting forces on its center of mass.
  */
 template <class BasicMapping>
-class CenterOfMassMapping : public BasicMapping, public virtual core::objectmodel::BaseObject
+class CenterOfMassMapping : public BasicMapping
 {
   public:
+        SOFA_CLASS(SOFA_TEMPLATE(CenterOfMassMapping,BasicMapping), BasicMapping);
 	typedef BasicMapping Inherit;
 	typedef typename Inherit::In In;
 	typedef typename Inherit::Out Out;

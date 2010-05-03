@@ -44,6 +44,7 @@ namespace misc
 	class Monitor: public virtual core::VisualModel
 	{
 		public:
+                SOFA_CLASS(SOFA_TEMPLATE(Monitor,DataTypes), core::VisualModel);
 
 		typedef typename DataTypes::VecReal VecReal;
 		typedef typename DataTypes::VecCoord VecCoord;

@@ -2,9 +2,10 @@
 
 SOFA_DIR = ../../..
 TEMPLATE = lib
+TARGET = vrpn_client
+
 include($${SOFA_DIR}/sofa.cfg)
 
-TARGET = vrpn_client$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
 
 QUATINCLUDES = ../quat

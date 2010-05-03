@@ -64,8 +64,11 @@ namespace visualmodel
  *  and Ati's >2K series.
  */
 
-class SOFA_COMPONENT_VISUALMODEL_API OglShader : public core::Shader, public core::VisualModel {
+class SOFA_COMPONENT_VISUALMODEL_API OglShader : public core::Shader, public core::VisualModel
+{
 public:
+    SOFA_CLASS2(OglShader, core::Shader, core::VisualModel);
+
 	///Activates or not the shader
 	Data<bool> turnOn;
 	///Tells if it must be activated automatically(value false : the visitor will switch the shader)

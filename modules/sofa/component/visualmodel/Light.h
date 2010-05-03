@@ -57,18 +57,19 @@ namespace visualmodel
  *
  */
 
-using sofa::defaulttype::Vector3;
 
 class SOFA_COMPONENT_VISUALMODEL_API Light : public virtual sofa::core::VisualModel {
+public:
+	SOFA_CLASS(Light, core::VisualModel);
 protected:
 	GLint lightID;
 	GLuint shadowTexWidth, shadowTexHeight;
 
-	Data<Vector3> color;
-	Data<float> zNear;
-	Data<float> zFar;
+	Data<sofa::defaulttype::Vector3> color;
+	Data<GLdouble> zNear;
+	Data<GLdouble> zFar;
 	Data<GLuint> shadowTextureSize;
-
+	Data<bool> drawSource;
 #ifdef SOFA_HAVE_GLEW
 	helper::gl::FrameBufferObject shadowFBO;
 #endif
@@ -90,7 +91,7 @@ public:
 	virtual void initVisual() ;
 	void init();
 	virtual void drawLight();
-	void draw() { } ;
+	virtual void draw() { } ;
 	virtual void reinit();
 	void update() {} ;
 
@@ -104,46 +105,51 @@ public:
 };
 
 class DirectionalLight : public Light {
-private:
-	Data<Vector3> direction;
-
 public:
+	SOFA_CLASS(DirectionalLight, Light);
+
+	Data<sofa::defaulttype::Vector3> direction;
 
 	DirectionalLight();
 	virtual ~DirectionalLight();
 	virtual void initVisual() ;
 	virtual void drawLight();
+	virtual void draw();
 	virtual void reinit();
 
 
 };
 
 class SOFA_COMPONENT_VISUALMODEL_API PositionalLight : public Light {
-protected:
-	Data<Vector3> position;
-	Data<float> attenuation;
-
 public:
+	SOFA_CLASS(PositionalLight, Light);
+
+	Data<bool> fixed;
+	Data<sofa::defaulttype::Vector3> position;
+	Data<float> attenuation;
 
 	PositionalLight();
 	virtual ~PositionalLight();
 	virtual void initVisual() ;
 	virtual void drawLight();
+	virtual void draw();
 	virtual void reinit();
 
 };
 
 class SOFA_COMPONENT_VISUALMODEL_API SpotLight : public PositionalLight {
-protected:
-	Data<Vector3> direction;
+public:
+	SOFA_CLASS(SpotLight, PositionalLight);
+
+	Data<sofa::defaulttype::Vector3> direction;
 	Data<float> cutoff;
 	Data<float> exponent;
 
-public:
 	SpotLight();
 	virtual ~SpotLight();
 	virtual void initVisual() ;
 	virtual void drawLight();
+	virtual void draw();
 	virtual void reinit();
 
 	void preDrawShadow();

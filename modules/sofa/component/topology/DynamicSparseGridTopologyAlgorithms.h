@@ -49,6 +49,8 @@ namespace topology
 	class DynamicSparseGridTopologyAlgorithms : public HexahedronSetTopologyAlgorithms<DataTypes> 
 	{
 	public:
+                SOFA_CLASS(SOFA_TEMPLATE(DynamicSparseGridTopologyAlgorithms,DataTypes),SOFA_TEMPLATE(HexahedronSetTopologyAlgorithms,DataTypes));
+
 		typedef typename DataTypes::Real Real;
 
 		DynamicSparseGridTopologyAlgorithms()

@@ -172,7 +172,7 @@ template <class DataTypes> void TriangularQuadraticSpringsForceField<DataTypes>:
 	serr << "initializing TriangularQuadraticSpringsForceField" << sendl;
 	this->Inherited::init();
 
-	_topology = getContext()->getMeshTopology();
+	_topology = this->getContext()->getMeshTopology();
 
 	if (_topology->getNbTriangles()==0)
 	{
@@ -419,10 +419,10 @@ void TriangularQuadraticSpringsForceField<DataTypes>::updateLameCoefficients()
 template<class DataTypes>
 void TriangularQuadraticSpringsForceField<DataTypes>::draw()
 {
-	if (!getContext()->getShowForceFields()) return;
+	if (!this->getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	VecCoord& x = *this->mstate->getX();
@@ -447,7 +447,7 @@ void TriangularQuadraticSpringsForceField<DataTypes>::draw()
 	glEnd();
 
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 

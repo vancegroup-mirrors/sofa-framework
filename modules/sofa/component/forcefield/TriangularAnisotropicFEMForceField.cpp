@@ -108,7 +108,7 @@ void TriangularAnisotropicFEMForceField<DataTypes>::TRQSTriangleCreationFunction
 template< class DataTypes>
 void TriangularAnisotropicFEMForceField<DataTypes>::init()
 {
-	_topology = getContext()->getMeshTopology();
+	_topology = this->getContext()->getMeshTopology();
 
 	Inherited::init();
 	//reinit();
@@ -274,7 +274,7 @@ void TriangularAnisotropicFEMForceField<DataTypes>::draw()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	Inherited::draw();
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	if (!getContext()->getShowForceFields())
+	if (!this->getContext()->getShowForceFields())
 	  return;
 
 	helper::vector<Deriv>& lfd = *(localFiberDirection.beginEdit());

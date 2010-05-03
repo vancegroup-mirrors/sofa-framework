@@ -66,6 +66,8 @@ template<class TDataTypes>
 class State : public virtual objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(State,TDataTypes), objectmodel::BaseObject);
+
     typedef TDataTypes DataTypes;
     /// Scalar values (float or double).
     typedef typename DataTypes::Real Real;

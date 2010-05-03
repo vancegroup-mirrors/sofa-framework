@@ -46,30 +46,15 @@ int QuadSetTopologyContainerClass = core::RegisterObject("Quad set topology cont
 
 QuadSetTopologyContainer::QuadSetTopologyContainer()
 : EdgeSetTopologyContainer()
-, d_quad(initDataPtr(&d_quad, &m_quad, "quads", "List of quad indices"))
+, d_quad(initData(&d_quad, "quads", "List of quad indices"))
 {
 }
 
-QuadSetTopologyContainer::QuadSetTopologyContainer(const sofa::helper::vector< Quad >& quads )
-: EdgeSetTopologyContainer()
-, m_quad( quads )
-, d_quad(initDataPtr(&d_quad, &m_quad, "quads", "List of quad indices"))
-{
-    for (unsigned int i=0; i<m_quad.size(); ++i)
-    {
-        for(unsigned int j=0; j<4; ++j)
-        {
-            int a = m_quad[i][j];
-            if (a >= getNbPoints()) nbPoints.setValue(a+1);
-        }
-    }
-}
 
 void QuadSetTopologyContainer::addQuad( int a, int b, int c, int d )
 {
-    d_quad.beginEdit();
+    helper::WriteAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
     m_quad.push_back(Quad(a,b,c,d));
-    d_quad.endEdit();
     if (a >= getNbPoints()) nbPoints.setValue(a+1);
     if (b >= getNbPoints()) nbPoints.setValue(b+1);
     if (c >= getNbPoints()) nbPoints.setValue(c+1);
@@ -85,10 +70,10 @@ void QuadSetTopologyContainer::init()
         void QuadSetTopologyContainer::loadFromMeshLoader(sofa::component::container::MeshLoader* loader)
 	{
 		// load points
-                if (!m_quad.empty()) return;
+	        helper::ReadAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
+		if (!m_quad.empty()) return;
 		PointSetTopologyContainer::loadFromMeshLoader(loader);
-		d_quad.beginEdit();
-		loader->getQuads(m_quad);
+		loader->getQuads(*(d_quad.beginEdit()));
 		d_quad.endEdit();
 	}
 
@@ -115,7 +100,8 @@ void QuadSetTopologyContainer::init()
 		}
 
 		m_quadsAroundVertex.resize( getNbPoints() );
-
+		helper::ReadAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
+		
 		for (unsigned int i=0; i<m_quad.size(); ++i)
 		{
 			// adding quad i in the quad shell of all points
@@ -169,7 +155,6 @@ void QuadSetTopologyContainer::init()
 
 	void QuadSetTopologyContainer::createEdgeSetArray()
 	{
-		d_edge.beginEdit();
 		if(!hasQuads()) // this method should only be called when quads exist
 		{
 	#ifndef NDEBUG
@@ -196,6 +181,8 @@ void QuadSetTopologyContainer::init()
 
 		// create a temporary map to find redundant edges
 		std::map<Edge, unsigned int> edgeMap;
+		helper::WriteAccessor< Data< sofa::helper::vector<Edge> > > m_edge = d_edge;
+		helper::ReadAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
 
 		for (unsigned int i=0; i<m_quad.size(); ++i)
 		{
@@ -217,7 +204,6 @@ void QuadSetTopologyContainer::init()
 				} 
 			}
 		}
-		d_edge.endEdit();
 	}
 
 	void QuadSetTopologyContainer::createEdgesInQuadArray()
@@ -244,10 +230,11 @@ void QuadSetTopologyContainer::init()
 		const unsigned int numQuads = getNumberOfQuads();
 
 		m_edgesInQuad.resize( numQuads );
+		helper::ReadAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
 
 		for(unsigned int i=0; i<numQuads; ++i)
 		{
-			Quad &t = m_quad[i];
+			const Quad &t = m_quad[i];
 			// adding edge i in the edge shell of both points
 			for (unsigned int j=0; j<4; ++j) 
 			{ 
@@ -267,7 +254,7 @@ void QuadSetTopologyContainer::init()
 			createQuadSetArray();
 		}
 
-		return m_quad;
+		return d_quad.getValue();
 	}
 
   const Quad QuadSetTopologyContainer::getQuad (QuadID i)
@@ -275,7 +262,7 @@ void QuadSetTopologyContainer::init()
     if(!hasQuads())
       createQuadSetArray();
 
-    return m_quad[i];
+    return (d_quad.getValue())[i];
   }
 
 
@@ -323,7 +310,8 @@ void QuadSetTopologyContainer::init()
 
 	unsigned int QuadSetTopologyContainer::getNumberOfQuads() const
 	{
-		return m_quad.size();
+	  helper::ReadAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
+	  return m_quad.size();
 	}
 
 	const sofa::helper::vector< sofa::helper::vector<unsigned int> > &QuadSetTopologyContainer::getQuadsAroundVertexArray() 
@@ -539,7 +527,7 @@ void QuadSetTopologyContainer::init()
 bool QuadSetTopologyContainer::hasQuads() const 
 {
     d_quad.updateIfDirty();
-    return !m_quad.empty();
+    return !(d_quad.getValue()).empty();
 }
 
 	bool QuadSetTopologyContainer::hasEdgesInQuad() const 
@@ -580,9 +568,8 @@ bool QuadSetTopologyContainer::hasQuads() const
 
 	void QuadSetTopologyContainer::clearQuads()
 	{
-		d_quad.beginEdit();
-		m_quad.clear();
-		d_quad.endEdit();
+	  helper::WriteAccessor< Data< sofa::helper::vector<Quad> > > m_quad = d_quad;
+	  m_quad.clear();
 	}
 
 	void QuadSetTopologyContainer::clear()

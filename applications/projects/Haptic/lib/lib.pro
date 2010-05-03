@@ -3,12 +3,10 @@ HEADERS += ChaiDevice.h HapticMapping.h HapticMapping.inl
 SOURCES += ChaiDevice.cpp HapticMapping.cpp
 
 SOFA_DIR = ../../../..
-
 TEMPLATE = lib
+TARGET = chaiIntegration$$LIBSUFFIX
 
 include($${SOFA_DIR}/sofa.cfg)
-
-TARGET = chaiIntegration$$LIBSUFFIX
 
 CONFIG += $$CONFIGLIBRARIES
 

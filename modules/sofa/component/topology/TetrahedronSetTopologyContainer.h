@@ -63,14 +63,14 @@ namespace topology
 		friend class TetrahedronSetTopologyModifier;
         
     public:
+                SOFA_CLASS(TetrahedronSetTopologyContainer,TriangleSetTopologyContainer);
+
 		typedef Tetra			Tetrahedron;
 		typedef EdgesInTetrahedron		EdgesInTetrahedron;
 		typedef TrianglesInTetrahedron	TrianglesInTetrahedron;
 
 	
 		TetrahedronSetTopologyContainer();
-
-		TetrahedronSetTopologyContainer(const sofa::helper::vector< Tetrahedron >& tetrahedra );
 
 		virtual ~TetrahedronSetTopologyContainer(){}
 
@@ -255,7 +255,8 @@ namespace topology
 		
 		inline friend std::ostream& operator<< (std::ostream& out, const TetrahedronSetTopologyContainer& t)
 		{
-			out  << t.m_tetrahedron<< " "
+               	        helper::ReadAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = t.d_tetrahedron;
+		        out  << m_tetrahedron<< " "
 				<< t.m_edgesInTetrahedron<< " "
 				<< t.m_trianglesInTetrahedron;
 
@@ -281,9 +282,9 @@ namespace topology
 		{
 			unsigned int s;
 			sofa::helper::vector< unsigned int > value;
+			helper::WriteAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = t.d_tetrahedron;
 
-
-			in >> t.m_tetrahedron >> t.m_edgesInTetrahedron >> t.m_trianglesInTetrahedron;
+			in >> m_tetrahedron >> t.m_edgesInTetrahedron >> t.m_trianglesInTetrahedron;
 
 
 			in >> s;
@@ -416,8 +417,7 @@ namespace topology
 	protected:
 
 		/// provides the set of tetrahedra.
-		sofa::helper::vector<Tetrahedron> m_tetrahedron;
-		DataPtr< sofa::helper::vector<Tetrahedron> > d_tetrahedron;
+		Data< sofa::helper::vector<Tetrahedron> > d_tetrahedron;
 
 		/// provides the set of edges for each tetrahedron.
 		sofa::helper::vector<EdgesInTetrahedron> m_edgesInTetrahedron;

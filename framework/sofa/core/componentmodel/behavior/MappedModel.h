@@ -62,6 +62,8 @@ template<class TDataTypes>
 class MappedModel : public State<TDataTypes>
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(MappedModel,TDataTypes), SOFA_TEMPLATE(State,TDataTypes));
+
     typedef TDataTypes DataTypes;
     /// Scalar values (float or double).
     typedef typename DataTypes::Real Real;

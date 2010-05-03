@@ -2,9 +2,10 @@
 
 SOFA_DIR = ../../..
 TEMPLATE = lib
+TARGET = sofahelper
+
 include($${SOFA_DIR}/sofa.cfg)
 
-TARGET = sofahelper$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib
@@ -81,6 +82,7 @@ HEADERS += \
           system/PipeProcess.h \
           system/SofaOStream.h \
           TagFactory.h \
+          accessor.h \
           vector.h \
           polygon_cube_intersection/vec.h \
           polygon_cube_intersection/polygon_cube_intersection.h \

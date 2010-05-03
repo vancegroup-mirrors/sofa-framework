@@ -83,13 +83,13 @@ namespace topology
 		friend class HexahedronSetTopologyModifier;
 		
 	public:
+                SOFA_CLASS(HexahedronSetTopologyContainer,QuadSetTopologyContainer);
+
 		typedef Hexa		Hexahedron;
 		typedef EdgesInHexahedron	EdgesInHexahedron;
 		typedef QuadsInHexahedron	QuadsInHexahedron;
 
 		HexahedronSetTopologyContainer();
-
-		HexahedronSetTopologyContainer(const sofa::helper::vector< Hexahedron > &hexahedra);
 
 		virtual ~HexahedronSetTopologyContainer() {}
 
@@ -376,8 +376,7 @@ namespace topology
 	protected:
 
 		/// provides the set of hexahedra.
-		sofa::helper::vector<Hexahedron> m_hexahedron;
-		DataPtr< sofa::helper::vector<Hexahedron> > d_hexahedron;
+		Data< sofa::helper::vector<Hexahedron> > d_hexahedron;
 
 		/// provides the set of edges for each hexahedron.
 		sofa::helper::vector<EdgesInHexahedron> m_edgesInHexahedron;

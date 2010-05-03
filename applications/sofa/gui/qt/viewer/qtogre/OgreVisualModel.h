@@ -49,6 +49,7 @@ namespace sofa
 class OgreVisualModel : public sofa::component::visualmodel::VisualModelImpl
 {
 public:
+  SOFA_CLASS(OgreVisualModel,sofa::component::visualmodel::VisualModelImpl);
   typedef sofa::component::visualmodel::VisualModelImpl Inherit;
     OgreVisualModel();
     ~OgreVisualModel();

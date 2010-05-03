@@ -57,6 +57,7 @@ template <class DataTypes>
 class PlaneROI : public virtual core::objectmodel::DataEngine, public virtual core::objectmodel::BaseObject
 {
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(PlaneROI,DataTypes),core::objectmodel::BaseObject);
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;
     typedef defaulttype::Vec<3,Real> Vec3;
@@ -85,8 +86,8 @@ public:
     template<class T>
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
-        if (dynamic_cast<MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
-            return false;
+        //if (dynamic_cast<MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
+        //    return false;
         return BaseObject::canCreate(obj, context, arg);
     }
 

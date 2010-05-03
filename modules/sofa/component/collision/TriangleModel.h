@@ -31,7 +31,7 @@
 #include <sofa/component/topology/TriangleData.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
-
+#include <sofa/component/collision/PointModel.h>
 #include <map>
 
 namespace sofa
@@ -79,6 +79,8 @@ public:
 class SOFA_COMPONENT_COLLISION_API TriangleModel : public core::CollisionModel
 {
 public:
+	SOFA_CLASS(TriangleModel, core::CollisionModel);
+
     typedef Vec3Types InDataTypes;
     typedef Vec3Types DataTypes;
     typedef DataTypes::VecCoord VecCoord;
@@ -98,6 +100,9 @@ public:
       FLAG_POINTS  = FLAG_P1|FLAG_P2|FLAG_P3,
       FLAG_EDGES   = FLAG_E12|FLAG_E23|FLAG_E31,
     };
+
+
+	Data<bool> bothSide; // to activate collision on both side of the triangle model
 
 protected:
     struct TriangleInfo
@@ -136,6 +141,8 @@ protected:
 
     sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
 
+    PointModel* mpoints;
+
 	TriangleLocalMinDistanceFilter *m_lmdFilter;
 
 public:
@@ -155,6 +162,8 @@ public:
     void draw(int index);
 
     void draw();
+	
+	virtual bool canCollideWithElement(int index, CollisionModel* model2, int index2);
 
     virtual void handleTopologyChange();
 

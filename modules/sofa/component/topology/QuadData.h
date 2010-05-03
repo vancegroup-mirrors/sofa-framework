@@ -82,7 +82,7 @@ namespace topology
 
 	public:
 		/// Constructor
-		QuadData( const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+            QuadData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
 			  void (*createFunc) (int, void*, T&, const Quad &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,
 				void* createParam  = (void*)NULL,
 				void (*destroyFunc)(int, void*, T&) = qd_basicDestroyFunc,

@@ -259,7 +259,7 @@ template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init
 	serr << "initializing TetrahedralTensorMassForceField" << sendl;
 	this->Inherited::init();
 
-	_topology = getContext()->getMeshTopology();
+	_topology = this->getContext()->getMeshTopology();
 
 	if (_topology->getNbTetrahedra()==0)
 	{
@@ -382,10 +382,10 @@ void TetrahedralTensorMassForceField<DataTypes>::updateLameCoefficients()
 template<class DataTypes>
 void TetrahedralTensorMassForceField<DataTypes>::draw()
 {
-	if (!getContext()->getShowForceFields()) return;
+	if (!this->getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
 
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 // 	VecCoord& x = *this->mstate->getX();
@@ -411,7 +411,7 @@ void TetrahedralTensorMassForceField<DataTypes>::draw()
 	glEnd();
 
 */
-	if (getContext()->getShowWireFrame())
+	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 

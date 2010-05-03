@@ -49,6 +49,8 @@ namespace topology
 	class HexahedronSetTopologyAlgorithms : public QuadSetTopologyAlgorithms<DataTypes> 
 	{
 	public:
+        SOFA_CLASS(SOFA_TEMPLATE(HexahedronSetTopologyAlgorithms,DataTypes),SOFA_TEMPLATE(QuadSetTopologyAlgorithms,DataTypes));
+
 		typedef typename DataTypes::Real Real;
 
 		HexahedronSetTopologyAlgorithms()

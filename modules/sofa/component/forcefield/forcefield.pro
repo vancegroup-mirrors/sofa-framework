@@ -1,7 +1,8 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentforcefield
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentforcefield$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib
@@ -48,7 +49,7 @@ HEADERS += initForceField.h \
            SpringForceField.inl \
            StiffSpringForceField.h \
            StiffSpringForceField.inl \
-		   SurfacePressureForceField.h \
+           SurfacePressureForceField.h \
            SurfacePressureForceField.inl \
            JointSpringForceField.h \
            JointSpringForceField.inl \
@@ -63,7 +64,7 @@ HEADERS += initForceField.h \
            HexahedronFEMForceField.inl \
            HexahedralFEMForceField.h \
            HexahedralFEMForceField.inl \
-		   HexahedronFEMForceFieldAndMass.h \
+           HexahedronFEMForceFieldAndMass.h \
            HexahedronFEMForceFieldAndMass.inl \
            TetrahedralTensorMassForceField.h \
            TetrahedralTensorMassForceField.inl \
@@ -105,7 +106,7 @@ SOURCES += initForceField.cpp \
            ParticlesRepulsionForceField.cpp \
            SpringForceField.cpp \
            StiffSpringForceField.cpp \
-		   SurfacePressureForceField.cpp \
+           SurfacePressureForceField.cpp \
            JointSpringForceField.cpp \
            PenalityContactForceField.cpp \
            MeshSpringForceField.cpp \

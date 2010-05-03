@@ -587,7 +587,7 @@ void BeamFEMForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *m
 template<class DataTypes>
 void BeamFEMForceField<DataTypes>::draw()
 {
-	if (!getContext()->getShowForceFields()) return;
+	if (!this->getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
 
 	const VecCoord& x = *this->mstate->getX();

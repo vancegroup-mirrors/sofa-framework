@@ -81,7 +81,7 @@ namespace topology
 
 	public:
 		/// Constructor
-		PointData(const sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >& data,
+            PointData(const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
  			  void (*createFunc) (int, void*, T&, const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = pd_basicCreateFunc,
 			  void* createParam  = (void*)NULL,
 			  void (*destroyFunc)(int, void*, T& ) = pd_basicDestroyFunc,
@@ -227,7 +227,6 @@ namespace topology
 			m_createParam=createParam;
 		}
 
-#ifdef POINT_DATA_VECTOR_ACCESS 
 		T& operator[](int i)
     		{
 			sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
@@ -235,7 +234,7 @@ namespace topology
 			this->endEdit();
         		return result;
     		}
-
+#ifdef POINT_DATA_VECTOR_ACCESS 
 		size_type size()
 		{
 			return this->getValue().size();

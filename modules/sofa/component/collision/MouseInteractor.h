@@ -107,6 +107,8 @@ namespace sofa
       class MouseInteractor : public BaseMouseInteractor
         {
         public:
+    		SOFA_CLASS(MouseInteractor,BaseMouseInteractor);
+
           typedef sofa::component::container::MechanicalObject< DataTypes > MouseContainer;
           typedef typename DataTypes::Coord Coord;
         public:

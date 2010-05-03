@@ -47,6 +47,7 @@ namespace sofa
       class SOFA_COMPONENT_ODESOLVER_API EulerSolver : public OdeSolverImpl
 	{
 	public:
+          SOFA_CLASS(EulerSolver, sofa::component::odesolver::OdeSolverImpl);
 
 	  EulerSolver();
 	  void solve (double dt);

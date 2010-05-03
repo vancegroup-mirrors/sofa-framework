@@ -42,6 +42,8 @@ class RegularGridSpringForceField : public StiffSpringForceField<DataTypes>
 {
     double m_potentialEnergy;
 public:
+    SOFA_CLASS(SOFA_TEMPLATE(RegularGridSpringForceField, DataTypes), SOFA_TEMPLATE(StiffSpringForceField, DataTypes));
+
     typedef StiffSpringForceField<DataTypes> Inherit;
     typedef typename Inherit::Spring Spring;
         typedef typename DataTypes::VecCoord VecCoord;
@@ -49,6 +51,11 @@ public:
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
+
+    typedef helper::ReadAccessor<VecCoord> RRefVecCoord;
+    typedef helper::WriteAccessor<VecCoord> WRefVecCoord;
+    typedef helper::ReadAccessor<VecDeriv> RRefVecDeriv;
+    typedef helper::WriteAccessor<VecDeriv> WRefVecDeriv;
 
 	//virtual const char* getTypeName() const { return "RegularGridSpringForceField"; }
 

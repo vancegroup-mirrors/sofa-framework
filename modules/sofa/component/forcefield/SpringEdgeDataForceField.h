@@ -47,9 +47,11 @@ using namespace sofa::defaulttype;
 //using namespace sofa::core::objectmodel;
 
 template<class DataTypes>
-class SpringEdgeDataForceField : public core::componentmodel::behavior::ForceField<DataTypes>, public  virtual core::objectmodel::BaseObject
+class SpringEdgeDataForceField : public core::componentmodel::behavior::ForceField<DataTypes>
 {
 public:
+  SOFA_CLASS(SOFA_TEMPLATE(SpringEdgeDataForceField, DataTypes), SOFA_TEMPLATE(core::componentmodel::behavior::ForceField, DataTypes));
+
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
 	typedef typename DataTypes::Coord Coord;

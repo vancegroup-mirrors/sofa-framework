@@ -56,6 +56,8 @@ namespace topology
 	class TetrahedronSetGeometryAlgorithms : public TriangleSetGeometryAlgorithms<DataTypes>
 	{
 	public:
+        SOFA_CLASS(SOFA_TEMPLATE(TetrahedronSetGeometryAlgorithms,DataTypes),SOFA_TEMPLATE(TriangleSetGeometryAlgorithms,DataTypes));
+
 		typedef typename DataTypes::VecCoord VecCoord;
 		typedef typename DataTypes::Real Real;
 		typedef typename DataTypes::Coord Coord;

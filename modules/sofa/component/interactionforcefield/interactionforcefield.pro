@@ -1,7 +1,8 @@
 SOFA_DIR = ../../../..
 TEMPLATE = lib
+TARGET = sofacomponentinteractionforcefield
+
 include($${SOFA_DIR}/sofa.cfg)
-TARGET = sofacomponentinteractionforcefield$$LIBSUFFIX
 CONFIG += $$CONFIGLIBRARIES
 
 CONFIG -= staticlib

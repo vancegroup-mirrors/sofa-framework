@@ -52,6 +52,7 @@ namespace visualmodel
 class SOFA_COMPONENT_VISUALMODEL_API SlicedVolumetricModel : public core::VisualModel
 {
 public:
+	SOFA_CLASS(SlicedVolumetricModel, core::VisualModel);
 
     SlicedVolumetricModel();
     virtual ~SlicedVolumetricModel();

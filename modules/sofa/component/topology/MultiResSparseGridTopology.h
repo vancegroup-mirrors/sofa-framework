@@ -51,8 +51,11 @@ using helper::vector;
 
 class MultiResSparseGridTopology : public core::componentmodel::topology::Topology
 {
+    public:
+        SOFA_CLASS(MultiResSparseGridTopology,core::componentmodel::topology::Topology);
+
         int nbPoints;
-public:
+
 
 
         /** Make all resolution of sparse grid create with a .vox file

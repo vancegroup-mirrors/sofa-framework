@@ -130,7 +130,7 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
   
   void Visitor::dumpInfo( const std::string &info)
  {
-   if (printActivated) {(*outputVisitor) << info; outputVisitor->flush();}
+   if (printActivated) {(*outputVisitor) << info; /*outputVisitor->flush();*/}
  }
 
   void Visitor::startDumpVisitor(std::ostream *s, double time)

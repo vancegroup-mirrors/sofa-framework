@@ -52,9 +52,9 @@ namespace topology
 		friend class ManifoldEdgeSetTopologyModifier;
 		
 	public:
-		ManifoldEdgeSetTopologyContainer();
+                SOFA_CLASS(ManifoldEdgeSetTopologyContainer,EdgeSetTopologyContainer);
 
-		ManifoldEdgeSetTopologyContainer(const sofa::helper::vector< Edge > &edges);
+		ManifoldEdgeSetTopologyContainer();
 
 		virtual ~ManifoldEdgeSetTopologyContainer() {}
 

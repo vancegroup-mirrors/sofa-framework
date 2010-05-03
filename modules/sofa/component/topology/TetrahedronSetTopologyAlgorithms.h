@@ -49,6 +49,8 @@ namespace topology
 	class TetrahedronSetTopologyAlgorithms : public TriangleSetTopologyAlgorithms<DataTypes> 
 	{
 	public:
+        SOFA_CLASS(SOFA_TEMPLATE(TetrahedronSetTopologyAlgorithms,DataTypes),SOFA_TEMPLATE(TriangleSetTopologyAlgorithms,DataTypes));
+
 		typedef typename DataTypes::Real Real;
 
 		TetrahedronSetTopologyAlgorithms()

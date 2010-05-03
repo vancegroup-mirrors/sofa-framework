@@ -92,7 +92,7 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 			// we can merge the groups
 			// if solvers are compatible...
 			SolverSet solver = SolverMerger::merge(group1->solver[0], group2->solver[0]);
-			if (solver.first!=NULL)
+                        if (solver.odeSolver!=NULL)
 			{
 				bool group1IsColl = groupSet.find(group1)!=groupSet.end();
 				bool group2IsColl = groupSet.find(group2)!=groupSet.end();
@@ -125,27 +125,40 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 					{
 						// merge groups and remove group2
 					    SolverSet solver2;
-					    solver2.first = group2->solver[0];
-					    group2->removeObject(solver2.first);
-					    if (!group2->linearSolver.empty())
-					    {
-						solver2.second = group2->linearSolver[0];
-						group2->removeObject(solver2.second);
+                                            solver2.odeSolver = group2->solver[0];
+                                            group2->removeObject(solver2.odeSolver);
+                                            if (!group2->linearSolver.empty() || !group2->constraintSolver.empty())
+                                            {
+                                                if (!group2->linearSolver.empty())
+                                                {
+                                                    solver2.linearSolver = group2->linearSolver[0];
+                                                    group2->removeObject(solver2.linearSolver);
+                                                }
+                                                if (!group2->constraintSolver.empty())
+                                                {
+                                                    solver2.constraintSolver = group2->constraintSolver[0];
+                                                    group2->removeObject(solver2.constraintSolver);
+                                                }
 					    }
 					    else
-						solver2.second = NULL;
-						while(!group2->object.empty())
-							group->moveObject(*group2->object.begin());
-						while(!group2->child.empty())
-							group->moveChild(*group2->child.begin());
-						parent->removeChild((simulation::Node*)group2);
-						groupSet.erase(group2);
-						mergedGroups[group2] = group;
-						delete solver2.first;
-						if (solver2.second) delete solver2.second;
-						// BUGFIX(2007-06-23 Jeremie A): we can't remove group2 yet, to make sure the keys in mergedGroups are unique.
-						removedGroup.push_back(group2);
-						//delete group2;
+                                            {
+                                                solver2.linearSolver = NULL;
+                                                solver2.constraintSolver = NULL;
+                                            }
+                                            while(!group2->object.empty())
+                                                group->moveObject(*group2->object.begin());
+                                            while(!group2->child.empty())
+                                                group->moveChild(*group2->child.begin());
+                                            parent->removeChild((simulation::Node*)group2);
+                                            groupSet.erase(group2);
+                                            mergedGroups[group2] = group;
+                                            delete solver2.odeSolver;
+                                            if (solver2.linearSolver) delete solver2.linearSolver;
+                                            if (solver2.constraintSolver) delete solver2.constraintSolver;
+                                            // BUGFIX(2007-06-23 Jeremie A): we can't remove group2 yet, to make sure the keys in mergedGroups are unique.
+                                            removedGroup.push_back(group2);
+                                            //delete group2;
+
 					}
 				}
 				else
@@ -166,9 +179,18 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 					group->removeObject(solver2);
 					delete solver2;
 				}
-				group->addObject(solver.first);
-				if (solver.second)
-				    group->addObject(solver.second);
+                                if (!group->constraintSolver.empty())
+                                {
+                                        core::componentmodel::behavior::ConstraintSolver* solver2 = group->constraintSolver[0];
+                                        group->removeObject(solver2);
+                                        delete solver2;
+                                }
+
+				group->addObject(solver.odeSolver);
+				if (solver.linearSolver)
+				    group->addObject(solver.linearSolver);
+                                if (solver.constraintSolver)
+				    group->addObject(solver.constraintSolver);
 			}
 		}
 		contactGroup.push_back(group);

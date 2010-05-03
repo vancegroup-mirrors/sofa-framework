@@ -10,6 +10,8 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
+#include <sofa/core/objectmodel/KeypressedEvent.h>
+#include <sofa/core/objectmodel/KeyreleasedEvent.h>
 
 namespace sofavrpn
 {
@@ -50,6 +52,7 @@ bool VRPNTracker::connectToServer()
 	//main interactive loop
 
 	// Let the tracker do its thing
+	//while(1)
 		tkr->mainloop();
 
 	return true;
@@ -57,17 +60,23 @@ bool VRPNTracker::connectToServer()
 
 void VRPNTracker::update()
 {
-//	if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
-//	{
-//		switch(ev->getKey())
-//		{
-//
-//			case 'T':
-//			case 't':
-//				std::cout << "Tracker : " << std::endl;
-//				break;
-//		}
-//	}
+	tkr->mainloop();
+}
+
+void VRPNTracker::handleEvent(sofa::core::objectmodel::Event* event)
+{
+	if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
+	{
+		switch(ev->getKey())
+		{
+
+			case 'T':
+			case 't':
+				update();
+				std::cout << "Tracker : " << std::endl;
+				break;
+		}
+	}
 }
 
 }

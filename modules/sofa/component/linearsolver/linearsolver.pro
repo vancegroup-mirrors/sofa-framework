@@ -27,7 +27,8 @@ HEADERS +=  \
            CompressedRowSparseMatrix.h \
            MatrixLinearSolver.h \
            NewMatVector.h \
-           NewMatMatrix.h 
+           NewMatMatrix.h \
+	   MatrixExpr.h
 
 SOURCES += initLinearSolver.cpp \
            CGLinearSolver.cpp \
@@ -73,6 +74,16 @@ contains(DEFINES,SOFA_HAVE_TAUCS){
 
     SOURCES +=  \
                SparseTAUCSSolver.cpp
+
+}
+
+contains(DEFINES,SOFA_HAVE_PARDISO){
+
+    HEADERS +=  \
+               SparsePARDISOSolver.h
+
+    SOURCES +=  \
+               SparsePARDISOSolver.cpp
 
 }
 

@@ -22,8 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/component/collision/RemovePrimitivePerformer.h>
+#ifndef SOFA_COMPONENT_COLLISION_REMOVEPRIMITIVEPERFORMER_CPP
+#define SOFA_COMPONENT_COLLISION_REMOVEPRIMITIVEPERFORMER_CPP
 
+#include <sofa/component/collision/RemovePrimitivePerformer.inl>
+#include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/helper/Factory.inl>
 
 namespace sofa
@@ -35,22 +38,24 @@ namespace sofa
     namespace collision
     {
 
-helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer >  RemovePrimitivePerformerClass("RemovePrimitive"); 
-      void RemovePrimitivePerformer::execute()
-      {
-          BodyPicked picked=this->interactor->getBodyPicked();
-          if (!picked.body) return;
-          core::CollisionElementIterator collisionElement( picked.body, picked.indexCollisionElement);
-	
-          sofa::core::componentmodel::topology::TopologyModifier* topologyModifier; 
-          picked.body->getContext()->get(topologyModifier);
-	         
-          // Handle Removing of topological element (from any type of topology)
-          if(topologyModifier) topologyChangeManager.removeItemsFromCollisionModel(collisionElement);
-          picked.body=NULL;
-          this->interactor->setBodyPicked(picked);
-      }
+      
+#ifndef SOFA_DOUBLE
+      template class SOFA_COMPONENT_COLLISION_API RemovePrimitivePerformer<defaulttype::Vec3fTypes>;
+#endif
+#ifndef SOFA_FLOAT
+      template class SOFA_COMPONENT_COLLISION_API RemovePrimitivePerformer<defaulttype::Vec3dTypes>;
+#endif
+
+#ifndef WIN32
+#ifndef SOFA_DOUBLE
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer<defaulttype::Vec3fTypes> >  RemovePrimitivePerformerVec3fClass("RemovePrimitive",true);
+#endif
+#ifndef SOFA_FLOAT
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer<defaulttype::Vec3dTypes> >  RemovePrimitivePerformerVec3dClass("RemovePrimitive",true);
+#endif
+#endif
+      
     }
   }
 }
-
+#endif

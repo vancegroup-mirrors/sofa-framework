@@ -307,9 +307,6 @@ template <>
 #endif
 
 
-
-
-
   SOFA_DECL_CLASS(DiagonalMass)
 
   // Register in the Factory
@@ -328,7 +325,7 @@ template <>
     .add< DiagonalMass<Rigid3fTypes,Rigid3fMass> >()
     .add< DiagonalMass<Rigid2fTypes,Rigid2fMass> >()
 #endif
-    ;
+;
 
 #ifndef SOFA_FLOAT
   template class SOFA_COMPONENT_MASS_API DiagonalMass<Vec3dTypes,double>;

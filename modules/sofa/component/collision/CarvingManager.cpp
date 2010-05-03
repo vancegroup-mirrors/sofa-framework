@@ -165,7 +165,7 @@ void CarvingManager::doCarve()
         sout << contacts->size() << " contacts detected." << sendl;
 #endif
     }
-    std::vector<int> elemsToRemove;
+    helper::vector<int> elemsToRemove;
     for (unsigned int j=0; j < ncontacts; ++j)
     {
         const ContactVector::value_type& c = (*contacts)[j];

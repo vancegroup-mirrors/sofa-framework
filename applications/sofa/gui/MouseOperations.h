@@ -110,14 +110,32 @@ protected:
       int cpt;
     };
 
-    class SOFA_SOFAGUI_API RemoveOperation : public Operation
+    class SOFA_SOFAGUI_API TopologyOperation : public Operation
     {
     public:
-      virtual ~RemoveOperation(){};
-      virtual void start() ;
-      virtual void execution() ; 
-      virtual void end() ;
-      static std::string getDescription() {return "Remove a primitive";}      
+    TopologyOperation():scale (0.0), volumicMesh (0), firstClick(1) {};
+      
+      virtual ~TopologyOperation(){};
+      virtual void start();
+      virtual void execution(); 
+      virtual void end();
+      virtual void endOperation();
+
+      void setTopologicalOperation(int m) {topologicalOperation = m;}
+      void setScale (double s) {scale = s;}
+      void setVolumicMesh (bool v) {volumicMesh = v;}
+
+      virtual int getTopologicalOperation() const { return volumicMesh;}
+      virtual double getScale() const {return scale;}
+      virtual bool getVolumicMesh() const {return volumicMesh;}
+      
+      static std::string getDescription() {return "Perform topological operations";}
+
+   protected:
+      int topologicalOperation;
+      double scale;
+      bool volumicMesh;
+      bool firstClick;
     };
         
     class SOFA_SOFAGUI_API FixOperation : public Operation
@@ -137,6 +155,7 @@ protected:
       double stiffness;
     };  
 
+    
     class SOFA_SOFAGUI_API InjectOperation : public Operation
     {
     public:

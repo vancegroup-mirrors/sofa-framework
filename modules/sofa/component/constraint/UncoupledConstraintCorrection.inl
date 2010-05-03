@@ -184,7 +184,7 @@ template<class DataTypes>
   }
 
   template<class DataTypes>
-  void UncoupledConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix *m)
+  void UncoupledConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix *m) const
   {
       const VecReal &comp=compliance.getValue();
       const unsigned int s=comp.size();

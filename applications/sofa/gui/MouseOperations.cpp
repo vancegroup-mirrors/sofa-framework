@@ -44,12 +44,13 @@ namespace sofa
 #ifndef SOFA_DOUBLE
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Vec3fTypes> >  AttachBodyPerformerVec3fClass("AttachBody",true);
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, FixParticlePerformer<defaulttype::Vec3fTypes> >  FixParticlePerformerVec3fClass("FixParticle",true);
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer<defaulttype::Vec3fTypes> >  RemovePrimitivePerformerVec3fClass("RemovePrimitive",true);
 #endif
 #ifndef SOFA_FLOAT
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Vec3dTypes> >  AttachBodyPerformerVec3dClass("AttachBody",true);
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, FixParticlePerformer<defaulttype::Vec3dTypes> >  FixParticlePerformerVec3dClass("FixParticle",true);
+      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer<defaulttype::Vec3dTypes> >  RemovePrimitivePerformerVec3dClass("RemovePrimitive",true);
 #endif
-      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer >  RemovePrimitivePerformerClass("RemovePrimitive"); 
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, InciseAlongPathPerformer>  InciseAlongPathPerformerClass("InciseAlongPath");
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, PotentialInjectionPerformer> PotentialInjectionPerformerClass("SetActionPotential"); 
 #endif
@@ -118,21 +119,64 @@ namespace sofa
 
 
     //******************************************************************************************* 
-    void RemoveOperation::start()
+    void TopologyOperation::start()
     {
-      performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("RemovePrimitive", pickHandle->getInteraction()->mouseInteractor);
-      pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+       //std::cout <<"TopologyOperation::start()"<< std::endl;
+
+       if (getTopologicalOperation() == 0)  // Remove one element
+       {
+          performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("RemovePrimitive", pickHandle->getInteraction()->mouseInteractor);
+          pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+
+          performer->start();
+       }
+       else if (getTopologicalOperation() == 1)
+       {
+          if (firstClick)
+          {
+             performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("RemovePrimitive", pickHandle->getInteraction()->mouseInteractor);
+             pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
+
+             component::collision::RemovePrimitivePerformerConfiguration *performerConfiguration=dynamic_cast<component::collision::RemovePrimitivePerformerConfiguration*>(performer);
+
+             performerConfiguration->setTopologicalOperation( getTopologicalOperation() );
+             performerConfiguration->setVolumicMesh( getVolumicMesh() );
+             performerConfiguration->setScale( getScale() );
+
+             performer->start();
+             firstClick = false;
+          }
+          else
+          {
+             performer->start();
+             firstClick = true;
+          }
+       }
     }
 
-    void RemoveOperation::execution()
+    void TopologyOperation::execution()
     {
 //       performer->execute();
     }
 
-    void RemoveOperation::end() 
+    void TopologyOperation::end() 
     {
-      pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
-      delete performer; performer=0;
+      if (getTopologicalOperation() == 0 || (getTopologicalOperation() == 1 && firstClick))
+      {
+         pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+         delete performer; performer=0;
+      }
+      
+    }
+
+    void TopologyOperation::endOperation()
+    {
+       if (performer)
+       {
+          pickHandle->getInteraction()->mouseInteractor->removeInteractionPerformer(performer);
+          delete performer; performer=0;
+          firstClick = true;
+       }
     }
 
 
@@ -148,7 +192,7 @@ namespace sofa
 	{
 	  performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("InciseAlongPath", pickHandle->getInteraction()->mouseInteractor);
 	  
-	  component::collision::InciseAlongPathPerformerconfiguration *performerConfiguration=dynamic_cast<component::collision::InciseAlongPathPerformerconfiguration*>(performer);
+	  component::collision::InciseAlongPathPerformerConfiguration *performerConfiguration=dynamic_cast<component::collision::InciseAlongPathPerformerConfiguration*>(performer);
 	  performerConfiguration->setIncisionMethod(getIncisionMethod());
 	  performerConfiguration->setSnapingBorderValue(getSnapingBorderValue());
 	  performerConfiguration->setSnapingValue(getSnapingValue());
@@ -172,7 +216,7 @@ namespace sofa
 	
 	performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("InciseAlongPath", pickHandle->getInteraction()->mouseInteractor);
 	
-	component::collision::InciseAlongPathPerformerconfiguration *performerConfiguration=dynamic_cast<component::collision::InciseAlongPathPerformerconfiguration*>(performer);
+	component::collision::InciseAlongPathPerformerConfiguration *performerConfiguration=dynamic_cast<component::collision::InciseAlongPathPerformerConfiguration*>(performer);
 	performerConfiguration->setIncisionMethod(getIncisionMethod());
 	performerConfiguration->setSnapingBorderValue(getSnapingBorderValue());
 	performerConfiguration->setSnapingValue(getSnapingValue());

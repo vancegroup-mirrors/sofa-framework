@@ -22,7 +22,6 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/component/controller/LCPForceFeedback.h>
 #include <sofa/component/controller/LCPForceFeedback.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/mastersolver/MasterContactSolver.h>

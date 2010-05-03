@@ -39,9 +39,6 @@ LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 
-contains(DEFINES,SOFA_HAVE_LAPACK){
-LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
-} 
 
 LIBS += $$SOFA_EXT_LIBS 
 

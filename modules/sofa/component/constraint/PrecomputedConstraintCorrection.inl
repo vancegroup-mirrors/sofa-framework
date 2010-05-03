@@ -28,7 +28,6 @@
 #include "PrecomputedConstraintCorrection.h"
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/simulation/common/Node.h>
-#include <sofa/component/mass/UniformMass.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
 //compliance computation include
@@ -636,7 +635,7 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 
       template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix* m)
+      void PrecomputedConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix* m) const
       {
           m->resize(dimensionAppCompliance,dimensionAppCompliance);
           for (unsigned int l=0;l<dimensionAppCompliance;++l)

@@ -97,6 +97,11 @@ public:
         return RESULT_CONTINUE;
     }
 
+    /// Process the OdeSolver
+    virtual Result fwdConstraintSolver(simulation::Node* /*node*/, core::componentmodel::behavior::ConstraintSolver* /*solver*/)
+    {
+        return RESULT_CONTINUE;
+    }
     /// Process the BaseMechanicalMapping
     virtual Result fwdMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
     {
@@ -180,6 +185,10 @@ public:
 
     /// Process the OdeSolver
     virtual void bwdOdeSolver(simulation::Node* /*node*/, core::componentmodel::behavior::OdeSolver* /*solver*/)
+    {}
+
+    /// Process the ConstraintSolver
+    virtual void bwdConstraintSolver(simulation::Node* /*node*/, core::componentmodel::behavior::ConstraintSolver* /*solver*/)
     {}
 
 
@@ -820,7 +829,13 @@ public:
 	/// Return a class name for this visitor
 	/// Only used for debugging / profiling purposes
 	virtual const char* getClassName() const { return "MechanicalPropagatePositionVisitor";}
-        virtual std::string getInfos() const { std::string name="x["+x.getName()+"]"; return name; }
+        virtual std::string getInfos() const
+        {
+            std::string name="x["+x.getName()+"]";
+            if (ignoreMask) name += " Mask DISABLED";
+            else            name += " Mask ENABLED";
+            return name;
+        }
 
     /// Specify whether this action can be parallelized.
     virtual bool isThreadSafe() const
@@ -1169,7 +1184,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalSolveLMConstraintVisitor: public Mech
         };
 
 
-  virtual Result fwdOdeSolver(simulation::Node* /*node*/, core::componentmodel::behavior::OdeSolver* s);
+  virtual Result fwdConstraintSolver(simulation::Node* /*node*/, core::componentmodel::behavior::ConstraintSolver* s);
 
   /// Return a class name for this visitor
   /// Only used for debugging / profiling purposes

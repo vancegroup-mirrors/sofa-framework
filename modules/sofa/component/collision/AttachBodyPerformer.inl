@@ -43,7 +43,6 @@ namespace sofa
               clear();
               return;
           }
-
         BodyPicked picked=this->interactor->getBodyPicked();
         if (!picked.body && !picked.mstate) return;
         core::componentmodel::behavior::MechanicalState<DataTypes>* mstateCollision=NULL;
@@ -52,7 +51,6 @@ namespace sofa
         if (picked.body)
         {
           mapper = MouseContactMapper::Create(picked.body);
-
           if (!mapper)
           {
             this->interactor->serr << "Problem with Mouse Mapper creation : " << this->interactor->sendl;
@@ -68,9 +66,25 @@ namespace sofa
 
           index = mapper->addPoint(pointPicked, idx, r);
           mapper->update();
+
+          if (mstateCollision->getContext() != picked.body->getContext())
+            {              
+              
+              simulation::Node *mappedNode=(simulation::Node *) mstateCollision->getContext();
+              simulation::Node *mainNode=(simulation::Node *) picked.body->getContext();
+              core::componentmodel::behavior::BaseMechanicalState *mainDof=dynamic_cast<core::componentmodel::behavior::BaseMechanicalState *>(mainNode->getMechanicalState());
+              const core::objectmodel::TagSet &tags=mainDof->getTags();
+              for (core::objectmodel::TagSet::const_iterator it=tags.begin();it!=tags.end();++it) 
+                {
+                  mstateCollision->addTag(*it);            
+                  mappedNode->mechanicalMapping->addTag(*it);
+                }
+              mstateCollision->setName("AttachedPoint");
+              mappedNode->mechanicalMapping->setName("MouseMapping");
+            }
         }
         else
-        {
+        {         
           mstateCollision = dynamic_cast< core::componentmodel::behavior::MechanicalState<DataTypes>*  >(picked.mstate);
           index = picked.indexCollisionElement;
           if (!mstateCollision)
@@ -79,7 +93,6 @@ namespace sofa
             return;
           }
         }
-
         double distanceFromMouse=picked.rayLength;
         restLength=picked.dist;
         this->interactor->setDistanceFromMouse(picked.rayLength);
@@ -94,6 +107,12 @@ namespace sofa
         sofa::core::BaseMapping *mapping;
         this->interactor->getContext()->get(mapping); assert(mapping);
         mapping->updateMapping();
+
+
+        const core::objectmodel::TagSet &tags=mstateCollision->getTags();
+        for (core::objectmodel::TagSet::const_iterator it=tags.begin();it!=tags.end();++it) forcefield->addTag(*it);
+
+
 
         mstateCollision->getContext()->addObject(forcefield);
         forcefield->init();

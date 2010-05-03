@@ -545,7 +545,12 @@ typedef QApplication QSOFAApplication;
       {
 	if ( sofa::helper::system::DataRepository.findFile ( pixmap_filename ) )
 	  pixmap_filename = sofa::helper::system::DataRepository.getFile ( pixmap_filename );
-	b->setPixmap(QPixmap(QImage(pixmap_filename.c_str())));
+	
+#ifdef SOFA_QT4
+        b->setPixmap(QPixmap(QPixmap::fromImage(QImage(pixmap_filename.c_str()))));
+#else
+        b->setPixmap(QPixmap(QImage(pixmap_filename.c_str())));
+#endif
       }
 
       RealGUI::~RealGUI()
@@ -1758,7 +1763,7 @@ typedef QApplication QSOFAApplication;
       //
       void RealGUI::exportOBJ ( bool exportMTL )
       {
-	Node* root = getScene();
+	Node* root = simulation::getSimulation()->getVisualRoot();
 	if ( !root ) return;
 	std::string sceneFileName = viewer->getSceneFileName();
 	std::ostringstream ofilename;

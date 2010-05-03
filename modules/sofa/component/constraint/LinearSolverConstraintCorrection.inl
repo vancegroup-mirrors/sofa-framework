@@ -28,7 +28,6 @@
 #include "LinearSolverConstraintCorrection.h"
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/simulation/common/Node.h>
-#include <sofa/component/mass/UniformMass.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
 //compliance computation include
@@ -195,8 +194,8 @@ void LinearSolverConstraintCorrection<DataTypes>::applyContactForce(const defaul
         //unsigned int numConstraints = constraints.size();
         VecCoord& x = *mstate->getX();
         VecDeriv& v = *mstate->getV();
-        VecDeriv v_free = *mstate->getVfree();
-        VecCoord x_free = *mstate->getXfree();
+        v_free = *mstate->getVfree();
+        x_free = *mstate->getXfree();
         //double dt = this->getContext()->getDt();
 
     const unsigned int numDOFs = mstate->getSize();
@@ -267,6 +266,8 @@ void LinearSolverConstraintCorrection<DataTypes>::applyContactForce(const defaul
         x[i] = x_free[i] + dxi;
         v[i] = v_free[i] + dvi;
         dx[i] = dxi;
+	
+	if (this->f_printLog.getValue()) std::cout << "dx[" << i << "] = " << dx[i] << std::endl;
     }
     mstate->vFree(forceID);
 }

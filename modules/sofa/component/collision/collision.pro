@@ -62,6 +62,7 @@ HEADERS += initCollision.h \
 #           RayPickInteractor.inl \
            RayTriangleIntersection.h \
            RemovePrimitivePerformer.h \
+           RemovePrimitivePerformer.inl \
            RuleBasedContactManager.h \
            SolverMerger.h \
            SpatialGridPointModel.h \
@@ -140,7 +141,6 @@ LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentmapping$$LIBSUFFIX
 LIBS += -lsofacomponentconstraint$$LIBSUFFIX
 LIBS += -lsofacomponentvisualmodel$$LIBSUFFIX
-LIBS += -lsofacomponentmass$$LIBSUFFIX
 
 
 LIBS += $$SOFA_EXT_LIBS 

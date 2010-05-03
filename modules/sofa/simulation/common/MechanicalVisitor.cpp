@@ -96,6 +96,9 @@ Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
 		}
 	}
 	if (res != RESULT_PRUNE) {
+		res = for_each_r(this, node, node->constraintSolver, &MechanicalVisitor::fwdConstraintSolver);
+	}
+	if (res != RESULT_PRUNE) {
 		res = for_each_r(this, node, node->forceField, &MechanicalVisitor::fwdForceField);
 	}
         if (res != RESULT_PRUNE) {
@@ -114,6 +117,7 @@ void MechanicalVisitor::processNodeBottomUp(simulation::Node* node)
 {
     for_each(this, node, node->constraint, &MechanicalVisitor::bwdConstraint);
     for_each(this, node, node->LMConstraint, &MechanicalVisitor::bwdLMConstraint);
+    for_each(this, node, node->constraintSolver, &MechanicalVisitor::bwdConstraintSolver);
 	if (node->mechanicalState != NULL) {
 		if (node->mechanicalMapping != NULL) {
 			if (node->mechanicalMapping->isMechanical()) {
@@ -1055,17 +1059,17 @@ MechanicalExpressJacobianVisitor::MechanicalExpressJacobianVisitor(simulation::N
    n->get<core::componentmodel::behavior::BaseLMConstraint>(&listC, core::objectmodel::BaseContext::SearchDown);
    for (unsigned int i=0;i<listC.size();++i)
    {
-       simulation::Node *node=(simulation::Node*) listC[i]->getContext();
-       ctime_t t0 = beginProcess(node, listC[i]);
+       // simulation::Node *node=(simulation::Node*) listC[i]->getContext();
+       // ctime_t t0 = beginProcess(node, listC[i]);
        listC[i]->buildJacobian();
-       endProcess(node, listC[i], t0);
+       // endProcess(node, listC[i], t0);
    }
    for (unsigned int i=0;i<listC.size();++i)
    {
-       simulation::Node *node=(simulation::Node*) listC[i]->getContext();
-       ctime_t t0 = beginProcess(node, listC[i]);
+       // simulation::Node *node=(simulation::Node*) listC[i]->getContext();
+       // ctime_t t0 = beginProcess(node, listC[i]);
        listC[i]->propagateJacobian();
-       endProcess(node, listC[i], t0);
+       // endProcess(node, listC[i], t0);
    }
 }
 
@@ -1079,31 +1083,11 @@ void MechanicalExpressJacobianVisitor::bwdMechanicalMapping(simulation::Node* no
 
 
 
-Visitor::Result MechanicalSolveLMConstraintVisitor::fwdOdeSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* s)
+Visitor::Result MechanicalSolveLMConstraintVisitor::fwdConstraintSolver(simulation::Node* node, core::componentmodel::behavior::ConstraintSolver* s)
 {
         typedef core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
         ctime_t t0 = beginProcess(node, s);
-        if ( state==VecId::dx())
-          {
-            bool active=s->constraintAcc.getValue();
-            s->constraintAcc.setValue(true);
-            s->solveConstraint(propagateState,state);
-            s->constraintAcc.setValue(active);            
-          }
-        else if (state==VecId::velocity())
-          {
-            bool active=s->constraintVel.getValue();
-            s->constraintVel.setValue(true);
-            s->solveConstraint(propagateState,state);
-            s->constraintVel.setValue(active);      
-          }
-        else if (state==VecId::position())
-          {
-            bool active=s->constraintPos.getValue();
-            s->constraintPos.setValue(true);
-            s->solveConstraint(propagateState,state,isPositionChangeUpdateVelocity);
-            s->constraintPos.setValue(active); 
-          }
+        s->solveConstraint(propagateState,state);
 	endProcess(node, s, t0);
         return RESULT_PRUNE;
 }

@@ -14,19 +14,21 @@ DEFINES += SOFA_BUILD_COMPONENT_MASTERSOLVER
 HEADERS += initMasterSolver.h \
            DefaultMasterSolver.h \
            MultiStepMasterSolver.h \
+           MultiTagMasterSolver.h \
            MasterContactSolver.h 
 
 SOURCES += initMasterSolver.cpp \
            DefaultMasterSolver.cpp \
            MultiStepMasterSolver.cpp \
+           MultiTagMasterSolver.cpp \
            MasterContactSolver.cpp
 
 
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
-LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
+LIBS += -lsofacomponentconstraint$$LIBSUFFIX
 LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS 
 

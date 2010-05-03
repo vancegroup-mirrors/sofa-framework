@@ -66,9 +66,12 @@ int Tetra2TriangleTopologicalMappingClass = core::RegisterObject("Special case o
 
 Tetra2TriangleTopologicalMapping::Tetra2TriangleTopologicalMapping(In* from, Out* to)
 : TopologicalMapping(from, to),
-object1(initData(&object1, std::string("../.."), "object1", "First object to map")),
-object2(initData(&object2, std::string(".."), "object2", "Second object to map")),
-flipNormals(initData(&flipNormals, bool(false), "flipNormals", "Flip Normal ? (Inverse point order when creating triangle)"))
+object1(initData(&object1, std::string("../.."), "object1", "First object to map"))
+,object2(initData(&object2, std::string(".."), "object2", "Second object to map"))
+,flipNormals(initData(&flipNormals, bool(false), "flipNormals", "Flip Normal ? (Inverse point order when creating triangle)"))
+,noNewTriangles(initData(&noNewTriangles, bool(false), "noNewTriangles", "If true no new triangles are being created"))
+,noInitialTriangles(initData(&noInitialTriangles, bool(false), "noInitialTriangles", "If true the list of initial triangles is initially empty. Only additional triangles will be added in the list"))
+
 {
 }
 
@@ -104,13 +107,15 @@ void Tetra2TriangleTopologicalMapping::init()
 
 
 			unsigned int nb_visible_triangles = 0;
+			/// only initialize with border triangles if necessary
+			if (noInitialTriangles.getValue()==false) {
 
-			sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
-			
-			Loc2GlobVec.clear();
-			Glob2LocMap.clear();
+				sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
 
-			for (unsigned int i=0; i<triangleArray.size(); ++i) {
+				Loc2GlobVec.clear();
+				Glob2LocMap.clear();
+
+				for (unsigned int i=0; i<triangleArray.size(); ++i) {
 
 					if (fromModel->getTetrahedraAroundTriangle(i).size()==1) {
 						if(flipNormals.getValue()){
@@ -122,17 +127,18 @@ void Tetra2TriangleTopologicalMapping::init()
 						}
 						else	to_tstm->addTriangleProcess(triangleArray[i]);
 
-							Loc2GlobVec.push_back(i);
-							Glob2LocMap[i]=Loc2GlobVec.size()-1;
+						Loc2GlobVec.push_back(i);
+						Glob2LocMap[i]=Loc2GlobVec.size()-1;
 
-							nb_visible_triangles+=1;
+						nb_visible_triangles+=1;
 					}
-			}
+				}
 
-			//to_tstm->propagateTopologicalChanges();
-			to_tstm->notifyEndingEvent();
-			//to_tstm->propagateTopologicalChanges();
-			Loc2GlobDataVec.endEdit();
+				//to_tstm->propagateTopologicalChanges();
+				to_tstm->notifyEndingEvent();
+				//to_tstm->propagateTopologicalChanges();
+				Loc2GlobDataVec.endEdit();
+			}
 		}
 
 	}
@@ -150,6 +156,7 @@ unsigned int Tetra2TriangleTopologicalMapping::getFromIndex(unsigned int ind){
 void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 
 	// INITIALISATION of TRIANGULAR mesh from TETRAHEDRAL mesh :
+//	cerr << "updateTopologicalMappingTopDown called" << endl;
 
 	if (fromModel) {
 
@@ -180,7 +187,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 
 				case core::componentmodel::topology::TRIANGLESREMOVED:
 					{
-						//sout << "INFO_print : Tetra2TriangleTopologicalMapping - TRIANGLESREMOVED" << sendl;
+//						cerr << "INFO_print : Tetra2TriangleTopologicalMapping - TRIANGLESREMOVED" << endl;
 
 						int last;
 						int ind_last;
@@ -266,7 +273,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 					{
 						//sout << "INFO_print : Tetra2TriangleTopologicalMapping - TETRAHEDRAREMOVED" << sendl;
 
-						if (fromModel) {
+						if ((fromModel) && (noNewTriangles.getValue()==false)) {
 
 							const sofa::helper::vector<Tetrahedron> &tetrahedronArray=fromModel->getTetrahedra();
 
@@ -301,6 +308,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 
 										bool is_present = false;
 										unsigned int k0 = 0;
+										/** HD may be a buf here k0<tab.size() */
 										while((!is_present) && k0 < i){
 											is_present = (ind_test == tab[k0]);
 											k0+=1;
@@ -312,7 +320,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 											const Tetrahedron &te=tetrahedronArray[ind_test];
 											int h = fromModel->getTriangleIndexInTetrahedron(fromModel->getTrianglesInTetrahedron(ind_test),k);
 
-											if (h%2) {
+											if ((h%2) && (flipNormals.getValue()==false))   {
 												t[0]=(int)(te[(h+1)%4]); t[1]=(int)(te[(h+2)%4]); t[2]=(int)(te[(h+3)%4]);
 											} else {
 												t[0]=(int)(te[(h+1)%4]); t[2]=(int)(te[(h+2)%4]); t[1]=(int)(te[(h+3)%4]);

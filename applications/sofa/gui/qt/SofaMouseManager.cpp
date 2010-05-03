@@ -54,7 +54,7 @@ namespace sofa
         RegisterOperation("Attach").add< QAttachOperation >();
         RegisterOperation("Fix")   .add< QFixOperation  >();
         RegisterOperation("Incise").add< QInciseOperation  >();
-        RegisterOperation("Remove").add< RemoveOperation  >();
+        RegisterOperation("Remove").add< QTopologyOperation  >();
 	RegisterOperation("Inject").add< QInjectOperation >();
       }
 

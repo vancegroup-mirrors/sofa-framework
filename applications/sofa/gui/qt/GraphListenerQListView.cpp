@@ -153,7 +153,11 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
             }
         for (int y=0 ; y < iconHeight ; y++)
             img->setPixel(2+iconWidth*nc-1,y,qRgba(0,0,0,255));
+#ifdef SOFA_QT4
+        pixmaps[flags] = new QPixmap(QPixmap::fromImage(*img));
+#else
         pixmaps[flags] = new QPixmap(*img);
+#endif
         delete img;
     }
     return pixmaps[flags];
@@ -397,12 +401,12 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
            for ( std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it = items.begin() ; it != items.end() ; ++ it ){
              if ( ( *it ).second == item ){
 	              base = (*it).first;
+                break;
 	           }
            }
         }
         return base;
       }
-
 
       /*****************************************************************************************************************/
       core::objectmodel::BaseData* GraphListenerQListView::findData(const Q3ListViewItem* item)

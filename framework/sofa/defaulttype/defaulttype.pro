@@ -40,3 +40,5 @@ HEADERS += \
 SOURCES += \
           Frame.cpp \
           SolidTypes.cpp
+
+

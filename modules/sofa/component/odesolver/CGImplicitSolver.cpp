@@ -87,10 +87,6 @@ void CGImplicitSolver::solve(double dt)
     const bool printLog = f_printLog.getValue();
     const bool verbose  = f_verbose.getValue();
 
-#ifdef SOFA_HAVE_EIGEN2
-    bool propagateState=needPriorStatePropagation();
-#endif
-
 
     addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
 
@@ -273,13 +269,9 @@ void CGImplicitSolver::solve(double dt)
     // apply the solution
 #ifdef SOFA_NO_VMULTIOP // unoptimized version
     vel.peq( x );                       // vel = vel + x
-#ifdef SOFA_HAVE_EIGEN2
-    solveConstraint(propagateState,VecId::velocity());
-#endif
+    solveConstraint(dt,VecId::velocity());
     pos.peq( vel, h );                  // pos = pos + h vel
-#ifdef SOFA_HAVE_EIGEN2
-    solveConstraint(propagateState,VecId::position());
-#endif
+    solveConstraint(dt,VecId::position());
 
 #else // single-operation optimization
     {
@@ -295,11 +287,8 @@ void CGImplicitSolver::solve(double dt)
 	simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.execute(this->getContext());
 
-#ifdef SOFA_HAVE_EIGEN2
-        solveConstraint(propagateState,VecId::velocity());
-        solveConstraint(propagateState,VecId::position());
-#endif
-
+        solveConstraint(dt,VecId::velocity());
+        solveConstraint(dt,VecId::position());
     }
 #endif
     if (f_velocityDamping.getValue()!=0.0)

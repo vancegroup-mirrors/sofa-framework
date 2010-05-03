@@ -48,6 +48,7 @@ class SensAble : public sofa::core::VisualModel, public sofa::core::BehaviorMode
 {
 
 public:
+	SOFA_CLASS2(SensAble, sofa::core::VisualModel, sofa::core::BehaviorModel);
 
 	SensAble();
 	~SensAble();

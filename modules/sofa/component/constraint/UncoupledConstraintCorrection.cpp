@@ -27,10 +27,10 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/simulation/common/Node.h>
-#include <sofa/component/mass/UniformMass.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
 #include <sofa/component/linearsolver/FullMatrix.h>
+#include <sofa/component/mass/UniformMass.h>
 namespace sofa
 {
 namespace component
@@ -62,6 +62,8 @@ void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::init()
 		simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
 		const sofa::defaulttype::Rigid3Mass* massValue = NULL;
 		
+                //Should use the BaseMatrix API to get the Mass
+                //void getElementMass(unsigned int index, defaulttype::BaseMatrix *m)
 		if (node != NULL)
 		{
 			core::componentmodel::behavior::BaseMass*_m = node->mass;
@@ -182,7 +184,7 @@ void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::getCompliance(defa
 }
 
 template<>
-    void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::getComplianceMatrix(defaulttype::BaseMatrix *m)
+    void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::getComplianceMatrix(defaulttype::BaseMatrix *m) const
     {
         const VecReal &comp=compliance.getValue();
         const unsigned int dimension = defaulttype::DataTypeInfo<Deriv>::size();

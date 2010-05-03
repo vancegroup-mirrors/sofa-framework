@@ -37,6 +37,7 @@
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qgroupbox.h>
+#include <qcombobox.h>
 /*#include <qradiobutton.h>
 #include <qpushbutton.h>*/
 #endif
@@ -49,6 +50,7 @@ namespace sofa
 
     namespace qt
     {
+      //*******************************************************************************************
       QAttachOperation::QAttachOperation()
       {
         //Building the GUI for the Attach Operation
@@ -65,7 +67,10 @@ namespace sofa
         return atof(value->displayText().ascii());
       }
 
+      //******************************************************************************************* 
 
+      
+      //******************************************************************************************* 
       QInciseOperation::QInciseOperation()
       {
 	//Building the GUI for the Injection Operation
@@ -144,7 +149,10 @@ namespace sofa
 	return snapingValue->value();
       }
       
+      //******************************************************************************************* 
+
       
+      //*******************************************************************************************
       QFixOperation::QFixOperation()
       {
         //Building the GUI for the Fix Operation
@@ -155,12 +163,119 @@ namespace sofa
         layout->addWidget(label);
         layout->addWidget(value);        
       }
-
+      
       double QFixOperation::getStiffness() const
       {
         return atof(value->displayText().ascii());
       }
+      
+      //*******************************************************************************************
 
+      
+      //******************************************************************************************* 
+      QTopologyOperation::QTopologyOperation()
+      {
+	//Building the GUI for Topological Operation
+
+	QVBoxLayout *layout=new QVBoxLayout(this);
+
+	// First part: selection of topological operation:
+	QHBoxLayout *HLayout1 = new QHBoxLayout();
+	QLabel *label1=new QLabel(QString("Topological operation: "), this);
+	operationChoice = new QComboBox(this);
+   operationChoice->insertItem("Remove one element");
+   operationChoice->insertItem("Remove a zone of elements");
+	
+	HLayout1->addWidget (label1);
+	HLayout1->addWidget (operationChoice);
+
+	
+	// Second part: advanced settings
+	advancedOptions = new QGroupBox(tr("Advanced settings"),this);
+	QVBoxLayout *VLayout1 = new QVBoxLayout(advancedOptions);
+
+	// First setting: type of mesh, either surface or volume
+	QHBoxLayout *HLayout2 = new QHBoxLayout();
+
+	QLabel *label2 = new QLabel(QString("Remove area type: "), this);
+	meshType1 = new QRadioButton(tr("&Surface"), advancedOptions);
+	meshType2 = new QRadioButton(tr("&Volume"), advancedOptions);
+	meshType1->setChecked (true);
+
+	HLayout2->addWidget (label2);
+	HLayout2->addWidget (meshType1);
+	HLayout2->addWidget (meshType2);
+	VLayout1->addLayout (HLayout2);
+
+	// Second setting: selector scale
+	QHBoxLayout *HLayout3 = new QHBoxLayout();
+	
+	QLabel *label3=new QLabel(QString("Selector scale: "), this);
+	scaleSlider = new QSlider (Qt::Horizontal, this);
+	scaleValue = new QSpinBox(0,100,1,this);
+	scaleValue->setEnabled(true);
+
+	HLayout3->addWidget (label3);
+	HLayout3->addWidget (scaleSlider);
+	HLayout3->addWidget (scaleValue);
+	VLayout1->addLayout (HLayout3);
+
+	
+	// Creating UI
+	layout->addLayout (HLayout1);
+	layout->addWidget(advancedOptions);
+	
+	connect(scaleSlider,SIGNAL(valueChanged(int)), scaleValue, SLOT(setValue(int)));
+   connect(scaleValue,SIGNAL(valueChanged(int)), scaleSlider, SLOT(setValue(int)));
+   connect(operationChoice, SIGNAL(activated(int)), this, SLOT(setEnableBox(int)));
+
+   scaleValue->setValue(0);
+   advancedOptions->setHidden(true);
+
+   }
+	  
+
+      double QTopologyOperation::getScale() const
+      {
+         return scaleValue->value();
+      }
+      
+      int QTopologyOperation::getTopologicalOperation() const 
+      {
+#ifdef SOFA_QT4
+         return operationChoice->currentIndex();
+#else
+         return operationChoice->currentItem();
+#endif
+      }
+      
+      bool QTopologyOperation::getVolumicMesh() const
+      {
+         if (meshType2->isChecked())
+            return 1;
+         else
+            return 0;
+      }
+
+      void QTopologyOperation::setEnableBox(int i)
+      {
+         switch (i)
+         {
+         case 0:
+            advancedOptions->setHidden(true);
+            break;
+         case 1:
+            advancedOptions->setHidden(false);
+            break;
+         default:
+            break;
+         }
+      }
+
+      //*******************************************************************************************
+
+      
+      //******************************************************************************************* 
       QInjectOperation::QInjectOperation()
       {
 	//Building the GUI for the Injection Operation
@@ -188,6 +303,10 @@ namespace sofa
 	return (std::string)(tag->displayText()).ascii();
       }
 
-    }
-  }
-}
+      //******************************************************************************************* 
+
+    } // namespace sofa
+  } // namespace gui
+} // namespace qt
+
+    

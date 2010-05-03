@@ -39,7 +39,7 @@ namespace sofa
     namespace collision
     {
 
-      class InciseAlongPathPerformerconfiguration
+      class InciseAlongPathPerformerConfiguration
       {
       public:
 	void setIncisionMethod (int m){currentMethod=m;}
@@ -54,7 +54,7 @@ namespace sofa
       };
 
       
-      class SOFA_COMPONENT_COLLISION_API InciseAlongPathPerformer: public InteractionPerformer, public InciseAlongPathPerformerconfiguration
+      class SOFA_COMPONENT_COLLISION_API InciseAlongPathPerformer: public InteractionPerformer, public InciseAlongPathPerformerConfiguration
       {          
       public:
       InciseAlongPathPerformer(BaseMouseInteractor *i):InteractionPerformer(i){};

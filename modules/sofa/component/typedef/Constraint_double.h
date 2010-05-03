@@ -39,7 +39,6 @@
 
 
 #include <sofa/component/constraint/AttachConstraint.h>
-#include <sofa/component/constraint/DistanceConstraint.h>
 #include <sofa/component/constraint/FixedConstraint.h>
 #include <sofa/component/constraint/FixedPlaneConstraint.h>
 #include <sofa/component/constraint/HermiteSplineConstraint.h>
@@ -60,13 +59,6 @@ typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::StdVect
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > AttachConstraint2d;
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::StdRigidTypes<3, double> > AttachConstraintRigid3d;
 typedef sofa::component::constraint::AttachConstraint<sofa::defaulttype::StdRigidTypes<2, double> > AttachConstraintRigid2d;
-
-
-
-//---------------------------------------------------------------------------------------------
-//Typedef for DistanceConstraint
-typedef sofa::component::constraint::DistanceConstraint<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > DistanceConstraint3d;
-typedef sofa::component::constraint::DistanceConstraint<sofa::defaulttype::StdRigidTypes<3, double> > DistanceConstraintRigid3d;
 
 
 
@@ -155,8 +147,6 @@ typedef AttachConstraint1d AttachConstraint1;
 typedef AttachConstraint2d AttachConstraint2;
 typedef AttachConstraintRigid3d AttachConstraintRigid3;
 typedef AttachConstraintRigid2d AttachConstraintRigid2;
-typedef DistanceConstraint3d DistanceConstraint3;
-typedef DistanceConstraintRigid3d DistanceConstraintRigid3;
 typedef FixedConstraint3d FixedConstraint3;
 typedef FixedConstraint1d FixedConstraint1;
 typedef FixedConstraint2d FixedConstraint2;

@@ -26,6 +26,7 @@ HEADERS +=  initConstraint.h \
            HermiteSplineConstraint.inl \
            OscillatorConstraint.h \
            OscillatorConstraint.inl \
+           LCPConstraintSolver.h \
            LinearSolverConstraintCorrection.h \
            LinearSolverConstraintCorrection.inl \
            ParabolicConstraint.h \
@@ -49,6 +50,7 @@ SOURCES += initConstraint.cpp \
            FixedTranslationConstraint.cpp \
            HermiteSplineConstraint.cpp \
            OscillatorConstraint.cpp \
+           LCPConstraintSolver.cpp \
            LinearSolverConstraintCorrection.cpp \
            ParabolicConstraint.cpp \
            PrecomputedConstraintCorrection.cpp \
@@ -59,15 +61,17 @@ SOURCES += initConstraint.cpp \
 
 contains(DEFINES,SOFA_HAVE_EIGEN2){ 
 HEADERS += \
-           DistanceConstraint.h \
-           DistanceConstraint.inl \
+           LMConstraintSolver.h\
+           DistanceLMConstraint.h \
+           DistanceLMConstraint.inl \
            FixedLMConstraint.h \
            FixedLMConstraint.inl \
            RotationLMConstraint.h \
            RotationLMConstraint.inl 
            
 SOURCES += \           
-           DistanceConstraint.cpp \
+           LMConstraintSolver.cpp\
+           DistanceLMConstraint.cpp \
            FixedLMConstraint.cpp \
            RotationLMConstraint.cpp
 }
@@ -81,6 +85,7 @@ LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentodesolver$$LIBSUFFIX
+LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
 LIBS += -lsofacomponentmass$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS 
 

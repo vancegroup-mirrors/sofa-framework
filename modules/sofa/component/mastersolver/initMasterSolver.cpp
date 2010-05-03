@@ -56,4 +56,5 @@ void initMasterSolver()
 SOFA_LINK_CLASS(DefaultMasterSolver)
 SOFA_LINK_CLASS(MasterContactSolver)
 SOFA_LINK_CLASS(MultiStepMasterSolver)
+SOFA_LINK_CLASS(MultiTagMasterSolver)
 

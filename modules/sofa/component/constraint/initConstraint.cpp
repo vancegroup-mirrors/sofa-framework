@@ -64,8 +64,11 @@ SOFA_LINK_CLASS(PrecomputedConstraintCorrection)
 SOFA_LINK_CLASS(LinearMovementConstraint)
 SOFA_LINK_CLASS(FixedRotationConstraint)
 SOFA_LINK_CLASS(LinearVelocityConstraint)
-
+SOFA_LINK_CLASS(LCPConstraintSolver)
 #ifdef SOFA_HAVE_EIGEN2
+SOFA_LINK_CLASS(LMConstraintSolver)
+SOFA_LINK_CLASS(DistanceLMConstraint)
 SOFA_LINK_CLASS(FixedLMConstraint)
+SOFA_LINK_CLASS(RotationLMConstraint)
 #endif
 

@@ -127,7 +127,7 @@ namespace sofa
 
       template <class BasicMapping>
       class SkinningMapping : public BasicMapping
-        {
+{
         public:
           SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
           typedef BasicMapping Inherit;
@@ -185,6 +185,8 @@ namespace sofa
           Data<Coefs<double> > coefs;
           Data<unsigned int> nbRefs;
           Data<bool> displayBlendedFrame;
+          Data<bool> computeJ;
+          Data<bool> computeAllMatrices;
 
           bool computeWeights;
           WeightingType wheighting;

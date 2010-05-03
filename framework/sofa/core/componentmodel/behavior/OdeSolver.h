@@ -31,6 +31,7 @@
 #include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
 #include <sofa/core/componentmodel/behavior/MultiVector.h>
 #include <sofa/core/componentmodel/behavior/MultiMatrix.h>
+#include <sofa/core/componentmodel/behavior/ConstraintSolver.h>
 #include <sofa/defaulttype/BaseMatrix.h>
 #include <sofa/defaulttype/BaseVector.h>
 
@@ -74,6 +75,7 @@ public:
 
     virtual ~OdeSolver();
 
+
     /// Main computation method.
     ///
     /// Specify and execute all computation for timestep integration, i.e.
@@ -87,11 +89,9 @@ public:
     virtual void solve (double dt) { solve(dt, BaseMechanicalState::VecId::position(), BaseMechanicalState::VecId::velocity()); }
 
 
-    /** Find all the LMConstraint present in the scene graph and solve a part of them
-     * @param priorStatePropagation boolean indication if we need to propagate the state vector to the mapped dof before solving the constraint
-     * @param Id nature of the constraint to be solved
+    /** Find all the Constraint present in the scene graph, build the constraint equation system, solve and apply the correction
      **/
-    virtual void solveConstraint(bool /*priorStatePropagation*/, BaseMechanicalState::VecId, bool /*isPositionChangesUpdateVelocity*/=true){};
+    virtual void solveConstraint(double /*dt*/, VecId,  bool /*isPositionChangesUpdateVelocity*/=true){};
 
     /// Propagate the given state (time, position and velocity) through all mappings
     ///
@@ -136,17 +136,6 @@ public:
 	{
 	  return getSolutionIntegrationFactor(0);
 	}
-
-        //Constraint resolution using Eigen2
-#ifdef SOFA_HAVE_EIGEN2
-
-	Data<bool> constraintAcc;
-	Data<bool> constraintVel;
-	Data<bool> constraintPos;
-
-	Data<unsigned int> numIterations;
-	Data<double> maxError;
-#endif
 
 };
 

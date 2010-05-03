@@ -157,6 +157,8 @@ using namespace sofa::core;
 			Data< std::string > object2;
 
 			Data<bool> flipNormals;
+			Data<bool> noNewTriangles;
+			Data<bool> noInitialTriangles;
 
         };
 

@@ -217,6 +217,17 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 
 		graph_den.push_back(den);
 
+		alpha = rho/den;
+		//x.peq(p,alpha);                 // x = x + alpha p
+		//r.peq(q,-alpha);                // r = r - alpha q
+		cgstep_alpha(x,r,p,q,alpha);
+		
+		if( verbose ) {
+			cerr<<"den = "<<den<<", alpha = "<<alpha<<endl;
+			cerr<<"x : "<<x<<endl;
+			cerr<<"r : "<<r<<endl;
+		}
+		
 		if( fabs(den)<f_smallDenominatorThreshold.getValue() ) {
 			endcond = "threshold";
 			if( verbose )
@@ -224,17 +235,6 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 				cerr<<"PCGLinearSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<endl;
 			}
 			break;
-		}
-
-		alpha = rho/den;
-		//x.peq(p,alpha);                 // x = x + alpha p
-		//r.peq(q,-alpha);                // r = r - alpha q
-		cgstep_alpha(x,r,p,q,alpha);
-
-		if( verbose ) {
-			cerr<<"den = "<<den<<", alpha = "<<alpha<<endl;
-			cerr<<"x : "<<x<<endl;
-			cerr<<"r : "<<r<<endl;
 		}
 
 		rho_1 = rho;
@@ -261,7 +261,7 @@ if (step_simu>DISPLAY_TIME) {
 
 		double total = time1+time2+time4+time3;
 		double percen = 100.0/total;
-		cerr<<"\nPCGLinearSolver::solve nbiter = "<<it_simu<<" total time = "<<total<<"\nCG =\t\t("<<time1<<"\t"<<(time1*percen)<<"%)\npreconditioner =("<<time2<<"\t"<<(time2*percen)<<"%)\nInvert =\t("<<time4<<"\t"<<(time4*percen)<<"%)\nbuild =\t\t("<<time3<<"\t"<<(time3*percen)<<"%)"<<endl;
+		cerr<<"\nPCGLinearSolver::solve nbiter = "<<it_simu<<" for " << DISPLAY_TIME << " steps. Total time = "<<total<<"\nCG =\t\t("<<time1<<"\t"<<(time1*percen)<<"%)\npreconditioner =("<<time2<<"\t"<<(time2*percen)<<"%)\nInvert =\t("<<time4<<"\t"<<(time4*percen)<<"%)\nbuild =\t\t("<<time3<<"\t"<<(time3*percen)<<"%)"<<endl;
 
 		time1 = 0.0;
 		time2 = 0.0;

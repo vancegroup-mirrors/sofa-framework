@@ -355,7 +355,7 @@ SimpleGUI::SimpleGUI()
     RegisterOperation("Attach").add< AttachOperation >();
     RegisterOperation("Fix").add< FixOperation >();
     RegisterOperation("Incise").add< InciseOperation >();
-    RegisterOperation("Remove").add< RemoveOperation >();
+    RegisterOperation("Remove").add< TopologyOperation >();
 
     //Add to each button of the mouse an operation
     pick.changeOperation(LEFT,   "Attach");
@@ -2668,7 +2668,7 @@ void SimpleGUI::exportOBJ(bool exportMTL)
     ofilename << ".obj";
     std::string filename = ofilename.str();
     std::cout << "Exporting OBJ Scene "<<filename<<std::endl;
-    getSimulation()->exportOBJ(groot, filename.c_str(),exportMTL);
+    getSimulation()->exportOBJ(simulation::getSimulation()->getVisualRoot(), filename.c_str(),exportMTL);
 }
 
 void SimpleGUI::setScene(sofa::simulation::Node* scene, const char* filename, bool)

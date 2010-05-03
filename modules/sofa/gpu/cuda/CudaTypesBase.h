@@ -69,11 +69,12 @@ class CudaBaseMatrix : public BaseMatrix {
 		}
 
 		void clear() {
-			for (unsigned j=0; j<m.getSizeX(); j++) {
-				for (unsigned i=0; i<m.getSizeY(); i++) {
-				  m[j][i] = (T)(0.0);
-				}
-			}
+// 			for (unsigned j=0; j<m.getSizeX(); j++) {
+// 				for (unsigned i=0; i<m.getSizeY(); i++) {
+// 				  m[j][i] = (T)(0.0);
+// 				}
+// 			}
+			m.memsetHost();
 		}
 
 		void set(int i, int j, double v) {
@@ -137,7 +138,8 @@ class CudaBaseVector : public BaseVector {
 		}
 
 		void clear() {
-		  for (unsigned int i=0; i<size(); i++) v[i]=(T)(0.0);
+		  //for (unsigned int i=0; i<size(); i++) v[i]=(T)(0.0);
+		  v.memsetHost();
 		}
 
 		void set(int i, SReal val) {

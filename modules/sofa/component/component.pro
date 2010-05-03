@@ -5,23 +5,25 @@ include($${SOFA_DIR}/sofa.cfg)
 
 SUBDIRS += libbase.pro
 
-
+#NO dependencies
 SUBDIRS += loader
-SUBDIRS += forcefield
-SUBDIRS += linearsolver
-SUBDIRS += mastersolver
-SUBDIRS += fem
-SUBDIRS += contextobject
-SUBDIRS += behaviormodel
 SUBDIRS += odesolver
-SUBDIRS += visualmodel
+SUBDIRS += forcefield
 SUBDIRS += mass
-SUBDIRS += interactionforcefield
-SUBDIRS += controller
-SUBDIRS += mapping
-SUBDIRS += constraint
-SUBDIRS += collision
-SUBDIRS += misc
-SUBDIRS += engine
+SUBDIRS += fem
+SUBDIRS += behaviormodel
+SUBDIRS += visualmodel
+SUBDIRS += contextobject
+
+SUBDIRS += interactionforcefield #forcefield dependency
+SUBDIRS += linearsolver          #forcefield dependency
+
+SUBDIRS += mapping               #forcefield + visualmodel dependency
+SUBDIRS += constraint            #forcefield + odesolver + linearsolver + mass dependency
+SUBDIRS += mastersolver          #linearsolver + constraint dependency
+SUBDIRS += controller            #forcefield + constraint dependency
+SUBDIRS += collision             #linearsolver+odesolver+forcefield+mapping+constraint+visualmodel
+SUBDIRS += engine                #collision dependency
+SUBDIRS += misc                  #full dependencies
 SUBDIRS += libcomponent.pro
 

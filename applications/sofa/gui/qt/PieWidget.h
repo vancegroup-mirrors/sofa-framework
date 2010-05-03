@@ -68,8 +68,6 @@ namespace sofa
       };
 
 
-
-
       class PieWidget: public QWidget
       {
       public:

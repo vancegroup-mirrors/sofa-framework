@@ -36,11 +36,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef SOFA_HAVE_EIGEN2
-#include <Eigen/Core>
-#include <Eigen/Sparse>
-USING_PART_OF_NAMESPACE_EIGEN
-#endif
 
 namespace sofa
 {
@@ -70,6 +65,9 @@ public:
     virtual void computeAcc(double t, VecId a, VecId x, VecId v);
     virtual void computeContactAcc(double t, VecId a, VecId x, VecId v);
 
+    virtual void solveConstraint(double /*dt*/, VecId,  bool /*isPositionChangesUpdateVelocity*/=true);
+
+
     /// @name Matrix operations using LinearSolver components
     /// @{
 
@@ -81,43 +79,6 @@ public:
     virtual void m_print( std::ostream& out );
 
     /// @}
-
-    //Constraint solution using Eigen2
-#ifdef SOFA_HAVE_EIGEN2
-
-typedef Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
-typedef Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
-typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
-typedef std::map< sofa::core::componentmodel::behavior::BaseMechanicalState *, SparseMatrixEigen > DofToMatrix;
-
-    /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
-    bool needPriorStatePropagation();
-    /** Find all the LMConstraint present in the scene graph and solve a part of them
-     * @param Id nature of the constraint to be solved
-     **/
-    void solveConstraint(bool priorStatePropagation, VecId Id, bool isPositionChangesUpdateVelocity=true);
-
- protected:
-
-    void buildLMatrix( sofa::core::componentmodel::behavior::BaseMechanicalState *dof,SparseMatrixEigen& L, sofa::helper::set< unsigned int > &dofUsed,
-                       const std::list<unsigned int> &idxEquations,unsigned int constraintOffset);
-    /// Construct the Right hand term of the system
-    void buildRightHandTerm( ConstOrder Order, const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, VectorEigen &c);
-    /** Apply the correction to the state corresponding
-     * @param id nature of the constraint, and correction to apply
-     * @param dof MechanicalState to correct
-     * @param invM_Jtrans matrix M^-1.J^T to apply the correction from the independant dofs through the mapping
-     * @param c correction vector
-     * @param propageVelocityChange need to propagate the correction done to the velocity for the position
-     **/
-    void constraintStateCorrection(VecId &id, sofa::core::componentmodel::behavior::BaseMechanicalState* dof,
-                                   const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool isPositionChangesUpdateVelocity);
-
-    DofToMatrix invMassMatrix;
-    helper::vector< core::componentmodel::behavior::BaseConstraintCorrection*> constraintCorrections;
-
-#endif
-
 };
 
 } // namespace odesolver

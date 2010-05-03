@@ -23,7 +23,7 @@ HEADERS += initController.h \
            NullForceFeedback.h \
            EnslavementForceFeedback.h \
            LCPForceFeedback.h \
-		   LCPForceFeedback.inl
+           LCPForceFeedback.inl
 
 SOURCES += initController.cpp \
            ArticulatedHierarchyController.cpp \
@@ -45,7 +45,7 @@ LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
-LIBS += -lsofacomponentmastersolver$$LIBSUFFIX
+LIBS += -lsofacomponentconstraint$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS 
 

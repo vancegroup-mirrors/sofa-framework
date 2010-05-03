@@ -41,18 +41,11 @@ namespace behavior
 {
 
 OdeSolver::OdeSolver()
-#ifdef SOFA_HAVE_EIGEN2
-	:
-	constraintAcc( initData( &constraintAcc, false, "constraintAcc", "Constraint the acceleration")),
-	  constraintVel( initData( &constraintVel, false, "constraintVel", "Constraint the velocity")),
-	  constraintPos( initData( &constraintPos, false, "constraintPos", "Constraint the position")),
-	  numIterations( initData( &numIterations, (unsigned int)25, "numIterations", "Number of iterations for Gauss-Seidel when solving the Constraints")),
-	  maxError( initData( &maxError, 0.0000001, "maxError", "Max error for Gauss-Seidel algorithm when solving the constraints"))
-#endif
 {}
 
 OdeSolver::~OdeSolver()
 {}
+
 
 //const OdeSolver::MechanicalMatrix OdeSolver::M(1,0,0);
 //const OdeSolver::MechanicalMatrix OdeSolver::B(0,1,0);

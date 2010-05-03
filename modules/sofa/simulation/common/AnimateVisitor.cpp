@@ -92,10 +92,18 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
         if (!node->solver.empty() )
         {
           double nextTime = node->getTime() + dt;
+
           MechanicalBeginIntegrationVisitor beginVisitor(dt);
           node->execute(&beginVisitor);
 		  
-          
+#ifdef SOFA_HAVE_EIGEN2
+          MechanicalExpressJacobianVisitor JacobianVisitor;
+          node->execute(&JacobianVisitor);
+
+          MechanicalPropagateLMConstraintVisitor accumulateVisitor;
+          node->execute(&accumulateVisitor);
+#endif
+
           for( unsigned i=0; i<node->solver.size(); i++ ){
             ctime_t t0 = begin(node, node->solver[i]);
 			//cerr<<"AnimateVisitor::processNodeTpDown  solver  "<<node->solver[i]->getName()<<endl;
@@ -105,6 +113,11 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
           
           MechanicalPropagatePositionAndVelocityVisitor(nextTime,core::componentmodel::behavior::OdeSolver::VecId::position(),core::componentmodel::behavior::OdeSolver::VecId::velocity()).execute( node );
           
+#ifdef SOFA_HAVE_EIGEN2
+          MechanicalResetConstraintVisitor resetConstraint;
+          node->execute(&resetConstraint);
+#endif
+
           MechanicalEndIntegrationVisitor endVisitor(dt);
           node->execute(&endVisitor);
           return RESULT_PRUNE;

@@ -38,10 +38,7 @@
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/VecTypes.h>
-
-
-
-#include <sofa/helper/Factory.inl>
+#include <sofa/simulation/common/Node.h>
 
 namespace sofa
 {
@@ -52,7 +49,7 @@ namespace sofa
     namespace collision
     {
 
-      using simulation::Node;
+      using sofa::simulation::Node;
       using sofa::component::collision::BodyPicked;
 
 
@@ -63,7 +60,7 @@ namespace sofa
 		void TComponentMouseInteraction<DataTypes>::init(Node* node)
 		{          
 			ComponentMouseInteraction::init(node);
-                        nodeRayPick->setName(nodeRayPick->getName() + "_" + DataTypes::Name());
+      nodeRayPick->setName(nodeRayPick->getName() + "_" + DataTypes::Name());
 			parentNode->addChild(nodeRayPick);
 
 			mouseInSofa =  new MouseContainer; 
@@ -81,7 +78,7 @@ namespace sofa
 
 			mouseMapping->setMechanical(false);
 
-                        parentNode->execute<simulation::InitVisitor>(); 
+      parentNode->execute<simulation::InitVisitor>(); 
 			parentNode->removeChild(nodeRayPick);
 		}
 

@@ -62,7 +62,7 @@ namespace sofa
       {
         LMConstraint<DataTypes,DataTypes>::init();
         topology = this->getContext()->getMeshTopology();
-        if (vecConstraint.getValue().size() == 0 && (this->object1==this->object2) ) vecConstraint.setValue(this->topology->getEdges());
+        if (vecConstraint.getValue().size() == 0 && (this->constrainedObject1==this->constrainedObject2) ) vecConstraint.setValue(this->topology->getEdges());
       }
 
       template <class DataTypes>
@@ -95,8 +95,8 @@ namespace sofa
       template <class DataTypes>
       void DistanceConstraint<DataTypes>::updateRestLength()
       {
-        const VecCoord &x0_1=*this->object1->getX();
-        const VecCoord &x0_2=*this->object2->getX();
+        const VecCoord &x0_1=*this->constrainedObject1->getX();
+        const VecCoord &x0_2=*this->constrainedObject2->getX();
         const SeqEdges &edges =  vecConstraint.getValue();
         this->l0.resize(edges.size());
         for (unsigned int i=0;i<edges.size();++i)
@@ -124,42 +124,66 @@ namespace sofa
 
 
       template<class DataTypes>
-      void DistanceConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
+      void DistanceConstraint<DataTypes>::buildJacobian()
       {
-        const VecCoord &x1=*(this->object1->getX());
-        const VecCoord &x2=*(this->object2->getX());
-        VecConst& c1 = *this->object1->getC();
-        VecConst& c2 = *this->object2->getC();
-        this->clear();
+        const VecCoord &x1=*(this->constrainedObject1->getX());
+        const VecCoord &x2=*(this->constrainedObject2->getX());
 
         const SeqEdges &edges =  vecConstraint.getValue();
 
         if (this->l0.size() != edges.size()) updateRestLength();
 
+        registeredConstraints.clear();
 
         for (unsigned int i=0;i<edges.size();++i)
           {
             unsigned int idx1=edges[i][0];
             unsigned int idx2=edges[i][1];
 
-            Deriv V12 = getDirection(edges[i], x1, x2);
+            const Deriv V12 = getDirection(edges[i], x1, x2);
 
-            core::componentmodel::behavior::BaseLMConstraint::constraintGroup *constraint = this->addGroupConstraint(Order);
+            SparseVecDeriv V1; V1.add(idx1, V12); 
+            SparseVecDeriv V2; V2.add(idx2,-V12);
+
+            registeredConstraints.resize(registeredConstraints.size()+1);
+            registeredConstraints.back().first = registerEquationInJ1(V1);
+            registeredConstraints.back().second= registerEquationInJ2(V2);
+
+            this->constrainedObject1->forceMask.insertEntry(idx1);
+            this->constrainedObject2->forceMask.insertEntry(idx2);
+          }
+      }
+
+
+      template<class DataTypes>
+      void DistanceConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
+      {        
+        const VecCoord &x1=*(this->constrainedObject1->getX());
+        const VecCoord &x2=*(this->constrainedObject2->getX());
+
+        const SeqEdges &edges =  vecConstraint.getValue();
+
+
+        for (unsigned int i=0;i<edges.size();++i)
+          {
+            core::componentmodel::behavior::BaseLMConstraint::ConstraintGroup *constraint = this->addGroupConstraint(Order);
             SReal correction=0;
             switch(Order)
               {
               case core::componentmodel::behavior::BaseLMConstraint::ACC :
                 {
-                  const VecDeriv &dx1=*(this->object1->getDx());
-                  const VecDeriv &dx2=*(this->object2->getDx());
-                  correction=(dx2[idx2]-dx1[idx1])*V12;
+                  correction = -this->constrainedObject1->getConstraintJacobianTimesVecDeriv(registeredConstraints[i].first,
+                                                                         core::componentmodel::behavior::BaseMechanicalState::VecId::dx());
+                  correction+= -this->constrainedObject2->getConstraintJacobianTimesVecDeriv(registeredConstraints[i].second,
+                                                                         core::componentmodel::behavior::BaseMechanicalState::VecId::dx());
                   break;
                 }
               case core::componentmodel::behavior::BaseLMConstraint::VEL :
                 {
-                  const VecDeriv &v1=*(this->object1->getV());
-                  const VecDeriv &v2=*(this->object2->getV());
-                  correction=(v2[idx2]-v1[idx1])*V12;
+                  correction = -this->constrainedObject1->getConstraintJacobianTimesVecDeriv(registeredConstraints[i].first,
+                                                                         core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
+                  correction+= -this->constrainedObject2->getConstraintJacobianTimesVecDeriv(registeredConstraints[i].second,
+                                                                         core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
                   break;
                 }
               case core::componentmodel::behavior::BaseLMConstraint::POS :
@@ -170,46 +194,10 @@ namespace sofa
                   break;
                 }
               };
-
-            //VecConst interface:
-            //index where the direction will be found
-            const unsigned int idxInVecConst[2]={c1.size(),
-                                                 c2.size()+(this->object1 == this->object2)};
-            SparseVecDeriv V1;
-            V1.add(idx1,V12); c1.push_back(V1);
-
-            //             if (this->object1 != this->object2)
-            //             {
-            SparseVecDeriv V2;
-            V2.add(idx2,-V12);c2.push_back(V2);
-            //             }
-            constraint->addConstraint( idxInVecConst[0], idxInVecConst[1], correction, core::componentmodel::behavior::BaseLMConstraint::BILATERAL);
-
-
+            constraint->addConstraint( registeredConstraints[i].first, registeredConstraints[i].second, correction, core::componentmodel::behavior::BaseLMConstraint::BILATERAL);
           }
       }
 
-
-      template <class DataTypes>
-      double DistanceConstraint<DataTypes>::getError()
-      {
-        double error=0.0;
-        const VecCoord &x1=*(this->object1->getX());
-        const VecCoord &x2=*(this->object2->getX());
-
-
-        const SeqEdges &edges = vecConstraint.getValue();
-        for (unsigned int i=0;i<edges.size();++i)
-          {
-            double length     = lengthEdge(edges[i],x1,x2);
-            double restLength = this->l0[i];//lengthEdge(edges[i],x0);
-            double deformation = fabs(length - restLength);
-            {
-              error += pow(deformation,2);
-            }
-          }
-        return error;
-      }
 
 #ifndef SOFA_FLOAT
       template <>
@@ -225,19 +213,15 @@ namespace sofa
       {
         if (this->l0.size() != vecConstraint.getValue().size()) updateRestLength();
 
-	sout << getError() << " Error" << sendl;
         if (this->getContext()->getShowBehaviorModels())
           {
-            const VecCoord &x1=*(this->object1->getX());
-            const VecCoord &x2=*(this->object2->getX());
+            const VecCoord &x1=*(this->constrainedObject1->getX());
+            const VecCoord &x2=*(this->constrainedObject2->getX());
 
             std::vector< Vector3 > points;
             const SeqEdges &edges =  vecConstraint.getValue();
             for (unsigned int i=0;i<edges.size();++i)
               {
-//                 double length     = lengthEdge(edges[i],x1,x2);
-//                 double restLength = this->l0[i];
-//                 double factor = fabs(length - restLength)/length;
                 points.push_back(x1[edges[i][0]]);
                 points.push_back(x2[edges[i][1]]);
               }

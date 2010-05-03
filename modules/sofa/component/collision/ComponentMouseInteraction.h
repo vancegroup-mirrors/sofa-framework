@@ -29,15 +29,16 @@
 
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/common/DeleteVisitor.h>
-#include <sofa/simulation/common/Node.h>
 #include <sofa/component/collision/MouseInteractor.h>
 #include <sofa/component/mapping/IdentityMapping.h>
-
 #include <sofa/component/component.h>
 
 namespace sofa
 {
 
+  namespace simulation{
+    class Node;
+  }
   namespace component
   {
 
@@ -81,7 +82,7 @@ namespace sofa
 
 
       template <class DataTypes>
-        class SOFA_COMPONENT_COLLISION_API TComponentMouseInteraction : public ComponentMouseInteraction
+        class TComponentMouseInteraction : public ComponentMouseInteraction
       {
         typedef sofa::component::container::MechanicalObject< defaulttype::Vec3Types > MousePosition;
         typedef sofa::component::container::MechanicalObject< DataTypes > MouseContainer;
@@ -90,13 +91,21 @@ namespace sofa
 
       public:
  
-        void init(simulation::Node* node);    
+        void  init(simulation::Node* node);    
             
-        bool isCompatible( core::objectmodel::BaseContext *context) const;
+        bool  isCompatible( core::objectmodel::BaseContext *context) const;
 
       };
 
-
+#if defined(WIN32) && !defined(SOFA_COMPONENT_COLLISION_COMPONENTMOUSEINTERACTION_CPP)
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_COLLISION_API TComponentMouseInteraction<defaulttype::Vec3fTypes>;
+#endif
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_COLLISION_API TComponentMouseInteraction<defaulttype::Vec3dTypes>;
+#endif
+extern template class SOFA_COMPONENT_COLLISION_API helper::Factory<std::string, ComponentMouseInteraction, core::objectmodel::BaseContext*>;
+#endif
     }
   }
 }

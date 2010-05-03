@@ -78,6 +78,9 @@ namespace sofa
 	//---------------------------------------------------------------
 
 
+#ifdef SOFA_HAVE_EIGEN2
+        bool propagateState=needPriorStatePropagation();
+#endif
 
 
 
@@ -100,10 +103,7 @@ namespace sofa
 	
 
 #ifdef SOFA_HAVE_EIGEN2
-	if (constraintAcc.getValue())  
-	  {
-	    solveConstraint(VecId::dx());
-	  }
+        solveConstraint(propagateState,VecId::dx());
 #endif
 
 	// update state
@@ -113,18 +113,12 @@ namespace sofa
 	    vel.peq(acc,dt);
 
 #ifdef SOFA_HAVE_EIGEN2
-	    if (constraintVel.getValue())
-	      {
-		solveConstraint(VecId::velocity());
-	      }
+            solveConstraint(propagateState,VecId::velocity());
 #endif
 	    pos.peq(vel,dt);
 
 #ifdef SOFA_HAVE_EIGEN2
-	    if (constraintPos.getValue())
-	      {
-		solveConstraint(VecId::position(),!constraintVel.getValue());
-	      }
+            solveConstraint(propagateState,VecId::position());
 #endif
 
 	  }
@@ -133,27 +127,13 @@ namespace sofa
 	    pos.peq(vel,dt);
 
 #ifdef SOFA_HAVE_EIGEN2
-	    bool propagateCorrectOfPositionOnVelocity = !constraintVel.getValue();
-	    solveConstraint(VecId::position(), propagateCorrectOfPositionOnVelocity);
-	    if (propagateCorrectOfPositionOnVelocity)
-	      {
-		simulation::MechanicalPropagatePositionAndVelocityVisitor propPosAndVelocity;
-		propPosAndVelocity.execute(this->getContext());
-	      }
-	    else
-	      {
-		simulation::MechanicalPropagatePositionVisitor propPos;
-		propPos.execute(this->getContext());
-	      }
+	    solveConstraint(propagateState,VecId::position());
 #endif
 
 	    vel.peq(acc,dt);
 
 #ifdef SOFA_HAVE_EIGEN2
-	    if (constraintVel.getValue())
-	      {
-		solveConstraint(VecId::velocity());
-	      }
+            solveConstraint(propagateState,VecId::velocity());
 #endif
 	  }
 #else // single-operation optimization
@@ -173,12 +153,10 @@ namespace sofa
 	  simulation::MechanicalVMultiOpVisitor vmop(ops);
 	  vmop.execute(this->getContext());
 
-
 #ifdef SOFA_HAVE_EIGEN2
-	  applyConstraints();
+          solveConstraint(propagateState,VecId::velocity());
+          solveConstraint(propagateState,VecId::position());
 #endif
-
-
 	}
 #endif
 

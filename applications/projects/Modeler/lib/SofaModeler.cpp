@@ -25,9 +25,15 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include "SofaModeler.h"
+
 #include <sofa/helper/system/FileRepository.h>
+
 #include <sofa/helper/system/SetDirectory.h> 
 #include <sofa/simulation/tree/TreeSimulation.h>
+
+#include <sofa/gui/GUIManager.h>
+#include <sofa/gui/qt/FileManagement.h>
+#include <sofa/gui/qt/SofaPluginManager.h>
 
 #define MAX_RECENTLY_OPENED 10
 
@@ -52,6 +58,7 @@
 #include <QMessageBox>
 #include <QDir>
 #include <QStatusBar>
+#include <QDesktopWidget>
 #else
 #include <qtoolbox.h>
 #include <qlayout.h>
@@ -92,6 +99,7 @@ namespace sofa
 	//----------------------------------------------------------------------
         //Get the different path needed
 	examplePath = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/examples/" );
+        openPath = examplePath;
 	binPath = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/bin/" );
 	presetPath = examplePath + std::string("Objects/");
 	std::string presetFile = std::string("config/preset.ini" );
@@ -196,7 +204,7 @@ namespace sofa
 	runSofaMenu->insertItem(QIconSet(), tr("Viewer"), runSofaGUI);
 	
 	//Set the different available GUI
-	std::vector<std::string> listGUI = sofa::gui::SofaGUI::ListSupportedGUI();
+	std::vector<std::string> listGUI = sofa::gui::GUIManager::ListSupportedGUI();
 	//Insert default GUI
 	{
 	    QAction *act= new QAction(this, QString("default")+QString("Action"));
@@ -326,11 +334,10 @@ namespace sofa
 
       void SofaModeler::fileOpen()
       {
-	QString s = getOpenFileName ( this, QString(examplePath.c_str()),"Scenes (*.scn *.xml);;Simulation (*.simu);;Php Scenes (*.pscn);;All (*)", "open file dialog",  "Choose a file to open" );
+	QString s = getOpenFileName ( this, QString(openPath.c_str()),"Scenes (*.scn *.xml);;Simulation (*.simu);;Php Scenes (*.pscn);;All (*)", "open file dialog",  "Choose a file to open" );
 	if (s.length() >0)
 	  {
 	    fileOpen(s);
-	    examplePath = sofa::helper::system::SetDirectory::GetParentDir(s.ascii());
 	  }
       }
 
@@ -345,9 +352,11 @@ namespace sofa
 	std::string newScene="config/newScene.scn";
 	if (sofa::helper::system::DataRepository.findFile(newScene))
 	  {
+            std::string openPathPrevious = openPath;
 	    newScene = sofa::helper::system::DataRepository.getFile ( newScene);	
 	    fileOpen(newScene);
 	    graph->setFilename("");
+            openPath = openPathPrevious;
 	  }
 	else
 	  {         
@@ -397,7 +406,7 @@ namespace sofa
 	    range=mapSofa.equal_range(curTab);
 	    for (multimapIterator it=range.first; it!=range.second;it++)
 	      {
-		removeTemporaryFiles(it->second);
+		removeTemporaryFiles(it->second->name());
 		it->second->kill();
 	      }
  	    mapSofa.erase(range.first, range.second);
@@ -431,7 +440,7 @@ namespace sofa
 	if ( sofa::helper::system::DataRepository.findFile ( filename ) )
 	  {	
 	    filename =  sofa::helper::system::DataRepository.getFile ( filename );
-
+	    openPath = sofa::helper::system::SetDirectory::GetParentDir(filename.c_str());
 	    GNode *root = NULL;
 	    xml::BaseElement* newXML=NULL;
 	    if (!filename.empty())
@@ -525,7 +534,7 @@ namespace sofa
 
       void SofaModeler::fileSave(std::string filename)
       {
-	simulation::tree::getSimulation()->printXML(graph->getRoot(), filename.c_str(), true);
+	simulation::tree::getSimulation()->exportXML(graph->getRoot(), filename.c_str(), true);
       }
 
      
@@ -676,7 +685,7 @@ namespace sofa
 	GNode* root=graph->getRoot();
 	if (!root) return;
 	// Init the scene
-	sofa::gui::SofaGUI::Init("Modeler");
+	sofa::gui::GUIManager::Init("Modeler");
 	
 	//Saving the scene in a temporary file ==> doesn't modify the current GNode of the simulation
 	std::string path;
@@ -684,7 +693,7 @@ namespace sofa
 	else path = sofa::helper::system::SetDirectory::GetParentDir(graph->getFilename().c_str())+std::string("/");
 
 	std::string filename=path + std::string("temp") + (count++) + std::string(".scn");
-	simulation::tree::getSimulation()->printXML(root,filename.c_str(),true);
+	simulation::tree::getSimulation()->exportXML(root,filename.c_str(),true);
 
 
 	if (count > '9') count = '0';
@@ -726,7 +735,6 @@ namespace sofa
 	
         argv << "-t";
 
-	statusBar()->message(messageLaunch,5000);
 	
 	Q3Process *p = new Q3Process(argv, this);
 	p->setName(filename.c_str());
@@ -737,14 +745,13 @@ namespace sofa
         p->start();
 	mapSofa.insert(std::make_pair(tabGraph, p));
 
-	//Maybe switch to a multimap as several sofa can be launch from the same tab
+	statusBar()->message(messageLaunch,5000);
       }
-
 
       void SofaModeler::sofaExited()
       {	
 	Q3Process *p = ((Q3Process*) sender());
-	removeTemporaryFiles(p);
+	removeTemporaryFiles(p->name());
 	if (p->normalExit()) return;
 	typedef std::multimap< const QWidget*, Q3Process* >::iterator multimapIterator;
 	for (multimapIterator it=mapSofa.begin(); it!=mapSofa.end();it++)
@@ -759,9 +766,9 @@ namespace sofa
 	  }
       }
 
-      void SofaModeler::removeTemporaryFiles(Q3Process *p)
+      void SofaModeler::removeTemporaryFiles(const std::string &f)
       {		
-	std::string filename(p->name());
+        std::string filename(f);
         std::string copyBuffer(presetPath+"copyBuffer.scn");
 	//Delete Temporary file
 	::remove(filename.c_str());

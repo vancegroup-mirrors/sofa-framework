@@ -46,11 +46,13 @@
 #include <Q3GroupBox>
 #include <QSpinBox>
 #include <QPushButton>
+#include <QGLWidget>
 #else
 #include <qlayout.h>
 #include <qgroupbox.h>
 #include <qspinbox.h>
 #include <qpushbutton.h>
+#include <qgl.h> 
 typedef QGroupBox Q3GroupBox;
 #endif
 
@@ -92,7 +94,7 @@ namespace sofa
 using namespace sofa::helper::system::thread;
 using namespace sofa::simulation;
 
-	  class QtOgreViewer : public QWidget, public sofa::gui::qt::viewer::SofaViewer
+	  class QtOgreViewer : public QGLWidget, public sofa::gui::qt::viewer::SofaViewer
 	    {
 	      Q_OBJECT
 		public:
@@ -113,7 +115,7 @@ using namespace sofa::simulation;
 	      QtOgreViewer( QWidget *parent=0, const char *name=0 );
 	      ~QtOgreViewer();
 
-	      QWidget* getQWidget() { return this; }
+	      QWidget* getQWidget() { return (QWidget*)this; }
 
 	      bool ready(){return _waitForRender;};
 	      void showEntireScene(void);
@@ -272,9 +274,7 @@ using namespace sofa::simulation;
 
 	      public slots:	      
 	      virtual void update(){
-#ifndef SOFA_QT4
 		updateIntern();
-#endif
 	      };
 	      
 	      void updateViewerParameters();

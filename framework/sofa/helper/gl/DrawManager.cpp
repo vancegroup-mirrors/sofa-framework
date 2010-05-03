@@ -517,7 +517,7 @@ namespace gl
  	node->scale(radius/50.0,radius/50.0,radius/50.0);
 	node->translate(p[0],p[1],p[2]);
 	node->attachObject(sph);  
-	sph->setNormaliseNormals(true);
+	// sph->setNormaliseNormals(true);
 	break;         
 #endif
       }

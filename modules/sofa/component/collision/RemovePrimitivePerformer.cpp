@@ -34,9 +34,8 @@ namespace sofa
 
     namespace collision
     {
-#ifndef WIN32
-      helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer >  RemovePrimitivePerformerClass("RemovePrimitive"); 
-#endif
+
+helper::Creator<InteractionPerformer::InteractionPerformerFactory, RemovePrimitivePerformer >  RemovePrimitivePerformerClass("RemovePrimitive"); 
       void RemovePrimitivePerformer::execute()
       {
           BodyPicked picked=this->interactor->getBodyPicked();

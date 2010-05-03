@@ -584,8 +584,8 @@ namespace sofa
 
       void GraphModeler::loadPreset(GNode *parent, std::string presetFile,
 				    std::string *filenames,
-				    std::string *translation,
-				    std::string *rotation,
+				    std::string translation,
+				    std::string rotation,
 				    std::string scale)
       {
 
@@ -656,30 +656,15 @@ namespace sofa
 	if (presetNode) addGNode(parent,presetNode);
       }
 
-      void GraphModeler::updatePresetNode(xml::BaseElement &elem, std::string meshFile, std::string *translation, std::string *rotation, std::string scale)
+      void GraphModeler::updatePresetNode(xml::BaseElement &elem, std::string meshFile, std::string translation, std::string rotation, std::string scale)
       {
 	if (elem.presenceAttribute(std::string("filename")))     elem.setAttribute(std::string("filename"),     meshFile.c_str());
 	if (elem.presenceAttribute(std::string("fileMesh")))     elem.setAttribute(std::string("fileMesh"),     meshFile.c_str());
 	if (elem.presenceAttribute(std::string("fileTopology"))) elem.setAttribute(std::string("fileTopology"), meshFile.c_str());
 
-	if (elem.presenceAttribute(std::string("dx2"))) elem.setAttribute(std::string("dx2"), translation[0].c_str());
-	if (elem.presenceAttribute(std::string("dy2"))) elem.setAttribute(std::string("dy2"), translation[1].c_str());
-	if (elem.presenceAttribute(std::string("dz2"))) elem.setAttribute(std::string("dz2"), translation[2].c_str());
-
-	if (elem.presenceAttribute(std::string("rx2"))) elem.setAttribute(std::string("rx2"), rotation[0].c_str());
-	if (elem.presenceAttribute(std::string("ry2"))) elem.setAttribute(std::string("ry2"), rotation[1].c_str());
-	if (elem.presenceAttribute(std::string("rz2"))) elem.setAttribute(std::string("rz2"), rotation[2].c_str());
-
-
-	if (elem.presenceAttribute(std::string("dx"))) elem.setAttribute(std::string("dx"), translation[0].c_str());
-	if (elem.presenceAttribute(std::string("dy"))) elem.setAttribute(std::string("dy"), translation[1].c_str());
-	if (elem.presenceAttribute(std::string("dz"))) elem.setAttribute(std::string("dz"), translation[2].c_str());
-
-	if (elem.presenceAttribute(std::string("rx"))) elem.setAttribute(std::string("rx"), rotation[0].c_str());
-	if (elem.presenceAttribute(std::string("ry"))) elem.setAttribute(std::string("ry"), rotation[1].c_str());
-	if (elem.presenceAttribute(std::string("rz"))) elem.setAttribute(std::string("rz"), rotation[2].c_str());
-
-	if (elem.presenceAttribute(std::string("scale"))) elem.setAttribute(std::string("scale"), scale.c_str());
+	if (elem.presenceAttribute(std::string("translation")))  elem.setAttribute(std::string("translation"), translation.c_str());
+	if (elem.presenceAttribute(std::string("rotation")))     elem.setAttribute(std::string("rotation"),    rotation.c_str());
+	if (elem.presenceAttribute(std::string("scale3d")))      elem.setAttribute(std::string("scale3d"),     scale.c_str());
       }
 
 
@@ -705,7 +690,7 @@ namespace sofa
 
       void GraphModeler::saveNode(GNode* node, std::string file)
       {
-	simulation::getSimulation()->printXML(node, file.c_str());
+	simulation::getSimulation()->exportXML(node, file.c_str());
       }
 
       void GraphModeler::saveComponent(BaseObject* object, std::string file)

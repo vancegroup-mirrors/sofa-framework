@@ -22,42 +22,31 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/simulation/common/ConstraintVisitor.h>
+#include <sofa/component/constraint/BaseProjectiveLMConstraint.inl>
+#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
 
-  namespace simulation
-  {
+namespace component
+{
 
+namespace constraint
+{
 
-    void ConstraintVisitor::processOdeSolver(simulation::Node* /*node*/, core::componentmodel::behavior::OdeSolver* solver)
-    {
-      solver->solveConstraint(Id, propagateVelocityFromPosition);
-      isEnd=RESULT_PRUNE;
-      
-    }
+#ifndef SOFA_FLOAT
+  template class BaseProjectiveLMConstraint<defaulttype::Vec3dTypes>;
+  template class BaseProjectiveLMConstraint<defaulttype::Rigid3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+  template class BaseProjectiveLMConstraint<defaulttype::Vec3fTypes>;
+  template class BaseProjectiveLMConstraint<defaulttype::Rigid3fTypes>;
+#endif
 
-    Visitor::Result ConstraintVisitor::processNodeTopDown(simulation::Node* node)
-    {
-      for_each(this, node, node->solver, &ConstraintVisitor::processOdeSolver);      
-      return isEnd;
-        
-    }
+} // namespace constraint
 
-
-    void ConstraintErrorVisitor::processLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* c)
-    {
-      error += c->getError();     
-    }
-
-    Visitor::Result ConstraintErrorVisitor::processNodeTopDown(simulation::Node* node)
-    {
-      for_each(this, node, node->LMConstraint, &ConstraintErrorVisitor::processLMConstraint);
-      return RESULT_CONTINUE;
-        
-    }
-
-} // namespace simulation
+} // namespace component
 
 } // namespace sofa
+

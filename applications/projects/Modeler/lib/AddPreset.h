@@ -58,7 +58,7 @@ namespace sofa
 	void accept();
     
       signals:
-	void loadPreset(GNode*,std::string,std::string*, std::string*,std::string*,std::string);
+	void loadPreset(GNode*,std::string,std::string*, std::string,std::string,std::string);
     
 
     

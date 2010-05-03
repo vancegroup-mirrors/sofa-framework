@@ -58,7 +58,6 @@ public:
     typedef sofa::core::componentmodel::behavior::MultiVector<OdeSolverImpl> MultiVector;
     typedef sofa::core::componentmodel::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
     typedef sofa::core::componentmodel::behavior::MechanicalMatrix MechanicalMatrix;
-    typedef sofa::simulation::MechanicalAccumulateLMConstraint::ConstraintData ConstraintData;
     typedef sofa::core::componentmodel::behavior::BaseLMConstraint::ConstOrder ConstOrder;
 
 
@@ -82,24 +81,23 @@ public:
 
     /// @}
 
-    //Constraint resolution using Lapack
+    //Constraint solution using Eigen2
 #ifdef SOFA_HAVE_EIGEN2
 
 typedef Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
 typedef Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
-typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
+typedef Eigen::DynamicSparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
 
-    /// Apply the constraints on the position and velocity.
-    void applyConstraints();
+    /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
+    bool needPriorStatePropagation();
     /** Find all the LMConstraint present in the scene graph and solve a part of them
      * @param Id nature of the constraint to be solved
-     * @param propagateVelocityToPosition need to update the velocity once we modified the position
      **/
-    void solveConstraint(VecId Id, bool propagateVelocityFromPosition=false);
+    void solveConstraint(bool priorStatePropagation, VecId Id);
 
  protected:
     /// Construct the Right hand term of the system
-    void buildRightHandTerm( ConstOrder Order, sofa::simulation::MechanicalAccumulateLMConstraint &LMConstraintVisitor, VectorEigen &c);
+    void buildRightHandTerm( ConstOrder Order, const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, VectorEigen &c);
     /** Apply the correction to the state corresponding
      * @param id nature of the constraint, and correction to apply
      * @param dof MechanicalState to correct
@@ -108,7 +106,7 @@ typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
      * @param propageVelocityChange need to propagate the correction done to the velocity for the position
      **/
     void constraintStateCorrection(VecId &id, sofa::core::componentmodel::behavior::BaseMechanicalState* dof,
-                                   const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed, bool propageVelocityChange=false);
+                                   const SparseMatrixEigen  &invM_Ltrans, const VectorEigen  &c, sofa::helper::set< unsigned int > &dofUsed);
 
 
  template <class T>

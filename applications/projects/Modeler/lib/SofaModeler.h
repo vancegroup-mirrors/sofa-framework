@@ -38,11 +38,6 @@
 #include <string>
 #include <sofa/helper/Factory.h>
 
-#include <sofa/gui/SofaGUI.h>
-#include <sofa/gui/qt/RealGUI.h>
-
-
-
 #ifdef SOFA_QT4
 #include "QSofaTreeLibrary.h"
 #include <Q3ListView>
@@ -161,7 +156,7 @@ namespace sofa
 	  /// Launch the current simulation into Sofa
 	  void runInSofa();
 	  void sofaExited();
-	  void removeTemporaryFiles(Q3Process *p);
+          void removeTemporaryFiles(const std::string &filename);
 
 	  /// Change of simulation by changing the current opened tabulation
 	  void changeCurrentScene( QWidget*);
@@ -251,6 +246,7 @@ namespace sofa
 	  std::string sofaBinary;
 	  std::string presetPath;
 	  std::string examplePath;
+	  std::string openPath;
 	  std::string binPath;
 	  char count;
           std::vector< std::string > exampleFiles;

@@ -35,6 +35,7 @@
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
 #include <sofa/simulation/tree/TreeSimulation.h>
+#include <sofa/gui/GUIManager.h>
 
 #include "SensAble.h"
 
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
 	std::vector<std::string> files;
 
 	std::string gui_help = "choose the UI (";
-	gui_help += sofa::gui::SofaGUI::ListSupportedGUI('|');
+	gui_help += sofa::gui::GUIManager::ListSupportedGUI('|');
 	gui_help += ")";
 
 	sofa::helper::parse(&files, "This is a SOFA application. Here are the command line arguments")
@@ -116,7 +117,7 @@ int main(int argc, char** argv)
 		std::cout << "//////// END FACTORY ////////" << std::endl;
 	}
 
-	if (int err=sofa::gui::SofaGUI::Init(argv[0],gui.c_str()))
+	if (int err=sofa::gui::GUIManager::Init(argv[0],gui.c_str()))
 		return err;
 
     sofa::simulation::tree::GNode* groot = NULL;
@@ -181,9 +182,9 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		if (int err=sofa::gui::SofaGUI::MainLoop(groot,fileName.c_str()))
+		if (int err=sofa::gui::GUIManager::MainLoop(groot,fileName.c_str()))
 			return err;
-		groot = dynamic_cast<sofa::simulation::tree::GNode*>( sofa::gui::SofaGUI::CurrentSimulation() );
+		groot = dynamic_cast<sofa::simulation::tree::GNode*>( sofa::gui::GUIManager::CurrentSimulation() );
 	}
 
 	if (groot!=NULL)

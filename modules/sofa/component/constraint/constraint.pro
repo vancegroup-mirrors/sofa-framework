@@ -12,8 +12,6 @@ DEFINES += SOFA_BUILD_COMPONENT_CONSTRAINT
 HEADERS +=  initConstraint.h \
            AttachConstraint.h \
            AttachConstraint.inl \
-           DistanceConstraint.h \
-           DistanceConstraint.inl \
            FixedConstraint.h \
            FixedConstraint.inl \  
            FixedPlaneConstraint.h \
@@ -43,7 +41,6 @@ HEADERS +=  initConstraint.h \
 
 SOURCES += initConstraint.cpp \
            AttachConstraint.cpp \
-           DistanceConstraint.cpp \
            FixedConstraint.cpp \
            FixedPlaneConstraint.cpp \
            FixedRotationConstraint.cpp \
@@ -57,6 +54,22 @@ SOURCES += initConstraint.cpp \
            UnilateralInteractionConstraint.cpp \
            LinearMovementConstraint.cpp  \
            LinearVelocityConstraint.cpp 
+
+contains(DEFINES,SOFA_HAVE_EIGEN2){ 
+HEADERS += \
+           BaseProjectiveLMConstraint.h \
+           BaseProjectiveLMConstraint.inl \
+           DistanceConstraint.h \
+           DistanceConstraint.inl \
+           FixedLMConstraint.h \
+           FixedLMConstraint.inl 
+           
+SOURCES += \           
+           BaseProjectiveLMConstraint.cpp \
+           DistanceConstraint.cpp \
+           FixedLMConstraint.cpp 
+}
+
 
 
 

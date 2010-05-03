@@ -27,6 +27,7 @@
 #ifndef SOFA_GUI_MOUSEOPERATIONS_H
 #define SOFA_GUI_MOUSEOPERATIONS_H
 
+#include "SofaGUI.h"
 #include <iostream>
 #include <vector>
 
@@ -58,11 +59,13 @@ namespace sofa
       virtual void wait(){};
     protected:
       PickHandler *pickHandle;
+public:
       sofa::component::collision::InteractionPerformer *performer;
+protected:
       MOUSE_BUTTON button;
     };
            
-    class AttachOperation : public Operation
+    class SOFA_SOFAGUI_API AttachOperation : public Operation
     {
     public:
     AttachOperation():stiffness(1000.0){};
@@ -80,7 +83,7 @@ namespace sofa
       double stiffness;
     };
 
-    class InciseOperation : public Operation
+    class SOFA_SOFAGUI_API InciseOperation : public Operation
     {
     public:
       virtual ~InciseOperation(){};
@@ -91,7 +94,7 @@ namespace sofa
       static bool isModifiable(){return false;};
     };
 
-    class RemoveOperation : public Operation
+    class SOFA_SOFAGUI_API RemoveOperation : public Operation
     {
     public:
       virtual ~RemoveOperation(){};
@@ -102,7 +105,7 @@ namespace sofa
       static bool isModifiable(){return false;};
     };
         
-    class FixOperation : public Operation
+    class SOFA_SOFAGUI_API FixOperation : public Operation
     {
     public:
     FixOperation():stiffness(10000.0){};
@@ -120,13 +123,13 @@ namespace sofa
       double stiffness;
     };  
 
-    class SculptOperation : public Operation
+    class SOFA_SOFAGUI_API SculptOperation : public Operation
     {
     public:
-    SculptOperation():force(50), scale(50){};
+    SculptOperation():force(1), scale(50), checkedFix(false), animated(false){}
       virtual ~SculptOperation();
       virtual void start() ;
-      virtual void execution() ;
+      virtual void execution();
       virtual void end() ;
       virtual void wait() ;
 
@@ -134,11 +137,15 @@ namespace sofa
       virtual double getForce() const { return force;}
       void setScale(double s){scale = s;}
       virtual double getScale() const {return scale;}
+      virtual bool isCheckedFix() const {return checkedFix;};
+      void setCheckedFix(bool b){checkedFix = b;};
+      virtual bool isAnimated() const {return animated;};
       static bool isModifiable(){return false;};
 
       static std::string getDescription() {return "Sculpt an object using the Mouse";}
     protected:
       double force, scale;
+      bool checkedFix, animated;
     };
 
   }

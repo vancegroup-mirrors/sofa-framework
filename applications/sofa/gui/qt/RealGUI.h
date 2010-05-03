@@ -32,12 +32,11 @@
 #  include <sofa/filemanager/sofapml/LMLReader.h>
 #endif
 
-#include <time.h>
- 
-
-#include <sofa/gui/SofaGUI.h>
-
 #include "GUI.h"
+#include "SofaGUIQt.h"
+#include <sofa/gui/SofaGUI.h>
+#include <time.h> 
+
 #include <sofa/gui/qt/GraphListenerQListView.h>
 #include <sofa/gui/qt/FileManagement.h>
 #include <sofa/gui/qt/viewer/SofaViewer.h>
@@ -106,7 +105,7 @@ using namespace sofa::filemanager::pml;
 #endif
 
 
-class RealGUI : public ::GUI, public SofaGUI
+class SOFA_SOFAGUIQT_API RealGUI : public ::GUI, public SofaGUI
 {
     Q_OBJECT
 
@@ -165,7 +164,7 @@ public:
 	  void dragEnterEvent( QDragEnterEvent* event){event->accept();}
 	  void dropEvent(QDropEvent* event);
 	  
-          void initRecentlyOpened();
+    void initRecentlyOpened();
           
 	  public slots:
 	  void fileRecentlyOpened(int id);

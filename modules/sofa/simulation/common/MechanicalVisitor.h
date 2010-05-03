@@ -187,6 +187,9 @@ public:
     virtual void bwdConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseConstraint* /*c*/)
     {}
 
+    /// Process all the BaseLMConstraint
+    virtual void bwdLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* /*c*/)
+    {}
     ///@}
 
 
@@ -1090,7 +1093,7 @@ public:
 
     virtual Result fwdMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* mm);
     virtual Result fwdMappedMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* mm);
-
+    virtual Result fwdLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* c);
 
 	/// Return a class name for this visitor
 	/// Only used for debugging / profiling purposes
@@ -1108,45 +1111,124 @@ public:
 #endif
 };
 
-class SOFA_SIMULATION_COMMON_API MechanicalAccumulateLMConstraint : public MechanicalVisitor
+class SOFA_SIMULATION_COMMON_API MechanicalExpressJacobianVisitor: public MechanicalVisitor
 {
  public:
-  struct ConstraintData
+ MechanicalExpressJacobianVisitor(){
+#ifdef SOFA_DUMP_VISITOR_INFO
+    setReadWriteVectors();
+#endif
+        };
+
+
+  virtual Result fwdLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* c);
+  virtual void bwdLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* c);
+
+  /// Return a class name for this visitor
+  /// Only used for debugging / profiling purposes
+  virtual const char* getClassName() const { return "MechanicalExpressJacobianVisitor"; }
+
+  virtual bool isThreadSafe() const
   {
-    ConstraintData():data(NULL)
+    return false;
+  }
+#ifdef SOFA_DUMP_VISITOR_INFO
+    void setReadWriteVectors()
     {
-        independentMState[0]=independentMState[1]=NULL;
-        constrainedMState[0]=constrainedMState[1]=NULL;
     }
+#endif
+};
 
 
+class SOFA_SIMULATION_COMMON_API MechanicalPropagateLMConstraintVisitor: public MechanicalVisitor
+{
+ public:
+ MechanicalPropagateLMConstraintVisitor(){
+#ifdef SOFA_DUMP_VISITOR_INFO
+    setReadWriteVectors();
+#endif
+        };
 
-    core::componentmodel::behavior::BaseLMConstraint *data;
-    //independent dofs associated
-    core::componentmodel::behavior::BaseMechanicalState *independentMState[2]; //independentMechanicalState
-    core::componentmodel::behavior::BaseMechanicalState *constrainedMState[2]; //constrainedMechanicalStates
-  };
+ virtual void bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map);
+
+  /// Return a class name for this visitor
+  /// Only used for debugging / profiling purposes
+  virtual const char* getClassName() const { return "MechanicalPropagateLMConstraintVisitor"; }
+
+  virtual bool isThreadSafe() const
+  {
+    return false;
+  }
+#ifdef SOFA_DUMP_VISITOR_INFO
+    void setReadWriteVectors()
+    {
+    }
+#endif
+};
 
 
- MechanicalAccumulateLMConstraint(){
+class SOFA_SIMULATION_COMMON_API MechanicalSolveLMConstraintVisitor: public MechanicalVisitor
+{
+ public:
+ MechanicalSolveLMConstraintVisitor(bool priorStatePropagation):propagateState(priorStatePropagation){
+#ifdef SOFA_DUMP_VISITOR_INFO
+    setReadWriteVectors();
+#endif
+        };
+
+
+  virtual Result fwdOdeSolver(simulation::Node* /*node*/, core::componentmodel::behavior::OdeSolver* s);
+
+  /// Return a class name for this visitor
+  /// Only used for debugging / profiling purposes
+  virtual const char* getClassName() const { return "MechanicalSolveLMConstraintVisitor"; }
+
+  virtual bool isThreadSafe() const
+  {
+    return false;
+  }
+#ifdef SOFA_DUMP_VISITOR_INFO
+    void setReadWriteVectors()
+    {
+    }
+#endif
+    bool propagateState;
+};
+
+
+class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public MechanicalVisitor
+{
+ public:
+ MechanicalWriteLMConstraint(){
 #ifdef SOFA_DUMP_VISITOR_INFO
     setReadWriteVectors();
 #endif
         };
 
   virtual Result fwdLMConstraint(simulation::Node* /*node*/, core::componentmodel::behavior::BaseLMConstraint* c);
-  virtual void bwdMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* map);
-
 
   /// Return a class name for this visitor
   /// Only used for debugging / profiling purposes
-  virtual const char* getClassName() const { return "MechanicalAccumulateConstraint"; }
+  virtual const char* getClassName() const { return "MechanicalWriteLMConstraint"; }
+  virtual std::string getInfos() const 
+    {
+      std::string name;
+      if      (order == core::componentmodel::behavior::BaseLMConstraint::ACC)
+        name= "["+VecId::dx().getName()+"]";
+      else if (order == core::componentmodel::behavior::BaseLMConstraint::VEL)
+        name= "["+VecId::velocity().getName()+"]";
+      else if (order == core::componentmodel::behavior::BaseLMConstraint::POS)
+        name= "["+VecId::position().getName()+"]";
+      return name; 
+    }
 
 
   virtual void clear(){datasC.clear();}
-  virtual ConstraintData &getConstraint(unsigned int i){return datasC[i];}
-  virtual unsigned int numConstraintDatas(){return datasC.size();}
+  virtual const std::vector< core::componentmodel::behavior::BaseLMConstraint *> &getConstraints(){return datasC;}
+  virtual unsigned int numConstraint(){return datasC.size();}
+
   virtual void setOrder(core::componentmodel::behavior::BaseLMConstraint::ConstOrder i){order=i;}
+  core::componentmodel::behavior::BaseLMConstraint::ConstOrder getOrder() const { return order; }
 
   virtual bool isThreadSafe() const
   {
@@ -1158,11 +1240,9 @@ class SOFA_SIMULATION_COMMON_API MechanicalAccumulateLMConstraint : public Mecha
     }
 #endif
 
-    core::componentmodel::behavior::BaseLMConstraint::ConstOrder getOrder() const { return order; }
-
  protected:
     core::componentmodel::behavior::BaseLMConstraint::ConstOrder order;
-    std::vector< ConstraintData > datasC;
+    std::vector< core::componentmodel::behavior::BaseLMConstraint *> datasC;
   
 };
 
@@ -1285,7 +1365,6 @@ public:
         }
     virtual Result fwdMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* mm);
     virtual Result fwdMappedMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* mm);
-
 	/// Return a class name for this visitor
 	/// Only used for debugging / profiling purposes
 	virtual const char* getClassName() const { return "MechanicalBeginIntegrationVisitor"; }

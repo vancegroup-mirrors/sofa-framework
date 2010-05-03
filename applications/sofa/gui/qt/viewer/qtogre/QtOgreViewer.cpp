@@ -139,7 +139,7 @@ namespace sofa
 
 	  //Application principale
 	  QtOgreViewer::QtOgreViewer( QWidget *parent, const char *name )
-	    : QWidget( parent, name )
+	    : QGLWidget( parent, name )
 	  {
 
 	    dirLight = pointLight = spotLight = NULL;
@@ -282,12 +282,6 @@ namespace sofa
 
 	    //RenderSystem
 	    mRoot->setRenderSystem(mRenderSystem);
-	    //Anti aliasing
-	    mRenderSystem->setConfigOption("Anti aliasing", "Level 2");
-	    //Floating-point mode
-	    mRenderSystem->setConfigOption("Floating-point mode", "Fastest");
-	    //Full Screen
-	    mRenderSystem->setConfigOption("Full Screen", "No");
 	    //Vsync
 	    mRenderSystem->setConfigOption("VSync", "No");
 
@@ -390,60 +384,39 @@ namespace sofa
 	  {
 
 	    Ogre::NameValuePairList params;
-
-#if defined(__linux__)
-
-	    // 	params["parentWindowHandle"] =
-	    // 	  Ogre::StringConverter::toString ((unsigned long)XOpenDisplay(NULL)) +
-	    // 	  ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
-
 #ifdef SOFA_QT4
-	    Display* display = QX11Info::display() ;
-	    int screen =  QX11Info::appScreen() ;
+            //These attributes are the same as those use in a QGLWidget
+            setAttribute(Qt::WA_PaintOnScreen);
+            setAttribute(Qt::WA_NoSystemBackground);
+#endif
+
+
+            //The external windows handle parameters are platform-specific
+            Ogre::String externalWindowHandleParams;
+            
+#if defined(WIN32)
+            //positive integer for W32 (HWND handle) - According to Ogre Docs
+            externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(winId()));
 #else
-	    Display* display = qt_xdisplay(); //XOpenDisplay(NULL);
-	    int screen = qt_xscreen(); //DefaultScreen(display);
+            //poslong:posint:poslong:poslong (display*:screen:windowHandle:XVisualInfo*) for GLX - According to Ogre Docs
+            QX11Info info = x11Info();
+            externalWindowHandleParams  = Ogre::StringConverter::toString((unsigned long)(info.display()));
+            externalWindowHandleParams += ":";
+            externalWindowHandleParams += Ogre::StringConverter::toString((unsigned int)(info.screen()));
+            externalWindowHandleParams += ":";
+            externalWindowHandleParams += Ogre::StringConverter::toString((unsigned long)(winId()));
+            externalWindowHandleParams += ":";
+            externalWindowHandleParams += Ogre::StringConverter::toString((unsigned long)(info.visual()));
 #endif
 
-// 	    params["parentWindowHandle"] =
-// 	      Ogre::StringConverter::toString ((unsigned long)display) +
-// 	      // 	      ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
-// 	      ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
+            //Add the extrenal window handle parameters to the existing params set.
+            params["externalWindowHandle"] = externalWindowHandleParams;
 
-	    	    params["parentWindowHandle"] =
-	    	      Ogre::StringConverter::toString ((unsigned long)display) +
-	    	      ":" + Ogre::StringConverter::toString ((unsigned long)screen) +
-	    	      ":" + Ogre::StringConverter::toString ((unsigned long)parentWidget()->winId());
+            //Finally create our window.
+            mRenderWindow = mRoot->createRenderWindow("OgreWindow", width(), height(), false, &params);
 
+            _beginTime = CTime::getTime();
 
-
-#elif defined (WIN32)
-	    params["externalWindowHandle"] = Ogre::StringConverter::toString((size_t)(HWND)winId());
-#elif defined (__APPLE__)
-
-	    // TODO
-#endif
-
-	    mRenderWindow = mRoot->createRenderWindow("View", width(), height(), false, &params);
-
-	    _beginTime = CTime::getTime();
-
-#if defined(__linux__)
-	    WId window_id;
-	    mRenderWindow->getCustomAttribute("WINDOW", &window_id);
-
-	    // Take over the ogre created window.
-	    QWidget::create(window_id);
-
-	    mRenderWindow->reposition(x(),y());
-#elif defined (__APPLE__)
-
-	    // TODO
-#endif
-
-#ifdef SOFA_QT4
-	    startTimer(20); //We render at 50 fps
-#endif
 
 	  }
 

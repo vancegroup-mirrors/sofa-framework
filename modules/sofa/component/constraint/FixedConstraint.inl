@@ -173,8 +173,9 @@ void FixedConstraint<DataTypes>::projectResponse(VecDeriv& res)
 // When a new fixed point is added while its velocity vector is already null, projectVelocity is not usefull.
 // But when a new fixed point is added while its velocity vector is not null, it's necessary to fix it to null. If not, the fixed point is going to drift.
 template <class DataTypes>
-void FixedConstraint<DataTypes>::projectVelocity(VecDeriv& res)
+void FixedConstraint<DataTypes>::projectVelocity(VecDeriv&)
 {
+#if 0 /// @TODO ADD A FLAG FOR THIS
     const SetIndexArray & indices = f_indices.getValue().getArray();
   //serr<<"FixedConstraint<DataTypes>::projectVelocity, res.size()="<<res.size()<<sendl;
   	if( f_fixAll.getValue()==true ) {  // fix everyting
@@ -189,6 +190,7 @@ void FixedConstraint<DataTypes>::projectVelocity(VecDeriv& res)
         res[*it] = Deriv();
     }
 	}
+#endif
 }
 
 // Matrix Integration interface

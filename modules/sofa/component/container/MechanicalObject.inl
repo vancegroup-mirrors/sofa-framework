@@ -2319,6 +2319,38 @@ std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> 
   return res;
 }
 
+template <class DataTypes>
+SReal MechanicalObject<DataTypes>::getConstraintJacobianTimesVecDeriv( unsigned int line, VecId id)
+{
+  SReal result=0;
+  SparseVecDeriv &value=(*c)[line];
+    
+  VecDeriv *data=NULL;
+
+  //Maybe we should extend this to restvelocity
+  if (id == VecId::velocity())
+    {
+      data = v;
+    }
+  else if (id == VecId::dx())
+    {
+      data = dx;
+    }
+  else 
+    {
+      this->serr << "getConstraintJacobianTimesVecDeriv " << "NOT IMPLEMENTED for " << id.getName() << this->sendl;
+      return 0;
+    }
+
+  std::pair<SparseVecDerivIterator,SparseVecDerivIterator> range=value.data();
+  for (SparseVecDerivIterator it=range.first;it!=range.second;++it)
+    {
+      result += it->second*(*data)[it->first];
+    }
+
+  return result;
+}
+
 
 template <class DataTypes>
     bool MechanicalObject<DataTypes>::addBBox(double* minBBox, double* maxBBox)

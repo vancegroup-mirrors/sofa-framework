@@ -84,7 +84,7 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
     MultiVector x(this, VecId::V_DERIV);
 
 #ifdef SOFA_DUMP_VISITOR_INFO
-        sofa::simulation::Visitor::printCloseNode("SolverVectorAllocation");
+    sofa::simulation::Visitor::printCloseNode("SolverVectorAllocation");
 #endif
 
     double h = dt;
@@ -92,6 +92,13 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
     const bool verbose  = f_verbose.getValue();
     const bool firstOrder = f_firstOrder.getValue();
     
+#ifdef SOFA_HAVE_EIGEN2
+    bool propagateState=needPriorStatePropagation();
+#endif
+
+
+
+
     //projectResponse(vel);          // initial velocities are projected to the constrained space
 
     // compute the right-hand term of the equation system
@@ -108,7 +115,6 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
       b.teq(h);                           // b = h(f0 + (h+rs)df/dx v - rd M v)
     }
 
-    
     if( verbose )
 	serr<<"EulerImplicitSolver, f0 = "<< b <<sendl;
 
@@ -135,6 +141,7 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printCloseNode("SystemSolution");
 #endif
+
     // projectResponse(x);
     // x is the solution of the system
 
@@ -142,16 +149,34 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
 
     MultiVector newPos(this, xResult);
     MultiVector newVel(this, vResult);
+
+#ifdef SOFA_HAVE_EIGEN2
+    //For to No MultiOp, as it would be impossible to apply the constraints
+#define SOFA_NO_VMULTIOP
+#endif
+
 #ifdef SOFA_NO_VMULTIOP // unoptimized version
     if (firstOrder)
     {
       newVel.eq(x);                         // vel = x
+#ifdef SOFA_HAVE_EIGEN2
+      solveConstraint(propagateState,VecId::velocity());
+#endif
       newPos.eq(pos, newVel, h);            // pos = pos + h vel
+#ifdef SOFA_HAVE_EIGEN2
+      solveConstraint(propagateState,VecId::position());
+#endif
     } else {
       //vel.peq( x );                       // vel = vel + x
       newVel.eq(vel, x);
+#ifdef SOFA_HAVE_EIGEN2
+      solveConstraint(propagateState,VecId::velocity());
+#endif
       //pos.peq( vel, h );                  // pos = pos + h vel
       newPos.eq(pos, newVel, h);
+#ifdef SOFA_HAVE_EIGEN2
+      solveConstraint(propagateState,VecId::position());
+#endif
     }
     
     
@@ -182,6 +207,11 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
 	simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.setTags(this->getTags());
         vmop.execute(this->getContext());
+
+#ifdef SOFA_HAVE_EIGEN2
+        solveConstraint(propagateState,VecId::velocity());
+        solveConstraint(propagateState,VecId::position());
+#endif
     }
 #endif
 
@@ -195,9 +225,6 @@ void EulerImplicitSolver::solve(double dt, sofa::core::componentmodel::behavior:
         serr<<"EulerImplicitSolver, final v = "<< newVel <<sendl;
     }
     
-#ifdef SOFA_HAVE_EIGEN2
-    applyConstraints();
-#endif
 }
 
 SOFA_DECL_CLASS(EulerImplicitSolver)

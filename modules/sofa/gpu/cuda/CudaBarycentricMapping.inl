@@ -520,8 +520,61 @@ void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT( In::VecConst& /*out*/, const Out::VecConst& /*in*/ )
+void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT( In::VecConst& out, const Out::VecConst& in )
 {
+        int offset = out.size();
+        out.resize ( offset+in.size() );
+        for ( unsigned int i=0;i<in.size();i++ ) {
+		int nbout = 0;
+		OutConstraintIterator itOut;
+		std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+		for (itOut=iter.first;itOut!=iter.second;itOut++) {
+			unsigned indexIn = itOut->first;
+			InDeriv data = (InDeriv) itOut->second;
+
+#ifdef SOFA_NEW_HEXA
+			const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[indexIn].in_index );
+#else
+			const topology::SparseGridTopology::Cube cube = this->topology->getCube ( this->map[indexIn].in_index );
+#endif
+			const OutReal fx = ( OutReal ) map[indexIn].baryCoords[0];
+			const OutReal fy = ( OutReal ) map[indexIn].baryCoords[1];
+			const OutReal fz = ( OutReal ) map[indexIn].baryCoords[2];
+
+			OutReal f = ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[0],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[1],  ( data * f ) ); ++nbout;
+          
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+#endif
+			f = ( ( 1-fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[4],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[5],  ( data * f ) ); ++nbout;
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+#endif
+		}
+        }
 }
 
 template<>
@@ -553,8 +606,60 @@ void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3f1Types>::apply
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3f1Types>::applyJT( In::VecConst& /*out*/, const Out::VecConst& /*in*/ )
-{
+void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3f1Types>::applyJT( In::VecConst& out, const Out::VecConst& in) {
+        int offset = out.size();
+        out.resize ( offset+in.size() );
+        for ( unsigned int i=0;i<in.size();i++ ) {
+		int nbout = 0;
+		OutConstraintIterator itOut;
+		std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+		for (itOut=iter.first;itOut!=iter.second;itOut++) {
+			unsigned indexIn = itOut->first;
+			InDeriv data = (InDeriv) itOut->second;
+
+#ifdef SOFA_NEW_HEXA
+			const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[indexIn].in_index );
+#else
+			const topology::SparseGridTopology::Cube cube = this->topology->getCube ( this->map[indexIn].in_index );
+#endif
+			const OutReal fx = ( OutReal ) map[indexIn].baryCoords[0];
+			const OutReal fy = ( OutReal ) map[indexIn].baryCoords[1];
+			const OutReal fz = ( OutReal ) map[indexIn].baryCoords[2];
+
+			OutReal f = ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[0],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[1],  ( data * f ) ); ++nbout;
+          
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+#endif
+			f = ( ( 1-fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[4],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[5],  ( data * f ) ); ++nbout;
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+#endif
+		}
+        }
 }
 
 template<>
@@ -586,8 +691,61 @@ void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJ
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJT( In::VecConst& /*out*/, const Out::VecConst& /*in*/ )
+void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJT( In::VecConst& out, const Out::VecConst& in )
 {
+        int offset = out.size();
+        out.resize ( offset+in.size() );
+        for ( unsigned int i=0;i<in.size();i++ ) {
+		int nbout = 0;
+		OutConstraintIterator itOut;
+		std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+		for (itOut=iter.first;itOut!=iter.second;itOut++) {
+			unsigned indexIn = itOut->first;
+			InDeriv data = (InDeriv) itOut->second;
+
+#ifdef SOFA_NEW_HEXA
+			const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[indexIn].in_index );
+#else
+			const topology::SparseGridTopology::Cube cube = this->topology->getCube ( this->map[indexIn].in_index );
+#endif
+			const OutReal fx = ( OutReal ) map[indexIn].baryCoords[0];
+			const OutReal fy = ( OutReal ) map[indexIn].baryCoords[1];
+			const OutReal fz = ( OutReal ) map[indexIn].baryCoords[2];
+
+			OutReal f = ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[0],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[1],  ( data * f ) ); ++nbout;
+          
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+#endif
+			f = ( ( 1-fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[4],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[5],  ( data * f ) ); ++nbout;
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+#endif
+		}
+        }
 }
 
 template<>
@@ -619,8 +777,61 @@ void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJ
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJT( In::VecConst& /*out*/, const Out::VecConst& /*in*/ )
+void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJT( In::VecConst& out, const Out::VecConst& in )
 {
+        int offset = out.size();
+        out.resize ( offset+in.size() );
+        for ( unsigned int i=0;i<in.size();i++ ) {
+		int nbout = 0;
+		OutConstraintIterator itOut;
+		std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+		for (itOut=iter.first;itOut!=iter.second;itOut++) {
+			unsigned indexIn = itOut->first;
+			InDeriv data = (InDeriv) itOut->second;
+
+#ifdef SOFA_NEW_HEXA
+			const topology::SparseGridTopology::Hexa cube = this->topology->getHexahedron ( this->map[indexIn].in_index );
+#else
+			const topology::SparseGridTopology::Cube cube = this->topology->getCube ( this->map[indexIn].in_index );
+#endif
+			const OutReal fx = ( OutReal ) map[indexIn].baryCoords[0];
+			const OutReal fy = ( OutReal ) map[indexIn].baryCoords[1];
+			const OutReal fz = ( OutReal ) map[indexIn].baryCoords[2];
+
+			OutReal f = ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[0],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[1],  ( data * f ) ); ++nbout;
+          
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[2],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( 1-fz ) );
+			out[i+offset].add ( cube[3],  ( data * f ) ); ++nbout;
+#endif
+			f = ( ( 1-fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[4],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( 1-fy ) * ( fz ) );
+			out[i+offset].add ( cube[5],  ( data * f ) ); ++nbout;
+#ifdef SOFA_NEW_HEXA
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+#else
+			f = ( ( 1-fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[6],  ( data * f ) ); ++nbout;
+			f = ( ( fx ) * ( fy ) * ( fz ) );
+			out[i+offset].add ( cube[7],  ( data * f ) ); ++nbout;
+#endif
+		}
+        }
 }
 
 template<>
@@ -667,6 +878,22 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
     outIndex = outIndex % BSIZE;
     map[b*maxNIn+j].d[outIndex].i = inIndex+1;
     map[b*maxNIn+j].d[outIndex].val = val;
+}
+
+template <typename VecIn, typename VecOut>
+float BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>, gpu::cuda::CudaVectorTypes<VecOut,VecOut,float> >::getMapValue(int outIndex, int j)
+{
+    int b    = outIndex / BSIZE;
+    outIndex = outIndex % BSIZE;
+    return map[b*maxNIn+j].d[outIndex].val;
+}
+
+template <typename VecIn, typename VecOut>
+int BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>, gpu::cuda::CudaVectorTypes<VecOut,VecOut,float> >::getMapIndex(int outIndex, int j)
+{
+    int b    = outIndex / BSIZE;
+    outIndex = outIndex % BSIZE;
+    return map[b*maxNIn+j].d[outIndex].i-1;
 }
 
 template <typename VecIn, typename VecOut>
@@ -939,7 +1166,7 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
                 addPointInCube(index-c0, coefs.ptr());
         }
     }
-    std::cout << "CUDA: BarycentricMapperMeshTopology: map initialized, "<<size<<" output points, max "<<maxNIn<<" inputs points per output, "<<map.size()*BSIZE<<" contributions total."<<std::endl;
+    std::cout << "CUDA: BarycentricMapperMeshTopology: map initialized, "<<size<<" output points, " << outside << " points ouside input mesh, max "<<maxNIn<<" inputs points per output, "<<map.size()*BSIZE<<" contributions total."<<std::endl;
 }
 
 
@@ -959,7 +1186,7 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
 		for (int i=0;i<n;i++)
 		{
 		    int index = map[b*maxNIn+j].d[i].i-1;
-		    std::cout << "map["<<b<<"*"<<maxNIn<<"+"<<j<<"].index["<<i<<"]="<<index<<std::endl;
+		    //std::cout << "map["<<b<<"*"<<maxNIn<<"+"<<j<<"].index["<<i<<"]="<<index<<std::endl;
 		    if (index >= 0)
 		    {
 			if ((unsigned)index >= nout.size()) nout.resize(index+1);
@@ -991,7 +1218,7 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
 		    if (index >= 0)
 		    {
 			int num = nout[index]++;
-			int bo = (index / BSIZE); index -= b*BSIZE;
+			int bo = (index / BSIZE); index -= bo*BSIZE;
 			mapT[bo*maxNOut+num].d[index].i = b*BSIZE+i;
 			mapT[bo*maxNOut+num].d[index].val = val;
 		    }
@@ -1000,9 +1227,6 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
 	}
     }
 }
-
-
-
 
 template<>
 void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::apply( Out::VecCoord& out, const In::VecCoord& in )
@@ -1027,18 +1251,31 @@ void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT( In::
 }
 
 template<>
-void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT( In::VecConst& /*out*/, const Out::VecConst& /*in*/ )
-{
+void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT( In::VecConst& out, const Out::VecConst& in) {
+        int offset = out.size();
+        out.resize ( offset+in.size() );
+        for ( unsigned int i=0;i<in.size();i++ ) {
+		OutConstraintIterator itOut;    
+		std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
+
+		for (itOut=iter.first;itOut!=iter.second;itOut++) {
+			int indexIn = itOut->first;
+			InDeriv data = (InDeriv) itOut->second;
+			for (int j=0;j<maxNIn;++j)
+			{
+				const OutReal f = ( OutReal ) getMapValue(indexIn,j);
+				int index = getMapIndex(indexIn,j);
+				if (index < 0) break;
+				out[i+offset].add (  index, data * f );
+			}
+		}
+	}
 }
 
 template<>
 void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
-
-
-
-
 
 template<>
 void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3f1Types>::apply( Out::VecCoord& out, const In::VecCoord& in )
@@ -1072,11 +1309,6 @@ void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3f1Types>::draw( const
 {
 }
 
-
-
-
-
-
 template<>
 void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3fTypes>::apply( Out::VecCoord& out, const In::VecCoord& in )
 {
@@ -1108,10 +1340,6 @@ template<>
 void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
-
-
-
-
 
 template<>
 void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3f1Types>::apply( Out::VecCoord& out, const In::VecCoord& in )

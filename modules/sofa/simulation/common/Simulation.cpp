@@ -112,7 +112,7 @@ Simulation::~Simulation(){
 			}
 
 /// Print all object in the graph
-          void Simulation::printXML ( Node* root, const char* fileName, bool compact )
+          void Simulation::exportXML ( Node* root, const char* fileName, bool compact )
 			{
 				if ( !root ) return;
 				if ( fileName!=NULL )
@@ -344,15 +344,6 @@ Simulation::~Simulation(){
 					ExportOBJVisitor act ( &fout,&mtl );
 					root->execute ( &act );
 				}
-			}
-
-/// Export a scene to XML
-			void Simulation::exportXML ( Node* root, const char* filename )
-			{
-				if ( !root ) return;
-				std::ofstream fout ( filename );
-				XMLPrintVisitor act ( fout );
-				root->execute ( &act );
 			}
 
 			void Simulation::dumpState ( Node* root, std::ofstream& out )

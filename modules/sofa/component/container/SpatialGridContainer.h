@@ -280,6 +280,9 @@ public:
 	Real getCellWidth() const { return cellWidth; }
 	Real getInvCellWidth() const { return invCellWidth; }
 
+    Map& getMap() { return map; }
+    const Map& getMap() const { return map; }
+
 protected:
 	Map map;
 	const Real cellWidth;
@@ -342,6 +345,9 @@ public:
 	//}
 	//grid->end();
     }
+
+    core::componentmodel::behavior::MechanicalState<DataTypes>* getMState() { return mstate; }
+
     template<class NeighborListener>
     void findNeighbors(NeighborListener* listener, Real r)
     {

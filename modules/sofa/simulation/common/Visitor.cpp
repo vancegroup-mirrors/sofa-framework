@@ -152,7 +152,7 @@ void Visitor::printInfo(const core::objectmodel::BaseContext* context, bool dirD
 
   double Visitor::getTimeSpent(ctime_t initTime, ctime_t endTime)
   {
-    return endTime-initTime;
+    return (double)(endTime-initTime);
   }
 
   void Visitor::printNode(const std::string &type, const std::string &name, const TRACE_ARGUMENT &arguments) 

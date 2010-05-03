@@ -53,9 +53,6 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Print all object in the graph
 	virtual void print(Node* root);
 
-	/// Print all object in the graph in XML format
-        virtual void printXML(Node* root, const char* fileName=0, bool compact=false);
-
         /// Initialize the objects
         virtual void init(Node* root);
 
@@ -89,8 +86,8 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Export a scene to an OBJ 3D Scene
 	virtual void exportOBJ(Node* root, const char* filename, bool exportMTL = true);
 
-	/// Export a scene to XML
-	virtual void exportXML(Node* root, const char* filename);
+	/// Print all object in the graph in XML format
+        virtual void exportXML(Node* root, const char* fileName=0, bool compact=false);
 
 	/// Dump the current state in the given stream
 	virtual void dumpState( Node* root, std::ofstream& out );

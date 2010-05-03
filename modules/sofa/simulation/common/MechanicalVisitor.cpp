@@ -113,6 +113,7 @@ Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
 void MechanicalVisitor::processNodeBottomUp(simulation::Node* node)
 {
     for_each(this, node, node->constraint, &MechanicalVisitor::bwdConstraint);
+    for_each(this, node, node->LMConstraint, &MechanicalVisitor::bwdLMConstraint);
 	if (node->mechanicalState != NULL) {
 		if (node->mechanicalMapping != NULL) {
 			if (node->mechanicalMapping->isMechanical()) {
@@ -202,8 +203,8 @@ void MechanicalVisitor::printReadVectors(simulation::Node* node, core::objectmod
 	}
       else if (sofa::core::componentmodel::behavior::BaseLMConstraint* interact = dynamic_cast<sofa::core::componentmodel::behavior::BaseLMConstraint*> (obj))
         {
-          dof1=interact->getMechModel1();
-          dof2=interact->getMechModel2();
+          dof1=interact->getConstrainedMechModel1();
+          dof2=interact->getConstrainedMechModel2();
         }
       else
 	{
@@ -242,8 +243,8 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
 	}
       else if (sofa::core::componentmodel::behavior::BaseLMConstraint* interact = dynamic_cast<sofa::core::componentmodel::behavior::BaseLMConstraint*> (obj))
         {
-          dof1=interact->getMechModel1();
-          dof2=interact->getMechModel2();
+          dof1=interact->getConstrainedMechModel1();
+          dof2=interact->getConstrainedMechModel2();
         }
       else
 	{
@@ -883,52 +884,62 @@ Visitor::Result MechanicalResetConstraintVisitor::fwdMechanicalState(simulation:
         return RESULT_CONTINUE;
     }
 
-Visitor::Result MechanicalAccumulateLMConstraint::fwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
+Visitor::Result MechanicalResetConstraintVisitor::fwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
+    {
+        // mm->setC(res);
+      ctime_t t0 = beginProcess(node, c);
+      c->resetConstraint();
+      endProcess(node, c, t0);
+      return RESULT_CONTINUE;
+    }
+
+
+Visitor::Result MechanicalExpressJacobianVisitor::fwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
+{
+  ctime_t t0 = beginProcess(node, c);
+  c->buildJacobian();
+  endProcess(node, c, t0);
+  return RESULT_CONTINUE;
+}
+
+void MechanicalExpressJacobianVisitor::bwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
+{
+  ctime_t t0 = beginProcess(node, c);
+  c->propagateJacobian();
+  endProcess(node, c, t0);
+}
+
+void MechanicalPropagateLMConstraintVisitor::bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
+{
+  ctime_t t0 = beginProcess(node, map);
+  map->accumulateConstraint();
+  endProcess(node, map, t0);
+}
+
+
+
+Visitor::Result MechanicalSolveLMConstraintVisitor::fwdOdeSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* s)
+{
+        typedef core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
+        ctime_t t0 = beginProcess(node, s);
+
+        s->solveConstraint(propagateState,VecId::velocity());
+        s->solveConstraint(propagateState,VecId::position());
+	endProcess(node, s, t0);
+        return RESULT_PRUNE;
+}
+
+Visitor::Result MechanicalWriteLMConstraint::fwdLMConstraint(simulation::Node* node, core::componentmodel::behavior::BaseLMConstraint* c)
     {
         ctime_t t0 = beginProcess(node, c);
         c->writeConstraintEquations(order);
 
-	datasC.push_back(ConstraintData());
-	ConstraintData &entry=datasC[datasC.size()-1];
+	datasC.push_back(c);
 
-        //get the corrections to apply
-        entry.constrainedMState[0]=entry.independentMState[0]=c->getMechModel1();
-        entry.constrainedMState[1]=entry.independentMState[1]=c->getMechModel2();
-        //get the corrections to apply
-
-        c->getMechModel1()->forceMask.setInUse(c->useMask());
-        c->getMechModel2()->forceMask.setInUse(c->useMask());
-
-	entry.data=c;
 	endProcess(node, c, t0);
         return RESULT_CONTINUE;
     }
 
-	void MechanicalAccumulateLMConstraint::bwdMechanicalMapping(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalMapping* map)
-    {
-          ctime_t t0 = beginProcess(node, map);
-
-          for (unsigned int i=0;i<datasC.size();++i)
-          {
-            //When we transmit a constraint equation through a mapping, we need to update the numero of the line in which will be store the equation
-            //corresponds to the entry in Vector C
-            if ( datasC[i].independentMState[0] == map->getMechTo())
-              datasC[i].data->constraintTransmission(order, datasC[i].constrainedMState[0],map->getMechFrom()->getCSize());
-
-            if ( datasC[i].independentMState[1] == map->getMechTo())
-              datasC[i].data->constraintTransmission(order, datasC[i].constrainedMState[1],map->getMechFrom()->getCSize());
-          }
-
-          map->accumulateConstraint();
-
-          for (unsigned int i=0;i<datasC.size();++i)
-	  {
-	    if ( datasC[i].independentMState[0] == map->getMechTo()) datasC[i].independentMState[0]=map->getMechFrom();
-	    if ( datasC[i].independentMState[1] == map->getMechTo()) datasC[i].independentMState[1]=map->getMechFrom();
-	  }
-
-	endProcess(node, map, t0);
-    }
 
 Visitor::Result MechanicalAccumulateConstraint::fwdConstraint(simulation::Node* node, core::componentmodel::behavior::BaseConstraint* c)
     {
@@ -1063,6 +1074,16 @@ Visitor::Result MechanicalPickParticlesVisitor::fwdMechanicalState(simulation::N
 {
     ctime_t t0 = beginProcess(node, mm);
     //std::cout << "Picking particles on state " << mm->getName() << " within radius " << radius0 << " + dist * " << dRadius << std::endl;
+
+    //We deactivate the Picking with static objects (not simulated)
+    core::CollisionModel *c;
+    mm->getContext()->get(c, core::objectmodel::BaseContext::Local);
+    if (c && !c->isSimulated()) //If it is an obstacle, we don't try to pick
+      {        
+        endProcess(node, mm, t0);
+        return RESULT_CONTINUE;
+      }
+      
     mm->pickParticles(rayOrigin[0], rayOrigin[1], rayOrigin[2], rayDirection[0], rayDirection[1], rayDirection[2], radius0, dRadius, particles);
     endProcess(node, mm, t0);
     return RESULT_CONTINUE;

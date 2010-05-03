@@ -33,8 +33,6 @@
 #include <sofa/simulation/common/DeleteVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
-#include <sofa/helper/Factory.inl>
-
 #include <iostream>
 
 
@@ -44,22 +42,14 @@
 namespace sofa
 {
   using namespace component::collision;
-  #ifndef SOFA_FLOAT
-  helper::Creator<ComponentMouseInteraction::ComponentMouseInteractionFactory,TComponentMouseInteraction<defaulttype::Vec3dTypes> > ComponentMouseInteractionVec3dClass ("MouseSpringVec3d",true);
-  #endif
-  #ifndef SOFA_DOUBLE
-  helper::Creator<ComponentMouseInteraction::ComponentMouseInteractionFactory, TComponentMouseInteraction<defaulttype::Vec3fTypes> > ComponentMouseInteractionVec3fClass ("MouseSpringVec3f",true);
-  #endif
+
 
   namespace gui
   {
 
     PickHandler::PickHandler():interactorInUse(false), mouseStatus(DEACTIVATED),mouseButton(NONE)
     {
-      operations[NONE] = 
-        operations[LEFT] = 
-        operations[MIDDLE] = 
-        operations[RIGHT] = NULL;
+      operations[LEFT] = operations[MIDDLE] = operations[RIGHT] = NULL;
 
       mouseNode = simulation::getSimulation()->newNode("Mouse");
 
@@ -147,37 +137,35 @@ namespace sofa
 
     void PickHandler::setCompatibleInteractor()
     {
-      if (useCollisions)
-      {
-      if (!lastPicked.body ) return;
+      if (!lastPicked.body && !lastPicked.mstate) return;
 
-      if (interaction->isCompatible(lastPicked.body->getContext())) return;
-      for (unsigned int i=0;i<instanceComponents.size();++i)
+      if (lastPicked.body)
         {
-          if (instanceComponents[i] != interaction &&
-              instanceComponents[i]->isCompatible(lastPicked.body->getContext()))
+          if (interaction->isCompatible(lastPicked.body->getContext())) return;
+          for (unsigned int i=0;i<instanceComponents.size();++i)
             {
-              interaction->deactivate();
-              interaction = instanceComponents[i];
-              interaction->activate();
+              if (instanceComponents[i] != interaction &&
+                  instanceComponents[i]->isCompatible(lastPicked.body->getContext()))
+                {
+                  interaction->deactivate();
+                  interaction = instanceComponents[i];
+                  interaction->activate();
+                }
             }
-        }
-      }
+        }    
       else
       {
-      if (!lastPicked.mstate) return;
-
-      if (interaction->isCompatible(lastPicked.mstate->getContext())) return;
-      for (unsigned int i=0;i<instanceComponents.size();++i)
-        {
-          if (instanceComponents[i] != interaction &&
-              instanceComponents[i]->isCompatible(lastPicked.mstate->getContext()))
-            {
-              interaction->deactivate();
-              interaction = instanceComponents[i];
-              interaction->activate();
-            }
-        }
+        if (interaction->isCompatible(lastPicked.mstate->getContext())) return;
+        for (unsigned int i=0;i<instanceComponents.size();++i)
+          {
+            if (instanceComponents[i] != interaction &&
+                instanceComponents[i]->isCompatible(lastPicked.mstate->getContext()))
+              {
+                interaction->deactivate();
+                interaction = instanceComponents[i];
+                interaction->activate();
+              }
+          }
       }
       
     }
@@ -196,7 +184,6 @@ namespace sofa
           interaction->mouseInteractor->setMouseRayModel(mouseCollision);      
           interaction->mouseInteractor->setBodyPicked(lastPicked);
         }
-
       
       if(mouseButton != NONE){
         switch (mouseStatus)
@@ -219,9 +206,12 @@ namespace sofa
             }
           case DEACTIVATED:
             {
-              operations[mouseButton]->wait();
             }
           }
+      }
+      for (unsigned int i=0; i<operations.size(); ++i)
+      {
+          operations[i]->wait();
       }
     }
 
@@ -243,8 +233,12 @@ namespace sofa
 
     component::collision::BodyPicked PickHandler::findCollision()
     {
-      if (useCollisions) return findCollisionUsingPipeline();
-      else               return findCollisionUsingBruteForce();
+      if (useCollisions) 
+        {
+           component::collision::BodyPicked picked=findCollisionUsingPipeline();
+           if (picked.body) return picked;
+        }
+      return findCollisionUsingBruteForce();
     }
 
       component::collision::BodyPicked PickHandler::findCollisionUsingPipeline()

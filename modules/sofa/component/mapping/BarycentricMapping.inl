@@ -975,7 +975,10 @@ namespace sofa
 
         if ( mapper != NULL )
         {
-          mapper->init ( *((const Out *)this->toModel)->getX(), *((const In *)this->fromModel)->getX() );
+            if (useRestPosition.getValue())
+                mapper->init ( *((const Out *)this->toModel)->getX0(), *((const In *)this->fromModel)->getX0() );
+            else
+                mapper->init ( *((const Out *)this->toModel)->getX(), *((const In *)this->fromModel)->getX() );
         }
         else
         {

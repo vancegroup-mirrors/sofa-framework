@@ -65,3 +65,7 @@ SOFA_LINK_CLASS(LinearMovementConstraint)
 SOFA_LINK_CLASS(FixedRotationConstraint)
 SOFA_LINK_CLASS(LinearVelocityConstraint)
 
+#ifdef SOFA_HAVE_EIGEN2
+SOFA_LINK_CLASS(FixedLMConstraint)
+#endif
+

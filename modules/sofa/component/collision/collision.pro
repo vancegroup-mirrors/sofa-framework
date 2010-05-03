@@ -74,7 +74,7 @@ HEADERS += initCollision.h \
            TriangleModelInRegularGrid.h \
            RayTraceDetection.h \
            TriangleOctree.h \
-           TriangleOctreeModel.h
+           TriangleOctreeModel.h \
 
 SOURCES += initCollision.cpp \
            AttachBodyPerformer.cpp \
@@ -97,6 +97,7 @@ SOURCES += initCollision.cpp \
            LMDNewProximityIntersection.cpp \
            FixParticlePerformer.cpp \
            FrictionContact.cpp \
+		   InteractionPerformer.cpp \
            LineLocalMinDistanceFilter.cpp \
            LocalMinDistance.cpp \
            LocalMinDistanceFilter.cpp \
@@ -122,7 +123,7 @@ SOURCES += initCollision.cpp \
            TriangleModelInRegularGrid.cpp \
            RayTraceDetection.cpp \
            TriangleOctree.cpp \
-           TriangleOctreeModel.cpp 
+           TriangleOctreeModel.cpp \
            
 
 
@@ -136,6 +137,7 @@ LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentmapping$$LIBSUFFIX
 LIBS += -lsofacomponentconstraint$$LIBSUFFIX
 LIBS += -lsofacomponentvisualmodel$$LIBSUFFIX
+LIBS += -lsofacomponentmass$$LIBSUFFIX
 
 
 LIBS += $$SOFA_EXT_LIBS 

@@ -58,9 +58,7 @@ namespace sofa
 	public:
 	  typedef typename DataTypes::VecCoord VecCoord;
 	  typedef typename DataTypes::VecDeriv VecDeriv;
-	  typedef typename DataTypes::Coord Coord;
 	  typedef typename DataTypes::Deriv Deriv;
-	  typedef typename DataTypes::VecConst VecConst;
 	  typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
 	  typedef typename core::componentmodel::behavior::MechanicalState<DataTypes> MechanicalState;
 
@@ -71,9 +69,6 @@ namespace sofa
 	  typedef typename core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
           typedef core::componentmodel::behavior::BaseLMConstraint::ConstOrder ConstOrder;
 
-	  using core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::sout;
-	  using core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::serr;
-	  using core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::sendl;
 	protected:
 	  DistanceConstraintInternalData<DataTypes> data;
 	  friend class DistanceConstraintInternalData<DataTypes>;
@@ -92,29 +87,42 @@ namespace sofa
 
 	  ~DistanceConstraint(){}; 
 	  
-	  // -- Constraint interface
 	  void init();
 	  void reinit();
+
+	  // -- LMConstraint interface
+          void buildJacobian();
 	  void writeConstraintEquations(ConstOrder order);
 
-	  double getError();
+
 
           void addConstraint(unsigned int i1, unsigned int i2);
 
 	  virtual void draw();
-	  virtual std::string getTemplateName() const
-	    {
-	      return templateName(this);
-	    }
-	  static std::string templateName(const DistanceConstraint<DataTypes>* = NULL)
-	  {
-	    return DataTypes::Name();
-	  }
 
-	  //Edges involving a distance constraint
-	  Data< SeqEdges > vecConstraint;
+          /// we compute the length with the constrained dof
+          bool isCorrectionComputedWithSimulatedDOF(){return false;}
+          bool useMask(){return true;}
+
+
+
+
+          std::string getTemplateName() const
+            {
+              return templateName(this);
+            }
+          static std::string templateName(const DistanceConstraint<DataTypes>* = NULL)
+          {
+            return DataTypes::Name();
+          }
+
+
+
+
 
 	protected :
+	  //Edges involving a distance constraint
+	  Data< SeqEdges > vecConstraint;
 	  ///Compute the length of an edge given the vector of coordinates corresponding
 	  double lengthEdge(const Edge &e, const VecCoord &x1,const VecCoord &x2) const;
 	  ///Compute the direction of the constraint
@@ -123,6 +131,8 @@ namespace sofa
 
 	  // Base Components of the current context
 	  core::componentmodel::topology::BaseMeshTopology *topology;  
+
+          helper::vector< std::pair< unsigned int, unsigned int> > registeredConstraints;
 
 	  // rest length pre-computated
 	  sofa::helper::vector< double > l0;

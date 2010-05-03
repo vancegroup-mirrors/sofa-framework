@@ -27,7 +27,8 @@
 #ifndef SOFA_GUI_PICKHANDLER_H
 #define SOFA_GUI_PICKHANDLER_H
 
-#include <sofa/gui/OperationFactory.h>
+#include "SofaGUI.h"
+#include "OperationFactory.h"
 
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/common/Node.h>
@@ -56,7 +57,7 @@ namespace sofa
 
     
 
-    class PickHandler
+    class SOFA_SOFAGUI_API PickHandler
     {
       typedef sofa::component::collision::RayModel MouseCollisionModel;
       typedef sofa::component::container::MechanicalObject< defaulttype::Vec3Types > MouseContainer;

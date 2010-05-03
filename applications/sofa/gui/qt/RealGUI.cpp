@@ -137,15 +137,12 @@ SOFA_LINK_CLASS(ImageQt);
 
 #ifdef SOFA_GUI_QGLVIEWER
       SOFA_DECL_CLASS ( QGLViewerGUI )
-      int QGLViewerGUIClass = SofaGUI::RegisterGUI ( "qglviewer", &RealGUI::CreateGUI, &RealGUI::InitGUI, 3 );
 #endif
 #ifdef SOFA_GUI_QTVIEWER
       SOFA_DECL_CLASS ( QTGUI )
-      int QtGUIClass = SofaGUI::RegisterGUI ( "qt", &RealGUI::CreateGUI, &RealGUI::InitGUI, 2 );
 #endif
 #ifdef SOFA_GUI_QTOGREVIEWER
       SOFA_DECL_CLASS ( OgreGUI )
-      int QtOGREGUIClass = SofaGUI::RegisterGUI ( "ogre", &RealGUI::CreateGUI, &RealGUI::InitGUI, 1 );
 #endif
 
       int RealGUI::InitGUI ( const char* name, const std::vector<std::string>& /* options */ )
@@ -1293,7 +1290,7 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::fileSaveAs ( Node *node, const char* filename )
       {
-	simulation::getSimulation()->printXML ( node, filename );
+	simulation::getSimulation()->exportXML ( node, filename );
       }
 
       void RealGUI::fileExit()
@@ -1306,7 +1303,7 @@ typedef QApplication QSOFAApplication;
 
       void RealGUI::saveXML()
       {
-	simulation::getSimulation()->printXML ( viewer->getScene(), "scene.scn" );
+	simulation::getSimulation()->exportXML ( viewer->getScene(), "scene.scn" );
       }
 
       void RealGUI::editRecordDirectory()

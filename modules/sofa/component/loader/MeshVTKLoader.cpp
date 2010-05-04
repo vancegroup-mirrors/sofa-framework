@@ -501,7 +501,7 @@ bool MeshVTKLoader::XMLVTKReader::readFile(const char* filename)
 		datasetFormat = STRUCTURED_POINTS;
 	else if (datasetFormatStr.compare("ImageData") == 0)
 		datasetFormat = IMAGE_DATA;
-	else checkErrorMsg(NULL, "Dataset format " << datasetFormatStr << " not recognized");
+    else checkErrorMsg(false, "Dataset format " << datasetFormatStr << " not recognized");
 
 	TiXmlHandle datasetFormatHandle = TiXmlHandle(hVTKDocRoot.FirstChild( datasetFormatStr.c_str() ).Element());
 
@@ -527,7 +527,7 @@ bool MeshVTKLoader::XMLVTKReader::readFile(const char* filename)
 			stateLoading = loadImageData(datasetFormatHandle);
 			break;
 		default:
-			checkErrorMsg(NULL, "Dataset format not implemented");
+            checkErrorMsg(false, "Dataset format not implemented");
 			break;
 	}
 	checkErrorMsg(stateLoading, "Error while parsing XML");
@@ -546,6 +546,7 @@ MeshVTKLoader::BaseVTKReader::BaseVTKDataIO* MeshVTKLoader::XMLVTKReader::loadDa
 
 MeshVTKLoader::BaseVTKReader::BaseVTKDataIO* MeshVTKLoader::XMLVTKReader::loadDataArray(TiXmlElement* dataArrayElement, int size, std::string type)
 {
+	std::cout << "begin " << type << std::endl;
 	//Type
 	const char* typeStrTemp;
 	if (type.empty())
@@ -577,7 +578,11 @@ MeshVTKLoader::BaseVTKReader::BaseVTKDataIO* MeshVTKLoader::XMLVTKReader::loadDa
 
 	bool state = false;
 
+	if (!listValuesStrTemp) return NULL;
+	if (std::string(listValuesStrTemp).size() < 1) return NULL;
+
 	BaseVTKDataIO* d = BaseVTKReader::newVTKDataIO(std::string(typeStrTemp));
+
 	if (!d) return NULL;
 
 	if (size > 0)

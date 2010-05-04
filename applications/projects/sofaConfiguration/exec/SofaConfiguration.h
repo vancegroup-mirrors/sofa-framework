@@ -37,6 +37,8 @@
 #include <QLineEdit>
 #include <QDir>
 #include <QLayout>
+#include <QPushButton>
+#include <Q3Process>
 #else
 #include <qmainwindow.h> 
 #include <qcheckbox.h>
@@ -44,6 +46,9 @@
 #include <qlineedit.h>
 #include <qdir.h>
 #include <qlayout.h>
+#include <qpushbutton.h>
+#include <qprocess.h> 
+typedef QProcess Q3Process;
 #endif
 
 #include <iostream>
@@ -170,8 +175,9 @@ namespace sofa
         Q_OBJECT
           public :
 
-        SofaConfiguration(std::string path, std::vector< DEFINES >& config);
-        ~SofaConfiguration(){};
+        SofaConfiguration(std::string path_, std::vector< DEFINES >& config);
+        ~SofaConfiguration(){
+        };
 
         bool getValue(CONDITION &option);
 
@@ -179,10 +185,15 @@ namespace sofa
         void processDirectory(const QString &dir);
         void processFile(const QFileInfo &info);
         public slots:
-
+        
         void updateOptions();
         void updateConditions();
         void saveConfiguration();
+
+     protected slots:
+        void redirectStdErr();
+        void redirectStdOut();
+        void saveConfigurationDone();
       protected:
         std::string path;
         std::vector< DEFINES >& data;
@@ -190,7 +201,11 @@ namespace sofa
         std::set< QWidget *> optionsModified;
 
         QLineEdit *projectVC;
+        QPushButton* saveButton;
+        Q3Process* p;
       };
+
+
     } 
   }
 }

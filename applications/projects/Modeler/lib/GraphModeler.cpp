@@ -107,7 +107,7 @@ namespace sofa
 
       BaseObject *GraphModeler::addComponent(GNode *parent, const ClassEntry* entry, const std::string &templateName, bool saveHistory, bool displayWarning)
       {
-        BaseObject *object=NULL;;
+        BaseObject *object=NULL;
         if (!parent || !entry) return object;
 
         std::string templateUsed = templateName;
@@ -115,7 +115,6 @@ namespace sofa
         xml::ObjectElement description("Default", entry->className.c_str() );
 
         if (!templateName.empty()) description.setAttribute("template", templateName.c_str());
-
 
         Creator* c=NULL;        
         if (entry->creatorMap.size() <= 1)
@@ -799,27 +798,28 @@ namespace sofa
 
       void GraphModeler::editUndo()
       {
-        Operation o=historyOperation.back();
-        historyOperation.pop_back();
+          if (historyOperation.empty()) return;
+          Operation o=historyOperation.back();
+          historyOperation.pop_back();
 
-        processUndo(o);
-        historyUndoOperation.push_back(o);
+          processUndo(o);
+          historyUndoOperation.push_back(o);
 
-        emit( undo(historyOperation.size()));
-        emit( redo(true));
+          emit( undo(historyOperation.size()));
+          emit( redo(true));
       }
 
       void GraphModeler::editRedo()
       {
-        Operation o=historyUndoOperation.back();
-        historyUndoOperation.pop_back();
+          if (historyUndoOperation.empty()) return;
+          Operation o=historyUndoOperation.back();
+          historyUndoOperation.pop_back();
 
-        processUndo(o);
-        historyOperation.push_back(o);
+          processUndo(o);
+          historyOperation.push_back(o);
 
-        emit( redo(historyUndoOperation.size()));
-        emit( undo(true));
-
+          emit( redo(historyUndoOperation.size()));
+          emit( undo(true));
       }
 
 
@@ -1011,7 +1011,7 @@ namespace sofa
       }
 
       void GraphModeler::closeDialogs()
-      {
+      {          
         std::map< void*, QDialog* >::iterator it;    ;
         for (it=map_modifyObjectWindow.begin();
           it!=map_modifyObjectWindow.end();
@@ -1019,6 +1019,7 @@ namespace sofa
         {
           delete it->second;
         }
+        map_modifyObjectWindow.clear();
       }
 
       /*****************************************************************************************************************/

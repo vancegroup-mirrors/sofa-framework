@@ -32,6 +32,7 @@
 #include "Modeler.h"
 #include "GraphModeler.h"
 #include "FilterLibrary.h"
+#include "SofaTutorialManager.h"
 
 #include <map>
 #include <vector>
@@ -85,6 +86,7 @@ namespace sofa
 
       using sofa::simulation::tree::GNode;
 
+      
 
       class SofaModeler : public ::Modeler
 	{
@@ -157,8 +159,10 @@ namespace sofa
 	  /// Quit the Modeler
 	  void fileExit(){close();};
 	  
+	  void openTutorial();
 	  /// Launch the current simulation into Sofa
 	  void runInSofa();
+      void runInSofa(const std::string &sceneFilename, GNode *groot);
 	  void sofaExited();
           void removeTemporaryFiles(const std::string &filename);
 
@@ -201,7 +205,9 @@ namespace sofa
 
 	  ///display the plugin manager window, to add/remove some external dynamic libraries
 	  void showPluginManager();
-          
+  protected slots:
+     void redirectStderr();
+     void redirectStdout();
 	protected:
           //********************************************
           //Left Part
@@ -218,6 +224,7 @@ namespace sofa
 	  /// Current opened Tab
 	  QWidget *tabGraph;
 
+          SofaTutorialManager *tuto;
 
           //********************************************
 	  /// Menu runSofa for the GUI

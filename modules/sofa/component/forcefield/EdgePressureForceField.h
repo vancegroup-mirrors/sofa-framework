@@ -29,7 +29,7 @@
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/component/topology/EdgeSubsetData.h>
 #include <sofa/component/topology/EdgeSetGeometryAlgorithms.h>
-
+#include <sofa/component/topology/TriangleSetTopologyContainer.h>
 
 namespace sofa
 {
@@ -72,27 +72,31 @@ protected:
    EdgeSubsetData<EdgePressureInformation> edgePressureMap;
 
 	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
+	sofa::component::topology::TriangleSetTopologyContainer* _completeTopology;
 	sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo; 
 
     Data<Deriv> pressure;
-
-	Data<std::string> edgeList;
-
-    /// the normal used to define the edge subjected to the pressure force.
-    Data<Deriv> normal;
-
+    Data<helper::vector<int> > edgeList;
+    Data<Deriv> normal; // the normal used to define the edge subjected to the pressure force
     Data<Real> dmin; // coordinates min of the plane for the vertex selection
     Data<Real> dmax;// coordinates max of the plane for the vertex selection
+    Data< double > arrowSizeCoef; // for drawing. The sign changes the direction, 0 doesn't draw arrow	
+    Data<Real> p_intensity; // pressure intensity on edge normal
+	Data<Coord> p_binormal; // binormal of the 2D plane
 
 public:
 
 	EdgePressureForceField():
 	pressure(initData(&pressure, "pressure", "Pressure force per unit area"))
-	, edgeList(initData(&edgeList,std::string(""),"edgeList", "Indices of edges separated with commas where a pressure is applied"))
+	, edgeList(initData(&edgeList,"edgeList", "Indices of edges separated with commas where a pressure is applied"))
 	, normal(initData(&normal,"normal", "Normal direction for the plane selection of edges"))
 	, dmin(initData(&dmin,(Real)0.0, "dmin", "Minimum distance from the origin along the normal direction"))
 	, dmax(initData(&dmax,(Real)0.0, "dmax", "Maximum distance from the origin along the normal direction"))
+	, arrowSizeCoef(initData(&arrowSizeCoef,0.0, "arrowSizeCoef", "Size of the drawn arrows (0->no arrows, sign->direction of drawing"))
+	, p_intensity(initData(&p_intensity,(Real)1.0, "p_intensity", "pressure intensity on edge normal"))
+	, p_binormal(initData(&p_binormal,"binormal", "Binormal of the 2D plane"))
     {
+		_completeTopology = NULL;
     }
 
     virtual ~EdgePressureForceField();
@@ -116,9 +120,9 @@ public:
 protected :
 	void selectEdgesAlongPlane();
 	void selectEdgesFromString();
-    void updateEdgeInformation();
-    void initEdgeInformation();
-    bool isPointInPlane(Coord p) {
+	void updateEdgeInformation();
+	void initEdgeInformation();
+	bool isPointInPlane(Coord p) {
         Real d=dot(p,normal.getValue());
         if ((d>dmin.getValue())&& (d<dmax.getValue())) 
             return true;

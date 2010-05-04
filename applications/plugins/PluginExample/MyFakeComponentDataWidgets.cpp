@@ -12,9 +12,9 @@ namespace qt{
   The factory key is the Data widget property 
   (see MyFakeComponent constructor) 
   */
-  helper::Creator<DataWidgetFactory,WidgetmyData> DW_myData("widget_myData",false);
+  helper::Creator<DataWidgetFactory,CustomDataUnsignedWidget> DW_myData("widget_myData",false);
   
-  bool WidgetmyData::createWidgets()
+  bool CustomDataUnsignedWidget::createWidgets()
   {
     unsigned myData_value = getData()->virtualGetValue();
   
@@ -51,7 +51,7 @@ namespace qt{
     return true;
   }
 
-  void WidgetmyData::readFromData()
+  void CustomDataUnsignedWidget::readFromData()
   {
     qslider->setValue( (int)getData()->virtualGetValue() );
     
@@ -66,7 +66,7 @@ namespace qt{
 
   }
   
-  void WidgetmyData::writeToData()
+  void CustomDataUnsignedWidget::writeToData()
   {
     unsigned widget_value = (unsigned)qslider->value();
     getData()->virtualSetValue(widget_value);
@@ -81,7 +81,7 @@ namespace qt{
 
   }
 
-  void WidgetmyData::change()
+  void CustomDataUnsignedWidget::change()
   {
     QString label1_text("myData current value = "); 
     label1_text.append(getData()->getValueString().c_str());

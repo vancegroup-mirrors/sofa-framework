@@ -37,12 +37,12 @@ namespace sofa{
               if (!namespacename.empty())
               {
                 new QLabel(QString("Namespace"), box);
-                new QLabel(QString(namespacename.c_str()), box);
+                (new QLabel(QString(namespacename.c_str()), box))->setMinimumWidth(20);
               }
               if (!object->getTemplateName().empty())
               {
                 new QLabel(QString("Template"), box);
-                new QLabel(QString(object->getTemplateName().c_str()), box);
+                (new QLabel(QString(object->getTemplateName().c_str()), box))->setMinimumWidth(20);
               }
 
               tabLayout->addWidget( box );
@@ -59,24 +59,24 @@ namespace sofa{
               if (!entry->description.empty() && entry->description != std::string("TODO"))
               {
                 new QLabel(QString("Description"), box);
-                new QLabel(QString(entry->description.c_str()), box);
+                (new QLabel(QString(entry->description.c_str()), box))->setMinimumWidth(20);
               }
               std::map<std::string, core::ObjectFactory::Creator*>::iterator it = entry->creatorMap.find(object->getTemplateName());
               if (it != entry->creatorMap.end() && *it->second->getTarget())
               {
                 new QLabel(QString("Provided by"), box);
-                new QLabel(QString(it->second->getTarget()), box);
+                (new QLabel(QString(it->second->getTarget()), box))->setMinimumWidth(20);
               }
 
               if (!entry->authors.empty() && entry->authors != std::string("TODO"))
               {
                 new QLabel(QString("Authors"), box);
-                new QLabel(QString(entry->authors.c_str()), box);
+                (new QLabel(QString(entry->authors.c_str()), box))->setMinimumWidth(20);
               }
               if (!entry->license.empty() && entry->license != std::string("TODO"))
               {
                 new QLabel(QString("License"), box);
-                new QLabel(QString(entry->license.c_str()), box);
+                (new QLabel(QString(entry->license.c_str()), box))->setMinimumWidth(20);
               }
               tabLayout->addWidget( box );
             }

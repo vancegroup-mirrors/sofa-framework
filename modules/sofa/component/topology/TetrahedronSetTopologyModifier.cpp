@@ -199,7 +199,7 @@ namespace topology
 		if(!m_container->hasTetrahedra())
 			return;
 
-		bool removeIsolatedVertices = removeIsolatedItems;
+		bool removeIsolatedVertices = removeIsolatedItems && removeIsolated.getValue();
 		bool removeIsolatedEdges = removeIsolatedItems && m_container->hasEdges();
 		bool removeIsolatedTriangles = removeIsolatedItems && m_container->hasTriangles();
 

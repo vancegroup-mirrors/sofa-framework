@@ -313,7 +313,7 @@ namespace sofa{
           }
           else
           {
-            loadSimulation();
+         
             RealGUI::setPixmap("textures/media-playback-pause.png", playforward);
 
             timerStep->start ( 0 );
@@ -341,6 +341,7 @@ namespace sofa{
         {
           setCurrentTime(getFinalTime());
           slot_sliderValue(timeSlider->maxValue());	    
+          loadSimulation();
         }
         
 

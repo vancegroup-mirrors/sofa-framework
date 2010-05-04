@@ -205,6 +205,7 @@ namespace component
 		virtual int createPointInCube(const typename Out::Coord& /*p*/, int /*cubeIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
 
 		virtual void setToTopology( topology::PointSetTopologyContainer* toTopology) {this->toTopology = toTopology;};
+		const topology::PointSetTopologyContainer *getToTopology() const {return toTopology;};
 
 	protected:
 		TopologyBarycentricMapper(core::componentmodel::topology::BaseMeshTopology* fromTopology, topology::PointSetTopologyContainer* toTopology = NULL)
@@ -598,7 +599,7 @@ public:
 
 		  void clear(int reserve=0);
 
-		  int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
+		  virtual int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
 		  int createPointInTriangle(const typename Out::Coord& p, int triangleIndex, const typename In::VecCoord* points);
 
 		  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);

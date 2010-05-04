@@ -84,10 +84,29 @@ void MechanicalMapping<In,Out>::setMechanical(bool b)
 template <class In, class Out>
 void MechanicalMapping<In,Out>::init()
 {
-	this->updateMapping();
+#ifdef SOFA_SMP
+	if (this->toModel == NULL || this->fromModel == NULL)
+		return;
+
+	if (this->toModel->getX()!=NULL && this->fromModel->getX()!=NULL)
+	{
+		apply(*this->toModel->getX(), *this->fromModel->getX());
+		//cerr<<"Mapping<In,Out>::updateMapping(), *this->fromModel->getX() = "<<*this->fromModel->getX()<<endl;
+		//cerr<<"Mapping<In,Out>::updateMapping(), *this->toModel->getX() = "<<*this->toModel->getX()<<endl;
+	}
+	if (this->toModel->getV()!=NULL && this->fromModel->getV()!=NULL)
+	{
+		applyJ(*this->toModel->getV(), *this->fromModel->getV());
+	}
+    if (this->fromModel!=NULL && this->toModel->getXfree()!=NULL && this->fromModel->getXfree()!=NULL)
+		apply(*this->toModel->getXfree(), *this->fromModel->getXfree());
+#else
+    this->updateMapping();
     propagateXfree();
+#endif
 }
 
+#ifndef SOFA_SMP
 template <class In, class Out>
 void MechanicalMapping<In,Out>::propagateX()
 {
@@ -160,6 +179,116 @@ void MechanicalMapping<In,Out>::accumulateConstraint()
 		}
 	}
 }
+#else
+using sofa::core::ParallelMappingApply;
+using sofa::core::ParallelMappingApplyJ;
+
+
+/************* Mapping Functors *********************/
+
+template <class T>
+struct ParallelMappingApplyJT
+{
+  void operator()(void *m, Shared_rw< typename T::In::VecDeriv> out, Shared_r<typename T::Out::VecDeriv> in){
+    ((T *)m)->applyJT(out.access(), in.read());
+  }
+};
+template <class T>
+struct ParallelMappingApplyJTCPU
+{
+  void operator()(void *m, Shared_rw< typename T::In::VecDeriv> out, Shared_r<typename T::Out::VecDeriv> in){
+    ((T *)m)->applyJT(out.access(), in.read());
+  }
+};
+
+template<class T>
+struct ParallelComputeAccFromMapping
+{
+  void operator()(void *m, Shared_rw< typename T::Out::VecDeriv> acc_out, Shared_r<typename T::In::VecDeriv> v_in,Shared_r<typename T::In::VecDeriv> acc_in){
+    ((T *)m)->::computeAccFromMapping(acc_out.access(), v_in.read(), acc_in.read());
+  }
+};
+
+template <class In, class Out>
+struct ParallelComputeAccFromMapping< MechanicalMapping<In, Out> >
+{
+	void operator()(MechanicalMapping<In,Out> *m,Shared_rw< typename Out::VecDeriv> acc_out, Shared_r<typename In::VecDeriv> v_in,Shared_r<typename In::VecDeriv> acc_in){
+		m->computeAccFromMapping(acc_out.access(),v_in.read(),acc_in.read());
+	}
+};
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::propagateX()
+{
+if (this->fromModel!=NULL && this->toModel->getX()!=NULL && this->fromModel->getX()!=NULL)
+        Task<ParallelMappingApplyCPU< Mapping<In,Out> >,ParallelMappingApply< Mapping<In,Out> > >(this,**this->toModel->getX(), **this->fromModel->getX());
+}
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::propagateV()
+{
+    if (this->fromModel!=NULL && this->toModel->getV()!=NULL && this->fromModel->getV()!=NULL)
+        Task<ParallelMappingApplyJCPU< Mapping<In,Out> >,ParallelMappingApplyJ< Mapping<In,Out> > >(this,**this->toModel->getV(), **this->fromModel->getV());
+}
+template <class In, class Out>
+void MechanicalMapping<In,Out>::propagateA()
+{
+//    if (this->fromModel!=NULL && this->toModel->getDx()!=NULL && this->fromModel->getV()!=NULL &&  this->fromModel->getDx()!=NULL )
+//		Task<ParallelComputeAccFromMapping<MechanicalMapping <In,Out> > >(this,**this->toModel->getDx(), **this->fromModel->getV(), **this->fromModel->getDx());
+}
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::propagateDx()
+{
+    if (this->fromModel!=NULL && this->toModel->getDx()!=NULL && this->fromModel->getDx()!=NULL)
+        Task<ParallelMappingApplyJCPU< Mapping<In,Out> >,ParallelMappingApplyJ< Mapping<In,Out> > >(this,**this->toModel->getDx(), **this->fromModel->getDx());
+}
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::propagateXfree()
+{
+    if (this->fromModel!=NULL && this->toModel->getXfree()!=NULL && this->fromModel->getXfree()!=NULL)
+        Task<ParallelMappingApplyCPU< Mapping<In,Out> >,ParallelMappingApply< Mapping<In,Out> > >(this,**this->toModel->getXfree(), **this->fromModel->getXfree());
+}
+
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::accumulateForce()
+{
+/*    if( this->fromModel==NULL ) cerr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<endl;
+    else if( this->toModel==NULL ) cerr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<endl;
+    else cerr<<"MechanicalMapping<In,Out>::accumulateForce() OK"<<endl;*/
+    if (this->fromModel!=NULL && this->toModel->getF()!=NULL && this->fromModel->getF()!=NULL)
+        Task<ParallelMappingApplyJTCPU< MechanicalMapping<In,Out> >,ParallelMappingApplyJT< MechanicalMapping<In,Out> > >(this,**this->fromModel->getF(), **this->toModel->getF());
+
+}
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::accumulateDf()
+{
+    if (this->fromModel!=NULL && this->toModel->getF()!=NULL && this->fromModel->getF()!=NULL)
+        Task<ParallelMappingApplyJTCPU< MechanicalMapping<In,Out> >,ParallelMappingApplyJT< MechanicalMapping<In,Out> > >(this,**this->fromModel->getF(), **this->toModel->getF());
+}
+
+template <class In, class Out>
+void MechanicalMapping<In,Out>::accumulateConstraint()
+{
+    if (this->fromModel!=NULL && this->toModel->getC()!=NULL && this->fromModel->getC()!=NULL)
+	{
+		applyJT(*this->fromModel->getC(), *this->toModel->getC());
+	       // Task<ParallelMappingApplyJTCPU<MechanicalMapping<In,Out> >,ParallelMappingApplyJT<MechanicalMapping<In,Out> >  >(this,**this->fromModel->getC(), **this->toModel->getC());
+		// Accumulate contacts indices through the MechanicalMapping
+		std::vector<unsigned int>::iterator it = this->toModel->getConstraintId().begin();
+		std::vector<unsigned int>::iterator itEnd = this->toModel->getConstraintId().end();
+
+		while (it != itEnd)
+		{
+			this->fromModel->setConstraintId(* it);
+			it++;
+		}
+	}
+}
+#endif
 
 
 } // namespace behavior

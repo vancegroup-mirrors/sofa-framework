@@ -40,6 +40,11 @@ namespace component {
 
 namespace linearsolver {
 
+template<class TVector>
+class BlockJacibiPreconditionerInternalData {
+};
+  
+  
 /// Linear solver based on a NxN bloc diagonal matrix (i.e. block Jacobi preconditioner)
 template<class TMatrix, class TVector>
 class BlockJacobiPreconditioner : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>
@@ -58,6 +63,26 @@ public:
     BlockJacobiPreconditioner();
     void solve (Matrix& M, Vector& x, Vector& b);
     void invert(Matrix& M);
+    
+    BlockJacibiPreconditionerInternalData<TVector> internalData; //not use in CPU
+    
+    /// Pre-construction check method called by ObjectFactory.
+    /// Check that DataTypes matches the MechanicalState.
+    template<class T>
+    static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg) {
+	return sofa::core::objectmodel::BaseObject::canCreate(obj, context, arg);	    
+    }
+
+    virtual std::string getTemplateName() const
+    {
+	return templateName(this);
+    }
+
+    static std::string templateName(const BlockJacobiPreconditioner<TMatrix,TVector>* = NULL)
+    {
+	return TVector::Name();
+    }
+    
 };
 
 } // namespace linearsolver

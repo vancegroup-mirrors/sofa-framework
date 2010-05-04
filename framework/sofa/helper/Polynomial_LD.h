@@ -118,11 +118,12 @@ public :
 	Monomial_LD<Real,N> operator*(const Monomial_LD<Real,N> & a){Monomial_LD<Real,N> r(*this);r*=a;return r;}
 
 	///Evaluating value
-	Real operator()(const sofa::helper::vector<Real> & x) const;
 	Real operator()(const RNpoint & x) const;
-	///Evaluating derivative value
-	Real operator()(const sofa::helper::vector<Real> & x,unsigned int ideriv) const;
-	Real operator()(const RNpoint & x,unsigned int ideriv) const;
+	///Evaluating first partial derivative by idvar-th variable
+	Real operator()(const RNpoint & x,unsigned int idvar) const;
+
+	///Evaluating partial derivative hight order by idvar-th variable in ideriv-th order
+	Real operator()(const RNpoint & x,unsigned int idvar,unsigned int ideriv) const;//Todo
 
 	///Derivative operator alowing to write p1=p2.d(x);
 	Monomial_LD<Real,N> d(const unsigned int & ideriv) const;
@@ -196,11 +197,12 @@ public :
 	Polynomial_LD<Real,N>  operator*(const Polynomial_LD<Real,N> & a){Polynomial_LD<Real,N> r(*this);r*=a;return r;}
 
 	///Evaluating
-	Real operator()(const sofa::helper::vector<Real> & x) const;
 	Real operator()(const RNpoint & x) const;
-	///Evaluating derivative
-	Real operator()(const sofa::helper::vector<Real> & x,unsigned int iderive) const;
-	Real operator()(const RNpoint & x,unsigned int iderive) const;
+	///Evaluating first partial derivative by idvar-th variable
+	Real operator()(const RNpoint & x,unsigned int idvar) const;
+
+	///Evaluating partial derivative hight order by idvar-th variable in ideriv-th order
+	Real operator()(const RNpoint & x,unsigned int idvar,unsigned int ideriv) const;//Todo
 
 	///Derivative operator alowing to write p1=p2.d(x);
 	Polynomial_LD<Real,N>  d(const unsigned int & ideriv) const;
@@ -221,6 +223,7 @@ public :
 	friend Polynomial_LD<FReal,FN> & operator*(const Monomial_LD<FReal,FN>   & a, Polynomial_LD<FReal,FN> & r);
 
 	void sort();
+	void testPolynomial_LD();
 protected :
 
 	///The sort must be done after each constructor and each operation where monomials are inserted
@@ -249,6 +252,23 @@ inline std::istream & operator>>(std::istream & stream, Polynomial_LD<FReal,FN> 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
+#if defined(WIN32) && !defined(SOFA_BUILD_HELPER)
+	#ifdef SOFA_DOUBLE
+		extern template class SOFA_HELPER_API Polynomial_LD<double,1>;
+		extern template class SOFA_HELPER_API Polynomial_LD<double,2>;
+		extern template class SOFA_HELPER_API Polynomial_LD<double,3>;
+		extern template class SOFA_HELPER_API Polynomial_LD<double,4>;
+		extern template class SOFA_HELPER_API Polynomial_LD<double,5>;
+	#endif
+
+	#ifdef SOFA_FLOAT
+		extern template class SOFA_HELPER_API Polynomial_LD<float,1>;
+		extern template class SOFA_HELPER_API Polynomial_LD<float,2>;
+		extern template class SOFA_HELPER_API Polynomial_LD<float,3>;
+		extern template class SOFA_HELPER_API Polynomial_LD<float,4>;
+		extern template class SOFA_HELPER_API Polynomial_LD<float,5>;
+	#endif
+#endif
 
 
 

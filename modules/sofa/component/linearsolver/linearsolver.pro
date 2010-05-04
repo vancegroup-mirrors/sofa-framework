@@ -16,7 +16,9 @@ HEADERS +=  \
            CGLinearSolver.h \
            PCGLinearSolver.h \
            JacobiPreconditioner.h \
+           JacobiPreconditioner.inl \
            BlockJacobiPreconditioner.h \
+           BlockJacobiPreconditioner.inl \
            SSORPreconditioner.h \
            CholeskySolver.h \
            LULinearSolver.h \

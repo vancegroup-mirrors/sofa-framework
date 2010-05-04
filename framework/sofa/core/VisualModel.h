@@ -119,6 +119,11 @@ public:
      *  \brief used to update the model if necessary.
      */
     virtual void updateVisual() { update(); }
+     /**
+     *  \brief used to update the model if necessary.
+     */
+    virtual void parallelUpdateVisual() { }
+
 
     /**
      *  \brief used to update the model if necessary.

@@ -145,6 +145,15 @@ public:
     template<class T>
     static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
+#ifdef SOFA_SMP_NUMA
+        if(context&&context->getProcessor()!=-1){
+        
+        obj = new(numa_alloc_onnode(sizeof(T),context->getProcessor()/2)) T(
+            (arg?dynamic_cast<In*>(arg->findObject(arg->getAttribute("object1","../.."))):NULL),
+            (arg?dynamic_cast<Out*>(arg->findObject(arg->getAttribute("object2",".."))):NULL));
+        }
+        else
+#endif
         obj = new T(
             (arg?dynamic_cast<In*>(arg->findObject(arg->getAttribute("object1","../.."))):NULL),
             (arg?dynamic_cast<Out*>(arg->findObject(arg->getAttribute("object2",".."))):NULL));

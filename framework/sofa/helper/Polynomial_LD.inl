@@ -154,18 +154,6 @@ Monomial_LD<Real,N> & Monomial_LD<Real,N>::operator*=(const Monomial_LD<Real,N> 
 }
 ////////////////////////////////
 template<typename Real, unsigned int N>
-Real Monomial_LD<Real,N>::operator()(const vector<Real> & x) const
-{
-	if (x.size()!= N) cout<<"WARNING : value assigned to the monome has not the good number of variable"<<endl;
-	Real value= coef;
-	for( unsigned int i=0;i<N;i++)
-	{
-		value*=(Real) pow(x[i],powers[i]);
-	}
-	return value;
-}
-////////////////////////////////
-template<typename Real, unsigned int N>
 Real Monomial_LD<Real,N>::operator()(const RNpoint & x) const
 {
 	if (x.size()!= N) cout<<"WARNING : value assigned to the monome has not the good number of variable"<<endl;
@@ -176,99 +164,57 @@ Real Monomial_LD<Real,N>::operator()(const RNpoint & x) const
 	}
 	return value;
 }
+
 ////////////////////////////////
 template<typename Real, unsigned int N>
-Real Monomial_LD<Real,N>::operator()(const vector<Real> & x,unsigned int ideriv) const
+Real Monomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int idvar) const
 {
-	//assert( (x.size()==N) && (ideriv < N) );
+	//assert( (x.size()==N) && (idvar < N) );
 	if (x.size()!= N) cout<<"WARNING : value assigned to the monome has not the good number of variable"<<endl;
+
 	Real value= coef;
 
-	if (ideriv >= N)
+	if (idvar >= N)
 	{
-		cout<<"WARNING : "<<ideriv<<"-th derivative couldn't take place for the monomial of:"<<N<<"-variables"<<endl
+		cout<<"WARNING : "<<idvar<<"-th partial derivative couldn't take place for the monomial of:"<<N<<"-variables"<<endl
 				<<(*this)<<endl
-				<<"CONDITION: id_derivative = { 0,1... (NbVariable-1) }"<<endl<<endl;
+				<<"CONDITION: id_variable = { 0,1... (NbVariable-1) }"<<endl<<endl;
 	}
 	else
 	{
-		if(ideriv==0)
+		for(unsigned int i=0;i<N;i++)
 		{
-			value=this->operator()(x);
-		}
-		else
-		{
-			for(unsigned int i=0;i<N;i++)
+			if (i!=idvar)
 			{
-				if (i==ideriv)
-				{
-					value*=(Real) powers[i];//derivate
-					value*=(Real) pow(x[i],(powers[i]-1));
-				}
-				else
-				{
-					value*=(Real) pow(x[i],powers[i]);
-				}
+				value*=(Real) pow(x[i],powers[i]);
+			}
+			else
+			{
+				value*=(Real) powers[i];//derivate
+				value*=(Real) pow(x[i],(powers[i]-1));
 			}
 		}
+
 	}
 	return value;
 }
 ////////////////////////////////
 template<typename Real, unsigned int N>
-Real Monomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int ideriv) const
-{
-	//assert( (x.size()==N) && (ideriv < N) );
-	if (x.size()!= N) cout<<"WARNING : value assigned to the monome has not the good number of variable"<<endl;
-	Real value= coef;
-
-	if (ideriv >= N)
-	{
-		cout<<"WARNING : "<<ideriv<<"-th derivative couldn't take place for the monomial of:"<<N<<"-variables"<<endl
-				<<(*this)<<endl
-				<<"CONDITION: id_derivative = { 0,1... (NbVariable-1) }"<<endl<<endl;
-	}
-	else
-	{
-		if(ideriv==0)
-		{
-			value=this->operator()(x);
-		}
-		else
-		{
-			for(unsigned int i=0;i<N;i++)
-			{
-				if (i==ideriv)
-				{
-					value*=(Real) powers[i];//derivate
-					value*=(Real) pow(x[i],(powers[i]-1));
-				}
-				else
-				{
-					value*=(Real) pow(x[i],powers[i]);
-				}
-			}
-		}
-	}
-	return value;
-}
-////////////////////////////////
-template<typename Real, unsigned int N>
-Monomial_LD<Real,N> Monomial_LD<Real,N>::d(const unsigned int & ideriv) const
+Monomial_LD<Real,N> Monomial_LD<Real,N>::d(const unsigned int & idvar) const
 {
 	Monomial_LD<Real,N> r(*this);
-	if (ideriv >= N)
+	if (idvar >= N)
 	{
-		cout<<"WARNING : "<<ideriv<<"-th derivative couldn't take place for the monomial of:"<<N<<"-variables"<<endl
+		cout<<"WARNING : "<<idvar<<"-th derivative couldn't take place for the monomial of:"<<N<<"-variables"<<endl
 				<<r<<endl
 				<<"CONDITION: id_derivative = { 0,1... (NbVariable-1) }"<<endl<<endl;
 	}
 	else
 	{
-		r.coef*=(Real) r.powers[ideriv];
-		if (powers[ideriv] != 0)
+		r.coef*=(Real) r.powers[idvar];
+		if (powers[idvar] != 0)
 		{
-			(r.powers[ideriv])--;
+			(r.powers[idvar])--;
 		}
 	}
 	return r;
@@ -464,19 +410,6 @@ Polynomial_LD<Real,N> Polynomial_LD<Real,N>::operator-() const
 	return r;
 }
 ////////////////////////////////
-
-template<typename Real, unsigned int N>
-Real Polynomial_LD<Real,N>::operator()(const sofa::helper::vector<Real> & x) const
-{
-	Real result=(Real) 0.;
-	for(MonomialConstIterator it=listOfMonoMial.begin();it != listOfMonoMial.end();++it)
-	{
-		result += (*it).operator()(x);
-	}
-	return result;
-}
-
-////////////////////////////////
 template<typename Real, unsigned int N>
 Real Polynomial_LD<Real,N>::operator()(const RNpoint & x) const
 {
@@ -487,35 +420,6 @@ Real Polynomial_LD<Real,N>::operator()(const RNpoint & x) const
 	}
 	return result;
 }
-////////////////////////////////
-template<typename Real, unsigned int N>
-Real Polynomial_LD<Real,N>::operator()(const sofa::helper::vector<Real> & x,unsigned int iderive) const
-{
-	Real result=(Real) 0.;
-	if (iderive >= N)
-	{
-		cout<<"WARNING : "<<iderive<<"-th derivative couldn't take place for the polynomial of:"<<N<<"-variables"<<endl
-				<<(*this)<<endl
-				<<"CONDITION: id_derivative = { 0,1... (NbVariable-1) }"<<endl<<endl;
-	}
-	else
-	{
-		if(iderive==0)
-		{
-			result=this->operator()(x);
-		}
-		else
-		{
-				for(MonomialConstIterator it=listOfMonoMial.begin();it != listOfMonoMial.end();++it)
-				{
-					result += (*it).operator()(x,iderive);
-				}
-		}
-
-	}
-	return result;
-}
-
 ////////////////////////////////
 template<typename Real, unsigned int N>
 Real Polynomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int iderive) const
@@ -529,18 +433,10 @@ Real Polynomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int iderive) c
 	}
 	else
 	{
-		if(iderive==0)
+		for(MonomialConstIterator it=listOfMonoMial.begin();it != listOfMonoMial.end();++it)
 		{
-			result=this->operator()(x);
+			result += (*it).operator()(x,iderive);
 		}
-		else
-		{
-				for(MonomialConstIterator it=listOfMonoMial.begin();it != listOfMonoMial.end();++it)
-				{
-					result += (*it).operator()(x,iderive);
-				}
-		}
-
 	}
 	return result;
 }
@@ -593,7 +489,7 @@ void Polynomial_LD<Real,N>::writeToStream(std::ostream & stream) const
 		stream << "  +  "<<*it;
 		++it;
 	}
-	stream<<std::endl;
+	//stream<<std::endl;
 }
 ////////////////////////////////
 template<typename Real, unsigned int N>

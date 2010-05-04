@@ -50,11 +50,16 @@ PairInteractionForceField<DataTypes>::PairInteractionForceField(MechanicalState<
   _object2(initData(&_object2, "object2", "Second object in interaction")),	     
   mstate1(mm1), mstate2(mm2), mask1(NULL), mask2(NULL)
 {  
+
+  if(mm1==0||mm2==0)
+    return;
 }
 
 template<class DataTypes>
 PairInteractionForceField<DataTypes>::~PairInteractionForceField()
 {
+  if(mstate1==0||mstate2==0)
+    return;
 }
 
 
@@ -148,6 +153,7 @@ template<class DataTypes>
   this->mask2 = &mstate2->forceMask;
 }
 
+#ifndef SOFA_SMP
 template<class DataTypes>
 void PairInteractionForceField<DataTypes>::addForce()
 {
@@ -180,6 +186,7 @@ void PairInteractionForceField<DataTypes>::addDForceV(double kFactor, double bFa
                   kFactor, bFactor);
 }
 
+#endif
 template<class DataTypes>
 void PairInteractionForceField<DataTypes>::addDForce(VecDeriv& /*df1*/, VecDeriv& /*df2*/, const VecDeriv& /*dx1*/, const VecDeriv& /*dx2*/)
 {
@@ -234,7 +241,230 @@ double PairInteractionForceField<DataTypes>::getPotentialEnergy() const
         return getPotentialEnergy(*mstate1->getX(), *mstate2->getX());
     else return 0;
 }
+#ifdef SOFA_SMP
 
+
+
+template <class DataTypes>
+struct ParallelPairInteractionForceFieldAddForce{
+void	operator()(PairInteractionForceField<DataTypes> *ff,
+        Shared_rw<typename DataTypes::VecDeriv> _f1,Shared_rw<typename DataTypes::VecDeriv> _f2,
+        Shared_r<typename DataTypes::VecCoord> _x1,Shared_r<typename DataTypes::VecCoord> _x2,
+        Shared_r<typename DataTypes::VecDeriv> _v1,Shared_r<typename DataTypes::VecDeriv> _v2)
+{
+  typename DataTypes::VecDeriv &f1= _f1.access();
+  typename DataTypes::VecDeriv &f2= _f2.access();
+  const typename DataTypes::VecCoord &x1= _x1.read();
+  const typename DataTypes::VecCoord &x2= _x2.read();
+  if(0&&x1.size()!=f1.size())
+	{
+    f1.resize(x1.size());
+	}
+	if(0&&x2.size()!=f2.size())
+	{
+	 f2.resize(x2.size());
+	}
+	ff->addForce(f1,f2,x1,x2,_v1.read(),_v2.read());	  
+}
+
+void	operator()(PairInteractionForceField<DataTypes> *ff,
+        Shared_rw<typename DataTypes::VecDeriv> _f1,
+        Shared_r<typename DataTypes::VecCoord> _x1,
+        Shared_r<typename DataTypes::VecDeriv> _v1)
+{
+  typename DataTypes::VecDeriv &f1= _f1.access();
+  
+  const typename DataTypes::VecCoord &x1= _x1.read();
+  const typename DataTypes::VecDeriv &v1= _v1.read();
+  if(0&&x1.size()!=f1.size())
+	{
+  	f1.resize(x1.size());
+  }
+	ff->addForce(f1,f1,x1,x1,v1,v1);	
+}
+
+};
+
+
+
+
+template <class DataTypes>
+struct ParallelPairInteractionForceFieldAddDForce{
+void	operator()(PairInteractionForceField<DataTypes> *ff,
+        Shared_rw<typename DataTypes::VecDeriv> _df1,Shared_rw<typename DataTypes::VecDeriv> _df2,
+        Shared_r<typename DataTypes::VecDeriv> _dx1,Shared_r<typename DataTypes::VecDeriv> _dx2,
+        double /*kFactor*/, double bFactor)
+{
+  typename DataTypes::VecDeriv &df1= _df1.access();
+  typename DataTypes::VecDeriv &df2= _df2.access();
+  const typename DataTypes::VecDeriv &dx1= _dx1.read();
+  const typename DataTypes::VecDeriv &dx2= _dx2.read();
+  if(0&&dx1.size()!=df1.size())
+	{
+  	df1.resize(dx1.size());
+  }
+  if(0&&dx2.size()!=df2.size())
+	{
+  	df2.resize(dx2.size());
+  }
+	ff->addDForce(df1,df2,dx1,dx2,1.0,bFactor);	
+}
+
+void	operator()(PairInteractionForceField<DataTypes> *ff,Shared_rw<typename DataTypes::VecDeriv> _df1,Shared_r<typename DataTypes::VecDeriv> _dx1,double /*kFactor*/, double bFactor)
+{
+ 	typename DataTypes::VecDeriv &df1= _df1.access();
+ 	const typename DataTypes::VecDeriv &dx1= _dx1.read();
+ 
+	if(0&&dx1.size()!=df1.size())
+	{
+	  df1.resize(dx1.size());
+	}
+
+	ff->addDForce(df1,df1,dx1,dx1,1.0,bFactor);	
+}
+
+};
+
+
+
+
+
+template <class DataTypes>
+struct ParallelPairInteractionForceFieldAddForceCPU
+{
+void	operator()(PairInteractionForceField<DataTypes> *ff,
+        Shared_rw<typename DataTypes::VecDeriv> _f1,Shared_rw<typename DataTypes::VecDeriv> _f2,
+        Shared_r<typename DataTypes::VecCoord> _x1,Shared_r<typename DataTypes::VecCoord> _x2,
+        Shared_r<typename DataTypes::VecDeriv> _v1,Shared_r<typename DataTypes::VecDeriv> _v2)
+{
+	typename DataTypes::VecDeriv &f1= _f1.access();
+	typename DataTypes::VecDeriv &f2= _f2.access();
+	const typename DataTypes::VecCoord &x1= _x1.read();
+	const typename DataTypes::VecCoord &x2= _x2.read();
+
+	if(0&&x1.size()!=f1.size())
+	{
+	  f1.resize(x1.size());
+	}
+	if(0&&x2.size()!=f2.size())
+	{
+	 f2.resize(x2.size());
+	}
+	ff->addForce(f1,f2,x1,x2,_v1.read(),_v2.read());	
+}
+
+void	operator()(PairInteractionForceField<DataTypes> *ff,
+        Shared_rw<typename DataTypes::VecDeriv> _f1,
+        Shared_r<typename DataTypes::VecCoord> _x1,
+        Shared_r<typename DataTypes::VecDeriv> _v1)
+{
+  typename DataTypes::VecDeriv &f1= _f1.access();
+  const typename DataTypes::VecCoord &x1= _x1.read();
+  const typename DataTypes::VecDeriv &v1= _v1.read();
+        
+  if(0&&x1.size()!=f1.size())
+	{
+  	f1.resize(x1.size());
+  }
+	ff->addForce(f1,f1,x1,x1,v1,v1);	
+}
+
+};
+
+
+template <class DataTypes>
+struct ParallelPairInteractionForceFieldAddDForceCPU
+{
+void	operator()(PairInteractionForceField<DataTypes> *ff,
+        Shared_rw<typename DataTypes::VecDeriv> _df1,Shared_rw<typename DataTypes::VecDeriv> _df2,
+        Shared_r<typename DataTypes::VecDeriv> _dx1,Shared_r<typename DataTypes::VecDeriv> _dx2
+        ,double /*kFactor*/, double bFactor)
+{
+  typename DataTypes::VecDeriv &df1= _df1.access();
+  typename DataTypes::VecDeriv &df2= _df2.access();
+  const typename DataTypes::VecDeriv &dx1= _dx1.read();
+  const typename DataTypes::VecDeriv &dx2= _dx2.read();
+  if(0&&dx1.size()!=df1.size())
+	{
+  	df1.resize(dx1.size());
+  }
+  if(0&&dx2.size()!=df2.size())
+	{
+  	df2.resize(dx2.size());
+  }
+	ff->addDForce(df1,df2,dx1,dx2,1.0,bFactor);	
+}
+
+void	operator()(PairInteractionForceField<DataTypes> *ff,Shared_rw<typename DataTypes::VecDeriv> _df1,Shared_r<typename DataTypes::VecDeriv> _dx1,double /*kFactor*/, double bFactor)
+{
+
+  typename DataTypes::VecDeriv &df1= _df1.access();
+  const typename DataTypes::VecDeriv &dx1= _dx1.read();
+  if(0&&dx1.size()!=df1.size())
+	{
+    df1.resize(dx1.size());
+  }
+	ff->addDForce(df1,df1,dx1,dx1,1.0,bFactor);	
+}
+
+};
+
+template<class DataTypes>
+void PairInteractionForceField<DataTypes>::addDForce(double kFactor, double bFactor)
+{
+  if (mstate1 && mstate2)
+	{
+    VecDeriv& df1 =*mstate1->getF();
+    VecDeriv& df2 = *mstate2->getF();
+    if(&df1==&df2)
+		{
+      Task<ParallelPairInteractionForceFieldAddDForceCPU<DataTypes >,ParallelPairInteractionForceFieldAddDForce< DataTypes > >(this,*df1,**mstate1->getDx(),kFactor,bFactor);
+	
+    }
+		else
+		{
+      Task<ParallelPairInteractionForceFieldAddDForceCPU<DataTypes >,ParallelPairInteractionForceFieldAddDForce< DataTypes > >(this,*df1,*df2,**mstate1->getDx(),**mstate2->getDx(),kFactor,bFactor);
+    }
+  }
+}
+
+template<class DataTypes>
+void PairInteractionForceField<DataTypes>::addDForceV(double kFactor, double bFactor)
+{
+  if (mstate1 && mstate2)
+	{
+    VecDeriv& df1 =*mstate1->getF();
+    VecDeriv& df2 = *mstate2->getF();
+    if(&df1==&df2)
+		{
+      Task<ParallelPairInteractionForceFieldAddDForceCPU< DataTypes > ,ParallelPairInteractionForceFieldAddDForce< DataTypes > >(this,*df1,**mstate1->getV(),kFactor,bFactor);
+    }
+		else
+		{
+      Task<ParallelPairInteractionForceFieldAddDForceCPU<DataTypes >,ParallelPairInteractionForceFieldAddDForce<DataTypes > >(this,*df1,*df2,**mstate1->getV(),**mstate2->getV(),kFactor,bFactor);
+    }
+  }
+}
+
+template<class DataTypes>
+void PairInteractionForceField<DataTypes>::addForce()
+{
+  if (mstate1 && mstate2)
+	{
+    VecDeriv& f1 =*mstate1->getF();
+    VecDeriv& f2 = *mstate2->getF();
+    if(&f1==&f2)
+		{
+      Task<ParallelPairInteractionForceFieldAddForceCPU< DataTypes >,ParallelPairInteractionForceFieldAddForce< DataTypes > >(this,*f1,**mstate1->getX(),**mstate1->getV());
+    }
+    else
+		{
+      Task<ParallelPairInteractionForceFieldAddForceCPU< DataTypes > ,ParallelPairInteractionForceFieldAddForce< DataTypes > >(this,*f1,*f2,**mstate1->getX(),**mstate2->getX()
+                                                                 ,**mstate1->getV(),**mstate2->getV());
+    }
+  }
+} 
+#endif
 } // namespace behavior
 
 } // namespace componentmodel

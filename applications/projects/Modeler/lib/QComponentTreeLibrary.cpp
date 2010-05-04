@@ -57,7 +57,6 @@ namespace sofa
 
       QComponentTreeLibrary::~QComponentTreeLibrary()
       {
-        setDisplayed(false);
         delete label;
         delete templates;
       }

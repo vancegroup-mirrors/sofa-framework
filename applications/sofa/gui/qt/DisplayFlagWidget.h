@@ -64,6 +64,12 @@ namespace sofa
       {
 	Q_OBJECT
 	  public:       
+	enum {VISUAL, BEHAVIOR, COLLISION, BOUNDING, MAPPING, MECHANICALMAPPING, FORCEFIELD, INTERACTION, WIREFRAME, NORMALS,
+#ifdef SOFA_SMP
+	 PROCESSORCOLOR,
+#endif
+	 ALL};
+ 
 
 	DisplayFlagWidget(QWidget* parent, const char* name= 0, Qt::WFlags f= 0 );
 
@@ -80,7 +86,7 @@ namespace sofa
 	void findChildren(Q3CheckListItem *, std::vector<Q3CheckListItem* > &children);
 
 
-	Q3CheckListItem* itemShowFlag[10];
+	Q3CheckListItem* itemShowFlag[ALL];
 	std::map<  Q3CheckListItem*, int > mapFlag;
       };
 

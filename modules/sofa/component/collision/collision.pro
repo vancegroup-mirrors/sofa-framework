@@ -146,6 +146,16 @@ SOURCES += initCollision.cpp \
 
 
 
+contains(DEFINES,SOFA_SMP){
+
+HEADERS += \
+           ParallelCollisionPipeline.h
+SOURCES += \
+           ParallelCollisionPipeline.cpp
+
+}
+
+
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
@@ -166,3 +176,4 @@ macx : LIBS += -framework GLUT
 INCLUDEPATH -= $$SOFA_DIR/applications
 
 include(collision-local.cfg) 
+                             

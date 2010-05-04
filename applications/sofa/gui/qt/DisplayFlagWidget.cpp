@@ -83,7 +83,10 @@ namespace sofa
 	itemShowFlag[Node::WIREFRAME]   = new Q3CheckListItem(itemShowOptions, "Wire Frame", Q3CheckListItem::CheckBox);
 	itemShowFlag[Node::NORMALS]   = new Q3CheckListItem(itemShowOptions, itemShowFlag[Node::WIREFRAME], "Normals", Q3CheckListItem::CheckBox);
 
-	insertItem(itemShowAll); 
+#ifdef SOFA_SMP
+	itemShowFlag[PROCESSORCOLOR]   = new Q3CheckListItem(itemShowOptions, itemShowFlag[NORMALS], "Processor Color", Q3CheckListItem::CheckBox);
+#endif
+	insertItem(itemShowAll);
 	itemShowAll->insertItem(itemShowVisual); itemShowAll->setOpen(true);
 	itemShowVisual->insertItem(itemShowFlag[Node::VISUALMODELS]);
 	itemShowAll->insertItem(itemShowBehavior); 
@@ -100,8 +103,10 @@ namespace sofa
 	insertItem(itemShowOptions); itemShowOptions->setOpen(true);
 	itemShowOptions->insertItem(itemShowFlag[Node::WIREFRAME]);
 	itemShowOptions->insertItem(itemShowFlag[Node::NORMALS]);
-
- 	for (int i=0;i<10;++i)  mapFlag.insert(std::make_pair(itemShowFlag[i],i));
+#ifdef SOFA_SMP
+	itemShowOptions->insertItem(itemShowFlag[Node::PROCESSORCOLOR]);
+#endif
+ 	for (int i=0;i<ALL;++i)  mapFlag.insert(std::make_pair(itemShowFlag[i],i));
       }
 
       void DisplayFlagWidget::findChildren(Q3CheckListItem *item, std::vector<Q3CheckListItem* > &children)

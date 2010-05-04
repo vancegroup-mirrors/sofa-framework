@@ -66,7 +66,7 @@ template<class TMatrix, class TVector>
 void SSORPreconditioner<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r) {
 	//double t2 = CTime::getRefTime();
 	const int n = M.rowSize();
-    const Real w = (Real)f_omega.getValue();
+	const Real w = (Real)f_omega.getValue();
 	//Solve (D/w+u) * u3 = r;
 	for (int j=n-1;j>=0;j--) {
 		double temp = 0.0;
@@ -95,7 +95,7 @@ void SSORPreconditioner<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r
 template<>
 void SSORPreconditioner<SparseMatrix<double>, FullVector<double> >::solve (Matrix& M, Vector& z, Vector& r) {
 	const int n = M.rowSize();
-    const Real w = (Real)f_omega.getValue();
+	const Real w = (Real)f_omega.getValue();
 
 	//Solve (D/w+U) * t = r;
 	for (int j=n-1;j>=0;j--) {

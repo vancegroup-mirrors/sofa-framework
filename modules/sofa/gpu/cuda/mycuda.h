@@ -43,8 +43,8 @@ namespace cuda
 
 extern "C" {
 
-extern int mycudaGetnumDevices();
-extern int mycudaGetBufferDevice();  
+extern SOFA_GPU_CUDA_API int  mycudaGetnumDevices();
+extern SOFA_GPU_CUDA_API int  mycudaGetBufferDevice();  
   
 extern int SOFA_GPU_CUDA_API mycudaInit(int device=-1);
 extern void SOFA_GPU_CUDA_API mycudaMalloc(void **devPtr, size_t size,int d = mycudaGetBufferDevice());
@@ -73,6 +73,8 @@ extern void SOFA_GPU_CUDA_API mycudaLogError(const char* err, const char* src);
 extern int myprintf(const char* fmt, ...);
 extern int mycudaGetMultiProcessorCount();
 extern void mycudaPrivateInit(int device=-1);
+
+extern void cuda_void_kernel();
 
 
 extern const char* mygetenv(const char* name);

@@ -64,7 +64,7 @@ namespace sofa
 
           connect(selector, SIGNAL(openCategory(const std::string&)),
                   this, SLOT(openCategory(const std::string&)));
-          connect(selector, SIGNAL(openTutorial(const std::string&)), 
+          connect(selector, SIGNAL(openTutorial(const std::string&)),
                   this, SLOT(openTutorial(const std::string&)));
           connect(selector, SIGNAL(openHTML(const std::string&)),
                   this, SLOT(openHTML(const std::string&)));
@@ -105,7 +105,7 @@ namespace sofa
           
 
           //Set up the list of tutorials
-          selector->openCategory(QString("All Sofa Tutorials"));
+          selector->init();
 
           const std::list<std::string> &listTuto=selector->getCategories();
           for (std::list<std::string>::const_reverse_iterator it=listTuto.rbegin();it!=listTuto.rend();++it)
@@ -132,7 +132,6 @@ namespace sofa
 
       void SofaTutorialManager::openTutorial(const std::string& filename)
       {
-
           graph->closeDialogs();
 
           if (filename.empty())
@@ -204,17 +203,13 @@ namespace sofa
       void SofaTutorialManager::dynamicChangeOfScene( const QString& u)
       {
         std::string path=u.ascii();
-#endif
+#endif        
         path  = sofa::helper::system::DataRepository.getFile(path);
         std::string extension=sofa::helper::system::SetDirectory::GetExtension(path.c_str());
+
         if (extension == "xml" || extension == "scn")
         {
             openTutorial(path);
-            std::string htmlLink=path.substr(0,path.size()-3)+"html";
-            if (sofa::helper::system::DataRepository.findFile(htmlLink))
-                openHTML(htmlLink);
-            else
-                openHTML("");
         }
         else if (extension == "html")
         {

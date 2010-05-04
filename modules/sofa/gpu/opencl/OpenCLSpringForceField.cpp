@@ -30,7 +30,7 @@
 #include "OpenCLProgram.h"
 #include "OpenCLKernel.h"
 
-#define DEBUG_TEXT(t) //printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
+#define DEBUG_TEXT(t)// printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
 
 namespace sofa {
 
@@ -212,7 +212,7 @@ DEBUG_TEXT("StiffSpringForceFieldOpenCL3f_addDForce");
 	CudaSpringForceFieldInputTextures<float,CudaVec3<float> >::setDX((const CudaVec3<float>*)dx);
 	size_t sizeBuffer = BSIZE*3*sizeof(float);
 #else
-	size_t sizeBuffer = BSIZE*6*sizeof(float);
+//	size_t sizeBuffer = BSIZE*6*sizeof(float);
 #endif
 
 	SpringForceField_CreateProgramWithFloat();

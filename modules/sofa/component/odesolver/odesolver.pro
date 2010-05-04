@@ -34,6 +34,12 @@ SOURCES += initOdeSolver.cpp \
            RungeKutta4Solver.cpp \
            StaticSolver.cpp
 
+contains(DEFINES,SOFA_SMP){ 
+SOURCES += ParallelCGImplicitSolver.cpp
+HEADERS += ParallelCGImplicitSolver.h \
+           ParallelOdeSolverImpl.h 
+
+}
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX

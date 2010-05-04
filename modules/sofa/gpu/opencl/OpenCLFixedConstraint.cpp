@@ -34,7 +34,6 @@
 
 #define DEBUG_TEXT(t) //printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
 
-
 #define BSIZE 16
 
 namespace sofa {
@@ -132,16 +131,16 @@ void FixedConstraintOpenCL3f_projectResponseIndexed(unsigned int size, const _de
 }
 
 
-void FixedConstraintOpenCL3f_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
-void FixedConstraintOpenCL3f1_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
-void FixedConstraintOpenCL3f1_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
+void FixedConstraintOpenCL3f_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){NOT_IMPLEMENTED()}
+void FixedConstraintOpenCL3f1_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){NOT_IMPLEMENTED();}
+void FixedConstraintOpenCL3f1_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/){NOT_IMPLEMENTED();}
 
 
 
-void FixedConstraintOpenCL3d_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
-void FixedConstraintOpenCL3d_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
-void FixedConstraintOpenCL3d1_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
-void FixedConstraintOpenCL3d1_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/){DEBUG_TEXT("no implemented");exit(0);}
+void FixedConstraintOpenCL3d_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){NOT_IMPLEMENTED();}
+void FixedConstraintOpenCL3d_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/){NOT_IMPLEMENTED();}
+void FixedConstraintOpenCL3d1_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/){NOT_IMPLEMENTED();}
+void FixedConstraintOpenCL3d1_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/){NOT_IMPLEMENTED();}
 
 
 

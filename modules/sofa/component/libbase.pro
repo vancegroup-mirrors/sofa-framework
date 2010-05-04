@@ -196,6 +196,11 @@ SOURCES +=  \
            topology/TriangleSetTopologyModifier.cpp
 
 
+contains(DEFINES,SOFA_SMP){
+HEADERS += \
+           container/MechanicalObjectTasks.inl
+}
+
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX

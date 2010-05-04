@@ -37,6 +37,7 @@
 //
 #include <sofa/simulation/common/Node.h>
 #include <cstring>
+#include <sofa/helper/SimpleTimer.h>
 
 
 #ifdef WIN32
@@ -96,8 +97,19 @@ bool isSchedulerError(const HDErrorInfo *error)
     }
 }
 
+static bool firstCB = true;
+
+sofa::helper::TSimpleTimer<1000,10> mytimer;
+
 HDCallbackCode HDCALLBACK stateCallback(void *userData)
 {
+    if (!firstCB)
+        mytimer.stop();
+
+    firstCB = false;
+
+    mytimer.start("CB");
+
 	OmniData* data = static_cast<OmniData*>(userData);
 	//FIXME : Apparenlty, this callback is run before the mechanical state initialisation. I've found no way to know whether the mechcanical state is initialized or not, so i wait ...
 	//static int wait = 0;
@@ -154,10 +166,13 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	//if(data->servoDeviceData.m_buttonState1)
 	//	renderForce = !renderForce;
 
+    mytimer.step("Force");
+
 	double fx=0.0, fy=0.0, fz=0.0;
 	if (data->forceFeedback != NULL)
 		(data->forceFeedback)->computeForce(data->servoDeviceData.pos[0], data->servoDeviceData.pos[1], data->servoDeviceData.pos[2], data->servoDeviceData.quat[0], data->servoDeviceData.quat[1], data->servoDeviceData.quat[2], data->servoDeviceData.quat[3], fx, fy, fz);
 
+    mytimer.step("OpenHaptics");
 
 	double currentForce[3];
 	currentForce[0] = ( data->rotation[0][0] * fx + data->rotation[1][0] * fy + data->rotation[2][0] * fz) * data->forceScale;

@@ -119,7 +119,7 @@ using namespace sofa::simulation;
 
 	      bool ready(){return _waitForRender;};
 	      void showEntireScene(void);
-
+              void drawSceneAxis() const;
 
 	      void setScene(sofa::simulation::Node* scene, const char* filename, bool keepParams=false);
 
@@ -215,6 +215,13 @@ using namespace sofa::simulation;
 	      QPoint m_mousePressPos;
 	      QPoint m_mousePos;
 	      bool pickDone;
+              Ogre::Vector3 size_world;
+
+              sofa::defaulttype::Vector3 sceneMinBBox;
+              sofa::defaulttype::Vector3 sceneMaxBBox;
+
+              bool showAxis;
+              bool perspectiveCamera;
 
 	      std::string sceneFile;
 	      //Tab in the GUI containing the interface to configure the lights
@@ -241,7 +248,13 @@ using namespace sofa::simulation;
 	      Ogre::Radian m_mRotX, m_mRotY;
 	      Ogre::Real m_mMoveSpeed;
 	      Ogre::Degree m_mRotateSpeed;
+
+              Ogre::Vector3 fixedAxis;
+
 	      Ogre::SceneNode* zeroNode;
+              Ogre::SceneNode* nodeX;
+              Ogre::SceneNode* nodeY;
+              Ogre::SceneNode* nodeZ;
 	      bool _waitForRender;
 	      float _factorWheel;
 
@@ -250,9 +263,12 @@ using namespace sofa::simulation;
 	      bool updateInteractor( QMouseEvent * e );	
 				
 	      void updateIntern();
- 	      virtual void paintEvent(QPaintEvent*);				 
+
+              virtual void showEvent(QShowEvent *);
+              virtual void initializeGL();
+              virtual void paintGL();
  	      virtual void resizeEvent(QResizeEvent*);			 
-	      virtual void timerEvent(QTimerEvent * event){Q_UNUSED(event);updateIntern();}
+              virtual void timerEvent(QTimerEvent * event){Q_UNUSED(event);updateIntern();}
 
 	      virtual void keyPressEvent ( QKeyEvent * e );
               virtual void keyReleaseEvent ( QKeyEvent * e );
@@ -273,11 +289,7 @@ using namespace sofa::simulation;
 	      }
 
 
-	      public slots:	      
-	      virtual void update(){
-		updateIntern();
-	      };
-	      
+              public slots:
 	      void updateViewerParameters();
 
 	      void resizeDirLight(int v);

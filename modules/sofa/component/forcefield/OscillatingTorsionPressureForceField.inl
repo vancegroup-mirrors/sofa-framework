@@ -50,6 +50,7 @@ using namespace core::componentmodel::topology;
 
 template <class DataTypes> OscillatingTorsionPressureForceField<DataTypes>::~OscillatingTorsionPressureForceField()
 {
+	//file.close();
 }
 // Handle topological changes
 template <class DataTypes> void  OscillatingTorsionPressureForceField<DataTypes>::handleTopologyChange()
@@ -65,7 +66,7 @@ template <class DataTypes> void OscillatingTorsionPressureForceField<DataTypes>:
 {
     //serr << "initializing OscillatingTorsionPressureForceField" << sendl;
     this->core::componentmodel::behavior::ForceField<DataTypes>::init();
-
+	//file.open("testsofa.dat");
     // normalize axis:
     axis.setValue( axis.getValue() / axis.getValue().norm() );
 
@@ -104,8 +105,10 @@ double OscillatingTorsionPressureForceField<DataTypes>::getAmplitude()
 template <class DataTypes> 
 void OscillatingTorsionPressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& /*v*/)
 {
+	
 	Deriv force;
   Coord forceDir, deltaPos;
+//  const VecCoord& x0 = *this->mstate->getX0();
   Real avgRotAngle = 0;
   Real totalDist = 0;
   
@@ -123,7 +126,13 @@ void OscillatingTorsionPressureForceField<DataTypes>::addForce(VecDeriv& f, cons
   }
    avgRotAngle /= totalDist;
    std::cout << "Angle = " << 57.295779513 * avgRotAngle;
+   
    rotationAngle = avgRotAngle;
+
+
+   //double da = 360.0 / 6.2831853 * rotationAngle;
+ //  file <<this->getContext()->getTime() << " " << getAmplitude()*0.01 << " " << avgRotAngle << std::endl;
+
 
   // calculate and apply penalty forces to ideal positions
   defaulttype::Quat quat( axis.getValue(), avgRotAngle );
@@ -148,7 +157,7 @@ void OscillatingTorsionPressureForceField<DataTypes>::addForce(VecDeriv& f, cons
     pointCnt++;
   }
   avgError /= (Real)pointCnt;
-  std::cout << "  AE = " << avgError << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
+  //std::cout << "  AE = " << avgError << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
 
   // apply remaining moment
   //Real check = 0;
@@ -162,6 +171,17 @@ void OscillatingTorsionPressureForceField<DataTypes>::addForce(VecDeriv& f, cons
     }
   }
   //std::cout << "RM=" << remainingMoment << "  CHK=" << check << std::endl;
+  std::cout << "  RM = " << remainingMoment << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
+}
+
+
+template <class DataTypes> 
+void OscillatingTorsionPressureForceField<DataTypes>::addDForce (VecDeriv& , const VecDeriv& , double , double )
+{
+  /*for (int i=0; i<dx.size(); i++) if (pointActive[i])
+  {
+    df[i] -= dx[i] * penalty.getValue() * kFactor;
+  }*/
 }
 
 

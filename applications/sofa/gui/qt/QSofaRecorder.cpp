@@ -415,7 +415,8 @@ namespace sofa{
         }
         timeSlider->setValue(value);
         timeSlider->update();
-        loadSimulation();
+		if(! this->record->isOn())
+			loadSimulation();
       }
 
       void QSofaRecorder::addReadState(const std::string& writeSceneName, bool init)

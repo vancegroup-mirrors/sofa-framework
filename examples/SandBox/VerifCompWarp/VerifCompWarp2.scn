@@ -1,11 +1,13 @@
 <?xml version="1.0"?>
 <Node name="root"  dt="1" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="1" showInteractionForceFields="1" gravity="0 0 0">
-	<Object type="MasterConstraintSolver" printLog="1"/> 
+	<Object type="MasterConstraintSolver" tolerance="1e-20" printLog="1"/> 
 	<Object type="CollisionPipeline" depth="6" verbose="0" draw="0"/>
 	<Object type="BruteForceDetection" name="N2" />
 	<Object type="LocalMinDistance" name="Proximity"  alarmDistance="0.2" contactDistance="0.09"  angleCone="0.0"/>
 	<Object type="CollisionResponse" name="Response" response="FrictionContact"/> 
 	<Object type="CollisionGroup" name="Group" />
+
+
 
 	
 	<Node name="BARRE">
@@ -36,23 +38,35 @@
 			<Node name="Constraint1">
 				<Object type="MechanicalObject" name="p1" template="Vec3d" position="-0.015 -0.015 -0.1"/>
 				<Object type="SubsetMapping"  />
-				</Node>
+			</Node>
 			
 			<Node name="Constraint2">
-				<Object type="MechanicalObject" name="p2" template="Vec3d" position="0.015 0.015 -0.04444"/>
+				<Object type="MechanicalObject" name="p2" template="Vec3d" position="-0.015 -0.005 -0.1"/>
 				<Object type="SubsetMapping"  />
-				</Node>	
+			</Node>	
+			
+			<Node name="Constraint3">
+				<Object type="MechanicalObject" name="p3" template="Vec3d" position="-0.015 0.005 -0.1"/>
+				<Object type="SubsetMapping"  />
 			</Node>
+			
+			<Node name="Constraint4">
+				<Object type="MechanicalObject" name="p4" template="Vec3d" position="-0.015 0.015 -0.1"/>
+				<Object type="SubsetMapping"  />
+			</Node>	
+						
+		</Node>
 		
-		</Node>	
+	</Node>	
 	
+	<Node name="SlidingSeg">
+		<Object type="MechanicalObject" name="points" template="Vec3d" position="0.25 0.12 -0.1  -0.25 -0.08 -0.1"/>
+	</Node>	
 	
-	<Node name="ConstraintRef">
-			<Object type="MechanicalObject" name="points" template="Vec3d" position="0.025 0.015 -0.1  0.015 -0.015 -0.04444"/><!-----> <!---0.015 -0.015 -0.1 0.015 0.015 -0.04444-->
-	</Node>
-	
-	<Object type="BilateralInteractionConstraint" object1="BARRE/TetraTopo/Constraint1/p1" object2="ConstraintRef/points" first_point="0" second_point="0" />
-	<Object type="BilateralInteractionConstraint" object1="BARRE/TetraTopo/Constraint2/p2" object2="ConstraintRef/points" first_point="0" second_point="1" />
+	<SlidingConstraint object1="BARRE/TetraTopo/Constraint1/p1" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />
+	<SlidingConstraint object1="BARRE/TetraTopo/Constraint2/p2" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />
+	<SlidingConstraint object1="BARRE/TetraTopo/Constraint3/p3" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />	
+	<SlidingConstraint object1="BARRE/TetraTopo/Constraint4/p4" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />
 	
 		
 		
@@ -78,7 +92,7 @@
 			<TetrahedronFEMForceField name="FEM" youngModulus="@../../BARRE/TetraTopo/FEM.youngModulus" poissonRatio="@../../BARRE/TetraTopo/FEM.poissonRatio" 
 			computeGlobalMatrix="@../../BARRE/TetraTopo/FEM.computeGlobalMatrix" method="@../../BARRE/TetraTopo/FEM.method"/>		
 			
-			<Object type="BoxROI" name="box_roi" box="@../BARRE/TetraTopo/box_roi.box" /> 
+			<Object type="BoxROI" name="box_roi" box="@../../BARRE/TetraTopo/box_roi.box" /> 
 			<Object type="FixedConstraint" indices="@box_roi.indices" />
 			<Object type="PrecomputedConstraintCorrection" rotations="1" recompute="true" debugViewFrameScale="0.005"  /> 
 			
@@ -88,8 +102,18 @@
 			</Node>
 			
 			<Node name="Constraint2">
-				<Object type="MechanicalObject" name="p2" template="Vec3d" position="0.015 0.015 -0.04444"/>
-				<Object type="SubsetMapping" />
+				<Object type="MechanicalObject" name="p2" template="Vec3d" position="-0.015 -0.005 -0.1"/>
+				<Object type="SubsetMapping"  />
+			</Node>	
+			
+			<Node name="Constraint3">
+				<Object type="MechanicalObject" name="p3" template="Vec3d" position="-0.015 0.005 -0.1"/>
+				<Object type="SubsetMapping"  />
+			</Node>
+			
+			<Node name="Constraint4">
+				<Object type="MechanicalObject" name="p4" template="Vec3d" position="-0.015 0.015 -0.1"/>
+				<Object type="SubsetMapping"  />
 			</Node>	
 			
 		</Node>													
@@ -98,13 +122,10 @@
 	</Node>	
 	
 	
-	
-	<Node name="ConstraintRef2">
-			<Object type="MechanicalObject" name="points" template="Vec3d" position="@../ConstraintRef/points.position"/>
-	</Node>
-	
-	<Object type="BilateralInteractionConstraint" object1="BARRE2/TetraTopo/Constraint1/p1" object2="ConstraintRef2/points" first_point="0" second_point="0" />
-	<Object type="BilateralInteractionConstraint" object1="BARRE2/TetraTopo/Constraint2/p2" object2="ConstraintRef2/points" first_point="0" second_point="1" />
+	<SlidingConstraint object1="BARRE2/TetraTopo/Constraint1/p1" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />
+	<SlidingConstraint object1="BARRE2/TetraTopo/Constraint2/p2" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />
+	<SlidingConstraint object1="BARRE2/TetraTopo/Constraint3/p3" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />	
+	<SlidingConstraint object1="BARRE2/TetraTopo/Constraint4/p4" object2="SlidingSeg/points" sliding_point="0" axis_1="0" axis_2="1" />
 	
 
 </Node>

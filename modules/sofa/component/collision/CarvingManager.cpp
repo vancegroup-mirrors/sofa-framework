@@ -27,11 +27,14 @@
 #include <sofa/core/componentmodel/collision/DetectionOutput.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
+#include <sofa/core/objectmodel/OmniEvent.h>
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
+
 #include <sofa/core/componentmodel/topology/TopologicalMapping.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/component/collision/TopologicalChangeManager.h>
+#include <sofa/helper/AdvancedTimer.h>
 
 namespace sofa
 {
@@ -112,7 +115,10 @@ void CarvingManager::reset()
 void CarvingManager::doCarve()
 {
     if (modelTool==NULL || modelSurface==NULL || intersectionMethod == NULL || detectionNP == NULL) return;
-    
+
+    sofa::helper::AdvancedTimer::stepBegin("Carve");
+
+    sofa::helper::AdvancedTimer::stepBegin("CarveCollision");
     // do collision detection
     //sout << "CarvingManager: build bounding trees" << sendl;
     {
@@ -145,6 +151,8 @@ void CarvingManager::doCarve()
     detectionNP->endNarrowPhase();
     
     const core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap& detectionOutputs = detectionNP->getDetectionOutputs();
+
+    sofa::helper::AdvancedTimer::stepEnd("CarveCollision");
     
     //sout << "CarvingManager: process contacts" << sendl;
 
@@ -165,6 +173,9 @@ void CarvingManager::doCarve()
         sout << contacts->size() << " contacts detected." << sendl;
 #endif
     }
+
+    int nbelems = 0;
+
     helper::vector<int> elemsToRemove;
     for (unsigned int j=0; j < ncontacts; ++j)
     {
@@ -173,16 +184,23 @@ void CarvingManager::doCarve()
 
 		elemsToRemove.push_back(triangleIdx);
     }
+    sofa::helper::AdvancedTimer::stepBegin("CarveElems");
     if (!elemsToRemove.empty())
     {
 #ifndef NDEBUG
         sout << elemsToRemove.size() << " elements to remove"<<sendl;
 #endif
 		static TopologicalChangeManager manager;
-		manager.removeItemsFromCollisionModel(modelSurface, elemsToRemove);
+		nbelems += manager.removeItemsFromCollisionModel(modelSurface, elemsToRemove);
     }
+    sofa::helper::AdvancedTimer::stepEnd("CarveElems");
     detectionNP->setInstance(NULL);
     //sout << "CarvingManager: carve done" << sendl;
+
+    sofa::helper::AdvancedTimer::valSet("CarvedElems", nbelems);
+
+    sofa::helper::AdvancedTimer::stepEnd("Carve");
+
 }
 
 void CarvingManager::handleEvent(sofa::core::objectmodel::Event* event)
@@ -205,6 +223,10 @@ void CarvingManager::handleEvent(sofa::core::objectmodel::Event* event)
         {
             active.setValue(false);
         }
+    }
+    else if (sofa::core::objectmodel::OmniEvent* ev = dynamic_cast<sofa::core::objectmodel::OmniEvent*>(event))
+    {
+        active.setValue(ev->getButtonState() != 0);
     }
     else if (/* simulation::AnimateEndEvent* ev = */ dynamic_cast<simulation::AnimateEndEvent*>(event))
     {

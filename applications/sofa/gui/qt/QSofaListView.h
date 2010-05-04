@@ -67,6 +67,7 @@ namespace sofa{
         void Clear(sofa::simulation::Node* rootNode);   
         void Freeze();
         void Unfreeze();
+        SofaListViewAttribute getAttribute() const { return attribute_; };
         public slots:
         void Export();
         void CloseAllDialogs();
@@ -75,7 +76,7 @@ namespace sofa{
         void Close();
         void Lock(bool);
         void RequestSaving(sofa::simulation::Node*);
-        void currentActivated(bool);
+        void RequestActivation(sofa::simulation::Node*,bool);
         void RootNodeChanged(sofa::simulation::Node* newroot, const char* newpath);
         void NodeRemoved();
         void Updated();
@@ -108,8 +109,8 @@ namespace sofa{
         void expandNode(Q3ListViewItem* item);
         void transformObject ( sofa::simulation::Node *node, double dx, double dy, double dz,  double rx, double ry, double rz, double scale );
         bool isNodeErasable( core::objectmodel::BaseNode* node);
-        void graphActivation(bool activate);
         void updateMatchingObjectmodel();
+        std::list<core::objectmodel::BaseNode*> collectNodesToChange(core::objectmodel::BaseNode* node);
         std::map< void*, Q3ListViewItem* > map_modifyDialogOpened;
 	      std::map< void*, QDialog* > map_modifyObjectWindow;
         GraphListenerQListView* graphListener_;

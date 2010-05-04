@@ -39,8 +39,8 @@ namespace component
 namespace collision
 {
 
-//#define cbrt(x)     ((x) > (SReal)0.0 ? pow((SReal)(x), (SReal)1.0/(SReal)3.0) : \
-	((x) < (SReal)0.0 ? -pow((SReal)-(x), (SReal)1.0/(SReal)3.0) : (SReal)0.0))
+//#define cbrt(x)     ((x) > (SReal)0.0 ? pow((SReal)(x), (SReal)1.0/(SReal)3.0) : 
+//	((x) < (SReal)0.0 ? -pow((SReal)-(x), (SReal)1.0/(SReal)3.0) : (SReal)0.0))
 
 //#define	IsZero(x)	((x) > -EQN_EPS && (x) < EQN_EPS)
 
@@ -130,9 +130,9 @@ public:
 	static const SReal EPSILON;
 	static const SReal EQN_EPS;
 
-	static const bool IsZero(SReal x){	return((x) > -EQN_EPS && (x) < EQN_EPS); }
+	static bool IsZero(SReal x){	return((x) > -EQN_EPS && (x) < EQN_EPS); }
 
-	static const SReal cbrt(SReal x) {  
+	static SReal cbrt(SReal x) {  
 		return  ((x) > (SReal)0.0 ? pow(x, (SReal)1.0/(SReal)3.0) : (x < (SReal)0.0 ? -pow(-x, (SReal)1.0/(SReal)3.0) : (SReal)0.0));
 	}
 

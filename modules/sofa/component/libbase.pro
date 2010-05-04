@@ -199,6 +199,7 @@ SOURCES +=  \
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
+
 LIBS += $$SOFA_EXT_LIBS 
 
 macx : LIBS += -framework GLUT 

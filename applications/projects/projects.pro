@@ -10,17 +10,10 @@ SUBDIRS += generateDoc
 SUBDIRS += GenerateRigid
 SUBDIRS += generateTypedefs
 
- 
-#Projects using Qt: if no QtViewer is available, we deactivate their compilation
-SUBDIRS += Modeler
-SUBDIRS += sofaConfiguration
-!contains (DEFINES, SOFA_GUI_QTVIEWER) {
-	!contains (DEFINES, SOFA_GUI_QGLVIEWER) {
-		!contains (DEFINES, SOFA_GUI_QTOGREVIEWER) {
-			SUBDIRS -= Modeler
-                        SUBDIRS -= sofaConfiguration
-		}
-	}
+#Projects using Qt4: if no QtViewer is available, we deactivate their compilation
+contains (DEFINES, SOFA_GUI_QTVIEWER) || contains (DEFINES, SOFA_GUI_QGLVIEWER) || contains (DEFINES, SOFA_GUI_QTOGREVIEWER) {
+    SUBDIRS += Modeler
+    SUBDIRS += sofaConfiguration
 }
 
 contains (DEFINES, SOFA_GPU_CUDA) {

@@ -14,7 +14,7 @@
 #define SIZE_TEXT     75
 namespace sofa{
   namespace helper{
-    template class Factory<std::string, gui::qt::DataWidget, gui::qt::DataWidget::CreatorArgument>;
+    template class SOFA_SOFAGUIQT_API Factory<std::string, sofa::gui::qt::DataWidget, sofa::gui::qt::DataWidget::CreatorArgument>;
   }
   using namespace core::objectmodel;
   namespace gui{
@@ -25,6 +25,9 @@ namespace sofa{
         core::objectmodel::BaseData* d, bool modifiable):QWidget(parent), data(d), numLines_(1)
       {
         QHBoxLayout* layout = new QHBoxLayout(this);
+#ifdef SOFA_QT4
+		layout->setContentsMargins(0,0,0,0);
+#endif
         std::string final_str;
         formatHelperString(helper,final_str);
         std::string parentClass=data->getParentClass();
@@ -39,10 +42,22 @@ namespace sofa{
         }
         else
         {
+#ifndef SOFA_GUI_QT_NO_DATA_HELP
           QLabel* helper_label = new QLabel(this);
           helper_label->setText(QString(final_str.c_str()));
+		  helper_label->setMinimumWidth(20);
           layout->addWidget(helper_label);
           if (!parentClass.empty()) QToolTip::add(helper_label, ("Data from "+parentClass).c_str());
+#else
+          numLines_ = 0;
+          if (!final_str.empty() || !parentClass.empty())
+          {
+              if (!final_str.empty()) final_str += '\n';
+              final_str += "Data from ";
+              final_str += parentClass;
+              QToolTip::add(parent, final_str.c_str());
+          }
+#endif
         }
         if(modifiable || !data->getLinkPath().empty())
         {

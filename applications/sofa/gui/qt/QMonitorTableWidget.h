@@ -49,14 +49,21 @@ namespace sofa{
         public:
           typedef typename TDataWidget<typename sofa::component::misc::Monitor<DataTypes>::MonitorData>::MyTData MyTData;
           QMonitorWidget(QWidget* parent,const char* name, MyTData* d):TDataWidget<typename sofa::component::misc::Monitor<DataTypes>::MonitorData>(parent,name,d){}//,QMonitorWidgetHelper(parent){};
+          
+          /* TDataWidget virtuals */ 
           virtual unsigned int sizeWidget(){return 3;}
           virtual unsigned int numColumnWidget(){return 4;}
           virtual bool createWidgets();
       protected:
+
         virtual void readFromData();
         virtual void writeToData();
-        virtual void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_listTable);
+        /* */ 
+        /* QMonitorWidgetHelper virtuals */
         virtual void resizeTable(int);
+        /* */
+        void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_listTable);
+        
         Q3Table* createTableWidget(unsigned int sizeIdx);
         MyTData* data_;
         std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >  listTable_;

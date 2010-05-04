@@ -63,14 +63,14 @@ namespace sofa{
   namespace gui{
     namespace qt{
 
-      class DataWidget : public QWidget
+      class SOFA_SOFAGUIQT_API DataWidget : public QWidget
       {
         Q_OBJECT
           public slots:
             void updateDataValue()
             {
               /* check that widget has been edited
-                 emit DataOwnerDirty in case the name field has been modified
+                 emit DataOwnerDirty in case the name field has been modified 
               */ 
               if(dirty){
                 std::string previousName = baseData->getOwner()->getName();
@@ -80,8 +80,10 @@ namespace sofa{
                   emit DataOwnerDirty(true);
                 }
               }
+         
               dirty = false;
               counter = baseData->getCounter();
+              
             }
             void updateWidgetValue() 
             { 
@@ -165,7 +167,7 @@ namespace sofa{
 
 
       template<class T>
-      class TDataWidget : public DataWidget
+      class SOFA_SOFAGUIQT_API TDataWidget : public DataWidget
       {
         
       public:
@@ -274,11 +276,14 @@ namespace sofa{
         QLineEdit *linkpath_edit;
       };
 
-#if defined WIN32 && !defined(SOFA_GUI_QT_DATAWIDGET_CPP)
+//MOC_SKIP_BEGIN
+#ifdef SOFA_QT4
+#if defined(WIN32) && !defined(SOFA_GUI_QT_DATAWIDGET_CPP)
       //delay load of the specialized Factory class. unique definition reside in the cpp file. 
       extern template class SOFA_SOFAGUIQT_API helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument>;
 #endif
-
+#endif
+//MOC_SKIP_END
 
 
     } // qt

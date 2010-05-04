@@ -49,27 +49,37 @@ namespace sofa
       int OgreVisualModel::meshName=0; //static counter to get unique name for entities
       int OgreVisualModel::materialName=0; 
 
+      bool OgreVisualModel::lightsEnabled=false;
+
       OgreVisualModel::OgreVisualModel():
 	materialFile(initData(&materialFile,"materialOgre", "Name of the material used by Ogre")),
 	culling(initData(&culling,true, "culling", "Activate Back-face culling in Ogre")),
-	ogreObject(NULL), ogreNormalObject(NULL)
+        ogreObject(NULL), ogreNormalObject(NULL), needUpdate(false)
       {
       }
 
 
       OgreVisualModel::~OgreVisualModel()
       {
-	if (mSceneMgr->hasEntity(currentName+"ENTITY"))
+        if (mSceneMgr->hasEntity(modelName+"ENTITY"))
 	  {	    
-	    mSceneMgr->destroyEntity(currentName+"ENTITY");
-	    Ogre::MeshManager::getSingleton().remove(currentName+"MESH");
+            mSceneMgr->destroyEntity(modelName+"ENTITY");
+            Ogre::MeshManager::getSingleton().remove(modelName+"MESH");
 	  }
       }
       void OgreVisualModel::init()
       {
-        sofa::component::visualmodel::VisualModelImpl::init();
-
-      }
+          sofa::component::visualmodel::VisualModelImpl::init();
+          helper::vector< core::BaseMapping *> m; this->getContext()->get<core::BaseMapping >(&m);
+          for (unsigned int i=0;i<m.size();++i)
+          {
+              if (m[i]->getTo() == this)
+              {
+                needUpdate=true;
+                break;
+              }
+          }          
+    }
 
       void OgreVisualModel::reinit()
       {
@@ -86,6 +96,226 @@ namespace sofa
         sofa::helper::system::DataRepository.findFile(file);
         Inherit::loadTexture(file);
         return true;
+      }
+
+      void OgreVisualModel::prepareMesh()
+      {
+          ++meshName;
+          //Create a model for the normals
+          {
+              std::ostringstream s;
+              s << "OgreVisualNormalModel["<<meshName<<"]";
+              normalName=s.str();
+              ogreNormalObject = (Ogre::ManualObject *) mSceneMgr->createMovableObject(normalName,"ManualObject");
+              ogreNormalObject->setDynamic(true);
+              ogreNormalObject->setCastShadows(false);
+
+              //Create the Material to draw the normals
+              s.str("");
+              s << "OgreNormalMaterial[" << ++materialName << "]" ;
+              currentMaterialNormals = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
+              currentMaterialNormals->setLightingEnabled(false);
+          }
+
+          //Create a model for the Mesh
+          {
+              std::ostringstream s;
+              s << "OgreVisualModel["<<meshName<<"]";
+              modelName=s.str();
+              ogreObject = (Ogre::ManualObject *) mSceneMgr->createMovableObject(modelName,"ManualObject");
+              ogreObject->setDynamic(needUpdate);
+              ogreObject->setCastShadows(true);
+
+
+              helper::vector<FaceGroup> &g=*(groups.beginEdit());
+              if (g.empty())
+              {
+                  subMeshes.resize(1);
+
+                  SubMesh &m=subMeshes[0];
+
+                  for (int i=vertices.size()-1;i>=0;--i) m.indices.insert(i);
+
+                  std::copy(this->triangles.begin(), this->triangles.end(), m.triangles.begin());
+                  std::copy(this->quads.begin(), this->quads.end(), m.quads.begin());
+                  m.material = createMaterial(this->material.getValue());
+              }
+              else
+              {
+
+                  for (unsigned int i=0;i<g.size();++i)
+                  {
+                      const int maxPrimitives=10000;
+                      const int currentPrimitives = g[i].nbt+g[i].nbq;
+                      for (int s=0;s<(currentPrimitives/maxPrimitives)+1;++s)
+                      {
+                          subMeshes.resize(subMeshes.size()+1);
+                          SubMesh &m=subMeshes.back();
+
+                          int minP=maxPrimitives*s;
+                          int maxP=maxPrimitives*(s+1);
+                          if (maxP > currentPrimitives) maxP = currentPrimitives;
+
+                          int minT=0, maxT=0;
+                          int minQ=0, maxQ=0;
+
+                          if (minP < g[i].nbt)
+                          {
+                              minT=minP;
+                              maxT=maxP;
+                              if (maxT > g[i].nbt) maxT=g[i].nbt;
+                              for ( int t=minT;t<maxT;++t)
+                              {
+                                  const Triangle &T=triangles[g[i].t0+t];
+                                  m.indices.insert(T[0]);
+                                  m.indices.insert(T[1]);
+                                  m.indices.insert(T[2]);
+                              }
+                          }
+                          else
+                          {
+                              minT=0; maxT=0;
+                          }
+
+
+                          if (maxP > g[i].nbt)
+                          {
+                              minQ=minP-g[i].nbt; if (minQ<0) minQ=0;
+                              maxQ=maxP-g[i].nbt;
+                              for ( int q=minQ;q<maxQ;++q)
+                              {
+                                  const Quad &Q=quads[g[i].q0+q];
+                                  m.indices.insert(Q[0]);
+                                  m.indices.insert(Q[1]);
+                                  m.indices.insert(Q[2]);
+                                  m.indices.insert(Q[3]);
+                              }
+                          }
+                          else
+                          {
+                              minQ=0; maxQ=0;
+                          }
+
+                          std::map< unsigned int, unsigned int > globalToLocalPrimitives;
+                          std::set<unsigned int >::const_iterator it;
+                          unsigned int idx=0;
+                          for (it=m.indices.begin();it!=m.indices.end();++it)
+                          {
+                              globalToLocalPrimitives.insert(std::make_pair(*it, idx++));
+                          }
+                          m.triangles.resize(maxT-minT);
+                          for ( int t=minT;t<maxT;++t)
+                          {
+                              const Triangle &T=triangles[g[i].t0+t];
+                              Triangle &newT=m.triangles[t-minT];
+                              newT[0]=globalToLocalPrimitives[T[0]];
+                              newT[1]=globalToLocalPrimitives[T[1]];
+                              newT[2]=globalToLocalPrimitives[T[2]];
+                          }
+                          m.quads.resize(maxQ-minQ);
+                          for ( int q=minQ;q<maxQ;++q)
+                          {
+                              const Quad &Q=quads[g[i].q0+q];
+                              Quad &newQ=m.quads[q-minQ];
+                              newQ[0]=globalToLocalPrimitives[Q[0]];
+                              newQ[1]=globalToLocalPrimitives[Q[1]];
+                              newQ[2]=globalToLocalPrimitives[Q[2]];
+                              newQ[3]=globalToLocalPrimitives[Q[3]];
+                          }
+                          //Create Material
+                          if (g[i].materialId < 0)
+                              m.material = createMaterial(this->material.getValue());
+                          else
+                              m.material = createMaterial(this->materials.getValue()[g[i].materialId]);
+                      }
+                  }
+              }
+          }
+      }
+
+      Ogre::MaterialPtr OgreVisualModel::createMaterial(const core::componentmodel::loader::Material &sofaMaterial)
+      {          
+          //Create the Material for the object
+          Ogre::MaterialPtr ogreMaterial;
+          std::ostringstream s;
+          s << "OgreVisualMaterial[" << ++materialName << "]" ;
+          ogreMaterial = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
+
+          ogreMaterial->setReceiveShadows(true);
+          ogreMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(true);
+
+          //If a texture is specified
+          if (!texturename.getValue().empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",texturename.getValue()) )
+              ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(texturename.getValue());
+
+          if (sofaMaterial.useDiffuse)
+              ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(sofaMaterial.diffuse[0],sofaMaterial.diffuse[1],sofaMaterial.diffuse[2],sofaMaterial.diffuse[3]));
+          else
+            ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
+
+          if (sofaMaterial.useAmbient)
+            ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(sofaMaterial.ambient[0],sofaMaterial.ambient[1],sofaMaterial.ambient[2],sofaMaterial.ambient[3]));
+          else
+            ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
+
+          if (sofaMaterial.useEmissive)
+            ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(sofaMaterial.emissive[0],sofaMaterial.emissive[1],sofaMaterial.emissive[2],sofaMaterial.emissive[3]));
+          else
+            ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
+
+          if (sofaMaterial.useSpecular)
+            ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(sofaMaterial.specular[0],sofaMaterial.specular[1],sofaMaterial.specular[2],sofaMaterial.specular[3]));
+          else
+            ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
+
+          if (sofaMaterial.useShininess)
+            ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(sofaMaterial.shininess));
+          else
+            ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
+
+          if ( (sofaMaterial.useDiffuse && sofaMaterial.diffuse[3] < 1) ||
+               (sofaMaterial.useAmbient && sofaMaterial.ambient[3] < 1) )
+            {
+              ogreMaterial->setDepthWriteEnabled(false);
+              ogreMaterial->getTechnique(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+              ogreMaterial->setCullingMode(Ogre::CULL_NONE);
+            }
+
+          ogreMaterial->compile();
+
+          return ogreMaterial;
+      }
+
+
+      void OgreVisualModel::uploadSubMesh(const SubMesh& m)
+      {                              
+          //Upload the indices
+          const bool hasTexCoords=vtexcoords.size();
+
+          for (std::set<unsigned int>::const_iterator it=m.indices.begin(); it!=m.indices.end();++it)
+            {
+              int idx=*it;
+              ogreObject->position(vertices[idx][0],vertices[idx][1],vertices[idx][2]);
+              ogreObject->normal(vnormals[idx][0],vnormals[idx][1],vnormals[idx][2]);
+              if (hasTexCoords) ogreObject->textureCoord(vtexcoords[idx][0],vtexcoords[idx][1]);
+             }
+
+          for ( unsigned int t=0;t<m.triangles.size();++t)
+          {
+              const Triangle &T=m.triangles[t];
+              ogreObject->triangle(T[0],T[1],T[2]);
+          }
+
+          for ( unsigned int q=0;q<m.quads.size();++q)
+          {
+              const Quad &Q=m.quads[q];
+              ogreObject->quad(Q[0],Q[1],Q[2],Q[3]);
+          }
+
+          if (getContext()->getShowWireFrame() || !culling.getValue())
+              m.material->getTechnique(0)->setCullingMode(Ogre::CULL_NONE);
+          else
+              m.material->getTechnique(0)->setCullingMode(Ogre::CULL_CLOCKWISE);
       }
 
       void OgreVisualModel::updateMaterial()
@@ -130,32 +360,6 @@ namespace sofa
 	currentMaterial->compile();
       }
 
-      void OgreVisualModel::uploadStructure()
-      {
-	bool hasTexCoords=vtexcoords.size();
-
-// 	std::ofstream s((this->getName() + std::string(".obj")).c_str());
-
-	for (unsigned int i=0;i<vertices.size();++i)
-	  {
-	    ogreObject->position(vertices[i][0],vertices[i][1],vertices[i][2]);
-	    ogreObject->normal(vnormals[i][0],vnormals[i][1],vnormals[i][2]);
-	    if (hasTexCoords) ogreObject->textureCoord(vtexcoords[i][0],vtexcoords[i][1]);
-//          s << hasTexCoords << " v[" << i << "]" << vtexcoords[i][0] << " !!! " <<  vtexcoords[i][1] << std::endl;
-
-	  }
-
-	for (unsigned int i=0;i<triangles.size();++i)
-	  {
-	    ogreObject->triangle(triangles[i][0],triangles[i][1],triangles[i][2]);
-// 	    s << "f " << triangles[i][2]+1 << " " << triangles[i][1]+1 << " " << triangles[i][0]+1 << "\n";
-	  }
-	for (unsigned int i=0;i<quads.size();++i)
-	  {
-	    ogreObject->quad(quads[i][0],quads[i][1],quads[i][2],quads[i][3]);
-	  }
-// 	s.close();
-      }
 
       void OgreVisualModel::uploadNormals()
       {       
@@ -164,135 +368,142 @@ namespace sofa
 	    ogreNormalObject->position(vertices[i][0],vertices[i][1],vertices[i][2]);
 	    ogreNormalObject->position(vertices[i][0]+vnormals[i][0],vertices[i][1]+vnormals[i][1],vertices[i][2]+vnormals[i][2]);
 	    ogreNormalObject->index(2*i);
-	    ogreNormalObject->index(2*i+1);
+            ogreNormalObject->index(2*i+1);
 	  }
       }
+
       void OgreVisualModel::convertManualToMesh()
       {
-	if (mSceneMgr->hasEntity(currentName+"ENTITY"))
+        if (mSceneMgr->hasEntity(modelName+"ENTITY"))
 	  {	    
-	    mSceneMgr->destroyEntity(currentName+"ENTITY");
-	    Ogre::MeshManager::getSingleton().remove(currentName+"MESH");
+            mSceneMgr->destroyEntity(modelName+"ENTITY");
+            Ogre::MeshManager::getSingleton().remove(modelName+"MESH");
 	  }
 	
-	Ogre::MeshPtr ogreMesh = ogreObject->convertToMesh(currentName+"MESH", "General");
-	Ogre::Entity *e = mSceneMgr->createEntity(currentName+"ENTITY", ogreMesh->getName());
- 	mSceneMgr->getRootSceneNode()->attachObject(e);	
+        Ogre::MeshPtr ogreMesh = ogreObject->convertToMesh(modelName+"MESH", "General");
+        Ogre::Entity *e = mSceneMgr->createEntity(modelName+"ENTITY", ogreMesh->getName());
+        mSceneMgr->getRootSceneNode()->attachObject(e);
+      }
+
+
+      void OgreVisualModel::updateVisibility()
+      {
+          if (lightsEnabled || !needUpdate) //Remove Manual Object, put mesh
+          {              
+              if (ogreObject->isAttached())  mSceneMgr->getRootSceneNode()->detachObject(ogreObject);
+
+              if (!mSceneMgr->hasEntity(modelName+"ENTITY")) return;
+              Ogre::Entity *e=mSceneMgr->getEntity(modelName+"ENTITY");
+
+              if (!this->getContext()->getShowVisualModels())
+              {
+                  if (e->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(e);
+                  if (ogreNormalObject->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(ogreNormalObject);
+              }
+              else
+              {
+                  if (!e->isAttached()) mSceneMgr->getRootSceneNode()->attachObject(e);
+
+                  if (this->getContext()->getShowNormals())
+                  {
+                      if (!ogreNormalObject->isAttached()) mSceneMgr->getRootSceneNode()->attachObject(ogreNormalObject);
+                  }
+                  else
+                  {
+                      if (ogreNormalObject->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(ogreNormalObject);
+                  }
+              }
+          }
+          else //Remove Mesh, put Manual Object
+          {              
+              if (mSceneMgr->hasEntity(modelName+"ENTITY"))
+              {
+                  Ogre::Entity *e=mSceneMgr->getEntity(modelName+"ENTITY");
+                  mSceneMgr->getRootSceneNode()->detachObject(e);
+              }
+
+              if (!this->getContext()->getShowVisualModels())
+              {                  
+                  if (ogreObject->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(ogreObject);
+                  if (ogreNormalObject->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(ogreNormalObject);
+              }
+              else
+              {                  
+                  if (!ogreObject->isAttached()) mSceneMgr->getRootSceneNode()->attachObject(ogreObject);
+
+                  if (this->getContext()->getShowNormals())
+                  {
+                      if (!ogreNormalObject->isAttached()) mSceneMgr->getRootSceneNode()->attachObject(ogreNormalObject);
+                  }
+                  else
+                  {
+                      if (ogreNormalObject->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(ogreNormalObject);
+                  }
+              }
+          }
       }
 
     void OgreVisualModel::internalDraw(bool /*transparent*/)
       {
 	if (!ogreObject)
-	  {
+          {
 	    //If visual model is empty, return
 	    if (triangles.size() == 0 && quads.size() == 0) return;
 
-
-	    //Create the Visual Model
-	    std::ostringstream s;
-	    s << "OgreVisualModel["<<meshName<<"]";
-	    currentName=s.str();
-	    ogreObject = (Ogre::ManualObject *) mSceneMgr->createMovableObject(s.str(),"ManualObject");
-	    ogreObject->setDynamic(true);
-	    ogreObject->setCastShadows(true);
-
-	    //Create a model for the normals
-	    s.str("");
-	    s << "OgreVisualNormalModel["<<meshName++<<"]";
-
-	    ogreNormalObject = (Ogre::ManualObject *) mSceneMgr->createMovableObject(s.str(),"ManualObject");
-	    ogreNormalObject->setDynamic(true);
-	    ogreNormalObject->setCastShadows(false);
-	    mSceneMgr->getRootSceneNode()->attachObject(ogreNormalObject);	
-
-
-
-	    //Create the materials
-	    if (!materialFile.getValue().empty())
-	      {
-                currentMaterial = Ogre::MaterialManager::getSingleton().getByName(materialFile.getFullPath());
-	      }
-	    if (currentMaterial.isNull())
-	      {
-		//Create the Material for the object
-		s.str("");
-		s << "OgreVisualMaterial[" << materialName << "]" ;
-		currentMaterial = Ogre::MaterialManager::getSingleton().create(s.str(), "General");  
-		//If a texture is specified
-		if (!texturename.getValue().empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",texturename.getValue()) )
-		  {
-		    currentMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(texturename.getValue());
-		  }
-		if (!culling.getValue()) currentMaterial->getTechnique(0)->getPass(0)->setCullingMode(Ogre::CULL_NONE);
-
-		//Create the Material to draw the normals
-		s.str("");
-		s << "OgreNormalMaterial[" << materialName++ << "]" ;
-		currentMaterialNormals = Ogre::MaterialManager::getSingleton().create(s.str(), "General"); 
-	
-  		currentMaterialNormals->setLightingEnabled(false);
-	      }
-	    updateMaterial();
-
-
+            prepareMesh();
 	    //Upload the indices
-	    ogreObject->begin(currentMaterial->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST); 
-	    uploadStructure();
-	    ogreObject->end();
-
-
-	    if (getContext()->getShowNormals())
-	      {	
+            for (unsigned int i=0;i<subMeshes.size();++i)
+            {
+                const SubMesh& m=subMeshes[i];
+                ogreObject->begin(m.material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
+                uploadSubMesh(m);
+                ogreObject->end();
+            }
+            if (getContext()->getShowNormals())
+              {
 		ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST); 
 		uploadNormals();
-		ogreNormalObject->end();
-	      }
+		ogreNormalObject->end();                              
+              }
 	  }
 	else
-	  {
-	    if (getContext()->getShowWireFrame() || !culling.getValue()) 
-	      currentMaterial->getTechnique(0)->setCullingMode(Ogre::CULL_NONE);
-	    else	     
-	      currentMaterial->getTechnique(0)->setCullingMode(Ogre::CULL_CLOCKWISE);
-	      
-	    
+          {
+            updateVisibility();
+            if (!this->getContext()->getShowVisualModels()) return;
+            if (!needUpdate)
+            {
+                mSceneMgr->getRootSceneNode()->detachObject(ogreObject);
+                convertManualToMesh();
+                return;
+            }
+
 	    //Visual Model update
-	    ogreObject->beginUpdate(0);  
-	    uploadStructure();      
-	    ogreObject->end();
-	    if (vertices.size() != 0)
-	      convertManualToMesh();
+            for (unsigned int i=0;i<subMeshes.size();++i)
+            {
+                const SubMesh& m=subMeshes[i];
+                ogreObject->beginUpdate(i);
+                uploadSubMesh(m);
+                ogreObject->end();
+            }
 
-	    //Normals
-	    if (ogreNormalObject->getNumSections())
-	      {
-		ogreNormalObject->beginUpdate(0);
-		uploadNormals();		 
-		ogreNormalObject->end();
-	      }
-	    else
-	      {
-		ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST); 
-		uploadNormals();
-		ogreNormalObject->end();
-	      }
+            if (lightsEnabled && vertices.size() != 0) convertManualToMesh();
 
-	  }
-
-
-	if (mSceneMgr->hasEntity(currentName+"ENTITY"))
-	  {
-	    Ogre::Entity *e=mSceneMgr->getEntity(currentName+"ENTITY");
-	    if (!this->getContext()->getShowVisualModels())
-	      {
-		if (e->isAttached()) mSceneMgr->getRootSceneNode()->detachObject(e);
-	      }
-	    else
-	      {
-		if (!e->isAttached()) mSceneMgr->getRootSceneNode()->attachObject(e);
-	      }
-
-	    ogreNormalObject->setVisible(this->getContext()->getShowNormals());
+            if (this->getContext()->getShowNormals())
+            {
+                //Normals
+                if (ogreNormalObject->getNumSections())
+                {
+                    ogreNormalObject->beginUpdate(0);
+                    uploadNormals();
+                    ogreNormalObject->end();
+                }
+                else
+                {
+                    ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST);
+                    uploadNormals();
+                    ogreNormalObject->end();
+                }
+            }
 	  }
       }
 

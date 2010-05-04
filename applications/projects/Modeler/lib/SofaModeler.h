@@ -192,7 +192,7 @@ namespace sofa
 	  void fileRecentlyOpened(int id);
 	  
 	  /// Filter in the library all the components containing the text written
-	  void searchText(const FilterQuery&);
+      void searchText(const FilterQuery&);
 
 	  void changeSofaBinary();
 	  void GUIChanged();

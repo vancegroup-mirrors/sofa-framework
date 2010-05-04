@@ -39,12 +39,15 @@ namespace sofa{
       }
 
       setTitle(data_->getName().c_str());
-      QHBoxLayout* layout = new QHBoxLayout(this);
+	  setInsideMargin(4);
+	  setInsideSpacing(2);
+
       const std::string label_text = data_->getHelp();
+
       if (label_text != "TODO") {
         datainfowidget_ = new QDisplayDataInfoWidget(this,label_text,data_,flags.LINKPATH_MODIFIABLE_FLAG);
         numWidgets_ += datainfowidget_->getNumLines()/3;
-        layout->addWidget(datainfowidget_);
+
       }
 
       DataWidget::CreatorArgument dwarg;
@@ -66,7 +69,7 @@ namespace sofa{
         datawidget_->setEnabled( !(data_->isReadOnly() && flags.READONLY_FLAG) );
         assert(datawidget_ != NULL);
       }
-      layout->addWidget(datawidget_);
+
       setColumns(datawidget_->numColumnWidget());
       //std::cout << "WIDGET created for data " << dwarg.data << " : " << dwarg.name << " : " << dwarg.data->getValueTypeString() << std::endl;
       numWidgets_+=datawidget_->sizeWidget();

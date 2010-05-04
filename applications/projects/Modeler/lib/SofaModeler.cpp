@@ -59,6 +59,8 @@
 #include <QDir>
 #include <QStatusBar>
 #include <QDesktopWidget>
+#include <Q3DockWindow>
+#include <Q3DockArea>
 #else
 #include <qtoolbox.h>
 #include <qlayout.h>
@@ -69,6 +71,8 @@
 #include <qmessagebox.h> 
 #include <qdir.h>
 #include <qstatusbar.h>
+#include <qdockwindow.h>
+#include <qdockarea.h>
 #endif
 
 namespace sofa
@@ -81,7 +85,8 @@ namespace sofa
     {
 
 #ifndef SOFA_QT4
-      typedef QTextDrag Q3TextDrag;
+      typedef QTextDrag Q3TextDrag;      
+      typedef QDockWindow Q3DockWindow;
 #endif
 
 
@@ -114,22 +119,23 @@ namespace sofa
         filter.push_back("*.scn");filter.push_back("*.xml");
         sofa::gui::qt::getFilesInDirectory(path, exampleQString, true, filter);
 
-        
 
-	//----------------------------------------------------------------------
+        //----------------------------------------------------------------------
         // Create the Left part of the GUI
-	//----------------------------------------------------------------------
-        QWidget *leftPartWidget = new QWidget( (QWidget*)splitter2, "LibraryLayout");
-        QVBoxLayout *leftPartLayout = new QVBoxLayout(leftPartWidget);
-        
-	//----------------------------------------------------------------------
-        //Add the button to create GNode
-        QPushButton *GNodeButton = new QPushButton( leftPartWidget, "GNodeButton");
-        GNodeButton->setText("GNode");
-        leftPartLayout->addWidget(GNodeButton);
-        connect( GNodeButton, SIGNAL( pressed() ),  this, SLOT( pressedGNodeButton() ) );
+        //----------------------------------------------------------------------
 
-	//----------------------------------------------------------------------
+        //----------------------------------------------------------------------
+        //Create a Dock Window to receive the Sofa Library
+        Q3DockWindow *dockRecorder=new Q3DockWindow(this);
+        dockRecorder->setResizeEnabled(true);
+        this->moveDockWindow( dockRecorder, Qt::DockLeft);
+//        this->topDock() ->setAcceptDockWindow(dockRecorder,false);
+//        this->bottomDock()->setAcceptDockWindow(dockRecorder,false);
+        dockRecorder->setFixedExtentWidth(520);
+        QWidget *leftPartWidget = new QWidget( dockRecorder, "LibraryLayout");
+        QVBoxLayout *leftPartLayout = new QVBoxLayout(leftPartWidget);
+
+        //----------------------------------------------------------------------
         //Add a Filter to the Library
         QWidget *filterContainer = new QWidget( leftPartWidget, "filterContainer" );
         QHBoxLayout *filterLayout = new QHBoxLayout(filterContainer);
@@ -142,17 +148,25 @@ namespace sofa
         filterLibrary = new FilterLibrary(filterContainer);
         filterLayout->addWidget(filterLibrary);
         connect(filterLibrary, SIGNAL( filterList( const FilterQuery &) ), this, SLOT(searchText( const FilterQuery &)) );
-        
 
-	//----------------------------------------------------------------------
-        //Add the Sofa Library
+        //----------------------------------------------------------------------
+        //Add the Sofa Library        
 #ifdef SOFA_QT4
         QSofaTreeLibrary *l = new QSofaTreeLibrary(leftPartWidget); library = l;
 #else
         QSofaLibrary *l = new QSofaLibrary(leftPartWidget); library = l;
 #endif
-
         leftPartLayout->addWidget(l);
+
+
+        //----------------------------------------------------------------------
+        //Add the button to create GNode
+        QPushButton *GNodeButton = new QPushButton( leftPartWidget, "GNodeButton");
+        GNodeButton->setText("GNode");
+        leftPartLayout->addWidget(GNodeButton);
+        connect( GNodeButton, SIGNAL( pressed() ),  this, SLOT( pressedGNodeButton() ) );
+
+        dockRecorder->setWidget(leftPartWidget);
 
 
 
@@ -168,7 +182,7 @@ namespace sofa
 
 	//----------------------------------------------------------------------
         //Create the scene graph visualization
-	QWidget *GraphSupport = new QWidget((QWidget*)splitter2);
+    QWidget *GraphSupport = new QWidget(this->centralWidget());
 	QGridLayout* GraphLayout = new QGridLayout(GraphSupport, 1,1,5,2,"GraphLayout");
 	sceneTab = new QTabWidget(GraphSupport);
 	GraphLayout->addWidget(sceneTab,0,0);	
@@ -186,6 +200,8 @@ namespace sofa
 	connect( sceneTab, SIGNAL(currentChanged( QWidget*)), this, SLOT( changeCurrentScene( QWidget*)));
        
 	GraphSupport->resize(200,550);
+
+    this->centralWidget()->layout()->add(GraphSupport);
 
 	//----------------------------------------------------------------------
 	//Add plugin manager window. ->load external libs
@@ -830,7 +846,8 @@ namespace sofa
 	  }
       }
 
-      /// Quick Filter of te components 
+
+      /// Quick Filter of the components
       void SofaModeler::searchText(const FilterQuery& query)
       {       
 #ifdef SOFA_QT4

@@ -154,7 +154,6 @@ namespace sofa
 	    setWFlags(Qt::WStyle_StaysOnTop);
 #endif
 
-
 	    // Make sure this class is enabled
 	    EnableViewer();
 
@@ -189,6 +188,8 @@ namespace sofa
 	    number_visualModels=0;
 	    _video = false;
  	    pickDone=false;
+            showAxis=false;
+            perspectiveCamera=true;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 	    mResourcePath = macBundlePath() + "/Contents/Resources/";
@@ -288,6 +289,74 @@ namespace sofa
 	    mRoot->initialise(false, "SOFA - OGRE");
 	  }
 
+          void QtOgreViewer::drawSceneAxis() const
+          {
+              defaulttype::Vector3 centerAxis(0,0,0);
+              static defaulttype::Vector3 axisX(1,0,0);
+              static defaulttype::Vector3 axisY(0,1,0);
+              static defaulttype::Vector3 axisZ(0,0,1);
+              const Ogre::Real l=size_world.length();
+
+              Ogre::Entity *axisXEntity;
+              Ogre::Entity *axisYEntity;
+              Ogre::Entity *axisZEntity;
+              if (!mSceneMgr->hasEntity("axisX"))
+              {
+                  Ogre::MaterialPtr axisMaterial = Ogre::MaterialManager::getSingleton().create("AxisViewerMaterial", "General");
+                  axisMaterial->setSelfIllumination(0.25,0.25,0.25);
+
+                  axisXEntity= mSceneMgr->createEntity( "axisX", "mesh/X.mesh" );
+                  axisYEntity= mSceneMgr->createEntity( "axisY", "mesh/Y.mesh" );
+                  axisZEntity= mSceneMgr->createEntity( "axisZ", "mesh/Z.mesh" );
+
+                  axisXEntity->setMaterial(axisMaterial);
+                  axisYEntity->setMaterial(axisMaterial);
+                  axisZEntity->setMaterial(axisMaterial);
+              }
+              else
+              {
+                  axisXEntity=mSceneMgr->getEntity("axisX");
+                  axisYEntity=mSceneMgr->getEntity("axisY");
+                  axisZEntity=mSceneMgr->getEntity("axisZ");
+              }
+
+              const defaulttype::Vector3 posX=centerAxis+axisX*l*0.6;
+              const defaulttype::Vector3 posY=centerAxis+axisY*l*0.6;
+              const defaulttype::Vector3 posZ=centerAxis+axisZ*l*0.6;
+              if (!axisXEntity->isAttached())
+              {
+                  nodeX->attachObject(axisXEntity);
+                  nodeX->setPosition(0,0,0);
+                  const Ogre::Real scale=l*0.075;
+                  nodeX->setScale(scale, scale, scale);
+                  nodeX->setPosition(posX[0], posX[1], posX[2]);
+              }
+              if (!axisYEntity->isAttached())
+              {
+                  nodeY->attachObject(axisYEntity);
+                  nodeY->setPosition(0,0,0);
+                  const Ogre::Real scale=l*0.075;
+                  nodeY->setScale(scale, scale, scale);
+                  nodeY->setPosition(posY[0], posY[1], posY[2]);
+              }
+              if (!axisZEntity->isAttached())
+              {
+                  nodeZ->attachObject(axisZEntity);
+                  nodeZ->setPosition(0,0,0);
+                  const Ogre::Real scale=l*0.075;
+                  nodeZ->setScale(scale, scale, scale);
+                  nodeZ->setPosition(posZ[0], posZ[1], posZ[2]);
+              }
+
+              simulation::getSimulation()->DrawUtility.drawArrow(centerAxis,posX,
+                                                                 l*0.005, defaulttype::Vec<4,float>(1.0f,0.0f,0.0f,1.0f));
+              simulation::getSimulation()->DrawUtility.drawArrow(centerAxis,posY,
+                                                                 l*0.005, defaulttype::Vec<4,float>(0.0f,1.0f,0.0f,1.0f));
+              simulation::getSimulation()->DrawUtility.drawArrow(centerAxis,posZ,
+                                                                 l*0.005, defaulttype::Vec<4,float>(0.0f,0.0f,1.0f,1.0f));
+
+          }
+
 	  //*****************************************************************************************
 	  //called to redraw the window
 	  void QtOgreViewer::updateIntern()
@@ -328,6 +397,8 @@ namespace sofa
 	      sofa::simulation::getSimulation()->DrawUtility.clear();
               sofa::simulation::getSimulation()->draw(groot);
               sofa::simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot());
+              if (showAxis) drawSceneAxis();
+
 	      //Remove previous mesh and entity
 	      if (mSceneMgr->hasEntity("drawUtilityENTITY"))
 		{
@@ -371,26 +442,36 @@ namespace sofa
 
 	  //******************************Qt paint***********************************
 
-	  void QtOgreViewer::paintEvent(QPaintEvent *)
-	  {
-	    updateIntern();
-	    emit( redrawn() );
+          void QtOgreViewer::showEvent(QShowEvent *e)
+          {
+              if (!mRoot) {setup();}
+              QGLWidget::showEvent(e);
+          }
+
+          void QtOgreViewer::initializeGL()
+          {
+              glDisableClientState(GL_VERTEX_ARRAY);
+          }
+
+          void QtOgreViewer::paintGL()
+          {
+              updateIntern();
+              emit( redrawn() );
 	  }
 
 	  //*****************************************************************************************
 	  //Initialize the rendering window: create a sofa simulation, Ogre window...
 	  void QtOgreViewer::setupView()
 	  {
-
 	    Ogre::NameValuePairList params;
-
             //The external windows handle parameters are platform-specific
             Ogre::String externalWindowHandleParams;
 
 #ifdef SOFA_QT4            
 #if defined(WIN32)
             //positive integer for W32 (HWND handle) - According to Ogre Docs
-			externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(this->parentWidget()->winId()));
+//            externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(winId()));
+            externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(this->parentWidget()->winId()));
 #else
             //poslong:posint:poslong:poslong (display*:screen:windowHandle:XVisualInfo*) for GLX - According to Ogre Docs
             QX11Info info = x11Info();
@@ -485,11 +566,20 @@ namespace sofa
 		mCamera->setFarClipDistance(loader.environment.farClipDistance);
 	      }
 	    //Always yaw around the camera Y axis.
- 	    mCamera->setFixedYawAxis(false);
+            fixedAxis = Ogre::Vector3::UNIT_Y;
+            mCamera->setFixedYawAxis(true, fixedAxis);
+
 	    Ogre::SceneNode* camNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 	    camNode->attachObject(mCamera);
 
 	    zeroNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+            nodeX = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+            nodeX->rotate(Ogre::Vector3::UNIT_Z, Ogre::Radian(Ogre::Degree(-90)));
+            nodeY = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+            nodeY->rotate(Ogre::Vector3::UNIT_Y, Ogre::Radian(Ogre::Degree(180)));
+            nodeZ = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+            nodeZ->rotate(Ogre::Vector3::UNIT_X, Ogre::Radian(Ogre::Degree(90)));
+
 
 	    mCamera->setAutoTracking(true, zeroNode);
 	    mCamera->setCastShadows(false);
@@ -540,7 +630,6 @@ namespace sofa
 	    //************************************************************************************************
 	    // Alter the camera aspect ratio to match the viewport
 	    mCamera->setAspectRatio(Real(mVp->getActualWidth()) / Real(mVp->getActualHeight()));
-
 	  }
 
 	  void QtOgreViewer::showEntireScene()
@@ -560,13 +649,11 @@ namespace sofa
 	    mSceneMgr->_updateSceneGraph (mCamera);
 	    //************************************************************************************************
 	    //Calculate the World Bounding Box
-	    //Scene Bounding Box
-	    sofa::defaulttype::Vector3 sceneMinBBox;
-	    sofa::defaulttype::Vector3 sceneMaxBBox;
+            //Scene Bounding Box
 	    simulation::getSimulation()->computeBBox(groot, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
             simulation::getSimulation()->computeBBox(simulation::getSimulation()->getVisualRoot(), sceneMinBBox.ptr(), sceneMaxBBox.ptr(),false);
 
-	    Ogre::Vector3 size_world(sceneMaxBBox[0] - sceneMinBBox[0],sceneMaxBBox[1] - sceneMinBBox[1],sceneMaxBBox[2] - sceneMinBBox[2]);
+            size_world = Ogre::Vector3 (sceneMaxBBox[0] - sceneMinBBox[0],sceneMaxBBox[1] - sceneMinBBox[1],sceneMaxBBox[2] - sceneMinBBox[2]);
 	    float max = std::max(std::max(size_world.x,size_world.y),size_world.z);
 	    float min = std::min(std::min(size_world.x,size_world.y),size_world.z);
 
@@ -586,9 +673,6 @@ namespace sofa
 	    mCamera->setPosition(camera_position);
 	    mCamera->moveRelative(Ogre::Vector3(0.0,0.0,2*std::max(size_world[0],std::max( size_world[1], size_world[2]))
 						));
-
-//  	    mCamera->setAutoTracking(true);
-// 	    mCamera->setFixedYawAxis(true);
 	    return;
 	  }
 
@@ -629,6 +713,17 @@ namespace sofa
 	      {
 		switch(e->key())
 		  {
+                  case Qt::Key_A:
+                    {
+                        showAxis=!showAxis;
+                        if (!showAxis)
+                        {
+                            nodeX->detachAllObjects();
+                            nodeY->detachAllObjects();
+                            nodeZ->detachAllObjects();
+                        }
+                        break;
+                    }
 		  case Qt::Key_B:
 		    {
 		      if (_background == 0 && backgroundColour == Vector3())
@@ -653,7 +748,7 @@ namespace sofa
 			  break;
 			}
 		      break;
-		    }
+                    }
 		  case Qt::Key_C:
 		    {
 		      showEntireScene();
@@ -663,19 +758,45 @@ namespace sofa
 		    // --- Modify the shadow type
 		    {
 		      switch(shadow)
-			{
-			case Ogre::SHADOWTYPE_NONE:
- 			  pickDone=true;
-			  shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
-			  break;
-			case Ogre::SHADOWTYPE_STENCIL_ADDITIVE:
-			default:
+                      {
+                      case Ogre::SHADOWTYPE_NONE:
+                          pickDone=true;
+                          shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
+                          sofa::component::visualmodel::OgreVisualModel::lightsEnabled=true;
+                          break;
+                      case Ogre::SHADOWTYPE_STENCIL_ADDITIVE:
+                      default:
 			  shadow = Ogre::SHADOWTYPE_NONE;
+                          sofa::component::visualmodel::OgreVisualModel::lightsEnabled=false;
 			  break;
 			}
 		      mCamera->getSceneManager()->setShadowTechnique(shadow);
 		      break;
 		    }
+                  case Qt::Key_T:
+                    {
+                      perspectiveCamera = !perspectiveCamera;
+
+                      if (perspectiveCamera)
+                      {                          
+                          mCamera->setProjectionType(Ogre::PT_PERSPECTIVE);
+                      }
+                      else
+                      {
+                          const sofa::defaulttype::Vector3 center((sceneMinBBox+sceneMaxBBox)*0.5);
+
+                          Ogre::Vector3 cameraPosition(mCamera->getPosition());
+                          const sofa::defaulttype::Vector3 cameraPos(cameraPosition.x,cameraPosition.y,cameraPosition.z);
+
+                          SReal d=(center-cameraPos).norm();
+
+                          mCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
+                          SReal wRatio = mCamera->getOrthoWindowWidth()/mCamera->getOrthoWindowHeight();
+                          mCamera->setOrthoWindow(d*wRatio,d);
+
+                      }
+                      break;
+                    }
 		  default:
 		    {
 		      SofaViewer::keyPressEvent(e);
@@ -753,6 +874,13 @@ namespace sofa
 		    mCamera->moveRelative(m_mTranslateVector);
 		    float new_dist = (zeroNode->getPosition()-mCamera->getPosition()).length();
 		    mCamera->moveRelative(Ogre::Vector3(0,0,dist-new_dist));
+
+                    Ogre::Vector3 p=mCamera->getPosition(); p.normalise();
+                    if (fixedAxis.absDotProduct(p) > 0.5)
+                    {
+                        fixedAxis=mCamera->getUp();
+                        mCamera->setFixedYawAxis(true, fixedAxis);
+                    }
 		  }
 
 		m_mousePos = evt->globalPos();
@@ -762,9 +890,16 @@ namespace sofa
 
 
 	  void QtOgreViewer::wheelEvent(QWheelEvent* evt)
-	  {	    
-	    m_mTranslateVector.z +=  evt->delta()*_factorWheel*0.0005;
+          {
+              SReal displacement=evt->delta()*_factorWheel*0.0005;
+            m_mTranslateVector.z +=  displacement;
 	    mCamera->moveRelative(m_mTranslateVector);
+            if (!perspectiveCamera)
+            {                
+                SReal wRatio = mCamera->getOrthoWindowWidth()/mCamera->getOrthoWindowHeight();                
+                mCamera->setOrthoWindow(displacement*wRatio+mCamera->getOrthoWindowWidth(),
+                                        displacement+mCamera->getOrthoWindowHeight());
+            }
 	    updateIntern();
 	  }
 
@@ -776,15 +911,14 @@ namespace sofa
 	    numPointLight->setValue(0);
 	    numSpotLight->setValue(0);
             SofaViewer::setScene(scene, filename, keepParams);
-	    createScene();
+            createScene();
 	    sofa::simulation::getSimulation()->DrawUtility.setOgreObject(drawUtility);
 	    sofa::simulation::getSimulation()->DrawUtility.setPolygonMode(0,false); //Disable culling
-            sofa::simulation::getSimulation()->DrawUtility.setLightingEnabled(false); //Disable lightning
 	    sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
 	    sofa::simulation::getSimulation()->DrawUtility.setSceneMgr(mSceneMgr);
             updateIntern();
             resize();
-	  }
+          }
 
 
 	  bool QtOgreViewer::updateInteractor(QMouseEvent * e)
@@ -799,77 +933,96 @@ namespace sofa
 
 	  void QtOgreViewer::moveRayPickInteractor(int eventX, int eventY)
 	  {
-	    sofa::defaulttype::Vec3d  p0, px, py, pz, px1, py1;
-	    GLint viewPort[4] = {0,0,width(), height()};
-	    Ogre::Matrix4 modelViewMatrix = mCamera->getViewMatrix().transpose();
-	    Ogre::Matrix4 projectionMatrix = mCamera->getProjectionMatrix();
 
-	    double modelViewMatrixGL[16] =
-	      {
-		modelViewMatrix[0][0], modelViewMatrix[0][1], modelViewMatrix[0][2], modelViewMatrix[0][3],
-		modelViewMatrix[1][0], modelViewMatrix[1][1], modelViewMatrix[1][2], modelViewMatrix[1][3],
-		modelViewMatrix[2][0], modelViewMatrix[2][1], modelViewMatrix[2][2], modelViewMatrix[2][3],
-		modelViewMatrix[3][0], modelViewMatrix[3][1], modelViewMatrix[3][2], modelViewMatrix[3][3],
-	      };
+              Vec3d position, direction;
+              if (perspectiveCamera)
+              {
+                  sofa::defaulttype::Vec3d  p0, px, py, pz, px1, py1;
+                  GLint viewPort[4] = {0,0,width(), height()};
+                  Ogre::Matrix4 modelViewMatrix = mCamera->getViewMatrix().transpose();
+                  Ogre::Matrix4 projectionMatrix = mCamera->getProjectionMatrix();
 
-
-	    double projectionMatrixGL[16] =
-	      {
-		projectionMatrix[0][0], projectionMatrix[0][1], projectionMatrix[0][2], projectionMatrix[0][3],
-		projectionMatrix[1][0], projectionMatrix[1][1], projectionMatrix[1][2], projectionMatrix[1][3],
-		projectionMatrix[2][0], projectionMatrix[2][1], projectionMatrix[2][2], -1,
-		projectionMatrix[3][0], projectionMatrix[3][1], projectionMatrix[3][2], projectionMatrix[3][3],
-	      };
-
-	    gluUnProject(eventX, viewPort[3]-1-(eventY),  0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(p0[0]), &(p0[1]), &(p0[2]));
-	    gluUnProject(eventX+1, viewPort[3]-1-(eventY),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px[0]), &(px[1]), &(px[2]));
-	    gluUnProject(eventX, viewPort[3]-1-(eventY+1),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py[0]), &(py[1]), &(py[2]));
-	    gluUnProject(eventX, viewPort[3]-1-(eventY),  1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(pz[0]), &(pz[1]), &(pz[2]));
-	    gluUnProject(eventX+1, viewPort[3]-1-(eventY), 0.1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px1[0]), &(px1[1]), &(px1[2]));
-	    gluUnProject(eventX, viewPort[3]-1-(eventY+1), 0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py1[0]), &(py1[1]), &(py1[2]));
- 
-
-  	    if ( pickDone)
-  	      pz*=-1;
-
-	    px1 -= pz;
-	    py1 -= pz;
-
-	    px -= p0;
-	    py -= p0;
-	    pz -= p0;
-
-	    double r0 = sqrt(px.norm2() + py.norm2());
-	    double r1 = sqrt(px1.norm2() + py1.norm2());
-	    r1 = r0 + (r1-r0) / pz.norm();
-	    px.normalize();
-	    py.normalize();
-	    pz.normalize();
-	    sofa::defaulttype::Mat4x4d transform;
-	    transform.identity();
-	    transform[0][0] = px[0];
-	    transform[1][0] = px[1];
-	    transform[2][0] = px[2];
-	    transform[0][1] = py[0];
-	    transform[1][1] = py[1];
-	    transform[2][1] = py[2];
-	    transform[0][2] = pz[0];
-	    transform[1][2] = pz[1];
-	    transform[2][2] = pz[2];
-	    transform[0][3] = p0[0];
-	    transform[1][3] = p0[1];
-	    transform[2][3] = p0[2];
+                  double modelViewMatrixGL[16] =
+                  {
+                      modelViewMatrix[0][0], modelViewMatrix[0][1], modelViewMatrix[0][2], modelViewMatrix[0][3],
+                      modelViewMatrix[1][0], modelViewMatrix[1][1], modelViewMatrix[1][2], modelViewMatrix[1][3],
+                      modelViewMatrix[2][0], modelViewMatrix[2][1], modelViewMatrix[2][2], modelViewMatrix[2][3],
+                      modelViewMatrix[3][0], modelViewMatrix[3][1], modelViewMatrix[3][2], modelViewMatrix[3][3],
+                  };
 
 
-	    sofa::defaulttype::Mat3x3d mat; mat = transform;
-	    sofa::defaulttype::Quat q; q.fromMatrix(mat);
+                  double projectionMatrixGL[16] =
+                  {
+                      projectionMatrix[0][0], projectionMatrix[0][1], projectionMatrix[0][2], projectionMatrix[0][3],
+                      projectionMatrix[1][0], projectionMatrix[1][1], projectionMatrix[1][2], projectionMatrix[1][3],
+                      projectionMatrix[2][0], projectionMatrix[2][1], projectionMatrix[2][2], -1,
+                      projectionMatrix[3][0], projectionMatrix[3][1], projectionMatrix[3][2], projectionMatrix[3][3],
+                  };
+
+                  gluUnProject(eventX, viewPort[3]-1-(eventY),  0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(p0[0]), &(p0[1]), &(p0[2]));
+                  gluUnProject(eventX+1, viewPort[3]-1-(eventY),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px[0]), &(px[1]), &(px[2]));
+                  gluUnProject(eventX, viewPort[3]-1-(eventY+1),0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py[0]), &(py[1]), &(py[2]));
+                  gluUnProject(eventX, viewPort[3]-1-(eventY),  1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(pz[0]), &(pz[1]), &(pz[2]));
+                  gluUnProject(eventX+1, viewPort[3]-1-(eventY), 0.1, modelViewMatrixGL, projectionMatrixGL, viewPort, &(px1[0]), &(px1[1]), &(px1[2]));
+                  gluUnProject(eventX, viewPort[3]-1-(eventY+1), 0, modelViewMatrixGL, projectionMatrixGL, viewPort, &(py1[0]), &(py1[1]), &(py1[2]));
+
+
+                  if ( pickDone)
+                      pz*=-1;
+
+                  px1 -= pz;
+                  py1 -= pz;
+
+                  px -= p0;
+                  py -= p0;
+                  pz -= p0;
+
+                  double r0 = sqrt(px.norm2() + py.norm2());
+                  double r1 = sqrt(px1.norm2() + py1.norm2());
+                  r1 = r0 + (r1-r0) / pz.norm();
+                  px.normalize();
+                  py.normalize();
+                  pz.normalize();
+                  sofa::defaulttype::Mat4x4d transform;
+                  transform.identity();
+                  transform[0][0] = px[0];
+                  transform[1][0] = px[1];
+                  transform[2][0] = px[2];
+                  transform[0][1] = py[0];
+                  transform[1][1] = py[1];
+                  transform[2][1] = py[2];
+                  transform[0][2] = pz[0];
+                  transform[1][2] = pz[1];
+                  transform[2][2] = pz[2];
+                  transform[0][3] = p0[0];
+                  transform[1][3] = p0[1];
+                  transform[2][3] = p0[2];
+
+
+                  sofa::defaulttype::Mat3x3d mat; mat = transform;
+                  sofa::defaulttype::Quat q; q.fromMatrix(mat);
 
 
 
-            Vec3d position, direction;
-            position  = transform*Vec4d(0,0,0,1);
-            direction = transform*Vec4d(0,0,1,0);
-            direction.normalize();
+                  position  = transform*Vec4d(0,0,0,1);
+                  direction = transform*Vec4d(0,0,1,0);
+                  direction.normalize();
+
+              }
+              else
+              {
+                  SReal w=mCamera->getOrthoWindowWidth()/(SReal)mRenderWindow->getWidth();
+                  SReal h=mCamera->getOrthoWindowHeight()/(SReal)mRenderWindow->getHeight();
+
+                  SReal posW=eventX-mRenderWindow->getWidth()*0.5;
+                  SReal posH=-1*(eventY-mRenderWindow->getHeight()*0.5);
+
+                  const Ogre::Vector3 &posCamera=mCamera->getPosition();
+                  Ogre::Vector3 p= posCamera + mCamera->getUp()*h*posH + mCamera->getRight()*w*posW;
+                  Ogre::Vector3 d=mCamera->getUp().crossProduct(mCamera->getRight());
+                  direction[0]=d.x; direction[1]=d.y; direction[2]=d.z;
+                  position[0]=p.x;  position[1]=p.y;  position[2]=p.z;
+              }
             pick.updateRay(position, direction);
 	  }
 
@@ -1141,6 +1294,7 @@ namespace sofa
 <ul>\
 <li><b>Mouse</b>: TO NAVIGATE<br></li>\
 <li><b>Shift & Left Button</b>: TO PICK OBJECTS<br></li>\
+<li><b>A</b>: TO DRAW THE SCENE AXIS<br></li>\
 <li><b>C</b>: TO CENTER THE VIEW<br></li>\
 <li><b>B</b>: TO CHANGE THE BACKGROUND<br></li>\
 <li><b>T</b>: TO CHANGE BETWEEN A PERSPECTIVE OR AN ORTHOGRAPHIC CAMERA<br></li>\
@@ -1149,6 +1303,7 @@ namespace sofa
 Each time the frame is updated an obj is exported<br></li>\
 <li><b>I</b>: TO SAVE A SCREENSHOT<br>\
 The captured images are saved in the running project directory under the name format capturexxxx.bmp<br></li>\
+<li><b>T</b>: TO CHANGE BETWEEN A PERSPECTIVE OR AN ORTHOGRAPHIC CAMERA<br></li>\
 <li><b>V</b>: TO SAVE A VIDEO<br>\
 Each time the frame is updated a screenshot is saved<br></li>\
 <li><b>Esc</b>: TO QUIT ::sofa:: <br></li></ul>");

@@ -81,12 +81,11 @@ SOFA_LINK_CLASS(TriangleFEMForceField)
 SOFA_LINK_CLASS(TriangularFEMForceField)
 SOFA_LINK_CLASS(TriangularAnisotropicFEMForceField)
 SOFA_LINK_CLASS(TriangularQuadraticSpringsForceField)
-SOFA_LINK_CLASS(TriangularBiquadraticSpringsForceField)
+//SOFA_LINK_CLASS(TriangularBiquadraticSpringsForceField)
 SOFA_LINK_CLASS(TriangularTensorMassForceField)
 SOFA_LINK_CLASS(SurfacePressureForceField)
 SOFA_LINK_CLASS(TriangleBendingSprings)
 SOFA_LINK_CLASS(TriangularBendingSprings)
 SOFA_LINK_CLASS(QuadBendingSprings)
 SOFA_LINK_CLASS(QuadularBendingSprings)
-
 

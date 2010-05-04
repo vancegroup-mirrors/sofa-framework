@@ -67,6 +67,7 @@
 #include <QLibrary>
 #include <QTextBrowser>
 #include <QUrl>
+#include <QStatusBar>
 typedef Q3ListViewItem QListViewItem;
 typedef QStackedWidget QWidgetStack;
 typedef Q3PopupMenu QPopupMenu;
@@ -82,6 +83,7 @@ typedef QTextDrag Q3TextDrag;
 #include <qlibrary.h>
 #include <qtextbrowser.h>
 #include <qurl.h>
+#include <qstatusbar.h>
 #endif 
  
 #ifdef SOFA_PML
@@ -111,7 +113,10 @@ using namespace sofa::filemanager::pml;
 #endif
 
 class QSofaListView;
+#ifndef SOFA_GUI_QT_NO_RECORDER
 class QSofaRecorder;
+#endif
+
 class QSofaStatWidget;
 
 class SOFA_SOFAGUIQT_API RealGUI : public ::GUI, public SofaGUI
@@ -144,7 +149,9 @@ public:
 
     sofa::gui::qt::viewer::SofaViewer* viewer;
     QSofaListView* simulationGraph;
+#ifndef SOFA_CLASSIC_SCENE_GRAPH
     QSofaListView* visualGraph;
+#endif
 
 	  RealGUI( const char* viewername, const std::vector<std::string>& options = std::vector<std::string>() );
 	  ~RealGUI();
@@ -185,10 +192,11 @@ public:
           
 	  public slots:
     void NewRootNode(sofa::simulation::Node* root, const char* path);
-	  void Update();
+    void ActivateNode(sofa::simulation::Node* , bool );
+    void Update();
     virtual void fileSaveAs(sofa::simulation::Node *node);	 
     void LockAnimation(bool);
-
+    
     void fileRecentlyOpened(int id);
 	  void updateRecentlyOpened(std::string fileLoaded);
 	  void playpauseGUI(bool value);
@@ -246,7 +254,12 @@ public:
 
 	  QWidget* currentTab;
           QWidget *tabInstrument;
-    QSofaRecorder* recorder;
+#ifndef SOFA_GUI_QT_NO_RECORDER
+      QSofaRecorder* recorder;
+#else
+      QLabel* fpsLabel; 
+      QLabel* timeLabel;
+#endif
     QSofaStatWidget* statWidget;
 	  QTimer* timerStep;
 	  WFloatLineEdit *background[3];
@@ -307,12 +320,14 @@ public:
 
     virtual void execute(const sofa::component::collision::BodyPicked &body)
     {
+        core::objectmodel::BaseObject *objectPicked=NULL;
         if (body.body)
         {
             Q3ListViewItem* item=gui->simulationGraph->getListener()->items[body.body];
             gui->simulationGraph->ensureItemVisible(item);
             gui->simulationGraph->clearSelection();
             gui->simulationGraph->setSelected(item,true);
+            objectPicked=body.body;
         }
         else if (body.mstate)
         {
@@ -320,12 +335,72 @@ public:
             gui->simulationGraph->ensureItemVisible(item);
             gui->simulationGraph->clearSelection();
             gui->simulationGraph->setSelected(item,true);
+            objectPicked=body.mstate;
         }
         else
             gui->simulationGraph->clearSelection();
+
+        if (objectPicked)
+        {
+            QString messagePicking;
+            simulation::Node *n=static_cast<simulation::Node*>(objectPicked->getContext());
+            messagePicking=QString("Index ") + QString::number(body.indexCollisionElement)
+                           + QString(" of  ")
+                           + QString(n->getPathName().c_str())
+                           + QString("/") + QString(objectPicked->getName().c_str())
+                           + QString(" : ") + QString(objectPicked->getClassName().c_str());
+            if (!objectPicked->getTemplateName().empty())
+                messagePicking += QString("<") + QString(objectPicked->getTemplateName().c_str()) + QString(">");
+            gui->statusBar()->message(messagePicking,3000); //display message during 3 seconds
+        }
     }
 protected:
     RealGUI *gui;
+};
+
+
+struct ActivationFunctor
+{
+       ActivationFunctor(bool act, GraphListenerQListView* l):active(act), listener(l)
+       {
+          pixmap_filename= std::string("textures/media-record.png");
+          if ( sofa::helper::system::DataRepository.findFile ( pixmap_filename ) )
+            pixmap_filename = sofa::helper::system::DataRepository.getFile ( pixmap_filename );
+       }
+        void operator()(core::objectmodel::BaseNode* n)
+        {
+          if (active)
+          {
+            //Find the corresponding node in the Qt Graph
+            QListViewItem *item=listener->items[n];  
+            //Remove the text
+            QString desact_text = item->text(0);
+            desact_text.remove(QString("Deactivated "), true);
+            item->setText(0,desact_text);
+            //Remove the icon
+            QPixmap *p = getPixmap(n);
+            item->setPixmap(0,*p);
+            item->setOpen(true);
+          }
+          else
+          {
+            //Find the corresponding node in the Qt Graph
+            QListViewItem *item=listener->items[n];
+            //Remove the text
+            item->setText(0, QString("Deactivated ") + item->text(0));
+            #ifdef SOFA_QT4
+            item->setPixmap(0,QPixmap::fromImage(QImage(pixmap_filename.c_str())));
+            #else
+            item->setPixmap(0,QPixmap(QImage(pixmap_filename.c_str())));
+            #endif
+            item->setOpen(false);
+          }
+        }
+      protected:
+        std::string pixmap_filename;
+        bool active;
+        GraphListenerQListView* listener;
+
 };
 
 } // namespace qt

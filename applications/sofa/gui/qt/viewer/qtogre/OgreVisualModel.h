@@ -33,6 +33,7 @@
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/VisualModel.h>
 #include <sofa/core/componentmodel/behavior/MappedModel.h>
+#include <sofa/core/componentmodel/loader/Material.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
 #include <sofa/component/visualmodel/VisualModelImpl.h>
 #include <sofa/core/objectmodel/DataFileName.h>
@@ -65,8 +66,22 @@ public:
     virtual bool loadTexture(const std::string& filename);
     virtual void applyUVTransformation();
 
+    static bool lightsEnabled;
 protected:
-    void uploadStructure();
+    struct SubMesh
+    {
+        std::set< unsigned int > indices;
+        Ogre::MaterialPtr material;
+
+        helper::vector< Triangle > triangles;
+        helper::vector< Quad >     quads;
+    };
+
+    void prepareMesh();
+    Ogre::MaterialPtr createMaterial(const core::componentmodel::loader::Material &sofaMaterial);
+
+    void updateVisibility();
+    void uploadSubMesh(const SubMesh& m);
     void uploadNormals();
     void updateMaterial();
     void convertManualToMesh();
@@ -78,13 +93,17 @@ protected:
     Data< bool > culling;
 
 
-    std::string currentName;
+    std::string modelName;
+    std::string normalName;
+
     Ogre::ManualObject *ogreObject;
     Ogre::ManualObject *ogreNormalObject;
     Ogre::SceneManager* mSceneMgr;
     Ogre::MaterialPtr currentMaterial;
     Ogre::MaterialPtr currentMaterialNormals;
 
+    helper::vector< SubMesh > subMeshes;
+    bool needUpdate;
 };
     }
   }

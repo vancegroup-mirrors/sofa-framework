@@ -36,6 +36,7 @@
 #include "WFloatLineEdit.h"
 #include <limits.h>
 
+
 #if !defined(INFINITY)
 #define INFINITY 9.0e10
 #endif
@@ -110,16 +111,16 @@ namespace sofa
         typedef Q3Grid ParentWidget;
         Widget* w;
         ParentWidget* parent_w;
-
-        data_widget_container() : w(NULL),parent_w(NULL) {}
+   
+        data_widget_container() : w(NULL),parent_w(NULL) {  }
 
         bool createWidgets(DataWidget * datawidget, QWidget* parent, const data_type& d, bool readOnly)
         {
           parent_w = createParentWidget(parent,1);
           assert(parent_w != NULL);
           w = helper::create(parent_w,d);
-          
           if (w == NULL) return false;
+      
           helper::readFromData(w, d);
           if (readOnly)
             w->setEnabled(false);
@@ -176,12 +177,15 @@ namespace sofa
        
         virtual void writeToData()
         {
-    
           data_type d = this->getData()->virtualGetValue();
           container.writeToData(d);
           this->getData()->virtualSetValue(d);
         }
+        virtual unsigned int numColumnWidget() { return 3; }
       };
+
+
+     
 
       ////////////////////////////////////////////////////////////////
       /// std::string support
@@ -379,17 +383,19 @@ namespace sofa
         typedef Q3Grid ParentWidget;
         enum { N = vhelper::SIZE };
         Container w[N];
+        
         ParentWidget* parent_w;
         fixed_vector_data_widget_container() {}
          
-        bool createWidgets(DataWidget * _widget, QWidget* /*parent*/, const data_type& d, bool readOnly)
+        bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
         {
-          parent_w = createParentWidget(_widget,N);
+          parent_w = createParentWidget(parent,N);
           assert(parent_w != NULL);
           for (int i=0; i<N; ++i)
             if (!w[i].createWidgets(_widget,
               parent_w, *vhelper::get(d,i), readOnly))
               return false;
+
           return true;
         }
         void setReadOnly(bool readOnly)
@@ -436,11 +442,11 @@ namespace sofa
         ParentWidget* parent_w;
         Container w[L][C];
         fixed_grid_data_widget_container() {}
- 
-        bool createWidgets(DataWidget * _widget, QWidget* /*parent*/, const data_type& d, bool readOnly)
+        
+        bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
         {
 
-          parent_w = createParentWidget(_widget,C);
+          parent_w = createParentWidget(parent,C);
           assert(parent_w);
           for (int y=0; y<L; ++y)
             for (int x=0; x<C; ++x)

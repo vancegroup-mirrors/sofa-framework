@@ -90,7 +90,8 @@ HEADERS += initForceField.h \
            VaccumSphereForceField.h \
            VaccumSphereForceField.inl \
            VectorSpringForceField.h \
-           VectorSpringForceField.inl 
+           VectorSpringForceField.inl
+
            
 SOURCES += initForceField.cpp \
            BeamFEMForceField.cpp \
@@ -133,7 +134,7 @@ SOURCES += initForceField.cpp \
            TriangularQuadraticSpringsForceField.cpp \
            TriangularTensorMassForceField.cpp \
            VaccumSphereForceField.cpp \
-           VectorSpringForceField.cpp 
+           VectorSpringForceField.cpp
            
 
 contains(DEFINES,SOFA_TEST_FRICTION){

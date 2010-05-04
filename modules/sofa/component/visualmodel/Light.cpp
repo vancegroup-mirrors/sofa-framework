@@ -103,14 +103,6 @@ void Light::init()
 
 void Light::initVisual()
 {
-	//Init Light part
-	glLightf(GL_LIGHT0+lightID, GL_SPOT_CUTOFF, 180.0);
-	GLfloat c[4] = { (GLfloat) color.getValue()[0], (GLfloat)color.getValue()[1], (GLfloat)color.getValue()[2], 1.0 };
-	glLightfv(GL_LIGHT0+lightID, GL_AMBIENT, c);
-	glLightfv(GL_LIGHT0+lightID, GL_DIFFUSE, c);
-	glLightfv(GL_LIGHT0+lightID, GL_SPECULAR, c);
-	glLightf(GL_LIGHT0+lightID, GL_LINEAR_ATTENUATION, 0.0);
-
 	//init Shadow part
 	computeShadowMapSize();
 	//Shadow part
@@ -129,6 +121,12 @@ void Light::reinit()
 
 void Light::drawLight()
 {
+	glLightf(GL_LIGHT0+lightID, GL_SPOT_CUTOFF, 180.0);
+	GLfloat c[4] = { (GLfloat) color.getValue()[0], (GLfloat)color.getValue()[1], (GLfloat)color.getValue()[2], 1.0 };
+	glLightfv(GL_LIGHT0+lightID, GL_AMBIENT, c);
+	glLightfv(GL_LIGHT0+lightID, GL_DIFFUSE, c);
+	glLightfv(GL_LIGHT0+lightID, GL_SPECULAR, c);
+	glLightf(GL_LIGHT0+lightID, GL_LINEAR_ATTENUATION, 0.0);
 
 }
 
@@ -374,14 +372,14 @@ void SpotLight::draw()
 		const Vector3& col = color.getValue();
 
 		//get Rotation
-	Vector3 xAxis, yAxis;
-	yAxis = (fabs(dir[1]) > fabs(dir[2])) ? Vector3(0.0,0.0,1.0) : Vector3(0.0,1.0,0.0);
-	xAxis = yAxis.cross(dir);
-    yAxis = dir.cross(xAxis);
-	xAxis.normalize();
-	yAxis.normalize();
-	defaulttype::Quat q;
-	q = q.createQuaterFromFrame(xAxis, yAxis, dir).inverse();
+		Vector3 xAxis, yAxis;
+		yAxis = (fabs(dir[1]) > fabs(dir[2])) ? Vector3(0.0,0.0,1.0) : Vector3(0.0,1.0,0.0);
+		xAxis = yAxis.cross(dir);
+		yAxis = dir.cross(xAxis);
+		xAxis.normalize();
+		yAxis.normalize();
+		defaulttype::Quat q;
+		q = q.createQuaterFromFrame(xAxis, yAxis, dir).inverse();
 
 		GLfloat rotMat[16];
 		q.writeOpenGlMatrix(rotMat);

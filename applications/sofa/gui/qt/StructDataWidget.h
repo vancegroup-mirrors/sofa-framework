@@ -87,11 +87,15 @@ namespace sofa
         PrevContainer p;
         Container w;
         QCheckBox* check;
+
         struct_data_widget_container() : check(NULL) {}
+
         bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
         {
           if (!p.createWidgets(_widget, parent, d, readOnly))
             return false;
+         
+
           const char* name = vhelper::name();
           bool checkable = vhelper::isCheckable();
           if (checkable)
@@ -104,11 +108,15 @@ namespace sofa
           }
           else
           {
-            if (name && *name && N > 1)
-              new QLabel(QString(name),parent);
+            // hack : empty QLabel for formatting purposes only when T = sofa::core::componentmode:Material 
+            new QLabel(parent);
+            if (name && *name && N > 1){
+              new QLabel(QString("name"),parent);
+            }
           }
           if (!w.createWidgets(_widget, parent, *vhelper::get(d), readOnly || vhelper::readOnly()))
             return false;
+   
           if (checkable)
           {
             bool isChecked = vhelper::isChecked(d);
@@ -119,7 +127,7 @@ namespace sofa
             {
               if (!isChecked)
                 w.setReadOnly(true);
-              _widget->connect(check, SIGNAL( toggled(bool) ), _widget, SLOT( setModified() ));
+                _widget->connect(check, SIGNAL( toggled(bool) ), _widget, SLOT( setWidgetDirty() ));
               if( w.parent_w){
               _widget->connect(check, SIGNAL( toggled(bool) ), w.parent_w, SLOT( setEnabled(bool) ));
               }
@@ -201,7 +209,7 @@ namespace sofa
         {
         }
         void readConstantsFromData(const data_type& /*d*/)
-        {
+        { 
         }
         void writeToData(data_type& /*d*/)
         {
@@ -527,6 +535,9 @@ namespace sofa
       template<>
       class data_widget_container < sofa::core::componentmodel::loader::Material > : public struct_data_widget_container < sofa::core::componentmodel::loader::Material >
       {};
+
+//      template<>
+//      unsigned int SimpleDataWidget< sofa::core::componentmodel::loader::Material >::numColumnWidget() { return 2; }
 
     } // namespace qt
 

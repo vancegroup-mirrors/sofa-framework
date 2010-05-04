@@ -136,7 +136,6 @@ namespace sofa
           typename DataTypes::Real r=0.0;
 
           index = mapper->addPoint(pointPicked, idx, r);
-          std::cerr << index << " ; " << pointPicked << " ! " << idx << " ! " << std::endl;
           mapper->update();
 
           if (mstateCollision->getContext() != picked.body->getContext())

@@ -76,13 +76,17 @@ namespace sofa
                   LeftOperationCombo  ->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
                   MiddleOperationCombo->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
                   RightOperationCombo ->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
-//
-//                  if      (it->first == "Attach") LeftOperationCombo->setCurrentItem(idx);
-//                  else if (it->first == "Incise") MiddleOperationCombo->setCurrentItem(idx);
-//                  else if (it->first == "Remove") RightOperationCombo->setCurrentItem(idx);
+
+                  if (OperationFactory::GetDescription(it->first) == OperationFactory::GetDescription(usedOperations[LEFT]))
+                      LeftOperationCombo->setCurrentItem(idx);
+                  if (OperationFactory::GetDescription(it->first) == OperationFactory::GetDescription(usedOperations[MIDDLE]))
+                      MiddleOperationCombo->setCurrentItem(idx);
+                  if (OperationFactory::GetDescription(it->first) == OperationFactory::GetDescription(usedOperations[RIGHT]))
+                      RightOperationCombo->setCurrentItem(idx);
+
                   mapIndexOperation.insert(std::make_pair(idx++, it->first));
               }
-          }        
+          }
       }
 
       void SofaMouseManager::setPickHandler(PickHandler *picker)
@@ -114,6 +118,8 @@ namespace sofa
        if (!qoperation) return;
 
        //TODO: change the text of the ComboBox if it is different from the current operation
+
+       usedOperations[button] = id;
 
        switch(button)
          {

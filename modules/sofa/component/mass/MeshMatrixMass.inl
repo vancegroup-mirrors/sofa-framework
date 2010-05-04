@@ -866,7 +866,7 @@ using namespace core::componentmodel::topology;
   
 
   template <class DataTypes, class MassType>
-  double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v )
+  double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v ) const
   {
      const MassVector &vertexMass= vertexMassInfo.getValue();
      const MassVector &edgeMass= edgeMassInfo.getValue();
@@ -894,7 +894,7 @@ using namespace core::componentmodel::topology;
 
   
   template <class DataTypes, class MassType>
-  double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x )
+  double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x ) const
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
 

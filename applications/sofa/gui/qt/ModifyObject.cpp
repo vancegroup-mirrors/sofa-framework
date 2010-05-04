@@ -83,6 +83,7 @@ namespace sofa
         if(base == NULL){
           return;
         }
+        emit beginObjectModification(base);
         node = base;
         data_ = NULL;
         //Layout to organize the whole window
@@ -128,7 +129,7 @@ namespace sofa
                      tabs.back()->layout()->add( transformation );
                      tabs.back()->externalWidgetAddition(transformation->getNumWidgets());
                      connect( transformation, SIGNAL(TransformationDirty(bool)), buttonUpdate, SLOT( setEnabled(bool) ) );
-
+                     connect( transformation, SIGNAL(TransformationDirty(bool)), this, SIGNAL( componentDirty(bool) ) );
                  }
                  //add the widgets to display the visual flags
                  {
@@ -144,6 +145,7 @@ namespace sofa
                      connect(buttonUpdate,   SIGNAL(clicked() ),               displayFlag, SLOT( applyFlags() ) );
                      connect(buttonOk,       SIGNAL(clicked() ),               displayFlag, SLOT( applyFlags() ) );
                      connect(displayFlag,    SIGNAL( DisplayFlagDirty(bool) ), buttonUpdate, SLOT( setEnabled(bool) ) );
+                     connect(displayFlag,    SIGNAL( DisplayFlagDirty(bool) ), this, SIGNAL( componentDirty(bool) ) );
                  }
             }
 
@@ -173,6 +175,7 @@ namespace sofa
                 connect(this,           SIGNAL(updateDataWidgets()), currentTab, SLOT( updateWidgetValue()) );
 
                 connect(currentTab, SIGNAL( TabDirty(bool) ), buttonUpdate, SLOT( setEnabled(bool) ) );
+                connect(currentTab, SIGNAL( TabDirty(bool) ), this, SIGNAL( componentDirty(bool) ) );
               }
 
             {
@@ -251,6 +254,9 @@ namespace sofa
       {
         data_ = data;
         node = NULL;
+
+        emit beginDataModification(data);
+
         QVBoxLayout *generalLayout = new QVBoxLayout(this, 0, 1, "generalLayout");
         QHBoxLayout *lineLayout = new QHBoxLayout( 0, 0, 6, "Button Layout");
         buttonUpdate = new QPushButton( this, "buttonUpdate" );
@@ -275,6 +281,7 @@ namespace sofa
         generalLayout->addLayout( lineLayout );
         connect(buttonUpdate,   SIGNAL( clicked() ), displaydatawidget, SLOT( UpdateData() ) );
         connect(displaydatawidget, SIGNAL( WidgetDirty(bool) ), buttonUpdate, SLOT( setEnabled(bool) ) );
+        connect(displaydatawidget, SIGNAL( WidgetDirty(bool) ), this, SIGNAL( componentDirty(bool) ) );
         connect(buttonOk, SIGNAL(clicked() ), displaydatawidget, SLOT( UpdateData() ) );
         connect(displaydatawidget, SIGNAL(DataOwnerDirty(bool)), this, SLOT( updateListViewItem() ) );
         connect( buttonOk,       SIGNAL( clicked() ), this, SLOT( accept() ) );
@@ -374,6 +381,13 @@ namespace sofa
         }
 
         emit (objectUpdated());
+
+        if (node)
+        {
+            emit endObjectModification(node);
+            emit beginObjectModification(node);
+        }
+
         buttonUpdate->setEnabled(false);
       }
 
@@ -409,6 +423,25 @@ namespace sofa
         }
       }
 
+      void ModifyObject::reject   ()
+      {
+          if (node)      emit endObjectModification(node);
+//          else if (data) emit endDataModification(data);
+          emit(dialogClosed(Id_));
+          deleteLater();
+          QDialog::reject();
+      } //When closing a window, inform the parent.
+
+      void ModifyObject::accept   ()
+      {
+          updateValues();
+
+          if (node)      emit endObjectModification(node);
+//          else if (data) emit endDataModification(data);
+          emit(dialogClosed(Id_));
+          deleteLater();
+          QDialog::accept();
+      } //if closing by using Ok button, update the values
 
 
 

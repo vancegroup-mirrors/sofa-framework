@@ -20,6 +20,10 @@ contains (DEFINES, SOFA_GPU_CUDA) {
 	SUBDIRS += sofaCUDA
 }
 
+contains (DEFINES, SOFA_GPU_OPENCL) {
+	SUBDIRS += sofaOPENCL
+}
+
 contains(DEFINES, SOFA_HAVE_FLOWVR){
 	SUBDIRS += SofaFlowVR
 }

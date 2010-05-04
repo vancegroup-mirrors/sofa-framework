@@ -41,6 +41,7 @@
 
 #include <map>
 #include <algorithm>
+
 #include <fstream>
 
 
@@ -174,12 +175,12 @@ namespace sofa
 
       bool SofaConfiguration::getValue(CONDITION &c)
       {
-        unsigned int i=0;
-        for (;i<options.size();++i)
+        for (unsigned int i=0;i<data.size();++i)
           {
-            if (options[i]->name() == c.option) 
+            const DEFINES& def=data[i];
+             if (def.name == c.option)
               {
-                bool presence = options[i]->getValue();
+                bool presence = def.value;
                 if (c.presence && presence) return true;
                 if (!c.presence && !presence) return true;
                 return false;
@@ -243,6 +244,7 @@ namespace sofa
       {       
         for (unsigned int i=0;i<options.size();++i)
           {            
+
             std::vector< CONDITION > &conditions=options[i]->option.conditions;
             for (unsigned int c=0;c<conditions.size();++c)
               {
@@ -419,13 +421,13 @@ namespace sofa
         const QFileInfoList &listDirectories =
 #ifdef SOFA_QT4
         d.entryInfoList();  
-        QStringList filters; filters << "*.cpp" << "*.h" << "*.inl"; 
+        QStringList filters; filters << "*.h" << "*.hpp" << "*.cpp" << "*.inl"<< "*.c" << "*.cu" << "*.cuh" << "*.pro" ;
         d.setNameFilters(filters);
         for (int j = 0; j < listDirectories.size(); ++j) {
           QFileInfo fileInfo=listDirectories.at(j);
 #else
         *(d.entryInfoList());
-        QString filters="*.cpp *.h *.inl";
+        QString filters="*.h *.hpp *.cpp *.inl *.c *.cu *.cuh *.pro";
         d.setNameFilter(filters);
         QFileInfoListIterator itDir( listDirectories );
         while ( (itDir.current()) != 0 ) {

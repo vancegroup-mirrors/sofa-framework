@@ -61,9 +61,11 @@ SOFA_LINK_CLASS(PointSplatModel)
 SOFA_LINK_CLASS(PositionalLight)
 
 #ifdef SOFA_HAVE_GLEW
+SOFA_LINK_CLASS(OglRenderingSRGB)
 SOFA_LINK_CLASS(OglShader)
 SOFA_LINK_CLASS(OglShaderVisualModel)
 SOFA_LINK_CLASS(OglShadowShader)
+SOFA_LINK_CLASS(OglTexture)
 SOFA_LINK_CLASS(OglTexture2D)
 SOFA_LINK_CLASS(OglIntVariable)
 SOFA_LINK_CLASS(OglInt2Variable)

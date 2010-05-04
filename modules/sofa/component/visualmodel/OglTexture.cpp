@@ -34,26 +34,43 @@ namespace component
 namespace visualmodel
 {
 
-
+SOFA_DECL_CLASS(OglTexture)
 SOFA_DECL_CLASS(OglTexture2D)
 
-//Register OglTexture2D in the Object Factory
-int OglTexture2DClass = core::RegisterObject("OglTexture2D")
-.add< OglTexture2D >()
-;
+// Register the OglTexture* objects in the Object Factory
+int OglTextureClass = core::RegisterObject("OglTexture").add< OglTexture >();
+int OglTexture2DClass = core::RegisterObject("OglTexture2D").add< OglTexture2D >();
 
 unsigned short OglTexture::MAX_NUMBER_OF_TEXTURE_UNIT = 1;
 
 OglTexture::OglTexture()
-:textureUnit(initData(&textureUnit, 1, "textureUnit", "Set the texture unit"))
+:textureFilename(initData(&textureFilename, (std::string) "", "textureFilename", "Texture Filename"))
+,textureUnit(initData(&textureUnit, 1, "textureUnit", "Set the texture unit"))
 ,enabled(initData(&enabled, (bool) true, "enabled", "enabled ?"))
+,repeat(initData(&repeat, (bool) false, "repeat", "Repeat Texture ?"))
+,linearInterpolation(initData(&linearInterpolation, (bool) true, "linearInterpolation", "Interpolate Texture ?"))
+,generateMipmaps(initData(&generateMipmaps, (bool) false, "generateMipmaps", "Generate mipmaps ?"))
+,srgbColorspace(initData(&srgbColorspace, (bool) false, "srgbColorspace", "SRGB colorspace ?"))
+,minLod(initData(&minLod, (float) -1000, "minLod", "Minimum mipmap lod ?"))
+,maxLod(initData(&maxLod, (float)  1000, "maxLod", "Maximum mipmap lod ?"))
+,proceduralTextureWidth(initData(&proceduralTextureWidth, (unsigned int) 0, "proceduralTextureWidth", "Width of procedural Texture"))
+,proceduralTextureHeight(initData(&proceduralTextureHeight, (unsigned int) 0, "proceduralTextureHeight", "Height of procedural Texture"))
+,proceduralTextureNbBits(initData(&proceduralTextureNbBits, (unsigned int) 1, "proceduralTextureNbBits", "Nb bits per color"))
+,proceduralTextureData(initData(&proceduralTextureData,  "proceduralTextureData", "Data of procedural Texture "))
+,cubemapFilenamePosX(initData(&cubemapFilenamePosX, (std::string) "", "cubemapFilenamePosX", "Texture filename of positive-X cubemap face"))
+,cubemapFilenamePosY(initData(&cubemapFilenamePosY, (std::string) "", "cubemapFilenamePosY", "Texture filename of positive-Y cubemap face"))
+,cubemapFilenamePosZ(initData(&cubemapFilenamePosZ, (std::string) "", "cubemapFilenamePosZ", "Texture filename of positive-Z cubemap face"))
+,cubemapFilenameNegX(initData(&cubemapFilenameNegX, (std::string) "", "cubemapFilenameNegX", "Texture filename of negative-X cubemap face"))
+,cubemapFilenameNegY(initData(&cubemapFilenameNegY, (std::string) "", "cubemapFilenameNegY", "Texture filename of negative-Y cubemap face"))
+,cubemapFilenameNegZ(initData(&cubemapFilenameNegZ, (std::string) "", "cubemapFilenameNegZ", "Texture filename of negative-Z cubemap face"))
+,img(0)
 {
 
 }
 
 OglTexture::~OglTexture()
 {
-
+  if (!texture)delete texture;
 }
 
 void OglTexture::setActiveTexture(unsigned short unit)
@@ -63,7 +80,105 @@ void OglTexture::setActiveTexture(unsigned short unit)
 
 void OglTexture::init()
 {
-	OglShaderElement::init();
+    if (textureFilename.getFullPath().empty())
+    {
+        if (cubemapFilenamePosX.getFullPath().empty() &&
+            cubemapFilenamePosY.getFullPath().empty() &&
+            cubemapFilenamePosZ.getFullPath().empty() &&
+            cubemapFilenameNegX.getFullPath().empty() &&
+            cubemapFilenameNegY.getFullPath().empty() &&
+            cubemapFilenameNegZ.getFullPath().empty())
+        {
+            // "Procedural" texture (actually inline texture data inside the scene file).
+            unsigned int height = proceduralTextureHeight.getValue();
+            unsigned int width = proceduralTextureWidth.getValue();
+            helper::vector<unsigned int> textureData = proceduralTextureData.getValue();
+            unsigned int nbb = proceduralTextureNbBits.getValue();
+
+            if (height > 0 && width > 0 && !textureData.empty() )
+            {
+                //Init texture
+                img = new helper::io::Image();
+                img->init(height, width, nbb);
+
+                //Make texture
+                unsigned char* data = img->getPixels();
+
+                for(unsigned int i=0 ;i<textureData.size() && i < height*width*(nbb/8); i++)
+                    data[i] = (unsigned char)textureData[i];
+
+                for (unsigned int i=textureData.size() ; i<height*width*(nbb/8) ; i++)
+                    data[i] = 0;
+            }
+        }
+        else
+        {
+            // A cubemap with faces stored in separate files.
+            std::string filename[6] =
+            {
+                cubemapFilenamePosX.getFullPath(),
+                cubemapFilenameNegX.getFullPath(),
+                cubemapFilenamePosY.getFullPath(),
+                cubemapFilenameNegY.getFullPath(),
+                cubemapFilenamePosZ.getFullPath(),
+                cubemapFilenameNegZ.getFullPath()
+            };
+
+            if (img) delete img;
+            img = 0;
+            helper::io::Image *tmp = 0;
+
+            for (unsigned i = 0; i < 6; i++)
+                if (!filename[i].empty())
+                {
+                    if (tmp) delete tmp;
+                    tmp = helper::io::Image::Create(filename[i].c_str());
+
+                    if (tmp->getTextureType() != helper::io::Image::TEXTURE_2D)
+                    {
+                        std::cerr << "OglTexture: invalid texture type in " << filename[i] << std::endl;
+                        continue;
+                    }
+
+                    if (!img)
+                    {
+                        img = new helper::io::Image();
+                        img->init(tmp->getWidth(), tmp->getHeight(), 0, 1, tmp->getDataType(), tmp->getChannelFormat());
+                        memset(img->getPixels(), 0, img->getImageSize());
+                    }
+                    else
+                    {
+                        if (img->getWidth() != tmp->getWidth() ||
+                            img->getHeight() != tmp->getHeight())
+                        {
+                            std::cerr << "OglTexture: inconsistent cubemap dimensions in " << filename[i] << std::endl;
+                            continue;
+                        }
+
+                        if (img->getDataType() != tmp->getDataType())
+                        {
+                            std::cerr << "OglTexture: inconsistent cubemap datatype in " << filename[i] << std::endl;
+                            continue;
+                        }
+
+                        if (img->getChannelFormat() != tmp->getChannelFormat())
+                        {
+                            std::cerr << "OglTexture: inconsistent cubemap channel format in " << filename[i] << std::endl;
+                            continue;
+                        }
+                    }
+
+                    memcpy(img->getCubeMipmapPixels(i, 0), tmp->getPixels(), tmp->getImageSize());
+                }
+
+            if (tmp) delete tmp;
+        }
+    }
+    else
+        // Ordinary texture.
+        img = helper::io::Image::Create(textureFilename.getFullPath().c_str());
+
+    OglShaderElement::init();
 }
 
 void OglTexture::initVisual()
@@ -78,11 +193,20 @@ void OglTexture::initVisual()
 		textureUnit.setValue(1);
 	}
 
-	/*if (textureUnit.getValue() < 1)
-		{
-			serr << "Unit Texture 0 not permitted ; set it at the unit texture n°1" << sendl;
-			textureUnit.setValue(1);
-		}*/
+    if (!img)
+    {
+        serr << "OglTexture: Error : OglTexture file " << textureFilename.getFullPath() << " not found." << sendl;
+        return;
+    }
+
+    texture = new helper::gl::Texture(img, repeat.getValue(), linearInterpolation.getValue(),
+                                      generateMipmaps.getValue(), srgbColorspace.getValue(),
+                                      minLod.getValue(), maxLod.getValue());
+    texture->init();
+
+    setActiveTexture(textureUnit.getValue());
+    shader->setTexture(indexShader.getValue(), id.getValue().c_str(), textureUnit.getValue());
+    setActiveTexture(0);
 }
 
 void OglTexture::reinit()
@@ -92,146 +216,58 @@ void OglTexture::reinit()
 		serr << "Unit Texture too high ; set it at the unit texture n°1" << sendl;
 		textureUnit.setValue(1);
 	}
-
 }
+
 void OglTexture::fwdDraw(Pass)
 {
 	if (enabled.getValue())
 	{
 		setActiveTexture(textureUnit.getValue());
 		bind();
-		forwardDraw();
 		setActiveTexture(0);
 	}
 }
+
 void OglTexture::bwdDraw(Pass)
 {
 	if (enabled.getValue())
 	{
 		setActiveTexture(textureUnit.getValue());
 		unbind();
-		backwardDraw();
-		///TODO ?
 		setActiveTexture(0);
 	}
 }
 
-OglTexture2D::OglTexture2D()
-:texture2DFilename(initData(&texture2DFilename, (std::string) "", "texture2DFilename", "Texture2D Filename"))
-,repeat(initData(&repeat, (bool) false, "repeat", "Repeat Texture ?"))
-,linearInterpolation(initData(&linearInterpolation, (bool) true, "linearInterpolation", "Interpolate Texture ?"))
-,proceduralTextureWidth(initData(&proceduralTextureWidth, (unsigned int) 0, "proceduralTextureWidth", "Width of procedural Texture"))
-,proceduralTextureHeight(initData(&proceduralTextureHeight, (unsigned int) 0, "proceduralTextureHeight", "Height of procedural Texture"))
-,proceduralTextureNbBits(initData(&proceduralTextureNbBits, (unsigned int) 1, "proceduralTextureNbBits", "Nb bits per color"))
-,proceduralTextureData(initData(&proceduralTextureData,  "proceduralTextureData", "Data of procedural Texture "))
+void OglTexture::bind()
 {
-
+   if (!texture) initVisual();
+    texture->bind();
+    glEnable(texture->getTarget());
 }
 
+void OglTexture::unbind()
+{
+    texture->unbind();
+    glDisable(texture->getTarget());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+OglTexture2D::OglTexture2D()
+:texture2DFilename(initData(&texture2DFilename, (std::string) "", "texture2DFilename", "Texture2D Filename"))
+{
+    std::cerr << "OglTexture2D is deprecated. Please use OglTexture instead." << std::endl;
+}
 
 OglTexture2D::~OglTexture2D()
 {
-  if (!texture2D)delete texture2D;
 }
 
 void OglTexture2D::init()
 {
-  if (!texture2DFilename.getFullPath().empty())
-    img = helper::io::Image::Create(texture2DFilename.getFullPath().c_str());
-  else
-  {
-	  unsigned int height = proceduralTextureHeight.getValue();
-	  unsigned int width = proceduralTextureWidth.getValue();
-	  helper::vector<unsigned int> textureData = proceduralTextureData.getValue();
-	  unsigned int nbb = proceduralTextureNbBits.getValue();
-
-	  if (height > 0 && width > 0 && !textureData.empty() )
-	  {
-          helper::io::Image::ChannelFormat channels;
-          switch (nbb)
-          {
-          case 8:
-              channels = helper::io::Image::L;
-              break;
-          case 16:
-              channels = helper::io::Image::LA;
-              break;
-          case 24:
-              channels = helper::io::Image::RGB;
-              break;
-          case 32:
-              channels = helper::io::Image::RGBA;
-              break;
-          default:
-              std::cerr << "OglTexture2D::init: Unknown bpp " << nbb << std::endl;
-              return;
-          }
-
-		  //Init texture
-		  img = new helper::io::Image();
-          img->init(height, width, 1, 1, helper::io::Image::UINT8, channels);
-
-		  //Make texture
-          unsigned char* data = img->getPixels();
-
-		  for(unsigned int i=0 ;i<textureData.size() && i < height*width*(nbb/8); i++)
-			  data[i] = (unsigned char)textureData[i];
-
-		  for (unsigned int i=textureData.size() ; i<height*width*(nbb/8) ; i++)
-			  data[i] = 0;
-	  }
-  }
-  OglTexture::init();
+    textureFilename = texture2DFilename;
+    OglTexture::init();
 }
-
-void OglTexture2D::initVisual()
-{
-	OglTexture::initVisual();
-
-	if (!img)
-	{
-		serr << "OglTexture2D: Error : OglTexture2D file " << texture2DFilename.getFullPath() << " not found." << sendl;
-		return;
-	}
-
-	texture2D = new helper::gl::Texture(img, repeat.getValue(), linearInterpolation.getValue());
-
-	texture2D->init();
-
-	setActiveTexture(textureUnit.getValue());
-
-	bind();
-
-	unbind();
-
-	shader->setTexture(indexShader.getValue(), id.getValue().c_str(), textureUnit.getValue());
-
-	setActiveTexture(0);
-}
-
-void OglTexture2D::bind()
-{
-   if (!texture2D) initVisual();
- 	texture2D->bind();
-	glEnable(GL_TEXTURE_2D);
-}
-
-void OglTexture2D::unbind()
-{
-	texture2D->unbind();
-	glDisable(GL_TEXTURE_2D);
-}
-
-void OglTexture2D::forwardDraw()
-{
-
-}
-
-void OglTexture2D::backwardDraw()
-{
-
-}
-
 
 }
 

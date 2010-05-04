@@ -151,7 +151,7 @@ namespace sofa
 
                 // Load the file header
                 DDSHeader header;
-                if (fread(&header, sizeof(header), 1, file))
+                if (!fread(&header, sizeof(header), 1, file))
                 {
                     fclose(file);
                     std::cerr << "ImageDDS::load: Cannot read the DDS header from " << filename << std::endl;
@@ -173,17 +173,17 @@ namespace sofa
                 switch (header.ddpfPixelFormat.dwFourCC)
                 {
                 // FourCC formats
-                case DDS_FORMAT_DXT1:    type = Image::COMPRESSED_DXT1; channels = Image::COMPRESSED; break;
-                case DDS_FORMAT_DXT3:    type = Image::COMPRESSED_DXT3; channels = Image::COMPRESSED; break;
-                case DDS_FORMAT_DXT5:    type = Image::COMPRESSED_DXT5; channels = Image::COMPRESSED; break;
-                case DDS_FORMAT_ATI1N:   type = Image::COMPRESSED_L;    channels = Image::COMPRESSED; break;
-                case DDS_FORMAT_ATI2N:   type = Image::COMPRESSED_LA;   channels = Image::COMPRESSED; break;
+                case DDS_FORMAT_DXT1:    type = Image::UCOMPRESSED; channels = Image::RGB; break;
+                //case DDS_FORMAT_DXT3:    type = Image::UCOMPRESSED; channels = Image::RGBA; break;
+                case DDS_FORMAT_DXT5:    type = Image::UCOMPRESSED; channels = Image::RGBA; break;
+                case DDS_FORMAT_ATI1N:   type = Image::UCOMPRESSED; channels = Image::L; break;
+                case DDS_FORMAT_ATI2N:   type = Image::UCOMPRESSED; channels = Image::LA; break;
 
-                case DDS_FORMAT_RG16:    type = Image::UINT16; channels = Image::LA;         break;
-                //case DDS_FORMAT_RGB16:   type = Image::UINT16; channels = Image::RGB;        break;
-                case DDS_FORMAT_RGBA16:  type = Image::UINT16; channels = Image::RGBA;       break;
-                //case DDS_FORMAT_BGR16:   type = Image::UINT16; channels = Image::BGR;        break;
-                //case DDS_FORMAT_BGRA16:  type = Image::UINT16; channels = Image::BGRA;       break;
+                case DDS_FORMAT_RG16:    type = Image::UNORM16; channels = Image::LA;         break;
+                //case DDS_FORMAT_RGB16:   type = Image::UNORM16; channels = Image::RGB;        break;
+                case DDS_FORMAT_RGBA16:  type = Image::UNORM16; channels = Image::RGBA;       break;
+                //case DDS_FORMAT_BGR16:   type = Image::UNORM16; channels = Image::BGR;        break;
+                //case DDS_FORMAT_BGRA16:  type = Image::UNORM16; channels = Image::BGRA;       break;
 
                 /*case DDS_FORMAT_L32:     type = Image::UINT32; channels = Image::L;          break;
                 case DDS_FORMAT_LA32:    type = Image::UINT32; channels = Image::LA;         break;
@@ -224,14 +224,14 @@ namespace sofa
                                      header.ddpfPixelFormat.dwGBitMask == 0x00 &&
                                      header.ddpfPixelFormat.dwBBitMask == 0x00)
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::R;
                             }
                             else if (header.ddpfPixelFormat.dwRBitMask == DDS_RBIT_RG3_B2)
                                 error = true;   // RG3_B2 is not supported
                             else
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::L;
                             }
                             break;
@@ -240,26 +240,26 @@ namespace sofa
                         case 16:
                             if      (header.ddpfPixelFormat.dwRGBAlphaBitMask)
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::LA;
                             }
                             else if (header.ddpfPixelFormat.dwRBitMask == 0x00FF &&
                                      header.ddpfPixelFormat.dwGBitMask == 0xFF00 &&
                                      header.ddpfPixelFormat.dwBBitMask == 0x0000)
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::RG;
                             }
                             else if (header.ddpfPixelFormat.dwRBitMask == 0xFFFF &&
                                      header.ddpfPixelFormat.dwGBitMask == 0x0000 &&
                                      header.ddpfPixelFormat.dwBBitMask == 0x0000)
                             {
-                                type = Image::UINT16;
+                                type = Image::UNORM16;
                                 channels = Image::R;
                             }
                             else
                             {
-                                type = Image::UINT16;
+                                type = Image::UNORM16;
                                 channels = Image::L;
                             }
                             break;
@@ -270,12 +270,12 @@ namespace sofa
                                 header.ddpfPixelFormat.dwGBitMask == 0x00FF00 &&
                                 header.ddpfPixelFormat.dwGBitMask == 0xFF0000)
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::RGB;
                             }
                             else
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::BGR;
                             }
                             break;
@@ -291,12 +291,12 @@ namespace sofa
                                      header.ddpfPixelFormat.dwGBitMask == 0x0000FF00 &&
                                      header.ddpfPixelFormat.dwBBitMask == 0x00FF0000)
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::RGBA;
                             }
                             else
                             {
-                                type = Image::UINT8;
+                                type = Image::UNORM8;
                                 channels = Image::BGRA;
                             }
                             break;
@@ -330,6 +330,11 @@ namespace sofa
                     return false; // "
                 }
 
+                std::cout << "DDS image " << filename << ": Type: " << strFromTextureType[getTextureType()]
+                        << ", Size: " << getWidth() << "x" << getHeight() << "x" << getDepth()
+                        << ", Format: " << strFromDataType[getDataType()] << ", Channels: " << strFromChannelFormat[getChannelFormat()]
+                        << ", Mipmaps: " << getMipmapCount() << std::endl;
+
                 return true;
             }
 
@@ -337,7 +342,7 @@ namespace sofa
 
             static DDSHeader::DDSPixelFormat pixelFormatTable[Image::COUNT_OF_DATA_TYPES][Image::COUNT_OF_CHANNEL_FORMATS] =
             {
-                // UINT8
+                // UNORM8
                 {
                     {32, DDPF_LUMINANCE, 0, 8, 0xFF, 0xFF, 0xFF, 0},                                // L
                     {32, DDPF_LUMINANCE | DDPF_ALPHAPIXELS, 0, 16, 0x00FF, 0x00FF, 0x00FF, 0xFF00}, // LA
@@ -346,10 +351,9 @@ namespace sofa
                     {32, DDPF_RGB, 0, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0},                         // RGB
                     {32, DDPF_RGB | DDPF_ALPHAPIXELS, 0, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000},   // RGBA
                     {32, DDPF_RGB, 0, 24, 0xFF0000, 0x00FF00, 0x0000FF, 0},                         // BGR
-                    {32, DDPF_RGB | DDPF_ALPHAPIXELS, 0, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000},   // BGRA
-                    {0, 0, 0, 0, 0, 0, 0, 0}     // COMPRESSED
+                    {32, DDPF_RGB | DDPF_ALPHAPIXELS, 0, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000}    // BGRA
                 },
-                // UINT16
+                // UNORM16
                 {
                     {32, DDPF_LUMINANCE, 0, 16, 0xFFFF, 0xFFFF, 0xFFFF, 0}, // L
                     {32, DDPF_FOURCC, DDS_FORMAT_RG16, 0, 0, 0, 0, 0},      // LA - basically the same as RG
@@ -358,8 +362,7 @@ namespace sofa
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_RGB16, 0, 0, 0, 0, 0},     // RGB
                     {32, DDPF_FOURCC, DDS_FORMAT_RGBA16, 0, 0, 0, 0, 0},    // RGBA
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGR16, 0, 0, 0, 0, 0},     // BGR
-                    {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGRA16, 0, 0, 0, 0, 0},    // BGRA
-                    {0, 0, 0, 0, 0, 0, 0, 0}     // COMPRESSED
+                    {0, 0, 0, 0, 0, 0, 0, 0}  // {32, DDPF_FOURCC, DDS_FORMAT_BGRA16, 0, 0, 0, 0, 0}     // BGRA
                 },
                 // UINT32
                 {
@@ -370,8 +373,7 @@ namespace sofa
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_RGB32, 0, 0, 0, 0, 0},     // RGB
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_RGBA32, 0, 0, 0, 0, 0},    // RGBA
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGR32, 0, 0, 0, 0, 0},     // BGR
-                    {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGRA32, 0, 0, 0, 0, 0},    // BGRA
-                    {0, 0, 0, 0, 0, 0, 0, 0}     // COMPRESSED
+                    {0, 0, 0, 0, 0, 0, 0, 0}  // {32, DDPF_FOURCC, DDS_FORMAT_BGRA32, 0, 0, 0, 0, 0}     // BGRA
                 },
                 // HALF
                 {
@@ -382,8 +384,7 @@ namespace sofa
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_RGB16F, 0, 0, 0, 0, 0},    // RGB
                     {32, DDPF_FOURCC, DDS_FORMAT_RGBA16F, 0, 0, 0, 0, 0},   // RGBA
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGR16F, 0, 0, 0, 0, 0},    // BGR
-                    {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGRA16F, 0, 0, 0, 0, 0},   // BGRA
-                    {0, 0, 0, 0, 0, 0, 0, 0}     // COMPRESSED
+                    {0, 0, 0, 0, 0, 0, 0, 0}  // {32, DDPF_FOURCC, DDS_FORMAT_BGRA16F, 0, 0, 0, 0, 0}    // BGRA
                 },
                 // FLOAT
                 {
@@ -394,39 +395,19 @@ namespace sofa
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_RGB32F, 0, 0, 0, 0, 0},    // RGB
                     {32, DDPF_FOURCC, DDS_FORMAT_RGBA32F, 0, 0, 0, 0, 0},   // RGBA
                     {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGR32F, 0, 0, 0, 0, 0},    // BGR
-                    {0, 0, 0, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_BGRA32F, 0, 0, 0, 0, 0},   // BGRA
-                    {0, 0, 0, 0, 0, 0, 0, 0}     // COMPRESSED
+                    {0, 0, 0, 0, 0, 0, 0, 0}  // {32, DDPF_FOURCC, DDS_FORMAT_BGRA32F, 0, 0, 0, 0, 0}    // BGRA
                 },
-                // BC1
+                // UCOMPRESSED
                 {
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {32, DDPF_FOURCC, DDS_FORMAT_DXT1, 0, 0, 0, 0, 0}
+                    {32, DDPF_FOURCC, DDS_FORMAT_ATI1N, 0, 0, 0, 0, 0},
+                    {32, DDPF_FOURCC, DDS_FORMAT_ATI2N, 0, 0, 0, 0, 0},
+                    {0, 0, 0, 0, 0, 0, 0, 0},
+                    {0, 0, 0, 0, 0, 0, 0, 0},
+                    {32, DDPF_FOURCC, DDS_FORMAT_DXT1, 0, 0, 0, 0, 0},
+                    {32, DDPF_FOURCC, DDS_FORMAT_DXT5, 0, 0, 0, 0, 0}, // {32, DDPF_FOURCC, DDS_FORMAT_DXT3, 0, 0, 0, 0, 0},
+                    {0, 0, 0, 0, 0, 0, 0, 0},
+                    {0, 0, 0, 0, 0, 0, 0, 0}
                 },
-                // BC2
-                {
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {32, DDPF_FOURCC, DDS_FORMAT_DXT3, 0, 0, 0, 0, 0}
-                },
-                // BC3
-                {
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {32, DDPF_FOURCC, DDS_FORMAT_DXT5, 0, 0, 0, 0, 0}
-                },
-                // BC4
-                {
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {32, DDPF_FOURCC, DDS_FORMAT_ATI1N, 0, 0, 0, 0, 0}
-                },
-                // BC5
-                {
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
-                    {32, DDPF_FOURCC, DDS_FORMAT_ATI2N, 0, 0, 0, 0, 0}
-                }
             };
 
             bool ImageDDS::save(const std::string &filename, int)
@@ -436,12 +417,12 @@ namespace sofa
                 header.dwMagic = DDS_MAGIC;
                 header.dwSize = 124;
                 header.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
-                header.dwFlags |= (getChannelFormat() != Image::COMPRESSED)? DDSD_PITCH : DDSD_LINEARSIZE;
+                header.dwFlags |= (getDataType() != Image::UCOMPRESSED)? DDSD_PITCH : DDSD_LINEARSIZE;
                 header.dwFlags |= (getMipmapCount() > 1)? DDSD_MIPMAPCOUNT : 0;
                 header.dwFlags |= (getTextureType() == Image::TEXTURE_3D)? DDSD_DEPTH : 0;
                 header.dwHeight = getHeight(0);
                 header.dwWidth = getWidth(0);
-                header.dwPitchOrLinearSize = (getChannelFormat() != Image::COMPRESSED)?
+                header.dwPitchOrLinearSize = (getDataType() != Image::UCOMPRESSED)?
                                              header.dwWidth * getBytesPerPixel() :
                                              getMipmapSize(0) / ((getTextureType() == Image::TEXTURE_CUBE)? 6 : 1);
                 header.dwDepth = (getTextureType() == Image::TEXTURE_3D)? getDepth(0) : 0;

@@ -346,12 +346,12 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 				////////////////////////////////////////////
 				//serr<<"pos0 set"<<sendl;
 
-				if (f*dof_on_node+i < 2)
+			/*	if (f*dof_on_node+i < 2)
 				{
 					eulerSolver->f_verbose.setValue(true);
 					eulerSolver->f_printLog.setValue(true);
 				//	serr<<"getF : "<<force<<sendl;  
-				}
+				}*/
 
 				double fact = 1.0; // christian : it is not a compliance... but an admittance that is computed !
 				if (eulerSolver)
@@ -377,13 +377,13 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 				velocity = *mstate->getV();
 				fact /= unitary_force[i];
 
-				if (f*dof_on_node+i < 2)
+			/*	if (f*dof_on_node+i < 2)
 				{
 					//eulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
 					eulerSolver->f_verbose.setValue(false);
 					eulerSolver->f_printLog.setValue(false);
 				//	serr<<"getV : "<<velocity<<sendl;
-				}
+				}*/
 
 				for (unsigned int v=0; v<nbNodes; v++)
 				{
@@ -509,7 +509,7 @@ void PrecomputedConstraintCorrection<DataTypes>::getCompliance(defaulttype::Base
 
 	/////////// The constraints are modified using a rotation value at each node/////
 	if(_rotations)
-		rotateConstraints();
+        rotateConstraints(false);
 	/////////////////////////////////////////////////////////////////////////////////
 
 
@@ -860,6 +860,46 @@ void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::applyContactForce
 */
 
 template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::applyPredictiveConstraintForce(const defaulttype::BaseVector *f)
+{
+   VecDeriv& force = *mstate->getExternalForces();
+
+    const unsigned int numDOFs = mstate->getSize();
+
+    force.clear();
+    force.resize(numDOFs);
+    for (unsigned int i=0; i< numDOFs; i++)
+        force[i] = Deriv();
+
+    if(this->_rotations)
+        this->rotateConstraints(true);
+
+    const VecConst& constraints = *mstate->getC();
+    unsigned int numConstraints = constraints.size();
+
+    for(unsigned int c1 = 0; c1 < numConstraints; c1++)
+    {
+        int indexC1 = mstate->getConstraintId()[c1];
+        double fC1 = f->element(indexC1);
+        //sout << "fC("<<indexC1<<")="<<fC1<<sendl;
+        if (fC1 != 0.0)
+        {
+          ConstConstraintIterator itConstraint;
+            std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
+          for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+            {
+              unsigned int dof = itConstraint->first;
+              Deriv n = itConstraint->second;
+
+                //sout << "f("<<constraints[c1][i].index<<") += "<< (constraints[c1][i].data * fC1) << sendl;
+                force[dof] += n * fC1;
+            }
+        }
+    }
+}
+
+
+template<class DataTypes>
 void PrecomputedConstraintCorrection<DataTypes>::resetContactForce()
 {
 	VecDeriv& force = *mstate->getExternalForces();
@@ -879,7 +919,7 @@ template<>
 void PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::draw();
 
 template<class DataTypes>
-void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints()
+void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints(bool back)
 {
 	VecConst& constraints = *mstate->getC();
 	unsigned int numConstraints = constraints.size();
@@ -905,7 +945,7 @@ void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints()
 	}
 	else
 	{
-		sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
+        sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints(false)";
 		return;
 	}
 
@@ -932,7 +972,8 @@ void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints()
 			{
 				Ri = rotationFinder->getRotations()[localRowNodeIdx];
 			}
-			Ri.transpose();
+            if(!back)
+                Ri.transpose();
 			// on passe les normales du repere global au repere local
 			Deriv n_i = Ri * n;
 			n.x() =  n_i.x();
@@ -951,10 +992,10 @@ void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints()
 }
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateConstraints(bool back);
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateConstraints(bool back);
 
 template<class DataTypes>
 void PrecomputedConstraintCorrection<DataTypes>::rotateResponse(){
@@ -979,7 +1020,7 @@ void PrecomputedConstraintCorrection<DataTypes>::rotateResponse(){
 	}
 	else
 	{
-		sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
+        sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints(false)";
 		return;
 	}
 
@@ -1011,13 +1052,13 @@ void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateResponse();
 #ifndef SOFA_DOUBLE
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateConstraints(bool back);
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateConstraints(bool back);
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateConstraints(bool back);
 
 template<>
 void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateResponse();
@@ -1059,7 +1100,7 @@ void PrecomputedConstraintCorrection<DataTypes>::resetForUnbuiltResolution(doubl
 
 	/////////// The constraints are modified using a rotation value at each node/////
 	if(_rotations)
-		rotateConstraints();
+        rotateConstraints(false);
 	/////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1527,10 +1568,10 @@ template<>
 void PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::draw();
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateConstraints(bool back);
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateConstraints(bool back);
 
 template<>
 void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateResponse();
@@ -1543,13 +1584,13 @@ void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateResponse();
 #ifndef SOFA_DOUBLE
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateConstraints(bool back);
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateConstraints(bool back);
 
 template<>
-void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateConstraints();
+void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateConstraints(bool back);
 
 template<>
 void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateResponse();

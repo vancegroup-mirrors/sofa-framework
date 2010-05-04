@@ -41,7 +41,7 @@ Visitor::Result MechanicalMatrixVisitor::processNodeTopDown(simulation::Node* no
 	
 
     for (unsigned i=0; i<node->solver.size() && res!=RESULT_PRUNE; i++ ) {
-      ctime_t t0 = begin(node, node->solver[i]);
+      ctime_t t0 = begin(node, node->solver[i], "fwd");
       res = this->fwdOdeSolver(node, node->solver[i]);
       end(node, node->solver[i], t0);
     }
@@ -50,17 +50,17 @@ Visitor::Result MechanicalMatrixVisitor::processNodeTopDown(simulation::Node* no
             if (node->mechanicalMapping != NULL) {
                 //cerr<<"MechanicalAction::processNodeTopDown, node "<<node->getName()<<" is a mapped model"<<endl;
                 Result res2;
-                ctime_t t0 = begin(node, node->mechanicalMapping);
+                ctime_t t0 = begin(node, node->mechanicalMapping, "fwd");
                 res = this->fwdMechanicalMapping(node, node->mechanicalMapping);
                 end(node, node->mechanicalMapping, t0);
-                t0 = begin(node, node->mechanicalState);
+                t0 = begin(node, node->mechanicalState, "fwd");
                 res2 = this->fwdMappedMechanicalState(node, node->mechanicalState);
                 end(node, node->mechanicalState, t0);
                 if (res2 == RESULT_PRUNE)
                         res = res2;
             } else {
                 //cerr<<"MechanicalAction::processNodeTopDown, node "<<node->getName()<<" is a no-map model"<<endl;
-                ctime_t t0 = begin(node, node->mechanicalState);
+                ctime_t t0 = begin(node, node->mechanicalState, "fwd");
                 res = this->fwdMechanicalState(node, node->mechanicalState);
                 end(node, node->mechanicalState, t0);
             }
@@ -68,7 +68,7 @@ Visitor::Result MechanicalMatrixVisitor::processNodeTopDown(simulation::Node* no
     }
 	if (res != RESULT_PRUNE) {
 		if (node->mass != NULL) {
-			ctime_t t0 = begin(node, node->mass);
+                        ctime_t t0 = begin(node, node->mass, "fwd");
 			res = this->fwdMass(node, node->mass);
 			end(node, node->mass, t0);
 		}
@@ -91,14 +91,14 @@ void MechanicalMatrixVisitor::processNodeBottomUp(simulation::Node* node)
 {
 	if (node->mechanicalState != NULL) {
 		if (node->mechanicalMapping != NULL) {
-			ctime_t t0 = begin(node, node->mechanicalState);
+                        ctime_t t0 = begin(node, node->mechanicalState, "bwd");
 			this->bwdMappedMechanicalState(node, node->mechanicalState);
 			end(node, node->mechanicalState, t0);
-			t0 = begin(node, node->mechanicalMapping);
+                        t0 = begin(node, node->mechanicalMapping, "bwd");
 			this->bwdMechanicalMapping(node, node->mechanicalMapping);
 			end(node, node->mechanicalMapping, t0);
 		} else {
-			ctime_t t0 = begin(node, node->mechanicalState);
+                        ctime_t t0 = begin(node, node->mechanicalState, "bwd");
 			this->bwdMechanicalState(node, node->mechanicalState);
 			end(node, node->mechanicalState, t0);
 		}
@@ -109,7 +109,7 @@ void MechanicalMatrixVisitor::processNodeBottomUp(simulation::Node* node)
         end(node, node->solver, t0);
     }*/
         for (unsigned i=0; i<node->solver.size(); i++ ) {
-          ctime_t t0 = begin(node, node->solver[i]);
+          ctime_t t0 = begin(node, node->solver[i], "bwd");
           this->bwdOdeSolver(node, node->solver[i]);
           end(node, node->solver[i], t0);
         }

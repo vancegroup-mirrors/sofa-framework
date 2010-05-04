@@ -99,11 +99,12 @@ void Fluid3D::updatePosition(double dt)
 {
     fnext->gravity = getContext()->getLocalGravity()/cellwidth;
     fnext->step(fluid, ftemp, (real)dt);
-    Grid3D* p = fluid; fluid=fnext; fnext=p;
+    Grid3D* p = fluid; fluid=fnext; fnext=p;    
 }
 
-void Fluid3D::drawVisual()
+void Fluid3D::draw()
 {
+    updateVisual();
     glPushMatrix();
     vec3 center = f_center.getValue();
     glTranslatef(center[0]-(nx-1)*cellwidth/2,center[1]-(ny-1)*cellwidth/2,center[2]-(nz-1)*cellwidth/2);

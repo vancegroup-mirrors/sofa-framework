@@ -92,6 +92,8 @@ using namespace plugins::pim::gui::qt;
 
 
 SOFA_LINK_CLASS(ProgressiveScaling)
+SOFA_LINK_CLASS(ComputeMeshIntersection)
+
 } 
 
 }

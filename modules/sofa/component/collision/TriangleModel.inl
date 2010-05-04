@@ -568,6 +568,9 @@ void TTriangleModel<DataTypes>::draw()
 {
     if (getContext()->getShowCollisionModels())
     {
+		if( size != _topology->getNbTriangles())
+			updateFromTopology();
+
         if (bothSide.getValue() || getContext()->getShowWireFrame())
             simulation::getSimulation()->DrawUtility.setPolygonMode(0,getContext()->getShowWireFrame());
         else

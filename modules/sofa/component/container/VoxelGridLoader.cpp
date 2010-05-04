@@ -291,7 +291,7 @@ namespace sofa
                     return 0;
                 }
                 helper::io::ImageRAW *imageRAW = new helper::io::ImageRAW();
-                imageRAW->init(res[0], res[1], res[2], 1, helper::io::Image::UINT8, channels);
+                imageRAW->init(res[0], res[1], res[2], 1, helper::io::Image::UNORM8, channels);
                 imageRAW->initHeader(hsize);
                 if(imageRAW->load( _filename ))
                     image = imageRAW;

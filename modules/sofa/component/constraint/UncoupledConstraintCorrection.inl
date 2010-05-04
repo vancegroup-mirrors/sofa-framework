@@ -405,7 +405,7 @@ void UncoupledConstraintCorrection<DataTypes>::applyContactForce(const defaultty
 	VecDeriv& v = *mstate->getV();
 	VecDeriv& v_free = *mstate->getVfree();
 	VecCoord& x_free = *mstate->getXfree();
-	double dt = this->getContext()->getDt();
+	const double invDt = 1.0/this->getContext()->getDt();
 
 
 	// Euler integration... will be done in the "integrator" as soon as it exists !
@@ -417,10 +417,48 @@ void UncoupledConstraintCorrection<DataTypes>::applyContactForce(const defaultty
 		v[i] = v_free[i];
 		dx[i] = force[i] * compliance.getValue()[i];
 		x[i] += dx[i];
-		v[i] += dx[i]/dt;
+		v[i] += dx[i]*invDt;
 	}
 	//sout<<" dx on articulations"<<dx<<sendl;
 }
+
+template<class DataTypes>
+void UncoupledConstraintCorrection<DataTypes>::applyPredictiveConstraintForce(const defaulttype::BaseVector *f)
+{
+   VecDeriv& force = *mstate->getExternalForces();
+
+    const unsigned int numDOFs = mstate->getSize();
+
+    force.clear();
+    force.resize(numDOFs);
+    for (unsigned int i=0; i< numDOFs; i++)
+        force[i] = Deriv();
+
+
+    const VecConst& constraints = *mstate->getC();
+    unsigned int numConstraints = constraints.size();
+
+    for(unsigned int c1 = 0; c1 < numConstraints; c1++)
+    {
+        int indexC1 = mstate->getConstraintId()[c1];
+        double fC1 = f->element(indexC1);
+        //sout << "fC("<<indexC1<<")="<<fC1<<sendl;
+        if (fC1 != 0.0)
+        {
+          ConstraintIterator itConstraint;
+        std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[c1].data();
+          for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+            {
+              unsigned int dof = itConstraint->first;
+              Deriv n = itConstraint->second;
+
+                //sout << "f("<<constraints[c1][i].index<<") += "<< (constraints[c1][i].data * fC1) << sendl;
+                force[dof] += n * fC1;
+            }
+        }
+    }
+}
+
 
 
 template<class DataTypes>

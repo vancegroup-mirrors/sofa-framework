@@ -20,10 +20,12 @@ HEADERS +=  initMapping.h \
            BeamLinearMapping.inl \
            CenterOfMassMapping.h \
            CenterOfMassMapping.inl \
-		   CenterPointMechanicalMapping.h \
-		   CenterPointMechanicalMapping.inl \
+	   CenterPointMechanicalMapping.h \
+	   CenterPointMechanicalMapping.inl \
            CurveMapping.h \
            CurveMapping.inl \
+	   ExternalInterpolationMapping.h \
+	   ExternalInterpolationMapping.inl \
            IdentityMapping.h \
            IdentityMapping.inl \
            ImplicitSurfaceMapping.h \
@@ -56,8 +58,9 @@ SOURCES += initMapping.cpp \
            BarycentricMappingRigid.cpp \
            BeamLinearMapping.cpp \
            CenterOfMassMapping.cpp \
-		   CenterPointMechanicalMapping.cpp \
+	   CenterPointMechanicalMapping.cpp \
            CurveMapping.cpp \
+	   ExternalInterpolationMapping.cpp \
            IdentityMapping.cpp \
            ImplicitSurfaceMapping.cpp \
            LaparoscopicRigidMapping.cpp \

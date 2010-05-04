@@ -158,6 +158,13 @@ else {
   message( "|  GPU support using CUDA: DISABLED")
 }
 
+contains(DEFINES,SOFA_GPU_OPENCL) {
+  message( "|  GPU support using OPENCL: ENABLED")
+}
+else {
+  message( "|  GPU support using OPENCL: DISABLED")
+}
+
 contains(DEFINES,SOFA_PML) {
   message( "|  PML/LML support: ENABLED")
 }

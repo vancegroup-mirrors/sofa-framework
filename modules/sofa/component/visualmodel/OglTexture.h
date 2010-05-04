@@ -57,8 +57,28 @@ public:
 	SOFA_CLASS2(OglTexture, core::VisualModel, OglShaderElement);
 
 protected:
+    sofa::core::objectmodel::DataFileName textureFilename;
     Data<int> textureUnit;
     Data<bool> enabled;
+    Data<bool> repeat;
+    Data<bool> linearInterpolation;
+    Data<bool> generateMipmaps;
+    Data<bool> srgbColorspace;
+    Data<float> minLod;
+    Data<float> maxLod;
+    Data<unsigned int> proceduralTextureWidth;
+    Data<unsigned int> proceduralTextureHeight;
+    Data<unsigned int> proceduralTextureNbBits;
+    Data<helper::vector<unsigned int> > proceduralTextureData;
+    sofa::core::objectmodel::DataFileName cubemapFilenamePosX;
+    sofa::core::objectmodel::DataFileName cubemapFilenamePosY;
+    sofa::core::objectmodel::DataFileName cubemapFilenamePosZ;
+    sofa::core::objectmodel::DataFileName cubemapFilenameNegX;
+    sofa::core::objectmodel::DataFileName cubemapFilenameNegY;
+    sofa::core::objectmodel::DataFileName cubemapFilenameNegZ;
+
+    helper::gl::Texture* texture;
+    helper::io::Image* img;
 
 public:
 	static unsigned short MAX_NUMBER_OF_TEXTURE_UNIT;
@@ -67,25 +87,19 @@ public:
     virtual ~OglTexture();
 
     virtual void init();
-    virtual void initVisual();
-    virtual void reinit();
+    void initVisual();
+    void reinit();
     void fwdDraw(Pass);
     void bwdDraw(Pass);
 
     std::string getTextureName();
     void getTextureUnit();
 
-    virtual void bind() = 0;
-    virtual void unbind() = 0;
+    void bind();
+    void unbind();
 
     ///Utility function to set current active texture
     static void setActiveTexture(unsigned short unit);
-
-    //virtual void setInShader(OglShader& s) = 0;
-
-protected:
-    virtual void forwardDraw() = 0;
-    virtual void backwardDraw() = 0;
 };
 
 class SOFA_COMPONENT_VISUALMODEL_API OglTexture2D : public OglTexture
@@ -95,31 +109,12 @@ public:
 
 private:
     sofa::core::objectmodel::DataFileName texture2DFilename;
-	Data<bool> repeat;
-	Data<bool> linearInterpolation;
-	Data<unsigned int>proceduralTextureWidth;
-	Data<unsigned int> proceduralTextureHeight;
-	Data<unsigned int> proceduralTextureNbBits;
-	Data<helper::vector<unsigned int> > proceduralTextureData;
-	helper::gl::Texture* texture2D;
-
-	helper::io::Image* img;
 
 public:
 	OglTexture2D();
     virtual ~OglTexture2D();
 
-    void initVisual();
-    void init();
-    void reinit() { };
-
-    void bind();
-    void unbind();
-
-
-protected:
-	void forwardDraw();
-   	void backwardDraw();
+    virtual void init();
 };
 
 }

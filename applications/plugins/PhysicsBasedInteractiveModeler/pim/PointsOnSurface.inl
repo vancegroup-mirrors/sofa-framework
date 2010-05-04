@@ -79,8 +79,8 @@ void PointsOnSurface<DataTypes>::update()
     const VecCoord& surfacePoints = f_surfacePoints.getValue();
     const VecCoord& setOfPoints = f_setOfPoints.getValue();
 
-    std::cout << "surfacePoints " << surfacePoints.size() << std::endl;
-    std::cout << "setOfPoints " << setOfPoints.size() << std::endl;
+//    std::cout << "surfacePoints " << surfacePoints.size() << std::endl;
+//    std::cout << "setOfPoints " << setOfPoints.size() << std::endl;
 
     for( unsigned i=0; i<surfacePoints.size(); ++i )
     {
@@ -94,12 +94,12 @@ void PointsOnSurface<DataTypes>::update()
             if (result.norm() < radius.getValue())
             {
                 outSetPoints.insert(j);
-                break;
+//                break;
             }
         }
     }
 
-    std::cout << "outSetPoints " << outSetPoints.size() << std::endl;
+//    std::cout << "outSetPoints " << outSetPoints.size() << std::endl;
 
     SetIndex& outputPoints = *(f_outputPoints.beginEdit());
     for( std::set<unsigned int>::const_iterator iter = outSetPoints.begin(); iter != outSetPoints.end(); ++iter )

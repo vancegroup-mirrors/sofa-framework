@@ -81,6 +81,8 @@ namespace sofa
 #endif
       signals:
         void runInSofa(const std::string& sceneFilename, GNode *root);
+        void undo();
+        void redo();
       protected:
         TutorialSelector *selector;
         GraphModeler *graph;

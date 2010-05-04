@@ -64,6 +64,7 @@ class SOFA_COMPONENT_CONSTRAINT_API LMConstraintSolver : public sofa::core::comp
     ~LMConstraintSolver();
 
     void init();
+    void reinit(){graphKineticEnergy.setDisplayed(traceKineticEnergy.getValue());};
 
 
     bool prepareStates(double dt, VecId);
@@ -80,7 +81,9 @@ class SOFA_COMPONENT_CONSTRAINT_API LMConstraintSolver : public sofa::core::comp
     Data<bool> constraintPos;
     Data<unsigned int> numIterations;
     Data<double> maxError;
-    mutable Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
+    mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphGSError;
+    Data< bool > traceKineticEnergy;
+    mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphKineticEnergy;
 
  protected:
     /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
@@ -103,7 +106,10 @@ class SOFA_COMPONENT_CONSTRAINT_API LMConstraintSolver : public sofa::core::comp
                                                const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, 
                                                const MatrixEigen &A, 
                                                VectorEigen  c,
-                                               VectorEigen &Lambda) const;
+                                               VectorEigen &Lambda);
+
+    /// Compute Kinetic Energy
+    void computeKineticEnergy();
 
     /** Apply the correction to the state corresponding
      * @param id nature of the constraint, and correction to apply

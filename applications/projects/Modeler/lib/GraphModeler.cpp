@@ -65,8 +65,48 @@ namespace sofa
       typedef QPopupMenu Q3PopupMenu;
 #endif
 
+      GraphModeler::GraphModeler( QWidget* parent, const char* name, Qt::WFlags f):Q3ListView(parent, name, f), graphListener(NULL)
+        {
+          graphListener = new GraphListenerQListView(this);
+          addColumn("Graph");
+          header()->hide();
+          setSorting ( -1 );
+
+
+          historyManager=new GraphHistoryManager(this);
+          //Make the connections
+          connect(this, SIGNAL(operationPerformed(GraphHistoryManager::Operation&)), historyManager, SLOT(operationPerformed(GraphHistoryManager::Operation&)));
+          connect(this, SIGNAL(undo()), historyManager, SLOT(undo()));
+          connect(this, SIGNAL(redo()), historyManager, SLOT(redo()));
+          connect(this, SIGNAL(graphClean()), historyManager, SLOT(graphClean()));
+
+          connect(historyManager, SIGNAL(undoEnabled(bool)),   this, SIGNAL(undoEnabled(bool)));
+          connect(historyManager, SIGNAL(redoEnabled(bool)),   this, SIGNAL(redoEnabled(bool)));
+          connect(historyManager, SIGNAL(graphModified(bool)), this, SIGNAL(graphModified(bool)));
+          connect(historyManager, SIGNAL(historyMessage(const std::string&)), this, SIGNAL(historyMessage(const std::string&)));
+
+#ifdef SOFA_QT4
+      connect(this, SIGNAL(doubleClicked ( Q3ListViewItem *)), this, SLOT( doubleClick(Q3ListViewItem *)));
+      connect(this, SIGNAL(rightButtonClicked ( Q3ListViewItem *, const QPoint &, int )),  this, SLOT( rightClick(Q3ListViewItem *, const QPoint &, int )));
+#else
+      connect(this, SIGNAL(doubleClicked ( QListViewItem * )), this, SLOT( doubleClick(QListViewItem *)));
+      connect(this, SIGNAL(rightButtonClicked ( QListViewItem *, const QPoint &, int )),  this, SLOT( rightClick(QListViewItem *, const QPoint &, int )));
+#endif
+          DialogAdd=NULL;
+        }
+
+      GraphModeler::~GraphModeler()
+        {
+          delete historyManager;
+          simulation::getSimulation()->unload(getRoot());
+          delete getRoot();
+          delete graphListener;
+          if (DialogAdd) delete DialogAdd;
+        }
+
+
       GNode *GraphModeler::addGNode(GNode *parent, GNode *child, bool saveHistory)
-      {
+      {          
         GNode *lastRoot = getRoot();
         if (!child)
         {
@@ -83,19 +123,19 @@ namespace sofa
 
           if (saveHistory)
           {
-            Operation adding(child, Operation::ADD_GNODE);
-            adding.info=std::string("Adding GNODE ") + child->getClassName();
-            storeHistory(adding);
+              GraphHistoryManager::Operation adding(child, GraphHistoryManager::Operation::ADD_GNODE);
+            adding.info=std::string("Adding GNODE ") + child->getClassName();            
+            emit operationPerformed(adding);
           }
         }
         else
-        {
+        {            
           graphListener->addChild(NULL, child);
           //Set up the root
           firstChild()->setExpandable(true);
           firstChild()->setOpen(true);
 
-          if (saveHistory) clearHistory();
+          if (saveHistory) historyManager->graphClean();
         }
 
         if (!parent && childCount()>1)
@@ -139,10 +179,10 @@ namespace sofa
           //parent->addObject(object);
           if (saveHistory)
           {
-            Operation adding(object, Operation::ADD_OBJECT);
+              GraphHistoryManager::Operation adding(object, GraphHistoryManager::Operation::ADD_OBJECT);
 
             adding.info=std::string("Adding Object ") + object->getClassName();
-            storeHistory(adding);
+            emit operationPerformed(adding);
           }
         }
         else
@@ -338,9 +378,15 @@ namespace sofa
           (*testWindow).second->raise();
           return;
         }
+
+
         ModifyObjectFlags dialogFlags = ModifyObjectFlags();
         dialogFlags.setFlagsForModeler();
         ModifyObject *dialogModify = new ModifyObject( current_Id_modifyDialog,item,this,dialogFlags,item->text(0));
+
+        connect(dialogModify, SIGNAL(beginObjectModification(sofa::core::objectmodel::Base*)), historyManager, SLOT(beginModification(sofa::core::objectmodel::Base*)));
+        connect(dialogModify, SIGNAL(endObjectModification(sofa::core::objectmodel::Base*)),   historyManager, SLOT(endModification(sofa::core::objectmodel::Base*)));
+
         if(data){
           dialogModify->createDialog(data);
         }
@@ -446,10 +492,12 @@ namespace sofa
         return loadNode(currentItem());
       }
 
-      GNode *GraphModeler::loadNode(Q3ListViewItem* item, std::string filename)
+      GNode *GraphModeler::loadNode(Q3ListViewItem* item, std::string filename, bool saveHistory)
       {
-        if (!item) return NULL;
-        GNode *node = getGNode(item);
+        GNode *node;
+        if (!item) node=NULL;
+        else node=getGNode(item);
+
         if (filename.empty())
         {
           QString s = getOpenFileName ( this, NULL,"Scenes (*.scn *.xml *.simu *.pscn)", "open file dialog",  "Choose a file to open" );
@@ -459,7 +507,7 @@ namespace sofa
           }
           else return NULL;
         }
-        return loadNode(node,filename);
+        return loadNode(node,filename, saveHistory);
       }
 
 
@@ -480,8 +528,8 @@ namespace sofa
 
         }
         else
-        {
-          if (node)
+        {            
+//          if (node)
           {
             //Add as a child
             addGNode(node,newNode,saveHistory);
@@ -554,16 +602,16 @@ namespace sofa
         }
       }
 
-      GNode* GraphModeler::loadNode(GNode *node, std::string path)
+      GNode* GraphModeler::loadNode(GNode *node, std::string path, bool saveHistory)
       {
         xml::BaseElement* newXML=NULL;
 
-        newXML = xml::loadFromFile (path.c_str() );
+        newXML = xml::loadFromFile (path.c_str() );        
         if (newXML == NULL) return NULL;
 
         //-----------------------------------------------------------------
         //Add the content of a xml file
-        GNode *newNode = buildNodeFromBaseElement(node, newXML, true);
+        GNode *newNode = buildNodeFromBaseElement(node, newXML, saveHistory);
         //-----------------------------------------------------------------
 
         return newNode;
@@ -686,6 +734,11 @@ namespace sofa
         if (elem.presenceAttribute(std::string("scale3d")))      elem.setAttribute(std::string("scale3d"),     scale.c_str());
       }
 
+      void GraphModeler::save(const std::string &filename)
+      {
+          saveNode(getRoot(), filename);
+          emit graphClean();
+      }
 
       void GraphModeler::saveNode()
       {
@@ -707,12 +760,13 @@ namespace sofa
         }
       }
 
-      void GraphModeler::saveNode(GNode* node, std::string file)
+
+      void GraphModeler::saveNode(GNode* node, const std::string &file)
       {
         simulation::getSimulation()->exportXML(node, file.c_str(),true);
       }
 
-      void GraphModeler::saveComponent(BaseObject* object, std::string file)
+      void GraphModeler::saveComponent(BaseObject* object, const std::string &file)
       {
         std::ofstream out(file.c_str());
         simulation::XMLPrintVisitor print(out);
@@ -737,12 +791,13 @@ namespace sofa
           BaseObject* object = getObject(item);
           if (saveHistory)
           {
-            Operation removal(getObject(item),Operation::DELETE_OBJECT);
+            GraphHistoryManager::Operation removal(getObject(item),GraphHistoryManager::Operation::DELETE_OBJECT);
             removal.parent=getGNode(item);
             removal.above=getComponentAbove(item);
 
             removal.info=std::string("Removing Object ") + object->getClassName();
-            storeHistory(removal);
+            emit operationPerformed(removal);
+
           }
           getGNode(item)->removeObject(getObject(item));
         }
@@ -753,11 +808,11 @@ namespace sofa
 
           if (saveHistory)
           {
-            Operation removal(node,Operation::DELETE_GNODE);
+            GraphHistoryManager::Operation removal(node,GraphHistoryManager::Operation::DELETE_GNODE);
             removal.parent = parent;
             removal.above=getComponentAbove(item);
             removal.info=std::string("Removing GNode ") + node->getClassName();
-            storeHistory(removal);
+            emit operationPerformed(removal);
           }
           if (!parent)
             graphListener->removeChild(parent, node);
@@ -794,67 +849,6 @@ namespace sofa
         map_modifyObjectWindow.erase( Id );
       }
 
-
-
-      void GraphModeler::editUndo()
-      {
-          if (historyOperation.empty()) return;
-          Operation o=historyOperation.back();
-          historyOperation.pop_back();
-
-          processUndo(o);
-          historyUndoOperation.push_back(o);
-
-          emit( undo(historyOperation.size()));
-          emit( redo(true));
-      }
-
-      void GraphModeler::editRedo()
-      {
-          if (historyUndoOperation.empty()) return;
-          Operation o=historyUndoOperation.back();
-          historyUndoOperation.pop_back();
-
-          processUndo(o);
-          historyOperation.push_back(o);
-
-          emit( redo(historyUndoOperation.size()));
-          emit( undo(true));
-      }
-
-
-      void GraphModeler::processUndo(Operation &o)
-      {
-        switch(o.ID)
-        {
-        case Operation::DELETE_OBJECT:
-          o.parent->addObject(dynamic_cast<BaseObject*>(o.sofaComponent));
-          moveItem(graphListener->items[o.sofaComponent],graphListener->items[o.above]);
-          o.ID = Operation::ADD_OBJECT;
-          break;
-        case Operation::DELETE_GNODE:
-          o.parent->addChild(dynamic_cast<Node*>(o.sofaComponent));
-          //If the node is not alone below another parent node
-          moveItem(graphListener->items[o.sofaComponent],graphListener->items[o.above]);
-
-          o.ID = Operation::ADD_GNODE;
-          break;
-        case Operation::ADD_OBJECT:
-          o.parent=getGNode(graphListener->items[o.sofaComponent]);
-          o.above=getComponentAbove(graphListener->items[o.sofaComponent]);
-
-          o.parent->removeObject(dynamic_cast<BaseObject*>(o.sofaComponent));
-
-          o.ID = Operation::DELETE_OBJECT;
-          break;
-        case Operation::ADD_GNODE:
-          o.parent=getGNode(graphListener->items[o.sofaComponent]->parent());
-          o.above=getComponentAbove(graphListener->items[o.sofaComponent]);
-          o.parent->removeChild(dynamic_cast<Node*>(o.sofaComponent));
-          o.ID = Operation::DELETE_GNODE;
-          break;
-        }
-      }
 
       void GraphModeler::keyPressEvent ( QKeyEvent * e )
       {
@@ -1069,53 +1063,6 @@ namespace sofa
         }
         return selectedItem();
       }
-
-      ///      void GraphModeler::addBaseElement(GNode *node,
-      /*****************************************************************************************************************/
-      //History of operations management
-
-      void GraphModeler::clearHistory()
-      {
-        for ( int i=historyOperation.size()-1;i>=0;--i)
-        {
-          if (historyOperation[i].ID == Operation::DELETE_OBJECT)
-            delete historyOperation[i].sofaComponent;
-          else if (historyOperation[i].ID == Operation::DELETE_GNODE)
-          {
-            GNode *n=dynamic_cast<GNode*>(historyOperation[i].sofaComponent);
-            simulation::getSimulation()->unload(n);
-            delete n;
-          }
-        }
-        historyOperation.clear();
-        emit( undo(false) );
-      }
-
-      void GraphModeler::clearHistoryUndo()
-      {
-        for ( int i=historyUndoOperation.size()-1;i>=0;--i)
-        {
-          if (historyUndoOperation[i].ID == Operation::DELETE_OBJECT)
-            delete historyUndoOperation[i].sofaComponent;
-          else if (historyUndoOperation[i].ID == Operation::DELETE_GNODE)
-          {
-            GNode *n=dynamic_cast<GNode*>(historyUndoOperation[i].sofaComponent);
-            simulation::getSimulation()->unload(n);
-            delete n;
-          }
-        }
-        historyUndoOperation.clear();
-        emit( redo(false) );
-      }
-
-      void GraphModeler::storeHistory(Operation &o)
-      {
-        clearHistoryUndo();
-        historyOperation.push_back(o);
-        emit( undo(true) );
-      }
-
-
     }
   }
 }

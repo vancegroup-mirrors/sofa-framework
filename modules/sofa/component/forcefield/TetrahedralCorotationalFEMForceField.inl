@@ -229,7 +229,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::addDForce (VecDeriv& v, co
 }
 
 template <class DataTypes>
-    double TetrahedralCorotationalFEMForceField<DataTypes>::getPotentialEnergy(const VecCoord&)
+    double TetrahedralCorotationalFEMForceField<DataTypes>::getPotentialEnergy(const VecCoord&) const
 {
     serr<<"TetrahedralCorotationalFEMForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
     return 0;

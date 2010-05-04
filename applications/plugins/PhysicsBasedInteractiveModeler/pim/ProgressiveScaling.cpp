@@ -40,21 +40,21 @@ SOFA_DECL_CLASS(ProgressiveScaling)
 int ProgressiveScalingClass = sofa::core::RegisterObject("Progresive scaling")
 #ifndef SOFA_FLOAT
 .add< ProgressiveScaling<Vec3dTypes> >()
-.add< ProgressiveScaling<Rigid3dTypes> >()
+//.add< ProgressiveScaling<Rigid3dTypes> >()
 #endif //SOFA_FLOAT
 #ifndef SOFA_DOUBLE
 .add< ProgressiveScaling<Vec3fTypes> >()
-.add< ProgressiveScaling<Rigid3fTypes> >()
+//.add< ProgressiveScaling<Rigid3fTypes> >()
 #endif //SOFA_DOUBLE
 ;
 
 #ifndef SOFA_FLOAT
 template class SOFA_COMPONENT_ENGINE_API ProgressiveScaling<Vec3dTypes>;
-template class SOFA_COMPONENT_ENGINE_API ProgressiveScaling<Rigid3dTypes>;
+//template class SOFA_COMPONENT_ENGINE_API ProgressiveScaling<Rigid3dTypes>;
 #endif //SOFA_FLOAT
 #ifndef SOFA_DOUBLE
 template class SOFA_COMPONENT_ENGINE_API ProgressiveScaling<Vec3fTypes>;
-template class SOFA_COMPONENT_ENGINE_API ProgressiveScaling<Rigid3fTypes>;
+//template class SOFA_COMPONENT_ENGINE_API ProgressiveScaling<Rigid3fTypes>;
 #endif //SOFA_DOUBLE
 
 } // namespace pim

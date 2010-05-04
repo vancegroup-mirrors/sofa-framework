@@ -121,7 +121,7 @@ public:
 
 	virtual ~TetrahedralTensorMassForceField();
 
-	virtual double  getPotentialEnergy(const VecCoord& x);
+        virtual double  getPotentialEnergy(const VecCoord& x) const;
 
 	virtual void init();
 	virtual void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);

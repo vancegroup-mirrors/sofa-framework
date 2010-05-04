@@ -50,11 +50,12 @@ using namespace sofa::core::objectmodel;
  * This class apply a progresive scaling all over the points of a mechanical object.
  */
 template <class DataTypes>
-  class ProgressiveScaling : public sofa::core::DataEngine
+class ProgressiveScaling : public sofa::core::DataEngine
 {
 public:
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Real Real;
+    typedef sofa::defaulttype::Vec<9,Real> Vec6;
 public:
     SOFA_CLASS(SOFA_TEMPLATE(ProgressiveScaling,DataTypes),sofa::core::DataEngine);
     ProgressiveScaling();
@@ -71,13 +72,33 @@ public:
 
     void handleEvent(sofa::core::objectmodel::Event *event);
 
+    void draw();
+
     Data<VecCoord> f_X0;
     Data<VecCoord> f_X;
     VecCoord local_X0;
     Data<double> from_scale, to_scale;
+
+    Data<double> d_scale;
+    Data<Vec3d> d_axis;
+    Data<Vec3d> d_center;
+    Data<double> d_angle;
     Data<double> step;
+    Data<std::string> d_file_in;
+
     Vector3 cm0;
     double progressiveScale;
+
+    Data<Vector3> right_femoral_head;
+    Data<Vector3> left_femoral_head;
+    Vector3 scaling_center;
+    VecCoord uterus_position_from_scaling_center;
+    Vector3 rotation_center;
+    Data<double> rotation;
+    Quat quat;
+    Data< sofa::helper::vector<Vec6> > boxes;
+    Vector3 new_center;
+
 
     virtual std::string getTemplateName() const
     {

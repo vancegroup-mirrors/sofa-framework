@@ -34,9 +34,6 @@
 #include "FilterLibrary.h"
 #include "SofaTutorialManager.h"
 
-#include <map>
-#include <vector>
-#include <string>
 #include <sofa/helper/Factory.h>
 
 #ifdef SOFA_QT4
@@ -50,6 +47,8 @@
 #include <QAction>
 #include <QComboBox>
 #include <Q3Process>
+#include <QTextBrowser>
+#include <QUrl>
 #else
 #include "QSofaLibrary.h"
 #include <qheader.h>
@@ -63,6 +62,8 @@
 #include <qaction.h>
 #include <qcombobox.h>
 #include <qprocess.h>
+#include <qtextbrowser.h>
+#include <qurl.h>
 typedef QProcess Q3Process;
 #endif
 
@@ -99,25 +100,31 @@ namespace sofa
 
 	  /// Create a new empty Tab
 	  void createTab();
-	  void closeTab(QWidget *tab);
+          bool closeTab(QWidget *tab);
 	  /// Change the content of the description box. Happens when the user has clicked on a component
  	  void changeComponent(const std::string &description); 
-	  void fileOpen(std::string filename);	
-	  void fileSave(std::string filename);  
+          void fileOpen(std::string filename);
 
 	  /// Change the name of the main window
 	  void changeNameWindow(std::string filename);
 	  /// Update the menu Recently Opened Files...
 	  void updateRecentlyOpened(std::string fileLoaded);
 
+          void changeTabName(GraphModeler *graph, const QString &name, const QString &suffix=QString());
 	signals:
-	  void loadPresetGraph(std::string);
+          void loadPresetGraph(std::string);
+
 
 	  public slots:
 	  /// Change the state of the Undo button
-	  void updateUndo(bool v){this->editUndoAction->setEnabled(v);}
+          void setUndoEnabled(bool v){this->editUndoAction->setEnabled(v);}
 	  /// Change the state of the Redo button
-	  void updateRedo(bool v){this->editRedoAction->setEnabled(v);}
+          void setRedoEnabled(bool v){this->editRedoAction->setEnabled(v);}
+          /// Each time a graph component is modified, or is cleaned
+          void graphModifiedNotification(bool);
+          ///Each time an operation is done in a graph in relation with undo/redo
+          void displayHistoryMessage(const std::string &m);
+
 	  /// Change the content of the description box. Happens when the user has clicked on a component
 #ifdef SOFA_QT4
 	  void changeInformation(Q3ListViewItem *);
@@ -142,7 +149,10 @@ namespace sofa
  
 	  /// Open an existing simulation (new tab will be created)
 	  void fileOpen();	 
-	  void fileOpen(const QString &filename){fileOpen(std::string(filename.ascii()));}
+          void fileOpen(const QString &filename){fileOpen(std::string(filename.ascii()));}
+#ifdef SOFA_QT4
+          void fileOpen(const QUrl &filename);
+#endif
 
 	  /// Save the current simulation
 	  void fileSave();
@@ -151,8 +161,8 @@ namespace sofa
 	  /// Remove all components of the current simulation
 	  void clearTab();
 	  /// Close the current simulation
-	  void closeTab();
-	  void closeTab(int);
+          void closeTab();
+          bool closeTab(int);
 	  /// Create a new tab containing an empty simulation (by default the collision pipeline is added)
 	  void newTab();
 
@@ -162,7 +172,7 @@ namespace sofa
 	  void openTutorial();
 	  /// Launch the current simulation into Sofa
 	  void runInSofa();
-      void runInSofa(const std::string &sceneFilename, GNode *groot);
+          void runInSofa(const std::string &sceneFilename, GNode *groot);
 	  void sofaExited();
           void removeTemporaryFiles(const std::string &filename);
 
@@ -196,7 +206,7 @@ namespace sofa
 	  void fileRecentlyOpened(int id);
 	  
 	  /// Filter in the library all the components containing the text written
-      void searchText(const FilterQuery&);
+          void searchText(const FilterQuery&);
 
 	  void changeSofaBinary();
 	  void GUIChanged();
@@ -209,6 +219,7 @@ namespace sofa
      void redirectStderr();
      void redirectStdout();
 	protected:
+     void displayHelpModeler();
           //********************************************
           //Left Part
 /*           QToolBox     *containerLibrary; */
@@ -233,12 +244,14 @@ namespace sofa
 	  Q3PopupMenu *preset;
 	  /// Menu containing the opened simulations in the Modeler
 	  Q3PopupMenu *windowMenu;
+
+          QTextBrowser *infoItem;
 	  /// Correspondance between a name clicked in the menu and a path to the preset
 	  std::map< std::string, std::string > mapPreset;
 
 
 	  /// Map between a tabulation from the modeler to an object of type GraphModeler
-	  std::map<  const QWidget*, GraphModeler*> mapGraph;
+          std::map<  QWidget*, GraphModeler*> mapGraph;
 	  /// Map between a tabulation from the modeler to a Sofa Application
 	  std::multimap<  const QWidget*, Q3Process*> mapSofa;
 	  /// Map between an index of tabulation to the tabulation itself

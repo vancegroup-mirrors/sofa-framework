@@ -41,6 +41,8 @@
 #include <sofa/component/constraint/AttachConstraint.h>
 #include <sofa/component/constraint/FixedConstraint.h>
 #include <sofa/component/constraint/FixedPlaneConstraint.h>
+#include <sofa/component/constraint/FixedRotationConstraint.h>
+#include <sofa/component/constraint/FixedTranslationConstraint.h>
 #include <sofa/component/constraint/HermiteSplineConstraint.h>
 #include <sofa/component/constraint/LinearMovementConstraint.h>
 #include <sofa/component/constraint/LinearVelocityConstraint.h>
@@ -77,6 +79,19 @@ typedef sofa::component::constraint::FixedConstraint<sofa::defaulttype::StdRigid
 //Typedef for FixedPlaneConstraint
 typedef sofa::component::constraint::FixedPlaneConstraint<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > FixedPlaneConstraint3d;
 typedef sofa::component::constraint::FixedPlaneConstraint<sofa::defaulttype::StdRigidTypes<3, double> > FixedPlaneConstraintRigid3d;
+
+
+
+//---------------------------------------------------------------------------------------------
+//Typedef for FixedRotationConstraint
+typedef sofa::component::constraint::FixedRotationConstraint<sofa::defaulttype::StdRigidTypes<3, double> > FixedRotationConstraintRigid3d;
+
+
+
+//---------------------------------------------------------------------------------------------
+//Typedef for FixedTranslationConstraint
+typedef sofa::component::constraint::FixedTranslationConstraint<sofa::defaulttype::StdRigidTypes<3, double> > FixedTranslationConstraintRigid3d;
+typedef sofa::component::constraint::FixedTranslationConstraint<sofa::defaulttype::StdRigidTypes<2, double> > FixedTranslationConstraintRigid2d;
 
 
 
@@ -155,6 +170,9 @@ typedef FixedConstraintRigid3d FixedConstraintRigid3;
 typedef FixedConstraintRigid2d FixedConstraintRigid2;
 typedef FixedPlaneConstraint3d FixedPlaneConstraint3;
 typedef FixedPlaneConstraintRigid3d FixedPlaneConstraintRigid3;
+typedef FixedRotationConstraintRigid3d FixedRotationConstraintRigid3;
+typedef FixedTranslationConstraintRigid3d FixedTranslationConstraintRigid3;
+typedef FixedTranslationConstraintRigid2d FixedTranslationConstraintRigid2;
 typedef HermiteSplineConstraint3d HermiteSplineConstraint3;
 typedef HermiteSplineConstraintRigid3d HermiteSplineConstraintRigid3;
 typedef LinearMovementConstraint3d LinearMovementConstraint3;

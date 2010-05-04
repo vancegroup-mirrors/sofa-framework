@@ -133,8 +133,8 @@ Simulation::~Simulation(){
 			void Simulation::init ( Node* root )
 			{
                                 //cerr<<"Simulation::init"<<endl;
-                                setContext( root->getContext());
 				if ( !root ) return;
+                                setContext( root->getContext());
                                 needToPrefetch = false;
                                 root->execute<InitVisitor>();
 				// Save reset state for later uses in reset()

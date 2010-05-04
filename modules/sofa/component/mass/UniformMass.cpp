@@ -282,7 +282,7 @@ template <> SOFA_COMPONENT_MASS_API
 }
 
 template <> SOFA_COMPONENT_MASS_API
-    double UniformMass<Rigid3dTypes,Rigid3dMass>::getPotentialEnergy( const Rigid3dTypes::VecCoord& x )
+    double UniformMass<Rigid3dTypes,Rigid3dMass>::getPotentialEnergy( const Rigid3dTypes::VecCoord& x ) const
 {
   double e = 0;
     // gravity
@@ -296,7 +296,7 @@ template <> SOFA_COMPONENT_MASS_API
 
 
 template <> SOFA_COMPONENT_MASS_API
-    double UniformMass<Rigid2dTypes,Rigid2dMass>::getPotentialEnergy( const Rigid2dTypes::VecCoord& x )
+    double UniformMass<Rigid2dTypes,Rigid2dMass>::getPotentialEnergy( const Rigid2dTypes::VecCoord& x ) const
 {
   double e = 0;
     // gravity
@@ -562,7 +562,7 @@ template <> SOFA_COMPONENT_MASS_API
 }
 
 template <> SOFA_COMPONENT_MASS_API
-    double UniformMass<Rigid3fTypes,Rigid3fMass>::getPotentialEnergy( const Rigid3fTypes::VecCoord& x )
+    double UniformMass<Rigid3fTypes,Rigid3fMass>::getPotentialEnergy( const Rigid3fTypes::VecCoord& x ) const
 {
   double e = 0;
     // gravity
@@ -575,7 +575,7 @@ template <> SOFA_COMPONENT_MASS_API
 }
 
 template <> SOFA_COMPONENT_MASS_API
-    double UniformMass<Rigid2fTypes,Rigid2fMass>::getPotentialEnergy( const Rigid2fTypes::VecCoord& x )
+    double UniformMass<Rigid2fTypes,Rigid2fMass>::getPotentialEnergy( const Rigid2fTypes::VecCoord& x ) const
 {
   double e = 0;
     // gravity

@@ -211,9 +211,14 @@ int mycudaInit(int device)
 		cudaCheck(cudaGetDeviceProperties(&dev,device));
 		myprintf("CUDA: Using device %d : \"%s\"\n",device,dev.name);
 		cudaCheck(cudaSetDevice(device));
-        mycudaPrivateInit(device);
-		return 1;
+		mycudaPrivateInit(device);
+		
 	}
+	
+#ifdef SOFA_GPU_CUBLAS
+	cublasInit();
+#endif
+	return 1;
 }
 
 int mycudaGetMultiProcessorCount() {

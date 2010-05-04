@@ -38,6 +38,10 @@ typedef QListView Q3ListView;
 typedef QListViewItem Q3ListViewItem;
 #endif
 
+#include <sofa/helper/system/FileRepository.h>
+#include <sofa/helper/system/SetDirectory.h>
+
+
 //Tinyxml library
 #include <tinyxml.h>
 #include <tinystr.h>
@@ -70,11 +74,17 @@ namespace sofa
           struct Tutorial
           {
             Tutorial(){};
-          Tutorial(const std::string &n, const std::string &scene, const std::string &html)
-              :name(n), sceneFilename(scene), htmlFilename(html){};
-              std::string name;
-              std::string sceneFilename;
-              std::string htmlFilename;
+            Tutorial(const std::string &n, const std::string &scene, const std::string &html)
+              :name(n), sceneFilename(scene), htmlFilename(html)
+            {
+              if ( !sceneFilename.empty() && sofa::helper::system::DataRepository.findFile (sceneFilename) )
+                sceneFilename = sofa::helper::system::DataRepository.getFile ( sceneFilename );
+              if ( !htmlFilename.empty()  && sofa::helper::system::DataRepository.findFile (htmlFilename) )
+                htmlFilename = sofa::helper::system::DataRepository.getFile ( htmlFilename );
+            };
+            std::string name;
+            std::string sceneFilename;
+            std::string htmlFilename;
           };
 
 	Q_OBJECT

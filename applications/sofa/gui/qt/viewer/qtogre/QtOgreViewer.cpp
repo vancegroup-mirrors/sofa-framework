@@ -279,8 +279,14 @@ namespace sofa
 	    mRoot->showConfigDialog();
 #else
 	    //Rendering Device - will pick first available render device
-	    Ogre::RenderSystemList::iterator pRend = mRoot->getAvailableRenderers()->begin();
-	    Ogre::RenderSystem* mRenderSystem = *pRend;
+#if OGRE_VERSION >= 0x010700
+      Ogre::RenderSystem* mRenderSystem = *(mRoot->getAvailableRenderers().begin());
+#else
+      Ogre::RenderSystemList::iterator pRend = mRoot->getAvailableRenderers()->begin();
+      Ogre::RenderSystem* mRenderSystem = *pRend;
+#endif
+
+
 
 	    //RenderSystem
 	    mRoot->setRenderSystem(mRenderSystem);
@@ -361,19 +367,16 @@ namespace sofa
 	  //called to redraw the window
 	  void QtOgreViewer::updateIntern()
 	  {
-
 	    if(mRenderWindow == NULL)
-	      setupView();
-
+        setupView();
 	    if(mRenderWindow != NULL && !_waitForRender){
 	      _waitForRender=true;
- 	      mRoot->_fireFrameStarted();
+// 	      mRoot->_fireFrameStarted();
 
 	      if (groot->getContext()->getShowWireFrame() && mCamera->getPolygonMode()!= Ogre::PM_WIREFRAME)
 		mCamera->setPolygonMode(Ogre::PM_WIREFRAME);
 	      if (!groot->getContext()->getShowWireFrame() && mCamera->getPolygonMode()!= Ogre::PM_SOLID)
-		mCamera->setPolygonMode(Ogre::PM_SOLID);
-
+    mCamera->setPolygonMode(Ogre::PM_SOLID);
 	      if (needUpdateParameters)
 		{
 		  mSceneMgr->setAmbientLight(Ogre::ColourValue(ambient[0]->getFloatValue(),ambient[1]->getFloatValue(),ambient[2]->getFloatValue(),1));
@@ -392,23 +395,28 @@ namespace sofa
 		    }
 
 		  needUpdateParameters = false;
-		}
+    }
 	      //Not optimal, clear all the datas
-	      sofa::simulation::getSimulation()->DrawUtility.clear();
-              sofa::simulation::getSimulation()->draw(groot);
-              sofa::simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot());
-              if (showAxis) drawSceneAxis();
+        sofa::simulation::getSimulation()->DrawUtility.clear();
 
+        static bool initViewer=false;
+        if (initViewer)
+        {
+          sofa::simulation::getSimulation()->draw(groot);
+          sofa::simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot());
+        }
+        else initViewer=true;
+
+        if (showAxis) drawSceneAxis();
 	      //Remove previous mesh and entity
 	      if (mSceneMgr->hasEntity("drawUtilityENTITY"))
-		{
-		  mSceneMgr->destroyEntity("drawUtilityENTITY");
+        {
+          mSceneMgr->destroyEntity("drawUtilityENTITY");
 		}
 	      if (!Ogre::MeshManager::getSingleton().getByName("drawUtilityMESH").isNull())
 		{
 		  Ogre::MeshManager::getSingleton().remove("drawUtilityMESH");
-		}
-
+    }
 	      //If the drawUtility has something to display, we convert to Mesh
 	      if (drawUtility->getNumSections())
 		{
@@ -423,14 +431,11 @@ namespace sofa
 		  if ((counter++ % CAPTURE_PERIOD)==0)
 #endif
 		    screenshot(capture.findFilename(), 2);
-		}
+    }
 
-
-	      moveCamera();
-
-	      mRenderWindow->update();
-		
- 	      mRoot->_fireFrameEnded();
+        moveCamera();
+        mRenderWindow->update();
+        mRoot->renderOneFrame();
 	      if (_waitForRender) _waitForRender = false;
 	    }
 	  }

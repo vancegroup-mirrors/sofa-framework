@@ -182,11 +182,11 @@ namespace sofa
         infoItem = new QTextBrowser(this->centralWidget());
         infoItem->setMaximumHeight(175);
 #ifdef SOFA_QT4
-      connect( infoItem, SIGNAL(anchorClicked(const QUrl&)), this, SLOT(fileOpen(const QUrl&)));
+        connect( infoItem, SIGNAL(anchorClicked(const QUrl&)), this, SLOT(fileOpen(const QUrl&)));
+        infoItem->setOpenExternalLinks(true);
 #else
-      connect( infoItem, SIGNAL(linkClicked( const QString &)), this, SLOT(fileOpen(const QString &)));
+        connect( infoItem, SIGNAL(linkClicked( const QString &)), this, SLOT(fileOpen(const QString &)));
 #endif
-
         mainLayout->addWidget(infoItem);
 
 	//----------------------------------------------------------------------
@@ -495,7 +495,11 @@ namespace sofa
 #ifdef SOFA_QT4
       void SofaModeler::fileOpen(const QUrl &u)
       {
+#ifdef WIN32
           std::string path=u.toString().ascii();
+#else
+          std::string path=u.path().ascii();
+#endif
           fileOpen(path);
       }
 

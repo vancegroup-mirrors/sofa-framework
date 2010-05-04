@@ -248,13 +248,11 @@ namespace sofa
 
          if (!path_ok)
             return;
-         std::cout << "tjs la" << std::endl;
 
          if (!positions.empty())
             positions.clear();
 
          positions.resize(topoPath_list.size());
-         std::cout << positions.size() << std::endl;
 
          for (unsigned int i=0; i<topoPath_list.size(); ++i)
          {

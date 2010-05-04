@@ -16,7 +16,8 @@ HEADERS += initLoader.h \
            MeshOffLoader.h \
            MeshTrianLoader.h \
            MeshVTKLoader.h \
-           MeshXspLoader.h 
+           MeshXspLoader.h \
+		   OffSequenceLoader.h
 
 
 SOURCES += initLoader.cpp \
@@ -25,7 +26,8 @@ SOURCES += initLoader.cpp \
            MeshOffLoader.cpp \
            MeshTrianLoader.cpp \
            MeshVTKLoader.cpp \
-           MeshXspLoader.cpp 
+           MeshXspLoader.cpp \
+		   OffSequenceLoader.cpp
 
            
 

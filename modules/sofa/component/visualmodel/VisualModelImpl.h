@@ -149,20 +149,24 @@ protected:
 
     DataPtr<bool> f_useNormals; ///< True if normals should be read from file
     Data<bool> updateNormals; ///< True if normals should be updated at each iteration
+    Data<bool> computeTangents_; ///< True if tangents should be computed at startup
+    Data<bool> updateTangents; ///< True if tangents should be updated at each iteration
 
 /*     Data< ResizableExtVector<Coord> > vertices; */
-    DataPtr< ResizableExtVector<Coord> > field_vertices;
-    ResizableExtVector<Coord> vertices;
+    Data< ResizableExtVector<Coord> > field_vertices;
+    //ResizableExtVector<Coord> vertices;
 
-    DataPtr< ResizableExtVector<Coord> > field_vnormals;
-    ResizableExtVector<Coord> vnormals;
-    DataPtr< ResizableExtVector<TexCoord> > field_vtexcoords;
-    ResizableExtVector<TexCoord> vtexcoords;
+    Data< ResizableExtVector<Coord> > field_vnormals;
+    //ResizableExtVector<Coord> vnormals;
+    Data< ResizableExtVector<TexCoord> > field_vtexcoords;
+    //ResizableExtVector<TexCoord> vtexcoords;
+    Data< ResizableExtVector<Coord> > field_vtangents;
+    Data< ResizableExtVector<Coord> > field_vbitangents;
 
-    DataPtr< ResizableExtVector<Triangle> > field_triangles;
-    ResizableExtVector<Triangle> triangles;
-    DataPtr< ResizableExtVector<Quad> > field_quads;
-    ResizableExtVector<Quad> quads;
+    Data< ResizableExtVector<Triangle> > field_triangles;
+    //ResizableExtVector<Triangle> triangles;
+    Data< ResizableExtVector<Quad> > field_quads;
+    //ResizableExtVector<Quad> quads;
 
     /// If vertices have multiple normals/texcoords, then we need to separate them
     /// This vector store which input position is used for each vertice
@@ -265,14 +269,61 @@ public:
     void setMesh(helper::io::Mesh &m, bool tex=false);
     bool isUsingTopology() const {return useTopology;};
 
-	ResizableExtVector<Coord> * getVertices() {return &vertices;}
-	void setVertices(ResizableExtVector<Coord> * x){vertices = *x;}
-	ResizableExtVector<Triangle> * getTriangles() {return &triangles;}
-	void setTriangles(ResizableExtVector<Triangle> * t){triangles = *t;}
+
+    const ResizableExtVector<Coord>& getVertices() {return field_vertices.getValue();}
+
+    const ResizableExtVector<Coord>& getVnormals() {return field_vnormals.getValue();}
+
+    const ResizableExtVector<TexCoord>& getVtexcoords() {return field_vtexcoords.getValue();}
+
+    const ResizableExtVector<Coord>& getVtangents() {return field_vtangents.getValue();}
+
+    const ResizableExtVector<Coord>& getVbitangents() {return field_vbitangents.getValue();}
+
+    const ResizableExtVector<Triangle>& getTriangles() {return field_triangles.getValue();}
+
+    const ResizableExtVector<Quad>& getQuads() {return field_quads.getValue();}
+
+    void setVertices(ResizableExtVector<Coord> * x){
+       ResizableExtVector<Coord>& vertices = *(field_vertices.beginEdit());
+       vertices = *x;
+       field_vertices.endEdit();}
+
+    void setVnormals(ResizableExtVector<Coord> * vn){
+       ResizableExtVector<Coord>& vnormals = *(field_vnormals.beginEdit());
+       vnormals = *vn;
+       field_vnormals.endEdit();}
+
+    void setVtexcoords(ResizableExtVector<TexCoord> * vt){
+       ResizableExtVector<TexCoord>& vtexcoords = *(field_vtexcoords.beginEdit());
+       vtexcoords = *vt;
+       field_vtexcoords.endEdit();}
+
+    void setVtangents(ResizableExtVector<Coord> * v){
+       ResizableExtVector<Coord>& vec = *(field_vtangents.beginEdit());
+       vec = *v;
+       field_vtangents.endEdit();}
+
+    void setVbitangents(ResizableExtVector<Coord> * v){
+       ResizableExtVector<Coord>& vec = *(field_vbitangents.beginEdit());
+       vec = *v;
+       field_vbitangents.endEdit();}
+
+    void setTriangles(ResizableExtVector<Triangle> * t){
+       ResizableExtVector<Triangle>& triangles = *(field_triangles.beginEdit());
+       triangles = *t;
+       field_triangles.endEdit();}
+
+    void setQuads(ResizableExtVector<Quad> * q){
+       ResizableExtVector<Quad>& quads = *(field_quads.beginEdit());
+       quads = *q;
+       field_quads.endEdit();}
+
 
     virtual void computePositions();
     virtual void computeMesh();
     virtual void computeNormals();
+    virtual void computeTangents();
     virtual void computeBBox();
 
     virtual void updateBuffers() { };
@@ -303,6 +354,12 @@ public:
     {
         return ExtVec3fMappedModel::templateName(p);
     }
+
+    static Coord compTangent(const Coord &v1, const Coord &v2, const Coord &v3,
+                             const TexCoord &t1, const TexCoord &t2, const TexCoord &t3);
+
+    static Coord compBitangent(const Coord &v1, const Coord &v2, const Coord &v3,
+                               const TexCoord &t1, const TexCoord &t2, const TexCoord &t3);
 };
 
 //typedef Vec<3,GLfloat> GLVec3f;

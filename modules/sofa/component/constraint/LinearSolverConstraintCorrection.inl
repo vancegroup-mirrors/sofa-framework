@@ -344,11 +344,14 @@ void LinearSolverConstraintCorrection<DataTypes>::applyPredictiveConstraintForce
               unsigned int dof = itConstraint->first;
               Deriv n = itConstraint->second;
 
-                //sout << "f("<<constraints[c1][i].index<<") += "<< (constraints[c1][i].data * fC1) << sendl;
+
+
+               std::cout << "Predictive Force => f("<<itConstraint->first<<") += "<< (itConstraint->second * fC1) << std::endl;
                 force[dof] += n * fC1;
             }
         }
     }
+        std::cout<< "Predictive External Forces: "<< force<<std::endl;
 }
 
 
@@ -665,10 +668,10 @@ void LinearSolverConstraintCorrection<DataTypes>::resetForUnbuiltResolution(doub
 
 
 	// debug !!
-	//double toto[12];
-	//toto[0]=0.0;
-	//addConstraintDisplacement(toto, 0,0) ;
-	//std::cout<<"toto[0] ="<<toto[0]<<std::endl;
+   //double values[12];
+   //values[0]=0.0;
+   //addConstraintDisplacement(values, 0,0) ;
+   //std::cout<<"values[0] ="<<values[0]<<std::endl;
 
 
 	///////// new : précalcul des liste d'indice ///////
@@ -865,7 +868,7 @@ void LinearSolverConstraintCorrection<DataTypes>::getBlockDiagonalCompliance(def
 		ConstraintIterator itConstraint1;
                 std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[c1].data();
 		unsigned int dof_buf=0;
-		int toto=0;
+      int debug=0;
 		for (itConstraint1=iter.first;itConstraint1!=iter.second;itConstraint1++)
 		{
 
@@ -874,11 +877,11 @@ void LinearSolverConstraintCorrection<DataTypes>::getBlockDiagonalCompliance(def
             for (unsigned int r=0;r<N;++r)
                 J.add(id1, dof*N+r, n[r]);
 
-			if (toto!=0)
+         if (debug!=0)
 			{
 				int test=dof_buf - dof;
 				if (test>2 || test< -2)
-					std::cout<<"YES !!!! for constraint id1 dof1 = "<<dof_buf<<" dof2 = "<<dof<<std::endl;
+               sout<<"YES !!!! for constraint id1 dof1 = "<<dof_buf<<" dof2 = "<<dof<<sendl;
 			}
 			dof_buf =dof;
 

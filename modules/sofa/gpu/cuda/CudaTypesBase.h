@@ -63,8 +63,9 @@ using namespace sofa::defaulttype;
 
 template <class T>
 class CudaBaseVector : public BaseVector {
-
 	public :
+  		typedef T Real;
+
 		CudaVector<T>& getCudaVector() {
 			return v;
 		}
@@ -106,7 +107,7 @@ class CudaBaseVector : public BaseVector {
 			v[i] += (T)val;
 		}
 
-    static const char* Name(); /* {
+		static const char* Name(); /* {
 			return "CudaBaseVector";
             }*/
 
@@ -202,6 +203,13 @@ class CudaBaseMatrix : public BaseMatrix {
 								        v.getCudaVector().deviceWrite());
 		}
 
+		void invalidateDevices() {
+		    m.invalidateDevices();
+		}
+
+		void invalidatehost() {
+		    m.invalidatehost();
+		}
 
 	private :
 		CudaMatrix<T> m;

@@ -100,6 +100,11 @@ namespace sofa
 
       void OgreVisualModel::prepareMesh()
       {
+
+        const ResizableExtVector<Triangle>& triangles = this->getTriangles();
+        const ResizableExtVector<Quad>& quads = this->getQuads();
+        const ResizableExtVector<Coord>& vertices = this->getVertices();
+
           ++meshName;
           //Create a model for the normals
           {
@@ -133,11 +138,13 @@ namespace sofa
                   subMeshes.resize(1);
 
                   SubMesh &m=subMeshes[0];
+                  m.triangles.resize(triangles.size());
+                  m.quads.resize(quads.size());
 
                   for (int i=vertices.size()-1;i>=0;--i) m.indices.insert(i);
 
-                  std::copy(this->triangles.begin(), this->triangles.end(), m.triangles.begin());
-                  std::copy(this->quads.begin(), this->quads.end(), m.quads.begin());
+                  std::copy(triangles.begin(), triangles.end(), m.triangles.begin());
+                  std::copy(quads.begin(), quads.end(), m.quads.begin());
                   m.material = createMaterial(this->material.getValue());
               }
               else
@@ -290,6 +297,9 @@ namespace sofa
       void OgreVisualModel::uploadSubMesh(const SubMesh& m)
       {                              
           //Upload the indices
+          const ResizableExtVector<Coord>& vertices = this->getVertices();
+          const ResizableExtVector<Coord>& vnormals = this->getVnormals();
+          const ResizableExtVector<TexCoord>& vtexcoords= this->getVtexcoords();
           const bool hasTexCoords=vtexcoords.size();
 
           for (std::set<unsigned int>::const_iterator it=m.indices.begin(); it!=m.indices.end();++it)
@@ -363,6 +373,8 @@ namespace sofa
 
       void OgreVisualModel::uploadNormals()
       {       
+        const ResizableExtVector<Coord>& vertices = this->getVertices();
+        const ResizableExtVector<Coord>& vnormals = this->getVnormals();
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	  {
 	    ogreNormalObject->position(vertices[i][0],vertices[i][1],vertices[i][2]);
@@ -445,6 +457,9 @@ namespace sofa
 
     void OgreVisualModel::internalDraw(bool /*transparent*/)
       {
+      const ResizableExtVector<Coord>& vertices = this->getVertices();
+      const ResizableExtVector<Triangle>& triangles = this->getTriangles();
+      const ResizableExtVector<Quad>& quads = this->getQuads();
 	if (!ogreObject)
           {
 	    //If visual model is empty, return

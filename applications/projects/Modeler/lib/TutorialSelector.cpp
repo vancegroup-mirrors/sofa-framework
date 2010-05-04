@@ -33,9 +33,6 @@
 #include <tinystr.cpp>
 #include <tinyxmlparser.cpp>
 
-#include <sofa/helper/system/FileRepository.h>
-#include <sofa/helper/system/SetDirectory.h>
-
 #include <iostream>
 
 #ifdef SOFA_QT4
@@ -54,7 +51,8 @@ namespace sofa
 
     namespace qt
     {
-      
+
+
         TutorialSelector::TutorialSelector(QWidget* parent):Q3ListView(parent)
       {
 #ifdef SOFA_QT4

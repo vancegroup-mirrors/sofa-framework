@@ -64,9 +64,10 @@ public:
     OglVariable();
     virtual ~OglVariable();
 
-    void setValue( const DataTypes& v ) { value.setValue(v); }
+    virtual void setValue( const DataTypes& v ) { value.setValue(v); }
     void init();
     void initVisual();
+    void pushValue() { initVisual(); }
     void reinit();
 };
 
@@ -272,7 +273,7 @@ public:
 	OglMatrix2Variable();
 	virtual ~OglMatrix2Variable() { }
 
-	void setValue( const bool& v ) { transpose.setValue(v); }
+	virtual void setTranspose( const bool& v ) { transpose.setValue(v); }
 
 	virtual void init();
 	virtual void initVisual();

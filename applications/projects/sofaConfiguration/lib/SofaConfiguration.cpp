@@ -364,7 +364,7 @@ namespace sofa
         argv << QString(QString(projectVC->text()) );
 #elif defined (__APPLE__)
         argv << QString("sh");
-        argv << QString("Project\\ MacOS.sh");
+        argv << QString("Project MacOS.sh");
 #else
 #if SOFA_QT4
                 argv << QString("qmake-qt4");
@@ -372,7 +372,6 @@ namespace sofa
                 argv << QString("qmake");
 #endif          
 #endif
-
         p = new Q3Process(argv,this);
         p->setWorkingDirectory(QDir(QString(path.c_str())));
         connect( p, SIGNAL( readyReadStdout() ), this, SLOT( redirectStdOut() ) );

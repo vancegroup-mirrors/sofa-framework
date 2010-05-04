@@ -53,9 +53,9 @@ ConstantForceField<DataTypes>::ConstantForceField()
   : points(initData(&points, "points", "points where the forces are applied"))
   , forces(initData(&forces, "forces", "applied forces at each point"))
   , force(initData(&force, "force", "applied force to all points if forces attribute is not specified"))
+  , totalForce(initData(&totalForce, "totalForce", "total force for all points, will be distributed uniformly over points"))
   , arrowSizeCoef(initData(&arrowSizeCoef,0.0, "arrowSizeCoef", "Size of the drawn arrows (0->no arrows, sign->direction of drawing"))
   , indexFromEnd(initData(&indexFromEnd,(bool)false,"indexFromEnd", "Concerned DOFs indices are numbered from the end of the MState DOFs vector"))
-  , totalForce(initData(&totalForce, "totalForce", "total force for all points, will be distributed uniformly over points"))
 {
 }
 
@@ -69,7 +69,7 @@ void ConstantForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, c
         Deriv singleForce;
         if (totalForce.getValue()[0] != 0.0 || totalForce.getValue()[1] != 0.0 || totalForce.getValue()[2] != 0.0) {
             for (unsigned comp = 0; comp < totalForce.getValue().size(); comp++)
-                singleForce[comp] = (totalForce.getValue()[comp])/(double(points.getValue().size()));
+                singleForce[comp] = (totalForce.getValue()[comp])/(Real(points.getValue().size()));
             //std::cout << "Setting forces for each node to = " << singleForce << std::endl;
         } else if (force.getValue()[0] != 0.0 || force.getValue()[1] != 0.0 || force.getValue()[2] != 0.0) {
             singleForce = force.getValue();
@@ -178,7 +178,7 @@ void ConstantForceField<DataTypes>::draw()
         Deriv singleForce;
         if (totalForce.getValue()[0] != 0.0 || totalForce.getValue()[1] != 0.0 || totalForce.getValue()[2] != 0.0) {
             for (unsigned comp = 0; comp < totalForce.getValue().size(); comp++)
-                singleForce[comp] = (totalForce.getValue()[comp])/(double(points.getValue().size()));
+              singleForce[comp] = (totalForce.getValue()[comp])/(Real(points.getValue().size()));
         } else if (force.getValue()[0] != 0.0 || force.getValue()[1] != 0.0 || force.getValue()[2] != 0.0) {
             singleForce = force.getValue();
         }

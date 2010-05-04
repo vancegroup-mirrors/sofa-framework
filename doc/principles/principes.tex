@@ -61,10 +61,10 @@
 
 
 \title{SOFA: a modular yet efficient physical simulation architecture}
-\author{Francois.Faure@imag.fr}
+\author{François Faure, EVASION}
 % \institute{ LJK, Grenoble }
 % \date{September, 2006}
-\date{}
+%\date{}
 
 \AtBeginSection[]{
 \begin{frame}
@@ -79,7 +79,13 @@
   \maketitle
 %\vspace{-28mm}
 \begin{center}
- \includegraphics[width=\linewidth]{logos.png}
+ %\includegraphics[width=\linewidth]{logos.png}
+\newcommand{\logoheight}{10mm}
+ \includegraphics[height=\logoheight]{inria-logo.png} \\ \vspace{10mm}~ \\
+ \includegraphics[height=\logoheight]{alcove-logo.jpg}
+ \includegraphics[height=\logoheight]{evasion-logo.png}
+ \includegraphics[height=\logoheight]{asclepios-logo.jpg}
+ \includegraphics[height=5mm]{moais-logo.png}
 \end{center}
 %\tableofcontents
 
@@ -107,7 +113,7 @@ Material, internal forces, contraints, contact detection and modeling, ODE solut
 \begin{frame}
 \frametitle{Simulation platforms}
 \begin{itemize}
-\item Current platforms (ODE, Havok, Novodex, etc.) provide:
+\item Current platforms (ODE, Havok, PhysX, etc.) provide:
 \begin{itemize}
 \item limited number of material types
 \item limited number of geometry types
@@ -115,7 +121,7 @@ Material, internal forces, contraints, contact detection and modeling, ODE solut
 \item no control on interaction modeling
 \item few (if any) control of the numerical models and methods.
 \item no control on the main loop
-\item few (if any) parallelism
+%\item few (if any) parallelism
 \end{itemize}
 \item We need much more !
 \begin{itemize}
@@ -177,9 +183,9 @@ A specialized program:
 \frametitle{Components}
 \begin{columns}
  \column[c]{0.5\linewidth}
-Data:
+%Data:
 \begin{itemize}
-\item<1-> sample points and associated values: $x,v,a,f$
+\item<1-> state vectors (DOF): $x,v,a,f$
 \item<1-> constraints: fixed points 
 \only<1> {\\ \em other: oscillator, collision plane, etc.}
 \item<2-> force field: tetrahedron FEM
@@ -199,8 +205,30 @@ Data:
 \end{columns}
 \end{frame}
 
+%-----------------------------------------
+\begin{frame}
+\frametitle{Operations}
 
+\begin{itemize}
+ \item The ODE solver sends visitors to apply operations
+ \item The visitors traverse the scene and apply virtual methods to the components
+ \item The methods read and write state vectors (identified by symbolic constants) in the DOF component
+ %\item State vectors are identified by symbolic constants 
+ \item Example: accumulate force
+  \begin{itemize}
+   \item A \texttt{ResetForceVisitor} recursively traverses the nodes of the scene (only one node here)
+  \begin{itemize}
+   \item All the \texttt{DOF} objects apply their \texttt{resetForce()} method
+  \end{itemize}
+   \item An \texttt{AccumulateForceVisitor} recursively traverses the nodes of the scene 
+  \begin{itemize}
+   \item All the \texttt{ForceField} objects apply their \texttt{addForce(  Forces, const Positions, const Velocities )} method
+  \end{itemize}
+   \item the final value of f is weight + tetra fem force + trian fem force
+  \end{itemize}
+\end{itemize}
 
+\end{frame}
 
 % %-----------------------------------------------
 % \begin{frame}[fragile]
@@ -228,28 +256,29 @@ Data:
 
 
 %%%===================================================================
-\section{Layered bodies}
+\section{Layered objects using node hierarchies}
 %%%===================================================================
 
 \begin{frame}
-\frametitle{Layered body }
+\frametitle{Layered object }
+Object embedded in a deformable grid
 \begin{columns}
 \column[c]{0.5\linewidth}
 \begin{itemize}
 \item<1-> independent DOFs (blue)
-\item<2-> visual samples (salmon)
-\item<3-> visual mapping 
+\item<2-> skin vertices (salmon)
+\item<3-> mapping 
 \item<4-> collision samples (green)
 \item<4-> collision mapping
 \item<5-> apply displacements
 \begin{enumerate}
-\item $v_{visual} = J_{visual} v$
-\item $v_{collision} = J_{collision} v_{visual}$
+\item $v_{skin} = J_{skin} v$
+\item $v_{collision} = J_{collision} v_{skin}$
 \end{enumerate}
 \item<6-> apply forces
 \begin{enumerate}
-\item $f_{visual} = J_{collision}^T f_{collision}$
-\item $f = J_{visual}^T f_{visual}$
+\item $f_{skin} = J_{collision}^T f_{collision}$
+\item $f = J_{skin}^T f_{skin}$
 \end{enumerate}
 \end{itemize}
 \column[c]{0.5\linewidth}
@@ -410,6 +439,7 @@ $$
 
 \begin{frame}
 \frametitle{Two bodies in contact}
+Example: 2-layer liver against 3-layer liver using a contact force.\\
 Use extended trees (Directed Acyclic Graphs) to model trees with loops.
 \begin{columns}
 \column{0.3\linewidth}
@@ -427,8 +457,8 @@ Use extended trees (Directed Acyclic Graphs) to model trees with loops.
  \only<2->{\includegraphics[width=0.9\linewidth]{livers-contact-tree-common.png}}
 \begin{itemize}
 \item<1-> Soft interactions: independent processing, no synchronization required\\
-\item<2-> Stiff interactions: unified implicit solution, synchronized objects\\
-\item<3-> Hard interaction constraints: work in progress  \begin{small}\textit{(Christian Duriez, ALCOVE)}\end{small}
+\item<2-> Stiff interactions: unified implicit solution with Conjugate Gradient, synchronized objects\\
+\item<3-> Hard interaction constraints: work in progress 
 \end{itemize}
 \end{frame}
 
@@ -454,7 +484,7 @@ Use extended trees (Directed Acyclic Graphs) to model trees with loops.
 %  \item each DOF component can be based on its own types (e.g. Vec3, Frame, etc. )
 %  \item symbolic values are used to represent global state vectors
 % \end{itemize}
- \item Action = graph traversal + global vector ids + call of abstract top-down and bottom up methods 
+ \item Operation = graph traversal + abstract methods + vector identificators
 % \begin{itemize}
 %  \item Displacements are propagated top-down
 %  \item Interactions forces are evaluated after displacement propagation
@@ -482,19 +512,19 @@ Use extended trees (Directed Acyclic Graphs) to model trees with loops.
 \end{frame}
 
 
-%-----------------------------------------------
-
-\begin{frame}
- \frametitle{Example: applying interaction forces}
-\begin{itemize}
- \item The solver triggers the appropriate action
-\item the action is propagated through the graph and calls the appropriate methods at each Contact node
-\end{itemize}
-\begin{center}
- \includegraphics[width=0.8\linewidth]{layered-contacts-action-applyInteractionForces.png}
-\end{center}
-
-\end{frame}
+% %-----------------------------------------------
+% 
+% \begin{frame}
+%  \frametitle{Example: applying interaction forces}
+% \begin{itemize}
+%  \item The solver triggers the appropriate action
+% \item the action is propagated through the graph and calls the appropriate methods at each Contact node
+% \end{itemize}
+% \begin{center}
+%  \includegraphics[width=0.8\linewidth]{layered-contacts-action-applyInteractionForces.png}
+% \end{center}
+% 
+% \end{frame}
 
 
 %-----------------------------------------------
@@ -564,7 +594,7 @@ Use extended trees (Directed Acyclic Graphs) to model trees with loops.
  \frametitle{Efficient implicit integration}
 \begin{itemize}
  \item Large time steps for stiff internal forces and interactions
- \item solve $ (\alpha M + \beta h^2 K ) \Delta v = h( f + hKv) $ Iteratively using a cojugate gradient solution
+ \item solve $ (\alpha M + \beta h^2 K ) \Delta v = h( f + hKv) $ Iteratively using a conjugate gradient solution
 \end{itemize}
  Actions:
 \begin{itemize}
@@ -596,7 +626,7 @@ Ongoing work: building global vectors and matrices also
  \item Displacements are propagated top-down
  \item Interactions forces are evaluated after displacement propagation
  \item Forces are accumulated bottom-up
- \item Branches can be processed in parallel
+% \item Branches can be processed in parallel
  \item virtual functions applied to components
 \end{itemize}
 
@@ -605,38 +635,105 @@ Ongoing work: building global vectors and matrices also
 \end{frame}
 
 
+
+%%%===================================================================
+\section{Collision detection and response}
+%%%===================================================================
+\begin{frame}
+ \frametitle{Collision detection and response}
+CollisionPipeline component orchestrates specific components
+\begin{itemize}
+ \item BroadPhase: bounding volume intersections
+ \item NarrowPhase: geometric primitive intersections
+ \item Reaction: what to do when collisions occur
+ \item GroupManager: putting colliding objects under a common solver
+\end{itemize}
+Recent work uses the GPU
+\end{frame}
+
+
+%%%===================================================================
+\section{Parallelism}
+%%%===================================================================
+\begin{frame}
+ \frametitle{Parallelism in time integration}
+Two levels of parallelism:
+\begin{itemize}
+ \item Low level: GPU implementations of components 
+ \item High level: task-based using data dependencies
+\end{itemize}
+
+We can combine them !
+\end{frame}
+
+%---------------------------------------------------------------
+\begin{frame}
+ \frametitle{GPU Parallelism}
+\begin{itemize}
+ \item StiffSpringForceField, TetrahedronFEMForceField, HexahedronFEMForceField are implemented on the GPU
+ \item The DOF component makes data transfer transparent
+ \item CPU and GPU components can be used simultaneously
+ \item Nice speedups
+\begin{center}
+\includegraphics[width=0.8\linewidth]{gpuForceFields.png}
+\end{center}
+\end{itemize}
+\end{frame}
+
+%---------------------------------------------------------------
+\begin{frame}
+ \frametitle{High-level Parallelism}
+Everton Hermann's Ph.D. thesis (2007-2010):
+\begin{itemize}
+ \item<1-> analyses solver operations
+ \item<2-> exploits scene graph branches
+ \item<3-> removes spurious synchronizations using data dependency analysis [Athapascan]
+ \item<3-> efficiency ranges for 50\% to 90\%
+\end{itemize}
+\begin{center}
+\only<1>{\includegraphics[height=0.4\linewidth]{interactionSequential.png}}
+\only<2>{\includegraphics[height=0.4\linewidth]{interactionParallel1.png}}
+\only<3>{\includegraphics[height=0.4\linewidth]{interactionParallel2.png}}
+\only<4>{\includegraphics[height=0.4\linewidth]{interactionParallel3.png}}
+\end{center}
+\end{frame}
+
+%---------------------------------------------------------------
+\begin{frame}
+ \frametitle{Hybrid Parallelism}
+Work in progress
+\begin{itemize}
+ \item Use high level and low level simultaneously 
+ \item Dynamically balance between multiple CPUs and GPUs 
+\end{itemize}
+\begin{center}
+\includegraphics[height=0.4\linewidth]{MultiGPUCPUResults.png}
+\end{center}
+\end{frame}
+
+
 %%%===================================================================
 \section{Conclusion}
 %%%===================================================================
 
-\begin{frame}
- \frametitle{Current stage}
-About 60 man.month, 20000 C++ code lines
-\begin{center}
- \includegraphics[width=\linewidth]{snapshotSofa1.png}
-\end{center}
-
-\end{frame}
-
 
 \begin{frame}
- \frametitle{Efficient coupling}
+ \frametitle{Conclusion - Features}
 High modularity:
 \begin{itemize}
  \item Abstract components: DOF, Force, Constraint, Solver, Topology, Mass, CollisionModel, VisualModel, etc. 
- \item Arbitrary DOF types can coexist in the same scene
+ \item Multimodel simulations using mappings
+ \item Explicit and implicit solvers, Lagrange multipliers
 \end{itemize}
 Efficiency:
 \begin{itemize}
  \item global vectors and matrices are avoided
- \item parallel processing is allowed
+ \item parallel implementations
 \end{itemize}
 Implementation:
 \begin{itemize}
- \item currently 20000 C++ lines
- \item Windows, Linux
- \item Qt or FLTK user interfaces
- \item XML file format
+ \item currently $450,000$ C++ lines
+ \item Linux, MacOs, Windows
 \end{itemize}
 
 \end{frame}
@@ -647,14 +744,16 @@ Implementation:
 \begin{frame}
 \frametitle{Ongoing work}
 \begin{itemize}
-\item More people: ETHZ, ...
-\item More algorithms: cutting \begin{small}\textit{(Herv\'e Delingette, ASCLEPIOS)}\end{small}, interfaces \begin{small}\textit{(Fran\c{c}ois Faure, EVASION)}\end{small},... 
-\item More schedulers: asynchronous simulation/rendering/haptic feedback \begin{small}\textit{(Jeremie Allard, Cimit)}\end{small}
-\item More brute force: parallelization on PC cluster \begin{small}\em (Everton Hermann, LIG/LJK)\end{small}
-\item More visual performance: coupling to a good render engine \begin{small}\textit{ (Pierre-Jean Bensoussan, ALCOVE)}\end{small}
-\item More documentation \begin{small}\textit{(everybody...)}\end{small}
-\item Licensing
+\item models and algorithms: better numerical solvers, cutting, haptics, Eulerian fluids...
+\item asynchronous simulation/rendering/haptic feedback 
+\item multiphysics (electrical/mechanical)
+\item parallelism for everyone
+\item more documentation (release 1.0 this year ?)
 \end{itemize}
+% \end{frame}
+% 
+% \begin{frame}
+% \frametitle{Applications}
 
 \vspace{1cm}
 \begin{center}

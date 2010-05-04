@@ -22,10 +22,10 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_CONSTRAINT_ROTATIONLMCONSTRAINT_INL
-#define SOFA_COMPONENT_CONSTRAINT_ROTATIONLMCONSTRAINT_INL
+#ifndef SOFA_COMPONENT_CONSTRAINT_DOFBLOCKERLMCONSTRAINT_INL
+#define SOFA_COMPONENT_CONSTRAINT_DOFBLOCKERLMCONSTRAINT_INL
 
-#include <sofa/component/constraint/RotationLMConstraint.h>
+#include <sofa/component/constraint/DOFBlockerLMConstraint.h>
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/helper/gl/Axis.h>
 #include <sofa/helper/gl/template.h>
@@ -48,9 +48,9 @@ namespace sofa
 
       // Define TestNewPointFunction
       template< class DataTypes>
-      bool RotationLMConstraint<DataTypes>::FCTestNewPointFunction(int /*nbPoints*/, void* param, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& )
+      bool DOFBlockerLMConstraint<DataTypes>::FCTestNewPointFunction(int /*nbPoints*/, void* param, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& )
       {
-	RotationLMConstraint<DataTypes> *fc= (RotationLMConstraint<DataTypes> *)param;
+    DOFBlockerLMConstraint<DataTypes> *fc= (DOFBlockerLMConstraint<DataTypes> *)param;
 	if (fc) {
           return true;
 	}else{
@@ -60,9 +60,9 @@ namespace sofa
 
       // Define RemovalFunction
       template< class DataTypes>
-      void RotationLMConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
+      void DOFBlockerLMConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
       {
-	RotationLMConstraint<DataTypes> *fc= (RotationLMConstraint<DataTypes> *)param;
+    DOFBlockerLMConstraint<DataTypes> *fc= (DOFBlockerLMConstraint<DataTypes> *)param;
 	if (fc) {
           fc->removeConstraint((unsigned int) pointIndex);
 	}
@@ -70,21 +70,21 @@ namespace sofa
       }
 
       template <class DataTypes>
-      void RotationLMConstraint<DataTypes>::clearConstraints()
+      void DOFBlockerLMConstraint<DataTypes>::clearConstraints()
       {
         f_indices.beginEdit()->clear();
         f_indices.endEdit();
       }
 
       template <class DataTypes>
-      void RotationLMConstraint<DataTypes>::addConstraint(unsigned int index)
+      void DOFBlockerLMConstraint<DataTypes>::addConstraint(unsigned int index)
       {
         f_indices.beginEdit()->push_back(index);
         f_indices.endEdit();
       }
 
       template <class DataTypes>
-      void RotationLMConstraint<DataTypes>::removeConstraint(unsigned int index)
+      void DOFBlockerLMConstraint<DataTypes>::removeConstraint(unsigned int index)
       {
         removeValue(*f_indices.beginEdit(),index);
         f_indices.endEdit();
@@ -92,7 +92,7 @@ namespace sofa
 
 
       template <class DataTypes>
-      void RotationLMConstraint<DataTypes>::init()
+      void DOFBlockerLMConstraint<DataTypes>::init()
       {
         core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::init();
 
@@ -109,7 +109,7 @@ namespace sofa
       }
 
       // Handle topological changes
-      template <class DataTypes> void RotationLMConstraint<DataTypes>::handleTopologyChange()
+      template <class DataTypes> void DOFBlockerLMConstraint<DataTypes>::handleTopologyChange()
       {
 	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
 	std::list<const TopologyChange *>::const_iterator itEnd =topology->lastChange();
@@ -119,18 +119,18 @@ namespace sofa
 
 
       template<class DataTypes>
-      void RotationLMConstraint<DataTypes>::resetConstraint()
+      void DOFBlockerLMConstraint<DataTypes>::resetConstraint()
       {
           core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::resetConstraint();
           idxEquations.clear();
       }
 
       template<class DataTypes>
-      void RotationLMConstraint<DataTypes>::buildJacobian()
+      void DOFBlockerLMConstraint<DataTypes>::buildJacobian(unsigned int &constraintId)
       {          
         if (!idxEquations.empty()) return;
         const SetIndexArray &indices = f_indices.getValue().getArray();
-        const helper::vector<Deriv> &axis=rotationAxis.getValue();
+        const helper::vector<Deriv> &axis=BlockedAxis.getValue();
 
         idxEquations.resize(indices.size());
         for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
@@ -140,7 +140,8 @@ namespace sofa
             for (unsigned int i=0;i<axis.size();++i)
               {
                 SparseVecDeriv V; V.add(index,axis[i]); 
-                idxEquations[index].push_back(registerEquationInJ1(V));
+                registerEquationInJ1(constraintId, V);
+                idxEquations[index].push_back(constraintId++);
               }
             this->constrainedObject1->forceMask.insertEntry(index);
           }
@@ -149,9 +150,10 @@ namespace sofa
 
 
       template<class DataTypes>
-      void RotationLMConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
+      void DOFBlockerLMConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
       {
 
+          typedef core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
         //We don't constrain the Position, only the velocities and accelerations
         if (idxEquations.empty() ||
             Order==core::componentmodel::behavior::BaseLMConstraint::POS) return;
@@ -172,13 +174,13 @@ namespace sofa
                   {
                   case core::componentmodel::behavior::BaseLMConstraint::ACC :
                     {
-                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[index][i],core::componentmodel::behavior::BaseMechanicalState::VecId::dx());
+                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[index][i],VecId::dx());
                     
                       break;
                     }
                   case core::componentmodel::behavior::BaseLMConstraint::VEL :
                     {
-                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[index][i],core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
+                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[index][i],VecId::velocity());
                       break;
                     }
                   default: break;
@@ -198,7 +200,7 @@ namespace sofa
 
 
       template <class DataTypes>
-      void RotationLMConstraint<DataTypes>::draw()
+      void DOFBlockerLMConstraint<DataTypes>::draw()
       {
         if (!this->getContext()->getShowForceFields()) return;
         const VecCoord& x = *this->constrainedObject1->getX();
@@ -213,7 +215,7 @@ namespace sofa
             Coord pos=x[index];
             const defaulttype::Vector3 &c=pos.getCenter();
             glColor3f(1,1,0);            
-            const helper::vector<Deriv>& axis=rotationAxis.getValue();
+            const helper::vector<Deriv>& axis=BlockedAxis.getValue();
             for (unsigned int i=0;i<axis.size();++i)
               {
                 helper::gl::Axis::draw(c,c+axis[i].getVOrientation()*showSizeAxis.getValue(),

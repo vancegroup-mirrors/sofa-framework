@@ -49,109 +49,71 @@ namespace sofa
 	}
 
 	template<class DataTypes1,class DataTypes2>       
-        unsigned int   LMConstraint<DataTypes1,DataTypes2>::registerEquationInJ1( const SparseVecDeriv1 &C1)
-        {          
-            //VecConst interface:
-            //index where the direction will be found
-          unsigned int id=constrainedObject1->getCSize();
-          constrainedObject1->getC()->push_back(C1);
-          linesInSimulatedObject1.insert(std::make_pair(id,id));
-          return id;
-        }
+    void   LMConstraint<DataTypes1,DataTypes2>::registerEquationInJ1(unsigned int constraintId, const SparseVecDeriv1 &C1) const
+    {
+        //VecConst interface:
+        //index where the direction will be found
+        constrainedObject1->getC()->push_back(C1);
+        constrainedObject1->setConstraintId(constraintId);
+    }
 
 	template<class DataTypes1,class DataTypes2>       
-        unsigned int   LMConstraint<DataTypes1,DataTypes2>::registerEquationInJ2( const SparseVecDeriv2 &C2)
-        {          
-            //VecConst interface:
-            //index where the direction will be found
-          unsigned int id=constrainedObject2->getCSize();
-          constrainedObject2->getC()->push_back(C2);
-          linesInSimulatedObject2.insert(std::make_pair(id,id));
-          return id;
-        }
+    void   LMConstraint<DataTypes1,DataTypes2>::registerEquationInJ2(unsigned int constraintId, const SparseVecDeriv2 &C2) const
+    {
+        //VecConst interface:
+        //index where the direction will be found
+        constrainedObject2->getC()->push_back(C2);
+        constrainedObject2->setConstraintId(constraintId);
+    }
 
-	template<class DataTypes1,class DataTypes2>
-	void LMConstraint<DataTypes1,DataTypes2>::propagateJacobian()
-	{
-          //Propagate the lines of the Jacobian through the mappings until we reach the simulated object
-          BaseMechanicalState *mstate;
-
-          mstate=constrainedObject1;
-	  
-	  if(mstate) {
-	    mstate->forceMask.setInUse(this->useMask());
-	    while (mstate != simulatedObject1)
-	      {                  
-		core::componentmodel::behavior::BaseMechanicalMapping* mapping;
-		mstate->getContext()->get(mapping);
-		if (!mapping) break;
-		constraintTransmissionJ1( mapping->getMechFrom()->getCSize());
-		mstate = mapping->getMechFrom();
-	      }
-	  }
-
-          mstate=constrainedObject2;
-
-	  if(mstate) {
-	    mstate->forceMask.setInUse(this->useMask());
-	    while (mstate != simulatedObject2)
-	      {                  
-		core::componentmodel::behavior::BaseMechanicalMapping* mapping;
-		mstate->getContext()->get(mapping);
-		if (!mapping) break;
-		constraintTransmissionJ2( mapping->getMechFrom()->getCSize());
-		mstate = mapping->getMechFrom();
-	      }          
-	  }
-	}
 
 
 	template<class DataTypes1,class DataTypes2>
 	void LMConstraint<DataTypes1,DataTypes2>::init()
 	{
-	  BaseLMConstraint::init();
+        BaseLMConstraint::init();
 
 
-	  if (constrainedObject1 != NULL && constrainedObject2 != NULL)      
+        if (constrainedObject1 != NULL && constrainedObject2 != NULL)
 	    {
-	      //Constraint created by passing Mechanical State directly, need to find the name of the path to be able to save the scene eventually
+            //Constraint created by passing Mechanical State directly, need to find the name of the path to be able to save the scene eventually
 
-	      if (constrainedObject1->getContext() != getContext())
-		{
-		  sofa::core::objectmodel::BaseContext *context = NULL;
-		  sofa::core::objectmodel::BaseNode*    currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(constrainedObject1->getContext());
+            if (constrainedObject1->getContext() != getContext())
+            {
+                sofa::core::objectmodel::BaseContext *context = NULL;
+                sofa::core::objectmodel::BaseNode*    currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(constrainedObject1->getContext());
 
-                  std::string constrainedObject_name=currentNode->getPathName();
-		  if (context != NULL) this->pathObject1.setValue(constrainedObject_name);
-		}
+                std::string constrainedObject_name=currentNode->getPathName();
+                if (context != NULL) this->pathObject1.setValue(constrainedObject_name);
+            }
 
 
-	      if (constrainedObject2->getContext() != getContext())
-		{
-		  sofa::core::objectmodel::BaseContext *context = NULL;
-		  sofa::core::objectmodel::BaseNode*    currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(constrainedObject2->getContext());
+            if (constrainedObject2->getContext() != getContext())
+            {
+                sofa::core::objectmodel::BaseContext *context = NULL;
+                sofa::core::objectmodel::BaseNode*    currentNode = dynamic_cast< sofa::core::objectmodel::BaseNode *>(constrainedObject2->getContext());
 
-                  std::string constrainedObject_name=currentNode->getPathName();
-		  if (context != NULL) this->pathObject2.setValue(constrainedObject_name);
-		}
+                std::string constrainedObject_name=currentNode->getPathName();
+                if (context != NULL) this->pathObject2.setValue(constrainedObject_name);
+            }
 
-              simulatedObject1=constrainedObject1;
-              while (simulatedObject1)
-                {                  
-                  core::componentmodel::behavior::BaseMechanicalMapping* mapping;
-                  simulatedObject1->getContext()->get(mapping);
-		  if (!mapping) break;
-		  simulatedObject1 = mapping->getMechFrom();
-                }
+            simulatedObject1=constrainedObject1;
+            while (simulatedObject1)
+            {
+                core::componentmodel::behavior::BaseMechanicalMapping* mapping;
+                simulatedObject1->getContext()->get(mapping);
+                if (!mapping) break;
+                simulatedObject1 = mapping->getMechFrom();
+            }
 
-              simulatedObject2=constrainedObject2;
-              while (simulatedObject2)
-                {                  
-                  core::componentmodel::behavior::BaseMechanicalMapping* mapping;
-                  simulatedObject2->getContext()->get(mapping);
-		  if (!mapping) break;
-		  simulatedObject2 = mapping->getMechFrom();
-                }
+            simulatedObject2=constrainedObject2;
+            while (simulatedObject2)
+            {
+                core::componentmodel::behavior::BaseMechanicalMapping* mapping;
+                simulatedObject2->getContext()->get(mapping);
+                if (!mapping) break;
+                simulatedObject2 = mapping->getMechFrom();
+            }
 	    }
 	}
 

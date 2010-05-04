@@ -19,6 +19,7 @@ namespace opencl
 #endif
 
 
+
 //private data
 int _numDevices = 0;
 int myopenclMultiOpMax = 0;
@@ -226,7 +227,7 @@ void myopenclShowError(std::string file, int line)
 		if(_error==CL_INVALID_KERNEL)std::cout << "\t\tCL_INVALID_KERNEL\n";
 		if(_error==CL_INVALID_VALUE)std::cout << "\tCL_INVALID_VALUE\n";
 		if(_error==CL_INVALID_KERNEL_ARGS)std::cout << "\tCL_INVALID_KERNEL_ARGS\n";
-		exit(1);
+		exit(0);
  	}
 }
 

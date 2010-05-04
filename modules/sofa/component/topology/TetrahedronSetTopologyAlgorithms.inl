@@ -269,6 +269,8 @@ namespace topology
 		m_modifier->removeTetrahedra(toBeRemovedTetraIndex);
 		m_modifier->notifyEndingEvent();
 		m_modifier->propagateTopologicalChanges(); 
+
+		sout << "NbCutElement=" << toBeRemovedTetraIndex.size() << " NbAddedElement=" << toBeAddedTetraIndex.size() << sendl;
 	}
 
 	template<class DataTypes>
@@ -1268,6 +1270,8 @@ namespace topology
 		m_modifier->removeTetrahedra(toBeRemovedTetraIndex);
 		m_modifier->notifyEndingEvent();
 		m_modifier->propagateTopologicalChanges(); 
+
+		sout << "NbCutElement=" << toBeRemovedTetraIndex.size() << " NbAddedElement=" << toBeAddedTetraIndex.size() << sendl;
 	}
 
 	template<class DataTypes>
@@ -1376,6 +1380,8 @@ namespace topology
 		m_modifier->removeTetrahedra(toBeRemovedTetraIndex);
 		m_modifier->notifyEndingEvent();
 		m_modifier->propagateTopologicalChanges(); 
+
+		sout << "NbCutElement=" << toBeRemovedTetraIndex.size() << " NbAddedElement=" << toBeAddedTetraIndex.size() << sendl;
 	}
 
 	template<class DataTypes>

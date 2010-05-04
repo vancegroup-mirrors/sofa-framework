@@ -19,6 +19,8 @@ HEADERS += initCollision.h \
            BaseContactMapper.h \
            BarycentricContactMapper.h \
            BarycentricContactMapper.inl \
+           RigidContactMapper.h \
+           RigidContactMapper.inl \
            BarycentricPenalityContact.h \
            BarycentricPenalityContact.inl \
            BruteForceDetection.h \
@@ -90,6 +92,7 @@ SOURCES += initCollision.cpp \
            AttachBodyPerformer.cpp \
            BaseContactMapper.cpp \
            BarycentricContactMapper.cpp \
+           RigidContactMapper.cpp \
            BarycentricPenalityContact.cpp \
            BruteForceDetection.cpp \     
            ComponentMouseInteraction.cpp \

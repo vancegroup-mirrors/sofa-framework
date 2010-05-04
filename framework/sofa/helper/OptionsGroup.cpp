@@ -24,17 +24,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_HELPER_TRICKS_H
-#define SOFA_HELPER_TRICKS_H
-
-#include <sofa/helper/helper.h>
-
-#include <sofa/helper/vector.h>
-#include <string>
-#include <iostream>
-#include <cstdarg>
-#include <sstream>
-
+#include "OptionsGroup.h"
 
 
 namespace sofa
@@ -43,67 +33,82 @@ namespace sofa
 namespace helper
 {
 
-///////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////
-/**
- * \namespace sofa::helper
- * \brief RadioTrick is a kind of data for a radio button. It has a list of text
- * representing a list of choices, and a interger number indicating the choice
- * selected.
- *
- */
-template< typename T > 
-class RadioTrick : public sofa::helper::vector<T>
-{
-public :
-	typedef sofa::helper::vector<std::string> textItems;
-
-RadioTrick() : textItems()
+class OptionsGroup;
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+OptionsGroup::OptionsGroup() : textItems()
 {
 	selectedItem=0;
 }
 ///////////////////////////////////////
-RadioTrick(int nbofRadioButton,...)
+OptionsGroup::OptionsGroup(int nbofRadioButton,...)
 {
-	textItems::resize(nbofRadioButton);
+	textItems.resize(nbofRadioButton);
     va_list vl;
     va_start(vl,nbofRadioButton);
-    for(unsigned int i=0;i<textItems::size();i++)
+    for(unsigned int i=0;i<textItems.size();i++)
     {
     	const char * tempochar=va_arg(vl,char *);
     	std::string  tempostring(tempochar);
-    	textItems::operator[](i)=tempostring;
+    	textItems[i]=tempostring;
     }
     va_end(vl);
     selectedItem=0;
 }
 ///////////////////////////////////////
-RadioTrick(const RadioTrick & m_radiotrick) : textItems(m_radiotrick)
+OptionsGroup::OptionsGroup(const OptionsGroup & m_radiotrick) : textItems(m_radiotrick.textItems)
 {
 	selectedItem=m_radiotrick.getSelectedId();
 }
 ///////////////////////////////////////
-/*RadioTrick & RadioTrick::operator=(const RadioTrick & m_radiotrick)
+OptionsGroup & OptionsGroup::operator=(const OptionsGroup & m_radiotrick)
 {
-	RadioTrick m_newRadioTrick(m_radiotrick);
-	return m_newRadioTrick;
-}*/
-///////////////////////////////////////
-
-///////////////////////////////////////
-void setSelectedItem(unsigned int id_item)
-{
-	if (id_item<textItems::size())
-		selectedItem=id_item;
-  std::cout<<"=============================checked number changed :"<<id_item<<std::endl;
+	textItems.resize(m_radiotrick.textItems.size());
+    for(unsigned int i=0;i<textItems.size();i++)
+    {
+    	textItems[i]=m_radiotrick.textItems[i];
+    }
+    selectedItem=m_radiotrick.selectedItem;
+	return *this;
 }
 ///////////////////////////////////////
-void setSelectedItem(const std::string & m_string)
+void OptionsGroup::setNames(int nbofRadioButton,...)
+{
+	textItems.resize(nbofRadioButton);
+    va_list vl;
+    va_start(vl,nbofRadioButton);
+    for(unsigned int i=0;i<textItems.size();i++)
+    {
+    	const char * tempochar=va_arg(vl,char *);
+    	std::string  tempostring(tempochar);
+    	textItems[i]=tempostring;
+    }
+    va_end(vl);
+    selectedItem=0;
+}
+///////////////////////////////////////
+int OptionsGroup::isInButtonList(const std::string & tempostring) const
+{
+	for(unsigned int i=0;i<textItems.size();i++)
+	{
+		if (textItems[i]==tempostring) return i;
+	}
+	return -1;
+}
+///////////////////////////////////////
+void OptionsGroup::setSelectedItem(unsigned int id_item)
+{
+	if (id_item<textItems.size())
+		selectedItem=id_item;
+	//std::cout<<"OptionsGroup:: ==============================setted :"<< this->selectedItem << std::endl;
+}
+///////////////////////////////////////
+void OptionsGroup::setSelectedItem(const std::string & m_string)
 {
 	int id_stringinButtonList = isInButtonList(m_string);
 	if (id_stringinButtonList == -1)
 	{
-		std::cout<<"WARNING(RadioTrick) : \""<< m_string <<"\" is not a parameter in button list :\" "<<(*this)<<"\""<< std::endl;
+		std::cout<<"WARNING(OptionsGroup) : \""<< m_string <<"\" is not a parameter in button list :\" "<<(*this)<<"\""<< std::endl;
 	}
 	else
 	{
@@ -111,26 +116,26 @@ void setSelectedItem(const std::string & m_string)
 	}
 }
 ///////////////////////////////////////
-unsigned int getSelectedId() const
+unsigned int OptionsGroup::getSelectedId() const
 {
 	return selectedItem;
 }
 ///////////////////////////////////////
-std::string  getSelectedItem() const
+std::string  OptionsGroup::getSelectedItem() const
 {
 	std::string checkedString;
-	checkedString = textItems::operator[](selectedItem);
+	checkedString = textItems.operator[](selectedItem);
 	return checkedString;
 }
 ///////////////////////////////////////
-void readFromStream(std::istream & stream)
+void OptionsGroup::readFromStream(std::istream & stream)
 {
 	std::string tempostring;
 	stream >> tempostring;
 	int id_stringinButtonList = isInButtonList(tempostring);
 	if (id_stringinButtonList == -1)
 	{
-		std::cout<<"WARNING(RadioTrick) : \""<< tempostring <<"\" is not a parameter in button list :\" "<<(*this)<<"\""<< std::endl;
+		std::cout<<"WARNING(OptionsGroup) : \""<< tempostring <<"\" is not a parameter in button list :\" "<<(*this)<<"\""<< std::endl;
 	}
 	else
 	{
@@ -138,9 +143,19 @@ void readFromStream(std::istream & stream)
 	}
 }
 ///////////////////////////////////////
-void TestRadioTrick()
+void OptionsGroup::writeToStream(std::ostream & stream) const
 {
-  sofa::helper::RadioTrick<std::string> m_radiotrick(3,"hello1","hello2","hello3");
+
+	for(unsigned int i=0;i<textItems.size()-1;i++)
+	{
+		std::string tempostring= textItems.operator[](i);
+		stream<< tempostring << " ";
+	}
+}
+///////////////////////////////////////
+void OptionsGroup::TestOptionsGroup() const
+{
+	sofa::helper::OptionsGroup m_radiotrick;m_radiotrick.setNames(3,"hello1","hello2","hello3");
 	std::cout<<"Radio button :"<<m_radiotrick<<"    selectedId :"<<m_radiotrick.getSelectedId()<<"   getSelectedItem() :"<<m_radiotrick.getSelectedItem()<<std::endl;
 	std::cin>>m_radiotrick;
 	std::cout<<"Radio button :"<<m_radiotrick<<"    selectedId :"<<m_radiotrick.getSelectedId()<<"   getSelectedItem() :"<<m_radiotrick.getSelectedItem()<<std::endl;
@@ -148,32 +163,6 @@ void TestRadioTrick()
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-protected:
-
-	unsigned int selectedItem;
-
-	///return the id_item of the string if found in string list button
-	///             -1    if not found
-	int isInButtonList(const std::string & tempostring)
-{
-	for(unsigned int i=0;i<textItems::size();i++)
-	{
-		if (textItems::operator[](i)==tempostring) return i;
-	}
-	return -1;
-}
-
-};
-
-template< typename T> 
-inline std::istream & operator >>(std::istream & in, RadioTrick<T> & m_trick)
-{m_trick.readFromStream(in);return in;}
-
-///////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////
 } // namespace helper
 
 } // namespace sofa
-
-#endif
-

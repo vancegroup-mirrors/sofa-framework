@@ -22,8 +22,8 @@ HEADERS += initEngine.h \
            MergePoints.inl \
            MergeSets.h \
            MergeSets.inl \
-	   MeshBarycentricMapperEngine.h \
-	   MeshBarycentricMapperEngine.inl \
+	       MeshBarycentricMapperEngine.h \
+	       MeshBarycentricMapperEngine.inl \
 	       TransformPosition.h \
 	       TransformPosition.inl \
 	       TransformEngine.h \
@@ -46,6 +46,8 @@ HEADERS += initEngine.h \
            RandomPointDistributionInSurface.inl \
            Spiral.h \
            Spiral.inl \
+           ShapeFunctionValuesEngine.h \
+           ShapeFunctionValuesEngine.inl \
            TrianglesInBoxROI.h \
            TrianglesInBoxROI.inl \
            TrianglesInSphereROI.h \
@@ -75,6 +77,7 @@ SOURCES += initEngine.cpp \
            MapIndices.cpp \
            RandomPointDistributionInSurface.cpp \
            Spiral.cpp \
+           ShapeFunctionValuesEngine.cpp \
            TrianglesInBoxROI.cpp \
            TrianglesInSphereROI.cpp \
            TrianglesInPlaneROI.cpp \

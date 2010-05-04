@@ -102,7 +102,7 @@ namespace sofa
           void reset(){initFixedPosition();};
 
 	  // -- LMConstraint interface
-          void buildJacobian();
+          void buildJacobian(unsigned int &constraintId);
 	  void writeConstraintEquations(ConstOrder order);
 
 

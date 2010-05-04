@@ -125,6 +125,8 @@ protected:
 	void setVecConst(unsigned int index, VecConst* v);
 
 	/// @}
+  /// Given the numero of a constraint Equation, find the index in the VecConst C, where the constraint is actually stored
+  unsigned int getIdxConstraintFromId(unsigned int id) const;
 
 	MechanicalObjectInternalData<DataTypes> data;
 
@@ -317,8 +319,8 @@ public:
 
 	virtual void addDxToCollisionModel(void);
 
-	void setConstraintId(unsigned int);
-	sofa::helper::vector<unsigned int>& getConstraintId();
+    void setConstraintId(unsigned int);
+    sofa::helper::vector<unsigned int>& getConstraintId();
 	/// Renumber the constraint ids with the given permutation vector
 	void renumberConstraintId(const sofa::helper::vector<unsigned>& renumbering);
 
@@ -397,7 +399,7 @@ public:
     virtual bool pickParticles(double rayOx, double rayOy, double rayOz, double rayDx, double rayDy, double rayDz, double radius0, double dRadius,
 			       std::multimap< double, std::pair<sofa::core::componentmodel::behavior::BaseMechanicalState*, int> >& particles);
 
-protected:
+protected:    
 	sofa::core::componentmodel::topology::BaseMeshTopology* _topology;
   sofa::core::VecId _forceId;
 

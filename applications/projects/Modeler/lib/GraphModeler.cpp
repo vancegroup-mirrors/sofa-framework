@@ -214,6 +214,9 @@ namespace sofa
             }
           }
           object = c->createInstance(parent->getContext(), NULL);
+          GraphHistoryManager::Operation adding(object, GraphHistoryManager::Operation::ADD_OBJECT);
+          adding.info=std::string("Adding Object ") + object->getClassName();
+          emit operationPerformed(adding);
           // 	    parent->addObject(object);
         }
         return object;

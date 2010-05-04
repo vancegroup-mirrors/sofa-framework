@@ -27,6 +27,7 @@
 
 #include <sofa/gui/qt/SimpleDataWidget.h>
 #include <sofa/helper/Factory.inl>
+#include <sofa/core/objectmodel/Tag.h>
 #include <iostream>
 
 namespace sofa
@@ -125,6 +126,50 @@ Creator<DataWidgetFactory, SimpleDataWidget< Mat<4,4,float> > > DWClass_Mat44f("
 Creator<DataWidgetFactory, SimpleDataWidget< Mat<4,4,double> > > DWClass_Mat44d("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< Mat<6,6,float> > > DWClass_Mat66f("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< Mat<6,6,double> > > DWClass_Mat66d("default",true);
+Creator<DataWidgetFactory, SimpleDataWidget< sofa::core::objectmodel::TagSet > > DWClass_TagSet("default",true);
+
+
+////////////////////////////////////////////////////////////////
+/// OptionsGroup support
+////////////////////////////////////////////////////////////////
+
+//these functions must be written here for effect of writeToData
+Creator<DataWidgetFactory,RadioDataWidget> DWClass_OptionsGroup("default",true);
+
+bool RadioDataWidget::createWidgets()
+{
+	buttonList=new QButtonGroup(this);
+	QVBoxLayout* layout = new QVBoxLayout(this);
+
+	sofa::helper::OptionsGroup m_radiotrick = getData()->virtualGetValue();
+	for(unsigned int i=0;i<m_radiotrick.size();i++)
+	{
+		std::string m_itemstring=m_radiotrick[i];
+
+		QRadioButton * m_radiobutton=new QRadioButton(QString::fromStdString(m_itemstring));
+		if (i==m_radiotrick.getSelectedId()) m_radiobutton->setChecked(true);
+		layout->add(m_radiobutton);
+		buttonList->addButton(m_radiobutton,i);
+	}
+	connect(buttonList, SIGNAL(buttonClicked(int)), this, SLOT(setbuttonchekec(int))) ;
+	return true;
+}
+void RadioDataWidget::setbuttonchekec(int id_checked)
+{
+    sofa::helper::OptionsGroup m_radiotrick = this->getData()->virtualGetValue();
+	m_radiotrick.setSelectedItem((unsigned int)id_checked);
+	this->getData()->virtualSetValue(m_radiotrick);
+}
+void RadioDataWidget::readFromData()
+{
+}
+void RadioDataWidget::writeToData()
+{
+	sofa::helper::OptionsGroup m_radiotrick = this->getData()->virtualGetValue();
+	m_radiotrick.setSelectedItem((unsigned int)buttonList->checkedId ());
+	this->getData()->virtualSetValue(m_radiotrick);
+}
+
 
 
 

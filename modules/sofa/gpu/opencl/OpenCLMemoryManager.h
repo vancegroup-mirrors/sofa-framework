@@ -31,7 +31,7 @@ class OpenCLMemoryManager: public sofa::helper::MemoryManager<T> {
 	typedef GLuint gl_buffer;
 
 	enum { MAX_DEVICES = 8 };
-	enum { BSIZE = 32 };
+//	enum { BSIZE = 32 };
 	enum { SUPPORT_GL_BUFFER = 0 };
 
 	static int numDevices()

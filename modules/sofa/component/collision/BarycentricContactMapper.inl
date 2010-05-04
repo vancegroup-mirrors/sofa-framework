@@ -79,55 +79,6 @@ typename BarycentricContactMapper<TCollisionModel,DataTypes>::MMechanicalState* 
     return mstate;
 }
 
-
-template < class TCollisionModel, class DataTypes >
-void RigidContactMapper<TCollisionModel,DataTypes>::cleanup()
-{
-    if (child!=NULL)
-    {
-        child->detachFromGraph();
-        child->execute<simulation::DeleteVisitor>();
-        delete child;
-        child = NULL;
-    }
-}
-
-template < class TCollisionModel, class DataTypes >
-typename RigidContactMapper<TCollisionModel,DataTypes>::MMechanicalState* RigidContactMapper<TCollisionModel,DataTypes>::createMapping(const char* name)
-{
-    if (model==NULL) return NULL;
-    InMechanicalState* instate = model->getMechanicalState();
-    if (instate!=NULL)
-    {
-        simulation::Node* parent = dynamic_cast<simulation::Node*>(instate->getContext());
-        if (parent==NULL)
-        {
-            std::cerr << "ERROR: RigidContactMapper only works for scenegraph scenes.\n";
-            return NULL;
-        }
-        child = simulation::getSimulation()->newNode(name);
-        parent->addChild(child); child->updateSimulationContext();
-        outmodel = new MMechanicalObject; child->addObject(outmodel);
-        outmodel->useMask.setValue(true);
-        mapping = new MMapping(instate, outmodel); child->addObject(mapping);
-    }
-    else
-    {
-        simulation::Node* parent = dynamic_cast<simulation::Node*>(model->getContext());
-        if (parent==NULL)
-        {
-            std::cerr << "ERROR: RigidContactMapper only works for scenegraph scenes.\n";
-            return NULL;
-        }
-        child = simulation::getSimulation()->newNode(name);
-        parent->addChild(child); child->updateSimulationContext();
-        outmodel = new MMechanicalObject; child->addObject(outmodel);
-        outmodel->useMask.setValue(true);
-        mapping = NULL;
-    }
-    return outmodel;
-}
-
 template < class TCollisionModel, class DataTypes >
 void SubsetContactMapper<TCollisionModel,DataTypes>::cleanup()
 {
@@ -176,24 +127,6 @@ typename SubsetContactMapper<TCollisionModel,DataTypes>::MMechanicalState* Subse
     return outmodel;
 }
 
-template <class DataTypes>
-typename ContactMapper<RigidDistanceGridCollisionModel,DataTypes>::MMechanicalState* ContactMapper<RigidDistanceGridCollisionModel,DataTypes>::createMapping(const char* name)
-{
-    MMechanicalState* outmodel = Inherit::createMapping(name);
-    if (this->child!=NULL && this->mapping==NULL)
-    {
-        // add velocity visualization
-        sofa::component::visualmodel::DrawV* visu = new sofa::component::visualmodel::DrawV;
-        this->child->addObject(visu);
-        visu->useAlpha.setValue(true);
-        visu->vscale.setValue(this->model->getContext()->getDt());
-        sofa::component::mapping::IdentityMapping< core::Mapping< core::componentmodel::behavior::State<DataTypes>, core::componentmodel::behavior::MappedModel< ExtVectorTypes< Vec<3,GLfloat>, Vec<3,GLfloat> > > > >* map = new sofa::component::mapping::IdentityMapping< core::Mapping< core::componentmodel::behavior::State<DataTypes> , core::componentmodel::behavior::MappedModel< ExtVectorTypes< Vec<3,GLfloat>, Vec<3,GLfloat> > > > > ( outmodel, visu );
-        this->child->addObject(map);
-        visu->init();
-        map->init();
-    }
-    return outmodel;
-}
 
 } // namespace collision
 

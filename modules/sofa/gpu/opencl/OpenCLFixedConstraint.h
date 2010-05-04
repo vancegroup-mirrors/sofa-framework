@@ -34,6 +34,55 @@ namespace component {
 
 namespace constraint {
 
+
+template<class TCoord, class TDeriv, class TReal>
+class FixedConstraintInternalData< gpu::opencl::OpenCLVectorTypes<TCoord,TDeriv,TReal> >
+{
+public:
+	typedef FixedConstraintInternalData< gpu::opencl::OpenCLVectorTypes<TCoord,TDeriv,TReal> > Data;
+	typedef gpu::opencl::OpenCLVectorTypes<TCoord,TDeriv,TReal> DataTypes;
+	typedef FixedConstraint<DataTypes> Main;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef typename DataTypes::Real Real;
+	typedef typename Main::SetIndex SetIndex;
+
+	// min/max fixed indices for contiguous constraints
+	int minIndex;
+	int maxIndex;
+	// vector of indices for general case
+	gpu::opencl::OpenCLVector<int> OpenCLIndices;
+
+	static void init(Main* m);
+
+	static void addConstraint(Main* m, unsigned int index);
+
+	static void removeConstraint(Main* m, unsigned int index);
+
+	static void projectResponse(Main* m, VecDeriv& dx);
+};
+
+
+// I know using macros is bad design but this is the only way not to repeat the code for all OpenCL types
+#define OpenCLFixedConstraint_DeclMethods(T) \
+	template<> void FixedConstraint< T >::init(); \
+	template<> void FixedConstraint< T >::addConstraint(unsigned int index); \
+	template<> void FixedConstraint< T >::removeConstraint(unsigned int index); \
+	template<> void FixedConstraint< T >::projectResponse(VecDeriv& dx);
+
+OpenCLFixedConstraint_DeclMethods(gpu::opencl::OpenCLVec3fTypes);
+OpenCLFixedConstraint_DeclMethods(gpu::opencl::OpenCLVec3f1Types);
+
+
+OpenCLFixedConstraint_DeclMethods(gpu::opencl::OpenCLVec3dTypes);
+OpenCLFixedConstraint_DeclMethods(gpu::opencl::OpenCLVec3d1Types);
+
+
+
+#undef OpenCLFixedConstraint_DeclMethods
+
+
+
 } // namespace constraint
 
 } // namespace component

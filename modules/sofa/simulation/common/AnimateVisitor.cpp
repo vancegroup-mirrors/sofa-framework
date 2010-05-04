@@ -147,10 +147,12 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
     
           MechanicalBeginIntegrationVisitor beginVisitor(dt);
           node->execute(&beginVisitor);
-		  
+
 #ifdef SOFA_HAVE_EIGEN2
-          MechanicalExpressJacobianVisitor JacobianVisitor(node);
-          node->execute(&JacobianVisitor);
+          {
+              unsigned int constraintId=0;
+              MechanicalAccumulateConstraint(constraintId).execute(node);
+          }
 #endif
 
           for( unsigned i=0; i<node->solver.size(); i++ ){

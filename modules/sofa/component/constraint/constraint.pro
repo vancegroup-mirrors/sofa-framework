@@ -66,14 +66,14 @@ HEADERS += \
            DistanceLMConstraint.inl \
            FixedLMConstraint.h \
            FixedLMConstraint.inl \
-           RotationLMConstraint.h \
-           RotationLMConstraint.inl 
+           DOFBlockerLMConstraint.h \
+           DOFBlockerLMConstraint.inl 
            
 SOURCES += \           
            LMConstraintSolver.cpp\
            DistanceLMConstraint.cpp \
            FixedLMConstraint.cpp \
-           RotationLMConstraint.cpp
+           DOFBlockerLMConstraint.cpp
 }
 
 

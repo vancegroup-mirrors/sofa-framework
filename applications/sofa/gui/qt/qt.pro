@@ -61,6 +61,7 @@ HEADERS += viewer/SofaViewer.h \
 		   DataFilenameWidget.h \
            DisplayFlagWidget.h \
            GraphDataWidget.h \
+		   MaterialDataWidget.h \
            ModifyObject.h \
            SimpleDataWidget.h \
 		   SofaGUIQt.h \
@@ -79,8 +80,7 @@ HEADERS += viewer/SofaViewer.h \
 		   QSofaListView.h \
 		   QSofaRecorder.h \
 		   QSofaStatWidget.h \
-           ImageQt.h \
-           TrickyDataWidget.h
+           ImageQt.h 
 
 SOURCES += Main.cpp \
            GraphListenerQListView.cpp \
@@ -91,6 +91,7 @@ SOURCES += Main.cpp \
 		   DataFilenameWidget.cpp \
            DisplayFlagWidget.cpp \
            GraphDataWidget.cpp \  
+		   MaterialDataWidget.cpp \
            ModifyObject.cpp \
            SimpleDataWidget.cpp \
            StructDataWidget.cpp \
@@ -108,8 +109,7 @@ SOURCES += Main.cpp \
 		   QSofaListView.cpp \
 		   QSofaRecorder.cpp \
 		   QSofaStatWidget.cpp \
-           ImageQt.cpp \
-           TrickyDataWidget.cpp
+           ImageQt.cpp 
 
 contains (DEFINES, SOFA_DUMP_VISITOR_INFO){
 HEADERS += GraphVisitor.h \

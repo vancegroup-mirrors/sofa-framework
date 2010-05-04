@@ -31,6 +31,7 @@
 
 #include <sofa/core/ObjectFactory.h>
 
+#include <sofa/helper/AdvancedTimer.h>
 #include <sofa/helper/system/thread/CTime.h>
 #include <math.h>
 #include <iostream>
@@ -79,6 +80,7 @@ void MasterContactSolver::init()
 void MasterContactSolver::step(double dt)
 {
     simulation::Node *context =  (simulation::Node *)(this->getContext()); // access to current node
+
     helper::system::thread::CTime timer;
     helper::system::thread::CTime timerTotal;
     double time = 0.0;
@@ -97,8 +99,10 @@ void MasterContactSolver::step(double dt)
     if( f_printLog.getValue())
       serr<<"updatePos called"<<sendl;
 
+    sofa::helper::AdvancedTimer::stepBegin("UpdatePosition");
     simulation::BehaviorUpdatePositionVisitor updatePos(dt);
     context->execute(&updatePos);
+    sofa::helper::AdvancedTimer::stepEnd  ("UpdatePosition");
 	
     if( f_printLog.getValue())
       serr<<"updatePos performed - beginVisitor called"<<sendl;
@@ -111,9 +115,11 @@ void MasterContactSolver::step(double dt)
       serr<<"beginVisitor performed - SolveVisitor for freeMotion is called"<<sendl;	
 	
     // Free Motion
+    sofa::helper::AdvancedTimer::stepBegin("FreeMotion");
     simulation::SolveVisitor freeMotion(dt, true);
     context->execute(&freeMotion);
     simulation::MechanicalPropagateFreePositionVisitor().execute(context);
+    sofa::helper::AdvancedTimer::stepEnd  ("FreeMotion");
 	
     if( f_printLog.getValue())
       serr<<" SolveVisitor for freeMotion performed"<<sendl;	
@@ -128,7 +134,9 @@ void MasterContactSolver::step(double dt)
       }	 	
 
     // Collision detection and response creation
+    sofa::helper::AdvancedTimer::stepBegin("Collision");
     computeCollision();
+    sofa::helper::AdvancedTimer::stepEnd  ("Collision");
 
     if ( displayTime.getValue() )
       {
@@ -137,7 +145,12 @@ void MasterContactSolver::step(double dt)
       }
 
     //SOLVE CONSTRAINT	
-    if (constraintSolver) constraintSolver->solveConstraint(dt, core::VecId::freePosition());
+    if (constraintSolver)
+    {
+        sofa::helper::AdvancedTimer::stepBegin("ConstraintSolver");
+        constraintSolver->solveConstraint(dt, core::VecId::freePosition());
+        sofa::helper::AdvancedTimer::stepEnd  ("ConstraintSolver");
+    }
 
 
     if ( displayTime.getValue() )

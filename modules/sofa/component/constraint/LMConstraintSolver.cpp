@@ -599,26 +599,28 @@ namespace sofa
                     unsigned int i=0;
                     for (i=0;i<numConstraintToProcess;++i)
                       {
+                        //TODO: handle the nature of the constraint, and error evaluation inside the constraint
                         //X^(k)= (c^(0)-A[c,c]*X^(k-1))/A[c,c]
                         Lambda(idxConstraint+i)=(c(idxConstraint+i) - varEigen(i))/A(idxConstraint+i,idxConstraint+i);
-                        if (constraintOrder[constraintEntry]->getConstraint(i).nature == BaseLMConstraint::UNILATERAL && Lambda(idxConstraint+i) < 0) 
-                          {
-                            groupDeactivated=true;
-                            if (f_printLog.getValue()) sout << "Constraint : " << i << " from group " << idxConstraint << " Deactivated" << sendl;
-                            break;
-                          }
-                        error += pow(previousIterationEigen(i)-Lambda(idxConstraint+i),2);			  
+                        if (constraintOrder[constraintEntry]->getConstraint(i).nature == BaseLMConstraint::UNILATERAL && Lambda(idxConstraint+i) < 0)
+                         {
+                           groupDeactivated=true;
+                           Lambda(idxConstraint+i) = 0;
+                           if (f_printLog.getValue()) sout << "Constraint : " << i << " from group " << idxConstraint << " Deactivated" << sendl;
+                           break;
+                         }
+                        error += pow(previousIterationEigen(i)-Lambda(idxConstraint+i),2);
                       }
                     //One of the Unilateral Constraint is not active anymore. We deactivate the whole group
                     if (groupDeactivated)
-                      {
-                        for (unsigned int j=0;j<numConstraintToProcess;++j)
-                          {                     
-                            if (j<i) error -= pow(previousIterationEigen(j)-Lambda(idxConstraint+j),2);
-                            Lambda(idxConstraint+j) = 0;
-                            error += pow(previousIterationEigen(j)-Lambda(idxConstraint+j),2);
-                          }
-                      }
+                     {/*
+                       for (unsigned int j=0;j<numConstraintToProcess;++j)
+                         {
+                           if (j<i) error -= pow(previousIterationEigen(j)-Lambda(idxConstraint+j),2);
+                           Lambda(idxConstraint+j) = 0;
+                           error += pow(previousIterationEigen(j)-Lambda(idxConstraint+j),2);
+                         }*/
+                     }
                     error = sqrt(error);
                     //****************************************************************
                     if (this->f_printLog.getValue()) 

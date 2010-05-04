@@ -1,0 +1,38 @@
+<Node gravity="0 -100 0" showInteractionForceFields="1" showWireFrame="0" >
+  <MasterContactSolver initial_guess="true" displayTime="0" mu="0.7" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false"/>
+  <!--<MasterConstraintSolver tolerance="1e-7" maxIterations="1000" printLog="0" displayTime="0" doubleBuffer="1"/>-->
+  <CollisionPipeline verbose="0" name="CollisionPipeline"/>
+  <LocalMinDistance name="Proximity" alarmDistance="0.1" contactDistance="0.001" coneFactor="0.5" angleCone="0.1"/>
+  <BruteForceDetection name="N2" />
+  <CollisionResponse response="FrictionContact" name="collision response"/>
+  <Node name="Armadillo1">
+    <EulerImplicit rayleighMass="0.1" rayleighStiffness="0.01"/>
+    <CGLinearSolver iterations="40" name="linear solver" tolerance="1.0e-9" threshold="1.0e-15"/>
+    <MechanicalObject template="Rigid" position="0 3.14192 4 0.713585 -0.36345 -0.13246 0.584085"/>
+    <UniformMass filename="../../applications/projects/ldidetection/examples/objects/Armadillo.rigid" totalmass="100" />
+    <UncoupledConstraintCorrection />
+    <RigidDistanceGrid filename="../../applications/projects/ldidetection/examples/objects/Armadillo-64.fmesh" sampling="-1" translation="0.1970512688 -3.8385167670 -0.6284996918" />
+    <Node>
+      <OglModel name="VM" filename="../../applications/projects/ldidetection/examples/objects/Armadillo.obj" dx="0.1970512688" dy="-3.8385167670" dz="-0.6284996918" color="1.0 0.5 0.5" />
+      <IdentityMapping object2="VM" />
+    </Node>
+  </Node>
+  <Node name="Armadillo2">
+    <EulerImplicit rayleighMass="0.1" rayleighStiffness="0.01"/>
+    <CGLinearSolver iterations="40" name="linear solver" tolerance="1.0e-9" threshold="1.0e-15"/>
+    <MechanicalObject template="Rigid" position="0 15 0 0 0 0 1"/>
+<!--    <MechanicalObject template="Rigid" position="0 15 0 1 0 0 0"/> -->
+    <UniformMass filename="../../applications/projects/ldidetection/examples/objects/Armadillo.rigid" totalmass="100" />
+    <UncoupledConstraintCorrection />
+    <RigidDistanceGrid filename="../../applications/projects/ldidetection/examples/objects/Armadillo-64.fmesh" sampling="-1" translation="0.1970512688 -3.8385167670 -0.6284996918" />
+    <Node>
+      <OglModel name="VM" filename="../../applications/projects/ldidetection/examples/objects/Armadillo.obj" dx="0.1970512688" dy="-3.8385167670" dz="-0.6284996918" color="0.5 1.0 0.5" />
+      <IdentityMapping object2="VM" />
+    </Node>
+  </Node>
+  <Node name="Floor">
+    <MechanicalObject template="Rigid" />
+    <RigidDistanceGrid filename="mesh/floor.fmesh" scale="0.2" simulated="0" moving="0" />
+    <OglModel name="VM" filename="mesh/floor.obj" scale="0.2" />
+  </Node>
+</Node>

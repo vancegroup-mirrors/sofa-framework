@@ -66,10 +66,45 @@ void ArticulatedHierarchyBVHController::reset()
 
 void ArticulatedHierarchyBVHController::applyController(void)
 {
-	double ndiv = 1.0/ahc->dtbvh;
-	int frameInc = 1;
+    double ndiv = 0.0;
+    int frameInc = 0;
+    double alpha;
+
+    if (useExternalTime.getValue())
+    {
+
+        frame = (int)(floor(externalTime.getValue() / ahc->dtbvh));
+
+        double residu = (externalTime.getValue() / ahc->dtbvh) - (double) frame;
+
+        std::cout<<"externalTime.getValue() = "<<externalTime.getValue() <<"  frame= "<<frame<<" residu = "<<residu<<std::endl;
+
+        if(frame > ahc->numOfFrames-2)
+        {
+            frame = ahc->numOfFrames-2;
+        }
+
+        alpha = residu;
+
+
+        // ndiv=1.0;
+        // n = residu;
+
+
+    }
+    else
+    {
+
+         ndiv = 1.0/ahc->dtbvh;
+
+         alpha= (n/ndiv);
+
+
+
+        frameInc = 1;
 	if (ndiv < 1.0)
 		frameInc = int(ahc->numOfFrames/(ahc->numOfFrames/ahc->dtbvh));
+    }
 
 	for (unsigned int i=0; i<m_artCenterVec.size(); i++)
 	{
@@ -100,14 +135,14 @@ void ArticulatedHierarchyBVHController::applyController(void)
 						if ((*it)->translation.getValue())
 						{
 							double diffMotions = (*it)->motion[frame+1] - (*it)->motion[frame];
-							(*(*articulatedObjIt)->getX())[(*it)->articulationIndex.getValue()] = (*it)->motion[frame] + (n/ndiv)*diffMotions;
-							(*(*articulatedObjIt)->getXfree())[(*it)->articulationIndex.getValue()] = (*it)->motion[frame] + (n/ndiv)*diffMotions;
+                                                        (*(*articulatedObjIt)->getX())[(*it)->articulationIndex.getValue()] = (*it)->motion[frame] + alpha*diffMotions;
+                                                        (*(*articulatedObjIt)->getXfree())[(*it)->articulationIndex.getValue()] = (*it)->motion[frame] + alpha*diffMotions;
 						}
 						else
 						{
 							double diffMotions = (((*it)->motion[frame+1]/180.0)*3.14) - (((*it)->motion[frame]/180.0)*3.14);
-							(*(*articulatedObjIt)->getX())[(*it)->articulationIndex.getValue()] = (((*it)->motion[frame]/180.0)*3.14) + (n/ndiv)*diffMotions;
-							(*(*articulatedObjIt)->getXfree())[(*it)->articulationIndex.getValue()] = (((*it)->motion[frame]/180.0)*3.14) + (n/ndiv)*diffMotions;
+                                                        (*(*articulatedObjIt)->getX())[(*it)->articulationIndex.getValue()] = (((*it)->motion[frame]/180.0)*3.14) + alpha*diffMotions;
+                                                        (*(*articulatedObjIt)->getXfree())[(*it)->articulationIndex.getValue()] = (((*it)->motion[frame]/180.0)*3.14) + alpha*diffMotions;
 						}
 					}
 			++it;
@@ -115,6 +150,9 @@ void ArticulatedHierarchyBVHController::applyController(void)
 		++artCenterIt;
 		}
 	}
+
+        if (!useExternalTime.getValue())
+        {
 	if (frame<(ahc->numOfFrames-2))
 	{
 		if (n<ndiv-1)
@@ -128,6 +166,7 @@ void ArticulatedHierarchyBVHController::applyController(void)
 			n=0;
 		}
 	}
+    }
 }
 
 SOFA_DECL_CLASS(ArticulatedHierarchyBVHController)

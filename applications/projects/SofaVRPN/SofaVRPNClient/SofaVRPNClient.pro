@@ -36,7 +36,8 @@ HEADERS +=  vrpnclient_config.h \
 			IRTracker.h \
 			#ContactWarning.h \
 			#ContactDisabler.h \
-			ToolFinder.h
+			ToolTracker.h \
+			ToolTracker.inl 
    
 SOURCES += 	initSofaVRPNClient.cpp \
 			VRPNDevice.cpp \
@@ -47,4 +48,4 @@ SOURCES += 	initSofaVRPNClient.cpp \
 		  	IRTracker.cpp \
 		  	#ContactWarning.cpp \
 		  	#ContactDisabler.cpp \
-		  	ToolFinder.cpp
+		  	ToolTracker.cpp

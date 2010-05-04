@@ -44,15 +44,17 @@ TagFactory::TagFactory()
 	std::vector<std::string>::iterator it = tagfac->tagsList.begin();
 	unsigned int i=0;
 
-	while(it != tagfac->tagsList.end() && (*it)!= name){
+	while(it != tagfac->tagsList.end() && (*it)!= name)
+    {
 		it++;
 		i++;
 	}
 
 	if (it!=tagfac->tagsList.end())
 		return i;
-	else{
-            std::cout << "TagFactory: creating new tag "<<i<<": "<<name<<std::endl;
+	else
+    {
+        std::cout << "TagFactory: creating new tag "<<i<<": "<<name<<std::endl;
 		tagfac->tagsList.push_back(name);
 		return i;
 	}

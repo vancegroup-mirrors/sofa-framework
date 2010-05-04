@@ -48,15 +48,15 @@
 #endif // SOFA_QT4
 
 #ifndef SOFA_QT4     
-      typedef QTable    Q3Table;
+typedef QTable    Q3Table;
 #endif
 
 
 namespace sofa{
-  
+
   namespace core{
     namespace objectmodel{
-     class Base;
+      class Base;
     }
   }
   namespace gui{
@@ -66,27 +66,38 @@ namespace sofa{
       class DataWidget : public QWidget
       {
         Q_OBJECT
-      public slots:
-        void updateData(){
-          if(modified){
-            std::string previousName = baseData->getOwner()->getName();
-            writeToData(); 
-            updateVisibility(); 
-            if(baseData->getOwner()->getName() != previousName){
-              emit dataParentNameChanged();
+          public slots:
+            void updateData(){
+              if(modified){
+                std::string previousName = baseData->getOwner()->getName();
+                writeToData(); 
+                updateVisibility(); 
+                if(baseData->getOwner()->getName() != previousName){
+                  emit dataParentNameChanged();
+                }
+              }
+              modified = false;
+              emit requestChange(modified);
             }
-          }
-          modified = false;
-          emit requestChange(modified);
-        }
-        void updateWidget() { 
-          if(!modified){
-            readFromData();
-          }
-        }
-      signals:
-        void requestChange(bool );
-        void dataParentNameChanged();
+            void updateWidget() { 
+              if(!modified){
+                readFromData();
+              }
+            }
+            void setDisplayed(bool b)
+            {
+              if(b){
+                readFromData();
+              }
+            }
+            virtual void update()
+            {
+              readFromData();
+            }
+
+signals:
+            void requestChange(bool );
+            void dataParentNameChanged();
 
       protected:
         core::objectmodel::BaseData* baseData;
@@ -94,10 +105,10 @@ namespace sofa{
         std::string name;
         bool readOnly;
         bool modified;
-      protected slots:
-        void setModified() { 
-          modified = true; emit requestChange(modified);
-        } 
+        protected slots:
+          void setModified() { 
+            modified = true; emit requestChange(modified);
+          } 
 
       public:
         typedef core::objectmodel::BaseData MyData;
@@ -113,10 +124,8 @@ namespace sofa{
         virtual void writeToData() = 0;
         virtual bool isModified() { return false; }
         std::string getName() { return name;};
-        virtual void update()
-        {
-          readFromData();
-        }
+
+
         virtual void updateVisibility()
         {
           parent->setShown(baseData->isDisplayed());
@@ -167,7 +176,7 @@ namespace sofa{
       public:
         DefaultDataWidget(MyData* d) : DataWidget(d), data(d), w(NULL), counter(-1), modified(false) {}
         virtual bool createWidgets(QWidget* parent);
-         virtual void readFromData()
+        virtual void readFromData()
         {
           std::string s = data->getValueString();
           w->setText(QString(s.c_str()));
@@ -203,63 +212,64 @@ namespace sofa{
           void setDisplayed(bool b){this->setShown(b);}
           void resizeTableV( int number ) 
           {
-             QSpinBox *spinBox = (QSpinBox *) sender();
+            QSpinBox *spinBox = (QSpinBox *) sender();
+            QString header;
             if( spinBox == NULL){
               return;
             }
             if (number != numRows())
             {
               setNumRows(number);
+
             }
           }
 
           void resizeTableH( int number ) 
           {
             QSpinBox *spinBox = (QSpinBox *) sender();
+            QString header;
             if( spinBox == NULL){
               return;
             }
             if (number != numCols())
             {
               setNumCols(number);
+
             }
           }
 
       };
 
- //     extern template class SOFA_SOFAGUIQT_API helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument>;
-          
-    class QPushButtonUpdater: public QPushButton
-    {
+      //     extern template class SOFA_SOFAGUIQT_API helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument>;
+
+      class QPushButtonUpdater: public QPushButton
+      {
         Q_OBJECT
-    public:
+      public:
 
-        QPushButtonUpdater( DataWidget *d, const QString & text, QWidget * parent = 0 ): QPushButton(text,parent),widget(d){};
+        QPushButtonUpdater( const QString & text, QWidget * parent = 0 ): QPushButton(text,parent){};
 
-    public slots:
-        void setDisplayed(bool b);
-    protected:
-        DataWidget *widget;
+        public slots:
+          void setDisplayed(bool b);
+      };
 
-    };
-
-    //Widget used to display the name of a Data and if needed the link to another Data
-     class QDisplayDataInfoWidget: public QWidget
-     {
-         Q_OBJECT
+      //Widget used to display the name of a Data and if needed the link to another Data
+      class QDisplayDataInfoWidget: public QWidget
+      {
+        Q_OBJECT
       public:
         QDisplayDataInfoWidget(QWidget* parent, const std::string& helper, core::objectmodel::BaseData* d, bool modifiable);   
         public slots:
-        void linkModification();
-        void linkEdited();
-        unsigned int getNumLines() const { return numLines_;} 
-     protected:
+          void linkModification();
+          void linkEdited();
+          unsigned int getNumLines() const { return numLines_;} 
+      protected:
         void formatHelperString(const std::string& helper, std::string& final_text);
         static unsigned int numLines(const std::string& str);
         core::objectmodel::BaseData* data;
         unsigned int numLines_;
         QLineEdit *linkpath_edit;
-     };
+      };
 
     } // qt
   } // gui

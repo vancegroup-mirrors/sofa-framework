@@ -41,6 +41,7 @@ public:
     typedef typename DataTypes::Real Real;
     typedef typename DataTypes::Coord Point;
     typedef typename DataTypes::Coord Coord;
+
     typedef typename DataTypes::VecCoord VecCoord;
 
 	VRPNTracker();
@@ -58,6 +59,8 @@ private:
 	void update();
 
 	void handleEvent(sofa::core::objectmodel::Event* event);
+	//DEBUG
+	double angleX, angleY, angleZ;
 };
 
 #if defined(WIN32) && !defined(SOFAVRPNCLIENT_VRPNTRACKER_CPP_)

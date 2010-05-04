@@ -115,7 +115,7 @@ template <>
 	len[1] = sqrt(m00+m22-m11);
 	len[2] = sqrt(m00+m11-m22);
 
-	helper::gl::Axis::draw(center, orient, len*showAxisSize.getValue());
+        simulation::getSimulation()->DrawUtility.drawFrame(center, orient, len*showAxisSize.getValue() );
 
 	gravityCenter += (center * masses[i].mass);
 	totalMass += masses[i].mass;
@@ -171,7 +171,8 @@ template <>
         
 	Quat orient(Vec3d(0,0,1), x[i].getOrientation());
 	Vec3d center; center = x[i].getCenter();
-	helper::gl::Axis::draw(center, orient, len);
+
+        simulation::getSimulation()->DrawUtility.drawFrame(center, orient, len*showAxisSize.getValue() );
       }
   }
 
@@ -246,7 +247,7 @@ template <>
 	len[1] = sqrt(m00+m22-m11);
 	len[2] = sqrt(m00+m11-m22);
 
-	helper::gl::Axis::draw(center, orient, len*showAxisSize.getValue());
+        simulation::getSimulation()->DrawUtility.drawFrame(center, orient, len*showAxisSize.getValue() );
 
 	gravityCenter += (center * masses[i].mass);
 	totalMass += masses[i].mass;
@@ -299,8 +300,8 @@ template <>
 	  len[2] = 0;
         
 	  Quat orient(Vec3d(0,0,1), x[i].getOrientation());
-	  Vec3d center; center = x[i].getCenter();
-	  helper::gl::Axis::draw(center, orient, len);
+          Vec3d center; center = x[i].getCenter();
+          simulation::getSimulation()->DrawUtility.drawFrame(center, orient, len*showAxisSize.getValue() );
 	}
       }
 

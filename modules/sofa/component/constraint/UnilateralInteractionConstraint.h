@@ -56,9 +56,18 @@ public:
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
 	typedef typename core::componentmodel::behavior::MechanicalState<DataTypes> MechanicalState;
+
+    typedef core::componentmodel::behavior::BaseConstraint::ConstraintBlockInfo ConstraintBlockInfo;
     typedef core::componentmodel::behavior::BaseConstraint::PersistentID PersistentID;
     typedef core::componentmodel::behavior::BaseConstraint::ConstCoord ConstCoord;
-    typedef core::componentmodel::behavior::BaseConstraint::ConstraintGroupInfo ConstraintGroupInfo;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstDeriv ConstDeriv;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstArea ConstArea;
+		
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
+    typedef core::componentmodel::behavior::BaseConstraint::VecPersistentID VecPersistentID;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstCoord VecConstCoord;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstArea VecConstArea;
 
 protected:
 	MechanicalState* object1;
@@ -143,7 +152,7 @@ public:
 	virtual void getConstraintValue(defaulttype::BaseVector *, bool freeMotion);
 
 	virtual void getConstraintId(long* id, unsigned int &offset);
-    virtual void getConstraintInfo(std::vector<ConstraintGroupInfo>& groups, std::vector<PersistentID>& ids, std::vector<ConstCoord>& positions);
+    virtual void getConstraintInfo(VecConstraintBlockInfo& blocks, VecPersistentID& ids, VecConstCoord& positions, VecConstDeriv& directions, VecConstArea& areas);
 
 	// Previous Constraint Interface
 	virtual void projectResponse(){}

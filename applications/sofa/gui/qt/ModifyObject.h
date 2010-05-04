@@ -177,10 +177,6 @@ namespace sofa
         void readOnlyData(Q3Table *widget, core::objectmodel::BaseData* data);
         void readOnlyData(QWidget *widget, core::objectmodel::BaseData* data);
 
-
-        signals:
-    
-
         public slots:
           void reject   (){                 emit(dialogClosed(Id_)); deleteLater();QDialog::reject();} //When closing a window, inform the parent.
 	        void accept   (){ updateValues(); emit(dialogClosed(Id_)); deleteLater();QDialog::accept();} //if closing by using Ok button, update the values
@@ -194,7 +190,7 @@ namespace sofa
           void updateDataWidgets();             // emitted eachtime updateValues is called to propagate the changes to the widgets.
           void objectUpdated();                 //update done
 	        void dialogClosed(void *);            //the current window has been closed: we give the Id of the current window
-          protected slots:
+        protected slots:
           void updateTables();              //update the tables of value at each step of the simulation
           void changeVisualValue();               //each time a field of the Visualization tab is modified
           void clearWarnings(){node->clearWarnings(); logWarningEdit->clear();}

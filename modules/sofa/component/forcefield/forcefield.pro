@@ -27,6 +27,8 @@ HEADERS += initForceField.h \
            LennardJonesForceField.inl \
            SPHFluidForceField.h \
            SPHFluidForceField.inl \
+           OscillatingTorsionPressureForceField.h \
+           OscillatingTorsionPressureForceField.inl \
            ParticlesRepulsionForceField.h \
            ParticlesRepulsionForceField.inl \
            PlaneForceField.h \
@@ -103,6 +105,7 @@ SOURCES += initForceField.cpp \
            EllipsoidForceField.cpp \
            FrameSpringForceField.cpp \
            SPHFluidForceField.cpp \
+           OscillatingTorsionPressureForceField.cpp \	   
            ParticlesRepulsionForceField.cpp \
            SpringForceField.cpp \
            StiffSpringForceField.cpp \

@@ -110,8 +110,9 @@ namespace topology
 		{
 			for (unsigned int j=0; j<6; ++j) 
 			{
-				int edgeIndex=m_container->getEdgeIndex(edgesInTetrahedronArray[j][0], 
-													edgesInTetrahedronArray[j][1]);
+				int edgeIndex=m_container->getEdgeIndex(t[edgesInTetrahedronArray[j][0]], 
+					t[edgesInTetrahedronArray[j][1]]);
+				
 				assert(edgeIndex!= -1);
 
 				//m_container->m_edgesInTetrahedron.resize(edgeIndex+1);

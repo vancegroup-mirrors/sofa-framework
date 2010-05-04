@@ -46,7 +46,7 @@ namespace sofa
 
     public:
     SolveVisitor(double _dt, bool free = false):dt(_dt), freeMotion(free) {}
-      void processSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* b);
+      virtual void processSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* b);
       virtual Result processNodeTopDown(simulation::Node* node);
 
       /// Specify whether this action can be parallelized.

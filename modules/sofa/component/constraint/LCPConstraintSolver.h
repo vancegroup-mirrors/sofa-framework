@@ -194,12 +194,14 @@ namespace constraint
 class MechanicalGetConstraintInfoVisitor : public simulation::MechanicalVisitor
 {
 public:
-    typedef core::componentmodel::behavior::BaseConstraint::PersistentID PersistentID;
-    typedef core::componentmodel::behavior::BaseConstraint::ConstCoord ConstCoord;
-    typedef core::componentmodel::behavior::BaseConstraint::ConstraintGroupInfo ConstraintGroupInfo;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
+    typedef core::componentmodel::behavior::BaseConstraint::VecPersistentID VecPersistentID;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstCoord VecConstCoord;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstArea VecConstArea;
 
-    MechanicalGetConstraintInfoVisitor(std::vector<ConstraintGroupInfo>& groups, std::vector<PersistentID>& ids, std::vector<ConstCoord>& positions)
-    : _groups(groups), _ids(ids), _positions(positions)
+    MechanicalGetConstraintInfoVisitor(VecConstraintBlockInfo& blocks, VecPersistentID& ids, VecConstCoord& positions, VecConstDeriv& directions, VecConstArea& areas)
+    : _blocks(blocks), _ids(ids), _positions(positions), _directions(directions), _areas(areas)
     {
 #ifdef SOFA_DUMP_VISITOR_INFO
         setReadWriteVectors();
@@ -209,7 +211,7 @@ public:
     virtual Result fwdConstraint(simulation::Node* node, core::componentmodel::behavior::BaseConstraint* c)
     {
         ctime_t t0 = begin(node, c);
-        c->getConstraintInfo(_groups, _ids, _positions);
+        c->getConstraintInfo(_blocks, _ids, _positions, _directions, _areas);
         end(node, c, t0);
         return RESULT_CONTINUE;
     }
@@ -220,9 +222,11 @@ public:
     }
 #endif
 private:
-    std::vector<ConstraintGroupInfo>& _groups;
-    std::vector<PersistentID>& _ids;
-    std::vector<ConstCoord>& _positions;
+    VecConstraintBlockInfo& _blocks;
+    VecPersistentID& _ids;
+    VecConstCoord& _positions;
+    VecConstDeriv& _directions;
+    VecConstArea& _areas;
 };
 
 
@@ -244,20 +248,29 @@ public:
           bool solveSystem(double dt, VecId);
           bool applyCorrection(double dt, VecId);   
  
-
+          void draw();
 
 
           Data<bool> displayTime;
           Data<bool> initial_guess;
           Data<bool> build_lcp;
-          Data<bool> multi_grid;
           Data < double > tol;
           Data < int > maxIt;
           Data < double > mu;
+          Data<bool> multi_grid;
+          Data<int>  multi_grid_levels;
+          Data<int>  merge_method;
+          Data<int>  merge_spatial_step;
+          Data<int>  merge_local_levels;
 
           Data < helper::set<int> > constraintGroups;
 
           Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
+
+          Data<int> showLevels;
+          Data<double> showCellWidth;
+          Data<defaulttype::Vector3> showTranslation;
+          Data<defaulttype::Vector3> showLevelTranslation;
 
           LCP* getLCP();
           void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCPs until the next call to this function. This is used to prevent concurent access to the LCP when using a LCPForceFeedback through an haptic thread
@@ -279,11 +292,20 @@ public:
 
           /// multi-grid approach ///
           void MultigridConstraintsMerge();
+          void MultigridConstraintsMerge_Compliance();
+          void MultigridConstraintsMerge_Spatial();
           void build_Coarse_Compliance(std::vector<int> &/*constraint_merge*/, int /*sizeCoarseSystem*/);
           LPtrFullMatrix<double>  _Wcoarse;
-          std::vector< int> _contact_group;
-          std::vector< int> _constraint_group;
-          std::vector<int> _group_lead;
+
+          //std::vector< int> _contact_group;
+          //std::vector< int> _constraint_group;
+          //std::vector<int> _group_lead;
+
+          std::vector< std::vector< int > > hierarchy_contact_group;
+          std::vector< std::vector< int > > hierarchy_constraint_group;
+          std::vector< std::vector< double > > hierarchy_constraint_group_fact;
+          std::vector< unsigned int > hierarchy_num_group;
+
 		
           /// common built-unbuilt
           simulation::Node *context;
@@ -308,23 +330,33 @@ public:
           std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem1;
           std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem2;
 		
+    typedef core::componentmodel::behavior::BaseConstraint::ConstraintBlockInfo ConstraintBlockInfo;
     typedef core::componentmodel::behavior::BaseConstraint::PersistentID PersistentID;
     typedef core::componentmodel::behavior::BaseConstraint::ConstCoord ConstCoord;
-    typedef core::componentmodel::behavior::BaseConstraint::ConstraintGroupInfo ConstraintGroupInfo;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstDeriv ConstDeriv;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstArea ConstArea;
+		
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
+    typedef core::componentmodel::behavior::BaseConstraint::VecPersistentID VecPersistentID;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstCoord VecConstCoord;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
+    typedef core::componentmodel::behavior::BaseConstraint::VecConstArea VecConstArea;
 
-    class ConstraintGroupBuf
+    class ConstraintBlockBuf
     {
     public:
         std::map<PersistentID,int> persistentToConstraintIdMap;
         int nbLines; ///< how many dofs (i.e. lines in the matrix) are used by each constraint
     };
 
-    std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintGroupBuf> _previousConstraints;
+    std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintBlockBuf> _previousConstraints;
     helper::vector< double > _previousForces;
 
-    helper::vector<ConstraintGroupInfo> _constraintGroupInfo;
-    helper::vector<PersistentID> _constraintIds;
-    helper::vector<ConstCoord> _constraintPositions;
+    helper::vector< VecConstraintBlockInfo > hierarchy_constraintBlockInfo;
+    helper::vector< VecPersistentID > hierarchy_constraintIds;
+    helper::vector< VecConstCoord > hierarchy_constraintPositions;
+    helper::vector< VecConstDeriv > hierarchy_constraintDirections;
+    helper::vector< VecConstArea > hierarchy_constraintAreas;
 
           // for gaussseidel_unbuilt
           helper::vector< helper::LocalBlock33 > unbuilt_W33;

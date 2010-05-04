@@ -36,21 +36,20 @@ namespace sofa
 
     namespace collision
     {
-
       template <class DataTypes>
       void AddFramePerformer<DataTypes>::start()
       {
         BodyPicked picked=this->interactor->getBodyPicked();
         if (!picked.body && !picked.mstate) return;
 
-        sofa::component::mapping::SkinningMapping<sofa::component::mapping::MechanicalMapping< core::componentmodel::behavior::MechanicalState<StdRigidTypes<3, typename DataTypes::Real> >, core::componentmodel::behavior::MechanicalState<DataTypes> > >* sMapping=NULL;
-
+        vector<SMapping*> vSMapping;
         typename DataTypes::Coord point;
 
         if (picked.body)
           {
             point = picked.point;
-            picked.body->getContext()->get(sMapping);
+	    sofa::core::objectmodel::BaseContext* context=  picked.body->getContext();
+            context->get<SMapping>( &vSMapping, core::objectmodel::BaseContext::SearchRoot);
           }
         else
           {         
@@ -60,13 +59,11 @@ namespace sofa
                 this->interactor->serr << "uncompatible MState during Mouse Interaction " << this->interactor->sendl;
                 return;
               }            
-            mstateCollision->getContext()->get( sMapping);
+            static_cast<simulation::Node*>(mstateCollision->getContext())->get<SMapping>( &vSMapping, core::objectmodel::BaseContext::SearchRoot);
             int index = picked.indexCollisionElement;
             point=(*(mstateCollision->getX()))[index];
           }
 
-        if( !(sMapping && sMapping->computeAllMatrices.getValue()) ) return;   
-        sMapping->insertFrame( point, helper::Quater<double>(0, 0, 0, 1) );
       }
 
       template <class DataTypes>

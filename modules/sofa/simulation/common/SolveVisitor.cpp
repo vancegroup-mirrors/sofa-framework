@@ -25,34 +25,36 @@
 #include <sofa/simulation/common/SolveVisitor.h>
 #include <sofa/core/componentmodel/behavior/BaseMechanicalState.h>
 
+#include <sofa/helper/AdvancedTimer.h>
+
 namespace sofa
 {
 
-  namespace simulation
-  {
+namespace simulation
+{
 
-    void SolveVisitor::processSolver(simulation::Node* /*node */, core::componentmodel::behavior::OdeSolver* s)
+void SolveVisitor::processSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* s)
+{
+    sofa::helper::AdvancedTimer::stepBegin("Mechanical",node);
+    if (freeMotion)
+        s->solve(dt, sofa::core::componentmodel::behavior::BaseMechanicalState::VecId::freePosition(), sofa::core::componentmodel::behavior::BaseMechanicalState::VecId::freeVelocity());
+    else
+        s->solve(dt);
+    sofa::helper::AdvancedTimer::stepEnd("Mechanical",node);
+}
+
+Visitor::Result SolveVisitor::processNodeTopDown(simulation::Node* node)
+{
+    if (! node->solver.empty())
     {
-		if (freeMotion)
-			s->solve(dt, sofa::core::componentmodel::behavior::BaseMechanicalState::VecId::freePosition(), sofa::core::componentmodel::behavior::BaseMechanicalState::VecId::freeVelocity());
-		else
-			s->solve(dt);
+        for_each(this, node, node->solver, &SolveVisitor::processSolver);
+        return RESULT_PRUNE;
     }
+    else
+        return RESULT_CONTINUE;
+}
 
-    Visitor::Result SolveVisitor::processNodeTopDown(simulation::Node* node)
-    {
-		if (! node->solver.empty())
-		{
-			for_each(this, node, node->solver, &SolveVisitor::processSolver);
-			return RESULT_PRUNE;
-		}
-		else
-			return RESULT_CONTINUE;
-    }
-
-
-
-  } // namespace simulation
+} // namespace simulation
 
 } // namespace sofa
 

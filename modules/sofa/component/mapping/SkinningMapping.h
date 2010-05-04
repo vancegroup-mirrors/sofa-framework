@@ -46,18 +46,84 @@ namespace component
 namespace mapping
 {
 
+using sofa::helper::vector;
+// TODO temporary declaration to avoid NO_DEV compilation errors.
+// TODO Create a DataVector type which is a Data<vector<T> > but which is serialized with delimiters.
+      template <class T>
+      class Coefs: public vector<vector<T> >
+        {
+        public:
+          Coefs() {};
+
+          std::ostream& write ( std::ostream& os ) const
+            {
+              if ( !this->empty() )
+                {
+                  os << "[ ";
+                  typename vector<vector<T> >::const_iterator i = this->begin();
+                  os <<  i->size() << " " << *i ;
+                  ++i;
+                  for ( ; i!=this->end(); ++i )
+                    os << " ],[ " << i->size() << " " << *i;
+                  os << " ]";
+                }
+              return os;
+            }
+
+          std::istream& read ( std::istream& in )
+          {
+            T t;
+            this->clear();
+            while ( !in.eof() )
+              {
+                char c;
+                in >> c;
+                if ( c != '[' )
+                {
+                    std::cerr << "Bad character : " << c << std::endl;
+                    break;
+                }
+                this->push_back ( vector<T>() );
+                vector<T>& nextElt = this->back();
+                unsigned int sizeVec;
+                in >> sizeVec;
+                for (unsigned int i=0;i<sizeVec;++i)
+                  {
+                    in >> t;
+                    nextElt.push_back ( t );
+                  }
+
+                in >> c; // ']'
+                in >> c; // ','
+              }
+            return in;
+          }
+
+          /// Output stream
+          inline friend std::ostream& operator<< ( std::ostream& os, const Coefs<T>& vec )
+          {
+            return vec.write ( os );
+          }
+
+          /// Input stream
+          inline friend std::istream& operator>> ( std::istream& in, Coefs<T>& vec )
+          {
+            return vec.read ( in );
+          }
+        };
+
 
 using sofa::helper::vector;
 using sofa::helper::Quater;
-using sofa::component::topology::Coefs;
 
 #define DISTANCE_EUCLIDIAN 0
 #define DISTANCE_GEODESIC 1
 #define DISTANCE_HARMONIC 2
 
-#define WEIGHT_LINEAR 0
+#define WEIGHT_NONE 0
 #define WEIGHT_INVDIST_SQUARE 1
-#define WEIGHT_HERMITE 2
+#define WEIGHT_LINEAR 2 // TODO use the two nearest 'from' primitives
+#define WEIGHT_HERMITE 3 // TODO use the two nearest 'from' primitives
 
 #define INTERPOLATION_LINEAR 0
 #define INTERPOLATION_DUAL_QUATERNION 1
@@ -132,6 +198,7 @@ using sofa::component::topology::Coefs;
 					typedef vector<double> VD;
           typedef Coefs<double> VVD;
 
+          typedef Coord GeoCoord;
         protected:
           vector<Coord> initPos; // pos: point coord in the world reference frame
           vector<Coord> rotatedPoints;
@@ -147,8 +214,15 @@ using sofa::component::topology::Coefs;
           Data<bool> computeJ;
           Data<bool> computeAllMatrices;
           Data<bool> showDefTensors;
-					Data<unsigned int> displayedFromIndex;
+					Data<double> showDefTensorScale;
+					Data<unsigned int> showFromIndex;
+					Data<bool> showDistancesValues;
+					Data<bool> showCoefs;
+					Data<bool> showCoefsValues;
+					Data<bool> showReps;
 					Data<double> showTextScaleFactor;
+					Data<bool> showGradients;
+					Data<double> showGradientsScaleFactor;
 
 					protected:
           Data<int /* = WeightingType*/> wheightingType;
@@ -156,11 +230,11 @@ using sofa::component::topology::Coefs;
           Data<int /* = DistanceType*/> distanceType;
           bool computeWeights;
           Coefs<double> distances;
-          vector<vector<Coord> > distGradients;
+          vector<vector<GeoCoord> > distGradients;
 
           inline void computeInitPos();
           inline void computeDistances();
-          inline void sortReferences();
+          inline void sortReferences( vector<int>& references);
 
         public:
           SkinningMapping ( In* from, Out* to );
@@ -178,9 +252,11 @@ using sofa::component::topology::Coefs;
 
           // Weights
           void setWeightsToHermite();
-          void setWieghtsToInvDist();
+          void setWeightsToInvDist();
           void setWeightsToLinear();
           inline void updateWeights();
+          inline void getDistances( int xfromBegin);
+          //inline void temporaryUpdateWeightsAfterInsertion( VVD& w, VecVecCoord& dw, int xfromBegin);
 
           // Interpolations
           void setInterpolationToLinear();

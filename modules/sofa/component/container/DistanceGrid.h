@@ -58,11 +58,11 @@ protected:
 
 public:
     /// Load a distance grid
-    static DistanceGrid* load(const std::string& filename, double scale=1.0, int nx=64, int ny=64, int nz=64, Coord pmin = Coord(), Coord pmax = Coord());
-    static DistanceGrid* loadVTKFile(const std::string& filename, double scale=1.0);
+    static DistanceGrid* load(const std::string& filename, double scale=1.0, double sampling=0.0, int nx=64, int ny=64, int nz=64, Coord pmin = Coord(), Coord pmax = Coord());
+    static DistanceGrid* loadVTKFile(const std::string& filename, double scale=1.0, double sampling=0.0);
 
     /// Load or reuse a distance grid
-    static DistanceGrid* loadShared(const std::string& filename, double scale=1.0, int nx=64, int ny=64, int nz=64, Coord pmin = Coord(), Coord pmax = Coord());
+    static DistanceGrid* loadShared(const std::string& filename, double scale=1.0, double sampling=0.0, int nx=64, int ny=64, int nz=64, Coord pmin = Coord(), Coord pmax = Coord());
 
     /// Add one reference to this grid. Note that loadShared already does this.
     DistanceGrid* addRef();
@@ -79,6 +79,9 @@ public:
     /// Compute distance field for a cube of the given half-size.
     /// Also create a mesh of points using np points per axis
     void calcCubeDistance(SReal dim=1, int np=5);
+
+    /// Sample the surface with points approximately separated by the given sampling distance (expressed in voxels if the value is negative)
+    void sampleSurface(double sampling=-1.0);
 
     /// Update bbox
     void computeBBox();
@@ -344,75 +347,81 @@ protected:
     {
         std::string filename;
         double scale;
-	int nx,ny,nz;
-	Coord pmin,pmax;
-	bool operator==(const DistanceGridParams& v) const
-	{
-	    if (!(filename == v.filename)) return false;
-	    if (!(scale    == v.scale   )) return false;
-	    if (!(nx       == v.nx      )) return false;
-	    if (!(ny       == v.ny      )) return false;
-	    if (!(nz       == v.nz      )) return false;
-	    if (!(pmin[0]  == v.pmin[0] )) return false;
-	    if (!(pmin[1]  == v.pmin[1] )) return false;
-	    if (!(pmin[2]  == v.pmin[2] )) return false;
-	    if (!(pmax[0]  == v.pmax[0] )) return false;
-	    if (!(pmax[1]  == v.pmax[1] )) return false;
-	    if (!(pmax[2]  == v.pmax[2] )) return false;
-	    return true;
-	}
-	bool operator<(const DistanceGridParams& v) const
-	{
-	    if (filename < v.filename) return true;
-	    if (filename > v.filename) return false;
-	    if (scale    < v.scale   ) return true;
-	    if (scale    > v.scale   ) return false;
-	    if (nx       < v.nx      ) return false;
-	    if (nx       > v.nx      ) return true;
-	    if (ny       < v.ny      ) return false;
-	    if (ny       > v.ny      ) return true;
-	    if (nz       < v.nz      ) return false;
-	    if (nz       > v.nz      ) return true;
-	    if (pmin[0]  < v.pmin[0] ) return false;
-	    if (pmin[0]  > v.pmin[0] ) return true;
-	    if (pmin[1]  < v.pmin[1] ) return false;
-	    if (pmin[1]  > v.pmin[1] ) return true;
-	    if (pmin[2]  < v.pmin[2] ) return false;
-	    if (pmin[2]  > v.pmin[2] ) return true;
-	    if (pmax[0]  < v.pmax[0] ) return false;
-	    if (pmax[0]  > v.pmax[0] ) return true;
-	    if (pmax[1]  < v.pmax[1] ) return false;
-	    if (pmax[1]  > v.pmax[1] ) return true;
-	    if (pmax[2]  < v.pmax[2] ) return false;
-	    if (pmax[2]  > v.pmax[2] ) return true;
-	    return false;
-	}
-	bool operator>(const DistanceGridParams& v) const
-	{
-	    if (filename > v.filename) return true;
-	    if (filename < v.filename) return false;
-	    if (scale    > v.scale   ) return true;
-	    if (scale    < v.scale   ) return false;
-	    if (nx       > v.nx      ) return false;
-	    if (nx       < v.nx      ) return true;
-	    if (ny       > v.ny      ) return false;
-	    if (ny       < v.ny      ) return true;
-	    if (nz       > v.nz      ) return false;
-	    if (nz       < v.nz      ) return true;
-	    if (pmin[0]  > v.pmin[0] ) return false;
-	    if (pmin[0]  < v.pmin[0] ) return true;
-	    if (pmin[1]  > v.pmin[1] ) return false;
-	    if (pmin[1]  < v.pmin[1] ) return true;
-	    if (pmin[2]  > v.pmin[2] ) return false;
-	    if (pmin[2]  < v.pmin[2] ) return true;
-	    if (pmax[0]  > v.pmax[0] ) return false;
-	    if (pmax[0]  < v.pmax[0] ) return true;
-	    if (pmax[1]  > v.pmax[1] ) return false;
-	    if (pmax[1]  < v.pmax[1] ) return true;
-	    if (pmax[2]  > v.pmax[2] ) return false;
-	    if (pmax[2]  < v.pmax[2] ) return true;
-	    return false;
-	}
+        double sampling;
+        int nx,ny,nz;
+        Coord pmin,pmax;
+        bool operator==(const DistanceGridParams& v) const
+        {
+            if (!(filename == v.filename)) return false;
+            if (!(scale    == v.scale   )) return false;
+            if (!(sampling == v.sampling)) return false;
+            if (!(nx       == v.nx      )) return false;
+            if (!(ny       == v.ny      )) return false;
+            if (!(nz       == v.nz      )) return false;
+            if (!(pmin[0]  == v.pmin[0] )) return false;
+            if (!(pmin[1]  == v.pmin[1] )) return false;
+            if (!(pmin[2]  == v.pmin[2] )) return false;
+            if (!(pmax[0]  == v.pmax[0] )) return false;
+            if (!(pmax[1]  == v.pmax[1] )) return false;
+            if (!(pmax[2]  == v.pmax[2] )) return false;
+            return true;
+        }
+        bool operator<(const DistanceGridParams& v) const
+        {
+            if (filename < v.filename) return false;
+            if (filename > v.filename) return true;
+            if (scale    < v.scale   ) return false;
+            if (scale    > v.scale   ) return true;
+            if (sampling < v.sampling) return false;
+            if (sampling > v.sampling) return true;
+            if (nx       < v.nx      ) return false;
+            if (nx       > v.nx      ) return true;
+            if (ny       < v.ny      ) return false;
+            if (ny       > v.ny      ) return true;
+            if (nz       < v.nz      ) return false;
+            if (nz       > v.nz      ) return true;
+            if (pmin[0]  < v.pmin[0] ) return false;
+            if (pmin[0]  > v.pmin[0] ) return true;
+            if (pmin[1]  < v.pmin[1] ) return false;
+            if (pmin[1]  > v.pmin[1] ) return true;
+            if (pmin[2]  < v.pmin[2] ) return false;
+            if (pmin[2]  > v.pmin[2] ) return true;
+            if (pmax[0]  < v.pmax[0] ) return false;
+            if (pmax[0]  > v.pmax[0] ) return true;
+            if (pmax[1]  < v.pmax[1] ) return false;
+            if (pmax[1]  > v.pmax[1] ) return true;
+            if (pmax[2]  < v.pmax[2] ) return false;
+            if (pmax[2]  > v.pmax[2] ) return true;
+            return false;
+        }
+        bool operator>(const DistanceGridParams& v) const
+        {
+            if (filename > v.filename) return false;
+            if (filename < v.filename) return true;
+            if (scale    > v.scale   ) return false;
+            if (scale    < v.scale   ) return true;
+            if (sampling < v.sampling) return false;
+            if (sampling > v.sampling) return true;
+            if (nx       > v.nx      ) return false;
+            if (nx       < v.nx      ) return true;
+            if (ny       > v.ny      ) return false;
+            if (ny       < v.ny      ) return true;
+            if (nz       > v.nz      ) return false;
+            if (nz       < v.nz      ) return true;
+            if (pmin[0]  > v.pmin[0] ) return false;
+            if (pmin[0]  < v.pmin[0] ) return true;
+            if (pmin[1]  > v.pmin[1] ) return false;
+            if (pmin[1]  < v.pmin[1] ) return true;
+            if (pmin[2]  > v.pmin[2] ) return false;
+            if (pmin[2]  < v.pmin[2] ) return true;
+            if (pmax[0]  > v.pmax[0] ) return false;
+            if (pmax[0]  < v.pmax[0] ) return true;
+            if (pmax[1]  > v.pmax[1] ) return false;
+            if (pmax[1]  < v.pmax[1] ) return true;
+            if (pmax[2]  > v.pmax[2] ) return false;
+            if (pmax[2]  < v.pmax[2] ) return true;
+            return false;
+        }
     };
     static std::map<DistanceGridParams, DistanceGrid*>& getShared();
 

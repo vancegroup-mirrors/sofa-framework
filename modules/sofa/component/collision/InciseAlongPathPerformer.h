@@ -38,7 +38,6 @@ namespace sofa
 
     namespace collision
     {
-
       class InciseAlongPathPerformerConfiguration
       {
       public:

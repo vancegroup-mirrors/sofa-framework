@@ -59,8 +59,8 @@ namespace sofa
 		template <class DataTypes>
 		void TComponentMouseInteraction<DataTypes>::createRayPickObjects(Node* node)
 		{
-                    ComponentMouseInteraction::createRayPickNode(node);
-                        nodeRayPick->setName(nodeRayPick->getName() + "_" + DataTypes::Name());
+      ComponentMouseInteraction::createRayPickNode(node);
+      nodeRayPick->setName(nodeRayPick->getName() + "_" + DataTypes::Name());
 			parentNode->addChild(nodeRayPick);
 
 			mouseInSofa = new MouseContainer; mouseInSofa->resize(1);

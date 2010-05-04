@@ -131,7 +131,6 @@ namespace sofa{
         if (b)
         {
           this->setText(QString("Click to hide the values"));
-          widget->readFromData();
         }
         else
         {

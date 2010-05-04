@@ -38,10 +38,8 @@ namespace sofa
 
     namespace collision
     {
-#ifndef WIN32
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, PotentialInjectionPerformer>  PotentialInjectionPerformerClass("SetActionPotential"); 
-#endif
-
+      
       void PotentialInjectionPerformer::start()
       {
 	BodyPicked picked=this->interactor->getBodyPicked();

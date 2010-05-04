@@ -69,6 +69,8 @@ RigidDistanceGridCollisionModel::RigidDistanceGridCollisionModel()
 : modified(true)
 , fileRigidDistanceGrid( initData( &fileRigidDistanceGrid, "fileRigidDistanceGrid", "load distance grid from specified file"))
 , scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
+, translation( initData( &translation, "translation", "translation to apply to input file"))
+, sampling( initData( &sampling, 0.0, "sampling", "if not zero: sample the surface with points approximately separated by the given sampling distance (expressed in voxels if the value is negative)"))
 , box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , nx( initData( &nx, 64, "nx", "number of values on X axis") )
 , ny( initData( &ny, 64, "ny", "number of values on Y axis") )
@@ -106,9 +108,10 @@ void RigidDistanceGridCollisionModel::init()
     }
     std::cout << "RigidDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<fileRigidDistanceGrid.getValue();
     if (scale.getValue()!=1.0) std::cout<<" scale="<<scale.getValue();
+    if (sampling.getValue()!=0.0) std::cout<<" sampling="<<sampling.getValue();
     if (box.getValue()[0][0]<box.getValue()[1][0]) std::cout<<" bbox=<"<<box.getValue()[0]<<">-<"<<box.getValue()[0]<<">";
     std::cout << std::endl;
-    grid = DistanceGrid::loadShared(fileRigidDistanceGrid.getFullPath(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
+    grid = DistanceGrid::loadShared(fileRigidDistanceGrid.getFullPath(), scale.getValue(), sampling.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
 
     resize(1);
     elems[0].grid = grid;
@@ -117,6 +120,7 @@ void RigidDistanceGridCollisionModel::init()
         std::cout << "RigidDistanceGridCollisionModel: dump grid to "<<dumpfilename.getValue()<<std::endl;
         grid->save(dumpfilename.getFullPath());
     }
+    updateState();
     std::cout << "< RigidDistanceGridCollisionModel::init()"<<std::endl;
 }
 
@@ -155,18 +159,11 @@ void RigidDistanceGridCollisionModel::setNewState(int index, double dt, Distance
     modified = true;
 }
 
-/// Create or update the bounding volume hierarchy.
-void RigidDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
+/// Update transformation matrices from current rigid state
+void RigidDistanceGridCollisionModel::updateState()
 {
-    CubeModel* cubeModel = this->createPrevious<CubeModel>();
-
-    if (!modified && !isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
-
-    updateGrid();
-
-    const bool flipped = isFlipped();
-
-    cubeModel->resize(size);
+    const Vector3& initTranslation = this->translation.getValue();
+    bool useInitTranslation = (initTranslation != DistanceGrid::Coord());
     for (int i=0; i<size; i++)
     {
         //static_cast<DistanceGridCollisionElement*>(elems[i])->recalcBBox();
@@ -176,8 +173,35 @@ void RigidDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
             const RigidTypes::Coord& xform = (*rigid->getX())[i];
             elems[i].translation = xform.getCenter();
             xform.getOrientation().toMatrix(elems[i].rotation);
+            if (useInitTranslation)
+                elems[i].translation += elems[i].rotation * initTranslation;
             elems[i].isTransformed = true;
         }
+        else if (useInitTranslation)
+        {
+            elems[i].translation = initTranslation;
+            elems[i].rotation.identity();
+            elems[i].isTransformed = true;
+        }
+    }
+}
+
+/// Create or update the bounding volume hierarchy.
+void RigidDistanceGridCollisionModel::computeBoundingTree(int maxDepth)
+{
+    CubeModel* cubeModel = this->createPrevious<CubeModel>();
+
+    if (!modified && !isMoving() && !cubeModel->empty()) return; // No need to recompute BBox if immobile
+
+    updateGrid();
+    updateState();
+
+    const bool flipped = isFlipped();
+    cubeModel->resize(size);
+    for (int i=0; i<size; i++)
+    {
+        //static_cast<DistanceGridCollisionElement*>(elems[i])->recalcBBox();
+        Vector3 emin, emax;
         if (elems[i].isTransformed)
         {
             //std::cout << "Grid "<<i<<" transformation: <"<<elems[i].rotation<<"> x + <"<<elems[i].translation<<">"<<std::endl;
@@ -393,6 +417,7 @@ void RigidDistanceGridCollisionModel::draw(int index)
 FFDDistanceGridCollisionModel::FFDDistanceGridCollisionModel()
 : fileFFDDistanceGrid( initData( &fileFFDDistanceGrid, "fileFFDDistanceGrid", "load distance grid from specified file"))
 , scale( initData( &scale, 1.0, "scale", "scaling factor for input file"))
+, sampling( initData( &sampling, 0.0, "sampling", "if not zero: sample the surface with points approximately separated by the given sampling distance (expressed in voxels if the value is negative)"))
 , box( initData( &box, "box", "Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , nx( initData( &nx, 64, "nx", "number of values on X axis") )
 , ny( initData( &ny, 64, "ny", "number of values on Y axis") )
@@ -437,9 +462,10 @@ void FFDDistanceGridCollisionModel::init()
     }
     std::cout << "FFDDistanceGridCollisionModel: creating "<<nx.getValue()<<"x"<<ny.getValue()<<"x"<<nz.getValue()<<" DistanceGrid from file "<<fileFFDDistanceGrid.getValue();
     if (scale.getValue()!=1.0) std::cout<<" scale="<<scale.getValue();
+    if (sampling.getValue()!=0.0) std::cout<<" sampling="<<sampling.getValue();
     if (box.getValue()[0][0]<box.getValue()[1][0]) std::cout<<" bbox=<"<<box.getValue()[0]<<">-<"<<box.getValue()[0]<<">";
     std::cout << std::endl;
-    grid = DistanceGrid::loadShared(fileFFDDistanceGrid.getFullPath(), scale.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
+    grid = DistanceGrid::loadShared(fileFFDDistanceGrid.getFullPath(), scale.getValue(), sampling.getValue(), nx.getValue(),ny.getValue(),nz.getValue(),box.getValue()[0],box.getValue()[1]);
     if (grid && !dumpfilename.getValue().empty())
     {
         std::cout << "FFDDistanceGridCollisionModel: dump grid to "<<dumpfilename.getValue()<<std::endl;

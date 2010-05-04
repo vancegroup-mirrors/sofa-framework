@@ -71,6 +71,11 @@ namespace topology
 		coefs(baryCoefs) 
 		{ }
 
+		const sofa::helper::vector<unsigned int> &getArray() const 
+		{
+			return tetrahedronIndexArray;
+		}
+
 		unsigned int getNbAddedTetrahedra() const 
 		{
 			return nTetrahedra;

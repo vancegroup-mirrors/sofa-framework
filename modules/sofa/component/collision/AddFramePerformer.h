@@ -27,6 +27,7 @@
 
 #include <sofa/component/collision/InteractionPerformer.h>
 #include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/component/mapping/SkinningMapping.h>
 
 
 namespace sofa
@@ -37,10 +38,13 @@ namespace sofa
 
     namespace collision
     {
-     
+     using sofa::defaulttype::StdRigidTypes;
+
       template <class DataTypes>
         class AddFramePerformer: public TInteractionPerformer<DataTypes>
-      {          
+      {
+        typedef typename sofa::component::mapping::SkinningMapping<sofa::component::mapping::MechanicalMapping< core::componentmodel::behavior::MechanicalState<StdRigidTypes<3, typename DataTypes::Real> >, core::componentmodel::behavior::MechanicalState<DataTypes> > > SMapping;
+
       public:
         AddFramePerformer(BaseMouseInteractor *i);
         ~AddFramePerformer();
@@ -53,7 +57,12 @@ namespace sofa
 
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_COLLISION_ADDFRAMEPERFORMER_CPP)
-extern template class SOFA_COMPONENT_COLLISION_API AddFramePerformer<defaulttype::Vec3Types>;
+#ifndef SOFA_DOUBLE
+      extern template class SOFA_COMPONENT_COLLISION_API  AddFramePerformer<defaulttype::Vec3fTypes>;
+#endif
+#ifndef SOFA_FLOAT
+      extern template class SOFA_COMPONENT_COLLISION_API  AddFramePerformer<defaulttype::Vec3dTypes>;
+#endif
 #endif
 
 

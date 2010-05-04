@@ -191,17 +191,23 @@ public:
         else { Transformation t; t.identity(); return t; }
     }
 
+    Transformation getInitialTetraRotation(unsigned int index) {
+        if (index < _rotations.size() )
+            return _initialRotations[index];
+        else { Transformation t; t.identity(); return t; }
+    }
+
 
     void setMethod(std::string methodName)
     {
-      if (methodName == "small")	this->setMethod(SMALL);
-      else if (methodName  == "polar")	this->setMethod(POLAR);
-      else
-      {
-	if (methodName != "large")
-	  serr << "unknown method: large method will be used. Remark: Available method are \"small\", \"polar\", \"large\" "<<sendl;
-	this->setMethod(LARGE);
-      }
+        if (methodName == "small")	this->setMethod(SMALL);
+        else if (methodName  == "polar")	this->setMethod(POLAR);
+        else
+        {
+            if (methodName != "large")
+                serr << "unknown method: large method will be used. Remark: Available method are \"small\", \"polar\", \"large\" "<<sendl;
+            this->setMethod(LARGE);
+        }
     }
 
     void setMethod(int val)

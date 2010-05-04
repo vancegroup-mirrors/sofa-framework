@@ -28,6 +28,7 @@
 
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
+#include <sofa/helper/gl/Axis.h>
 
 #ifdef SOFA_GUI_QTOGREVIEWER
 #include <OgreRenderOperation.h>
@@ -297,6 +298,74 @@ namespace gl
 	  }
     }
 
+
+  void DrawManager::drawTriangles(const std::vector<Vector3> &points,
+                                  const std::vector<Vector3> &normal, const std::vector< Vec<4,float> > &colour)
+    {
+        const unsigned int nbTriangles=points.size()/3;
+        bool computeNormals= (normal.size() != nbTriangles);
+
+        switch(SystemDraw)
+          {
+          case OPENGL:
+//            setMaterial(colour);
+            glBegin(GL_TRIANGLES);
+            for (unsigned int i=0;i<nbTriangles;++i)
+              {
+                if (!computeNormals)
+                {
+                    addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],normal[i],
+                                colour[3*i+0],colour[3*i+1],colour[3*i+2]);
+                }
+                else
+                {
+                    const Vector3& a = points[ 3*i+0 ];
+                    const Vector3& b = points[ 3*i+1 ];
+                    const Vector3& c = points[ 3*i+2 ];
+                    Vector3 n = cross((b-a),(c-a));
+                    n.normalize();
+
+                    addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],n,
+                                colour[3*i+0],colour[3*i+1],colour[3*i+2]);
+                }
+              }
+            glEnd();
+//            resetMaterial(colour);
+
+            break;
+#ifdef SOFA_GUI_QTOGREVIEWER
+          case OGRE:
+            if (!ogreDraw) return;
+//            setMaterial(colour);
+            ogreDraw->begin(currentMaterial->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+            for (unsigned int i=0;i<nbTriangles;++i)
+              {
+
+                if (!computeNormals)
+                {
+                    addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],normal[i],
+                                colour[3*i+0],colour[3*i+1],colour[3*i+2]);
+                }
+                else
+                {
+                    const Vector3& a = points[ 3*i+0 ];
+                    const Vector3& b = points[ 3*i+1 ];
+                    const Vector3& c = points[ 3*i+2 ];
+                    Vector3 n = cross((b-a),(c-a));
+                    n.normalize();
+
+                    addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],n,
+                                colour[3*i+0],colour[3*i+1],colour[3*i+2]);
+                }
+                ogreDraw->triangle(3*i+0,3*i+1,3*i+2);
+              }
+            ogreDraw->end();
+          break;
+#endif
+          }
+    }
+
   void DrawManager::drawTriangleStrip(const std::vector<Vector3> &points,
 				      const std::vector<Vector3>  &normal,
 				      const Vec<4,float> colour)
@@ -342,6 +411,68 @@ namespace gl
 	  }
     }
 
+  void DrawManager::drawTriangleFan(const std::vector<Vector3> &points,
+                                      const std::vector<Vector3>  &normal,
+                                      const Vec<4,float> colour)
+    {
+        if (points.size() < 3) return;
+        switch(SystemDraw)
+          {
+          case OPENGL:
+            setMaterial(colour);
+            glBegin(GL_TRIANGLE_FAN);
+
+            glNormalT(normal[0]);
+            glVertexNv<3>(points[0].ptr());
+            glVertexNv<3>(points[1].ptr());
+            glVertexNv<3>(points[2].ptr());
+
+            for (unsigned int i=3;i<points.size();++i)
+            {
+                glNormalT(normal[i]);
+                glVertexNv<3>(points[i].ptr());
+            }
+
+            glEnd();
+            resetMaterial(colour);
+
+            break;
+#ifdef SOFA_GUI_QTOGREVIEWER
+          case OGRE:
+            if (!ogreDraw) return;
+            setMaterial(colour);
+            ogreDraw->begin(currentMaterial->getName(), Ogre::RenderOperation::OT_TRIANGLE_FAN);
+
+
+            addOgreVertexPosition(points[0]);
+            addOgreVertexNormal(normal[0]);
+            addOgreVertexColour(colour);
+
+            addOgreVertexPosition(points[1]);
+            addOgreVertexNormal(normal[0]);
+            addOgreVertexColour(colour);
+
+            addOgreVertexPosition(points[2]);
+            addOgreVertexNormal(normal[0]);
+            addOgreVertexColour(colour);
+
+            ogreDraw->index(0);
+            ogreDraw->index(1);
+            ogreDraw->index(2);
+
+            for (unsigned int i=3;i<points.size();++i)
+            {
+                addOgreVertexPosition(points[i]);
+                addOgreVertexNormal(normal[i]);
+                addOgreVertexColour(colour);
+                ogreDraw->index(i);
+            }
+
+            ogreDraw->end();
+          break;
+#endif
+          }
+    }
 
   void DrawManager::drawSpheres(const std::vector<Vector3> &points, float radius, const Vec<4,float> colour)
     {
@@ -364,7 +495,7 @@ namespace gl
 
   
   void DrawManager::drawCone(const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subd)
-    {
+    {      
       Vector3 tmp = p2-p1;
       setMaterial(colour);
       /* create Vectors p and q, co-planar with the cylinder's cross-sectional disk */
@@ -387,6 +518,18 @@ namespace gl
       std::vector<Vec<4,int> > indices;
       std::vector<Vector3> normals;
 
+      std::vector<Vector3> pointsCloseCylinder1;
+      std::vector<Vector3> normalsCloseCylinder1;
+      std::vector<Vector3> pointsCloseCylinder2;
+      std::vector<Vector3> normalsCloseCylinder2;
+
+      Vector3 dir=p1-p2; dir.normalize();
+      pointsCloseCylinder1.push_back(p1);
+      normalsCloseCylinder1.push_back(dir);
+      pointsCloseCylinder2.push_back(p2);
+      normalsCloseCylinder2.push_back(-dir);
+
+
       for (i2=0 ; i2<=subd ; i2++)
         {
           /* sweep out a circle */
@@ -397,16 +540,29 @@ namespace gl
 	  tmp = p*ct+q*st;
           /* set the normal for the two subseqent points */
 	  normals.push_back(tmp);
+
           /* point on disk 1 */
           Vector3 w(p1);
           w += tmp*radius1;
 	  points.push_back(w);
+          pointsCloseCylinder1.push_back(w);
+          normalsCloseCylinder1.push_back(dir);
+
           /* point on disk 2 */
           w=p2;
           w += tmp*radius2;
-	  points.push_back(w);
+	  points.push_back(w);          
+          pointsCloseCylinder2.push_back(w);
+          normalsCloseCylinder2.push_back(-dir);
         }
+      pointsCloseCylinder1.push_back(pointsCloseCylinder1[1]);
+      pointsCloseCylinder2.push_back(pointsCloseCylinder2[1]);
+
+
       drawTriangleStrip(points, normals,colour);
+      if (radius1 > 0) drawTriangleFan(pointsCloseCylinder1, normalsCloseCylinder1,colour);
+      if (radius2 > 0) drawTriangleFan(pointsCloseCylinder2, normalsCloseCylinder2,colour);
+
       resetMaterial(colour);
     }
 
@@ -421,6 +577,37 @@ namespace gl
       Vector3 p3 = p1*.2+p2*.8;
       drawCylinder( p1,p3,radius,colour,subd);
       drawCone( p3,p2,radius*2.5,0,colour,subd);
+    }
+
+    void DrawManager::drawFrame   (const Vector3& position, const Quaternion &orientation, const Vec<3,float> &size)
+    {
+
+        switch(SystemDraw)
+          {
+          case OPENGL:
+              helper::gl::Axis::draw(position, orientation, size);
+              break;
+#ifdef SOFA_GUI_QTOGREVIEWER
+        case OGRE:
+
+            setLightingEnabled(true);
+            SReal matrix[16];
+            orientation.writeOpenGlMatrix(matrix);
+
+            Vector3 X(matrix[0*4+0], matrix[0*4+1],matrix[0*4+2]);
+            Vector3 Y(matrix[1*4+0], matrix[1*4+1],matrix[1*4+2]);
+            Vector3 Z(matrix[2*4+0], matrix[2*4+1],matrix[2*4+2]);
+
+            drawArrow(position, position+X*size[0], 0.1*size[0], Vec<4,float>(1.0f,0.0f,0.0f,1.0f),16);
+            drawArrow(position, position+Y*size[1], 0.1*size[1], Vec<4,float>(0.0f,1.0f,0.0f,1.0f),16);
+            drawArrow(position, position+Z*size[2], 0.1*size[2], Vec<4,float>(0.0f,0.0f,1.0f,1.0f),16);
+
+            setLightingEnabled(false);
+            break;
+#endif
+        };
+
+
     }
 
 
@@ -463,6 +650,41 @@ namespace gl
       }
 
 
+  void DrawManager::addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
+                                const Vector3 &normal,
+                                const Vec<4,float> &c1, const Vec<4,float> &c2, const Vec<4,float> &c3)
+
+  {      
+      switch(SystemDraw)
+        {
+        case OPENGL:
+          glNormalT(normal);
+          glColor4fv(c1.ptr());
+          glVertexNv<3>(p1.ptr());
+          glColor4fv(c2.ptr());
+          glVertexNv<3>(p2.ptr());
+          glColor4fv(c3.ptr());
+          glVertexNv<3>(p3.ptr());
+          break;
+#ifdef SOFA_GUI_QTOGREVIEWER
+        case OGRE:
+          if (!ogreDraw) return;
+          addOgreVertexPosition(p1);
+          addOgreVertexNormal(normal);
+          addOgreVertexColour(c1);
+
+          addOgreVertexPosition(p2);
+          addOgreVertexNormal(normal);
+          addOgreVertexColour(c2);
+          addOgreVertexPosition(p3);
+          addOgreVertexNormal(normal);
+          addOgreVertexColour(c3);
+
+          break;
+#endif
+          };
+  };
+
   void DrawManager::addTriangle( const Vector3 &p1, const Vector3 &p2, const Vector3 &p3,
 				 const Vector3 &normal, const  Vec<4,float> &c)
     {
@@ -485,7 +707,6 @@ namespace gl
 	  addOgreVertexPosition(p2);
 	  addOgreVertexNormal(normal);
 	  addOgreVertexColour(c);
-
 	  addOgreVertexPosition(p3);
 	  addOgreVertexNormal(normal);
 	  addOgreVertexColour(c);
@@ -658,7 +879,7 @@ namespace gl
 
   void DrawManager::resetMaterial(const Vec<4,float> &colour,std::string 
 #ifdef SOFA_GUI_QTOGREVIEWER
-				name
+                                  //name
 #endif
 				)
   {

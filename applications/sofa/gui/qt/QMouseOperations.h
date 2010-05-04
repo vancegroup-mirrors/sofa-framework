@@ -77,44 +77,44 @@ namespace sofa
       
       class QInciseOperation : public QWidget, public InciseOperation
       {
-	Q_OBJECT
+         Q_OBJECT
       public:
          QInciseOperation();
-        int getIncisionMethod() const;
-        int getSnapingBorderValue() const;
-        int getSnapingValue() const;
+         int getIncisionMethod() const;
+         int getSnapingBorderValue() const;
+         int getSnapingValue() const;
 
-        bool getCompleteIncision () {return finishIncision;}
-        bool getKeepPoint () {return keepPoint;}
-	
-        void configure(PickHandler *picker, MOUSE_BUTTON b)
-        {
-          InciseOperation::configure(picker, b);
-        }
+         bool getCompleteIncision () {return finishIncision;}
+         bool getKeepPoint () {return keepPoint;}
 
-        bool finishIncision;
-        bool keepPoint;
+         void configure(PickHandler *picker, MOUSE_BUTTON b)
+         {
+            InciseOperation::configure(picker, b);
+         }
 
-     public slots:
-        void setEnableBox (bool i);
-        void setFinishIncision (bool i);
-        void setkeepPoint (bool i);
+         bool finishIncision;
+         bool keepPoint;
+
+      public slots:
+         void setEnableBox (bool i);
+         void setFinishIncision (bool i);
+         void setkeepPoint (bool i);
 
 
       protected:
-	QGroupBox* incisionMethodChoiceGroup;
-	QRadioButton* method1;
-	QRadioButton* method2;
+         QGroupBox* incisionMethodChoiceGroup;
+         QRadioButton* method1;
+         QRadioButton* method2;
 
-   QGroupBox *advancedOperations;
-   QCheckBox *finishCut;
-   QCheckBox *storeLastPoint;
+         QGroupBox *advancedOperations;
+         QCheckBox *finishCut;
+         QCheckBox *storeLastPoint;
 
-	QGroupBox* advancedOptions;
-	QSlider  *snapingBorderSlider;
-	QSpinBox *snapingBorderValue;
-	QSlider  *snapingSlider;
-	QSpinBox *snapingValue;
+         QGroupBox* advancedOptions;
+         QSlider  *snapingBorderSlider;
+         QSpinBox *snapingBorderValue;
+         QSlider  *snapingSlider;
+         QSpinBox *snapingValue;
       };
 
 
@@ -138,32 +138,32 @@ namespace sofa
       
       class QTopologyOperation : public QWidget, public TopologyOperation
       {
-        Q_OBJECT
+         Q_OBJECT
       public:
-        QTopologyOperation();
-	double getScale() const;
-	int getTopologicalOperation() const;
-	bool getVolumicMesh() const;
+         QTopologyOperation();
+         double getScale() const;
+         int getTopologicalOperation() const;
+         bool getVolumicMesh() const;
 
 
-	
-	void configure(PickHandler *picker, MOUSE_BUTTON b)
-        {
-          TopologyOperation::configure(picker, b);
-        }
 
-   public slots:
-   void setEnableBox (int i);
+         void configure(PickHandler *picker, MOUSE_BUTTON b)
+         {
+            TopologyOperation::configure(picker, b);
+         }
+
+      public slots:
+         void setEnableBox (int i);
 
       protected:
 
-	QComboBox *operationChoice;
-   QRadioButton *meshType1;
-	QRadioButton *meshType2;
+         QComboBox *operationChoice;
+         QRadioButton *meshType1;
+         QRadioButton *meshType2;
 
-   QGroupBox *advancedOptions;
-	QSlider *scaleSlider;
-	QSpinBox *scaleValue;
+         QGroupBox *advancedOptions;
+         QSlider *scaleSlider;
+         QSpinBox *scaleValue;
       };
 	
 
@@ -174,7 +174,7 @@ namespace sofa
       public:
         QInjectOperation();
         double getPotentialValue() const;
-	std::string getStateTag() const;
+        std::string getStateTag() const;
         void configure(PickHandler *picker, MOUSE_BUTTON b)
         {
           InjectOperation::configure(picker, b);
@@ -182,8 +182,27 @@ namespace sofa
 
       protected:
         QLineEdit *value;
-	QLineEdit *tag;
+        QLineEdit *tag;
       };
+
+
+      class QAddSutureOperation : public QWidget, public AddSutureOperation
+      {
+         Q_OBJECT
+       public:
+         QAddSutureOperation();
+         double getStiffness() const;
+         double getDamping() const;
+
+         void configure(PickHandler *picker, MOUSE_BUTTON b)
+         {
+           AddSutureOperation::configure(picker, b);
+         }
+
+       protected:
+         QLineEdit *stiffness;
+         QLineEdit *damping;
+       };
 
     }
   }

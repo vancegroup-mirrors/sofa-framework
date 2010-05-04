@@ -28,7 +28,10 @@
 #define SOFA_HELPER_GL_DRAWMANAGER_H
 #include <sofa/helper/helper.h>
 #include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/Quat.h>
+
 #include <vector>
+
 
 #include <sofa/helper/gl/template.h>
 #ifdef SOFA_GUI_QTOGREVIEWER
@@ -68,14 +71,23 @@ namespace gl
 		       const std::vector< defaulttype::Vec<3,int> > &index, 
 		       const std::vector<Vector3>  &normal,
 		       const Vec<4,float> colour);
+    void drawTriangles(const std::vector<Vector3> &points,
+                       const std::vector<Vector3>  &normal,
+                       const std::vector< Vec<4,float> > &colour);
+
     void drawTriangleStrip(const std::vector<Vector3> &points,
 			   const std::vector<Vector3>  &normal,
 			   const Vec<4,float> colour);
+    void drawTriangleFan(const std::vector<Vector3> &points,
+                         const std::vector<Vector3>  &normal,
+                         const Vec<4,float> colour);
+
     void drawSpheres (const std::vector<Vector3> &points, const std::vector<float> radius, const Vec<4,float> colour);
     void drawSpheres (const std::vector<Vector3> &points, float radius, const Vec<4,float> colour);
     void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subd=16);
     void drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
     void drawArrow   (const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
+    void drawFrame   (const Vector3& position, const Quaternion &orientation, const Vec<3,float> &size);
 
 
 
@@ -83,6 +95,9 @@ namespace gl
     void addPoint(const Vector3 &p, const Vector3 &n, const Vec<4,float> &c);
     void addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
 		     const Vector3 &normal, const Vec<4,float> &c);
+    void addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
+                     const Vector3 &normal,
+                     const Vec<4,float> &c1, const Vec<4,float> &c2, const Vec<4,float> &c3);
 
 
     void addSphere( const Vector3 &p, float radius);

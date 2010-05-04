@@ -201,6 +201,7 @@ public:
 
 	// Getting the stiffness matrix of index i
 	void getElementStiffnessMatrix(Real* stiffness, unsigned int nodeIdx);
+	void getElementStiffnessMatrix(Real* stiffness, Tetra& te);
 
     void draw();
 
@@ -212,6 +213,7 @@ public:
     void computeStiffnessMatrix( StiffnessMatrix& S,StiffnessMatrix& SR,const MaterialStiffness &K, const StrainDisplacement &J, const Transformation& Rot );
 
     void computeMaterialStiffness(int i, Index&a, Index&b, Index&c, Index&d);
+	void computeMaterialStiffness(MaterialStiffness& materialMatrix, Index&a, Index&b, Index&c, Index&d);
 
     void computeForce( Displacement &F, const Displacement &Depl, const MaterialStiffness &K, const StrainDisplacement &J );
 

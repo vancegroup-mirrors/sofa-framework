@@ -27,6 +27,7 @@
 
 #include <sofa/gui/qt/GraphListenerQListView.h>
 #include <sofa/simulation/common/Colors.h>
+#include "iconmultinode.xpm"
 #include "iconnode.xpm"
 #include "iconwarning.xpm"
 #include "icondata.xpm"
@@ -182,56 +183,74 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       /*****************************************************************************************************************/
       void GraphListenerQListView::addChild(Node* parent, Node* child)
       {
-	if (frozen) return;
-	if (items.count(child))
-	  {
-	    Q3ListViewItem* item = items[child];
-	    if (item->listView() == NULL)
-	      {
-		if (parent == NULL)
-		  widget->insertItem(item);
-		else if (items.count(parent))
-		  items[parent]->insertItem(item);
-		else
-		  {
-		    std::cerr << "Graph -> QT ERROR: Unknown parent node "<<parent->getName()<<std::endl;
-		    return;
-		  }
-	      }
-	  }
-	else
-	  {
-	    Q3ListViewItem* item;
-	    if (parent == NULL)
-	      item = new Q3ListViewItem(widget);
-	    else if (items.count(parent))
-	      item = createItem(items[parent]);
-	    else
-	      {
-		std::cerr << "Graph -> QT ERROR: Unknown parent node "<<parent->getName()<<std::endl;
-		return;
-	      }
 
-	    //	    if (std::string(child->getName(),0,7) != "default")
-		item->setDropEnabled(true);
-	    item->setText(0, child->getName().c_str());
-            if (child->getWarnings().empty())
+          if (frozen) return;
+          if (items.count(child))
+          {
+              Q3ListViewItem* item = items[child];
+              if (item->listView() == NULL)
               {
-                QPixmap* pix = getPixmap(child);
-                if (pix)
-                  item->setPixmap(0, *pix);
+                  if (parent == NULL)
+                      widget->insertItem(item);
+                  else if (items.count(parent))
+                      items[parent]->insertItem(item);
+                  else
+                  {
+                      std::cerr << "Graph -> QT ERROR: Unknown parent node "<<parent->getName()<<std::endl;
+                      return;
+                  }
               }
-            else
+              else
               {
-                static QPixmap pixWarning((const char**)iconwarning_xpm);
-                item->setPixmap(0,pixWarning);
+                  //Node with multiple parent
+                  Q3ListViewItem *nodeItem=items[child];
+                  if (parent &&
+                      parent != findObject(nodeItem->parent()) &&
+                      !nodeWithMultipleParents.count(nodeItem))
+                  {
+                      Q3ListViewItem* item= createItem(items[parent]);
+                      item->setDropEnabled(true);
+                      QString name=QString("MultiNode ") + QString(child->getName().c_str());
+                      item->setText(0, name);
+                      nodeWithMultipleParents.insert(std::make_pair(items[child], item));
+                      static QPixmap pixMultiNode((const char**)iconmultinode_xpm);
+                      item->setPixmap(0, pixMultiNode);
+                  }
+              }
+          }
+          else
+          {
+              Q3ListViewItem* item;
+              if (parent == NULL)
+                  item = new Q3ListViewItem(widget);
+              else if (items.count(parent))
+                  item = createItem(items[parent]);
+              else
+              {
+                  std::cerr << "Graph -> QT ERROR: Unknown parent node "<<parent->getName()<<std::endl;
+                  return;
               }
 
-	    item->setOpen(true);
-	    items[child] = item;
-	  }
-	// Add all objects and grand-children
-        MutationListener::addChild(parent, child);
+              //	    if (std::string(child->getName(),0,7) != "default")
+              item->setDropEnabled(true);
+              item->setText(0, child->getName().c_str());
+              if (child->getWarnings().empty())
+              {
+                  QPixmap* pix = getPixmap(child);
+                  if (pix)
+                      item->setPixmap(0, *pix);
+              }
+              else
+              {
+                  static QPixmap pixWarning((const char**)iconwarning_xpm);
+                  item->setPixmap(0,pixWarning);
+              }
+
+              item->setOpen(true);
+              items[child] = item;
+          }
+          // Add all objects and grand-children
+          MutationListener::addChild(parent, child);
       }
 
       /*****************************************************************************************************************/
@@ -390,7 +409,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       {
 	if (!items.count(groot)) return;
 	frozen = false;
-	addChild(NULL, groot);
+    addChild(NULL, groot);
       }
 
       /*****************************************************************************************************************/
@@ -402,9 +421,17 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
            for ( std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it = items.begin() ; it != items.end() ; ++ it ){
              if ( ( *it ).second == item ){
 	              base = (*it).first;
-                break;
+                  return base;
 	           }
            }
+        }
+        if (!base) //Can be a multi node
+        {
+            std::multimap<Q3ListViewItem *, Q3ListViewItem*>::iterator it;
+            for (it=nodeWithMultipleParents.begin();it!=nodeWithMultipleParents.end();++it)
+            {
+                if (it->second == item) return findObject(it->first);
+            }
         }
         return base;
       }

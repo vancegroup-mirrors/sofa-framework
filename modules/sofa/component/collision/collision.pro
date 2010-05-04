@@ -56,7 +56,6 @@ HEADERS += initCollision.h \
            Point.h \
 	   PointLocalMinDistanceFilter.h \
            PointModel.h \
-	   PotentialInjectionPerformer.h \
            SuturePointPerformer.h \
            SuturePointPerformer.inl \
            Ray.h \
@@ -114,7 +113,6 @@ SOURCES += initCollision.cpp \
            NewProximityIntersection.cpp \
            PointLocalMinDistanceFilter.cpp \
            PointModel.cpp \
-	   PotentialInjectionPerformer.cpp \
            SuturePointPerformer.cpp \
            RayContact.cpp \
            RayModel.cpp \

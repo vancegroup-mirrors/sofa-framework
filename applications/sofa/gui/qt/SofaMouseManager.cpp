@@ -56,32 +56,39 @@ namespace sofa
         RegisterOperation("Fix")   .add< QFixOperation  >();
         RegisterOperation("Incise").add< QInciseOperation  >();
         RegisterOperation("Remove").add< QTopologyOperation  >();
-        RegisterOperation("Inject").add< QInjectOperation >();
         RegisterOperation("Suture").add< QAddSutureOperation >();
+      }
+
+      void SofaMouseManager::updateContent()
+      {
+          LeftOperationCombo->clear();
+          MiddleOperationCombo->clear();
+          RightOperationCombo->clear();
+          mapIndexOperation.clear();
+
+          if (mapIndexOperation.empty())
+          {
+              const OperationFactory::RegisterStorage &registry = OperationFactory::getInstance()->registry;
+
+              int idx=0;
+              for (OperationFactory::RegisterStorage::const_iterator it=registry.begin(); it!=registry.end();++it)
+              {
+                  LeftOperationCombo  ->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
+                  MiddleOperationCombo->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
+                  RightOperationCombo ->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
+//
+//                  if      (it->first == "Attach") LeftOperationCombo->setCurrentItem(idx);
+//                  else if (it->first == "Incise") MiddleOperationCombo->setCurrentItem(idx);
+//                  else if (it->first == "Remove") RightOperationCombo->setCurrentItem(idx);
+                  mapIndexOperation.insert(std::make_pair(idx++, it->first));
+              }
+          }        
       }
 
       void SofaMouseManager::setPickHandler(PickHandler *picker)
       {
         pickHandler=picker;
-
-        if (mapIndexOperation.empty())
-        {
-            const OperationFactory::RegisterStorage &registry = OperationFactory::getInstance()->registry;
-
-            int idx=0;
-            for (OperationFactory::RegisterStorage::const_iterator it=registry.begin(); it!=registry.end();++it)
-            {
-                LeftOperationCombo  ->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
-                MiddleOperationCombo->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
-                RightOperationCombo ->insertItem(QString(OperationFactory::GetDescription(it->first).c_str()));
-
-                if      (it->first == "Attach") LeftOperationCombo->setCurrentItem(idx);
-                else if (it->first == "Incise") MiddleOperationCombo->setCurrentItem(idx);
-                else if (it->first == "Remove") RightOperationCombo->setCurrentItem(idx);
-                mapIndexOperation.insert(std::make_pair(idx++, it->first));
-            }
-        }
-
+        updateContent();
         updateOperation(LEFT,   "Attach"); 
         updateOperation(MIDDLE, "Incise");
         updateOperation(RIGHT,  "Remove");
@@ -105,6 +112,8 @@ namespace sofa
        Operation *operation=pickHandler->changeOperation( button, id);
        QWidget* qoperation=dynamic_cast<QWidget*>(operation);
        if (!qoperation) return;
+
+       //TODO: change the text of the ComboBox if it is different from the current operation
 
        switch(button)
          {

@@ -54,6 +54,8 @@ namespace sofa
           return &instance;
         }
 
+        void updateContent();
+
         void setPickHandler(PickHandler *);
         
         std::map< int, std::string >& getMapIndexOperation()

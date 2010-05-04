@@ -159,6 +159,8 @@ namespace topology
 		m_modifier->removeTetrahedra(toBeRemovedTetraIndex);
 		m_modifier->notifyEndingEvent();
 		m_modifier->propagateTopologicalChanges(); 
+
+		sout << "NbCutElement=" << toBeRemovedTetraIndex.size() << " NbAddedElement=" << toBeAddedTetraIndex.size() << sendl;
 	}
 
 	template<class DataTypes>
@@ -1247,7 +1249,7 @@ namespace topology
 					}
 				}
 			}
-			nbTobeAddedTetras+=subDivideTetrahedronWithPlane(intersectedTetras[i],intersectedEdgesInTetra[i],intersectedPointID, planeNormal, toBeAddedTetra);
+			nbTobeAddedTetras+=subDivideRestTetrahedronWithPlane(intersectedTetras[i],intersectedEdgesInTetra[i],intersectedPointID, planeNormal, toBeAddedTetra);
 
 			//add the intersected tetrahedron to the to be removed tetrahedron list
 			toBeRemovedTetraIndex.push_back(intersectedTetras[i]);
@@ -1355,7 +1357,7 @@ namespace topology
 					}
 				}
 			}
-			nbTobeAddedTetras+=subDivideTetrahedronWithPlane(intersectedTetras[i],intersectedEdgesInTetra[i],intersectedPointID, planeNormal, toBeAddedTetra);
+			nbTobeAddedTetras+=subDivideRestTetrahedronWithPlane(intersectedTetras[i],intersectedEdgesInTetra[i],intersectedPointID, planeNormal, toBeAddedTetra);
 
 			//add the intersected tetrahedron to the to be removed tetrahedron list
 			toBeRemovedTetraIndex.push_back(intersectedTetras[i]);

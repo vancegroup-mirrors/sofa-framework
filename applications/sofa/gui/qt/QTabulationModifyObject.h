@@ -2,6 +2,7 @@
 #define SOFA_GUI_QT_QTABULATIONMODIFYOBJECT_H
 
 #include <sofa/core/objectmodel/BaseData.h>
+#include <sofa/simulation/common/Node.h>
 
 #ifdef SOFA_QT4
 #include <QWidget>
@@ -56,7 +57,7 @@ namespace sofa{
         void UpdateDatas();
         void UpdateDataWidgets();
         void TabDirty(bool);
-
+        void nodeNameModification(simulation::Node *);
       protected: 
         core::objectmodel::Base *object;
         Q3ListViewItem* item;

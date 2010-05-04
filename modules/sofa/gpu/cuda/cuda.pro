@@ -83,7 +83,8 @@ HEADERS += mycuda.h \
            CudaTetrahedralVisualModel.h \
            CudaTetrahedralVisualModel.inl \
            CudaParticleSource.h \
-           CudaParticleSource.inl
+           CudaParticleSource.inl \
+	   CudaMemoryManager.h 
 
 
 SOURCES += mycuda.cpp \
@@ -91,6 +92,8 @@ SOURCES += mycuda.cpp \
            CudaMechanicalObject.cpp \
            CudaUniformMass.cpp \
            CudaFixedConstraint.cpp \
+           CudaFixedTranslationConstraint.cpp \
+           CudaLinearMovementConstraint.cpp \
            CudaSpringForceField.cpp \
            CudaTetrahedronFEMForceField.cpp \
            CudaPlaneForceField.cpp \

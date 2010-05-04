@@ -95,8 +95,8 @@ bool ImageQt::load(std::string filename)
     }
     if (qin.depth() <= 8 && !qin.isGrayscale()) // paletted -> not supported by sofa
     {
-	QImage orig = qin;
-	qin = orig.convertDepth(32);
+    QImage orig = qin;
+    qin = orig.convertDepth(32);
     }
     if (qin.depth() >= 24)
     {
@@ -105,11 +105,12 @@ bool ImageQt::load(std::string filename)
     }
     Image::init(qin.width(), qin.height(), qin.depth());
     int lsize = ((int)qin.bytesPerLine() < (int)getLineSize() ? (int)qin.bytesPerLine() : (int)getLineSize());
+    int height = getHeight();
     for (int y=0;y<height;++y)
     {
 	const uchar* in = qin.scanLine(y);
-	unsigned char* out = getData() + y*getLineSize();
-	memcpy(out, in, lsize);
+    unsigned char* out = getPixels() + y*getLineSize();
+    memcpy(out, in, lsize);
     }
     return true;
 }

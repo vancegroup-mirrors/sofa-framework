@@ -60,7 +60,7 @@
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/UpdateContextVisitor.h>
 #include <sofa/simulation/common/DeleteVisitor.h>
-#include <sofa/simulation/common/DesactivatedNodeVisitor.h>
+#include <sofa/simulation/common/DeactivatedNodeVisitor.h>
 
 #include <sofa/helper/system/FileRepository.h>
 
@@ -261,6 +261,7 @@ namespace sofa
 
       int RealGUI::mainLoop()
       {
+        if (windowFilePath().isNull()) return application->exec();
         std::string filename=windowFilePath().ascii();
         if (filename.size() > 5 && filename.substr(filename.size()-5) == ".simu")
         {
@@ -438,9 +439,11 @@ namespace sofa
         connect(simulationGraph, SIGNAL( NodeRemoved() ), this, SLOT( Update() ) );
         connect(simulationGraph, SIGNAL( Lock(bool) ), this, SLOT( LockAnimation(bool) ) );
         connect(simulationGraph, SIGNAL( RequestSaving(sofa::simulation::Node*) ), this, SLOT( fileSaveAs(sofa::simulation::Node*) ) );
+        connect(simulationGraph, SIGNAL( RequestExportOBJ(sofa::simulation::Node*, bool) ), this, SLOT( exportOBJ(sofa::simulation::Node*, bool) ) );
         connect(simulationGraph, SIGNAL( RequestActivation(sofa::simulation::Node*, bool) ), this, SLOT( ActivateNode(sofa::simulation::Node*, bool) ) );
 #ifndef SOFA_CLASSIC_SCENE_GRAPH
         connect(visualGraph, SIGNAL( RequestActivation(sofa::simulation::Node*, bool) ) , this, SLOT( ActivateNode(sofa::simulation::Node*, bool) ) );
+        connect(visualGraph, SIGNAL( RequestExportOBJ(sofa::simulation::Node*, bool) ), this, SLOT( exportOBJ(sofa::simulation::Node*, bool) ) );
 #endif
         //connect(simulationGraph, SIGNAL( currentActivated(bool) ), viewer->getQWidget(), SLOT( resetView() ) );
         //connect(simulationGraph, SIGNAL( currentActivated(bool) ), this, SLOT( Update() ) );
@@ -703,7 +706,7 @@ namespace sofa
 #else
             QValueList<int> list;
 #endif
-            list.push_back ( 216 );
+            list.push_back ( 250 );
             list.push_back ( 640 );
             splitter_ptr->setSizes ( list );
 
@@ -1123,7 +1126,7 @@ namespace sofa
 #else
             QValueList<int> list;
 #endif
-          list.push_back ( 216 );
+          list.push_back ( 250 );
           list.push_back ( w );
           QSplitter *splitter_ptr = dynamic_cast<QSplitter *> ( splitter2 );
           splitter_ptr->setSizes ( list );
@@ -1363,6 +1366,7 @@ namespace sofa
 
       void RealGUI::showMouseManager()
       {
+        SofaMouseManager::getInstance()->updateContent();
         SofaMouseManager::getInstance()->show();
       }
 
@@ -1488,8 +1492,12 @@ namespace sofa
           if ( ( counter++ % CAPTURE_PERIOD ) ==0 )
 #endif
           {
-            exportOBJ ( false );
-            ++_animationOBJcounter;
+#ifdef SOFA_CLASSIC_SCENE_GRAPH
+              exportOBJ ( getScene(), false );
+#else
+              exportOBJ ( getSimulation()->getVisualRoot(), false );
+#endif
+              ++_animationOBJcounter;
           }
         }
 
@@ -1742,13 +1750,8 @@ namespace sofa
 
       //*****************************************************************************************
       //
-      void RealGUI::exportOBJ ( bool exportMTL )
+      void RealGUI::exportOBJ (simulation::Node* root,  bool exportMTL )
       {
-#ifdef SOFA_CLASSIC_SCENE_GRAPH
-        Node* root = getScene();
-#else
-        Node* root = simulation::getSimulation()->getVisualRoot();
-#endif
         if ( !root ) return;
         std::string sceneFileName(this->windowFilePath ().ascii());
         std::ostringstream ofilename;
@@ -1792,8 +1795,12 @@ namespace sofa
         case Qt::Key_O:
           // --- export to OBJ
           {
-            exportOBJ();
-            break;
+#ifdef SOFA_CLASSIC_SCENE_GRAPH
+              exportOBJ ( getScene() );
+#else
+              exportOBJ ( getSimulation()->getVisualRoot() );
+#endif
+              break;
           }
         case Qt::Key_P:
           // --- export to a succession of OBJ to make a video
@@ -2022,7 +2029,7 @@ namespace sofa
         QSofaListView* sofalistview = (QSofaListView*)sender();
         
         if (activate) node->setActive(true);
-        simulation::DesactivationVisitor v(activate);
+        simulation::DeactivationVisitor v(activate);
         node->executeVisitor(&v);
 
        

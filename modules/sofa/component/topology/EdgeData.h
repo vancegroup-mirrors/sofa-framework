@@ -68,7 +68,7 @@ namespace topology
 	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
 	* happen (non exhaustive list: Edges added, removed, fused, renumbered).
 	*/
-	template< class T, class Alloc = std::allocator<T> > 
+	template< class T, class Alloc = helper::CPUMemoryManager<T> >
 	class EdgeData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
 	public:

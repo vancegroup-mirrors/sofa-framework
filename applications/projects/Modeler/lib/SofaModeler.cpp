@@ -113,9 +113,9 @@ namespace sofa
 
 
           Q3PopupMenu *openTutorial = new Q3PopupMenu(this);
-          this->menubar->insertItem(tr(QString("&Tutorials")), openTutorial, menuIndex++);
+          this->menubar->insertItem(tr(QString("&Tutorials")), openTutorial, menuIndex++);          
+          openTutorialAction->addTo(openTutorial);
           openTutorialAction->addTo(toolBar);
-
 
 
           //Find all the scene files in examples directory
@@ -772,12 +772,10 @@ namespace sofa
 
     const std::string &extension=sofa::helper::system::SetDirectory::GetExtension(sceneFilename.c_str());
 
-    std::cerr << sceneFilename << " : " << extension << std::endl;
     if (!sceneFilename.empty() && !extension.empty())
     {
 
         std::string viewFile = sceneFilename;
-        std::cerr << "Entering " << viewFile << std::endl;
         //Get the name of the viewer
         std::string viewerName;
         for (unsigned int i=0;i<listActionGUI.size();++i)

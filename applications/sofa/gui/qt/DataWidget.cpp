@@ -11,7 +11,7 @@
 #include <qtooltip.h>
 #endif
 
-#define SIZE_TEXT     75
+#define SIZE_TEXT     60
 namespace sofa{
   namespace helper{
     template class SOFA_SOFAGUIQT_API Factory<std::string, sofa::gui::qt::DataWidget, sofa::gui::qt::DataWidget::CreatorArgument>;
@@ -45,7 +45,7 @@ namespace sofa{
 #ifndef SOFA_GUI_QT_NO_DATA_HELP
           QLabel* helper_label = new QLabel(this);
           helper_label->setText(QString(final_str.c_str()));
-		  helper_label->setMinimumWidth(20);
+          helper_label->setMinimumWidth(20);
           layout->addWidget(helper_label);
           if (!parentClass.empty()) QToolTip::add(helper_label, ("Data from "+parentClass).c_str());
 #else

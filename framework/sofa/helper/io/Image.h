@@ -35,51 +35,117 @@
 namespace sofa
 {
 
-namespace helper
-{
-
-namespace io
-{
-
-class SOFA_HELPER_API Image
-{
-protected:
-	int width, height, nbBits;
-	unsigned char *data;
-public:
-	Image();
-	
-	virtual ~Image();
-	
-	void init(int w, int h, int nbb);
-	void clear();
-	
-	int getWidth() const                  { return width; }
-	int getHeight() const                 { return height; }
-	int getNbBits() const                 { return nbBits; }
-	int getLineSize() const               { return ((nbBits+7)/8)*width; }
-	int getImageSize() const              { return getLineSize()*height; }
-	unsigned char * getData()             { return data; }
-	const unsigned char * getData() const { return data; }
-	
-	typedef Factory<std::string, Image, std::string> FactoryImage;
-	
-	static Image* Create(std::string filename);
-
-    template<class Object>
-    static void create(Object*& obj, std::string arg)
+    namespace helper
     {
-        obj = new Object(arg);
-    }
-};
 
-} // namespace io
+        namespace io
+        {
+            class SOFA_HELPER_API Image
+            {
+            public:
+                enum DataType
+                {
+                    UINT8,
+                    UINT16,
+                    UINT32,
+                    HALF,
+                    FLOAT,
+
+                    COMPRESSED_DXT1,
+                    COMPRESSED_DXT3,
+                    COMPRESSED_DXT5,
+                    COMPRESSED_L,
+                    COMPRESSED_LA,
+
+                    COUNT_OF_DATA_TYPES
+                };
+
+                static const char *strFromDataType[COUNT_OF_DATA_TYPES+1];
+
+                enum ChannelFormat
+                {
+                    L,
+                    LA,
+                    R,
+                    RG,
+                    RGB,
+                    RGBA,
+                    BGR,
+                    BGRA,
+                    COMPRESSED,
+
+                    COUNT_OF_CHANNEL_FORMATS
+                };
+
+                static const char *strFromChannelFormat[COUNT_OF_CHANNEL_FORMATS+1];
+
+                enum TextureType
+                {
+                    TEXTURE_2D,
+                    TEXTURE_3D,
+                    TEXTURE_CUBE,
+
+                    TEXTURE_INVALID
+                };
+
+                static const char *strFromTextureType[TEXTURE_INVALID+1];
+
+                Image();
+                virtual ~Image();
+
+                unsigned getWidth(unsigned mipmap = 0) const;
+                unsigned getHeight(unsigned mipmap = 0) const;
+                unsigned getDepth(unsigned mipmap = 0) const;
+                unsigned getBytesPerPixel() const;
+                unsigned getBytesPerBlock() const;
+                unsigned getBytesPerChannel() const;
+                unsigned getChannelCount() const;
+                unsigned getMipmapCount() const;
+                unsigned getPixelCount() const;
+                unsigned getLineSize(unsigned mipmap = 0) const;
+                unsigned getMipmapSize(unsigned mipmap) const;
+                unsigned getMipmapRangeSize(unsigned firstMipmap, unsigned mipmaps) const;
+                unsigned getImageSize() const;
+                DataType getDataType() const;
+                ChannelFormat getChannelFormat() const;
+                TextureType getTextureType() const;
+
+                unsigned char *getPixels();
+                unsigned char *getMipmapPixels(unsigned mipmap);
+                unsigned char *getCubeMipmapPixels(unsigned cubeside, unsigned mipmap);
+                unsigned char *get3DSliceMipmapPixels(unsigned slice, unsigned mipmap);
+
+                void clear();
+                void init(unsigned width, unsigned height, unsigned depth, unsigned mipmaps,
+                          DataType dataType, ChannelFormat channelFormat);
+
+                // for compatibility with the old interface
+                void init(unsigned width, unsigned height, unsigned bpp);
+
+                typedef Factory<std::string, Image, std::string> FactoryImage;
+
+                static Image* Create(std::string filename);
+
+                template<class Object>
+                static void create(Object*& obj, std::string arg)
+                {
+                    obj = new Object(arg);
+                }
+
+            private:
+                unsigned width, height, depth, mipmaps;
+                DataType dataType;
+                ChannelFormat channelFormat;
+                unsigned char *data;
+            };
+
+        } // namespace io
 
 #if defined(WIN32) && !defined(SOFA_BUILD_HELPER)
-extern template class SOFA_HELPER_API Factory<std::string, io::Image, std::string>;
+        extern template class SOFA_HELPER_API Factory<std::string, io::Image, std::string>;
 #endif
 
-} // namespace helper
+    } // namespace helper
 
 } // namespace sofa
 

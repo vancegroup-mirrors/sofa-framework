@@ -50,7 +50,6 @@ void FixedConstraintCuda3d1_projectResponseContiguous(unsigned int size, void* d
 void FixedConstraintCuda3d1_projectResponseIndexed(unsigned int size, const void* indices, void* dx);
 
 #endif // SOFA_GPU_CUDA_DOUBLE
-
 }
 
 //////////////////////
@@ -81,6 +80,7 @@ __global__ void FixedConstraintCuda3t1_projectResponseContiguous_kernel(int size
 	dx[index] = CudaVec4<real>::make(0.0f,0.0f,0.0f,0.0f);
 }
 
+
 template<class real>
 __global__ void FixedConstraintCuda1t_projectResponseIndexed_kernel(int size, const int* indices, real* dx)
 {
@@ -104,6 +104,7 @@ __global__ void FixedConstraintCuda3t1_projectResponseIndexed_kernel(int size, c
     if (index < size)
 	dx[indices[index]] = CudaVec4<real>::make(0.0f,0.0f,0.0f,0.0f);
 }
+
 
 //////////////////////
 // CPU-side methods //
@@ -129,6 +130,7 @@ void FixedConstraintCuda3f1_projectResponseContiguous(unsigned int size, void* d
 	cudaMemset(dx, 0, size*4*sizeof(float));
 }
 
+
 void FixedConstraintCuda3f_projectResponseIndexed(unsigned int size, const void* indices, void* dx)
 {
 	dim3 threads(BSIZE,1);
@@ -142,6 +144,7 @@ void FixedConstraintCuda3f1_projectResponseIndexed(unsigned int size, const void
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
 	FixedConstraintCuda3t1_projectResponseIndexed_kernel<float><<< grid, threads >>>(size, (const int*)indices, (CudaVec4<float>*)dx);
 }
+
 
 #ifdef SOFA_GPU_CUDA_DOUBLE
 
@@ -165,6 +168,7 @@ void FixedConstraintCuda3d1_projectResponseContiguous(unsigned int size, void* d
 	cudaMemset(dx, 0, size*4*sizeof(double));
 }
 
+
 void FixedConstraintCuda3d_projectResponseIndexed(unsigned int size, const void* indices, void* dx)
 {
 	dim3 threads(BSIZE,1);
@@ -178,6 +182,7 @@ void FixedConstraintCuda3d1_projectResponseIndexed(unsigned int size, const void
 	dim3 grid((size+BSIZE-1)/BSIZE,1);
 	FixedConstraintCuda3t1_projectResponseIndexed_kernel<double><<< grid, threads >>>(size, (const int*)indices, (CudaVec4<double>*)dx);
 }
+
 
 #endif // SOFA_GPU_CUDA_DOUBLE
 

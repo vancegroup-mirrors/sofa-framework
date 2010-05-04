@@ -49,8 +49,8 @@ namespace gl
 			    ,ogreDraw(NULL)
 #endif
   {
-    lightEnabled=true;
-    wireframeEnabled=false;
+    lightEnabled=false;
+    wireframeEnabled=false;    
     polygonMode=1;
   };
 
@@ -95,7 +95,7 @@ namespace gl
 
 	    for (unsigned int i=0;i<points.size();++i)
 	      ogreDraw->index(i);
-	    ogreDraw->end();
+            ogreDraw->end();
 	  break;
 #endif
 	  }
@@ -304,7 +304,7 @@ namespace gl
     {
         const unsigned int nbTriangles=points.size()/3;
         bool computeNormals= (normal.size() != nbTriangles);
-
+        if (nbTriangles == 0) return;
         switch(SystemDraw)
           {
           case OPENGL:
@@ -325,8 +325,10 @@ namespace gl
                     Vector3 n = cross((b-a),(c-a));
                     n.normalize();
 
-                    addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],n,
-                                colour[3*i+0],colour[3*i+1],colour[3*i+2]);
+                    addPoint(a,n,colour[3*i+0]);
+                    addPoint(b,n,colour[3*i+1]);
+                    addPoint(c,n,colour[3*i+2]);
+
                 }
               }
             glEnd();
@@ -341,7 +343,6 @@ namespace gl
 
             for (unsigned int i=0;i<nbTriangles;++i)
               {
-
                 if (!computeNormals)
                 {
                     addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],normal[i],
@@ -355,8 +356,9 @@ namespace gl
                     Vector3 n = cross((b-a),(c-a));
                     n.normalize();
 
-                    addTriangle(points[3*i+0],points[3*i+1],points[3*i+2],n,
-                                colour[3*i+0],colour[3*i+1],colour[3*i+2]);
+                    addPoint(a,n,colour[3*i+0]);
+                    addPoint(b,n,colour[3*i+1]);
+                    addPoint(c,n,colour[3*i+2]);
                 }
                 ogreDraw->triangle(3*i+0,3*i+1,3*i+2);
               }
@@ -581,7 +583,7 @@ namespace gl
 
     void DrawManager::drawFrame   (const Vector3& position, const Quaternion &orientation, const Vec<3,float> &size)
     {
-
+        setPolygonMode(0,false);
         switch(SystemDraw)
           {
           case OPENGL:
@@ -782,12 +784,15 @@ namespace gl
 	else                  glPolygonMode(GL_BACK, GL_FILL);
       }
   }
+
+
   void DrawManager::setLightingEnabled(bool b)
   {
     lightEnabled=b;
     if (lightEnabled) glEnable(GL_LIGHTING);
     else glDisable(GL_LIGHTING);
   }
+
 
   void DrawManager::setMaterial(const Vec<4,float> &colour,std::string 
 #ifdef SOFA_GUI_QTOGREVIEWER
@@ -833,7 +838,7 @@ namespace gl
 	  currentMaterial = Ogre::MaterialManager::getSingleton().getByName(name);
 
 	//Light
-	currentMaterial->setLightingEnabled(lightEnabled);
+        currentMaterial->setLightingEnabled(lightEnabled);
 	//Culling
 	switch( polygonMode )
 	  {

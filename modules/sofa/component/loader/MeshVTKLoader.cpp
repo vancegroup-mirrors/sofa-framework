@@ -78,8 +78,6 @@ MeshVTKLoader::VTKFileType MeshVTKLoader::detectFileType(const char* filename)
 		return MeshVTKLoader::LEGACY;
 	else //default behavior if the first line is not correct ?
 		return MeshVTKLoader::NONE;
-
-	inVTKFile.close();
 }
 
 bool MeshVTKLoader::load()
@@ -546,7 +544,6 @@ MeshVTKLoader::BaseVTKReader::BaseVTKDataIO* MeshVTKLoader::XMLVTKReader::loadDa
 
 MeshVTKLoader::BaseVTKReader::BaseVTKDataIO* MeshVTKLoader::XMLVTKReader::loadDataArray(TiXmlElement* dataArrayElement, int size, std::string type)
 {
-	std::cout << "begin " << type << std::endl;
 	//Type
 	const char* typeStrTemp;
 	if (type.empty())

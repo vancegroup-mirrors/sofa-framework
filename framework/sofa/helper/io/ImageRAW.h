@@ -48,26 +48,19 @@ public:
 	ImageRAW ();
 	virtual ~ImageRAW() {}
 
-	void init(int w, int h, int d, int nbb, int hsize);
+    void initHeader(unsigned hsize);
 
 	// header size in Bytes
-	int getHeaderSize() const             { return headerSize; }
+    unsigned getHeaderSize() const { return headerSize; }
 
-	int getDataSize() const               { return getLineSize()*height*depth; }
-
-	// number of slices of a 3D image
-	int getDepth() const                  { return depth; }
-
-	unsigned char * getHeader()           { return header; }
-	const unsigned char * getHeader() const { return header; }
+    unsigned char * getHeader()           { return header; }
+    const unsigned char * getHeader() const { return header; }
 
 	bool load(std::string filename);
 	bool save(std::string filename, int compression_level = -1);
 
 private:
-	int depth;
-	int headerSize;
-
+    unsigned headerSize;
 	unsigned char *header;
 };
 

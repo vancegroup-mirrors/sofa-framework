@@ -20,6 +20,8 @@ HEADERS += initEngine.h \
            GroupFilterYoungModulus.inl \
            MergePoints.h \
            MergePoints.inl \
+           MergeSets.h \
+           MergeSets.inl \
 	       TransformPosition.h \
 	        TransformPosition.inl \
 	       TransformEngine.h \
@@ -28,6 +30,14 @@ HEADERS += initEngine.h \
            PlaneROI.inl \
            PointsFromIndices.h \
            PointsFromIndices.inl \
+           ValuesFromIndices.h \
+           ValuesFromIndices.inl \
+           IndicesFromValues.h \
+           IndicesFromValues.inl \
+           MapIndices.h \
+           MapIndices.inl \
+	   PrimitivesInSphereROI.h \
+	   PrimitivesInSphereROI.inl \
            RandomPointDistributionInSurface.h \
            RandomPointDistributionInSurface.inl \
            Spiral.h \
@@ -48,10 +58,15 @@ SOURCES += initEngine.cpp \
            ExtrudeSurface.cpp \
            GroupFilterYoungModulus.cpp \
            MergePoints.cpp \
+           MergeSets.cpp \
            PlaneROI.cpp \
+	   PrimitivesInSphereROI.cpp \
 	  	   TransformPosition.cpp \
            TransformEngine.cpp \
            PointsFromIndices.cpp \
+           ValuesFromIndices.cpp \
+           IndicesFromValues.cpp \
+           MapIndices.cpp \
            RandomPointDistributionInSurface.cpp \
            Spiral.cpp \
            TrianglesInBoxROI.cpp \

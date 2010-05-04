@@ -93,6 +93,8 @@ namespace sofa
               return std::make_pair(_data.begin(), _data.end());
             }
 
+	bool empty() const { return _data.empty(); }
+
       protected:
         data_t _data;
       };

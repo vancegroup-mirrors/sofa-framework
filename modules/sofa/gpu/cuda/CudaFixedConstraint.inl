@@ -219,6 +219,7 @@ void FixedConstraintInternalData<gpu::cuda::CudaVec3f1Types>::projectResponse(Ma
 	FixedConstraintCuda3f1_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
 }
 
+
 // Handle topological changes
 template <> 
 void FixedConstraint<gpu::cuda::CudaVec3fTypes>::handleTopologyChange() {
@@ -264,6 +265,7 @@ void FixedConstraintInternalData<gpu::cuda::CudaVec3d1Types>::projectResponse(Ma
     else
 	FixedConstraintCuda3d1_projectResponseIndexed(data.cudaIndices.size(), data.cudaIndices.deviceRead(), dx.deviceWrite());
 }
+
 
 #endif // SOFA_GPU_CUDA_DOUBLE
 

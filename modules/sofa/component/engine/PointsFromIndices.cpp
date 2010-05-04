@@ -40,7 +40,7 @@ namespace engine
 
 SOFA_DECL_CLASS(PointsFromIndices)
 
-int PointsFromIndicesClass = core::RegisterObject("Find the points given a lis of indices")
+int PointsFromIndicesClass = core::RegisterObject("Find the points given a list of indices")
 #ifndef SOFA_FLOAT
 .add< PointsFromIndices<Vec3dTypes> >()
 // .add< PointsFromIndices<Rigid3dTypes> >()

@@ -314,13 +314,14 @@ public:
 	return r;
     }
 
-        /// On-place multiplication by a scalar f.
-        template<class real2>
-        void operator*=(real2 f)
-        {
-                for (int i=0;i<N;i++)
-                        this->elems[i]*=(real)f;
-        }
+		/// On-place multiplication by a scalar f.
+		template<class real2>
+		void operator*=(real2 f)
+		{
+				for (int i=0;i<N;i++)
+						this->elems[i]*=(real)f;
+		}
+
 
     /// Division by a scalar f.
     template<class real2>

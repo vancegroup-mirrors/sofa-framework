@@ -219,8 +219,8 @@ public:
     void Clear();
 	  //Used in Context Menu
 	  //refresh the visualization window	 
-	  void redraw();
-	  void exportOBJ(bool exportMTL=true);
+      void redraw();
+      void exportOBJ(sofa::simulation::Node* node, bool exportMTL=true);
 	  void dumpState(bool);
 	  void displayComputationTime(bool);
 	  void setExportGnuplot(bool);

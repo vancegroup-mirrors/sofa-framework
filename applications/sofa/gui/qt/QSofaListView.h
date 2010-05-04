@@ -75,7 +75,8 @@ namespace sofa{
         signals:
         void Close();
         void Lock(bool);
-        void RequestSaving(sofa::simulation::Node*);
+        void RequestSaving(sofa::simulation::Node*);        
+        void RequestExportOBJ(sofa::simulation::Node* node, bool exportMTL);
         void RequestActivation(sofa::simulation::Node*,bool);
         void RootNodeChanged(sofa::simulation::Node* newroot, const char* newpath);
         void NodeRemoved();
@@ -84,6 +85,7 @@ namespace sofa{
         
         protected slots:
         void SaveNode();
+        void exportOBJ();
         void collapseNode();
         void expandNode();
         void modifyUnlock(void* Id);
@@ -92,7 +94,7 @@ namespace sofa{
         void Modify();
         void HideDatas();
         void ShowDatas();
-        void DesactivateNode();
+        void DeactivateNode();
         void ActivateNode();
         void loadObject ( std::string path, double dx, double dy, double dz,  double rx, double ry, double rz,double scale );
 #ifdef SOFA_QT4
@@ -104,6 +106,7 @@ namespace sofa{
         void RunSofaRightClicked( QListViewItem *item, const QPoint& point, int index );
         void RunSofaDoubleClicked( QListViewItem*);
 #endif
+        void nodeNameModification( simulation::Node*);
       protected: 
         void collapseNode(Q3ListViewItem* item);
         void expandNode(Q3ListViewItem* item);

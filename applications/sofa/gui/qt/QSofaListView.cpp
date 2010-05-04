@@ -253,13 +253,14 @@ namespace sofa{
           contextMenu->insertSeparator ();
           /*****************************************************************************************************************/
           if (object_.ptr.Node->isActive())
-            contextMenu->insertItem ( "Desactivate", this, SLOT ( DesactivateNode() ) );
+            contextMenu->insertItem ( "Deactivate", this, SLOT ( DeactivateNode() ) );
           else
             contextMenu->insertItem ( "Activate", this, SLOT ( ActivateNode() ) );
           contextMenu->insertSeparator ();
           /*****************************************************************************************************************/
 
           contextMenu->insertItem ( "Save Node", this, SLOT ( SaveNode() ) );
+          contextMenu->insertItem ( "Export OBJ", this, SLOT ( exportOBJ() ) );
           
           if ( attribute_ == SIMULATION)
           {
@@ -294,8 +295,24 @@ namespace sofa{
 
       }
 
+      /*****************************************************************************************************************/
+      void QSofaListView::nodeNameModification(simulation::Node* node)
+      {
+          Q3ListViewItem *item=graphListener_->items[node];
 
-      void QSofaListView::DesactivateNode()
+          QString nameToUse(node->getName().c_str());
+          item->setText(0,nameToUse);
+
+          nameToUse=QString("MultiNode ")+nameToUse;
+
+          typedef std::multimap<Q3ListViewItem *, Q3ListViewItem*>::iterator ItemIterator;
+          std::pair<ItemIterator,ItemIterator> range=graphListener_->nodeWithMultipleParents.equal_range(item);
+
+          for (ItemIterator it=range.first;it!=range.second;++it) it->second->setText(0,nameToUse);
+      }
+
+
+      void QSofaListView::DeactivateNode()
       {
         emit RequestActivation(object_.ptr.Node,false);
         currentItem()->setOpen(false);
@@ -315,6 +332,15 @@ namespace sofa{
           emit RequestSaving(node);
           emit Lock(false);
         
+        }
+      }
+      void QSofaListView::exportOBJ()
+      {
+        if( object_.ptr.Node != NULL){
+          emit Lock(true);
+          Node * node = object_.ptr.Node;
+          emit RequestExportOBJ(node,true);
+          emit Lock(false);
         }
       }
       void QSofaListView::RaiseAddObject()
@@ -410,6 +436,7 @@ namespace sofa{
           connect ( dialogModifyObject, SIGNAL( objectUpdated() ), this, SIGNAL( Updated() ));
           connect ( this, SIGNAL( Close() ), dialogModifyObject, SLOT( closeNow() ) );
           connect ( dialogModifyObject, SIGNAL( dialogClosed(void *) ) , this, SLOT( modifyUnlock(void *)));
+          connect ( dialogModifyObject, SIGNAL( nodeNameModification(simulation::Node*) ) , this, SLOT( nodeNameModification(simulation::Node*) ));
           dialogModifyObject->show();
           dialogModifyObject->raise();
         }

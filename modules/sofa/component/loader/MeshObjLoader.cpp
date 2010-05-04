@@ -288,7 +288,7 @@ MeshObjLoader::MeshObjLoader(): MeshLoader()
     
     // end of current group
     if (curGroup.groupName.empty())
-    	curGroup.groupName = "Default Group";
+    	curGroup.groupName = "Default_Group";
 
 	curGroup.nbp = nbf - curGroup.p0;
 	if (curGroup.nbp > 0) addGroup(curGroup);

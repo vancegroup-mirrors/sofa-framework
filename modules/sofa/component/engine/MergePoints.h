@@ -50,7 +50,7 @@ using namespace core::componentmodel::topology;
 using namespace core::objectmodel;
 
 /** 
- * This class merge 2 cordinate vectors.
+ * This class merge 2 coordinate vectors.
  */
 template <class DataTypes>
 class MergePoints : public core::DataEngine

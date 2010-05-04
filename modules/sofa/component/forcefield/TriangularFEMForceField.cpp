@@ -167,8 +167,8 @@ void TriangularFEMForceField<DataTypes>::TRQSTriangleCreationFunction(int triang
 			, f_method(initData(&f_method,std::string("large"),"method","large: large displacements, small: small displacements"))
 			//, f_poisson(initData(&f_poisson,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
 			//, f_young(initData(&f_young,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
-			, f_poisson(initData(&f_poisson,helper::vector<Real>(1,0.45),"poissonRatio","Poisson ratio in Hooke's law (vector)"))
-			, f_young(initData(&f_young,helper::vector<Real>(1,1000.0),"youngModulus","Young modulus in Hooke's law (vector)"))
+			, f_poisson(initData(&f_poisson,helper::vector<Real>(1,static_cast<Real>(0.45)),"poissonRatio","Poisson ratio in Hooke's law (vector)"))
+			, f_young(initData(&f_young,helper::vector<Real>(1,static_cast<Real>(1000.0)),"youngModulus","Young modulus in Hooke's law (vector)"))
 			, f_damping(initData(&f_damping,(Real)0.,"damping","Ratio damping/stiffness"))
 			, f_fracturable(initData(&f_fracturable,false,"fracturable","the forcefield computes the next fracturable Edge"))
 			, showStressValue(initData(&showStressValue,false,"showStressValue","Flag activating rendering of stress values as a color in each triangle"))
@@ -204,7 +204,6 @@ TriangularFEMForceField<DataTypes>::~TriangularFEMForceField()
 template <class DataTypes>
 void TriangularFEMForceField<DataTypes>::init()
 {
-	sout << "initializing TriangularFEMForceField" << sendl;
 	this->Inherited::init();
 
 	_topology = this->getContext()->getMeshTopology();
@@ -311,6 +310,118 @@ void TriangularFEMForceField<DataTypes>::computeRotationLarge( Transformation &r
     r[2][1] = edgez[1];
     r[2][2] = edgez[2];
 }
+// --------------------------------------------------------------------------------------
+// --- Get the rotation of node	 
+// --------------------------------------------------------------------------------------
+template <class DataTypes>
+void TriangularFEMForceField<DataTypes>::getRotation(Transformation& R, unsigned int nodeIdx)
+{
+	helper::vector<TriangleInformation>& triangleInf = *(triangleInfo.beginEdit());
+	int numNeiTri=_topology->getTrianglesAroundVertex(nodeIdx).size();
+	Transformation r;
+	for(int i=0;i<numNeiTri;i++)
+	{
+		int triIdx=_topology->getTrianglesAroundVertex(nodeIdx)[i];
+		TriangleInformation *tinfo = &triangleInf[triIdx];
+		Transformation r01,r21;
+		r01=tinfo->initialTransformation;
+		r21=tinfo->rotation*r01;
+		r+=r21;
+	}
+	R=r/static_cast<Real>(numNeiTri);
+
+	//orthogonalization
+	Coord ex,ey,ez;
+	for(int i=0;i<3;i++)
+	{
+		ex[i]=R[0][i];
+		ey[i]=R[1][i];
+	}
+	ex.normalize();
+	ey.normalize();
+
+	ez=cross(ex,ey);
+	ez.normalize();
+
+	ey=cross(ez,ex);
+	ey.normalize();
+
+	for(int i=0;i<3;i++)
+	{
+		R[0][i]=ex[i];
+		R[1][i]=ey[i];
+		R[2][i]=ez[i];
+	}
+	triangleInfo.endEdit();
+}
+
+// --------------------------------------------------------------------------------------
+// --- Compute the rotation of all nodes	 
+// --------------------------------------------------------------------------------------
+template <class DataTypes>
+void TriangularFEMForceField<DataTypes>::getRotations()
+{
+	helper::vector<TriangleInformation>& triangleInf = *(triangleInfo.beginEdit());
+	helper::vector<VertexInformation>& vertexInf = *(vertexInfo.beginEdit());
+	int numPoint=_topology->getNbPoints();
+	int numTri=_topology->getNbTriangles();
+
+	//reset the rotation matrix
+	for(int i=0;i<numPoint;i++)
+	{
+		VertexInformation *vinfo= &vertexInf[i];
+		vinfo->rotation.clear();
+	}
+
+	//add the rotation matrix
+	for(int i=0;i<numTri;i++)
+	{
+		TriangleInformation *tinfo = &triangleInf[i];
+		Transformation r01,r21;
+		r01=tinfo->initialTransformation;
+		r21=tinfo->rotation*r01;
+
+		for(int j=0;j<3;j++)
+		{
+			int idx=_topology->getTriangle(i)[j];
+			VertexInformation *vinfo= &vertexInf[idx];
+			vinfo->rotation+=r21;
+		}
+	}
+
+	//averaging the rotation matrix
+	for(int i=0;i<numPoint;i++)
+	{
+		VertexInformation *vinfo=&vertexInf[i];
+		int numNeiTri=_topology->getTrianglesAroundVertex(i).size();
+		vinfo->rotation/=static_cast<Real>(numNeiTri);
+
+		//orthogonalization
+		Coord ex,ey,ez;
+		for(int i=0;i<3;i++)
+		{
+			ex[i]=vinfo->rotation[0][i];
+			ey[i]=vinfo->rotation[1][i];
+		}
+		ex.normalize();
+		ey.normalize();
+
+		ez=cross(ex,ey);
+		ez.normalize();
+
+		ey=cross(ez,ex);
+		ey.normalize();
+
+		for(int i=0;i<3;i++)
+		{
+			vinfo->rotation[0][i]=ex[i];
+			vinfo->rotation[1][i]=ey[i];
+			vinfo->rotation[2][i]=ez[i];
+		}
+	}
+	triangleInfo.endEdit();
+	vertexInfo.endEdit();
+}
 
 // --------------------------------------------------------------------------------------
 // --- Store the initial position of the nodes 	 
@@ -333,7 +444,7 @@ void TriangularFEMForceField<DataTypes>::initSmall(int i, Index&a, Index&b, Inde
 	tinfo->rotatedInitialElements[1] = (*_initialPoints)[b] - (*_initialPoints)[a];
 	tinfo->rotatedInitialElements[2] = (*_initialPoints)[c] - (*_initialPoints)[a];
 		
-	computeStrainDisplacement(tinfo->strainDisplacementMatrix, tinfo->rotatedInitialElements[0], tinfo->rotatedInitialElements[1], tinfo->rotatedInitialElements[2]);
+        computeStrainDisplacement(tinfo->strainDisplacementMatrix, i, tinfo->rotatedInitialElements[0], tinfo->rotatedInitialElements[1], tinfo->rotatedInitialElements[2]);
 
 	triangleInfo.endEdit();
 }
@@ -440,14 +551,16 @@ void TriangularFEMForceField<DataTypes>::computeDisplacementLarge(Displacement &
 // --- Compute the strain-displacement matrix where (a, b, c) are the coordinates of the 3 nodes of a triangle
 // ------------------------------------------------------------------------------------------------------------
 template <class DataTypes>
-void TriangularFEMForceField<DataTypes>::computeStrainDisplacement( StrainDisplacement &J, Coord a, Coord b, Coord c )
+void TriangularFEMForceField<DataTypes>::computeStrainDisplacement(StrainDisplacement &J, Index elementIndex, Coord a, Coord b, Coord c )
 {
 	Real determinant;
-	
+        helper::vector<TriangleInformation>& triangleInf = *(triangleInfo.beginEdit());
+
 	if (method == SMALL) {
 		Coord ab_cross_ac = cross(b-a, c-a);
 		determinant = ab_cross_ac.norm();
-		
+                triangleInf[elementIndex].area = determinant*0.5f;
+
 		Real x13 = (a[0]-c[0]) / determinant;
 		Real x21 = (b[0]-a[0]) / determinant;
 		Real x32 = (c[0]-b[0]) / determinant;	
@@ -481,11 +594,12 @@ void TriangularFEMForceField<DataTypes>::computeStrainDisplacement( StrainDispla
 	}
 	else {
 		determinant = b[0] * c[1];
+                triangleInf[elementIndex].area = determinant*0.5f;
 
 		Real x13 = -c[0] / determinant; // since a=(0,0)
 		Real x21 = b[0] / determinant; // since a=(0,0)
 		Real x32 = (c[0]-b[0]) / determinant;	
-		Real y12 = 0;		// since a=(0,0) and b[1] = 0
+                Real y12 = 0;	// since a=(0,0) and b[1] = 0
 		Real y23 = -c[1] / determinant; // since a=(0,0) and b[1] = 0
 		Real y31 = c[1] / determinant; // since a=(0,0) 
 
@@ -513,6 +627,18 @@ void TriangularFEMForceField<DataTypes>::computeStrainDisplacement( StrainDispla
 		J[5][1] = x21;
 		J[5][2] = y12;
 	}
+    triangleInfo.endEdit();
+}
+
+// --------------------------------------------------------------------------------------------------------
+// --- Stiffness = K = J*D*Jt
+// --------------------------------------------------------------------------------------------------------
+template <class DataTypes>
+void TriangularFEMForceField<DataTypes>::computeStiffness(StrainDisplacement &J, Stiffness &K, MaterialStiffness &D)
+{
+	Mat<3,6,Real> Jt;
+	Jt.transpose(J);
+	K=J*D*Jt;
 }
 
 // --------------------------------------------------------------------------------------------------------
@@ -525,12 +651,12 @@ void TriangularFEMForceField<DataTypes>::computeStrain(Vec<3,Real> &strain, cons
 	Jt.transpose(J);
 	
 	if (_anisotropicMaterial || method == SMALL) {
-			strain = Jt * D; 
+                strain = Jt * D;
 	}
 	else {
-			strain[0] = Jt[0][0] * D[0] + /* Jt[0][1] * Depl[1] + */ Jt[0][2] * D[2] /* + Jt[0][3] * Depl[3] + Jt[0][4] * Depl[4] + Jt[0][5] * Depl[5] */ ;
-			strain[1] = /* Jt[1][0] * Depl[0] + */ Jt[1][1] * D[1] + /* Jt[1][2] * Depl[2] + */ Jt[1][3] * D[3] + /* Jt[1][4] * Depl[4] + */ Jt[1][5] * D[5];
-			strain[2] = Jt[2][0] * D[0] + Jt[2][1] * D[1] + Jt[2][2] * D[2] +	Jt[2][3] * D[3] + Jt[2][4] * D[4] /* + Jt[2][5] * Depl[5] */ ;
+                strain[0] = Jt[0][0] * D[0] + /* Jt[0][1] * Depl[1] + */ Jt[0][2] * D[2] /* + Jt[0][3] * Depl[3] + Jt[0][4] * Depl[4] + Jt[0][5] * Depl[5] */ ;
+                strain[1] = /* Jt[1][0] * Depl[0] + */ Jt[1][1] * D[1] + /* Jt[1][2] * Depl[2] + */ Jt[1][3] * D[3] + /* Jt[1][4] * Depl[4] + */ Jt[1][5] * D[5];
+                strain[2] = Jt[2][0] * D[0] + Jt[2][1] * D[1] + Jt[2][2] * D[2] +	Jt[2][3] * D[3] + Jt[2][4] * D[4] /* + Jt[2][5] * Depl[5] */ ;
 	}
 }
 	
@@ -544,12 +670,12 @@ void TriangularFEMForceField<DataTypes>::computeStress(Vec<3,Real> &stress, Mate
 		stress = K * strain;
 	} 
 	else { 			
-			// Optimisations: The following values are 0 (per computeMaterialStiffnesses )
-			// K[0][2]  K[1][2]  K[2][0] K[2][1]
-			stress[0] = K[0][0] * strain[0] + K[0][1] * strain[1] + K[0][2] * strain[2];
-			stress[1] = K[1][0] * strain[0] + K[1][1] * strain[1] + K[1][2] * strain[2];
-			stress[2] = K[2][0] * strain[0] + K[2][1] * strain[1] + K[2][2] * strain[2];
-		}
+            // Optimisations: The following values are 0 (per computeMaterialStiffnesses )
+            // K[0][2]  K[1][2]  K[2][0] K[2][1]
+            stress[0] = K[0][0] * strain[0] + K[0][1] * strain[1] + K[0][2] * strain[2];
+            stress[1] = K[1][0] * strain[0] + K[1][1] * strain[1] + K[1][2] * strain[2];
+            stress[2] = K[2][0] * strain[0] + K[2][1] * strain[1] + K[2][2] * strain[2];
+        }
 }
 
 // --------------------------------------------------------------------------------------
@@ -659,11 +785,10 @@ void TriangularFEMForceField<DataTypes>::computeMaterialStiffness(int i, Index &
 	tinfo->materialMatrix[1][2] = 0;
 	tinfo->materialMatrix[2][0] = 0;
 	tinfo->materialMatrix[2][1] = 0;
-	tinfo->materialMatrix[2][2] = 0.5f * (1 - p);//poissonArray[i]);
+        tinfo->materialMatrix[2][2] = (1.0f - p) * 0.5f;//poissonArray[i]);
 	
-	//tinfo->materialMatrix *= (f_young.getValue() / (12 * (1 - f_poisson.getValue() * f_poisson.getValue())));
-	tinfo->materialMatrix *= (y / (12 * (1 - p * p)));
-	
+        tinfo->materialMatrix *= (y / (1.0f - p * p));
+
 	triangleInfo.endEdit();
 }
 
@@ -677,6 +802,7 @@ void TriangularFEMForceField<DataTypes>::computeForce(Displacement &F, Index ele
 	
 	Displacement D;
 	StrainDisplacement J;
+	Stiffness K;
 	Vec<3,Real> strain;
 	Vec<3,Real> stress;
 	Transformation R_0_2, R_2_0;
@@ -690,12 +816,12 @@ void TriangularFEMForceField<DataTypes>::computeForce(Displacement &F, Index ele
 	if (method == SMALL) { // classic linear elastic method
 		computeDisplacementSmall(D, elementIndex, p);
 		if (_anisotropicMaterial)
-			computeStrainDisplacement(J, Coord(0,0,0), (p[b]-p[a]), (p[c]-p[a])); 
+                        computeStrainDisplacement(J, elementIndex, Coord(0,0,0), (p[b]-p[a]), (p[c]-p[a]));
 		else
 			J = triangleInf[elementIndex].strainDisplacementMatrix;
 		computeStrain(strain, J, D);
 		computeStress(stress, triangleInf[elementIndex].materialMatrix, strain);
-		F = J * stress;
+                F = J * stress * triangleInf[elementIndex].area;
 
 		// store newly computed values for next time
 		triangleInf[elementIndex].strainDisplacementMatrix = J;		
@@ -712,16 +838,17 @@ void TriangularFEMForceField<DataTypes>::computeForce(Displacement &F, Index ele
 		Coord B = R_0_2 * (p[b]-p[a]);
 		Coord C = R_0_2 * (p[c]-p[a]);	
 		
-		computeStrainDisplacement(J, A, B, C);
+                computeStrainDisplacement(J, elementIndex, A, B, C);
 		computeStrain(strain, J, D);
 		computeStress(stress, triangleInf[elementIndex].materialMatrix, strain);
+		computeStiffness(J,K,triangleInf[elementIndex].materialMatrix);
 		
 //		sout << endl;
 //		sout << "p[a]=(" << p[a] << ") - p[b]=(" << p[b] << ") - p[c]=(" << p[c] << ")" << endl;
 //		sout << "D: " << D << endl;
 //		sout << "J: " << J << endl;
 //		sout << "Strain: " << strain << endl;
-//		sout << "Stress: " << stress << endl;
+//              sout << "Stress: " << stress << endl;
 
 		// Compute F = J * stress;
 		// Optimisations: The following values are 0 (per computeStrainDisplacement )
@@ -733,68 +860,73 @@ void TriangularFEMForceField<DataTypes>::computeForce(Displacement &F, Index ele
 		F[3] = /* J[3][0] * KJtD[0] + */ J[3][1] * stress[1] + J[3][2] * stress[2];
 		F[4] = /* J[4][0] * KJtD[0] + J[4][1] * KJtD[1] + */ J[4][2] * stress[2];
 		F[5] = /* J[5][0] * KJtD[0] + */ J[5][1] * stress[1] /* + J[5][2] * KJtD[2] */ ;
-		
+
+                // Since J has been "normalized" we need to multiply the force F by the area of the triangle to get the correct force
+                F *= triangleInf[elementIndex].area;
+
 		// store newly computed values for next time
 		R_2_0.transpose(R_0_2);
 		triangleInf[elementIndex].strainDisplacementMatrix = J;
 		triangleInf[elementIndex].rotation = R_2_0;			
 		triangleInf[elementIndex].strain = strain;
-		triangleInf[elementIndex].stress = stress;		
+		triangleInf[elementIndex].stress = stress;
+		triangleInf[elementIndex].stiffness = K;
 	}
 
 	triangleInfo.endEdit();
 }
 
-                    /// Compute current stress
-                    template <class DataTypes>
-                    void TriangularFEMForceField<DataTypes>::computeStress(Vec<3,Real> &stress, Index elementIndex)
-                    {
-                        //	sofa::helper::system::thread::Trace::print(1, "Hello from computeForce()\n");
-                        
-                        Displacement D;
-                        StrainDisplacement J;
-                        Vec<3,Real> strain;
-                        Transformation R_0_2, R_2_0;
-                        const VecCoord& p = *this->mstate->getX();
-                        Index a = _topology->getTriangle(elementIndex)[0];
-                        Index b = _topology->getTriangle(elementIndex)[1];
-                        Index c = _topology->getTriangle(elementIndex)[2];
-                        
-			helper::vector<TriangleInformation>& triangleInf = *(triangleInfo.beginEdit());
+/// Compute current stress
+template <class DataTypes>
+void TriangularFEMForceField<DataTypes>::computeStress(Vec<3,Real> &stress, Index elementIndex)
+{
+    //	sofa::helper::system::thread::Trace::print(1, "Hello from computeForce()\n");
 
-                        if (method == SMALL) { // classic linear elastic method
-                            R_0_2.identity();
-                            computeDisplacementSmall(D, elementIndex, p);
-                            if (_anisotropicMaterial)
-                                computeStrainDisplacement(J, Coord(0,0,0), (p[b]-p[a]), (p[c]-p[a])); 
-                            else
-                                J = triangleInf[elementIndex].strainDisplacementMatrix;
-                            computeStrain(strain, J, D);
-                            computeStress(stress, triangleInf[elementIndex].materialMatrix, strain);
-                        }
-                        else { // co-rotational method
-                            // first, compute rotation matrix into co-rotational frame
-                            computeRotationLarge( R_0_2, p, a, b, c);
-                            // then compute displacement in this frame
-                            computeDisplacementLarge(D, elementIndex, R_0_2, p);
-                            // and compute postions of a, b, c in the co-rotational frame
-                            Coord A = Coord(0, 0, 0);
-                            Coord B = R_0_2 * (p[b]-p[a]);
-                            Coord C = R_0_2 * (p[c]-p[a]);	
-                            
-                            computeStrainDisplacement(J, A, B, C);
-                            computeStrain(strain, J, D);
-                            computeStress(stress, triangleInf[elementIndex].materialMatrix, strain);
-                        }
-                        // store newly computed values for next time
-                        R_2_0.transpose(R_0_2);
-                        triangleInf[elementIndex].strainDisplacementMatrix = J;
-                        triangleInf[elementIndex].rotation = R_2_0;			
-                        triangleInf[elementIndex].strain = strain;
-                        triangleInf[elementIndex].stress = stress;		
-	
-	                triangleInfo.endEdit();
-                    }
+    Displacement D;
+    StrainDisplacement J;
+    Vec<3,Real> strain;
+    Transformation R_0_2, R_2_0;
+    const VecCoord& p = *this->mstate->getX();
+    Index a = _topology->getTriangle(elementIndex)[0];
+    Index b = _topology->getTriangle(elementIndex)[1];
+    Index c = _topology->getTriangle(elementIndex)[2];
+
+    helper::vector<TriangleInformation>& triangleInf = *(triangleInfo.beginEdit());
+
+    if (method == SMALL) { // classic linear elastic method
+        R_0_2.identity();
+        computeDisplacementSmall(D, elementIndex, p);
+        if (_anisotropicMaterial)
+            computeStrainDisplacement(J, elementIndex, Coord(0,0,0), (p[b]-p[a]), (p[c]-p[a]));
+        else
+            J = triangleInf[elementIndex].strainDisplacementMatrix;
+        computeStrain(strain, J, D);
+        computeStress(stress, triangleInf[elementIndex].materialMatrix, strain);
+    }
+    else { // co-rotational method
+        // first, compute rotation matrix into co-rotational frame
+        computeRotationLarge( R_0_2, p, a, b, c);
+        // then compute displacement in this frame
+        computeDisplacementLarge(D, elementIndex, R_0_2, p);
+        // and compute postions of a, b, c in the co-rotational frame
+        Coord A = Coord(0, 0, 0);
+        Coord B = R_0_2 * (p[b]-p[a]);
+        Coord C = R_0_2 * (p[c]-p[a]);
+
+        computeStrainDisplacement(J, elementIndex, A, B, C);
+        computeStrain(strain, J, D);
+        computeStress(stress, triangleInf[elementIndex].materialMatrix, strain);
+    }
+    // store newly computed values for next time
+    R_2_0.transpose(R_0_2);
+    triangleInf[elementIndex].strainDisplacementMatrix = J;
+    triangleInf[elementIndex].rotation = R_2_0;
+    triangleInf[elementIndex].strain = strain;
+    triangleInf[elementIndex].stress = stress;
+
+    triangleInfo.endEdit();
+}
+
 // --------------------------------------------------------------------------------------
 // ---   	 
 // --------------------------------------------------------------------------------------
@@ -844,7 +976,7 @@ void TriangularFEMForceField<DataTypes>::applyStiffnessSmall(VecCoord &v, Real h
 		J = triangleInf[i].strainDisplacementMatrix;		
 		computeStrain(strain, J, D);
 		computeStress(stress, triangleInf[i].materialMatrix, strain);
-		F = J * stress;
+                F = J * stress * triangleInf[i].area;
 		
 		v[a] += Coord(-h*F[0], -h*F[1], 0);
 		v[b] += Coord(-h*F[2], -h*F[3], 0);
@@ -915,6 +1047,8 @@ void TriangularFEMForceField<DataTypes>::applyStiffnessLarge(VecCoord &v, Real h
 		F[3] = /* J[3][0] * KJtD[0] + */ J[3][1] * stress[1] + J[3][2] * stress[2];
 		F[4] = /* J[4][0] * KJtD[0] + J[4][1] * KJtD[1] + */ J[4][2] * stress[2];
 		F[5] = /* J[5][0] * KJtD[0] + */ J[5][1] * stress[1] /* + J[5][2] * KJtD[2] */ ;
+
+                F *= triangleInf[i].area;
 
 		v[a] += triangleInf[i].rotation * Coord(-h*F[0], -h*F[1], 0);
 		v[b] += triangleInf[i].rotation * Coord(-h*F[2], -h*F[3], 0);
@@ -1051,17 +1185,17 @@ void TriangularFEMForceField<DataTypes>::computeStressAcrossDirection(Real &stre
     this->computeStressAlongDirection(stress_across_dir, elementIndex, dir_t, stress);
 }
                     
-                    template <class DataTypes> 
-                    void TriangularFEMForceField<DataTypes>::computeStressAcrossDirection(Real &stress_across_dir, Index elementIndex, const Coord &dir)
-                    {
-                        Index a = _topology->getTriangle(elementIndex)[0];
-                        Index b = _topology->getTriangle(elementIndex)[1];
-                        Index c = _topology->getTriangle(elementIndex)[2];
-                        const VecCoord& x = *this->mstate->getX();
-                        Coord n = cross(x[b]-x[a],x[c]-x[a]);
-                        Coord dir_t = cross(dir,n);
-                        this->computeStressAlongDirection(stress_across_dir, elementIndex, dir_t);
-                    }
+template <class DataTypes>
+        void TriangularFEMForceField<DataTypes>::computeStressAcrossDirection(Real &stress_across_dir, Index elementIndex, const Coord &dir)
+{
+    Index a = _topology->getTriangle(elementIndex)[0];
+    Index b = _topology->getTriangle(elementIndex)[1];
+    Index c = _topology->getTriangle(elementIndex)[2];
+    const VecCoord& x = *this->mstate->getX();
+    Coord n = cross(x[b]-x[a],x[c]-x[a]);
+    Coord dir_t = cross(dir,n);
+    this->computeStressAlongDirection(stress_across_dir, elementIndex, dir_t);
+}
                     
                     
 template <class DataTypes> 
@@ -1301,6 +1435,27 @@ void TriangularFEMForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x
 		 */
 		
 		//	sout << "EOF AddForce"<<sendl;
+/*	int nodeIdx=88;
+	Transformation r,rt,I;
+	getRotation(r,nodeIdx);
+	rt.transpose(r);
+	I=rt*r;
+
+	serr << "rotation Matrix"<< r <<sendl;
+	serr << "rotation Matrix"<< rt <<sendl;
+	serr << "rotation Matrix"<< I <<sendl;*/
+
+/*	helper::vector<TriangleInformation>& triangleInf = *(triangleInfo.beginEdit());
+	int numNeiTri=_topology->getTrianglesAroundVertex(nodeIdx).size();
+	for(int i=0;i<numNeiTri;i++)
+	{
+		int triIdx=_topology->getTrianglesAroundVertex(nodeIdx)[i];
+		TriangleInformation *tinfo = &triangleInf[triIdx];
+		Transformation r01,r21;
+		r01=tinfo->initialTransformation;
+		r21=tinfo->rotation*r01;
+		serr << "rotation Matrix of"<< i << "triangle"<< r21 <<sendl;
+	}*/
 }
 	
 // --------------------------------------------------------------------------------------

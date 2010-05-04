@@ -262,29 +262,49 @@ namespace sofa
     }
 
     helper::io::Image* VoxelGridLoader::loadImage ( const std::string& filename, const Vec3i& res, const int hsize ) const
-	{
-	  helper::io::Image* image = NULL;
+    {
+        helper::io::Image* image = NULL;
 
-      std::string _filename ( filename );
+        std::string _filename ( filename );
 
-	  if(res.norm2() > 0 && bpp > 0)
-	  {
-		  if ( _filename.length() > 4 && _filename.compare ( _filename.length()-4, 4, ".raw" ) ==0 )
-		  {
-			helper::io::ImageRAW *imageRAW = new helper::io::ImageRAW();
-			imageRAW->init(res[0], res[1], res[2], bpp, hsize);
-			if(imageRAW->load( _filename ))
-				image = imageRAW;
-		  }
-	  }
+        if(res.norm2() > 0 && bpp > 0)
+        {
+            if ( _filename.length() > 4 && _filename.compare ( _filename.length()-4, 4, ".raw" ) ==0 )
+            {
+                helper::io::Image::ChannelFormat channels;
+                switch (bpp)
+                {
+                case 8:
+                    channels = helper::io::Image::L;
+                    break;
+                case 16:
+                    channels = helper::io::Image::LA;
+                    break;
+                case 24:
+                    channels = helper::io::Image::RGB;
+                    break;
+                case 32:
+                    channels = helper::io::Image::RGBA;
+                    break;
+                default:
+                    std::cerr << "VoxelGridLoader::loadImage: Unknown bitdepth: " << bpp << std::endl;
+                    return 0;
+                }
+                helper::io::ImageRAW *imageRAW = new helper::io::ImageRAW();
+                imageRAW->init(res[0], res[1], res[2], 1, helper::io::Image::UINT8, channels);
+                imageRAW->initHeader(hsize);
+                if(imageRAW->load( _filename ))
+                    image = imageRAW;
+            }
+        }
 
-	  if(image == NULL)
-      {
-		  std::cout << "Unable to load file " <<  _filename << std::endl;
-      }
+        if(image == NULL)
+        {
+            std::cerr << "Unable to load file " <<  _filename << std::endl;
+        }
 
-	  return image;
-	}
+        return image;
+    }
 
 
 	int VoxelGridLoader::getDataSize() const
@@ -354,18 +374,18 @@ namespace sofa
 
 	unsigned char * VoxelGridLoader::getData()
 	{
-		return image->getData();
+        return image->getPixels();
 	}
 
 	const unsigned char * VoxelGridLoader::getData() const
 	{
-		return image->getData();
+        return image->getPixels();
 	}
 
   unsigned char * VoxelGridLoader::getSegmentID()
   {
     if( segmentation)
-      return segmentation->getData();
+      return segmentation->getPixels();
     else
       return NULL;
   }
@@ -373,7 +393,7 @@ namespace sofa
   const unsigned char * VoxelGridLoader::getSegmentID() const
   {
     if( segmentation)
-      return segmentation->getData();
+      return segmentation->getPixels();
     else
       return NULL;
   }
@@ -392,7 +412,7 @@ namespace sofa
 			return true;
 
 		helper::io::Image* img = (segmentation == NULL) ? image : segmentation;
-		const unsigned char value = img->getData()[idx];
+        const unsigned char value = img->getPixels()[idx];
 
 		if(!activeVal.empty()) // active values were specified
 		{

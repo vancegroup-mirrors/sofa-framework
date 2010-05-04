@@ -45,13 +45,24 @@ namespace engine
 using namespace sofa::helper;
 using namespace sofa::defaulttype;
 using namespace core::objectmodel;
+using namespace core::componentmodel::topology;
 
 template <class DataTypes>
 BoxROI<DataTypes>::BoxROI()
 : boxes( initData(&boxes, "box", "Box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , f_X0( initData (&f_X0, "rest_position", "Rest position coordinates of the degrees of freedom") )
+, f_edges(initData (&f_edges, "edges", "Edge Topology") )
+, f_triangles(initData (&f_triangles, "triangles", "Triangle Topology") )
 , f_indices( initData(&f_indices,"indices","Indices of the points contained in the ROI") )
-, _drawSize( initData(&_drawSize,0.0,"drawSize","0 -> point based rendering") )
+, f_edgeIndices( initData(&f_edgeIndices,"edgeIndices","Indices of the edges contained in the ROI") )
+, f_triangleIndices( initData(&f_triangleIndices,"triangleIndices","Indices of the triangles contained in the ROI") )
+, f_pointsInBox( initData(&f_pointsInBox,"pointsInBox","Points contained in the ROI") )
+, f_edgesInBox( initData(&f_edgesInBox,"edgesInBox","Edges contained in the ROI") )
+, f_trianglesInBox( initData(&f_trianglesInBox,"f_trianglesInBox","Triangles contained in the ROI") )
+, p_drawBoxes( initData(&p_drawBoxes,false,"drawBoxes","Draw Box(es)") )
+, p_drawPoints( initData(&p_drawPoints,false,"drawPoints","Draw Points") )
+, p_drawEdges( initData(&p_drawEdges,false,"drawEdges","Draw Edges") )
+, p_drawTriangles( initData(&p_drawTriangles,false,"drawTriangle","Draw Triangles") )
 {
     boxes.beginEdit()->push_back(Vec6(0,0,0,1,1,1));
     boxes.endEdit();
@@ -65,20 +76,55 @@ void BoxROI<DataTypes>::init()
 {
     if (!f_X0.isSet())
     {
-	MechanicalState<DataTypes>* mstate;
-	this->getContext()->get(mstate);
-	if (mstate)
-	{
-	    BaseData* parent = mstate->findField("rest_position");
-	    if (parent)
-	    {
-		f_X0.setParent(parent);
-		f_X0.setReadOnly(true);
-	    }
-	}
+		MechanicalState<DataTypes>* mstate;
+		this->getContext()->get(mstate);
+		if (mstate)
+		{
+			BaseData* parent = mstate->findField("rest_position");
+			if (parent)
+			{
+				f_X0.setParent(parent);
+				f_X0.setReadOnly(true);
+			}
+		}
     }
+    if (!f_edges.isSet() || !f_triangles.isSet())
+	{
+		BaseMeshTopology* topology;
+		this->getContext()->get(topology);
+		if (topology)
+		{
+			if (!f_edges.isSet())
+			{
+				BaseData* eparent = topology->findField("edges");
+				if (eparent)
+				{
+					f_edges.setParent(eparent);
+					f_edges.setReadOnly(true);
+				}
+			}
+			if (!f_triangles.isSet())
+			{
+				BaseData* tparent = topology->findField("triangles");
+				if (tparent)
+				{
+					f_triangles.setParent(tparent);
+					f_triangles.setReadOnly(true);
+				}
+			}
+		}
+	}
+
     addInput(&f_X0);
+    addInput(&f_edges);
+    addInput(&f_triangles);
+
     addOutput(&f_indices);
+    addOutput(&f_edgeIndices);
+    addOutput(&f_triangleIndices);
+    addOutput(&f_pointsInBox);
+    addOutput(&f_edgesInBox);
+    addOutput(&f_trianglesInBox);
     setDirtyValue();
 }
 
@@ -86,6 +132,43 @@ template <class DataTypes>
 void BoxROI<DataTypes>::reinit()
 {
     update();
+}
+
+template <class DataTypes>
+bool BoxROI<DataTypes>::isPointInBox(const typename DataTypes::CPos& p, const Vec6& b)
+{
+    return ( p[0] >= b[0] && p[0] <= b[3] && p[1] >= b[1] && p[1] <= b[4] && p[2] >= b[2] && p[2] <= b[5] );
+}
+
+template <class DataTypes>
+bool BoxROI<DataTypes>::isPointInBox(const PointID& pid, const Vec6& b)
+{
+    const VecCoord* x0 = &f_X0.getValue();
+    CPos p =  DataTypes::getCPos((*x0)[pid]);
+    return ( isPointInBox(p,b) );
+}
+
+template <class DataTypes>
+bool BoxROI<DataTypes>::isEdgeInBox(const Edge& e, const Vec6& b)
+{
+    const VecCoord* x0 = &f_X0.getValue();
+    CPos p0 =  DataTypes::getCPos((*x0)[e[0]]);
+    CPos p1 =  DataTypes::getCPos((*x0)[e[1]]);
+    CPos c = (p1+p0)*0.5;
+
+	return isPointInBox(c,b);
+}
+
+template <class DataTypes>
+bool BoxROI<DataTypes>::isTriangleInBox(const Triangle& t, const Vec6& b)
+{
+    const VecCoord* x0 = &f_X0.getValue();
+    CPos p0 =  DataTypes::getCPos((*x0)[t[0]]);
+    CPos p1 =  DataTypes::getCPos((*x0)[t[1]]);
+    CPos p2 =  DataTypes::getCPos((*x0)[t[2]]);
+    CPos c = (p2+p1+p0)/3.0;
+
+	return (isPointInBox(c,b));
 }
 
 template <class DataTypes>
@@ -104,27 +187,66 @@ void BoxROI<DataTypes>::update()
 
     boxes.endEdit();
 
-    SetIndex& indices = *(f_indices.beginEdit());
+    helper::ReadAccessor< Data<helper::vector<BaseMeshTopology::Edge> > > edges = f_edges;
+    helper::ReadAccessor< Data<helper::vector<BaseMeshTopology::Triangle> > > triangles = f_triangles;
+
+    SetIndex& indices = *f_indices.beginEdit();
+    SetIndex& edgeIndices = *f_edgeIndices.beginEdit();
+    SetIndex& triangleIndices = *f_triangleIndices.beginEdit();
+    helper::WriteAccessor< Data<VecCoord > > pointsInBox = f_pointsInBox;
+    helper::WriteAccessor< Data<helper::vector<BaseMeshTopology::Edge> > > edgesInBox = f_edgesInBox;
+    helper::WriteAccessor< Data<helper::vector<BaseMeshTopology::Triangle> > > trianglesInBox = f_trianglesInBox;
+
+
     indices.clear();
+    edgesInBox.clear();
+    trianglesInBox.clear();
 
     const VecCoord* x0 = &f_X0.getValue();
 
     for( unsigned i=0; i<x0->size(); ++i )
     {
-	Real x=0.0,y=0.0,z=0.0;
-	DataTypes::get(x,y,z,(*x0)[i]);
-	for (unsigned int bi=0;bi<vb.size();++bi)
-	{
-	    const Vec6& b=vb[bi];
-            if( x >= b[0] && x <= b[3] && y >= b[1] && y <= b[4] && z >= b[2] && z <= b[5] )
-            {
+    	for (unsigned int bi=0;bi<vb.size();++bi)
+    	{
+    		if (isPointInBox(i, vb[bi]))
+    		{
                 indices.push_back(i);
-		break;
+                pointsInBox.push_back((*x0)[i]);
+                break;
             }
         }
     }
 
+    for(unsigned int i=0 ; i<edges.size() ; i++)
+    {
+    	Edge e = edges[i];
+    	for (unsigned int bi=0;bi<vb.size();++bi)
+    	{
+			if (isEdgeInBox(e, vb[bi]))
+			{
+				edgeIndices.push_back(i);
+				edgesInBox.push_back(e);
+				break;
+			}
+    	}
+    }
+
+    for(unsigned int i=0 ; i<triangles.size() ; i++)
+    {
+    	Triangle t = triangles[i];
+    	for (unsigned int bi=0;bi<vb.size();++bi)
+    	{
+			if (isTriangleInBox(t, vb[bi]))
+			{
+				triangleIndices.push_back(i);
+				trianglesInBox.push_back(t);
+				break;
+			}
+    	}
+    }
+
     f_indices.endEdit();
+
 }
 
 template <class DataTypes>
@@ -133,7 +255,9 @@ void BoxROI<DataTypes>::draw()
     if (!this->getContext()->getShowBehaviorModels())
         return;
 
-    if( _drawSize.getValue() == 0) // old classical drawing by points
+    const VecCoord* x0 = &f_X0.getValue();
+    glColor3f(0.0, 1.0, 1.0);
+    if( p_drawBoxes.getValue())
     {
         ///draw the boxes
         glBegin(GL_LINES);
@@ -174,6 +298,51 @@ void BoxROI<DataTypes>::draw()
         }
         glEnd();
     }
+    if( p_drawPoints.getValue())
+	{
+		///draw the boxes
+		glBegin(GL_POINTS);
+		glPointSize(5.0);
+	    helper::ReadAccessor< Data<VecCoord > > pointsInBox = f_pointsInBox;
+		for (unsigned int i=0; i<pointsInBox.size() ;++i)
+		{
+			CPos p = DataTypes::getCPos(pointsInBox[i]);
+			helper::gl::glVertexT(p);
+		}
+		glEnd();
+	}
+    if( p_drawEdges.getValue())
+	{
+		///draw the boxes
+		glBegin(GL_LINES);
+		helper::ReadAccessor< Data<helper::vector<BaseMeshTopology::Edge> > > edgesInBox = f_edgesInBox;
+		for (unsigned int i=0; i<edgesInBox.size() ;++i)
+		{
+			Edge e = edgesInBox[i];
+			for (unsigned int j=0 ; j<2 ;j++)
+			{
+				CPos p = DataTypes::getCPos((*x0)[e[j]]);
+				helper::gl::glVertexT(p);
+			}
+		}
+		glEnd();
+	}
+    if( p_drawTriangles.getValue())
+	{
+		///draw the boxes
+		glBegin(GL_TRIANGLES);
+		helper::ReadAccessor< Data<helper::vector<BaseMeshTopology::Triangle> > > trianglesInBox = f_trianglesInBox;
+		for (unsigned int i=0; i<trianglesInBox.size() ;++i)
+		{
+			Triangle t = trianglesInBox[i];
+			for (unsigned int j=0 ; j<3 ;j++)
+			{
+				CPos p = DataTypes::getCPos((*x0)[t[j]]);
+				helper::gl::glVertexT(p);
+			}
+		}
+		glEnd();
+	}
 }
 
 template <class DataTypes>

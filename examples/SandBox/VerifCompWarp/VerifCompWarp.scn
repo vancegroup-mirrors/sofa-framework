@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<Node name="root"  dt="1" showBehaviorModels="0" showCollisionModels="0" showMappings="0" showForceFields="1" showInteractionForceFields="1" gravity="0 0 0">
+	<Object type="MasterConstraintSolver" printLog="1"/> 
+	<Object type="CollisionPipeline" depth="6" verbose="0" draw="0"/>
+	<Object type="BruteForceDetection" name="N2" />
+	<Object type="LocalMinDistance" name="Proximity"  alarmDistance="0.2" contactDistance="0.09"  angleCone="0.0"/>
+	<Object type="CollisionResponse" name="Response" response="FrictionContact"/> 
+	<Object type="CollisionGroup" name="Group" />
+
+
+	<Node name="BARRE">
+		<Object type="EulerImplicit" name="cg_odesolver" printLog="false" rayleighStiffness="0.3" rayleighMass="0.2"/>
+		<Object type="SparseLDLSolver" name="linear solver"  />
+		<Object type="MechanicalObject" template="Vec3d"  name="master"/>
+		<Object type="UniformMass" name="massMaster" mass="1"/>
+		<Object type="RegularGrid" name="grid"
+				nx="4" ny="4" nz="9"
+				xmin="-0.015" xmax="0.015"
+				ymin="-0.015" ymax="0.015"
+				zmin="-0.1" zmax="0.0"
+		/><!--nx="7" ny="7" nz="19"-->
+		<Object type="TetrahedronFEMForceField" name="FEM" youngModulus="1e6" poissonRatio="0.4" computeGlobalMatrix="false" method="polar"/>
+		<Object type="BoxROI" name="box_roi" box="-0.02 -0.02 -0.001 0.02 0.02 0.001" /> 
+		<Object type="FixedConstraint" indices="@box_roi.indices" />
+		<Object type="LinearSolverConstraintCorrection"  /> 
+				
+		<Node name="Constraint1">
+			<Object type="MechanicalObject" name="p1" template="Vec3d" position="-0.015 -0.015 -0.1"/>
+			<Object type="SubsetMapping"  />
+		</Node>
+		
+		<Node name="Constraint2">
+			<Object type="MechanicalObject" name="p2" template="Vec3d" position="0.015 0.015 -0.04444"/>
+			<Object type="SubsetMapping"  />
+		</Node>	
+		
+	</Node>	
+	
+	
+	<Node name="ConstraintRef">
+			<Object type="MechanicalObject" name="points" template="Vec3d" position="0.025 0.015 -0.1  0.015 -0.015 -0.04444"/><!-----> <!---0.015 -0.015 -0.1 0.015 0.015 -0.04444-->
+	</Node>
+	
+	<Object type="BilateralInteractionConstraint" object1="BARRE/Constraint1/p1" object2="ConstraintRef/points" first_point="0" second_point="0" />
+	<Object type="BilateralInteractionConstraint" object1="BARRE/Constraint2/p2" object2="ConstraintRef/points" first_point="0" second_point="1" />
+	
+		
+		
+	<Node name="BARRE2">
+		<Object type="EulerImplicit" name="cg_odesolver" printLog="false" rayleighStiffness="0.3" rayleighMass="0.2"/>
+		<Object type="SparseLDLSolver" name="linear solver"  />
+		<Object type="MechanicalObject" template="Vec3d" name="slave" position="@../BARRE/master.position" />
+		<Object type="UniformMass" mass="@../BARRE/massMaster.mass"/>
+		<Object type="RegularGrid" name="grid"
+				nx="4" ny="4" nz="9"
+				xmin="-0.015" xmax="0.015"
+				ymin="-0.015" ymax="0.015"
+				zmin="-0.1" zmax="0.0"
+		/><!--nx="7" ny="7" nz="19"-->
+		<Object type="TetrahedronFEMForceField" name="FEM" youngModulus="@../BARRE/FEM.youngModulus" poissonRatio="@../BARRE/FEM.poissonRatio" 
+															computeGlobalMatrix="@../BARRE/FEM.computeGlobalMatrix" method="@../BARRE/FEM.method"/>
+		<Object type="BoxROI" name="box_roi" box="@../BARRE/box_roi.box" /> 
+		<Object type="FixedConstraint" indices="@box_roi.indices" />
+		<!--<Object type="UncoupledConstraintCorrection"/>-->
+		<Object type="PrecomputedConstraintCorrection" rotations="1" recompute="true" debugViewFrameScale="0.01"  /> 
+				
+		<Node name="Constraint1">
+			<Object type="MechanicalObject" name="p1" template="Vec3d" position="-0.015 -0.015 -0.1"/>
+			<Object type="SubsetMapping"  />
+		</Node>
+		
+		<Node name="Constraint2">
+			<Object type="MechanicalObject" name="p2" template="Vec3d" position="0.015 0.015 -0.04444"/>
+			<Object type="SubsetMapping" />
+		</Node>	
+		
+	</Node>	
+	
+	
+	<Node name="ConstraintRef2">
+			<Object type="MechanicalObject" name="points" template="Vec3d" position="@../ConstraintRef/points.position"/>
+	</Node>
+	
+	<Object type="BilateralInteractionConstraint" object1="BARRE2/Constraint1/p1" object2="ConstraintRef2/points" first_point="0" second_point="0" />
+	<Object type="BilateralInteractionConstraint" object1="BARRE2/Constraint2/p2" object2="ConstraintRef2/points" first_point="0" second_point="1" />
+	
+
+</Node>

@@ -28,7 +28,8 @@ HEADERS +=  \
            MatrixLinearSolver.h \
            NewMatVector.h \
            NewMatMatrix.h \
-	   MatrixExpr.h
+	   MatrixExpr.h \
+           MultiCGLinearSolver.h
 
 SOURCES += initLinearSolver.cpp \
            CGLinearSolver.cpp \
@@ -40,7 +41,8 @@ SOURCES += initLinearSolver.cpp \
            LULinearSolver.cpp \
            BTDLinearSolver.cpp \
            FullVector.cpp \
-           MatrixLinearSolver.cpp 
+           MatrixLinearSolver.cpp \
+           MultiCGLinearSolver.cpp
 
 
 contains(DEFINES,SOFA_HAVE_MKL){
@@ -90,6 +92,7 @@ contains(DEFINES,SOFA_HAVE_PARDISO){
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
+LIBS += -lsofacomponentodesolver$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 
 LIBS += $$SOFA_EXT_LIBS 

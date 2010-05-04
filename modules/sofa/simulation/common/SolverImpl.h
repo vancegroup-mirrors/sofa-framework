@@ -35,6 +35,8 @@ namespace sofa
 namespace simulation
 {
 
+class Visitor;
+class MechanicalVisitor;
 
 /**
  *  \brief Implementation of LinearSolver/OdeSolver/MasterSolver relying on component::System.
@@ -44,6 +46,7 @@ class SOFA_SIMULATION_COMMON_API SolverImpl : public virtual sofa::core::objectm
 {
 public:
     typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
+    typedef std::map<core::objectmodel::BaseContext*, double> MultiNodeDataMap;
 
     SolverImpl();
 
@@ -131,11 +134,65 @@ public:
 
     /// @}
 
+    /// @name Multi-Group operations
+    /// @{
+
+    virtual MultiNodeDataMap* getNodeMap()
+    {
+        return NULL;
+    }
+
+    virtual MultiNodeDataMap* getWriteNodeMap()
+    {
+        return NULL;
+    }
+
+    virtual MultiNodeDataMap* getClearNodeMap()
+    {
+        MultiNodeDataMap* m = getWriteNodeMap();
+        if (m)
+            for (MultiNodeDataMap::iterator it = m->begin(), end = m->end(); it != end; ++it)
+                it->second = 0.0;
+        return m;
+    }
+    
+    /// @}
+
 protected:
+
+    virtual void prepareVisitor(Visitor* v);
+    virtual void prepareVisitor(MechanicalVisitor* v);
+
+    template<class T>
+    void executeVisitor(T v)
+    {
+        prepareVisitor(&v);
+        v.execute( this->getContext() );
+    }
+
+    template<class T>
+    void executeVisitor(T* v)
+    {
+        prepareVisitor(v);
+        v->execute( this->getContext() );
+    }
+
+    template<class T>
+    void executeVisitor(T v, bool prefetch)
+    {
+        prepareVisitor(&v);
+        v.execute( this->getContext(), prefetch );
+    }
+
+    template<class T>
+    void executeVisitor(T* v, bool prefetch)
+    {
+        prepareVisitor(v);
+        v->execute( this->getContext(), prefetch );
+    }
 
     /// Result of latest v_dot operation
     double result;
-
 };
 
 } // namespace simulation

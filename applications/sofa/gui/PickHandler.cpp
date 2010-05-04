@@ -188,6 +188,10 @@ namespace sofa
           setCompatibleInteractor();
           interaction->mouseInteractor->setMouseRayModel(mouseCollision);      
           interaction->mouseInteractor->setBodyPicked(lastPicked);
+          for (unsigned int i=0;i<callbacks.size();++i)
+          {
+              callbacks[i]->execute(lastPicked);
+          }
         }
       
 

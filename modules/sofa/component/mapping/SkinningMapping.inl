@@ -59,8 +59,6 @@ SkinningMapping<BasicMapping>::SkinningMapping ( In* from, Out* to )
         , weightGradients ( initData ( &weightGradients,"weightGradients","weight gradients list for the influences of the references Dofs" ) )
         , nbRefs ( initData ( &nbRefs, ( unsigned ) 3,"nbRefs","nb references for skinning" ) )
         , showBlendedFrame ( initData ( &showBlendedFrame, false, "showBlendedFrame","weights list for the influences of the references Dofs" ) )
-        , computeJ ( initData ( &computeJ, false, "computeJ", "compute matrix J in addition to apply for the dual quat interpolation method." ) )
-        , computeAllMatrices ( initData ( &computeAllMatrices, false, "computeAllMatrices","compute all the matrices in addition to apply for the dual quat interpolation method." ) )
         , showDefTensors ( initData ( &showDefTensors, false, "showDefTensors","show computed deformation tensors." ) )
         , showDefTensorsValues ( initData ( &showDefTensorsValues, false, "showDefTensorsValues","Show Deformation Tensors Values." ) )
         , showDefTensorScale ( initData ( &showDefTensorScale, 1.0, "showDefTensorScale","deformation tensor scale." ) )
@@ -207,7 +205,7 @@ void SkinningMapping<BasicMapping>::init()
         {
             sortReferences ( m_reps);
         }
-        else if ( INTERPOLATION_DUAL_QUATERNION)
+        else if ( interpolationType.getValue() == INTERPOLATION_DUAL_QUATERNION)
         {
             VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
             VecInCoord& xfrom = *this->fromModel->getX0();
@@ -273,8 +271,8 @@ void SkinningMapping<BasicMapping>::updateWeights ()
     VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
     VecInCoord& xfrom = *this->fromModel->getX0();
 
-    vector<vector<double> >& m_coefs = * ( coefs.beginEdit() );
-    Coefs<GeoCoord>& m_dweight = * ( weightGradients.beginEdit());
+    VVD& m_coefs = * ( coefs.beginEdit() );
+    SVector<SVector<GeoCoord> >& m_dweight = * ( weightGradients.beginEdit());
     const vector<int>& m_reps = repartition.getValue();
 
     m_coefs.resize ( xfrom.size() );
@@ -436,9 +434,9 @@ void SkinningMapping<BasicMapping>::updateWeights ()
 }
 
 template <class BasicMapping>
-void SkinningMapping<BasicMapping>::setWeightCoefs ( vector<vector<double> > &weights )
+void SkinningMapping<BasicMapping>::setWeightCoefs ( VVD &weights )
 {
-    vector<vector<double> > * m_coefs = coefs.beginEdit();
+    VVD * m_coefs = coefs.beginEdit();
     m_coefs->clear();
     m_coefs->insert ( m_coefs->begin(), weights.begin(), weights.end() );
     coefs.endEdit();
@@ -458,7 +456,7 @@ template <class BasicMapping>
 void SkinningMapping<BasicMapping>::apply ( typename Out::VecCoord& out, const typename In::VecCoord& in )
 {
     const vector<int>& m_reps = repartition.getValue();
-    const vector<vector<double> >& m_coefs = coefs.getValue();
+    const VVD& m_coefs = coefs.getValue();
 
     switch ( interpolationType.getValue() )
     {
@@ -493,7 +491,7 @@ template <class BasicMapping>
 void SkinningMapping<BasicMapping>::applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
 {
     const vector<int>& m_reps = repartition.getValue();
-    const vector<vector<double> >& m_coefs = coefs.getValue();
+    const VVD& m_coefs = coefs.getValue();
     VecCoord& xto = *this->toModel->getX();
     out.resize ( xto.size() );
     Deriv v,omega;
@@ -559,7 +557,7 @@ template <class BasicMapping>
 void SkinningMapping<BasicMapping>::applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 {
     const vector<int>& m_reps = repartition.getValue();
-    const vector<vector<double> >& m_coefs = coefs.getValue();
+    const VVD& m_coefs = coefs.getValue();
 
     Deriv v,omega;
     if ( ! ( maskTo->isInUse() ) )
@@ -627,7 +625,7 @@ template <class BasicMapping>
 void SkinningMapping<BasicMapping>::applyJT ( typename In::VecConst& out, const typename Out::VecConst& in )
 {
     const vector<int>& m_reps = repartition.getValue();
-    const vector<vector<double> >& m_coefs = coefs.getValue();
+    const VVD& m_coefs = coefs.getValue();
     const unsigned int nbr = nbRefs.getValue();
     const unsigned int nbi = this->fromModel->getX()->size();
     Deriv omega;
@@ -681,8 +679,8 @@ void SkinningMapping<BasicMapping>::draw()
     const typename Out::VecCoord& xto = *this->toModel->getX();
     const typename In::VecCoord& xfrom = *this->fromModel->getX();
     const vector<int>& m_reps = repartition.getValue();
-    const vector<vector<double> >& m_coefs = coefs.getValue();
-		const Coefs<GeoCoord>& dw = weightGradients.getValue();
+    const VVD& m_coefs = coefs.getValue();
+		const SVector<SVector<GeoCoord> >& dw = weightGradients.getValue();
     const unsigned int nbRef = nbRefs.getValue();
     const int valueScale = showValuesNbDecimals.getValue();
     int scale = 1;

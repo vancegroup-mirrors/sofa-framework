@@ -188,7 +188,7 @@ namespace sofa
                     if (i < factor.size()) correction*=factor[i];
                     else                   correction*=factor.back();
                   }
-                constraint->addConstraint( idxEquations[index][i], -correction, core::componentmodel::behavior::BaseLMConstraint::BILATERAL);
+                constraint->addConstraint( idxEquations[index][i], -correction);
               }
             
           }

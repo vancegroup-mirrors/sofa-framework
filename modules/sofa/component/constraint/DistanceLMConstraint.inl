@@ -194,7 +194,7 @@ namespace sofa
                   break;
                 }
               };
-            constraint->addConstraint( registeredConstraints[i].first, registeredConstraints[i].second, -correction, core::componentmodel::behavior::BaseLMConstraint::BILATERAL);
+            constraint->addConstraint( registeredConstraints[i].first, registeredConstraints[i].second, -correction);
           }
       }
 

@@ -82,10 +82,10 @@ bool isSchedulerError(const HDErrorInfo *error)
         case HD_TIMER_ERROR:
         case HD_INVALID_PRIORITY:
         case HD_SCHEDULER_FULL:
-            return HD_TRUE;
+            return true;
 
         default:
-            return HD_FALSE;
+            return false;
     }
 }
 

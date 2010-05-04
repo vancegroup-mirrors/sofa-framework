@@ -171,17 +171,22 @@ template <class DataTypes>
 inline void TetrahedronFEMForceField<DataTypes>::getElementStiffnessMatrix(Real* stiffness, unsigned int elementIndex)
 {
 // 	helper::vector<TetrahedronInformation>& tetraInf = *(tetrahedronInfo.beginEdit());
+	if(needUpdateTopology)
+	{
+		reinit();
+		needUpdateTopology = false;
+	}
 	Transformation Rot;
 	StiffnessMatrix JKJt,tmp;
 	Rot[0][0]=Rot[1][1]=Rot[2][2]=1;
 	Rot[0][1]=Rot[0][2]=0;
 	Rot[1][0]=Rot[1][2]=0;
 	Rot[2][0]=Rot[2][1]=0;
-	computeStiffnessMatrix(JKJt,tmp,_materialsStiffnesses[elementIndex], _strainDisplacements[elementIndex],Rot);
+	computeStiffnessMatrix(JKJt,tmp,_materialsStiffnesses[elementIndex], _strainDisplacements[elementIndex],_initialRotations[elementIndex]);
 	for(int i=0;i<12;i++)
 	{
 		for(int j=0;j<12;j++)
-			stiffness[i*12+j]=JKJt(i,j);
+			stiffness[i*12+j]=tmp(i,j);
 	}
 // 	tetrahedronInfo.endEdit();
 }
@@ -189,8 +194,12 @@ inline void TetrahedronFEMForceField<DataTypes>::getElementStiffnessMatrix(Real*
 template <class DataTypes>
 inline void TetrahedronFEMForceField<DataTypes>::getElementStiffnessMatrix(Real* stiffness, Tetra& te)
 {
+  	if (needUpdateTopology)
+	{
+		reinit();
+		needUpdateTopology = false;
+	}
 	const VecCoord *X0=this->mstate->getX0();
-
 	Index a = te[0];
 	Index b = te[1];
 	Index c = te[2];
@@ -222,11 +231,13 @@ inline void TetrahedronFEMForceField<DataTypes>::getElementStiffnessMatrix(Real*
 	Rot[0][1]=Rot[0][2]=0;
 	Rot[1][0]=Rot[1][2]=0;
 	Rot[2][0]=Rot[2][1]=0;
-	computeStiffnessMatrix(JKJt, tmp, materialMatrix, strainMatrix, Rot);
+
+	R_0_1.transpose();
+	computeStiffnessMatrix(JKJt, tmp, materialMatrix, strainMatrix, R_0_1);
 	for(int i=0;i<12;i++)
 	{
 		for(int j=0;j<12;j++)
-			stiffness[i*12+j]=JKJt(i,j);
+			stiffness[i*12+j]=tmp(i,j);
 	}
 }
 
@@ -267,7 +278,7 @@ void TetrahedronFEMForceField<DataTypes>::computeMaterialStiffness(int i, Index&
 	// divide by 36 times volumes of the element
 
 
-        const VecCoord &initialPoints=_initialPoints.getValue();
+    const VecCoord &initialPoints=_initialPoints.getValue();
 	Coord A = initialPoints[b] - initialPoints[a];
 	Coord B = initialPoints[c] - initialPoints[a];
 	Coord C = initialPoints[d] - initialPoints[a];
@@ -311,7 +322,7 @@ void TetrahedronFEMForceField<DataTypes>::computeMaterialStiffness(MaterialStiff
 	{
 		serr << "ERROR: Negative volume for tetra"<<a<<','<<b<<','<<c<<','<<d<<"> = "<<volumes6/6<<sendl;
 	}
-	materialMatrix  /= volumes6;
+	materialMatrix  /= volumes6*6;
 }
 
 template<class DataTypes>

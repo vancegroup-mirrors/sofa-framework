@@ -32,6 +32,7 @@
 
 #include <sofa/core/componentmodel/behavior/BaseController.h>
 #include <sofa/component/visualModel/OglModel.h>
+#include <sofa/component/controller/Controller.h>
 
 namespace sofa
 {
@@ -83,7 +84,7 @@ typedef struct {
 /**
 * Omni driver
 */
-class NewOmniDriver : public core::componentmodel::behavior::BaseController 
+class NewOmniDriver : public Controller 
 {
 
 public:
@@ -101,17 +102,31 @@ public:
         NewOmniDriver();
         virtual ~NewOmniDriver();
 
-		virtual void init();
+		virtual void bwdInit();
+		virtual void reset();
         void reinit();
+
         void cleanup();
 		virtual void draw();
 
         void setForceFeedback(ForceFeedback* ff);
 
+		void onKeyPressedEvent(core::objectmodel::KeypressedEvent *);
+		void onKeyReleasedEvent(core::objectmodel::KeyreleasedEvent *);
+
+		void setDataValue();
+		void reinitVisual();
+
 private:
         void handleEvent(core::objectmodel::Event *);
 		sofa::component::visualmodel::OglModel *visu_base, *visu_end;
 		bool noDevice;
+
+		bool moveOmniBase;
+		Vec3d positionBase_buf;
+
+
+
 
 };
 

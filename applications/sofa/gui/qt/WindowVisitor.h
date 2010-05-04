@@ -27,9 +27,9 @@
 #ifndef SOFA_WINDOWVISITOR_H
 #define SOFA_WINDOWVISITOR_H
 
-#include "VisitorGUI.h"
-
-#include "PieWidget.h"
+#include <sofa/gui/qt/VisitorGUI.h>
+#include <sofa/gui/qt/PieWidget.h>
+#include <sofa/gui/qt/QVisitorControlPanel.h>
 
 #ifdef SOFA_QT4
 #include <Q3ListViewItem>
@@ -58,6 +58,7 @@ namespace sofa
     {
       
 #ifndef SOFA_QT4
+      typedef QListView Q3ListView;
       typedef QListViewItem Q3ListViewItem;
 #endif
 
@@ -86,6 +87,8 @@ namespace sofa
 	  void collapseNode();
 	  void expandNode();
           
+          void focusOn(QString focus);
+
           static componentType getComponentType(std::string name)
             {               
               if (name == "Node")
@@ -107,8 +110,6 @@ namespace sofa
             clearGraph();
 	  }
 
-
-	  public slots:
 	  void clearGraph()
           {
             graphView->clear();
@@ -131,6 +132,8 @@ namespace sofa
 
           QWidget *statsWidget;
 	protected:
+          bool setFocusOn(Q3ListViewItem *item, QString text);
+
 	  static QPixmap *icons[OTHER+1];
 
           std::vector< dataTime > componentsTime;
@@ -142,6 +145,7 @@ namespace sofa
           std::vector< dataTime > componentsTimeMax;
           std::vector< dataTime > visitorsTimeMax;
 
+          QVisitorControlPanel *controlPanel;
           ChartsWidget *chartsComponent;
           ChartsWidget *chartsVisitor;
           QComboBox *typeOfCharts;

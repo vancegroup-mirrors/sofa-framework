@@ -42,6 +42,7 @@ namespace sofa{
 
         unsigned int getIndex() const {return index;};
         bool isFull() const;
+        void setFull(){size+=maxSize;};
         bool isEmpty() const;
         bool isDirty() const;
 

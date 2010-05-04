@@ -60,11 +60,16 @@ namespace sofa
 		if (!in.fail())
 		  {
 		    Ogre::Vector3 camera_position;
+		    Ogre::Vector3 camera_zero;
 		    Ogre::Quaternion camera_orientation;
+
+		    in >> camera_zero[0];
+		    in >> camera_zero[1];
+		    in >> camera_zero[2];
+
 		    in >> camera_position[0];
 		    in >> camera_position[1];
 		    in >> camera_position[2];
-
 
 		    in >> camera_orientation.x;
 		    in >> camera_orientation.y;
@@ -73,7 +78,7 @@ namespace sofa
 
 		    camera_orientation.normalise();
 		    
-
+		    zeroNode->setPosition(camera_zero);
 		    mCamera->setPosition(camera_position);
 		    mCamera->setOrientation(camera_orientation);
  		    update();
@@ -122,14 +127,14 @@ namespace sofa
 		  {
 
 		    Ogre::Vector3 position_cam = mCamera->getPosition();
+		    Ogre::Vector3 position_zero = zeroNode->getPosition();
 		    Ogre::Quaternion orientation_cam = mCamera->getOrientation();
 
+		    out << position_zero[0] << " " << position_zero[1] << " " << position_zero[2] << "\n";
 		    out << position_cam[0] << " " << position_cam[1] << " " << position_cam[2] << "\n";
 		    out << orientation_cam.x << " " << orientation_cam.y << " " << orientation_cam.z << " " << orientation_cam.w << "\n";
 
 		    out.close();
-
-		    
 		  }
 		std::cout << "View parameters saved in "<<viewFileName<<std::endl;
 	      }

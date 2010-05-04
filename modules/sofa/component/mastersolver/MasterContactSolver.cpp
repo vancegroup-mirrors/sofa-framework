@@ -27,6 +27,7 @@
 #include <sofa/simulation/common/AnimateVisitor.h>
 #include <sofa/simulation/common/BehaviorUpdatePositionVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/simulation/common/CollisionVisitor.h>
 #include <sofa/simulation/common/SolveVisitor.h>
 
 #include <sofa/core/ObjectFactory.h>
@@ -81,17 +82,19 @@ void MasterContactSolver::step(double dt)
 {
     simulation::Node *context =  (simulation::Node *)(this->getContext()); // access to current node
 
-    helper::system::thread::CTime timer;
-    helper::system::thread::CTime timerTotal;
+    //helper::system::thread::CTime timer;
+    //helper::system::thread::CTime timerTotal;
     double time = 0.0;
     double timeTotal=0.0;
     double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
     if ( displayTime.getValue() )
       {
-        time = (double) timer.getTime();
-        timeTotal = (double) timerTotal.getTime();
+		  time = (double) helper::system::thread::CTime::getTime();
+        timeTotal = (double) helper::system::thread::CTime::getTime();
         //sout<<"********* Start Iteration : " << _numConstraints << " constraints *********" <<sendl;
       }
+
+    context->execute<simulation::CollisionResetVisitor>();
 
     // Update the BehaviorModels
     // Required to allow the RayPickInteractor interaction
@@ -130,9 +133,9 @@ void MasterContactSolver::step(double dt)
     if ( displayTime.getValue() )
       {
         sout << " >>>>> Begin display MasterContactSolver time" << sendl;
-        sout<<" Free Motion " << ( (double) timer.getTime() - time)*timeScale <<" ms" <<sendl;
+        sout<<" Free Motion " << ( (double) helper::system::thread::CTime::getTime() - time)*timeScale <<" ms" <<sendl;
 
-        time = (double) timer.getTime();
+        time = (double) helper::system::thread::CTime::getTime();
       }	 	
 
     // Collision detection and response creation
@@ -142,8 +145,8 @@ void MasterContactSolver::step(double dt)
 
     if ( displayTime.getValue() )
       {
-        sout<<" computeCollision " << ( (double) timer.getTime() - time)*timeScale <<" ms" <<sendl;
-        time = (double) timer.getTime();
+        sout<<" computeCollision " << ( (double) helper::system::thread::CTime::getTime() - time)*timeScale <<" ms" <<sendl;
+        time = (double) helper::system::thread::CTime::getTime();
       }
 
     //SOLVE CONSTRAINT	
@@ -157,7 +160,7 @@ void MasterContactSolver::step(double dt)
 
     if ( displayTime.getValue() )
       {
-        sout<<" contactCorrections " <<( (double) timer.getTime() - time)*timeScale <<" ms" <<sendl;
+        sout<<" contactCorrections " <<( (double) helper::system::thread::CTime::getTime() - time)*timeScale <<" ms" <<sendl;
         sout << "<<<<<< End display MasterContactSolver time." << sendl;
       }
 

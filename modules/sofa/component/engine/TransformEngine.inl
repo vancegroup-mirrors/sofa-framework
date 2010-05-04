@@ -40,7 +40,7 @@ namespace engine
 template <class DataTypes>
 TransformEngine<DataTypes>::TransformEngine()
 : f_inputX ( initData (&f_inputX, "input_position", "input array of 3d points") )
-, f_outputX( initData (&f_outputX, "output_position", "output array of 3d points projected on a plane") )
+, f_outputX( initData (&f_outputX, "output_position", "output array of 3d points") )
 , translation(initData(&translation, defaulttype::Vector3(0,0,0),"translation", "translation vector ") )
 , rotation(initData(&rotation, defaulttype::Vector3(0,0,0), "rotation", "rotation vector ") )
 , scale(initData(&scale, defaulttype::Vector3(1,1,1),"scale", "scale factor") )
@@ -106,9 +106,8 @@ struct Rotation : public TransformOperation<DataTypes>
     DataTypes::get(pos[0],pos[1],pos[2],p);
     pos=q.rotate(pos);
     DataTypes::set(p,pos[0],pos[1],pos[2]);
-  };
-    
-    
+  }
+
   void configure(const defaulttype::Vector3 &r)
   {
     q=helper::Quater<Real>::createQuaterFromEuler( r*(M_PI/180.0));
@@ -122,7 +121,7 @@ template<>
 void Rotation<defaulttype::Rigid3fTypes>::execute(defaulttype::Rigid3fTypes::Coord &p) const
 {     
   p.getCenter() = q.rotate(p.getCenter());
-  p.getOrientation() *= q;
+  p.getOrientation() = q*p.getOrientation();
 }
 
 #endif
@@ -131,7 +130,7 @@ template<>
 void Rotation<defaulttype::Rigid3dTypes>::execute(defaulttype::Rigid3dTypes::Coord &p) const
 {
   p.getCenter() = q.rotate(p.getCenter());
-  p.getOrientation() *= q;
+  p.getOrientation() = q*p.getOrientation();
 }
 #endif
 
@@ -200,7 +199,7 @@ void TransformEngine<DataTypes>::update()
    Transform<DataTypes> transformation;
    if (s != defaulttype::Vector3(1,1,1))  transformation.add(new Scale<DataTypes>)->configure(s);
    if (r != defaulttype::Vector3(0,0,0))  transformation.add(new Rotation<DataTypes>)->configure(r);
-   if (t != defaulttype::Vector3(0,0,0))  transformation.add(new Translation<DataTypes>)->configure(t);   
+   if (t != defaulttype::Vector3(0,0,0))  transformation.add(new Translation<DataTypes>)->configure(t);
 
    //Get input
    const VecCoord& in = f_inputX.getValue();
@@ -220,11 +219,6 @@ void TransformEngine<DataTypes>::update()
        delete operations.back();
        operations.pop_back();
      }
-  
-   //Reseting to default values
-   translation.setValue(defaulttype::Vector3(0,0,0));
-   rotation   .setValue(defaulttype::Vector3(0,0,0));
-   scale      .setValue(defaulttype::Vector3(1,1,1));
 
    f_outputX.endEdit();
 }

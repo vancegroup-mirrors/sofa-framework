@@ -66,8 +66,8 @@ namespace topology
 
 		PointSetGeometryAlgorithms()
 		: GeometryAlgorithms()
-		  ,debugViewIndicesScale (core::objectmodel::Base::initData(&debugViewIndicesScale, (float) 0.0001, "debugViewIndicesScale", "Debug : scale for view topology indices"))
-		  ,debugViewPointIndices (core::objectmodel::Base::initData(&debugViewPointIndices, (bool) false, "debugViewPointIndices", "Debug : view Point indices"))
+		  ,showIndicesScale (core::objectmodel::Base::initData(&showIndicesScale, (float) 0.0001, "showIndicesScale", "Debug : scale for view topology indices"))
+		  ,showPointIndices (core::objectmodel::Base::initData(&showPointIndices, (bool) false, "showPointIndices", "Debug : view Point indices"))
 		{
 		}
 		
@@ -102,7 +102,14 @@ namespace topology
 		sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *getDOF() const { return object;	}
 
 		float PointIndicesScale;
-								
+	
+	template<class T>
+	static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg) {
+	    if (context->getMechanicalState() && dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
+			    return false;
+	    return BaseObject::canCreate(obj, context, arg);	    
+	}	
+		
         virtual std::string getTemplateName() const
         {
           return templateName(this);
@@ -117,8 +124,8 @@ namespace topology
 		/** the object where the mechanical DOFs are stored */
 		sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *object;
 		sofa::core::componentmodel::topology::BaseMeshTopology* m_topology;
-		Data<float> debugViewIndicesScale;
-		Data<bool> debugViewPointIndices;
+		Data<float> showIndicesScale;
+		Data<bool> showPointIndices;
 	};
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_POINTSETGEOMETRYALGORITHMS_CPP)

@@ -1,7 +1,7 @@
 <Node name="root" dt="0.01" gravity="0 -9.81 0" showBehaviorModels="0" showCollisionModels="0" showVisualModels="1">
 
 	<Node name="tracking">
-		<VRPNTracker name="ircams" listening="true" />
+		<VRPNTracker name="ircams" listening="true" serverName="127.0.0.1" serverPort="3883" />
 		<ToolTracker name="tool" points="@ircams.points"  distances="0.05 0.125 0.108" />
 	</Node>
 	<Node name="Mecha">

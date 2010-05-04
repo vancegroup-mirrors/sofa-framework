@@ -111,6 +111,7 @@ SOURCES += mycuda.cpp \
 CUDA_SOURCES += mycuda.cu \
            CudaMechanicalObject.cu \
            CudaUniformMass.cu \
+	   CudaTypesBase.cu \
            CudaFixedConstraint.cu \
            CudaSpringForceField.cu \
            CudaTetrahedronFEMForceField.cu \

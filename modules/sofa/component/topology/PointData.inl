@@ -47,8 +47,8 @@ namespace topology
 	////////////////////////////////////////implementation//////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	template <typename T, typename Alloc>
-	void PointData<T,Alloc>::handleTopologyEvents( std::list<  const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
+	template <typename T, typename VecT>
+	void PointData<T,VecT>::handleTopologyEvents( std::list<  const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
 												std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
@@ -150,7 +150,7 @@ namespace topology
 			   const sofa::helper::vector< unsigned int >& indexList = ( static_cast< const PointsMoved * >( *changeIt ) )->indicesList;
 			   const sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsMoved * >( *changeIt ) )->ancestorsList;
 			   sofa::helper::vector< sofa::helper::vector< double > > coefs = ( static_cast< const PointsMoved * >( *changeIt ) )->baryCoefsList;
-			   sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			   container_type& data = *(this->beginEdit());
 
 			   for (unsigned int i = 0; i <indexList.size(); i++)
 			   {
@@ -214,10 +214,10 @@ namespace topology
 		}
 	}
 
-	template <typename T, typename Alloc>
-	void PointData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 
+	template <typename T, typename VecT>
+	void PointData<T,VecT>::swap( unsigned int i1, unsigned int i2 ) 
 	{
-		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+		container_type& data = *(this->beginEdit());
 
 		T tmp = data[i1];
 		data[i1] = data[i2];
@@ -226,12 +226,12 @@ namespace topology
 		this->endEdit();
 	}
 
-	template <typename T, typename Alloc>
-	void PointData<T,Alloc>::add( unsigned int nbPoints, 
+	template <typename T, typename VecT>
+	void PointData<T,VecT>::add( unsigned int nbPoints, 
 								const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors, 
 								const sofa::helper::vector< sofa::helper::vector< double > >& coefs) 
 	{
-		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+		container_type& data = *(this->beginEdit());
 
 		// Using default values
 		unsigned int i0 = data.size();
@@ -255,12 +255,12 @@ namespace topology
 
 
 
-	template <typename T, typename Alloc>
-	void PointData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index ) 
+	template <typename T, typename VecT>
+	void PointData<T,VecT>::remove( const sofa::helper::vector<unsigned int> &index ) 
 	{
 		unsigned int last = this->getValue().size() -1;
 
-		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+		container_type& data = *(this->beginEdit());
 
 		for (unsigned int i = 0; i < index.size(); ++i)
 		{
@@ -274,12 +274,12 @@ namespace topology
 	}
 
 
-	template <typename T, typename Alloc>
-	void PointData<T,Alloc>::renumber( const sofa::helper::vector<unsigned int> &index ) 
+	template <typename T, typename VecT>
+	void PointData<T,VecT>::renumber( const sofa::helper::vector<unsigned int> &index ) 
 	{
-		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+		container_type& data = *(this->beginEdit());
 
-		sofa::helper::vector< T,Alloc > copy = this->getValue(); // not very efficient memory-wise, but I can see no better solution...
+		container_type copy = this->getValue(); // not very efficient memory-wise, but I can see no better solution...
 		for (unsigned int i = 0; i < index.size(); ++i)
 		{
 			data[i] = copy[ index[i] ];

@@ -57,7 +57,7 @@ namespace topology
 	;
 
     #ifndef SOFA_FLOAT
-	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec3dTypes>;
+	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec3dTypes>; 
 	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec2dTypes>;
 	template class SOFA_COMPONENT_TOPOLOGY_API TetrahedronSetGeometryAlgorithms<Vec1dTypes>;
     #endif

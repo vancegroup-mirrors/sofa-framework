@@ -468,7 +468,7 @@ namespace topology
     PointSetGeometryAlgorithms<DataTypes>::draw();
 
     // Draw Edges indices
-    if (debugViewEdgeIndices.getValue())
+    if (showEdgeIndices.getValue())
     {
       Mat<4,4, GLfloat> modelviewM;
       const VecCoord& coords = *(this->object->getX());

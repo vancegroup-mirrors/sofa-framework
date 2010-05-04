@@ -53,7 +53,7 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 }
 
   
-  void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* scene, const sofa::helper::vector<Contact*>& contacts)
+void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* scene, const sofa::helper::vector<Contact*>& contacts)
 {
 	int groupIndex = 1;
 	simulation::Node* node = dynamic_cast<simulation::Node*>(scene);
@@ -91,8 +91,12 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 		{
 			// we can merge the groups
 			// if solvers are compatible...
-			SolverSet solver = SolverMerger::merge(group1->solver[0], group2->solver[0]);
-                        if (solver.odeSolver!=NULL)
+            bool mergeSolvers = (!group1->solver.empty() || !group2->solver.empty());
+			SolverSet solver;
+            if (mergeSolvers)
+                solver = SolverMerger::merge(group1->solver[0], group2->solver[0]);
+            //else std::cout << "New integration group below multi-group solver" << std::endl;
+            if (!mergeSolvers || solver.odeSolver!=NULL)
 			{
 				bool group1IsColl = groupSet.find(group1)!=groupSet.end();
 				bool group2IsColl = groupSet.find(group2)!=groupSet.end();
@@ -125,40 +129,34 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 					{
 						// merge groups and remove group2
 					    SolverSet solver2;
-                                            solver2.odeSolver = group2->solver[0];
-                                            group2->removeObject(solver2.odeSolver);
-                                            if (!group2->linearSolver.empty() || !group2->constraintSolver.empty())
-                                            {
-                                                if (!group2->linearSolver.empty())
-                                                {
-                                                    solver2.linearSolver = group2->linearSolver[0];
-                                                    group2->removeObject(solver2.linearSolver);
-                                                }
-                                                if (!group2->constraintSolver.empty())
-                                                {
-                                                    solver2.constraintSolver = group2->constraintSolver[0];
-                                                    group2->removeObject(solver2.constraintSolver);
-                                                }
-					    }
-					    else
-                                            {
-                                                solver2.linearSolver = NULL;
-                                                solver2.constraintSolver = NULL;
-                                            }
-                                            while(!group2->object.empty())
-                                                group->moveObject(*group2->object.begin());
-                                            while(!group2->child.empty())
-                                                group->moveChild(*group2->child.begin());
-                                            parent->removeChild((simulation::Node*)group2);
-                                            groupSet.erase(group2);
-                                            mergedGroups[group2] = group;
-                                            delete solver2.odeSolver;
-                                            if (solver2.linearSolver) delete solver2.linearSolver;
-                                            if (solver2.constraintSolver) delete solver2.constraintSolver;
-                                            // BUGFIX(2007-06-23 Jeremie A): we can't remove group2 yet, to make sure the keys in mergedGroups are unique.
-                                            removedGroup.push_back(group2);
-                                            //delete group2;
-
+                        if (mergeSolvers)
+                        {
+                            solver2.odeSolver = group2->solver[0];
+                            group2->removeObject(solver2.odeSolver);
+                            if (!group2->linearSolver.empty())
+                            {
+                                solver2.linearSolver = group2->linearSolver[0];
+                                group2->removeObject(solver2.linearSolver);
+                            }
+                            if (!group2->constraintSolver.empty())
+                            {
+                                solver2.constraintSolver = group2->constraintSolver[0];
+                                group2->removeObject(solver2.constraintSolver);
+                            }
+                        }
+                        while(!group2->object.empty())
+                            group->moveObject(*group2->object.begin());
+                        while(!group2->child.empty())
+                            group->moveChild(*group2->child.begin());
+                        parent->removeChild((simulation::Node*)group2);
+                        groupSet.erase(group2);
+                        mergedGroups[group2] = group;
+                        if (solver2.odeSolver) delete solver2.odeSolver;
+                        if (solver2.linearSolver) delete solver2.linearSolver;
+                        if (solver2.constraintSolver) delete solver2.constraintSolver;
+                        // BUGFIX(2007-06-23 Jeremie A): we can't remove group2 yet, to make sure the keys in mergedGroups are unique.
+                        removedGroup.push_back(group2);
+                        //delete group2;
 					}
 				}
 				else
@@ -167,29 +165,29 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 					group = group2;
 					group->moveChild(group1);
 				}
-                                if (!group->solver.empty())
+                if (!group->solver.empty())
 				{
-                                        core::componentmodel::behavior::OdeSolver* solver2 = group->solver[0];
+                    core::componentmodel::behavior::OdeSolver* solver2 = group->solver[0];
 					group->removeObject(solver2);
 					delete solver2;
 				}
-                                if (!group->linearSolver.empty())
+                if (!group->linearSolver.empty())
 				{
 					core::componentmodel::behavior::LinearSolver* solver2 = group->linearSolver[0];
 					group->removeObject(solver2);
 					delete solver2;
 				}
-                                if (!group->constraintSolver.empty())
-                                {
-                                        core::componentmodel::behavior::ConstraintSolver* solver2 = group->constraintSolver[0];
-                                        group->removeObject(solver2);
-                                        delete solver2;
-                                }
-
-				group->addObject(solver.odeSolver);
+                if (!group->constraintSolver.empty())
+                {
+                    core::componentmodel::behavior::ConstraintSolver* solver2 = group->constraintSolver[0];
+                    group->removeObject(solver2);
+                    delete solver2;
+                }
+                if (solver.linearSolver)
+                    group->addObject(solver.odeSolver);
 				if (solver.linearSolver)
 				    group->addObject(solver.linearSolver);
-                                if (solver.constraintSolver)
+                if (solver.constraintSolver)
 				    group->addObject(solver.constraintSolver);
 			}
 		}
@@ -228,19 +226,45 @@ simulation::Node* DefaultCollisionGroupManager::buildCollisionGroup() {
 
 simulation::Node* DefaultCollisionGroupManager::getIntegrationNode(core::CollisionModel* model)
 {
-        simulation::Node* node = static_cast<simulation::Node*>(model->getContext());
-        helper::vector< core::componentmodel::behavior::OdeSolver *> listSolver;
-        node->get< core::componentmodel::behavior::OdeSolver >(&listSolver);
-
-        if (!listSolver.empty()) return static_cast<simulation::Node*>(listSolver.back()->getContext());
-        else                     return NULL;
+    simulation::Node* node = static_cast<simulation::Node*>(model->getContext());
+    helper::vector< core::componentmodel::behavior::OdeSolver *> listSolver;
+    node->get< core::componentmodel::behavior::OdeSolver >(&listSolver);
+    
+    if (listSolver.empty())
+        return NULL;
+    simulation::Node* solvernode = static_cast<simulation::Node*>(listSolver.back()->getContext());
+    if (solvernode->linearSolver.empty())
+        return solvernode; // no linearsolver
+    core::componentmodel::behavior::LinearSolver * linearSolver = solvernode->linearSolver[0];
+    if (!linearSolver->isMultiGroup())
+    {
+        //std::cout << "Linear solver " << linearSolver->getName() << " of CM " << model->getName() << " is not multi-group" << std::endl;
+        return solvernode;
+    }
+    // This solver handles multiple groups, we have to find which group contains this collision model
+    // First move up to the node of the initial mechanical object
+    while (node->mechanicalMapping && node->mechanicalMapping->getMechFrom())
+        node = static_cast<simulation::Node*>(node->mechanicalMapping->getMechFrom()->getContext());
+    // Then check if it is one of the child nodes of the solver node
+    for (simulation::Node::ChildIterator it = solvernode->child.begin(), itend = solvernode->child.end(); it != itend; ++it)
+        if (*it == node)
+        {
+            //std::cout << "Group of CM " << model->getName() << " is " << (*it)->getName() << " child of " << solvernode->getName() << std::endl;
+            return *it;
+        }
+    // Then check if it is a child of one of the child nodes of the solver node
+    for (simulation::Node::ChildIterator it = solvernode->child.begin(), itend = solvernode->child.end(); it != itend; ++it)
+        if (node->hasParent(*it))
+            return *it;
+    // Then check if it is a grand-childs of one of the child nodes of the solver node
+    for (simulation::Node::ChildIterator it = solvernode->child.begin(), itend = solvernode->child.end(); it != itend; ++it)
+        if (node->getContext()->hasAncestor(*it))
+            return *it;
+    // group not found, simply return the solver node
+    return solvernode;
 }
 
-
-
-
-
-}// namespace collision
+} // namespace collision
 
 } // namespace component
 

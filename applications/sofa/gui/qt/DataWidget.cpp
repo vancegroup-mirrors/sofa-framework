@@ -2,6 +2,12 @@
 #include "ModifyObject.h"
 #include <sofa/helper/Factory.inl>
 
+#ifdef SOFA_QT4
+#include <QToolTip>
+#else
+#include <qtooltip.h>
+#endif
+
 #define SIZE_TEXT     75
 namespace sofa{
   namespace helper{
@@ -34,6 +40,7 @@ namespace sofa{
         QHBoxLayout* layout = new QHBoxLayout(this);
         std::string final_str;
         formatHelperString(helper,final_str);
+        std::string parentClass=data->getParentClass();
         if (modifiable)
         {
           QPushButton *helper_button = new QPushButton(QString(final_str.c_str()),this);
@@ -41,12 +48,14 @@ namespace sofa{
           helper_button ->setAutoDefault(false);
           layout->addWidget(helper_button);
           connect(helper_button, SIGNAL( clicked() ), this, SLOT( linkModification()));
+          if (!parentClass.empty()) QToolTip::add(helper_button, ("Data from "+parentClass).c_str());
         }
         else
         {
           QLabel* helper_label = new QLabel(this);
           helper_label->setText(QString(final_str.c_str()));
           layout->addWidget(helper_label);
+          if (!parentClass.empty()) QToolTip::add(helper_label, ("Data from "+parentClass).c_str());
         }
         if(modifiable || !data->getLinkPath().empty())
         {

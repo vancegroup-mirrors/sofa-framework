@@ -16,7 +16,7 @@ SUBDIRS += visualmodel
 SUBDIRS += contextobject
 
 SUBDIRS += interactionforcefield #forcefield dependency
-SUBDIRS += linearsolver          #forcefield dependency
+SUBDIRS += linearsolver          #forcefield + odesolver dependency
 
 SUBDIRS += mapping               #forcefield + visualmodel dependency
 SUBDIRS += constraint            #forcefield + odesolver + linearsolver + mass dependency

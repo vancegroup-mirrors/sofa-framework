@@ -24,7 +24,7 @@
 ******************************************************************************/
 #include <sofa/core/ObjectFactory.h>
 #define SOFA_COMPONENT_CONTAINER_MECHANICALOBJECT_CPP
-#include <sofa/component/container/MechanicalObject.inl>
+#include <sofa/component/container/MechanicalObject.inl> 
 #include <sofa/helper/Quater.h>
 
 

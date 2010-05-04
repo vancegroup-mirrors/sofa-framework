@@ -23,7 +23,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef SOFA_COMPONENT_MECHANICALOBJECT_INL
-#define SOFA_COMPONENT_MECHANICALOBJECT_INL
+#define SOFA_COMPONENT_MECHANICALOBJECT_INL 
 
 #include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
@@ -104,6 +104,21 @@ namespace sofa
       this->addField(f_Vfree, "free_velocity");
       this->addField(f_X0,"rest_position");
       
+      f_X->setGroup("Vector");
+      f_V->setGroup("Vector");
+      f_F->setGroup("Vector");
+      f_externalF->setGroup("Vector");
+      f_Dx->setGroup("Vector");
+      f_Xfree->setGroup("Vector");
+      f_Vfree->setGroup("Vector");
+      f_X0->setGroup("Vector");
+
+      translation.setGroup("Transformation");
+      translation2.setGroup("Transformation");
+      rotation.setGroup("Transformation");
+      rotation2.setGroup("Transformation");
+      scale.setGroup("Transformation");
+
       //Desactivate the Filter. MechanicalObjects created during the collision response must not use the filter as it will be empty
       this->forceMask.activate(false);
 
@@ -2168,23 +2183,35 @@ void MechanicalObject<DataTypes>::vAvail(VecId& v)
 
 
     template <class DataTypes>
-    void MechanicalObject<DataTypes>::printDOF( VecId v, std::ostream& out, unsigned int firstIndex, int range) const
+    void MechanicalObject<DataTypes>::printDOF( VecId v, std::ostream& out, int firstIndex, int range) const
     {
-        if( v.type==VecId::V_COORD && getVecCoord(v.index))
-	{
-            const VecCoord& x= *getVecCoord(v.index);
-            if (firstIndex >= x.size()) return;
-            const unsigned max=( (range>=0) && ( (range+firstIndex)<x.size() ) )?(range+firstIndex):x.size();
-            for( unsigned i=firstIndex; i<max; ++i )
-                out<<x[i]<<" ";
+        const unsigned int size=this->getSize();
+        if ((unsigned int) (abs(firstIndex)) >= size) return;
+        const unsigned int first=((firstIndex>=0)?firstIndex:size+firstIndex);
+        const unsigned int max=( ( (range >= 0) && ( (range+first)<size) ) ? (range+first):size);
+        if( v.type==VecId::V_COORD)
+        {
+            if (getVecCoord(v.index))
+            {
+                const VecCoord& x= *getVecCoord(v.index);
+                for( unsigned i=first; i<max; ++i )
+                {
+                    out<<x[i];
+                    if (i != max-1) out <<" ";
+                }
+            }
 	}
-        else if( v.type==VecId::V_DERIV && getVecDeriv(v.index))
+        else if( v.type==VecId::V_DERIV)
 	{
-            const VecDeriv& x= *getVecDeriv(v.index);
-            if (firstIndex >= x.size()) return;
-            const unsigned max=( (range>=0) && ( (range+firstIndex)<x.size() ) )?(range+firstIndex):x.size();
-            for( unsigned i=firstIndex; i<max; ++i )
-                out<<x[i]<<" ";
+            if (getVecDeriv(v.index))
+            {
+                const VecDeriv& x= *getVecDeriv(v.index);
+                for( unsigned i=first; i<max; ++i )
+                {
+                    out<<x[i];
+                    if (i != max-1) out <<" ";
+                }
+            }
 	}
         else
             out<<"MechanicalObject<DataTypes>::printDOF, unknown v.type = "<<v.type<<std::endl;

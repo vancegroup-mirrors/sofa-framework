@@ -189,7 +189,9 @@ Simulation::~Simulation(){
                                         root->execute ( beh );
                                         root->execute ( act );
                                         root->setTime ( startTime + (i+1)* act.getDt() );
+                                        getVisualRoot()->setTime ( root->getTime() );
 					root->execute<UpdateSimulationContextVisitor>();
+                                        getVisualRoot()->execute<UpdateSimulationContextVisitor>();
                                 }
 
                             {

@@ -351,7 +351,7 @@ namespace topology
     EdgeSetGeometryAlgorithms<DataTypes>::draw();
 
     // Draw Quads indices
-    if (debugViewQuadIndices.getValue())
+    if (showQuadIndices.getValue())
     {
       Mat<4,4, GLfloat> modelviewM;
       const VecCoord& coords = *(this->object->getX());

@@ -1,0 +1,42 @@
+
+<Node name="root" dt="0.02" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1" >
+	<!-- <Object type="Simulation" name="Simulation" /> -->
+	<CollisionPipeline verbose="0" name="CollisionPipeline"/>
+	<BruteForceDetection name="N2" />
+	<CollisionResponse response="default" name="collision response"/>
+	<Object type="CollisionGroup" />
+	<Node name="Liver">
+		<EulerImplicit name="ode-solver" printLog="false"  />
+		<MultiCGLinearSolver iterations="100" name="linear-solver" tolerance="1.0e-9" threshold="1.0e-9" multiGroup="1"  />
+        <Node name="L1">
+        	<MeshLoader name="meshLoader" filename="mesh/liver.msh"/>
+		    <TetrahedronSetTopologyContainer name="topo" />
+		    <MechanicalObject name="dofs"  />
+		    <TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+		    <DiagonalMass massDensity="1" name="mass-computed-by-density"  />
+		    <TetrahedronFEMForceField name="FEM" youngModulus="3000" poissonRatio="0.3" computeGlobalMatrix="false" method="large"  />
+            <FixedConstraint name="FixedConstraint" indices="3 39 64"  />
+
+		<Node name="Surf">
+			<Sphere name="CollisionModel" filename="mesh/liver.sph" contactStiffness="100" />
+			<MechanicalObject  />
+			<BarycentricMapping name="sphere-mapping"  />
+		</Node>
+		</Node>
+        <Node name="L2">
+        	<MeshLoader name="meshLoader" filename="mesh/liver.msh"/>
+		    <TetrahedronSetTopologyContainer name="topo" />
+		    <MechanicalObject name="dofs" dx2="5" dy2="-2" />
+		    <TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+		    <DiagonalMass massDensity="1" name="mass-computed-by-density"  />
+		    <TetrahedronFEMForceField name="FEM" youngModulus="3000" poissonRatio="0.3" computeGlobalMatrix="false" method="large"  />
+            <FixedConstraint name="FixedConstraint" indices="3 39 64"  />
+		<Node name="Surf">
+			<Sphere name="CollisionModel" filename="mesh/liver.sph" contactStiffness="100" />
+			<MechanicalObject  dx2="5" dy2="-2" />
+			<BarycentricMapping name="sphere-mapping"  />
+		</Node>
+		</Node>
+	</Node>
+</Node>
+

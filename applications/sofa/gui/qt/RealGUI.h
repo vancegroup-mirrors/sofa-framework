@@ -37,6 +37,7 @@
 #include <sofa/gui/SofaGUI.h>
 #include <time.h> 
 
+#include <sofa/gui/qt/QSofaListView.h>
 #include <sofa/gui/qt/GraphListenerQListView.h>
 #include <sofa/gui/qt/FileManagement.h>
 #include <sofa/gui/qt/viewer/SofaViewer.h>
@@ -89,9 +90,15 @@ typedef QTextDrag Q3TextDrag;
 
 namespace sofa
 {
+  /*namespace simulation{
+    class Node;
+  }*/
 
 namespace gui
 {
+
+    class CallBackPicker;
+
 
 namespace qt
 {
@@ -99,11 +106,13 @@ namespace qt
 //enum TYPE{ NORMAL, PML, LML};  
 enum SCRIPT_TYPE { PHP, PERL };
 
-using sofa::simulation::Node;
 #ifdef SOFA_PML
 using namespace sofa::filemanager::pml;
 #endif
 
+class QSofaListView;
+class QSofaRecorder;
+class QSofaStatWidget;
 
 class SOFA_SOFAGUIQT_API RealGUI : public ::GUI, public SofaGUI
 {
@@ -114,6 +123,11 @@ class SOFA_SOFAGUIQT_API RealGUI : public ::GUI, public SofaGUI
 
 
 public:
+
+#ifndef SOFA_QT4
+    void setWindowFilePath(const QString &filePath){ filePath_=filePath;};
+  QString windowFilePath() const { QString filePath = filePath_; return filePath; }
+#endif
 
     static int InitGUI(const char* name, const std::vector<std::string>& options);
     static SofaGUI* CreateGUI(const char* name, const std::vector<std::string>& options, sofa::simulation::Node* groot = NULL, const char* filename = NULL);
@@ -129,16 +143,19 @@ public:
     const char* viewerName;
 
     sofa::gui::qt::viewer::SofaViewer* viewer;
+    QSofaListView* simulationGraph;
+    QSofaListView* visualGraph;
 
 	  RealGUI( const char* viewername, const std::vector<std::string>& options = std::vector<std::string>() );
 	  ~RealGUI();
 
+	  static void setPixmap(std::string pixmap_filename, QPushButton* b);
 
 	  virtual void fileOpen(std::string filename, bool temporaryFile=false);
-      	  virtual void fileOpenSimu(std::string filename);
+    virtual void fileOpenSimu(std::string filename);
 	  virtual void setScene(Node* groot, const char* filename=NULL, bool temporaryFile=false);
-          virtual void setDimension(int w, int h);
-          virtual void setFullScreen();
+    virtual void setDimension(int w, int h);
+    virtual void setFullScreen();
 	  virtual void setTitle( std::string windowTitle );
 
 	  //public slots:
@@ -146,7 +163,7 @@ public:
 	  virtual void fileOpen();
 	  virtual void fileSave(); 
  	  virtual void fileSaveAs(){fileSaveAs((Node *)NULL);};
-	  virtual void fileSaveAs(Node *node);	 
+	  
 	  virtual void fileSaveAs(Node* node,const char* filename);
 	  
 	  virtual void fileReload();
@@ -167,32 +184,20 @@ public:
     void initRecentlyOpened();
           
 	  public slots:
-	  void fileRecentlyOpened(int id);
+    void NewRootNode(sofa::simulation::Node* root, const char* path);
+	  void Update();
+    virtual void fileSaveAs(sofa::simulation::Node *node);	 
+    void LockAnimation(bool);
 
+    void fileRecentlyOpened(int id);
 	  void updateRecentlyOpened(std::string fileLoaded);
-	  void DoubleClickeItemInSceneView(QListViewItem * item);
-	  void RightClickedItemInSceneView(QListViewItem *item, const QPoint& point, int index);
 	  void playpauseGUI(bool value);
 	  void step();
 	  void setDt(double);
 	  void setDt(const QString&);
 	  void resetScene();
 	  void screenshot();
-
 	  void showhideElements(int FILTER, bool value);
-
-	  void clearRecord();
-	  void slot_recordSimulation( bool);
-	  void slot_backward( );
-	  void slot_stepbackward( );
-// 	  void slot_playbackward(  );
-	  void slot_playforward(  ) ;
-	  void slot_stepforward( ) ;
-	  void slot_forward( );
-	  void slot_sliderValue(int value,bool updateTime=true);
-	  void slot_loadrecord_timevalue(bool updateTime=true);
-
-
 	  void updateViewerParameters();
 	  void updateBackgroundColour();
 	  void updateBackgroundImage();
@@ -203,31 +208,10 @@ public:
           void changeHtmlPage( const QString&);
 #endif
 	  void changeInstrument(int);
-  
-	  void clearGraph();
+    void Clear();
 	  //Used in Context Menu
-	  void graphSaveObject();
-	  void graphAddObject();
-	  void graphRemoveObject();
-	  void graphModify();
-	  void graphCollapse();
-	  void graphExpand();
-          void graphActivation(Node* node, GraphListenerQListView *listener, bool activate);
-	  void graphDesactivateNode();
-	  void graphActivateNode();
-    void graphShowDatas();
-    void graphHideDatas();
-	  //When adding an object in the graph
-	  void loadObject(std::string path, double dx, double dy, double dz,double rx, double ry, double rz, double scale=1.0);
 	  //refresh the visualization window	 
 	  void redraw();
-	  //when a dialog modify object is closed
-	  void modifyUnlock(void *Id);
-	  void transformObject( Node *node, double dx, double dy, double dz, double rx, double ry, double rz, double scale=1.0);
-	  
-
-	  void exportGraph();
-	  void exportGraph(sofa::simulation::Node*);
 	  void exportOBJ(bool exportMTL=true);
 	  void dumpState(bool);
 	  void displayComputationTime(bool);
@@ -242,21 +226,12 @@ public:
 	  void quit();
 
 	protected:
-	  
 	  void eventNewStep();
 	  void eventNewTime();
 	  void init();
 	  void keyPressEvent ( QKeyEvent * e );
 	  
-	  void loadSimulation(bool one_step=false);
-
-	  void initDesactivatedNode();
-	  //Graph Stats
-	  bool graphCreateStats(Node *groot); 	  
-	  void graphAddCollisionModelsStat(sofa::helper::vector< sofa::core::CollisionModel* > &v);	  
-	  void graphSummary();
-	  	 
-    bool isNodeErasable ( core::objectmodel::BaseNode* node);
+	  void loadSimulation(bool one_step=false); 	 
 
 	  void startDumpVisitor();
 	  void stopDumpVisitor();
@@ -270,54 +245,18 @@ public:
 
 
 	  QWidget* currentTab;
-	  QWidget *tabInstrument;
-	  
-	  GraphListenerQListView* graphListener;
-    GraphListenerQListView* visualGraphListener;
-	  QListViewItem *item_clicked;
-	  Node *node_clicked;
+          QWidget *tabInstrument;
+    QSofaRecorder* recorder;
+    QSofaStatWidget* statWidget;
 	  QTimer* timerStep;
-	  QTimer* timerRecordStep;
-	  QLabel* fpsLabel;
-	  QLabel* timeLabel;
 	  WFloatLineEdit *background[3];
 	  QLineEdit *backgroundImage;
-          
+    QWidgetStack* left_stack;      
 	  
-	  void setPixmap(std::string pixmap_filename, QPushButton* b);
-
-	   double getRecordInitialTime() const; 
-	   void   setRecordInitialTime(const double time);
-	   double getRecordFinalTime  () const;	 
-	   void   setRecordFinalTime  (const double time);	 
-	   double getRecordTime       () const;	 
-	   void   setRecordTime       (const double time);
-	   void   setTimeSimulation   (const double time);
-	  
-	  QPushButton* record;
-	  QPushButton* backward_record;
-	  QPushButton* stepbackward_record;
-// 	  QPushButton* playbackward_record;
-	  QPushButton* playforward_record;
-	  QPushButton* stepforward_record;
-	  QPushButton* forward_record;
-	  
-	  QLineEdit* loadRecordTime;
-	  QLabel* initialTime;
-	  QLabel* finalTime;
-	  QSlider* timeSlider;
-	  
-	  std::string simulation_name;
-	  std::string record_directory;
+    std::string simulation_name;
 	  std::string gnuplot_directory;
-	  std::string writeSceneName;
 	  std::string pathDumpVisitor;
 	      
-	  QWidgetStack* left_stack;
-	  AddObject *dialog;
-
-
-
 	  sofa::simulation::Node* getScene() { if (viewer) return viewer->getScene(); else return NULL; }
 
 	  void sleep(float seconds, float init_time)
@@ -328,33 +267,19 @@ public:
 	  }
 	  
 	private:
-	  //Map: Id -> Node currently modified. Used to avoid dependancies during removing actions
-	  std::map< void*, Q3ListViewItem* > map_modifyDialogOpened;
-	  
-	  std::map< void*, QDialog* >                       map_modifyObjectWindow;
-	  std::vector<std::pair<core::objectmodel::Base*, Q3ListViewItem*> > items_stats;
-	  //unique ID to pass to a modify object dialog
-	  void *current_Id_modifyDialog;
 
- 
+#ifndef SOFA_QT4
+    QString filePath_;
+#endif 
 	  //currently unused: scale is experimental
  	  float object_Scale[2]; 
-          bool saveReloadFile;
+    bool saveReloadFile;
 
-
-	  float initial_time;
 	  int frameCounter;
-	  //At initialization: list of the path to the basic objects you can add to the scene
-	  std::vector< std::string > list_object;
-	  bool record_simulation;
 
 	  bool setViewer(const char* name);
 	  void addViewer();	  
 	  void setGUI(void);
-	  
-	  bool setWriteSceneName();
-	  void addReadState(bool init);
-	  void addWriteState();
 	  
 #ifdef SOFA_PML
 	  virtual void pmlOpen(const char* filename, bool resetView=true);
@@ -371,7 +296,36 @@ public:
 #endif
           QDialog* descriptionScene;
           QTextBrowser* htmlPage;
+    bool animationState;
+};
 
+
+class InformationOnPickCallBack: public CallBackPicker
+{
+public:
+    InformationOnPickCallBack(RealGUI *g):gui(g){};
+
+    virtual void execute(const sofa::component::collision::BodyPicked &body)
+    {
+        if (body.body)
+        {
+            Q3ListViewItem* item=gui->simulationGraph->getListener()->items[body.body];
+            gui->simulationGraph->ensureItemVisible(item);
+            gui->simulationGraph->clearSelection();
+            gui->simulationGraph->setSelected(item,true);
+        }
+        else if (body.mstate)
+        {
+            Q3ListViewItem* item=gui->simulationGraph->getListener()->items[body.mstate];
+            gui->simulationGraph->ensureItemVisible(item);
+            gui->simulationGraph->clearSelection();
+            gui->simulationGraph->setSelected(item,true);
+        }
+        else
+            gui->simulationGraph->clearSelection();
+    }
+protected:
+    RealGUI *gui;
 };
 
 } // namespace qt

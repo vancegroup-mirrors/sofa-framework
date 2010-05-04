@@ -34,18 +34,14 @@ namespace simulation
 using std::cerr;
 using std::endl;
 
-Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
+Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node, VisitorContext* ctx)
 {
     Result res = RESULT_CONTINUE;
-/*    if (node->solver != NULL) {
-        ctime_t t0 = beginProcess(node, node->solver);
-        res = this->fwdOdeSolver(node, node->solver);
-        endProcess(node, node->solver, t0);
-    }*/
+
     for (unsigned i=0; i<node->solver.size() && res!=RESULT_PRUNE; i++ ) {
 		if(testTags(node->solver[i])){
 			debug_write_state_before(node->solver[i]);
-			res = this->fwdOdeSolver(node, node->solver[i]);
+			res = this->fwdOdeSolver(ctx, node->solver[i]);
 		    debug_write_state_after(node->solver[i]);
 		}
     }
@@ -64,13 +60,13 @@ Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
                 Result res2 = RESULT_CONTINUE;
 				if(testTags(node->mechanicalMapping)){
 					debug_write_state_before(node->mechanicalMapping);
-					res = this->fwdMechanicalMapping(node, node->mechanicalMapping);
+					res = this->fwdMechanicalMapping(ctx, node->mechanicalMapping);
 					debug_write_state_after(node->mechanicalMapping);
 				}
 
 				if(testTags(node->mechanicalState)){
 					debug_write_state_before(node->mechanicalState);
-					res2 = this->fwdMappedMechanicalState(node, node->mechanicalState);
+					res2 = this->fwdMappedMechanicalState(ctx, node->mechanicalState);
 					debug_write_state_after(node->mechanicalState);
 				}
 
@@ -81,7 +77,7 @@ Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
 				if(testTags(node->mechanicalState)){
 					//cerr<<"MechanicalVisitor::processNodeTopDown, node "<<node->getName()<<" is a no-map model"<<endl;
 					debug_write_state_before(node->mechanicalState);
-					res = this->fwdMechanicalState(node, node->mechanicalState);
+					res = this->fwdMechanicalState(ctx, node->mechanicalState);
 					debug_write_state_after(node->mechanicalState);
 				}
             }
@@ -91,58 +87,271 @@ Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
 		if (node->mass != NULL) {
 			if(testTags(node->mass)){
 				debug_write_state_before(node->mass);
-				res = this->fwdMass(node, node->mass);
+				res = this->fwdMass(ctx, node->mass);
 				debug_write_state_after(node->mass);
 			}
 		}
 	}
 	if (res != RESULT_PRUNE) {
-		res = for_each_r(this, node, node->constraintSolver, &MechanicalVisitor::fwdConstraintSolver);
+		res = for_each_r(this, ctx, node->constraintSolver, &MechanicalVisitor::fwdConstraintSolver);
 	}
 	if (res != RESULT_PRUNE) {
-		res = for_each_r(this, node, node->forceField, &MechanicalVisitor::fwdForceField);
+		res = for_each_r(this, ctx, node->forceField, &MechanicalVisitor::fwdForceField);
 	}
         if (res != RESULT_PRUNE) {
-            res = for_each_r(this, node, node->interactionForceField, &MechanicalVisitor::fwdInteractionForceField);
+            res = for_each_r(this, ctx, node->interactionForceField, &MechanicalVisitor::fwdInteractionForceField);
         }
         if (res != RESULT_PRUNE) {
-            res = for_each_r(this, node, node->constraint, &MechanicalVisitor::fwdConstraint);
+            res = for_each_r(this, ctx, node->constraint, &MechanicalVisitor::fwdConstraint);
         }
         if (res != RESULT_PRUNE) {
-            res = for_each_r(this, node, node->LMConstraint, &MechanicalVisitor::fwdLMConstraint);
+            res = for_each_r(this, ctx, node->LMConstraint, &MechanicalVisitor::fwdLMConstraint);
         }
         return res;
 }
 
-void MechanicalVisitor::processNodeBottomUp(simulation::Node* node)
+void MechanicalVisitor::processNodeBottomUp(simulation::Node* node, VisitorContext* ctx)
 {
-    for_each(this, node, node->constraint, &MechanicalVisitor::bwdConstraint);
-    for_each(this, node, node->LMConstraint, &MechanicalVisitor::bwdLMConstraint);
-    for_each(this, node, node->constraintSolver, &MechanicalVisitor::bwdConstraintSolver);
+
+    for_each(this, ctx, node->constraint, &MechanicalVisitor::bwdConstraint);
+    for_each(this, ctx, node->LMConstraint, &MechanicalVisitor::bwdLMConstraint);
+    for_each(this, ctx, node->constraintSolver, &MechanicalVisitor::bwdConstraintSolver);
 	if (node->mechanicalState != NULL) {
 		if (node->mechanicalMapping != NULL) {
 			if (!stopAtMechanicalMapping(node, node->mechanicalMapping)) {
 				if(testTags(node->mechanicalState)){
-					this->bwdMappedMechanicalState(node, node->mechanicalState);
-					this->bwdMechanicalMapping(node, node->mechanicalMapping);
+					this->bwdMappedMechanicalState(ctx, node->mechanicalState);
+					this->bwdMechanicalMapping(ctx, node->mechanicalMapping);
 				}
 			}
 		} else {
 			if(testTags(node->mechanicalState))
-				this->bwdMechanicalState(node, node->mechanicalState);
+				this->bwdMechanicalState(ctx, node->mechanicalState);
 		}
 
 	}
-/*    if (node->solver != NULL) {
-        ctime_t t0 = beginProcess(node, node->solver);
-        this->bwdOdeSolver(node, node->solver);
-        endProcess(node, node->solver, t0);
-    }*/
-        for (unsigned i=0; i<node->solver.size(); i++ ) {
-			if(testTags(node->solver[i]))
-				this->bwdOdeSolver(node, node->solver[i]);
-        }
+
+    for (unsigned i=0; i<node->solver.size(); i++ ) {
+        if(testTags(node->solver[i]))
+            this->bwdOdeSolver(ctx, node->solver[i]);
+    }
+    if (node == root)
+    {
+        root = NULL;
+    }
 }
+
+
+Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node)
+{
+    if (root == NULL)
+    {
+        root = node;
+    }
+
+    VisitorContext ctx;
+    ctx.root = root;
+    ctx.node = node;
+    ctx.nodeData = rootData;
+
+    const bool writeData = writeNodeData();
+    const bool readData = readNodeData();
+    const bool useNodeData = readData || writeData;
+
+    if (nodeMap && !nodeMap->empty())
+    {// only apply visitor to the specified subset of child nodes from the root
+        if (node == root)
+        {
+            tmpNodeDataMap.clear();
+        }
+        else if (node->hasParent(root))
+        {
+            MultiNodeDataMap::iterator it = nodeMap->find(node->getContext());
+            if (it == nodeMap->end())
+                return RESULT_PRUNE;
+            if (useNodeData)
+                ctx.nodeData = &(it->second);
+        }
+        else
+        {
+            if (useNodeData)
+            {
+                std::map<simulation::Node*, double*>::iterator it = tmpNodeDataMap.find(node);
+                if (it != tmpNodeDataMap.end())
+                    ctx.nodeData = it->second;
+            }
+        }
+        if (useNodeData && ctx.nodeData != rootData)
+        { // propagate the pointer to node-specific data to child nodes
+            for (Node::ChildIterator it = node->child.begin(), itend = node->child.end(); it != itend; ++it)
+                tmpNodeDataMap[*it] = ctx.nodeData;
+        }
+    }
+    return processNodeTopDown(node, &ctx);
+}
+
+void MechanicalVisitor::processNodeBottomUp(simulation::Node* node)
+{
+    VisitorContext ctx;
+    ctx.root = root;
+    ctx.node = node;
+    ctx.nodeData = rootData;
+
+    const bool writeData = writeNodeData();
+    const bool readData = readNodeData();
+    const bool useNodeData = readData || writeData;
+
+    if (nodeMap && !nodeMap->empty())
+    {// only apply visitor to the specified subset of child nodes from the root
+        if (node == root)
+        {
+            tmpNodeDataMap.clear();
+        }
+        else if (node->hasParent(root))
+        {
+            MultiNodeDataMap::iterator it = nodeMap->find(node->getContext());
+            if (it == nodeMap->end())
+                return; // RESULT_PRUNE;
+            if (useNodeData)
+                ctx.nodeData = &(it->second);
+        }
+        else
+        {
+            if (useNodeData)
+            {
+                std::map<simulation::Node*, double*>::iterator it = tmpNodeDataMap.find(node);
+                if (it != tmpNodeDataMap.end())
+                    ctx.nodeData = it->second;
+            }
+        }
+    }
+
+    processNodeBottomUp(node, &ctx);
+
+
+    if (writeData && nodeMap && !nodeMap->empty() && node->hasParent(root) && rootData != ctx.nodeData)
+        addNodeData(node, rootData, ctx.nodeData);
+
+}
+
+Visitor::Result MechanicalVisitor::processNodeTopDown(simulation::Node* node, LocalStorage* stack)
+{
+    if (root == NULL)
+    {
+        root = node;
+    }
+
+    VisitorContext ctx;
+    ctx.root = root;
+    ctx.node = node;
+    ctx.nodeData = rootData;
+
+    const bool writeData = writeNodeData();
+    const bool readData = readNodeData();
+    const bool useNodeData = readData || writeData;
+
+    if (nodeMap && !nodeMap->empty())
+    { // only apply visitor to the specified subset of child nodes from the root
+
+        if (node == root)
+        {
+        }
+        else if (node->hasParent(root))
+        {
+            MultiNodeDataMap::iterator it = nodeMap->find(node->getContext());
+            if (it == nodeMap->end())
+                return RESULT_PRUNE;
+            if (useNodeData)
+            {
+                ctx.nodeData = &(it->second);
+                stack->push(ctx.nodeData);
+            }
+        }
+        else
+        {
+            if (useNodeData)
+            {
+                double* parentData = stack->empty() ? rootData : (double*)stack->top();
+                if (!writeData)
+                    ctx.nodeData = parentData;
+                else // must create a local copy
+                {
+                    ctx.nodeData = new double(0.0);
+                    setNodeData(node, ctx.nodeData, parentData);
+                    stack->push(ctx.nodeData);
+                }
+            }
+        }
+    }
+    else if (writeData)
+    { // create temporary accumulation buffer for parallel reductions (dot products)
+        if (node != root)
+        {
+            double* parentData = stack->empty() ? rootData : (double*)stack->top();
+            ctx.nodeData = new double(0.0);
+            setNodeData(node, ctx.nodeData, parentData);
+            stack->push(ctx.nodeData);
+        }
+    }
+
+    return processNodeTopDown(node, &ctx);
+}
+
+void MechanicalVisitor::processNodeBottomUp(simulation::Node* node, LocalStorage* stack)
+{
+    VisitorContext ctx;
+    ctx.root = root;
+    ctx.node = node;
+    ctx.nodeData = rootData;
+    double* parentData = rootData;
+
+    const bool writeData = writeNodeData();
+    const bool readData = readNodeData();
+    const bool useNodeData = readData || writeData;
+
+    if (nodeMap && !nodeMap->empty())
+    {// only apply visitor to the specified subset of child nodes from the root
+        if (node == root)
+        {
+        }
+        else if (node->hasParent(root))
+        {
+            MultiNodeDataMap::iterator it = nodeMap->find(node->getContext());
+            if (it == nodeMap->end())
+                return; // RESULT_PRUNE;
+            if (useNodeData)
+            {
+                ctx.nodeData = &(it->second);
+                stack->pop();
+            }
+        }
+        else
+        {
+            if (useNodeData)
+            {
+                ctx.nodeData = (double*)stack->top();
+                if (writeData)
+                    stack->pop();
+                parentData = stack->empty() ? rootData : (double*)stack->top();
+            }
+        }
+    }
+    else if (writeData)
+    { // use temporary accumulation buffer for parallel reductions (dot products)
+        if (node != root)
+        {
+            ctx.nodeData = (double*)stack->pop();
+            parentData = stack->empty() ? rootData : (double*)stack->top();
+        }
+    }
+
+    processNodeBottomUp(node, &ctx);
+
+    if (writeData && parentData != ctx.nodeData)
+        addNodeData(node, parentData, ctx.nodeData);
+}
+
+
 #ifdef SOFA_DUMP_VISITOR_INFO
 void MechanicalVisitor::printReadVectors(core::componentmodel::behavior::BaseMechanicalState* mm)
 {
@@ -263,6 +472,16 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
     }
 
 
+Visitor::Result MechanicalGetDimensionVisitor::fwdMechanicalState(VisitorContext* ctx, core::componentmodel::behavior::BaseMechanicalState* mm)
+{
+    simulation::Node* node = ctx->node;
+    ctime_t t0 = beginProcess(node, mm);
+    unsigned int row = 0, col = 0;
+    mm->contributeToMatrixDimension(&row, &col);
+    *ctx->nodeData += (double)row;
+	endProcess(node, mm, t0);
+    return RESULT_CONTINUE;
+}
 
 Visitor::Result MechanicalIntegrationVisitor::fwdOdeSolver(simulation::Node* node, core::componentmodel::behavior::OdeSolver* obj)
 {
@@ -312,46 +531,61 @@ Visitor::Result MechanicalVFreeVisitor::fwdMechanicalState(simulation::Node* nod
     }
 
 
-Visitor::Result MechanicalVOpVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
-    {
-        //cerr<<"    MechanicalVOpVisitor::fwdMechanicalState, model "<<mm->getName()<<endl;
-        ctime_t t0 = beginProcess(node, mm);
-        mm->vOp(v,a,b,f);
+Visitor::Result MechanicalVOpVisitor::fwdMechanicalState(VisitorContext* ctx, core::componentmodel::behavior::BaseMechanicalState* mm)
+{
+    simulation::Node* node = ctx->node;
+
+    //cerr<<"    MechanicalVOpVisitor::fwdMechanicalState, model "<<mm->getName()<<endl;
+    ctime_t t0 = beginProcess(node, mm);
+    mm->vOp(v,a,b,((ctx->nodeData && *ctx->nodeData != 1.0) ? *ctx->nodeData * f : f));
 	endProcess(node, mm, t0);
-        return RESULT_CONTINUE;
-    }
-    Visitor::Result MechanicalVOpVisitor::fwdMappedMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* /*mm*/)
-    {
-        //cerr<<"    MechanicalVOpVisitor::fwdMappedMechanicalState, model "<<mm->getName()<<endl;
-        //mm->vOp(v,a,b,f);
-        return RESULT_CONTINUE;
-    }
+    return RESULT_CONTINUE;
+}
+Visitor::Result MechanicalVOpVisitor::fwdMappedMechanicalState(VisitorContext* /*ctx*/, core::componentmodel::behavior::BaseMechanicalState* /*mm*/)
+{
+    //cerr<<"    MechanicalVOpVisitor::fwdMappedMechanicalState, model "<<mm->getName()<<endl;
+    //mm->vOp(v,a,b,((ctx->nodeData && *ctx->nodeData != 1.0) ? *ctx->nodeData * f : f));
+    return RESULT_CONTINUE;
+}
 
-
-Visitor::Result MechanicalVMultiOpVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
+Visitor::Result MechanicalVMultiOpVisitor::fwdMechanicalState(VisitorContext* ctx, core::componentmodel::behavior::BaseMechanicalState* mm)
+{
+    simulation::Node* node = ctx->node;
+    //cerr<<"    MechanicalVOpVisitor::fwdMechanicalState, model "<<mm->getName()<<endl;
+    ctime_t t0 = beginProcess(node, mm);
+    if (ctx->nodeData && *ctx->nodeData != 1.0)
     {
-        //cerr<<"    MechanicalVOpVisitor::fwdMechanicalState, model "<<mm->getName()<<endl;
-        ctime_t t0 = beginProcess(node, mm);
+        VMultiOp ops2 = ops;
+        const double fact = *ctx->nodeData;
+        for (VMultiOp::iterator it = ops2.begin(), itend = ops2.end(); it != itend; ++it)
+            for (unsigned int i = 1; i < it->second.size(); ++i)
+                it->second[i].second *= fact;
+        mm->vMultiOp(ops2);
+    }
+    else
+    {
         mm->vMultiOp(ops);
+    }
 	endProcess(node, mm, t0);
-        return RESULT_CONTINUE;
-    }
-Visitor::Result MechanicalVMultiOpVisitor::fwdMappedMechanicalState(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalState* /*mm*/)
-    {
-        //cerr<<"    MechanicalVOpVisitor::fwdMappedMechanicalState, model "<<mm->getName()<<endl;
-        //mm->vMultiOp(ops);
-        return RESULT_CONTINUE;
-    }
+    return RESULT_CONTINUE;
+}
+Visitor::Result MechanicalVMultiOpVisitor::fwdMappedMechanicalState(VisitorContext* /*ctx*/, core::componentmodel::behavior::BaseMechanicalState* /*mm*/)
+{
+    //cerr<<"    MechanicalVOpVisitor::fwdMappedMechanicalState, model "<<mm->getName()<<endl;
+    //mm->vMultiOp(ops);
+    return RESULT_CONTINUE;
+}
 
-    /// Sequential code
-    Visitor::Result MechanicalVDotVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
-    {
-        ctime_t t0 = beginProcess(node, mm);
-        *total += mm->vDot(a,b);
+Visitor::Result MechanicalVDotVisitor::fwdMechanicalState(VisitorContext* ctx, core::componentmodel::behavior::BaseMechanicalState* mm)
+{
+    simulation::Node* node = ctx->node;
+    ctime_t t0 = beginProcess(node, mm);
+    *ctx->nodeData += mm->vDot(a,b);
 	endProcess(node, mm, t0);
-        return RESULT_CONTINUE;
-    }
+    return RESULT_CONTINUE;
+}
 
+#if 0
     /// Parallel code
 Visitor::Result MechanicalVDotVisitor::processNodeTopDown(simulation::Node* node, LocalStorage* stack)
     {
@@ -376,7 +610,7 @@ Visitor::Result MechanicalVDotVisitor::processNodeTopDown(simulation::Node* node
             *parentTotal += *localTotal;
         delete localTotal;
     }
-
+#endif
 
     Visitor::Result MechanicalPropagateDxVisitor::fwdMechanicalState(simulation::Node* node, core::componentmodel::behavior::BaseMechanicalState* mm)
     {

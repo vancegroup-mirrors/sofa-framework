@@ -27,6 +27,7 @@
 #include <sofa/core/componentmodel/behavior/LinearSolver.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/component/linearsolver/FullVector.h>
+#include <sofa/simulation/common/AnimateBeginEvent.h>
 
 #include <sofa/defaulttype/Quat.h>
 
@@ -52,8 +53,12 @@ namespace sofa
                                                 constraintPos( initData( &constraintPos, false, "constraintPos", "Constraint the position")),
                                                 numIterations( initData( &numIterations, (unsigned int)25, "numIterations", "Number of iterations for Gauss-Seidel when solving the Constraints")),
                                                 maxError( initData( &maxError, 0.0000001, "maxError", "Max error for Gauss-Seidel algorithm when solving the constraints")),
+                                                f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") ),
                                                 A(NULL), c(NULL), Lambda(NULL)
       {
+          f_graph.setWidget("graph");
+          f_graph.setReadOnly(true);
+          this->f_listening.setValue(true);
       }
 
 
@@ -204,7 +209,7 @@ namespace sofa
 
 
 
-      bool LMConstraintSolver::buildSystem(double /*dt*/, VecId)
+      bool LMConstraintSolver::buildSystem(double /*dt*/, VecId id)
       {
 #ifdef SOFA_DUMP_VISITOR_INFO
         sofa::simulation::Visitor::printNode("SystemCreation");
@@ -223,7 +228,15 @@ namespace sofa
             SetDof::iterator currentIt=it;
             ++it;
 
-            if (!(*currentIt)->getContext()->getMass()) setDofs.erase(currentIt);
+            if (!(*currentIt)->getContext()->getMass()) setDofs.erase(currentIt);            
+#ifdef SOFA_DUMP_VISITOR_INFO
+            else if (sofa::simulation::Visitor::IsExportStateVectorEnabled())
+            {
+                sofa::simulation::Visitor::printNode("Input_"+(*currentIt)->getName());
+                sofa::simulation::Visitor::printVector(*currentIt, id);
+                sofa::simulation::Visitor::printCloseNode("Input_"+(*currentIt)->getName());
+            }
+#endif
           }
 
 
@@ -330,6 +343,15 @@ namespace sofa
             const VectorEigen &LambdaVector=*Lambda;
             bool updateVelocities=!constraintVel.getValue();
             constraintStateCorrection(id, updateVelocities,invMass_Ltrans[dofs] , LambdaVector, dofUsed[dofs], dofs);
+
+#ifdef SOFA_DUMP_VISITOR_INFO
+            if (sofa::simulation::Visitor::IsExportStateVectorEnabled())
+            {
+                sofa::simulation::Visitor::printNode("Output_"+dofs->getName());
+                sofa::simulation::Visitor::printVector(dofs, id);
+                sofa::simulation::Visitor::printCloseNode("Output_"+dofs->getName());
+            }
+#endif
           }
 
 #ifdef SOFA_DUMP_VISITOR_INFO
@@ -557,9 +579,23 @@ namespace sofa
           }
       }
 
-      bool LMConstraintSolver::solveConstraintSystemUsingGaussSeidel( ConstOrder Order, const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, const MatrixEigen &A, const VectorEigen  &c, VectorEigen &Lambda) const
+
+      bool LMConstraintSolver::solveConstraintSystemUsingGaussSeidel( ConstOrder Order, const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, const MatrixEigen &A, VectorEigen c, VectorEigen &Lambda) const
       {
         if (f_printLog.getValue()) sout << "Using Gauss-Seidel solution"<<sendl;
+
+
+        std::string orderName;
+        switch (Order)
+        {
+        case BaseLMConstraint::ACC: orderName="Acceleration";break;
+        case BaseLMConstraint::VEL: orderName="Velocity";break;
+        case BaseLMConstraint::POS: orderName="Position";break;
+        }
+
+        helper::vector<double> &vError=(*f_graph.beginEdit())["Error "+ orderName];
+        vError.push_back(c.sum());
+        f_graph.endEdit();
 
         const unsigned int numConstraint=A.rows();
         //-- Initialization of X, solution of the system
@@ -569,9 +605,10 @@ namespace sofa
         for (;iteration < numIterations.getValue() && continueIteration;++iteration)
           {
             unsigned int idxConstraint=0;
-            VectorEigen varEigen;
-            VectorEigen previousIterationEigen;
+            VectorEigen LambdaCorrection;
+            VectorEigen LambdaPreviousIteration;
             continueIteration=false;
+
             //Iterate on all the Constraint components
             for (unsigned int componentConstraint=0;componentConstraint<LMConstraints.size();++componentConstraint)
               {
@@ -584,44 +621,34 @@ namespace sofa
                     //-------------------------------------
                     //Initialize the variables, and store X^(k-1) in previousIteration
                     unsigned int numConstraintToProcess=constraintOrder[constraintEntry]->getNumConstraint();
-                    varEigen = VectorEigen::Zero(numConstraintToProcess);
-                    previousIterationEigen = VectorEigen::Zero(numConstraintToProcess);
-                    for (unsigned int i=0;i<numConstraintToProcess;++i)
-                      {
-                        previousIterationEigen(i)=Lambda(idxConstraint+i);
-                        Lambda(idxConstraint+i)=0;
-                      }
-                    //    operation: A.X^k --> var
-
-                    varEigen = A.block(idxConstraint,0,numConstraintToProcess,numConstraint)*Lambda;
+                    LambdaPreviousIteration = LambdaCorrection = VectorEigen(numConstraintToProcess);
                     error=0;
-                    bool groupDeactivated=false;
-                    unsigned int i=0;
-                    for (i=0;i<numConstraintToProcess;++i)
+                    unsigned int idx=idxConstraint;
+                    for (unsigned int i=0;i<numConstraintToProcess;++i,++idx)
                       {
-                        //TODO: handle the nature of the constraint, and error evaluation inside the constraint
+                        LambdaPreviousIteration(i)=Lambda(idx);
                         //X^(k)= (c^(0)-A[c,c]*X^(k-1))/A[c,c]
-                        Lambda(idxConstraint+i)=(c(idxConstraint+i) - varEigen(i))/A(idxConstraint+i,idxConstraint+i);
-                        if (constraintOrder[constraintEntry]->getConstraint(i).nature == BaseLMConstraint::UNILATERAL && Lambda(idxConstraint+i) < 0)
-                         {
-                           groupDeactivated=true;
-                           Lambda(idxConstraint+i) = 0;
-                           if (f_printLog.getValue()) sout << "Constraint : " << i << " from group " << idxConstraint << " Deactivated" << sendl;
-                           break;
-                         }
-                        error += pow(previousIterationEigen(i)-Lambda(idxConstraint+i),2);
+                        LambdaCorrection(i)=c(idx)/A(idx,idx);
                       }
-                    //One of the Unilateral Constraint is not active anymore. We deactivate the whole group
-                    if (groupDeactivated)
-                     {/*
-                       for (unsigned int j=0;j<numConstraintToProcess;++j)
-                         {
-                           if (j<i) error -= pow(previousIterationEigen(j)-Lambda(idxConstraint+j),2);
-                           Lambda(idxConstraint+j) = 0;
-                           error += pow(previousIterationEigen(j)-Lambda(idxConstraint+j),2);
-                         }*/
-                     }
-                    error = sqrt(error);
+                    Lambda.block(idxConstraint,0,numConstraintToProcess,1) += LambdaCorrection;
+                    bool activated=constraint->LagrangeMultiplierEvaluation(Lambda.data()+idxConstraint, constraintOrder[constraintEntry]);
+                    if (activated)
+                    {
+                        c -= A.block(0,idxConstraint,numConstraint, numConstraintToProcess)*LambdaCorrection;
+
+                        for (unsigned int i=0;i<numConstraintToProcess;++i)
+                            error += pow(LambdaPreviousIteration(i)-Lambda(idxConstraint+i),2);
+                        error = sqrt(error);
+                    }
+                    else
+                    {                     
+                        for (unsigned int i=0;i<numConstraintToProcess;++i)
+                            Lambda(idxConstraint+i)=0;
+
+                        idxConstraint+=numConstraintToProcess;
+                        continue;
+                    }
+
                     //****************************************************************
                     if (this->f_printLog.getValue()) 
                       {
@@ -633,32 +660,30 @@ namespace sofa
                     if (error < maxError.getValue())
                       {		
                         for (unsigned int i=0;i<numConstraintToProcess;++i)
-                          {
-                            Lambda(idxConstraint+i)=previousIterationEigen(i);
-                          }
+                            Lambda(idxConstraint+i)=LambdaPreviousIteration(i);
                       }
-                    else
-                      {
-                        continueIteration=true;
-                      }
+                    else continueIteration=true;
+
                     idxConstraint+=numConstraintToProcess;
                   }
               }
+
+            helper::vector<double> &vError=(*f_graph.beginEdit())["Error "+ orderName];
+            vError.push_back(c.sum());
+            f_graph.endEdit();
+
             if (this->f_printLog.getValue()) 
               {
                 if (f_printLog.getValue()) sout << "ITERATION " << iteration << " ENDED\n"<<sendl;
               }
           }
         if (iteration == numIterations.getValue())
-          {
-            serr << "no convergence in Gauss-Seidel for ";
-            switch (Order)
+        {
+            if (f_printLog.getValue())
             {
-            case BaseLMConstraint::ACC: serr << "Acceleration" << sendl; break;
-            case BaseLMConstraint::VEL: serr << "Velocity" << sendl; break;
-            case BaseLMConstraint::POS: serr << "Position" << sendl; break;
+                serr << "no convergence in Gauss-Seidel for " << orderName;
             }
-            return false;
+//            return false;
           }
 
         if (f_printLog.getValue()) sout << "Gauss-Seidel done in " << iteration << " iterations "<<sendl;      
@@ -755,6 +780,15 @@ namespace sofa
           }
       }
 
+
+      void LMConstraintSolver::handleEvent(core::objectmodel::Event *e)
+      {
+          if (dynamic_cast<sofa::simulation::AnimateBeginEvent*>(e))
+          {
+              f_graph.beginEdit()->clear();
+              f_graph.endEdit();
+          }
+      }
 
       int LMConstraintSolverClass = core::RegisterObject("A Constraint Solver working specifically with LMConstraint based components")
       .add< LMConstraintSolver >();

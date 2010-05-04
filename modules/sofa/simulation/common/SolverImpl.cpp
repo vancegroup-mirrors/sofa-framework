@@ -51,188 +51,202 @@ double SolverImpl::finish()
     return result;
 }
 
+void SolverImpl::prepareVisitor(Visitor* v)
+{
+    v->setTags(this->getTags());
+}
+
+void SolverImpl::prepareVisitor(MechanicalVisitor* v)
+{
+    if (v->writeNodeData())
+        v->setNodeMap(this->getWriteNodeMap());
+    else
+        v->setNodeMap(this->getNodeMap());
+    prepareVisitor((Visitor*)v);
+}
+
 SolverImpl::VecId SolverImpl::v_alloc(VecId::Type t)
 {
     //VecId v(t, vectors[t].alloc());
     VecId v(t, VecId::V_FIRST_DYNAMIC_INDEX);
-    MechanicalVAvailVisitor(v).setTags(this->getTags()).execute( getContext() );
-    MechanicalVAllocVisitor(v).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalVAvailVisitor(v) );
+    executeVisitor( MechanicalVAllocVisitor(v) );
     return v;
 }
 
 void SolverImpl::v_free(VecId v)
 {
     //if (vectors[v.type].free(v.index))
-        MechanicalVFreeVisitor(v).setTags(this->getTags()).execute( getContext() );
+        executeVisitor( MechanicalVFreeVisitor(v) );
 }
 
 void SolverImpl::v_clear(VecId v) ///< v=0
 {
-    MechanicalVOpVisitor(v).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalVOpVisitor(v) );
 }
 
 void SolverImpl::v_eq(VecId v, VecId a) ///< v=a
 {
-    MechanicalVOpVisitor(v,a).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalVOpVisitor(v,a) );
 }
 
 void SolverImpl::v_peq(VecId v, VecId a, double f) ///< v+=f*a
 {
-    MechanicalVOpVisitor(v,v,a,f).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+    executeVisitor( MechanicalVOpVisitor(v,v,a,f), true ); // enable prefetching
 }
 void SolverImpl::v_teq(VecId v, double f) ///< v*=f
 {
-    MechanicalVOpVisitor(v,VecId::null(),v,f).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalVOpVisitor(v,VecId::null(),v,f) );
 }
 void SolverImpl::v_op(VecId v, VecId a, VecId b, double f) ///< v=a+b*f
 {
-    MechanicalVOpVisitor(v,a,b,f).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+    executeVisitor( MechanicalVOpVisitor(v,a,b,f), true ); // enable prefetching
 }
 
 void SolverImpl::v_dot(VecId a, VecId b) ///< a dot b ( get result using finish )
 {
     result = 0;
-    MechanicalVDotVisitor(a,b,&result).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+    MechanicalVDotVisitor(a,b,&result).setNodeMap(this->getClearNodeMap()).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 }
 
 void SolverImpl::v_threshold(VecId a, double t)
 {
-  VelocityThresholdVisitor(a,t).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( VelocityThresholdVisitor(a,t) );
 }
 
 void SolverImpl::propagateDx(VecId dx)
 {
-    MechanicalPropagateDxVisitor(dx, false) //Don't ignore the masks
-            .setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalPropagateDxVisitor(dx, false) //Don't ignore the masks
+             );
 }
 
 void SolverImpl::propagateDxAndResetDf(VecId dx, VecId df)
 {
-    MechanicalPropagateDxAndResetForceVisitor(dx,df, false) //Don't ignore the masks
-            .setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+    executeVisitor( MechanicalPropagateDxAndResetForceVisitor(dx,df, false) //Don't ignore the masks
+            , true ); // enable prefetching
     finish();
 }
 
 void SolverImpl::propagateX(VecId x)
 {
-    MechanicalPropagateXVisitor(x, false) //Don't ignore the masks
-            .setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalPropagateXVisitor(x, false) //Don't ignore the masks
+             );
 }
 
 void SolverImpl::propagateXAndResetF(VecId x, VecId f)
 {
-    MechanicalPropagateXAndResetForceVisitor(x,f, false) //Don't ignore the masks
-            .setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalPropagateXAndResetForceVisitor(x,f, false) //Don't ignore the masks
+             );
     finish();
 }
 
 void SolverImpl::projectResponse(VecId dx, double **W)
 {
-    MechanicalApplyConstraintsVisitor(dx, W).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalApplyConstraintsVisitor(dx, W) );
 }
 
 void SolverImpl::addMdx(VecId res, VecId dx, double factor)
 {
-    MechanicalAddMDxVisitor(res,dx,factor).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalAddMDxVisitor(res,dx,factor) );
 }
 
 void SolverImpl::integrateVelocity(VecId res, VecId x, VecId v, double dt)
 {
-    MechanicalVOpVisitor(res,x,v,dt).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalVOpVisitor(res,x,v,dt) );
 }
 
 void SolverImpl::accFromF(VecId a, VecId f)
 {
-    MechanicalAccFromFVisitor(a,f).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalAccFromFVisitor(a,f) );
 }
 
 void SolverImpl::computeForce(VecId result, bool clear, bool accumulate)
 {
     if (clear)
     {
-	MechanicalResetForceVisitor(result, false).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+	executeVisitor( MechanicalResetForceVisitor(result, false), true ); // enable prefetching
 	finish();
     }
-    MechanicalComputeForceVisitor(result, accumulate).setTags(this->getTags()).execute( getContext() , true ); // enable prefetching
+    executeVisitor( MechanicalComputeForceVisitor(result, accumulate) , true ); // enable prefetching
 }
 
 void SolverImpl::computeDf(VecId df, bool clear, bool accumulate)
 {
     if (clear)
     {
-	MechanicalResetForceVisitor(df).setTags(this->getTags()).execute( getContext() );
+	executeVisitor( MechanicalResetForceVisitor(df) );
 	finish();
     }
-    MechanicalComputeDfVisitor(df, false, accumulate).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalComputeDfVisitor(df, false, accumulate) );
 }
 
 void SolverImpl::computeDfV(VecId df, bool clear, bool accumulate)
 {
     if (clear)
     {
-	MechanicalResetForceVisitor(df).setTags(this->getTags()).execute( getContext() );
+	executeVisitor( MechanicalResetForceVisitor(df) );
 	finish();
     }
-    MechanicalComputeDfVisitor(df, true, accumulate).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalComputeDfVisitor(df, true, accumulate) );
 }
 
 void SolverImpl::addMBKdx(VecId df, double m, double b, double k, bool clear, bool accumulate)
 {
     if (clear)
     {
-	MechanicalResetForceVisitor(df, true).setTags(this->getTags()).execute( getContext() );
+	executeVisitor( MechanicalResetForceVisitor(df, true) );
 	finish();
     }
-    MechanicalAddMBKdxVisitor(df,m,b,k, false, accumulate).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
+    executeVisitor( MechanicalAddMBKdxVisitor(df,m,b,k, false, accumulate), true ); // enable prefetching
 }
 
 void SolverImpl::addMBKv(VecId df, double m, double b, double k, bool clear, bool accumulate)
 {
     if (clear)
     {
-	MechanicalResetForceVisitor(df, true).setTags(this->getTags()).execute( getContext() );
+	executeVisitor( MechanicalResetForceVisitor(df, true) );
 	finish();
     }
-    MechanicalAddMBKdxVisitor(df,m,b,k, true, accumulate).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalAddMBKdxVisitor(df,m,b,k, true, accumulate) );
 }
 
 
 void SolverImpl::addSeparateGravity(double dt, VecId result)
 {
-	MechanicalAddSeparateGravityVisitor(dt, result).setTags(this->getTags()).execute( getContext() );
+	executeVisitor( MechanicalAddSeparateGravityVisitor(dt, result) );
 }
 
 void SolverImpl::computeContactForce(VecId result)
 {
-    MechanicalResetForceVisitor(result).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalResetForceVisitor(result) );
     finish();
-    MechanicalComputeContactForceVisitor(result).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalComputeContactForceVisitor(result) );
 }
 
 void SolverImpl::computeContactDf(VecId df)
 {
-    MechanicalResetForceVisitor(df).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalResetForceVisitor(df) );
     finish();
-    //MechanicalComputeDfVisitor(df).setTags(this->getTags()).execute( getContext() );
+    //executeVisitor( MechanicalComputeDfVisitor(df) );
 }
 
 
 void SolverImpl::print( VecId v, std::ostream& out )
 {
-    MechanicalVPrintVisitor(v,out).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalVPrintVisitor(v,out) );
 }
 
 void SolverImpl::printWithElapsedTime( VecId v,  unsigned time, std::ostream& out )
 {
     const double fact = 1000000.0 / (100*helper::system::thread::CTime::getTicksPerSec());
-    MechanicalVPrintWithElapsedTimeVisitor(v,(int)((fact*time+0.5)*0.001), out).setTags(this->getTags()).execute( getContext() );
+    MechanicalVPrintWithElapsedTimeVisitor(v,(int)((fact*time+0.5)*0.001), out)/*.setNodeMap(this->getNodeMap())*/.setTags(this->getTags()).execute( getContext() );
 }
 
 // BaseMatrix & BaseVector Computations
 
 void SolverImpl::getMatrixDimension(unsigned int * const nbRow, unsigned int * const nbCol)
 {
-    MechanicalGetMatrixDimensionVisitor(nbRow, nbCol).setTags(this->getTags()).execute( getContext() );
+    executeVisitor( MechanicalGetMatrixDimensionVisitor(nbRow, nbCol) );
 }
 
 void SolverImpl::addMBK_ToMatrix(defaulttype::BaseMatrix *A, double mFact, double bFact, double kFact, unsigned int offset)
@@ -240,21 +254,21 @@ void SolverImpl::addMBK_ToMatrix(defaulttype::BaseMatrix *A, double mFact, doubl
     if (A != NULL)
     {
         //std::cout << "MechanicalAddMBK_ToMatrixVisitor "<< mFact << " " << bFact << " " << kFact << " " << offset << std::endl;
-        MechanicalAddMBK_ToMatrixVisitor(A, mFact, bFact, kFact, offset).setTags(this->getTags()).execute( getContext() );
+        executeVisitor( MechanicalAddMBK_ToMatrixVisitor(A, mFact, bFact, kFact, offset) );
     }
 }
 /*
 void SolverImpl::addMBKdx_ToVector(defaulttype::BaseVector *V, VecId dx, double mFact, double bFact, double kFact, unsigned int offset)
 {
 	if (V != NULL)
-		MechanicalAddMBKdx_ToVectorVisitor(V, dx, mFact, bFact, kFact, offset).setTags(this->getTags()).execute( getContext() );
+		executeVisitor( MechanicalAddMBKdx_ToVectorVisitor(V, dx, mFact, bFact, kFact, offset) );
 }
 */
 void SolverImpl::multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest, unsigned int offset)
 {
     if (dest != NULL)
     {
-        MechanicalMultiVector2BaseVectorVisitor(src, dest, offset).setTags(this->getTags()).execute( getContext() );;
+        executeVisitor( MechanicalMultiVector2BaseVectorVisitor(src, dest, offset) );
     }
 }
 
@@ -262,7 +276,7 @@ void SolverImpl::multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *s
 {
 	if (src != NULL)
 	{
-		MechanicalMultiVectorPeqBaseVectorVisitor(dest, src, offset).setTags(this->getTags()).execute( getContext() );;
+		executeVisitor( MechanicalMultiVectorPeqBaseVectorVisitor(dest, src, offset) );
 	}
 }
 

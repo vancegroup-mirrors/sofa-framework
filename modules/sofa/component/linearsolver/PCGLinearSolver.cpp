@@ -25,16 +25,18 @@
 // Author: Hadrien Courtecuisse
 //
 // Copyright: See COPYING file that comes with this distribution
+#include <sofa/core/objectmodel/BaseContext.h>
+#include <sofa/core/componentmodel/behavior/LinearSolver.h>
 #include <sofa/component/linearsolver/PCGLinearSolver.h>
 #include <sofa/component/linearsolver/NewMatMatrix.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/component/linearsolver/SparseMatrix.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/helper/system/thread/CTime.h>
+#include <sofa/helper/AdvancedTimer.h>
+
 #include <sofa/core/ObjectFactory.h>
 #include <iostream>
-#include "sofa/helper/system/thread/CTime.h"
-#include <sofa/core/objectmodel/BaseContext.h>
-#include <sofa/core/componentmodel/behavior/LinearSolver.h>
-#include <sofa/helper/AdvancedTimer.h>
 
 namespace sofa
 {
@@ -55,12 +57,35 @@ using std::cerr;
 using std::endl;
 
 template<class TMatrix, class TVector>
+PCGLinearSolver<TMatrix,TVector>::PCGLinearSolver()
+: f_maxIter( initData(&f_maxIter,(unsigned)25,"iterations","maximum number of iterations of the Conjugate Gradient solution") )
+, f_tolerance( initData(&f_tolerance,1e-5,"tolerance","desired precision of the Conjugate Gradient Solution (ratio of current residual norm over initial residual norm)") )
+, f_smallDenominatorThreshold( initData(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
+, f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
+, f_refresh( initData(&f_refresh,0,"refresh","Refresh iterations") )
+, use_precond( initData(&use_precond,true,"use_precond","Use preconditioners") )
+, f_preconditioners( initData(&f_preconditioners, "preconditioners", "If not empty: path to the solvers to use as preconditioners") )
+#ifdef DISPLAY_TIME    
+, display_time( initData(&display_time,false,"display_time","display time information") )
+#endif
+, f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") )    
+{
+    f_graph.setWidget("graph");
+    f_graph.setReadOnly(true);
+    iteration = 0;
+    usePrecond = true;
+#ifdef DISPLAY_TIME
+    timeStamp = 1.0 / (double)CTime::getRefTicksPerSec();
+#endif
+}
+
+template<class TMatrix, class TVector>
 void PCGLinearSolver<TMatrix,TVector>::init() {
 	std::vector<sofa::core::componentmodel::behavior::LinearSolver*> solvers;
 	BaseContext * c = this->getContext();
 
     const helper::vector<std::string>& precondNames = f_preconditioners.getValue();
-    if (precondNames.empty())
+    if (precondNames.empty() || !use_precond.getValue())
     {
         c->get<sofa::core::componentmodel::behavior::LinearSolver>(&solvers,BaseContext::SearchDown);
     }
@@ -93,7 +118,7 @@ void PCGLinearSolver<TMatrix,TVector>::init() {
 	step_simu=0;
 	it_simu=0;
 #endif
-
+	first = true;
 }
 
 template<class TMatrix, class TVector>
@@ -103,10 +128,10 @@ void PCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, double b
 #ifdef DISPLAY_TIME
 	double t3 = (double) CTime::getTime();
 #endif
+	usePrecond = use_precond.getValue();
 
-	no_precond = use_precond.getValue();
-
-	if (no_precond) {
+	if (first || usePrecond) {
+		first = false;
 		if (iteration<=0) {
 			for (unsigned int i=0;i<this->preconditioners.size();++i) {
 				preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);
@@ -115,12 +140,40 @@ void PCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, double b
 		} else {
 			iteration--;
 		}
+		
 	}
 
 #ifdef DISPLAY_TIME
 	time3 += (double) CTime::getTime() - t3;
 #endif
 
+}
+
+template<>
+inline void PCGLinearSolver<component::linearsolver::GraphScatteredMatrix,component::linearsolver::GraphScatteredVector>::cgstep_beta(Vector& p, Vector& r, double beta)
+{
+    this->v_op(p,r,p,beta); // p = p*beta + r
+}
+
+template<>
+inline void PCGLinearSolver<component::linearsolver::GraphScatteredMatrix,component::linearsolver::GraphScatteredVector>::cgstep_alpha(Vector& x, Vector& r, Vector& p, Vector& q, double alpha)
+{
+#if 1 //SOFA_NO_VMULTIOP // unoptimized version
+    x.peq(p,alpha);                 // x = x + alpha p
+    r.peq(q,-alpha);                // r = r - alpha q
+#else // single-operation optimization
+    typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+    VMultiOp ops;
+    ops.resize(2);
+    ops[0].first = (VecId)x;
+    ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+    ops[0].second.push_back(std::make_pair((VecId)p,alpha));
+    ops[1].first = (VecId)r;
+    ops[1].second.push_back(std::make_pair((VecId)r,1.0));
+    ops[1].second.push_back(std::make_pair((VecId)q,-alpha));
+    simulation::tree::MechanicalVMultiOpVisitor vmop(ops);
+    vmop.execute(this->getContext());
+#endif
 }
 
 template<class TMatrix, class TVector>
@@ -162,7 +215,7 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 	double tmp = 0.0;
 #endif
 
-	if (!no_precond) {
+	if (usePrecond) {
 		for (unsigned int i=0;i<this->preconditioners.size();i++) {
 			preconditioners[i]->setSystemLHVector(z);
 			preconditioners[i]->setSystemRHVector(r);
@@ -183,10 +236,7 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
   simulation::Visitor::printComment(comment.str());
 #endif
 
-		if (this->preconditioners.size()==0 || (!no_precond)) {
-			z = r;
-		} else {
-
+		if (this->preconditioners.size()>0 && usePrecond) {
 			for (unsigned int i=0;i<this->preconditioners.size();i++) {
 #ifdef DISPLAY_TIME
 			tmp2 = (double) CTime::getTime();
@@ -198,7 +248,10 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 			tmp += ((double) CTime::getTime() - tmp2);
 #endif
 			}
+		} else {
+		  z = r;
 		}
+
 
 		rho = r.dot(z);
 

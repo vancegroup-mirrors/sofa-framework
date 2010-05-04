@@ -62,7 +62,7 @@ template<> double FullVector<bool>::norm() const
         double r = 0.0;
         for(int i=0;i<cursize;++i)
 			r += (*this)[i] ? 1.0 : 0.0;
-        return helper::rsqrt(r);
+        return helper::rsqrt(r); 
 }
 
 template SOFA_COMPONENT_LINEARSOLVER_API class FullVector<bool>;

@@ -449,6 +449,7 @@ QPixmap* getPixmap(core::objectmodel::Base* obj)
       /*****************************************************************************************************************/
       void GraphListenerQListView::addDatas(sofa::core::objectmodel::BaseObject *parent)
       {
+        if (frozen) return;
         Q3ListViewItem* new_item;
         std::string name;
         BaseData* data = NULL;

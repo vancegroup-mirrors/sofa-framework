@@ -1,12 +1,12 @@
 <Node dt="0.01" gravity="0 -100 0" showInteractionForceFields="0" showWireFrame="0" >
   <!-- WITH FRICTION -->
-<!--
   <MasterContactSolver displayTime="0" mu="0.08" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false" initial_guess="false" />
   <CollisionResponse response="FrictionContact?mu=0.08" name="collision response"/>
--->
   <!-- WITHOUT FRICTION -->
+<!--
   <MasterContactSolver displayTime="0" mu="0.0" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false" initial_guess="false" />
   <CollisionResponse response="FrictionContact?mu=0.0" name="collision response"/>
+-->
 <!--
   <MasterContactSolver displayTime="0" mu="0.0" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false" initial_guess="false" />
   <CollisionResponse response="FrictionContact?mu=0.0" name="collision response"/>

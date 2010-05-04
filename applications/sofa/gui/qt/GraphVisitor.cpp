@@ -63,7 +63,7 @@ namespace sofa
 	TiXmlDocument doc;
         doc.Parse(file.c_str());
 	
-//         std::cerr << "GRAPH:"<< std::endl << file << std::endl;
+        //std::cerr << "GRAPH:"<< std::endl << file << std::endl;
 
         TiXmlHandle hDoc(&doc);
 	TiXmlNode* pElem;
@@ -124,8 +124,7 @@ namespace sofa
 	while (attribute)
 	  {
 	    std::string nameOfAttribute(attribute->Name());
-	    std::string valueOfAttribute(attribute->Value());
-
+	    std::string valueOfAttribute(attribute->Value());            
 	    addInformation(item, nameOfAttribute, valueOfAttribute);
 	    attribute=attribute->Next();
 	  }
@@ -324,29 +323,49 @@ namespace sofa
 
       void GraphVisitor::addInformation(Q3ListViewItem *element, std::string name, std::string info)
       {
-	if (!element) return;
+        if (!element) return;
 	if (element->text(0) == QString("Node"))
 	  element->setText(0, QString(info.c_str()));
 	else  if (element->text(0) == QString("Component"))
 	  element->setText(0, QString(info.c_str()));
 	else
-	  {
-	    if (element->text(2).isEmpty())
-	      {
-		element->setText(2, QString( name.c_str()));
-		element->setText(3, QString( info.c_str()));
-	      }
-	    else
-	      {
-                if (name != "ptr")
-                  {
-                    QString nameQt = element->text(2) + QString("\n") + QString( name.c_str());
-                    QString infoQt = element->text(3) + QString("\n") + QString( info.c_str());
+          {
 
-                    element->setText(2, nameQt);
-                    element->setText(3, infoQt);
-                  }
-	      }
+            QString nameQt = element->text(2);
+            QString infoQt = element->text(3);
+            if (!nameQt.isEmpty())
+            {
+                nameQt += QString("\n");
+                infoQt += QString("\n");
+            }
+
+            if (element->text(0) == QString("Vector")  && name=="value" && !info.empty())
+            {
+                std::istringstream ss(info);
+                std::ostringstream result;
+                unsigned int size; ss >> size;
+                while (!ss.eof())
+                {
+                    result << "[";
+                    for (unsigned int i=0;i<size;++i)
+                    {
+                        float v; ss >> v;                        
+                        result << v;
+                        if (i!=size-1) result << " ";
+                    }
+                    result << "]\n";
+                }
+                info = result.str();
+            }
+
+            nameQt += QString(name.c_str());
+            infoQt += QString(info.c_str());
+
+            if (name != "ptr")
+              {
+                element->setText(2, nameQt);
+                element->setText(3, infoQt);
+              }
 	  }
       }
       

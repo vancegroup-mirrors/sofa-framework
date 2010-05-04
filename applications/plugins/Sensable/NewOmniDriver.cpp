@@ -39,7 +39,9 @@
 #include <cstring>
 
 #include <sofa/component/visualModel/OglModel.h>
-
+#include <sofa/core/objectmodel/KeypressedEvent.h>
+#include <sofa/core/objectmodel/KeyreleasedEvent.h>
+#include <sofa/core/objectmodel/MouseEvent.h>
 //sensable namespace
 
 
@@ -309,6 +311,7 @@ NewOmniDriver::NewOmniDriver()
 	this->f_listening.setValue(true);
 	data.forceFeedback = new NullForceFeedback();
 	noDevice = false;
+	moveOmniBase = false;
 }
 
 NewOmniDriver::~NewOmniDriver()
@@ -326,16 +329,22 @@ void NewOmniDriver::cleanup()
 
 void NewOmniDriver::setForceFeedback(ForceFeedback* ff)
 {
-	sout << "change ff" << endl;
+
+	// the forcefeedback is already set
+	if(data.forceFeedback == ff)
+	{
+		return;
+	}
+
 	if(data.forceFeedback)
 		delete data.forceFeedback;
 	data.forceFeedback = ff;
 };
 
-void NewOmniDriver::init()
+void NewOmniDriver::bwdInit()
 {
 
-	sout << "NewOmniDriver::init()" << sendl;
+	//std::cout << "NewOmniDriver::init()" << std::endl;
 	simulation::Node *context = dynamic_cast<simulation::Node *>(this->getContext()); // access to current node
 	ForceFeedback *ff = context->getTreeObject<ForceFeedback>();
 	
@@ -343,31 +352,47 @@ void NewOmniDriver::init()
 	{
 		this->setForceFeedback(ff);
 	}
+	//std::cerr << "setForceFeedback(ff) ok" << std::endl;
 
-	data.scale = Scale.getValue();
-	data.forceScale = forceScale.getValue();
-	Quat q = orientationBase.getValue();
-	q.normalize();
-	data.world_H_baseOmni.set( positionBase.getValue(), q		);
-	q=orientationTool.getValue();
-	q.normalize();
-	data.endOmni_H_virtualTool.set(positionTool.getValue(), q);
+	setDataValue();
+
+
+
+	//std::cerr << "data init ok" << std::endl;
+
 	if(initDevice(data)==-1){
 		noDevice=true;
 		std::cout<<"WARNING NO DEVICE"<<std::endl;
 	}
-	sout << "NewOmniDriver::init() done" << sendl;
+	std::cerr  << "NewOmniDriver::init() done" << std::endl;
 
-	data.permanent_feedback = permanent.getValue();
+	
 	
 }
 
-void NewOmniDriver::reinit()
+
+void NewOmniDriver::setDataValue()
 {
+	data.scale = Scale.getValue();
+	data.forceScale = forceScale.getValue();
+	Quat q = orientationBase.getValue();
+	q.normalize();
+	orientationBase.setValue(q);
+	data.world_H_baseOmni.set( positionBase.getValue(), q		);
+	q=orientationTool.getValue();
+	q.normalize();
+	data.endOmni_H_virtualTool.set(positionTool.getValue(), q);
+	data.permanent_feedback = permanent.getValue();
+}
 
-	this->init();
+void NewOmniDriver::reset()
+{
+	std::cout<<"NewOmniDriver::reset() is called" <<std::endl;
+	this->reinit();
+}
 
-
+void NewOmniDriver::reinitVisual()
+{
 	if(visu_base!=NULL)
 	{
 			delete(visu_base);
@@ -395,6 +420,18 @@ void NewOmniDriver::reinit()
 		visu_end->initVisual();
 		visu_end->updateVisual();			
 	}
+
+	
+}
+
+void NewOmniDriver::reinit()
+{
+	std::cout<<"NewOmniDriver::reinit() is called" <<std::endl;
+	this->cleanup();
+	this->bwdInit();
+
+	this->reinitVisual();
+
 
 //////////////// visu_base: place the visual model of the NewOmniDriver
 
@@ -428,8 +465,8 @@ void NewOmniDriver::draw()
 			visu_base->applyRotation(orientationBase.getValue());
 			visu_base->applyTranslation( positionBase.getValue()[0],positionBase.getValue()[1], positionBase.getValue()[2]);
 			//getContext()->addObject(visu_base);
-			
 		}
+		
 
 		if (visu_end == NULL)
 		{
@@ -462,8 +499,26 @@ void NewOmniDriver::draw()
 	}
 }
 
+void NewOmniDriver::onKeyPressedEvent(core::objectmodel::KeypressedEvent *kpe)
+{
+
+
+
+}
+
+void NewOmniDriver::onKeyReleasedEvent(core::objectmodel::KeyreleasedEvent *kre)
+{
+
+		//OmniVisu.setValue(false);
+	
+}
+
 void NewOmniDriver::handleEvent(core::objectmodel::Event *event)
 {
+
+	//std::cout<<"NewEvent detected !!"<<std::endl;
+
+
 	if (dynamic_cast<sofa::simulation::AnimateBeginEvent *>(event))
 	{
 		//getData(); // copy data->servoDeviceData to gDeviceData
@@ -483,8 +538,75 @@ void NewOmniDriver::handleEvent(core::objectmodel::Event *event)
 			sofa::core::objectmodel::OmniEvent omniEvent(data.deviceData.id, world_H_virtualTool.getOrigin(), world_H_virtualTool.getOrientation() , data.deviceData.m_buttonState);
 
 			this->getContext()->propagateEvent(&omniEvent);
+
+			if (moveOmniBase)
+			{
+				std::cout<<" new positionBase = "<<positionBase_buf<<std::endl;
+				visu_base->applyTranslation(positionBase_buf[0] - positionBase.getValue()[0],
+											positionBase_buf[1] - positionBase.getValue()[1], 
+											positionBase_buf[2] - positionBase.getValue()[2]);
+				positionBase.setValue(positionBase_buf);
+				setDataValue();
+				//this->reinitVisual();
+			}
+
 		}
+		else
+			std::cout<<"data not ready"<<std::endl;
+
+
+
 	}
+
+	if (dynamic_cast<core::objectmodel::KeypressedEvent *>(event))
+	{
+		core::objectmodel::KeypressedEvent *kpe = dynamic_cast<core::objectmodel::KeypressedEvent *>(event);
+		if (kpe->getKey()=='Z' ||kpe->getKey()=='z' )
+		{
+			moveOmniBase = !moveOmniBase;
+			std::cout<<"key z detected "<<std::endl;
+			OmniVisu.setValue(moveOmniBase);
+
+
+			if(moveOmniBase)
+			{
+				this->cleanup();
+				positionBase_buf = positionBase.getValue();
+
+			}
+			else
+			{
+				this->reinit();
+			}
+		}
+
+		if(kpe->getKey()=='K' || kpe->getKey()=='k')
+		{
+			positionBase_buf.x()=0.0;
+			positionBase_buf.y()=0.5;
+			positionBase_buf.z()=2.6;
+		}
+
+		if(kpe->getKey()=='L' || kpe->getKey()=='l')
+		{
+			positionBase_buf.x()=-0.15;  
+			positionBase_buf.y()=1.5;
+			positionBase_buf.z()=2.6;
+		}
+
+		if(kpe->getKey()=='M' || kpe->getKey()=='m')
+		{
+			positionBase_buf.x()=0.0;
+			positionBase_buf.y()=2.5;
+			positionBase_buf.z()=2.6;
+		}
+
+
+
+	}
+
+
+
 }
 
 int NewOmniDriverClass = core::RegisterObject("Solver to test compliance computation for new articulated system objects")

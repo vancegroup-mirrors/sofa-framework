@@ -298,10 +298,10 @@ public:
     template<class Real2>
     FullVector<Real2> operator*(const FullVector<Real2>& v) const
     {
-        FullVector<Real2> res(rowSize());
+        FullVector<Real2> res(rowSize());  
         for (Index i=0;i<nRow;++i)
-        {
-            Real r = 0;
+        { 
+            Real r = 0; 
             for (Index j=0;j<nCol;++j)
                 r += data[i*pitch+j] * v[j];
             res[i] = r;

@@ -66,27 +66,50 @@ namespace topology
 	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
 	* happen (non exhaustive list: points added, removed, fused, renumbered).
 	*/
-	template< class T, class Alloc = std::allocator<T> > 
-	class PointData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >//public sofa::helper::vector<T, Alloc> 
+	template< class T, class VecT = helper::vector<T> > 
+	class PointData : public sofa::core::objectmodel::Data< VecT >//public container_type 
 	{
 	public:
+	     typedef T value_type;
+	     typedef VecT container_type;
 		/// size_type
-		typedef typename sofa::helper::vector<T,Alloc>::size_type size_type;
+		typedef typename VecT::size_type size_type;
 		/// reference to a value (read-write)
-		typedef typename sofa::helper::vector<T,Alloc>::reference reference;
+		typedef typename VecT::reference reference;
 		/// const reference to a value (read only)
-		typedef typename sofa::helper::vector<T,Alloc>::const_reference const_reference;
+		typedef typename VecT::const_reference const_reference;
 		/// const iterator 
-		typedef typename sofa::helper::vector<T,Alloc>::const_iterator const_iterator;
-
+		typedef typename VecT::const_iterator const_iterator;
+				
+		/// Creation function, called when adding elements.
+		typedef void (*t_createFunc)(int, void*, T&, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&);
+		/// Destruction function, called when deleting elements.
+		typedef void (*t_destroyFunc)(int, void*, T&);
+		/// Creation function, called when adding edges elements.
+		typedef void (*t_createEdgeFunc)(const sofa::helper::vector<unsigned int> &, void*,  container_type &);
+		/// Destruction function, called when removing edges elements.
+		typedef void (*t_destroyEdgeFunc)(const sofa::helper::vector<unsigned int> &, void*,  container_type &);
+		/// Creation function, called when adding triangles elements.
+		typedef void (*t_createTriangleFunc)(const sofa::helper::vector<unsigned int> &, void*,  container_type &);
+		/// Destruction function, called when removing triangles elements.
+		typedef void (*t_destroyTriangleFunc)(const sofa::helper::vector<unsigned int> &, void*,  container_type &);
+		/// Creation function, called when adding quads elements.
+		typedef void (*t_createQuadFunc)(const sofa::helper::vector<unsigned int> &, void*,  container_type &);
+		/// Destruction function, called when removing quads elements.
+		typedef void (*t_destroyQuadFunc)(const sofa::helper::vector<unsigned int> &, void*,  container_type &);
+		/// Creation function, called when adding tetrahedra elements.
+		typedef void (*t_createTetrahedronFunc)(const sofa::helper::vector<unsigned int> &, void*, container_type &);
+		/// Destruction function, called when removing tetrahedra elements.
+		typedef void (*t_destroyTetrahedronFunc)(const sofa::helper::vector<unsigned int> &, void*, container_type &);
+		
 	public:
 		/// Constructor
-            PointData(const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
+            PointData(const typename sofa::core::objectmodel::Data< container_type >::InitData& data,
  			  void (*createFunc) (int, void*, T&, const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = pd_basicCreateFunc,
 			  void* createParam  = (void*)NULL,
 			  void (*destroyFunc)(int, void*, T& ) = pd_basicDestroyFunc,
 			  void* destroyParam = (void*)NULL )
-		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(data), 
+		: sofa::core::objectmodel::Data< container_type >(data), 
 		m_createFunc(createFunc), m_destroyFunc(destroyFunc), 
 		m_createEdgeFunc(0), m_destroyEdgeFunc(0),
 		m_createTriangleFunc(0), m_destroyTriangleFunc(0), 
@@ -95,37 +118,37 @@ namespace topology
 		{}
 
 		/// Constructor
-		PointData(size_type n, const T& value) : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		PointData(size_type n, const T& value) : sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			data->resize(n, value);
 			this->endEdit();
 		}
 		/// Constructor
-		PointData(int n, const T& value) : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		PointData(int n, const T& value) : sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			data->resize(n, value);
 			this->endEdit();
 		}
 		/// Constructor
-		PointData(long n, const T& value): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		PointData(long n, const T& value): sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			data->resize(n, value);
 			this->endEdit();
 		}
 		/// Constructor
-		explicit PointData(size_type n): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		explicit PointData(size_type n): sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			data->resize(n);
 			this->endEdit();
 		}
 		/// Constructor
-		PointData(const sofa::helper::vector<T, Alloc>& x): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		PointData(const container_type& x): sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			(*data) = x;
 			this->endEdit();
 		}
@@ -133,17 +156,17 @@ namespace topology
 #ifdef __STL_MEMBER_TEMPLATES
 		/// Constructor
 		template <class InputIterator>
-		PointData(InputIterator first, InputIterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		PointData(InputIterator first, InputIterator last): sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			data->assign(first, last);
 			this->endEdit();
 		}
 #else /* __STL_MEMBER_TEMPLATES */
 		/// Constructor
-		PointData(const_iterator first, const_iterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+		PointData(const_iterator first, const_iterator last): sofa::core::objectmodel::Data< container_type >(0, false, false)
 		{
-			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
+			container_type* data = this->beginEdit();
 			data->assign(first, last);
 			this->endEdit();
 		}
@@ -155,7 +178,7 @@ namespace topology
 					void* createParam  = (void*)NULL, 
 					void (*destroyFunc)(int, void*, T&                                     ) = pd_basicDestroyFunc, 
 					void* destroyParam = (void*)NULL ) 
-		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false), 
+		: sofa::core::objectmodel::Data< container_type >(0, false, false), 
 		m_createFunc(createFunc), m_destroyFunc(destroyFunc), 
 		m_createEdgeFunc(0), m_destroyEdgeFunc(0),
 		m_createTriangleFunc(0), m_destroyTriangleFunc(0), 
@@ -167,52 +190,50 @@ namespace topology
 		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
 									std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end );
 
-		void setCreateFunction(void (*createFunc )(int, void*, T&, 
-								const sofa::helper::vector< unsigned int > &, 
-								const sofa::helper::vector< double >& )) 
+		void setCreateFunction(t_createFunc createFunc) 
 		{
 			m_createFunc=createFunc;
 		}
 
-		void setDestroyFunction( void (*destroyFunc)(int, void*, T&) ) 
+		void setDestroyFunction(t_destroyFunc destroyFunc) 
 		{
 			m_destroyFunc=destroyFunc;
 		}
 
-		void setCreateEdgeFunction(	void (*createEdgeFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setCreateEdgeFunction(t_createEdgeFunc createEdgeFunc) 
 		{
 			m_createEdgeFunc=createEdgeFunc;
 		}
-		void setDestroyEdgeFunction(void (*destroyEdgeFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) {
+		void setDestroyEdgeFunction(t_destroyEdgeFunc destroyEdgeFunc) {
 			m_destroyEdgeFunc=destroyEdgeFunc;
 		}
 
-		void setCreateTriangleFunction(	void (*createTriangleFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setCreateTriangleFunction(t_createTriangleFunc createTriangleFunc) 
 		{
 			m_createTriangleFunc=createTriangleFunc;
 		}
 
-		void setDestroyTriangleFunction(void (*destroyTriangleFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setDestroyTriangleFunction(t_destroyTriangleFunc destroyTriangleFunc) 
 		{
 			m_destroyTriangleFunc=destroyTriangleFunc;
 		}
 
-		void setCreateQuadFunction(	void (*createQuadFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setCreateQuadFunction(t_createQuadFunc createQuadFunc) 
 		{
 			m_createQuadFunc=createQuadFunc;
 		}
 
-		void setDestroyQuadFunction(void (*destroyQuadFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setDestroyQuadFunction(t_destroyQuadFunc destroyQuadFunc) 
 		{
 			m_destroyQuadFunc=destroyQuadFunc;
 		}
 
-		void setCreateTetrahedronFunction(	void (*createTetrahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setCreateTetrahedronFunction(t_createTetrahedronFunc createTetrahedronFunc) 
 		{
 			m_createTetrahedronFunc=createTetrahedronFunc;
 		}
 
-		void setDestroyTetrahedronFunction(void (*destroyTetrahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
+		void setDestroyTetrahedronFunction(t_destroyTetrahedronFunc destroyTetrahedronFunc) 
 		{
 			m_destroyTetrahedronFunc=destroyTetrahedronFunc;
 		}
@@ -229,7 +250,7 @@ namespace topology
 
 		T& operator[](int i)
     		{
-			sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			container_type& data = *(this->beginEdit());
 			T& result = data[i];
 			this->endEdit();
         		return result;
@@ -242,14 +263,14 @@ namespace topology
 
 		void resize(size_type n)
 		{
-			sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			container_type& data = *(this->beginEdit());
 			data.resize(n);
 			this->endEdit();
 		}
 
 		void push_back(T& elem)
 		{
-			sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
+			container_type& data = *(this->beginEdit());
 			data.push_back(elem);
 			this->endEdit();
 		}
@@ -271,40 +292,17 @@ namespace topology
 		void renumber( const sofa::helper::vector<unsigned int> &index );
 
 	private:
-
-		/// Creation function, called when adding elements.
-		void (*m_createFunc)(int, void*, T&, 
-							const sofa::helper::vector< unsigned int > &, 
-							const sofa::helper::vector< double >&);
-
-		/// Destruction function, called when deleting elements.
-		void (*m_destroyFunc)(int, void*, T&);
-
-		/// Creation function, called when adding edges elements.
-		void (*m_createEdgeFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Destruction function, called when removing edges elements.
-		void (*m_destroyEdgeFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Creation function, called when adding triangles elements.
-		void (*m_createTriangleFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Destruction function, called when removing triangles elements.
-		void (*m_destroyTriangleFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Creation function, called when adding quads elements.
-		void (*m_createQuadFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Destruction function, called when removing quads elements.
-		void (*m_destroyQuadFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Creation function, called when adding tetrahedra elements.
-		void (*m_createTetrahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Destruction function, called when removing tetrahedra elements.
-		void (*m_destroyTetrahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-
+		t_createFunc m_createFunc;
+		t_destroyFunc m_destroyFunc;
+		t_createEdgeFunc m_createEdgeFunc;
+		t_destroyEdgeFunc m_destroyEdgeFunc;
+		t_createTriangleFunc m_createTriangleFunc;
+		t_destroyTriangleFunc m_destroyTriangleFunc;
+		t_createQuadFunc m_createQuadFunc;
+		t_destroyQuadFunc m_destroyQuadFunc;
+		t_createTetrahedronFunc m_createTetrahedronFunc;
+		t_destroyTetrahedronFunc m_destroyTetrahedronFunc;
+		
 		/** Parameter to be passed to creation function.
 		*
 		* Warning : construction and destruction of this object is not of the responsibility of PointData.

@@ -32,6 +32,8 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
 
+#include <sofa/helper/SVector.h>
+
 #include <vector>
 
 #include <sofa/component/component.h>
@@ -47,74 +49,8 @@ namespace mapping
 {
 
 using sofa::helper::vector;
-// TODO temporary declaration to avoid NO_DEV compilation errors.
-// TODO Create a DataVector type which is a Data<vector<T> > but which is serialized with delimiters.
-      template <class T>
-      class Coefs: public vector<vector<T> >
-        {
-        public:
-          Coefs() {};
-
-          std::ostream& write ( std::ostream& os ) const
-            {
-              if ( !this->empty() )
-                {
-                  os << "[ ";
-                  typename vector<vector<T> >::const_iterator i = this->begin();
-                  os <<  i->size() << " " << *i ;
-                  ++i;
-                  for ( ; i!=this->end(); ++i )
-                    os << " ],[ " << i->size() << " " << *i;
-                  os << " ]";
-                }
-              return os;
-            }
-
-          std::istream& read ( std::istream& in )
-          {
-            T t;
-            this->clear();
-            while ( !in.eof() )
-              {
-                char c;
-                in >> c;
-                if ( c != '[' )
-                {
-                    std::cerr << "Bad character : " << c << std::endl;
-                    break;
-                }
-                this->push_back ( vector<T>() );
-                vector<T>& nextElt = this->back();
-                unsigned int sizeVec;
-                in >> sizeVec;
-                for (unsigned int i=0;i<sizeVec;++i)
-                  {
-                    in >> t;
-                    nextElt.push_back ( t );
-                  }
-
-                in >> c; // ']'
-                in >> c; // ','
-              }
-            return in;
-          }
-
-          /// Output stream
-          inline friend std::ostream& operator<< ( std::ostream& os, const Coefs<T>& vec )
-          {
-            return vec.write ( os );
-          }
-
-          /// Input stream
-          inline friend std::istream& operator>> ( std::istream& in, Coefs<T>& vec )
-          {
-            return vec.read ( in );
-          }
-        };
-
-
-using sofa::helper::vector;
 using sofa::helper::Quater;
+using sofa::helper::SVector;
 
 #define DISTANCE_EUCLIDIAN 0
 #define DISTANCE_GEODESIC 1
@@ -122,28 +58,28 @@ using sofa::helper::Quater;
 
 #define WEIGHT_NONE 0
 #define WEIGHT_INVDIST_SQUARE 1
-#define WEIGHT_LINEAR 2 // TODO use the two nearest 'from' primitives
-#define WEIGHT_HERMITE 3 // TODO use the two nearest 'from' primitives
+#define WEIGHT_LINEAR 2
+#define WEIGHT_HERMITE 3
 #define WEIGHT_SPLINE 4
 
 #define INTERPOLATION_LINEAR 0
 #define INTERPOLATION_DUAL_QUATERNION 1
-      /*
-      typedef enum
-      {
-        DISTANCE_EUCLIDIAN, DISTANCE_GEODESIC, DISTANCE_HARMONIC
-      } DistanceType;
 
-      typedef enum
-      {
-        WEIGHT_LINEAR, WEIGHT_INVDIST_SQUARE, WEIGHT_HERMITE
-      } WeightingType;
+/*
+typedef enum
+{
+	DISTANCE_EUCLIDIAN, DISTANCE_GEODESIC, DISTANCE_HARMONIC
+} DistanceType;
 
-      typedef enum
-      {
-        INTERPOLATION_LINEAR, INTERPOLATION_DUAL_QUATERNION
-      } InterpolationType;*/
+typedef enum
+{
+	WEIGHT_LINEAR, WEIGHT_INVDIST_SQUARE, WEIGHT_HERMITE
+} WeightingType;
 
+typedef enum
+{
+	INTERPOLATION_LINEAR, INTERPOLATION_DUAL_QUATERNION
+} InterpolationType;*/
 
 
       template <class BasicMapping>
@@ -196,8 +132,8 @@ using sofa::helper::Quater;
           typedef defaulttype::Vec<8,Real> Vec8;
 					typedef Quater<InReal> Quat;
 					typedef sofa::helper::vector< VecCoord > VecVecCoord;
-					typedef vector<double> VD;
-          typedef Coefs<double> VVD;
+					typedef SVector<double> VD;
+          typedef SVector<SVector<double> > VVD;
 
           typedef Coord GeoCoord;
           typedef VecCoord GeoVecCoord;
@@ -209,20 +145,18 @@ using sofa::helper::Quater;
           core::componentmodel::behavior::BaseMechanicalState::ParticleMask* maskTo;
 
           Data<vector<int> > repartition;
-          Data<Coefs<double> > coefs;
-          Data<Coefs<GeoCoord> > weightGradients;
+          Data<VVD > coefs;
+          Data<SVector<SVector<GeoCoord> > > weightGradients;
           Data<unsigned int> nbRefs;
 					public:
           Data<bool> showBlendedFrame;
-          Data<bool> computeJ;
-          Data<bool> computeAllMatrices;
           Data<bool> showDefTensors;
 					Data<bool> showDefTensorsValues;
 					Data<double> showDefTensorScale;
 					Data<unsigned int> showFromIndex;
 					Data<bool> showDistancesValues;
 					Data<bool> showCoefs;
-                                        Data<double> showGammaCorrection;
+					Data<double> showGammaCorrection;
 					Data<bool> showCoefsValues;
 					Data<bool> showReps;
 					Data<int> showValuesNbDecimals;
@@ -236,7 +170,7 @@ using sofa::helper::Quater;
           Data<int /* = InterpolationType*/> interpolationType;
           Data<int /* = DistanceType*/> distanceType;
           bool computeWeights;
-          Coefs<double> distances;
+          VVD distances;
           vector<vector<GeoCoord> > distGradients;
 
           inline void computeInitPos();
@@ -274,7 +208,7 @@ using sofa::helper::Quater;
           {
             nbRefs.setValue ( nb );
           }
-          void setWeightCoefs ( vector<vector<double> > &weights );
+          void setWeightCoefs ( VVD& weights );
           void setRepartition ( vector<int> &rep );
           void setComputeWeights ( bool val )
           {
@@ -284,7 +218,7 @@ using sofa::helper::Quater;
           {
             return nbRefs.getValue();
           }
-          const vector<vector<double> >& getWeightCoefs()
+          const VVD& getWeightCoefs()
           {
             return coefs.getValue();
           }

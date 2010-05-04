@@ -48,7 +48,10 @@ namespace sofa{
       public: 
         QObjectMonitor(const ModifyObjectFlags& flags ,
           QWidget* parent = 0);
- 
+
+        virtual unsigned int sizeWidget(){return 3;}
+        virtual unsigned int numColumnWidget(){return 4;}
+
       protected:
         virtual void update() = 0; // were the actual stuff is done when UpdateTables is called.
         virtual void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_listTable) = 0;

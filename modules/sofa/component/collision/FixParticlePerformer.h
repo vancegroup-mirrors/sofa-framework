@@ -64,10 +64,8 @@ namespace sofa
         void draw();
 
       protected:
-        MouseContactMapper   *mapper;   
-        std::map< core::CollisionModel*, MouseContactMapper* > mapperFixations;
+        MouseContactMapper   *mapper;
         std::vector< simulation::Node * > fixations;
-        std::vector< core::componentmodel::behavior::BaseConstraint * > fixationConstraint;
       };
    
 

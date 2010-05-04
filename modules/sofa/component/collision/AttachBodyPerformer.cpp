@@ -57,7 +57,7 @@ namespace sofa
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Vec3fTypes> >  AttachBodyPerformerVec3fClass("AttachBody",true);
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Rigid3fTypes> >  AttachBodyPerformerRigid3fClass("AttachBody",true);
       template <>
-      void AttachBodyPerformer<defaulttype::Rigid3fTypes>::start_partial(const BodyPicked& picked)
+      bool AttachBodyPerformer<defaulttype::Rigid3fTypes>::start_partial(const BodyPicked& picked)
       {
         core::componentmodel::behavior::MechanicalState<Rigid3fTypes>* mstateCollision=NULL;
        
@@ -72,7 +72,7 @@ namespace sofa
         
         
         spring.setInitLength(this->interactor->getMouseRayModel()->getRay(0).direction()*restLength);
-        spring.setSoftStiffnessTranslation(stiffness);
+        spring.setSoftStiffnessTranslation((float)stiffness);
         jointspringforcefield->addSpring(spring);
 
         const core::objectmodel::TagSet &tags=mstateCollision->getTags();
@@ -80,6 +80,7 @@ namespace sofa
           jointspringforcefield->addTag(*it);        
         mstateCollision->getContext()->addObject(jointspringforcefield);
         
+        return true;
       }
 
 #endif
@@ -88,7 +89,7 @@ namespace sofa
       helper::Creator<InteractionPerformer::InteractionPerformerFactory, AttachBodyPerformer<defaulttype::Rigid3dTypes> >  AttachBodyPerformerRigid3dClass("AttachBody",true);
 
       template <>
-      void AttachBodyPerformer<defaulttype::Rigid3dTypes>::start_partial(const BodyPicked& picked)
+      bool AttachBodyPerformer<defaulttype::Rigid3dTypes>::start_partial(const BodyPicked& picked)
       {
         core::componentmodel::behavior::MechanicalState<Rigid3dTypes>* mstateCollision=NULL;
          
@@ -111,6 +112,7 @@ namespace sofa
 
         mstateCollision->getContext()->addObject(jointspringforcefield);
         
+        return true;
       }
 #endif
 

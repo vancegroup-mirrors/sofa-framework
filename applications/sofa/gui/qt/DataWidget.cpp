@@ -130,11 +130,11 @@ namespace sofa{
 
         if (b)
         {
-          this->setText(QString("Click to hide the values"));
+          this->setText(QString("Hide the values"));
         }
         else
         {
-          this->setText(QString("Click to display the values"));
+          this->setText(QString("Display the values"));
         }
 
       }

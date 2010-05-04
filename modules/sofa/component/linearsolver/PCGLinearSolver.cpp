@@ -234,6 +234,15 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 
 		graph_den.push_back(den);
 
+		if( fabs(den)<f_smallDenominatorThreshold.getValue() ) {
+			endcond = "threshold";
+			if( verbose )
+			{
+				cerr<<"PCGLinearSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<endl;
+			}
+			break;
+		}
+
 		alpha = rho/den;
 		//x.peq(p,alpha);                 // x = x + alpha p
 		//r.peq(q,-alpha);                // r = r - alpha q
@@ -245,15 +254,6 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 			cerr<<"r : "<<r<<endl;
 		}
 		
-		if( fabs(den)<f_smallDenominatorThreshold.getValue() ) {
-			endcond = "threshold";
-			if( verbose )
-			{
-				cerr<<"PCGLinearSolver, den = "<<den<<", smallDenominatorThreshold = "<<f_smallDenominatorThreshold.getValue()<<endl;
-			}
-			break;
-		}
-
 		rho_1 = rho;
 
 		//printf("%f\n",(CTime::getRefTime() - time1)  / (double)CTime::getRefTicksPerSec());

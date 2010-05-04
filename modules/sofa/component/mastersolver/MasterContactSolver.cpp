@@ -118,7 +118,9 @@ void MasterContactSolver::step(double dt)
     sofa::helper::AdvancedTimer::stepBegin("FreeMotion");
     simulation::SolveVisitor freeMotion(dt, true);
     context->execute(&freeMotion);
+    sofa::helper::AdvancedTimer::stepBegin("PropagateFreePosition");
     simulation::MechanicalPropagateFreePositionVisitor().execute(context);
+    sofa::helper::AdvancedTimer::stepEnd  ("PropagateFreePosition");
     sofa::helper::AdvancedTimer::stepEnd  ("FreeMotion");
 	
     if( f_printLog.getValue())

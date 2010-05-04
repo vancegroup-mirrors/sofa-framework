@@ -76,6 +76,8 @@ Light::Light()
 , color(initData(&color, (Vector3) Vector3(1,1,1), "color", "Set the color of the light"))
 , shadowTextureSize (initData(&shadowTextureSize, (GLuint) 0, "shadowTextureSize", "Set size for shadow texture "))
 , drawSource(initData(&drawSource, (bool) false, "drawSource", "Draw Light Source"))
+, p_zNear(initData(&p_zNear, "zNear", "Camera's ZNear"))
+, p_zFar(initData(&p_zFar, "zFar", "Camera's ZFar"))
 , enableShadow(initData(&enableShadow, (bool) true, "enableShadow", "Enable Shadow from this light"))
 {
 
@@ -357,7 +359,7 @@ void SpotLight::drawLight()
 
 void SpotLight::draw()
 {
-/*	if (drawSource.getValue() && getContext()->getShowVisualModels())
+	if (drawSource.getValue() && getContext()->getShowVisualModels())
 	{
 	    Vector3 sceneMinBBox, sceneMaxBBox;
 		sofa::simulation::getSimulation()->computeBBox((sofa::simulation::Node*)this->getContext(), sceneMinBBox.ptr(), sceneMaxBBox.ptr());
@@ -372,7 +374,15 @@ void SpotLight::draw()
 		const Vector3& col = color.getValue();
 
 		//get Rotation
-		defaulttype::Quat q = defaulttype::Quat::createQuaterFrom2Vectors( dir , Vector3(0,0,1));
+	Vector3 xAxis, yAxis;
+	yAxis = (fabs(dir[1]) > fabs(dir[2])) ? Vector3(0.0,0.0,1.0) : Vector3(0.0,1.0,0.0);
+	xAxis = yAxis.cross(dir);
+    yAxis = dir.cross(xAxis);
+	xAxis.normalize();
+	yAxis.normalize();
+	defaulttype::Quat q;
+	q = q.createQuaterFromFrame(xAxis, yAxis, dir).inverse();
+
 		GLfloat rotMat[16];
 		q.writeOpenGlMatrix(rotMat);
 		glDisable(GL_LIGHTING);
@@ -393,7 +403,6 @@ void SpotLight::draw()
 
 		glEnable(GL_LIGHTING);
 	}
-	*/
 }
 
 void SpotLight::preDrawShadow(helper::gl::VisualParameters* vp)
@@ -402,46 +411,56 @@ void SpotLight::preDrawShadow(helper::gl::VisualParameters* vp)
 	const Vector3 &pos = position.getValue();
 	const Vector3 &dir = direction.getValue();
 
-	helper::gl::Transformation transform;
-	for (unsigned int i=0 ; i< 3 ; i++)
-	{
-		transform.translation[i] = pos[i];
-		transform.scale[i] = 1.0;
-	}
 	Vector3 xAxis, yAxis;
-	yAxis = Vector3(0.0,1.0,0.0);
+	yAxis = (fabs(dir[1]) > fabs(dir[2])) ? Vector3(0.0,0.0,1.0) : Vector3(0.0,1.0,0.0);
 	xAxis = yAxis.cross(dir);
+    yAxis = dir.cross(xAxis);
 	xAxis.normalize();
+	yAxis.normalize();
 	defaulttype::Quat q;
 	q = q.createQuaterFromFrame(xAxis, yAxis, dir);
-	q.buildRotationMatrix(transform.rotation);
 
-	//compute zNear, zFar from light point of view
 	double zNear=1e10, zFar=-1e10;
-	for (int corner=0;corner<8;++corner)
+	if (!p_zNear.isSet() || !p_zFar.isSet())
 	{
-		Vector3 p((corner&1)?vp->minBBox[0]:vp->maxBBox[0],
-			  (corner&2)?vp->minBBox[1]:vp->maxBBox[1],
-			  (corner&4)?vp->minBBox[2]:vp->maxBBox[2]);
-		p = transform * p;
-		double z = -p[2];
-		if (z < zNear) zNear = z;
-		if (z > zFar)  zFar = z;
+		//compute zNear, zFar from light point of view
+		for (int corner=0;corner<8;++corner)
+		{
+			Vector3 p((corner&1)?vp->minBBox[0]:vp->maxBBox[0],
+				  (corner&2)?vp->minBBox[1]:vp->maxBBox[1],
+				  (corner&4)?vp->minBBox[2]:vp->maxBBox[2]);
+			p = q.rotate(p - pos);
+			double z = -p[2];
+			if (z < zNear) zNear = z;
+			if (z > zFar)  zFar = z;
+		}
+        if (this->f_printLog.getValue())
+            sout << "zNear = " << zNear << "  zFar = " << zFar << sendl;
+
+		if (zNear <= 0)
+			zNear = 1;
+		if (zFar >= 1000.0)
+			zFar = 1000.0;
+		if (zFar <= 0)
+		{
+			zNear = vp->zNear;
+			zFar = vp->zFar;
+		}
+
+		if (zNear > 0 && zFar < 1000)
+		{
+			zNear *= 0.8; // add some margin
+			zFar *= 1.2;
+			if (zNear < zFar*0.01)
+			  zNear = zFar*0.01;
+			if (zNear < 0.1) zNear = 0.1;
+			if (zFar < 2.0) zFar = 2.0;
+		}
 	}
-
-	if (zNear <= 0)
-		zNear = 1;
-	if (zFar >= 1000.0)
-		zFar = 1000.0;
-
-	if (zNear > 0 && zFar < 1000)
+	else
 	{
-		zNear *= 0.8; // add some margin
-		zFar *= 1.2;
-		if (zNear < zFar*0.01)
-		  zNear = zFar*0.01;
-		if (zNear < 0.1) zNear = 0.1;
-		if (zFar < 2.0) zFar = 2.0;
+		zNear = p_zNear.getValue();
+		zFar = p_zFar.getValue();
 	}
 
 	//Projection matrix

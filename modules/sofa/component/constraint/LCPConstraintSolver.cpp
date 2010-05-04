@@ -54,8 +54,16 @@ namespace constraint
 LCP::LCP(unsigned int mxC) : maxConst(mxC), tol(0.00001), numItMax(1000), useInitialF(true), mu(0.0), dim(0), lok(false)
 {
 	W.resize(maxConst,maxConst);
-        dFree.resize(maxConst);
-        f.resize(2*maxConst+1);
+    dFree.resize(maxConst);
+    f.resize(2*maxConst+1);
+}
+
+void LCP::setMaxConst(unsigned int nbC)
+{
+    maxConst = nbC;
+	W.resize(maxConst,maxConst);
+    dFree.resize(maxConst);
+    f.resize(2*maxConst+1);
 }
 
 LCP::~LCP()
@@ -76,7 +84,7 @@ bool LCPConstraintSolver::prepareStates(double /*dt*/, VecId id)
 	last_lcp = lcp;
 	core::componentmodel::behavior::BaseMechanicalState::VecId dx_id = core::componentmodel::behavior::BaseMechanicalState::VecId::dx();
 	simulation::MechanicalVOpVisitor(dx_id).execute( context); //dX=0
-        simulation::MechanicalPropagateDxVisitor(dx_id,true).execute( context); //Propagate dX //ignore the mask here
+    simulation::MechanicalPropagateDxVisitor(dx_id,true,true).execute( context); //Propagate dX //ignore the mask here
 
         if( f_printLog.getValue())
           serr<<" propagate DXn performed - collision called"<<sendl;		
@@ -372,11 +380,15 @@ void LCPConstraintSolver::build_LCP()
 
 	//sout<<" accumulateConstraint_done "  <<sendl;
 
-	if (_numConstraints > MAX_NUM_CONSTRAINTS)
-          {
-            serr<<sendl<<"Error in LCPConstraintSolver, maximum number of contacts exceeded, "<< _numConstraints/3 <<" contacts detected"<<sendl;
-            exit(-1);
-          }
+	if (_numConstraints > lcp->getMaxConst())
+    {
+        serr<<sendl<<"maximum number of contacts exceeded, "<< _numConstraints/3 <<" contacts detected"<<sendl;
+        int maxC = (_numConstraints > 2*lcp->getMaxConst()) ? _numConstraints : 2*lcp->getMaxConst();
+        lcp1.setMaxConst(maxC);
+        lcp2.setMaxConst(maxC);
+        lcp3.setMaxConst(maxC);
+        //exit(-1);
+    }
 
 	lcp->getMu() = _mu;
 
@@ -765,14 +777,18 @@ void LCPConstraintSolver::build_problem_info()
 	
 	// debug
 	//std::cout<<" accumulateConstraint_done "  <<std::endl;
-
+/*
 	// necessary ///////
-	if (_numConstraints > MAX_NUM_CONSTRAINTS)
-          {
-            serr<<sendl<<"WARNING in LCPConstraintSolver: maximum number of contacts exceeded, "<< _numConstraints/3 <<" contacts detected"<<sendl;
-            //exit(-1);
-          }
-
+	if (_numConstraints > lcp->getMaxConst())
+    {
+        serr<<sendl<<"maximum number of contacts exceeded, "<< _numConstraints/3 <<" contacts detected"<<sendl;
+        int maxC = (_numConstraints > 2*lcp->getMaxConst()) ? _numConstraints : 2*lcp->getMaxConst();
+        lcp1.setMaxConst(maxC);
+        lcp2.setMaxConst(maxC);
+        lcp3.setMaxConst(maxC);
+        //exit(-1);
+    }
+*/
 	lcp->getMu() = _mu;
 
     _dFree->resize(_numConstraints);
@@ -1184,9 +1200,7 @@ void LCPConstraintSolver::keepContactForcesValue()
                 }
               //debug
               //std::cout<<" f : ["<<std::endl;
-              for (int i = 0; i < numContacts; i++){
-                //	std::cout<<f[3*i]<<"\n"<<f[3*i+1] <<"\n"<<f[3*i+2] <<std::endl;
-              }
+              //for (int i = 0; i < numContacts; i++) std::cout<<f[3*i]<<"\n"<<f[3*i+1] <<"\n"<<f[3*i+2] <<std::endl;
               //std::cout<<"];"<<std::endl;
               //delete[] W33;
               if ( displayTime.getValue() )
@@ -1195,10 +1209,13 @@ void LCPConstraintSolver::keepContactForcesValue()
 
                 }			
 			
+              sofa::helper::AdvancedTimer::valSet("GS iterations", it+1);
 			
               return 1;
             }
           }
+    sofa::helper::AdvancedTimer::valSet("GS iterations", it);
+
 	//free(d);
 	//for (int i = 0; i < numContacts; i++)
 	//	delete W33[i];
@@ -1401,6 +1418,8 @@ void LCPConstraintSolver::keepContactForcesValue()
                   sout<<" GAUSS_SEIDEL iterations  " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
                 
                 }
+              sofa::helper::AdvancedTimer::valSet("GS iterations", it+1);
+
               return 1;
             }
           }
@@ -1409,6 +1428,8 @@ void LCPConstraintSolver::keepContactForcesValue()
             sout<<" GAUSS_SEIDEL iterations " << ( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
           }
     
+        sofa::helper::AdvancedTimer::valSet("GS iterations", it);
+
         serr<<"No convergence in  unbuilt lcp gaussseidel function : error ="<<error <<" after"<< it<<" iterations"<<sendl;
         //afficheLCP(dfree,W,f,dim);
         return 0;

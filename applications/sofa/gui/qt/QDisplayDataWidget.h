@@ -51,21 +51,10 @@ namespace sofa{
         QDisplayDataInfoWidget*  datainfowidget_;
         DataWidget* datawidget_;
         unsigned int numWidgets_;
-        protected slots:
-        void TextChange();
+        
       };
 
-      class QDataTextEdit : public QTextEdit
-      {
-        Q_OBJECT
-      public: 
-        QDataTextEdit(QWidget* parent,core::objectmodel::BaseData*,const ModifyObjectFlags& flags);
-      public slots:
-        void UpdateData();
-        void UpdateWidget();
-      protected:
-        core::objectmodel::BaseData* data_;
-      };
+  
     
     } // qt
   } // gui

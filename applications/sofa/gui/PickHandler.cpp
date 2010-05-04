@@ -83,6 +83,10 @@ namespace sofa
 
     PickHandler::~PickHandler()
     {
+      for (unsigned int i=0; i<operations.size(); ++i)
+      {
+          delete operations[i];
+      }
 //       for (unsigned int i=0;i<instanceComponents.size();++i) delete instanceComponents[i];
     }
 
@@ -173,8 +177,10 @@ namespace sofa
     void PickHandler::updateRay(const sofa::defaulttype::Vector3 &position,const sofa::defaulttype::Vector3 &orientation)
     {
       if (!interactorInUse) return;
+
       mouseCollision->getRay(0).origin() = position+orientation*interaction->mouseInteractor->getDistanceFromMouse();
       mouseCollision->getRay(0).direction() = orientation;
+      simulation::MechanicalPropagatePositionVisitor().execute(mouseCollision->getContext());
 
       if (needToCastRay())
         {          
@@ -184,6 +190,7 @@ namespace sofa
           interaction->mouseInteractor->setBodyPicked(lastPicked);
         }
       
+
       if(mouseButton != NONE){
         switch (mouseStatus)
           {
@@ -208,6 +215,7 @@ namespace sofa
             }
           }
       }
+
       for (unsigned int i=0; i<operations.size(); ++i)
       {
           operations[i]->wait();

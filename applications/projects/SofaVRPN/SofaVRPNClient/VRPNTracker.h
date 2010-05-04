@@ -52,6 +52,11 @@ public:
 
 private:
 	Data<VecCoord> f_points;
+
+	Data<Real> p_dx, p_dy, p_dz;
+	Data<Real> p_scale;
+
+
 	VRPNTrackerData trackerData;
 	vrpn_Tracker_Remote* tkr;
 	sofa::helper::RandomGenerator rg;

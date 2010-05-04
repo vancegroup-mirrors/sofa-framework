@@ -361,8 +361,17 @@ void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TRea
     if (prefetch) return;
     if (!m->externalForces->empty())
     {
+        //std::cout << "ADD: external forces, size = "<< m->externalForces->size() << std::endl;
 	Kernels::vAssign(m->externalForces->size(), m->f->deviceWrite(), m->externalForces->deviceRead());
     }
+    //else std::cout << "NO external forces" << std::endl;
+}
+
+template<class TCoord, class TDeriv, class TReal>
+void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::addDxToCollisionModel(Main* m, bool prefetch)
+{
+    if (prefetch) return;
+    Kernels::vAdd(m->xfree->size(), m->x->deviceWrite(), m->xfree->deviceRead(), m->dx->deviceRead());
 }
 
 template<class TCoord, class TDeriv, class TReal>
@@ -954,7 +963,9 @@ void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TRea
     template<> double MechanicalObject< T >::vDot(VecId a, VecId b) \
     { return data.vDot(this, a, b, this->isPrefetching()); }				    \
     template<> void MechanicalObject< T >::resetForce() \
-    { data.resetForce(this, this->isPrefetching()); }
+    { data.resetForce(this, this->isPrefetching()); } \
+    template<> void MechanicalObject< T >::addDxToCollisionModel() \
+    { data.addDxToCollisionModel(this, this->isPrefetching()); }
 
 CudaMechanicalObject_ImplMethods(gpu::cuda::CudaVec3fTypes);
 CudaMechanicalObject_ImplMethods(gpu::cuda::CudaVec3f1Types);

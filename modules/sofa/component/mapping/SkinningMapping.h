@@ -124,6 +124,7 @@ using sofa::helper::Quater;
 #define WEIGHT_INVDIST_SQUARE 1
 #define WEIGHT_LINEAR 2 // TODO use the two nearest 'from' primitives
 #define WEIGHT_HERMITE 3 // TODO use the two nearest 'from' primitives
+#define WEIGHT_SPLINE 4
 
 #define INTERPOLATION_LINEAR 0
 #define INTERPOLATION_DUAL_QUATERNION 1
@@ -199,6 +200,7 @@ using sofa::helper::Quater;
           typedef Coefs<double> VVD;
 
           typedef Coord GeoCoord;
+          typedef VecCoord GeoVecCoord;
         protected:
           vector<Coord> initPos; // pos: point coord in the world reference frame
           vector<Coord> rotatedPoints;
@@ -208,20 +210,25 @@ using sofa::helper::Quater;
 
           Data<vector<int> > repartition;
           Data<Coefs<double> > coefs;
+          Data<Coefs<GeoCoord> > weightGradients;
           Data<unsigned int> nbRefs;
 					public:
           Data<bool> showBlendedFrame;
           Data<bool> computeJ;
           Data<bool> computeAllMatrices;
           Data<bool> showDefTensors;
+					Data<bool> showDefTensorsValues;
 					Data<double> showDefTensorScale;
 					Data<unsigned int> showFromIndex;
 					Data<bool> showDistancesValues;
 					Data<bool> showCoefs;
+                                        Data<double> showGammaCorrection;
 					Data<bool> showCoefsValues;
 					Data<bool> showReps;
+					Data<int> showValuesNbDecimals;
 					Data<double> showTextScaleFactor;
 					Data<bool> showGradients;
+					Data<bool> showGradientsValues;
 					Data<double> showGradientsScaleFactor;
 
 					protected:

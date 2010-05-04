@@ -73,12 +73,19 @@ public:
 
 private:
 
-        sofa::core::objectmodel::DataFileName filename; ///< file in which the events are stored.
+    sofa::core::objectmodel::DataFileName filename; ///< file in which the events are stored.
 	Data<bool> inverseSense; ///< inverse the sense of the mouvement
+	Data<bool> p_printEvent;
+	Data<char> p_key1, p_key2;
 //	Data<double> timeout;
 	int fd; ///< desciptor to open and read the file.
 
 	int deplX, deplY; ///< mouse relative deplacements.
+
+	enum PedalState { LEFT_PEDAL, RIGHT_PEDAL, NO_PEDAL };
+	int pedalValue;
+	PedalState currentPedalState, oldPedalState;
+
 
 	/**
 	 * @brief getInputEvents gets the mouse relative deplacements.

@@ -56,6 +56,7 @@
 #include <sofa/simulation/common/TransformationVisitor.h>
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/DesactivatedNodeVisitor.h>
+#include <sofa/simulation/common/UpdateContextVisitor.h>
 
 #include <sofa/helper/system/FileRepository.h>
 
@@ -419,11 +420,11 @@ typedef QApplication QSOFAApplication;
 
 	initRecentlyOpened();
 
-
 	//Dialog Add Object
 	connect ( tabs, SIGNAL ( currentChanged ( QWidget* ) ), this, SLOT ( currentTabChanged ( QWidget* ) ) );
 
 	addViewer();
+
 	currentTabChanged ( tabs->currentPage() );
 
 	//ADD GUI for Background
@@ -747,6 +748,7 @@ typedef QApplication QSOFAApplication;
 	setGUI();
 
         SofaMouseManager::getInstance()->setPickHandler(viewer->getPickHandler());
+
       }
 
       void RealGUI::viewerOpenGL()
@@ -887,7 +889,7 @@ typedef QApplication QSOFAApplication;
 	addViewer();
 
 	viewer->configureViewerTab(tabs);
-
+        viewer->getPickHandler()->reset();
 
 	if (filename.rfind(".simu") != std::string::npos)
 	  fileOpenSimu(filename.c_str() );
@@ -1652,10 +1654,12 @@ typedef QApplication QSOFAApplication;
 	//Reset the scene
 	if ( root )
 	  {
-            simulation::getSimulation()->reset ( root );
-            simulation::getSimulation()->reset ( simulation::getSimulation()->getVisualRoot() );
-	    root->setTime(initial_time);
-	    eventNewTime();
+		root->setTime(initial_time);
+		eventNewTime();
+		simulation::getSimulation()->reset ( root );
+		simulation::getSimulation()->reset ( simulation::getSimulation()->getVisualRoot() );
+		UpdateContextVisitor().execute(root);
+		UpdateContextVisitor().execute(simulation::getSimulation()->getVisualRoot());
 
 	    emit newStep();
 	  }

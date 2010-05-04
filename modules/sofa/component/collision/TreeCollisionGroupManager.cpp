@@ -48,13 +48,29 @@ simulation::Node* TreeCollisionGroupManager::findCommonParent(simulation::Node *
 {
   simulation::tree::GNode *gnodeGroup1=static_cast<simulation::tree::GNode*>(group1),
                           *gnodeGroup2=static_cast<simulation::tree::GNode*>(group2);
+  helper::vector<simulation::tree::GNode*> hierarchyParent;
 
-  simulation::tree::GNode* pgroup1=static_cast<simulation::tree::GNode*>(gnodeGroup1->getParent());
-  if (!pgroup1) return NULL;
+  gnodeGroup1=static_cast<simulation::tree::GNode*>(gnodeGroup1->getParent());
+  while ( gnodeGroup1)
+  {
+      hierarchyParent.push_back(gnodeGroup1);
+      gnodeGroup1=static_cast<simulation::tree::GNode*>(gnodeGroup1->getParent());
+  }
+  if (hierarchyParent.empty())   return NULL;
 
-  simulation::tree::GNode* pgroup2=static_cast<simulation::tree::GNode*>(gnodeGroup2->getParent());
-  if (pgroup1==pgroup2) return pgroup1;
-  else                  return NULL;
+  gnodeGroup2=static_cast<simulation::tree::GNode*>(gnodeGroup2->getParent());
+  while (gnodeGroup2)
+  {
+      helper::vector<simulation::tree::GNode*>::iterator it=std::find(hierarchyParent.begin(), hierarchyParent.end(), gnodeGroup2);
+      if (it != hierarchyParent.end())
+      {
+          return gnodeGroup2;
+          break;
+      }
+      gnodeGroup2=static_cast<simulation::tree::GNode*>(gnodeGroup2->getParent());
+  }
+
+  return NULL;
 }
 
 void TreeCollisionGroupManager::clearGroups(core::objectmodel::BaseContext* /*scene*/)

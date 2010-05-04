@@ -321,7 +321,8 @@ namespace sofa
 	if ( m_exportGnuplot )
 	  simulation::getSimulation()->exportGnuplot ( viewer->getScene(), viewer->getScene()->getTime() );
 
-	emit newStep();			 
+	emit newStep();	
+        simulation::getSimulation()->getVisualRoot()->execute< sofa::simulation::UpdateMappingVisitor >();		 
       }
 
 

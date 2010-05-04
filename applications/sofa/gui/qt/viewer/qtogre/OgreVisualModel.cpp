@@ -180,7 +180,7 @@ namespace sofa
  	mSceneMgr->getRootSceneNode()->attachObject(e);	
       }
 
-      void OgreVisualModel::internalDraw()
+    void OgreVisualModel::internalDraw(bool /*transparent*/)
       {
 	if (!ogreObject)
 	  {

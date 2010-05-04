@@ -55,7 +55,7 @@ public:
     ~OgreVisualModel();
     void setOgreSceneManager(Ogre::SceneManager* m){mSceneMgr=m;}
  private:
-    virtual void internalDraw();
+    virtual void internalDraw(bool transparent=false);
  public:
     virtual void init();
     virtual void reinit();

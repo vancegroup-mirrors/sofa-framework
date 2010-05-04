@@ -67,6 +67,9 @@ namespace sofa{
       {
         Q_OBJECT
           public slots:
+
+
+
             void updateData(){
               if(modified){
                 std::string previousName = baseData->getOwner()->getName();

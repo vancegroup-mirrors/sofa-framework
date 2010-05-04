@@ -27,6 +27,7 @@
 
 #include <sofa/gui/qt/DisplayFlagWidget.h>
 #include <sofa/simulation/common/Node.h>
+#include <sofa/simulation/common/UpdateContextVisitor.h>
 
 namespace sofa
 {
@@ -133,6 +134,50 @@ namespace sofa
 	      emit clicked();
 	    }
 	}
+
+      QDisplayFlagWidget::QDisplayFlagWidget(QWidget* parent, simulation::Node* n, QString name):Q3GroupBox(parent), node(n), numWidgets_(5)
+      {
+        this->setColumns(1);
+        this->setTitle(name);
+        flags = new DisplayFlagWidget(this);
+        
+        flags->setFlag(simulation::Node::VISUALMODELS, node->getShowVisualModels());
+        flags->setFlag(simulation::Node::BEHAVIORMODELS, node->getShowBehaviorModels());
+        flags->setFlag(simulation::Node::COLLISIONMODELS, node->getShowCollisionModels());
+        flags->setFlag(simulation::Node::BOUNDINGCOLLISIONMODELS, node->getShowBoundingCollisionModels());
+        flags->setFlag(simulation::Node::MAPPINGS, node->getShowMappings());
+        flags->setFlag(simulation::Node::MECHANICALMAPPINGS, node->getShowMechanicalMappings());
+        flags->setFlag(simulation::Node::FORCEFIELDS, node->getShowForceFields());
+        flags->setFlag(simulation::Node::INTERACTIONFORCEFIELDS, node->getShowInteractionForceFields());
+        flags->setFlag(simulation::Node::WIREFRAME, node->getShowWireFrame());
+        flags->setFlag(simulation::Node::NORMALS, node->getShowNormals());
+
+        connect(flags, SIGNAL(clicked()), this, SLOT(internalModification()));
+        flags->setMinimumSize(QSize(50,400));
+      }
+
+      void QDisplayFlagWidget::applyFlags()
+      {
+        node->setShowVisualModels(flags->getFlag(simulation::Node::VISUALMODELS));
+        node->setShowBehaviorModels(flags->getFlag(simulation::Node::BEHAVIORMODELS));
+        node->setShowCollisionModels(flags->getFlag(simulation::Node::COLLISIONMODELS));
+        node->setShowBoundingCollisionModels(flags->getFlag(simulation::Node::BOUNDINGCOLLISIONMODELS));
+        node->setShowMappings(flags->getFlag(simulation::Node::MAPPINGS));
+        node->setShowMechanicalMappings(flags->getFlag(simulation::Node::MECHANICALMAPPINGS));
+        node->setShowForceFields(flags->getFlag(simulation::Node::FORCEFIELDS));
+        node->setShowInteractionForceFields(flags->getFlag(simulation::Node::INTERACTIONFORCEFIELDS));
+        node->setShowWireFrame(flags->getFlag(simulation::Node::WIREFRAME));
+        node->setShowNormals(flags->getFlag(simulation::Node::NORMALS));
+
+
+        node->execute< sofa::simulation::UpdateVisualContextVisitor >();
+        if (!node->nodeInVisualGraph.empty())
+        {
+          node->nodeInVisualGraph->copyContext((core::objectmodel::Context&) *(node->getContext()));
+          node->nodeInVisualGraph->execute< sofa::simulation::UpdateVisualContextVisitor >();
+        }
+      }
+      
 
     } // namespace qt
 

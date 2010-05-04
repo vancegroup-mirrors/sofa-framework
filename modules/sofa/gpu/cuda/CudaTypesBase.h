@@ -44,11 +44,11 @@ class CudaBaseMatrix : public BaseMatrix {
 			return m;
 		}
 
-		void resize(int nbCol, int nbRow) {
+		void resize(int nbRow, int nbCol) {
 			m.resize(nbCol,nbRow,BSIZE);
 		}
 
-		void resize(int nbCol, int nbRow,int ws) {
+		void resize(int nbRow, int nbCol,int ws) {
 			m.resize(nbCol,nbRow,ws);
 		}
 
@@ -61,7 +61,7 @@ class CudaBaseMatrix : public BaseMatrix {
 		}
 
 		SReal element(int i, int j) const {
-			return m[j][i];
+			return m[i][j];
 		}
 
 		const T* operator[] ( int i ) const {
@@ -84,7 +84,7 @@ class CudaBaseMatrix : public BaseMatrix {
 				exit(1);
 			}
 #endif
-			m[j][i] = (T)v;
+			m[i][j] = (T)v;
 		}
 
 		void add(int i, int j, double v) {
@@ -94,7 +94,7 @@ class CudaBaseMatrix : public BaseMatrix {
 				exit(1);
 			}
 #endif
-			m[j][i] += (T)v;
+			m[i][j] += (T)v;
 		}
 
 		static std::string Name() {

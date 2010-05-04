@@ -171,8 +171,19 @@ void LinearMovementConstraint<DataTypes>::init()
 	x0.resize(0);
 	nextM = prevM = Deriv();
 
-  currentTime = -1.0;
-  finished = false;
+	currentTime = -1.0;
+	finished = false;
+}
+
+
+template <class DataTypes>
+void LinearMovementConstraint<DataTypes>::reset()
+{
+	nextT = prevT = 0.0;
+	nextM = prevM = Deriv();
+
+	currentTime = -1.0;
+	finished = false;
 }
 
 
@@ -186,19 +197,19 @@ template <class DataTypes>
 void LinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 {
 	Real cT = (Real) this->getContext()->getTime(); 
-  if ((cT != currentTime) || !finished)
-  {
-    findKeyTimes();
-  }
+	if ((cT != currentTime) || !finished)
+	{
+		findKeyTimes();
+	}
 
-  if (finished && nextT != prevT) 
-  {
+	if (finished && nextT != prevT) 
+	{
 	  	const SetIndexArray & indices = m_indices.getValue().getArray();
 
 	  	//set the motion to the Dofs 
 	  	for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
 	  	{
-        dx[*it] = (nextM - prevM)*(1.0 / (nextT - prevT));
+			dx[*it] = (nextM - prevM)*(1.0 / (nextT - prevT));
 	  	}	
 	}
 }
@@ -217,41 +228,41 @@ void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
 			x0[*it] = x[*it];
 	}
 
-  if ((cT != currentTime) || !finished)
-  {
-    findKeyTimes();
-  }
+	if ((cT != currentTime) || !finished)
+	{
+		findKeyTimes();
+	}
 
 	//if we found 2 keyTimes, we have to interpolate a velocity (linear interpolation)
-	if(finished && nextT != prevT){
-	  const SetIndexArray & indices = m_indices.getValue().getArray();
+	if(finished && nextT != prevT)
+	{
+		const SetIndexArray & indices = m_indices.getValue().getArray();
 
-	  Real dt = (cT - prevT) / (nextT - prevT);
-	  Deriv m = prevM + (nextM-prevM)*dt;
+		Real dt = (cT - prevT) / (nextT - prevT);
+		Deriv m = prevM + (nextM-prevM)*dt;
 
-	  //set the motion to the Dofs 
-	  for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-	  {
-	  	x[*it] = x0[*it] + m ;
-	  }
-  }
+		//set the motion to the Dofs 
+		for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+		{
+			x[*it] = x0[*it] + m ;
+		}
+	}
 }
 
 template <class DataTypes>
 void LinearMovementConstraint<DataTypes>::findKeyTimes()
 {
-  Real cT = (Real) this->getContext()->getTime();
+	Real cT = (Real) this->getContext()->getTime();
+	finished = false;
 
-  finished = false;
-
-	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin()){
-
-    nextT = *m_keyTimes.getValue().begin();
-    prevT = nextT;
+	if(m_keyTimes.getValue().size() != 0 && cT >= *m_keyTimes.getValue().begin() && cT <= *m_keyTimes.getValue().rbegin())
+	{
+		nextT = *m_keyTimes.getValue().begin();
+		prevT = nextT;
 
 		typename helper::vector<Real>::const_iterator it_t = m_keyTimes.getValue().begin();
 		typename VecDeriv::const_iterator it_m = m_keyMovements.getValue().begin();
- 
+	 
 		//WARNING : we consider that the key-events are in chronological order
 		//here we search between which keyTimes we are, to know which are the motion to interpolate
 		while( it_t != m_keyTimes.getValue().end() && !finished)
@@ -268,29 +279,30 @@ void LinearMovementConstraint<DataTypes>::findKeyTimes()
 			it_t++;
 			it_m++;
 		}
-  }
+	}
 }
 
 
 //display the path the constrained dofs will go through
-template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::draw()
-{
+  template <class DataTypes>
+  void LinearMovementConstraint<DataTypes>::draw()
+  {
     if (!this->getContext()->getShowBehaviorModels() || m_keyTimes.getValue().size() == 0 ) return;
     glDisable (GL_LIGHTING);
     glPointSize(10);
     glColor4f (1,0.5,0.5,1);
     glBegin (GL_LINES);
 	const SetIndexArray & indices = m_indices.getValue().getArray();
-	for (unsigned int i=0 ; i<m_keyMovements.getValue().size()-1 ; i++) {
-		for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-		{
-			gl::glVertexT(x0[*it]+m_keyMovements.getValue()[i]);
-			gl::glVertexT(x0[*it]+m_keyMovements.getValue()[i+1]);
-		}
+	for (unsigned int i=0 ; i<m_keyMovements.getValue().size()-1 ; i++) 
+	{
+	  for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+	  {
+		  gl::glVertexT(x0[*it]+m_keyMovements.getValue()[i]);
+		  gl::glVertexT(x0[*it]+m_keyMovements.getValue()[i+1]);
+	  }
 	}
     glEnd();
-}
+  }
 
 // Specialization for rigids
 template <>

@@ -34,6 +34,9 @@ OglViewport::OglViewport()
 ,p_screenSize(initData(&p_screenSize, "screenSize", "Viewport size"))
 ,p_cameraPosition(initData(&p_cameraPosition, Vec3f(0.0,0.0,0.0), "cameraPosition", "Camera's position in eye's space"))
 ,p_cameraOrientation(initData(&p_cameraOrientation,Quat(), "cameraOrientation", "Camera's orientation"))
+,p_cameraRigid(initData(&p_cameraRigid, "cameraRigid", "Camera's rigid coord"))
+,p_zNear(initData(&p_zNear, "zNear", "Camera's ZNear"))
+,p_zFar(initData(&p_zFar, "zFar", "Camera's ZFar"))
 {
 	// TODO Auto-generated constructor stub
 
@@ -63,46 +66,72 @@ void OglViewport::initVisual()
 
 void OglViewport::preDrawScene(helper::gl::VisualParameters* vp)
 {
-	const Vec3f &cameraPosition = *p_cameraPosition.beginEdit();
-	Quat &cameraOrientation = *p_cameraOrientation.beginEdit();
+	Vec3f cameraPosition;
+	Quat cameraOrientation;
+	//const Vec3f &cameraPosition = *p_cameraPosition.beginEdit();
+	//const Quat &cameraOrientation = *p_cameraOrientation.beginEdit();
+	//defaulttype::RigidCoord &rigidCamera = *p_cameraRigid.beginEdit();
+
+	//Take the rigid if it is connected to something
+	if (p_cameraRigid.isSet() || p_cameraRigid.getParent())
+	{
+		RigidCoord rcam = p_cameraRigid.getValue();
+		cameraPosition =  rcam.getCenter() ;
+		cameraOrientation = rcam.getOrientation();
+	}
+	else
+	{
+		cameraPosition = p_cameraPosition.getValue();
+		cameraOrientation = p_cameraOrientation.getValue();
+	}
+
 	cameraOrientation.normalize();
 	helper::gl::Transformation transform;
 
 	cameraOrientation.buildRotationMatrix(transform.rotation);
+	//cameraOrientation.writeOpenGlMatrix((SReal*) transform.rotation);
 
 	for (unsigned int i=0 ; i< 3 ; i++)
 	{
-		transform.translation[i] = cameraPosition[i];
+		transform.translation[i] = -cameraPosition[i];
 		transform.scale[i] = 1.0;
 	}
 
-	//recompute zNear, zFar
 	double zNear=1e10, zFar=-1e10;
-
-	for (int corner=0;corner<8;++corner)
+	//recompute zNear, zFar
+	if (!p_zNear.isSet() || !p_zFar.isSet())
 	{
-	    Vector3 p((corner&1)?vp->minBBox[0]:vp->maxBBox[0],
-		      (corner&2)?vp->minBBox[1]:vp->maxBBox[1],
-		      (corner&4)?vp->minBBox[2]:vp->maxBBox[2]);
-	    p = transform * p;
-	    double z = -p[2];
-	    if (z < zNear) zNear = z;
-	    if (z > zFar)  zFar = z;
+		for (int corner=0;corner<8;++corner)
+		{
+			Vector3 p((corner&1)?vp->minBBox[0]:vp->maxBBox[0],
+				  (corner&2)?vp->minBBox[1]:vp->maxBBox[1],
+				  (corner&4)?vp->minBBox[2]:vp->maxBBox[2]);
+			//TODO: invert transform...
+			p = transform * p;
+			double z = -p[2];
+			if (z < zNear) zNear = z;
+			if (z > zFar)  zFar = z;
+		}
+
+		if (zNear <= 0)
+			zNear = 1;
+		if (zFar >= 1000.0)
+			zFar = 1000.0;
+
+		if (zNear > 0 && zFar < 1000)
+		{
+			zNear *= 0.8; // add some margin
+			zFar *= 1.2;
+			if (zNear < zFar*0.01)
+			  zNear = zFar*0.01;
+			if (zNear < 0.1) zNear = 0.1;
+			if (zFar < 2.0) zFar = 2.0;
+		}
 	}
-
-	if (zNear <= 0)
-	    zNear = 1;
-	if (zFar >= 1000.0)
-	    zFar = 1000.0;
-
-	if (zNear > 0 && zFar < 1000)
+	else
 	{
-	    zNear *= 0.8; // add some margin
-	    zFar *= 1.2;
-	    if (zNear < zFar*0.01)
-	      zNear = zFar*0.01;
-	    if (zNear < 0.1) zNear = 0.1;
-	    if (zFar < 2.0) zFar = 2.0;
+		zNear = p_zNear.getValue();
+		zFar = p_zFar.getValue();
 	}
 
 	double ratio = (double)vp->viewport[2]/(double)vp->viewport[3];
@@ -120,7 +149,9 @@ void OglViewport::preDrawScene(helper::gl::VisualParameters* vp)
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	transform.Apply();
+	helper::gl::glMultMatrix((SReal *)transform.rotation);
+	helper::gl::glTranslate(transform.translation[0], transform.translation[1], transform.translation[2]);
+
 	//gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2],0 ,0 ,0, cameraDirection[0], cameraDirection[1], cameraDirection[2]);
 	simulation::VisualDrawVisitor vdv( core::VisualModel::Std );
 	vdv.execute ( getContext() );

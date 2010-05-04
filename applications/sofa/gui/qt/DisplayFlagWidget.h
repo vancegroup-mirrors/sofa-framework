@@ -31,6 +31,8 @@
 #include <map>
 #include <vector>
 
+#include <sofa/simulation/common/Node.h>
+
 #ifdef SOFA_QT4
 #include <Q3ListView>
 #include <Q3CheckListItem>
@@ -38,12 +40,15 @@
 #include <Q3Header>
 #include <QMouseEvent>
 #include <Q3Frame>
+#include <Q3GroupBox>
 #else
 #include <qlistview.h>
 #include <qheader.h>
+#include <qgroupbox.h>
 typedef QListView Q3ListView;
 typedef QCheckListItem Q3CheckListItem;
 typedef QListViewItem Q3ListViewItem;
+typedef QGroupBox Q3GroupBox;
 #endif
 namespace sofa
 {
@@ -54,6 +59,7 @@ namespace sofa
     namespace qt
     {
 
+
       class DisplayFlagWidget : public Q3ListView
       {
 	Q_OBJECT
@@ -63,6 +69,7 @@ namespace sofa
 
 	bool getFlag(int idx){return itemShowFlag[idx]->isOn();}
 	void setFlag(int idx, bool value){itemShowFlag[idx]->setOn(value);}
+
       signals:
 	void change(int,bool);
 	void clicked();
@@ -75,6 +82,26 @@ namespace sofa
 
 	Q3CheckListItem* itemShowFlag[10];
 	std::map<  Q3CheckListItem*, int > mapFlag;
+      };
+
+
+      class QDisplayFlagWidget: public Q3GroupBox
+      {
+        Q_OBJECT
+      public:
+        QDisplayFlagWidget(QWidget* parent, simulation::Node* node, QString name);
+        unsigned int getNumWidgets() const { return numWidgets_;};
+
+        public slots:
+        void applyFlags();
+        void internalModification(){emit DisplayFlagDirty(true);}
+      signals:
+        void DisplayFlagDirty(bool);
+
+      protected:
+        DisplayFlagWidget *flags;
+        simulation::Node *node;
+        const unsigned int numWidgets_;
       };
 
     } // namespace qt

@@ -38,8 +38,10 @@ void UpdateMappingVisitor::processMapping(simulation::Node* n, core::BaseMapping
     end(n, obj, t0);
 }
 
-void UpdateMappingVisitor::processMechanicalMapping(simulation::Node* n, core::componentmodel::behavior::BaseMechanicalMapping* obj)
+void UpdateMappingVisitor::processMechanicalMapping(simulation::Node* n, core::componentmodel::behavior::BaseMechanicalMapping* /*obj*/)
 {
+    // mechanical mappings with isMechanical flag not set are now processed by the MechanicalPropagatePositionVisitor visitor
+/*
     if (!obj->isMechanical())
     {
       simulation::Node::ctime_t t0=begin(n, obj);
@@ -63,6 +65,7 @@ void UpdateMappingVisitor::processMechanicalMapping(simulation::Node* n, core::c
 
       end(n, obj, t0);
     }
+*/
 }
 
 Visitor::Result UpdateMappingVisitor::processNodeTopDown(simulation::Node* node)

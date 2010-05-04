@@ -85,6 +85,7 @@ namespace constraint
         inline unsigned int getNbConst(void) {return nbConst;};
         inline void setNbConst(unsigned int nbC) {nbConst = nbC;};
         inline unsigned int getMaxConst(void) {return maxConst;};
+        void setMaxConst(unsigned int nbC);
 
         inline bool isLocked(void) {return false;};
         inline void lock(void) {lok = true;};
@@ -117,6 +118,17 @@ namespace constraint
             end(node, ms, t0);
             return RESULT_CONTINUE;
           }
+
+          // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+          virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
+          {
+              return false; // !map->isMechanical();
+          }
+
+            /// Return a class name for this visitor
+            /// Only used for debugging / profiling purposes
+            virtual const char* getClassName() const { return "MechanicalResetContactForceVisitor";}
+
 #ifdef SOFA_DUMP_VISITOR_INFO
           void setReadWriteVectors()
           {
@@ -147,6 +159,18 @@ namespace constraint
             end(node, ms, t0);
             return RESULT_CONTINUE;
           }
+
+
+          // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+          virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
+          {
+              return false; // !map->isMechanical();
+          }
+
+          /// Return a class name for this visitor
+          /// Only used for debugging / profiling purposes
+          virtual const char* getClassName() const { return "MechanicalApplyContactForceVisitor";}
+
 #ifdef SOFA_DUMP_VISITOR_INFO
           void setReadWriteVectors()
           {
@@ -180,6 +204,18 @@ namespace constraint
             end(node, c, t0);
             return RESULT_CONTINUE;
           }
+
+
+          // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+          virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
+          {
+              return false; // !map->isMechanical();
+          }
+
+          /// Return a class name for this visitor
+          /// Only used for debugging / profiling purposes
+          virtual const char* getClassName() const { return "MechanicalGetConstraintValueVisitor";}
+
 #ifdef SOFA_DUMP_VISITOR_INFO
           void setReadWriteVectors()
           {
@@ -216,6 +252,17 @@ public:
         return RESULT_CONTINUE;
     }
     
+
+    // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+    virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMechanicalMapping* /*map*/)
+    {
+        return false; // !map->isMechanical();
+    }
+
+    /// Return a class name for this visitor
+    /// Only used for debugging / profiling purposes
+    virtual const char* getClassName() const { return "MechanicalGetConstraintInfoVisitor";}
+
 #ifdef SOFA_DUMP_VISITOR_INFO
     void setReadWriteVectors()
     {

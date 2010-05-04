@@ -47,8 +47,10 @@ namespace sofa
       {
       public:
         void setStiffness(double s){stiffness=s;}
+        void setArrowSize(float s){size=s;}
       protected:
         SReal stiffness;
+        SReal size;
       }; 
 
       template <class DataTypes>

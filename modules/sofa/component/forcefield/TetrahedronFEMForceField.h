@@ -27,6 +27,7 @@
 
 #include <sofa/core/componentmodel/behavior/ForceField.h>
 #include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/component/topology/TetrahedronData.h>
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Mat.h>
@@ -57,7 +58,7 @@ namespace forcefield
 
 using namespace sofa::defaulttype;
 using sofa::helper::vector;
-
+using namespace sofa::component::topology;
 
 /// This class can be overridden if needed for additionnal storage within template specializations.
 template<class DataTypes>
@@ -235,6 +236,11 @@ public:
     virtual void addKToMatrix(sofa::defaulttype::BaseMatrix *, SReal, unsigned int &);
 
     void draw();
+
+    // Getting the stiffness matrix of index i
+    void getElementStiffnessMatrix(Real* stiffness, unsigned int nodeIdx);
+    void getElementStiffnessMatrix(Real* stiffness, Tetra& te);
+    void computeMaterialStiffness(MaterialStiffness& materialMatrix, Index&a, Index&b, Index&c, Index&d);
 
   protected:
 

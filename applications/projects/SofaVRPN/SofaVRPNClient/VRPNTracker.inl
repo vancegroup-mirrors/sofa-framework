@@ -27,6 +27,10 @@ using namespace sofa::defaulttype;
 template<class DataTypes>
 VRPNTracker<DataTypes>::VRPNTracker()
 : f_points(initData(&f_points, "points", "Points from Sensors"))
+, p_dx(initData(&p_dx, (Real) 0.0, "dx", "Translation along X axis"))
+, p_dy(initData(&p_dy, (Real) 0.0, "dy", "Translation along Y axis"))
+, p_dz(initData(&p_dz, (Real) 0.0, "dz", "Translation along Z axis"))
+, p_scale(initData(&p_scale, (Real) 1.0, "scale", "Scale (3 axis)"))
 {
 	// TODO Auto-generated constructor stub
 	trackerData.data.resize(1);
@@ -75,12 +79,10 @@ void VRPNTracker<DataTypes>::update()
 			for (unsigned int i=0 ; i<copyTrackerData.data.size() ;i++)
 			{
 				Coord pos;
-				for (unsigned int j=0 ; j<3 ;j++)
-				{
-					pos[j] = copyTrackerData.data[i].pos[j];
-					//points[i][j] = (Real)rg.randomDouble(0, 10);
-					//TODO: quat
-				}
+				pos[0] = (copyTrackerData.data[i].pos[0])*p_scale.getValue() + p_dx.getValue();
+				pos[1] = (copyTrackerData.data[i].pos[1])*p_scale.getValue() + p_dy.getValue();
+				pos[2] = (copyTrackerData.data[i].pos[2])*p_scale.getValue() + p_dz.getValue();
+
 				Coord p(pos);
 				points[i] = p;
 			}

@@ -192,7 +192,6 @@ namespace topology
 		TetrahedraRemoved *e=new TetrahedraRemoved(tetrahedra);
 		addTopologyChange(e);
 	}
-
 	
 	void TetrahedronSetTopologyModifier::removeTetrahedraProcess( const sofa::helper::vector<unsigned int> &indices,
 																			const bool removeIsolatedItems)

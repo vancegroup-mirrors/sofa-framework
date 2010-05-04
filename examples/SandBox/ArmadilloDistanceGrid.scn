@@ -1,38 +1,92 @@
-<Node gravity="0 -100 0" showInteractionForceFields="1" showWireFrame="0" >
-  <MasterContactSolver initial_guess="true" displayTime="0" mu="0.7" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false"/>
+<Node dt="0.01" gravity="0 -100 0" showInteractionForceFields="0" showWireFrame="0" >
+  <!-- WITH FRICTION -->
+<!--
+  <MasterContactSolver displayTime="0" mu="0.08" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false" initial_guess="false" />
+  <CollisionResponse response="FrictionContact?mu=0.08" name="collision response"/>
+-->
+  <!-- WITHOUT FRICTION -->
+  <MasterContactSolver displayTime="0" mu="0.0" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false" initial_guess="false" />
+  <CollisionResponse response="FrictionContact?mu=0.0" name="collision response"/>
+<!--
+  <MasterContactSolver displayTime="0" mu="0.0" tolerance="1e-5" printLog="0" maxIt="1000" build_lcp="false" initial_guess="false" />
+  <CollisionResponse response="FrictionContact?mu=0.0" name="collision response"/>
+-->
+
   <!--<MasterConstraintSolver tolerance="1e-7" maxIterations="1000" printLog="0" displayTime="0" doubleBuffer="1"/>-->
   <CollisionPipeline verbose="0" name="CollisionPipeline"/>
-  <LocalMinDistance name="Proximity" alarmDistance="0.1" contactDistance="0.001" coneFactor="0.5" angleCone="0.1"/>
+  <LocalMinDistance name="Proximity" alarmDistance="0.15" contactDistance="-0.005" coneFactor="0.5" angleCone="0.1"/>
   <BruteForceDetection name="N2" />
-  <CollisionResponse response="FrictionContact" name="collision response"/>
   <Node name="Armadillo1">
     <EulerImplicit rayleighMass="0.1" rayleighStiffness="0.01"/>
     <CGLinearSolver iterations="40" name="linear solver" tolerance="1.0e-9" threshold="1.0e-15"/>
-    <MechanicalObject template="Rigid" position="0 3.14192 4 0.713585 -0.36345 -0.13246 0.584085"/>
+    <MechanicalObject template="Rigid" position="0 0 0 0 0 0 1" rotation="100 40 0" translation="0.8 4 0"/>
+<!--    <MechanicalObject template="Rigid" position="0 3.14192 4 0.713585 -0.36345 -0.13246 0.584085"/> -->
     <UniformMass filename="../../applications/projects/ldidetection/examples/objects/Armadillo.rigid" totalmass="100" />
     <UncoupledConstraintCorrection />
-    <RigidDistanceGrid filename="../../applications/projects/ldidetection/examples/objects/Armadillo-64.fmesh" sampling="-1" translation="0.1970512688 -3.8385167670 -0.6284996918" />
+    <RigidDistanceGrid filename="../../applications/projects/ldidetection/examples/objects/Armadillo-128.fmesh" sampling="0.22" translation="0.1970512688 -3.8385167670 -0.6284996918" />
     <Node>
       <OglModel name="VM" filename="../../applications/projects/ldidetection/examples/objects/Armadillo.obj" dx="0.1970512688" dy="-3.8385167670" dz="-0.6284996918" color="1.0 0.5 0.5" />
-      <IdentityMapping object2="VM" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
     </Node>
   </Node>
   <Node name="Armadillo2">
     <EulerImplicit rayleighMass="0.1" rayleighStiffness="0.01"/>
     <CGLinearSolver iterations="40" name="linear solver" tolerance="1.0e-9" threshold="1.0e-15"/>
-    <MechanicalObject template="Rigid" position="0 15 0 0 0 0 1"/>
+    <MechanicalObject template="Rigid" position="0 0 0 0 0 0 1" rotation="-70 150 0" translation="0.4 14 0"/>
 <!--    <MechanicalObject template="Rigid" position="0 15 0 1 0 0 0"/> -->
     <UniformMass filename="../../applications/projects/ldidetection/examples/objects/Armadillo.rigid" totalmass="100" />
     <UncoupledConstraintCorrection />
-    <RigidDistanceGrid filename="../../applications/projects/ldidetection/examples/objects/Armadillo-64.fmesh" sampling="-1" translation="0.1970512688 -3.8385167670 -0.6284996918" />
+    <RigidDistanceGrid filename="../../applications/projects/ldidetection/examples/objects/Armadillo-128.fmesh" sampling="0.22" translation="0.1970512688 -3.8385167670 -0.6284996918" />
     <Node>
       <OglModel name="VM" filename="../../applications/projects/ldidetection/examples/objects/Armadillo.obj" dx="0.1970512688" dy="-3.8385167670" dz="-0.6284996918" color="0.5 1.0 0.5" />
-      <IdentityMapping object2="VM" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
+    </Node>
+  </Node>
+  <Node name="Step1">
+    <MechanicalObject template="Rigid" position="6 0 0 0 0 0 1" />
+    <RigidDistanceGrid filename="mesh/step.fmesh" scale="1.2" simulated="0" moving="0" />
+    <Node>
+      <OglModel name="VM" filename="mesh/step.obj" useNormals="true" scale="1.2" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
+    </Node>
+  </Node>
+  <Node name="Step2">
+    <MechanicalObject template="Rigid" position="-2 -6 0 0 0 0 1"  />
+    <RigidDistanceGrid filename="mesh/step.fmesh" scale="1.2" simulated="0" moving="0" />
+    <Node>
+      <OglModel name="VM" filename="mesh/step.obj" useNormals="true" scale="1.2" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
+    </Node>
+  </Node>
+  <Node name="Step3">
+    <MechanicalObject template="Rigid" position="-10 -12 0 0 0 0 1"  />
+    <RigidDistanceGrid filename="mesh/step.fmesh" scale="1.2" simulated="0" moving="0" />
+    <Node>
+      <OglModel name="VM" filename="mesh/step.obj" useNormals="true" scale="1.2" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
+    </Node>
+  </Node>
+  <Node name="Step4">
+    <MechanicalObject template="Rigid" position="-18 -18 0 0 0 0 1"  />
+    <RigidDistanceGrid filename="mesh/step.fmesh" scale="1.2" simulated="0" moving="0" />
+    <Node>
+      <OglModel name="VM" filename="mesh/step.obj" useNormals="true" scale="1.2" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
     </Node>
   </Node>
   <Node name="Floor">
-    <MechanicalObject template="Rigid" />
-    <RigidDistanceGrid filename="mesh/floor.fmesh" scale="0.2" simulated="0" moving="0" />
-    <OglModel name="VM" filename="mesh/floor.obj" scale="0.2" />
+    <MechanicalObject template="Rigid" position="-22 -25 -22 0 0 0 1"  />
+    <RigidDistanceGrid filename="mesh/floor.fmesh" scale="1.0" simulated="0" moving="0" />
+    <Node>
+      <OglModel name="VM" filename="mesh/floor2.obj" useNormals="true" scale="1.0" material="floor Ambient 1 0.0 0.0 0.0 0.0 Diffuse 1 0.52 0.46 0.4 1.0 Specular 0 1.0 1.0 1.0 1.0 Emissive 0 0.05 0.05 0.05 0.0 Shininess 0 20" />
+      <IdentityMapping object2="VM" template="Mapping&lt;Rigid,Rigid3f&gt;" />
+    </Node>
   </Node>
+<!--
+  	<Object type="LightManager" listening="true" shadowEnabled="true" ambient="0.0 0.0 0.0 0.0" />
+        <Object type="SpotLight" color="1.0 1.0 1.0" position="-25 80 -18" direction="0 -1 0.1" cutoff="25" shadowTextureSize="2048" attenuation="0.01"/>
+        <Object type="SpotLight" color="1.0 1.0 1.0" position="-20 80 80" direction="0 -0.5 -0.25" shadowTextureSize="2048" attenuation="0.01"/>
+        <Object type="SpotLight" color="0.4 0.4 0.5" position="-100 40 70" direction="1 -0.5 -1" cutoff="25" attenuation="0" enableShadow="false" />
+	<Object type="OglShadowShader"/>
+-->
 </Node>

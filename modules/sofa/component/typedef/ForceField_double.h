@@ -45,7 +45,6 @@
 #include <sofa/component/forcefield/DistanceGridForceField.h>
 #include <sofa/component/forcefield/EdgePressureForceField.h>
 #include <sofa/component/forcefield/EllipsoidForceField.h>
-#include <sofa/component/forcefield/FastTetrahedralCorotationalForceField.h>
 #include <sofa/component/forcefield/FrameSpringForceField.h>
 #include <sofa/component/forcefield/HexahedralFEMForceField.h>
 #include <sofa/component/forcefield/HexahedronFEMForceField.h>
@@ -132,12 +131,6 @@ typedef sofa::component::forcefield::EdgePressureForceField<sofa::defaulttype::S
 typedef sofa::component::forcefield::EllipsoidForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > EllipsoidForceField3d;
 typedef sofa::component::forcefield::EllipsoidForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<2, double>, sofa::defaulttype::Vec<2, double>, double> > EllipsoidForceField1d;
 typedef sofa::component::forcefield::EllipsoidForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > EllipsoidForceField2d;
-
-
-
-//---------------------------------------------------------------------------------------------
-//Typedef for FastTetrahedralCorotationalForceField
-typedef sofa::component::forcefield::FastTetrahedralCorotationalForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > FastTetrahedralCorotationalForceField3d;
 
 
 
@@ -388,7 +381,6 @@ typedef EdgePressureForceField3d EdgePressureForceField3;
 typedef EllipsoidForceField3d EllipsoidForceField3;
 typedef EllipsoidForceField1d EllipsoidForceField1;
 typedef EllipsoidForceField2d EllipsoidForceField2;
-typedef FastTetrahedralCorotationalForceField3d FastTetrahedralCorotationalForceField3;
 typedef FrameSpringForceFieldRigid3d FrameSpringForceFieldRigid3;
 typedef HexahedralFEMForceField3d HexahedralFEMForceField3;
 typedef HexahedronFEMForceField3d HexahedronFEMForceField3;

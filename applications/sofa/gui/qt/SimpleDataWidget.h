@@ -36,7 +36,6 @@
 #include "WFloatLineEdit.h"
 #include <limits.h>
 
-#include <sofa/component/fem/QuadratureFormular.h>
 #include <sofa/helper/Polynomial_LD.inl>
 #include <sofa/helper/OptionsGroup.h>
 
@@ -643,51 +642,6 @@ namespace sofa
       template<class T>
       class data_widget_container < Quater<T> > : public fixed_vector_data_widget_container < Quater<T> >
       {};
-
-      ////////////////////////////////////////////////////////////////
-      /// sofa::component::fem::QuadratureFormular support
-      ////////////////////////////////////////////////////////////////
-      using sofa::component::fem::QuadraturePoint;
-
-      template<typename VecN>
-      class vector_data_trait < QuadraturePoint< VecN > >
-      {
-      public:
-    	typedef QuadraturePoint<VecN > data_type;
-    	typedef typename VecN::value_type value_type;
-        enum { NDIM = 1 };
-        enum { SIZE = QuadraturePoint<VecN >::static_size };
-        static int size(const data_type&) { return SIZE; }
-        static const char* header(const data_type& , int i = 0)
-        {
-          switch(i)
-          {
-          case 0: return "weight";
-          case 1: return "X";
-          case 2: return "Y";
-          case 3: return "Z";
-          }
-          return NULL;
-        }
-        static const value_type* get(const data_type& d, int i = 0)
-        {
-          return ((unsigned)i < (unsigned)size(d)) ? &(d[i]) : NULL;
-        }
-        static void set( const value_type& v, data_type& d, int i = 0)
-        {
-          if ((unsigned)i < (unsigned)size(d))
-            d[i] = v;
-        }
-        static void resize( int , data_type&)
-        {
-        }
-      };
-
-      template<class VecN>
-      class data_widget_container < QuadraturePoint<VecN > >
-      : public fixed_vector_data_widget_container < QuadraturePoint<VecN > >
-      {};
-
 
       ////////////////////////////////////////////////////////////////
       /// sofa::helper::Polynomial_LD support

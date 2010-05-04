@@ -14,13 +14,9 @@ DEFINES += SOFA_BUILD_COMPONENT_FEM_MATERIAL
 DEFINES += SOFA_BUILD_COMPONENT_FEM_FORCEFIELD
 DEFINES += SOFA_BUILD_COMPONENT_FEM_STRAINTENSOR
 
-HEADERS += initFEM.h \
-           QuadratureFormular.h \
-           QuadratureFormular.inl 
+HEADERS += initFEM.h
 
-SOURCES += initFEM.cpp \
-           QuadratureFormular.cpp 
-
+SOURCES += initFEM.cpp
 
 
 LIBS += $$SOFA_FRAMEWORK_LIBS

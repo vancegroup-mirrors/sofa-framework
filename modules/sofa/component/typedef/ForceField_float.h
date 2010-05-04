@@ -45,7 +45,6 @@
 #include <sofa/component/forcefield/DistanceGridForceField.h>
 #include <sofa/component/forcefield/EdgePressureForceField.h>
 #include <sofa/component/forcefield/EllipsoidForceField.h>
-#include <sofa/component/forcefield/FastTetrahedralCorotationalForceField.h>
 #include <sofa/component/forcefield/FrameSpringForceField.h>
 #include <sofa/component/forcefield/HexahedralFEMForceField.h>
 #include <sofa/component/forcefield/HexahedronFEMForceField.h>
@@ -133,11 +132,6 @@ typedef sofa::component::forcefield::EllipsoidForceField<sofa::defaulttype::StdV
 typedef sofa::component::forcefield::EllipsoidForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<2, float>, sofa::defaulttype::Vec<2, float>, float> > EllipsoidForceField1f;
 typedef sofa::component::forcefield::EllipsoidForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, float>, sofa::defaulttype::Vec<1, float>, float> > EllipsoidForceField2f;
 
-
-
-//---------------------------------------------------------------------------------------------
-//Typedef for FastTetrahedralCorotationalForceField
-typedef sofa::component::forcefield::FastTetrahedralCorotationalForceField<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, float>, sofa::defaulttype::Vec<3, float>, float> > FastTetrahedralCorotationalForceField3f;
 
 
 
@@ -388,7 +382,6 @@ typedef EdgePressureForceField3f EdgePressureForceField3;
 typedef EllipsoidForceField3f EllipsoidForceField3;
 typedef EllipsoidForceField1f EllipsoidForceField1;
 typedef EllipsoidForceField2f EllipsoidForceField2;
-typedef FastTetrahedralCorotationalForceField3f FastTetrahedralCorotationalForceField3;
 typedef FrameSpringForceFieldRigid3f FrameSpringForceFieldRigid3;
 typedef HexahedralFEMForceField3f HexahedralFEMForceField3;
 typedef HexahedronFEMForceField3f HexahedronFEMForceField3;

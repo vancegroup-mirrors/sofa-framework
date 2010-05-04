@@ -41,31 +41,31 @@ namespace sofa
       class PotentialInjectionPerformerConfiguration
       {
       public:
-	void setPotentialValue (double f){potentialValue=f;}
-	void setStateTag (std::string s){stateTag=s;}
+         void setPotentialValue (double f){potentialValue=f;}
+         void setStateTag (std::string s){stateTag=s;}
 
       protected:
-	double potentialValue;
-	std::string stateTag;
+         double potentialValue;
+         std::string stateTag;
       };
       
 	      
       class SOFA_COMPONENT_COLLISION_API PotentialInjectionPerformer: public InteractionPerformer, public PotentialInjectionPerformerConfiguration
       {          
       public:
-      PotentialInjectionPerformer(BaseMouseInteractor *i):InteractionPerformer(i){};
-	~PotentialInjectionPerformer(){};
+         PotentialInjectionPerformer(BaseMouseInteractor *i):InteractionPerformer(i), isScalar(true){};
+         ~PotentialInjectionPerformer(){};
 	
 	
-        void start();
-        void execute();
-        void draw(){};
+         void start();
+         void execute();
+         void draw(){};
 
       protected:
 
-	std::vector<unsigned int> indexToChange;
-   sofa::component::container::MechanicalObject<defaulttype::Vec2dTypes>* PotentialObjectContainer;
-	
+         std::vector<unsigned int> indexToChange;
+         bool isScalar;
+
       };
     }
   }

@@ -295,7 +295,7 @@ public:
     QSpinBox* wSize;
     QTableUpdater* wTable;
     QPushButtonUpdater* wDisplay;
-    DataWidget *widget;
+    DataWidget * widget;
 
     table_data_widget_container() : wSize(NULL), wTable(NULL), wDisplay(NULL), widget(NULL){}
     int rows;
@@ -362,11 +362,13 @@ public:
         rows = 0;  
         int dataRows = rhelper::size(d);
 
+        
+
 	if (dataRows > 0)
 	    cols = vhelper::size(*rhelper::get(d,0));
 	else
 	    cols = vhelper::size(row_type());
-	wSize = new QSpinBox(0, INT_MAX, 1, parent);
+	
 	if (FLAGS & TABLE_HORIZONTAL)
             wTable = new QTableUpdater(cols, 0, parent);
 	else
@@ -374,7 +376,15 @@ public:
 
         widget=_widget;
 
-        wDisplay = new QPushButtonUpdater( QString("Display the values"), parent);
+        QHBoxLayout* mainlayout = new QHBoxLayout(widget);
+        QVBoxLayout* vlayout = new QVBoxLayout();
+        wSize = new QSpinBox(0, INT_MAX, 1, widget);
+        wDisplay = new QPushButtonUpdater( QString("Display the values"), widget);
+        vlayout->addWidget(wDisplay);
+        vlayout->addWidget(wSize);
+
+        mainlayout->addLayout(vlayout);
+        mainlayout->addWidget(wTable);
         wDisplay->setToggleButton(true);
         wDisplay->setOn(dataRows < MAX_NUM_ELEM && dataRows != 0 );
         wDisplay->setAutoDefault(false);
@@ -398,8 +408,8 @@ public:
 	{
 	    if (!(FLAGS & TABLE_FIXEDSIZE))
 	    {
-		    _widget->connect(wSize, SIGNAL( valueChanged(int) ), _widget, SLOT(setModified()) );
-        _widget->connect(wSize, SIGNAL( valueChanged(int) ), _widget, SLOT(update()) );
+         _widget->connect(wSize, SIGNAL( valueChanged(int) ), _widget, SLOT( setWidgetDirty() ));
+        _widget->connect(wSize, SIGNAL( valueChanged(int) ), _widget, SLOT(updateDataValue()) );
        
       
         if( FLAGS & TABLE_HORIZONTAL)
@@ -411,11 +421,11 @@ public:
 	    {
 		     wSize->setEnabled(false);
 	    }
-	    _widget->connect(wTable, SIGNAL( valueChanged(int,int) ), _widget, SLOT(setModified()) );
+	    _widget->connect(wTable, SIGNAL( valueChanged(int,int) ), _widget, SLOT(setWidgetDirty()) );
 	}
         _widget->connect(wDisplay, SIGNAL( toggled(bool) ), wTable,   SLOT(setDisplayed(bool)));
         _widget->connect(wDisplay, SIGNAL( toggled(bool) ), wDisplay, SLOT(setDisplayed(bool)));
-        _widget->connect(wDisplay, SIGNAL( toggled(bool) ), _widget, SLOT(setDisplayed(bool)));
+        _widget->connect(wDisplay, SIGNAL( toggled(bool) ), _widget, SLOT( updateWidgetValue() ));
 	return true;
     }
 
@@ -561,19 +571,9 @@ public:
     typedef SimpleDataWidget<T, table_data_widget_container< T , FLAGS > > Inherit;
     typedef sofa::core::objectmodel::TData<T> MyData;
 public:
-    TableDataWidget(MyData* d) : Inherit(d){}
+    TableDataWidget(QWidget* parent,const char* name, MyData* d) : Inherit(parent,name,d){}
     virtual unsigned int sizeWidget(){return 3;}    
-    virtual void update()
-    {
-      const data_type& d = this->data->virtualGetValue();
-      this->container.processTableModifications(d);
-    }
 };
-
-//class TagDataWidget : public TableDataWidget<std::map<unsigned int, std::string> > 
-//{
-//  public 
-//}
 
 ////////////////////////////////////////////////////////////////
 /// variable-sized vectors support

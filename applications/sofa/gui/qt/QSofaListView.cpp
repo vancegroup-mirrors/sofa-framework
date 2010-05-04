@@ -364,7 +364,7 @@ namespace sofa{
         std::list< BaseNode* > visualNodeToProcess;
         std::list< BaseNode* > nodeToChange;
         //Breadth First approach to activate all the nodes
-        if( attribute_ == SIMULATION ){
+  
           while (!nodeToProcess.empty())
           {
             //We take the first element of the list
@@ -378,33 +378,34 @@ namespace sofa{
             std::copy(n->child.begin(), n->child.end(), std::back_inserter(nodeToProcess));
             std::copy(n->childInVisualGraph.begin(), n->childInVisualGraph.end(), std::back_inserter(visualNodeToProcess));
           }
+          if( attribute_  == SIMULATION)
           {
             ActivationFunctor activator(activate, graphListener_);
             std::for_each(nodeToChange.begin(),nodeToChange.end(),activator);
+
           }
-          if ( activate ){
-            simulation::getSimulation()->init(object_.ptr.Node);
-          }
-        }
-        if( attribute_ == VISUAL ){
+
+          nodeToChange.clear();
           while (!visualNodeToProcess.empty())
           {
-            //We take the first element of the list
-            Node* n=(Node*)visualNodeToProcess.front();
-            visualNodeToProcess.pop_front();
+              //We take the first element of the list
+              Node* n=(Node*)visualNodeToProcess.front();
+              visualNodeToProcess.pop_front();
 
-            nodeToChange.push_front(n);
+              nodeToChange.push_front(n);
 
-            //We add to the list of node to process all its children
-            core::objectmodel::BaseNode::Children children=n->getChildren();
-            std::copy(children.begin(), children.end(), std::back_inserter(visualNodeToProcess));
+              //We add to the list of node to process all its children
+              core::objectmodel::BaseNode::Children children=n->getChildren();
+              std::copy(children.begin(), children.end(), std::back_inserter(visualNodeToProcess));
           }
-          {
+          if(attribute_ == VISUAL){
+            
             ActivationFunctor activator(activate, graphListener_);
             std::for_each(nodeToChange.begin(),nodeToChange.end(),activator);
           }
-        }
-            
+          if( activate && attribute_ == SIMULATION){
+              simulation::getSimulation()->init(object_.ptr.Node);
+          }
       }
 
       void QSofaListView::SaveNode()
@@ -531,7 +532,9 @@ namespace sofa{
         if( object_.type == typeObject )
         {
           emit Lock(true);
+          Unfreeze();
           graphListener_->removeDatas(object_.ptr.Object);
+          Freeze();
           emit Lock(false);
         }
       }
@@ -541,7 +544,9 @@ namespace sofa{
         if ( object_.type == typeObject )
         {
           emit Lock(true);
+          Unfreeze();
           graphListener_->addDatas(object_.ptr.Object);
+          Freeze();
           emit Lock(false);
         }
       }

@@ -22,14 +22,15 @@ HEADERS +=  \
            BTDLinearSolver.h \
            FullVector.h \
            FullMatrix.h \
-	   DiagonalMatrix.h \
+           DiagonalMatrix.h \
            SparseMatrix.h \
            CompressedRowSparseMatrix.h \
            MatrixLinearSolver.h \
            NewMatVector.h \
            NewMatMatrix.h \
-	   MatrixExpr.h \
-           MultiCGLinearSolver.h
+           MatrixExpr.h \
+           MultiCGLinearSolver.h \
+           matrix_bloc_traits.h
 
 SOURCES += initLinearSolver.cpp \
            CGLinearSolver.cpp \

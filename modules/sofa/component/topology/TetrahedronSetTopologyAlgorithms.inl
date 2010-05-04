@@ -51,12 +51,114 @@ namespace topology
 		this->getContext()->get(m_modifier);
 		this->getContext()->get(m_geometryAlgorithms);
 		m_intialNbPoints=m_container->getNbPoints();
+		m_baryLimit=0.2;
 	}	
 
 	template<class DataTypes>
 	void TetrahedronSetTopologyAlgorithms< DataTypes >::removeTetra(sofa::helper::vector<TetraID>& ind_ta)
 	{
 		m_modifier->removeTetrahedraProcess(ind_ta,true);
+	}
+
+	template<class DataTypes>
+	void TetrahedronSetTopologyAlgorithms< DataTypes >::subDivideTetrahedronsWithPlane(sofa::helper::vector< sofa::helper::vector<double> >& coefs, sofa::helper::vector<EdgeID>& intersectedEdgeID, Coord /*planePos*/, Coord planeNormal)
+	{
+		//Current topological state
+		int nbPoint=this->m_container->getNbPoints();
+		int nbTetra=this->m_container->getNbTetrahedra();
+
+		//Number of to be added points 
+		int nbTobeAddedPoints=intersectedEdgeID.size()*2;
+
+		//barycentric coodinates of to be added points
+		sofa::helper::vector< sofa::helper::vector<unsigned int> > ancestors;
+		for( unsigned int i=0;i<intersectedEdgeID.size();i++)
+		{
+			Edge theEdge=m_container->getEdge(intersectedEdgeID[i]);
+			sofa::helper::vector< unsigned int > ancestor;
+			ancestor.push_back(theEdge[0]); ancestor.push_back(theEdge[1]);
+			ancestors.push_back(ancestor); ancestors.push_back(ancestor);
+		}
+
+		//Number of to be added tetras
+		int nbTobeAddedTetras=0;
+
+		//To be added components
+		sofa::helper::vector<Tetra>			toBeAddedTetra;
+		sofa::helper::vector<TetraID>		toBeAddedTetraIndex;
+
+		//To be removed components
+		sofa::helper::vector<TetraID>		toBeRemovedTetraIndex;
+
+		sofa::helper::vector<TetraID> intersectedTetras;
+		sofa::helper::vector<sofa::helper::vector<EdgeID> > intersectedEdgesInTetra;
+		int nbIntersectedTetras=0;
+
+		//Getting intersected tetrahedron
+		for( unsigned int i=0;i<intersectedEdgeID.size();i++)
+		{
+			//Getting the tetrahedron around each intersected edge
+			TetrahedraAroundEdge tetrasIdx=m_container->getTetrahedraAroundEdge(intersectedEdgeID[i]);
+			for( unsigned int j=0;j<tetrasIdx.size();j++)
+			{
+				bool flag=true;
+				for( unsigned int k=0;k<intersectedTetras.size();k++)
+				{
+					if(intersectedTetras[k]==tetrasIdx[j])
+					{
+						flag=false;
+						intersectedEdgesInTetra[k].push_back(intersectedEdgeID[i]);
+						break;
+					}
+				}
+				if(flag)
+				{
+					intersectedTetras.push_back(tetrasIdx[j]);
+					nbIntersectedTetras++;
+					intersectedEdgesInTetra.resize(nbIntersectedTetras);
+					intersectedEdgesInTetra[nbIntersectedTetras-1].push_back(intersectedEdgeID[i]);
+				}
+			}
+		}
+
+		m_modifier->addPointsProcess(nbTobeAddedPoints);
+		m_modifier->addPointsWarning(nbTobeAddedPoints, ancestors, coefs, true);
+
+		//sub divide the each intersected tetrahedron
+		for( unsigned int i=0;i<intersectedTetras.size();i++)
+		{
+			//determine the index of intersected point
+			sofa::helper::vector<unsigned int> intersectedPointID;
+			intersectedPointID.resize(intersectedEdgesInTetra[i].size());
+			for( unsigned int j=0;j<intersectedEdgesInTetra[i].size();j++)
+			{
+				for( unsigned int k=0;k<intersectedEdgeID.size();k++)
+				{
+					if(intersectedEdgesInTetra[i][j]==intersectedEdgeID[k])
+					{
+						intersectedPointID[j]=nbPoint+k*2;
+					}
+				}
+			}
+			nbTobeAddedTetras+=subDivideTetrahedronWithPlane(intersectedTetras[i],intersectedEdgesInTetra[i],intersectedPointID, planeNormal, toBeAddedTetra);
+
+			//add the intersected tetrahedron to the to be removed tetrahedron list
+			toBeRemovedTetraIndex.push_back(intersectedTetras[i]);
+		}
+
+		for(int i=0;i<nbTobeAddedTetras;i++)
+			toBeAddedTetraIndex.push_back(nbTetra+i);
+
+		//tetrahedron addition 
+		m_modifier->addTetrahedraProcess(toBeAddedTetra);
+		m_modifier->addTetrahedraWarning(toBeAddedTetra.size(), (const sofa::helper::vector< Tetra >&) toBeAddedTetra, toBeAddedTetraIndex);
+
+		m_modifier->propagateTopologicalChanges(); 
+
+		//tetrahedron removal
+		m_modifier->removeTetrahedra(toBeRemovedTetraIndex);
+		m_modifier->notifyEndingEvent();
+		m_modifier->propagateTopologicalChanges(); 
 	}
 
 	template<class DataTypes>
@@ -77,7 +179,8 @@ namespace topology
 			Edge theEdge=m_container->getEdge(intersectedEdgeID[i]);
 			sofa::defaulttype::Vec<3,double> p;
 			p[0]=intersectedPoints[i][0]; p[1]=intersectedPoints[i][1]; p[2]=intersectedPoints[i][2];
-			sofa::helper::vector< double > coef = m_geometryAlgorithms->computeRest2PointsBarycoefs(p, theEdge[0], theEdge[1]);
+			sofa::helper::vector< double > coef = m_geometryAlgorithms->compute2PointsBarycoefs(p, theEdge[0], theEdge[1]);
+
 			sofa::helper::vector< unsigned int > ancestor;
 			ancestor.push_back(theEdge[0]); ancestor.push_back(theEdge[1]);
 
@@ -96,7 +199,7 @@ namespace topology
 		sofa::helper::vector<TetraID>		toBeRemovedTetraIndex;
 
 		sofa::helper::vector<TetraID> intersectedTetras;
-      sofa::helper::vector<sofa::helper::vector<EdgeID> > intersectedEdgesInTetra;
+		sofa::helper::vector<sofa::helper::vector<EdgeID> > intersectedEdgesInTetra;
 		int nbIntersectedTetras=0;
 
 		//Getting intersected tetrahedron
@@ -173,15 +276,6 @@ namespace topology
 		int nbAddedTetra;
 		Coord edgeDirec;
 
-		for( unsigned int i=0;i<intersectedEdgeID.size();i++)
-		{
-			Edge intersectedEdge=this->m_container->getEdge(intersectedEdgeID[i]);
-			if(intersectedEdge[0]>=m_intialNbPoints)
-				serr<<"Edge can be divided only on time !!"<<sendl;
-			if(intersectedEdge[1]>=m_intialNbPoints)
-				serr<<"Edge can be divided only on time !!"<<sendl;
-		}
-
 		//1. Number of intersected edge = 1
 		if(intersectedEdgeID.size()==1)
 		{
@@ -200,7 +294,7 @@ namespace topology
 
 			//construct subdivided tetrahedrons
 			Tetra subTetra[2];
-			edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0])*-1;
+			edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0])*-1;
 			Real dot=edgeDirec*planeNormal;
 
 			//inspect the tetrahedron is already subdivided
@@ -327,6 +421,16 @@ namespace topology
 		if(intersectedEdgeID.size()==2)
 		{
 			Edge intersectedEdge[2];
+			if(intersectedEdgeID[0]>intersectedEdgeID[1])
+			{
+				int temp=intersectedEdgeID[0];
+				intersectedEdgeID[0]=intersectedEdgeID[1];
+				intersectedEdgeID[1]=temp;
+
+				temp=intersectedPointID[0];
+				intersectedPointID[0]=intersectedPointID[1];
+				intersectedPointID[1]=temp;
+			}
 			intersectedEdge[0]=this->m_container->getEdge(intersectedEdgeID[0]);
 			intersectedEdge[1]=this->m_container->getEdge(intersectedEdgeID[1]);
 
@@ -339,28 +443,28 @@ namespace topology
 				pointsID[0]=intersectedEdge[0][0];
 				pointsID[1]=intersectedEdge[0][1];
 				pointsID[2]=intersectedEdge[1][1];
-				edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0])*-1;
+				edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0])*-1;
 			}
 			else if(intersectedEdge[0][0]==intersectedEdge[1][1])
 			{
 				pointsID[0]=intersectedEdge[0][0];
 				pointsID[1]=intersectedEdge[0][1];
 				pointsID[2]=intersectedEdge[1][0];
-				edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0])*-1;
+				edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0])*-1;
 			}
 			else if(intersectedEdge[0][1]==intersectedEdge[1][0])
 			{
 				pointsID[0]=intersectedEdge[0][1];
 				pointsID[1]=intersectedEdge[0][0];
 				pointsID[2]=intersectedEdge[1][1];
-				edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0]);
+				edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0]);
 			}
 			else
 			{
 				pointsID[0]=intersectedEdge[0][1];
 				pointsID[1]=intersectedEdge[0][0];
 				pointsID[2]=intersectedEdge[1][0];
-				edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0]);
+				edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0]);
 			}
 
 			//find the point index of tetrahedron which are not included to the intersected edge
@@ -456,6 +560,39 @@ namespace topology
 		{
 			int DIVISION_STATE=0;			//1: COMPLETE DIVISION, 2: PARTIAL DIVISION
 			Edge intersectedEdge[3];
+
+			//sorting
+			if(intersectedEdgeID[0]>intersectedEdgeID[1])
+			{
+				int temp=intersectedEdgeID[0];
+				intersectedEdgeID[0]=intersectedEdgeID[1];
+				intersectedEdgeID[1]=temp;
+
+				temp=intersectedPointID[0];
+				intersectedPointID[0]=intersectedPointID[1];
+				intersectedPointID[1]=temp;
+			}
+			if(intersectedEdgeID[1]>intersectedEdgeID[2])
+			{
+				int temp=intersectedEdgeID[1];
+				intersectedEdgeID[1]=intersectedEdgeID[2];
+				intersectedEdgeID[2]=temp;
+
+				temp=intersectedPointID[1];
+				intersectedPointID[1]=intersectedPointID[2];
+				intersectedPointID[2]=temp;
+			}
+			if(intersectedEdgeID[0]>intersectedEdgeID[1])
+			{
+				int temp=intersectedEdgeID[0];
+				intersectedEdgeID[0]=intersectedEdgeID[1];
+				intersectedEdgeID[1]=temp;
+
+				temp=intersectedPointID[0];
+				intersectedPointID[0]=intersectedPointID[1];
+				intersectedPointID[1]=temp;
+			}
+
 			intersectedEdge[0]=this->m_container->getEdge(intersectedEdgeID[0]);
 			intersectedEdge[1]=this->m_container->getEdge(intersectedEdgeID[1]);
 			intersectedEdge[2]=this->m_container->getEdge(intersectedEdgeID[2]);
@@ -506,9 +643,9 @@ namespace topology
 			if(DIVISION_STATE==1)
 			{
 				if(pointsID[0]==intersectedEdge[0][0])
-					edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0])*-1;
+					edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0])*-1;
 				else
-					edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0]);
+					edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0]);
 				for(int i=0;i<3;i++)
 				{
 					for(int j=0;j<2;j++)
@@ -524,16 +661,16 @@ namespace topology
 				if(dot>0)
 				{
 					subTetra[0][0]=pointsID[0];				subTetra[0][1]=intersectedPointID[0]+1;	subTetra[0][2]=intersectedPointID[1]+1;	subTetra[0][3]=intersectedPointID[2]+1;
-					subTetra[1][0]=intersectedPointID[0];	subTetra[1][1]=pointsID[1];				subTetra[1][2]=pointsID[2];				subTetra[1][3]=pointsID[3];
-					subTetra[2][0]=intersectedPointID[0];	subTetra[2][1]=intersectedPointID[1];	subTetra[2][2]=intersectedPointID[2];	subTetra[2][3]=pointsID[2];
-					subTetra[3][0]=intersectedPointID[0];	subTetra[3][1]=intersectedPointID[2];	subTetra[3][2]=pointsID[2];				subTetra[3][3]=pointsID[3];
+					subTetra[1][0]=intersectedPointID[0];	subTetra[1][1]=intersectedPointID[1];	subTetra[1][2]=intersectedPointID[2];	subTetra[1][3]=pointsID[1];
+					subTetra[2][0]=intersectedPointID[1];	subTetra[2][1]=intersectedPointID[2];	subTetra[2][2]=pointsID[1];				subTetra[2][3]=pointsID[2];
+					subTetra[3][0]=intersectedPointID[2];	subTetra[3][1]=pointsID[1];				subTetra[3][2]=pointsID[2];				subTetra[3][3]=pointsID[3];
 				}
 				else
 				{
 					subTetra[0][0]=pointsID[0];				subTetra[0][1]=intersectedPointID[0];	subTetra[0][2]=intersectedPointID[1];	subTetra[0][3]=intersectedPointID[2];
-					subTetra[1][0]=intersectedPointID[0]+1;	subTetra[1][1]=pointsID[1];				subTetra[1][2]=pointsID[2];				subTetra[1][3]=pointsID[3];
-					subTetra[2][0]=intersectedPointID[0]+1;	subTetra[2][1]=intersectedPointID[1]+1;	subTetra[2][2]=intersectedPointID[2]+1;	subTetra[2][3]=pointsID[2];
-					subTetra[3][0]=intersectedPointID[0]+1;	subTetra[3][1]=intersectedPointID[2]+1;	subTetra[3][2]=pointsID[2];				subTetra[3][3]=pointsID[3];
+					subTetra[1][0]=intersectedPointID[0]+1;	subTetra[1][1]=intersectedPointID[1]+1;	subTetra[1][2]=intersectedPointID[2]+1;	subTetra[1][3]=pointsID[1];
+					subTetra[2][0]=intersectedPointID[1]+1;	subTetra[2][1]=intersectedPointID[2]+1;	subTetra[2][2]=pointsID[1];				subTetra[2][3]=pointsID[2];
+					subTetra[3][0]=intersectedPointID[2]+1;	subTetra[3][1]=pointsID[1]			;	subTetra[3][2]=pointsID[2];				subTetra[3][3]=pointsID[3];
 				}
 
 				//add the sub divided tetrahedra to the to be added tetrahedra list
@@ -556,9 +693,9 @@ namespace topology
 			{
 				Coord edgeDirec;
 				if(pointsID[0]==intersectedEdge[0][0])
-					edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0])*-1;
+					edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0])*-1;
 				else
-					edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0]);
+					edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0]);
 
 				int secondIntersectedEdgeIndex = 0, thirdIntersectedEdgeIndex = 0;
 				int conectedIndex, nonConectedIndex;
@@ -681,37 +818,89 @@ namespace topology
 
 				if(dot>0)
 				{
-					subTetra[0][0]=pointsID[0];				subTetra[0][1]=intersectedPointID[0]+1;		subTetra[0][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;		subTetra[0][3]=pointsID[3];
-					subTetra[1][0]=pointsID[3];				subTetra[1][1]=intersectedPointID[0]+1;		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;		subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
-					if(conectedIndex==1)
+					if(secondIntersectedEdgeIndex==1)
 					{
-						subTetra[2][0]=intersectedPointID[0];								subTetra[2][1]=pointsID[1];		subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex];
-						subTetra[3][0]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[3][1]=pointsID[2];		subTetra[3][2]=intersectedPointID[thirdIntersectedEdgeIndex];		subTetra[3][3]=pointsID[3];
-						subTetra[4][0]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[4][1]=pointsID[1];		subTetra[4][2]=intersectedPointID[thirdIntersectedEdgeIndex];		subTetra[4][3]=pointsID[2];
+						if(conectedIndex==2)
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[0]+1;								subTetra[0][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[0]+1;		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[2][0]=pointsID[1];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[0];								subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0];		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+						}
+						else
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[0][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[0]+1;		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;					
+							subTetra[2][0]=pointsID[2];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex];	
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0];		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+						}
 					}
 					else
 					{
-						subTetra[2][0]=intersectedPointID[0];	subTetra[2][1]=pointsID[2];		subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex];
-						subTetra[3][0]=intersectedPointID[0];	subTetra[3][1]=pointsID[1];		subTetra[3][2]=intersectedPointID[thirdIntersectedEdgeIndex];		subTetra[3][3]=pointsID[3];
-						subTetra[4][0]=intersectedPointID[0];	subTetra[4][1]=pointsID[2];		subTetra[4][2]=intersectedPointID[thirdIntersectedEdgeIndex];		subTetra[4][3]=pointsID[1];
-					}
+						if(conectedIndex==2)
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[0]+1;								subTetra[0][3]=intersectedPointID[secondIntersectedEdgeIndex]+1;
+							subTetra[1][0]=pointsID[3];			subTetra[1][1]=intersectedPointID[0]+1;		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[2][0]=pointsID[1];				subTetra[2][1]=pointsID[3];				subTetra[2][2]=intersectedPointID[0];								subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[3][0]=pointsID[1];				subTetra[3][1]=intersectedPointID[0];	subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[4][0]=pointsID[1];				subTetra[4][1]=pointsID[2];				subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+						}
+						else
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[0][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[0]+1;		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;					
+							subTetra[2][0]=pointsID[2];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex];	
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0];		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+						}
+					}	
 				}
 				else
 				{
-					subTetra[0][0]=pointsID[0];				subTetra[0][1]=intersectedPointID[0];		subTetra[0][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[0][3]=pointsID[3];
-					subTetra[1][0]=pointsID[3];				subTetra[1][1]=intersectedPointID[0];		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex];
-					if(conectedIndex==1)
+					if(secondIntersectedEdgeIndex==1)
 					{
-						subTetra[2][0]=intersectedPointID[0]+1;								subTetra[2][1]=pointsID[1];		subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
-						subTetra[3][0]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[3][1]=pointsID[2];		subTetra[3][2]=intersectedPointID[thirdIntersectedEdgeIndex]+1;		subTetra[3][3]=pointsID[3];
-						subTetra[4][0]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[4][1]=pointsID[1];		subTetra[4][2]=intersectedPointID[thirdIntersectedEdgeIndex]+1;		subTetra[4][3]=pointsID[2];
+						if(conectedIndex==2)
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[0];								subTetra[0][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[0];		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							
+							subTetra[2][0]=pointsID[1];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[0];								subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0]+1;		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+						}
+						else
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[0][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[0];		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex];					
+							
+							subTetra[2][0]=pointsID[2];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;	
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0]+1;		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+						}
 					}
 					else
 					{
-						subTetra[2][0]=intersectedPointID[0]+1;	subTetra[2][1]=pointsID[2];		subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;		subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
-						subTetra[3][0]=intersectedPointID[0]+1;	subTetra[3][1]=pointsID[1];		subTetra[3][2]=intersectedPointID[thirdIntersectedEdgeIndex]+1;			subTetra[3][3]=pointsID[3];
-						subTetra[4][0]=intersectedPointID[0]+1;	subTetra[4][1]=pointsID[2];		subTetra[4][2]=intersectedPointID[thirdIntersectedEdgeIndex]+1;			subTetra[4][3]=pointsID[1];
-					}
+						if(conectedIndex==2)
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[0];								subTetra[0][3]=intersectedPointID[secondIntersectedEdgeIndex];
+							subTetra[1][0]=pointsID[3];			subTetra[1][1]=intersectedPointID[0];		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							
+							subTetra[2][0]=pointsID[1];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[0];								subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0]+1;		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+						}
+						else
+						{
+							subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];					subTetra[0][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[0][3]=intersectedPointID[thirdIntersectedEdgeIndex];
+							subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[0];		subTetra[1][2]=intersectedPointID[secondIntersectedEdgeIndex];		subTetra[1][3]=intersectedPointID[thirdIntersectedEdgeIndex];					
+							
+							subTetra[2][0]=pointsID[2];			subTetra[2][1]=pointsID[3];					subTetra[2][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[2][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;	
+							subTetra[3][0]=pointsID[1];			subTetra[3][1]=intersectedPointID[0]+1;		subTetra[3][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[3][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+							subTetra[4][0]=pointsID[1];			subTetra[4][1]=pointsID[2];					subTetra[4][2]=intersectedPointID[secondIntersectedEdgeIndex]+1;	subTetra[4][3]=intersectedPointID[thirdIntersectedEdgeIndex]+1;
+						}
+					}	
 				}
 
 				//add the sub divided tetrahedra to the to be added tetrahedra list
@@ -727,6 +916,7 @@ namespace topology
 				}
 				nbAddedTetra=5;
 				return nbAddedTetra;
+				return 0;
 			}
 		}
 
@@ -790,30 +980,136 @@ namespace topology
 			}
 
 			Coord edgeDirec;
-			edgeDirec=this->m_geometryAlgorithms->computeRestEdgeDirection(intersectedEdgeID[0])*-1;
+			edgeDirec=this->m_geometryAlgorithms->computeEdgeDirection(intersectedEdgeID[0])*-1;
 
 			//construct subdivided tetrahedrons
 			Real dot=edgeDirec*planeNormal;
 			Tetra subTetra[6];
 			if(dot>0)
 			{
-				subTetra[0][0]=pointsID[0];							subTetra[0][1]=intersectedPointID[localIndex[0]]+1;	subTetra[0][2]=intersectedPointID[localIndex[1]]+1;	subTetra[0][3]=pointsID[3];
-				subTetra[1][0]=intersectedPointID[localIndex[0]]+1;	subTetra[1][1]=intersectedPointID[localIndex[1]]+1;	subTetra[1][2]=pointsID[3];							subTetra[1][3]=intersectedPointID[localIndex[3]]+1;
-				subTetra[2][0]=intersectedPointID[localIndex[1]]+1;	subTetra[2][1]=intersectedPointID[localIndex[2]]+1;	subTetra[2][2]=intersectedPointID[localIndex[3]]+1;	subTetra[2][3]=pointsID[3];
-
-				subTetra[3][0]=intersectedPointID[localIndex[0]];	subTetra[3][1]=intersectedPointID[localIndex[1]];	subTetra[3][2]=intersectedPointID[localIndex[3]];	subTetra[3][3]=pointsID[1];
-				subTetra[4][0]=pointsID[1];							subTetra[4][1]=intersectedPointID[localIndex[1]];	subTetra[4][2]=intersectedPointID[localIndex[2]];	subTetra[4][3]=intersectedPointID[localIndex[3]];
-				subTetra[5][0]=pointsID[1];							subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[1]];	subTetra[5][3]=intersectedPointID[localIndex[2]];
+				if(intersectedEdgeID[localIndex[0]]>intersectedEdgeID[localIndex[3]])
+				{
+					if(intersectedEdgeID[localIndex[1]]>intersectedEdgeID[localIndex[2]])
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[0]]+1;	subTetra[0][3]=intersectedPointID[localIndex[1]]+1;
+						subTetra[1][0]=pointsID[3];			subTetra[1][1]=intersectedPointID[localIndex[0]]+1;	subTetra[1][2]=intersectedPointID[localIndex[1]]+1;	subTetra[1][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[2][0]=pointsID[3];			subTetra[2][1]=intersectedPointID[localIndex[1]]+1;	subTetra[2][2]=intersectedPointID[localIndex[3]]+1;	subTetra[2][3]=intersectedPointID[localIndex[2]]+1;
+					}
+					else
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[0]]+1;	subTetra[0][3]=intersectedPointID[localIndex[2]]+1;
+						subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[localIndex[0]]+1;	subTetra[1][2]=intersectedPointID[localIndex[1]]+1;	subTetra[1][3]=intersectedPointID[localIndex[2]]+1;
+						subTetra[2][0]=pointsID[3];			subTetra[2][1]=intersectedPointID[localIndex[0]]+1;	subTetra[2][2]=intersectedPointID[localIndex[3]]+1;	subTetra[2][3]=intersectedPointID[localIndex[2]]+1;
+					}
+				}
+				else
+				{
+					if(intersectedEdgeID[localIndex[1]]>intersectedEdgeID[localIndex[2]])
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[3]]+1;	subTetra[0][3]=intersectedPointID[localIndex[1]]+1;
+						subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[localIndex[0]]+1;	subTetra[1][2]=intersectedPointID[localIndex[1]]+1;	subTetra[1][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[2][0]=pointsID[3];			subTetra[2][1]=intersectedPointID[localIndex[1]]+1;	subTetra[2][2]=intersectedPointID[localIndex[3]]+1;	subTetra[2][3]=intersectedPointID[localIndex[2]]+1;
+					}
+					else
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[2]]+1;	subTetra[0][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[localIndex[0]]+1;	subTetra[1][2]=intersectedPointID[localIndex[1]]+1;	subTetra[1][3]=intersectedPointID[localIndex[2]]+1;
+						subTetra[2][0]=pointsID[0];			subTetra[2][1]=intersectedPointID[localIndex[0]]+1;	subTetra[2][2]=intersectedPointID[localIndex[3]]+1;	subTetra[2][3]=intersectedPointID[localIndex[2]]+1;
+					}
+				}
+				if(intersectedEdgeID[localIndex[0]]>intersectedEdgeID[localIndex[1]])
+				{
+					if(intersectedEdgeID[localIndex[2]]>intersectedEdgeID[localIndex[3]])
+					{
+						subTetra[3][0]=pointsID[1];		subTetra[3][1]=intersectedPointID[localIndex[0]];	subTetra[3][2]=intersectedPointID[localIndex[3]];	subTetra[3][3]=intersectedPointID[localIndex[2]];
+						subTetra[4][0]=pointsID[2];		subTetra[4][1]=intersectedPointID[localIndex[0]];	subTetra[4][2]=intersectedPointID[localIndex[1]];	subTetra[4][3]=intersectedPointID[localIndex[2]];
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[0]];	subTetra[5][3]=intersectedPointID[localIndex[2]];
+					}
+					else
+					{
+						subTetra[3][0]=pointsID[2];		subTetra[3][1]=intersectedPointID[localIndex[1]];	subTetra[3][2]=intersectedPointID[localIndex[2]];	subTetra[3][3]=intersectedPointID[localIndex[3]];
+						subTetra[4][0]=pointsID[2];		subTetra[4][1]=intersectedPointID[localIndex[0]];	subTetra[4][2]=intersectedPointID[localIndex[1]];	subTetra[4][3]=intersectedPointID[localIndex[3]];
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[0]];	subTetra[5][3]=intersectedPointID[localIndex[3]];
+					}
+				}
+				else
+				{
+					if(intersectedEdgeID[localIndex[2]]>intersectedEdgeID[localIndex[3]])
+					{
+						subTetra[3][0]=pointsID[1];		subTetra[3][1]=intersectedPointID[localIndex[0]];	subTetra[3][2]=intersectedPointID[localIndex[3]];	subTetra[3][3]=intersectedPointID[localIndex[1]];
+						subTetra[4][0]=pointsID[1];		subTetra[4][1]=intersectedPointID[localIndex[1]];	subTetra[4][2]=intersectedPointID[localIndex[2]];	subTetra[4][3]=intersectedPointID[localIndex[3]];
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[1]];	subTetra[5][3]=intersectedPointID[localIndex[2]];
+					}
+					else
+					{
+						subTetra[3][0]=pointsID[1];		subTetra[3][1]=intersectedPointID[localIndex[0]];	subTetra[3][2]=intersectedPointID[localIndex[3]];	subTetra[3][3]=intersectedPointID[localIndex[1]];
+						subTetra[4][0]=pointsID[2];		subTetra[4][1]=intersectedPointID[localIndex[1]];	subTetra[4][2]=intersectedPointID[localIndex[2]];	subTetra[4][3]=intersectedPointID[localIndex[3]];
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[1]];	subTetra[5][3]=intersectedPointID[localIndex[3]];
+					}
+				}
 			}
 			else
 			{
-				subTetra[0][0]=pointsID[0];							subTetra[0][1]=intersectedPointID[localIndex[0]];	subTetra[0][2]=intersectedPointID[localIndex[1]];	subTetra[0][3]=pointsID[3];
-				subTetra[1][0]=intersectedPointID[localIndex[0]];	subTetra[1][1]=intersectedPointID[localIndex[1]];	subTetra[1][2]=pointsID[3];							subTetra[1][3]=intersectedPointID[localIndex[3]];
-				subTetra[2][0]=intersectedPointID[localIndex[1]];	subTetra[2][1]=intersectedPointID[localIndex[2]];	subTetra[2][2]=intersectedPointID[localIndex[3]];	subTetra[2][3]=pointsID[3];
-
-				subTetra[3][0]=intersectedPointID[localIndex[0]]+1;	subTetra[3][1]=intersectedPointID[localIndex[1]]+1;	subTetra[3][2]=intersectedPointID[localIndex[3]]+1;	subTetra[3][3]=pointsID[1];
-				subTetra[4][0]=pointsID[1];							subTetra[4][1]=intersectedPointID[localIndex[1]]+1;	subTetra[4][2]=intersectedPointID[localIndex[2]]+1;	subTetra[4][3]=intersectedPointID[localIndex[3]]+1;
-				subTetra[5][0]=pointsID[1];							subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[1]]+1;	subTetra[5][3]=intersectedPointID[localIndex[2]]+1;
+				if(intersectedEdgeID[localIndex[0]]>intersectedEdgeID[localIndex[3]])
+				{
+					if(intersectedEdgeID[localIndex[1]]>intersectedEdgeID[localIndex[2]])
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[0]];	subTetra[0][3]=intersectedPointID[localIndex[1]];
+						subTetra[1][0]=pointsID[3];			subTetra[1][1]=intersectedPointID[localIndex[0]];	subTetra[1][2]=intersectedPointID[localIndex[1]];	subTetra[1][3]=intersectedPointID[localIndex[3]];
+						subTetra[2][0]=pointsID[3];			subTetra[2][1]=intersectedPointID[localIndex[1]];	subTetra[2][2]=intersectedPointID[localIndex[3]];	subTetra[2][3]=intersectedPointID[localIndex[2]];
+					}
+					else
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[0]];	subTetra[0][3]=intersectedPointID[localIndex[2]];
+						subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[localIndex[0]];	subTetra[1][2]=intersectedPointID[localIndex[1]];	subTetra[1][3]=intersectedPointID[localIndex[2]];
+						subTetra[2][0]=pointsID[3];			subTetra[2][1]=intersectedPointID[localIndex[0]];	subTetra[2][2]=intersectedPointID[localIndex[3]];	subTetra[2][3]=intersectedPointID[localIndex[2]];
+					}
+				}
+				else
+				{
+					if(intersectedEdgeID[localIndex[1]]>intersectedEdgeID[localIndex[2]])
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[3]];	subTetra[0][3]=intersectedPointID[localIndex[1]];
+						subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[localIndex[0]];	subTetra[1][2]=intersectedPointID[localIndex[1]];	subTetra[1][3]=intersectedPointID[localIndex[3]];
+						subTetra[2][0]=pointsID[3];			subTetra[2][1]=intersectedPointID[localIndex[1]];	subTetra[2][2]=intersectedPointID[localIndex[3]];	subTetra[2][3]=intersectedPointID[localIndex[2]];
+					}
+					else
+					{
+						subTetra[0][0]=pointsID[0];			subTetra[0][1]=pointsID[3];							subTetra[0][2]=intersectedPointID[localIndex[2]];	subTetra[0][3]=intersectedPointID[localIndex[3]];
+						subTetra[1][0]=pointsID[0];			subTetra[1][1]=intersectedPointID[localIndex[0]];	subTetra[1][2]=intersectedPointID[localIndex[1]];	subTetra[1][3]=intersectedPointID[localIndex[2]];
+						subTetra[2][0]=pointsID[0];			subTetra[2][1]=intersectedPointID[localIndex[0]];	subTetra[2][2]=intersectedPointID[localIndex[3]];	subTetra[2][3]=intersectedPointID[localIndex[2]];
+					}
+				}
+				if(intersectedEdgeID[localIndex[0]]>intersectedEdgeID[localIndex[1]])
+				{
+					if(intersectedEdgeID[localIndex[2]]>intersectedEdgeID[localIndex[3]])
+					{
+						subTetra[3][0]=pointsID[1];		subTetra[3][1]=intersectedPointID[localIndex[0]]+1;	subTetra[3][2]=intersectedPointID[localIndex[3]]+1;	subTetra[3][3]=intersectedPointID[localIndex[2]]+1;
+						subTetra[4][0]=pointsID[2];		subTetra[4][1]=intersectedPointID[localIndex[0]]+1;	subTetra[4][2]=intersectedPointID[localIndex[1]]+1;	subTetra[4][3]=intersectedPointID[localIndex[2]]+1;
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[0]]+1;	subTetra[5][3]=intersectedPointID[localIndex[2]]+1;
+					}
+					else
+					{
+						subTetra[3][0]=pointsID[2];		subTetra[3][1]=intersectedPointID[localIndex[1]]+1;	subTetra[3][2]=intersectedPointID[localIndex[2]]+1;	subTetra[3][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[4][0]=pointsID[2];		subTetra[4][1]=intersectedPointID[localIndex[0]]+1;	subTetra[4][2]=intersectedPointID[localIndex[1]]+1;	subTetra[4][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[0]]+1;	subTetra[5][3]=intersectedPointID[localIndex[3]]+1;
+					}
+				}
+				else
+				{
+					if(intersectedEdgeID[localIndex[2]]>intersectedEdgeID[localIndex[3]])
+					{
+						subTetra[3][0]=pointsID[1];		subTetra[3][1]=intersectedPointID[localIndex[0]]+1;	subTetra[3][2]=intersectedPointID[localIndex[3]]+1;	subTetra[3][3]=intersectedPointID[localIndex[1]]+1;
+						subTetra[4][0]=pointsID[1];		subTetra[4][1]=intersectedPointID[localIndex[1]]+1;	subTetra[4][2]=intersectedPointID[localIndex[2]]+1;	subTetra[4][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[1]]+1;	subTetra[5][3]=intersectedPointID[localIndex[2]]+1;
+					}
+					else
+					{
+						subTetra[3][0]=pointsID[1];		subTetra[3][1]=intersectedPointID[localIndex[0]]+1;	subTetra[3][2]=intersectedPointID[localIndex[3]]+1;	subTetra[3][3]=intersectedPointID[localIndex[1]]+1;
+						subTetra[4][0]=pointsID[2];		subTetra[4][1]=intersectedPointID[localIndex[1]]+1;	subTetra[4][2]=intersectedPointID[localIndex[2]]+1;	subTetra[4][3]=intersectedPointID[localIndex[3]]+1;
+						subTetra[5][0]=pointsID[1];		subTetra[5][1]=pointsID[2];							subTetra[5][2]=intersectedPointID[localIndex[1]]+1;	subTetra[5][3]=intersectedPointID[localIndex[3]]+1;
+					}
+				}
 			}
 
 			for(int i=0;i<6;i++)

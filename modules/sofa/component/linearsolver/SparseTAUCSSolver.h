@@ -34,7 +34,10 @@
 #include <math.h>
 
 // include all headers included in taucs.h to fix errors on macx
+#ifndef WIN32
 #include <complex.h>
+#endif
+
 #include <assert.h>
 #include <float.h>
 #include <stdlib.h>
@@ -49,7 +52,7 @@ namespace component {
 
 namespace linearsolver {
 
-/// Linear system solver using the conjugate gradient iterative algorithm
+/// Direct linear solvers implemented with the TAUCS library
 template<class TMatrix, class TVector>
 class SparseTAUCSSolver : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>
 {
@@ -66,7 +69,6 @@ public:
     Data<bool> f_symmetric;
 
     Data<bool> f_verbose;
-    Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
 
     SparseTAUCSSolver();
     ~SparseTAUCSSolver();

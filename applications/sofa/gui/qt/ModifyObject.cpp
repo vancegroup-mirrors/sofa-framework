@@ -269,9 +269,9 @@ namespace sofa
         lineLayout->addWidget(buttonCancel);
         generalLayout->addLayout( lineLayout );
         connect(buttonUpdate,   SIGNAL( clicked() ), displaydatawidget, SLOT( UpdateData() ) );
-        connect(displaydatawidget, SIGNAL( WidgetHasChanged(bool) ), buttonUpdate, SLOT( setEnabled(bool) ) );
+        connect(displaydatawidget, SIGNAL( WidgetDirty(bool) ), buttonUpdate, SLOT( setEnabled(bool) ) );
         connect(buttonOk, SIGNAL(clicked() ), displaydatawidget, SLOT( UpdateData() ) );
-        connect(displaydatawidget, SIGNAL(DataParentNameChanged()), this, SLOT( updateListViewItem() ) );
+        connect(displaydatawidget, SIGNAL(DataOwnerDirty(bool)), this, SLOT( updateListViewItem() ) );
         connect( buttonOk,       SIGNAL( clicked() ), this, SLOT( accept() ) );
         connect( buttonCancel,   SIGNAL( clicked() ), this, SLOT( reject() ) );
         connect(this, SIGNAL(updateDataWidgets()), displaydatawidget, SLOT(UpdateWidgets()) );
@@ -397,8 +397,9 @@ namespace sofa
             energy->step();              
             if (dialogTab->currentPage() == energy) energy->updateVisualization();
           }
-
-        updateConsole();
+        if(node){
+          updateConsole();
+        }
       }
 
 

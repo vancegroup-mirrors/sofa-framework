@@ -47,6 +47,13 @@
 
 #include <sofa/component/typedef/Sofa_typedef.h>
 
+#ifdef WIN32
+// BUGFIX(Jeremie A. 02-05-2009): put OpenHaptics libs here instead of the project file to work around a bug in qmake when there is a space in an environment variable used to look-up a library
+#pragma comment(lib,"hl.lib")
+#pragma comment(lib,"hd.lib")
+#pragma comment(lib,"hdu.lib")
+#endif
+
 using namespace sofa::defaulttype;
 using namespace sofa::simulation::tree;
 using namespace sofa::simulation;

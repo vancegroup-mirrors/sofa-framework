@@ -28,12 +28,7 @@
 #include <sofa/core/componentmodel/collision/DetectionOutput.h>
 #include <math.h>
 
-#define cbrt(x)     ((x) > (SReal)0.0 ? pow((SReal)(x), (SReal)1.0/(SReal)3.0) : \
-                    ((x) < (SReal)0.0 ? -pow((SReal)-(x), (SReal)1.0/(SReal)3.0) : (SReal)0.0))
-#define EPSILON 0.000001
 
-#define EQN_EPS     1e-9
-#define	IsZero(x)	((x) > -EQN_EPS && (x) < EQN_EPS)
 
 namespace sofa
 {
@@ -44,6 +39,11 @@ namespace component
 namespace collision
 {
 
+//#define cbrt(x)     ((x) > (SReal)0.0 ? pow((SReal)(x), (SReal)1.0/(SReal)3.0) : \
+	((x) < (SReal)0.0 ? -pow((SReal)-(x), (SReal)1.0/(SReal)3.0) : (SReal)0.0))
+
+//#define	IsZero(x)	((x) > -EQN_EPS && (x) < EQN_EPS)
+
 using namespace collision;
 
 class SOFA_COMPONENT_COLLISION_API ContinuousTriangleIntersection
@@ -51,6 +51,7 @@ class SOFA_COMPONENT_COLLISION_API ContinuousTriangleIntersection
 private:
 	Triangle &tr1, &tr2;
 	SReal m_tolerance, m_tolmin, m_tolmax;
+
 
 	int intersectPointTriangle (SReal& t, SReal& u, SReal& v,
                                 const Vector3& p0, const Vector3& v0,
@@ -125,6 +126,16 @@ public:
 	~ContinuousTriangleIntersection(void);
 	core::componentmodel::collision::DetectionOutput* computeDetectionOutput (void);
 	bool isCollision(void);
+
+	static const SReal EPSILON;
+	static const SReal EQN_EPS;
+
+	static const bool IsZero(SReal x){	return((x) > -EQN_EPS && (x) < EQN_EPS); }
+
+	static const SReal cbrt(SReal x) {  
+		return  ((x) > (SReal)0.0 ? pow(x, (SReal)1.0/(SReal)3.0) : (x < (SReal)0.0 ? -pow(-x, (SReal)1.0/(SReal)3.0) : (SReal)0.0));
+	}
+
 };
 
 } // namespace collision

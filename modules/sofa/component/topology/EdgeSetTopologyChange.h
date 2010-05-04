@@ -84,6 +84,14 @@ namespace topology
 		virtual ~EdgesAdded() {}
 
 		unsigned int getNbAddedEdges() const { return nEdges;}
+	/*	const sofa::helper::vector<unsigned int> &getArray() const 
+		{
+			return edgeIndexArray;
+		}*/
+		const sofa::helper::vector< Edge > &getArray() const 
+		{
+			return edgeArray;
+		}
 
 	public:
 		unsigned int nEdges;

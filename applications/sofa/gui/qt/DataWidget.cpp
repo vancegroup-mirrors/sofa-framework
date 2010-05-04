@@ -1,3 +1,6 @@
+#ifndef SOFA_GUI_QT_DATAWIDGET_CPP
+#define SOFA_GUI_QT_DATAWIDGET_CPP
+
 #include "DataWidget.h"
 #include "ModifyObject.h"
 #include <sofa/helper/Factory.inl>
@@ -16,22 +19,6 @@ namespace sofa{
   using namespace core::objectmodel;
   namespace gui{
     namespace qt{
-
-
-
-      bool DefaultDataWidget::createWidgets(QWidget *parent){
-        w = new QLineEdit(parent);
-        if (w == NULL) return false;
-        std::string s = data->getValueString();
-        w->setText(QString(s.c_str()));
-        counter = data->getCounter();
-        if (this->readOnly)
-          w->setEnabled(false);
-        else
-          connect(w, SIGNAL( textChanged(const QString&) ), this, SLOT( setModified() ));
-        return true;
-      }
-
       /*QDisplayDataInfoWidget definitions */ 
 
       QDisplayDataInfoWidget::QDisplayDataInfoWidget(QWidget* parent, const std::string& helper,
@@ -157,4 +144,4 @@ namespace sofa{
   }//gui
 }//sofa
 
-
+#endif // SOFA_GUI_QT_DATAWIDGET_CPP

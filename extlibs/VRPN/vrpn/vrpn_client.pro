@@ -10,13 +10,19 @@ CONFIG += $$CONFIGLIBRARIES
 
 QUATINCLUDES = ../quat
 
-LIBS += -ldl -lvrpn_quat -lXext -lX11 -lm
+LIBS += -ldl -lvrpn_quat
 contains(DEFINES,VRPN_USE_WIIUSE){
 	LIBS += -lwiiuse
 }
 INCLUDEPATH += $$QUATINCLUDES
 
-DEFINES += linux
+linux { 
+	DEFINES += linux
+	LIBS +=  -lXext -lX11 -lm
+}
+
+macx: DEFINES += MACOSX
+
 
 HEADERS += \
 	vrpn_Connection.h vrpn_Tracker.h vrpn_Button.h \
@@ -29,13 +35,13 @@ HEADERS += \
 	vrpn_Analog_Output.h vrpn_Poser.h vrpn_Auxiliary_Logger.h
 
 SOURCES += \
-	vrpn_Connection.C vrpn_Tracker.C vrpn_Button.C \
-	vrpn_ForceDevice.C vrpn_Shared.C \
-	vrpn_Analog.C vrpn_FileConnection.C \
-	vrpn_FileController.C vrpn_Forwarder.C vrpn_Text.C \
-	vrpn_ForwarderController.C vrpn_Serial.C vrpn_Dial.C \
-	vrpn_SharedObject.C vrpn_BaseClass.C \
-	vrpn_Sound.C vrpn_LamportClock.C vrpn_Mutex.C \
-	vrpn_RedundantTransmission.C vrpn_Imager.C \
-	vrpn_Analog_Output.C vrpn_Poser.C vrpn_Auxiliary_Logger.C
+	vrpn_Connection.cpp vrpn_Tracker.cpp vrpn_Button.cpp \
+	vrpn_ForceDevice.cpp vrpn_Shared.cpp \
+	vrpn_Analog.cpp vrpn_FileConnection.cpp \
+	vrpn_FileController.cpp vrpn_Forwarder.cpp vrpn_Text.cpp \
+	vrpn_ForwarderController.cpp vrpn_Serial.cpp vrpn_Dial.cpp \
+	vrpn_SharedObject.cpp vrpn_BaseClass.cpp \
+	vrpn_Sound.cpp vrpn_LamportClock.cpp vrpn_Mutex.cpp \
+	vrpn_RedundantTransmission.cpp vrpn_Imager.cpp \
+	vrpn_Analog_Output.cpp vrpn_Poser.cpp vrpn_Auxiliary_Logger.cpp
 

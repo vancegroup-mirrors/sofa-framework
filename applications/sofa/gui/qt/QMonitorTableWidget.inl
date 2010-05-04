@@ -18,86 +18,96 @@ namespace sofa{
     namespace qt{
 
       template <class DataTypes>
-      QMonitorTableWidget<DataTypes>::QMonitorTableWidget(typename QMonitorTableWidget<DataTypes>::TData* data, 
-        const ModifyObjectFlags& flags, 
-        QWidget* parent):QObjectMonitor(flags,parent),data_(data)
+      bool QMonitorWidget<DataTypes>::createWidgets()
       {
         QVBoxLayout* layout = new QVBoxLayout(this);
         layout->setResizeMode(QLayout::FreeResize);
         //internal monitorData
-        typename Monitor<DataTypes>::MonitorData MonitorDataTemp = data_->getValue();
+        typename Monitor<DataTypes>::MonitorData MonitorDataTemp = this->getData()->virtualGetValue();
         //number of rows
         if (!MonitorDataTemp.sizeIdxPos() && !MonitorDataTemp.sizeIdxVels()
-            && !MonitorDataTemp.sizeIdxForces() && !dialogFlags_.EMPTY_FLAG )
-            return;
+          && !MonitorDataTemp.sizeIdxForces())
+          return false;
 
-          layout->addWidget(new QLabel("", this));
-          layout->addWidget(new QLabel("Positions", this));
-          vectorTable1_ = addResizableTable(MonitorDataTemp.sizeIdxPos(),4);
-          layout->addWidget(new QLabel (" ", this));
+        layout->addWidget(new QLabel("", this));
+        layout->addWidget(new QLabel("Positions", this));
+        vectorTable1_ = createTableWidget(MonitorDataTemp.sizeIdxPos());
+        layout->addWidget(new QLabel (" ", this));
 
-          vectorTable1_->setReadOnly(false);
+        layout->addWidget(new QLabel("Velocities", this));
+        vectorTable2_ = createTableWidget(MonitorDataTemp.sizeIdxVels());
+        layout->addWidget(new QLabel (" ", this));
 
-          listTable_.push_back(std::make_pair(vectorTable1_, data_));
+        layout->addWidget(new QLabel("Forces", this));
+        vectorTable3_ = createTableWidget(MonitorDataTemp.sizeIdxForces());
+        layout->addWidget(new QLabel (" ", this));
 
-          vectorTable1_->horizontalHeader()->setLabel(0,QString("particle Indices"));
-          vectorTable1_->setColumnStretchable(0,true);
-          vectorTable1_->horizontalHeader()->setLabel(1,QString("X"));      
-          vectorTable1_->setColumnStretchable(1,true);
-          vectorTable1_->horizontalHeader()->setLabel(2,QString("Y"));      
-          vectorTable1_->setColumnStretchable(2,true);
-          vectorTable1_->horizontalHeader()->setLabel(3,QString("Z"));      
-          vectorTable1_->setColumnStretchable(3,true);
+        return true;
+      }
 
-          connect( vectorTable1_, SIGNAL( valueChanged(int,int) ), this, SLOT( UpdateWidget() ) );
+      template <class DataTypes>
+      Q3Table* QMonitorWidget<DataTypes>::createTableWidget(unsigned int sizeIdx)
+      {
+        QSpinBox *spinBox = new QSpinBox(0,INT_MAX, 1, this);
+        this->layout()->add(spinBox);
+        Q3Table* table = new Q3Table(sizeIdx,4, this);
+        this->layout()->add(table);
+        spinBox->setValue(sizeIdx);
+        resizeMap_.insert(std::make_pair(spinBox, table));
+        listTable_.push_back( std::make_pair(table, this->getData()) );
 
 
-          layout->addWidget(new QLabel("Velocities", this));
-          vectorTable2_ = addResizableTable(MonitorDataTemp.sizeIdxVels(),4);
-          layout->addWidget(new QLabel (" ", this));
+        table->setReadOnly(false);
+        table->horizontalHeader()->setLabel(0,QString("particle Indices"));
+        table->setColumnStretchable(0,true);
+        table->horizontalHeader()->setLabel(1,QString("X"));      
+        table->setColumnStretchable(1,true);
+        table->horizontalHeader()->setLabel(2,QString("Y"));      
+        table->setColumnStretchable(2,true);
+        table->horizontalHeader()->setLabel(3,QString("Z"));      
+        table->setColumnStretchable(3,true);
 
-          vectorTable2_->setReadOnly(false);
+        /* 
+        as this class inherits from QMonitorWidgetHelper and TDataWidget 
+        which both derives from QObject,some explicit disambiguation must be done...
+        */
+        QMonitorWidgetHelper::connect( spinBox, SIGNAL( valueChanged(int) ), (QMonitorWidgetHelper*)this, SLOT( resizeTable(int) ) );
+        QMonitorWidgetHelper::connect( spinBox, SIGNAL( valueChanged(int) ), (DataWidget*)this, SLOT( updateWidgetValue() ) );
+        QMonitorWidgetHelper::connect( spinBox, SIGNAL( valueChanged(int) ), (DataWidget*)this, SLOT( updateWidgetValue() ) );
+        QMonitorWidgetHelper::connect( table,   SIGNAL( valueChanged(int,int) ), (DataWidget*)this, SLOT( updateWidgetValue() ) );
+        return table;
+      }
 
-          listTable_.push_back(std::make_pair(vectorTable2_, data_));
-
-          vectorTable2_->horizontalHeader()->setLabel(0,QString("particle Indices"));
-          vectorTable2_->setColumnStretchable(0,true);
-          vectorTable2_->horizontalHeader()->setLabel(1,QString("X"));
-          vectorTable2_->setColumnStretchable(1,true);
-          vectorTable2_->horizontalHeader()->setLabel(2,QString("Y"));
-          vectorTable2_->setColumnStretchable(2,true);
-          vectorTable2_->horizontalHeader()->setLabel(3,QString("Z"));
-          vectorTable2_->setColumnStretchable(3,true);
-
-          connect( vectorTable2_, SIGNAL( valueChanged(int,int) ), this, SLOT( UpdateWidget() ) );
-
-          layout->addWidget(new QLabel("Forces", this));
-
-          vectorTable3_ = addResizableTable(MonitorDataTemp.sizeIdxForces(),4);
-          layout->addWidget(new QLabel (" ", this));
-          vectorTable3_->setReadOnly(false);
-
-          listTable_.push_back(std::make_pair(vectorTable3_, data_));
-
-          vectorTable3_->horizontalHeader()->setLabel(0,QString("particle Indices"));
-          vectorTable3_->setColumnStretchable(0,true);
-          vectorTable3_->horizontalHeader()->setLabel(1,QString("X"));
-          vectorTable3_->setColumnStretchable(1,true);
-          vectorTable3_->horizontalHeader()->setLabel(2,QString("Y"));
-          vectorTable3_->setColumnStretchable(2,true);
-          vectorTable3_->horizontalHeader()->setLabel(3,QString("Z"));
-          vectorTable3_->setColumnStretchable(3,true);
-
-          connect( vectorTable3_, SIGNAL( valueChanged(int,int) ), this, SLOT( UpdateWidget() ) );
-
+      template <class DataTypes>
+      void QMonitorWidget<DataTypes>::resizeTable(int value)
+      {
+        QSpinBox *spinBox = (QSpinBox *) QMonitorWidgetHelper::sender();
+        if( spinBox == NULL){
+          return;
+        }
+        Q3Table *table = resizeMap_[spinBox];
+        if (value != table->numRows())
+        {
+          table->setNumRows(value);
+          setResize_.insert(table);
+        }
       }
 
       template <class DataTypes> 
-      void QMonitorTableWidget<DataTypes>::update()
+      void QMonitorWidget<DataTypes>::writeToData()
+      {
+        std::list< std::pair< Q3Table*, BaseData*> >::iterator it_listTable;
+        for (it_listTable = listTable_.begin(); it_listTable != listTable_.end(); it_listTable++)
+        {
+          storeTable(it_listTable);
+        }
+      }
+
+      template <class DataTypes> 
+      void QMonitorWidget<DataTypes>::readFromData()
       {
 
-
-        typename Monitor<DataTypes>::MonitorData MonitorDataTemp = data_->getValue();
+        typename Monitor<DataTypes>::MonitorData MonitorDataTemp = this->getData()->virtualGetValue();
         //number of rows
         unsigned short int nbRowVels = 0, nbRowForces = 0, nbRowPos = 0;
         //number of rows for positions
@@ -166,7 +176,7 @@ namespace sofa{
           vectorTable3_->setNumRows(nbRowForces);
         }
 
-       setResize_.clear();
+        setResize_.clear();
 
 
         for (unsigned int i=0; i<3; i++)
@@ -216,41 +226,22 @@ namespace sofa{
           oss3[j] << MonitorDataTemp.getIndForces()[j];
           vectorTable3_->setText(j,0,std::string(oss3[j].str()).c_str());
         }
-        if (vectorTable1_ ) readOnlyData(vectorTable1_ ,data_);
-        if (vectorTable2_) readOnlyData(vectorTable2_,data_);
-        if (vectorTable3_) readOnlyData(vectorTable3_,data_);
         delete [] oss;
         delete [] oss2;
         delete [] oss3;
 
-        counterWidget_ +=3;
-        data_->setValue (MonitorDataTemp);
-        emit TableValuesChanged(); //just in case we wanna intercept something.
+        this->getData()->virtualSetValue(MonitorDataTemp);
       }
 
-      template <class DataTypes>
-      Q3Table * QMonitorTableWidget<DataTypes>::addResizableTable(const int& number,
-        const int& column)
-      {
-        QVBoxLayout* layout = (QVBoxLayout*)this->layout();
-        assert(layout != NULL);
-        QSpinBox *spinBox = new QSpinBox(0,INT_MAX, 1, this);
-        layout->addWidget(spinBox);
-        Q3Table* table = new Q3Table(number,column, this);
-        layout->addWidget(table);
-        spinBox->setValue(number);
-        resizeMap_.insert(std::make_pair(spinBox, table));
-        connect( spinBox, SIGNAL( valueChanged(int) ), this, SLOT( resizeTable(int) ) );
-        return  table;
-      }
 
+      //writeToData()
       template <class DataTypes>
-      void QMonitorTableWidget<DataTypes>::storeTable(std::list< std::pair< Q3Table*, BaseData*> >::iterator &it_listTable)
+      void QMonitorWidget<DataTypes>::storeTable(std::list< std::pair< Q3Table*, BaseData*> >::iterator &it_listTable)
       {
         Q3Table* table = it_listTable->first;
-       
+
         //internal monitorData
-        typename Monitor<DataTypes>::MonitorData NewMonitorData = data_->getValue();
+        typename Monitor<DataTypes>::MonitorData NewMonitorData = this->getData()->virtualGetValue();
         //Qtable positions
         if (NewMonitorData.getSizeVecPos())
         {
@@ -304,17 +295,8 @@ namespace sofa{
           NewMonitorData.setIndForces(values);
         }
 
-        data_->setValue(NewMonitorData);
+        this->getData()->virtualSetValue(NewMonitorData);
       }
-
-
-      template <class DataTypes>
-      void QMonitorTableWidget<DataTypes>::readOnlyData(Q3Table *widget, BaseData* data)
-      {
-        widget->setReadOnly(( (data->isReadOnly()) && dialogFlags_.READONLY_FLAG));
-      }
-
-
     }
   }
 }

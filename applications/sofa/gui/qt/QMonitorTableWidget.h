@@ -12,7 +12,7 @@
 #include <qlabel.h>
 #include <qspinbox.h>
 #endif
-
+#include "DataWidget.h"
 #include <sofa/component/misc/Monitor.h>
 #include <sofa/defaulttype/Vec.h>
 #include <list>
@@ -30,59 +30,43 @@ namespace sofa{
   namespace gui{
     namespace qt{
 
-
-      struct ModifyObjectFlags;
-      class QObjectMonitor : public QWidget
+      class QMonitorWidgetHelper : public QObject
       {
         Q_OBJECT
-  
-     public slots:
-        void UpdateWidget();
-        void UpdateData();
-     signals: 
-        void TableValuesChanged();
-        void TablesNeedUpdate(); 
-      public slots:
-        void resizeTable(int number);
-
       public: 
-        QObjectMonitor(const ModifyObjectFlags& flags ,
-          QWidget* parent = 0);
-
-        virtual unsigned int sizeWidget(){return 3;}
-        virtual unsigned int numColumnWidget(){return 4;}
-
+        //QMonitorWidgetHelper(QObject* parent):QObject(parent){};
+      protected slots:
+        virtual void resizeTable(int) = 0;
       protected:
-        virtual void update() = 0; // were the actual stuff is done when UpdateTables is called.
-        virtual void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_listTable) = 0;
-        //where the actual stuff is done when saveTables is called.
-        
+ 
+      };
 
+      template <class DataTypes>
+      class QMonitorWidget : 
+        public TDataWidget<typename sofa::component::misc::Monitor<DataTypes>::MonitorData>
+        , public QMonitorWidgetHelper
+      {
+        public:
+          typedef typename TDataWidget<typename sofa::component::misc::Monitor<DataTypes>::MonitorData>::MyTData MyTData;
+          QMonitorWidget(QWidget* parent,const char* name, MyTData* d):TDataWidget<typename sofa::component::misc::Monitor<DataTypes>::MonitorData>(parent,name,d){}//,QMonitorWidgetHelper(parent){};
+          virtual unsigned int sizeWidget(){return 3;}
+          virtual unsigned int numColumnWidget(){return 4;}
+          virtual bool createWidgets();
+      protected:
+        virtual void readFromData();
+        virtual void writeToData();
+        virtual void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_listTable);
+        virtual void resizeTable(int);
+        Q3Table* createTableWidget(unsigned int sizeIdx);
+        MyTData* data_;
+        std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >  listTable_;
+        std::map<QSpinBox*,Q3Table*> resizeMap_;
+        std::set< Q3Table* > setResize_;
         Q3Table* vectorTable1_;
         Q3Table* vectorTable2_;
         Q3Table* vectorTable3_;
-        unsigned int counterWidget_;
-        const ModifyObjectFlags& dialogFlags_;
-        std::map<QSpinBox*,Q3Table*> resizeMap_;
-        std::set< Q3Table* > setResize_;
-        std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >  listTable_;
-        
-      };
-   
-      template <class DataTypes>
-      class QMonitorTableWidget : public QObjectMonitor
-      {
-        typedef Data<typename sofa::component::misc::Monitor<DataTypes>::MonitorData > TData;
-    
-      protected:
-        virtual void storeTable(std::list< std::pair< Q3Table*, core::objectmodel::BaseData*> >::iterator &it_listTable);
-        virtual void update();
-        Q3Table* addResizableTable(const int& number, const int& column);
-        void readOnlyData(Q3Table *widget, core::objectmodel::BaseData* data);
-        TData* data_;
-        unsigned int numWidgets_;
-      public:
-        QMonitorTableWidget(TData* data,const ModifyObjectFlags& flags,QWidget* parent);
+
+
       };
     }
   }
@@ -90,3 +74,5 @@ namespace sofa{
 
 
 #endif 
+
+

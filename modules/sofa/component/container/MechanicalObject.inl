@@ -49,6 +49,7 @@
 
 #include <sofa/component/linearsolver/SparseMatrix.h>
 
+
 #include <assert.h>
 #include <iostream>
 
@@ -1102,7 +1103,7 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
     template <class DataTypes>
     void MechanicalObject<DataTypes>::init()
     {
-	  _topology = this->getContext()->getMeshTopology();
+      _topology = this->getContext()->getMeshTopology();
 
       f_X->beginEdit();
       f_V->beginEdit();
@@ -1134,58 +1135,58 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
       else if (getX()->size() <= 1)
 	{
 
-    if (!ignoreLoader.getValue())
-    {
-      MeshLoader* m_loader;
-      this->getContext()->get(m_loader);
+	  if (!ignoreLoader.getValue())
+	    {
+	      MeshLoader* m_loader;
+	      this->getContext()->get(m_loader);
 
-      if(m_loader && m_loader->getFillMState()){
+	      if(m_loader && m_loader->getFillMState()){
 
-        int nbp = m_loader->getNbPoints();
+		int nbp = m_loader->getNbPoints();
 
-          //std::cout<<"Setting "<<nbp<<" points from MeshLoader. " <<std::endl;
+		//std::cout<<"Setting "<<nbp<<" points from MeshLoader. " <<std::endl;
 
-	    // copy the last specified velocity to all points
-	if (getV()->size() >= 1 && getV()->size() < (unsigned)nbp)
-	{
-	    unsigned int i = getV()->size();
-	    Deriv v1 = (*getV())[i-1];
-	    getV()->resize(nbp);
-	    while (i < getV()->size())
-		(*getV())[i++] = v1;
-	}
-          this->resize(nbp);
-          for (int i=0;i<nbp;i++)
-          {
-          (*getX())[i] = Coord();
-          DataTypes::set((*getX())[i], m_loader->getPX(i), m_loader->getPY(i), m_loader->getPZ(i));
-          }
+		// copy the last specified velocity to all points
+		if (getV()->size() >= 1 && getV()->size() < (unsigned)nbp)
+		  {
+		    unsigned int i = getV()->size();
+		    Deriv v1 = (*getV())[i-1];
+		    getV()->resize(nbp);
+		    while (i < getV()->size())
+		      (*getV())[i++] = v1;
+		  }
+		this->resize(nbp);
+		for (int i=0;i<nbp;i++)
+		  {
+		    (*getX())[i] = Coord();
+		    DataTypes::set((*getX())[i], m_loader->getPX(i), m_loader->getPY(i), m_loader->getPZ(i));
+		  }
 
-      }else{
+	      }else{
 
-            if (_topology!=NULL && _topology->hasPos() && _topology->getContext() == this->getContext())
-              {
-                int nbp = _topology->getNbPoints();
-                //std::cout<<"Setting "<<nbp<<" points from topology. " << this->getName() << " topo : " << _topology->getName() <<std::endl;
-	    // copy the last specified velocity to all points
-	if (getV()->size() >= 1 && getV()->size() < (unsigned)nbp)
-	{
-	    unsigned int i = getV()->size();
-	    Deriv v1 = (*getV())[i-1];
-	    getV()->resize(nbp);
-	    while (i < getV()->size())
-		(*getV())[i++] = v1;
-	}
-                this->resize(nbp);
-                for (int i=0;i<nbp;i++)
-                {
-                  (*getX())[i] = Coord();
-                  DataTypes::set((*getX())[i], _topology->getPX(i), _topology->getPY(i), _topology->getPZ(i));
-                }
+		if (_topology!=NULL && _topology->hasPos() && _topology->getContext() == this->getContext())
+		  {
+		    int nbp = _topology->getNbPoints();
+		    //std::cout<<"Setting "<<nbp<<" points from topology. " << this->getName() << " topo : " << _topology->getName() <<std::endl;
+		    // copy the last specified velocity to all points
+		    if (getV()->size() >= 1 && getV()->size() < (unsigned)nbp)
+		      {
+			unsigned int i = getV()->size();
+			Deriv v1 = (*getV())[i-1];
+			getV()->resize(nbp);
+			while (i < getV()->size())
+			  (*getV())[i++] = v1;
+		      }
+		    this->resize(nbp);
+		    for (int i=0;i<nbp;i++)
+		      {
+			(*getX())[i] = Coord();
+			DataTypes::set((*getX())[i], _topology->getPX(i), _topology->getPY(i), _topology->getPZ(i));
+		      }
 
-              }
-      }
-    }
+		  }
+	      }
+	    }
 	}
 
 	reinit();
@@ -2320,22 +2321,28 @@ template <class DataTypes>
 std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> MechanicalObject<DataTypes>::constraintBlocks( const std::list<unsigned int> &indices) const
 {
   const unsigned int dimensionDeriv = defaulttype::DataTypeInfo< Deriv >::size();
-  
+  assert( indices.size() > 0 );
+  assert( dimensionDeriv > 0 );
+
   // simple column/block map
+
   typedef sofa::component::linearsolver::SparseMatrix<SReal> matrix_t;
+  // typedef sofa::component::linearsolver::FullMatrix<SReal> matrix_t;
+
   typedef std::map<unsigned int, matrix_t* > blocks_t;
- 
   blocks_t blocks;
 
   // for all row indices
   typedef std::list<unsigned int> indices_t;
 
   unsigned int block_row = 0;
-  for(indices_t::const_iterator row = indices.begin(); row != indices.end(); ++row, ++block_row) {
+  for(indices_t::const_iterator row = indices.begin(); 
+      row != indices.end(); ++row, ++block_row) {
     
     // for all sparse data in the row 
-    std::pair<ConstraintIterator,ConstraintIterator> range=(*c)[ *row ].data();
-    ConstraintIterator chunk=range.first, last=range.second;
+    assert( *row < c->size() );
+    std::pair<ConstraintIterator,ConstraintIterator> range = (*c)[ *row ].data();
+    ConstraintIterator chunk = range.first, last = range.second;
     for( ; chunk != last; ++chunk) {
       const unsigned int column = chunk->first;
       

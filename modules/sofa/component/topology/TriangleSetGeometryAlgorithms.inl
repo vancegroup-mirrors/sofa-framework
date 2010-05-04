@@ -2003,7 +2003,8 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
     {
       Mat<4,4, GLfloat> modelviewM;
       const VecCoord& coords = *(this->object->getX());
-      glColor3f(0.0,0.4,0.4);
+      const Vector3& color = _drawColor.getValue();
+      glColor3f(color[0]-0.2, color[1]-0.2, color[2]-0.2);
       glDisable(GL_LIGHTING);
       float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
 
@@ -2068,7 +2069,8 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
 	const VecCoord& coords = *(this->object->getX());
 
 	glDisable(GL_LIGHTING);
-	glColor3f(0.2,1.0,1.0);
+   const Vector3& color = _drawColor.getValue();
+   glColor3f(color[0], color[1], color[2]);
 	glBegin(GL_TRIANGLES);
 	for (unsigned int i = 0; i<triangleArray.size(); i++)
 	{
@@ -2082,7 +2084,7 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
 	}
 	glEnd();
 
-	glColor3f(0.0,0.4,0.4);
+   glColor3f(color[0]-0.2, color[1]-0.2, color[2]-0.2);
 	glBegin(GL_LINES);
 	const sofa::helper::vector<Edge> &edgeArray = this->m_topology->getEdges();
 

@@ -28,8 +28,9 @@
 #include <sofa/core/componentmodel/behavior/LinearSolver.h>
 #include <sofa/component/linearsolver/MatrixLinearSolver.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
-#include <sofa/component/linearsolver/SparseMatrix.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
+#include <sofa/component/linearsolver/SparseMatrix.h>
+#include <sofa/component/linearsolver/CompressedRowSparseMatrix.h>
 #include <sofa/helper/map.h>
 #include <math.h>
 #include <ldl.h>
@@ -40,7 +41,7 @@ namespace component {
 
 namespace linearsolver {
 
-/// Linear system solver using the conjugate gradient iterative algorithm
+/// Direct linear solver based on Sparse LDL^T factorization, implemented with the CSPARSE library
 template<class TMatrix, class TVector>
 class SparseLDLSolver : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>
 {
@@ -53,8 +54,6 @@ public:
     typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
 
     Data<bool> f_verbose;
-    Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
-    Data<double> f_tol;
 
     SparseLDLSolver();
     ~SparseLDLSolver();
@@ -70,6 +69,10 @@ private :
 	helper::vector<double> A_x,Lx,D,Y;
 	helper::vector<int> A_i,A_p, Li,Lp,Parent,Lnz,Flag,Pattern;
 };
+
+#if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_LINEARSOLVER)
+extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix<double>,FullVector<double> >;
+#endif
 
 } // namespace linearsolver
 

@@ -16,12 +16,14 @@ HEADERS += initEngine.h \
            BoxROI.inl \
            ExtrudeSurface.h \
            ExtrudeSurface.inl \
+           GroupFilterYoungModulus.h \
+           GroupFilterYoungModulus.inl \
            MergePoints.h \
            MergePoints.inl \
-	   TransformPosition.h \
-	   TransformPosition.inl \
-	   TransformEngine.h \
-	   TransformEngine.inl \
+	       TransformPosition.h \
+	        TransformPosition.inl \
+	       TransformEngine.h \
+	       TransformEngine.inl \
            PlaneROI.h \
            PlaneROI.inl \
            PointsFromIndices.h \
@@ -44,9 +46,10 @@ HEADERS += initEngine.h \
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
            ExtrudeSurface.cpp \
+           GroupFilterYoungModulus.cpp \
            MergePoints.cpp \
            PlaneROI.cpp \
-	   TransformPosition.cpp \
+	  	   TransformPosition.cpp \
            TransformEngine.cpp \
            PointsFromIndices.cpp \
            RandomPointDistributionInSurface.cpp \

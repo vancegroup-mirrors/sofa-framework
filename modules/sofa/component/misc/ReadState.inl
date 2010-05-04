@@ -76,7 +76,7 @@ void ReadState::init()
 
 void ReadState::reset()
 {
-    mmodel = dynamic_cast< sofa::core::componentmodel::behavior::BaseMechanicalState* >(this->getContext()->getMechanicalState());
+     mmodel = dynamic_cast< sofa::core::componentmodel::behavior::BaseMechanicalState* >(this->getContext()->getMechanicalState());
     if (infile)
     {
         delete infile;

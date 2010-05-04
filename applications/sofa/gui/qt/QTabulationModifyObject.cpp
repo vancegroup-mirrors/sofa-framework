@@ -28,8 +28,8 @@ namespace sofa{
 
         size += displaydatawidget->getNumWidgets();
 
-        connect(displaydatawidget, SIGNAL( WidgetHasChanged(bool) ), this, SLOT( setTabDirty(bool) ) );   
-        connect(displaydatawidget, SIGNAL(DataParentNameChanged()),  this, SLOT( updateListViewItem() ) );
+        connect(displaydatawidget, SIGNAL( WidgetDirty(bool) ), this, SLOT( setTabDirty(bool) ) );   
+        connect(displaydatawidget, SIGNAL( DataOwnerDirty(bool)),  this, SLOT( updateListViewItem() ) );
         connect(this, SIGNAL(UpdateDatas()), displaydatawidget, SLOT( UpdateData()));
         connect(this, SIGNAL(UpdateDataWidgets()), displaydatawidget, SLOT( UpdateWidgets()));
       }

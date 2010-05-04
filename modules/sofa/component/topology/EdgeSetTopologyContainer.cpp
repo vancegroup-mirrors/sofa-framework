@@ -401,7 +401,7 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer()
 			sout << "Error. [EdgeSetTopologyContainer::getEdgesAroundVertex] edge vertex shell array out of bounds: "
 				 << i << " >= " << m_edgesAroundVertex.size() << endl;
 	#endif
-
+		
 		return m_edgesAroundVertex[i];
 	}
 

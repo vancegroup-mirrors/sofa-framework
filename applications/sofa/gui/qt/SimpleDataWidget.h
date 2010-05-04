@@ -77,7 +77,7 @@ namespace sofa
         }
        static void connectChanged(Widget* w, DataWidget* datawidget)
         {
-          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setModified()));
+          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setWidgetDirty()));
         }
       };
 
@@ -148,48 +148,38 @@ namespace sofa
 
       /// This class manages the GUI of a BaseData, using the corresponding instance of data_widget_container
       template<class T, class Container = data_widget_container<T> >
-      class SimpleDataWidget : public DataWidget
+      class SimpleDataWidget : public TDataWidget<T>
       {
-      public:
-        typedef sofa::core::objectmodel::TData<T> MyData;
+
       protected:
         typedef T data_type;
         Container container;
         typedef data_widget_trait<data_type> helper;
-        MyData* data;
-        int counter;
-        
+      
+
       public:
-        SimpleDataWidget(MyData* d) : DataWidget(d), data(d), counter(-1) {}
-        virtual bool createWidgets(QWidget* parent)
+        typedef sofa::core::objectmodel::TData<T> MyTData;
+        SimpleDataWidget(QWidget* parent,const char* name, MyTData* d):
+        TDataWidget<T>(parent,name,d)
+        {}
+        virtual bool createWidgets()
         {
-          const data_type& d = data->virtualGetValue();
-          if (!container.createWidgets(this, parent, d, this->readOnly))
+          const data_type& d = this->getData()->virtualGetValue();
+          if (!container.createWidgets(this, this->parentWidget(), d, ! (this->isEnabled()) ))
             return false;
           return true;
         }
         virtual void readFromData()
         {
-          container.readFromData(data->virtualGetValue());
-          modified = false;
-          counter = data->getCounter();
+          container.readFromData(this->getData()->virtualGetValue());      
         }
-        virtual bool isModified() { return modified; }
+       
         virtual void writeToData()
         {
-          
-          if (!modified) return;
-          data_type d = data->virtualGetValue();
+    
+          data_type d = this->getData()->virtualGetValue();
           container.writeToData(d);
-          data->virtualSetValue(d);
-          counter = data->getCounter();
-        }
-        virtual void update()
-        {      
-          if (!data->isCounterValid() || counter != data->getCounter())
-          {
-            readFromData();
-          }
+          this->getData()->virtualSetValue(d);
         }
       };
 
@@ -218,7 +208,7 @@ namespace sofa
         }
         static void connectChanged(Widget* w, DataWidget* datawidget)
         {
-          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setModified()) );
+          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setWidgetDirty()) );
         }
       };
 
@@ -247,7 +237,7 @@ namespace sofa
         }
         static void connectChanged(Widget* w, DataWidget* datawidget)
         {
-          datawidget->connect(w, SIGNAL( toggled(bool) ), datawidget, SLOT(setModified()));
+          datawidget->connect(w, SIGNAL( toggled(bool) ), datawidget, SLOT(setWidgetDirty()));
         }
       };
 
@@ -278,7 +268,7 @@ namespace sofa
         }
         static void connectChanged(Widget* w, DataWidget* datawidget)
         {
-          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setModified()));
+          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setWidgetDirty()));
         }
       };
 
@@ -316,7 +306,7 @@ namespace sofa
         }
         static void connectChanged(Widget* w, DataWidget* datawidget)
         {
-          datawidget->connect(w, SIGNAL( valueChanged(int) ), datawidget, SLOT(setModified()));
+          datawidget->connect(w, SIGNAL( valueChanged(int) ), datawidget, SLOT(setWidgetDirty()));
         }
       };
 
@@ -392,9 +382,9 @@ namespace sofa
         ParentWidget* parent_w;
         fixed_vector_data_widget_container() {}
          
-        bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
+        bool createWidgets(DataWidget * _widget, QWidget* /*parent*/, const data_type& d, bool readOnly)
         {
-          parent_w = createParentWidget(parent,N);
+          parent_w = createParentWidget(_widget,N);
           assert(parent_w != NULL);
           for (int i=0; i<N; ++i)
             if (!w[i].createWidgets(_widget,
@@ -447,10 +437,10 @@ namespace sofa
         Container w[L][C];
         fixed_grid_data_widget_container() {}
  
-        bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
+        bool createWidgets(DataWidget * _widget, QWidget* /*parent*/, const data_type& d, bool readOnly)
         {
 
-          parent_w = createParentWidget(parent,C);
+          parent_w = createParentWidget(_widget,C);
           assert(parent_w);
           for (int y=0; y<L; ++y)
             for (int x=0; x<C; ++x)

@@ -240,7 +240,9 @@ namespace topology
 					sofa::helper::vector< unsigned int > &shell = m_container->m_tetrahedraAroundVertex[ t[j] ];
 					shell.erase(remove(shell.begin(), shell.end(), indices[i]), shell.end());
 					if(removeIsolatedVertices && shell.empty())
+					{
 						vertexToBeRemoved.push_back(t[j]);
+					}
 				}
 			}
 
@@ -516,7 +518,7 @@ namespace topology
 		propagateTopologicalChanges();
 
 		// now destroy the old tetrahedra.
-		removeTetrahedraProcess(  tetrahedra ,true);
+		removeTetrahedraProcess(tetrahedra ,true);
 
 		m_container->checkTopology();
 

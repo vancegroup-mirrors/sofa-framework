@@ -468,7 +468,8 @@ namespace topology
     {
       Mat<4,4, GLfloat> modelviewM;
       const VecCoord& coords = *(this->object->getX());
-      glColor3f(1.0,1.0,0.0);
+      const Vector3& color = _drawColor.getValue();
+      glColor3f(color[0], color[1], color[2]);
       glDisable(GL_LIGHTING);
       float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
 
@@ -535,7 +536,8 @@ namespace topology
       if (!hexaArray.empty())
       {
 	glDisable(GL_LIGHTING);
-	glColor3f(1.0,1.0,0.0);
+   const Vector3& color = _drawColor.getValue();
+   glColor3f(color[0], color[1], color[2]);
 	glBegin(GL_LINES);
 	const VecCoord& coords = *(this->object->getX());
 

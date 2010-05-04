@@ -40,7 +40,7 @@ namespace component {
 
 namespace linearsolver {
 
-/// Linear system solver using the conjugate gradient iterative algorithm
+/// Linear solver based on a NxN bloc diagonal matrix (i.e. block Jacobi preconditioner)
 template<class TMatrix, class TVector>
 class BlockJacobiPreconditioner : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>
 {
@@ -51,7 +51,7 @@ public:
     typedef TVector Vector;
     typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;
     typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
-    typedef typename TMatrix::SubMatrixType SubMatrix;
+    typedef typename TMatrix::Bloc SubMatrix;
 
     Data<bool> f_verbose;
 

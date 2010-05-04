@@ -9,49 +9,14 @@ namespace sofa{
       
 
 #ifndef SOFA_DOUBLE
-      template class QMonitorTableWidget<defaulttype::Vec3fTypes>;
+      template class QMonitorWidget<defaulttype::Vec3fTypes>;
+            helper::Creator<DataWidgetFactory, QMonitorWidget<defaulttype::Vec3fTypes> > DWClass_Monitor3f("default",true);
 #endif
 #ifndef SOFA_FLOAT
-      template class QMonitorTableWidget<defaulttype::Vec3dTypes>;
+      template class QMonitorWidget<defaulttype::Vec3dTypes>;
+      helper::Creator<DataWidgetFactory, QMonitorWidget<defaulttype::Vec3dTypes> > DWClass_Monitor3d("default",true);
 #endif
-
-      QObjectMonitor::QObjectMonitor( const ModifyObjectFlags& flags,QWidget* parent):
-        QWidget(parent),
-        vectorTable1_(NULL),
-        vectorTable2_(NULL),
-        vectorTable3_(NULL),
-        counterWidget_(0),
-        dialogFlags_(flags)
-        {
-        }
-      void QObjectMonitor::resizeTable(int number)
-      {
-        QSpinBox *spinBox = (QSpinBox *) sender();
-        if( spinBox == NULL){
-          return;
-        }
-        Q3Table *table = resizeMap_[spinBox];
-        if (number != table->numRows())
-        {
-          table->setNumRows(number);
-          setResize_.insert(table);
-          UpdateWidget();
-        }
-      }
-
-      void QObjectMonitor::UpdateData()
-      {
-        std::list< std::pair< Q3Table*, BaseData*> >::iterator it_listTable;
-        for (it_listTable = listTable_.begin(); it_listTable != listTable_.end(); it_listTable++)
-        {
-          storeTable(it_listTable);
-        }
-      }
-
-      void QObjectMonitor::UpdateWidget()
-      {
-        update();
-      }
     }
   }
 }
+

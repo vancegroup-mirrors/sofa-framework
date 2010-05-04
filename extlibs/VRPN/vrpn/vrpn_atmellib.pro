@@ -10,8 +10,15 @@ CONFIG += $$CONFIGLIBRARIES
 
 QUATINCLUDES = ../quat
 
-LIBS += -ldl -lvrpn_quat -lXext -lX11 -lm
+LIBS += -ldl -lvrpn_quat
 INCLUDEPATH += $$QUATINCLUDES
+
+
+unix {
+	!macx {
+		LIBS += -lXext -lX11 -lm
+	}
+}
 
 HEADERS += \
 	vrpn_atmellib.h vrpn_atmellib_helper.h vrpn_atmellib_errno.h

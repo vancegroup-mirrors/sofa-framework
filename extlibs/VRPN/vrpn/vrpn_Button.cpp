@@ -875,7 +875,7 @@ int vrpn_Button_Parallel::openGiveIO(void)
 
       // else if NT: use giveio driver
     if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-	HANDLE h = CreateFile("\\\\.\\giveio", GENERIC_READ, 0, NULL,
+	HANDLE h = CreateFileA("\\\\.\\giveio", GENERIC_READ, 0, NULL,
 				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (h == INVALID_HANDLE_VALUE) {
 	      // maybe driver not installed?

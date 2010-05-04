@@ -35,7 +35,8 @@ namespace component
 namespace loader
 {
 
-  using namespace sofa::defaulttype;
+using namespace sofa::defaulttype;
+using namespace sofa::core::componentmodel::loader;
 
 SOFA_DECL_CLASS(MeshObjLoader)
 
@@ -43,50 +44,18 @@ SOFA_DECL_CLASS(MeshObjLoader)
 .add< MeshObjLoader >()
 ;
 
-
-  MeshObjLoader::Material::Material()
-  {
-    ambient =  Vec4f( 0.2f,0.2f,0.2f,1.0f);
-    diffuse =  Vec4f( 0.75f,0.75f,0.75f,1.0f);
-    specular =  Vec4f( 1.0f,1.0f,1.0f,1.0f);
-    emissive =  Vec4f( 0.0f,0.0f,0.0f,0.0f);
-    
-    shininess =  45.0f;
-    name = "Default";
-    useAmbient =  true;
-    useDiffuse =  true;
-    useSpecular =  false;
-    useEmissive =  false;
-    useShininess =  false;
-    activated = false;
-  }
-
-  void MeshObjLoader::Material::setColor(float r, float g, float b, float a)
-  {
-    float f[4] = { r, g, b, a };
-    for (int i=0;i<4;i++)
-    {
-      ambient = Vec4f(f[0]*0.2f,f[1]*0.2f,f[2]*0.2f,f[3]);
-      diffuse = Vec4f(f[0],f[1],f[2],f[3]);
-      specular = Vec4f(f[0],f[1],f[2],f[3]);
-      emissive = Vec4f(f[0],f[1],f[2],f[3]);
-    }
-  }
-
-
-
-
-  MeshObjLoader::MeshObjLoader(): MeshLoader()
-				, texturesList(initData(&texturesList,"texturesList","List of textures corresponding to elements of the mesh loaded."))
-				, texCoords(initData(&texCoords,"texcoords","Texcoords of the mesh loaded")) 
-				, normalsList(initData(&normalsList,"normalsList","List of normals of elements of the mesh loaded."))
-				, normals(initData(&normals,"normals","Normals of the mesh loaded"))
-  {
-    texturesList.setPersistent(false);
-    texCoords.setPersistent(false);
-    normalsList.setPersistent(false);
-    normals.setPersistent(false);
-  }
+MeshObjLoader::MeshObjLoader(): MeshLoader()
+			, faceType(MeshObjLoader::TRIANGLE)
+			, texturesList(initData(&texturesList,"texturesList","List of textures corresponding to elements of the mesh loaded."))
+			, texCoords(initData(&texCoords,"texcoords","Texcoords of the mesh loaded"))
+			, normalsList(initData(&normalsList,"normalsList","List of normals of elements of the mesh loaded."))
+			, normals(initData(&normals,"normals","Normals of the mesh loaded"))
+{
+	texturesList.setPersistent(false);
+	texCoords.setPersistent(false);
+	normalsList.setPersistent(false);
+	normals.setPersistent(false);
+}
   
 
 
@@ -115,6 +84,31 @@ SOFA_DECL_CLASS(MeshObjLoader)
   }
 
   
+  void MeshObjLoader::addGroup (const PrimitiveGroup& g)
+  {
+
+	    helper::vector< PrimitiveGroup>& my_edgesGroups = *(edgesGroups.beginEdit());
+	    helper::vector< PrimitiveGroup>& my_trianglesGroups = *(trianglesGroups.beginEdit());
+	    helper::vector< PrimitiveGroup>& my_quadsGroups = *(quadsGroups.beginEdit());
+
+		switch (faceType)
+		{
+			case MeshObjLoader::EDGE:
+				my_edgesGroups.push_back(g);
+				break;
+			case MeshObjLoader::TRIANGLE:
+				my_trianglesGroups.push_back(g);
+				break;
+			case MeshObjLoader::QUAD:
+				my_quadsGroups.push_back(g);
+				break;
+			default: break;
+		}
+
+	    edgesGroups.endEdit();
+	    trianglesGroups.endEdit();
+	    quadsGroups.endEdit();
+  }
   
   bool MeshObjLoader::readOBJ (std::ifstream &file, const char* filename)
   {
@@ -136,133 +130,169 @@ SOFA_DECL_CLASS(MeshObjLoader)
   
     int vtn[3];
     Vec3d result;
+    int nbf = 0;
+    PrimitiveGroup curGroup;
     std::string line;
     std::string face, tmp;
     while( std::getline(file,line) )
     {
-	if (line.empty()) continue;
-	std::istringstream values(line);
-        std::string token;
-	
-	values >> token;
-        if (token == "#")
-	{
-	  /* comment */
-	}
-        else if (token == "v")
-	{
-	  /* vertex */
-	  values >> result[0] >> result[1] >> result[2];
-	  my_positions.push_back(Vector3(result[0],result[1], result[2]));
-	}
-        else if (token == "vn")
-	{
-            /* normal */
-	  values >> result[0] >> result[1] >> result[2];
-	  my_normals.push_back(Vector3(result[0],result[1], result[2]));
-	}
-        else if (token == "vt")
-	{
-	  /* texcoord */
-	  values >> result[0] >> result[1];
-	  my_texCoords.push_back(Vector2(result[0],result[1]));
-	}
-        else if (token == "mtllib")
-	{
-	  while (!values.eof())
-	  {
-	    std::string materialLibaryName;
-	    values >> materialLibaryName;
-	    std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(materialLibaryName.c_str(), filename);
-	    this->readMTL(mtlfile.c_str(), my_materials);
-	  }
-	}
-        else if (token == "usemtl")
-	{
-            std::string materialName;
-            values >> materialName;
-	    helper::vector<MeshObjLoader::Material>::iterator it = my_materials.begin();
-	    helper::vector<MeshObjLoader::Material>::iterator itEnd = my_materials.end();
-            for (; it != itEnd; it++)
-	    {
-	      if (it->name == materialName)
-	      {
-		// std::cout << "Using material "<<it->name<<std::endl;
-		(*it).activated = true;
-		material = *it;
-	      }
-	    }
-	}
-        else if (token == "g")
-          {
-            while (!values.eof())
-	    {
-	      std::string groupName;
-	      values >> groupName;
-	      //Do Nothing....
-	    }
-          }
-        else if (token == "l" || token == "f")
-	{
-	  /* face */
-	  nodes.clear();
-	  nIndices.clear();
-	  tIndices.clear();
+		if (line.empty()) continue;
+		std::istringstream values(line);
+		std::string token;
 
-	  while (!values.eof())
-	  {
-	    std::string face;
-	    values >> face;
-	    if (face.empty()) continue;
-	    for (int j = 0; j < 3; j++)
-	    {
-	      vtn[j] = 0;
-	      std::string::size_type pos = face.find('/');
-	      std::string tmp = face.substr(0, pos);
-	      if (pos == std::string::npos)
-		face = "";
-	      else
-	      {
-		face = face.substr(pos + 1);
-	      }
+		values >> token;
+		if (token == "#")
+		{
+		  /* comment */
+		}
+		else if (token == "v")
+		{
+		  /* vertex */
+		  values >> result[0] >> result[1] >> result[2];
+		  my_positions.push_back(Vector3(result[0],result[1], result[2]));
+		}
+		else if (token == "vn")
+		{
+				/* normal */
+		  values >> result[0] >> result[1] >> result[2];
+		  my_normals.push_back(Vector3(result[0],result[1], result[2]));
+		}
+		else if (token == "vt")
+		{
+		  /* texcoord */
+		  values >> result[0] >> result[1];
+		  my_texCoords.push_back(Vector2(result[0],result[1]));
+		}
+		else if (token == "mtllib")
+		{
+		  while (!values.eof())
+		  {
+			std::string materialLibaryName;
+			values >> materialLibaryName;
+			std::string mtlfile = sofa::helper::system::SetDirectory::GetRelativeFromFile(materialLibaryName.c_str(), filename);
+			this->readMTL(mtlfile.c_str(), my_materials);
+		  }
+		}
+		else if (token == "usemtl" || token == "g")
+		{
+			// end of current group
+			curGroup.nbp = nbf - curGroup.p0;
+			if (curGroup.nbp > 0)
+			{
+				//warning : a group is supposed to be composed with the same type of face ...
+				addGroup(curGroup);
+			}
+			curGroup.p0 = nbf;
+			curGroup.nbp = 0;
+			if (token == "usemtl")
+			{
+				curGroup.materialId = -1;
+				std::string materialName;
+				values >> materialName;
+				helper::vector<Material>::iterator it = my_materials.begin();
+				helper::vector<Material>::iterator itEnd = my_materials.end();
 
-	      if (!tmp.empty())
-		vtn[j] = atoi(tmp.c_str()) - 1; // -1 because the numerotation begins at 1 and a vector begins at 0
-	    }
+				for (; it != itEnd; it++)
+				{
+					if (it->name == curGroup.materialName)
+					{
+						// std::cout << "Using material "<<it->name<<std::endl;
+						(*it).activated = true;
+						if (!material.activated)
+							material = *it;
+						curGroup.materialId = it - my_materials.begin();
+						break;
+					}
+				}
+			}
+			else if (token == "g")
+			{
+				curGroup.groupName.clear();
+				while (!values.eof())
+				{
+					std::string g;
+					values >> g;
+					if (!curGroup.groupName.empty())
+						curGroup.groupName += " ";
+					curGroup.groupName += g;
+				}
+			}
+		}
+		else if (token == "l" || token == "f")
+		{
+		  /* face */
+		  nodes.clear();
+		  nIndices.clear();
+		  tIndices.clear();
 
-	    nodes.push_back(vtn[0]);
-	    nIndices.push_back(vtn[1]);
-	    tIndices.push_back(vtn[2]);  
-	  }
+		  while (!values.eof())
+		  {
+			std::string face;
+			values >> face;
+			if (face.empty()) continue;
+			for (int j = 0; j < 3; j++)
+			{
+			  vtn[j] = 0;
+			  std::string::size_type pos = face.find('/');
+			  std::string tmp = face.substr(0, pos);
+			  if (pos == std::string::npos)
+			face = "";
+			  else
+			  {
+			face = face.substr(pos + 1);
+			  }
 
-	  my_normalsList.push_back(nIndices);
-	  my_texturesList.push_back(tIndices);
+			  if (!tmp.empty())
+			vtn[j] = atoi(tmp.c_str()) - 1; // -1 because the numerotation begins at 1 and a vector begins at 0
+			}
 
-	  if (nodes.size() == 2) // Edge
-	  {
-	    if (nodes[0]<nodes[1])
-	      addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
-	    else
-	      addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[1], nodes[0]));
-	  }
-	  else if (nodes.size()==4) // Quad
-	  { 
-	    addQuad(&my_quads, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
-	  }
-	  else // Triangularize
-	  { 
-	    for (unsigned int j=2; j<nodes.size(); j++)
-	      addTriangle(&my_triangles, helper::fixed_array <unsigned int,3>(nodes[0], nodes[j-1], nodes[j]));
-	  }
-	  	  
-	}
-        else
-	{
-	  // std::cerr << "readObj : Unknown token for line " << line << std::endl;
-	}
-      }
+			nodes.push_back(vtn[0]);
+			nIndices.push_back(vtn[1]);
+			tIndices.push_back(vtn[2]);
+		  }
+
+		  my_normalsList.push_back(nIndices);
+		  my_texturesList.push_back(tIndices);
+
+		  if (nodes.size() == 2) // Edge
+		  {
+			if (nodes[0]<nodes[1])
+			  addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[0], nodes[1]));
+			else
+			  addEdge(&my_edges, helper::fixed_array <unsigned int,2>(nodes[1], nodes[0]));
+
+			faceType = MeshObjLoader::EDGE;
+		  }
+		  else if (nodes.size()==4) // Quad
+		  {
+			addQuad(&my_quads, helper::fixed_array <unsigned int,4>(nodes[0], nodes[1], nodes[2], nodes[3]));
+
+			faceType = MeshObjLoader::QUAD;
+		  }
+		  else // Triangularize
+		  {
+			for (unsigned int j=2; j<nodes.size(); j++)
+			  addTriangle(&my_triangles, helper::fixed_array <unsigned int,3>(nodes[0], nodes[j-1], nodes[j]));
+
+			faceType = MeshObjLoader::TRIANGLE;
+		  }
+
+		  ++nbf;
+
+		}
+		else
+		{
+		  // std::cerr << "readObj : Unknown token for line " << line << std::endl;
+		}
+    }
     
-    
+    // end of current group
+    if (curGroup.groupName.empty())
+    	curGroup.groupName = "Default Group";
+
+	curGroup.nbp = nbf - curGroup.p0;
+	if (curGroup.nbp > 0) addGroup(curGroup);
+
     // announce the model statistics 
     // 	sout << " Vertices: " << vertices.size() << sendl;
     // 	sout << " Normals: " << normals.size() << sendl;
@@ -295,6 +325,15 @@ SOFA_DECL_CLASS(MeshObjLoader)
     edges.endEdit();
     triangles.endEdit();
     quads.endEdit();
+
+//    helper::vector< PrimitiveGroup>& my_edgesGroups = *(edgesGroups.beginEdit());
+//    helper::vector< PrimitiveGroup>& my_trianglesGroups = *(trianglesGroups.beginEdit());
+//    helper::vector< PrimitiveGroup>& my_quadsGroups = *(quadsGroups.beginEdit());
+//
+//    std::cout << "Nb Groups of triangles : " << my_trianglesGroups.size() << std::endl;
+//    std::cout << "Nb Groups of quads : " << my_quadsGroups.size() << std::endl;
+//    std::cout << "Nb Groups of edges : " << my_edgesGroups.size() << std::endl;
+
 
     texCoords.endEdit();
     normals.endEdit();

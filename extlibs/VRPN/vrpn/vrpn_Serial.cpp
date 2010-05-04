@@ -77,7 +77,7 @@ int vrpn_open_commport(const char *portname, long baud, int charsize, vrpn_SER_P
 
 
 #if defined(_WIN32)
-  hCom = CreateFile( portname,
+  hCom = CreateFileA( portname,
 		     GENERIC_READ | GENERIC_WRITE,
 		     0,    // comm devices must be opened w/exclusive-access 
 		     NULL, // no security attributes 

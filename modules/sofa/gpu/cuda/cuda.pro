@@ -72,6 +72,8 @@ HEADERS += mycuda.h \
            CudaCollisionDetection.h \
            CudaPointModel.h \
            CudaSphereModel.h \
+           CudaTriangleModel.h \
+           CudaTriangleModel.inl \
            CudaPenalityContactForceField.h \
            CudaPenalityContactForceField.inl \
            CudaSpatialGridContainer.h \
@@ -82,6 +84,7 @@ HEADERS += mycuda.h \
            CudaTetrahedralVisualModel.inl \
            CudaParticleSource.h \
            CudaParticleSource.inl
+
 
 SOURCES += mycuda.cpp \
            CudaBoxROI.cpp  \
@@ -102,6 +105,7 @@ SOURCES += mycuda.cpp \
            CudaCollisionDetection.cpp \
 		   CudaSphereModel.cpp \
            CudaPointModel.cpp \
+           CudaTriangleModel.cpp \
            CudaPenalityContactForceField.cpp \
            CudaVisualModel.cpp \
            CudaTetrahedralVisualModel.cpp \

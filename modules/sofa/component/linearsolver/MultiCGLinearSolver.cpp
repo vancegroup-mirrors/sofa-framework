@@ -150,15 +150,7 @@ void MultiCGLinearSolver<TMatrix,TVector>::solve(Matrix& M, Vector& x, Vector& b
     
     //double normb = sqrt(normb2);
     helper::vector<double> normb(nbg);
-    //for (int g=0;g<nbg;++g) normb[g] = sqrt(normb2(g));
-#ifdef WIN32
-    typedef double (*fn)(double);
-    std::transform<helper::vector<double>::iterator,
-      helper::vector<double>::iterator,
-      fn>(normb2.begin(), normb2.end(), normb.begin(), sqrt);
-#else
-    std::transform(normb2.begin(),normb2.end(),normb.begin(), sqrt);
-#endif 
+    for (int g=0;g<nbg;++g) normb[g] = sqrt(normb2[g]);
 
 	std::map < std::string, sofa::helper::vector<double> >& graph = *f_graph.beginEdit();
 	sofa::helper::vector< sofa::helper::vector<double>* > graph_error(nbg, NULL);

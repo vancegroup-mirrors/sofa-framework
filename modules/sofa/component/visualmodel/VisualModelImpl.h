@@ -35,6 +35,7 @@
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/io/Mesh.h>
 #include <sofa/component/component.h>
+#include <sofa/core/componentmodel/loader/PrimitiveGroup.h>
 
 #include <map>
 
@@ -48,6 +49,7 @@ namespace visualmodel
 {
 
 using namespace sofa::defaulttype;
+using namespace sofa::core::componentmodel::loader;
 
 
 class RigidMappedModel : public core::componentmodel::behavior::MappedModel< Rigid3fTypes >
@@ -171,6 +173,11 @@ protected:
     /// If it is empty then each vertex correspond to one normal
     ResizableExtVector<int> vertNormIdx;
 
+    virtual void internalDraw(bool /*transparent*/)
+    {}
+
+public:
+
 
 
     sofa::core::objectmodel::DataFileName fileMesh;
@@ -183,12 +190,7 @@ protected:
     Data< TexCoord >  translationTex;
 
     Vec3f bbox[2];
-
-    virtual void internalDraw(bool /*transparent*/)
-    {}
-
-public:
-    Data< sofa::helper::io::Mesh::Material > material;
+    Data< Material > material;
     Data< bool > putOnlyTexCoords;
 
     class FaceGroup
@@ -212,7 +214,7 @@ public:
         }
     };
 
-    Data< helper::vector<sofa::helper::io::Mesh::Material> > materials;
+    Data< helper::vector<Material> > materials;
     Data< helper::vector<FaceGroup> > groups;
 
     VisualModelImpl();

@@ -40,8 +40,6 @@ namespace sofa
 			using namespace sofa::defaulttype;
 			using namespace sofa::core::componentmodel::topology;
 
-			class TriangleModel;
-
 			class TriangleModelInRegularGrid : public TriangleModel
 			{
 				public:

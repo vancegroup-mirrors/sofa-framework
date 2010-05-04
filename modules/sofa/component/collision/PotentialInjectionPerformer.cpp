@@ -42,86 +42,124 @@ namespace sofa
       
       void PotentialInjectionPerformer::start()
       {
-	BodyPicked picked=this->interactor->getBodyPicked();
-	TriangleModel* CollisionModel = dynamic_cast< TriangleModel* >(picked.body);
+         BodyPicked picked=this->interactor->getBodyPicked();
+         TriangleModel* CollisionModel = dynamic_cast< TriangleModel* >(picked.body);
 	
-        if (picked.body == NULL || CollisionModel == NULL)
-	{
-          this->interactor->serr << "Error: PotentialInjectionPerformer no picked body;" << this->interactor->sendl;
-	  return;
-	}
+         if (picked.body == NULL || CollisionModel == NULL)
+         {
+            this->interactor->serr << "Error: PotentialInjectionPerformer no picked body;" << this->interactor->sendl;
+            return;
+         }
 
-	sofa::component::container::MechanicalObject<defaulttype::Vec3dTypes>* MechanicalObject=NULL;
-   CollisionModel->getContext()->get (MechanicalObject,  sofa::core::objectmodel::BaseContext::SearchRoot);
+         // Get mechanical Object (3D positions)
+         sofa::component::container::MechanicalObject<defaulttype::Vec3dTypes>* MechanicalObject=NULL;
+         CollisionModel->getContext()->get (MechanicalObject,  sofa::core::objectmodel::BaseContext::SearchRoot);
 
-	sofa::core::objectmodel::Tag mytag (stateTag);
-   CollisionModel->getContext()->get (PotentialObjectContainer, mytag, sofa::core::objectmodel::BaseContext::SearchRoot);
+         if (MechanicalObject == NULL)
+         {
+            this->interactor->serr << "Error, can't find mechanicalObject" << this->interactor->sendl;
+            return;
+         }
 
-   if (MechanicalObject == NULL)
-   {
-      this->interactor->serr << "Error, can't find mechanicalObject" << this->interactor->sendl;
-      return;
-   }
+         // Get potential container
+         sofa::core::objectmodel::Tag mytag (stateTag);
+         sofa::component::container::MechanicalObject<defaulttype::Vec1dTypes>* Potential1D;
+         sofa::component::container::MechanicalObject<defaulttype::Vec2dTypes>* Potential2D;
 
-   if (PotentialObjectContainer == NULL)
-   {
-      this->interactor->serr << "Error, can't find potentialObject" << this->interactor->sendl;
-      return;
-   }
-	
-	sofa::component::topology::TriangleSetTopologyContainer* triangleContainer;
-	CollisionModel->getContext()->get (triangleContainer);
-	
-	const component::topology::Triangle pickedTriangle = triangleContainer->getTriangle(picked.indexCollisionElement);
-	
-	sofa::helper::vector<sofa::defaulttype::Vector3 > listCoords;
-	sofa::defaulttype::Vector3 the_point = picked.point;
-		
-	for (unsigned int i=0; i<3; i++)
-	{
-	  sofa::defaulttype::Vector3& tmp = (*MechanicalObject->getX())[ pickedTriangle[i] ];
-	  listCoords.push_back (tmp);
-	}
+         CollisionModel->getContext()->get (Potential1D, mytag, sofa::core::objectmodel::BaseContext::SearchRoot);
+         CollisionModel->getContext()->get (Potential2D, mytag, sofa::core::objectmodel::BaseContext::SearchRoot);
 
-	// Find the closest dof to pickedPoint:
-	double distance1 = 0.0;
-	double distance2 = 0.0;
-	double sum = 0.0;
-	
-	//case 1;
-	for (unsigned int i =0; i<3; i++)
-	  sum += (listCoords[0][i] - the_point[i])*(listCoords[0][i] - the_point[i]);
-	
-	distance1 = sqrt (sum);
-	unsigned int cpt = 0;
-	
-	for (unsigned int i =1; i<3; i++)
-	{
-	  sum = 0.0;
-	  for (unsigned int j=0; j<3; j++)
-	    sum += (listCoords[i][j] - the_point[j])*(listCoords[i][j] - the_point[j]);
+         // Hack, potential is either 1D or 2D, no possibility to guess
+         if (Potential1D == NULL && Potential2D == NULL)
+         {
+            this->interactor->serr << "Error, can't find potentialObject" << this->interactor->sendl;
+            return;
+         }
 
-	  distance2 = sqrt (sum);
+         if (Potential2D)
+            isScalar = false;
 
-	  if (distance2 < distance1) // this point is closer
-	  {
-	    cpt = i;
-	    distance1 = distance2;
-	  }
-	}
-	
-	indexToChange.push_back (pickedTriangle[cpt]);
-	
+
+         // Get triangle topology - TODO: allow others topologies
+         sofa::component::topology::TriangleSetTopologyContainer* triangleContainer;
+         CollisionModel->getContext()->get (triangleContainer);
+
+         const component::topology::Triangle pickedTriangle = triangleContainer->getTriangle(picked.indexCollisionElement);
+
+         sofa::helper::vector<sofa::defaulttype::Vector3 > listCoords;
+         sofa::defaulttype::Vector3 the_point = picked.point;
+
+         for (unsigned int i=0; i<3; i++)
+         {
+            sofa::defaulttype::Vector3& tmp = (*MechanicalObject->getX())[ pickedTriangle[i] ];
+            listCoords.push_back (tmp);
+         }
+
+         // Find the closest dof to pickedPoint:
+         double distance1 = 0.0;
+         double distance2 = 0.0;
+         double sum = 0.0;
+
+         //case 1;
+         for (unsigned int i =0; i<3; i++)
+            sum += (listCoords[0][i] - the_point[i])*(listCoords[0][i] - the_point[i]);
+
+         distance1 = sqrt (sum);
+         unsigned int cpt = 0;
+
+         for (unsigned int i =1; i<3; i++)
+         {
+            sum = 0.0;
+            for (unsigned int j=0; j<3; j++)
+               sum += (listCoords[i][j] - the_point[j])*(listCoords[i][j] - the_point[j]);
+
+            distance2 = sqrt (sum);
+
+            if (distance2 < distance1) // this point is closer
+            {
+               cpt = i;
+               distance1 = distance2;
+            }
+         }
+
+         indexToChange.push_back (pickedTriangle[cpt]);
       }
+
 
       void PotentialInjectionPerformer::execute()
       {
+         if (!indexToChange.empty())
+         {
+            sofa::core::objectmodel::Tag mytag (stateTag);
+            BodyPicked picked=this->interactor->getBodyPicked();
+            TriangleModel* CollisionModel = dynamic_cast< TriangleModel* >(picked.body);
 
-	if (PotentialObjectContainer != NULL)
-	  for (unsigned int i=0; i<indexToChange.size(); i++)
-       (*PotentialObjectContainer->getX())[ indexToChange[i] ][0] = potentialValue;
+            // hack for template guess
+            if (isScalar)
+            {
+               sofa::component::container::MechanicalObject<defaulttype::Vec1dTypes>* Potential1D;
+               CollisionModel->getContext()->get (Potential1D, mytag, sofa::core::objectmodel::BaseContext::SearchRoot);
 
-	indexToChange.clear();
+               if (Potential1D == NULL)
+                  return;
+
+               for (unsigned int i=0; i<indexToChange.size(); i++)
+                 (*Potential1D->getX())[ indexToChange[i] ][0] = potentialValue;
+            }
+            else
+            {
+               sofa::component::container::MechanicalObject<defaulttype::Vec2dTypes>* Potential2D;
+               CollisionModel->getContext()->get (Potential2D, mytag, sofa::core::objectmodel::BaseContext::SearchRoot);
+
+               if (Potential2D == NULL)
+                  return;
+
+               for (unsigned int i=0; i<indexToChange.size(); i++)
+                 (*Potential2D->getX())[ indexToChange[i] ][0] = potentialValue;
+            }
+
+            indexToChange.clear();
+         }
       }
       
     }

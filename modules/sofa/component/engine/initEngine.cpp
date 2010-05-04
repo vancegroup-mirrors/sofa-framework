@@ -54,6 +54,7 @@ void initEngine()
 ////////// BEGIN CLASS LIST //////////
 SOFA_LINK_CLASS(BoxROI)
 SOFA_LINK_CLASS(ExtrudeSurface)
+SOFA_LINK_CLASS(GroupFilterYoungModulus)
 SOFA_LINK_CLASS(MergePoints)
 SOFA_LINK_CLASS(PointsFromIndices)
 SOFA_LINK_CLASS(PlaneROI)

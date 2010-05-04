@@ -34,6 +34,10 @@ namespace component
 namespace collision
 {
 
+	const SReal ContinuousTriangleIntersection::EPSILON = 0.000001;
+	const SReal ContinuousTriangleIntersection::EQN_EPS = 1e-9;
+
+
 bool ContinuousTriangleIntersection::isCollision(void)
 {
 	SReal t[3], u[3], v[3];

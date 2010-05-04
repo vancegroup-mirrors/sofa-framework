@@ -11,13 +11,18 @@ CONFIG += $$CONFIGLIBRARIES
 QUATINCLUDES = ../quat
 ATMELINCLUDES = atmellib/
 
-LIBS += -ldl -lvrpn_quat -lvrpn_atmellib -lXext -lX11 -lm
+LIBS += -ldl -lvrpn_quat -lvrpn_atmellib
 contains(DEFINES,VRPN_USE_WIIUSE){
 	LIBS += -lwiiuse
 }
 INCLUDEPATH += $$QUATINCLUDES $$ATMELINCLUDES
 
-DEFINES += linux
+linux { 
+	DEFINES += linux
+	LIBS +=  -lXext -lX11 -lm
+}
+
+macx: DEFINES += MACOSX
 
 HEADERS += \
 	vrpn_Connection.h vrpn_Tracker.h vrpn_Button.h \
@@ -36,7 +41,7 @@ HEADERS += \
 	vrpn_Analog_Radamec_SPI.h vrpn_ImmersionBox.h vrpn_Wanda.h \
 	vrpn_Analog_5dt.h vrpn_Joylin.h vrpn_Tng3.h vrpn_Spaceball.h \
 	vrpn_tracker_isense.h vrpn_Zaber.h vrpn_nikon_controls.h \
-	vrpn_GlobalHapticsOrb.C vrpn_Tracker_ButtonFly.h vrpn_ADBox.h \
+	vrpn_GlobalHapticsOrb.cpp vrpn_Tracker_ButtonFly.h vrpn_ADBox.h \
 	vrpn_VPJoystick.h vrpn_Tracker_Liberty.h vrpn_NationalInstruments.h \
 	vrpn_Poser_Analog.h vrpn_Tracker_DTrack.h vrpn_Poser.h \
 	vrpn_Poser_Tek4662.h vrpn_Tracker_Crossbow.h vrpn_Tracker_3DMouse.h \
@@ -52,34 +57,34 @@ HEADERS += \
 	
 
 SOURCES += \
-	vrpn_Connection.C vrpn_Tracker.C vrpn_Button.C \
-	vrpn_ForceDevice.C vrpn_Shared.C \
-	vrpn_Analog.C vrpn_FileConnection.C \
-	vrpn_FileController.C vrpn_Forwarder.C vrpn_Text.C \
-	vrpn_ForwarderController.C vrpn_Serial.C vrpn_Dial.C \
-	vrpn_SharedObject.C vrpn_BaseClass.C \
-	vrpn_Sound.C vrpn_LamportClock.C vrpn_Mutex.C \
-	vrpn_RedundantTransmission.C vrpn_Imager.C \
-	vrpn_Analog_Output.C vrpn_Poser.C vrpn_Auxiliary_Logger.C \
-	vrpn_3Space.C \
-	vrpn_Flock.C vrpn_Tracker_Fastrak.C vrpn_Dyna.C \
-	vrpn_Flock_Parallel.C  vrpn_UNC_Joystick.C \
-	vrpn_JoyFly.C vrpn_sgibox.C vrpn_CerealBox.C \
-	vrpn_Tracker_AnalogFly.C vrpn_raw_sgibox.C vrpn_Magellan.C \
-	vrpn_Analog_Radamec_SPI.C vrpn_ImmersionBox.C vrpn_Wanda.C \
-	vrpn_Analog_5dt.C vrpn_Joylin.C vrpn_Tng3.C vrpn_Spaceball.C \
-	vrpn_Tracker_isense.C vrpn_Zaber.C vrpn_nikon_controls.C \
-	vrpn_GlobalHapticsOrb.C vrpn_Tracker_ButtonFly.C vrpn_ADBox.C \
-	vrpn_VPJoystick.C vrpn_Tracker_Liberty.C vrpn_NationalInstruments.C \
-	vrpn_Poser_Analog.C vrpn_Tracker_DTrack.C vrpn_Poser_Tek4662.C \
-	vrpn_Tracker_Crossbow.C vrpn_Tracker_3DMouse.C \
-	vrpn_Mouse.C vrpn_3DMicroscribe.C vrpn_5DT16.C \
-	vrpn_ForceDeviceServer.C vrpn_Keyboard.C \
-	vrpn_Analog_USDigital_A2.C vrpn_Button_NI_DIO24.C \
-	vrpn_Tracker_PhaseSpace.C \
-	vrpn_Atmel.C vrpn_inertiamouse.C vrpn_Event.C vrpn_Event_Analog.C \
-	vrpn_Event_Mouse.C vrpn_Imager_Stream_Buffer.C \
-	vrpn_HumanInterface.C vrpn_Xkeys.C vrpn_3DConnexion.C \
-	vrpn_Tracker_MotionNode.C vrpn_Tracker_NDI_Polaris.C \
-	vrpn_WiiMote.C
+	vrpn_Connection.cpp vrpn_Tracker.cpp vrpn_Button.cpp \
+	vrpn_ForceDevice.cpp vrpn_Shared.cpp \
+	vrpn_Analog.cpp vrpn_FileConnection.cpp \
+	vrpn_FileController.cpp vrpn_Forwarder.cpp vrpn_Text.cpp \
+	vrpn_ForwarderController.cpp vrpn_Serial.cpp vrpn_Dial.cpp \
+	vrpn_SharedObject.cpp vrpn_BaseClass.cpp \
+	vrpn_Sound.cpp vrpn_LamportClock.cpp vrpn_Mutex.cpp \
+	vrpn_RedundantTransmission.cpp vrpn_Imager.cpp \
+	vrpn_Analog_Output.cpp vrpn_Poser.cpp vrpn_Auxiliary_Logger.cpp \
+	vrpn_3Space.cpp \
+	vrpn_Flock.cpp vrpn_Tracker_Fastrak.cpp vrpn_Dyna.cpp \
+	vrpn_Flock_Parallel.cpp  vrpn_UNC_Joystick.cpp \
+	vrpn_JoyFly.cpp vrpn_sgibox.cpp vrpn_CerealBox.cpp \
+	vrpn_Tracker_AnalogFly.cpp vrpn_raw_sgibox.cpp vrpn_Magellan.cpp \
+	vrpn_Analog_Radamec_SPI.cpp vrpn_ImmersionBox.cpp vrpn_Wanda.cpp \
+	vrpn_Analog_5dt.cpp vrpn_Joylin.cpp vrpn_Tng3.cpp vrpn_Spaceball.cpp \
+	vrpn_Tracker_isense.cpp vrpn_Zaber.cpp vrpn_nikon_controls.cpp \
+	vrpn_GlobalHapticsOrb.cpp vrpn_Tracker_ButtonFly.cpp vrpn_ADBox.cpp \
+	vrpn_VPJoystick.cpp vrpn_Tracker_Liberty.cpp vrpn_NationalInstruments.cpp \
+	vrpn_Poser_Analog.cpp vrpn_Tracker_DTrack.cpp vrpn_Poser_Tek4662.cpp \
+	vrpn_Tracker_Crossbow.cpp vrpn_Tracker_3DMouse.cpp \
+	vrpn_Mouse.cpp vrpn_3DMicroscribe.cpp vrpn_5DT16.cpp \
+	vrpn_ForceDeviceServer.cpp vrpn_Keyboard.cpp \
+	vrpn_Analog_USDigital_A2.cpp vrpn_Button_NI_DIO24.cpp \
+	vrpn_Tracker_PhaseSpace.cpp \
+	vrpn_Atmel.cpp vrpn_inertiamouse.cpp vrpn_Event.cpp vrpn_Event_Analog.cpp \
+	vrpn_Event_Mouse.cpp vrpn_Imager_Stream_Buffer.cpp \
+	vrpn_HumanInterface.cpp vrpn_Xkeys.cpp vrpn_3DConnexion.cpp \
+	vrpn_Tracker_MotionNode.cpp vrpn_Tracker_NDI_Polaris.cpp \
+	vrpn_WiiMote.cpp
 

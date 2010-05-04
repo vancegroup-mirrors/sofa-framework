@@ -58,6 +58,10 @@ public:
     virtual void getCompliance(defaulttype::BaseMatrix* W) = 0;
     //Fill the matrix m with the full Compliance Matrix
     virtual void getComplianceMatrix(defaulttype::BaseMatrix* m) const=0;
+
+    // for multigrid approach => constraints are merged
+    virtual void  getComplianceWithConstraintMerge(defaulttype::BaseMatrix* /*Wmerged*/, std::vector<int> & /*constraint_merge*/){
+    sout<<"getComplianceWithConstraintMerge is not implemented yet "<<sendl;}
 	
 
 

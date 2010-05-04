@@ -886,7 +886,7 @@ namespace sofa
             if ( t2 != NULL )
             {
               typedef BarycentricMapperTetrahedronSetTopology<InDataTypes, OutDataTypes> TetrahedronSetMapper;
-              mapper = new TetrahedronSetMapper ( t2, maskFrom, maskTo );
+              mapper = new TetrahedronSetMapper ( t2, maskFrom, maskTo, tetForceField );
             }
             else
             {
@@ -960,9 +960,14 @@ namespace sofa
 
       template <class BasicMapping>
       void BarycentricMapping<BasicMapping>::init()
-      {
+      { 
         topology_from = this->fromModel->getContext()->getMeshTopology();
         topology_to = this->toModel->getContext()->getMeshTopology();
+
+        //IPB
+        this->fromModel->getContext()->get(tetForceField);
+        this->fromModel->getContext()->getDt();
+        //IPE
 
         f_grid->beginEdit();
         if ( mapper == NULL ) // try to create a mapper according to the topology of the In model
@@ -1243,7 +1248,7 @@ namespace sofa
 
       template <class In, class Out>
       void BarycentricMapperTetrahedronSetTopology<In,Out>::apply ( typename Out::VecCoord& out, const typename In::VecCoord& in )
-      {
+      {          
         out.resize ( map.getValue().size() );
         const sofa::helper::vector<topology::Tetrahedron>& tetrahedra = this->topology->getTetrahedra();
         for ( unsigned int i=0;i<map.getValue().size();i++ )

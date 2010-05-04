@@ -35,22 +35,24 @@
 #include <sofa/component/linearsolver/SparseMatrix.h>
 
 #include <sofa/helper/set.h>
+#include <sofa/helper/map.h>
 #include <sofa/helper/LCPcalc.h>
 
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace constraint
-    {
+namespace constraint
+{
 
       using namespace sofa::defaulttype;
       using namespace sofa::component::linearsolver;
       using namespace helper::system::thread;
 
 
+      /// Christian : WARNING: this class is already defined in sofa::helper
       class   LCP
       {
      public:
@@ -189,43 +191,49 @@ namespace sofa
         };
 
 
-      class MechanicalGetContactIDVisitor : public simulation::MechanicalVisitor
-        {
-        public:
-        MechanicalGetContactIDVisitor(long *id, unsigned int offset = 0)
-          : _id(id),_offset(offset)
-          {
+class MechanicalGetConstraintInfoVisitor : public simulation::MechanicalVisitor
+{
+public:
+    typedef core::componentmodel::behavior::BaseConstraint::PersistentID PersistentID;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstCoord ConstCoord;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstraintGroupInfo ConstraintGroupInfo;
+
+    MechanicalGetConstraintInfoVisitor(std::vector<ConstraintGroupInfo>& groups, std::vector<PersistentID>& ids, std::vector<ConstCoord>& positions)
+    : _groups(groups), _ids(ids), _positions(positions)
+    {
 #ifdef SOFA_DUMP_VISITOR_INFO
-            setReadWriteVectors();
+        setReadWriteVectors();
 #endif
-          }
-
-          virtual Result fwdConstraint(simulation::Node* node, core::componentmodel::behavior::BaseConstraint* c)
-          {
-            ctime_t t0 = begin(node, c);
-            c->getConstraintId(_id, _offset);
-            end(node, c, t0);
-            return RESULT_CONTINUE;
-          }
-
+    }
+    
+    virtual Result fwdConstraint(simulation::Node* node, core::componentmodel::behavior::BaseConstraint* c)
+    {
+        ctime_t t0 = begin(node, c);
+        c->getConstraintInfo(_groups, _ids, _positions);
+        end(node, c, t0);
+        return RESULT_CONTINUE;
+    }
+    
 #ifdef SOFA_DUMP_VISITOR_INFO
-          void setReadWriteVectors()
-          {
-          }
+    void setReadWriteVectors()
+    {
+    }
 #endif
-        private:
-          long *_id;
-          unsigned int _offset;
-        };
-       
+private:
+    std::vector<ConstraintGroupInfo>& _groups;
+    std::vector<PersistentID>& _ids;
+    std::vector<ConstCoord>& _positions;
+};
 
-      class SOFA_COMPONENT_CONSTRAINT_API LCPConstraintSolver : public sofa::core::componentmodel::behavior::ConstraintSolver
-        {
-          typedef std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> list_cc;
-          typedef std::vector<list_cc> VecListcc;
-          typedef sofa::core::VecId VecId;
-        public:
-          SOFA_CLASS(LCPConstraintSolver, sofa::core::componentmodel::behavior::ConstraintSolver);
+
+class SOFA_COMPONENT_CONSTRAINT_API LCPConstraintSolver : public sofa::core::componentmodel::behavior::ConstraintSolver
+{
+    typedef std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> list_cc;
+    typedef std::vector<list_cc> VecListcc;
+    typedef sofa::core::VecId VecId;
+public:
+    SOFA_CLASS(LCPConstraintSolver, sofa::core::componentmodel::behavior::ConstraintSolver);
+
           LCPConstraintSolver();
 
           void init();
@@ -234,7 +242,7 @@ namespace sofa
           bool prepareStates(double dt, VecId);
           bool buildSystem(double dt, VecId);
           bool solveSystem(double dt, VecId);
-          bool applyCorrection(double dt, VecId, bool isPositionChangesUpdateVelocity);   
+          bool applyCorrection(double dt, VecId);   
  
 
 
@@ -242,12 +250,14 @@ namespace sofa
           Data<bool> displayTime;
           Data<bool> initial_guess;
           Data<bool> build_lcp;
+          Data<bool> multi_grid;
           Data < double > tol;
           Data < int > maxIt;
           Data < double > mu;
 
           Data < helper::set<int> > constraintGroups;
 
+          Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
 
           LCP* getLCP();
           void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCPs until the next call to this function. This is used to prevent concurent access to the LCP when using a LCPForceFeedback through an haptic thread
@@ -266,6 +276,14 @@ namespace sofa
           LCP lcp1, lcp2, lcp3; // Triple buffer for LCP.
           LPtrFullMatrix<double>  *_W;
           LCP *lcp,*last_lcp; /// use of last_lcp allows several LCPForceFeedback to be used in the same scene
+
+          /// multi-grid approach ///
+          void MultigridConstraintsMerge();
+          void build_Coarse_Compliance(std::vector<int> &/*constraint_merge*/, int /*sizeCoarseSystem*/);
+          LPtrFullMatrix<double>  _Wcoarse;
+          std::vector< int> _contact_group;
+          std::vector< int> _constraint_group;
+          std::vector<int> _group_lead;
 		
           /// common built-unbuilt
           simulation::Node *context;
@@ -290,21 +308,23 @@ namespace sofa
           std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem1;
           std::vector<core::componentmodel::behavior::BaseConstraintCorrection*> _cclist_elem2;
 		
-		
-						
+    typedef core::componentmodel::behavior::BaseConstraint::PersistentID PersistentID;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstCoord ConstCoord;
+    typedef core::componentmodel::behavior::BaseConstraint::ConstraintGroupInfo ConstraintGroupInfo;
 
-          typedef struct {
-            Vector3 n;
-            Vector3 t;
-            Vector3 s;
-            Vector3 F;
-            long id;
+    class ConstraintGroupBuf
+    {
+    public:
+        std::map<PersistentID,int> persistentToConstraintIdMap;
+        int nbLines; ///< how many dofs (i.e. lines in the matrix) are used by each constraint
+    };
 
-          } contactBuf;
+    std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintGroupBuf> _previousConstraints;
+    helper::vector< double > _previousForces;
 
-          helper::vector<contactBuf> _PreviousContactList;
-          unsigned int _numPreviousContact;
-          helper::vector<long> _cont_id_list;
+    helper::vector<ConstraintGroupInfo> _constraintGroupInfo;
+    helper::vector<PersistentID> _constraintIds;
+    helper::vector<ConstCoord> _constraintPositions;
 
           // for gaussseidel_unbuilt
           helper::vector< helper::LocalBlock33 > unbuilt_W33;
@@ -314,11 +334,11 @@ namespace sofa
           helper::vector< double > unbuilt_invW11;
           
           bool isActive;
-        };
+};
 
-    } // namespace constraint
+} // namespace constraint
 
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

@@ -81,6 +81,8 @@ public:
 
     //Mapped Model does not store any rest position
     virtual VecCoord* getX0() { return NULL; };
+    //Mapped Model does not store any reset position
+    virtual VecCoord* getXReset() { return NULL; };
     //Mapped Model does not store any normal
     virtual VecCoord* getN() { return NULL; };
 
@@ -88,6 +90,8 @@ public:
     virtual const VecCoord* getX0() const { return NULL; };
     //Mapped Model does not store any normal
     virtual const VecCoord* getN() const { return NULL; };
+    //Mapped Model does not store any reset position
+    virtual const VecCoord* getXReset() const { return NULL; };
 };
 
 } // namespace behavior

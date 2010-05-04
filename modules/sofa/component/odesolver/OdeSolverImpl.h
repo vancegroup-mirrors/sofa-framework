@@ -65,7 +65,7 @@ public:
     virtual void computeAcc(double t, VecId a, VecId x, VecId v);
     virtual void computeContactAcc(double t, VecId a, VecId x, VecId v);
 
-    virtual void solveConstraint(double /*dt*/, VecId,  bool /*isPositionChangesUpdateVelocity*/=true);
+    virtual void solveConstraint(double /*dt*/, VecId);
 
 
     /// @name Matrix operations using LinearSolver components

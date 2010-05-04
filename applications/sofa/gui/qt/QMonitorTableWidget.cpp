@@ -27,6 +27,9 @@ namespace sofa{
       void QObjectMonitor::resizeTable(int number)
       {
         QSpinBox *spinBox = (QSpinBox *) sender();
+        if( spinBox == NULL){
+          return;
+        }
         Q3Table *table = resizeMap_[spinBox];
         if (number != table->numRows())
         {

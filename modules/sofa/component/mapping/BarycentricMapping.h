@@ -37,6 +37,14 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
+#include <sofa/defaulttype/Quat.h>
+
+#include <sofa/defaulttype/Vec.h>
+#include <sofa/defaulttype/Mat.h>
+
+#include <sofa/component/forcefield/TetrahedronFEMForceField.h>
+
+
 // forward declarations
 namespace sofa {
 	namespace core {
@@ -85,6 +93,7 @@ namespace component
   namespace mapping
   {
     /// Base class for barycentric mapping topology-specific mappers
+    using sofa::defaulttype::Matrix3;
     template<class In, class Out>
       class BarycentricMapper
     {
@@ -101,6 +110,8 @@ namespace component
       typedef typename Out::Deriv OutDeriv;
       typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
       typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
+
+
 
     protected:
       template< int NC,  int NP>
@@ -721,12 +732,22 @@ public:
                   typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
                   typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 		  typedef typename Inherit::MappingData3D MappingData;
+                  
+                  typedef typename In::VecCoord VecCoord;
+
+                  typedef typename forcefield::TetrahedronFEMForceField<In> TetraFF;
 	  protected:
 		topology::PointData< MappingData >  map;
+                topology::PointData< MappingData >  mapOrient[3];
+                defaulttype::Vec3dTypes::VecCoord initialTetraPos;
+                VecCoord glPointPositions, glVertexPositions[4];                
+                sofa::helper::vector<sofa::defaulttype::Quat> prevTetraRotation;
+
 		topology::TetrahedronSetTopologyContainer*			_container;
 		topology::TetrahedronSetGeometryAlgorithms<In>*	_geomAlgo;
                 core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskFrom;
                 core::componentmodel::behavior::BaseMechanicalState::ParticleMask *maskTo;
+                TetraFF* forceField;
 
 	  public:
 		  BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* topology,
@@ -738,11 +759,25 @@ public:
                   maskFrom(_maskFrom), maskTo(_maskTo)
 		{}
 
+                  //IPB
+                BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* topology,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskFrom,
+                                                     core::componentmodel::behavior::BaseMechanicalState::ParticleMask *_maskTo,
+                                                     TetraFF *_forceField)
+                 : TopologyBarycentricMapper<In,Out>(topology),
+                _container(topology),
+                _geomAlgo(NULL),
+                  maskFrom(_maskFrom), maskTo(_maskTo),
+                  forceField(_forceField)
+                {}
+                //IPE
+
 		virtual ~BarycentricMapperTetrahedronSetTopology(){}
 
 		  void clear(int reserve=0);
 
 		  int addPointInTetra(const int index, const SReal* baryCoords);
+                  int addPointOrientationInTetra ( const int tetraIndex, const Matrix3 baryCoorsOrient); // { return 0; }
 
 		  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
@@ -914,8 +949,12 @@ public:
       typedef BarycentricMapperRegularGridTopology<InDataTypes, OutDataTypes> RegularGridMapper;
       typedef BarycentricMapperHexahedronSetTopology<InDataTypes, OutDataTypes> HexaMapper;
 
+      //IPB
+      typedef forcefield::TetrahedronFEMForceField<InDataTypes> TetraFF;
+      //IPE
 
     protected:
+
 
       Mapper* mapper;
       DataPtr< RegularGridMapper >* f_grid;
@@ -925,14 +964,15 @@ public:
 
     public:
 
-	  Data<bool> useRestPosition;
+                Data<bool> useRestPosition;
+
 
       BarycentricMapping(In* from, Out* to)
 	: Inherit(from, to), mapper(NULL)
             , f_grid (new DataPtr< RegularGridMapper >( new RegularGridMapper( NULL,NULL,NULL ),"Regular Grid Mapping"))
         , f_hexaMapper (new DataPtr< HexaMapper >( new HexaMapper(  ),"Hexahedron Mapper"))
 	    , useRestPosition(core::objectmodel::Base::initData(&useRestPosition, false, "useRestPosition", "Use the rest position of the input and output models to initialize the mapping"))
-	  {
+          {
 	    this->addField( f_grid, "gridmap");	f_grid->beginEdit();
  	    this->addField( f_hexaMapper, "hexamap");	f_hexaMapper->beginEdit();
           }
@@ -982,6 +1022,11 @@ public:
 	protected:
 		sofa::core::componentmodel::topology::BaseMeshTopology* topology_from;
 		sofa::core::componentmodel::topology::BaseMeshTopology* topology_to;
+
+                //IP
+                TetraFF* tetForceField;                
+                //sofa::helper::vector<Quat> prevTetraRotations;
+                //IP
 
 	private:
 		void createMapperFromTopology(BaseMeshTopology * topology);

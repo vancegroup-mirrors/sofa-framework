@@ -16,50 +16,49 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/core/componentmodel/behavior/ConstraintSolver.h>
+#ifndef SOFA_COMPONENT_COLLISION_ADDFRAMEPERFORMER_H
+#define SOFA_COMPONENT_COLLISION_ADDFRAMEPERFORMER_H
+
+#include <sofa/component/collision/InteractionPerformer.h>
+#include <sofa/defaulttype/Vec3Types.h>
+
 
 namespace sofa
 {
 
-namespace core
-{
-
-namespace componentmodel
-{
-
-namespace behavior
-{
-
-  ConstraintSolver::ConstraintSolver()
-  {}
-
-ConstraintSolver::~ConstraintSolver()
-{}
-
-  void ConstraintSolver::solveConstraint(double dt, VecId id)
+  namespace component
   {
-    bool continueSolving=true;
-    continueSolving=prepareStates(dt, id);
-    if (continueSolving) continueSolving=buildSystem(dt, id);
-    else return;
-    if (continueSolving) continueSolving=solveSystem(dt, id);
-    else return;
-    if (continueSolving) continueSolving=applyCorrection(dt, id);
-    else return;
+
+    namespace collision
+    {
+     
+      template <class DataTypes>
+        class AddFramePerformer: public TInteractionPerformer<DataTypes>
+      {          
+      public:
+        AddFramePerformer(BaseMouseInteractor *i);
+        ~AddFramePerformer();
+
+        void start();
+        void execute();
+
+      };
+   
+
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_COLLISION_ADDFRAMEPERFORMER_CPP)
+extern template class SOFA_COMPONENT_COLLISION_API AddFramePerformer<defaulttype::Vec3Types>;
+#endif
+
+
+    }
   }
-} // namespace behavior
+}
 
-} // namespace componentmodel
-
-} // namespace core
-
-} // namespace sofa
-
+#endif

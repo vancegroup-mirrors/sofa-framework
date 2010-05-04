@@ -127,6 +127,8 @@ namespace sofa
         if(build_lcp.getValue())
           {
 
+              std::map < std::string, sofa::helper::vector<double> >& graph = *f_graph.beginEdit();
+
             double _tol = tol.getValue();
             int _maxIt = maxIt.getValue();
             if (_mu > 0.0)
@@ -134,16 +136,51 @@ namespace sofa
 			 
                 lcp->setNbConst(_numConstraints);
                 lcp->setTol(_tol);
-                helper::nlcp_gaussseidel(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _mu, _tol, _maxIt, initial_guess.getValue());
-                if (this->f_printLog.getValue()) helper::afficheLCP(_dFree->ptr(), _W->lptr(), _result->ptr(),_numConstraints);
+
+                if (multi_grid.getValue())
+                {
+                std::cout<<"+++++++++++++ \n SOLVE WITH MULTIGRID \n ++++++++++++++++"<<std::endl;
+
+                MultigridConstraintsMerge();
+                //build_Coarse_Compliance(_constraint_group, 3*_group_lead.size());
+                std::cerr<<"out from build_Coarse_Compliance"<<std::endl;
+
+                    sofa::helper::vector<double>& graph_error1 = graph["Error"];
+                    graph_error1.clear();
+                    sofa::helper::vector<double>& graph_error2 = graph["Error Coarse"];
+                    graph_error2.clear();
+
+                    /*helper::nlcp_multiGrid(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _mu, _tol, _maxIt, initial_guess.getValue(),
+                                           _Wcoarse.lptr(),
+                                           _contact_group, _group_lead.size(), this->f_printLog.getValue());*/
+
+                    helper::nlcp_multiGrid_2levels(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _mu, _tol, _maxIt, initial_guess.getValue(),
+                                           _contact_group, _group_lead.size(), this->f_printLog.getValue(), &graph_error1, &graph_error2);
+                    std::cout<<"+++++++++++++ \n SOLVE WITH GAUSSSEIDEL \n ++++++++++++++++"<<std::endl;
+					helper::nlcp_gaussseidel(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _mu, _tol, _maxIt, initial_guess.getValue(), this->f_printLog.getValue(), &graph_error1);
+
+                   // if (this->f_printLog.getValue()) helper::afficheLCP(_dFree->ptr(), _W->lptr(), _result->ptr(),_numConstraints);
+
+                }
+                else
+                {
+                    sofa::helper::vector<double>& graph_error = graph["Error"];
+                    graph_error.clear();
+                    helper::nlcp_gaussseidel(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _mu, _tol, _maxIt, initial_guess.getValue(), this->f_printLog.getValue(), &graph_error);
+
+                    //std::cout << "errors: " << graph_error << std::endl;
+                }
+
               }
             else
               {
                 // warning _A has been being suppr... need to be allocated
                 //
                 //		helper::lcp_lexicolemke(_numConstraints, _dFree->ptr(), _W->lptr(), _A.lptr(), _result->ptr());
-                helper::gaussSeidelLCP1(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _tol, _maxIt);
-                if (this->f_printLog.getValue()) helper::afficheLCP(_dFree->ptr(), _W->lptr(), _result->ptr(),_numConstraints);
+                  sofa::helper::vector<double>& graph_error = graph["Error"];
+                  graph_error.clear();
+                  helper::gaussSeidelLCP1(_numConstraints, _dFree->ptr(), _W->lptr(), _result->ptr(), _tol, _maxIt, &graph_error);
+                  if (this->f_printLog.getValue()) helper::afficheLCP(_dFree->ptr(), _W->lptr(), _result->ptr(),_numConstraints);
               }
           }
         else
@@ -178,9 +215,11 @@ namespace sofa
             sout<<" TOTAL solve_LCP " <<( (double) timer.getTime() - time)*timeScale<<" ms" <<sendl;
             time = (double) timer.getTime();
           }
+
+    f_graph.endEdit();
         return true;
       }
-      bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId, bool )
+      bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
       {
 	if (initial_guess.getValue())
           keepContactForcesValue();
@@ -239,10 +278,12 @@ namespace sofa
         :displayTime(initData(&displayTime, false, "displayTime","Display time for each important step of LCPConstraintSolver."))
         ,initial_guess(initData(&initial_guess, true, "initial_guess","activate LCP results history to improve its resolution performances."))
         ,build_lcp(initData(&build_lcp, true, "build_lcp", "LCP is not fully built to increase performance in some case."))
+        ,multi_grid(initData(&multi_grid, false, "multi_grid","activate multi_grid resolution (NOT STABLE YET)"))
         ,tol( initData(&tol, 0.001, "tolerance", ""))
         ,maxIt( initData(&maxIt, 1000, "maxIt", ""))
         ,mu( initData(&mu, 0.6, "mu", ""))
         , constraintGroups( initData(&constraintGroups, "group", "list of ID of groups of constraints to be handled by this solver.") )
+        , f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") )
         ,_mu(0.6)
         , lcp1(MAX_NUM_CONSTRAINTS)
         , lcp2(MAX_NUM_CONSTRAINTS)
@@ -258,11 +299,15 @@ namespace sofa
 	constraintGroups.beginEdit()->insert(0);
 	constraintGroups.endEdit();
 
-	_numPreviousContact=0;
+	f_graph.setWidget("graph");
+	f_graph.setReadOnly(true);
+
+	//_numPreviousContact=0;
 	//_PreviousContactList = (contactBuf *)malloc(MAX_NUM_CONSTRAINTS * sizeof(contactBuf));
 	//_cont_id_list = (long *)malloc(MAX_NUM_CONSTRAINTS * sizeof(long));
 	
 	_Wdiag = new SparseMatrix<double>();
+
       }
 
       void LCPConstraintSolver::init()
@@ -320,11 +365,82 @@ namespace sofa
 
 	if ((initial_guess.getValue()) && (_numConstraints != 0))
           {
-	    _cont_id_list.resize(_numConstraints);
-	    MechanicalGetContactIDVisitor(&(_cont_id_list[0])).execute(context);
-            computeInitialGuess();
+              //_cont_id_list.resize(_numConstraints);
+              //MechanicalGetContactIDVisitor(&(_cont_id_list[0])).execute(context);
+              _constraintGroupInfo.clear();
+              _constraintIds.clear();
+              _constraintPositions.clear();
+              MechanicalGetConstraintInfoVisitor(_constraintGroupInfo, _constraintIds, _constraintPositions).execute(context);
+              computeInitialGuess();
           }
       }
+
+      void LCPConstraintSolver::build_Coarse_Compliance(std::vector<int> &constraint_merge, int sizeCoarseSystem)
+      {
+          /* constraint_merge => tableau donne l'indice du groupe de contraintes dans le système grossier en fonction de l'indice de la contrainte dans le système de départ */
+          std::cout<<"build_Coarse_Compliance is called : size="<<sizeCoarseSystem<<std::endl;
+
+          _Wcoarse.clear();
+          if (sizeCoarseSystem==0)
+          {
+              std::cerr<<"no constraint"<<std::endl;
+              return;
+          }
+          _Wcoarse.resize(sizeCoarseSystem,sizeCoarseSystem);
+          for (unsigned int i=0;i<constraintCorrections.size();i++)
+            {
+              core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+              cc->getComplianceWithConstraintMerge(&_Wcoarse, constraint_merge);
+            }
+      }
+
+      void LCPConstraintSolver::MultigridConstraintsMerge()
+      {
+          /////// Analyse des contacts à regrouper //////
+          double criterion=0.0;
+          int numContacts = _numConstraints/3;
+          _contact_group.clear();
+          _contact_group.resize(numContacts);
+          _group_lead.clear();
+          _constraint_group.clear();
+          _constraint_group.resize(_numConstraints);
+
+          for (int c=0; c<numContacts; c++)
+          {
+                  bool new_group = true;
+                  for(int g=0; g<(int)_group_lead.size() ; g++)
+                  {
+
+                      if (_W->lptr()[3*c][3*_group_lead[g]] > criterion * (_W->lptr()[3*c][3*c] +_W->lptr()[3*_group_lead[g]][3*_group_lead[g]]) )  // on regarde les couplages selon la normale...
+                      {
+                          new_group =false;
+                          _contact_group[c] = g;
+
+
+                      }
+                  }
+                  if (new_group)
+                  {
+                      _contact_group[c]=_group_lead.size();
+                      _group_lead.push_back(c);
+
+                  }
+          }
+
+          if(this->f_printLog.getValue())
+          {
+              std::cout<<"contacts merged in "<<_group_lead.size()<<" list(s)"<<std::endl;
+          }
+
+          for (int c=0; c<numContacts; c++)
+          {
+              _constraint_group[3*c] = 3*_contact_group[c];
+              _constraint_group[3*c+1] = 3*_contact_group[c]+1;
+              _constraint_group[3*c+2] = 3*_contact_group[c]+2;
+
+          }
+      }
+
 
       /// build_problem_info
       /// When the LCP or the NLCP is not fully built, the  diagonal blocks of the matrix are still needed for the resolution
@@ -370,8 +486,10 @@ namespace sofa
    
 	if (initial_guess.getValue())
           {
-	    _cont_id_list.resize(_numConstraints);
-	    MechanicalGetContactIDVisitor(&(_cont_id_list[0])).execute(context);
+              _constraintGroupInfo.clear();
+              _constraintIds.clear();
+              _constraintPositions.clear();
+              MechanicalGetConstraintInfoVisitor(_constraintGroupInfo, _constraintIds, _constraintPositions).execute(context);
             computeInitialGuess();
           }	
 		
@@ -384,77 +502,73 @@ namespace sofa
 
 
 
-      void LCPConstraintSolver::computeInitialGuess()
-      {
+void LCPConstraintSolver::computeInitialGuess()
+{
 	int numContact = (_mu > 0.0) ? _numConstraints/3 : _numConstraints;
-
+    
 	for (int c=0; c<numContact; c++)
-          {
-            if (_mu>0.0){
-              (*_result)[3*c  ] = 0.0;
-              (*_result)[3*c+1] = 0.0;
-              (*_result)[3*c+2] = 0.0;
+    {
+        if (_mu>0.0){
+            (*_result)[3*c  ] = 0.0;
+            (*_result)[3*c+1] = 0.0;
+            (*_result)[3*c+2] = 0.0;
+        }
+        else
+        {
+            (*_result)[c] =  0.0;
+            (*_result)[c+numContact] =  0.0;
+        }
+    }
+    for (unsigned cg = 0; cg < _constraintGroupInfo.size(); ++cg)
+    {
+        const ConstraintGroupInfo& info = _constraintGroupInfo[cg];
+        if (!info.hasId) continue;
+        std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintGroupBuf>::const_iterator previt = _previousConstraints.find(info.parent);
+        if (previt == _previousConstraints.end()) continue;
+        const ConstraintGroupBuf& buf = previt->second;
+        const int c0 = info.const0;
+        const int nbl = (info.nbLines < buf.nbLines) ? info.nbLines : buf.nbLines;
+        for (int c = 0; c < info.nbGroups; ++c)
+        {
+            std::map<PersistentID,int>::const_iterator it = buf.persistentToConstraintIdMap.find(_constraintIds[info.offsetId + c]);
+            if (it == buf.persistentToConstraintIdMap.end()) continue;
+            int prevIndex = it->second;
+            if (prevIndex >= 0 && prevIndex+nbl <= (int) _previousForces.size())
+            {
+                for (int l=0;l<nbl;++l)
+                    (*_result)[c0 + c*nbl + l] = _previousForces[prevIndex + l];
             }
-            else
-              {
-                (*_result)[c] =  0.0;
-                (*_result)[c+numContact] =  0.0;
-              }
-          }
+        }
+    }
+}
 
-
-	for (int c=0; c<numContact; c++)
-          {
-            for (unsigned int pc=0; pc<_numPreviousContact; pc++)
-              {
-                if (_cont_id_list[c] == _PreviousContactList[pc].id)
-                  {
-                    if (_mu>0.0){
-                      (*_result)[3*c  ] = _PreviousContactList[pc].F.x();
-                      (*_result)[3*c+1] = _PreviousContactList[pc].F.y();
-                      (*_result)[3*c+2] = _PreviousContactList[pc].F.z();
-                    }
-                    else
-                      {
-                        (*_result)[c+numContact] =  _PreviousContactList[pc].F.x();
-                      }
-                  }
-              }
-          }
-      }
-
-      void LCPConstraintSolver::keepContactForcesValue()
-      {
-	_numPreviousContact=0;
-
-	int numContact = (_mu > 0.0) ? _numConstraints/3 : _numConstraints;
-	_PreviousContactList.resize(numContact);
-
-	for (int c=0; c<numContact; c++)
-          {
-            if (_mu>0.0)
-              {
-                if ((*_result)[3*c]>0.0)//((_result[3*c]>0.0)||(_result[3*c+1]>0.0)||(_result[3*c+2]>0.0))
-                  {
-                    _PreviousContactList[_numPreviousContact].id = (_cont_id_list[c] >= 0) ? _cont_id_list[c] : -_cont_id_list[c];
-                    _PreviousContactList[_numPreviousContact].F.x() = (*_result)[3*c];
-                    _PreviousContactList[_numPreviousContact].F.y() = (*_result)[3*c+1];
-                    _PreviousContactList[_numPreviousContact].F.z() = (*_result)[3*c+2];
-                    _numPreviousContact++;
-                  }
-              }
-            else
-              {
-                if ((*_result)[c]>0.0)
-                  {
-                    _PreviousContactList[_numPreviousContact].id = (_cont_id_list[c] >= 0) ? _cont_id_list[c] : -_cont_id_list[c];
-                    _PreviousContactList[_numPreviousContact].F.x() = (*_result)[c];
-                    _numPreviousContact++;
-                  }
-
-              }
-          }
-      }
+void LCPConstraintSolver::keepContactForcesValue()
+{
+    // store current force
+    _previousForces.resize(_numConstraints);
+    for (unsigned int c=0;c<_numConstraints;++c)
+        _previousForces[c] = (*_result)[c];
+    // clear previous history
+    for (std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintGroupBuf>::iterator it = _previousConstraints.begin(), itend = _previousConstraints.end(); it != itend; ++it)
+    {
+        ConstraintGroupBuf& buf = it->second;
+        for (std::map<PersistentID,int>::iterator it2 = buf.persistentToConstraintIdMap.begin(), it2end = buf.persistentToConstraintIdMap.end(); it2 != it2end; ++it2)
+            it2->second = -1;
+    }
+    // fill info from current ids
+    for (unsigned cg = 0; cg < _constraintGroupInfo.size(); ++cg)
+    {
+        const ConstraintGroupInfo& info = _constraintGroupInfo[cg];
+        if (!info.parent) continue;
+        if (!info.hasId) continue;
+        ConstraintGroupBuf& buf = _previousConstraints[info.parent];
+        int c0 = info.const0;
+        int nbl = info.nbLines;
+        buf.nbLines = nbl;
+        for (int c = 0; c < info.nbGroups; ++c)
+            buf.persistentToConstraintIdMap[_constraintIds[info.offsetId + c]] = c0 + c*nbl;
+    }
+}
 
 
       int LCPConstraintSolver::nlcp_gaussseidel_unbuilt(double *dfree, double *f)

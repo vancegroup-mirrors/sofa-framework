@@ -38,7 +38,9 @@
 #include <QLineEdit>
 #include <Q3Table>
 #include <QPushButton>
+#include <QSpinBox>
 #else
+#include <qspinbox.h>
 #include <qdialog.h>
 #include <qlineedit.h>
 #include <qtable.h>
@@ -66,16 +68,22 @@ namespace sofa{
         Q_OBJECT
       public slots:
         void updateData(){
-          std::string previousName = baseData->getOwner()->getName();
-          writeToData(); 
-          updateVisibility(); 
-          if(baseData->getOwner()->getName() != previousName){
-            emit dataParentNameChanged();
+          if(modified){
+            std::string previousName = baseData->getOwner()->getName();
+            writeToData(); 
+            updateVisibility(); 
+            if(baseData->getOwner()->getName() != previousName){
+              emit dataParentNameChanged();
+            }
           }
           modified = false;
           emit requestChange(modified);
         }
-        void updateWidget() { readFromData();}
+        void updateWidget() { 
+          if(!modified){
+            readFromData();
+          }
+        }
       signals:
         void requestChange(bool );
         void dataParentNameChanged();
@@ -87,7 +95,9 @@ namespace sofa{
         bool readOnly;
         bool modified;
       protected slots:
-        void setModified() { modified = true; emit requestChange(modified); } 
+        void setModified() { 
+          modified = true; emit requestChange(modified);
+        } 
 
       public:
         typedef core::objectmodel::BaseData MyData;
@@ -100,7 +110,7 @@ namespace sofa{
         core::objectmodel::BaseData* getBaseData() const { return baseData; } 
         virtual bool createWidgets(QWidget* parent) = 0;
         virtual void readFromData() {};
-        virtual void writeToData() {};
+        virtual void writeToData() = 0;
         virtual bool isModified() { return false; }
         std::string getName() { return name;};
         virtual void update()
@@ -191,7 +201,29 @@ namespace sofa{
         {};
         public slots:
           void setDisplayed(bool b){this->setShown(b);}
-          public slots:
+          void resizeTableV( int number ) 
+          {
+             QSpinBox *spinBox = (QSpinBox *) sender();
+            if( spinBox == NULL){
+              return;
+            }
+            if (number != numRows())
+            {
+              setNumRows(number);
+            }
+          }
+
+          void resizeTableH( int number ) 
+          {
+            QSpinBox *spinBox = (QSpinBox *) sender();
+            if( spinBox == NULL){
+              return;
+            }
+            if (number != numCols())
+            {
+              setNumCols(number);
+            }
+          }
 
       };
 

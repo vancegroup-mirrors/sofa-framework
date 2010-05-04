@@ -398,7 +398,13 @@ public:
 	{
 	    if (!(FLAGS & TABLE_FIXEDSIZE))
 	    {
-		_widget->connect(wSize, SIGNAL( valueChanged(int) ), _widget, SLOT(setModified()) );
+		   // _widget->connect(wSize, SIGNAL( valueChanged(int) ), _widget, SLOT(setModified()) );
+       
+      
+        if( FLAGS & TABLE_HORIZONTAL)
+          _widget->connect(wSize, SIGNAL( valueChanged(int) ), wTable, SLOT(resizeTableH(int) ) );
+        else
+          _widget->connect(wSize, SIGNAL( valueChanged(int) ), wTable, SLOT(resizeTableV(int) ) );
 	    }
 	    else
 	    {
@@ -424,52 +430,32 @@ public:
 
     void readFromData(const data_type& d)
     {
-      int newRows = rhelper::size(d);
-      wSize->setValue(newRows);
-
       if (isDisplayed())
         {
-          int newCols;
-          if (rows > 0)
-            newCols = vhelper::size(d[0]);
-          else
-            newCols = vhelper::size(row_type());
-          
           processTableModifications(d);
           fillTable(d);
-          rows=newRows;
         }
     }
     void writeToData(data_type& d)
-    {
+    { 
+      rows = wSize->value();
       if (!(FLAGS & TABLE_FIXEDSIZE))
-        {
-          int oldRows = rhelper::size(d);
-          if (rows != oldRows)
-            {
-              rhelper::resize(rows, d);
-            }
-          int newRows = rhelper::size(d);
-          if (rows != newRows)
-            { // resize failed -> conform to the real size
-              /* std::cout << "Resize to " << rows << " failed. New size is " << newRows << std::endl; */
-              wSize->setValue(newRows);
-              if (FLAGS & TABLE_HORIZONTAL)
-                wTable->setNumCols(newRows);
-              else
-                wTable->setNumRows(newRows);
-              rows = newRows;
-            }
-          else
-            {
-              int widgetSize=wSize->value();
-              if (widgetSize != rows)
-              {
-                rhelper::resize(widgetSize, d);
-              }
-              /* std::cout << "Resize to " << widgetSize<< " succeeded." << std::endl; */
-            }
-        }
+      {         
+          int oldrows = rhelper::size(d);
+          if( rows != oldrows){
+            rhelper::resize(rows,d);
+          }
+          int newrows = rhelper::size(d);
+          if( rows != newrows){
+            wSize->setValue(newrows);
+            rows = newrows;
+            if (FLAGS & TABLE_HORIZONTAL)
+                wTable->setNumCols(newrows);
+            else
+                wTable->setNumRows(newrows);
+          }
+      }
+      processTableModifications(d);
 
       if (isDisplayed())
         {
@@ -487,7 +473,7 @@ public:
         }
         
     }
-
+   
     void processTableModifications(const data_type &d)
     {
       int currentNumRow;
@@ -504,6 +490,8 @@ public:
         wTable->setNumCols(dataRows);
       else
         wTable->setNumRows(dataRows);
+
+      rows = dataRows;
     
       for (int x=0; x<cols; ++x)
         {
@@ -535,32 +523,18 @@ public:
     void fillTable(const data_type &d)
     {
       int currentNum;
-      if (FLAGS & TABLE_HORIZONTAL)  currentNum=wTable->numCols();
-      else                           currentNum=wTable->numRows();   
-
+      int dsize = (int)d.size();
+      if (FLAGS & TABLE_HORIZONTAL)  
+        currentNum=wTable->numCols() > dsize ? dsize : wTable->numCols();
+      else  
+        currentNum=wTable->numRows() > dsize ? dsize : wTable->numRows();   
+      
       for (int y=0; y<currentNum; ++y)
         for (int x=0; x<cols; ++x)
           setCell(y, x, *vhelper::get(*rhelper::get(d,y),x));  
       
     }
     
-    bool processChange(const QObject* sender)
-    {
-      data_type d=data_type();
-
-      if (isDisplayed()) processTableModifications(d);
-
-      if (!(FLAGS & TABLE_FIXEDSIZE) && sender == wSize)
-        {
-          int newRows = wSize->value();
-          if (rows == newRows) return false;          
-          if (isDisplayed())  rows = newRows;
-          return true;
-        }
-      if (sender == wTable)
-        return true;
-      return false;
-    }
 };
 
 template<class T, int FLAGS = TABLE_NORMAL>

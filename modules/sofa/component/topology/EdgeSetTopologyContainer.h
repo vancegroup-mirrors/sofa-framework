@@ -119,6 +119,13 @@ namespace topology
 		 */
 		virtual bool checkTopology() const;
 
+
+      /** \brief Checks if the topology has only one connex component
+        *
+        * @return true if only one connex component
+        */
+      virtual bool checkConnexity();
+
 		
 		/** \brief Returns the number of edges in this topology.
 		 *

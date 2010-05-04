@@ -350,10 +350,9 @@ namespace sofa
         //If the item clicked is a node, we add it to the list of the element modified
 
         map_modifyDialogOpened.insert ( std::make_pair ( current_Id_modifyDialog, item ) );
-
+        connect ( dialogModify, SIGNAL( dialogClosed(void *) ) , this, SLOT( modifyUnlock(void *)));
         dialogModify->show();
         dialogModify->raise();
-
       }
 
       void GraphModeler::doubleClick(Q3ListViewItem *item)

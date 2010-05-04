@@ -26,8 +26,6 @@
 #define SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_INL
 
 #include <sofa/component/mapping/SkinningMapping.h>
-#include <sofa/helper/io/MassSpringLoader.h>
-#include <sofa/helper/io/SphereLoader.h>
 #include <sofa/helper/io/Mesh.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/helper/gl/Axis.h>
@@ -36,6 +34,7 @@
 #include <string>
 #include <iostream>
 #include <sofa/component/topology/TriangleSetTopologyContainer.h>
+#include <sofa/helper/gl/glText.inl>
 
 
 
@@ -51,19 +50,6 @@ namespace sofa
       using namespace sofa::defaulttype;
 			using sofa::component::topology::TriangleSetTopologyContainer;
 
-      template <class BasicMapping>
-      class SkinningMapping<BasicMapping>::Loader : public helper::io::MassSpringLoader, public helper::io::SphereLoader
-        {
-        public:
-          SkinningMapping<BasicMapping>* dest;
-          Loader ( SkinningMapping<BasicMapping>* dest ) : dest ( dest ) {}
-          virtual void addMass ( SReal /*px*/, SReal /*py*/, SReal /*pz*/, SReal, SReal, SReal, SReal, SReal, bool, bool )
-          {
-          }
-          virtual void addSphere ( SReal /*px*/, SReal /*py*/, SReal /*pz*/, SReal )
-          {
-          }
-        };
 
       template <class BasicMapping>
       SkinningMapping<BasicMapping>::SkinningMapping ( In* from, Out* to )
@@ -71,12 +57,14 @@ namespace sofa
           , repartition ( initData ( &repartition,"repartition","repartition between input DOFs and skinned vertices" ) )
           , coefs ( initData ( &coefs,"coefs","weights list for the influences of the references Dofs" ) )
           , nbRefs ( initData ( &nbRefs, ( unsigned ) 3,"nbRefs","nb references for skinning" ) )
-          , displayBlendedFrame ( initData ( &displayBlendedFrame, false, "displayBlendedFrame","weights list for the influences of the references Dofs" ) )
+          , showBlendedFrame ( initData ( &showBlendedFrame, false, "showBlendedFrame","weights list for the influences of the references Dofs" ) )
           , computeJ ( initData ( &computeJ, false, "computeJ", "compute matrix J in addition to apply for the dual quat interpolation method." ) )
           , computeAllMatrices ( initData ( &computeAllMatrices, false, "computeAllMatrices","compute all the matrices in addition to apply for the dual quat interpolation method." ) )
-          , displayDefTensors ( initData ( &displayDefTensors, false, "displayDefTensors","display computed deformation tensors." ) )
+          , showDefTensors ( initData ( &showDefTensors, false, "showDefTensors","show computed deformation tensors." ) )
+          , displayedFromIndex ( initData ( &displayedFromIndex, ( unsigned ) 0, "displayedFromIndex","Displayed From Index." ) )
+          , showTextScaleFactor ( initData ( &showTextScaleFactor, 0.00005, "showTextScaleFactor","Text Scale Factor." ) )
           , wheightingType ( initData ( &wheightingType, WEIGHT_INVDIST_SQUARE, "wheightingType","Weighting computation method." ) )
-          , interpolationType ( initData ( &interpolationType, INTERPOLATION_DUAL_QUATERNION, "interpolationType","Interpolation method." ) )
+          , interpolationType ( initData ( &interpolationType, INTERPOLATION_LINEAR, "interpolationType","Interpolation method." ) )
           , distanceType ( initData ( &distanceType, DISTANCE_HARMONIC, "distanceType","Distance computation method." ) )
           , computeWeights ( true )
       {
@@ -93,24 +81,14 @@ namespace sofa
       {
       }
 
-      template <class BasicMapping>
-      void SkinningMapping<BasicMapping>::load ( const char * /*filename*/ )
-      {
-      }
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::computeInitPos ( )
       {
-        const VecCoord& xto = *this->toModel->getX0();
+        const VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
         const VecInCoord& xfrom = *this->fromModel->getX0();
-        initPosDOFs.resize ( xfrom.size() );
 
         const vector<int>& m_reps = repartition.getValue();
-
-        for ( unsigned int i = 0; i < xfrom.size(); i++ )
-          {
-            initPosDOFs[i] = xfrom[i];
-          }
 
         switch ( interpolationType.getValue() )
           {
@@ -130,21 +108,14 @@ namespace sofa
       }
 
       template <class BasicMapping>
-      void SkinningMapping<BasicMapping>::sortReferences ()
+      void SkinningMapping<BasicMapping>::computeDistances ()
       {
         Coord posTo;
-        VecCoord& xto = *this->toModel->getX0();
+        VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
         VecInCoord& xfrom = *this->fromModel->getX0();
-
-        vector<int>& m_reps = * ( repartition.beginEdit() );
-        m_reps.clear();
-        m_reps.resize ( nbRefs.getValue() *xto.size() );
-        for ( unsigned int i=0;i<nbRefs.getValue() *xto.size();i++ )
-          m_reps[i] = -1;
 
         distances.clear();
         distGradients.clear();
-        const unsigned int& nbRef = nbRefs.getValue();
 
         switch ( distanceType.getValue() )
           {
@@ -173,72 +144,78 @@ namespace sofa
           default:
           {}
           }
+      }
 
-        for ( unsigned int i=0;i<xfrom.size();i++ )
-          {
-            for ( unsigned int j=0;j<xto.size();j++ )
-              {
-                for ( unsigned int k=0; k<nbRef; k++ )
-                  {
-                    const int idxReps=m_reps[nbRef*j+k];
-                    if ( ( idxReps == -1 ) || ( distances[i][j] < distances[idxReps][j] ) )
-                      {
-                        for ( unsigned int m=nbRef-1 ; m>k ; m-- )
-                          m_reps[nbRef *j+m] = m_reps[nbRef *j+m-1];
-                        m_reps[nbRef *j+k] = i;
-                        break;
-                      }
-                  }
-              }
-          }
 
-        //for ( unsigned int j=0;j<xto.size();j++ )
-        //  for ( unsigned int k=0;k<nbRef;k++ )
-        //    serr << "m_reps["<<j<<"]["<<k<<"] " << m_reps[nbRef *j+k] << sendl;
+      template <class BasicMapping>
+      void SkinningMapping<BasicMapping>::sortReferences()
+      {
+        VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
+        VecInCoord& xfrom = *this->fromModel->getX0();
+        const unsigned int& nbRef = nbRefs.getValue();
 
-			}
+        vector<int>& m_reps = * ( repartition.beginEdit() );
+        m_reps.clear();
+        m_reps.resize ( nbRefs.getValue() *xto.size() );
+        for ( unsigned int i=0;i<nbRefs.getValue() *xto.size();i++ )
+          m_reps[i] = -1;
+
+				if( interpolationType.getValue() == INTERPOLATION_LINEAR)
+				{
+					for ( unsigned int i=0;i<xfrom.size();i++ )
+						for ( unsigned int j=0;j<xto.size();j++ )
+							for ( unsigned int k=0; k<nbRef; k++ )
+								{
+									const int idxReps=m_reps[nbRef*j+k];
+									if ( ( idxReps == -1 ) || ( distances[i][j] < distances[idxReps][j] ) )
+										{
+											for ( unsigned int m=nbRef-1 ; m>k ; m-- )
+												m_reps[nbRef *j+m] = m_reps[nbRef *j+m-1];
+											m_reps[nbRef *j+k] = i;
+											break;
+										}
+								}
+				}
+				else if( INTERPOLATION_DUAL_QUATERNION)
+				{
+					for ( unsigned int i=0;i<xfrom.size();i++ )
+						for ( unsigned int j=0;j<xto.size();j++ )
+							m_reps[nbRef *j+i] = i;
+				}
+      }
+
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::init()
       {
-        VecInCoord& xfrom = *this->fromModel->getX0();
         distanceType.setValue( DISTANCE_EUCLIDIAN);
+        VecInCoord& xfrom = *this->fromModel->getX0();
         if ( this->initPos.empty() && this->toModel!=NULL && computeWeights==true && coefs.getValue().size() ==0 )
           {
             if ( wheightingType.getValue() == WEIGHT_LINEAR || wheightingType.getValue() == WEIGHT_HERMITE )
                 nbRefs.setValue ( 2 );
 
-            if( xfrom.size() < nbRefs.getValue())
+            if( xfrom.size() < nbRefs.getValue() || interpolationType.getValue() == INTERPOLATION_DUAL_QUATERNION)
                 nbRefs.setValue ( xfrom.size() );
 
+            computeDistances();
             sortReferences ();
             updateWeights ();
             computeInitPos ();
+
           }
         else if ( computeWeights == false || coefs.getValue().size() !=0 )
           {
             computeInitPos();
           }
 
-
-				doJustOnce = true; //TODO to remove. Used to place the DOFs after init
-
         this->BasicMapping::init();
-      }
-
-      template <class BasicMapping>
-      void SkinningMapping<BasicMapping>::parse ( core::objectmodel::BaseObjectDescription* arg )
-      {
-        if ( arg->getAttribute ( "filename" ) )
-          this->load ( arg->getAttribute ( "filename" ) );
-        this->Inherit::parse ( arg );
-      }
+			}
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::clear()
       {
         this->initPos.clear();
-        this->initPosDOFs.clear();
       }
 
       template <class BasicMapping>
@@ -274,7 +251,7 @@ namespace sofa
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::updateWeights ()
       {
-        VecCoord& xto = *this->toModel->getX0();
+        VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
         VecInCoord& xfrom = *this->fromModel->getX0();
 
         vector<vector<double> >& m_coefs = * ( coefs.beginEdit() );
@@ -299,11 +276,8 @@ namespace sofa
                 // Abscisse curviligne
                 m_coefs[m_reps[nbRefs.getValue() *i+0]][i] = ( 1 - wi );
                 m_coefs[m_reps[nbRefs.getValue() *i+1]][i] = wi;
-//								int j = m_reps[nbRefs.getValue() *i+0];
-//serr << "coeff["<<j<<"]["<<i<<"]: " << m_coefs[m_reps[nbRefs.getValue() *i+0]][i] << ", " << m_coefs[m_reps[nbRefs.getValue() *i+1]][i] << sendl;
                 distGradients[m_reps[nbRefs.getValue() *i+0]][i] = -r1r2 / r1r2NormSquare;
                 distGradients[m_reps[nbRefs.getValue() *i+1]][i] = r1r2 / r1r2NormSquare;
-//serr << "gradient["<<j<<"]["<<i<<"]: " << distGradients[m_reps[nbRefs.getValue() *i+0]][i] << ", " << distGradients[m_reps[nbRefs.getValue() *i+1]][i] << sendl;
               }
             break;
           }
@@ -311,20 +285,24 @@ namespace sofa
           {
             for ( unsigned int j=0;j<xto.size();j++ )
             {
-              for ( unsigned int i=0;i<xfrom.size();i++ )
-                m_coefs[i][j] = 1 / distances[i][j];
-              //m_coefs.normalize();
+              for ( unsigned int i=0;i<nbRefs.getValue();i++ )
+              {
+                int indexFrom = m_reps[nbRefs.getValue() *j + i];
+                m_coefs[indexFrom][j] = 1 / (distances[indexFrom][j]*distances[indexFrom][j]);
+                if( distanceType.getValue() == DISTANCE_EUCLIDIAN)
+                  distGradients[indexFrom][j] = - distGradients[indexFrom][j] / (double)(distances[indexFrom][j]*distances[indexFrom][j]*distances[indexFrom][j]) * 2.0;
+              }
+
+              /* TODO normalize later. Store the weights to be able to recompute the coeffs as the normalized weights (for each frame) even when we insert a new frame
               //normalize the coefs vector such as the sum is equal to 1
               double norm=0.0;
               for ( unsigned int i=0;i<xfrom.size();i++ )
-                norm += m_coefs[i][j]*m_coefs[i][j];
+                norm += m_coefs[i][j];
               norm = helper::rsqrt ( norm );
 
               for ( unsigned int i=0;i<xfrom.size();i++ )
-              {
                 m_coefs[i][j] /= norm;
-                m_coefs[i][j] = m_coefs[i][j]*m_coefs[i][j];
-              }
+              //*/
             }
 
             break;
@@ -417,13 +395,6 @@ namespace sofa
         out.resize ( xto.size() );
         Deriv v,omega;
 
-        /*        vector<double> dqTest; //TODO to remove after the convergence test
-                dqTest.resize ( out.size() ); //TODO to remove after the convergence test
-                vector<Vec3d> dqJiWi; //TODO to remove after the convergence test
-                dqJiWi.resize ( out.size() ); //TODO to remove after the convergence test
-                 dqLi_previous.resize ( out.size() * nbRefs.getValue() ); //TODO to remove after the convergence test
-                 dqLi.resize ( out.size() * nbRefs.getValue() ); //TODO to remove after the convergence test
-        */
         if ( ! ( maskTo->isInUse() ) )
           {
             switch ( interpolationType.getValue() )
@@ -604,13 +575,28 @@ namespace sofa
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::draw()
       {
-        const typename Out::VecCoord& xOut = *this->toModel->getX();
-        const typename In::VecCoord& xIn = *this->fromModel->getX();
+        const typename Out::VecCoord& xto = *this->toModel->getX();
+        const typename In::VecCoord& xfrom = *this->fromModel->getX();
         const vector<int>& m_reps = repartition.getValue();
         const vector<vector<double> >& m_coefs = coefs.getValue();
+				const unsigned int nbRef = nbRefs.getValue();
 
         if ( this->getShow() )
           {
+
+            /*/ Display  m_reps for each points
+            for ( unsigned int i=0;i<xto.size();i++ )
+                    sofa::helper::gl::GlText::draw ( m_reps[nbRefs.getValue() *i+0], xto[i], showTextScaleFactor.getValue() );
+            //*/
+
+            // Display coefs for each points
+            glDisable ( GL_LIGHTING );
+            glColor3f( 1.0, 1.0, 1.0);
+            for ( unsigned int i=0;i<xto.size();i++ )
+                    sofa::helper::gl::GlText::draw ( (int)(m_coefs[displayedFromIndex.getValue()%xfrom.size()][i]*10000), xto[i], showTextScaleFactor.getValue() );
+            //*/
+
+            // Display mapping links between in and out elements
             if ( interpolationType.getValue() != INTERPOLATION_DUAL_QUATERNION )
               {
                 glDisable ( GL_LIGHTING );
@@ -618,23 +604,24 @@ namespace sofa
                 glColor4f ( 1,1,0,1 );
                 glBegin ( GL_LINES );
 
-                for ( unsigned int i=0; i<xOut.size(); i++ )
+                for ( unsigned int i=0; i<xto.size(); i++ )
                   {
-                    for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+                    for ( unsigned int m=0 ; m<nbRef; m++ )
                       {
-                        const int idxReps=m_reps[nbRefs.getValue() *i+m];
+                        const int idxReps=m_reps[nbRef *i+m];
                         double coef = m_coefs[idxReps][i];
                         if ( coef > 0.0 )
                           {
                             glColor4d ( coef,coef,0,1 );
-                            helper::gl::glVertexT ( xIn[m_reps[nbRefs.getValue() *i+m] ].getCenter() );
-                            helper::gl::glVertexT ( xOut[i] );
+                            helper::gl::glVertexT ( xfrom[m_reps[nbRef *i+m] ].getCenter() );
+                            helper::gl::glVertexT ( xto[i] );
                           }
                       }
                   }
                 glEnd();
               }
           }
+
 
       }
 

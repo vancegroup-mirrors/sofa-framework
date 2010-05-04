@@ -64,7 +64,7 @@ namespace sofa
       protected:
 
 	std::vector<unsigned int> indexToChange;
-	sofa::component::container::MechanicalObject<defaulttype::Vec1dTypes>* PotentialObjectContainer;
+   sofa::component::container::MechanicalObject<defaulttype::Vec2dTypes>* PotentialObjectContainer;
 	
       };
     }

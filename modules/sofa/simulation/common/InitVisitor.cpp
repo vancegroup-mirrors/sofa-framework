@@ -78,6 +78,8 @@ namespace simulation
                 getSimulation()->getVisualRoot()->addChild(nodeInVisualGraph);
                 simuToVisu.insert(std::make_pair(node, nodeInVisualGraph));
                 node->nodeInVisualGraph.add(nodeInVisualGraph);
+                const core::objectmodel::Context &nodeContext=*static_cast<core::objectmodel::Context*>(node->getContext());
+                nodeInVisualGraph->copyContext(nodeContext);
             }
             else
             {
@@ -145,9 +147,11 @@ namespace simulation
       {
           std::map< simulation::Node*, simulation::Node*> simuToVisu;
           if ( (Node*)(getSimulation()->getContext())  == node) //Root of the Simulation Graph
-          {
+          {              
               node->nodeInVisualGraph.add(getSimulation()->getVisualRoot());
               simuToVisu.insert(std::make_pair(node, getSimulation()->getVisualRoot()));
+              const core::objectmodel::Context &nodeContext=*static_cast<core::objectmodel::Context*>(node->getContext());
+              getSimulation()->getVisualRoot()->copyContext(nodeContext);
           }
 
           //********************************************************

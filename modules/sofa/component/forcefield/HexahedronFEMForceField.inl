@@ -1262,8 +1262,7 @@ void HexahedronFEMForceField<DataTypes>::draw()
 		simulation::getSimulation()->DrawUtility.drawTriangles(points[2], Vec<4,float>(0.0f,0.7f,0.0f,(_sparseGrid?_sparseGrid->getStiffnessCoef(i):1.0f)));
 		simulation::getSimulation()->DrawUtility.drawTriangles(points[3], Vec<4,float>(0.0f,0.0f,0.7f,(_sparseGrid?_sparseGrid->getStiffnessCoef(i):1.0f)));
 		simulation::getSimulation()->DrawUtility.drawTriangles(points[4], Vec<4,float>(0.1f,0.7f,0.7f,(_sparseGrid?_sparseGrid->getStiffnessCoef(i):1.0f)));
-		simulation::getSimulation()->DrawUtility.drawTriangles(points[5], Vec<4,float>(0.7f,0.1f,0.7f,(_sparseGrid?_sparseGrid->getStiffnessCoef(i):1.0f)));
-		simulation::getSimulation()->DrawUtility.setLightingEnabled(true);
+		simulation::getSimulation()->DrawUtility.drawTriangles(points[5], Vec<4,float>(0.7f,0.1f,0.7f,(_sparseGrid?_sparseGrid->getStiffnessCoef(i):1.0f)));		
 
 	}
 

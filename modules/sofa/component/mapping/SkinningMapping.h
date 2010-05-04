@@ -27,28 +27,29 @@
 
 #include <sofa/core/componentmodel/behavior/MechanicalMapping.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/componentmodel/behavior/MappedModel.h>
 
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
-#include <sofa/core/componentmodel/behavior/MappedModel.h>
+
 #include <vector>
+
 #include <sofa/component/component.h>
+
+
 namespace sofa
-  {
+{
 
-  namespace component
-    {
+namespace component
+{
 
-    namespace topology
-      {
-      template<class T>
-      class HexahedronGeodesicalDistance;
-    }
+namespace mapping
+{
 
-    namespace mapping
-      {
-      using sofa::component::topology::HexahedronGeodesicalDistance;
-      using sofa::helper::vector;
+
+using sofa::helper::vector;
+using sofa::helper::Quater;
+using sofa::component::topology::Coefs;
 
 #define DISTANCE_EUCLIDIAN 0
 #define DISTANCE_GEODESIC 1
@@ -76,64 +77,6 @@ namespace sofa
         INTERPOLATION_LINEAR, INTERPOLATION_DUAL_QUATERNION
       } InterpolationType;*/
 
-      template <class T>
-      class Coefs: public vector<vector<T> >
-        {
-        public:
-          Coefs() {};
-
-          std::ostream& write ( std::ostream& os ) const
-            {
-              if ( !this->empty() )
-                {
-                  os << "[";
-                  typename vector<vector<T> >::const_iterator i = this->begin();
-                  os << *i;
-                  ++i;
-                  for ( ; i!=this->end(); ++i )
-                    os << "],[" << *i;
-                  os << "]";
-                }
-              return os;
-            }
-
-          std::istream& read ( std::istream& in )
-          {
-            T t;
-            this->clear();
-            while ( in.rdstate() & std::ios_base::eofbit )
-              {
-                char c;
-                in >> c;
-                if ( c == '[' ) break;
-                this->push_back ( vector<T>() );
-                vector<T>& nextElt = this->back();
-                while ( in>>t )
-                  {
-                    nextElt.push_back ( t );
-                  }
-                in >> c; // ']'
-                in >> c; // ','
-              }
-            if ( in.rdstate() & std::ios_base::eofbit )
-              {
-                in.clear();
-              }
-            return in;
-          }
-
-          /// Output stream
-          inline friend std::ostream& operator<< ( std::ostream& os, const Coefs<T>& vec )
-          {
-            return vec.write ( os );
-          }
-
-          /// Input stream
-          inline friend std::istream& operator>> ( std::istream& in, Coefs<T>& vec )
-          {
-            return vec.read ( in );
-          }
-        };
 
 
       template <class BasicMapping>
@@ -154,6 +97,7 @@ namespace sofa
           typedef typename In::Coord InCoord;
           typedef typename In::Deriv InDeriv;
           typedef typename In::VecCoord VecInCoord;
+          typedef typename InCoord::value_type InReal;
           typedef typename Coord::value_type Real;
           enum { N=Coord::static_size };
           typedef defaulttype::Mat<N,N,Real> Mat;
@@ -183,9 +127,12 @@ namespace sofa
           typedef vector<Vec6> VVec6;
           typedef vector<VVec6> VVVec6;
           typedef defaulttype::Vec<8,Real> Vec8;
+					typedef Quater<InReal> Quat;
+					typedef sofa::helper::vector< VecCoord > VecVecCoord;
+					typedef vector<double> VD;
+          typedef Coefs<double> VVD;
 
         protected:
-          vector<InCoord> initPosDOFs; // translation and rotation of the blended reference frame i, where i=0..n.
           vector<Coord> initPos; // pos: point coord in the world reference frame
           vector<Coord> rotatedPoints;
 
@@ -195,21 +142,24 @@ namespace sofa
           Data<vector<int> > repartition;
           Data<Coefs<double> > coefs;
           Data<unsigned int> nbRefs;
-          Data<bool> displayBlendedFrame;
+					public:
+          Data<bool> showBlendedFrame;
           Data<bool> computeJ;
           Data<bool> computeAllMatrices;
-          Data<bool> displayDefTensors;
+          Data<bool> showDefTensors;
+					Data<unsigned int> displayedFromIndex;
+					Data<double> showTextScaleFactor;
 
+					protected:
           Data<int /* = WeightingType*/> wheightingType;
           Data<int /* = InterpolationType*/> interpolationType;
           Data<int /* = DistanceType*/> distanceType;
           bool computeWeights;
-          vector<vector<double> > distances;
+          Coefs<double> distances;
           vector<vector<Coord> > distGradients;
 
-          class Loader;
-          void load ( const char* filename );
           inline void computeInitPos();
+          inline void computeDistances();
           inline void sortReferences();
 
         public:
@@ -217,7 +167,6 @@ namespace sofa
           virtual ~SkinningMapping();
 
           void init();
-          void parse ( core::objectmodel::BaseObjectDescription* arg );
 
           void apply ( typename Out::VecCoord& out, const typename In::VecCoord& in );
           void applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
@@ -265,7 +214,6 @@ namespace sofa
             return computeWeights;
           }
 
-          bool doJustOnce; //TO remove after unitary tests.
         };
 
       using core::Mapping;

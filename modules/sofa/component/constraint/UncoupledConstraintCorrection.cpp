@@ -118,13 +118,15 @@ void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::getCompliance(defa
 	VecReal UsedComp = compliance.getValue();
 	//serr<<" UsedComp ok"<<sendl;
 	
+        std::cout<<"numConstraints ="<<numConstraints<<std::endl;
+
 	for(unsigned int curRowConst=0; curRowConst < numConstraints; curRowConst++)
 	{
-		//serr<<"constraint["<<curRowConst<<"] : ";
+
 		
 		int indexCurRowConst = mstate->getConstraintId()[curRowConst];
 		
-		
+                std::cout<<"constraint["<<curRowConst<<"] : index :  "<<indexCurRowConst<<std::endl;
 		
 		
 		
@@ -135,6 +137,7 @@ void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::getCompliance(defa
 		{
 			unsigned int dof = itConstraint->first;
 			Deriv n = itConstraint->second;
+                         std::cout<<"    [ "<<dof<<"]="<<n<<std::endl;
 			
 			weighedNormal.getVCenter() = n.getVCenter(); // weighed normal
 			weighedNormal.getVOrientation() = n.getVOrientation();
@@ -146,7 +149,7 @@ void UncoupledConstraintCorrection<defaulttype::Rigid3Types>::getCompliance(defa
 			Comp_wN[3] =  UsedComp[1] * weighedNormal[3] +  UsedComp[2] * weighedNormal[4] +  UsedComp[3] * weighedNormal[5];
 			Comp_wN[4] =  UsedComp[2] * weighedNormal[3] +  UsedComp[4] * weighedNormal[4] +  UsedComp[5] * weighedNormal[5];
 			Comp_wN[5] =  UsedComp[3] * weighedNormal[3] +  UsedComp[5] * weighedNormal[4] +  UsedComp[6] * weighedNormal[5];
-			//serr<<" - "<<weighedNormal<<sendl;
+                        //serr<<" - "<<weighedNormal<<sendl;
 			//InvM_wN = weighedNormal / (*massValue);
 			//InvM_wN *= dt*dt ;
 
@@ -291,7 +294,6 @@ template<>
 	dx[i] *= dt;
 	x[i] += dx[i];	
 
-	
   }
   //std::cout<<"dx -- resultante: "<<dx[0].getVCenter()<<"   -- moment: "<<dx[0].getVOrientation()<<std::endl;
   

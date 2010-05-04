@@ -88,6 +88,9 @@ public:
 
     virtual ~State() { }
 
+    /// Resize all stored vector
+    virtual void resize(int vsize) = 0;
+
     /// Return the current position vector (read-write access).
     virtual VecCoord* getX() = 0;
     /// Return the current velocity vector (read-write access).
@@ -95,6 +98,9 @@ public:
     /// Return the current rest position vector (read-write access)
     /// (return NULL if the state does not store rest position .
     virtual VecCoord* getX0() = 0;
+    /// Return the current reset position vector (read-write access)
+    /// (return NULL if the state does not store rest position .
+    virtual VecCoord* getXReset() = 0;
     /// Return the current velocity vector (read-write access).
     /// (return NULL if the state does not store normal .
     virtual VecCoord* getN() = 0;
@@ -106,6 +112,9 @@ public:
     /// Return the current rest position vector (read-only access)
     /// (return NULL if the state does not store rest position .
     virtual const VecCoord* getX0() const = 0;
+    /// Return the current reset position vector (read-write access)
+    /// (return NULL if the state does not store rest position .
+    virtual const VecCoord* getXReset() const = 0;
     /// Return the current velocity vector (read-only access).
     /// (return NULL if the state does not store normal .
     virtual const VecCoord* getN() const = 0;

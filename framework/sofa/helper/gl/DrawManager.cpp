@@ -87,6 +87,7 @@ namespace gl
 	    glEnd();
 	    if (lightEnabled) glEnable(GL_LIGHTING);
 	    resetMaterial(colour);
+	    glPointSize(1);
 	    break;
 #ifdef SOFA_GUI_QTOGREVIEWER
 	  case OGRE:	    

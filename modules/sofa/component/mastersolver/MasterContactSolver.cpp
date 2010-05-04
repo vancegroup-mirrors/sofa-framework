@@ -47,16 +47,37 @@ namespace component
 namespace mastersolver
 {
 
-  MasterContactSolver::MasterContactSolver()
-  {
-  }
+MasterContactSolver::MasterContactSolver()
+: constraintSolver(NULL), defaultSolver(NULL)
+{
+}
+
+void MasterContactSolver::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
+{
+    defaultSolver = new constraint::LCPConstraintSolver;
+    defaultSolver->parse(arg);
+}
+
 
 void MasterContactSolver::init()
 {
-  getContext()->get(constraintSolver, core::objectmodel::BaseContext::SearchDown);
+    getContext()->get(constraintSolver, core::objectmodel::BaseContext::SearchDown);
+    if (constraintSolver == NULL && defaultSolver != NULL)
+    {
+        serr << "No ConstraintSolver found, using default LCPConstraintSolver" << sendl;
+        this->getContext()->addObject(defaultSolver);
+        constraintSolver = defaultSolver;
+        defaultSolver = NULL;
+    }
+    else
+    {
+        delete defaultSolver;
+        defaultSolver = NULL;
+    }
 }
-  void MasterContactSolver::step(double dt)
-  {
+
+void MasterContactSolver::step(double dt)
+{
     simulation::Node *context =  (simulation::Node *)(this->getContext()); // access to current node
     helper::system::thread::CTime timer;
     helper::system::thread::CTime timerTotal;

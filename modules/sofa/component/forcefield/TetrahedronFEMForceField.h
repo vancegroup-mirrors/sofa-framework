@@ -183,6 +183,14 @@ public:
     void setYoungModulus(Real val) { this->_youngModulus.setValue(val); }
 
     void setComputeGlobalMatrix(bool val) { this->_assembling.setValue(val); }
+    
+    //for tetra mapping, should be removed in future
+    Transformation getActualTetraRotation(unsigned int index) {
+        if (index < _rotations.size() )
+            return _rotations[index];        
+        else { Transformation t; t.identity(); return t; }
+    }
+
 
     void setMethod(std::string methodName)
     {

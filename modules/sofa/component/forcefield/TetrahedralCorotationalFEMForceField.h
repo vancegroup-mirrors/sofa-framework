@@ -196,7 +196,7 @@ public:
 
 	// Getting the rotation of the vertex by averaing the rotation of neighboring elements
 	void getRotation(Transformation& R, unsigned int nodeIdx);
-	void getRotations();
+   void getRotations(){};
 	void getElementRotation(Transformation& R, unsigned int elementIdx);
 
 	// Getting the stiffness matrix of index i

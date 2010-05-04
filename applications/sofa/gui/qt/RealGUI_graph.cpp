@@ -601,7 +601,8 @@ namespace sofa
           dialogModifyObject->raise();
           connect ( this, SIGNAL ( newScene() ), dialogModifyObject, SLOT ( closeNow() ) );
           connect ( this, SIGNAL ( newStep() ),  dialogModifyObject, SLOT ( updateTables() ) );
-
+          connect ( dialogModifyObject, SIGNAL( objectUpdated() ), this, SLOT( redraw() ));
+          connect ( dialogModifyObject, SIGNAL( dialogClosed(void *) ) , this, SLOT( modifyUnlock(void *)));
 
 
           item_clicked = NULL;

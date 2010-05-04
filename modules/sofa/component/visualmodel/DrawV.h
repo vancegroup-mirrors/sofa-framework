@@ -68,6 +68,8 @@ public:
 
     bool addBBox(double* minBBox, double* maxBBox);
 
+    virtual void resize(int vsize) { inputX.resize( vsize); inputV.resize( vsize);}
+
     const VecCoord* getX()  const { return &inputX; }
     const VecDeriv* getV()  const { return &inputV; }
     VecCoord* getX()  { return &inputX; }

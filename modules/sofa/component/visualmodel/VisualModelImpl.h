@@ -61,6 +61,8 @@ public:
     {
     }
 
+    virtual void resize(int vsize) { xformsModified = true; xforms.resize( vsize); }
+
     const VecCoord* getX()  const { return &xforms; }
     const VecDeriv* getV()  const { return NULL; }
 
@@ -83,6 +85,8 @@ public:
     : inputVertices(NULL), inputRestVertices(NULL), inputNormals(NULL), modified(false)
     {
     }
+
+    virtual void resize(int vsize) { modified = true; if( inputVertices)inputVertices->resize( vsize); if( inputRestVertices)inputRestVertices->resize( vsize); if( inputNormals)inputNormals->resize( vsize);}
 
     const VecCoord* getX()  const { return inputVertices; }
     const VecDeriv* getV()  const { return NULL; }

@@ -42,7 +42,7 @@ namespace sofa{
      signals: 
         void TableValuesChanged();
         void TablesNeedUpdate(); 
-      protected slots:
+      public slots:
         void resizeTable(int number);
 
       public: 

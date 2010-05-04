@@ -33,6 +33,7 @@
 #include <sofa/core/componentmodel/behavior/BaseConstraintCorrection.h>
 #include <sofa/core/componentmodel/behavior/OdeSolver.h>
 #include <sofa/component/odesolver/OdeSolverImpl.h>
+#include <sofa/component/constraint/LCPConstraintSolver.h>
 #include <sofa/helper/set.h>
 
 namespace sofa
@@ -48,18 +49,20 @@ using namespace sofa::defaulttype;
 using namespace sofa::component::linearsolver;
 using namespace helper::system::thread;
 
-
 class SOFA_COMPONENT_MASTERSOLVER_API MasterContactSolver : public sofa::simulation::MasterSolverImpl
 {
 public:
-	SOFA_CLASS(MasterContactSolver, sofa::simulation::MasterSolverImpl);	
+	SOFA_CLASS(MasterContactSolver, sofa::simulation::MasterSolverImpl);
         MasterContactSolver();
         void step (double dt);
         void init();
 
+        virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );
+
         Data<bool> displayTime;
 protected:
         sofa::core::componentmodel::behavior::ConstraintSolver *constraintSolver;
+        constraint::LCPConstraintSolver* defaultSolver;
 };
 
 } // namespace mastersolver

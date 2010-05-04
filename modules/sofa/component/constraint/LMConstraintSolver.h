@@ -68,7 +68,7 @@ class SOFA_COMPONENT_CONSTRAINT_API LMConstraintSolver : public sofa::core::comp
     bool prepareStates(double dt, VecId);
     bool buildSystem(double dt, VecId);
     bool solveSystem(double dt, VecId);
-    bool applyCorrection(double dt, VecId, bool isPositionChangesUpdateVelocity);   
+    bool applyCorrection(double dt, VecId);
  
 
 

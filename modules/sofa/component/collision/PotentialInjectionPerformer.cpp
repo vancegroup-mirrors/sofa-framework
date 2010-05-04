@@ -54,17 +54,22 @@ namespace sofa
 	}
 
 	sofa::component::container::MechanicalObject<defaulttype::Vec3dTypes>* MechanicalObject=NULL;
-	CollisionModel->getContext()->get (MechanicalObject);
+   CollisionModel->getContext()->get (MechanicalObject,  sofa::core::objectmodel::BaseContext::SearchRoot);
 
 	sofa::core::objectmodel::Tag mytag (stateTag);
-	CollisionModel->getContext()->get (PotentialObjectContainer, mytag, sofa::core::objectmodel::BaseContext::SearchDown);
+   CollisionModel->getContext()->get (PotentialObjectContainer, mytag, sofa::core::objectmodel::BaseContext::SearchRoot);
 
-	if (MechanicalObject == NULL || PotentialObjectContainer == NULL)
-	{
-          this->interactor->serr << "Error, can't find mechanicalObjects" << this->interactor->sendl;
-	  return;
-	}
-	
+   if (MechanicalObject == NULL)
+   {
+      this->interactor->serr << "Error, can't find mechanicalObject" << this->interactor->sendl;
+      return;
+   }
+
+   if (PotentialObjectContainer == NULL)
+   {
+      this->interactor->serr << "Error, can't find potentialObject" << this->interactor->sendl;
+      return;
+   }
 	
 	sofa::component::topology::TriangleSetTopologyContainer* triangleContainer;
 	CollisionModel->getContext()->get (triangleContainer);
@@ -116,7 +121,7 @@ namespace sofa
 
 	if (PotentialObjectContainer != NULL)
 	  for (unsigned int i=0; i<indexToChange.size(); i++)
-	    (*PotentialObjectContainer->getX())[ indexToChange[i] ] = potentialValue;
+       (*PotentialObjectContainer->getX())[ indexToChange[i] ][0] = potentialValue;
 
 	indexToChange.clear();
       }

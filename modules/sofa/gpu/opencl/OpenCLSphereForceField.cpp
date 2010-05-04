@@ -54,9 +54,11 @@ int SphereForceFieldOpenCLClass = core::RegisterObject("Supports GPU-side comput
 //start kernel
 
 sofa::helper::OpenCLProgram* SphereForceFieldOpenCLFloat_program;
-sofa::helper::OpenCLProgram* SphereForceFieldOpenCLDouble_program;
 
+sofa::helper::OpenCLKernel * SphereForceFieldOpenCL3f_addForce_kernel;
+sofa::helper::OpenCLKernel * SphereForceFieldOpenCL3f_addDForce_kernel;
 
+/*
 void SphereForceField_CreateProgramWithFloat()
 {
 	if(SphereForceFieldOpenCLFloat_program==NULL)
@@ -74,26 +76,36 @@ void SphereForceField_CreateProgramWithFloat()
 		std::cout << SphereForceFieldOpenCLFloat_program->buildLog(0);
 	}
 }
+*/
 
-void SphereForceField_CreateProgramWithDouble()
+void SphereForceField_CreateProgramWithFloat()
 {
-
-	if(SphereForceFieldOpenCLDouble_program==NULL)
+	if(SphereForceFieldOpenCLFloat_program==NULL)
 	{
+		std::cout << sofa::helper::OpenCLProgram::loadSource("OpenCLSphereForceField.cl") << std::endl;
 
-		std::map<std::string, std::string> types;
-		types["Real"]="double";
-		types["Real4"]="double4";
+		SphereForceFieldOpenCLFloat_program
+				= new sofa::helper::OpenCLProgram();
 
-		SphereForceFieldOpenCLDouble_program
-				= new sofa::helper::OpenCLProgram(sofa::helper::OpenCLProgram::loadSource("OpenCLSphereForceField.cl"),&types);
+		SphereForceFieldOpenCLFloat_program->setSource(*sofa::helper::OpenCLProgram::loadSource("OpenCLGenericParticleForceField.cl"));
+		std::string macros = *sofa::helper::OpenCLProgram::loadSource("OpenCLGenericParticleForceField_Sphere.macrocl");
+		SphereForceFieldOpenCLFloat_program->addMacros(&macros,"all");
+		SphereForceFieldOpenCLFloat_program->addMacros(&macros,"float");
+		SphereForceFieldOpenCLFloat_program->createProgram();
+		SphereForceFieldOpenCLFloat_program->buildProgram();
+		sofa::gpu::opencl::myopenclShowError(__FILE__,__LINE__);
+		std::cout << SphereForceFieldOpenCLFloat_program->buildLog(0);
+	//	std::cout << SphereForceFieldOpenCLFloat_program->sourceLog();
 
-		SphereForceFieldOpenCLDouble_program->buildProgram();
 
+		//create kernels
+		SphereForceFieldOpenCL3f_addForce_kernel
+			= new sofa::helper::OpenCLKernel(SphereForceFieldOpenCLFloat_program,"GenericParticleForceField_3f_addForce_Sphere");
+
+		SphereForceFieldOpenCL3f_addDForce_kernel
+			= new sofa::helper::OpenCLKernel(SphereForceFieldOpenCLFloat_program,"GenericParticleForceField_3f_addDForce_Sphere");
 	}
 }
-
-
 
 typedef struct f4
 {
@@ -107,7 +119,7 @@ typedef struct f4
 	}
 }float4;
 
-sofa::helper::OpenCLKernel * SphereForceFieldOpenCL3f_addForce_kernel;
+
 void SphereForceFieldOpenCL3f_addForce(unsigned int size, GPUSphere* sphere, _device_pointer penetration, _device_pointer f, const _device_pointer x, const _device_pointer v)
 {
 int BSIZE = gpu::opencl::OpenCLMemoryManager<float>::BSIZE;
@@ -116,9 +128,6 @@ DEBUG_TEXT( "SphereForceFieldOpenCL3f_addForce");
 	float4 sd(sphere->r ,sphere->stiffness,sphere->damping,0.0);
 
 	SphereForceField_CreateProgramWithFloat();
-	if(SphereForceFieldOpenCL3f_addForce_kernel==NULL)SphereForceFieldOpenCL3f_addForce_kernel
-			= new sofa::helper::OpenCLKernel(SphereForceFieldOpenCLFloat_program,"SphereForceField_3f_addForce_v2");
-
 
 	SphereForceFieldOpenCL3f_addForce_kernel->setArg<float4>(0,&sc);
 	SphereForceFieldOpenCL3f_addForce_kernel->setArg<float4>(1,&sd);
@@ -138,7 +147,6 @@ DEBUG_TEXT( "SphereForceFieldOpenCL3f_addForce");
 }
 
 
-sofa::helper::OpenCLKernel * SphereForceFieldOpenCL3f_addDForce_kernel;
 void SphereForceFieldOpenCL3f_addDForce(unsigned int size, GPUSphere* sphere, const _device_pointer penetration, _device_pointer f, const _device_pointer dx)
 {
 int BSIZE = gpu::opencl::OpenCLMemoryManager<float>::BSIZE;
@@ -146,9 +154,6 @@ DEBUG_TEXT( "SphereForceFieldOpenCL3f_addDForce");
 	float4 sc(sphere->center.x(),sphere->center.y(),sphere->center.z(),0.0);
 
 	SphereForceField_CreateProgramWithFloat();
-	if(SphereForceFieldOpenCL3f_addDForce_kernel==NULL)SphereForceFieldOpenCL3f_addDForce_kernel
-			= new sofa::helper::OpenCLKernel(SphereForceFieldOpenCLFloat_program,"SphereForceField_3f_addDForce_v2");
-
 
 	SphereForceFieldOpenCL3f_addDForce_kernel->setArg<float4>(0,&sc);
 	SphereForceFieldOpenCL3f_addDForce_kernel->setArg<float>(1,&(sphere->stiffness));

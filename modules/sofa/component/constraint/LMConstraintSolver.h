@@ -105,7 +105,7 @@ class SOFA_COMPONENT_CONSTRAINT_API LMConstraintSolver : public sofa::core::comp
     bool solveConstraintSystemUsingGaussSeidel(ConstOrder Order,
                                                const helper::vector< core::componentmodel::behavior::BaseLMConstraint* > &LMConstraints, 
                                                MatrixEigen &W,
-                                               VectorEigen  c,
+                                               VectorEigen &c,
                                                VectorEigen &Lambda);
 
     /// Compute Kinetic Energy

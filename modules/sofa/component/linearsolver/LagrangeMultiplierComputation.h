@@ -22,43 +22,46 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#define SOFA_COMPONENT_ENGINE_SHAPEFUNCTIONVALUESENGINE_CPP
-#include <sofa/component/engine/ShapeFunctionValuesEngine.inl>
-#include <sofa/core/ObjectFactory.h>
+#ifndef SOFA_COMPONENT_LINEARSOLVER_LAGRANGEMULTIPLIERCOMPUTATION_H
+#define SOFA_COMPONENT_LINEARSOLVER_LAGRANGEMULTIPLIERCOMPUTATION_H
+
+#include <Eigen/Core>
+#include <Eigen/Sparse>
+#include <Eigen/LU>
+#include <Eigen/QR>
+//USING_PART_OF_NAMESPACE_EIGEN
 
 namespace sofa
 {
 
-namespace component
-{
+  namespace component
+  {
 
-namespace engine
-{
+    namespace linearsolver
+    {
 
-SOFA_DECL_CLASS(ShapeFunctionValuesEngine)
+      class LagrangeMultiplierComputation
+      {
+      public:
+        typedef Eigen::Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
+        typedef Eigen::Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
 
-int ShapeFunctionValuesEngineClass = core::RegisterObject("Values and derivative values computed by shape functions on given barycentric points")
-#ifndef SOFA_FLOAT
-  .add< ShapeFunctionValuesEngine<defaulttype::Rigid3dTypes> >()
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-  .add< ShapeFunctionValuesEngine<defaulttype::Rigid3fTypes> >()
-#endif //SOFA_DOUBLE
-  .add< ShapeFunctionValuesEngine<defaulttype::ExtVec3fTypes> >()
-;
+        static VectorEigen ComputeLagrangeMultiplier(const SReal* Wptr, SReal* cptr, SReal* LambdaInitptr,
+                                                     unsigned int numEquations)
+        {
+          Eigen::Map<MatrixEigen> W(Wptr, numEquations, numEquations);
+          Eigen::Map<VectorEigen> c(cptr, numEquations);
+          Eigen::Map<VectorEigen> LambdaInit(LambdaInitptr, numEquations);
 
-#ifndef SOFA_FLOAT
-template class SOFA_COMPONENT_ENGINE_API ShapeFunctionValuesEngine<defaulttype::Rigid3dTypes>;
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-template class SOFA_COMPONENT_ENGINE_API ShapeFunctionValuesEngine<defaulttype::Rigid3fTypes>;
-#endif //SOFA_DOUBLE
-template class SOFA_COMPONENT_ENGINE_API ShapeFunctionValuesEngine<defaulttype::ExtVec3fTypes>;
+          return (LambdaInit+W.marked<Eigen::SelfAdjoint>().inverse()*c);
+        }
 
+          
+      };
+    }
 
-} // namespace constraint
+  }
 
-} // namespace component
+}
 
-} // namespace sofa
-
+#endif

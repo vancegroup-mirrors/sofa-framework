@@ -79,54 +79,6 @@ typename BarycentricContactMapper<TCollisionModel,DataTypes>::MMechanicalState* 
     return mstate;
 }
 
-template < class TCollisionModel, class DataTypes >
-void SubsetContactMapper<TCollisionModel,DataTypes>::cleanup()
-{
-    if (child!=NULL)
-    {
-        child->detachFromGraph();
-        child->execute<simulation::DeleteVisitor>();
-        delete child;
-	child = NULL;
-    }
-}
-
-template < class TCollisionModel, class DataTypes >
-typename SubsetContactMapper<TCollisionModel,DataTypes>::MMechanicalState* SubsetContactMapper<TCollisionModel,DataTypes>::createMapping(const char* name)
-{
-    if (model==NULL) return NULL;
-    InMechanicalState* instate = model->getMechanicalState();
-    if (instate!=NULL)
-    {
-        simulation::Node* parent = dynamic_cast<simulation::Node*>(instate->getContext());
-        if (parent==NULL)
-        {
-            std::cerr << "ERROR: SubsetContactMapper only works for scenegraph scenes.\n";
-            return NULL;
-        }
-        child = simulation::getSimulation()->newNode(name);
-        parent->addChild(child); child->updateSimulationContext();
-        outmodel = new MMechanicalObject; child->addObject(outmodel);
-        outmodel->useMask.setValue(true);
-        mapping = new MMapping(instate, outmodel); child->addObject(mapping);
-    }
-    else
-    {
-        simulation::Node* parent = dynamic_cast<simulation::Node*>(model->getContext());
-        if (parent==NULL)
-        {
-            std::cerr << "ERROR: SubsetContactMapper only works for scenegraph scenes.\n";
-            return NULL;
-        }
-        child = simulation::getSimulation()->newNode(name);
-        parent->addChild(child); child->updateSimulationContext();
-        outmodel = new MMechanicalObject; child->addObject(outmodel);
-        outmodel->useMask.setValue(true);
-        mapping = NULL;
-    }
-    return outmodel;
-}
-
 
 } // namespace collision
 

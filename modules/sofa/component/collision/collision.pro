@@ -77,6 +77,8 @@ HEADERS += initCollision.h \
            Sphere.h \
            SphereModel.h \
            SphereTreeModel.h \
+           SubsetContactMapper.h \
+           SubsetContactMapper.inl \
            TetrahedronModel.h \
            TreeCollisionGroupManager.h \
            Triangle.h \
@@ -132,6 +134,7 @@ SOURCES += initCollision.cpp \
            SpatialGridPointModel.cpp \
            SphereModel.cpp \
            SphereTreeModel.cpp \
+           SubsetContactMapper.cpp \
            TetrahedronModel.cpp \
            TreeCollisionGroupManager.cpp \
 	   TriangleLocalMinDistanceFilter.cpp \

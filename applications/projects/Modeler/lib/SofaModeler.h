@@ -110,7 +110,8 @@ namespace sofa
 	  /// Update the menu Recently Opened Files...
 	  void updateRecentlyOpened(std::string fileLoaded);
 
-          void changeTabName(GraphModeler *graph, const QString &name, const QString &suffix=QString());
+    void changeTabName(GraphModeler *graph, const QString &name, const QString &suffix=QString());
+    void setDebugBinary(bool b){debug=b;};
 	signals:
           void loadPresetGraph(std::string);
 
@@ -273,7 +274,8 @@ namespace sofa
 	  std::string openPath;
 	  std::string binPath;
 	  char count;
-          std::vector< std::string > exampleFiles;
+    std::vector< std::string > exampleFiles;
+    bool debug;
 	};
     }
   }

@@ -46,8 +46,6 @@ HEADERS += initEngine.h \
            RandomPointDistributionInSurface.inl \
            Spiral.h \
            Spiral.inl \
-           ShapeFunctionValuesEngine.h \
-           ShapeFunctionValuesEngine.inl \
            TrianglesInBoxROI.h \
            TrianglesInBoxROI.inl \
            TrianglesInSphereROI.h \
@@ -77,12 +75,13 @@ SOURCES += initEngine.cpp \
            MapIndices.cpp \
            RandomPointDistributionInSurface.cpp \
            Spiral.cpp \
-           ShapeFunctionValuesEngine.cpp \
            TrianglesInBoxROI.cpp \
            TrianglesInSphereROI.cpp \
            TrianglesInPlaneROI.cpp \
            Vertex2Frame.cpp \
            TextureInterpolation.cpp
+           
+           
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofacomponentbase$$LIBSUFFIX

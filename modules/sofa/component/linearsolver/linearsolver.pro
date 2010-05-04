@@ -12,6 +12,7 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_LINEARSOLVER
 
 HEADERS +=  \
+	   ShewchukPCGLinearSolver.h \
            CGLinearSolver.h \
            PCGLinearSolver.h \
            JacobiPreconditioner.h \
@@ -32,7 +33,9 @@ HEADERS +=  \
            MultiCGLinearSolver.h \
            matrix_bloc_traits.h
 
-SOURCES += initLinearSolver.cpp \
+SOURCES += \ 
+	   ShewchukPCGLinearSolver.cpp \ 
+	   initLinearSolver.cpp \
            CGLinearSolver.cpp \
            PCGLinearSolver.cpp \
            JacobiPreconditioner.cpp \
@@ -54,6 +57,9 @@ contains(DEFINES,SOFA_HAVE_MKL){
 
 }
 
+contains(DEFINES, SOFA_HAVE_EIGEN2){        
+	HEADERS +=  LagrangeMultiplierComputation.h 
+}
 
 
 contains(DEFINES,SOFA_HAVE_CSPARSE){

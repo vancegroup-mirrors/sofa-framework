@@ -1,6 +1,10 @@
 #include <sofa/gui/qt/MaterialDataWidget.h>
 #include <limits>
 
+#ifndef SOFA_QT4
+#include <qcombobox.h>
+#endif
+
 namespace sofa{
   namespace gui{
     namespace qt{
@@ -106,19 +110,14 @@ namespace sofa{
 
       void RGBAColorPicker::redrawColorButton()
       {
-        int iconSize = _colorButton->style()->pixelMetric(QStyle::PM_SmallIconSize);
-        QPixmap pix(iconSize, iconSize);
-        pix.fill(_colorButton->palette().button().color());
+        int w=_colorButton->width();
+        int h=_colorButton->height();
 
-        QPainter p(&pix);
+        QPixmap *pix=new QPixmap(25,20);
+        pix->fill(QColor(qRed(_rgba), qGreen(_rgba), qBlue(_rgba)));
+        _colorButton->setPixmap(*pix);
 
-        int w = pix.width();			// width of cell in pixels
-        int h = pix.height();			// height of cell in pixels
-        p.setPen(QPen(Qt::gray));
-        p.setBrush(QBrush(QColor(_rgba)));
-        p.drawRect(2, 2, w - 5, h - 5);
-        _colorButton->setIcon(QIcon(pix));
-        _colorButton->update();
+        _colorButton->resize(w,h);
       }
 
       void RGBAColorPicker::raiseQColorDialog()
@@ -130,7 +129,11 @@ namespace sofa{
         defaulttype::Vec4f color;
         QColor qcolor = QColorDialog::getRgba(_rgba,&ok,this);
         if( ok ){
-          qcolor.getRgba(&r,&g,&b,&a);
+          QRgb rgba=qcolor.rgb();
+          r=qRed(rgba);
+          g=qGreen(rgba);
+          b=qBlue(rgba);
+          a=qAlpha(rgba);
           color[0] = (float)r / max;
           color[1] = (float)g / max;
           color[2] = (float)b / max;
@@ -297,7 +300,7 @@ namespace sofa{
           _comboBox->insertItem ( QString( (*iter).name.c_str() ) ); 
         }
         _currentMaterialPos = 0;
-        _comboBox->setCurrentIndex(_currentMaterialPos);
+        _comboBox->setCurrentItem(_currentMaterialPos);
         _currentMaterial.setValue(_vectorEditedMaterial[_currentMaterialPos]);
         _materialDataWidget->setData(&_currentMaterial);
         _materialDataWidget->updateWidgetValue();
@@ -312,7 +315,8 @@ namespace sofa{
         Material mat(_currentMaterial.virtualGetValue() );
         
         
-        _comboBox->setItemText(_currentMaterialPos, QString(mat.name.c_str() ) );
+//        _comboBox->setItemText(_currentMaterialPos, QString(mat.name.c_str() ) );
+        _comboBox->setCurrentText( QString(mat.name.c_str() ) );
         _comboBox->update();
 
         _vectorEditedMaterial[_currentMaterialPos] = mat;
@@ -332,9 +336,12 @@ namespace sofa{
         Material mat(_currentMaterial.virtualGetValue() );
         _vectorEditedMaterial[_currentMaterialPos] = mat;
 
+        int idx=_comboBox->currentItem();
         for ( unsigned int i = 0; i < _vectorEditedMaterial.size(); i++){
-          _comboBox->setItemText(i, QString( _vectorEditedMaterial[i].name.c_str() ) );
+          _comboBox->setCurrentItem(i);
+          _comboBox->setCurrentText(QString( _vectorEditedMaterial[i].name.c_str() ) );
         }
+        _comboBox->setCurrentItem(idx);
 
 
         VectorMaterial* vecMaterial = getData()->virtualBeginEdit();

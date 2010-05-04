@@ -733,15 +733,15 @@ namespace gl
       case OGRE:
 	std::ostringstream s;
 	s << "mesh[" << meshName++ <<"]";
-	Ogre::Entity* sph = mSceneMgr->createEntity(s.str().c_str(), Ogre::SceneManager::PT_SPHERE );
-	s.str("");
-	s << "material[" << materialName-1 << "]" ;
-	sph->setMaterialName(s.str());
-	Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
- 	node->scale(radius/50.0,radius/50.0,radius/50.0);
-	node->translate(p[0],p[1],p[2]);
-	node->attachObject(sph);  
-	// sph->setNormaliseNormals(true);
+  Ogre::Entity* sph = mSceneMgr->createEntity( s.str(), "mesh/ball.mesh" );//mSceneMgr->createEntity(s.str().c_str(), Ogre::SceneManager::PT_SPHERE );
+  s.str("");
+  s << "material[" << materialName-1 << "]" ;
+  sph->setMaterialName(s.str());
+
+  Ogre::SceneNode* node = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+  node->setScale(radius,radius,radius);
+  node->setPosition(p[0],p[1],p[2]);
+  node->attachObject(sph);
 	break;         
 #endif
       }
@@ -911,8 +911,10 @@ namespace gl
     for (int i=0;i<meshName;++i)
       {
 	std::ostringstream s;
-	s << "mesh[" << i <<"]" ;
-	mSceneMgr->destroyEntity(s.str());
+  s << "mesh[" << i <<"]" ;
+  Ogre::SceneNode* n=(Ogre::SceneNode*)(mSceneMgr->getEntity(s.str())->getParentNode());
+  mSceneMgr->destroyEntity(s.str());
+  mSceneMgr->destroySceneNode(n);
       }
 
     for (int i=0;i<materialName;++i)

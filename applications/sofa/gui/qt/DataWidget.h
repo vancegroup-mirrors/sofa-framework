@@ -40,12 +40,16 @@
 #include <Q3Table>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QRadioButton>
+#include <QButtonGroup>
 #else
 #include <qspinbox.h>
 #include <qdialog.h>
 #include <qlineedit.h>
 #include <qtable.h>
 #include <qpushbutton.h>
+#include <qradiobutton.h>
+#include <qbuttongroup.h>
 #endif // SOFA_QT4
 
 #ifndef SOFA_QT4     

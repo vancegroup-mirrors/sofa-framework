@@ -16,6 +16,7 @@ HEADERS += initCollision.h \
            AddFramePerformer.inl \
            AttachBodyPerformer.h \
            AttachBodyPerformer.inl \
+           BaseContactMapper.h \
            BarycentricContactMapper.h \
            BarycentricContactMapper.inl \
            BarycentricPenalityContact.h \
@@ -40,6 +41,8 @@ HEADERS += initCollision.h \
            FrictionContact.h \
            FrictionContact.inl \
            InciseAlongPathPerformer.h \
+           IdentityContactMapper.h \
+           IdentityContactMapper.inl \
            InteractionPerformer.h \
            Line.h \
            LineLocalMinDistanceFilter.h \
@@ -85,6 +88,7 @@ HEADERS += initCollision.h \
 SOURCES += initCollision.cpp \
            AddFramePerformer.cpp \
            AttachBodyPerformer.cpp \
+           BaseContactMapper.cpp \
            BarycentricContactMapper.cpp \
            BarycentricPenalityContact.cpp \
            BruteForceDetection.cpp \     
@@ -99,6 +103,7 @@ SOURCES += initCollision.cpp \
            DefaultPipeline.cpp \
            DiscreteIntersection.cpp \
            DistanceGridCollisionModel.cpp \
+           IdentityContactMapper.cpp \
            InciseAlongPathPerformer.cpp \
            LineModel.cpp \
            LMDNewProximityIntersection.cpp \

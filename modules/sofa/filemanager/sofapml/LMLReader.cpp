@@ -50,139 +50,142 @@
 namespace sofa
 {
 
-namespace filemanager
-{
+    namespace filemanager
+    {
 
-namespace pml
-{
+        namespace pml
+        {
 
-using namespace sofa::defaulttype;
-using namespace sofa::core::objectmodel;
-using namespace sofa::component::constraint;
+            using namespace sofa::defaulttype;
+            using namespace sofa::core::objectmodel;
+            using namespace sofa::component::constraint;
 
-LMLReader::LMLReader(char* filename){
-	lmlFile = filename;
-	loadsList = NULL;
-}
+            LMLReader::LMLReader(char* filename){
+                lmlFile = filename;
+                loadsList = NULL;
+            }
 
-void LMLReader::BuildStructure(const char* filename, PMLReader * pmlreader)
-{
-	if (filename)
-		lmlFile = filename;
+            void LMLReader::BuildStructure(const char* filename, PMLReader * pmlreader)
+            {
+                if (filename)
+                    lmlFile = filename;
 
-	//check if there is a file specified
-	if (!lmlFile) {
-		cout<<"LMLReader error : No lml file found"<<endl;
-		return;
-	}
+                //check if there is a file specified
+                if (!lmlFile) {
+                    cout<<"LMLReader error : No lml file found"<<endl;
+                    return;
+                }
 
-	if(loadsList) delete loadsList;
-	//read the file
-	loadsList = new Loads(lmlFile);
-	//loadsList = data.getLoads();
-	this->BuildStructure(pmlreader);
-}
+                if(loadsList) delete loadsList;
+                //read the file
+                loadsList = new Loads(lmlFile);
+                //loadsList = data.getLoads();
+                this->BuildStructure(pmlreader);
+            }
 
-void LMLReader::BuildStructure(Loads * loads, PMLReader * pmlreader)
-{
-	loadsList = loads;
-	this->BuildStructure(pmlreader);
-}
+            void LMLReader::BuildStructure(Loads * loads, PMLReader * pmlreader)
+            {
+                loadsList = loads;
+                this->BuildStructure(pmlreader);
+            }
 
-void LMLReader::BuildStructure(PMLReader * pmlreader)
-{
-	//check if loads was read
-	if (!loadsList || loadsList->numberOfLoads()<=0) {
-		cout<<"LMLReader error : No loads found"<<endl;
-		return;
-	}
+            void LMLReader::BuildStructure(PMLReader * pmlreader)
+            {
+                //check if loads was read
+                if (!loadsList || loadsList->numberOfLoads()<=0) {
+                    cout<<"LMLReader error : No loads found"<<endl;
+                    return;
+                }
 
-	std::vector<PMLBody*>::iterator it = pmlreader->bodiesList.begin();
+                std::vector<PMLBody*>::iterator it = pmlreader->bodiesList.begin();
 
-	while(it!=pmlreader->bodiesList.end()) 
-	{
-		//find forces and constraints in the loads list
-		LMLConstraint<Vec3Types> *constraints = new LMLConstraint<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
-		if (constraints->getTargets().size() >0)
-			if( (*it)->isTypeOf() == "rigid"){
-				delete constraints;
-				FixedConstraint<RigidTypes> * fixedConstraint = new FixedConstraint<RigidTypes>;
-				//fixedConstraint->addConstraint(0);
-				fixedConstraint->setName("loads");
-				(*it)->parentNode->addObject(fixedConstraint);
-				((PMLRigidBody*)*it)->bodyFixed = true;
-			}
-			else
-				(*it)->getPointsNode()->addObject(constraints);
-		else
-			delete constraints;
+                while(it!=pmlreader->bodiesList.end())
+                {
+                    //find forces and constraints in the loads list
+                    LMLConstraint<Vec3Types> *constraints = new LMLConstraint<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
+                    std::cout << "Looking for a constraint" << std::endl;
+                    if (constraints->getTargets().size() >0) {
+                        std::cout << "  Constraint found " << std::endl;
+                        if ( (*it)->isTypeOf() == "rigid") {
+                            delete constraints;
+                            FixedConstraint<RigidTypes> * fixedConstraint = new FixedConstraint<RigidTypes>;
+                            //fixedConstraint->addConstraint(0);
+                            fixedConstraint->setName("loads");
+                            (*it)->parentNode->addObject(fixedConstraint);
+                            ((PMLRigidBody*)*it)->bodyFixed = true;
+                        }
+                        else
+                            (*it)->getPointsNode()->addObject(constraints);
+                    }
+                    else
+                        delete constraints;
 
-		LMLForce<Vec3Types> *forces = new LMLForce<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
-		if (forces->getTargets().size() >0)
-			(*it)->getPointsNode()->addObject(forces);
-		else
-			delete forces;
+                    LMLForce<Vec3Types> *forces = new LMLForce<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
+                    if (forces->getTargets().size() >0)
+                        (*it)->getPointsNode()->addObject(forces);
+                    else
+                        delete forces;
 
-		it++;
-	}
-}
+                    it++;
+                }
+            }
 
-void LMLReader::updateStructure(Loads * loads, PMLReader * pmlreader)
-{
-	loadsList = loads;
-	std::vector<PMLBody *>::iterator it = pmlreader->bodiesList.begin();
-	GNode * pointsNode;
+            void LMLReader::updateStructure(Loads * loads, PMLReader * pmlreader)
+            {
+                loadsList = loads;
+                std::vector<PMLBody *>::iterator it = pmlreader->bodiesList.begin();
+                GNode * pointsNode;
 
-	while (it != pmlreader->bodiesList.end() )
-	{
-		pointsNode = (*it)->getPointsNode();
+                while (it != pmlreader->bodiesList.end() )
+                {
+                    pointsNode = (*it)->getPointsNode();
 
-		//update constraints
-		for (unsigned i=0 ; i<pointsNode->constraint.size() ; i++) {
-			if (pointsNode->constraint[i]->getName() == "loads")
-				pointsNode->removeObject ( pointsNode->constraint[i] );
-			//delete ?
-		}
-		LMLConstraint<Vec3Types> *constraints = new LMLConstraint<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
-		if (constraints->getTargets().size() >0){
-			if( (*it)->isTypeOf() == "rigid"){
-				delete constraints;
-				FixedConstraint<RigidTypes> * fixedConstraint = new FixedConstraint<RigidTypes>;
-				//fixedConstraint->addConstraint(0);
-				(*it)->parentNode->addObject(fixedConstraint);
-				fixedConstraint->setName("loads");
-				((PMLRigidBody*)*it)->bodyFixed = true;
-			}
-			else
-				pointsNode->addObject(constraints);
-		}else
-			delete constraints;
+                    //update constraints
+                    for (unsigned i=0 ; i<pointsNode->constraint.size() ; i++) {
+                        if (pointsNode->constraint[i]->getName() == "loads")
+                            pointsNode->removeObject ( pointsNode->constraint[i] );
+                        //delete ?
+                    }
+                    LMLConstraint<Vec3Types> *constraints = new LMLConstraint<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
+                    if (constraints->getTargets().size() >0){
+                        if( (*it)->isTypeOf() == "rigid"){
+                            delete constraints;
+                            FixedConstraint<RigidTypes> * fixedConstraint = new FixedConstraint<RigidTypes>;
+                            //fixedConstraint->addConstraint(0);
+                            (*it)->parentNode->addObject(fixedConstraint);
+                            fixedConstraint->setName("loads");
+                            ((PMLRigidBody*)*it)->bodyFixed = true;
+                        }
+                        else
+                            pointsNode->addObject(constraints);
+                    }else
+                        delete constraints;
 
-		//update forces
-		for (unsigned i=0 ; i<pointsNode->forceField.size() ; i++) {
-			if (pointsNode->forceField[i]->getName() == "loads")
-				pointsNode->removeObject ( pointsNode->forceField[i] );
-			//delete ?
-		}
-		LMLForce<Vec3Types> *forces = new LMLForce<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
-		if (forces->getTargets().size() >0)
-			(*it)->getPointsNode()->addObject(forces);
-		else
-			delete forces;		
+                    //update forces
+                    for (unsigned i=0 ; i<pointsNode->forceField.size() ; i++) {
+                        if (pointsNode->forceField[i]->getName() == "loads")
+                            pointsNode->removeObject ( pointsNode->forceField[i] );
+                        //delete ?
+                    }
+                    LMLForce<Vec3Types> *forces = new LMLForce<Vec3Types>(loadsList, (*it)->AtomsToDOFsIndexes, (MechanicalState<Vec3Types>*)(*it)->getMechanicalState());
+                    if (forces->getTargets().size() >0)
+                        (*it)->getPointsNode()->addObject(forces);
+                    else
+                        delete forces;
 
-		it++;
-	}
-}
+                    it++;
+                }
+            }
 
-void LMLReader::saveAsLML(const char * filename)
-{
-	if(!loadsList)
-		return;
+            void LMLReader::saveAsLML(const char * filename)
+            {
+                if(!loadsList)
+                    return;
 
-	std::ofstream outputFile(filename);
-	loadsList->xmlPrint(outputFile);
-}
+                std::ofstream outputFile(filename);
+                loadsList->xmlPrint(outputFile);
+            }
 
-}
-}
+        }
+    }
 }

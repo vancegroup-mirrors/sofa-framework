@@ -456,7 +456,10 @@ void MechanicalVisitor::printWriteVectors(simulation::Node* node, core::objectmo
         }
       else
 	{
-          printWriteVectors(node->mechanicalState);
+          core::componentmodel::behavior::BaseMechanicalState* dof = node->mechanicalState;
+          if (dof == NULL)
+            node->getContext()->get(dof);
+          printWriteVectors(dof);
           return;
 	}
 
@@ -517,7 +520,7 @@ Visitor::Result MechanicalIntegrationVisitor::fwdOdeSolver(simulation::Node* nod
 	return RESULT_PRUNE;
 }
 
-Visitor::Result MechanicalIntegrationVisitor::fwdInteractionForceField(simulation::Node* node, core::componentmodel::behavior::InteractionForceField* obj)
+Visitor::Result MechanicalIntegrationVisitor::fwdInteractionForceField(simulation::Node* /*node*/, core::componentmodel::behavior::InteractionForceField* obj)
 {
   obj->addForce();
   return RESULT_CONTINUE;

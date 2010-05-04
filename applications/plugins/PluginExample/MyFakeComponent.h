@@ -74,8 +74,8 @@ SOFA_CLASS(MyFakeComponent,sofa::core::BehaviorModel);
 
 protected:
 
-	Data<unsigned> myData;
-
+	Data<unsigned> customUnsignedData;
+  Data<unsigned> regularUnsignedData;
 private:
 
 };

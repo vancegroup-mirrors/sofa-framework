@@ -55,18 +55,31 @@ ConstantForceField<DataTypes>::ConstantForceField()
   , force(initData(&force, "force", "applied force to all points if forces attribute is not specified"))
   , arrowSizeCoef(initData(&arrowSizeCoef,0.0, "arrowSizeCoef", "Size of the drawn arrows (0->no arrows, sign->direction of drawing"))
   , indexFromEnd(initData(&indexFromEnd,(bool)false,"indexFromEnd", "Concerned DOFs indices are numbered from the end of the MState DOFs vector"))
+  , totalForce(initData(&totalForce, "totalForce", "total force for all points, will be distributed uniformly over points"))
 {
-
 }
 
 
 template<class DataTypes>
 void ConstantForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, const VecDeriv&)
-{
-	f1.resize(p1.size());
+{        
+	f1.resize(p1.size());                
+
+        //std::cout << "Points = " << points.getValue() << std::endl;
+        Deriv singleForce;
+        if (totalForce.getValue()[0] != 0.0 || totalForce.getValue()[1] != 0.0 || totalForce.getValue()[2] != 0.0) {
+            for (unsigned comp = 0; comp < totalForce.getValue().size(); comp++)
+                singleForce[comp] = (totalForce.getValue()[comp])/(double(points.getValue().size()));
+            //std::cout << "Setting forces for each node to = " << singleForce << std::endl;
+        } else if (force.getValue()[0] != 0.0 || force.getValue()[1] != 0.0 || force.getValue()[2] != 0.0) {
+            singleForce = force.getValue();
+            //std::cout << "Setting forces for each node to = " << singleForce << std::endl;
+        }
+
 	const VecIndex& indices = points.getValue();
 	const VecDeriv& f = forces.getValue();
-	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
+        //const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
+        const Deriv f_end = (f.empty()? singleForce : f[f.size()-1]);
 	unsigned int i = 0;
 
 	if (!indexFromEnd.getValue())
@@ -138,7 +151,7 @@ void ConstantForceField<DataTypes>::setForce(unsigned i, const Deriv& force)
 	indices.push_back(i);
 	f.push_back( force );
 	points.endEdit();
-	forces.endEdit();
+	forces.endEdit();       
 }
 
 
@@ -162,10 +175,18 @@ void ConstantForceField<DataTypes>::draw()
 {
 	double aSC = arrowSizeCoef.getValue();
 
+        Deriv singleForce;
+        if (totalForce.getValue()[0] != 0.0 || totalForce.getValue()[1] != 0.0 || totalForce.getValue()[2] != 0.0) {
+            for (unsigned comp = 0; comp < totalForce.getValue().size(); comp++)
+                singleForce[comp] = (totalForce.getValue()[comp])/(double(points.getValue().size()));
+        } else if (force.getValue()[0] != 0.0 || force.getValue()[1] != 0.0 || force.getValue()[2] != 0.0) {
+            singleForce = force.getValue();
+        }
+
 	if ((!this->getContext()->getShowForceFields() && (aSC==0)) || (aSC < 0.0)) return;
 	const VecIndex& indices = points.getValue();
 	const VecDeriv& f = forces.getValue();
-	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
+	const Deriv f_end = (f.empty()? singleForce : f[f.size()-1]);
 	const VecCoord& x = *this->mstate->getX();
 
 	

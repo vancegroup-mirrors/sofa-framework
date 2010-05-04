@@ -84,7 +84,10 @@ HEADERS += helper.h \
     proximity.h \
     SimpleTimer.h \
     AdvancedTimer.h \
-    io/ImageDDS.h
+    io/ImageDDS.h \
+	tricks.h \ 
+    Polynomial_LD.h \
+    Polynomial_LD.inl 
 SOURCES += ArgumentParser.cpp \
     BackTrace.cpp \
     Factory.cpp \
@@ -127,7 +130,8 @@ SOURCES += ArgumentParser.cpp \
     vector.cpp \
     proximity.cpp \
     AdvancedTimer.cpp \
-    io/ImageDDS.cpp
+    io/ImageDDS.cpp \
+	Polynomial_LD.cpp
 contains(DEFINES,SOFA_HAVE_GLEW) { 
     HEADERS += gl/FrameBufferObject.h \
         gl/GLSLShader.h

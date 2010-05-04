@@ -36,7 +36,8 @@
 #include "WFloatLineEdit.h"
 #include <limits.h>
 
-//#include <sofa/component/fem/QuadratureFormular.h>
+#include <sofa/component/fem/QuadratureFormular.h>
+#include <sofa/helper/Polynomial_LD.inl>
 
 
 #if !defined(INFINITY)
@@ -185,9 +186,6 @@ namespace sofa
         }
         virtual unsigned int numColumnWidget() { return 3; }
       };
-
-
-     
 
       ////////////////////////////////////////////////////////////////
       /// std::string support
@@ -371,8 +369,6 @@ namespace sofa
         static void resize( int /*s*/, data_type& /*d*/)
         {
         }
-
-
       };
 
 
@@ -647,24 +643,19 @@ namespace sofa
       class data_widget_container < Quater<T> > : public fixed_vector_data_widget_container < Quater<T> >
       {};
 
-
       ////////////////////////////////////////////////////////////////
       /// sofa::component::fem::QuadratureFormular support
       ////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-      template<typename TDataTypes, int N >
-      class vector_data_trait < sofa::component::fem::InternalQuadraturePoint<TDataTypes, N> >
+      using sofa::component::fem::QuadraturePoint;
+
+      template<typename VecN>
+      class vector_data_trait < QuadraturePoint< VecN > >
       {
       public:
-    	typedef typename sofa::component::fem::InternalQuadraturePoint<TDataTypes, N> data_type;
-        typedef TDataTypes DataTypes;
-    	typedef typename DataTypes::Coord Coord;
-    	typedef typename DataTypes::VecCoord VecCoord;
-    	typedef typename Coord::value_type value_type;
+    	typedef QuadraturePoint<VecN > data_type;
+    	typedef typename VecN::value_type value_type;
         enum { NDIM = 1 };
-        enum { SIZE = Coord::static_size };
+        enum { SIZE = QuadraturePoint<VecN >::static_size };
         static int size(const data_type&) { return SIZE; }
         static const char* header(const data_type& , int i = 0)
         {
@@ -691,13 +682,43 @@ namespace sofa
         }
       };
 
-      template<class TDatatype>
-      class data_widget_container < sofa::component::fem::QuadratureFormular<TDatatype>::QuadraturePoint >
-      : public fixed_vector_data_widget_container < sofa::component::fem::QuadratureFormular<TDatatype>::QuadraturePoint >
+      template<class VecN>
+      class data_widget_container < QuadraturePoint<VecN > >
+      : public fixed_vector_data_widget_container < QuadraturePoint<VecN > >
       {};
-*/
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+      ////////////////////////////////////////////////////////////////
+      /// sofa::helper::Polynomial_LD support
+      ////////////////////////////////////////////////////////////////
+      using sofa::helper::Polynomial_LD;
+
+      template<typename Real, unsigned int N>
+      class data_widget_trait < Polynomial_LD<Real,N> >
+      {
+      public:
+        typedef Polynomial_LD<Real,N> data_type;
+        typedef QLineEdit Widget;
+        static Widget* create(QWidget* parent, const data_type& )
+        {
+          Widget* w = new Widget(parent);
+          return w;
+        }
+        static void readFromData(Widget* w, const data_type& d)
+        {
+          unsigned int m_length=d.getString().length();
+          w->setMaxLength(m_length+2);w->setReadOnly(true);
+          w->setText(QString(d.getString().c_str()));
+        }
+        static void writeToData(Widget* , data_type& )
+        {
+        }
+        static void connectChanged(Widget* w, DataWidget* datawidget)
+        {
+          datawidget->connect(w, SIGNAL( textChanged(const QString&) ), datawidget, SLOT(setWidgetDirty()) );
+        }
+      };
+
       ////////////////////////////////////////////////////////////////
       /// sofa::defaulttype::Mat support
       ////////////////////////////////////////////////////////////////

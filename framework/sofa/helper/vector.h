@@ -59,11 +59,12 @@ public:
     typedef const T& const_reference;
     typedef T*     iterator;
     typedef const T* const_iterator;
+    typedef typename MemoryManager::device_pointer device_pointer;
 
 protected:
     size_type     vectorSize;     ///< Current size of the vector
     size_type     allocSize;      ///< Allocated size
-    mutable void* devicePointer[MemoryManager::MAX_DEVICES];  ///< Pointer to the data on the GPU side
+    device_pointer devicePointer[MemoryManager::MAX_DEVICES];  ///< Pointer to the data on the GPU side
     T*            hostPointer;    ///< Pointer to the data on the CPU side
     GLuint        bufferObject;   ///< Optionnal associated OpenGL buffer ID
     mutable int   deviceIsValid;  ///< True if the data on the GPU is currently valid
@@ -75,18 +76,18 @@ public:
     vector()
     : vectorSize ( 0 ), allocSize ( 0 ), hostPointer ( NULL ), bufferObject(0), deviceIsValid ( ALL_DEVICE_VALID ), hostIsValid ( true ), bufferIsRegistered(false) 
     {
-	  for (int d=0;d<MemoryManager::numDevices();d++) devicePointer[d] = NULL;
+	  for (int d=0;d<MemoryManager::numDevices();d++) devicePointer[d] = MemoryManager::null();
     }
     vector ( size_type n )
     : vectorSize ( 0 ), allocSize ( 0 ), hostPointer ( NULL ), bufferObject(0), deviceIsValid ( ALL_DEVICE_VALID ), hostIsValid ( true ), bufferIsRegistered(false)  
     {
-	for (int d=0;d<MemoryManager::numDevices();d++) devicePointer[d] = NULL;
+	for (int d=0;d<MemoryManager::numDevices();d++) devicePointer[d] = MemoryManager::null();
         resize ( n );
     }
     vector ( const vector<T,MemoryManager >& v )
     : vectorSize ( 0 ), allocSize ( 0 ), hostPointer ( NULL ), bufferObject(0), deviceIsValid ( ALL_DEVICE_VALID ), hostIsValid ( true ), bufferIsRegistered(false) 
     {
-	for (int d=0;d<MemoryManager::numDevices();d++) devicePointer[d] = NULL;
+	for (int d=0;d<MemoryManager::numDevices();d++) devicePointer[d] = MemoryManager::null();
         *this = v;
     }
     
@@ -125,8 +126,8 @@ public:
 	    }
 	    
 	    for (int d=0;d<MemoryManager::numDevices();d++) {	  
-		if (devicePointer[d]!=NULL && v.devicePointer[d]!=NULL && v.isDeviceValid(d)) {	      
-		      MemoryManager::memcpyDeviceToDevice (d, devicePointer[d], v.devicePointer[d], vectorSize*sizeof ( T ) );
+		if (!MemoryManager::isNull(devicePointer[d]) && !MemoryManager::isNull(v.devicePointer[d]) && v.isDeviceValid(d)) {
+			  MemoryManager::memcpyDeviceToDevice(d, devicePointer[d], v.devicePointer[d], vectorSize*sizeof ( T ) );
 		}
 	    }
 	}
@@ -140,10 +141,10 @@ public:
 	if (MemoryManager::SUPPORT_GL_BUFFER && bufferObject ) {
 	    unregisterBuffer();
 	    MemoryManager::bufferFree(bufferObject);
-	    devicePointer[MemoryManager::getBufferDevice()] = NULL; // already free
+		devicePointer[MemoryManager::getBufferDevice()] = MemoryManager::null(); // already free
 	} else {	    
 	    for (int d=0;d<MemoryManager::numDevices();d++) {
-	      if ( devicePointer[d]!=NULL ) MemoryManager::deviceFree(d, devicePointer[d] );
+		  if ( !MemoryManager::isNull(devicePointer[d]) ) MemoryManager::deviceFree(d, (devicePointer[d]) );
 	    }
 	}
     }
@@ -177,11 +178,11 @@ public:
 		if ( vectorSize > 0 && deviceIsValid ) deviceIsValid = 0;
 	} else {
 		for (int d=0;d<MemoryManager::numDevices();d++) {
-			void* prevDevicePointer = devicePointer[d];
+                        device_pointer prevDevicePointer = devicePointer[d];
 			//COMM : if (mycudaVerboseLevel>=LOG_INFO) std::cout << "CudaVector<"<<sofa::core::objectmodel::Base::className((T*)NULL)<<"> : reserve("<<s<<")"<<std::endl;
 			MemoryManager::deviceAlloc(d, &devicePointer[d], allocSize*sizeof ( T ) );
 			if ( vectorSize > 0 && isDeviceValid(d)) MemoryManager::memcpyDeviceToDevice (d, devicePointer[d], prevDevicePointer, vectorSize*sizeof ( T ) );
-			if ( prevDevicePointer != NULL ) MemoryManager::deviceFree (d, prevDevicePointer );
+			if ( !MemoryManager::isNull(prevDevicePointer)) MemoryManager::deviceFree (d, prevDevicePointer );
 		}
 	}
 	
@@ -216,7 +217,7 @@ public:
         deviceIsValid = ALL_DEVICE_VALID;
     }
 
-    void memsetHost(int v = 0) {
+	void memsetHost(int v = 0) {
 	MemoryManager::memsetHost(hostPointer,v,vectorSize*sizeof(T));
         hostIsValid = true;
         deviceIsValid = 0;
@@ -230,7 +231,7 @@ public:
                 if (hostIsValid) MemoryManager::memsetHost(hostPointer+vectorSize,0,(s-vectorSize)*sizeof(T));
                 
 		for (int d=0;d<MemoryManager::numDevices();d++) {
-		  if (isDeviceValid(d)) MemoryManager::memsetDevice(d,(void *) (((T*)devicePointer[d])+vectorSize), 0, (s-vectorSize)*sizeof(T));
+		  if (isDeviceValid(d)) MemoryManager::memsetDevice(d,MemoryManager::deviceOffset(devicePointer[d],vectorSize), 0, (s-vectorSize)*sizeof(T));
 		}
             } else {
                 copyToHost();
@@ -244,8 +245,9 @@ public:
 		  if (MemoryManager::SUPPORT_GL_BUFFER && bufferObject) mapBuffer();
 		  
 		  for (int d=0;d<MemoryManager::numDevices();d++) {
-		    if (devicePointer[d]!=NULL &&  isDeviceValid(d) ) 
-		      MemoryManager::memcpyHostToDevice(d, ((T*) devicePointer[d] ) +vectorSize, hostPointer+vectorSize, ( s-vectorSize ) *sizeof ( T ) );
+				if (!MemoryManager::isNull(devicePointer[d]) &&  isDeviceValid(d) ) {
+					MemoryManager::memcpyHostToDevice(d, MemoryManager::deviceOffset(devicePointer[d], vectorSize), hostPointer+vectorSize, ( s-vectorSize ) *sizeof ( T ) );
+				}
 		  }
 		}
 	    }
@@ -276,23 +278,23 @@ public:
 	VSWAP ( bool     , bufferIsRegistered );
 #undef VSWAP
     }
-    
-    const void* deviceReadAt ( int i ,int gpu = MemoryManager::getBufferDevice()) const {
+
+    const device_pointer deviceReadAt ( int i ,int gpu = MemoryManager::getBufferDevice()) const {
         copyToDevice(gpu);
-        return ( ( const T* ) devicePointer[gpu] ) +i;		
+		return MemoryManager::deviceOffset(devicePointer[gpu],i);
     }
     
-    const void* deviceRead ( int gpu = MemoryManager::getBufferDevice()) const { return deviceReadAt(0,gpu); }
+    const device_pointer deviceRead ( int gpu = MemoryManager::getBufferDevice()) const { return deviceReadAt(0,gpu); }
     
-    void* deviceWriteAt ( int i ,int gpu = MemoryManager::getBufferDevice()) {
+    device_pointer deviceWriteAt ( int i ,int gpu = MemoryManager::getBufferDevice()) {
         copyToDevice(gpu);
         hostIsValid = false;
         int mask = 1<<gpu;
         deviceIsValid = mask;
-        return ( ( T* ) devicePointer[gpu] ) +i;
+		return MemoryManager::deviceOffset(devicePointer[gpu],i);
     }
 
-    void* deviceWrite (int gpu = MemoryManager::getBufferDevice()) { return deviceWriteAt(0,gpu); }    
+    device_pointer deviceWrite (int gpu = MemoryManager::getBufferDevice()) { return deviceWriteAt(0,gpu); }
 
     const T* hostRead ( int i=0 ) const {
         copyToHost();
@@ -349,7 +351,7 @@ public:
     const T& operator[] ( size_type i ) const {
         checkIndex ( i );
         return hostRead() [i];
-    }
+	}
     
     T& operator[] ( size_type i ) {
         checkIndex ( i );
@@ -407,8 +409,8 @@ protected:
 	if (MemoryManager::SUPPORT_GL_BUFFER && bufferObject) mapBuffer();
 	
 	for (int d=0;d<MemoryManager::numDevices();d++) {
-	    if (devicePointer[d]!=NULL && isDeviceValid(d)) {
-	      MemoryManager::memcpyDeviceToHost (d, hostPointer, devicePointer[d], vectorSize*sizeof ( T ) );
+		if (!MemoryManager::isNull(devicePointer[d]) && isDeviceValid(d)) {
+		  MemoryManager::memcpyDeviceToHost (d, hostPointer, devicePointer[d], vectorSize*sizeof ( T ) );
 	      hostIsValid = true;
 	      return;
 	    }
@@ -422,7 +424,7 @@ protected:
         //COMM : if (mycudaVerboseLevel>=LOG_TRACE) std::cout << "CUDA: CPU->GPU copy of "<<sofa::core::objectmodel::Base::decodeTypeName ( typeid ( *this ) ) <<": "<<vectorSize*sizeof ( T ) <<" B"<<std::endl;
 //#endif
         if ( !hostIsValid ) copyToHost();
-        MemoryManager::memcpyHostToDevice (d, devicePointer[d], hostPointer, vectorSize*sizeof ( T ) );
+		MemoryManager::memcpyHostToDevice (d, devicePointer[d], hostPointer, vectorSize*sizeof ( T ) );
         int mask = 1<<d;
         deviceIsValid = deviceIsValid | mask;
     }
@@ -439,8 +441,8 @@ protected:
 	
 	if (MemoryManager::SUPPORT_GL_BUFFER && bufferObject) mapBuffer();	
 	for (int d=0;d<MemoryManager::numDevices();d++) {
-	    if (devicePointer[d]!=NULL && isDeviceValid(d)) {
-	      MemoryManager::memcpyDeviceToHost(d, ((T*)hostPointer)+i, ((const T*)devicePointer[d])+i, sizeof ( T ) );
+		if (!MemoryManager::isNull(devicePointer[d]) && isDeviceValid(d)) {
+		  MemoryManager::memcpyDeviceToHost(d, ((T*)hostPointer)+i, MemoryManager::deviceOffset(devicePointer[d],i), sizeof ( T ) );
 	      return;
 	    }
 	}	
@@ -466,8 +468,8 @@ protected:
 	if (MemoryManager::SUPPORT_GL_BUFFER) {
 	    registerBuffer();
 	    if (bufferIsRegistered) {
-		if (this->allocSize > 0 && this->devicePointer[MemoryManager::getBufferDevice()]==NULL) {
-		    MemoryManager::bufferMapToDevice(&this->devicePointer[MemoryManager::getBufferDevice()], bufferObject);
+		if (this->allocSize > 0 && MemoryManager::isNull(this->devicePointer[MemoryManager::getBufferDevice()])) {
+                        MemoryManager::bufferMapToDevice((device_pointer*)&(this->devicePointer[MemoryManager::getBufferDevice()]), bufferObject);
 		}
 	    } else {
 		std::cout << "CUDA: Unable to map buffer to opengl" << std::endl;
@@ -477,9 +479,9 @@ protected:
     
     void unmapBuffer() const {
 	if (MemoryManager::SUPPORT_GL_BUFFER) {
-	    if (this->allocSize > 0 && this->devicePointer[MemoryManager::getBufferDevice()] != NULL) {
-		MemoryManager::bufferUnmapToDevice(&this->devicePointer[MemoryManager::getBufferDevice()], bufferObject);
-		this->devicePointer[MemoryManager::getBufferDevice()] = NULL;
+		if (this->allocSize > 0 && !MemoryManager::isNull(this->devicePointer[MemoryManager::getBufferDevice()])) {
+                MemoryManager::bufferUnmapToDevice((device_pointer*)&(this->devicePointer[MemoryManager::getBufferDevice()]), bufferObject);
+                *((device_pointer*) &(this->devicePointer[MemoryManager::getBufferDevice()])) = MemoryManager::null();
 	    }
 	}
     }
@@ -506,7 +508,7 @@ protected:
 		if (this->vectorSize>0 && this->isDeviceValid(MemoryManager::getBufferDevice())) {
 		    deviceRead(MemoryManager::getBufferDevice());//check datas are on device MemoryManager::getBufferDevice()
 		    mapBuffer();
-		    if (prevDevicePointer) MemoryManager::memcpyDeviceToDevice (MemoryManager::getBufferDevice(), devicePointer[MemoryManager::getBufferDevice()], prevDevicePointer, vectorSize*sizeof ( T ) );
+			if (prevDevicePointer) MemoryManager::memcpyDeviceToDevice ( MemoryManager::getBufferDevice(), devicePointer[MemoryManager::getBufferDevice()], prevDevicePointer, vectorSize*sizeof ( T ) );
 		}
 		if ( prevDevicePointer != NULL ) MemoryManager::deviceFree(MemoryManager::getBufferDevice(), prevDevicePointer);
 	    }
@@ -541,11 +543,11 @@ public:
 	/// Constructor
 	vector(const std::vector<T, Alloc>& x): std::vector<T,Alloc>(x) {}
 	/// Constructor
-	vector<T, Alloc>& operator=(const std::vector<T, Alloc>& x)
+	/*vector<T, Alloc>& operator=(const std::vector<T, Alloc>& x)
 	{
 		//std::vector<T,Alloc>::operator = (x);
 		return vector(x);
-	}
+	}*/
 
 #ifdef __STL_MEMBER_TEMPLATES
   /// Constructor

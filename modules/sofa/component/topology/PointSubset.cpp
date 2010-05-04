@@ -160,8 +160,16 @@ void PointSubset::remove( const sofa::helper::vector<unsigned int> &index)
 
 			m_subset[it1]=m_subset[m_subset.size()-1];
 			m_removalFunc( index[i], m_removeParam); 
-			m_subset.resize(m_subset.size()-1);
 
+			// Fix "vector size specified is too large" exception.
+			if (m_subset.size() > 0)
+			{
+				m_subset.resize(m_subset.size() - 1);
+			}
+			else
+			{
+				m_subset.resize(0);
+			}
 		}
 		else
 		{

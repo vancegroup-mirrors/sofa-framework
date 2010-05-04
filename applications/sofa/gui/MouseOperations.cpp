@@ -104,6 +104,7 @@ namespace sofa
     {    
       //Creation
       performer=component::collision::InteractionPerformer::InteractionPerformerFactory::getInstance()->createObject("FixParticle", pickHandle->getInteraction()->mouseInteractor);
+      if (!performer) {std::cerr << "FixParticule performer is not able to run with the model picked" << std::endl; return;}
       pickHandle->getInteraction()->mouseInteractor->addInteractionPerformer(performer);
 
       //Configuration

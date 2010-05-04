@@ -24,6 +24,8 @@ HEADERS += component.h \
            container/ArticulatedHierarchyContainer.h \
            container/ArticulatedHierarchyContainer.inl \
            container/ImplicitSurfaceContainer.h \
+           container/InterpolatedImplicitSurface.h \
+           container/InterpolatedImplicitSurface.inl \
            container/RotationFinder.h \
            container/RotationFinder.inl \
            container/SpatialGridContainer.h \
@@ -133,6 +135,7 @@ SOURCES +=  \
            container/VoxelGridLoader.cpp \
            container/ArticulatedHierarchyContainer.cpp \
            container/ImplicitSurfaceContainer.cpp \
+           container/InterpolatedImplicitSurface.cpp \
            container/RotationFinder.cpp \
            container/SpatialGridContainer.cpp \
            container/DistanceGrid.cpp \

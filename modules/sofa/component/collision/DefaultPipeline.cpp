@@ -88,7 +88,7 @@ void DefaultPipeline::doCollisionReset()
 	if (groupManager!=NULL)
 	{
 		if (node) t0 = node->startTime();
-		groupManager->clearGroups(scene);
+                groupManager->clearGroups(scene);
 		if (node) t0 = node->endTime(t0, category, groupManager, this);
 	}
 }

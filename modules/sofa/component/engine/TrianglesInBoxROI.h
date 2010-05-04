@@ -109,6 +109,7 @@ public:
       return DataTypes::Name();
     }
 
+    Data<bool> isVisible;
     Data< helper::vector<Vec6> > boxes;
     Data<VecCoord> f_X0;
     Data< helper::vector<BaseMeshTopology::Triangle> > f_triangles;

@@ -58,8 +58,8 @@ void MasterContactSolver::init()
   void MasterContactSolver::step(double dt)
   {
     simulation::Node *context =  (simulation::Node *)(this->getContext()); // access to current node
-    CTime timer;
-    CTime timerTotal;
+    helper::system::thread::CTime timer;
+    helper::system::thread::CTime timerTotal;
     double time = 0.0;
     double timeTotal=0.0;
     double timeScale = 1000.0 / (double)CTime::getTicksPerSec();

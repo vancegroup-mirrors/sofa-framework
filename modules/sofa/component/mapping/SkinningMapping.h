@@ -50,6 +50,17 @@ namespace sofa
       using sofa::component::topology::HexahedronGeodesicalDistance;
       using sofa::helper::vector;
 
+#define DISTANCE_EUCLIDIAN 0
+#define DISTANCE_GEODESIC 1
+#define DISTANCE_HARMONIC 2
+
+#define WEIGHT_LINEAR 0
+#define WEIGHT_INVDIST_SQUARE 1
+#define WEIGHT_HERMITE 2
+
+#define INTERPOLATION_LINEAR 0
+#define INTERPOLATION_DUAL_QUATERNION 1
+      /*
       typedef enum
       {
         DISTANCE_EUCLIDIAN, DISTANCE_GEODESIC, DISTANCE_HARMONIC
@@ -63,7 +74,7 @@ namespace sofa
       typedef enum
       {
         INTERPOLATION_LINEAR, INTERPOLATION_DUAL_QUATERNION
-      } InterpolationType;
+      } InterpolationType;*/
 
       template <class T>
       class Coefs: public vector<vector<T> >
@@ -127,7 +138,7 @@ namespace sofa
 
       template <class BasicMapping>
       class SkinningMapping : public BasicMapping
-{
+        {
         public:
           SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
           typedef BasicMapping Inherit;
@@ -187,11 +198,12 @@ namespace sofa
           Data<bool> displayBlendedFrame;
           Data<bool> computeJ;
           Data<bool> computeAllMatrices;
+          Data<bool> displayDefTensors;
 
+          Data<int /* = WeightingType*/> wheightingType;
+          Data<int /* = InterpolationType*/> interpolationType;
+          Data<int /* = DistanceType*/> distanceType;
           bool computeWeights;
-          WeightingType wheighting;
-          InterpolationType interpolation;
-          DistanceType distance;
           vector<vector<double> > distances;
           vector<vector<Coord> > distGradients;
 
@@ -253,6 +265,7 @@ namespace sofa
             return computeWeights;
           }
 
+          bool doJustOnce; //TO remove after unitary tests.
         };
 
       using core::Mapping;

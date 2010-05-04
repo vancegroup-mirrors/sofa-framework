@@ -44,6 +44,8 @@
 #include <sofa/component/topology/QuadSetGeometryAlgorithms.h>
 #include <sofa/component/topology/HexahedronSetGeometryAlgorithms.h>
 
+#include <sofa/core/objectmodel/DataFileName.h>
+
 namespace sofa
 {
 
@@ -95,7 +97,8 @@ public:
 
 	/// to display the center of gravity of the system
 	Data< bool > showCenterOfGravity;
-	Data< float > showAxisSize;
+        Data< float > showAxisSize;
+        core::objectmodel::DataFileName fileMass;
 
 protected:
     //VecMass masses;
@@ -126,7 +129,7 @@ public:
 
     virtual void reinit();
     virtual void init();
-    virtual void parse(core::objectmodel::BaseObjectDescription* arg);
+
 
     TopologyType getMassTopologyType() const {
         return topologyType;

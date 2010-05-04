@@ -641,7 +641,11 @@ namespace sofa
             //Remove the text
             item->setText(0, QString("Deactivated ") + item->text(0));
             //Remove the icon
+#ifdef SOFA_QT4
+            item->setPixmap(0,QPixmap::fromImage(QImage(pixmap_filename.c_str())));
+#else
             item->setPixmap(0,QPixmap(QImage(pixmap_filename.c_str())));
+#endif
             item->setOpen(false);
           }
         }

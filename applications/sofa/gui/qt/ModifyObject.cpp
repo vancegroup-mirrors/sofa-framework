@@ -509,6 +509,7 @@ namespace sofa
         connect(displaydatawidget, SIGNAL(DataParentNameChanged()), this, SLOT( updateListViewItem() ) );
         connect( buttonOk,       SIGNAL( clicked() ), this, SLOT( accept() ) );
         connect( buttonCancel,   SIGNAL( clicked() ), this, SLOT( reject() ) );
+        connect(this, SIGNAL(updateDataWidgets()), displaydatawidget, SLOT(UpdateWidgets()) );
       }
 
       //******************************************************************************************

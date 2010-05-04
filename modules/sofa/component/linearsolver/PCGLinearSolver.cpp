@@ -251,25 +251,25 @@ void PCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 	f_graph.endEdit();
 	// x is the solution of the system
 #ifdef DISPLAY_TIME
-step_simu++;
-it_simu+=nb_iter;
-if (step_simu>DISPLAY_TIME) {
-		time1 /= (double)((double)CTime::getRefTicksPerSec());
-		time2 /= (double)((double)CTime::getRefTicksPerSec());
-		time3 /= (double)((double)CTime::getRefTicksPerSec());
-		time4 /= (double)((double)CTime::getRefTicksPerSec());
+	step_simu++;
+	it_simu+=nb_iter-1;
+	if (display_time.getValue() && step_simu>DISPLAY_TIME) {
+			time1 /= (double)((double)CTime::getRefTicksPerSec());
+			time2 /= (double)((double)CTime::getRefTicksPerSec());
+			time3 /= (double)((double)CTime::getRefTicksPerSec());
+			time4 /= (double)((double)CTime::getRefTicksPerSec());
 
-		double total = time1+time2+time4+time3;
-		double percen = 100.0/total;
-		cerr<<"\nPCGLinearSolver::solve nbiter = "<<it_simu<<" for " << DISPLAY_TIME << " steps. Total time = "<<total<<"\nCG =\t\t("<<time1<<"\t"<<(time1*percen)<<"%)\npreconditioner =("<<time2<<"\t"<<(time2*percen)<<"%)\nInvert =\t("<<time4<<"\t"<<(time4*percen)<<"%)\nbuild =\t\t("<<time3<<"\t"<<(time3*percen)<<"%)"<<endl;
+			double total = time1+time2+time4+time3;
+			double percen = 100.0/total;
+			cerr<<"\nPCGLinearSolver::solve nbiter = "<<it_simu<<" for " << DISPLAY_TIME << " steps. Total time = "<<total<<"\nCG =\t\t("<<time1<<"\t"<<(time1*percen)<<"%)\npreconditioner =("<<time2<<"\t"<<(time2*percen)<<"%)\nInvert =\t("<<time4<<"\t"<<(time4*percen)<<"%)\nbuild =\t\t("<<time3<<"\t"<<(time3*percen)<<"%)"<<endl;
 
-		time1 = 0.0;
-		time2 = 0.0;
-		time3 = 0.0;
-		time4 = 0.0;
-		step_simu=0;
-		it_simu=0;
-}
+			time1 = 0.0;
+			time2 = 0.0;
+			time3 = 0.0;
+			time4 = 0.0;
+			step_simu=0;
+			it_simu=0;
+	}
 #endif
 	if( printLog )
 	{

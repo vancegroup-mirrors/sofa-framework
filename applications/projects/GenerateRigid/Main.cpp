@@ -34,9 +34,9 @@ using namespace sofa::defaulttype;
 
 int main(int argc, char** argv)
 {
-    if (argc < 2 || argc > 3)
+    if (argc < 2 || argc > 4)
     {
-        std::cout <<"USAGE: "<<argv[0]<<" inputfile.obj [outputfile.rigid]\n";
+        std::cout <<"USAGE: "<<argv[0]<<" inputfile.obj [outputfile.rigid] [density]\n";
         return 1;
     }
 
@@ -56,6 +56,11 @@ int main(int argc, char** argv)
 
 
     projects::GenerateRigid(mass, center, mesh);
+
+    double density = 1000;
+    if (argc >= 4) density = atof( argv[3] );
+    std::cout << "Using density = " << density << "kg/m^3" << std::endl;
+    mass.mass *= density;
 
     std::ostream* out = &std::cout;
     if (argc >= 3)

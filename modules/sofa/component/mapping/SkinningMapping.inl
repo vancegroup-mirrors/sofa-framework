@@ -35,6 +35,8 @@
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <string>
 #include <iostream>
+#include <sofa/component/topology/TriangleSetTopologyContainer.h>
+
 
 
 namespace sofa
@@ -47,6 +49,7 @@ namespace sofa
       {
 
       using namespace sofa::defaulttype;
+			using sofa::component::topology::TriangleSetTopologyContainer;
 
       template <class BasicMapping>
       class SkinningMapping<BasicMapping>::Loader : public helper::io::MassSpringLoader, public helper::io::SphereLoader
@@ -71,10 +74,11 @@ namespace sofa
           , displayBlendedFrame ( initData ( &displayBlendedFrame, false, "displayBlendedFrame","weights list for the influences of the references Dofs" ) )
           , computeJ ( initData ( &computeJ, false, "computeJ", "compute matrix J in addition to apply for the dual quat interpolation method." ) )
           , computeAllMatrices ( initData ( &computeAllMatrices, false, "computeAllMatrices","compute all the matrices in addition to apply for the dual quat interpolation method." ) )
+          , displayDefTensors ( initData ( &displayDefTensors, false, "displayDefTensors","display computed deformation tensors." ) )
+          , wheightingType ( initData ( &wheightingType, WEIGHT_INVDIST_SQUARE, "wheightingType","Weighting computation method." ) )
+          , interpolationType ( initData ( &interpolationType, INTERPOLATION_DUAL_QUATERNION, "interpolationType","Interpolation method." ) )
+          , distanceType ( initData ( &distanceType, DISTANCE_HARMONIC, "distanceType","Distance computation method." ) )
           , computeWeights ( true )
-          , wheighting ( WEIGHT_INVDIST_SQUARE )
-          , interpolation ( INTERPOLATION_DUAL_QUATERNION )
-          , distance ( DISTANCE_HARMONIC )
       {
         maskFrom = NULL;
         if ( core::componentmodel::behavior::BaseMechanicalState *stateFrom = dynamic_cast< core::componentmodel::behavior::BaseMechanicalState *> ( from ) )
@@ -97,8 +101,8 @@ namespace sofa
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::computeInitPos ( )
       {
-        const VecCoord& xto = *this->toModel->getX();
-        const VecInCoord& xfrom = *this->fromModel->getX();
+        const VecCoord& xto = *this->toModel->getX0();
+        const VecInCoord& xfrom = *this->fromModel->getX0();
         initPosDOFs.resize ( xfrom.size() );
 
         const vector<int>& m_reps = repartition.getValue();
@@ -108,7 +112,7 @@ namespace sofa
             initPosDOFs[i] = xfrom[i];
           }
 
-        switch ( interpolation )
+        switch ( interpolationType.getValue() )
           {
           case INTERPOLATION_LINEAR:
           {
@@ -129,8 +133,8 @@ namespace sofa
       void SkinningMapping<BasicMapping>::sortReferences ()
       {
         Coord posTo;
-        VecCoord& xto = *this->toModel->getX();
-        VecInCoord& xfrom = *this->fromModel->getX();
+        VecCoord& xto = *this->toModel->getX0();
+        VecInCoord& xfrom = *this->fromModel->getX0();
 
         vector<int>& m_reps = * ( repartition.beginEdit() );
         m_reps.clear();
@@ -142,7 +146,7 @@ namespace sofa
         distGradients.clear();
         const unsigned int& nbRef = nbRefs.getValue();
 
-        switch ( distance )
+        switch ( distanceType.getValue() )
           {
           case DISTANCE_EUCLIDIAN:
           {
@@ -157,7 +161,6 @@ namespace sofa
                     distGradients[i][j] = xto[j] - xfrom[i].getCenter();
                     distances[i][j] = distGradients[i][j].norm();
                     distGradients[i][j].normalize();
-                    distGradients[i][j] *= -2/(distances[i][j]*distances[i][j]*distances[i][j]);
                   }
               }
             break;
@@ -183,22 +186,30 @@ namespace sofa
                         for ( unsigned int m=nbRef-1 ; m>k ; m-- )
                           m_reps[nbRef *j+m] = m_reps[nbRef *j+m-1];
                         m_reps[nbRef *j+k] = i;
+                        break;
                       }
                   }
               }
           }
-      }
+
+        //for ( unsigned int j=0;j<xto.size();j++ )
+        //  for ( unsigned int k=0;k<nbRef;k++ )
+        //    serr << "m_reps["<<j<<"]["<<k<<"] " << m_reps[nbRef *j+k] << sendl;
+
+			}
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::init()
       {
-        distance = DISTANCE_EUCLIDIAN;
+        VecInCoord& xfrom = *this->fromModel->getX0();
+        distanceType.setValue( DISTANCE_EUCLIDIAN);
         if ( this->initPos.empty() && this->toModel!=NULL && computeWeights==true && coefs.getValue().size() ==0 )
           {
-            if ( wheighting == WEIGHT_LINEAR || wheighting == WEIGHT_HERMITE )
-              {
+            if ( wheightingType.getValue() == WEIGHT_LINEAR || wheightingType.getValue() == WEIGHT_HERMITE )
                 nbRefs.setValue ( 2 );
-              }
+
+            if( xfrom.size() < nbRefs.getValue())
+                nbRefs.setValue ( xfrom.size() );
 
             sortReferences ();
             updateWeights ();
@@ -209,6 +220,8 @@ namespace sofa
             computeInitPos();
           }
 
+
+				doJustOnce = true; //TODO to remove. Used to place the DOFs after init
 
         this->BasicMapping::init();
       }
@@ -231,38 +244,38 @@ namespace sofa
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::setWeightsToHermite()
       {
-        wheighting = WEIGHT_HERMITE;
+        wheightingType.setValue( WEIGHT_HERMITE);
       }
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::setWeightsToLinear()
       {
-        wheighting = WEIGHT_LINEAR;
+        wheightingType.setValue( WEIGHT_LINEAR);
       }
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::setWieghtsToInvDist()
       {
-        wheighting = WEIGHT_INVDIST_SQUARE;
+        wheightingType.setValue( WEIGHT_INVDIST_SQUARE);
       }
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::setInterpolationToLinear()
       {
-        interpolation = INTERPOLATION_LINEAR;
+        interpolationType.setValue( INTERPOLATION_LINEAR);
       }
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::setInterpolationToDualQuaternion()
       {
-        interpolation = INTERPOLATION_DUAL_QUATERNION;
+        interpolationType.setValue( INTERPOLATION_DUAL_QUATERNION);
       }
 
       template <class BasicMapping>
       void SkinningMapping<BasicMapping>::updateWeights ()
       {
-        VecCoord& xto = *this->toModel->getX();
-        VecInCoord& xfrom = *this->fromModel->getX();
+        VecCoord& xto = *this->toModel->getX0();
+        VecInCoord& xfrom = *this->fromModel->getX0();
 
         vector<vector<double> >& m_coefs = * ( coefs.beginEdit() );
         const vector<int>& m_reps = repartition.getValue();
@@ -271,25 +284,26 @@ namespace sofa
         for ( unsigned int i=0;i<xfrom.size();i++ )
           m_coefs[i].resize ( xto.size() );
 
-        switch ( wheighting )
+        switch ( wheightingType.getValue() )
           {
           case WEIGHT_LINEAR:
           {
             for ( unsigned int i=0;i<xto.size();i++ )
               {
                 Vec3d r1r2, r1p;
-                double wi;
                 r1r2 = xfrom[m_reps[nbRefs.getValue() *i+1]].getCenter() - xfrom[m_reps[nbRefs.getValue() *i+0]].getCenter();
                 r1p  = xto[i] - xfrom[m_reps[nbRefs.getValue() *i+0]].getCenter();
-                wi = ( r1r2*r1p ) / ( r1r2.norm() *r1r2.norm() );
+                double r1r2NormSquare = r1r2.norm()*r1r2.norm(); 
+                double wi = ( r1r2*r1p ) / ( r1r2NormSquare);
 
                 // Abscisse curviligne
                 m_coefs[m_reps[nbRefs.getValue() *i+0]][i] = ( 1 - wi );
                 m_coefs[m_reps[nbRefs.getValue() *i+1]][i] = wi;
-
-                r1r2.normalize();
-                distGradients[m_reps[nbRefs.getValue() *i+0]][i] = -r1r2;
-                distGradients[m_reps[nbRefs.getValue() *i+1]][i] = r1r2;
+//								int j = m_reps[nbRefs.getValue() *i+0];
+//serr << "coeff["<<j<<"]["<<i<<"]: " << m_coefs[m_reps[nbRefs.getValue() *i+0]][i] << ", " << m_coefs[m_reps[nbRefs.getValue() *i+1]][i] << sendl;
+                distGradients[m_reps[nbRefs.getValue() *i+0]][i] = -r1r2 / r1r2NormSquare;
+                distGradients[m_reps[nbRefs.getValue() *i+1]][i] = r1r2 / r1r2NormSquare;
+//serr << "gradient["<<j<<"]["<<i<<"]: " << distGradients[m_reps[nbRefs.getValue() *i+0]][i] << ", " << distGradients[m_reps[nbRefs.getValue() *i+1]][i] << sendl;
               }
             break;
           }
@@ -365,7 +379,7 @@ namespace sofa
         const vector<int>& m_reps = repartition.getValue();
         const vector<vector<double> >& m_coefs = coefs.getValue();
 
-        switch ( interpolation )
+        switch ( interpolationType.getValue() )
           {
           case INTERPOLATION_LINEAR:
           {
@@ -412,7 +426,7 @@ namespace sofa
         */
         if ( ! ( maskTo->isInUse() ) )
           {
-            switch ( interpolation )
+            switch ( interpolationType.getValue() )
               {
               case INTERPOLATION_LINEAR:
               {
@@ -441,7 +455,7 @@ namespace sofa
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
             ParticleMask::InternalStorage::const_iterator it;
-            switch ( interpolation )
+            switch ( interpolationType.getValue() )
               {
               case INTERPOLATION_LINEAR:
               {
@@ -476,7 +490,7 @@ namespace sofa
         Deriv v,omega;
         if ( ! ( maskTo->isInUse() ) )
           {
-            switch ( interpolation )
+            switch ( interpolationType.getValue() )
               {
               case INTERPOLATION_LINEAR:
               {
@@ -506,7 +520,7 @@ namespace sofa
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
             ParticleMask::InternalStorage::const_iterator it;
-            switch ( interpolation )
+            switch ( interpolationType.getValue() )
               {
               case INTERPOLATION_LINEAR:
               {
@@ -547,7 +561,7 @@ namespace sofa
         vector<bool> flags;
         int outSize = out.size();
         out.resize ( in.size() + outSize ); // we can accumulate in "out" constraints from several mappings
-        switch ( interpolation )
+        switch ( interpolationType.getValue() )
           {
           case INTERPOLATION_LINEAR:
           {
@@ -597,7 +611,7 @@ namespace sofa
 
         if ( this->getShow() )
           {
-            if ( interpolation != INTERPOLATION_DUAL_QUATERNION )
+            if ( interpolationType.getValue() != INTERPOLATION_DUAL_QUATERNION )
               {
                 glDisable ( GL_LIGHTING );
                 glPointSize ( 1 );

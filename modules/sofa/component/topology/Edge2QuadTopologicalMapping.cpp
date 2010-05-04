@@ -226,9 +226,8 @@ void Edge2QuadTopologicalMapping::init()
 			to_tstm->addQuadsProcess(quads_to_create);
 			to_tstm->addQuadsWarning(quads_to_create.size(), quads_to_create, quadsIndexList);
 
-			//to_tstm->propagateTopologicalChanges();
-			to_tstm->notifyEndingEvent();
-			//to_tstm->propagateTopologicalChanges();
+			//to_tstm->notifyEndingEvent();
+			to_tstm->propagateTopologicalChanges();
 			Loc2GlobDataVec.endEdit();
 		}
 		
@@ -322,7 +321,7 @@ void Edge2QuadTopologicalMapping::updateTopologicalMappingTopDown(){
 							}
 							
 							to_tstm->addQuadsProcess(quads_to_create);
-							to_tstm->addQuadsWarning(quads_to_create.size(), quads_to_create, quadsIndexList) ;							
+							to_tstm->addQuadsWarning(quads_to_create.size(), quads_to_create, quadsIndexList) ;
 							to_tstm->propagateTopologicalChanges();
 						}
 						break;

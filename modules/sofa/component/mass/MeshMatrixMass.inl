@@ -26,9 +26,7 @@
 #define SOFA_COMPONENT_MASS_MESHMATRIXMASS_INL
 
 #include <sofa/component/mass/MeshMatrixMass.h>
-//#include <sofa/helper/io/MassSpringLoader.h>
 #include <sofa/helper/gl/template.h>
-//#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/DataTypeInfo.h>
 #include <sofa/component/topology/TopologyChangedEvent.h>
 #include <sofa/component/topology/PointData.inl>
@@ -51,20 +49,20 @@ using namespace	sofa::component::topology;
 using namespace core::componentmodel::topology;
 
 
-  template < class MassType >
-  void VertexMassCreationFunction(int, void* , MassType & VertexMass,
-				  const sofa::helper::vector< unsigned int > &,
-				  const sofa::helper::vector< double >&)
+  template< class DataTypes, class MassType>
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassCreationFunction(int, void* , MassType & VertexMass,
+                                                                       const sofa::helper::vector< unsigned int > &,
+                                                                       const sofa::helper::vector< double >&)
   {
     VertexMass = 0;
   }
   
 
-  template< class MassType >
-  void EdgeMassCreationFunction(int, void* , MassType & EdgeMass,
-				const Edge&,
-				const sofa::helper::vector< unsigned int > &,
-				const sofa::helper::vector< double >&)
+  template< class DataTypes, class MassType>
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassCreationFunction(int, void* , MassType & EdgeMass,
+                                                                     const Edge&,
+                                                                     const sofa::helper::vector< unsigned int > &,
+                                                                     const sofa::helper::vector< double >&)
   {
     EdgeMass = 0;
   }
@@ -76,8 +74,8 @@ using namespace core::componentmodel::topology;
 
   /// Creation fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  inline void VertexMassTriangleCreationFunction(const sofa::helper::vector<unsigned int> &triangleAdded,
-						 void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassTriangleCreationFunction(const sofa::helper::vector<unsigned int> &triangleAdded,
+                                                                               void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -107,8 +105,8 @@ using namespace core::componentmodel::topology;
   
   /// Creation fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  inline void EdgeMassTriangleCreationFunction(const sofa::helper::vector<unsigned int> &triangleAdded,
-					       void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassTriangleCreationFunction(const sofa::helper::vector<unsigned int> &triangleAdded,
+                                                                             void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -138,8 +136,8 @@ using namespace core::componentmodel::topology;
 
   /// Destruction fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  inline void VertexMassTriangleDestroyFunction(const sofa::helper::vector<unsigned int> &triangleRemoved,
-						void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassTriangleDestroyFunction(const sofa::helper::vector<unsigned int> &triangleRemoved,
+                                                                              void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -169,8 +167,8 @@ using namespace core::componentmodel::topology;
 
   /// Destruction fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  inline void EdgeMassTriangleDestroyFunction(const sofa::helper::vector<unsigned int> &triangleRemoved,
-					      void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassTriangleDestroyFunction(const sofa::helper::vector<unsigned int> &triangleRemoved,
+                                                                            void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -208,8 +206,8 @@ using namespace core::componentmodel::topology;
 
   /// Creation fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  void VertexMassQuadCreationFunction(const sofa::helper::vector<unsigned int> &quadAdded,
-				      void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassQuadCreationFunction(const sofa::helper::vector<unsigned int> &quadAdded,
+                                                                           void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -239,8 +237,8 @@ using namespace core::componentmodel::topology;
 
   /// Creation fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  void EdgeMassQuadCreationFunction(const sofa::helper::vector<unsigned int> &quadAdded,
-				    void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassQuadCreationFunction(const sofa::helper::vector<unsigned int> &quadAdded,
+                                                                         void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -270,8 +268,8 @@ using namespace core::componentmodel::topology;
 
   /// Destruction fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  void VertexMassQuadDestroyFunction(const sofa::helper::vector<unsigned int> &quadRemoved,
-				     void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassQuadDestroyFunction(const sofa::helper::vector<unsigned int> &quadRemoved,
+                                                                          void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -301,8 +299,8 @@ using namespace core::componentmodel::topology;
   
   /// Destruction fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  void EdgeMassQuadDestroyFunction(const sofa::helper::vector<unsigned int> &quadRemoved,
-				   void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassQuadDestroyFunction(const sofa::helper::vector<unsigned int> &quadRemoved,
+                                                                        void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -340,8 +338,8 @@ using namespace core::componentmodel::topology;
 
   /// Creation fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  void VertexMassTetrahedronCreationFunction(const sofa::helper::vector<unsigned int> &tetrahedronAdded,
-					     void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassTetrahedronCreationFunction(const sofa::helper::vector<unsigned int> &tetrahedronAdded,
+                                                                                  void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -371,8 +369,8 @@ using namespace core::componentmodel::topology;
   
   /// Creation fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  void EdgeMassTetrahedronCreationFunction(const sofa::helper::vector<unsigned int> &tetrahedronAdded,
-					   void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassTetrahedronCreationFunction(const sofa::helper::vector<unsigned int> &tetrahedronAdded,
+                                                                                void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -402,8 +400,8 @@ using namespace core::componentmodel::topology;
   
   /// Destruction fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  void VertexMassTetrahedronDestroyFunction(const sofa::helper::vector<unsigned int> &tetrahedronRemoved,
-					    void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassTetrahedronDestroyFunction(const sofa::helper::vector<unsigned int> &tetrahedronRemoved,
+                                                                                 void* param, vector<MassType> &VertexMasses)
   {
         MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -433,8 +431,8 @@ using namespace core::componentmodel::topology;
 
   /// Destruction fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  void EdgeMassTetrahedronDestroyFunction(const sofa::helper::vector<unsigned int> &tetrahedronRemoved,
-					  void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassTetrahedronDestroyFunction(const sofa::helper::vector<unsigned int> &tetrahedronRemoved,
+                                                                               void* param, vector<MassType> &EdgeMasses)
   {
         MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -471,8 +469,8 @@ using namespace core::componentmodel::topology;
 
   /// Creation fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  void VertexMassHexahedronCreationFunction(const sofa::helper::vector<unsigned int> &hexahedronAdded,
-					    void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassHexahedronCreationFunction(const sofa::helper::vector<unsigned int> &hexahedronAdded,
+                                                                                 void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -502,8 +500,8 @@ using namespace core::componentmodel::topology;
   
   /// Creation fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  void EdgeMassHexahedronCreationFunction(const sofa::helper::vector<unsigned int> &hexahedronAdded,
-					  void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassHexahedronCreationFunction(const sofa::helper::vector<unsigned int> &hexahedronAdded,
+                                                                               void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -533,8 +531,8 @@ using namespace core::componentmodel::topology;
   
   /// Destruction fonction for mass stored on vertices
   template< class DataTypes, class MassType>
-  void VertexMassHexahedronDestroyFunction(const sofa::helper::vector<unsigned int> &hexahedronRemoved,
-					   void* param, vector<MassType> &VertexMasses)
+  void MeshMatrixMass<DataTypes, MassType>::VertexMassHexahedronDestroyFunction(const sofa::helper::vector<unsigned int> &hexahedronRemoved,
+                                                                                void* param, vector<MassType> &VertexMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -564,8 +562,8 @@ using namespace core::componentmodel::topology;
 
   /// Destruction fonction for mass stored on edges
   template< class DataTypes, class MassType>
-  void EdgeMassHexahedronDestroyFunction(const sofa::helper::vector<unsigned int> &hexahedronRemoved,
-					 void* param, vector<MassType> &EdgeMasses)
+  void MeshMatrixMass<DataTypes, MassType>::EdgeMassHexahedronDestroyFunction(const sofa::helper::vector<unsigned int> &hexahedronRemoved,
+                                                                              void* param, vector<MassType> &EdgeMasses)
   {
     MeshMatrixMass<DataTypes, MassType> *MMM = (MeshMatrixMass<DataTypes, MassType> *)param;
 
@@ -609,14 +607,11 @@ using namespace core::componentmodel::topology;
     , showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
     , showAxisSize( initData(&showAxisSize, 1.0f, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
     , topologyType(TOPOLOGY_UNKNOWN)
+    , massLumpingCoeff(0.0)
   {
 
   }
 
-  template <class DataTypes, class MassType>
-  MeshMatrixMass<DataTypes, MassType>::~MeshMatrixMass()
-  {
-  }
 
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::init()
@@ -660,37 +655,37 @@ using namespace core::componentmodel::topology;
     this->getContext()->get(hexaGeo);
     
     // add the functions to handle topology changes for Vertex informations
-    vertexMassInfo.setCreateFunction(VertexMassCreationFunction<MassType>);
+    vertexMassInfo.setCreateFunction(VertexMassCreationFunction);
     vertexMassInfo.setCreateParameter ((void *) this );
     // Triangle
-    vertexMassInfo.setCreateTriangleFunction(VertexMassTriangleCreationFunction<DataTypes,MassType> );
-    vertexMassInfo.setDestroyTriangleFunction(VertexMassTriangleDestroyFunction<DataTypes,MassType>);
+    vertexMassInfo.setCreateTriangleFunction(VertexMassTriangleCreationFunction);
+    vertexMassInfo.setDestroyTriangleFunction(VertexMassTriangleDestroyFunction);
     // Quad
-    vertexMassInfo.setCreateQuadFunction(VertexMassQuadCreationFunction<DataTypes,MassType>);
-    vertexMassInfo.setDestroyQuadFunction(VertexMassQuadDestroyFunction<DataTypes,MassType>);
+    vertexMassInfo.setCreateQuadFunction(VertexMassQuadCreationFunction);
+    vertexMassInfo.setDestroyQuadFunction(VertexMassQuadDestroyFunction);
     // Tetrahedron
-    vertexMassInfo.setCreateTetrahedronFunction(VertexMassTetrahedronCreationFunction<DataTypes,MassType>);
-    vertexMassInfo.setDestroyTetrahedronFunction(VertexMassTetrahedronDestroyFunction<DataTypes,MassType>);
+    vertexMassInfo.setCreateTetrahedronFunction(VertexMassTetrahedronCreationFunction);
+    vertexMassInfo.setDestroyTetrahedronFunction(VertexMassTetrahedronDestroyFunction);
     // Hexahedron (NOT HANDLE YET)
-    //vertexMassInfo.setCreateHexahedronFunction(VertexMassHexahedronCreationFunction<DataTypes,MassType>);
-    //vertexMassInfo.setDestroyHexahedronFunction(VertexMassHexahedronDestroyFunction<DataTypes,MassType>);
+    //vertexMassInfo.setCreateHexahedronFunction(VertexMassHexahedronCreationFunction);
+    //vertexMassInfo.setDestroyHexahedronFunction(VertexMassHexahedronDestroyFunction);
     
     
     // add the functions to handle topology changes for Edge informations
-    edgeMassInfo.setCreateFunction(EdgeMassCreationFunction<MassType>);
+    edgeMassInfo.setCreateFunction(EdgeMassCreationFunction);
     edgeMassInfo.setCreateParameter ((void *) this );
     // Triangle
-    edgeMassInfo.setCreateTriangleFunction(EdgeMassTriangleCreationFunction<DataTypes,MassType>);
-    edgeMassInfo.setDestroyTriangleFunction(EdgeMassTriangleDestroyFunction<DataTypes,MassType>);
+    edgeMassInfo.setCreateTriangleFunction(EdgeMassTriangleCreationFunction);
+    edgeMassInfo.setDestroyTriangleFunction(EdgeMassTriangleDestroyFunction);
     // Quad
-    edgeMassInfo.setCreateQuadFunction(EdgeMassQuadCreationFunction<DataTypes,MassType>);
-    edgeMassInfo.setDestroyQuadFunction(EdgeMassQuadDestroyFunction<DataTypes,MassType>);
+    edgeMassInfo.setCreateQuadFunction(EdgeMassQuadCreationFunction);
+    edgeMassInfo.setDestroyQuadFunction(EdgeMassQuadDestroyFunction);
     // Tetrahedron
-    edgeMassInfo.setCreateTetrahedronFunction(EdgeMassTetrahedronCreationFunction<DataTypes,MassType>);
-    edgeMassInfo.setDestroyTetrahedronFunction(EdgeMassTetrahedronDestroyFunction<DataTypes,MassType>);
+    edgeMassInfo.setCreateTetrahedronFunction(EdgeMassTetrahedronCreationFunction);
+    edgeMassInfo.setDestroyTetrahedronFunction(EdgeMassTetrahedronDestroyFunction);
     // Hexahedron (NOT HANDLE YET)
-    //edgeMassInfo.setCreateHexahedronFunction(EdgeMassHexahedronCreationFunction<DataTypes,MassType>);
-    //edgeMassInfo.setDestroyHexahedronFunction(EdgeMassHexahedronDestroyFunction<DataTypes,MassType>);
+    //edgeMassInfo.setCreateHexahedronFunction(EdgeMassHexahedronCreationFunction);
+    //edgeMassInfo.setDestroyHexahedronFunction(EdgeMassHexahedronDestroyFunction);
 
     if ((vertexMassInfo.getValue().size()==0 || edgeMassInfo.getValue().size()==0) && (_topology!=0)) {
       reinit();
@@ -706,6 +701,7 @@ using namespace core::componentmodel::topology;
       // resize array
       clear();
 
+      /// prepare to store info in the vertex array
       vector<MassType>& my_vertexMassInfo = *vertexMassInfo.beginEdit();
       vector<MassType>& my_edgeMassInfo = *edgeMassInfo.beginEdit();
 
@@ -715,116 +711,74 @@ using namespace core::componentmodel::topology;
       my_vertexMassInfo.resize(ndof);
       my_edgeMassInfo.resize(nbEdges);
 
-      // Mass initialisation to 0
+      // set vertex tensor to 0
       for (unsigned int i = 0; i<ndof; ++i)
       	VertexMassCreationFunction (i, (void*) this, my_vertexMassInfo[i],
-				    (const sofa::helper::vector< unsigned int > )0,
-				    (const sofa::helper::vector< double >)0);
+                                     (const sofa::helper::vector< unsigned int > )0,
+                                     (const sofa::helper::vector< double >)0);
 
+      // set edge tensor to 0
       for (unsigned int i = 0; i<nbEdges; ++i)
-	EdgeMassCreationFunction (i, (void*) this, my_edgeMassInfo[i], _topology->getEdge(i),
-				  (const sofa::helper::vector< unsigned int > )0,
-				  (const sofa::helper::vector< double >)0);
+         EdgeMassCreationFunction (i, (void*) this, my_edgeMassInfo[i], _topology->getEdge(i),
+                                   (const sofa::helper::vector< unsigned int > )0,
+                                   (const sofa::helper::vector< double >)0);
       
 
-
-      typename DataTypes::Real densityM = getMassDensity();
-      typename DataTypes::Real mass = (typename DataTypes::Real) 0;
-
       // Create mass matrix depending on current Topology:
-      if (_topology->getNbTriangles()>0 && triangleGeo) // Triangle topology
+      if (_topology->getNbHexahedra()>0 && hexaGeo)  // Hexahedron topology
       {
-	for (int i = 0; i<_topology->getNbTriangles(); ++i)
-	{
-	  // Get the triangle to be added
-	  const Triangle &t = _topology->getTriangle(i);
-	  // Get the edgesInTriangle to be added
-	  const EdgesInTriangle &te = _topology->getEdgesInTriangle(i);
-	  
-	  // Compute rest mass of conserne triangle = density * triangle surface. 
-	  if(triangleGeo){
-	    mass=(densityM * triangleGeo->computeRestTriangleArea(i))/(typename DataTypes::Real)6.0;
-	  }
-	  // Adding mass
-	  for (unsigned int j=0; j<3; ++j)
-	    my_vertexMassInfo[ t[j] ] += mass;
-	  	  
-	  // Adding mass edges of concerne triangle
-	  for (unsigned int j=0; j<3; ++j)
-	    my_edgeMassInfo[ te[j] ] += mass/2;
-	}
-      }
-      else if (_topology->getNbQuads()>0 && quadGeo)  // Quad topology
-      {
-	for (int i = 0; i<_topology->getNbQuads(); ++i)
-	{
-	  // Get the quad to be added
-	  const Quad &q = _topology->getQuad(i);
-	  // Get the EdgesInQuad to be added
-	  const EdgesInQuad &qe = _topology->getEdgesInQuad(i);
-	  
-	  // Compute rest mass of conserne quad = density * quad surface. 
-	  if(quadGeo){
-	    mass=(densityM * quadGeo->computeRestQuadArea(i))/(typename DataTypes::Real)10.0;
-	  }
+         // create vector tensor by calling the hexahedron creation function on the entire mesh
+         sofa::helper::vector<unsigned int> hexahedraAdded;
+         setMassTopologyType(TOPOLOGY_HEXAHEDRONSET);
 
-	  // Adding mass
-	  for (unsigned int j=0; j<4; ++j)
-	    my_vertexMassInfo[ q[j] ] += mass;
-	  
-	  // Adding mass edges of concerne quad
-	  for (unsigned int j=0; j<4; ++j)
-	    my_edgeMassInfo[ qe[j] ] += mass/2;
-	}
+         for (int i = 0; i<_topology->getNbHexahedra(); ++i)
+            hexahedraAdded.push_back(i);
+
+         VertexMassHexahedronCreationFunction(hexahedraAdded, (void*) this, my_vertexMassInfo);
+         EdgeMassHexahedronCreationFunction(hexahedraAdded, (void*) this, my_edgeMassInfo);
+         massLumpingCoeff = 2.5;
       }
       else if (_topology->getNbTetrahedra()>0 && tetraGeo)  // Tetrahedron topology
       {
-	for (int i = 0; i<_topology->getNbTetrahedra(); ++i)
-	{
-	  // Get the tetrahedron to be added
-	  const Tetrahedron &t = _topology->getTetrahedron(i);
-	  // Get the edgesInTetrahedron to be added
-	  const EdgesInTetrahedron &te = _topology->getEdgesInTetrahedron(i);
+         // create vector tensor by calling the tetrahedron creation function on the entire mesh
+         sofa::helper::vector<unsigned int> tetrahedraAdded;
+         setMassTopologyType(TOPOLOGY_TETRAHEDRONSET);
 
-	  // Compute rest mass of conserne triangle = density * tetrahedron volume. 
-	  if(tetraGeo){
-	    mass=(densityM * tetraGeo->computeRestTetrahedronVolume(i))/(typename DataTypes::Real)8.0;
-	  }
+         for (int i = 0; i<_topology->getNbTetrahedra(); ++i)
+            tetrahedraAdded.push_back(i);
 
-	  // Adding mass
-	  for (unsigned int j=0; j<4; ++j)
-	    my_vertexMassInfo[ t[j] ] += mass;
-	  // Adding mass edges of concerne triangle
-	  for (unsigned int j=0; j<6; ++j)
-	    my_edgeMassInfo[ te[j] ] += mass/2;
-	}
+         VertexMassTetrahedronCreationFunction(tetrahedraAdded, (void*) this, my_vertexMassInfo);
+         EdgeMassTetrahedronCreationFunction(tetrahedraAdded, (void*) this, my_edgeMassInfo);
+         massLumpingCoeff = 2.5;
       }
-      else if (_topology->getNbHexahedra()>0 && hexaGeo)  // Hexahedron topology
+      else if (_topology->getNbQuads()>0 && quadGeo)  // Quad topology
       {
-	for (int i = 0; i<_topology->getNbHexahedra(); ++i)
-	{
-	  // Get the hexahedron to be added
-	  const Hexahedron &h = _topology->getHexahedron(i);
-	  
-	  // Get the EdgesInHexahedron to be added
-	  const EdgesInHexahedron &he = _topology->getEdgesInHexahedron(i);
-	  
-	  // Compute rest mass of conserne hexahedron = density * hexahedron volume. 
-	  if(hexaGeo){
-	    mass=(densityM * hexaGeo->computeRestHexahedronVolume(i))/(typename DataTypes::Real)20.0;
-	  }
-	  
-	  // Adding mass
-	  for (unsigned int j=0; j<8; ++j)
-	    my_vertexMassInfo[ h[j] ] += mass;
-	  	  
-	  // Adding mass edges of concerne triangle
-	  for (unsigned int j=0; j<12; ++j)
-	    my_edgeMassInfo[ he[j] ] += mass/2;
-	}
+         // create vector tensor by calling the quad creation function on the entire mesh
+         sofa::helper::vector<unsigned int> quadsAdded;
+         setMassTopologyType(TOPOLOGY_QUADSET);
+
+         for (int i = 0; i<_topology->getNbQuads(); ++i)
+            quadsAdded.push_back(i);
+
+         VertexMassQuadCreationFunction(quadsAdded, (void*) this, my_vertexMassInfo);
+         EdgeMassQuadCreationFunction(quadsAdded, (void*) this, my_edgeMassInfo);
+         massLumpingCoeff = 2.0;
       }
-    }
-  }
+      else if (_topology->getNbTriangles()>0 && triangleGeo) // Triangle topology
+      {
+         // create vector tensor by calling the triangle creation function on the entire mesh
+         sofa::helper::vector<unsigned int> trianglesAdded;
+         setMassTopologyType(TOPOLOGY_TRIANGLESET);
+
+         for (int i = 0; i<_topology->getNbTriangles(); ++i)
+            trianglesAdded.push_back(i);
+
+         VertexMassTriangleCreationFunction(trianglesAdded, (void*) this, my_vertexMassInfo);
+         EdgeMassTriangleCreationFunction(trianglesAdded, (void*) this, my_edgeMassInfo);
+         massLumpingCoeff = 2.0;
+      }
+   }
+ }
 
 
   template <class DataTypes, class MassType>
@@ -857,42 +811,16 @@ using namespace core::componentmodel::topology;
   {
 
     const MassVector &vertexMass= vertexMassInfo.getValue();
-    const MassVector &edgeMass= edgeMassInfo.getValue();
-
-    unsigned int nbEdges=_topology->getNbEdges();
-    unsigned int v0,v1;
        
     if (factor == 1.0)
     {
       for (unsigned int i=0;i<dx.size();i++)
-      {
-	res[i] += dx[i] * vertexMass[i];
-      }
-
-      for (unsigned int i=0; i<nbEdges; ++i)
-      {
-	v0=_topology->getEdge(i)[0];
-	v1=_topology->getEdge(i)[1];
-
-	res[v0] += dx[v0] * edgeMass[i];
-	res[v1] += dx[v1] * edgeMass[i];
-      }
+         res[i] += dx[i] * vertexMass[i]  * massLumpingCoeff;
     }
     else
     {
       for (unsigned int i=0;i<dx.size();i++)
-      {
-	res[i] += (dx[i] * vertexMass[i]) * (Real)factor;
-      }
-
-      for (unsigned int i=0; i<nbEdges; ++i)
-      {
-	v0=_topology->getEdge(i)[0];
-	v1=_topology->getEdge(i)[1];
-
-	res[v0] += (dx[v0] * edgeMass[i]) * (Real)factor;
-	res[v1] += (dx[v1] * edgeMass[i]) * (Real)factor;
-      }
+         res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
     }
   }
 
@@ -916,11 +844,6 @@ using namespace core::componentmodel::topology;
       return;
 
     const MassVector &vertexMass= vertexMassInfo.getValue();
-    const MassVector &edgeMass= edgeMassInfo.getValue();
-
-    unsigned int nbEdges=_topology->getNbEdges();
-    unsigned int v0,v1;
-
     
     // gravity
     Vec3d g ( this->getContext()->getLocalGravity() );
@@ -937,18 +860,7 @@ using namespace core::componentmodel::topology;
 
     // add weight and inertia force
     for (unsigned int i=0; i<x.size(); ++i)
-    {
-      f[i] += theGravity * vertexMass[i] + core::componentmodel::behavior::inertiaForce(vframe,aframe,vertexMass[i],x[i],v[i]);
-    }
-
-    for (unsigned int i=0; i<nbEdges; ++i)
-    {
-      v0=_topology->getEdge(i)[0];
-      v1=_topology->getEdge(i)[1];
-
-      f[v0] += theGravity*edgeMass[i] + core::componentmodel::behavior::inertiaForce(vframe,aframe,edgeMass[i],x[v0],v[v0]);
-      f[v1] += theGravity*edgeMass[i] + core::componentmodel::behavior::inertiaForce(vframe,aframe,edgeMass[i],x[v1],v[v1]);
-    }
+       f[i] += theGravity * vertexMass[i] * massLumpingCoeff + core::componentmodel::behavior::inertiaForce(vframe,aframe,vertexMass[i] * massLumpingCoeff ,x[i],v[i]);
   }
 
   
@@ -956,42 +868,35 @@ using namespace core::componentmodel::topology;
   template <class DataTypes, class MassType>
   double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v )
   {
+     const MassVector &vertexMass= vertexMassInfo.getValue();
+     const MassVector &edgeMass= edgeMassInfo.getValue();
 
-    const MassVector &vertexMass= vertexMassInfo.getValue();
-    const MassVector &edgeMass= edgeMassInfo.getValue();
-    
-    unsigned int nbEdges=_topology->getNbEdges();
-    unsigned int v0,v1;
+     unsigned int nbEdges=_topology->getNbEdges();
+     unsigned int v0,v1;
 
-    double e = 0;
-    
-    for (unsigned int i=0;i<v.size();i++)
-    {
-      e += v[i]*vertexMass[i]*v[i]; // v[i]*v[i]*masses[i] would be more efficient but less generic
-    }
+     double e = 0;
 
-    for (unsigned int i=0; i<nbEdges; ++i)
-    {
-      v0=_topology->getEdge(i)[0];
-      v1=_topology->getEdge(i)[1];
+     for (unsigned int i=0;i<v.size();i++)
+     {
+        e += dot(v[i],v[i]) * vertexMass[i]; // v[i]*v[i]*masses[i] would be more efficient but less generic
+     }
 
-      e += v[v0]*edgeMass[i]*v[v0];
-      e += v[v1]*edgeMass[i]*v[v1];
-    }
-    
-    return e/2;
+     for (unsigned int i=0; i<nbEdges; ++i)
+     {
+        v0=_topology->getEdge(i)[0];
+        v1=_topology->getEdge(i)[1];
+
+        e += 2*dot(v[v0],v[v1])*edgeMass[i];
+     }
+
+     return e/2;
   }
 
   
   template <class DataTypes, class MassType>
   double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x )
   {
-
     const MassVector &vertexMass= vertexMassInfo.getValue();
-    const MassVector &edgeMass= edgeMassInfo.getValue();
-    
-    unsigned int nbEdges=_topology->getNbEdges();
-    unsigned int v0,v1;
 
     SReal e = 0;
     // gravity
@@ -1000,19 +905,8 @@ using namespace core::componentmodel::topology;
     DataTypes::set ( theGravity, g[0], g[1], g[2]);
 
     for (unsigned int i=0;i<x.size();i++)
-    {
-      e -= theGravity*vertexMass[i]*x[i];
-    }
+       e -= dot(theGravity,x[i])*vertexMass[i] * massLumpingCoeff;
 
-    for (unsigned int i=0; i<nbEdges; ++i)
-    {
-      v0=_topology->getEdge(i)[0];
-      v1=_topology->getEdge(i)[1];
-
-      e -= theGravity*edgeMass[i]*x[v0];
-      e -= theGravity*edgeMass[i]*x[v1];
-    }
-    
     return e;
   }
 
@@ -1059,8 +953,8 @@ using namespace core::componentmodel::topology;
       v0=_topology->getEdge(i)[0];
       v1=_topology->getEdge(i)[1];
 
-      calc(mat, edgeMass[i], offset + N*v0, mFact);
-      calc(mat, edgeMass[i], offset + N*v1, mFact);
+      calc(mat, edgeMass[i], offset + v0, offset + v1, mFact);
+      calc(mat, edgeMass[i], offset + v1, offset + v0, mFact);
     }
   }
 
@@ -1070,10 +964,10 @@ using namespace core::componentmodel::topology;
   template <class DataTypes, class MassType>
   double MeshMatrixMass<DataTypes, MassType>::getElementMass(unsigned int index) const
   {
-    //return (SReal)(f_mass.getValue()[index]);
-    (void)index;
-    serr << "WARNING: the methode 'getElementMass' can't be used with MeshMatrixMass as this mass matrix is stored on two different Data." << sendl;
-    return 0.0;
+     const MassVector &vertexMass= vertexMassInfo.getValue();
+     double mass = vertexMass[index] * massLumpingCoeff;
+
+     return mass;
   }
 
 
@@ -1081,16 +975,12 @@ using namespace core::componentmodel::topology;
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const
   {
-    /*
+
     const unsigned int dimension = defaulttype::DataTypeInfo<Deriv>::size();
     if (m->rowSize() != dimension || m->colSize() != dimension) m->resize(dimension,dimension);
 
     m->clear();
-    AddMToMatrixFunctor<Deriv,MassType>()(m, f_mass.getValue()[index], 0, 1);
-    */
-    (void)index;
-    (void)m;
-    serr << "WARNING: the methode 'getElementMass' can't be used with MeshMatrixMass as this mass matrix is stored on two different Data." << sendl;
+    AddMToMatrixFunctor<Deriv,MassType>()(m, vertexMassInfo.getValue()[index] * massLumpingCoeff, 0, 1);
   }
 
 

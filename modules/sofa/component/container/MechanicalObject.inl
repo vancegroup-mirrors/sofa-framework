@@ -1278,7 +1278,13 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
       //std::cout << this->getName() << ": reset V"<<std::endl;
       //*this->v = *v0;
 
-      if (v0 == NULL)	return;
+      if (v0 == NULL)
+      {
+        for( unsigned int i=0; i<this->v->size(); ++i )
+          (*this->v)[i] = Deriv();
+        return;
+      }
+
       *this->getVecDeriv(VecId::velocity().index) = *this->v0;
 
       //std::cout << this->getName() << ": reset Xfree"<<std::endl;

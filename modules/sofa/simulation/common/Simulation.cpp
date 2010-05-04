@@ -176,6 +176,7 @@ Simulation::~Simulation(){
 				// CHANGE to support MasterSolvers : CollisionVisitor is now activated within AnimateVisitor
 				//root->execute<CollisionVisitor>();
 
+
 				AnimateVisitor act;
 				act.setDt ( mechanicalDt );
                                 BehaviorUpdatePositionVisitor beh(root->getDt());

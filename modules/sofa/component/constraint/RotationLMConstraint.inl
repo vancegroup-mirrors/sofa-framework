@@ -119,12 +119,19 @@ namespace sofa
 
 
       template<class DataTypes>
+      void RotationLMConstraint<DataTypes>::resetConstraint()
+      {
+          core::componentmodel::behavior::LMConstraint<DataTypes,DataTypes>::resetConstraint();
+          idxEquations.clear();
+      }
+
+      template<class DataTypes>
       void RotationLMConstraint<DataTypes>::buildJacobian()
-      { 
-        idxEquations.clear();
+      {          
+        if (!idxEquations.empty()) return;
         const SetIndexArray &indices = f_indices.getValue().getArray();
         const helper::vector<Deriv> &axis=rotationAxis.getValue();
-        
+
         idxEquations.resize(indices.size());
         for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
           {
@@ -137,6 +144,7 @@ namespace sofa
               }
             this->constrainedObject1->forceMask.insertEntry(index);
           }
+
       }
 
 
@@ -145,7 +153,8 @@ namespace sofa
       {
 
         //We don't constrain the Position, only the velocities and accelerations
-        if (Order==core::componentmodel::behavior::BaseLMConstraint::POS) return;
+        if (idxEquations.empty() ||
+            Order==core::componentmodel::behavior::BaseLMConstraint::POS) return;
 
 
         const SetIndexArray & indices = f_indices.getValue().getArray();
@@ -183,6 +192,7 @@ namespace sofa
               }
             
           }
+
       }
 
 

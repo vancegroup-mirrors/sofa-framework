@@ -102,6 +102,7 @@ namespace sofa
           
 	  void init();
           void draw();
+          void resetConstraint();
 
 	  // -- LMConstraint interface
           void buildJacobian();

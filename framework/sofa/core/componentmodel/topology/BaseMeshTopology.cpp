@@ -241,10 +241,6 @@ const BaseMeshTopology::VerticesAroundVertex BaseMeshTopology::getVerticesAround
 
 void BaseMeshTopology::init()
 {
-}
-void BaseMeshTopology::parse(core::objectmodel::BaseObjectDescription* arg)
-{
-    this->core::componentmodel::topology::Topology::parse(arg);
     if (!fileTopology.getValue().empty())
     {
         this->load(fileTopology.getValue().c_str());

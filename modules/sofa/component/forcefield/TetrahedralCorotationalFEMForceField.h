@@ -165,10 +165,10 @@ public:
     , _youngModulus(core::objectmodel::BaseObject::initData(&_youngModulus,(Real)5000,"youngModulus","FEM Young Modulus"))
     , _localStiffnessFactor(core::objectmodel::BaseObject::initData(&_localStiffnessFactor,"localStiffnessFactor","Allow specification of different stiffness per element. If there are N element and M values are specified, the youngModulus factor for element i would be localStiffnessFactor[i*M/N]"))
     , _updateStiffnessMatrix(core::objectmodel::BaseObject::initData(&_updateStiffnessMatrix,false,"updateStiffnessMatrix",""))
-    , _assembling(core::objectmodel::BaseObject::initData(&_assembling,false,"assembling",""))
-    {}
-
-    void parse(core::objectmodel::BaseObjectDescription* arg);
+    , _assembling(core::objectmodel::BaseObject::initData(&_assembling,false,"computeGlobalMatrix",""))
+    {
+        this->addAlias(&_assembling, "assembling");
+    }
 
     void setPoissonRatio(Real val) { this->_poissonRatio.setValue(val); }
 
@@ -193,6 +193,14 @@ public:
 
 	// handle topological changes
 	virtual void handleTopologyChange();
+
+	// Getting the rotation of the vertex by averaing the rotation of neighboring elements
+	void getRotation(Transformation& R, unsigned int nodeIdx);
+	void getRotations();
+	void getElementRotation(Transformation& R, unsigned int elementIdx);
+
+	// Getting the stiffness matrix of index i
+	void getElementStiffnessMatrix(Real* stiffness, unsigned int nodeIdx);
 
     void draw();
 

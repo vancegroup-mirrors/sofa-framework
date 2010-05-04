@@ -61,8 +61,6 @@ class SOFA_COMPONENT_CONTAINER_API MeshTopology : public core::componentmodel::t
 
 	MeshTopology();
 
-	virtual void parse(core::objectmodel::BaseObjectDescription* arg);
-
 	virtual void init();
 	
 	virtual int getNbPoints() const;
@@ -195,7 +193,8 @@ class SOFA_COMPONENT_CONTAINER_API MeshTopology : public core::componentmodel::t
 
  protected:
 	int nbPoints;
-	Data< vector< defaulttype::Vec<3,SReal> > > seqPoints;
+	typedef vector<defaulttype::Vec<3, SReal > > SeqPoints;
+	Data< SeqPoints > seqPoints;
 	
 	Data<SeqEdges> seqEdges;
 	bool validEdges;

@@ -121,16 +121,6 @@ _fillWeighted(initData(&_fillWeighted, true, "fillWeighted", "Is quantity of mat
 }
 
 
-bool SparseGridTopology::load(const char* filename)
-{
-	std::string f(filename);
-	if ( sofa::helper::system::DataRepository.findFile ( f ) )
-		this->fileTopology.setValue( f );
-	// 		serr<<"SparseGridTopology::load : "<<filename<<"    "<<this->filename.getValue()<<sendl;
-	return true;
-}
-
-
 void SparseGridTopology::init()
 {
 	if(_alreadyInit) return;

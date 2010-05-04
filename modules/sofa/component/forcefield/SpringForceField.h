@@ -35,6 +35,7 @@
 #include <sofa/helper/accessor.h>
 #include <sofa/component/component.h>
 
+#include <sofa/core/objectmodel/DataFileName.h>
 
 namespace sofa
 {
@@ -117,6 +118,7 @@ protected:
     Data<SReal> ks;
     Data<SReal> kd;
     Data<sofa::helper::vector<Spring> > springs;
+    core::objectmodel::DataFileName fileSprings;
     class Loader;
 
     SpringForceFieldInternalData<DataTypes> data;
@@ -130,7 +132,6 @@ public:
 
     virtual bool canPrefetch() const { return false; }
 
-    virtual void parse(core::objectmodel::BaseObjectDescription* arg);
 
     bool load(const char *filename);
 

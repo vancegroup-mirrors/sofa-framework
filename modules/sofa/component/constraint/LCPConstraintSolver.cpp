@@ -268,7 +268,15 @@ namespace sofa
       void LCPConstraintSolver::init()
       {
         core::componentmodel::behavior::ConstraintSolver::init();
+
+		// Prevents ConstraintCorrection accumulation due to multiple MasterSolver initialization on dynamic components Add/Remove operations.
+		if (!constraintCorrections.empty())
+		{
+			constraintCorrections.clear();
+		}
+
         getContext()->get<core::componentmodel::behavior::BaseConstraintCorrection>(&constraintCorrections, core::objectmodel::BaseContext::SearchDown);
+
         context = (simulation::Node*) getContext();
       }
 
@@ -452,7 +460,7 @@ namespace sofa
       int LCPConstraintSolver::nlcp_gaussseidel_unbuilt(double *dfree, double *f)
       {
 
-	CTime timer;
+        helper::system::thread::CTime timer;
 	double time = 0.0;
 	double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
 	if ( displayTime.getValue() )
@@ -771,7 +779,7 @@ namespace sofa
 
       int LCPConstraintSolver::lcp_gaussseidel_unbuilt(double *dfree, double *f)
       {
-        CTime timer;
+        helper::system::thread::CTime timer;
         double time = 0.0;
         double timeScale = 1.0; 
         if ( displayTime.getValue() )

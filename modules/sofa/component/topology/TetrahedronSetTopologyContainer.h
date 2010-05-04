@@ -63,12 +63,11 @@ namespace topology
 		friend class TetrahedronSetTopologyModifier;
         
     public:
-                SOFA_CLASS(TetrahedronSetTopologyContainer,TriangleSetTopologyContainer);
+        SOFA_CLASS(TetrahedronSetTopologyContainer,TriangleSetTopologyContainer);
 
 		typedef Tetra			Tetrahedron;
 		typedef EdgesInTetrahedron		EdgesInTetrahedron;
 		typedef TrianglesInTetrahedron	TrianglesInTetrahedron;
-
 	
 		TetrahedronSetTopologyContainer();
 
@@ -76,7 +75,12 @@ namespace topology
 
 		virtual void init();
 
-		
+		//add removed tetrahedron index
+		void addRemovedTetraIndex(sofa::helper::vector< unsigned int >& tetrahedra);
+
+		//get removed tetrahedron index
+		sofa::helper::vector< unsigned int >& getRemovedTetraIndex();
+
 		/// Procedural creation methods
 		/// @{
 		virtual void clear();
@@ -431,12 +435,12 @@ namespace topology
 		/// for each edge provides the set of tetrahedra adjacent to that edge.
 		sofa::helper::vector< TetrahedraAroundEdge > m_tetrahedraAroundEdge;
 
+		/// removed tetrahedron index
+		sofa::helper::vector<unsigned int> m_removedTetraIndex;
+
 		/// for each triangle provides the set of tetrahedra adjacent to that triangle.
 		sofa::helper::vector< TetrahedraAroundTriangle > m_tetrahedraAroundTriangle;
-
-		
 		virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
-
 	};
 
 } // namespace topology

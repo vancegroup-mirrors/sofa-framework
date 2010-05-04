@@ -66,6 +66,9 @@ public:
     Data<bool> f_verbose;
     Data<int> f_refresh;
     Data<bool> use_precond;
+#ifdef DISPLAY_TIME
+    Data<bool> display_time;
+#endif
     Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
     std::vector<sofa::core::componentmodel::behavior::LinearSolver*> preconditioners;
 
@@ -75,8 +78,11 @@ public:
     , f_smallDenominatorThreshold( initData(&f_smallDenominatorThreshold,1e-5,"threshold","minimum value of the denominator in the conjugate Gradient solution") )
     , f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
     , f_refresh( initData(&f_refresh,0,"refresh","Refresh iterations") )
-    , use_precond( initData(&use_precond,true,"precond","Use preconditioners") )
-    , f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") )
+    , use_precond( initData(&use_precond,true,"precond","Use preconditioners") )    
+#ifdef DISPLAY_TIME    
+    , display_time( initData(&display_time,false,"display_time","display time information") )
+#endif
+    , f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") )    
     {
 		f_graph.setWidget("graph");
 		f_graph.setReadOnly(true);

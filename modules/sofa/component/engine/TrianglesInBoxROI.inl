@@ -48,7 +48,8 @@ using namespace core::objectmodel;
 
 template <class DataTypes>
 TrianglesInBoxROI<DataTypes>::TrianglesInBoxROI()
-: boxes( initData(&boxes, "box", "Box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
+: isVisible( initData (&isVisible, bool (true), "isVisible", "is Visible ?") ),
+  boxes( initData(&boxes, "box", "Box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
 , f_X0( initData (&f_X0, "rest_position", "Rest position coordinates of the degrees of freedom") )
 , f_triangles(initData(&f_triangles, "triangles", "List of triangle indices"))
 , f_indices( initData(&f_indices,"indices","Indices of the triangles contained in the ROI") )
@@ -167,7 +168,7 @@ void TrianglesInBoxROI<DataTypes>::update()
 template <class DataTypes>
 void TrianglesInBoxROI<DataTypes>::draw()
 {
-    if (!this->getContext()->getShowBehaviorModels())
+    if (!this->getContext()->getShowBehaviorModels() || !isVisible.getValue())
         return;
 
     if( _drawSize.getValue() > 0)

@@ -43,6 +43,11 @@
 #include <sofa/helper/gl/Axis.h>
 #include <sofa/helper/Quater.h>
 
+#ifdef SOFA_HAVE_EIGEN2
+#include <sofa/component/constraint/LMConstraintSolver.h>
+#include <sofa/simulation/common/Node.h>
+#endif
+
 //#include <glib.h>
 #include <sstream>
 #include <list>
@@ -50,79 +55,82 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace constraint
-    {
+namespace constraint
+{
+
 //#define	MAX_NUM_CONSTRAINT_PER_NODE 10000
 //#define EPS_UNITARY_FORCE 0.01
 
-      using namespace sofa::component::odesolver;
-	  using namespace sofa::component::linearsolver;
-	  using namespace sofa::simulation;
+using namespace sofa::component::odesolver;
+using namespace sofa::component::linearsolver;
+using namespace sofa::simulation;
 
-      template<class DataTypes>
-      PrecomputedConstraintCorrection<DataTypes>::PrecomputedConstraintCorrection(behavior::MechanicalState<DataTypes> *mm)
-  : _rotations(false)
-  , f_rotations(initDataPtr(&f_rotations,&_rotations,"rotations",""))
-  , _restRotations(false)
-  , f_restRotations(initDataPtr(&f_restRotations,&_restRotations,"restDeformations",""))
-  , recompute(initData(&recompute, false, "recompute","if true, always recompute the compliance"))
-  , filePrefix(initData(&filePrefix, "filePrefix","if not empty, the prefix used for the file containing the compliance matrix"))
-  , mstate(mm)
-  , invM(NULL)
-  , appCompliance(NULL)
-      {
-      }
+template<class DataTypes>
+PrecomputedConstraintCorrection<DataTypes>::PrecomputedConstraintCorrection(behavior::MechanicalState<DataTypes> *mm)
+	: _rotations(false)
+	, f_rotations(initDataPtr(&f_rotations,&_rotations,"rotations",""))
+	, _restRotations(false)
+	, f_restRotations(initDataPtr(&f_restRotations,&_restRotations,"restDeformations",""))
+	, recompute(initData(&recompute, false, "recompute","if true, always recompute the compliance"))
+	, filePrefix(initData(&filePrefix, "filePrefix","if not empty, the prefix used for the file containing the compliance matrix"))
+	, mstate(mm)
+	, invM(NULL)
+	, appCompliance(NULL)
+{
+}
 
-      template<class DataTypes>
-      PrecomputedConstraintCorrection<DataTypes>::~PrecomputedConstraintCorrection()
-      {
-	  releaseInverse(invName, invM);
-      }
+template<class DataTypes>
+PrecomputedConstraintCorrection<DataTypes>::~PrecomputedConstraintCorrection()
+{
+	releaseInverse(invName, invM);
+}
 
 
 
-      //////////////////////////////////////////////////////////////////////////
-      //   Precomputation of the Constraint Correction for all type of data
-      //////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//   Precomputation of the Constraint Correction for all type of data
+//////////////////////////////////////////////////////////////////////////
 
 template<class DataTypes>
 typename PrecomputedConstraintCorrection<DataTypes>::InverseStorage* PrecomputedConstraintCorrection<DataTypes>::getInverse(std::string name)
 {
-    std::map<std::string, InverseStorage>& registry = getInverseMap();
-    InverseStorage* m = &(registry[name]);
-    ++m->nbref;
-    return m;
+	std::map<std::string, InverseStorage>& registry = getInverseMap();
+	InverseStorage* m = &(registry[name]);
+	++m->nbref;
+	return m;
 }
 
 template<class DataTypes>
 void PrecomputedConstraintCorrection<DataTypes>::releaseInverse(std::string name, InverseStorage* inv)
 {
-    if (inv == NULL) return;
-    std::map<std::string, InverseStorage>& registry = getInverseMap();
-    if (--inv->nbref == 0)
-    {
-	if (inv->data) delete[] inv->data;
-	registry.erase(name);
-    }
+	if (inv == NULL) return;
+	std::map<std::string, InverseStorage>& registry = getInverseMap();
+	if (--inv->nbref == 0)
+	{
+		if (inv->data) delete[] inv->data;
+		registry.erase(name);
+	}
 }
 
+
+struct ConstraintActivation{ bool acc, vel, pos; };
 
 template<class DataTypes>
 void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 {
- 	f_rotations.beginEdit();
-  	f_restRotations.beginEdit();
+	f_rotations.beginEdit();
+	f_restRotations.beginEdit();
 	mstate = dynamic_cast< behavior::MechanicalState<DataTypes>* >(getContext()->getMechanicalState());
 	const VecDeriv& v0 = *mstate->getV();
 
 	nbNodes = v0.size();
 
 	if (nbNodes==0){
-	  serr<<"No degree of freedom" << sendl;
-	  return;
+		serr<<"No degree of freedom" << sendl;
+		return;
 	}
 	dof_on_node = v0[0].size();
 
@@ -135,208 +143,246 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	double dt = this->getContext()->getDt();
 
-    if (!filePrefix.getValue().empty())
-        invName = filePrefix.getValue();
-    else
-    {
-	std::stringstream ss;
-	ss << this->getContext()->getName() << "-" << nbRows << "-" << dt <<".comp";
-        invName = ss.str();
-    }
-    invM = getInverse(invName);
-    dimensionAppCompliance=nbRows;
+	if (!filePrefix.getValue().empty())
+		invName = filePrefix.getValue();
+	else
+	{
+		std::stringstream ss;
+		ss << this->getContext()->getName() << "-" << nbRows << "-" << dt <<".comp";
+		invName = ss.str();
+	}
+	invM = getInverse(invName);
+	dimensionAppCompliance=nbRows;
 
 	if (invM->data == NULL)
 	{
-            invM->data = new Real[nbRows * nbCols];
+		invM->data = new Real[nbRows * nbCols];
 
-	sout << "try to open : " << invName << endl;
-        if (sofa::helper::system::DataRepository.findFile(invName) && recompute.getValue()==false)
-          {
-            invName=sofa::helper::system::DataRepository.getFile(invName);
-            std::ifstream compFileIn(invName.c_str(), std::ifstream::binary);
-	    sout << "file open : " << invName << " compliance being loaded" << endl;
-	    //complianceLoaded = true;
-	    compFileIn.read((char*)invM->data, nbCols * nbRows*sizeof(double));
-	    compFileIn.close();
-	  }
-	else
-	  {
-	    sout << " compliance being built" << sendl;
-
-	    // for the intial computation, the gravity has to be put at 0
-	    const Vec3d gravity = this->getContext()->getGravityInWorld();
-	    const Vec3d gravity_zero(0.0,0.0,0.0);
-	    this->getContext()->setGravityInWorld(gravity_zero);
-
- 	    CGImplicitSolver* odeSolver;
-		EulerImplicitSolver* EulerSolver;
-		CGLinearSolver<GraphScatteredMatrix,GraphScatteredVector>* CGlinearSolver;
-		core::componentmodel::behavior::LinearSolver* linearSolver;
-
-		this->getContext()->get(odeSolver);
-		this->getContext()->get(EulerSolver);
-		this->getContext()->get(CGlinearSolver);
-		this->getContext()->get(linearSolver);
-
-		if(odeSolver)
-			sout << "use CGImplicitSolver " << sendl;
-		else if(EulerSolver && CGlinearSolver)
-			sout << "use EulerImplicitSolver &  CGLinearSolver" << sendl;
-		else if(EulerSolver && linearSolver)
-			sout << "use EulerImplicitSolver &  LinearSolver" << sendl;
-		else if(EulerSolver)
+		sout << "try to open : " << invName << endl;
+		if (sofa::helper::system::DataRepository.findFile(invName) && recompute.getValue()==false)
 		{
-			sout << "use EulerImplicitSolver" << sendl;
+			invName=sofa::helper::system::DataRepository.getFile(invName);
+			std::ifstream compFileIn(invName.c_str(), std::ifstream::binary);
+			sout << "file open : " << invName << " compliance being loaded" << endl;
+			//complianceLoaded = true;
+			compFileIn.read((char*)invM->data, nbCols * nbRows*sizeof(double));
+			compFileIn.close();
 		}
-	    else
+		else
 		{
-	      serr<<"PrecomputedContactCorrection must be associated with CGImplicitSolver or EulerImplicitSolver+LinearSolver for the precomputation\nNo Precomputation" << sendl;
-	      return;
-	    }
+			sout << " compliance being built" << sendl;
 
+			// for the intial computation, the gravity has to be put at 0
+			const Vec3d gravity = this->getContext()->getGravityInWorld();
+			const Vec3d gravity_zero(0.0,0.0,0.0);
+			this->getContext()->setGravityInWorld(gravity_zero);
 
+			CGImplicitSolver* odeSolver;
+			EulerImplicitSolver* EulerSolver;
+			CGLinearSolver<GraphScatteredMatrix,GraphScatteredVector>* CGlinearSolver;
+			core::componentmodel::behavior::LinearSolver* linearSolver;
 
-	    //complianceLoaded = true;
-	    VecDeriv& force = *mstate->getExternalForces();
-	    force.clear();
-	    force.resize(nbNodes);
-	    //v.clear();
-	    //v.resize(v0.size());//computeDf
+			this->getContext()->get(odeSolver);
+			this->getContext()->get(EulerSolver);
+			this->getContext()->get(CGlinearSolver);
+			this->getContext()->get(linearSolver);
 
-
-	    ///////////////////////// CHANGE THE PARAMETERS OF THE SOLVER /////////////////////////////////
-		double buf_tolerance=0, buf_threshold=0;
-	    int	   buf_maxIter=0;
-		if(odeSolver)
-		{
-			buf_tolerance = (double) odeSolver->f_tolerance.getValue();
-			buf_maxIter   = (int) odeSolver->f_maxIter.getValue();
-			buf_threshold = (double) odeSolver->f_smallDenominatorThreshold.getValue();
-			odeSolver->f_tolerance.setValue(1e-20);
-			odeSolver->f_maxIter.setValue(5000);
-			odeSolver->f_smallDenominatorThreshold.setValue(1e-35);
-		}
-		else if(CGlinearSolver)
-		{
-			buf_tolerance = (double) CGlinearSolver->f_tolerance.getValue();
-			buf_maxIter   = (int) CGlinearSolver->f_maxIter.getValue();
-			buf_threshold = (double) CGlinearSolver->f_smallDenominatorThreshold.getValue();
-			CGlinearSolver->f_tolerance.setValue(1e-20);
-			CGlinearSolver->f_maxIter.setValue(5000);
-			CGlinearSolver->f_smallDenominatorThreshold.setValue(1e-35);
-		}
-	    ///////////////////////////////////////////////////////////////////////////////////////////////
-
-            VecDeriv& velocity = *mstate->getV();
-            VecDeriv velocity0 = *mstate->getV();
-            VecCoord& pos=*mstate->getX();
-            VecCoord  pos0=*mstate->getX();
-
-
-		/// christian : it seems necessary to called the integration one time for initialization 
-		/// (avoid to have a line of 0 at the top of the matrix)
-		if(EulerSolver){
-		//serr<<"EulerSolver"<<sendl;
-			EulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
-		}
-	    for(unsigned int f = 0 ; f < nbNodes ; f++){
-			std::cout.precision(2);
-			std::cout << "Precomputing constraint correction : " << std::fixed << (float)f/(float)nbNodes*100.0f << " %   " << '\xd';
-			std::cout.flush();
-	    //  serr << "inverse cols node : " << f << sendl;
-	      Deriv unitary_force;
-
-			for (unsigned int i=0; i<dof_on_node; i++)	{
-				unitary_force.clear();
-				//serr<<"dof n:"<<i<<sendl;
-				unitary_force[i]=1.0;
-				force[f] = unitary_force;
-				////// reset Position and Velocities ///////
-				velocity.clear();
-				velocity.resize(nbNodes);
-				for (unsigned int n=0; n<nbNodes; n++)
-                                  pos[n] = pos0[n];
-				////////////////////////////////////////////
-				//serr<<"pos0 set"<<sendl;
-
-				if(f*dof_on_node+i <2 )
-				{
-					EulerSolver->f_verbose.setValue(true);
-					EulerSolver->f_printLog.setValue(true);
-					serr<<"getF : "<<force<<sendl;  
-				}
-
-				double fact = 1.0; // christian : it is not a compliance... but an admittance that is computed !
-				if (EulerSolver)
-					 fact = EulerSolver->getPositionIntegrationFactor(); // here, we compute a compliance 
-	
-				//odeSolver->computeContactForce(force);
-
-				if(odeSolver){
-					//serr<<"odeSolver"<<sendl;
-					odeSolver->solve(dt);
-				}
-				else if(EulerSolver){
-					//serr<<"EulerSolver"<<sendl;
-					EulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
-				    if (linearSolver)
-					linearSolver->freezeSystemMatrix(); // do not recompute the matrix for the rest of the precomputation
-				}
-
-				//serr<<"solve reussi"<<sendl;
-
-				velocity = *mstate->getV();
-				fact /= unitary_force[i];
-
-				if(f*dof_on_node+i < 2)
-				{
-
-					//EulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
-					EulerSolver->f_verbose.setValue(false);
-					EulerSolver->f_printLog.setValue(false);
-					serr<<"getV : "<<velocity<<sendl;
-				}
-				for (unsigned int v=0; v<nbNodes; v++){
-
-				  for (unsigned int j=0; j<dof_on_node; j++)	{
-                                    invM->data[(v*dof_on_node+j)*nbCols + (f*dof_on_node+i) ] = (Real)(fact * velocity[v][j]);
-				  }
-				}
-				//serr<<"put in appComp"<<sendl;
+                        simulation::Node *solvernode=NULL;
+			if(odeSolver)
+                        {
+				sout << "use CGImplicitSolver " << sendl;
+                                solvernode=(simulation::Node*)odeSolver->getContext();
+                        }
+			else if(EulerSolver && CGlinearSolver)
+                        {
+				sout << "use EulerImplicitSolver &  CGLinearSolver" << sendl;
+                                solvernode=(simulation::Node*)EulerSolver->getContext();
+                        }
+			else if(EulerSolver && linearSolver)
+                        {
+				sout << "use EulerImplicitSolver &  LinearSolver" << sendl;
+                                solvernode=(simulation::Node*)EulerSolver->getContext();
+                        }
+			else if(EulerSolver)
+			{
+				sout << "use EulerImplicitSolver" << sendl;
+                                solvernode=(simulation::Node*)EulerSolver->getContext();
 			}
-			  unitary_force.clear();
-			  force[f] = unitary_force;
-	    }
-	    if (linearSolver)
-		linearSolver->updateSystemMatrix(); // do not recompute the matrix for the rest of the precomputation
+			else
+			{
+				serr<<"PrecomputedContactCorrection must be associated with CGImplicitSolver or EulerImplicitSolver+LinearSolver for the precomputation\nNo Precomputation" << sendl;
+				return;
+			}
 
-	    ///////////////////////// RESET PARAMETERS AT THEIR PREVIOUS VALUE /////////////////////////////////
-	    // gravity is reset at its previous value
-	    this->getContext()->setGravityInWorld(gravity);
-		if(odeSolver)
-		{
-			odeSolver->f_tolerance.setValue(buf_tolerance);
-			odeSolver->f_maxIter.setValue(buf_maxIter);
-			odeSolver->f_smallDenominatorThreshold.setValue(buf_threshold);
-		}
-		else if(CGlinearSolver)
-		{
-			CGlinearSolver->f_tolerance.setValue(buf_tolerance);
-			CGlinearSolver->f_maxIter.setValue(buf_maxIter);
-			CGlinearSolver->f_smallDenominatorThreshold.setValue(buf_threshold);
-		}
-		///////////////////////////////////////////////////////////////////////////////////////////////
-	    std::ofstream compFileOut(invName.c_str(), std::fstream::out | std::fstream::binary);
-	    compFileOut.write((char*)invM->data, nbCols * nbRows*sizeof(double));
-	    compFileOut.close();
+#ifdef SOFA_HAVE_EIGEN2
+                        helper::vector< sofa::component::constraint::LMConstraintSolver* > listLMConstraintSolver;
+                        solvernode->get< sofa::component::constraint::LMConstraintSolver >(&listLMConstraintSolver, core::objectmodel::BaseContext::SearchDown);
+                        helper::vector< ConstraintActivation > listConstraintActivation(listLMConstraintSolver.size());
+                        for (unsigned int i=0;i<listLMConstraintSolver.size();++i)
+                        {
+                            listConstraintActivation[i].acc=listLMConstraintSolver[i]->constraintAcc.getValue();
+                            listLMConstraintSolver[i]->constraintAcc.setValue(false);
 
-            //Reset the velocity
-            for (unsigned int i=0; i<velocity.size(); i++) velocity[i]=velocity0[i];
-            //Reset the position
-            for (unsigned int i=0; i<pos.size(); i++)      pos[i]=pos0[i];
-	  }
-        }
+                            listConstraintActivation[i].vel=listLMConstraintSolver[i]->constraintVel.getValue();
+                            listLMConstraintSolver[i]->constraintVel.setValue(false);
+
+                            listConstraintActivation[i].pos=listLMConstraintSolver[i]->constraintPos.getValue();
+                            listLMConstraintSolver[i]->constraintPos.setValue(false);
+                        }
+#endif
+
+
+			//complianceLoaded = true;
+			VecDeriv& force = *mstate->getExternalForces();
+			force.clear();
+			force.resize(nbNodes);
+			//v.clear();
+			//v.resize(v0.size());//computeDf
+
+
+			///////////////////////// CHANGE THE PARAMETERS OF THE SOLVER /////////////////////////////////
+			double buf_tolerance=0, buf_threshold=0;
+			int	   buf_maxIter=0;
+			if(odeSolver)
+			{
+				buf_tolerance = (double) odeSolver->f_tolerance.getValue();
+				buf_maxIter   = (int) odeSolver->f_maxIter.getValue();
+				buf_threshold = (double) odeSolver->f_smallDenominatorThreshold.getValue();
+				odeSolver->f_tolerance.setValue(1e-20);
+				odeSolver->f_maxIter.setValue(5000);
+				odeSolver->f_smallDenominatorThreshold.setValue(1e-35);
+			}
+			else if(CGlinearSolver)
+			{
+				buf_tolerance = (double) CGlinearSolver->f_tolerance.getValue();
+				buf_maxIter   = (int) CGlinearSolver->f_maxIter.getValue();
+				buf_threshold = (double) CGlinearSolver->f_smallDenominatorThreshold.getValue();
+				CGlinearSolver->f_tolerance.setValue(1e-20);
+				CGlinearSolver->f_maxIter.setValue(5000);
+				CGlinearSolver->f_smallDenominatorThreshold.setValue(1e-35);
+			}
+			///////////////////////////////////////////////////////////////////////////////////////////////
+
+			VecDeriv& velocity = *mstate->getV();
+			VecDeriv velocity0 = *mstate->getV();
+			VecCoord& pos=*mstate->getX();
+			VecCoord  pos0=*mstate->getX();
+
+
+			/// christian : it seems necessary to called the integration one time for initialization 
+			/// (avoid to have a line of 0 at the top of the matrix)
+			if(EulerSolver){
+				//serr<<"EulerSolver"<<sendl;
+				EulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
+			}
+			for(unsigned int f = 0 ; f < nbNodes ; f++){
+				std::cout.precision(2);
+				std::cout << "Precomputing constraint correction : " << std::fixed << (float)f/(float)nbNodes*100.0f << " %   " << '\xd';
+				std::cout.flush();
+				//  serr << "inverse cols node : " << f << sendl;
+				Deriv unitary_force;
+
+				for (unsigned int i=0; i<dof_on_node; i++)	{
+					unitary_force.clear();
+					//serr<<"dof n:"<<i<<sendl;
+					unitary_force[i]=1.0;
+					force[f] = unitary_force;
+					////// reset Position and Velocities ///////
+					velocity.clear();
+					velocity.resize(nbNodes);
+					for (unsigned int n=0; n<nbNodes; n++)
+						pos[n] = pos0[n];
+					////////////////////////////////////////////
+					//serr<<"pos0 set"<<sendl;
+
+					if(f*dof_on_node+i <2 )
+					{
+						EulerSolver->f_verbose.setValue(true);
+						EulerSolver->f_printLog.setValue(true);
+						serr<<"getF : "<<force<<sendl;  
+					}
+
+					double fact = 1.0; // christian : it is not a compliance... but an admittance that is computed !
+					if (EulerSolver)
+						fact = EulerSolver->getPositionIntegrationFactor(); // here, we compute a compliance 
+
+					//odeSolver->computeContactForce(force);
+
+					if(odeSolver){
+						//serr<<"odeSolver"<<sendl;
+						odeSolver->solve(dt);
+					}
+					else if(EulerSolver){
+						//serr<<"EulerSolver"<<sendl;
+						EulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
+						if (linearSolver)
+							linearSolver->freezeSystemMatrix(); // do not recompute the matrix for the rest of the precomputation
+					}
+
+					//serr<<"solve reussi"<<sendl;
+
+					velocity = *mstate->getV();
+					fact /= unitary_force[i];
+
+					if(f*dof_on_node+i < 2)
+					{
+
+						//EulerSolver->solve(dt, core::componentmodel::behavior::BaseMechanicalState::VecId::position(), core::componentmodel::behavior::BaseMechanicalState::VecId::velocity());
+						EulerSolver->f_verbose.setValue(false);
+						EulerSolver->f_printLog.setValue(false);
+						serr<<"getV : "<<velocity<<sendl;
+					}
+					for (unsigned int v=0; v<nbNodes; v++){
+
+						for (unsigned int j=0; j<dof_on_node; j++)	{
+							invM->data[(v*dof_on_node+j)*nbCols + (f*dof_on_node+i) ] = (Real)(fact * velocity[v][j]);
+						}
+					}
+					//serr<<"put in appComp"<<sendl;
+				}
+				unitary_force.clear();
+				force[f] = unitary_force;
+			}
+			if (linearSolver)
+				linearSolver->updateSystemMatrix(); // do not recompute the matrix for the rest of the precomputation
+
+			///////////////////////// RESET PARAMETERS AT THEIR PREVIOUS VALUE /////////////////////////////////
+			// gravity is reset at its previous value
+			this->getContext()->setGravityInWorld(gravity);
+			if(odeSolver)
+			{
+				odeSolver->f_tolerance.setValue(buf_tolerance);
+				odeSolver->f_maxIter.setValue(buf_maxIter);
+				odeSolver->f_smallDenominatorThreshold.setValue(buf_threshold);
+			}
+			else if(CGlinearSolver)
+			{
+				CGlinearSolver->f_tolerance.setValue(buf_tolerance);
+				CGlinearSolver->f_maxIter.setValue(buf_maxIter);
+				CGlinearSolver->f_smallDenominatorThreshold.setValue(buf_threshold);
+			}
+			///////////////////////////////////////////////////////////////////////////////////////////////
+			std::ofstream compFileOut(invName.c_str(), std::fstream::out | std::fstream::binary);
+			compFileOut.write((char*)invM->data, nbCols * nbRows*sizeof(double));
+			compFileOut.close();
+
+			//Reset the velocity
+			for (unsigned int i=0; i<velocity.size(); i++) velocity[i]=velocity0[i];
+			//Reset the position
+			for (unsigned int i=0; i<pos.size(); i++)      pos[i]=pos0[i];
+
+
+#ifdef SOFA_HAVE_EIGEN2
+                        for (unsigned int i=0;i<listLMConstraintSolver.size();++i)
+                        {
+                            listLMConstraintSolver[i]->constraintAcc.setValue(listConstraintActivation[i].acc);
+                            listLMConstraintSolver[i]->constraintVel.setValue(listConstraintActivation[i].vel);
+                            listLMConstraintSolver[i]->constraintPos.setValue(listConstraintActivation[i].pos);
+                        }
+#endif
+
+		}
+	}
 
 	appCompliance = invM->data;
 
@@ -349,15 +395,15 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	if (this->f_printLog.getValue()) {
 		sout << "Matrix compliance : nbCols ="<<nbCols<<"  nbRows ="<<nbRows ;
 
-	for (unsigned int i=0; i<20 && i<nbCols; i++){
-		sout << sendl;
-		for (unsigned int j=0; j<20 && j<nbCols; j++)
-		{
-			sout <<" \t "<< appCompliance[j*nbCols + i];
+		for (unsigned int i=0; i<20 && i<nbCols; i++){
+			sout << sendl;
+			for (unsigned int j=0; j<20 && j<nbCols; j++)
+			{
+				sout <<" \t "<< appCompliance[j*nbCols + i];
+			}
 		}
-	}
 
-	sout << sendl;
+		sout << sendl;
 	}
 	////sout << "quit init "  << endl;
 
@@ -390,20 +436,12 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	//sout<<"q_test = "<<q_test<<sendl;
 
 	//sout<<"Alpha = "<<q_test.toEulerVector()<< " doit valoir une rotation de Pi/2 autour de l'axe y"<<sendl;
+}
 
 
-
-
-
-
-
-
-      }
-
-
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::getCompliance(defaulttype::BaseMatrix* W)
-      {
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::getCompliance(defaulttype::BaseMatrix* W)
+{
 
 	VecConst& constraints = *mstate->getC();
 
@@ -415,26 +453,26 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	/////////// The constraints are modified using a rotation value at each node/////
 	if(_rotations)
-	  rotateConstraints();
+		rotateConstraints();
 	/////////////////////////////////////////////////////////////////////////////////
 
 
 	/////////// Which node are involved with the contact ?/////
 	//std::list<int> activeDof;
 	for (unsigned int i=0;i<_indexNodeSparseCompliance.size();++i)
-	    _indexNodeSparseCompliance[i] = -1;
+		_indexNodeSparseCompliance[i] = -1;
 	for(unsigned int c1 = 0; c1 < numConstraints; c1++)
-	  {
-            ConstConstraintIterator itConstraint;
-             std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
+	{
+		ConstConstraintIterator itConstraint;
+		std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
 
-             for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                unsigned int dof = itConstraint->first;
-                //activeDof.push_back(dof);
-		_indexNodeSparseCompliance[dof]=0;
-              }
-	  }
+		for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+		{
+			unsigned int dof = itConstraint->first;
+			//activeDof.push_back(dof);
+			_indexNodeSparseCompliance[dof]=0;
+		}
+	}
 	//unsigned int numNodes1 = activeDof.size();
 	//sout<< "numNodes : avant = "<<numNodes1;
 	//activeDof.sort();
@@ -443,7 +481,7 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	//sout<< " apres = "<<numNodes<<sendl;
 	int nActiveDof = 0;
 	for (unsigned int i=0;i<_indexNodeSparseCompliance.size();++i)
-	    if (_indexNodeSparseCompliance[i]==0) ++nActiveDof;
+		if (_indexNodeSparseCompliance[i]==0) ++nActiveDof;
 
 	////////////////////////////////////////////////////////////
 	unsigned int offset, offset2;
@@ -457,81 +495,81 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	_sparseCompliance.resize(nActiveDof*numConstraints);
 	//std::list<int>::iterator IterateurListe;
 	//for(IterateurListe=activeDof.begin();IterateurListe!=activeDof.end();IterateurListe++)
-        //  {
+	//  {
 	//  int NodeIdx = (*IterateurListe);
 	for (int NodeIdx = 0; NodeIdx < (int)_indexNodeSparseCompliance.size(); ++NodeIdx)
 	{
-	    if (_indexNodeSparseCompliance[NodeIdx] == -1) continue;
-	  _indexNodeSparseCompliance[NodeIdx]=it;
-	  for(curColConst = 0; curColConst < numConstraints; curColConst++)
-	    {
-	      indexCurColConst = mstate->getConstraintId()[curColConst];
+		if (_indexNodeSparseCompliance[NodeIdx] == -1) continue;
+		_indexNodeSparseCompliance[NodeIdx]=it;
+		for(curColConst = 0; curColConst < numConstraints; curColConst++)
+		{
+			indexCurColConst = mstate->getConstraintId()[curColConst];
 
-	      Vbuf.clear();
-              ConstConstraintIterator itConstraint;
+			Vbuf.clear();
+			ConstConstraintIterator itConstraint;
 
-              std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curColConst].data();
-              for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-                {
-                  unsigned int dof = itConstraint->first;
-                  const Deriv n2 = itConstraint->second;
-		  offset = dof_on_node*(NodeIdx * nbCols +  dof);
-
-		  for (ii=0; ii<dof_on_node; ii++)
-		    {
-		      offset2 = offset+ii*nbCols;
-		      for (jj=0; jj<dof_on_node; jj++)
+			std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curColConst].data();
+			for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
 			{
-			  Vbuf[ii] += appCompliance[offset2 + jj] * n2[jj];
+				unsigned int dof = itConstraint->first;
+				const Deriv n2 = itConstraint->second;
+				offset = dof_on_node*(NodeIdx * nbCols +  dof);
+
+				for (ii=0; ii<dof_on_node; ii++)
+				{
+					offset2 = offset+ii*nbCols;
+					for (jj=0; jj<dof_on_node; jj++)
+					{
+						Vbuf[ii] += appCompliance[offset2 + jj] * n2[jj];
+					}
+				}
 			}
-		    }
+			_sparseCompliance[it]=Vbuf;
+			it++;
 		}
-	      _sparseCompliance[it]=Vbuf;
-	      it++;
-	    }
 	}
 
 
 	for(curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	  {
-	    indexCurRowConst = mstate->getConstraintId()[curRowConst];//global index of constraint
+	{
+		indexCurRowConst = mstate->getConstraintId()[curRowConst];//global index of constraint
 
-            ConstConstraintIterator itConstraint;
+		ConstConstraintIterator itConstraint;
 
-            std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curRowConst].data();
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                const int NodeIdx = itConstraint->first;
-                const Deriv n1 = itConstraint->second;
+		std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curRowConst].data();
+		for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+		{
+			const int NodeIdx = itConstraint->first;
+			const Deriv n1 = itConstraint->second;
 
-		unsigned int temp =(unsigned int) _indexNodeSparseCompliance[NodeIdx];
+			unsigned int temp =(unsigned int) _indexNodeSparseCompliance[NodeIdx];
 
-		for(curColConst = curRowConst; curColConst < numConstraints; curColConst++)
-		  {
-		    indexCurColConst = mstate->getConstraintId()[curColConst];
-		    double w = _sparseCompliance[temp + curColConst]*n1;
-		    //W[indexCurRowConst][indexCurColConst] += w;
-		    //sout << "W("<<indexCurRowConst<<","<<indexCurColConst<<") = "<<w<<sendl;
-		    W->add(indexCurRowConst, indexCurColConst, w);
-		    if (indexCurRowConst != indexCurColConst)
-		      W->add(indexCurColConst, indexCurRowConst, w);
-		  }
-	      }
-	    /*
-	    //Compliance matrix is symetric ?
-	    for(unsigned int curColConst = curRowConst+1; curColConst < numConstraints; curColConst++)
-	    {
-	    int indexCurColConst = mstate->getConstraintId()[curColConst];
-	    W[indexCurColConst][indexCurRowConst] = W[indexCurRowConst][indexCurColConst];
-	    }
-	    */
-	  }
-      }
+			for(curColConst = curRowConst; curColConst < numConstraints; curColConst++)
+			{
+				indexCurColConst = mstate->getConstraintId()[curColConst];
+				double w = _sparseCompliance[temp + curColConst]*n1;
+				//W[indexCurRowConst][indexCurColConst] += w;
+				//sout << "W("<<indexCurRowConst<<","<<indexCurColConst<<") = "<<w<<sendl;
+				W->add(indexCurRowConst, indexCurColConst, w);
+				if (indexCurRowConst != indexCurColConst)
+					W->add(indexCurColConst, indexCurRowConst, w);
+			}
+		}
+		/*
+		//Compliance matrix is symetric ?
+		for(unsigned int curColConst = curRowConst+1; curColConst < numConstraints; curColConst++)
+		{
+		int indexCurColConst = mstate->getConstraintId()[curColConst];
+		W[indexCurColConst][indexCurRowConst] = W[indexCurRowConst][indexCurColConst];
+		}
+		*/
+	}
+}
 
 
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::applyContactForce(const defaulttype::BaseVector *f)
-      {
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::applyContactForce(const defaulttype::BaseVector *f)
+{
 	VecDeriv& force = *mstate->getExternalForces();
 	VecConst& constraints = *mstate->getC();
 	unsigned int numConstraints = constraints.size();
@@ -556,30 +594,30 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	//	sout<<"First list:"<<sendl;
 	for(unsigned int c1 = 0; c1 < numConstraints; c1++)
-	  {
-	    int indexC1 = mstate->getConstraintId()[c1];
+	{
+		int indexC1 = mstate->getConstraintId()[c1];
 
-            double fC1 = (Real)f->element(indexC1);
-            //sout << "fC("<<indexC1<<")="<<fC1<<sendl;
+		double fC1 = (Real)f->element(indexC1);
+		//sout << "fC("<<indexC1<<")="<<fC1<<sendl;
 
-	    if (fC1 != 0.0)
-	      {
+		if (fC1 != 0.0)
+		{
 
-                ConstConstraintIterator itConstraint;
+			ConstConstraintIterator itConstraint;
 
-                std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
-                for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-                  {
-                    unsigned int dof = itConstraint->first;
-                    const Deriv n = itConstraint->second;
-		    //on ne fait pas passer les forces du repere courant a celui initial ?
-		    // <-non, car elles ont deja ete tournees car on utilise une reference dans getCompliance !!!
-		    Deriv temp = n * fC1;
-		    force[dof] += temp;
-		    activeDof.push_back(dof);
-		  }
-	      }
-	  }
+			std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
+			for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+			{
+				unsigned int dof = itConstraint->first;
+				const Deriv n = itConstraint->second;
+				//on ne fait pas passer les forces du repere courant a celui initial ?
+				// <-non, car elles ont deja ete tournees car on utilise une reference dans getCompliance !!!
+				Deriv temp = n * fC1;
+				force[dof] += temp;
+				activeDof.push_back(dof);
+			}
+		}
+	}
 
 	activeDof.sort();
 	activeDof.unique();
@@ -591,26 +629,26 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	unsigned int i;
 	unsigned int offset, offset2;
 	for(IterateurListe=activeDof.begin();IterateurListe!=activeDof.end();IterateurListe++){
-	  int f = (*IterateurListe);
+		int f = (*IterateurListe);
 
-	  for (i=0; i< dof_on_node; i++)
-	    {
-	      Fbuf[i] = force[f][i];
-	    }
-	  for(unsigned int v = 0 ; v < dx.size() ; v++)
-	    {
-	      offset =  v * dof_on_node * nbCols + f*dof_on_node;
-	      for (unsigned int j=0; j< dof_on_node; j++)
+		for (i=0; i< dof_on_node; i++)
 		{
-		  offset2 = offset+ j*nbCols;
-		  DXbuf=0.0;
-		  for (i=0; i< dof_on_node; i++)
-		    {
-		      DXbuf += appCompliance[ offset2 + i ] * Fbuf[i];
-		    }
-		  dx[v][j]+=DXbuf;
+			Fbuf[i] = force[f][i];
 		}
-	    }
+		for(unsigned int v = 0 ; v < dx.size() ; v++)
+		{
+			offset =  v * dof_on_node * nbCols + f*dof_on_node;
+			for (unsigned int j=0; j< dof_on_node; j++)
+			{
+				offset2 = offset+ j*nbCols;
+				DXbuf=0.0;
+				for (i=0; i< dof_on_node; i++)
+				{
+					DXbuf += appCompliance[ offset2 + i ] * Fbuf[i];
+				}
+				dx[v][j]+=DXbuf;
+			}
+		}
 	}
 
 
@@ -618,39 +656,39 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	force.resize(x_free.size());
 
 	if(_rotations)
-	  rotateResponse();
+		rotateResponse();
 
 
 	for (unsigned int i=0; i< dx.size(); i++)
-	  {
-	    //sout << "dx("<<i<<")="<<dx[i]<<sendl;
-	    x[i] = x_free[i];
-	    v[i] = v_free[i];
-
-	    x[i] += dx[i];
-	    v[i] += dx[i]*(1/dt);
-	  }
-      }
-
-
-
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix* m) const
-      {
-          m->resize(dimensionAppCompliance,dimensionAppCompliance);
-          for (unsigned int l=0;l<dimensionAppCompliance;++l)
-          {
-              for (unsigned int c=0;c<dimensionAppCompliance;++c)
-              {
-                  m->set(l,c,appCompliance[l*dimensionAppCompliance+c]);
-              }
-          }
-      }
-
-      /*
-	template<>
-	void PrecomputedConstraintCorrection<defaulttype::Rigid3Types>::applyContactForce(double *f)
 	{
+		//sout << "dx("<<i<<")="<<dx[i]<<sendl;
+		x[i] = x_free[i];
+		v[i] = v_free[i];
+
+		x[i] += dx[i];
+		v[i] += dx[i]*(1/dt);
+	}
+}
+
+
+
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix* m) const
+{
+        m->resize(dimensionAppCompliance,dimensionAppCompliance);
+	for (unsigned int l=0;l<dimensionAppCompliance;++l)
+	{
+		for (unsigned int c=0;c<dimensionAppCompliance;++c)
+		{
+			m->set(l,c,appCompliance[l*dimensionAppCompliance+c]);
+		}
+	}
+}
+
+/*
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Rigid3Types>::applyContactForce(double *f)
+{
 	VecDeriv& force = *mstate->getExternalForces();
 	const VecConst& constraints = *mstate->getC();
 	Deriv weighedNormal;
@@ -661,14 +699,14 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	if (node != NULL)
 	{
-	core::componentmodel::behavior::BaseMass*_m = node->mass;
-	component::mass::UniformMass<defaulttype::Rigid3Types, defaulttype::Rigid3Mass> *m = dynamic_cast<component::mass::UniformMass<defaulttype::Rigid3Types, defaulttype::Rigid3Mass>*> (_m);
-	massValue = &( m->getMass());
+		core::componentmodel::behavior::BaseMass*_m = node->mass;
+		component::mass::UniformMass<defaulttype::Rigid3Types, defaulttype::Rigid3Mass> *m = dynamic_cast<component::mass::UniformMass<defaulttype::Rigid3Types, defaulttype::Rigid3Mass>*> (_m);
+		massValue = &( m->getMass());
 	}
 	else
 	{
-	massValue = new sofa::defaulttype::Rigid3Mass();
-	printf("\n WARNING : node is not found => massValue could be false in getCompliance function");
+		massValue = new sofa::defaulttype::Rigid3Mass();
+		printf("\n WARNING : node is not found => massValue could be false in getCompliance function");
 	}
 
 
@@ -682,18 +720,18 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	for(int c1 = 0; c1 < numConstraints; c1++)
 	{
-	int indexC1 = mstate->getConstraintId()[c1];
+		int indexC1 = mstate->getConstraintId()[c1];
 
-	if (f[indexC1] != 0.0)
-	{
-	int sizeC1 = constraints[c1].size();
-	for(int i = 0; i < sizeC1; i++)
-	{
-	weighedNormal = constraints[c1][i].data; // weighted normal
-	force[0].getVCenter() += weighedNormal.getVCenter() * f[indexC1];
-	force[0].getVOrientation() += weighedNormal.getVOrientation() * f[indexC1];
-	}
-	}
+		if (f[indexC1] != 0.0)
+		{
+			int sizeC1 = constraints[c1].size();
+			for(int i = 0; i < sizeC1; i++)
+			{
+				weighedNormal = constraints[c1][i].data; // weighted normal
+				force[0].getVCenter() += weighedNormal.getVCenter() * f[indexC1];
+				force[0].getVOrientation() += weighedNormal.getVOrientation() * f[indexC1];
+			}
+		}
 	}
 
 
@@ -717,14 +755,12 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 	dx[0] *= dt;
 	x[0] += dx[0];
 	//	simulation::tree::MechanicalPropagateAndAddDxVisitor(dx).execute(this->getContext());
-
-	}
-
-
-	template<>
-	void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::applyContactForce(double *f){
+}
 
 
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::applyContactForce(double *f)
+{
 	VecDeriv& force = *mstate->getExternalForces();
 	const VecConst& constraints = *mstate->getC();
 	unsigned int numConstraints = constraints.size();
@@ -733,16 +769,16 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	for(unsigned int c1 = 0; c1 < numConstraints; c1++)
 	{
-	int indexC1 = mstate->getConstraintId()[c1];
+		int indexC1 = mstate->getConstraintId()[c1];
 
-	if (f[indexC1] != 0.0)
-	{
-	int sizeC1 = constraints[c1].size();
-	for(int i = 0; i < sizeC1; i++)
-	{
-	force[constraints[c1][i].index] += constraints[c1][i].data * f[indexC1];
-	}
-	}
+		if (f[indexC1] != 0.0)
+		{
+			int sizeC1 = constraints[c1].size();
+			for(int i = 0; i < sizeC1; i++)
+			{
+				force[constraints[c1][i].index] += constraints[c1][i].data * f[indexC1];
+			}
+		}
 	}
 
 	VecDeriv& dx = *mstate->getDx();
@@ -758,23 +794,22 @@ void PrecomputedConstraintCorrection<DataTypes>::bwdInit()
 
 	for (unsigned int i=0; i<dx.size(); i++)
 	{
-	x[i] = x_free[i];
-	v[i] = v_free[i];
-	dx[i] = force[i]/10000.0;
-	x[i] += dx[i];
-	v[i] += dx[i]/dt;
+		x[i] = x_free[i];
+		v[i] = v_free[i];
+		dx[i] = force[i]/10000.0;
+		x[i] += dx[i];
+		v[i] += dx[i]/dt;
 	}
-	}
+}
+*/
 
-
-      */
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::resetContactForce()
-      {
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::resetContactForce()
+{
 	VecDeriv& force = *mstate->getExternalForces();
 	for( unsigned i=0; i<force.size(); ++i )
-	  force[i] = Deriv();
-      }
+		force[i] = Deriv();
+}
 
 ////  DRAW : generic function ////
 template<class DataTypes>
@@ -784,76 +819,89 @@ void PrecomputedConstraintCorrection<DataTypes>::draw()
 }
 
 #ifndef SOFA_FLOAT
-	template<>
-	void PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::draw()
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::draw();
+
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints()
+{
+	VecConst& constraints = *mstate->getC();
+	unsigned int numConstraints = constraints.size();
+
+	simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
+
+	sofa::component::forcefield::TetrahedronFEMForceField<DataTypes>* forceField = NULL;
+	sofa::component::container::RotationFinder<DataTypes>* rotationFinder = NULL;
+
+	if (node != NULL)
 	{
-
-		if (!getContext()->getShowBehaviorModels() || !_rotations) return;
-
-		// we draw the rotations associated to each node //
-
-		simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
-
-		sofa::component::forcefield::TetrahedronFEMForceField<defaulttype::Vec3dTypes>* forceField = NULL;
-		sofa::component::container::RotationFinder<defaulttype::Vec3dTypes>* rotationFinder = NULL;
-
-		if (node != NULL)
+		//		core::componentmodel::behavior::BaseForceField* _forceField = node->forceField[1];
+		forceField = node->get<component::forcefield::TetrahedronFEMForceField<DataTypes> > ();
+		if (forceField == NULL)
 		{
-			//		core::componentmodel::behavior::BaseForceField* _forceField = node->forceField[1];
-			forceField = node->get<component::forcefield::TetrahedronFEMForceField<defaulttype::Vec3dTypes> > ();
-			if (forceField == NULL)
+			rotationFinder = node->get<component::container::RotationFinder<DataTypes> > ();
+			if (rotationFinder == NULL)
 			{
-					rotationFinder = node->get<component::container::RotationFinder<defaulttype::Vec3dTypes> > ();
-					if (rotationFinder == NULL)
-				{
-					sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
-					return;
-				}
+				sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
+				return;
 			}
 		}
+	}
+	else
+	{
+		sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
+		return;
+	}
 
-		VecCoord& x = *mstate->getX();
-		for (unsigned int i=0; i< x.size(); i++)
+	//sout << "start rotating normals " << g_timer_elapsed(timer, &micro) << sendl;
+	//	int sizemax=0;
+	//	int index_const = -1;
+	// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
+	for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
+	{
+		ConstraintIterator itConstraint;             
+		std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
+
+		for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
 		{
+			unsigned int dof = itConstraint->first;
+			Deriv& n = itConstraint->second;
+			const int localRowNodeIdx = dof;
 			Transformation Ri;
 			if (forceField != NULL)
-            {
-				forceField->getRotation(Ri, i);
-            }
-            else // rotationFinder has been defined
-            {
-                Ri = rotationFinder->getRotations()[i];
-            }
-
-
-			sofa::defaulttype::Matrix3 RotMat;
-
-			for (unsigned int a=0; a<3; a++)
 			{
-				for (unsigned int b=0; b<3; b++)
-				{
-					RotMat[a][b] = Ri(a,b);
-				}
+				forceField->getRotation(Ri, localRowNodeIdx);
 			}
-
-			sofa::defaulttype::Quat q;
-			q.fromMatrix(RotMat);
-
-
-			helper::gl::Axis::draw(x[i], q  , 10.0);
-
-		}	
-
-
-
+			else // rotationFinder has been defined
+			{
+				Ri = rotationFinder->getRotations()[localRowNodeIdx];
+			}
+			Ri.transpose();
+			// on passe les normales du repere global au repere local
+			Deriv n_i = Ri * n;
+			n.x() =  n_i.x();
+			n.y() =  n_i.y();
+			n.z() =  n_i.z();
+		}
+		/*
+		// test pour voir si on peut reduire le nombre de contrainte
+		if (sizeCurRowConst > sizemax)
+		{
+		sizemax = sizeCurRowConst;
+		index_const = curRowConst;
+		}
+		*/
 	}
+}
 
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::rotateConstraints()
-      {
-	VecConst& constraints = *mstate->getC();
-	unsigned int numConstraints = constraints.size();
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateConstraints();
 
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateConstraints();
+
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::rotateResponse(){
 	simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
 
 	sofa::component::forcefield::TetrahedronFEMForceField<DataTypes>* forceField = NULL;
@@ -861,387 +909,78 @@ void PrecomputedConstraintCorrection<DataTypes>::draw()
 
 	if (node != NULL)
 	{
-	    //		core::componentmodel::behavior::BaseForceField* _forceField = node->forceField[1];
-	    forceField = node->get<component::forcefield::TetrahedronFEMForceField<DataTypes> > ();
-            if (forceField == NULL)
-            {
-                rotationFinder = node->get<component::container::RotationFinder<DataTypes> > ();
-                if (rotationFinder == NULL)
-	        {
-	            sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
-	            return;
-	        }
-            }
+		//		core::componentmodel::behavior::BaseForceField* _forceField = node->forceField[1];
+		forceField = node->get<component::forcefield::TetrahedronFEMForceField<DataTypes> > ();
+		if (forceField == NULL)
+		{
+			rotationFinder = node->get<component::container::RotationFinder<DataTypes> > ();
+			if (rotationFinder == NULL)
+			{
+				sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
+				return;
+			}
+		}
 	}
-        else
-        {
-            sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
-            return;
-        }
-
-	//sout << "start rotating normals " << g_timer_elapsed(timer, &micro) << sendl;
-	//	int sizemax=0;
-	//	int index_const = -1;
-	// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
-	for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
+	else
 	{
-            ConstraintIterator itConstraint;             
-            std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
+		sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
+		return;
+	}
 
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-            {
-                unsigned int dof = itConstraint->first;
-                Deriv& n = itConstraint->second;
-		const int localRowNodeIdx = dof;
-		Transformation Ri;
+	VecDeriv& dx = *mstate->getDx();
+	for(unsigned int j = 0; j < dx.size(); j++)
+	{
+		Transformation Rj;
 		if (forceField != NULL)
-                {
-		    forceField->getRotation(Ri, localRowNodeIdx);
-                }
-                else // rotationFinder has been defined
-                {
-                    Ri = rotationFinder->getRotations()[localRowNodeIdx];
-                }
-		Ri.transpose();
-		// on passe les normales du repere global au repere local
-		Deriv n_i = Ri * n;
-		n.x() =  n_i.x();
-		n.y() =  n_i.y();
-		n.z() =  n_i.z();
-	    }
-	    /*
-	    // test pour voir si on peut reduire le nombre de contrainte
-	    if (sizeCurRowConst > sizemax)
-	    {
-	    sizemax = sizeCurRowConst;
-	    index_const = curRowConst;
-	    }
-	    */
+		{
+			forceField->getRotation(Rj, j);
+		}
+		else // rotationFinder has been defined
+		{
+			Rj = rotationFinder->getRotations()[j];
+		}
+		// on passe les deplacements du repere local au repere global
+		const Deriv& temp = Rj * dx[j];
+		dx[j] = temp;
 	}
-      }
+}
 
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateResponse();
 
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateConstraints()
-      {
-	VecCoord& x = *mstate->getX();
-	VecConst& constraints = *mstate->getC();
-	VecCoord& x0 = *mstate->getX0();
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateResponse();
 
-	unsigned int numConstraints = constraints.size();
-	//	int sizemax=0;
-	//	int index_const = -1;
-	// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
-	for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	  {
-            ConstraintIterator itConstraint;
-            std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                unsigned int dof = itConstraint->first;
-                Deriv& n = itConstraint->second;
-		const int localRowNodeIdx = dof;
-		Quat q;
-		if (_restRotations)
-		  q = x[localRowNodeIdx].getOrientation() * x0[localRowNodeIdx].getOrientation().inverse();
-		else
-		  q = x[localRowNodeIdx].getOrientation();
-
-
-		Vec3d n_i = q.inverseRotate(n.getVCenter());
-		Vec3d wn_i= q.inverseRotate(n.getVOrientation());
-
-		// on passe les normales du repere global au repere local
-		n.getVCenter() = n_i;
-		n.getVOrientation() = wn_i;
-
-	      }
-	  }
-      }
-
-
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateConstraints()
-      {
-      }
-
-
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::rotateResponse(){
-	simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
-
-	sofa::component::forcefield::TetrahedronFEMForceField<DataTypes>* forceField = NULL;
-	sofa::component::container::RotationFinder<DataTypes>* rotationFinder = NULL;
-
-	if (node != NULL)
-	{
-	    //		core::componentmodel::behavior::BaseForceField* _forceField = node->forceField[1];
-	    forceField = node->get<component::forcefield::TetrahedronFEMForceField<DataTypes> > ();
-            if (forceField == NULL)
-            {
-                rotationFinder = node->get<component::container::RotationFinder<DataTypes> > ();
-                if (rotationFinder == NULL)
-	        {
-	            sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
-	            return;
-	        }
-            }
-	}
-        else
-        {
-            sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
-            return;
-        }
-
-	VecDeriv& dx = *mstate->getDx();
-	for(unsigned int j = 0; j < dx.size(); j++)
-	  {
-	    Transformation Rj;
-            if (forceField != NULL)
-            {
-	        forceField->getRotation(Rj, j);
-            }
-            else // rotationFinder has been defined
-            {
-                Rj = rotationFinder->getRotations()[j];
-            }
-	    // on passe les deplacements du repere local au repere global
-	    const Deriv& temp = Rj * dx[j];
-	    dx[j] = temp;
-	  }
-      }
-
-
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateResponse(){
-
-	VecDeriv& dx = *mstate->getDx();
-	VecCoord& x = *mstate->getX();
-	VecCoord& x0 = *mstate->getX0();
-	for(unsigned int j = 0; j < dx.size(); j++)
-	  {
-	    // on passe les deplacements du repere local (au repos) au repere global
-	    Deriv temp ;
-	    Quat q;
-	    if (_restRotations)
-	      q = x[j].getOrientation() * x0[j].getOrientation().inverse();
-	    else
-	      q = x[j].getOrientation();
-
-	    temp.getVCenter()		= q.rotate(dx[j].getVCenter());
-	    temp.getVOrientation()  = q.rotate(dx[j].getVOrientation());
-	    dx[j] = temp;
-	  }
-      }
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>::rotateResponse()
-      {
-      }
 #endif
 #ifndef SOFA_DOUBLE
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateConstraints()
-      {
-	VecConst& constraints = *mstate->getC();
-	unsigned int numConstraints = constraints.size();
 
-	simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateConstraints();
 
-	sofa::component::forcefield::TetrahedronFEMForceField<defaulttype::Vec3fTypes>* forceField = NULL;
-	sofa::component::container::RotationFinder<defaulttype::Vec3fTypes>* rotationFinder = NULL;
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateConstraints();
 
-	if (node != NULL)
-	{
-	    forceField = node->get<component::forcefield::TetrahedronFEMForceField<defaulttype::Vec3fTypes> > ();
-            if (forceField == NULL)
-            {
-                rotationFinder = node->get<component::container::RotationFinder<defaulttype::Vec3fTypes> > ();
-                if (rotationFinder == NULL)
-	        {
-	            sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
-	            return;
-	        }
-            }
-	}
-        else
-        {
-            sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
-            return;
-        }
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateConstraints();
 
-	//sout << "start rotating normals " << g_timer_elapsed(timer, &micro) << sendl;
-	//	int sizemax=0;
-	//	int index_const = -1;
-	// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
-	for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	  {
-            ConstraintIterator itConstraint;
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateResponse();
 
-            std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                unsigned int dof = itConstraint->first;
-                Deriv& n = itConstraint->second;
-		const int localRowNodeIdx = dof;
-		Transformation Ri;
-		if (forceField != NULL)
-                {
-                    forceField->getRotation(Ri, localRowNodeIdx);
-                }
-                else // rotationFinder has been defined
-                {
-                    Ri = rotationFinder->getRotations()[localRowNodeIdx];
-                }
-		Ri.transpose();
-		// on passe les normales du repere global au repere local
-		Deriv n_i = Ri * n;
-		n.x() =  n_i.x();
-		n.y() =  n_i.y();
-		n.z() =  n_i.z();
-	      }
-	    /*
-	    // test pour voir si on peut reduire le nombre de contrainte
-	    if (sizeCurRowConst > sizemax)
-	    {
-	    sizemax = sizeCurRowConst;
-	    index_const = curRowConst;
-	    }
-	    */
-	  }
-      }
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateResponse();
 
-      template<>
-	  void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateConstraints()
-      {
-	VecCoord& x = *mstate->getX();
-	VecConst& constraints = *mstate->getC();
-	VecCoord& x0 = *mstate->getX0();
-
-	unsigned int numConstraints = constraints.size();
-	//	int sizemax=0;
-	//	int index_const = -1;
-	// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
-	for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	{
-            ConstraintIterator itConstraint;
-
-            std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                unsigned int dof = itConstraint->first;
-                Deriv& n = itConstraint->second;
-                const int localRowNodeIdx = dof;
-                Quat q;
-                if (_restRotations)
-                  q = x[localRowNodeIdx].getOrientation() * x0[localRowNodeIdx].getOrientation().inverse();
-                else
-                  q = x[localRowNodeIdx].getOrientation();
-
-
-                Vec3d n_i = n.getVCenter();
-                Vec3d wn_i= n.getVOrientation();
-
-                // on passe les normales du repere global au repere local
-                n.getVCenter() = n_i;
-                n.getVOrientation() = wn_i;
-
-              }
-	}
-      }
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateConstraints()
-      {
-      }
-
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>::rotateResponse(){
-	simulation::Node *node = dynamic_cast<simulation::Node *>(getContext());
-
-	sofa::component::forcefield::TetrahedronFEMForceField<defaulttype::Vec3fTypes>* forceField = NULL;
-	sofa::component::container::RotationFinder<defaulttype::Vec3fTypes>* rotationFinder = NULL;
-
-	if (node != NULL)
-	{
-	    //		core::componentmodel::behavior::BaseForceField* _forceField = node->forceField[1];
-	    forceField = node->get<component::forcefield::TetrahedronFEMForceField<defaulttype::Vec3fTypes> > ();
-            if (forceField == NULL)
-            {
-                rotationFinder = node->get<component::container::RotationFinder<defaulttype::Vec3fTypes> > ();
-                if (rotationFinder == NULL)
-	        {
-	            sout << "No rotation defined : only defined for TetrahedronFEMForceField and RotationFinder!";
-	            return;
-	        }
-            }
-	}
-        else
-        {
-            sout << "Error getting context in method: PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>::rotateConstraints()";
-            return;
-        }
-
-	VecDeriv& dx = *mstate->getDx();
-	for(unsigned int j = 0; j < dx.size(); j++)
-	  {
-	    Transformation Rj;
-            if (forceField != NULL)
-            {
-	        forceField->getRotation(Rj, j);
-            }
-            else // rotationFinder has been defined
-            {
-                Rj = rotationFinder->getRotations()[j];
-            }
-	    // on passe les deplacements du repere local au repere global
-	    const Deriv& temp = Rj * dx[j];
-	    dx[j] = temp;
-	  }
-      }
-
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateResponse(){
-
-	VecDeriv& dx = *mstate->getDx();
-	VecCoord& x = *mstate->getX();
-	VecCoord& x0 = *mstate->getX0();
-	for(unsigned int j = 0; j < dx.size(); j++)
-	  {
-	    // on passe les deplacements du repere local (au repos) au repere global
-	    Deriv temp ;
-	    Quat q;
-	    if (_restRotations)
-	      q = x[j].getOrientation() * x0[j].getOrientation().inverse();
-	    else
-	      q = x[j].getOrientation();
-
-	    temp.getVCenter()		= q.rotate(dx[j].getVCenter());
-	    temp.getVOrientation()  = q.rotate(dx[j].getVOrientation());
-	    dx[j] = temp;
-	  }
-      }
-
-      template<>
-      void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateResponse()
-      {
-      }
+template<>
+void PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>::rotateResponse();
 
 #endif
 
 
+// new API for non building the constraint system during solving process //
 
-
-	// new API for non building the constraint system during solving process //
-	
-      template<class DataTypes>
-      void PrecomputedConstraintCorrection<DataTypes>::resetForUnbuiltResolution(double * f, std::list<int>& /*renumbering*/)
-      {
-	  constraint_force = f;
+template<class DataTypes>
+void PrecomputedConstraintCorrection<DataTypes>::resetForUnbuiltResolution(double * f, std::list<int>& /*renumbering*/)
+{
+	constraint_force = f;
 	VecConst& constraints = *mstate->getC();
 	localConstraintId = &(mstate->getConstraintId());
 	unsigned int numConstraints = constraints.size();
@@ -1252,22 +991,22 @@ void PrecomputedConstraintCorrection<DataTypes>::draw()
 
 	/////////// The constraints are modified using a rotation value at each node/////
 	if(_rotations)
-	  rotateConstraints();
+		rotateConstraints();
 	/////////////////////////////////////////////////////////////////////////////////
 
 
 	/////////// Which node are involved with the contact ?/////
 	std::list<int> activeDof;
 	for(unsigned int c1 = 0; c1 < numConstraints; c1++)
-	  {
-            ConstConstraintIterator itConstraint;
-            std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                unsigned int dof = itConstraint->first;
-                activeDof.push_back(dof);
-              }
-	  }
+	{
+		ConstConstraintIterator itConstraint;
+		std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[c1].data();
+		for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+		{
+			unsigned int dof = itConstraint->first;
+			activeDof.push_back(dof);
+		}
+	}
 	//unsigned int numNodes1 = activeDof.size();
 	//sout<< "numNodes : avant = "<<numNodes1;
 	activeDof.sort();
@@ -1288,104 +1027,104 @@ void PrecomputedConstraintCorrection<DataTypes>::draw()
 	_sparseCompliance.resize(activeDof.size()*numConstraints);
 	std::list<int>::iterator IterateurListe;
 	for(IterateurListe=activeDof.begin();IterateurListe!=activeDof.end();IterateurListe++)
-          {
-	  int NodeIdx = (*IterateurListe);
-	  _indexNodeSparseCompliance[NodeIdx]=it;
-	  for(curColConst = 0; curColConst < numConstraints; curColConst++)
-	    {
-		//indexCurColConst = mstate->getConstraintId()[curColConst];
+	{
+		int NodeIdx = (*IterateurListe);
+		_indexNodeSparseCompliance[NodeIdx]=it;
+		for(curColConst = 0; curColConst < numConstraints; curColConst++)
+		{
+			//indexCurColConst = mstate->getConstraintId()[curColConst];
 
-	      Vbuf.clear();
-              ConstConstraintIterator itConstraint;
-              std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curColConst].data();
-              for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-                {
-                  unsigned int dof = itConstraint->first;
-                  const Deriv n2 = itConstraint->second;
-		  offset = dof_on_node*(NodeIdx * nbCols +  dof);
-
-		  for (ii=0; ii<dof_on_node; ii++)
-		    {
-		      offset2 = offset+ii*nbCols;
-		      for (jj=0; jj<dof_on_node; jj++)
+			Vbuf.clear();
+			ConstConstraintIterator itConstraint;
+			std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curColConst].data();
+			for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
 			{
-			  Vbuf[ii] += appCompliance[offset2 + jj] * n2[jj];
+				unsigned int dof = itConstraint->first;
+				const Deriv n2 = itConstraint->second;
+				offset = dof_on_node*(NodeIdx * nbCols +  dof);
+
+				for (ii=0; ii<dof_on_node; ii++)
+				{
+					offset2 = offset+ii*nbCols;
+					for (jj=0; jj<dof_on_node; jj++)
+					{
+						Vbuf[ii] += appCompliance[offset2 + jj] * n2[jj];
+					}
+				}
 			}
-		    }
+			_sparseCompliance[it]=Vbuf;
+			it++;
 		}
-	      _sparseCompliance[it]=Vbuf;
-	      it++;
-	    }
 	}
 
 	id_to_localIndex.clear();
 	for(unsigned int i=0;i<numConstraints;++i)
 	{
-	    unsigned int c = (*localConstraintId)[i];
-	    if (c >= id_to_localIndex.size()) id_to_localIndex.resize(c+1,-1);
-	    if (id_to_localIndex[c] != -1)
-		serr << "duplicate entry in constraints for id " << c << " : " << id_to_localIndex[c] << " + " << i << sendl;
-	    id_to_localIndex[c] = i;
+		unsigned int c = (*localConstraintId)[i];
+		if (c >= id_to_localIndex.size()) id_to_localIndex.resize(c+1,-1);
+		if (id_to_localIndex[c] != -1)
+			serr << "duplicate entry in constraints for id " << c << " : " << id_to_localIndex[c] << " + " << i << sendl;
+		id_to_localIndex[c] = i;
 	}
 
 	localW.resize(numConstraints,numConstraints);
 
 	for(curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	  {
-	      //indexCurRowConst = mstate->getConstraintId()[curRowConst];//global index of constraint
+	{
+		//indexCurRowConst = mstate->getConstraintId()[curRowConst];//global index of constraint
 
-            ConstConstraintIterator itConstraint;
+		ConstConstraintIterator itConstraint;
 
-            std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curRowConst].data();
-            for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-              {
-                const int NodeIdx = itConstraint->first;
-                const Deriv n1 = itConstraint->second;
+		std::pair< ConstConstraintIterator, ConstConstraintIterator > iter=constraints[curRowConst].data();
+		for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
+		{
+			const int NodeIdx = itConstraint->first;
+			const Deriv n1 = itConstraint->second;
 
-		unsigned int temp =(unsigned int) _indexNodeSparseCompliance[NodeIdx];
-		for(curColConst = curRowConst; curColConst < numConstraints; curColConst++)
-		  {
-		      //indexCurColConst = mstate->getConstraintId()[curColConst];
-		    double w = _sparseCompliance[temp + curColConst]*n1;
-		    //W[indexCurRowConst][indexCurColConst] += w;
-		    //sout << "W("<<indexCurRowConst<<","<<indexCurColConst<<") = "<<w<<sendl;
-		    //W->add(indexCurRowConst, indexCurColConst, w);
-		    //if (indexCurRowConst != indexCurColConst)
-		    //  W->add(indexCurColConst, indexCurRowConst, w);
-		    localW.add(curRowConst, curColConst, w);
-		    if (curRowConst != curColConst)
-		      localW.add(curColConst, curRowConst, w);
-		  }
-	      }
-	    /*
-	    //Compliance matrix is symetric ?
-	    for(unsigned int curColConst = curRowConst+1; curColConst < numConstraints; curColConst++)
-	    {
-	    int indexCurColConst = mstate->getConstraintId()[curColConst];
-	    W[indexCurColConst][indexCurRowConst] = W[indexCurRowConst][indexCurColConst];
-	    }
-	    */
-	  }
-      }
-	
+			unsigned int temp =(unsigned int) _indexNodeSparseCompliance[NodeIdx];
+			for(curColConst = curRowConst; curColConst < numConstraints; curColConst++)
+			{
+				//indexCurColConst = mstate->getConstraintId()[curColConst];
+				double w = _sparseCompliance[temp + curColConst]*n1;
+				//W[indexCurRowConst][indexCurColConst] += w;
+				//sout << "W("<<indexCurRowConst<<","<<indexCurColConst<<") = "<<w<<sendl;
+				//W->add(indexCurRowConst, indexCurColConst, w);
+				//if (indexCurRowConst != indexCurColConst)
+				//  W->add(indexCurColConst, indexCurRowConst, w);
+				localW.add(curRowConst, curColConst, w);
+				if (curRowConst != curColConst)
+					localW.add(curColConst, curRowConst, w);
+			}
+		}
+		/*
+		//Compliance matrix is symetric ?
+		for(unsigned int curColConst = curRowConst+1; curColConst < numConstraints; curColConst++)
+		{
+		int indexCurColConst = mstate->getConstraintId()[curColConst];
+		W[indexCurColConst][indexCurRowConst] = W[indexCurRowConst][indexCurColConst];
+		}
+		*/
+	}
+}
+
 template<class DataTypes>
 bool PrecomputedConstraintCorrection<DataTypes>::hasConstraintNumber(int index)
 {
-    return ((std::size_t)index) < id_to_localIndex.size() && id_to_localIndex[index] >= 0;
+	return ((std::size_t)index) < id_to_localIndex.size() && id_to_localIndex[index] >= 0;
 }
 
 template<class DataTypes>
 void PrecomputedConstraintCorrection<DataTypes>::addConstraintDisplacement(double *d, int begin,int end)
 {
-    unsigned int numConstraints = localConstraintId->size();
-    for (int id_=begin; id_<=end; id_++)
-    {
-	int c = id_to_localIndex[id_];
-	double dc = d[id_];
-	for (unsigned int j=0;j<numConstraints;++j)
-	    dc += localW.element(c,j) * constraint_force[(*localConstraintId)[j]];
-	d[id_] = dc;
-    }
+	unsigned int numConstraints = localConstraintId->size();
+	for (int id_=begin; id_<=end; id_++)
+	{
+		int c = id_to_localIndex[id_];
+		double dc = d[id_];
+		for (unsigned int j=0;j<numConstraints;++j)
+			dc += localW.element(c,j) * constraint_force[(*localConstraintId)[j]];
+		d[id_] = dc;
+	}
 }
 
 template<class DataTypes>
@@ -1396,26 +1135,25 @@ void PrecomputedConstraintCorrection<DataTypes>::setConstraintDForce(double * /*
 template<class DataTypes>
 void PrecomputedConstraintCorrection<DataTypes>::getBlockDiagonalCompliance(defaulttype::BaseMatrix* W, int begin, int end)
 {
-    for (int id1=begin; id1<=end; id1++)
-    {
-	int c1 = id_to_localIndex[id1];
-	for (int id2= id1; id2<=end; id2++)
+	for (int id1=begin; id1<=end; id1++)
 	{
-	    int c2 = id_to_localIndex[id2];
-	    Real w = localW.element(c1,c2);
-	    W->add(id1, id2, w);
-	    if (id1 != id2)
-		W->add(id2, id1, w);
+		int c1 = id_to_localIndex[id1];
+		for (int id2= id1; id2<=end; id2++)
+		{
+			int c2 = id_to_localIndex[id2];
+			Real w = localW.element(c1,c2);
+			W->add(id1, id2, w);
+			if (id1 != id2)
+				W->add(id2, id1, w);
+		}
 	}
-    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////	
 
+} // namespace collision
 
-    } // namespace collision
-
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

@@ -28,6 +28,8 @@
 #include <sofa/core/componentmodel/behavior/BaseConstraintCorrection.h>
 #include <sofa/core/componentmodel/behavior/MechanicalState.h>
 #include <sofa/component/forcefield/TetrahedronFEMForceField.h>
+#include <sofa/component/forcefield/TriangularFEMForceField.h>
+#include <sofa/component/forcefield/TetrahedralCorotationalFEMForceField.h>
 
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/defaulttype/Mat.h>
@@ -131,8 +133,8 @@ public:
         return DataTypes::Name();
     }
 
-
-protected:
+//protected:
+public:
     behavior::MechanicalState<DataTypes> *mstate;
 
     struct InverseStorage
@@ -143,13 +145,13 @@ protected:
     };
     std::string invName;
     InverseStorage* invM;
-    const Real* appCompliance;
+    Real* appCompliance;
     unsigned int dimensionAppCompliance;
 
     static std::map<std::string, InverseStorage>& getInverseMap()
     {
-	static std::map<std::string, InverseStorage> registry;
-	return registry;
+		static std::map<std::string, InverseStorage> registry;
+		return registry;
     }
 
     static InverseStorage* getInverse(std::string name);
@@ -184,7 +186,38 @@ protected:
     linearsolver::FullMatrix<Real> localW;
     double* constraint_force;
 
+public:
+	Real* getInverse()
+	{
+		if(invM->data)
+			return invM->data;
+		else
+			serr<<"Inverse is not computed yet"<<sendl;
+		return NULL;
+	}
+
 };
+
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINT_PRECOMPUTEDCONSTRAINTCORRECTION_CPP)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec3dTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec6dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Rigid2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec3fTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Vec6fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PrecomputedConstraintCorrection<defaulttype::Rigid2fTypes>;
+#endif
+#endif
+
 
 } // namespace collision
 

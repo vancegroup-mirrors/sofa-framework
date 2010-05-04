@@ -39,6 +39,12 @@ namespace simulation
 {
 
 
+    AnimateVisitor::AnimateVisitor(double dt) : dt(dt)
+#ifdef SOFA_HAVE_EIGEN2
+, firstNodeVisited(false)
+#endif
+{}
+
 void AnimateVisitor::processMasterSolver(simulation::Node*, core::componentmodel::behavior::MasterSolver* obj)
 {
 	obj->step(getDt());
@@ -71,7 +77,23 @@ void AnimateVisitor::processOdeSolver(simulation::Node* /*node*/, core::componen
 Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
 {
   //cerr<<"AnimateVisitor::process Node  "<<node->getName()<<endl;
-  if (!node->is_activated.getValue()) return Visitor::RESULT_PRUNE;
+    if (!node->is_activated.getValue()) return Visitor::RESULT_PRUNE;
+#ifdef SOFA_HAVE_EIGEN2
+    //If we have a mastersolver in the scene, we let him rule the simulation, and chose when to reset the constraints
+    if (!firstNodeVisited)
+    {
+        firstNodeVisited=true;
+
+        core::componentmodel::behavior::MasterSolver* presenceMasterSolver;
+        node->get(presenceMasterSolver, core::objectmodel::BaseContext::SearchDown);
+        if (!presenceMasterSolver)
+        {
+            MechanicalResetConstraintVisitor resetConstraint;
+            node->execute(&resetConstraint);
+        }
+    }
+#endif
+
 	if (dt == 0) setDt(node->getDt());
 // 	for_each(this, node, node->behaviorModel, &AnimateVisitor::processBehaviorModel);
 	if (node->masterSolver != NULL)
@@ -83,6 +105,7 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
 	}
 	if (node->collisionPipeline != NULL)
 	{
+
 		//ctime_t t0 = begin(node, node->collisionPipeline);
                 {
                     CollisionBeginEvent evBegin;
@@ -107,7 +130,7 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
         if (!node->solver.empty() )
         {
           double nextTime = node->getTime() + dt;
-
+    
           MechanicalBeginIntegrationVisitor beginVisitor(dt);
           node->execute(&beginVisitor);
 		  
@@ -124,11 +147,7 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
           }
           
           MechanicalPropagatePositionAndVelocityVisitor(nextTime,core::componentmodel::behavior::OdeSolver::VecId::position(),core::componentmodel::behavior::OdeSolver::VecId::velocity()).execute( node );
-          
-#ifdef SOFA_HAVE_EIGEN2
-          MechanicalResetConstraintVisitor resetConstraint;
-          node->execute(&resetConstraint);
-#endif
+      
 
           MechanicalEndIntegrationVisitor endVisitor(dt);
           node->execute(&endVisitor);

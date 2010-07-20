@@ -5,7 +5,6 @@
 #include "OpenCLProgramParser.h"
 #include "myopencl.h"
 #include "OpenCLProgram.h"
-#include <CL/cl.h>
 
 namespace sofa
 {
@@ -30,12 +29,18 @@ public:
 	template <typename T>
 	void setArg(int numArg,const T* arg)
 	{
-		sofa::gpu::opencl::myopenclSetKernelArg(_kernel,numArg,sizeof(T),(void *)arg);
+		//sofa::gpu::opencl::myopenclSetKernelArg(_kernel,numArg,sizeof(T),(void *)arg);
+		sofa::gpu::opencl::myopenclSetKernelArg(_kernel,numArg,arg);
 	}
 
 	void setArg(int numArg,int size,void* arg)
 	{
 		sofa::gpu::opencl::myopenclSetKernelArg(_kernel,numArg,size,arg);
+	}
+
+	void setArg(int numArg,const sofa::gpu::opencl::_device_pointer* arg)
+	{
+		sofa::gpu::opencl::myopenclSetKernelArg(_kernel,numArg,sizeof(cl_mem),(void *)&(arg->m));
 	}
 
 //note: 'global_work_offset' must currently be a NULL value. In a future revision of OpenCL, global_work_offset can be used to specify an array of work_dim unsigned values that describe the offset used to calculate the global ID of a work-item instead of having the global IDs always start at offset (0, 0,... 0).
@@ -48,11 +53,7 @@ public:
 };
 
 
-/*	template <>
-	void OpenCLKernel::setArg(int numArg,const sofa::gpu::opencl::_device_pointer* arg)
-	{
-		sofa::gpu::opencl::myopenclSetKernelArg(_kernel,numArg,sizeof(cl_mem),(void *)&(arg->m));
-	}*/
+
 
 }
 

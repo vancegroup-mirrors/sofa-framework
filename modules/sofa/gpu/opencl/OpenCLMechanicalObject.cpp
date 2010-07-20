@@ -35,7 +35,7 @@
 //#include "tools/top.h"
 
 
-#define DEBUG_TEXT(t) printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
+#define DEBUG_TEXT(t) //printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
 
 namespace sofa {
   
@@ -109,8 +109,12 @@ void MechanicalObject_CreateProgramWithFloat()
 		types["Real4"]="float4";
 
 		std::cout << sofa::helper::OpenCLProgram::loadSource("OpenCLMechanicalObject.cl") << std::endl;
+
+		std::string source = *sofa::helper::OpenCLProgram::loadSource("OpenCLMechanicalObject.cl");
+		source = stringBSIZE + source;
+
 		MechanicalObjectOpenCLFloat_program
-				= new sofa::helper::OpenCLProgram(sofa::helper::OpenCLProgram::loadSource("OpenCLMechanicalObject.cl"),&types);
+				= new sofa::helper::OpenCLProgram(&source,&types);
 
 		MechanicalObjectOpenCLFloat_program->buildProgram();
 		sofa::gpu::opencl::myopenclShowError(__FILE__,__LINE__);
@@ -373,7 +377,6 @@ BARRIER(a,__FILE__,__LINE__);
 ERROR_OFFSET(a);
 ERROR_OFFSET(b);
 ERROR_OFFSET(tmp);
-	std::cout << size << "\n";
 
 	size*=3;
 	MechanicalObject_CreateProgramWithFloat();

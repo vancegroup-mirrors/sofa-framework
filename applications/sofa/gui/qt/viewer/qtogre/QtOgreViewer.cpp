@@ -27,7 +27,9 @@
 #include <OgreConfigFile.h>
 #include <sofa/gui/qt/viewer/qtogre/QtOgreViewer.h>
 #include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
+#if OGRE_VERSION >= 0x010700
 #include "HelperLogics.h"
+#endif
 #include <sofa/gui/qt/viewer/qtogre/OgreVisualModel.h>
 #include <sofa/gui/qt/viewer/qtogre/OgreShaderParameter.h>
 #include <sofa/gui/qt/viewer/qtogre/OgreShaderTextureUnit.h>
@@ -265,21 +267,20 @@ namespace sofa
 	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins.cfg");            
 #endif
 	    mRoot = new Ogre::Root(pluginsPath, ogrePath, ogreLog);
-//	    Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
+//        Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
 #ifndef WIN32
 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation("/","FileSystem","General");
 #endif
         const std::vector< std::string > &paths=sofa::helper::system::DataRepository.getPaths();
-        for (unsigned int i=0;i<paths.size();++i)
-          Ogre::ResourceGroupManager::getSingleton().addResourceLocation(paths[i] ,"FileSystem","General");
+        for (unsigned int i=0;i<paths.size();++i)  Ogre::ResourceGroupManager::getSingleton().addResourceLocation(paths[i] ,"FileSystem","General");
+
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(helper::system::SetDirectory::GetCurrentDir(),"FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/config","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/textures","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/programs","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/scripts","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures/nvidia","FileSystem","General");
-//        Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
 	  }
 
 
@@ -828,7 +829,9 @@ namespace sofa
             );
         {
           Ogre::CompositionTechnique *t = comp4->createTechnique();
+#if OGRE_VERSION >= 0x010700
           t->setCompositorLogicName("HeatVision");
+#endif
           {
             Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("scene");
             def->width = 256;
@@ -1069,6 +1072,7 @@ namespace sofa
 			  mVp->setBackgroundColour(Ogre::ColourValue(1,1,1));
 			  break;
 			}
+              updateIntern();
 		      break;
                     }
 		  case Qt::Key_C:
@@ -1214,9 +1218,15 @@ namespace sofa
             // Register the compositor logics
             // See comment in beginning of HelperLogics.h for explanation
             Ogre::CompositorManager& compMgr = Ogre::CompositorManager::getSingleton();
+#if OGRE_VERSION >= 0x010700
             compMgr.registerCompositorLogic("GaussianBlur", new GaussianBlurLogic);
             compMgr.registerCompositorLogic("HDR", new HDRLogic);
             compMgr.registerCompositorLogic("HeatVision", new HeatVisionLogic);
+#else
+            compMgr.addCompositor(mVp,"GaussianBlur");
+            compMgr.addCompositor(mVp,"HDR");
+            compMgr.addCompositor(mVp,"HeatVision");
+#endif
             firstTime = false;
           }
         createTextures();

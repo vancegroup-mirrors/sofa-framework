@@ -11,8 +11,8 @@ You may use this sample code for anything you like, it is not covered by the
 same license as the rest of the engine.
 -----------------------------------------------------------------------------
 */
-
 #include "HelperLogics.h"
+#if OGRE_VERSION >= 0x010700
 
 #include "Ogre.h"
 
@@ -339,3 +339,4 @@ void GaussianListener::notifyMaterialRender(Ogre::uint32 pass_id, Ogre::Material
 {
 }
 //---------------------------------------------------------------------------
+#endif

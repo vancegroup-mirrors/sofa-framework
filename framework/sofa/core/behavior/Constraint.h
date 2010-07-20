@@ -77,76 +77,41 @@ public:
     /// Retrieve the associated MechanicalState
     MechanicalState<DataTypes>* getMState() { return mstate; }
 
-    /// @name Vector operations
+    /// @name Matrix operations
     /// @{
 
-    /// Project dx to constrained space (dx models an acceleration).
-    ///
-    /// This method retrieves the dx vector from the MechanicalState and call
-    /// the internal projectResponse(VecDeriv&) method implemented by
-    /// the component.
-    virtual void projectResponse();
+	/// Project the global Mechanical Matrix to constrained space using offset parameter
+    /// @deprecated
+    virtual void applyConstraint(defaulttype::BaseMatrix* /*matrix*/, unsigned int & /*offset*/)
+    {
+    }
+    
+	/// Project the global Mechanical Matrix to constrained space using offset parameter
+    virtual void applyConstraint(const sofa::core::behavior::MultiMatrixAccessor* matrix)
+    {
+        sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
+        if (r)
+            applyConstraint(r.matrix, r.offset);
+    }
 
-    /// Project the L matrix of the Lagrange Multiplier equation system.
-    ///
-    /// This method retrieves the lines of the Jacobian Matrix from the MechanicalState and call
-    /// the internal projectResponse(SparseVecDeriv&) method implemented by
-    /// the component.
-    virtual void projectJacobianMatrix();
+	/// Project the global Mechanical Vector to constrained space using offset parameter
+    /// @deprecated
+    virtual void applyConstraint(defaulttype::BaseVector* /*vector*/, unsigned int & /*offset*/)
+    {
+    }
 
-    /// Project v to constrained space (v models a velocity).
-    ///
-    /// This method retrieves the v vector from the MechanicalState and call
-    /// the internal projectVelocity(VecDeriv&) method implemented by
-    /// the component.
-    virtual void projectVelocity();
+	/// Project the global Mechanical Vector to constrained space using offset parameter
+    virtual void applyConstraint(defaulttype::BaseVector* vector, const sofa::core::behavior::MultiMatrixAccessor* matrix)
+    {
+        int o = matrix->getGlobalOffset(this->mstate);
+        if (o >= 0)
+        {
+            unsigned int offset = (unsigned int)o;
+            applyConstraint(vector, offset);
+        }
+    }
 
-    /// Project x to constrained space (x models a position).
-    ///
-    /// This method retrieves the x vector from the MechanicalState and call
-    /// the internal projectPosition(VecCoord&) method implemented by
-    /// the component.
-    virtual void projectPosition();
-
-    /// Project vFree to constrained space (vFree models a velocity).
-    ///
-    /// This method retrieves the vFree vector from the MechanicalState and call
-    /// the internal projectVelocity(VecDeriv&) method implemented by
-    /// the component.
-    virtual void projectFreeVelocity();
-
-    /// Project xFree to constrained space (xFree models a position).
-    ///
-    /// This method retrieves the xFree vector from the MechanicalState and call
-    /// the internal projectPosition(VecCoord&) method implemented by
-    /// the component.
-    virtual void projectFreePosition();
-
-
-    /// Project dx to constrained space (dx models an acceleration).
-    ///
-    /// This method must be implemented by the component, and is usually called
-    /// by the generic Constraint::projectResponse() method.
-    virtual void projectResponse(VecDeriv& dx) = 0;
-    /// This method must be implemented by the component to handle Lagrange Multiplier based constraint
-    virtual void projectResponse(SparseVecDeriv& dx) = 0;
-
-    /// Project v to constrained space (v models a velocity).
-    ///
-    /// This method must be implemented by the component, and is usually called
-    /// by the generic Constraint::projectVelocity() method.
-    virtual void projectVelocity(VecDeriv& v) = 0;
-
-    /// Project x to constrained space (x models a position).
-    ///
-    /// This method must be implemented by the component, and is usually called
-    /// by the generic Constraint::projectPosition() method.
-    virtual void projectPosition(VecCoord& x) = 0;
-
-    /// @}
-
-    /// \todo What is the difference with BaseConstraint::applyConstraint(unsigned int&, double&) ?
-    virtual void applyConstraint(unsigned int & contactId); // Pure virtual would be better
+    virtual void buildConstraintMatrix(unsigned int & contactId, core::VecId);
 
     virtual void applyConstraint(VecConst& /*c*/, unsigned int & /*contactId*/){}
 

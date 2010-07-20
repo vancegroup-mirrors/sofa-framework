@@ -82,47 +82,85 @@ namespace topology
           core::topology::BaseTopologyObject::init();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::lastChange() const
+
+   void TopologyContainer::addTopologyChange(const TopologyChange *topologyChange)
+   {
+      sofa::helper::list <const TopologyChange *>& my_changeList = *(m_changeList.beginEdit());
+      my_changeList.push_back(topologyChange);
+      m_changeList.endEdit();
+   }
+
+   void TopologyContainer::addStateChange(const TopologyChange *topologyChange)
+   {
+      sofa::helper::list <const TopologyChange *>& my_stateChangeList = *(m_stateChangeList.beginEdit());
+      my_stateChangeList.push_back(topologyChange);
+      m_stateChangeList.endEdit();
+   }
+
+
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::lastChange() const
 	{
-		return m_changeList.end();
+      return (m_changeList.getValue()).end();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::firstChange() const
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::firstChange() const
 	{
-		return m_changeList.begin();
+      return (m_changeList.getValue()).begin();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::lastStateChange() const
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::lastStateChange() const
 	{
-		return m_stateChangeList.end();
+      return (m_stateChangeList.getValue()).end();
 	}
 
-	std::list<const TopologyChange *>::const_iterator TopologyContainer::firstStateChange() const
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::firstStateChange() const
 	{
-		return m_stateChangeList.begin();
+      return (m_stateChangeList.getValue()).begin();
 	}
 
 	void TopologyContainer::resetTopologyChangeList()
 	{
-		for (std::list<const TopologyChange *>::iterator it=m_changeList.begin();
-			it!=m_changeList.end(); ++it)
+      sofa::helper::list <const TopologyChange *>& my_changeList = *(m_changeList.beginEdit());
+      for (std::list<const TopologyChange *>::iterator it=my_changeList.begin();
+         it!=my_changeList.end(); ++it)
 		{
 			delete (*it);
 		}
 
-		m_changeList.clear();
+      my_changeList.clear();
+      m_changeList.endEdit();
 	}
 
 	void TopologyContainer::resetStateChangeList()
 	{
-		for (std::list<const TopologyChange *>::iterator it=m_stateChangeList.begin();
-			it!=m_stateChangeList.end();++it)
+      sofa::helper::list <const TopologyChange *>& my_stateChangeList = *(m_stateChangeList.beginEdit());
+      for (std::list<const TopologyChange *>::iterator it=my_stateChangeList.begin();
+         it!=my_stateChangeList.end();++it)
 		{
 			delete (*it);
 		}
 
-		m_stateChangeList.clear();
+      my_stateChangeList.clear();
+      m_stateChangeList.endEdit();
 	}
+
+
+   // TopologyEngine implementation
+   void TopologyEngine::init()
+   {
+      DataEngine::init();
+   }
+
+   void TopologyEngine::addTopologicalData(sofa::core::objectmodel::BaseData& topologicalData)
+   {
+      m_topologicalData.push_back(&topologicalData);
+   }
+
+   void TopologyEngine::removeTopoligicalData(sofa::core::objectmodel::BaseData& topologicalData)
+   {
+      m_topologicalData.remove(&topologicalData);
+   }
+
 
 } // namespace topology
 

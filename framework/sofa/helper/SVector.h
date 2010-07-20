@@ -80,7 +80,7 @@ public:
 
 
 	std::ostream& write ( std::ostream& os ) const
-		{
+        {
 			if ( !this->empty() )
 				{
 					typename SVector<T>::const_iterator i = this->begin();
@@ -95,14 +95,14 @@ public:
 		}
 
 	std::istream& read ( std::istream& in )
-	{
+    {
 		T t;
 		this->clear();
 		char c;
-		in >> c;
+        in >> c;
 		if ( c != '[' )
 		{
-			std::cerr << "Bad begin character : " << c << std::endl;
+            std::cerr << "Bad begin character : " << c << std::endl;
 			return in;
 		}
 		c = ',';

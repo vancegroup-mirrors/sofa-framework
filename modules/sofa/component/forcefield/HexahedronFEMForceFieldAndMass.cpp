@@ -22,6 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#define SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELDANDMASS_CPP
 #include <sofa/component/forcefield/HexahedronFEMForceFieldAndMass.inl>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/core/behavior/ForceField.inl>
@@ -53,10 +54,10 @@ namespace sofa
 	;
 
 #ifndef SOFA_FLOAT
-      template class HexahedronFEMForceFieldAndMass<Vec3dTypes>;
+      template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-      template class HexahedronFEMForceFieldAndMass<Vec3fTypes>;
+      template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass<Vec3fTypes>;
 #endif
 
 

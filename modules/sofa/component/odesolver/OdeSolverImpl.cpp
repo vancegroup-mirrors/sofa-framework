@@ -81,12 +81,12 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
     projectResponse(a);
 }
 
-void OdeSolverImpl::solveConstraint(double dt, VecId id)
+void OdeSolverImpl::solveConstraint(double dt, VecId id, core::behavior::BaseConstraintSet::ConstOrder order)
 {
   simulation::Node *node=(simulation::Node*)getContext();
   for (simulation::Node::Sequence< core::behavior::ConstraintSolver >::iterator it=node->constraintSolver.begin(); it!=node->constraintSolver.end();++it)
     {
-      (*it)->solveConstraint(dt, id);
+      (*it)->solveConstraint(dt, id, order);
     }
 }
 

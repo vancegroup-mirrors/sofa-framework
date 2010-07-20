@@ -39,20 +39,21 @@ namespace sofa
     namespace visualmodel
     {
 
-    class BaseOgreShaderParameter : public core::VisualModel
+
+      class BaseOgreShaderParameter :public core::VisualModel
     {
     public:
+      SOFA_CLASS(BaseOgreShaderParameter, core::VisualModel);
+
       BaseOgreShaderParameter():
           entryPoint(initData(&entryPoint,5,"entryPoint", "Entry Point for the parameter:\nthe first 4 entries are automatically binded with ambient, diffuse, specular and shininess"))
           , dirty(true)
       {
       };
         virtual ~BaseOgreShaderParameter(){};
-        SOFA_CLASS(BaseOgreShaderParameter, core::objectmodel::BaseObject);
 
-
-        void setEntryPoint(int entry) {entryPoint.setValue(entry); dirty=true;}
-        int getEntryPoint() const {return entryPoint.getValue();}
+        int getEntryPoint() const{return entryPoint.getValue();};
+        void setEntryPoint(int e){entryPoint.setValue(e);};
 
         virtual unsigned int getValueSize() const=0;
         virtual float getValue(unsigned int index) const =0;

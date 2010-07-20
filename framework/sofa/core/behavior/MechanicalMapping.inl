@@ -58,6 +58,12 @@ MechanicalMapping<In,Out>::~MechanicalMapping()
 }
 
 template <class In, class Out>
+std::string MechanicalMapping<In,Out>::getTemplateName() const
+{
+  return templateName(this);
+}
+
+template <class In, class Out>
 helper::vector<BaseMechanicalState*> MechanicalMapping<In,Out>::getMechFrom()
 {
   helper::vector<BaseMechanicalState*> vec(1,this->fromModel);

@@ -26,13 +26,13 @@
 #define SOFA_GPU_OPENCL_OPENCLFIXEDCONSTRAINT_H
 
 #include "OpenCLTypes.h"
-#include <sofa/component/constraint/FixedConstraint.h>
+#include <sofa/component/projectiveconstraintset/FixedConstraint.h>
 
 namespace sofa {
 
 namespace component {
 
-namespace constraint {
+namespace projectiveconstraintset {
 
 
 template<class TCoord, class TDeriv, class TReal>
@@ -83,7 +83,7 @@ OpenCLFixedConstraint_DeclMethods(gpu::opencl::OpenCLVec3d1Types);
 
 
 
-} // namespace constraint
+} // namespace projectiveconstraintset
 
 } // namespace component
 

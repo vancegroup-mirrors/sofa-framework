@@ -34,14 +34,14 @@
 
 namespace sofa
 {
-	namespace core{ namespace componentmodel {
+	namespace core{
 		namespace topology {
 		class BaseMeshTopology;
 		}
 		namespace behavior {
 		class BaseMechanicalState;
 		}
-	}}
+	}
 
 namespace component
 {

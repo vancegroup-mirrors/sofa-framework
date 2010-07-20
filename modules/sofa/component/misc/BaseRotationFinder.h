@@ -22,8 +22,8 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_OBJECTMODEL_BASEROTATIONFINDER_H
-#define SOFA_CORE_OBJECTMODEL_BASEROTATIONFINDER_H
+#ifndef SOFA_COMPONENT_MISC_BASEROTATIONFINDER_H
+#define SOFA_COMPONENT_MISC_BASEROTATIONFINDER_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/helper/vector.h>

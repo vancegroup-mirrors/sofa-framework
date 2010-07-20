@@ -36,9 +36,9 @@
 #include <string>
 
 
-#define ERROR_OFFSET(t) {if(t.offset!=0){printf("Error Offset %s %d: %d\n",__FILE__,__LINE__,(int)t.offset);exit(-1);}}
-#define NOT_IMPLEMENTED() {printf("Not implemented %s %d\n",__FILE__,__LINE__);exit(-1);}
-#define BARRIER(x,y,z) myopenclBarrier(x,y,z);
+#define ERROR_OFFSET(t) //{if(t.offset!=0){printf("Error Offset %s %d: %d\n",__FILE__,__LINE__,(int)t.offset);exit(-1);}}
+#define NOT_IMPLEMENTED() //{printf("Not implemented %s %d\n",__FILE__,__LINE__);exit(-1);}
+#define BARRIER(x,y,z) //myopenclBarrier(x,y,z);
 
 
 #if defined(__cplusplus)
@@ -77,6 +77,7 @@ extern "C" {
 	extern void myopenclEnqueueReadBuffer(int device,void * hdest,const cl_mem dsrc,size_t offset, size_t n);
 	extern void myopenclEnqueueCopyBuffer(int device, cl_mem ddest,size_t destOffset, const cl_mem dsrc,size_t srcOffset, size_t n);
 	extern void myopenclSetKernelArg(cl_kernel kernel, int num_arg,int size,void* arg);
+
 	extern void myopenclBuildProgram(void* p);
 	extern void myopenclBuildProgramWithFlags(void * program, char * flags);
 	extern cl_program myopenclProgramWithSource(const char * s,const size_t size);
@@ -88,11 +89,24 @@ extern "C" {
 	extern void* myopencldevice(int device);
 	extern int myopenclNumDevices();
 	extern int & myopenclError();
+	extern std::string myopenclErrorMsg(cl_int err);
 	extern void myopenclShowError(std::string file, int line);
 	extern std::string myopenclPath();
 
 	extern int myopenclMultiOpMax;
 }
+
+template<class T>
+void myopenclSetKernelArg(cl_kernel kernel, int num_arg, const T* arg);
+
+template<class T>
+extern inline void myopenclSetKernelArg(cl_kernel kernel, int num_arg, const T* arg)
+{
+    myopenclSetKernelArg(kernel, num_arg, sizeof(T), (void*)arg);
+}
+
+template<>
+void myopenclSetKernelArg<_device_pointer>(cl_kernel kernel, int num_arg, const _device_pointer* arg);
 
 
 #if defined(__cplusplus)

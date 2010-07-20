@@ -1,5 +1,3 @@
-# File generate by kdevelop's qmake manager. 
-# ------------------------------------------- 
 # Subdir relative project main directory: ./framework/sofa/core
 # Target is a library:  sofacore$$LIBSUFFIX
 
@@ -13,7 +11,7 @@ CONFIG += $$CONFIGLIBRARIES
 
 !contains(CONFIGSTATIC, static) {
 	CONFIG -= staticlib
-CONFIG += dll
+    CONFIG += dll
 }
 
 LIBS += -lsofahelper$$LIBSUFFIX -lsofadefaulttype$$LIBSUFFIX
@@ -37,31 +35,36 @@ HEADERS += \
           DataEngine.h \
           behavior/BaseController.h \
           behavior/BaseConstraint.h \
+          behavior/BaseConstraintSet.h \
           behavior/BaseConstraintCorrection.h \
           behavior/BaseForceField.h \
           behavior/BaseLMConstraint.h \
           behavior/BaseMass.h \
           behavior/BaseMechanicalMapping.h \
-          behavior/BaseMechanicalState.h \
+          behavior/BaseMechanicalState.h \ 
+          behavior/BaseProjectiveConstraintSet.h \
           behavior/Constraint.h \
           behavior/Constraint.inl \
           behavior/ConstraintSolver.h \
           behavior/ForceField.h \
           behavior/ForceField.inl \
           behavior/InteractionForceField.h \
+          behavior/InteractionProjectiveConstraintSet.h \
           behavior/InteractionConstraint.h \
           behavior/LinearSolver.h \
           behavior/LMConstraint.h \
           behavior/LMConstraint.inl \
           behavior/PairInteractionForceField.h \
           behavior/PairInteractionForceField.inl \
-	  behavior/MixedInteractionForceField.h \
-	  behavior/MixedInteractionForceField.inl \
+          behavior/MixedInteractionForceField.h \
+          behavior/MixedInteractionForceField.inl \
           behavior/PairInteractionConstraint.h \
           behavior/PairInteractionConstraint.inl \
-	  behavior/MixedInteractionConstraint.h \
-	  behavior/MixedInteractionConstraint.inl \
-	  behavior/MappedModel.h \
+          behavior/PairInteractionProjectiveConstraintSet.h \
+          behavior/PairInteractionProjectiveConstraintSet.inl \
+          behavior/MixedInteractionConstraint.h \
+          behavior/MixedInteractionConstraint.inl \
+          behavior/MappedModel.h \
           behavior/Mass.h \
           behavior/Mass.inl \
           behavior/MasterSolver.h \
@@ -74,6 +77,9 @@ HEADERS += \
           behavior/MechanicalState.h \
           behavior/MultiVector.h \
           behavior/MultiMatrix.h \
+          behavior/MultiMatrixAccessor.h \
+          behavior/ProjectiveConstraintSet.h \
+          behavior/ProjectiveConstraintSet.inl \
           behavior/OdeSolver.h \
           behavior/State.h \
           collision/BroadPhaseDetection.h \
@@ -170,9 +176,10 @@ SOURCES +=  \
           behavior/LinearSolver.cpp \
           behavior/MasterSolver.cpp \
           behavior/MultiMatrix.cpp \
+          behavior/MultiMatrixAccessor.cpp \
           behavior/OdeSolver.cpp \
-          collision/Contact.cpp \
           behavior/ConstraintSolver.cpp \
+          collision/Contact.cpp \
           collision/Intersection.cpp \
           collision/Pipeline.cpp \
           topology/BaseMeshTopology.cpp \
@@ -190,7 +197,9 @@ SOURCES +=  \
           behavior/PairInteractionForceField.cpp \
           behavior/MixedInteractionForceField.cpp \
           behavior/PairInteractionConstraint.cpp \
+          behavior/PairInteractionProjectiveConstraintSet.cpp \
           behavior/MixedInteractionConstraint.cpp \
+          behavior/ProjectiveConstraintSet.cpp \
           loader/MeshLoader.cpp 
 
 
@@ -209,5 +218,3 @@ SOURCES +=  \
           collision/ParallelPipeline.cpp\
           objectmodel/BaseObjectTasks.cpp 
 }
-
-

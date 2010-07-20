@@ -33,7 +33,7 @@
 #include <sofa/core/behavior/BaseConstraintCorrection.h>
 #include <sofa/core/behavior/OdeSolver.h>
 #include <sofa/component/odesolver/OdeSolverImpl.h>
-#include <sofa/component/constraint/LCPConstraintSolver.h>
+#include <sofa/component/constraintset/LCPConstraintSolver.h>
 #include <sofa/helper/set.h>
 
 namespace sofa
@@ -62,7 +62,7 @@ public:
         Data<bool> displayTime;
 protected:
         sofa::core::behavior::ConstraintSolver *constraintSolver;
-        constraint::LCPConstraintSolver* defaultSolver;
+        constraintset::LCPConstraintSolver* defaultSolver;
 };
 
 } // namespace mastersolver

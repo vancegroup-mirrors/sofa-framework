@@ -49,6 +49,7 @@
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/component/misc/BaseRotationFinder.h>
 #include <sofa/component/linearsolver/RotationMatrix.h>
+#include <sofa/component/linearsolver/DefaultMultiMatrixAccessor.h>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <sofa/helper/system/atomic.h>
@@ -177,9 +178,11 @@ protected:
 
 	unsigned int systemSize;	    
 	Matrix * matricesWork[2];
+	DefaultMultiMatrixAccessor matrixAccessor;
 	TRotationMatrix * rotationWork[2];
 	TRotationMatrix * Rcur;
 	int indexwork;
+	
 	
 	VecId solutionVecId;	
 	Vector* systemRHVector;

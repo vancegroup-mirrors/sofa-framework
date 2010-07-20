@@ -82,7 +82,8 @@ LIBS += -lsofacomponentvisualmodel$$LIBSUFFIX
 LIBS += -lsofacomponentmass$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentmapping$$LIBSUFFIX
-LIBS += -lsofacomponentconstraint$$LIBSUFFIX
+LIBS += -lsofacomponentprojectiveconstraintset$$LIBSUFFIX
+LIBS += -lsofacomponentconstraintset$$LIBSUFFIX
 LIBS += -lsofacomponentcollision$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 

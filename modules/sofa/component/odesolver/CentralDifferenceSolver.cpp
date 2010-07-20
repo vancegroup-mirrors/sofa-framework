@@ -105,15 +105,15 @@ void CentralDifferenceSolver::solve(double dt)
 
     projectResponse(dx);                    // dx is projected to the constrained space
 
-    solveConstraint(dt,VecId::dx());
+    solveConstraint(dt,dx,core::behavior::BaseConstraintSet::ACC);
     // apply the solution
     if (r==0)
     {
 #ifdef SOFA_NO_VMULTIOP // unoptimized version
-        vel.peq( dx, dt );                  // vel = vel + dt M^{-1} ( P_n - K u_n )
-        solveConstraint(dt,VecId::velocity());
-	pos.peq( vel, dt );                    // pos = pos + h vel
-        solveConstraint(dt,VecId::position());
+      vel.peq( dx, dt );                  // vel = vel + dt M^{-1} ( P_n - K u_n )
+      solveConstraint(dt,vel, core::behavior::BaseConstraintSet::VEL);
+      pos.peq( vel, dt );                    // pos = pos + h vel
+      solveConstraint(dt,pos, core::behavior::BaseConstraintSet::POS);
 
 #else // single-operation optimization
   
@@ -147,14 +147,14 @@ void CentralDifferenceSolver::solve(double dt)
 	ops[0].second.push_back(std::make_pair((VecId)vel,(1/dt - r/2)/(1/dt + r/2)));
 	ops[0].second.push_back(std::make_pair((VecId)dx,1/(1/dt + r/2)));
 	// pos += vel * dt
-        ops[1].first = (VecId)pos;
+    ops[1].first = (VecId)pos;
 	ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
 	ops[1].second.push_back(std::make_pair((VecId)vel,dt));
 	simulation::MechanicalVMultiOpVisitor vmop(ops);
 	vmop.execute(getContext());
 
-        solveConstraint(dt,VecId::velocity());
-        solveConstraint(dt,VecId::position());
+    solveConstraint(dt,vel, core::behavior::BaseConstraintSet::VEL);
+    solveConstraint(dt,pos, core::behavior::BaseConstraintSet::POS);
 
 #endif
     }

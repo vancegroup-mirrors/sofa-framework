@@ -29,10 +29,10 @@
 
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/topology/BaseTopologyObject.h>
+#include <sofa/core/DataEngine.h>
+#include <sofa/core/objectmodel/Data.h>
 
-#include <sofa/helper/vector.h>
-#include <list>
-#include <string>
+#include <sofa/helper/list.h>
 
 
 namespace sofa
@@ -61,6 +61,9 @@ namespace topology
 
 	/// Translates topology events (TopologyChange objects) from a topology so that they apply on another one.
 	class TopologicalMapping;
+
+   /// Allow topological handle events
+   class TopologyEngine;
 
 
 	/** A class that contains a set of high-level (user frisendly) methods that perform topological changes */
@@ -179,6 +182,7 @@ public:
 		TopologyContainer *m_topologyContainer;
 	};
 
+
 	/** A class that contains a description of the topology (set of edges, triangles, adjacency information, ...) */
 class SOFA_CORE_API TopologyContainer : public sofa::core::topology::BaseTopologyObject,
                                         public core::topology::BaseMeshTopology
@@ -211,45 +215,43 @@ protected:
 		/// @}
 
 
-		const std::list<const TopologyChange *> &getChangeList() const { return m_changeList; }
+      const sofa::helper::list<const TopologyChange *> &getChangeList() const { return m_changeList.getValue(); }
 
-		const std::list<const TopologyChange *> &getStateChangeList() const { return m_stateChangeList; }
+      const sofa::helper::list<const TopologyChange *> &getStateChangeList() const { return m_stateChangeList.getValue(); }
+
+      const Data <sofa::helper::list<const TopologyChange *> > &getDataChangeList() const { return m_changeList; }
+
+      const Data <sofa::helper::list<const TopologyChange *> > &getDataStateChangeList() const { return m_stateChangeList; }
 
 		/** \brief Adds a TopologyChange to the list.
 		*
 		* Needed by topologies linked to this one to know what happened and what to do to take it into account.
 		*
 		*/
-		void addTopologyChange(const TopologyChange *topologyChange) 
-		{ 
-			m_changeList.push_back(topologyChange); 
-		}
+      void addTopologyChange(const TopologyChange *topologyChange);
 
 		/** \brief Adds a StateChange to the list.
 		*
 		* Needed by topologies linked to this one to know what happened and what to do to take it into account.
 		*
 		*/
-		void addStateChange(const TopologyChange *topologyChange) 
-		{	
-			m_stateChangeList.push_back(topologyChange);
-		}
+      void addStateChange(const TopologyChange *topologyChange);
 
 		/** \brief Provides an iterator on the first element in the list of TopologyChange objects.
 		 */
-		std::list<const TopologyChange *>::const_iterator firstChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator firstChange() const;
 
 		/** \brief Provides an iterator on the last element in the list of TopologyChange objects.
 		 */
-		std::list<const TopologyChange *>::const_iterator lastChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator lastChange() const;
 
 		/** \brief Provides an iterator on the first element in the list of StateChange objects.
 		 */
-		std::list<const TopologyChange *>::const_iterator firstStateChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator firstStateChange() const;
 
 		/** \brief Provides an iterator on the last element in the list of StateChange objects.
 		 */
-		std::list<const TopologyChange *>::const_iterator lastStateChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator lastStateChange() const;
 	
 
 		/** \brief Free each Topology changes in the list and remove them from the list
@@ -264,11 +266,47 @@ protected:
 
 	private:
 		/// Array of topology modifications that have already occured (addition) or will occur next (deletion).
-		std::list<const TopologyChange *> m_changeList; 
+      Data <sofa::helper::list<const TopologyChange *> >m_changeList;
 
 		/// Array of state modifications that have already occured (addition) or will occur next (deletion).
-		std::list<const TopologyChange *> m_stateChangeList; 
+      Data <sofa::helper::list<const TopologyChange *> >m_stateChangeList;
+
+   protected:
+      /// Contains the actual topology data and give acces to it (nature of these data heavily depends on the kind of topology).
+      TopologyEngine *m_topologyEngine;
 	};
+
+
+/** A class that contains a description of the topology (set of edges, triangles, adjacency information, ...) */
+class SOFA_CORE_API TopologyEngine : public sofa::core::DataEngine
+{
+public:
+   SOFA_CLASS(TopologyEngine, DataEngine);
+   typedef sofa::helper::list<sofa::core::objectmodel::BaseData *> _topologicalDataList;
+   typedef sofa::helper::list<sofa::core::objectmodel::BaseData *>::iterator _iterator;
+
+   virtual ~TopologyEngine() {}
+
+   virtual void init();
+
+   virtual void handleTopologyChange(){};
+
+protected:
+   TopologyEngine(){};
+
+   Data <sofa::helper::list<const TopologyChange *> >m_changeList;
+
+   _topologicalDataList m_topologicalData;
+
+public:
+   unsigned int getNumberOfTopologicalDataLinked() {return m_topologicalData.size();}
+
+   void addTopologicalData(sofa::core::objectmodel::BaseData& topologicalData);
+
+   void removeTopoligicalData(sofa::core::objectmodel::BaseData& topologicalData);
+
+};
+
 
 } // namespace topology
 

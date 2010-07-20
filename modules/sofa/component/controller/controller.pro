@@ -47,7 +47,8 @@ LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
-LIBS += -lsofacomponentconstraint$$LIBSUFFIX
+LIBS += -lsofacomponentprojectiveconstraintset$$LIBSUFFIX
+LIBS += -lsofacomponentconstraintset$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS 
 

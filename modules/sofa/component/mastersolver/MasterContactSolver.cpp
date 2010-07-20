@@ -57,7 +57,7 @@ MasterContactSolver::MasterContactSolver()
 
 void MasterContactSolver::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
 {
-    defaultSolver = new constraint::LCPConstraintSolver;
+    defaultSolver = new constraintset::LCPConstraintSolver;
     defaultSolver->parse(arg);
 }
 
@@ -164,7 +164,7 @@ void MasterContactSolver::step(double dt)
 	if (constraintSolver)
 	{
 		AdvancedTimer::stepBegin("ConstraintSolver");
-		constraintSolver->solveConstraint(dt, core::VecId::freePosition());
+        constraintSolver->solveConstraint(dt, core::VecId::freePosition(), core::behavior::BaseConstraintSet::POS);
 		AdvancedTimer::stepEnd("ConstraintSolver");
 	}
 

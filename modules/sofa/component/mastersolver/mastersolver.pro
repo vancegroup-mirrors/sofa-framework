@@ -30,7 +30,8 @@ SOURCES += initMasterSolver.cpp \
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
-LIBS += -lsofacomponentconstraint$$LIBSUFFIX
+LIBS += -lsofacomponentprojectiveconstraintset$$LIBSUFFIX
+LIBS += -lsofacomponentconstraintset$$LIBSUFFIX
 LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
 LIBS += $$SOFA_EXT_LIBS 
 

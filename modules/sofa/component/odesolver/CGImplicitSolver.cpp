@@ -269,9 +269,9 @@ void CGImplicitSolver::solve(double dt)
     // apply the solution
 #ifdef SOFA_NO_VMULTIOP // unoptimized version
     vel.peq( x );                       // vel = vel + x
-    solveConstraint(dt,VecId::velocity());
+    solveConstraint(dt,vel, core::behavior::BaseConstraintSet::VEL);
     pos.peq( vel, h );                  // pos = pos + h vel
-    solveConstraint(dt,VecId::position());
+    solveConstraint(dt,pos, core::behavior::BaseConstraintSet::POS);
 
 #else // single-operation optimization
     {
@@ -287,8 +287,8 @@ void CGImplicitSolver::solve(double dt)
 	simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.execute(this->getContext());
 
-        solveConstraint(dt,VecId::velocity());
-        solveConstraint(dt,VecId::position());
+        solveConstraint(dt,vel, core::behavior::BaseConstraintSet::VEL);
+        solveConstraint(dt,pos, core::behavior::BaseConstraintSet::POS);
     }
 #endif
     if (f_velocityDamping.getValue()!=0.0)

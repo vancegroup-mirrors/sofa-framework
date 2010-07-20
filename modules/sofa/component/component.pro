@@ -19,7 +19,8 @@ SUBDIRS += interactionforcefield #forcefield dependency
 SUBDIRS += linearsolver          #forcefield + odesolver dependency
 
 SUBDIRS += mapping               #forcefield + visualmodel dependency
-SUBDIRS += constraint            #forcefield + odesolver + linearsolver + mass dependency
+SUBDIRS += projectiveconstraintset            #forcefield + odesolver + linearsolver + mass dependency
+SUBDIRS += constraintset         #forcefield + odesolver + linearsolver + mass dependency
 SUBDIRS += mastersolver          #linearsolver + constraint dependency
 SUBDIRS += controller            #forcefield + constraint dependency
 SUBDIRS += collision             #linearsolver+odesolver+forcefield+mapping+constraint+visualmodel

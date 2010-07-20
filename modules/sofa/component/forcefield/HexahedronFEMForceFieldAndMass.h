@@ -86,6 +86,11 @@ namespace sofa
 
 		virtual void addMToMatrix(defaulttype::BaseMatrix * matrix, double mFact, unsigned int &offset);
 
+        void addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset)
+        {
+            HexahedronFEMForceFieldT::addKToMatrix(mat, k, offset);
+        }
+
 		virtual  void accFromF(VecDeriv& a, const VecDeriv& f);
 
 		virtual  void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);
@@ -131,9 +136,19 @@ namespace sofa
 	  
 	  };
 
-    } // namespace forcefield
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELDANDMASS_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass< defaulttype::Vec3dTypes >;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass< defaulttype::Vec3fTypes >;
+#endif
+#endif
 
-  } // namespace component
+} // namespace forcefield
+
+} // namespace component
 
 } // namespace sofa
 

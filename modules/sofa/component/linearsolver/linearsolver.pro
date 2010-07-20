@@ -31,6 +31,7 @@ HEADERS +=  \
            SparseMatrix.h \
            CompressedRowSparseMatrix.h \
 	   GraphScatteredTypes.h \
+           DefaultMultiMatrixAccessor.h \
            MatrixLinearSolver.h \
 	   ParallelMatrixLinearSolver.h \
 	   ParallelMatrixLinearSolver.inl \
@@ -53,6 +54,7 @@ SOURCES += \
            BTDLinearSolver.cpp \
            FullVector.cpp \
 	   GraphScatteredTypes.cpp \
+           DefaultMultiMatrixAccessor.cpp \
            MatrixLinearSolver.cpp \
 	   ParallelMatrixLinearSolver.cpp \
            MultiCGLinearSolver.cpp

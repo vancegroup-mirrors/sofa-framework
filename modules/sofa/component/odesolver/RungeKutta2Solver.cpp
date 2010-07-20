@@ -99,13 +99,13 @@ void RungeKutta2Solver::solve(double dt)
     // Use the derivative at newX, newV to update the state 
 #ifdef SOFA_NO_VMULTIOP // unoptimized version
     pos.peq(newV,dt);
-    solveConstraint(dt,VecId::position());
+    solveConstraint(dt,pos,core::behavior::BaseConstraintSet::POS);
     vel.peq(acc,dt);
-    solveConstraint(dt,VecId::velocity());
+    solveConstraint(dt,vel,core::behavior::BaseConstraintSet::VEL);
 #else // single-operation optimization
     {
         typedef core::behavior::BaseMechanicalState::VMultiOp VMultiOp;
-	VMultiOp ops;
+        VMultiOp ops;
         ops.resize(2);
         ops[0].first = (VecId)pos;
         ops[0].second.push_back(std::make_pair((VecId)pos,1.0));
@@ -116,8 +116,8 @@ void RungeKutta2Solver::solve(double dt)
         simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.execute(this->getContext());
 
-        solveConstraint(dt,VecId::velocity());
-        solveConstraint(dt,VecId::position());
+        solveConstraint(dt,vel,core::behavior::BaseConstraintSet::VEL);
+        solveConstraint(dt,pos,core::behavior::BaseConstraintSet::POS);
     }
 #endif
 

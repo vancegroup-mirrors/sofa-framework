@@ -27,6 +27,7 @@
 
 #include <sofa/core/behavior/OdeSolver.h>
 #include <sofa/core/behavior/LinearSolver.h>
+#include <sofa/core/behavior/MultiMatrixAccessor.h>
 #include <sofa/simulation/common/common.h>
 
 namespace sofa
@@ -115,11 +116,14 @@ public:
     /// @{
 
     // BaseMatrix & BaseVector Computations
-	virtual void addMBK_ToMatrix(defaulttype::BaseMatrix *A, double mFact=1.0, double bFact=1.0, double kFact=1.0, unsigned int offset=0);
-    //virtual void addMBKdx_ToVector(defaulttype::BaseVector *V, VecId dx, double mFact=1.0, double bFact=1.0, double kFact=1.0, unsigned int offset=0);
-    virtual void getMatrixDimension(unsigned int * const, unsigned int * const);
-	virtual void multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest=NULL, unsigned int offset=0);
-	virtual void multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *src=NULL, unsigned int offset=0);
+    virtual void getMatrixDimension(unsigned int * const, unsigned int * const, sofa::core::behavior::MultiMatrixAccessor* matrix = NULL);
+    void getMatrixDimension(sofa::core::behavior::MultiMatrixAccessor* matrix)
+    {
+        getMatrixDimension(NULL, NULL, matrix);
+    }
+	virtual void addMBK_ToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, double mFact, double bFact, double kFact);
+	virtual void multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest, const sofa::core::behavior::MultiMatrixAccessor* matrix);
+	virtual void multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *src, const sofa::core::behavior::MultiMatrixAccessor* matrix);
 
     /// @}
 

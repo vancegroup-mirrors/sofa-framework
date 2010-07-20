@@ -12,6 +12,8 @@ conditions of the standard open source license.
 -----------------------------------------------------------------------------
 */
 
+#include <Ogre.h>
+#if OGRE_VERSION >= 0x010700
 #ifndef _HelperLogics_H__
 #define _HelperLogics_H__
 
@@ -79,4 +81,5 @@ protected:
 	virtual Ogre::CompositorInstance::Listener* createListener(Ogre::CompositorInstance* instance);
 };
 
+#endif
 #endif

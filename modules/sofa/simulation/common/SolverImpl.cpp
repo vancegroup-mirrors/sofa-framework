@@ -244,39 +244,33 @@ void SolverImpl::printWithElapsedTime( VecId v,  unsigned time, std::ostream& ou
 
 // BaseMatrix & BaseVector Computations
 
-void SolverImpl::getMatrixDimension(unsigned int * const nbRow, unsigned int * const nbCol)
+void SolverImpl::getMatrixDimension(unsigned int * const nbRow, unsigned int * const nbCol, sofa::core::behavior::MultiMatrixAccessor* matrix)
 {
-    executeVisitor( MechanicalGetMatrixDimensionVisitor(nbRow, nbCol) );
+    executeVisitor( MechanicalGetMatrixDimensionVisitor(nbRow, nbCol, matrix) );
 }
 
-void SolverImpl::addMBK_ToMatrix(defaulttype::BaseMatrix *A, double mFact, double bFact, double kFact, unsigned int offset)
+void SolverImpl::addMBK_ToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, double mFact, double bFact, double kFact)
 {
-    if (A != NULL)
+    if (matrix != NULL)
     {
         //std::cout << "MechanicalAddMBK_ToMatrixVisitor "<< mFact << " " << bFact << " " << kFact << " " << offset << std::endl;
-        executeVisitor( MechanicalAddMBK_ToMatrixVisitor(A, mFact, bFact, kFact, offset) );
+        executeVisitor( MechanicalAddMBK_ToMatrixVisitor(matrix, mFact, bFact, kFact) );
     }
 }
-/*
-void SolverImpl::addMBKdx_ToVector(defaulttype::BaseVector *V, VecId dx, double mFact, double bFact, double kFact, unsigned int offset)
-{
-	if (V != NULL)
-		executeVisitor( MechanicalAddMBKdx_ToVectorVisitor(V, dx, mFact, bFact, kFact, offset) );
-}
-*/
-void SolverImpl::multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest, unsigned int offset)
+
+void SolverImpl::multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest, const sofa::core::behavior::MultiMatrixAccessor* matrix)
 {
     if (dest != NULL)
     {
-        executeVisitor( MechanicalMultiVector2BaseVectorVisitor(src, dest, offset) );
+        executeVisitor( MechanicalMultiVector2BaseVectorVisitor(src, dest, matrix) );
     }
 }
 
-void SolverImpl::multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *src, unsigned int offset)
+void SolverImpl::multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *src, const sofa::core::behavior::MultiMatrixAccessor* matrix)
 {
 	if (src != NULL)
 	{
-		executeVisitor( MechanicalMultiVectorPeqBaseVectorVisitor(dest, src, offset) );
+		executeVisitor( MechanicalMultiVectorPeqBaseVectorVisitor(dest, src, matrix) );
 	}
 }
 

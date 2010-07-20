@@ -54,7 +54,7 @@ public:
     typedef sofa::core::behavior::MultiVector<OdeSolverImpl> MultiVector;
     typedef sofa::core::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
     typedef sofa::core::behavior::MechanicalMatrix MechanicalMatrix;
-    typedef sofa::core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
+    typedef sofa::core::behavior::BaseConstraintSet::ConstOrder ConstOrder;
 
 
     OdeSolverImpl();
@@ -65,7 +65,7 @@ public:
     virtual void computeAcc(double t, VecId a, VecId x, VecId v);
     virtual void computeContactAcc(double t, VecId a, VecId x, VecId v);
 
-    virtual void solveConstraint(double /*dt*/, VecId);
+    virtual void solveConstraint(double /*dt*/, VecId, core::behavior::BaseConstraintSet::ConstOrder);
 
 
     /// @name Matrix operations using LinearSolver components

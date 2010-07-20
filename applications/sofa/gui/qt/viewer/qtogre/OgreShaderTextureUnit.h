@@ -27,8 +27,8 @@
 #ifndef OGRESHADERTEXTUREUNIT_H
 #define OGRESHADERTEXTUREUNIT_H
 
-#include <sofa/core/VisualModel.h>
 #include <sofa/core/objectmodel/DataFileName.h>
+#include "OgreShaderEntryPoint.h"
 
 namespace sofa
 {
@@ -39,21 +39,17 @@ namespace sofa
     namespace visualmodel
     {
 
-    class OgreShaderTextureUnit : public core::VisualModel
+    class OgreShaderTextureUnit : public OgreShaderEntryPoint
     {
     public:
+      SOFA_CLASS(OgreShaderTextureUnit, OgreShaderEntryPoint);
+
       OgreShaderTextureUnit():
-          passIndex(initData(&passIndex, 0, "passIndex", "Index of the pass where we have to add the Texture Unit"))
-         ,  textureIndex(initData(&textureIndex, 0, "textureIndex", "Index of the texture in the pass"))
+           textureIndex(initData(&textureIndex, 0, "textureIndex", "Index of the texture in the pass"))
          , textureName(initData(&textureName,"textureName", "File to use for the Texture"))
       {
       };
         virtual ~OgreShaderTextureUnit(){};
-        SOFA_CLASS(OgreShaderTextureUnit, core::objectmodel::BaseObject);
-
-
-        void setPassIndex(int entry) {passIndex.setValue(entry);}
-        int getPassIndex() const {return passIndex.getValue();}
 
         void setTextureIndex(int entry) {textureIndex.setValue(entry);}
         int getTextureIndex() const {return textureIndex.getValue();}
@@ -62,7 +58,6 @@ namespace sofa
         const std::string &getTextureName() const {return textureName.getValue();}
 
     protected:
-        Data<int> passIndex;
         Data<int> textureIndex;
         core::objectmodel::DataFileName textureName;
 

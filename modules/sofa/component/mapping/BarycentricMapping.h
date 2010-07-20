@@ -1023,108 +1023,105 @@ template <class BasicMapping>
 class BarycentricMapping : public BasicMapping
 {
 public:
-      SOFA_CLASS(SOFA_TEMPLATE(BarycentricMapping,BasicMapping), BasicMapping);
+	SOFA_CLASS(SOFA_TEMPLATE(BarycentricMapping,BasicMapping), BasicMapping);
 
-      typedef BasicMapping Inherit;
-      typedef typename Inherit::In In;
-      typedef typename Inherit::Out Out;
-      typedef typename In::DataTypes InDataTypes;
-      typedef typename InDataTypes::VecCoord InVecCoord;
-      typedef typename InDataTypes::VecDeriv InVecDeriv;
-      typedef typename InDataTypes::Coord InCoord;
-      typedef typename InDataTypes::Deriv InDeriv;
-      typedef typename InDataTypes::SparseVecDeriv InSparseVecDeriv;
-      typedef typename InDataTypes::Real Real;
-      typedef typename Out::DataTypes OutDataTypes;
-      typedef typename OutDataTypes::VecCoord OutVecCoord;
-      typedef typename OutDataTypes::VecDeriv OutVecDeriv;
-      typedef typename OutDataTypes::Coord OutCoord;
-      typedef typename OutDataTypes::Deriv OutDeriv;
-      typedef typename OutDataTypes::SparseVecDeriv OutSparseVecDeriv;
-      typedef typename OutDataTypes::Real OutReal;
+	typedef BasicMapping Inherit;
+	typedef typename Inherit::In In;
+	typedef typename Inherit::Out Out;
+	typedef typename In::DataTypes InDataTypes;
+	typedef typename InDataTypes::VecCoord InVecCoord;
+	typedef typename InDataTypes::VecDeriv InVecDeriv;
+	typedef typename InDataTypes::Coord InCoord;
+	typedef typename InDataTypes::Deriv InDeriv;
+	typedef typename InDataTypes::SparseVecDeriv InSparseVecDeriv;
+	typedef typename InDataTypes::Real Real;
+	typedef typename Out::DataTypes OutDataTypes;
+	typedef typename OutDataTypes::VecCoord OutVecCoord;
+	typedef typename OutDataTypes::VecDeriv OutVecDeriv;
+	typedef typename OutDataTypes::Coord OutCoord;
+	typedef typename OutDataTypes::Deriv OutDeriv;
+	typedef typename OutDataTypes::SparseVecDeriv OutSparseVecDeriv;
+	typedef typename OutDataTypes::Real OutReal;
 
-      typedef core::topology::BaseMeshTopology BaseMeshTopology;
+	typedef core::topology::BaseMeshTopology BaseMeshTopology;
 
-      typedef TopologyBarycentricMapper<InDataTypes,OutDataTypes> Mapper;
-      typedef BarycentricMapperRegularGridTopology<InDataTypes, OutDataTypes> RegularGridMapper;
-      typedef BarycentricMapperHexahedronSetTopology<InDataTypes, OutDataTypes> HexaMapper;
+	typedef TopologyBarycentricMapper<InDataTypes,OutDataTypes> Mapper;
+	typedef BarycentricMapperRegularGridTopology<InDataTypes, OutDataTypes> RegularGridMapper;
+	typedef BarycentricMapperHexahedronSetTopology<InDataTypes, OutDataTypes> HexaMapper;
 
-      //typedef forcefield::TetrahedronFEMForceField<InDataTypes> TetraFF;
+	//typedef forcefield::TetrahedronFEMForceField<InDataTypes> TetraFF;
 
-    protected:
+protected:
+
+	Mapper *mapper;
+	RegularGridMapper *f_grid;
+	HexaMapper *f_hexaMapper;
+
+	BarycentricMapperDynamicTopology* dynamicMapper;
+
+public:
+
+	Data< bool > useRestPosition;
 
 
-      Mapper* mapper;
-      DataPtr< RegularGridMapper >* f_grid;
-      DataPtr< HexaMapper >* f_hexaMapper;
-
-		BarycentricMapperDynamicTopology* dynamicMapper;
-
-    public:
-
-                Data<bool> useRestPosition;
-
-
-      BarycentricMapping(In* from, Out* to)
-	: Inherit(from, to), mapper(NULL)
-            , f_grid (new DataPtr< RegularGridMapper >( new RegularGridMapper( NULL,NULL,NULL,NULL ),"Regular Grid Mapping"))
-        , f_hexaMapper (new DataPtr< HexaMapper >( new HexaMapper(  ),"Hexahedron Mapper"))
-	    , useRestPosition(core::objectmodel::Base::initData(&useRestPosition, false, "useRestPosition", "Use the rest position of the input and output models to initialize the mapping"))
-          {
-	    this->addField( f_grid, "gridmap");	f_grid->beginEdit();
- 	    this->addField( f_hexaMapper, "hexamap");	f_hexaMapper->beginEdit();
-          }
+	BarycentricMapping(In* from, Out* to)
+		: Inherit(from, to), mapper(NULL)
+		, f_grid(new RegularGridMapper(NULL, NULL, NULL, NULL))
+		, f_hexaMapper(new HexaMapper())
+		, useRestPosition(core::objectmodel::Base::initData(&useRestPosition, false, "useRestPosition", "Use the rest position of the input and output models to initialize the mapping"))
+	{
+	}
 
 	BarycentricMapping(In* from, Out* to, Mapper* mapper)
-	: Inherit(from, to), mapper(mapper)
+		: Inherit(from, to), mapper(mapper)
+		, f_grid(0)
+		, f_hexaMapper(0)
 	{
-	  if (RegularGridMapper* m = dynamic_cast< RegularGridMapper* >(mapper))
-	  {
-	    f_grid = new DataPtr< RegularGridMapper >( m,"Regular Grid Mapping");
-	    this->addField( f_grid, "gridmap");	f_grid->beginEdit();
-	  }
-          else if (HexaMapper* m = dynamic_cast< HexaMapper* >(mapper))
-            {
-              f_hexaMapper = new DataPtr< HexaMapper >( m,"Hexahedron Mapper");
-              this->addField( f_hexaMapper, "hexamap");	f_hexaMapper->beginEdit();
-            }
+		if (RegularGridMapper* m = dynamic_cast< RegularGridMapper* >(mapper))
+		{
+			f_grid = m;
+		}
+		else if (HexaMapper* m = dynamic_cast< HexaMapper* >(mapper))
+		{
+			f_hexaMapper = m;
+		}
 	}
 
 	BarycentricMapping(In* from, Out* to, BaseMeshTopology * topology );
 
-	  virtual ~BarycentricMapping()
-	    {
-	      if (mapper!=NULL)
-		delete mapper;
-	    }
+	virtual ~BarycentricMapping()
+	{
+		if (mapper != NULL)
+			delete mapper;
+	}
 
-	  void init();
+	void init();
 
-	  void reinit();
+	void reinit();
 
-	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 
-	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 
-	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
-	  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+	void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
 
-    virtual const sofa::defaulttype::BaseMatrix* getJ();
+	virtual const sofa::defaulttype::BaseMatrix* getJ();
 
-	  void draw();
+	void draw();
 
-	  // handle topology changes depending on the topology
-	  virtual void handleTopologyChange(core::topology::Topology* t);
+	// handle topology changes depending on the topology
+	virtual void handleTopologyChange(core::topology::Topology* t);
 
-	  TopologyBarycentricMapper<InDataTypes,OutDataTypes>*	getMapper() {return mapper;}
+	TopologyBarycentricMapper<InDataTypes,OutDataTypes>*	getMapper() {return mapper;}
 
-	protected:
-		sofa::core::topology::BaseMeshTopology* topology_from;
-                sofa::core::topology::BaseMeshTopology* topology_to;
+protected:
+	sofa::core::topology::BaseMeshTopology* topology_from;
+	sofa::core::topology::BaseMeshTopology* topology_to;
 
-	private:
-		void createMapperFromTopology(BaseMeshTopology * topology);
+private:
+	void createMapperFromTopology(BaseMeshTopology * topology);
 };
 
 using sofa::defaulttype::Vec1dTypes;

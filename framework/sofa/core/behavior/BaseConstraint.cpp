@@ -39,17 +39,7 @@ void BaseConstraint::projectResponse(double **)
 {
 }
 
-void BaseConstraint::applyConstraint(unsigned int&)
-{
-}
 
-void BaseConstraint::applyConstraint(defaulttype::BaseMatrix *, unsigned int &)
-{
-}
-
-void BaseConstraint::applyConstraint(defaulttype::BaseVector *, unsigned int &)
-{
-}
 
 } // namespace behavior
 

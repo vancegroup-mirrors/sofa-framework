@@ -166,7 +166,8 @@ LIBS += -lsofacomponentlinearsolver$$LIBSUFFIX
 LIBS += -lsofacomponentodesolver$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentmapping$$LIBSUFFIX
-LIBS += -lsofacomponentconstraint$$LIBSUFFIX
+LIBS += -lsofacomponentprojectiveconstraintset$$LIBSUFFIX
+LIBS += -lsofacomponentconstraintset$$LIBSUFFIX
 LIBS += -lsofacomponentvisualmodel$$LIBSUFFIX
 
 

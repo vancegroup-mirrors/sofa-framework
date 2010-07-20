@@ -102,7 +102,6 @@ GraphOptionWidget::GraphOptionWidget(const std::string &dataName, GraphSetting *
   connect(exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
   connect(findImageFile, SIGNAL(clicked()), this, SLOT(openFindFileDialog()));
 #endif
-
 }
 
 void GraphOptionWidget::openFindFileDialog()

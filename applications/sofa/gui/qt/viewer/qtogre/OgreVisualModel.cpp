@@ -157,7 +157,7 @@ namespace sofa
           model->end();
         }
 
-        if (!OgreVisualModel::lightsEnabled) applyShaderParameters();
+        if (!OgreVisualModel::lightsEnabled) updateManualObjectCustomParameter();
       }
 
       //-------------------------------------------
@@ -320,10 +320,12 @@ namespace sofa
           material = cel->clone(s.str());
         }
         else
+        {
           material = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
 
-        material->setReceiveShadows(true);
-        material->getTechnique(0)->getPass(0)->setLightingEnabled(true);
+          material->setReceiveShadows(true);
+          material->getTechnique(0)->getPass(0)->setLightingEnabled(true);
+        }
 
         updateMaterial(sofaMaterial);        
         material->compile();
@@ -336,27 +338,19 @@ namespace sofa
         if (material.isNull()) return;
 
 
-        if (!textureName.empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",textureName) )
-          material->getTechnique(0)->getPass(0)->createTextureUnitState(textureName);
-
-
         for (unsigned int i=0;i<shaderTextureUnits->size();++i)
         {
           OgreShaderTextureUnit *textureUnit=(*shaderTextureUnits)[i];
-          if (material->getTechnique(0)->getNumPasses() <= textureUnit->getPassIndex())
-          {
-            std::cerr << "ERROR: " << textureUnit->getPassIndex() << " does not exist in the shader. Only " << material->getTechnique(0)->getNumPasses() << " exist in the material" << std::endl;
-            for (unsigned int j=0;j<material->getTechnique(0)->getNumPasses();++j)
-              std::cerr << material->getTechnique(0)->getPass(j)->getName() << std::endl;
-            continue;
-          }
-          Ogre::TextureUnitState *tex=material->getTechnique(0)->getPass(textureUnit->getPassIndex())->getTextureUnitState(textureUnit->getTextureIndex());
-          if (tex) material->getTechnique(0)->getPass(textureUnit->getPassIndex())->removeTextureUnitState(textureUnit->getTextureIndex());
-
-          material->getTechnique(0)->getPass(textureUnit->getPassIndex())->createTextureUnitState(textureUnit->getTextureName(), textureUnit->getTextureIndex());
+          Ogre::TextureUnitState *tex=material->getTechnique(textureUnit->getTechniqueIndex())->getPass(textureUnit->getPassIndex())->getTextureUnitState(textureUnit->getTextureIndex());
+          if (tex) tex->setTextureName(textureUnit->getTextureName());
+          material->getTechnique(textureUnit->getTechniqueIndex())->getPass(textureUnit->getPassIndex())->createTextureUnitState(textureUnit->getTextureName(), textureUnit->getTextureIndex());
          }
 
         if (!shaderName.empty()) return;
+
+
+        if (!textureName.empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",textureName) )
+          material->getTechnique(0)->getPass(0)->createTextureUnitState(textureName);
 
 
         if (sofaMaterial.useDiffuse)
@@ -393,60 +387,15 @@ namespace sofa
           }
       }
 
-      void SubMesh::applyShaderParameters() const
+      void SubMesh::updateManualObjectCustomParameter() const
       {
-        for (unsigned int i=0;i<storage.size();++i)
-        {
-          Ogre::ManualObject::ManualObjectSection *section=model->getSection(index+i);
-          section->setCustomParameter(1, Ogre::Vector4(sofaMaterial.ambient.ptr()));
-          section->setCustomParameter(2, Ogre::Vector4(sofaMaterial.diffuse.ptr()));
-          section->setCustomParameter(3, Ogre::Vector4(sofaMaterial.specular.ptr()));
-          section->setCustomParameter(4, Ogre::Vector4(sofaMaterial.shininess,0,0,0));
-
-          for (unsigned int p=0;p<shaderParameters->size();++p)
-          {
-            if ((*shaderParameters)[p]->isDirty())
-            {
-              Ogre::Vector4 value;
-              BaseOgreShaderParameter* parameter=(*shaderParameters)[p];
-              parameter->getValue(value);
-              section->setCustomParameter(parameter->getEntryPoint(), value);
-            }
-          }
-
-          for (unsigned int i=0;i<shaderTextureUnits->size();++i)
-          {
-            OgreShaderTextureUnit *textureUnit=(*shaderTextureUnits)[i];
-            Ogre::TextureUnitState *tex=material->getTechnique(0)->getPass(textureUnit->getPassIndex())->getTextureUnitState(textureUnit->getTextureIndex());
-            if (tex) tex->setTextureName(textureUnit->getTextureName());
-
-            material->getTechnique(0)->getPass(textureUnit->getPassIndex())->createTextureUnitState(textureUnit->getTextureName(), textureUnit->getTextureIndex());
-          }
-        }
+        for (unsigned int i=0;i<storage.size();++i)  updateCustomParameters(model->getSection(index+i));
       }
 
       void SubMesh::updateMeshCustomParameter(Ogre::Entity *entity) const
       {
-        for (unsigned int i=0;i<storage.size();++i)
-        {
-          Ogre::SubEntity* section=entity->getSubEntity(index+i);
-          section->setCustomParameter(1, Ogre::Vector4(sofaMaterial.ambient.ptr()));
-          section->setCustomParameter(2, Ogre::Vector4(sofaMaterial.diffuse.ptr()));
-          section->setCustomParameter(3, Ogre::Vector4(sofaMaterial.specular.ptr()));
-          section->setCustomParameter(4, Ogre::Vector4(sofaMaterial.shininess,0,0,0));
-
-          for (unsigned int p=0;p<shaderParameters->size();++p)
-          {
-            if ((*shaderParameters)[p]->isDirty())
-            {
-              Ogre::Vector4 value;
-              BaseOgreShaderParameter* parameter=(*shaderParameters)[p];
-              parameter->getValue(value);
-              section->setCustomParameter(parameter->getEntryPoint(), value);
-            }
-          }
-       }
-    }
+        for (unsigned int i=0;i<storage.size();++i)  updateCustomParameters(entity->getSubEntity(index+i));
+      }
 
       void OgreVisualModel::uploadNormals()
       {       

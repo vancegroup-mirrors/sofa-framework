@@ -38,33 +38,33 @@
 
 
 
-#include <sofa/component/constraint/LinearSolverConstraintCorrection.h>
-#include <sofa/component/constraint/PrecomputedConstraintCorrection.h>
-#include <sofa/component/constraint/UncoupledConstraintCorrection.h>
+#include <sofa/component/constraintset/LinearSolverConstraintCorrection.h>
+#include <sofa/component/constraintset/PrecomputedConstraintCorrection.h>
+#include <sofa/component/constraintset/UncoupledConstraintCorrection.h>
 
 
 
 //---------------------------------------------------------------------------------------------
 //Typedef for LinearSolverConstraintCorrection
-typedef sofa::component::constraint::LinearSolverConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > LinearSolverConstraintCorrection3d;
-typedef sofa::component::constraint::LinearSolverConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > LinearSolverConstraintCorrection2d;
-typedef sofa::component::constraint::LinearSolverConstraintCorrection<sofa::defaulttype::StdRigidTypes<3, double> > LinearSolverConstraintCorrectionRigid3d;
+typedef sofa::component::constraintset::LinearSolverConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > LinearSolverConstraintCorrection3d;
+typedef sofa::component::constraintset::LinearSolverConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > LinearSolverConstraintCorrection1d;
+typedef sofa::component::constraintset::LinearSolverConstraintCorrection<sofa::defaulttype::StdRigidTypes<3, double> > LinearSolverConstraintCorrectionRigid3d;
 
 
 
 //---------------------------------------------------------------------------------------------
 //Typedef for PrecomputedConstraintCorrection
-typedef sofa::component::constraint::PrecomputedConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > PrecomputedConstraintCorrection3d;
-typedef sofa::component::constraint::PrecomputedConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > PrecomputedConstraintCorrection2d;
-typedef sofa::component::constraint::PrecomputedConstraintCorrection<sofa::defaulttype::StdRigidTypes<3, double> > PrecomputedConstraintCorrectionRigid3d;
+typedef sofa::component::constraintset::PrecomputedConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > PrecomputedConstraintCorrection3d;
+typedef sofa::component::constraintset::PrecomputedConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > PrecomputedConstraintCorrection1d;
+typedef sofa::component::constraintset::PrecomputedConstraintCorrection<sofa::defaulttype::StdRigidTypes<3, double> > PrecomputedConstraintCorrectionRigid3d;
 
 
 
 //---------------------------------------------------------------------------------------------
 //Typedef for UncoupledConstraintCorrection
-typedef sofa::component::constraint::UncoupledConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > UncoupledConstraintCorrection2d;
-typedef sofa::component::constraint::UncoupledConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > UncoupledConstraintCorrection3d;
-typedef sofa::component::constraint::UncoupledConstraintCorrection<sofa::defaulttype::StdRigidTypes<3, double> > UncoupledConstraintCorrectionRigid3d;
+typedef sofa::component::constraintset::UncoupledConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<1, double>, sofa::defaulttype::Vec<1, double>, double> > UncoupledConstraintCorrection1d;
+typedef sofa::component::constraintset::UncoupledConstraintCorrection<sofa::defaulttype::StdVectorTypes<sofa::defaulttype::Vec<3, double>, sofa::defaulttype::Vec<3, double>, double> > UncoupledConstraintCorrection3d;
+typedef sofa::component::constraintset::UncoupledConstraintCorrection<sofa::defaulttype::StdRigidTypes<3, double> > UncoupledConstraintCorrectionRigid3d;
 
 
 
@@ -72,12 +72,12 @@ typedef sofa::component::constraint::UncoupledConstraintCorrection<sofa::default
 
 #ifndef SOFA_FLOAT
 typedef LinearSolverConstraintCorrection3d LinearSolverConstraintCorrection3;
-typedef LinearSolverConstraintCorrection2d LinearSolverConstraintCorrection2;
+typedef LinearSolverConstraintCorrection1d LinearSolverConstraintCorrection1;
 typedef LinearSolverConstraintCorrectionRigid3d LinearSolverConstraintCorrectionRigid3;
 typedef PrecomputedConstraintCorrection3d PrecomputedConstraintCorrection3;
-typedef PrecomputedConstraintCorrection2d PrecomputedConstraintCorrection2;
+typedef PrecomputedConstraintCorrection1d PrecomputedConstraintCorrection1;
 typedef PrecomputedConstraintCorrectionRigid3d PrecomputedConstraintCorrectionRigid3;
-typedef UncoupledConstraintCorrection2d UncoupledConstraintCorrection2;
+typedef UncoupledConstraintCorrection1d UncoupledConstraintCorrection1;
 typedef UncoupledConstraintCorrection3d UncoupledConstraintCorrection3;
 typedef UncoupledConstraintCorrectionRigid3d UncoupledConstraintCorrectionRigid3;
 #endif

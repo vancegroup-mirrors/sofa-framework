@@ -40,42 +40,42 @@ namespace behavior
 
 using namespace sofa::defaulttype;
     
-template class MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3dTypes> >;
-template class MechanicalMapping< MechanicalState<Vec2dTypes>, MechanicalState<Vec2dTypes> >;
-template class MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1dTypes> >;
-template class MechanicalMapping< MechanicalState<Vec6dTypes>, MechanicalState<Vec6dTypes> >;
-template class MechanicalMapping< MechanicalState<Rigid2dTypes>, MechanicalState<Vec2dTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid2dTypes> > ;
-template class MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3dTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2dTypes>, MechanicalState<Vec2dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6dTypes>, MechanicalState<Vec6dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2dTypes>, MechanicalState<Vec2dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid2dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3dTypes> > ;
 
-template class MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Vec1fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec2fTypes>, MechanicalState<Vec2fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec6fTypes>, MechanicalState<Vec6fTypes> >;
-template class MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3fTypes> > ;
-template class MechanicalMapping< MechanicalState<Rigid2fTypes>, MechanicalState<Vec2fTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2fTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Vec1fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2fTypes>, MechanicalState<Vec2fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6fTypes>, MechanicalState<Vec6fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2fTypes>, MechanicalState<Vec2fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3fTypes> > ;
 
 
 
-template class MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3dTypes> >;
-template class MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Vec1dTypes> >;
-template class MechanicalMapping< MechanicalState<Vec2dTypes>, MechanicalState<Vec2fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec2fTypes>, MechanicalState<Vec2dTypes> >;
-template class MechanicalMapping< MechanicalState<Vec6dTypes>, MechanicalState<Vec6fTypes> >;
-template class MechanicalMapping< MechanicalState<Vec6fTypes>, MechanicalState<Vec6dTypes> >;
-template class MechanicalMapping< MechanicalState<Rigid2dTypes>, MechanicalState<Vec2fTypes> > ;
-template class MechanicalMapping< MechanicalState<Rigid2fTypes>, MechanicalState<Vec2dTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid2fTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2dTypes> > ;
-template class MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3fTypes> > ;
-template class MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3dTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3fTypes> > ;
-template class MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Vec1dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2dTypes>, MechanicalState<Vec2fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2fTypes>, MechanicalState<Vec2dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6dTypes>, MechanicalState<Vec6fTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6fTypes>, MechanicalState<Vec6dTypes> >;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2dTypes>, MechanicalState<Vec2fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2fTypes>, MechanicalState<Vec2dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid2fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3dTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3fTypes> > ;
+template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3dTypes> > ;
 
 
 } // namespace behavior

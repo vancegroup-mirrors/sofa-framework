@@ -67,7 +67,7 @@ class RotationMatrix : public defaulttype::BaseMatrix {
     virtual void set(int i, int j, double v) {
 	int bd = (i/3)*3;
 	if ((j<bd) || (j>bd+2)) return;
-	data[i*3+j-bd] = v;      
+	data[i*3+j-bd] = (Real)v;      
     }
     
     /// Add v to the existing value of the element at row i, column j (using 0-based indices)
@@ -75,7 +75,7 @@ class RotationMatrix : public defaulttype::BaseMatrix {
 	int bd = (i/3)*3;
 	if ((j<bd) || (j>bd+2)) return;
 	
-	data[i*3+j-bd] += v;
+	data[i*3+j-bd] += (Real)v;
     }
     
     virtual helper::vector<Real> & getVector() {

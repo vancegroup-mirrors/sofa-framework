@@ -165,23 +165,23 @@ void EulerImplicitSolver::solve(double dt, sofa::core::behavior::BaseMechanicalS
         sofa::helper::AdvancedTimer::stepBegin("UpdateV");
         newVel.eq(x);                         // vel = x
         sofa::helper::AdvancedTimer::stepNext ("UpdateV", "CorrectV");
-        solveConstraint(dt,VecId::velocity());
+        solveConstraint(dt,newVel,core::behavior::BaseConstraintSet::VEL);
         sofa::helper::AdvancedTimer::stepNext ("CorrectV", "UpdateX");
         newPos.eq(pos, newVel, h);            // pos = pos + h vel
         sofa::helper::AdvancedTimer::stepNext ("UpdateX", "CorrectX");
-        solveConstraint(dt,VecId::position());
+        solveConstraint(dt,newPos,core::behavior::BaseConstraintSet::POS);
         sofa::helper::AdvancedTimer::stepEnd  ("CorrectX");
     } else {
         sofa::helper::AdvancedTimer::stepBegin("UpdateV");
         //vel.peq( x );                       // vel = vel + x
         newVel.eq(vel, x);
         sofa::helper::AdvancedTimer::stepNext ("UpdateV", "CorrectV");
-        solveConstraint(dt,VecId::velocity());
+        solveConstraint(dt,newVel,core::behavior::BaseConstraintSet::VEL);
         sofa::helper::AdvancedTimer::stepNext ("CorrectV", "UpdateX");
         //pos.peq( vel, h );                  // pos = pos + h vel
         newPos.eq(pos, newVel, h);
         sofa::helper::AdvancedTimer::stepNext ("UpdateX", "CorrectX");
-        solveConstraint(dt,VecId::position());
+        solveConstraint(dt,newPos,core::behavior::BaseConstraintSet::POS);
         sofa::helper::AdvancedTimer::stepEnd  ("CorrectX");
     }
     
@@ -189,37 +189,37 @@ void EulerImplicitSolver::solve(double dt, sofa::core::behavior::BaseMechanicalS
 #else // single-operation optimization
     {
         typedef core::behavior::BaseMechanicalState::VMultiOp VMultiOp;
-	VMultiOp ops;
-	if (firstOrder)
-	{
-	  ops.resize(2);
-	  ops[0].first = (VecId)newVel;
-	  ops[0].second.push_back(std::make_pair((VecId)x,1.0));
-	  ops[1].first = (VecId)newPos;
-	  ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
-	  ops[1].second.push_back(std::make_pair((VecId)newVel,h));
-	}
-	else
-	{
-	  ops.resize(2);
-	  ops[0].first = (VecId)newVel;
-	  ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
-	  ops[0].second.push_back(std::make_pair((VecId)x,1.0));
-	  ops[1].first = (VecId)newPos;
-	  ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
-	  ops[1].second.push_back(std::make_pair((VecId)newVel,h));
-	}
-	
+        VMultiOp ops;
+        if (firstOrder)
+        {
+          ops.resize(2);
+          ops[0].first = (VecId)newVel;
+          ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+          ops[1].first = (VecId)newPos;
+          ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
+          ops[1].second.push_back(std::make_pair((VecId)newVel,h));
+        }
+        else
+        {
+          ops.resize(2);
+          ops[0].first = (VecId)newVel;
+          ops[0].second.push_back(std::make_pair((VecId)vel,1.0));
+          ops[0].second.push_back(std::make_pair((VecId)x,1.0));
+          ops[1].first = (VecId)newPos;
+          ops[1].second.push_back(std::make_pair((VecId)pos,1.0));
+          ops[1].second.push_back(std::make_pair((VecId)newVel,h));
+        }
+
         sofa::helper::AdvancedTimer::stepBegin("UpdateVAndX");
         simulation::MechanicalVMultiOpVisitor vmop(ops);
         vmop.setTags(this->getTags());
         vmop.execute(this->getContext());
         sofa::helper::AdvancedTimer::stepNext ("UpdateVAndX", "CorrectV");
-        solveConstraint(dt,VecId::velocity());
+        solveConstraint(dt,newVel,core::behavior::BaseConstraintSet::VEL);
         sofa::helper::AdvancedTimer::stepNext ("CorrectV", "CorrectX");
-        solveConstraint(dt,VecId::position());
+        solveConstraint(dt,newPos,core::behavior::BaseConstraintSet::POS);
         sofa::helper::AdvancedTimer::stepEnd  ("CorrectX");
-    }
+      }
 #endif
 
     addSeparateGravity(dt, newVel);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.

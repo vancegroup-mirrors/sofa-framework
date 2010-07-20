@@ -31,6 +31,9 @@
 #include <sofa/core/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/behavior/BaseMechanicalState.h>
 
+#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/RigidTypes.h>
+
 namespace sofa
 {
 
@@ -185,10 +188,7 @@ public:
     virtual void accumulateConstraint();
 
 
-    virtual std::string getTemplateName() const
-    {
-      return templateName(this);
-    }
+    virtual std::string getTemplateName() const;
 
     static std::string templateName(const MechanicalMapping<In, Out>* = NULL)
     {
@@ -208,6 +208,47 @@ protected:
 #endif
 
 };
+
+#if defined(WIN32) && !defined(SOFA_BUILD_CORE)
+
+using namespace sofa::defaulttype;
+using namespace sofa::core::behavior;
+
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2dTypes>, MechanicalState<Vec2dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6dTypes>, MechanicalState<Vec6dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2dTypes>, MechanicalState<Vec2dTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid2dTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3dTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3dTypes> > ;
+
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Vec1fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2fTypes>, MechanicalState<Vec2fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6fTypes>, MechanicalState<Vec6fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2fTypes>, MechanicalState<Vec2fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3fTypes> > ;
+
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Vec1dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2dTypes>, MechanicalState<Vec2fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec2fTypes>, MechanicalState<Vec2dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6dTypes>, MechanicalState<Vec6fTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec6fTypes>, MechanicalState<Vec6dTypes> >;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2dTypes>, MechanicalState<Vec2fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2fTypes>, MechanicalState<Vec2dTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid2fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2dTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3dTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3fTypes> > ;
+extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3dTypes> > ;
+#endif
 
 } // namespace behavior
 

@@ -110,12 +110,15 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(double mFact, double bFact, double kFact) {
   if (!this->frozen) {
-      unsigned int nbRow=0, nbCol=0;
-      this->getMatrixDimension(&nbRow,&nbCol);
-      resizeSystem(nbRow);
-      matricesWork[indexwork]->clear();
-      unsigned int offset = 0;
-      this->addMBK_ToMatrix(matricesWork[indexwork], mFact, bFact, kFact, offset);
+	matrixAccessor.setGlobalMatrix(matricesWork[indexwork]);
+	matrixAccessor.clear();
+      
+        this->getMatrixDimension(&matrixAccessor);
+        matrixAccessor.setupMatrices();
+        resizeSystem(matrixAccessor.getGlobalDimension());
+        matricesWork[indexwork]->clear();
+        this->addMBK_ToMatrix(&matrixAccessor, mFact, bFact, kFact);
+        matrixAccessor.computeGlobalMatrix();
   }
   for (unsigned i=0;i<useRotation && rotationFinders.size();i++) rotationFinders[i]->getRotations(rotationWork[indexwork]);
   
@@ -170,10 +173,9 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    std :: cout << "Launching the invert thread...." << std::endl;// on matrix[1]
 	    Thread_invert<Matrix,Vector> thi(bar,this,&ready_thread,&run,matricesWork,indexwork);
 	    boost::thread thrd(thi);
-	    
+	    	        
 	    indexwork = 0;
-	    nbstep_update = 0;
-	    
+	    nbstep_update = 1;
 	} else if (! useMultiThread.getValue()) {
 	    this->computeSystemMatrix(mFact,bFact,kFact);		    
 	    this->invertSystem();
@@ -184,8 +186,8 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    	    
 	    bar->wait();
 	    
-	    std::cout << "thread swap " << nbstep_update << " needed" << std::endl;
-	    nbstep_update = 0;
+	    std::cout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << std::endl;
+	    nbstep_update = 1;
 	    
 	    if (indexwork) indexwork=0;
 	    else indexwork=1;	    
@@ -196,15 +198,13 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemRHVector(VecId v) {
-    unsigned int offset = 0;
-    this->multiVector2BaseVector(v, systemRHVector, offset);
+    this->multiVector2BaseVector(v, systemRHVector, &matrixAccessor);
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v) {
     solutionVecId = v;
-    unsigned int offset = 0;
-    this->multiVector2BaseVector(v, systemLHVector, offset);
+    this->multiVector2BaseVector(v, systemLHVector, &matrixAccessor);
 }
 
 template<class Matrix, class Vector>
@@ -223,9 +223,8 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
 	}
 	
 	if (!solutionVecId.isNull()) {
-		unsigned int offset = 0;
 		v_clear(solutionVecId);
-		multiVectorPeqBaseVector(solutionVecId, systemLHVector, offset);
+		multiVectorPeqBaseVector(solutionVecId, systemLHVector, &matrixAccessor);
 	}
 }
 

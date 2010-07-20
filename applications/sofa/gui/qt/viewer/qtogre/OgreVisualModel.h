@@ -115,9 +115,12 @@ namespace sofa
 
         Ogre::MaterialPtr createMaterial(helper::vector< OgreShaderTextureUnit*> *, const core::loader::Material &sofaMaterial, const std::string &shaderName);
         void updateMaterial(const core::loader::Material &sofaMaterial);
-        void applyShaderParameters() const;
 
         void updateMeshCustomParameter(Ogre::Entity *entity) const;
+        void updateManualObjectCustomParameter() const;
+
+        template <class ObjectType>
+            void updateCustomParameters(ObjectType *section) const;
 
         static int materialUniqueIndex;
       protected:
@@ -183,6 +186,28 @@ protected:
     MatToMesh materialToMesh;
 
     bool needUpdate;
+};
+
+
+template <class ObjectType>
+    void SubMesh::updateCustomParameters(ObjectType *section) const
+{
+  section->setCustomParameter(1, Ogre::Vector4(sofaMaterial.ambient.ptr()));
+  section->setCustomParameter(2, Ogre::Vector4(sofaMaterial.diffuse.ptr()));
+  section->setCustomParameter(3, Ogre::Vector4(sofaMaterial.specular.ptr()));
+  section->setCustomParameter(4, Ogre::Vector4(sofaMaterial.shininess,0,0,0));
+
+  for (unsigned int p=0;p<shaderParameters->size();++p)
+  {
+    if ((*shaderParameters)[p]->isDirty())
+    {
+      Ogre::Vector4 value;
+      BaseOgreShaderParameter* parameter=(*shaderParameters)[p];
+      parameter->getValue(value);
+      section->setCustomParameter(parameter->getEntryPoint(), value);
+    }
+  }
+
 };
     }
   }

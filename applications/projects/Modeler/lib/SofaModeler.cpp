@@ -122,7 +122,7 @@ namespace sofa
         Q3DockWindow *dockLibrary=new Q3DockWindow(this);
         dockLibrary->setResizeEnabled(true);
         this->moveDockWindow( dockLibrary, Qt::DockLeft);
-        dockLibrary->setFixedExtentWidth(this->width()*0.45);
+        dockLibrary->setFixedExtentWidth((int)(this->width()*0.45));
 
         QWidget *leftPartWidget = new QWidget( dockLibrary, "LibraryLayout");
         QVBoxLayout *leftPartLayout = new QVBoxLayout(leftPartWidget);
@@ -133,14 +133,19 @@ namespace sofa
         QHBoxLayout *filterLayout = new QHBoxLayout(filterContainer);
         leftPartLayout->addWidget(filterContainer);
         //--> Label
-        QPushButton *filterLabel= new QPushButton(QString("Filter: "),filterContainer);
+        QLabel *filterLabel= new QLabel(QString("Filter: "),filterContainer);
         filterLayout->addWidget(filterLabel);
         //--> Filter        
         filterLibrary = new FilterLibrary(filterContainer);
         filterLayout->addWidget(filterLibrary);
+        //--> Clear Button
+        QPushButton *clearButton= new QPushButton(QString("X"),filterContainer);
+        filterLayout->addWidget(clearButton);
+        clearButton->setMaximumHeight(16);
+        clearButton->setMaximumWidth(16);
 
         connect(filterLibrary, SIGNAL( filterList( const FilterQuery &) ), this, SLOT(searchText( const FilterQuery &)) );
-        connect(filterLabel, SIGNAL( clicked()), filterLibrary, SLOT(clearText()));
+        connect(clearButton, SIGNAL( clicked()), filterLibrary, SLOT(clearText()));
 
         //----------------------------------------------------------------------
         //Add the Sofa Library        
@@ -964,11 +969,22 @@ namespace sofa
       {		
         std::string filename(f);
         std::string copyBuffer(presetPath+"copyBuffer.scn");
-	//Delete Temporary file
-	::remove(filename.c_str());
-	filename += "." + std::string(sofa::gui::GUIManager::GetValidGUIName()) + ".view";
-	//Remove eventual .view file
-	::remove(filename.c_str()); 
+        //Delete Temporary file
+        ::remove(filename.c_str());
+
+        //Delete View files
+        std::string viewFilename=filename + std::string(".view");
+        for (unsigned int i=0;i<listActionGUI.size();++i)
+        {
+          const std::string viewerName=listActionGUI[i]->text().ascii();
+          if (viewerName != "default" && viewerName != "batch")
+          {
+            std::string viewFilename=filename + std::string(".") + viewerName + std::string(".view");
+            //Remove eventual .view file
+            ::remove(viewFilename.c_str());
+          }
+        }
+
         //Remove eventual copy buffer
         ::remove(copyBuffer.c_str());
       }

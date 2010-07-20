@@ -26,7 +26,7 @@
 #define SOFA_GPU_OPENCL_OPENCLFIXEDCONSTRAINT_INL
 
 #include "OpenCLFixedConstraint.h"
-#include <sofa/component/constraint/FixedConstraint.inl>
+#include <sofa/component/projectiveconstraintset/FixedConstraint.inl>
 
 namespace sofa {
 
@@ -58,7 +58,7 @@ extern void FixedConstraintOpenCL3d1_projectResponseIndexed(unsigned int size, c
 
 namespace component {
 
-namespace constraint {
+namespace projectiveconstraintset {
 
 
 using namespace gpu::opencl;
@@ -70,7 +70,7 @@ void FixedConstraintInternalData< gpu::opencl::OpenCLVectorTypes<TCoord,TDeriv,T
 	data.minIndex = -1;
 	data.maxIndex = -1;
 	data.OpenCLIndices.clear();
-	m->core::behavior::Constraint<DataTypes>::init();
+    m->core::behavior::ProjectiveConstraintSet<DataTypes>::init();
 	const SetIndex& indices = m->f_indices.getValue();
 	if (!indices.empty())
 	{
@@ -285,7 +285,7 @@ OpenCLFixedConstraint_ImplMethods(gpu::opencl::OpenCLVec3f1Types);
 OpenCLFixedConstraint_ImplMethods(gpu::opencl::OpenCLVec3dTypes);
 OpenCLFixedConstraint_ImplMethods(gpu::opencl::OpenCLVec3d1Types);
 
-} // namespace constraint
+} // namespace projectiveconstraintset
 
 } // namespace component
 

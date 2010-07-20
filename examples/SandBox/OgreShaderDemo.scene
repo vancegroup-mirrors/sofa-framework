@@ -1,0 +1,23 @@
+<scene formatVersion="">
+	<environment>
+		<colourBackground r="0.4" g="0.4" b="0.5" a="0" />
+		<colourAmbient r="0.1" g="0.1" b="0.1" />
+	</environment>
+
+	<nodes>
+		<node name="DirectionalLightNode">
+			<light name="Light0" type="directional" castShadows="false">
+				<normal x="0" y="-1" z="0" />
+				<colourDiffuse r="0.3" g="0.3" b="0.3" />
+				<colourSpecular r="0.4" g="0.4" b="0.4" />
+			</light>
+		</node>
+		<node name="PointLightNode">
+			<light name="Light1" type="point" castShadows="true">
+				<position x="-21" y="75" z="50" />
+				<colourDiffuse r="0.5" g="0.5" b="0.6" />
+				<colourSpecular r="1" g="1" b="1" />
+			</light>
+		</node>
+	</nodes>
+</scene>

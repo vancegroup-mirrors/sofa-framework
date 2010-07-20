@@ -62,6 +62,12 @@ public:
     /// \todo Rename to getMechState2()
     /// \todo Replace with an accessor to a list of states, as an InteractionForceField can be applied to more than two.
     virtual BaseMechanicalState* getMechModel2() = 0;
+
+    virtual void addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* /*matrix*/, double /*kFact*/)
+    {
+        serr << "addKToMatrix not implemented by " << this->getClassName() << sendl;
+    }
+
 };
 
 } // namespace behavior

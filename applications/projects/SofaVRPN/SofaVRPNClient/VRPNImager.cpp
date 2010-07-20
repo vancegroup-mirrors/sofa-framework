@@ -96,8 +96,12 @@ namespace sofavrpn
             float *data  = (float *) calloc(numData, sizeof(float));
             memcpy(data, line+myOffset, numData*sizeof(float));
 
-            //for (unsigned i =  0; i < numData; i++)
-            //    fprintf(stderr,"[%d] = %f\n", i, data[i]);
+            for (unsigned i =  0; i < numData; i++) {
+                imagerData->rigidPointData[i] = data[i];
+                fprintf(stderr,"[%d] = %f ", i, imagerData->rigidPointData[i]);
+            }
+            fprintf(stderr,"\n");
+            //std::cout << "rigidPoint = " << rigidPoint. << std::endl;
 
         }
 

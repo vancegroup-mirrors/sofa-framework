@@ -46,10 +46,10 @@ namespace opencl {
 SOFA_DECL_CLASS(OpenCLFixedConstraint)
 
 int FixedConstraintOpenCLClass = core::RegisterObject("Supports GPU-side computations using OPENCL")
-.add< component::constraint::FixedConstraint<OpenCLVec3fTypes> >()
-.add< component::constraint::FixedConstraint<OpenCLVec3f1Types> >()
-.add< component::constraint::FixedConstraint<OpenCLVec3dTypes> >()
-.add< component::constraint::FixedConstraint<OpenCLVec3d1Types> >()
+.add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3fTypes> >()
+.add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3f1Types> >()
+.add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3dTypes> >()
+.add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3d1Types> >()
 ;
 
 
@@ -73,12 +73,16 @@ void FixedConstraint_CreateProgramWithFloat()
 		types["Real"]="float";
 		types["Real4"]="float4";
 
+		std::string source = *sofa::helper::OpenCLProgram::loadSource("OpenCLFixedConstraint.cl");
+		source = stringBSIZE + source;
+
 		FixedConstraintOpenCLFloat_program
-				= new sofa::helper::OpenCLProgram(sofa::helper::OpenCLProgram::loadSource("OpenCLFixedConstraint.cl"),&types);
+				= new sofa::helper::OpenCLProgram(&source,&types);
 
 		FixedConstraintOpenCLFloat_program->buildProgram();
 		sofa::gpu::opencl::myopenclShowError(__FILE__,__LINE__);
 		std::cout << FixedConstraintOpenCLFloat_program->buildLog(0);
+		std::cout << FixedConstraintOpenCLFloat_program->sourceLog();
 	}
 }
 

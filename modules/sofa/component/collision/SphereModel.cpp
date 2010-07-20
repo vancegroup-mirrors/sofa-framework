@@ -153,6 +153,61 @@ void SphereModel::draw()
 		getPrevious()->draw();
 }
 
+void SphereModel::drawColourPicking()
+{
+  using namespace sofa::core::objectmodel;
+
+  helper::vector<core::CollisionModel*> listCollisionModel;
+  this->getContext()->get<core::CollisionModel>(&listCollisionModel,BaseContext::SearchRoot);
+  const int totalCollisionModel = listCollisionModel.size();
+  helper::vector<core::CollisionModel*>::iterator iter = std::find(listCollisionModel.begin(), listCollisionModel.end(), this);
+  const int indexCollisionModel = std::distance(listCollisionModel.begin(),iter ) + 1 ;
+  
+
+  float red = (float)indexCollisionModel / (float)totalCollisionModel;
+  
+
+
+  // Check topological modifications
+	const int npoints = mstate->getX()->size();
+
+  std::vector<Vector3> points;
+  std::vector<float> radius;
+		for (int i=0;i<npoints;i++)
+	{
+		    Sphere t(this,i);
+		    Vector3 p = t.p();
+		    points.push_back(p);
+		    radius.push_back(t.r());
+  }
+
+  glDisable(GL_LIGHTING);
+  glDisable(GL_COLOR_MATERIAL);
+  glDisable(GL_DITHER);
+  float ratio;
+  for( int i=0;i<npoints;i++){
+    Vector3 p = points[i];
+    
+    glPushMatrix();
+	  glTranslated(p[0], p[1], p[2]);
+	  ratio = (float)i / (float)npoints;  
+    glColor4f(red,ratio,0,0);
+
+    glutSolidSphere(radius[i], 32, 16);
+    
+    glPopMatrix();
+  }
+}
+
+
+sofa::defaulttype::Vector3 SphereModel::getPositionFromWeights(int index, Real /*b*/, Real /*a*/)
+{
+  Element sphere(this,index);
+
+  return sphere.center();
+
+}
+
 void SphereModel::computeBoundingTree(int maxDepth)
 {
 	CubeModel* cubeModel = createPrevious<CubeModel>();

@@ -59,6 +59,7 @@ SOFA_LINK_CLASS(UncoupledConstraintCorrection)
 
 #ifdef SOFA_HAVE_EIGEN2
 SOFA_LINK_CLASS(DistanceLMConstraint)
+SOFA_LINK_CLASS(DistanceLMContactConstraint)
 SOFA_LINK_CLASS(DOFBlockerLMConstraint)
 SOFA_LINK_CLASS(FixedLMConstraint)
 SOFA_LINK_CLASS(LMConstraintSolver)

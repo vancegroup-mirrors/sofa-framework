@@ -46,14 +46,13 @@ namespace sofa
         typedef Eigen::Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
         typedef Eigen::Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
 
-        static VectorEigen ComputeLagrangeMultiplier(const SReal* Wptr, SReal* cptr, SReal* LambdaInitptr,
+        static VectorEigen ComputeLagrangeMultiplier(const SReal* Wptr, const SReal* cptr,
                                                      unsigned int numEquations)
         {
           Eigen::Map<MatrixEigen> W(Wptr, numEquations, numEquations);
           Eigen::Map<VectorEigen> c(cptr, numEquations);
-          Eigen::Map<VectorEigen> LambdaInit(LambdaInitptr, numEquations);
 
-          return (LambdaInit+W.marked<Eigen::SelfAdjoint>().inverse()*c);
+          return (W.marked<Eigen::SelfAdjoint>().inverse()*c);
         }
 
           

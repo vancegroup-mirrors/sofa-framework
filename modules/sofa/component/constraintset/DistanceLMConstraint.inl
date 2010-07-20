@@ -144,11 +144,9 @@ namespace sofa
 
 
       template<class DataTypes>
-      void DistanceLMConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
+      void DistanceLMConstraint<DataTypes>::writeConstraintEquations(VecId id, ConstOrder Order)
       {
         typedef core::behavior::BaseMechanicalState::VecId VecId;
-        const VecCoord &x1=*(this->constrainedObject1->getX());
-        const VecCoord &x2=*(this->constrainedObject2->getX());
         const SeqEdges &edges =  vecConstraint.getValue();
 
         if (registeredConstraints.empty()) return;
@@ -158,20 +156,17 @@ namespace sofa
             SReal correction=0;
             switch(Order)
               {
-              case core::behavior::BaseLMConstraint::ACC :
+              case core::behavior::BaseConstraintSet::ACC :
+              case core::behavior::BaseConstraintSet::VEL :
                 {
-                  correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(registeredConstraints[i],VecId::dx());
-                  correction+= this->constrainedObject2->getConstraintJacobianTimesVecDeriv(registeredConstraints[i],VecId::dx());
+                  correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(registeredConstraints[i],id);
+                  correction+= this->constrainedObject2->getConstraintJacobianTimesVecDeriv(registeredConstraints[i],id);
                   break;
                 }
-              case core::behavior::BaseLMConstraint::VEL :
+              case core::behavior::BaseConstraintSet::POS :
                 {
-                  correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(registeredConstraints[i],VecId::velocity());
-                  correction+= this->constrainedObject2->getConstraintJacobianTimesVecDeriv(registeredConstraints[i],VecId::velocity());
-                  break;
-                }
-              case core::behavior::BaseLMConstraint::POS :
-                {
+                  const VecCoord &x1=*(this->constrainedObject1->getVecCoord(id.index));
+                  const VecCoord &x2=*(this->constrainedObject2->getVecCoord(id.index));
                   SReal length     = lengthEdge(edges[i],x1,x2);
                   SReal restLength = this->l0[i];
                   correction= restLength-length;

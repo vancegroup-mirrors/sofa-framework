@@ -34,6 +34,7 @@
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/simulation/common/ColourPickingVisitor.h>
 //#include <sofa/helper/system/SetDirectory.h>
 #include <math.h>
 #include <iostream>
@@ -83,6 +84,7 @@ namespace sofa
 	  using namespace sofa::defaulttype;
 	  using namespace sofa::helper::gl;
 	  using sofa::simulation::getSimulation;
+    using namespace sofa::simulation;
 
 	  //extern UserInterface*	GUI;
 	  //extern OBJmodel*		cubeModel;
@@ -357,6 +359,10 @@ namespace sofa
 	    // save x3d file in the MainController. So we need to change it:
 	    setShortcut(QGLViewer::SAVE_SCREENSHOT, Qt::Key_S);
 	    setShortcut(QGLViewer::HELP, Qt::Key_H);
+
+      pick.setColourRenderCallback(new ColourPickingRenderCallBack(this) );
+
+      
 	  }
 
 	  // ---------------------------------------------------------
@@ -591,6 +597,28 @@ namespace sofa
 	      }
 	    glEnd();
 	  }
+
+    void QtGLViewer::drawColourPicking()
+    {
+
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	    // GL_PROJECTION matrix
+	    camera()->loadProjectionMatrix();
+	    // GL_MODELVIEW matrix
+	    camera()->loadModelViewMatrix();
+
+      // Define background color
+		  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+      ColourPickingVisitor cpv;
+      cpv.execute(sofa::simulation::getSimulation()->getContext() );
+
+	    glMatrixMode(GL_PROJECTION);
+	    glPopMatrix();
+	    glMatrixMode(GL_MODELVIEW);
+	    glPopMatrix();
+    }
 
 	  // -------------------------------------------------------------------
 	  // ---

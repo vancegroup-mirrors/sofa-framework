@@ -147,11 +147,11 @@ namespace behavior
 
 
 	  /// Called by MechanicalWriteLMConstaint: The Object will compute the constraints present in the current state, and create the ConstraintGroup related.
-	  virtual void writeConstraintEquations(ConstOrder id)=0;
+      virtual void writeConstraintEquations(VecId id, ConstOrder order)=0;
 
     /// Compute the new Lagrange Multiplier given a block of the compliance matrix W, and the current correction (left hand term) and previous Lagrange Multiplier
     virtual void LagrangeMultiplierEvaluation(const SReal* /*W*/,
-                                              SReal* /*c*/, SReal* /*Lambda*/,
+                                              const SReal* /*c*/, SReal* /*Lambda*/,
                                               core::behavior::BaseLMConstraint::ConstraintGroup * /*group*/){};
 
 	  /// Interface to construct a group of constraint: Giving the order of these constraints, it returns a pointer to the structure

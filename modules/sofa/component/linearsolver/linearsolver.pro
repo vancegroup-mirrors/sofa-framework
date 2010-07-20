@@ -73,6 +73,14 @@ contains(DEFINES, SOFA_HAVE_EIGEN2){
 }
 
 
+contains(DEFINES, SOFA_SMP){ # BEGIN SOFA_SMP
+	HEADERS += ParallelCGLinearSolver.h \
+						 ParallelCGLinearSolver.inl
+
+	SOURCES += ParallelCGLinearSolver.cpp
+
+} # END SOFA_SMP
+
 contains(DEFINES,SOFA_HAVE_CSPARSE){
 
     HEADERS +=  \
@@ -91,10 +99,12 @@ contains(DEFINES,SOFA_HAVE_CSPARSE){
 contains(DEFINES,SOFA_HAVE_TAUCS){
 
     HEADERS +=  \
-               SparseTAUCSSolver.h
+               SparseTAUCSSolver.h \
+	       IncompleteTAUCSSolver.h
 
     SOURCES +=  \
-               SparseTAUCSSolver.cpp
+               SparseTAUCSSolver.cpp \
+	       IncompleteTAUCSSolver.cpp
 
 }
 

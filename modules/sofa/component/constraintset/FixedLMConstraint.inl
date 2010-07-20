@@ -172,7 +172,7 @@ namespace sofa
 
 
       template<class DataTypes>
-      void FixedLMConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
+      void FixedLMConstraint<DataTypes>::writeConstraintEquations(VecId id, ConstOrder Order)
       {
 
         typedef core::behavior::BaseMechanicalState::VecId VecId;
@@ -188,23 +188,16 @@ namespace sofa
             switch(Order)
               {
               case core::behavior::BaseLMConstraint::ACC :
-                {
-                  correctionX =this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxX[counter],VecId::dx());
-                  correctionY =this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxY[counter],VecId::dx());
-                  correctionZ =this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxZ[counter],VecId::dx());
-                    
-                  break;
-                }
               case core::behavior::BaseLMConstraint::VEL :
                 {
-                  correctionX = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxX[counter],VecId::velocity());
-                  correctionY = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxY[counter],VecId::velocity());
-                  correctionZ = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxZ[counter],VecId::velocity());
+                  correctionX = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxX[counter],id);
+                  correctionY = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxY[counter],id);
+                  correctionZ = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxZ[counter],id);
                   break;
                 }
               case core::behavior::BaseLMConstraint::POS :
                 {
-                  const VecCoord &x =*(this->constrainedObject1->getX());
+                  const VecCoord &x =*(this->constrainedObject1->getVecCoord(id.index));
 
                   //If a new particle has to be fixed, we add its current position as rest position
                   if (restPosition.find(index) == this->restPosition.end())

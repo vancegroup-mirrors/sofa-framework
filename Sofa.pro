@@ -29,6 +29,11 @@ contains(DEFINES,SOFA_HAVE_CSPARSE){
 }
 
 
+#DCCD
+contains(DEFINES,SOFA_HAVE_DCCD){
+	SUBDIRS += extlibs/self-ccd-1.0/self-ccd.pro
+}
+
 #QGLViewer
 
 contains(DEFINES,SOFA_GUI_QGLVIEWER){

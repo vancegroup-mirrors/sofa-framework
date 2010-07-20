@@ -62,6 +62,9 @@ namespace topology
 		return;
 	}
 
+   /** \brief Topological Engine which will handle all QuadData */
+   class QuadSetTopologyEngine;
+
 	/** \brief A class for storing Quad related data. Automatically manages topology changes.
 	*
 	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
@@ -70,6 +73,8 @@ namespace topology
 	template< class T, class Alloc = helper::CPUMemoryManager<T> >
 	class QuadData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
+      friend class QuadSetTopologyEngine;
+
 	public:
 		/// size_type
 		typedef typename sofa::helper::vector<T,Alloc>::size_type size_type;
@@ -80,16 +85,29 @@ namespace topology
 		/// const iterator 
 		typedef typename sofa::helper::vector<T,Alloc>::const_iterator const_iterator;
 
+
+      /// Creation function, called when adding elements.
+      typedef void (*t_createFunc)(int, void*, T&, const Quad&, const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >& );
+      /// Destruction function, called when deleting elements.
+      typedef void (*t_destroyFunc)(int, void*, T&);
+
+      /// Creation function, called when adding hexahedra elements.
+      typedef void (*t_createHexahedronFunc)(const sofa::helper::vector<unsigned int> &, void*, helper::vector< T > &);
+      /// Destruction function, called when removing hexahedra elements.
+      typedef void (*t_destroyHexahedronFunc)(const sofa::helper::vector<unsigned int> &, void*, helper::vector< T > &);
+
+
 	public:
 		/// Constructor
-            QuadData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
-			  void (*createFunc) (int, void*, T&, const Quad &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,
-				void* createParam  = (void*)NULL,
-				void (*destroyFunc)(int, void*, T&) = qd_basicDestroyFunc,
-				void* destroyParam = (void*)NULL )
-		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(data), 
-		m_createFunc(createFunc), m_destroyFunc(destroyFunc), 
-		m_createParam(createParam), m_destroyParam(destroyParam)
+      QuadData( const typename sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >::InitData& data,
+                void (*createFunc) (int, void*, T&, const Quad &,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,
+                void* createParam  = (void*)NULL,
+                void (*destroyFunc)(int, void*, T&) = qd_basicDestroyFunc,
+                void* destroyParam = (void*)NULL )
+                   : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(data),
+                   m_createFunc(createFunc), m_destroyFunc(destroyFunc),
+                   m_createHexahedronFunc(0), m_destroyHexahedronFunc(0),
+                   m_createParam(createParam), m_destroyParam(destroyParam)
 		{}
 
 		/// Constructor
@@ -131,7 +149,7 @@ namespace topology
 #ifdef __STL_MEMBER_TEMPLATES
 		/// Constructor
 		template <class InputIterator>
-		QuadData(InputIterator first, InputIterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
+            QuadData(InputIterator first, InputIterator last): sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false)
 		{
 			sofa::helper::vector<T, Alloc>* data = this->beginEdit();
 			data->assign(first, last);
@@ -149,51 +167,61 @@ namespace topology
 
 		/// Optionnaly takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
 		QuadData( void (*createFunc) (int, void*, T&, const Quad& ,const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double >&) = trd_basicCreateFunc,  
-				void* createParam  = (void*)NULL, 
-				void (*destroyFunc)(int, void*, T&                                     ) = qd_basicDestroyFunc, 
-				void* destroyParam = (void*)NULL ) 
-		: sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false), 
-		m_createFunc(createFunc), m_destroyFunc(destroyFunc)
-		//,  m_createHexahedronFunc(0), m_destroyHexahedronFunc(0)
-		,m_createParam(createParam), m_destroyParam(destroyParam)
+                void* createParam  = (void*)NULL,
+                void (*destroyFunc)(int, void*, T&                                     ) = qd_basicDestroyFunc,
+                void* destroyParam = (void*)NULL )
+                   : sofa::core::objectmodel::Data< sofa::helper::vector<T, Alloc> >(0, false, false),
+                   m_createFunc(createFunc), m_destroyFunc(destroyFunc),
+                   m_createHexahedronFunc(0), m_destroyHexahedronFunc(0),
+                   m_createParam(createParam), m_destroyParam(destroyParam)
 		{}
 
 		/// Handle QuadSetTopology related events, ignore others.
 		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
-									std::list< const core::topology::TopologyChange *>::const_iterator &end );
+                                 std::list< const core::topology::TopologyChange *>::const_iterator &end );
 
 
-		void setCreateFunction(void (*createFunc )(int, void*, T&, const Quad&, const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double>& )) 
-		{
-			m_createFunc=createFunc;
-		}
 
-		void setDestroyFunction( void (*destroyFunc)(int, void*, T&) ) 
-		{
-			m_destroyFunc=destroyFunc;
-		}
+      /// Creation function, called when adding elements.
+      void setCreateFunction(t_createFunc createFunc)
+      {
+         m_createFunc=createFunc;
+      }
+      /// Destruction function, called when deleting elements.
+      void setDestroyFunction(t_destroyFunc destroyFunc)
+      {
+         m_destroyFunc=destroyFunc;
+      }
 
-		void setDestroyParameter( void* destroyParam ) 
-		{
-			m_destroyParam=destroyParam;
-		}
+      /// Creation function, called when adding hexahedra elements.
+      void setCreateHexahedronFunction(t_createHexahedronFunc createHexahedronFunc)
+      {
+         m_createHexahedronFunc=createHexahedronFunc;
+      }
+      /// Destruction function, called when removing hexahedra elements.
+      void setDestroyHexahedronFunction(t_destroyHexahedronFunc destroyHexahedronFunc)
+      {
+         m_destroyHexahedronFunc=destroyHexahedronFunc;
+      }
 
-		void setCreateParameter( void* createParam ) 
-		{
-			m_createParam=createParam;
-		}
+      /// Creation function, called when adding parameter to those elements.
+      void setDestroyParameter( void* destroyParam )
+      {
+         m_destroyParam=destroyParam;
+      }
+      /// Destruction function, called when removing parameter to those elements.
+      void setCreateParameter( void* createParam )
+      {
+         m_createParam=createParam;
+      }
 
-		/*
-		void setCreateHexahedronFunction(	void (*createHexahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
-		{
-			m_createHexahedronFunc=createHexahedronFunc;
-		}
 
-		void setDestroyHexahedronFunction(void (*destroyHexahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &) ) 
-		{
-			m_destroyHexahedronFunc=destroyHexahedronFunc;
-		}
-		*/
+      /** Public fonction to apply creation and destruction functions */
+      /// Apply adding hexahedra elements.
+      void applyCreateHexahedronFunction(const sofa::helper::vector<unsigned int> & indices);
+      /// Apply removing hexahedra elements.
+      void applyDestroyHexahedronFunction(const sofa::helper::vector<unsigned int> & indices);
+
 
 	private:
 		/// Swaps values at indices i1 and i2.
@@ -201,28 +229,19 @@ namespace topology
 
 		/// Add some values. Values are added at the end of the vector.
 		void add( unsigned int nbQuads,
-			const sofa::helper::vector< Quad >& quad,
-			const sofa::helper::vector< sofa::helper::vector< unsigned int > > &ancestors, 
-			const sofa::helper::vector< sofa::helper::vector< double > >& coefs);
+                const sofa::helper::vector< Quad >& quad,
+                const sofa::helper::vector< sofa::helper::vector< unsigned int > > &ancestors,
+                const sofa::helper::vector< sofa::helper::vector< double > >& coefs);
 
 		/// Remove the values corresponding to the Quads removed.
 		void remove( const sofa::helper::vector<unsigned int> &index );
 
+
 	private:
-		/// Creation function, called when adding elements.
-		void (*m_createFunc)(int, void*, T&, const Quad&, 
-							const sofa::helper::vector< unsigned int >&, 
-							const sofa::helper::vector< double >& );
-
-		/// Destruction function, called when deleting elements.
-		void (*m_destroyFunc)(int, void*, T&);
-
-		/// Creation function, called when adding hexahedra elements.
-		//void (*m_createHexahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
-		/// Destruction function, called when removing hexahedra elements.
-		//void (*m_destroyHexahedronFunc)(const sofa::helper::vector<unsigned int> &, void*,  helper::vector< T > &);
-
+      t_createFunc m_createFunc;
+      t_destroyFunc m_destroyFunc;
+      t_createHexahedronFunc m_createHexahedronFunc;
+      t_destroyHexahedronFunc m_destroyHexahedronFunc;
 
 		/** Parameter to be passed to creation function.
 		*

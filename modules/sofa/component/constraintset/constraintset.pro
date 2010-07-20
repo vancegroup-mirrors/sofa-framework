@@ -36,6 +36,8 @@ HEADERS += \
            LMConstraintSolver.h\
            DistanceLMConstraint.h \
            DistanceLMConstraint.inl \
+           DistanceLMContactConstraint.h \
+           DistanceLMContactConstraint.inl \
            FixedLMConstraint.h \
            FixedLMConstraint.inl \
            DOFBlockerLMConstraint.h \
@@ -44,6 +46,7 @@ HEADERS += \
 SOURCES += \           
            LMConstraintSolver.cpp\
            DistanceLMConstraint.cpp \
+           DistanceLMContactConstraint.cpp \
            FixedLMConstraint.cpp \
            DOFBlockerLMConstraint.cpp
 }

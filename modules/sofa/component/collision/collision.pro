@@ -148,6 +148,13 @@ SOURCES += initCollision.cpp \
 
 
 
+contains(DEFINES,SOFA_HAVE_EIGEN2){
+
+HEADERS += BarycentricDistanceLMConstraintContact.h \
+           BarycentricDistanceLMConstraintContact.inl 
+SOURCES += BarycentricDistanceLMConstraintContact.cpp
+
+}
 contains(DEFINES,SOFA_SMP){
 
 HEADERS += \

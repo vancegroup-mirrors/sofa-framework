@@ -45,7 +45,7 @@ namespace sofa
       struct BodyPicked
       {            
       BodyPicked():body(NULL), mstate(NULL){};
-        sofa::core::CollisionModel *body;
+        sofa::core::CollisionModel *body; 
         sofa::core::behavior::BaseMechanicalState *mstate;
         unsigned int indexCollisionElement;
         defaulttype::Vector3 point;

@@ -29,6 +29,7 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/core/topology/BaseTopology.h>
 #include <sofa/component/component.h>
+#include <sofa/component/topology/PointSetTopologyEngine.h>
 
 namespace sofa
 {
@@ -147,13 +148,26 @@ namespace topology
 		{
 		  return in;
 		}
-		
+
+
+      /** \brief function to create appropriate pointer to TopologyEngine class.
+        *
+        * @return false if creation failed
+        */
+      virtual bool createTopologyEngine();
+
+      /** \brief function to register a topological Data to the list of Data in the topologyEngine. */
+      void addTopologycalData(PointData<void*>& topologicalData);
+
+      /** \brief return pointer to topologyEngine*/		
+      const sofa::core::topology::TopologyEngine* getPointSetTopologyEngine();
 		
 	protected:
 		virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
 		
-        protected:
-                Data<unsigned int> nbPoints;
+      Data<unsigned int> nbPoints;
+
+      sofa::component::topology::PointSetTopologyEngine* m_topologyEngine;
 		
 	private:
 		typedef defaulttype::Vec3Types InitTypes;

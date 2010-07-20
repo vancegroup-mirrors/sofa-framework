@@ -27,6 +27,7 @@
 
 #include <sofa/component/topology/QuadData.h>
 #include <sofa/component/topology/QuadSetTopologyChange.h>
+#include <sofa/component/topology/HexahedronSetTopologyChange.h>
 
 namespace sofa
 {
@@ -50,40 +51,38 @@ namespace topology
 			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
-			{
-			/*
-			case core::topology::HEXAHEDRAADDED:
-			{
-				if (m_createHexahedronFunc) 
-				{
-					const HexahedraAdded *ea=static_cast< const HexahedraAdded* >( *changeIt );
-					(*m_createHexahedronFunc)(ea->hexahedronIndexArray,m_createParam,*this);
-				}
-				break;
-			}
-			case core::topology::HEXAHEDRAREMOVED:
-			{
-				if (m_destroyHexahedronFunc) 
-				{
-					const HexahedraRemoved *er=static_cast< const HexahedraRemoved * >( *changeIt );
-					(*m_destroyHexahedronFunc)(er->getArray(),m_createParam,*this);
-				}
-				break;
-			}
-			*/
-			case core::topology::QUADSADDED:
-			{
-				const QuadsAdded *qa=static_cast< const QuadsAdded * >( *changeIt );
-				add( qa->getNbAddedQuads(), qa->quadArray, qa->ancestorsList, qa->coefs );
-				break;
-			}
+			{			
+         case core::topology::HEXAHEDRAADDED:
+            {
+               if (m_createHexahedronFunc)
+               {
+                  const HexahedraAdded *ea=static_cast< const HexahedraAdded* >( *changeIt );
+                  this->applyCreateHexahedronFunction(ea->hexahedronIndexArray);
+               }
+               break;
+            }
+         case core::topology::HEXAHEDRAREMOVED:
+            {
+               if (m_destroyHexahedronFunc)
+               {
+                  const HexahedraRemoved *er=static_cast< const HexahedraRemoved * >( *changeIt );
+                  this->applyDestroyHexahedronFunction(er->getArray());
+               }
+               break;
+            }
+         case core::topology::QUADSADDED:
+            {
+               const QuadsAdded *qa=static_cast< const QuadsAdded * >( *changeIt );
+               add( qa->getNbAddedQuads(), qa->quadArray, qa->ancestorsList, qa->coefs );
+               break;
+            }
 
 			case core::topology::QUADSREMOVED:
-			{
-				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const QuadsRemoved *>( *changeIt ) )->getArray();
-				remove( tab );
-				break;
-			}
+            {
+               const sofa::helper::vector<unsigned int> &tab = ( static_cast< const QuadsRemoved *>( *changeIt ) )->getArray();
+               remove( tab );
+               break;
+            }
 
 			default:
 				// Ignore events that are not Quad or Point related.
@@ -93,6 +92,32 @@ namespace topology
 			++changeIt;
 		}
 	}
+
+
+   ///////////////////// Public functions to call pointer to fonction ////////////////////////
+   /// Apply adding hexahedra elements.
+   template <typename T, typename Alloc>
+   void QuadData<T,Alloc>::applyCreateHexahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createHexahedronFunc)
+      {
+         (*m_createHexahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing hexahedra elements.
+   template <typename T, typename Alloc>
+   void QuadData<T,Alloc>::applyDestroyHexahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyHexahedronFunc)
+      {
+         (*m_destroyHexahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+
+   ///////////////////// Private functions on QuadData changes /////////////////////////////
 
 	template <typename T, typename Alloc>
 	void QuadData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 
@@ -113,7 +138,7 @@ namespace topology
 		// Using default values
 		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
 		unsigned int i0 = data.size();
-		this->resize(i0+nbQuads);
+      data.resize(i0+nbQuads);
 
 		for (unsigned int i = 0; i < nbQuads; ++i)
 		{

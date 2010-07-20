@@ -107,6 +107,7 @@ namespace gl
     void setLightingEnabled(bool b);
 
     void setSystemDraw(MODEDISPLAY mode){SystemDraw=mode;}
+    MODEDISPLAY getSystemDraw() const {return SystemDraw;}
 #ifdef SOFA_GUI_QTOGREVIEWER
     void addOgreVertexPosition(const Vector3 &p);
     void addOgreVertexColour(const Vec<4,float> &p);

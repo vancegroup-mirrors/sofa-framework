@@ -43,7 +43,7 @@ namespace topology
 
 	template <typename T, typename Alloc>
 	void HexahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
-														std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
+                                                       std::list< const core::topology::TopologyChange *>::const_iterator &end )
 	{
 		while( changeIt != end )
 		{
@@ -52,17 +52,17 @@ namespace topology
 			switch( changeType ) 
 			{
 			case core::topology::HEXAHEDRAADDED:
-			{
-				const HexahedraAdded *ta=static_cast< const HexahedraAdded * >( *changeIt );
-				add( ta->getNbAddedHexahedra(), ta->hexahedronArray, ta->ancestorsList, ta->coefs );
-				break;
-			}
+            {
+               const HexahedraAdded *ta=static_cast< const HexahedraAdded * >( *changeIt );
+               add( ta->getNbAddedHexahedra(), ta->hexahedronArray, ta->ancestorsList, ta->coefs );
+               break;
+            }
 			case core::topology::HEXAHEDRAREMOVED:
-			{
-				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const HexahedraRemoved *>( *changeIt ) )->getArray();
-				remove( tab );
-				break;
-			}
+            {
+               const sofa::helper::vector<unsigned int> &tab = ( static_cast< const HexahedraRemoved *>( *changeIt ) )->getArray();
+               remove( tab );
+               break;
+            }
 			default:
 				// Ignore events that are not Hexahedron or Point related.
 				break;
@@ -72,6 +72,9 @@ namespace topology
 		} // while( changeIt != last; )
 	}
 
+
+
+   ///////////////////// Private functions on HexahedronData changes /////////////////////////////
 
 	template <typename T, typename Alloc>
 	void HexahedronData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 

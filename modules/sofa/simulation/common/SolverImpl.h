@@ -30,6 +30,11 @@
 #include <sofa/core/behavior/MultiMatrixAccessor.h>
 #include <sofa/simulation/common/common.h>
 
+#ifdef SOFA_SMP
+#include <sofa/core/behavior/ParallelMultivector.h>
+using namespace sofa::defaulttype::SharedTypes;
+#endif
+
 namespace sofa
 {
 
@@ -75,9 +80,20 @@ public:
     virtual void v_clear(VecId v); ///< v=0
     virtual void v_eq(VecId v, VecId a); ///< v=a
     virtual void v_peq(VecId v, VecId a, double f=1.0); ///< v+=f*a
+#ifdef SOFA_SMP
+    virtual void v_peq(VecId v, VecId a, Shared<double> &fSh, double f=1.0); ///< v+=f*a
+    virtual void v_meq(VecId v, VecId a, Shared<double> &fSh); ///< v+=f*a
+#endif
     virtual void v_teq(VecId v, double f); ///< v*=f
     virtual void v_op(VecId v, VecId a, VecId b, double f=1.0); ///< v=a+b*f
+#ifdef SOFA_SMP
+    virtual void v_op(VecId v, VecId a, VecId b, Shared<double> &f); ///< v=a+b*f
+#endif
+
     virtual void v_dot(VecId a, VecId b); ///< a dot b ( get result using finish )
+#ifdef SOFA_SMP
+    virtual void v_dot(Shared<double> &result,VecId a, VecId b); ///< a dot b
+#endif
     virtual void v_threshold(VecId a, double threshold); ///< nullify the values below the given threshold
     /// Propagate the given displacement through all mappings
     virtual void propagateDx(VecId dx);

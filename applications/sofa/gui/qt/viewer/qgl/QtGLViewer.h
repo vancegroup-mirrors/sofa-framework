@@ -124,6 +124,8 @@ namespace sofa
 	      /// and can be used to unregister classes associated with in the the ObjectFactory.
 	      static int DisableViewer();
 
+        virtual void drawColourPicking ();  
+
 	      QtGLViewer( QWidget* parent, const char* name="" );
 	      ~QtGLViewer();
 
@@ -162,6 +164,8 @@ namespace sofa
 	      QString helpString();
 	      
 	      virtual void setBackgroundImage(std::string imageFileName);
+    
+
 
 	    private:
 
@@ -185,10 +189,15 @@ namespace sofa
 	      void	DrawScene();
 
 
+
+
 	      //int		handle(int event);	// required by FLTK
 
 	    protected:
 	      //virtual bool event ( QEvent * e );
+
+        
+
 	      virtual void keyPressEvent ( QKeyEvent * e );
 	      virtual void keyReleaseEvent ( QKeyEvent * e );
 	      virtual void mousePressEvent ( QMouseEvent * e );

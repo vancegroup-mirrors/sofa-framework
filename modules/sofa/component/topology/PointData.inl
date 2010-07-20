@@ -49,7 +49,7 @@ namespace topology
 
 	template <typename T, typename VecT>
 	void PointData<T,VecT>::handleTopologyEvents( std::list<  const core::topology::TopologyChange *>::const_iterator changeIt, 
-												std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
+                                                 std::list< const core::topology::TopologyChange *>::const_iterator &end )
 	{
 		while( changeIt != end )
 		{
@@ -57,162 +57,289 @@ namespace topology
 
 			switch( changeType ) 
 			{
-			 case core::topology::TETRAHEDRAADDED:
-			 {
-				 if (m_createTetrahedronFunc) 
-				 {
-					const TetrahedraAdded *ea=static_cast< const TetrahedraAdded* >( *changeIt );
-					(*m_createTetrahedronFunc)(ea->tetrahedronIndexArray,m_createParam, *(this->beginEdit() ) );
-					this->endEdit();
-				 }
-				 break;
-			 }
-			 case core::topology::TETRAHEDRAREMOVED:
-			 {
-				 if (m_destroyTetrahedronFunc) 
-				 {
-					const TetrahedraRemoved *er=static_cast< const TetrahedraRemoved * >( *changeIt );
-					(*m_destroyTetrahedronFunc)(er->getArray(),m_createParam,*(this->beginEdit() ) );
-					this->endEdit();
-				 }
-				 break;
-			 }		
-			 case core::topology::TRIANGLESADDED:
-			 {
-				 if (m_createTriangleFunc) 
-				 {
-					const TrianglesAdded *ea=static_cast< const TrianglesAdded* >( *changeIt );
-					(*m_createTriangleFunc)(ea->triangleIndexArray,m_createParam,*(this->beginEdit() ) );
-					this->endEdit();
-				 }
-				 break;
-			 }
-			 case core::topology::TRIANGLESREMOVED:
-			 {
-				 if (m_destroyTriangleFunc) 
-				 {
-					const TrianglesRemoved *er=static_cast< const TrianglesRemoved * >( *changeIt );
-					(*m_destroyTriangleFunc)(er->getArray(),m_createParam, *(this->beginEdit() ) );
-					this->endEdit();
-				 }
-				 break;
-			 }						 
-			 case core::topology::EDGESADDED:
-			 {
-				 if (m_createEdgeFunc) 
-				 {
-					const EdgesAdded *ea=static_cast< const EdgesAdded* >( *changeIt );
-					(*m_createEdgeFunc)(ea->edgeIndexArray,m_createParam,*(this->beginEdit() ) );
-					this->endEdit();
-				 }
-				 break;
-			 }
-			 case core::topology::EDGESREMOVED:
-			 {
-				 if (m_destroyEdgeFunc) 
-				 {
-					const EdgesRemoved *er=static_cast< const EdgesRemoved * >( *changeIt );
-					(*m_destroyEdgeFunc)(er->getArray(),m_createParam,*(this->beginEdit() ) );
-					this->endEdit();
-				 }
-				 break;
-			 }
-			 case core::topology::POINTSINDICESSWAP:
-			 {
-				 unsigned int i1 = ( static_cast< const PointsIndicesSwap * >( *changeIt ) )->index[0];
-				 unsigned int i2 = ( static_cast< const PointsIndicesSwap* >( *changeIt ) )->index[1];
-				 swap( i1, i2 );
-				 break;
-			 }
-			 case core::topology::POINTSADDED:
-			 {
-				 unsigned int nbPoints = ( static_cast< const PointsAdded * >( *changeIt ) )->getNbAddedVertices();
-				 sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsAdded * >( *changeIt ) )->ancestorsList;
-				 sofa::helper::vector< sofa::helper::vector< double       > > coefs     = ( static_cast< const PointsAdded * >( *changeIt ) )->coefs;
-				 add( nbPoints, ancestors, coefs );
-				 break;
-			 }
-			 case core::topology::POINTSREMOVED:
-			 {
-				 const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRemoved * >( *changeIt ) )->getArray();
-				 remove( tab );
-				 break;
-			 }
-			 case core::topology::POINTSRENUMBERING:
-			 {
+         case core::topology::TETRAHEDRAADDED:
+            {
+               if (m_createTetrahedronFunc)
+               {
+                  const TetrahedraAdded *ea=static_cast< const TetrahedraAdded* >( *changeIt );
+                  this->applyCreateTetrahedronFunction(ea->tetrahedronIndexArray);
+               }
+               break;
+            }
+         case core::topology::TETRAHEDRAREMOVED:
+            {
+               if (m_destroyTetrahedronFunc)
+               {
+                  const TetrahedraRemoved *er=static_cast< const TetrahedraRemoved * >( *changeIt );
+                  this->applyDestroyTetrahedronFunction(er->getArray());
+               }
+               break;
+            }
+         case core::topology::TRIANGLESADDED:
+            {
+               if (m_createTriangleFunc)
+               {
+                  const TrianglesAdded *ea=static_cast< const TrianglesAdded* >( *changeIt );
+                  this->applyCreateTriangleFunction(ea->triangleIndexArray);
+               }
+               break;
+            }
+         case core::topology::TRIANGLESREMOVED:
+            {
+               if (m_destroyTriangleFunc)
+               {
+                  const TrianglesRemoved *er=static_cast< const TrianglesRemoved * >( *changeIt );
+                  this->applyDestroyTriangleFunction(er->getArray());
+               }
+               break;
+            }
+         case core::topology::EDGESADDED:
+            {
+               if (m_createEdgeFunc)
+               {
+                  const EdgesAdded *ea=static_cast< const EdgesAdded* >( *changeIt );
+                  this->applyCreateEdgeFunction(ea->edgeIndexArray);
+               }
+               break;
+            }
+         case core::topology::EDGESREMOVED:
+            {
+               if (m_destroyEdgeFunc)
+               {
+                  const EdgesRemoved *er=static_cast< const EdgesRemoved * >( *changeIt );
+                  this->applyDestroyEdgeFunction(er->getArray());
+               }
+               break;
+            }
+         case core::topology::POINTSINDICESSWAP:
+            {
+               unsigned int i1 = ( static_cast< const PointsIndicesSwap * >( *changeIt ) )->index[0];
+               unsigned int i2 = ( static_cast< const PointsIndicesSwap* >( *changeIt ) )->index[1];
+               swap( i1, i2 );
+               break;
+            }
+         case core::topology::POINTSADDED:
+            {
+               unsigned int nbPoints = ( static_cast< const PointsAdded * >( *changeIt ) )->getNbAddedVertices();
+               sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsAdded * >( *changeIt ) )->ancestorsList;
+               sofa::helper::vector< sofa::helper::vector< double       > > coefs     = ( static_cast< const PointsAdded * >( *changeIt ) )->coefs;
+               add( nbPoints, ancestors, coefs );
+               break;
+            }
+         case core::topology::POINTSREMOVED:
+            {
+               const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRemoved * >( *changeIt ) )->getArray();
+               remove( tab );
+               break;
+            }
+         case core::topology::POINTSRENUMBERING:
+            {
 
-				 const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRenumbering * >( *changeIt ) )->getIndexArray(); 
-				 renumber( tab );
-				 break;
-			 }
-			 case core::topology::POINTSMOVED:
-			 {
-			   const sofa::helper::vector< unsigned int >& indexList = ( static_cast< const PointsMoved * >( *changeIt ) )->indicesList;
-			   const sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsMoved * >( *changeIt ) )->ancestorsList;
-			   sofa::helper::vector< sofa::helper::vector< double > > coefs = ( static_cast< const PointsMoved * >( *changeIt ) )->baryCoefsList;
-			   container_type& data = *(this->beginEdit());
+               const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRenumbering * >( *changeIt ) )->getIndexArray();
+               renumber( tab );
+               break;
+            }
+         case core::topology::POINTSMOVED:
+            {
+               const sofa::helper::vector< unsigned int >& indexList = ( static_cast< const PointsMoved * >( *changeIt ) )->indicesList;
+               const sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsMoved * >( *changeIt ) )->ancestorsList;
+               sofa::helper::vector< sofa::helper::vector< double > > coefs = ( static_cast< const PointsMoved * >( *changeIt ) )->baryCoefsList;
 
-			   for (unsigned int i = 0; i <indexList.size(); i++)
-			   {
-			     m_destroyFunc( indexList[i], m_destroyParam, data[indexList[i]] );  
-			     m_createFunc( indexList[i], m_createParam, data[indexList[i]], ancestors[i], coefs[i] );
-			   }
-
-			   this->endEdit();
-			   break;
-			 }
-			 case core::topology::EDGESMOVED_REMOVING:
-			 {
-			   if (m_destroyEdgeFunc) 
-			   {
-			     const EdgesMoved_Removing *em=static_cast< const EdgesMoved_Removing * >( *changeIt );
-			     (*m_destroyEdgeFunc)(em->edgesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
-			     this->endEdit();
-			   }
-
-			   break;
-			 }
-			 case core::topology::EDGESMOVED_ADDING:
-			 {
-			   if (m_createEdgeFunc) 
-			   {
-			     const EdgesMoved_Adding *em=static_cast< const EdgesMoved_Adding* >( *changeIt );
-			     (*m_createEdgeFunc)(em->edgesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
-			     this->endEdit();
-			   }
-
-			   break;
-			 }
-			 case core::topology::TRIANGLESMOVED_REMOVING:
-			 {
-			   if (m_destroyTriangleFunc) 
-			   {
-			     const TrianglesMoved_Removing *tm=static_cast< const TrianglesMoved_Removing* >( *changeIt );
-			     (*m_destroyTriangleFunc)(tm->trianglesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
-			     this->endEdit();
-			   }
-			   
-			   break;
-			 }
-			 case core::topology::TRIANGLESMOVED_ADDING:
-			 {
-			   if (m_createTriangleFunc) 
-			   {
-			     const TrianglesMoved_Adding *tm=static_cast< const TrianglesMoved_Adding * >( *changeIt );
-			     (*m_createTriangleFunc)(tm->trianglesAroundVertexMoved,m_createParam,*(this->beginEdit() ) );
-			     this->endEdit();
-			   }
-
-			   break;
-			 }
-			 default:
-				 // Ignore events that are not point related.
-				 break;
+               move( indexList, ancestors, coefs);
+               break;
+            }
+         case core::topology::EDGESMOVED_REMOVING:
+            {
+               if (m_destroyEdgeFunc)
+               {
+                  const EdgesMoved_Removing *em=static_cast< const EdgesMoved_Removing * >( *changeIt );
+                  this->applyDestroyEdgeFunction(em->edgesAroundVertexMoved);
+               }
+               break;
+            }
+         case core::topology::EDGESMOVED_ADDING:
+            {
+               if (m_createEdgeFunc)
+               {
+                  const EdgesMoved_Adding *em=static_cast< const EdgesMoved_Adding* >( *changeIt );
+                  this->applyCreateEdgeFunction(em->edgesAroundVertexMoved);
+               }
+               break;
+            }
+         case core::topology::TRIANGLESMOVED_REMOVING:
+            {
+               if (m_destroyTriangleFunc)
+               {
+                  const TrianglesMoved_Removing *tm=static_cast< const TrianglesMoved_Removing* >( *changeIt );                  
+                  this->applyDestroyTriangleFunction(tm->trianglesAroundVertexMoved);
+               }
+               break;
+            }
+         case core::topology::TRIANGLESMOVED_ADDING:
+            {
+               if (m_createTriangleFunc)
+               {
+                  const TrianglesMoved_Adding *tm=static_cast< const TrianglesMoved_Adding * >( *changeIt );                  
+                  this->applyCreateTriangleFunction(tm->trianglesAroundVertexMoved);
+               }
+               break;
+            }
+         case core::topology::QUADSADDED:
+            {
+               if (m_createQuadFunc)
+               {
+                  const QuadsAdded *ea=static_cast< const QuadsAdded* >( *changeIt );
+                  this->applyCreateQuadFunction(ea->quadIndexArray);
+               }
+               break;
+            }
+         case core::topology::QUADSREMOVED:
+            {
+               if (m_destroyQuadFunc)
+               {
+                  const QuadsRemoved *er=static_cast< const QuadsRemoved * >( *changeIt );
+                  this->applyDestroyQuadFunction(er->getArray());
+               }
+               break;
+            }
+         case core::topology::HEXAHEDRAADDED:
+            {
+               if (m_createHexahedronFunc)
+               {
+                  const HexahedraAdded *ea=static_cast< const HexahedraAdded* >( *changeIt );
+                  this->applyCreateHexahedronFunction(ea->hexahedronIndexArray);
+               }
+               break;
+            }
+         case core::topology::HEXAHEDRAREMOVED:
+            {
+               if (m_destroyHexahedronFunc)
+               {
+                  const HexahedraRemoved *er=static_cast< const HexahedraRemoved * >( *changeIt );
+                  this->applyDestroyHexahedronFunction(er->getArray());
+               }
+               break;
+            }
+         default:
+            // Ignore events that are not point related.
+            break;
 			}; // switch( changeType )
 
 			++changeIt;
 		}
 	}
+
+
+
+   ///////////////////// Public functions to call pointer to fonction ////////////////////////
+   /// Apply adding edges elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyCreateEdgeFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createEdgeFunc)
+      {
+         (*m_createEdgeFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing edges elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyDestroyEdgeFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyEdgeFunc)
+      {
+         (*m_destroyEdgeFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+   /// Apply adding triangles elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyCreateTriangleFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createTriangleFunc)
+      {
+         (*m_createTriangleFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing triangles elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyDestroyTriangleFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyTriangleFunc)
+      {
+         (*m_destroyTriangleFunc)(indices,m_createParam, *(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+   /// Apply adding quads elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyCreateQuadFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createQuadFunc)
+      {
+         (*m_createQuadFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing quads elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyDestroyQuadFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyQuadFunc)
+      {
+         (*m_destroyQuadFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+   /// Apply adding tetrahedra elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyCreateTetrahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createTetrahedronFunc)
+      {
+         (*m_createTetrahedronFunc)(indices,m_createParam, *(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing tetrahedra elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyDestroyTetrahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyTetrahedronFunc)
+      {
+         (*m_destroyTetrahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+   /// Apply adding hexahedra elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyCreateHexahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createHexahedronFunc)
+      {
+         (*m_createHexahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing hexahedra elements.
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::applyDestroyHexahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyHexahedronFunc)
+      {
+         (*m_destroyHexahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+
+
+   ///////////////////// Private functions on PointData changes /////////////////////////////
 
 	template <typename T, typename VecT>
 	void PointData<T,VecT>::swap( unsigned int i1, unsigned int i2 ) 
@@ -288,6 +415,23 @@ namespace topology
 
 		this->endEdit();
 	}
+
+
+   template <typename T, typename VecT>
+   void PointData<T,VecT>::move( const sofa::helper::vector<unsigned int> &indexList,
+                                 const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
+                                 const sofa::helper::vector< sofa::helper::vector< double > >& coefs)
+   {
+      container_type& data = *(this->beginEdit());
+
+      for (unsigned int i = 0; i <indexList.size(); i++)
+      {
+        m_destroyFunc( indexList[i], m_destroyParam, data[indexList[i]] );
+        m_createFunc( indexList[i], m_createParam, data[indexList[i]], ancestors[i], coefs[i] );
+      }
+
+      this->endEdit();
+   }
 
 } // namespace topology
 

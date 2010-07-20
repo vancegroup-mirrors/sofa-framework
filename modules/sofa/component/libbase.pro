@@ -126,7 +126,13 @@ HEADERS += component.h \
            topology/TriangleSetGeometryAlgorithms.inl \
            topology/TriangleSetTopologyAlgorithms.inl \
            topology/TriangleSubsetData.h \
-           topology/TriangleSubsetData.inl
+           topology/TriangleSubsetData.inl \
+           topology/PointSetTopologyEngine.h \
+           topology/EdgeSetTopologyEngine.h \
+           topology/TriangleSetTopologyEngine.h \
+           topology/QuadSetTopologyEngine.h \
+           topology/TetrahedronSetTopologyEngine.h \
+           topology/HexahedronSetTopologyEngine.h 
 
 SOURCES +=  \
            container/initContainer.cpp \
@@ -195,7 +201,14 @@ SOURCES +=  \
            topology/TriangleSetGeometryAlgorithms.cpp \
            topology/TriangleSetTopologyAlgorithms.cpp \
            topology/TriangleSetTopologyContainer.cpp \
-           topology/TriangleSetTopologyModifier.cpp
+           topology/TriangleSetTopologyModifier.cpp \
+           topology/PointSetTopologyEngine.cpp \
+           topology/EdgeSetTopologyEngine.cpp \
+           topology/TriangleSetTopologyEngine.cpp \
+           topology/QuadSetTopologyEngine.cpp \
+           topology/TetrahedronSetTopologyEngine.cpp \
+           topology/HexahedronSetTopologyEngine.cpp
+
 
 
 contains(DEFINES,SOFA_SMP){

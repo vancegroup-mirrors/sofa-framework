@@ -148,7 +148,7 @@ namespace sofa
 
 
       template<class DataTypes>
-      void DOFBlockerLMConstraint<DataTypes>::writeConstraintEquations(ConstOrder Order)
+      void DOFBlockerLMConstraint<DataTypes>::writeConstraintEquations(VecId id, ConstOrder Order)
       {
 
           typedef core::behavior::BaseMechanicalState::VecId VecId;
@@ -169,14 +169,9 @@ namespace sofa
                 switch(Order)
                   {
                   case core::behavior::BaseLMConstraint::ACC :
-                    {
-                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[numParticle][i],VecId::dx());
-                    
-                      break;
-                    }
                   case core::behavior::BaseLMConstraint::VEL :
                     {
-                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[numParticle][i],VecId::velocity());
+                      correction = this->constrainedObject1->getConstraintJacobianTimesVecDeriv(idxEquations[numParticle][i],id);
                       break;
                     }
                   default: break;

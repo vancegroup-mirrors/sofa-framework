@@ -26,6 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGYCONTAINER_H
 
 #include <sofa/component/topology/EdgeSetTopologyContainer.h>  
+#include <sofa/component/topology/TriangleSetTopologyEngine.h>
 
 namespace sofa
 {
@@ -55,7 +56,7 @@ namespace sofa
 	to each triangle and its edges and vertices */
       class SOFA_COMPONENT_CONTAINER_API TriangleSetTopologyContainer : public EdgeSetTopologyContainer 
       {
-	friend class TriangleSetTopologyModifier;
+         friend class TriangleSetTopologyModifier;
 
       public:
         SOFA_CLASS(TriangleSetTopologyContainer,EdgeSetTopologyContainer);
@@ -302,6 +303,15 @@ namespace sofa
 	void clearBorderElementLists();
 			
 
+   /** \brief function to create appropriate pointer to TopologyEngine class.
+     *
+     * @return false if creation failed
+     */
+   virtual bool createTopologyEngine();
+
+   /** \brief return pointer to topologyEngine*/
+   const sofa::core::topology::TopologyEngine* getTriangleSetTopologyEngine();
+
       protected:
 
 	/** \brief Returns a non-const list of triangle indices around a given DOF for subsequent modification.
@@ -343,6 +353,7 @@ namespace sofa
 	/// Set of point indices on topology border.
 	sofa::helper::vector <PointID> m_pointsOnBorder;
 
+   sofa::component::topology::TriangleSetTopologyEngine* m_topologyEngine;
 
 	virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
       };

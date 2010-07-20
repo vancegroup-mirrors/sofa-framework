@@ -23,7 +23,11 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/simulation/common/SolverImpl.h>
+#ifndef SOFA_SMP
 #include <sofa/simulation/common/MechanicalVisitor.h>
+#else
+#include <sofa/simulation/common/ParallelMechanicalVisitor.h>
+#endif
 #include <sofa/simulation/common/MechanicalMatrixVisitor.h>
 #include <sofa/simulation/common/MechanicalVPrintVisitor.h>
 #include <sofa/simulation/common/VelocityThresholdVisitor.h>
@@ -90,24 +94,53 @@ void SolverImpl::v_eq(VecId v, VecId a) ///< v=a
     executeVisitor( MechanicalVOpVisitor(v,a) );
 }
 
+#ifndef SOFA_SMP
 void SolverImpl::v_peq(VecId v, VecId a, double f) ///< v+=f*a
 {
     executeVisitor( MechanicalVOpVisitor(v,v,a,f), true ); // enable prefetching
 }
+#else
+void SolverImpl::v_peq(VecId v, VecId a, Shared<double> &fSh,double f) ///< v+=f*a
+{
+    ParallelMechanicalVOpVisitor(v,v,a,f,&fSh).execute( getContext() );
+}
+void SolverImpl::v_peq(VecId v, VecId a, double f) ///< v+=f*a
+{
+    ParallelMechanicalVOpVisitor(v,v,a,f).execute( getContext() );
+}
+void SolverImpl::v_meq(VecId v, VecId a, Shared<double> &fSh) ///< v+=f*a
+{
+    ParallelMechanicalVOpMecVisitor(v,a,&fSh).execute( getContext() );
+}
+#endif // SOFA_SMP
 void SolverImpl::v_teq(VecId v, double f) ///< v*=f
 {
     executeVisitor( MechanicalVOpVisitor(v,VecId::null(),v,f) );
 }
+
 void SolverImpl::v_op(VecId v, VecId a, VecId b, double f) ///< v=a+b*f
 {
     executeVisitor( MechanicalVOpVisitor(v,a,b,f), true ); // enable prefetching
 }
+#ifdef SOFA_SMP
+void SolverImpl::v_op(VecId v, VecId a, VecId b, Shared<double> &f) ///< v=a+b*f
+{
+    ParallelMechanicalVOpVisitor(v,a,b,1.0,&f).execute( getContext() );
+}
+#endif // SOFA_SMP
+
 
 void SolverImpl::v_dot(VecId a, VecId b) ///< a dot b ( get result using finish )
 {
     result = 0;
     MechanicalVDotVisitor(a,b,&result).setNodeMap(this->getClearNodeMap()).setTags(this->getTags()).execute( getContext(), true ); // enable prefetching
 }
+#ifdef SOFA_SMP
+void SolverImpl::v_dot(Shared<double> &result,VecId a, VecId b) ///< a dot b ( get result using finish )
+{    
+    ParallelMechanicalVDotVisitor(&result,a,b).execute( getContext() );
+}
+#endif // SOFA_SMP
 
 void SolverImpl::v_threshold(VecId a, double t)
 {

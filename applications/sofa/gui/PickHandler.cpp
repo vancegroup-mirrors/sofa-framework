@@ -31,6 +31,9 @@
 
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/helper/system/gl.h>
+#include <sofa/helper/gl/DrawManager.h>
+#include <sofa/simulation/common/Simulation.h>
 
 #include <iostream>
 
@@ -46,7 +49,7 @@ namespace sofa
   namespace gui
   {
 
-    PickHandler::PickHandler():interactorInUse(false), mouseStatus(DEACTIVATED),mouseButton(NONE)
+    PickHandler::PickHandler():interactorInUse(false), mouseStatus(DEACTIVATED),mouseButton(NONE),renderCallback(NULL)
     {
       operations[LEFT] = operations[MIDDLE] = operations[RIGHT] = NULL;
 
@@ -88,6 +91,8 @@ namespace sofa
       {
           delete operations[i];
       }
+
+      if( renderCallback ) delete renderCallback;
 //       for (unsigned int i=0;i<instanceComponents.size();++i) delete instanceComponents[i];
     }
 
@@ -97,6 +102,30 @@ namespace sofa
       simulation::getSimulation()->getContext()->get(pipeline, core::objectmodel::BaseContext::SearchRoot);
 
       useCollisions = (pipeline != NULL);
+
+
+ 
+
+
+#ifdef SOFA_GUI_QTOGREVIEWER
+      if (simulation::getSimulation()->DrawUtility.getSystemDraw() != sofa::helper::gl::DrawManager::OGRE)
+#endif
+      {
+        const char* version = (char*)glGetString( GL_VERSION);
+
+        _fboParams.depthInternalformat = GL_DEPTH_COMPONENT24;
+        if( strcmp(version,"3") ){
+          _fboParams.colorInternalformat = GL_RGBA32F;
+        }
+        else{
+          _fboParams.colorInternalformat = GL_RGBA16;
+        }
+        _fboParams.colorFormat         = GL_RGBA;
+        _fboParams.colorType           = GL_FLOAT;
+
+        _fbo.setFormat(_fboParams);
+        _fbo.init(GL_MAX_TEXTURE_SIZE,GL_MAX_TEXTURE_SIZE);
+      }
     }
 
     void PickHandler::reset()
@@ -123,15 +152,6 @@ namespace sofa
       operations[button]=mouseOp;
       return mouseOp;
     }
-
-
-
-
-
-
-
-
-
 
 
     void PickHandler::activateRay(bool act)
@@ -262,6 +282,7 @@ namespace sofa
 
       mouseButton=button;
       mouseStatus=status;
+
     }
 
 
@@ -279,6 +300,7 @@ namespace sofa
            if (picked.body) return picked;
         }
       return findCollisionUsingBruteForce();
+      //return findCollisionUsingColourCoding();
     }
 
       component::collision::BodyPicked PickHandler::findCollisionUsingPipeline()
@@ -344,6 +366,15 @@ namespace sofa
       return findCollisionUsingBruteForce(origin, direction, maxLength);
       }
 
+      component::collision::BodyPicked PickHandler::findCollisionUsingColourCoding()
+      {
+      const defaulttype::Vector3& origin          = mouseCollision->getRay(0).origin();
+      const defaulttype::Vector3& direction       = mouseCollision->getRay(0).direction();
+
+      return findCollisionUsingColourCoding(origin, direction);
+
+      }
+
     
     component::collision::BodyPicked PickHandler::findCollisionUsingBruteForce(const defaulttype::Vector3& origin,
                                                                                const defaulttype::Vector3& direction,
@@ -370,6 +401,61 @@ namespace sofa
         }
       return result;
     }
+
+    component::collision::BodyPicked PickHandler::findCollisionUsingColourCoding(const defaulttype::Vector3& origin, 
+      const defaulttype::Vector3& direction)
+    {
+      BodyPicked result;
+
+      sofa::defaulttype::Vec4f color;
+      int x = mousePosition.screenWidth -  mousePosition.x;
+      int y = mousePosition.screenHeight - mousePosition.y;
+      _fbo.start();
+      if(renderCallback){
+        renderCallback->render();
+      }
+           
+      glReadPixels(x,y,1,1,_fboParams.colorFormat,_fboParams.colorType,color.elems);
+
+      _fbo.stop();
+
+      result = _decodeColour(color, origin, direction);
+     
+      return result;
+      
+    }
+
+    component::collision::BodyPicked PickHandler::_decodeColour(const sofa::defaulttype::Vec4f& colour,
+      const defaulttype::Vector3& origin, 
+      const defaulttype::Vector3& direction)
+    {
+      using namespace core::objectmodel;
+      using namespace core::behavior;
+      using namespace sofa::defaulttype;
+      static const float threshold = 0.00001f;
+
+      component::collision::BodyPicked result;
+
+      result.dist =  0;
+
+      if( colour[0] > threshold || colour[1] > threshold || colour[2] > threshold  ) {
+
+       helper::vector<core::CollisionModel*> listCollisionModel;
+       sofa::simulation::getSimulation()->getContext()->get<core::CollisionModel>(&listCollisionModel,BaseContext::SearchRoot);
+       const int totalCollisionModel = listCollisionModel.size();
+       const int indexListCollisionModel = (int) ( colour[0] * (float)totalCollisionModel + 0.5) - 1;
+       result.body = listCollisionModel[indexListCollisionModel];
+       result.indexCollisionElement = (int) ( colour[1] * result.body->getSize() );
+       result.point = result.body->getPositionFromWeights(result.indexCollisionElement, colour[2], colour[3]);
+       
+       result.rayLength = (result.point-origin)*direction;
+      }
+
+       return result;
+    }
+
+
+  
 
   }
 }

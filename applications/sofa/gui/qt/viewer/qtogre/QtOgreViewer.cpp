@@ -150,8 +150,8 @@ namespace sofa
 	  //Application principale
 	  QtOgreViewer::QtOgreViewer( QWidget *parent, const char *name )
 	    : QGLWidget( parent, name )
-	  {
-
+	  {       
+        sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
 	    dirLight = pointLight = spotLight = NULL;
 	    this->setName("ogre");
 #ifdef SOFA_QT4
@@ -1205,8 +1205,7 @@ namespace sofa
         SofaViewer::setScene(scene, filename, keepParams);
         createScene();
 	    sofa::simulation::getSimulation()->DrawUtility.setOgreObject(drawUtility);
-	    sofa::simulation::getSimulation()->DrawUtility.setPolygonMode(0,false); //Disable culling
-	    sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
+        sofa::simulation::getSimulation()->DrawUtility.setPolygonMode(0,false); //Disable culling
 	    sofa::simulation::getSimulation()->DrawUtility.setSceneMgr(mSceneMgr);
         updateIntern();
         resize();

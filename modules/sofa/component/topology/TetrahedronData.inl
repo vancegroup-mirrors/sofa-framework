@@ -27,6 +27,7 @@
 
 #include <sofa/component/topology/TetrahedronData.h>
 #include <sofa/component/topology/TetrahedronSetTopologyChange.h>
+#include <sofa/component/topology/HexahedronSetTopologyChange.h>
 
 namespace sofa
 {
@@ -42,7 +43,7 @@ namespace topology
 
 	template <typename T, typename Alloc>
 	void TetrahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
-														std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
+                                                        std::list< const core::topology::TopologyChange *>::const_iterator &end )
 	{
 		while( changeIt != end )
 		{
@@ -51,25 +52,70 @@ namespace topology
 			switch( changeType ) 
 			{
 			case core::topology::TETRAHEDRAADDED:
-			{
-				const TetrahedraAdded *ta = static_cast< const TetrahedraAdded * >( *changeIt );
-				add( ta->getNbAddedTetrahedra(), ta->tetrahedronArray, ta->ancestorsList, ta->coefs );
-				break;
-			}
+            {
+               const TetrahedraAdded *ta = static_cast< const TetrahedraAdded * >( *changeIt );
+               add( ta->getNbAddedTetrahedra(), ta->tetrahedronArray, ta->ancestorsList, ta->coefs );
+               break;
+            }
 			case core::topology::TETRAHEDRAREMOVED:
-			{
-				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const TetrahedraRemoved *>( *changeIt ) )->getArray();
-				remove( tab );
-				break;
-			}
+            {
+               const sofa::helper::vector<unsigned int> &tab = ( static_cast< const TetrahedraRemoved *>( *changeIt ) )->getArray();
+               remove( tab );
+               break;
+            }
+         case core::topology::HEXAHEDRAADDED:
+            {
+               if (m_createHexahedronFunc)
+               {
+                  const HexahedraAdded *ea=static_cast< const HexahedraAdded* >( *changeIt );
+                  this->applyCreateHexahedronFunction(ea->hexahedronIndexArray);
+               }
+               break;
+            }
+         case core::topology::HEXAHEDRAREMOVED:
+            {
+               if (m_destroyHexahedronFunc)
+               {
+                  const HexahedraRemoved *er=static_cast< const HexahedraRemoved * >( *changeIt );
+                  this->applyDestroyHexahedronFunction(er->getArray());
+               }
+               break;
+            }
 			default:
-			// Ignore events that are not Tetrahedron or Point related.
-			break;
+            // Ignore events that are not Tetrahedron or Point related.
+            break;
 			}; 
 
 			++changeIt;
 		} 
 	}
+
+
+
+   ///////////////////// Public functions to call pointer to fonction ////////////////////////
+   /// Apply adding hexahedra elements.
+   template <typename T, typename Alloc>
+   void TetrahedronData<T,Alloc>::applyCreateHexahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_createHexahedronFunc)
+      {
+         (*m_createHexahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+   /// Apply removing hexahedra elements.
+   template <typename T, typename Alloc>
+   void TetrahedronData<T,Alloc>::applyDestroyHexahedronFunction(const sofa::helper::vector<unsigned int> & indices)
+   {
+      if (m_destroyHexahedronFunc)
+      {
+         (*m_destroyHexahedronFunc)(indices,m_createParam,*(this->beginEdit() ) );
+         this->endEdit();
+      }
+   }
+
+
+   ///////////////////// Private functions on TetrahedronData changes /////////////////////////////
 
 	template <typename T, typename Alloc>
 	void TetrahedronData<T,Alloc>::swap( unsigned int i1, unsigned int i2 ) 
@@ -111,8 +157,8 @@ namespace topology
 
 
 	template <typename T, typename Alloc>
-	void TetrahedronData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index ) {
-
+   void TetrahedronData<T,Alloc>::remove( const sofa::helper::vector<unsigned int> &index )
+   {
 		sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
 
 		unsigned int last = data.size() -1;

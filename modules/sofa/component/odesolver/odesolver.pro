@@ -14,7 +14,7 @@ DEFINES += SOFA_BUILD_COMPONENT_ODESOLVER
 
 HEADERS += initOdeSolver.h \
            CentralDifferenceSolver.h \
-           CGImplicitSolver.h \
+#           CGImplicitSolver.h \
            DampVelocitySolver.h \
            EulerSolver.h \
            EulerImplicitSolver.h \
@@ -26,7 +26,7 @@ HEADERS += initOdeSolver.h \
 
 SOURCES += initOdeSolver.cpp \
            CentralDifferenceSolver.cpp \
-           CGImplicitSolver.cpp \
+#           CGImplicitSolver.cpp \
            DampVelocitySolver.cpp \
            EulerSolver.cpp \
            EulerImplicitSolver.cpp \
@@ -36,12 +36,6 @@ SOURCES += initOdeSolver.cpp \
            RungeKutta4Solver.cpp \
            StaticSolver.cpp
 
-contains(DEFINES,SOFA_SMP){ 
-SOURCES += ParallelCGImplicitSolver.cpp
-HEADERS += ParallelCGImplicitSolver.h \
-           ParallelOdeSolverImpl.h 
-
-}
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX

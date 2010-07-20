@@ -48,6 +48,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETTOPOLOGYCONTAINER_H
 
 #include <sofa/component/topology/QuadSetTopologyContainer.h>
+#include <sofa/component/topology/HexahedronSetTopologyEngine.h>
 #include <sofa/component/container/MeshLoader.h>
 
 namespace sofa
@@ -381,6 +382,16 @@ namespace topology
 
 		void clearHexahedraAroundQuad();
 
+
+      /** \brief function to create appropriate pointer to TopologyEngine class.
+        *
+        * @return false if creation failed
+        */
+      virtual bool createTopologyEngine();
+
+      /** \brief return pointer to topologyEngine*/
+      const sofa::core::topology::TopologyEngine* getHexahedronSetTopologyEngine();
+
 	protected:
 
 
@@ -408,7 +419,7 @@ namespace topology
 		virtual HexahedraAroundQuad& getHexahedraAroundQuadForModification(const QuadID quadIndex); 
 
 		
-	protected:
+   protected:
 
 		/// provides the set of hexahedra.
 		Data< sofa::helper::vector<Hexahedron> > d_hexahedron;
@@ -428,6 +439,7 @@ namespace topology
 		/// for each quad provides the set of hexahedra adjacent to that quad.
 		sofa::helper::vector< HexahedraAroundQuad > m_hexahedraAroundQuad;
 
+      sofa::component::topology::HexahedronSetTopologyEngine* m_topologyEngine;
 
 		virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
 	};

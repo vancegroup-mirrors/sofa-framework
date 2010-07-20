@@ -118,6 +118,10 @@ public:
 	{
 	}
 
+  virtual void drawColourPicking () {};
+
+  
+
 	virtual QWidget* getQWidget()=0;
 
 	virtual sofa::simulation::Node* getScene()
@@ -501,10 +505,25 @@ protected:
 
 	void mouseEvent(QMouseEvent *e)
 	{
+    GLint viewport[4]; 
+    glGetIntegerv(GL_VIEWPORT,viewport);
+
+    MousePosition mousepos;
+    mousepos.screenWidth  = viewport[2];
+    mousepos.screenHeight = viewport[3];
+    mousepos.x      = e->x();
+    mousepos.y      = e->y();
+
+
+      
+    
+
 		if (e->state() & Qt::ShiftButton)
 		{
 
 			pick.activateRay(true);
+      pick.updateMouse2D( mousepos );
+
 			//_sceneTransform.ApplyInverse();
 			switch (e->type())
 			{
@@ -512,7 +531,7 @@ protected:
 
 				if (e->button() == Qt::LeftButton)
 				{
-					pick.handleMouseEvent(PRESSED, LEFT);
+          pick.handleMouseEvent(PRESSED, LEFT);
 				}
 				else if (e->button() == Qt::RightButton) // Shift+Rightclick to remove triangles
 				{
@@ -849,8 +868,26 @@ protected:
 	virtual void resizeW(int)=0;
 	virtual void resizeH(int)=0;
 
+
 protected:
         sofa::component::visualmodel::BaseCamera* currentCamera;
+
+  
+
+};
+
+class ColourPickingRenderCallBack : public sofa::gui::CallBackRender
+{
+public: 
+  ColourPickingRenderCallBack(SofaViewer* viewer):_viewer(viewer){};
+  virtual void render()
+  {
+    if(_viewer){
+      _viewer->drawColourPicking();
+    }
+  };
+protected:
+  SofaViewer* _viewer;
 
 };
 }

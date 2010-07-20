@@ -82,3 +82,7 @@ SOFA_LINK_CLASS(Triangle)
 SOFA_LINK_CLASS(TriangleLocalMinDistanceFilter)
 SOFA_LINK_CLASS(SphereTreeModel)
 
+#ifdef SOFA_HAVE_EIGEN2
+SOFA_LINK_CLASS(BarycentricDistanceLMConstraintContact)
+#endif
+

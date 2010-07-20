@@ -1664,6 +1664,9 @@ class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public Mechanical
   virtual void setOrder(core::behavior::BaseLMConstraint::ConstOrder i){order=i;}
   core::behavior::BaseLMConstraint::ConstOrder getOrder() const { return order; }
 
+  virtual void setVecId(core::VecId i){id=i;}
+  core::VecId getVecId() const { return id; }
+
   virtual bool isThreadSafe() const
   {
     return false;
@@ -1676,6 +1679,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public Mechanical
 
  protected:
     core::behavior::BaseLMConstraint::ConstOrder order;
+    core::VecId id;
     helper::vector< core::behavior::BaseLMConstraint *> datasC;
   
 };

@@ -55,3 +55,6 @@ void initLinearSolver()
 SOFA_LINK_CLASS(BTDLinearSolver)
 SOFA_LINK_CLASS(CGLinearSolver)
 SOFA_LINK_CLASS(LULinearSolver)
+#ifdef SOFA_SMP
+SOFA_LINK_CLASS(ParallelCGLinearSolver)
+#endif

@@ -27,8 +27,7 @@
 
 #include "CudaTetrahedronFEMForceField.h"
 #include <sofa/component/forcefield/TetrahedronFEMForceField.inl>
-#include <sofa/gpu/cuda/CudaDiagonalMatrix.h>
-#include <sofa/gpu/cuda/CudaRotationMatrix.h>
+
 namespace sofa
 {
 
@@ -452,18 +451,7 @@ template<class TCoord, class TDeriv, class TReal>
 void TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::addKToMatrix(Main* m, sofa::defaulttype::BaseMatrix *mat, double k, unsigned int &offset)
 {
     Data& data = m->data;
-    if (CudaDiagonalMatrix<Real> * diag = dynamic_cast<CudaDiagonalMatrix<Real> * >(mat)) {
-	Kernels::addKToMatrix(
-			      data.size(),
-			      data.nbVertex,
-			      data.nbElementPerVertex,
-			      data.elems.deviceRead(),
-			      data.state.deviceRead(),
-			      data.eforce.deviceWrite(),
-			      data.velems.deviceRead(),
-			      diag->getCudaMatrix().deviceWriteAt(offset),
-			      k);
-    } else if (sofa::component::linearsolver::CompressedRowSparseMatrix<defaulttype::Mat<3,3,double> > * crsmat = dynamic_cast<sofa::component::linearsolver::CompressedRowSparseMatrix<defaulttype::Mat<3,3,double> > * >(mat)) {
+    if (sofa::component::linearsolver::CompressedRowSparseMatrix<defaulttype::Mat<3,3,double> > * crsmat = dynamic_cast<sofa::component::linearsolver::CompressedRowSparseMatrix<defaulttype::Mat<3,3,double> > * >(mat)) {
 	const VecElement& elems = *m->_indexedElements;
 
 	//helper::ReadAccessor< gpu::cuda::CudaVector<GPUElementState> > state = data.state;
@@ -636,9 +624,7 @@ template<class TCoord, class TDeriv, class TReal>
 void TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::getRotations(Main* m,defaulttype::BaseMatrix * rotations,int offset, bool prefetch)
 {
     Data& data = m->data;
-    if (CudaRotationMatrix<TReal> * diagd = dynamic_cast<CudaRotationMatrix<TReal> * >(rotations)) {
-	data.getRotations(m,diagd->getCudaVector(),prefetch);
-    } else {
+    {
 		
 	data.vecTmpRotation.resize(data.nbVertex*9);	
 	data.getRotations(m,data.vecTmpRotation,prefetch);

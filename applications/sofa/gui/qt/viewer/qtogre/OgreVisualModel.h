@@ -72,6 +72,7 @@ protected:
     {
         std::set< unsigned int > indices;
         Ogre::MaterialPtr material;
+        std::string materialName;
 
         helper::vector< Triangle > triangles;
         helper::vector< Quad >     quads;
@@ -79,11 +80,11 @@ protected:
 
     void prepareMesh();
     Ogre::MaterialPtr createMaterial(const core::loader::Material &sofaMaterial);
+    void updateMaterial(Ogre::MaterialPtr ogreMaterial, const core::loader::Material &sofaMaterial);
 
     void updateVisibility();
     void uploadSubMesh(const SubMesh& m);
-    void uploadNormals();
-    void updateMaterial();
+    void uploadNormals();    
     void convertManualToMesh();
 
     static int meshName;   
@@ -102,7 +103,7 @@ protected:
     Ogre::MaterialPtr currentMaterial;
     Ogre::MaterialPtr currentMaterialNormals;
 
-    helper::vector< SubMesh > subMeshes;
+    helper::vector<SubMesh> subMeshes;
     bool needUpdate;
 };
     }

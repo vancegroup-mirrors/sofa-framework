@@ -33,6 +33,8 @@
 #include <iostream>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/BehaviorModel.h>
+#include <sofa/defaulttype/BaseMatrix.h>
+#include <sofa/helper/vector.h>
 
 namespace sofa
 {
@@ -66,9 +68,9 @@ public:
     virtual ~BaseMechanicalMapping() { }
 
     /// Get the source (upper) model.
-    virtual BaseMechanicalState* getMechFrom() = 0;
+    virtual helper::vector<BaseMechanicalState*> getMechFrom() = 0;
     /// Get the destination (lower, mapped) model.
-    virtual BaseMechanicalState* getMechTo() = 0;
+    virtual helper::vector<BaseMechanicalState*> getMechTo() = 0;
     /// Return false if this mapping should only be used as a regular mapping instead of a mechanical mapping.
     virtual bool isMechanical() = 0;
     /// Determine if this mapping should only be used as a regular mapping instead of a mechanical mapping.
@@ -130,10 +132,27 @@ public:
     virtual void accumulateConstraint() {}
 
 
-	/// Disable the mapping to get the original coordinates of the mapped model.
-	///
-	/// It is for instance used in RigidMapping to get the local coordinates of the object.
-	virtual void disable() {}
+    /// Get the (sparse) jacobian matrix of this mapping, as used in applyJ/applyJT.
+    /// This matrix should have as many columns as DOFs in the input mechanical states
+    /// (one after the other in case of multi-mappings), and as many lines as DOFs in
+    /// the output mechanical states.
+    ///
+    /// applyJ(out, in) should be equivalent to $out = J in$.
+    /// applyJT(out, in) should be equivalent to $out = J^T in$.
+    ///
+    /// @TODO Note that if the mapping provides this matrix, then a default implementation
+    /// of all other related methods could be provided, or optionally used to verify the
+    /// provided implementations for debugging.
+    virtual const sofa::defaulttype::BaseMatrix* getJ()
+    {
+        serr << "BaseMechanicalMapping::getJ() NOT IMPLEMENTED BY " << getClassName() << sendl;
+        return NULL;
+    }
+
+    /// Disable the mapping to get the original coordinates of the mapped model.
+    ///
+    /// It is for instance used in RigidMapping to get the local coordinates of the object.
+    virtual void disable() {}
 };
 
 } // namespace behavior

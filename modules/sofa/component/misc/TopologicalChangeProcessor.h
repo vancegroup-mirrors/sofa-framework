@@ -64,10 +64,21 @@ public:
 
     sofa::core::objectmodel::DataFileName m_filename;
     Data < helper::vector< helper::vector <unsigned int> > > m_listChanges;
+
+    // Parameters for time
     Data < double > m_interval;
     Data < double > m_shift;
     Data < bool > m_loop;
-    
+
+    // Inputs for operations on Data
+    Data <bool> m_useDataInputs;
+    Data <double> m_timeToRemove;
+    Data <sofa::helper::vector <unsigned int> > m_edgesToRemove;
+    Data <sofa::helper::vector <unsigned int> > m_trianglesToRemove;
+    Data <sofa::helper::vector <unsigned int> > m_quadsToRemove;
+    Data <sofa::helper::vector <unsigned int> > m_tetrahedraToRemove;
+    Data <sofa::helper::vector <unsigned int> > m_hexahedraToRemove;
+
     
 protected:
     core::topology::BaseMeshTopology* m_topology;
@@ -112,6 +123,7 @@ public:
 
         return BaseObject::canCreate(obj, context, arg);
     }
+
 
 };
   

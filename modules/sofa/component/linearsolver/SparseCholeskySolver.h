@@ -61,9 +61,6 @@ public:
     void solve (Matrix& M, Vector& x, Vector& b);
     void invert(Matrix& M);
 
-    bool readFile(std::istream& in);
-    bool writeFile(std::ostream& out);
-
 private :
 	css *S;
 	csn *N;

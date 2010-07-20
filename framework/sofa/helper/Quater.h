@@ -302,6 +302,7 @@ public:
             return in;
         }
 
+        enum { static_size = 4 };
 		static unsigned int size(){return 4;};
 };
 

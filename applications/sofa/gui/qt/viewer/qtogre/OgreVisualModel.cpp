@@ -73,7 +73,7 @@ namespace sofa
           helper::vector< core::BaseMapping *> m; this->getContext()->get<core::BaseMapping >(&m);
           for (unsigned int i=0;i<m.size();++i)
           {
-              if (m[i]->getTo() == this)
+              if (m[i]->getTo()[0] == this)
               {
                 needUpdate=true;
                 break;
@@ -84,10 +84,27 @@ namespace sofa
       void OgreVisualModel::reinit()
       {
         sofa::component::visualmodel::VisualModelImpl::reinit();
-	if (!currentMaterial.isNull())
-	  {
-	    updateMaterial();
-	  }
+
+        if (materials.getValue().empty())
+        {
+          updateMaterial(subMeshes[0].material, this->material.getValue());
+        }
+        else
+        {
+          const helper::vector<Material> &vecMaterials=materials.getValue();
+          for (unsigned int i=0;i<vecMaterials.size();++i)
+          {
+            const std::string &name=vecMaterials[i].name;
+            for (unsigned int j=0;j<subMeshes.size();++j)
+            {
+              if (subMeshes[j].materialName == name)
+              {
+                updateMaterial(subMeshes[j].material, vecMaterials[i]);
+                break;
+              }
+            }
+          }
+        }
       }
 
       bool OgreVisualModel::loadTexture(const std::string& filename)
@@ -229,11 +246,17 @@ namespace sofa
                               newQ[2]=globalToLocalPrimitives[Q[2]];
                               newQ[3]=globalToLocalPrimitives[Q[3]];
                           }
-                          //Create Material
+
                           if (g[i].materialId < 0)
+                          {
                               m.material = createMaterial(this->material.getValue());
+                              m.materialName = this->material.getValue().name;
+                          }
                           else
+                          {
                               m.material = createMaterial(this->materials.getValue()[g[i].materialId]);
+                              m.materialName = this->materials.getValue()[g[i].materialId].name;
+                          }
                       }
                   }
               }
@@ -242,55 +265,70 @@ namespace sofa
 
       Ogre::MaterialPtr OgreVisualModel::createMaterial(const core::loader::Material &sofaMaterial)
       {          
-          //Create the Material for the object
           Ogre::MaterialPtr ogreMaterial;
-          std::ostringstream s;
-          s << "OgreVisualMaterial[" << ++materialName << "]" ;
-          ogreMaterial = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
-
-          ogreMaterial->setReceiveShadows(true);
-          ogreMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(true);
-
-          //If a texture is specified
-          if (!texturename.getValue().empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",texturename.getValue()) )
-              ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(texturename.getValue());
-
-          if (sofaMaterial.useDiffuse)
-              ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(sofaMaterial.diffuse[0],sofaMaterial.diffuse[1],sofaMaterial.diffuse[2],sofaMaterial.diffuse[3]));
-          else
-            ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
-
-          if (sofaMaterial.useAmbient)
-            ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(sofaMaterial.ambient[0],sofaMaterial.ambient[1],sofaMaterial.ambient[2],sofaMaterial.ambient[3]));
-          else
-            ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
-
-          if (sofaMaterial.useEmissive)
-            ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(sofaMaterial.emissive[0],sofaMaterial.emissive[1],sofaMaterial.emissive[2],sofaMaterial.emissive[3]));
-          else
-            ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
-
-          if (sofaMaterial.useSpecular)
-            ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(sofaMaterial.specular[0],sofaMaterial.specular[1],sofaMaterial.specular[2],sofaMaterial.specular[3]));
-          else
-            ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
-
-          if (sofaMaterial.useShininess)
-            ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(sofaMaterial.shininess));
-          else
-            ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
-
-          if ( (sofaMaterial.useDiffuse && sofaMaterial.diffuse[3] < 1) ||
-               (sofaMaterial.useAmbient && sofaMaterial.ambient[3] < 1) )
+          for (unsigned int i=0;i<subMeshes.size();++i)
+          {
+            if (subMeshes[i].materialName == sofaMaterial.name)
             {
-              ogreMaterial->setDepthWriteEnabled(false);
-              ogreMaterial->getTechnique(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-              ogreMaterial->setCullingMode(Ogre::CULL_NONE);
+              ogreMaterial=subMeshes[i].material;
+              break;
             }
+          }
+          if (ogreMaterial.isNull())
+          {
+            //Create the Material for the object
+            std::ostringstream s;
+            s << "OgreVisualMaterial[" << ++materialName << "]" ;
+            ogreMaterial = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
 
-          ogreMaterial->compile();
+            ogreMaterial->setReceiveShadows(true);
+            ogreMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(true);
+          }
+          updateMaterial(ogreMaterial,sofaMaterial);
 
           return ogreMaterial;
+      }
+
+      void OgreVisualModel::updateMaterial(Ogre::MaterialPtr ogreMaterial, const core::loader::Material &sofaMaterial)
+      {
+        //If a texture is specified
+        if (!texturename.getValue().empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",texturename.getValue()) )
+            ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(texturename.getValue());
+
+        if (sofaMaterial.useDiffuse)
+            ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(sofaMaterial.diffuse[0],sofaMaterial.diffuse[1],sofaMaterial.diffuse[2],sofaMaterial.diffuse[3]));
+        else
+          ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
+
+        if (sofaMaterial.useAmbient)
+          ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(sofaMaterial.ambient[0],sofaMaterial.ambient[1],sofaMaterial.ambient[2],sofaMaterial.ambient[3]));
+        else
+          ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
+
+        if (sofaMaterial.useEmissive)
+          ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(sofaMaterial.emissive[0],sofaMaterial.emissive[1],sofaMaterial.emissive[2],sofaMaterial.emissive[3]));
+        else
+          ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
+
+        if (sofaMaterial.useSpecular)
+          ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(sofaMaterial.specular[0],sofaMaterial.specular[1],sofaMaterial.specular[2],sofaMaterial.specular[3]));
+        else
+          ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
+
+        if (sofaMaterial.useShininess)
+          ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(sofaMaterial.shininess));
+        else
+          ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
+
+        if ( (sofaMaterial.useDiffuse && sofaMaterial.diffuse[3] < 1) ||
+             (sofaMaterial.useAmbient && sofaMaterial.ambient[3] < 1) )
+          {
+            ogreMaterial->setDepthWriteEnabled(false);
+            ogreMaterial->getTechnique(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+            ogreMaterial->setCullingMode(Ogre::CULL_NONE);
+          }
+
+        ogreMaterial->compile();
       }
 
 
@@ -327,49 +365,6 @@ namespace sofa
           else
               m.material->getTechnique(0)->setCullingMode(Ogre::CULL_CLOCKWISE);
       }
-
-      void OgreVisualModel::updateMaterial()
-      {
-	currentMaterial->setReceiveShadows(true); 
-	currentMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(true);
-	
-	
-	if (this->material.getValue().useDiffuse)	  
-	    currentMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(this->material.getValue().diffuse[0],this->material.getValue().diffuse[1],this->material.getValue().diffuse[2],this->material.getValue().diffuse[3]));	 
-	else
-	  currentMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
-
-	if (this->material.getValue().useAmbient)
-	  currentMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(this->material.getValue().ambient[0],this->material.getValue().ambient[1],this->material.getValue().ambient[2],this->material.getValue().ambient[3]));
-	else
-	  currentMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
-
-	if (this->material.getValue().useEmissive)
-	  currentMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(this->material.getValue().emissive[0],this->material.getValue().emissive[1],this->material.getValue().emissive[2],this->material.getValue().emissive[3]));
-	else
-	  currentMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
-
-	if (this->material.getValue().useSpecular)
-	  currentMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(this->material.getValue().specular[0],this->material.getValue().specular[1],this->material.getValue().specular[2],this->material.getValue().specular[3]));
-	else
-	  currentMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
-
-	if (this->material.getValue().useShininess)
-	  currentMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(this->material.getValue().shininess));
-	else
-	  currentMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
-
-	if ( (this->material.getValue().useDiffuse && this->material.getValue().diffuse[3] < 1) || 
-	     (this->material.getValue().useAmbient && this->material.getValue().ambient[3] < 1) )
-	  {
-	    currentMaterial->setDepthWriteEnabled(false);
-	    currentMaterial->getTechnique(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-	    currentMaterial->setCullingMode(Ogre::CULL_NONE); 
-	  }
-
-	currentMaterial->compile();
-      }
-
 
       void OgreVisualModel::uploadNormals()
       {       
@@ -492,7 +487,7 @@ namespace sofa
                 return;
             }
 
-	    //Visual Model update
+        //Visual Model update
             for (unsigned int i=0;i<subMeshes.size();++i)
             {
                 const SubMesh& m=subMeshes[i];

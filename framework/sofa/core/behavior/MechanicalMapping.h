@@ -90,10 +90,10 @@ public:
 
         
     /// Get the source (upper) model.
-    virtual BaseMechanicalState* getMechFrom();
+    virtual helper::vector<BaseMechanicalState*> getMechFrom();
 
     /// Get the destination (lower, mapped) model.
-    virtual BaseMechanicalState* getMechTo();
+    virtual helper::vector<BaseMechanicalState*> getMechTo();
 
     /// Return false if this mapping should only be used as a regular mapping instead of a mechanical mapping.
     virtual bool isMechanical();

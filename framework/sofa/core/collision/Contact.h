@@ -82,7 +82,7 @@ public:
     /// Control the keepAlive flag of the contact. Note that not all contacts support this method
     virtual void setKeepAlive(bool /* val */) {}
 
-	class Factory : public helper::Factory< std::string, Contact, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> >
+    class Factory : public helper::Factory< std::string, Contact, std::pair<std::pair<core::CollisionModel*,core::CollisionModel*>,Intersection*> >
 	{
 	public:
 	static Factory SOFA_CORE_API *getInstance();

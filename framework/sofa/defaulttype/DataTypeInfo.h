@@ -63,6 +63,7 @@ struct DataTypeInfo
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
 
+    enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
 
 	static unsigned int size(const DataType& /*type*/) { return 1; }
@@ -232,6 +233,7 @@ struct IntegerTypeInfo
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
 
+    enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
 
 	static unsigned int size(const DataType& /*type*/) { return 1; }
@@ -283,6 +285,7 @@ struct BoolTypeInfo
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
 
+    enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
 
 	static unsigned int size(const DataType& /*type*/) { return 1; }
@@ -355,6 +358,7 @@ struct ScalarTypeInfo
     enum { Scalar          = 1 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
 
+    enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
 
 	static unsigned int size(const DataType& /*type*/) { return 1; }
@@ -407,6 +411,7 @@ struct TextTypeInfo
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 1 }; ///< 1 if this type uses text values
 
+    enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
 
 	static unsigned int size(const DataType& /*type*/) { return 1; }
@@ -458,6 +463,7 @@ struct FixedArrayTypeInfo
     enum { Scalar          = BaseTypeInfo::Scalar          }; ///< 1 if this type uses scalar values
     enum { Text            = BaseTypeInfo::Text            }; ///< 1 if this type uses text values
 
+    enum { Size = DataType::static_size * BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size()
     {
         return DataType::size() * BaseTypeInfo::size();
@@ -611,6 +617,7 @@ struct VectorTypeInfo
     enum { Scalar          = BaseTypeInfo::Scalar          }; ///< 1 if this type uses scalar values
     enum { Text            = BaseTypeInfo::Text            }; ///< 1 if this type uses text values
 
+    enum { Size = BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size()
     {
         return BaseTypeInfo::size();
@@ -761,6 +768,7 @@ struct SetTypeInfo
     enum { Scalar          = BaseTypeInfo::Scalar          }; ///< 1 if this type uses scalar values
     enum { Text            = BaseTypeInfo::Text            }; ///< 1 if this type uses text values
 
+    enum { Size = BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size()
     {
         return BaseTypeInfo::size();

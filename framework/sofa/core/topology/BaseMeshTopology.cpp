@@ -211,6 +211,29 @@ const BaseMeshTopology::VerticesAroundVertex BaseMeshTopology::getVerticesAround
 }
 
 
+/// Returns the set of element indices adjacent to a given element (i.e. sharing a link)
+const vector<BaseMeshTopology::index_type> BaseMeshTopology::getElementAroundElement(index_type)
+{
+    static vector<index_type> empty;
+    return empty;
+}
+
+
+/// Returns the set of element indices adjacent to a given list of elements (i.e. sharing a link)
+const vector<BaseMeshTopology::index_type> BaseMeshTopology::getElementAroundElements(vector<index_type>)
+{
+    static vector<index_type> empty;
+    return empty;
+}
+
+/// Returns the set of element indices connected to an input one (i.e. which can be reached by topological links)
+const vector<BaseMeshTopology::index_type> BaseMeshTopology::getConnectedElement(index_type)
+{
+   static vector<index_type> empty;
+   return empty;
+}
+
+
 /// Returns the set of triangles on the border of the triangulation
   const sofa::helper::vector <BaseMeshTopology::TriangleID>& BaseMeshTopology::getTrianglesOnBorder()
   {
@@ -455,10 +478,24 @@ BaseMeshTopology::Edge BaseMeshTopology::getLocalEdgesInTetrahedron (const Point
 	return empty;
 }
 
+BaseMeshTopology::Triangle BaseMeshTopology::getLocalTrianglesInTetrahedron (const PointID) const
+{
+	static BaseMeshTopology::Triangle empty;
+        serr<<"getLocalTrianglesInTetrahedron() not supported." << sendl;
+	return empty;
+}
+
 BaseMeshTopology::Edge BaseMeshTopology::getLocalEdgesInHexahedron (const PointID) const
 {
 	static BaseMeshTopology::Edge empty;
         serr<<"getLocalEdgesInHexahedron() not supported." << sendl;
+	return empty;
+}
+
+BaseMeshTopology::Quad BaseMeshTopology::getLocalQuadsInHexahedron (const PointID)  const
+{
+	static BaseMeshTopology::Quad empty;
+        serr<<"getLocalQuadsInHexahedron() not supported." << sendl;
 	return empty;
 }
   

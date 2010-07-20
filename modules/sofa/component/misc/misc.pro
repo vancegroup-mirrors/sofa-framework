@@ -6,8 +6,10 @@ include($${SOFA_DIR}/sofa.cfg)
 
 CONFIG += $$CONFIGLIBRARIES
 
-CONFIG -= staticlib
+!contains(CONFIGSTATIC, static) {
+	CONFIG -= staticlib
 CONFIG += dll
+}
 
 DEFINES += SOFA_BUILD_COMPONENT_MISC
 
@@ -19,6 +21,8 @@ HEADERS += initMisc.h \
            DevTensionMonitor.h \
            DevTensionMonitor.inl \
            DevMonitorManager.h \
+           ExtraMonitor.h \
+           ExtraMonitor.inl \
            InputEventReader.h \
            Monitor.h \
            Monitor.inl \
@@ -46,6 +50,7 @@ SOURCES += initMisc.cpp \
            DevAngleCollisionMonitor.cpp \
            DevTensionMonitor.cpp \
            DevMonitorManager.cpp \
+           ExtraMonitor.cpp \
            InputEventReader.cpp \
            Monitor.cpp \
            ParticleSink.cpp \

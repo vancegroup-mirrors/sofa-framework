@@ -55,15 +55,17 @@ MechanicalMapping<In,Out>::~MechanicalMapping()
 }
 
 template <class In, class Out>
-BaseMechanicalState* MechanicalMapping<In,Out>::getMechFrom()
+helper::vector<BaseMechanicalState*> MechanicalMapping<In,Out>::getMechFrom()
 {
-	return this->fromModel;
+  helper::vector<BaseMechanicalState*> vec(1,this->fromModel);
+	return vec;
 }
 
 template <class In, class Out>
-BaseMechanicalState* MechanicalMapping<In,Out>::getMechTo()
+helper::vector<BaseMechanicalState*> MechanicalMapping<In,Out>::getMechTo()
 {
-	return this->toModel;
+  helper::vector<BaseMechanicalState*> vec(1,this->toModel);
+	return vec;
 }
 
 template <class In, class Out>
@@ -144,11 +146,10 @@ void MechanicalMapping<In,Out>::propagateXfree()
 template <class In, class Out>
 void MechanicalMapping<In,Out>::accumulateForce()
 {
-/*    if( this->fromModel==NULL ) serr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<sendl;
-    else if( this->toModel==NULL ) serr<<"MechanicalMapping<In,Out>::accumulateForce, toModel is NULL"<<sendl;
-    else serr<<"MechanicalMapping<In,Out>::accumulateForce() OK"<<sendl;*/
     if (this->fromModel!=NULL && this->toModel->getF()!=NULL && this->fromModel->getF()!=NULL)
+  {
 		applyJT(*this->fromModel->getF(), *this->toModel->getF());
+  }
 }
 
 template <class In, class Out>
@@ -184,31 +185,28 @@ using sofa::core::ParallelMappingApplyJ;
 /************* Mapping Functors *********************/
 
 template <class T>
-struct ParallelMappingApplyJT
-{
+struct ParallelMappingApplyJT{
   void operator()(void *m, Shared_rw< typename T::In::VecDeriv> out, Shared_r<typename T::Out::VecDeriv> in){
     ((T *)m)->applyJT(out.access(), in.read());
   }
 };
 template <class T>
-struct ParallelMappingApplyJTCPU
-{
+struct ParallelMappingApplyJTCPU{
   void operator()(void *m, Shared_rw< typename T::In::VecDeriv> out, Shared_r<typename T::Out::VecDeriv> in){
-    ((T *)m)->applyJT(out.access(), in.read());
+    ((T *)m)->applyJTCPU(out.access(), in.read());
   }
 };
 
 template<class T>
-struct ParallelComputeAccFromMapping
-{
+struct ParallelComputeAccFromMapping{
   void operator()(void *m, Shared_rw< typename T::Out::VecDeriv> acc_out, Shared_r<typename T::In::VecDeriv> v_in,Shared_r<typename T::In::VecDeriv> acc_in){
     ((T *)m)->::computeAccFromMapping(acc_out.access(), v_in.read(), acc_in.read());
   }
 };
 
+
 template <class In, class Out>
-struct ParallelComputeAccFromMapping< MechanicalMapping<In, Out> >
-{
+struct ParallelComputeAccFromMapping< MechanicalMapping<In, Out> >{
 	void operator()(MechanicalMapping<In,Out> *m,Shared_rw< typename Out::VecDeriv> acc_out, Shared_r<typename In::VecDeriv> v_in,Shared_r<typename In::VecDeriv> acc_in){
 		m->computeAccFromMapping(acc_out.access(),v_in.read(),acc_in.read());
 	}

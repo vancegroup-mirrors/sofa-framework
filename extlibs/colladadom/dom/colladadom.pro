@@ -23,8 +23,10 @@ INCLUDEPATH *= external-libs/minizip/include external-libs/tinyxml
 win32 {
   DEFINES *= DOM_DYNAMIC PCRE_STATIC
   contains (DEFINES, DOM_DYNAMIC) {
-    CONFIG -= staticlib
+    !contains(CONFIGSTATIC, static) {
+	CONFIG -= staticlib
     CONFIG += dll
+}
     DEFINES *= DOM_EXPORT
   }
   contains (CONFIGDEBUG, debug) {

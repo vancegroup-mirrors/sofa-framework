@@ -5,7 +5,8 @@
 	<MinProximityIntersection name="Proximity"  alarmDistance="0.8"  contactDistance="0.5" />
 	<TreeCollisionGroupManager name="default2" />
 	<Node 	name="SquareGravity" gravity="0 -9.81 0"  >
-		<CGImplicitSolver name="default3"  iterations="40"  tolerance="1e-06"  threshold="1e-10" />
+		<EulerImplicit name="cg_odesolver" printLog="false"/>
+		<CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
 		<MeshLoader name="meshLoader"  filename="mesh/square3.msh" />
 		<MechanicalObject template="Vec3d" name="default4"  scale3d="10 10 10"  restScale="1" />
 		<TriangleSetTopologyContainer name="Container" />

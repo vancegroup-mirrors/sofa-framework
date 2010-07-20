@@ -28,11 +28,11 @@
 #define SOFA_CORE_BASEMAPPING_H
 
 #include <stdlib.h>
-#include <vector>
 #include <string>
 #include <iostream>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/BehaviorModel.h>
+#include <sofa/helper/vector.h>
 
 namespace sofa
 {
@@ -59,10 +59,10 @@ public:
 	virtual void updateMapping() = 0;
 
 	/// Accessor to the input model of this mapping
-	virtual objectmodel::BaseObject* getFrom() = 0;
+  virtual helper::vector<objectmodel::BaseObject*> getFrom() = 0;
 
 	/// Accessor to the output model of this mapping
-	virtual objectmodel::BaseObject* getTo() = 0;
+	virtual helper::vector<objectmodel::BaseObject*> getTo() = 0;
 
 	/// Disable the mapping to get the original coordinates of the mapped model.
 	virtual void disable()=0;

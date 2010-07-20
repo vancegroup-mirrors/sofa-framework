@@ -86,7 +86,12 @@ else:unix {
 }
 
 contains (CONFIGDEBUG, debug) {
-  message( "|  Mode: DEBUG")
+	contains( CONFIGSTATIC, static) {
+		message( "|  Mode: DEBUG with static compilation")
+	}
+	else {
+	  message( "|  Mode: DEBUG")
+	}
 }
 contains (CONFIGDEBUG, release) {
   contains (QMAKE_CXXFLAGS,-g) {
@@ -97,7 +102,12 @@ contains (CONFIGDEBUG, release) {
       message( "|  Mode: RELEASE with profiling")
     }
     else {
-      message( "|  Mode: RELEASE")
+			contains (CONFIGSTATIC, static) {
+	      message( "|  Mode: RELEASE with static compilation")
+			}
+			else {
+				message( "|  Mode : RELEASE")
+			}
     }
   }
 }

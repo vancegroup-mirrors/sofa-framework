@@ -28,6 +28,7 @@
 #include <sofa/component/constraint/LinearMovementConstraint.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/behavior/Constraint.inl>
+#include <sofa/simulation/common/Simulation.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <iostream>
@@ -81,6 +82,7 @@ LinearMovementConstraint<DataTypes>::LinearMovementConstraint()
 , m_indices( initData(&m_indices,"indices","Indices of the constrained points") )
 , m_keyTimes(  initData(&m_keyTimes,"keyTimes","key times for the movements") )
 , m_keyMovements(  initData(&m_keyMovements,"movements","movements corresponding to the key times") )
+, showMovement( initData(&showMovement, (bool)false, "showMovement", "Visualization of the movement to be applied to constrained dofs."))
 {
     // default to indice 0
     m_indices.beginEdit()->push_back(0);
@@ -314,6 +316,8 @@ void LinearMovementConstraint<DataTypes>::findKeyTimes()
   void LinearMovementConstraint<DataTypes>::draw()
   {
     if (!this->getContext()->getShowBehaviorModels() || m_keyTimes.getValue().size() == 0 ) return;
+		if (showMovement.getValue())
+		{
     glDisable (GL_LIGHTING);
     glPointSize(10);
     glColor4f (1,0.5,0.5,1);
@@ -328,6 +332,22 @@ void LinearMovementConstraint<DataTypes>::findKeyTimes()
 	  }
 	}
     glEnd();
+		}
+		else
+		{
+			const VecCoord& x = *this->mstate->getX();
+
+			sofa::helper::vector< Vector3 > points;
+			Vector3 point;
+			unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
+			const SetIndexArray & indices = m_indices.getValue().getArray();
+			for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+			{
+				for (unsigned int s=0;s<sizePoints;++s) point[s] = x[*it][s];
+				points.push_back(point);
+			}
+			simulation::getSimulation()->DrawUtility.drawPoints(points, 10, Vec<4,float>(1,0.5,0.5,1));
+		}
   }
 
 // Specialization for rigids

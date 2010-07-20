@@ -283,14 +283,14 @@ void DiagonalMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx
     const MassVector &masses= f_mass.getValue();
     if (factor == 1.0)
     {
-        for (unsigned int i=0;i<dx.size();i++)
+        for (unsigned int i=0;i<masses.size();i++)
         {
             res[i] += dx[i] * masses[i];
         }
     }
     else
     {
-        for (unsigned int i=0;i<dx.size();i++)
+        for (unsigned int i=0;i<masses.size();i++)
         {
             res[i] += (dx[i] * masses[i]) * (Real)factor;
         }
@@ -304,7 +304,7 @@ void DiagonalMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f)
 {
 
     const MassVector &masses= f_mass.getValue();
-    for (unsigned int i=0;i<f.size();i++)
+    for (unsigned int i=0;i<masses.size();i++)
     {
         a[i] = f[i] / masses[i];
     }
@@ -482,7 +482,7 @@ void DiagonalMass<DataTypes, MassType>::handleTopologyChange()
 template <class DataTypes, class MassType>
 void DiagonalMass<DataTypes, MassType>::init()
 {
-        if (!fileMass.getValue().empty()) load(fileMass.getFullPath().c_str());
+   if (!fileMass.getValue().empty()) load(fileMass.getFullPath().c_str());
 
 	_topology = this->getContext()->getMeshTopology();
 
@@ -523,6 +523,7 @@ void DiagonalMass<DataTypes, MassType>::init()
 	if ((f_mass.getValue().size()==0) && (_topology!=0)) {
           reinit();
         }
+
 }
 
 template <class DataTypes, class MassType>
@@ -576,6 +577,8 @@ template <class DataTypes, class MassType>
 {
   if (!this->getContext()->getShowBehaviorModels()) return;
   const MassVector &masses= f_mass.getValue();
+  if (masses.empty()) return;
+
   const VecCoord& x = *this->mstate->getX();
   Coord gravityCenter;
   Real totalMass=0.0;
@@ -593,6 +596,7 @@ template <class DataTypes, class MassType>
     gravityCenter += x[i]*masses[i];
     totalMass += masses[i];
   }
+
   simulation::getSimulation()->DrawUtility.drawPoints(points, 2, Vec<4,float>(1,1,1,1));
 
   if(showCenterOfGravity.getValue()){

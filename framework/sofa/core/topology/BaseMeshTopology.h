@@ -95,7 +95,7 @@ public:
     /// @{
     typedef fixed_array<EdgeID,3>		EdgesInTriangle;
     typedef fixed_array<EdgeID,4>		EdgesInQuad;
-    typedef fixed_array<TriangleID,4>		TrianglesInTetrahedron;
+    typedef fixed_array<TriangleID,4>	TrianglesInTetrahedron;
     typedef fixed_array<EdgeID,6>		EdgesInTetrahedron;
     typedef fixed_array<QuadID,6>		QuadsInHexahedron;
     typedef fixed_array<EdgeID,12>		EdgesInHexahedron;
@@ -103,17 +103,17 @@ public:
 
     /// dynamic-size neighbors arrays
     /// @{
-    typedef vector<PointID>			VerticesAroundVertex;
+    typedef vector<PointID>		VerticesAroundVertex;
     typedef vector<EdgeID>			EdgesAroundVertex;
-    typedef vector<TriangleID>			TrianglesAroundVertex;
+    typedef vector<TriangleID>	TrianglesAroundVertex;
     typedef vector<QuadID>			QuadsAroundVertex;
-    typedef vector<TetraID>			TetrahedraAroundVertex;
+    typedef vector<TetraID>		TetrahedraAroundVertex;
     typedef vector<HexaID>			HexahedraAroundVertex;
-    typedef vector<TriangleID>		        TrianglesAroundEdge;
+    typedef vector<TriangleID>	TrianglesAroundEdge;
     typedef vector<QuadID>			QuadsAroundEdge;
-    typedef vector<TetraID>			TetrahedraAroundEdge;
+    typedef vector<TetraID>		TetrahedraAroundEdge;
     typedef vector<HexaID>			HexahedraAroundEdge;
-    typedef vector<TetraID>			TetrahedraAroundTriangle;
+    typedef vector<TetraID>		TetrahedraAroundTriangle;
     typedef vector<HexaID>			HexahedraAroundQuad;
     /// @}
 
@@ -205,7 +205,10 @@ public:
 
     /// Returns the set of vertices adjacent to a given vertex (i.e. sharing an edge)
     virtual const VerticesAroundVertex getVerticesAroundVertex(PointID i);
-
+    /// Returns the set of element indices adjacent to a given element (i.e. sharing a link)
+    virtual const vector<index_type> getElementAroundElement(index_type elem);
+    /// Returns the set of element indices adjacent to a given list of elements (i.e. sharing a link)
+    virtual const vector<index_type> getElementAroundElements(vector<index_type> elems);
     /// @}
 
 
@@ -245,11 +248,15 @@ public:
 	/** returns the index (either 0, 1 ,2 ,3, 4, 5) of the quad whose global index is quadIndex. Returns -1 if none */
 	virtual int getQuadIndexInHexahedron(const QuadsInHexahedron &t, QuadID quadIndex) const;
 
-	/** returns for each index (between 0 and 5) the two vertex indices that are adjacent to that edge */
+	/** \brief Returns for each index (between 0 and 5) the two vertex indices that are adjacent to that edge */
 	virtual Edge getLocalEdgesInTetrahedron (const PointID i) const;
+	/** \brief Returns for each index (between 0 and 3) the three local vertices indices that are adjacent to that triangle */
+	virtual Triangle getLocalTrianglesInTetrahedron (const PointID i) const;
 
 	/** \brief Returns for each index (between 0 and 12) the two vertex indices that are adjacent to that edge */
 	virtual Edge getLocalEdgesInHexahedron (const PointID i) const;
+	/** \brief Returns for each index (between 0 and 6) the four vertices indices that are adjacent to that quad */
+	virtual Quad getLocalQuadsInHexahedron (const PointID i) const;
 
     /// @name Deprecated names, for backward-compatibility
     /// @{
@@ -282,6 +289,16 @@ public:
     virtual void addQuad( int a, int b, int c, int d );
     virtual void addTetra( int a, int b, int c, int d );
     virtual void addHexa( int a, int b, int c, int d, int e, int f, int g, int h );
+    /// @}
+
+    /// get information about connexity of the mesh
+    /// @{
+    /// Checks if the topology has only one connected component. @return Return true if so.
+    virtual bool checkConnexity() {return true;}
+    /// Returns the number of connected component.
+    virtual unsigned int getNumberOfConnectedComponent() {return 0;}
+    /// Returns the set of element indices connected to an input one (i.e. which can be reached by topological links)
+    virtual const vector<index_type> getConnectedElement(index_type elem);
     /// @}
 
     /// get the current revision of this mesh (use to detect changes)

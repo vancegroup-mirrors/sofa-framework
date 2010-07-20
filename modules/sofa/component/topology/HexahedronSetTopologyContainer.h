@@ -39,6 +39,7 @@
 //  Z
 //
 // Hexahedron quads are ordered as {BACK, FRONT, BOTTOM, RIGHT, TOP, LEFT}
+// const unsigned int quadsInHexahedronArray[6][4]={{0,1,2,3}, {4,7,6,5}, {1,0,4,5},{1,5,6,2},  {2,6,7,3}, {0,3,7,4}}
 // The quads orientation is clockwise
 //
 
@@ -59,23 +60,24 @@ namespace topology
 
 	using core::topology::BaseMeshTopology;
 
-	typedef BaseMeshTopology::PointID			PointID;
-	typedef BaseMeshTopology::EdgeID			EdgeID;
+   typedef BaseMeshTopology::PointID			         PointID;
+   typedef BaseMeshTopology::EdgeID			            EdgeID;
 	typedef BaseMeshTopology::TriangleID	         	QuadID;
-	typedef BaseMeshTopology::HexaID			HexaID;
-	typedef BaseMeshTopology::Edge				Edge;
-	typedef BaseMeshTopology::Quad				Quad;
-	typedef BaseMeshTopology::Hexa				Hexa;
-	typedef BaseMeshTopology::SeqHexahedra			SeqHexahedra;
+   typedef BaseMeshTopology::HexaID			            HexaID;
+   typedef BaseMeshTopology::Edge				         Edge;
+   typedef BaseMeshTopology::Quad				         Quad;
+   typedef BaseMeshTopology::Hexa				         Hexa;
+   typedef BaseMeshTopology::SeqHexahedra			      SeqHexahedra;
 	typedef BaseMeshTopology::HexahedraAroundVertex		HexahedraAroundVertex;
 	typedef BaseMeshTopology::HexahedraAroundEdge		HexahedraAroundEdge;
 	typedef BaseMeshTopology::HexahedraAroundQuad		HexahedraAroundQuad;
-	typedef BaseMeshTopology::EdgesInHexahedron		EdgesInHexahedron;
-	typedef BaseMeshTopology::QuadsInHexahedron		QuadsInHexahedron;
+   typedef BaseMeshTopology::EdgesInHexahedron		   EdgesInHexahedron;
+   typedef BaseMeshTopology::QuadsInHexahedron		   QuadsInHexahedron;
 
 	typedef Hexa		Hexahedron;
 	typedef EdgesInHexahedron	EdgesInHexahedron;
 	typedef QuadsInHexahedron	QuadsInHexahedron;
+   typedef sofa::helper::vector<HexaID>               VecHexaID;
 
 	/** a class that stores a set of hexahedra and provides access with adjacent quads, edges and vertices */
 	class SOFA_COMPONENT_CONTAINER_API HexahedronSetTopologyContainer : public QuadSetTopologyContainer 
@@ -206,6 +208,12 @@ namespace topology
 		 */
 		virtual Edge getLocalEdgesInHexahedron (const unsigned int i) const;
 		
+
+		/** \brief Returns for each index (between 0 and 6) the four vertices indices that are adjacent to that quad
+		 *
+		 */
+		virtual Quad getLocalQuadsInHexahedron (const PointID i) const;
+
 		/// @}
 
 
@@ -224,6 +232,27 @@ namespace topology
 		 * @see m_hexahedraAroundQuad
 		 */
 		virtual bool checkTopology() const;
+
+
+      /// Get information about connexity of the mesh
+      /// @{
+      /** \brief Checks if the topology has only one connected component
+        *
+        * @return true if only one connected component
+        */
+      virtual bool checkConnexity();
+
+      /// Returns the number of connected component.
+      virtual unsigned int getNumberOfConnectedComponent();
+
+      /// Returns the set of element indices connected to an input one (i.e. which can be reached by topological links)
+      virtual const VecHexaID getConnectedElement(HexaID elem);
+
+      /// Returns the set of element indices adjacent to a given element (i.e. sharing a link)
+      virtual const VecHexaID getElementAroundElement(HexaID elem);
+      /// Returns the set of element indices adjacent to a given list of elements (i.e. sharing a link)
+      virtual const VecHexaID getElementAroundElements(VecHexaID elems);
+      /// @}
 
 
 		/** \brief Returns the number of hexahedra in this topology.

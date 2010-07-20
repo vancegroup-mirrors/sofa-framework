@@ -3,8 +3,10 @@ TEMPLATE = lib
 TARGET = sofacomponentvisualmodel
 include($${SOFA_DIR}/sofa.cfg)
 CONFIG += $$CONFIGLIBRARIES
-CONFIG -= staticlib
+!contains(CONFIGSTATIC, static) {
+	CONFIG -= staticlib
 CONFIG += dll
+}
 DEFINES += SOFA_BUILD_COMPONENT_VISUALMODEL
 HEADERS += initVisualModel.h \
     ClipPlane.h \

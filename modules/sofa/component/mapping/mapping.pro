@@ -6,8 +6,10 @@ include($${SOFA_DIR}/sofa.cfg)
 
 CONFIG += $$CONFIGLIBRARIES
 
-CONFIG -= staticlib
+!contains(CONFIGSTATIC, static) {
+	CONFIG -= staticlib
 CONFIG += dll
+}
 
 DEFINES += SOFA_BUILD_COMPONENT_MAPPING
 
@@ -18,10 +20,14 @@ HEADERS +=  initMapping.h \
            BarycentricMapping.inl \
            BeamLinearMapping.h \
            BeamLinearMapping.inl \
-           CenterOfMassMapping.h \
-           CenterOfMassMapping.inl \
 	   CenterPointMechanicalMapping.h \
 	   CenterPointMechanicalMapping.inl \
+           CenterOfMassMapping.h \
+           CenterOfMassMapping.inl \
+           CenterOfMassMultiMapping.h \
+           CenterOfMassMultiMapping.inl \
+           CenterOfMassMulti2Mapping.h \
+           CenterOfMassMulti2Mapping.inl \
            CurveMapping.h \
            CurveMapping.inl \
 	   ExternalInterpolationMapping.h \
@@ -48,6 +54,8 @@ HEADERS +=  initMapping.h \
            SPHFluidSurfaceMapping.inl \
            SubsetMapping.h \
            SubsetMapping.inl \
+           SubsetMultiMapping.h \
+           SubsetMultiMapping.inl \
            TubularMapping.h \
            TubularMapping.inl \
            VoidMapping.h
@@ -57,8 +65,10 @@ SOURCES += initMapping.cpp \
            BarycentricMapping.cpp \
            BarycentricMappingRigid.cpp \
            BeamLinearMapping.cpp \
+           CenterPointMechanicalMapping.cpp \
            CenterOfMassMapping.cpp \
-	   CenterPointMechanicalMapping.cpp \
+           CenterOfMassMultiMapping.cpp \
+           CenterOfMassMulti2Mapping.cpp \
            CurveMapping.cpp \
 	   ExternalInterpolationMapping.cpp \
            IdentityMapping.cpp \
@@ -71,7 +81,8 @@ SOURCES += initMapping.cpp \
 	   SimpleTesselatedTetraMechanicalMapping.cpp \
            SkinningMapping.cpp \
            SPHFluidSurfaceMapping.cpp \
-           SubsetMapping.cpp \
+           SubsetMapping.cpp \    
+           SubsetMultiMapping.cpp \
            TubularMapping.cpp \
            VoidMapping.cpp 
            

@@ -282,10 +282,13 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 	cgstep_beta(r,b,-1);//for (int i=0; i<n; i++) r[i] = b[i] - r[i];
 	if (this->preconditioners.size()>0 && usePrecond) {
 		sofa::helper::AdvancedTimer::stepEnd("PCGLinearSolver::solve");
-		sofa::helper::AdvancedTimer::stepBegin("PCGLinearSolver::apply Precond");
+		sofa::helper::AdvancedTimer::stepBegin("PCGLinearSolver::apply Precond");		
 		preconditioners[0]->setSystemLHVector(d);
 		preconditioners[0]->setSystemRHVector(r);
-		preconditioners[0]->solveSystem();
+		preconditioners[0]->freezeSystemMatrix();
+		preconditioners[0]->solveSystem();		
+		//Use freeze boolean to specify the preconditioner that's the fist solve of the step (for example if stepMBK is not call)
+		preconditioners[0]->updateSystemMatrix();
 		sofa::helper::AdvancedTimer::stepEnd("PCGLinearSolver::apply Precond");
 		sofa::helper::AdvancedTimer::stepBegin("PCGLinearSolver::solve");
 	} else {
@@ -341,7 +344,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 	  iter++;
 	}
 	sofa::helper::AdvancedTimer::valSet("PCG iterations", iter);
-		
+
 	f_graph.endEdit();
 	this->deleteVector(&r);
 	this->deleteVector(&q);

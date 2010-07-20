@@ -125,6 +125,8 @@ namespace topology
 		}
 
 		data.resize( data.size() - index.size() );
+
+      this->endEdit();
 	}
 
 

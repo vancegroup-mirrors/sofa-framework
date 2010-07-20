@@ -44,6 +44,8 @@ int HexahedronSetTopologyContainerClass = core::RegisterObject("Hexahedron set t
 ;
 
 const unsigned int edgesInHexahedronArray[12][2]={{0,1},{0,3},{0,4},{1,2},{1,5},{2,3},{2,6},{3,7},{4,5},{4,7},{5,6},{6,7}};
+///convention quads in hexa (orientation interior)
+const unsigned int quadsInHexahedronArray[6][4]={{0,1,2,3}, {4,7,6,5}, {1,0,4,5},{1,5,6,2},  {2,6,7,3}, {0,3,7,4}};
 
 HexahedronSetTopologyContainer::HexahedronSetTopologyContainer()
 : QuadSetTopologyContainer()
@@ -571,6 +573,17 @@ void HexahedronSetTopologyContainer::init()
 		return Edge (edgesInHexahedronArray[i][0], edgesInHexahedronArray[i][1]);
 	}
 
+
+	Quad HexahedronSetTopologyContainer::getLocalQuadsInHexahedron (const unsigned int i) const
+	{
+		assert(i<6);
+		return Quad (quadsInHexahedronArray[i][0],
+				     quadsInHexahedronArray[i][1],
+				     quadsInHexahedronArray[i][2],
+				     quadsInHexahedronArray[i][3]);
+	}
+
+
 	const sofa::helper::vector< QuadsInHexahedron> &HexahedronSetTopologyContainer::getQuadsInHexahedronArray() 
 	{
 		if(!hasQuadsInHexahedron())
@@ -783,7 +796,7 @@ void HexahedronSetTopologyContainer::init()
 												|| (m_edgesInHexahedron[tes[j]][11]==i);
 					if(!check_hexa_edge_shell)
 					{
-					  std::cout << "*** CHECK FAILED : check_hexa_edge_shell, i = " << i << " , j = " << j << std::endl;
+                  std::cout << "*** CHECK FAILED : check_hexa_edge_shell, i = " << i << " , j = " << j << std::endl;
 						ret = false;
 					}
 				}
@@ -798,14 +811,14 @@ void HexahedronSetTopologyContainer::init()
 				for(unsigned int j=0; j<tes.size(); ++j)
 				{
 					bool check_hexa_quad_shell =   (m_quadsInHexahedron[tes[j]][0]==i) 
-												|| (m_quadsInHexahedron[tes[j]][1]==i) 
-												|| (m_quadsInHexahedron[tes[j]][2]==i) 
-												|| (m_quadsInHexahedron[tes[j]][3]==i) 
-												|| (m_quadsInHexahedron[tes[j]][4]==i) 
-												|| (m_quadsInHexahedron[tes[j]][5]==i);
+                                              || (m_quadsInHexahedron[tes[j]][1]==i)
+                                              || (m_quadsInHexahedron[tes[j]][2]==i)
+                                              || (m_quadsInHexahedron[tes[j]][3]==i)
+                                              || (m_quadsInHexahedron[tes[j]][4]==i)
+                                              || (m_quadsInHexahedron[tes[j]][5]==i);
 					if(!check_hexa_quad_shell)
 					{
- 					  std::cout << "*** CHECK FAILED : check_hexa_quad_shell, i = " << i << " , j = " << j << std::endl;
+                  std::cout << "*** CHECK FAILED : check_hexa_quad_shell, i = " << i << " , j = " << j << std::endl;
 						ret = false;
 					}
 				}
@@ -813,10 +826,241 @@ void HexahedronSetTopologyContainer::init()
 		}
 
 		return ret && QuadSetTopologyContainer::checkTopology();
-	#else
+#else
 		return true;
-	#endif
+#endif
 	}
+
+
+
+
+/// Get information about connexity of the mesh
+/// @{
+
+   bool HexahedronSetTopologyContainer::checkConnexity()
+   {
+
+      unsigned int nbr = this->getNbHexahedra();
+
+      if (nbr == 0)
+      {
+#ifndef NDEBUG
+         serr << "Warning. [HexahedronSetTopologyContainer::checkConnexity] Can't compute connexity as there are no Hexahedra" << endl;
+#endif
+         return false;
+      }
+
+      VecHexaID elemAll = this->getConnectedElement(0);
+
+      if (elemAll.size() != nbr)
+      {
+         serr << "Warning: in computing connexity, Hexahedra are missings. There is more than one connexe component." << sendl;
+         return false;
+      }
+
+      return true;
+   }
+
+
+   unsigned int HexahedronSetTopologyContainer::getNumberOfConnectedComponent()
+   {
+      unsigned int nbr = this->getNbHexahedra();
+
+      if (nbr == 0)
+      {
+#ifndef NDEBUG
+         serr << "Warning. [HexahedronSetTopologyContainer::getNumberOfConnectedComponent] Can't compute connexity as there are no Hexahedra" << endl;
+#endif
+         return 0;
+      }
+
+      VecHexaID elemAll = this->getConnectedElement(0);
+      unsigned int cpt = 1;
+
+      while (elemAll.size() < nbr)
+      {
+         std::sort(elemAll.begin(), elemAll.end());
+         unsigned int other_HexaID = elemAll.size();
+
+         for (unsigned int i = 0; i<elemAll.size(); ++i)
+            if (elemAll[i] != i)
+            {
+            other_HexaID = i;
+            break;
+         }
+
+         VecHexaID elemTmp = this->getConnectedElement(other_HexaID);
+         cpt++;
+
+         elemAll.insert(elemAll.begin(), elemTmp.begin(), elemTmp.end());
+      }
+
+      return cpt;
+   }
+
+
+   const VecHexaID HexahedronSetTopologyContainer::getConnectedElement(HexaID elem)
+   {
+      if(!hasHexahedraAroundVertex())	// this method should only be called when the shell array exists
+      {
+#ifndef NDEBUG
+         serr << "Warning. [HexahedronSetTopologyContainer::getConnectedElement] hexahedron vertex shell array is empty." << endl;
+#endif
+         createHexahedraAroundVertexArray();
+      }
+
+      VecHexaID elemAll;
+      VecHexaID elemOnFront, elemPreviousFront, elemNextFront;
+      bool end = false;
+      unsigned int cpt = 0;
+      unsigned int nbr = this->getNbHexahedra();
+
+      // init algo
+      elemAll.push_back(elem);
+      elemOnFront.push_back(elem);
+      elemPreviousFront.clear();
+      cpt++;
+
+      while (!end && cpt < nbr)
+      {
+         // First Step - Create new region
+         elemNextFront = this->getElementAroundElements(elemOnFront); // for each HexaID on the propagation front
+
+         // Second Step - Avoid backward direction
+         for (unsigned int i = 0; i<elemNextFront.size(); ++i)
+         {
+            bool find = false;
+            HexaID id = elemNextFront[i];
+
+            for (unsigned int j = 0; j<elemAll.size(); ++j)
+               if (id == elemAll[j])
+               {
+               find = true;
+               break;
+            }
+
+            if (!find)
+            {
+               elemAll.push_back(id);
+               elemPreviousFront.push_back(id);
+            }
+         }
+
+         // cpt for connexity
+         cpt +=elemPreviousFront.size();
+
+         if (elemPreviousFront.empty())
+         {
+            end = true;
+#ifndef NDEBUG
+            serr << "Loop for computing connexity has reach end." << sendl;
+#endif
+         }
+
+         // iterate
+         elemOnFront = elemPreviousFront;
+         elemPreviousFront.clear();
+      }
+
+      return elemAll;
+   }
+
+
+   const VecHexaID HexahedronSetTopologyContainer::getElementAroundElement(HexaID elem)
+   {
+      VecHexaID elems;
+
+      if (!hasHexahedraAroundVertex())
+      {
+#ifndef NDEBUG
+         serr << "Warning. [HexahedronSetTopologyContainer::getElementAroundElement] hexahedron vertex shell array is empty." << endl;
+#endif
+         createHexahedraAroundVertexArray();
+      }
+
+      Hexahedron the_hexa = this->getHexahedron(elem);
+
+      for(unsigned int i = 0; i<8; ++i) // for each node of the hexahedron
+      {
+         HexahedraAroundVertex hexaAV = this->getHexahedraAroundVertex(the_hexa[i]);
+
+         for (unsigned int j = 0; j<hexaAV.size(); ++j) // for each hexahedron around the node
+         {
+            bool find = false;
+            HexaID id = hexaAV[j];
+
+            if (id == elem)
+               continue;
+
+            for (unsigned int k = 0; k<elems.size(); ++k) // check no redundancy
+               if (id == elems[k])
+               {
+               find = true;
+               break;
+            }
+
+            if (!find)
+               elems.push_back(id);
+         }
+      }
+
+      return elems;
+   }
+
+
+   const VecHexaID HexahedronSetTopologyContainer::getElementAroundElements(VecHexaID elems)
+   {
+      VecHexaID elemAll;
+      VecHexaID elemTmp;
+
+      if (!hasHexahedraAroundVertex())
+      {
+#ifndef NDEBUG
+         serr << "Warning. [HexahedronSetTopologyContainer::getElementAroundElements] hexahedron vertex shell array is empty." << endl;
+#endif
+         createHexahedraAroundVertexArray();
+      }
+
+      for (unsigned int i = 0; i <elems.size(); ++i) // for each HexaID of input vector
+      {
+         VecHexaID elemTmp2 = this->getElementAroundElement(elems[i]);
+
+         elemTmp.insert(elemTmp.end(), elemTmp2.begin(), elemTmp2.end());
+      }
+
+      for (unsigned int i = 0; i<elemTmp.size(); ++i) // for each hexahedron Id found
+      {
+         bool find = false;
+         HexaID id = elemTmp[i];
+
+         for (unsigned int j = 0; j<elems.size(); ++j) // check no redundancy with input vector
+            if (id == elems[j])
+            {
+            find = true;
+            break;
+         }
+
+         if (!find)
+         {
+            for (unsigned int j = 0; j<elemAll.size(); ++j) // check no redundancy in output vector
+               if (id == elemAll[j])
+               {
+               find = true;
+               break;
+            }
+         }
+
+         if (!find)
+            elemAll.push_back(id);
+      }
+
+
+      return elemAll;
+   }
+
+   /// @}
+
+
 
 bool HexahedronSetTopologyContainer::hasHexahedra() const
 {

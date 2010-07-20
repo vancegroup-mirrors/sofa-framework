@@ -279,18 +279,21 @@ void DiagonalMass<DataTypes, MassType>::resize(int vsize)
 template <class DataTypes, class MassType>
 void DiagonalMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
 {
-
     const MassVector &masses= f_mass.getValue();
+    //std::cout << "DIAGONALMASS: dx size = " << dx.size() << " res size = " << res.size() << " masses size = " << masses.size() << std::endl;
+    unsigned int n = masses.size();
+    if (dx.size() < n) n = dx.size();
+    if (res.size() < n) n = res.size();
     if (factor == 1.0)
     {
-        for (unsigned int i=0;i<masses.size();i++)
+        for (unsigned int i=0;i<n;i++)
         {
             res[i] += dx[i] * masses[i];
         }
     }
     else
     {
-        for (unsigned int i=0;i<masses.size();i++)
+        for (unsigned int i=0;i<n;i++)
         {
             res[i] += (dx[i] * masses[i]) * (Real)factor;
         }
@@ -491,6 +494,16 @@ void DiagonalMass<DataTypes, MassType>::init()
 	this->getContext()->get(quadGeo);
 	this->getContext()->get(tetraGeo);
 	this->getContext()->get(hexaGeo);
+/*
+    std::cout << "DIAGONALMASS: found";
+    if (_topology) std::cout << " topology";
+    if (edgeGeo) std::cout << " edgeGeo";
+    if (triangleGeo) std::cout << " triangleGeo";
+    if (quadGeo) std::cout << " quadGeo";
+    if (tetraGeo) std::cout << " tetraGeo";
+    if (hexaGeo) std::cout << " hexaGeo";
+    std::cout << std::endl;
+*/
 
 	Inherited::init();
 
@@ -589,8 +602,7 @@ template <class DataTypes, class MassType>
   for (unsigned int i=0; i<x.size(); i++)
   {
     Vector3 p;
-    for (unsigned int j=0;j< Coord::static_size; ++j)
-      p[j] = x[i][j];
+    p = DataTypes::getCPos(x[i]);
 
     points.push_back(p);
     gravityCenter += x[i]*masses[i];
@@ -604,7 +616,7 @@ template <class DataTypes, class MassType>
     glColor4f (1,1,0,1);
     glPointSize(5);
     gravityCenter /= totalMass;
-    for(unsigned int i=0 ; i<Coord::static_size ; i++){
+    for(unsigned int i=0 ; i<Coord::spatial_dimensions ; i++){
       Coord v;
       v[i] = showAxisSize.getValue();
       helper::gl::glVertexT(gravityCenter-v);

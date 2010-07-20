@@ -84,30 +84,10 @@ public:
         return sofa::defaulttype::VirtualTypeInfo<T>::get();
     }
 
-    const T& virtualGetValue() const
-    {
-	this->updateIfDirty();
-        return value();
-    }
-
-    void virtualSetValue(const T& v)
-    {
-        ++this->m_counter;
-        value() = v;
-        BaseData::setDirtyOutputs();
-    }
-
-    virtual T* virtualBeginEdit()
-    {
-        this->updateIfDirty();
-        ++this->m_counter;
-        BaseData::setDirtyOutputs();
-        return &(value());
-    }
-
-    virtual void virtualEndEdit()
-    {
-    }
+    virtual const T& virtualGetValue() const = 0;
+    virtual void virtualSetValue(const T& v) = 0;
+    virtual T* virtualBeginEdit() = 0;
+    virtual void virtualEndEdit() = 0;
 
     /// Get current value as a void pointer (use getValueTypeInfo to find how to access it)
     virtual const void* getValueVoidPtr() const
@@ -136,17 +116,16 @@ public:
             return false;
         //serr<<"Field::read "<<s.c_str()<<sendl;
         std::istringstream istr( s.c_str() );
-        istr >> value();
+        istr >> *virtualBeginEdit();
+        virtualEndEdit();
         if( istr.fail() )
-	{
-	    return false;
-	}
-	else
-	{
-	    ++this->m_counter;
-            BaseData::setDirtyOutputs();
-	    return true;
-	}
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
     
     virtual bool isCounterValid() const {return true;}
@@ -172,34 +151,160 @@ protected:
 
     bool validParent(BaseData* parent)
     {
-	if (dynamic_cast<TData<T>*>(parent))
-	    return true;
-	return BaseData::validParent(parent);
+        if (dynamic_cast<TData<T>*>(parent))
+            return true;
+        return BaseData::validParent(parent);
     }
 
     void doSetParent(BaseData* parent)
     {
-	parentData = dynamic_cast<TData<T>*>(parent);
-	BaseData::doSetParent(parent);
+        parentData = dynamic_cast<TData<T>*>(parent);
+        BaseData::doSetParent(parent);
     }
 
     bool updateFromParentValue(const BaseData* parent)
     {
-	if (parent == parentData)
+        if (parent == parentData)
         {
-            value() = parentData->value();
-            ++this->m_counter;
+            virtualSetValue(parentData->virtualGetValue());
             return true;
         }
-	else
-	    return BaseData::updateFromParentValue(parent);
+        else
+            return BaseData::updateFromParentValue(parent);
     }
-
-    virtual const T& value() const = 0;
-    virtual T& value() = 0;
 
     TData<T>* parentData;
 };
+
+template <class T, bool COW>
+class DataContainer;
+
+template <class T>
+class DataContainer<T, false>
+{
+protected:
+    T data;
+public:
+
+    DataContainer()
+    : data(T())// BUGFIX (Jeremie A.): Force initialization of basic types to 0 (bool, int, float, etc).
+    {
+    }
+
+    DataContainer(const T &value)
+    : data(value)
+    {
+    }
+
+    DataContainer(const DataContainer<T, false>& dc)
+    : data(dc.getValue())
+    {
+    }
+
+    DataContainer<T, false>& operator=(const DataContainer<T, false>& dc )
+    {
+        data = dc.getValue();
+        return *this;
+    }
+
+    T* beginEdit() { return &data; }
+    void endEdit() {}
+    const T& getValue() const { return data; }
+//    T& value() { return data; }
+};
+
+
+template <class T>
+class DataContainer<T, true>
+{
+    //TODO: change this to be atomic
+    typedef unsigned int Counter;
+
+protected:
+    T* data;
+    Counter* cpt;
+public:
+
+    DataContainer()
+    : data(new T(T())) // BUGFIX (Jeremie A.): Force initialization of basic types to 0 (bool, int, float, etc).
+    , cpt(new Counter(1))
+    {
+    }
+
+    DataContainer(const T& value)
+    : data(new T(value))
+    , cpt(new Counter(1))
+    {
+    }
+
+    DataContainer(const DataContainer& dc)
+    : data(dc.data)
+    , cpt(dc.cpt)
+    {
+        ++(*cpt);
+    }
+
+    ~DataContainer()
+    {
+        if ((--(*cpt)) == 0) // last ref to data
+        {
+            delete cpt;
+            delete data;
+        }
+    }
+
+    DataContainer<T, true>& operator=(const DataContainer<T, true>& dc )
+    {
+        //avoid self reference
+        if(&dc != this)
+        {
+            if ((--(*cpt)) == 0) // last ref to data
+            {
+                delete cpt;
+                delete data;
+            }
+            this->data = dc.data;
+            this->cpt = dc.cpt;
+
+            ++(*cpt);
+        }
+
+        return *this;
+    }
+
+    T* beginEdit()
+    {
+        if (*cpt > 1)
+        {
+            T* newData = new T(*data);
+            if ((--(*cpt)) == 0) // last ref to data, not that this can only happen if another thread released a reference between this test and the previous if condition
+            {
+                delete cpt;
+                delete data;
+            }
+
+            cpt = new Counter(1);
+            data = newData;
+        }
+        return data;
+    }
+
+    void endEdit()
+    {
+    }
+
+    const T& getValue() const
+    {
+        return *data;
+    }
+
+//    T& value()
+//    {
+//        return *beginEdit();
+//    }
+};
+
+
 
 /**
  *  \brief Container of data, readable and writable from/to a string.
@@ -226,7 +331,6 @@ public:
      */
     explicit Data(const BaseData::BaseInitData& init)
     : TData<T>(init)
-    , m_value(T())// BUGFIX (Jeremie A.): Force initialization of basic types to 0 (bool, int, float, etc).
     {
     }
 
@@ -246,6 +350,7 @@ public:
     : TData<T>(helpMsg, isDisplayed, isReadOnly, owner, name)
     , m_value(T())// BUGFIX (Jeremie A.): Force initialization of basic types to 0 (bool, int, float, etc).
     {
+
     }
 
     /** Constructor
@@ -258,6 +363,12 @@ public:
     {
     }
 
+    Data(const Data& d)
+    : TData<T>()
+    , m_value(d.getValue())
+    {
+    }
+
     virtual ~Data()
     {}
 
@@ -266,21 +377,29 @@ public:
         this->updateIfDirty();
         ++this->m_counter;
         BaseData::setDirtyOutputs();
-        return &m_value;
+        return m_value.beginEdit();
     }
     inline void endEdit()
     {
+        m_value.endEdit();
     }
+
     inline void setValue(const T& value )
     {
         *beginEdit()=value;
         endEdit();
     }
+
     inline const T& getValue() const
     {
-	this->updateIfDirty();
-        return m_value;
+        this->updateIfDirty();
+        return m_value.getValue();
     }
+
+    virtual const T& virtualGetValue() const { return getValue(); }
+    virtual void virtualSetValue(const T& v) { setValue(v); }
+    virtual T* virtualBeginEdit() { return beginEdit(); }
+    virtual void virtualEndEdit() { endEdit(); }
 
     inline friend std::ostream & operator << (std::ostream &out, const Data& df)
     {
@@ -305,18 +424,9 @@ public:
 protected:
 
     /// Value
-    T m_value;
-    const T& value() const
-    { 
-	this->updateIfDirty();
-        return m_value; 
-    }
-
-    T& value()
-    {
-	this->updateIfDirty();
-        return m_value;
-    }
+    //T m_value;
+    DataContainer<T, sofa::defaulttype::DataTypeInfo<T>::CopyOnWrite> m_value;
+    //DataContainer<T, false> m_value;
 };
 
 #if defined(WIN32) && !defined(SOFA_CORE_OBJECTMODEL_DATA_CPP)
@@ -343,7 +453,7 @@ template<class T>
 inline
 void TData<T>::printValue( std::ostream& out=std::cout ) const
 {
-  out << value() << " ";
+  out << virtualGetValue() << " ";
 }
 
 /// General case for printing default value
@@ -352,7 +462,7 @@ inline
 std::string TData<T>::getValueString() const
 {
     std::ostringstream out;
-    out << value();
+    out << virtualGetValue();
     return out.str();
 }
 
@@ -360,7 +470,7 @@ template<class T>
 inline
 std::string TData<T>::getValueTypeString() const
 {
-    return BaseData::typeName(&value());
+    return BaseData::typeName(&virtualGetValue());
 }
 
 

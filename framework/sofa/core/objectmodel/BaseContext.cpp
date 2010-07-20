@@ -99,11 +99,6 @@ bool BaseContext::getAnimate() const
     return true;
 }
 
-/// MultiThreading activated
-bool BaseContext::getMultiThreadSimulation() const
-{
-    return false;
-}
 #ifdef SOFA_SMP
 int BaseContext::getProcessor() const
 {
@@ -182,23 +177,6 @@ bool BaseContext::getShowProcessorColor() const
 }
 #endif
 
-/// Multiresolution
-int BaseContext::getCurrentLevel() const
-{
-	return 0;
-}
-int BaseContext::getCoarsestLevel() const
-{
-	return 0;
-}
-int BaseContext::getFinestLevel() const
-{
-	return 0;
-}
-// unsigned int BaseContext::nbLevels() const
-// {
-// 	return getCoarsestLevel() - getFinestLevel() + 1;
-// }
 
 //////////////////////////////
 // Local Coordinates System //

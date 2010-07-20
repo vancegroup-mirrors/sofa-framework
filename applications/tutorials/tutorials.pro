@@ -10,5 +10,9 @@ SUBDIRS += oneTetrahedron
 SUBDIRS += mixedPendulum
 SUBDIRS += chainHybrid
 
+
+contains (DEFINES, SOFA_HAVE_EIGEN2) {	
+SUBDIRS += houseOfCards
+}
 !include(tutorials-local.cfg) {
 }

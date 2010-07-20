@@ -35,6 +35,7 @@
 
 #include <sofa/helper/system/SetDirectory.h> 
 #include <sofa/helper/system/FileRepository.h> 
+#include <sofa/component/init.h>
 
 using sofa::core::SofaLibrary;
 using sofa::core::CategoryLibrary;
@@ -398,6 +399,8 @@ void writeFile(const CategoryLibrary &category,  TYPES t, std::ostream &generalO
 
 int main(int , char** )
 {
+
+  sofa::component::init();
 
   SofaLibrary library; library.build();
   const SofaLibrary::VecCategory &categories = library.getCategories();

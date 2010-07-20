@@ -421,7 +421,6 @@ void RegularGridSpringForceField<DataTypes>::draw()
 
 	std::vector< Vector3 > points;
 	Vector3 point1,point2;
-	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
 	if (this->mstate1==this->mstate2)
 	{
 		if (topology != NULL)
@@ -443,11 +442,8 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x+1,y,z);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring.m1]);
+                            point2 = DataTypes::getCPos(p2[spring.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}
@@ -461,12 +457,8 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y+1,z);
-
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring.m1]);
+                            point2 = DataTypes::getCPos(p2[spring.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}
@@ -480,11 +472,8 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring.m1 = topology->point(x,y,z);
 							spring.m2 = topology->point(x,y,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring.m1]);
+                            point2 = DataTypes::getCPos(p2[spring.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}
@@ -510,20 +499,14 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y+1,z);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring1.m1]);
+                            point2 = DataTypes::getCPos(p2[spring1.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 							spring2.m1 = topology->point(x+1,y,z);
 							spring2.m2 = topology->point(x,y+1,z);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring2.m1]);
+                            point2 = DataTypes::getCPos(p2[spring2.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}
@@ -542,20 +525,14 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring1.m1]);
+                            point2 = DataTypes::getCPos(p2[spring1.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 							spring2.m1 = topology->point(x+1,y,z);
 							spring2.m2 = topology->point(x,y,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring2.m1]);
+                            point2 = DataTypes::getCPos(p2[spring2.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}
@@ -574,20 +551,14 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x,y+1,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring1.m1]);
+                            point2 = DataTypes::getCPos(p2[spring1.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 							spring2.m1 = topology->point(x,y+1,z);
 							spring2.m2 = topology->point(x,y,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring2.m1]);
+                            point2 = DataTypes::getCPos(p2[spring2.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}
@@ -620,38 +591,26 @@ void RegularGridSpringForceField<DataTypes>::draw()
 						{
 							spring1.m1 = topology->point(x,y,z);
 							spring1.m2 = topology->point(x+1,y+1,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring1.m1]);
+                            point2 = DataTypes::getCPos(p2[spring1.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 							spring2.m1 = topology->point(x+1,y,z);
 							spring2.m2 = topology->point(x,y+1,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring2.m1]);
+                            point2 = DataTypes::getCPos(p2[spring2.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 							spring3.m1 = topology->point(x,y+1,z);
 							spring3.m2 = topology->point(x+1,y,z+1);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring3.m1]);
+                            point2 = DataTypes::getCPos(p2[spring3.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 							spring4.m1 = topology->point(x,y,z+1);
 							spring4.m2 = topology->point(x+1,y+1,z);
-							for (unsigned int s=0;s<sizePoints;++s)
-							  {
-							    point1[s] = p1[spring.m1][s];
-							    point2[s] = p2[spring.m2][s];
-							  }
+                            point1 = DataTypes::getCPos(p1[spring4.m1]);
+                            point2 = DataTypes::getCPos(p2[spring4.m2]);
 							points.push_back(point1);
 							points.push_back(point2);
 						}

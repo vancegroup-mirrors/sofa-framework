@@ -64,7 +64,7 @@ namespace sofa
 
         template <class T> void setValue(T& value)
         {
-          assert(value.size() >=4);
+          //assert(value.size() >=4);
 
           unsigned int i=0;
           for (i=0;i<getValueSize();++i) setValue(value[i],i);
@@ -73,7 +73,7 @@ namespace sofa
         }
         template <class T> void getValue(T& value) const
         {
-          assert(value.size() >=4);
+          //assert(value.size() >=4);
 
           unsigned int i=0;
           for (i=0;i<getValueSize();++i) value[i]=getValue(i);

@@ -144,7 +144,7 @@ public:
         return sortedFind(v, Range(0,v.size()), val, result);
     }
 
-protected:
+public :
     Index nRow,nCol;
     Index nBlocRow,nBlocCol;
     bool compressed;
@@ -525,7 +525,8 @@ public:
     static bool upper_nonsmall(int   i  , int   j  , Bloc& val, const Bloc&   ref  ) { return upper(i,j,val,ref) && nonsmall(i,j,val,ref); }
     static bool lower_nonsmall(int   i  , int   j  , Bloc& val, const Bloc&   ref  ) { return lower(i,j,val,ref) && nonsmall(i,j,val,ref); }
 
-    void filterValues(Matrix& M, filter_fn* filter = &nonzeros, const Bloc& ref = Bloc())
+    template<class TMatrix>
+    void filterValues(TMatrix& M, filter_fn* filter = &nonzeros, const Bloc& ref = Bloc())
     {
 	M.compress();
 	nRow = M.rowSize();
@@ -570,7 +571,8 @@ public:
 	rowBegin.push_back(vid); // end of last row
     }
 
-    void copyNonZeros(Matrix& M)
+    template <class TMatrix>
+    void copyNonZeros(TMatrix& M)
     {
 	filterValues(M, nonzeros);
     }
@@ -590,11 +592,12 @@ public:
 	filterValues(M, lower);
     }
 
-    void copyUpperNonZeros(Matrix& M)
+    template <class TMatrix>
+    void copyUpperNonZeros(TMatrix& M)
     {
 	filterValues(M, upper_nonzeros);
     }
-    
+
     void copyLowerNonZeros(Matrix& M)
     {
 	filterValues(M, lower_nonzeros);

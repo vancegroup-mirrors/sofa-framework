@@ -193,8 +193,10 @@ public:
         return in;
     }
 
-    enum { static_size = 3 };
+    /// Compile-time constant specifying the number of scalars within this vector (equivalent to the size() method)
     enum { total_size = 6 };
+    /// Compile-time constant specifying the number of dimensions of space (NOT equivalent to total_size for rigids)
+    enum { spatial_dimensions = 3 };
 
     real* ptr() { return vCenter.ptr(); }
     const real* ptr() const { return vCenter.ptr(); }
@@ -442,8 +444,11 @@ public:
 	{
 		return 3;
 	}
-	enum { static_size = 3 };
+
+    /// Compile-time constant specifying the number of scalars within this vector (equivalent to the size() method)
     enum { total_size = 7 };
+    /// Compile-time constant specifying the number of dimensions of space (NOT equivalent to total_size for rigids)
+    enum { spatial_dimensions = 3 };
 
     real* ptr() { return center.ptr(); }
     const real* ptr() const { return center.ptr(); }
@@ -561,6 +566,10 @@ public:
     typedef RigidDeriv<3,real> Deriv;
     typedef typename Coord::Vec3 Vec3;
     typedef typename Coord::Quat Quat;
+
+    enum { spatial_dimensions = Coord::spatial_dimensions };
+    enum { coord_total_size = Coord::total_size };
+    enum { deriv_total_size = Deriv::total_size };
 
     typedef typename Coord::Pos CPos;
     typedef typename Coord::Rot CRot;
@@ -827,8 +836,10 @@ public:
         return in;
     }
 
-    enum { static_size = 2 };
+    /// Compile-time constant specifying the number of scalars within this vector (equivalent to the size() method)
     enum { total_size = 3 };
+    /// Compile-time constant specifying the number of dimensions of space (NOT equivalent to total_size for rigids)
+    enum { spatial_dimensions = 2 };
 
     real* ptr() { return vCenter.ptr(); }
     const real* ptr() const { return vCenter.ptr(); }
@@ -1060,8 +1071,10 @@ public:
         return 3;
     }
 
-    enum { static_size = 2 };
+    /// Compile-time constant specifying the number of scalars within this vector (equivalent to the size() method)
     enum { total_size = 3 };
+    /// Compile-time constant specifying the number of dimensions of space (NOT equivalent to total_size for rigids)
+    enum { spatial_dimensions = 2 };
 
     real* ptr() { return center.ptr(); }
     const real* ptr() const { return center.ptr(); }
@@ -1177,6 +1190,10 @@ public:
 
     typedef RigidDeriv<2,Real> Deriv;
     typedef RigidCoord<2,Real> Coord;
+
+    enum { spatial_dimensions = Coord::spatial_dimensions };
+    enum { coord_total_size = Coord::total_size };
+    enum { deriv_total_size = Deriv::total_size };
 
     typedef typename Coord::Pos CPos;
     typedef typename Coord::Rot CRot;
@@ -1312,18 +1329,14 @@ typedef Rigid2dMass Rigid2Mass;
 // Specialization of the defaulttype::DataTypeInfo type traits template
 
 template<int N, typename real>
-struct DataTypeInfo< sofa::defaulttype::RigidDeriv<N,real> > : public FixedArrayTypeInfo< sofa::defaulttype::RigidDeriv<N,real> >
+struct DataTypeInfo< sofa::defaulttype::RigidDeriv<N,real> > : public FixedArrayTypeInfo< sofa::defaulttype::RigidDeriv<N,real>, sofa::defaulttype::RigidDeriv<N,real>::total_size >
 {
-    // static_size is currently defined as the number of translation DOFs, while here we want all dofs
-    enum { Size = sofa::defaulttype::RigidDeriv<N,real>::total_size };
     static std::string name() { std::ostringstream o; o << "RigidDeriv<" << N << "," << DataTypeName<real>::name() << ">"; return o.str(); }
 };
 
 template<int N, typename real>
-struct DataTypeInfo< sofa::defaulttype::RigidCoord<N,real> > : public FixedArrayTypeInfo< sofa::defaulttype::RigidCoord<N,real> >
+struct DataTypeInfo< sofa::defaulttype::RigidCoord<N,real> > : public FixedArrayTypeInfo< sofa::defaulttype::RigidCoord<N,real>, sofa::defaulttype::RigidCoord<N,real>::total_size >
 {
-    // static_size is currently defined as the number of translation DOFs, while here we want all dofs
-    enum { Size = sofa::defaulttype::RigidCoord<N,real>::total_size };
     static std::string name() { std::ostringstream o; o << "RigidCoord<" << N << "," << DataTypeName<real>::name() << ">"; return o.str(); }
 };
 

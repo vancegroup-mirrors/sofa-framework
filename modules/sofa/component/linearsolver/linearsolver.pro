@@ -30,6 +30,7 @@ HEADERS +=  \
            DiagonalMatrix.h \
            SparseMatrix.h \
            CompressedRowSparseMatrix.h \
+	   CompressedRowSparseMatrix.inl \
 	   GraphScatteredTypes.h \
            DefaultMultiMatrixAccessor.h \
            MatrixLinearSolver.h \

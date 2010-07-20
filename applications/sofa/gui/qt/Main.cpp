@@ -28,8 +28,6 @@
 #include "RealGUI.h"
 #include "Main.h"
 
-
-
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/common/Node.h>
 #include <iostream>
@@ -81,7 +79,6 @@ namespace sofa
 	//gui->viewer->SwitchToPresetView();
 	
 	application->setMainWidget( gui );
-
 
 	// show the gui
 	gui->show();

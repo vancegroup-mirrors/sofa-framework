@@ -299,12 +299,16 @@ template<class TCoord, class TDeriv, class TReal = typename TCoord::value_type>
 class CudaVectorTypes
 {
 public:
-        typedef TCoord Coord;
-        typedef TDeriv Deriv;
-        typedef TReal Real;
-        typedef CudaVector<Coord> VecCoord;
-        typedef CudaVector<Deriv> VecDeriv;
-        typedef CudaVector<Real> VecReal;
+    typedef TCoord Coord;
+    typedef TDeriv Deriv;
+    typedef TReal Real;
+    typedef CudaVector<Coord> VecCoord;
+    typedef CudaVector<Deriv> VecDeriv;
+    typedef CudaVector<Real> VecReal;
+
+    enum { spatial_dimensions = Coord::spatial_dimensions };
+    enum { coord_total_size = Coord::total_size };
+    enum { deriv_total_size = Deriv::total_size };
 
     typedef Coord CPos;
     static const CPos& getCPos(const Coord& c) { return c; }
@@ -613,6 +617,9 @@ public:
     typedef CudaVector<Deriv> VecDeriv;
     typedef CudaVector<Real> VecReal;
 
+    enum { spatial_dimensions = Coord::spatial_dimensions };
+    enum { coord_total_size = Coord::total_size };
+    enum { deriv_total_size = Deriv::total_size };
 
     typedef typename Coord::Pos CPos;
     typedef typename Coord::Rot CRot;

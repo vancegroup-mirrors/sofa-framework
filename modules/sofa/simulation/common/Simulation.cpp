@@ -86,7 +86,8 @@ Simulation::Simulation()
   nbSteps( initData(&nbSteps, (unsigned)0, "nbSteps", "Steps number of computation", true, false)),
   needToPrefetch(false), 
   gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
-  instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used"))
+  instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used")),
+  paused(false)
 {}
 
 Simulation::~Simulation(){
@@ -120,6 +121,8 @@ Simulation::~Simulation(){
 				if ( fileName!=NULL )
 				{
 					std::ofstream out ( fileName );
+                    out << "<?xml version=\"1.0\"?>\n";
+
 					XMLPrintVisitor print ( out,compact );
 					root->execute ( print );
 				}
@@ -173,8 +176,6 @@ Simulation::~Simulation(){
 			void Simulation::animate ( Node* root, double dt )
 			{
 				if ( !root ) return;
-				if ( root->getMultiThreadSimulation() )
-					return;
 
 #ifdef SOFA_DUMP_VISITOR_INFO
                 simulation::Visitor::printNode(std::string("Step"));
@@ -309,6 +310,16 @@ Simulation::~Simulation(){
                                     if ((SReal)(act.maxBBox[2]) > maxBBox[2] ) maxBBox[2] = (SReal)(act.maxBBox[2]);
                                 }
 			}
+
+            void Simulation::setPaused(bool paused)
+            {
+                this->paused = paused;
+            }
+
+            bool Simulation::getPaused()
+            {
+                return paused;
+            }
 
 /// Update contexts. Required before drawing the scene if root flags are modified.
 			void Simulation::updateContext ( Node* root )

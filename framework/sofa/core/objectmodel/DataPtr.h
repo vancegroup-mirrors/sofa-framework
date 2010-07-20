@@ -65,7 +65,7 @@ public:
 
     inline T* beginEdit()
     {
-	this->updateIfDirty();
+        this->updateIfDirty();
         ++this->m_counter;
         BaseData::setDirtyOutputs();
         return ptr;
@@ -84,24 +84,20 @@ public:
     }
     inline const T& getValue() const
     {
-	this->updateIfDirty();
+        this->updateIfDirty();
         return *ptr;
     }
+
+    virtual const T& virtualGetValue() const { return getValue(); }
+    virtual void virtualSetValue(const T& v) { setValue(v); }
+    virtual T* virtualBeginEdit() { return beginEdit(); }
+    virtual void virtualEndEdit() { endEdit(); }
+
     /// The value stored in counter can be false, as the pointer can be modified without using the BaseData API. The counter doesn't mean anything in that case
     inline bool isCounterValid() const {return false;}
 protected:
     /// Pointer to the parameter
     T* ptr;
-    const T& value() const 
-    {
-	this->updateIfDirty();
-        return *ptr;
-    }
-    T& value()
-    {
-	this->updateIfDirty();
-        return *ptr;
-    }
 };
 
 } // namespace objectmodel

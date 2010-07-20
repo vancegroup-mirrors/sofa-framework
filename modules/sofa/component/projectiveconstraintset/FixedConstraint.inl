@@ -259,62 +259,58 @@ template <class DataTypes>
 void FixedConstraint<DataTypes>::draw()
 {
     if (!this->getContext()->
-            getShowBehaviorModels()) return;
+        getShowBehaviorModels()) return;
     if (!this->isActive()) return;
     const VecCoord& x = *this->mstate->getX();
     //serr<<"FixedConstraint<DataTypes>::draw(), x.size() = "<<x.size()<<sendl;
+    
+    
 
-
-
-
+    
     const SetIndexArray & indices = f_indices.getValue().getArray();
-
+    
     if( _drawSize.getValue() == 0) // old classical drawing by points
-      {
-	std::vector< Vector3 > points;
-	Vector3 point;
-	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
-	//serr<<"FixedConstraint<DataTypes>::draw(), indices = "<<indices<<sendl;
-	if( f_fixAll.getValue()==true )
-	  for (unsigned i=0; i<x.size(); i++ )
-	    {
-	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[i][s];
-	      points.push_back(point);
-	    }
-	else
-	  for (SetIndexArray::const_iterator it = indices.begin();
-	       it != indices.end();
-	       ++it)
-	    {
-	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[*it][s];
-	      points.push_back(point);
-	    }
-	simulation::getSimulation()->DrawUtility.drawPoints(points, 10, Vec<4,float>(1,0.5,0.5,1));
-      }
+    {
+        std::vector< Vector3 > points;
+        Vector3 point;
+        //serr<<"FixedConstraint<DataTypes>::draw(), indices = "<<indices<<sendl;
+        if( f_fixAll.getValue() )
+            for (unsigned i=0; i<x.size(); i++ )
+            {
+                point = DataTypes::getCPos(x[i]);
+                points.push_back(point);
+            }
+        else
+            for (SetIndexArray::const_iterator it = indices.begin();
+                 it != indices.end();
+                 ++it)
+            {
+                point = DataTypes::getCPos(x[*it]);
+                points.push_back(point);
+            }
+        simulation::getSimulation()->DrawUtility.drawPoints(points, 10, Vec<4,float>(1,0.5,0.5,1));
+    }
     else // new drawing by spheres
-      {
-	std::vector< Vector3 > points;
-	Vector3 point;
-	unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
-	glColor4f (1.0f,0.35f,0.35f,1.0f);
-	if( f_fixAll.getValue()==true )
-	  for (unsigned i=0; i<x.size(); i++ )
-	    {
-	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[i][s];
-	      points.push_back(point);
-	    }
+    {
+        std::vector< Vector3 > points;
+        Vector3 point;
+        glColor4f (1.0f,0.35f,0.35f,1.0f);
+        if( f_fixAll.getValue()==true )
+            for (unsigned i=0; i<x.size(); i++ )
+            {
+                point = DataTypes::getCPos(x[i]);
+                points.push_back(point);
+            }
     	else
-	  for (SetIndexArray::const_iterator it = indices.begin();
-	       it != indices.end();
-	       ++it)
-	    {
-	      for (unsigned int s=0;s<sizePoints;++s) point[s] = x[*it][s];
-	      points.push_back(point);
-	    }
-	simulation::getSimulation()->DrawUtility.drawSpheres(points, (float)_drawSize.getValue(), Vec<4,float>(1.0f,0.35f,0.35f,1.0f));
-
-      }
-
+            for (SetIndexArray::const_iterator it = indices.begin();
+                 it != indices.end();
+                 ++it)
+            {
+                point = DataTypes::getCPos(x[*it]);
+                points.push_back(point);
+            }
+        simulation::getSimulation()->DrawUtility.drawSpheres(points, (float)_drawSize.getValue(), Vec<4,float>(1.0f,0.35f,0.35f,1.0f));
+    }
 }
 
 // Specialization for rigids

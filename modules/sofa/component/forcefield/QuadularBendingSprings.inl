@@ -68,8 +68,8 @@ void QuadularBendingSprings<DataTypes>::QuadularBSEdgeCreationFunction(int /*edg
 		
 		unsigned int u,v;
 		/// set to zero the edge stiffness matrix
-		for (u=0;u<3;++u) {
-			for (v=0;v<3;++v) {
+		for (u=0;u<N;++u) {
+			for (v=0;v<N;++v) {
 				ei.DfDx[u][v]=0;
 			}
 		}
@@ -113,8 +113,8 @@ void QuadularBendingSprings<DataTypes>::QuadularBSQuadCreationFunction (const so
 					ei.is_activated=true;
 
 					/// set to zero the edge stiffness matrix
-					for (u=0;u<3;++u) {
-						for (v=0;v<3;++v) {
+					for (u=0;u<N;++u) {
+						for (v=0;v<N;++v) {
 							ei.DfDx[u][v]=0;
 						}
 					}
@@ -572,11 +572,11 @@ void QuadularBendingSprings<DataTypes>::addForce(VecDeriv& f, const VecCoord& x,
 
 				updateMatrix=true;
 
-				Mat3& m = einfo->DfDx; //Mat& m = this->dfdx[i];
+				Mat& m = einfo->DfDx; //Mat& m = this->dfdx[i];
 				Real tgt = forceIntensity * inverseLength;
-				for( int j=0; j<3; ++j )
+				for( int j=0; j<N; ++j )
 				{
-					for( int k=0; k<3; ++k )
+					for( int k=0; k<N; ++k )
 					{
 						m[j][k] = ((Real)einfo->ks-tgt) * u1[j] * u1[k];
 					}
@@ -585,10 +585,10 @@ void QuadularBendingSprings<DataTypes>::addForce(VecDeriv& f, const VecCoord& x,
 			}
 			else // null length, no force and no stiffness
 			{
-				Mat3& m = einfo->DfDx; //Mat& m = this->dfdx[i];
-				for( int j=0; j<3; ++j )
+				Mat& m = einfo->DfDx; //Mat& m = this->dfdx[i];
+				for( int j=0; j<N; ++j )
 				{
-					for( int k=0; k<3; ++k )
+					for( int k=0; k<N; ++k )
 					{
 						m[j][k] = 0;
 					}
@@ -613,11 +613,11 @@ void QuadularBendingSprings<DataTypes>::addForce(VecDeriv& f, const VecCoord& x,
 
 				updateMatrix=true;
 
-				Mat3& m = einfo->DfDx; //Mat& m = this->dfdx[i];
+				Mat& m = einfo->DfDx; //Mat& m = this->dfdx[i];
 				Real tgt = forceIntensity * inverseLength;
-				for( int j=0; j<3; ++j )
+				for( int j=0; j<N; ++j )
 				{
-					for( int k=0; k<3; ++k )
+					for( int k=0; k<N; ++k )
 					{
 						m[j][k] = ((Real)einfo->ks-tgt) * u2[j] * u2[k];
 					}
@@ -626,10 +626,10 @@ void QuadularBendingSprings<DataTypes>::addForce(VecDeriv& f, const VecCoord& x,
 			}
 			else // null length, no force and no stiffness
 			{
-				Mat3& m = einfo->DfDx; //Mat& m = this->dfdx[i];
-				for( int j=0; j<3; ++j )
+				Mat& m = einfo->DfDx; //Mat& m = this->dfdx[i];
+				for( int j=0; j<N; ++j )
 				{
-					for( int k=0; k<3; ++k )
+					for( int k=0; k<N; ++k )
 					{
 						m[j][k] = 0;
 					}
@@ -653,9 +653,9 @@ void QuadularBendingSprings<DataTypes>::addDForce(VecDeriv& df, const VecDeriv& 
 {		
 	int nbEdges=_topology->getNbEdges();
 
-	EdgeInformation *einfo;
+	const EdgeInformation *einfo;
 
-	helper::vector<EdgeInformation>& edgeInf = *(edgeInfo.beginEdit());
+	const helper::vector<EdgeInformation>& edgeInf = edgeInfo.getValue();
 
     df.resize(dx.size());
     //serr<<"QuadularBendingSprings<DataTypes>::addDForce, dx1 = "<<dx1<<sendl;
@@ -692,8 +692,6 @@ void QuadularBendingSprings<DataTypes>::addDForce(VecDeriv& df, const VecDeriv& 
 		}
 	}
 
-	edgeInfo.endEdit();
-
     //for (unsigned int i=0; i<springs.size(); i++)
     //{
     //    this->addSpringDForce(df,dx, i, springs[i]);
@@ -728,7 +726,7 @@ void QuadularBendingSprings<DataTypes>::draw()
 
 	unsigned int nb_to_draw = 0;
 
-	helper::vector<EdgeInformation>& edgeInf = *(edgeInfo.beginEdit());
+	const helper::vector<EdgeInformation>& edgeInf = edgeInfo.getValue();
 
 	glBegin(GL_LINES);
 	for(unsigned int i=0;i<edgeInf.size(); ++i)

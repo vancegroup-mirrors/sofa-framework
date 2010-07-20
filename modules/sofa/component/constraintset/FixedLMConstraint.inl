@@ -237,23 +237,22 @@ namespace sofa
 
         std::vector< Vector3 > points;
         Vector3 point;
-        unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
         //serr<<"FixedLMConstraint<DataTypes>::draw(), indices = "<<indices<<sendl;
         for (SetIndexArray::const_iterator it = indices.begin();
              it != indices.end();
              ++it)
-          {
-            for (unsigned int s=0;s<sizePoints;++s) point[s] = x[*it][s];
+        {
+            point = DataTypes::getCPos(x[*it]);
             points.push_back(point);
-          }
+        }
         if( _drawSize.getValue() == 0) // old classical drawing by points
-          {
+        {
             simulation::getSimulation()->DrawUtility.drawPoints(points, 10, Vec<4,float>(1,0.5,0.5,1));
-          }
+        }
         else
-          {
+        {
             simulation::getSimulation()->DrawUtility.drawSpheres(points, (float)_drawSize.getValue(), Vec<4,float>(1.0f,0.35f,0.35f,1.0f));
-          }
+        }
       }
 
       // Specialization for rigids

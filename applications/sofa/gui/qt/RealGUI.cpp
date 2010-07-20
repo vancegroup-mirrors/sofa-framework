@@ -45,9 +45,6 @@
 #include <sofa/gui/qt/viewer/qgl/QtGLViewer.h>
 #endif
 
-
-
-
 #ifdef SOFA_HAVE_CHAI3D
 #include <sofa/simulation/common/PropagateEventVisitor.h>
 #include <sofa/core/objectmodel/GLInitializedEvent.h>
@@ -135,7 +132,6 @@ namespace sofa
       using namespace sofa::helper::system::thread;
       using namespace sofa::simulation;
       //       using namespace sofa::simulation::tree;
-
 
 
       ///////////////////////////////////////////////////////////
@@ -241,14 +237,12 @@ namespace sofa
         gui->setIcon(QPixmap(pathIcon));
 #endif
 
-
         // show the gui
         gui->show();
 
-
 #ifdef SOFA_HAVE_CHAI3D
         // Tell nodes that openGl is initialized
-        // especialy the GL_MODELVIEW_MATRIX
+        // especially the GL_MODELVIEW_MATRIX
         sofa::core::objectmodel::GLInitializedEvent ev;
         sofa::simulation::PropagateEventVisitor act(&ev);
         root->execute(act);
@@ -1493,7 +1487,6 @@ namespace sofa
 
         startDumpVisitor();
 
-
         {
           if ( viewer->ready() ) return;
 
@@ -1540,6 +1533,8 @@ namespace sofa
 
         stopDumpVisitor();
         emit newStep();
+        if ( simulation::getSimulation()->getPaused() )
+            startButton->setOn ( false );
       }
 
       //*****************************************************************************************

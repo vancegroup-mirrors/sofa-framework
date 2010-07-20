@@ -38,25 +38,26 @@ namespace linearsolver {
 template<class Matrix, class Vector>
 void Thread_invert<Matrix,Vector>::operator()() {	
 	(*run)=1;
-	while (*run) {
+	while (true) {
+		bar->wait();
+		
+		if (! *run) break;
+	  
 		solver->invert(*(matrices[index]));
 		
 		ready_thread[0] = 1; //signal the main thread the invert is finish
 		
-		if (*run) bar->wait();
-		else break;
 		
 		if(index) index=0;
 		else index=1;
-	}
-	
-	bar->wait();
+	}	
 }  
   
   
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
 : useWarping( initData( &useWarping, true, "useWarping", "use Warping around the solver" ) )
+, useRotationFinder( initData( &useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
 , useMultiThread( initData( &useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
 , check_symetric( initData( &check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
 {}
@@ -65,8 +66,9 @@ template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::~ParallelMatrixLinearSolver()
 {
     run = 0;
+    bar->wait();
+    
     std::cout << "Wait for destoying thread" << std::endl;
-    bar->wait();    
     
     if (systemRHVector) delete systemRHVector;
     if (systemLHVector) delete systemLHVector;
@@ -87,7 +89,10 @@ void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
     c->get<sofa::component::misc::BaseRotationFinder >(&rotationFinders, sofa::core::objectmodel::BaseContext::Local);
     
     sout << "Found " << rotationFinders.size() << " Rotation finders" << sendl;
-    
+    for (unsigned i=0;i<rotationFinders.size();i++) {
+      sout << i << " : " << rotationFinders[i]->getName() << sendl;
+    }
+      
     first = true;
 }
 
@@ -120,7 +125,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(double mFact
         this->addMBK_ToMatrix(&matrixAccessor, mFact, bFact, kFact);
         matrixAccessor.computeGlobalMatrix();
   }
-  for (unsigned i=0;i<useRotation && rotationFinders.size();i++) rotationFinders[i]->getRotations(rotationWork[indexwork]);
+  if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
   
   if (check_symetric.getValue()) {
     for (unsigned i=0;i<matricesWork[indexwork]->colSize();i++) {
@@ -140,7 +145,8 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(double mFact
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
 	useRotation = useWarping.getValue() && rotationFinders.size();
-    
+	indRotationFinder = useRotationFinder.getValue()<rotationFinders.size() ? useRotationFinder.getValue() : 0;
+	
 	if (first) {
 	    first = false;
 	    matricesWork[0] = new Matrix();
@@ -160,25 +166,26 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    matricesWork[0]->resize(nbRow,nbRow);matricesWork[0]->clear();	    
 	    matricesWork[1]->resize(nbRow,nbRow);matricesWork[1]->clear();    
 	    //////////////////////////////////////////////////////////////
-	    
-	    indexwork = 0;
-	    this->computeSystemMatrix(mFact,bFact,kFact);
-	    this->invertSystem(); //only this thread use metho invert.
-	    
+	    	    
 	    indexwork = 1;
 	    this->computeSystemMatrix(mFact,bFact,kFact);
-	    
 	    ready_thread = 0;
 	    bar = new boost::barrier(2);
 	    std :: cout << "Launching the invert thread...." << std::endl;// on matrix[1]
 	    Thread_invert<Matrix,Vector> thi(bar,this,&ready_thread,&run,matricesWork,indexwork);
 	    boost::thread thrd(thi);
-	    	        
-	    indexwork = 0;
+	    
+    	    indexwork = 0;
+	    this->computeSystemMatrix(mFact,bFact,kFact);
+	    this->invertSystem(); //only this thread use metho invert.
+
+   	    if (useMultiThread.getValue()) bar->wait(); //launch the second thread if we use it
+
 	    nbstep_update = 1;
 	} else if (! useMultiThread.getValue()) {
 	    this->computeSystemMatrix(mFact,bFact,kFact);		    
 	    this->invertSystem();
+	    ready_thread = true;
 	} else if (ready_thread) {
 	    ready_thread = 0;
 	    	    
@@ -210,14 +217,14 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v) {
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
 	if (useRotation && frozen) {
-	    for (unsigned i=0;i<rotationFinders.size();i++) rotationFinders[i]->getRotations(Rcur);
+	    rotationFinders[indRotationFinder]->getRotations(Rcur);
 	    rotationWork[indexwork]->opMulTM(Rcur,Rcur);
 	}
 	
 	if (useRotation) {
-		for (unsigned i=0;useRotation && i<rotationFinders.size();i++) Rcur->opMulTV(systemLHVector,systemRHVector);
+		Rcur->opMulTV(systemLHVector,systemRHVector);
 		this->solve(*matricesWork[indexwork], tmpVectorRotation, *systemLHVector);
-		for (unsigned i=0;useRotation && i<rotationFinders.size();i++) Rcur->opMulV(systemLHVector,&tmpVectorRotation);
+		Rcur->opMulV(systemLHVector,&tmpVectorRotation);
 	} else {
 		this->solve(*matricesWork[indexwork], *systemLHVector, *systemRHVector);
 	}

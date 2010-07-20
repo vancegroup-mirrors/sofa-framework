@@ -83,14 +83,15 @@ typedef enum
 } InterpolationType;*/
 
 
-      template <class BasicMapping>
-      class SkinningMapping : public BasicMapping
-        {
-        public:
-          SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
+template <class BasicMapping>
+class SkinningMapping : public BasicMapping
+{
+public:
+    SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
           typedef BasicMapping Inherit;
           typedef typename Inherit::In In;
           typedef typename Inherit::Out Out;
+          typedef typename Out::DataTypes DataTypes;
           typedef typename Out::VecCoord VecCoord;
           typedef typename Out::VecDeriv VecDeriv;
           typedef typename Out::Coord Coord;
@@ -101,9 +102,9 @@ typedef enum
           typedef typename In::Coord InCoord;
           typedef typename In::Deriv InDeriv;
           typedef typename In::VecCoord VecInCoord;
-          typedef typename InCoord::value_type InReal;
-          typedef typename Coord::value_type Real;
-          enum { N=Coord::static_size };
+            typedef typename In::Real InReal;
+            typedef typename Out::Real Real;
+          enum { N=DataTypes::spatial_dimensions };
           typedef defaulttype::Mat<N,N,Real> Mat;
           //typedef defaulttype::Mat<3,1,Real> Mat31;
           typedef defaulttype::Mat<3,3,Real> Mat33;

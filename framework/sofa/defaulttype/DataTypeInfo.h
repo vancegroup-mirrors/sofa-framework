@@ -62,6 +62,7 @@ struct DataTypeInfo
     enum { Integer         = 0 }; ///< 1 if this type uses integer values
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 0 }; ///< 1 if this type uses copy-on-write
 
     enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
@@ -115,6 +116,7 @@ public:
     virtual bool Integer() const = 0;
     virtual bool Scalar() const = 0;
     virtual bool Text() const = 0;
+    virtual bool CopyOnWrite() const = 0;
 
     virtual unsigned int size() const = 0;
     virtual unsigned int size(const void* type) const = 0;
@@ -160,6 +162,7 @@ public:
     virtual bool Integer() const         { return Info::Integer; }
     virtual bool Scalar() const          { return Info::Scalar; }
     virtual bool Text() const            { return Info::Text; }
+    virtual bool CopyOnWrite() const     { return Info::CopyOnWrite; }
 
     virtual unsigned int size() const
     {
@@ -232,6 +235,7 @@ struct IntegerTypeInfo
     enum { Integer         = 1 }; ///< 1 if this type uses integer values
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 0 }; ///< 1 if this type uses copy-on-write
 
     enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
@@ -284,6 +288,7 @@ struct BoolTypeInfo
     enum { Integer         = 1 }; ///< 1 if this type uses integer values
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 0 }; ///< 1 if this type uses copy-on-write
 
     enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
@@ -357,6 +362,7 @@ struct ScalarTypeInfo
     enum { Integer         = 0 }; ///< 1 if this type uses integer values
     enum { Scalar          = 1 }; ///< 1 if this type uses scalar values
     enum { Text            = 0 }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 0 }; ///< 1 if this type uses copy-on-write
 
     enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
@@ -410,6 +416,7 @@ struct TextTypeInfo
     enum { Integer         = 0 }; ///< 1 if this type uses integer values
     enum { Scalar          = 0 }; ///< 1 if this type uses scalar values
     enum { Text            = 1 }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 1 }; ///< 1 if this type uses copy-on-write
 
     enum { Size = 1 }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size() { return 1; }
@@ -445,7 +452,7 @@ struct TextTypeInfo
 	}
 };
 
-template<class TDataType>
+template<class TDataType, int static_size = TDataType::static_size>
 struct FixedArrayTypeInfo
 {
     typedef TDataType DataType;
@@ -462,8 +469,9 @@ struct FixedArrayTypeInfo
     enum { Integer         = BaseTypeInfo::Integer         }; ///< 1 if this type uses integer values
     enum { Scalar          = BaseTypeInfo::Scalar          }; ///< 1 if this type uses scalar values
     enum { Text            = BaseTypeInfo::Text            }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 1                             }; ///< 1 if this type uses copy-on-write
 
-    enum { Size = DataType::static_size * BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
+    enum { Size = static_size * BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size()
     {
         return DataType::size() * BaseTypeInfo::size();
@@ -616,6 +624,7 @@ struct VectorTypeInfo
     enum { Integer         = BaseTypeInfo::Integer         }; ///< 1 if this type uses integer values
     enum { Scalar          = BaseTypeInfo::Scalar          }; ///< 1 if this type uses scalar values
     enum { Text            = BaseTypeInfo::Text            }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 1                             }; ///< 1 if this type uses copy-on-write
 
     enum { Size = BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size()
@@ -767,6 +776,7 @@ struct SetTypeInfo
     enum { Integer         = BaseTypeInfo::Integer         }; ///< 1 if this type uses integer values
     enum { Scalar          = BaseTypeInfo::Scalar          }; ///< 1 if this type uses scalar values
     enum { Text            = BaseTypeInfo::Text            }; ///< 1 if this type uses text values
+    enum { CopyOnWrite     = 1                             }; ///< 1 if this type uses copy-on-write
 
     enum { Size = BaseTypeInfo::Size }; ///< largest known fixed size for this type, as returned by size()
 	static unsigned int size()

@@ -53,25 +53,25 @@
 namespace sofa
 {
 
-  namespace gui
-  {
+namespace gui
+{
 
-    namespace qt
-    {
+namespace qt
+{
 
-      namespace viewer
-      {
+namespace viewer
+{
 
-	namespace qgl
-	{
-	  using namespace sofa::defaulttype;
-	  using namespace sofa::helper::gl;
-	  using namespace sofa::helper::system::thread;
-	  using namespace sofa::component::collision;
+namespace qgl
+{
+using namespace sofa::defaulttype;
+using namespace sofa::helper::gl;
+using namespace sofa::helper::system::thread;
+using namespace sofa::component::collision;
 
 
-	  class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::SofaViewer
-	    {
+class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::SofaViewer
+{
 	      typedef Vector3::value_type Real;
 	      Q_OBJECT
 		private:
@@ -105,7 +105,6 @@ namespace sofa
 	      int				_renderingMode;
 	      //GLuint			_logoTexture;
 	      Texture			*texLogo;
-
 
 	      ctime_t			_beginTime;
 
@@ -141,7 +140,6 @@ namespace sofa
 
             public:
 
-
 	      //void			reshape(int width, int height);
 	      int GetWidth()
 	      {
@@ -159,7 +157,6 @@ namespace sofa
 	      void moveRayPickInteractor(int eventX, int eventY);
 
               void setCameraMode(component::visualmodel::BaseCamera::CameraType mode);
-
 
 	      QString helpString();
 	      
@@ -187,9 +184,6 @@ namespace sofa
 	      void	DisplayOBJs();
 	      void	DisplayMenu(void);
 	      void	DrawScene();
-
-
-
 
 	      //int		handle(int event);	// required by FLTK
 
@@ -221,15 +215,15 @@ namespace sofa
 	      void resizeW( int );
 	      void resizeH( int );
 	      void quit();
-	    };
+};
 
-	} // namespace qgl
+} // namespace qgl
 
-      } // namespace viewer
+} // namespace viewer
 
-    } //namespace qt
+} //namespace qt
 
-  } // namespace gui
+} // namespace gui
 
 } // namespace sofa
 

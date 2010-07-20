@@ -56,7 +56,6 @@
 #endif
 #include <sofa/helper/io/ImageBMP.h>
 
-
 #include <sofa/defaulttype/RigidTypes.h>
 
 
@@ -67,24 +66,24 @@
 namespace sofa
 {
 
-  namespace gui
-  {
+namespace gui
+{
 
-    namespace qt
-    {
+namespace qt
+{
 
-      namespace viewer
-      {
+namespace viewer
+{
 
-	namespace qgl
-	{
+namespace qgl
+{
 
-	  using std::cout;
-	  using std::endl;
-	  using namespace sofa::defaulttype;
-	  using namespace sofa::helper::gl;
-	  using sofa::simulation::getSimulation;
-    using namespace sofa::simulation;
+using std::cout;
+using std::endl;
+using namespace sofa::defaulttype;
+using namespace sofa::helper::gl;
+using sofa::simulation::getSimulation;
+using namespace sofa::simulation;
 
 	  //extern UserInterface*	GUI;
 	  //extern OBJmodel*		cubeModel;
@@ -889,7 +888,6 @@ namespace sofa
 		// draw the scene
 		DrawScene();
 
-
 	    if (_video)
 	      {
 #ifdef CAPTURE_PERIOD
@@ -1126,7 +1124,6 @@ namespace sofa
 	    update();
 	  }
 
-
 	  void QtGLViewer::saveView()
 	  {
 	    if (!sceneFileName.empty())
@@ -1142,7 +1139,6 @@ namespace sofa
 		std::cout << "View parameters saved in "<<viewFileName<<std::endl;
 	      }
 	  }
-
 
 	  void QtGLViewer::setSizeW( int size )
 	  {

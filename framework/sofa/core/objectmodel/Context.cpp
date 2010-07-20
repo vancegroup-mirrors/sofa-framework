@@ -56,10 +56,6 @@ Context::Context()
 #ifdef SOFA_SMP
   , showProcessorColor_                (initData(&showProcessorColor_,                -1,"showProcessorColor","display Processor Color"))
 #endif
-  , multiThreadSimulation_(initData(&multiThreadSimulation_,false,"multiThreadSimulation","Apply multithreaded simulation"))
-  , currentLevel_(initData(&currentLevel_,0,"currentLevel","Current level of details"))
-  , coarsestLevel_(initData(&coarsestLevel_,3,"coarsestLevel","Coarsest level of details"))
-  , finestLevel_(initData(&finestLevel_,0,"finestLevel","Finest level of details"))
 #ifdef SOFA_SMP
   ,  processor(initData(&processor,(int )-1,"processor","assigned processor"))
   ,  gpuPrioritary(initData(&gpuPrioritary,false,"gpuPrioritary","node should be executed on GPU")),
@@ -100,7 +96,6 @@ Context::Context()
     //setShowInteractionForceFields(objectmodel::BaseContext::getShowInteractionForceFields());
     //setShowWireFrame(objectmodel::BaseContext::getShowWireFrame());
     //setShowNormals(objectmodel::BaseContext::getShowNormals());
-    //setMultiThreadSimulation(objectmodel::BaseContext::getMultiThreadSimulation());
 }
 
 /// The Context is active
@@ -182,12 +177,6 @@ bool Context::getAnimate() const
     return animate_.getValue();
 }
 
-/// MultiThreading activated
-bool Context::getMultiThreadSimulation() const
-{
-    return multiThreadSimulation_.getValue();
-}
-
 /// Display flags: Collision Models
 bool Context::getShowCollisionModels() const
 {
@@ -266,21 +255,6 @@ bool Context::getShowProcessorColor() const
 }
 #endif
 
-// Multiresolution
-
-int Context::getCurrentLevel() const
-{
-	return currentLevel_.getValue();
-}
-int Context::getCoarsestLevel() const
-{
-	return coarsestLevel_.getValue();
-}
-int Context::getFinestLevel() const
-{
-	return finestLevel_.getValue();
-}
-
 
 //===============================================================================
 
@@ -312,12 +286,6 @@ void Context::setGravityInWorld(const Vec3& g)
 void Context::setAnimate(bool val)
 {
     animate_.setValue(val);
-}
-
-/// MultiThreading activated
-void Context::setMultiThreadSimulation(bool val)
-{
-    multiThreadSimulation_.setValue(val);
 }
 
 /// Display flags: Collision Models
@@ -387,33 +355,6 @@ void Context::setShowProcessorColor(bool val)
 }
 #endif
 
-// Multiresolution
-
-bool Context::setCurrentLevel(int l)
-{
-	if( l > coarsestLevel_.getValue() )
-	{
-		currentLevel_.setValue(coarsestLevel_.getValue());
-		return false;
-	}
-	else if( l < 0 /*finestLevel_.getValue()*/ )
-	{
-// 		currentLevel_.setValue(finestLevel_.getValue());
-		currentLevel_.setValue( 0 );
-		return false;
-	}
-    currentLevel_.setValue(l);
-	if( l == coarsestLevel_.getValue() ) return false;
-    return true;
-}
-void Context::setCoarsestLevel(int l)
-{
-	coarsestLevel_.setValue( l );
-}
-void Context::setFinestLevel(int l)
-{
-	finestLevel_.setValue( l );
-}
 
 //======================
 
@@ -444,7 +385,6 @@ void Context::copySimulationContext(const Context& c)
   dt_.setValue(c.dt_.getValue());
   time_.setValue(c.time_.getValue());
   animate_.setValue(c.animate_.getValue());
-  multiThreadSimulation_.setValue(c.multiThreadSimulation_.getValue());
 #ifdef SOFA_SMP
 if(c.gpuPrioritary.getValue())
   gpuPrioritary.setValue(true);
@@ -454,10 +394,7 @@ if(c.gpuPrioritary.getValue())
   spatialVelocityInWorld_ = c.spatialVelocityInWorld_;
   velocityBasedLinearAccelerationInWorld_ = c.velocityBasedLinearAccelerationInWorld_;
 
-	// for multiresolution
-// 	finestLevel_ = c.finestLevel_;
-// 	coarsestLevel_ = c.coarsestLevel_;
-// 	currentLevel_ = c.currentLevel_;
+
 #ifdef SOFA_SMP
 if(!partition_){
     if(processor.getValue()!=-1)

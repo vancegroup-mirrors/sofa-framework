@@ -202,13 +202,10 @@ void SpringForceField<DataTypes>::draw()
 	for (unsigned int i=0; i<springs.size(); i++)
 	{
 		Real d = (p2[springs[i].m2]-p1[springs[i].m1]).norm();
-                Vector3 point2,point1;
-		unsigned int sizePoints= (Coord::static_size <=3)?Coord::static_size:3;
-		for (unsigned int s=0;s<sizePoints;++s)
-		  {
-		    point1[s] = p1[springs[i].m1][s];
-		    point2[s] = p2[springs[i].m2][s];
-		  }
+        Vector3 point2,point1;
+        point1 = DataTypes::getCPos(p1[springs[i].m1]);
+        point2 = DataTypes::getCPos(p2[springs[i].m2]);
+
 		if (external)
 		{
 			if (d<springs[i].initpos*0.9999)

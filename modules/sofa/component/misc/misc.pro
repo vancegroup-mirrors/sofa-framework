@@ -29,6 +29,8 @@ HEADERS += initMisc.h \
            Monitor.inl \
            ParticleSink.h \
            ParticleSource.h \
+           PauseAnimation.h \
+           PauseAnimationOnEvent.h \
            ReadState.h \
            ReadState.inl \
            ReadTopology.h \
@@ -56,6 +58,8 @@ SOURCES += initMisc.cpp \
            Monitor.cpp \
            ParticleSink.cpp \
            ParticleSource.cpp \
+           PauseAnimation.cpp \
+           PauseAnimationOnEvent.cpp \
            ReadState.cpp \
            ReadTopology.cpp \
            WriteState.cpp \

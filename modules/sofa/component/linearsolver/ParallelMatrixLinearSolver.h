@@ -79,6 +79,7 @@ public:
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
 
 	Data<bool> useWarping;
+	Data<unsigned> useRotationFinder;
 	Data<bool> useMultiThread;
 	Data<bool> check_symetric;
 
@@ -189,6 +190,7 @@ protected:
 	Vector* systemLHVector;
 	
 	bool useRotation;
+	unsigned indRotationFinder;
 	ParallelMatrixLinearSolverInternalData<Vector> internalData;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
 	Vector tmpVectorRotation;

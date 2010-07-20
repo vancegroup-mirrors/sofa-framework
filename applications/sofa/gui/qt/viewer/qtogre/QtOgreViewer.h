@@ -39,7 +39,6 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/common/Simulation.h>
 
-
 #ifdef SOFA_QT4
 #include <QPaintEvent>
 #include <QWidget>

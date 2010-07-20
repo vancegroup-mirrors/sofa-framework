@@ -213,7 +213,12 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 
 	// delete removed groups
 	for (sofa::helper::vector<simulation::Node*>::iterator it = removedGroup.begin(); it!=removedGroup.end(); ++it)
-		delete *it;
+    {
+      simulation::Node *node=*it;
+      node->detachFromGraph();
+      node->execute<simulation::DeleteVisitor>();
+      delete *it;
+    }
 	removedGroup.clear();
 
 	// finally recreate group vector

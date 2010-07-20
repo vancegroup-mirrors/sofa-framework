@@ -263,9 +263,17 @@ namespace sofa
 		ofile.close();
               }
 	    ogreLog = sofa::helper::system::DataRepository.getFile("config/Ogre.log");
+#ifdef _WINDOWS
+#ifdef NDEBUG
+	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins_win.cfg");           
+#else 
+      pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins_win_d.cfg");
+#endif //NDEBUG
+#else
+	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins.cfg");           
 
-	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins.cfg");            
-#endif
+#endif 
+#endif // OGRE_STATIC_LIB
 	    mRoot = new Ogre::Root(pluginsPath, ogrePath, ogreLog);
 //        Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
 #ifndef WIN32
@@ -1234,7 +1242,6 @@ namespace sofa
 
 
       }
-
 
 	  bool QtOgreViewer::updateInteractor(QMouseEvent * e)
 	  {

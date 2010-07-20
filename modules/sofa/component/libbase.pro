@@ -227,4 +227,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(libbase-local.cfg) 
+exists(libbase-local.cfg): include(libbase-local.cfg) 

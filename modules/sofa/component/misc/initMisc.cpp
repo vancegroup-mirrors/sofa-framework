@@ -62,4 +62,5 @@ SOFA_LINK_CLASS(WriteState)
 SOFA_LINK_CLASS(WriteTopology)
 SOFA_LINK_CLASS(EvalPointsDistance)
 SOFA_LINK_CLASS(EvalSurfaceDistance)
+SOFA_LINK_CLASS(PauseAnimationOnEvent)
 

@@ -47,7 +47,6 @@
 
 #include <qcursor.h>
 
-
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/gui/qt/SofaVideoRecorderManager.h>
 #ifdef SOFA_HAVE_FFMPEG
@@ -98,7 +97,6 @@ enum
 
 
 class SofaViewer
-
 {
 
 public:

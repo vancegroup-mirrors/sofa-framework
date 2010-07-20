@@ -120,9 +120,6 @@ public:
 	/// Animation flag
 	virtual bool getAnimate() const;
 
-	/// MultiThreading activated
-	virtual bool getMultiThreadSimulation() const;
-
 	/// Display flags: Collision Models
 	virtual bool getShowCollisionModels() const;
 
@@ -160,17 +157,6 @@ public:
         virtual Iterative::IterativePartition*  getPartition() const;
 #endif
 
-	/// Multiresolution support (UNSTABLE)
-	virtual int getCurrentLevel() const;
-    
-	/// Multiresolution support (UNSTABLE)
-	virtual int getCoarsestLevel() const;
-    
-	/// Multiresolution support (UNSTABLE)
-	virtual int getFinestLevel() const;
-    
-	/// Multiresolution support (UNSTABLE)
-	//     virtual unsigned int nbLevels() const;
 
 	/// @}
 
@@ -363,10 +349,6 @@ public:
 	virtual void setAnimate(bool /*val*/)
 	{ }
 
-	/// MultiThreading activated
-	virtual void setMultiThreadSimulation(bool /*val*/)
-	{ }
-
 	/// Display flags: Collision Models
 	virtual void setShowCollisionModels(bool /*val*/)
 	{ }
@@ -412,17 +394,6 @@ public:
 	{ }
 #endif
     
-	/// Multiresolution support (UNSTABLE) : Set the current level, return false if l >= coarsestLevel
-	virtual bool setCurrentLevel(int )
-	{
-	  return false;
-	}
-    
-	/// Multiresolution support (UNSTABLE)
-	virtual void setCoarsestLevel(int ){}
-    
-	/// Multiresolution support (UNSTABLE)
-	virtual void setFinestLevel(int ){}
 
 	/// @}
 

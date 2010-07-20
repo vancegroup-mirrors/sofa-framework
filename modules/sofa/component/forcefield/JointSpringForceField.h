@@ -53,7 +53,7 @@ template<class DataTypes>
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
-	enum { N=Coord::static_size };
+	enum { N=DataTypes::spatial_dimensions };
 	typedef defaulttype::Mat<N,N,Real> Mat;
 	typedef Vec<N,Real> Vector;
 
@@ -280,7 +280,7 @@ public:
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
 	typedef core::behavior::MechanicalState<DataTypes> MechanicalState;
-	enum { N=Coord::static_size };
+	enum { N=DataTypes::spatial_dimensions };
 	typedef defaulttype::Mat<N,N,Real> Mat;
 	typedef Vec<N,Real> Vector;
 

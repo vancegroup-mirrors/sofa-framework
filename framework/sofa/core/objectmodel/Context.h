@@ -81,22 +81,14 @@ public:
 #ifdef SOFA_SMP
     Data<int> showProcessorColor_;
 #endif
-    Data<bool> multiThreadSimulation_;
     
-    /// @name For multiresolution (UNSTABLE)
-    /// @{
-    Data<int> currentLevel_;
-    Data<int> coarsestLevel_;
-    Data<int> finestLevel_;
+
 #ifdef SOFA_SMP
     Data<int> processor;
     Data<bool> gpuPrioritary;
     Data<bool> is_partition_;
     Iterative::IterativePartition *partition_;
 #endif
-
-    /// @}
-
 
     Frame localFrame_;
     SpatialVector spatialVelocityInWorld_;
@@ -131,9 +123,6 @@ public:
 
     /// Animation flag
     virtual bool getAnimate() const;
-
-    /// MultiThreading activated
-    virtual bool getMultiThreadSimulation() const;
 
     /// Display flags: Collision Models
     virtual bool getShowCollisionModels() const;
@@ -170,12 +159,6 @@ public:
     virtual bool getShowProcessorColor() const;
 #endif
 
-    /// Multiresolution support (UNSTABLE)
-    virtual int getCurrentLevel() const;
-    /// Multiresolution support (UNSTABLE)
-    virtual int getCoarsestLevel() const;
-    /// Multiresolution support (UNSTABLE)
-    virtual int getFinestLevel() const;
 
     /// @}
 
@@ -210,9 +193,6 @@ public:
     /// Animation flag
     virtual void setAnimate(bool val);
 
-    /// MultiThreading activated
-    virtual void setMultiThreadSimulation(bool val);
-
     /// Display flags: Collision Models
     virtual void setShowCollisionModels(bool val);
 
@@ -246,12 +226,8 @@ public:
 #ifdef SOFA_SMP
     virtual void setShowProcessorColor(bool val);
 #endif
-    /// Multiresolution support (UNSTABLE) : Set the current level, return false if l >= coarsestLevel
-    virtual bool setCurrentLevel(int l);
-    /// Multiresolution support (UNSTABLE)
-    virtual void setCoarsestLevel(int l);
-    /// Multiresolution support (UNSTABLE)
-    virtual void setFinestLevel(int l);
+
+
 #ifdef SOFA_SMP
     inline bool is_partition()const {return is_partition_.getValue();}
     inline Iterative::IterativePartition *getPartition()const {return partition_;}

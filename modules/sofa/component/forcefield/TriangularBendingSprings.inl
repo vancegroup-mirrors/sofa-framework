@@ -76,8 +76,8 @@ void TriangularBendingSprings<DataTypes>::TriangularBSEdgeCreationFunction(int /
 		
 		unsigned int u,v;
 		/// set to zero the edge stiffness matrix
-		for (u=0;u<3;++u) {
-			for (v=0;v<3;++v) {
+		for (u=0;u<N;++u) {
+			for (v=0;v<N;++v) {
 				ei.DfDx[u][v]=0;
 			}
 		}
@@ -121,8 +121,8 @@ void TriangularBendingSprings<DataTypes>::TriangularBSTriangleCreationFunction (
 					ei.is_activated=true;
 
 					/// set to zero the edge stiffness matrix
-					for (u=0;u<3;++u) {
-						for (v=0;v<3;++v) {
+					for (u=0;u<N;++u) {
+						for (v=0;v<N;++v) {
 							ei.DfDx[u][v]=0;
 						}
 					}
@@ -546,11 +546,11 @@ void TriangularBendingSprings<DataTypes>::addForce(VecDeriv& f, const VecCoord& 
 
 				updateMatrix=true;
 
-				Mat3& m = einfo->DfDx; //Mat& m = this->dfdx[i];
+				Mat& m = einfo->DfDx; //Mat& m = this->dfdx[i];
 				Real tgt = forceIntensity * inverseLength;
-				for( int j=0; j<3; ++j )
+				for( int j=0; j<N; ++j )
 				{
-					for( int k=0; k<3; ++k )
+					for( int k=0; k<N; ++k )
 					{
 						m[j][k] = ((Real)einfo->ks-tgt) * u[j] * u[k];
 					}
@@ -559,10 +559,10 @@ void TriangularBendingSprings<DataTypes>::addForce(VecDeriv& f, const VecCoord& 
 			}
 			else // null length, no force and no stiffness
 			{
-				Mat3& m = einfo->DfDx; //Mat& m = this->dfdx[i];
-				for( int j=0; j<3; ++j )
+				Mat& m = einfo->DfDx; //Mat& m = this->dfdx[i];
+				for( int j=0; j<N; ++j )
 				{
-					for( int k=0; k<3; ++k )
+					for( int k=0; k<N; ++k )
 					{
 						m[j][k] = 0;
 					}
@@ -584,9 +584,9 @@ void TriangularBendingSprings<DataTypes>::addDForce(VecDeriv& df, const VecDeriv
 {
 	int nbEdges=_topology->getNbEdges();
 
-	EdgeInformation *einfo;
+	const EdgeInformation *einfo;
 
-	helper::vector<EdgeInformation>& edgeInf = *(edgeInfo.beginEdit());
+	const helper::vector<EdgeInformation>& edgeInf = edgeInfo.getValue();
 
     df.resize(dx.size());
     //serr<<"TriangularBendingSprings<DataTypes>::addDForce, dx1 = "<<dx1<<sendl;
@@ -617,7 +617,6 @@ void TriangularBendingSprings<DataTypes>::addDForce(VecDeriv& df, const VecDeriv
 		}
 	}
 
-	edgeInfo.endEdit();
     //for (unsigned int i=0; i<springs.size(); i++)
     //{
     //    this->addSpringDForce(df,dx, i, springs[i]);
@@ -672,7 +671,7 @@ void TriangularBendingSprings<DataTypes>::draw()
 	*/
 	unsigned int nb_to_draw = 0;
 
-	helper::vector<EdgeInformation>& edgeInf = *(edgeInfo.beginEdit());
+	const helper::vector<EdgeInformation>& edgeInf = edgeInfo.getValue();
 
 	glBegin(GL_LINES);
 	for(i=0;i<edgeInf.size(); ++i)
@@ -707,8 +706,6 @@ void TriangularBendingSprings<DataTypes>::draw()
 		}
 	}
 	glEnd();
-
-	edgeInfo.endEdit();
 
 	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

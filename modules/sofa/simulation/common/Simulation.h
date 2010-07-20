@@ -126,6 +126,12 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
         
         bool isPrefetchingUsed() const{ return needToPrefetch;};
 
+        /// Pause the simulation
+        virtual void setPaused(bool paused);
+
+        /// Return the current pause state
+        virtual bool getPaused();
+
 	/// Number of mechanical steps within an animation step
 	Data<unsigned> numMechSteps;
 
@@ -142,6 +148,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 
 	sofa::helper::gl::DrawManager DrawUtility;
 
+    bool paused;
 
 	///load a scene from memory (typically : an xml into a string)
 	static Node* loadFromMemory ( const char *filename, const char *data, unsigned int size );

@@ -39,6 +39,11 @@
 #include <math.h>
 
 #include <qevent.h>
+
+//#ifdef __APPLE__
+//#include <OpenGL.h>
+//#endif
+
 #include "GenGraphForm.h"
 #include "Main.h"
 
@@ -51,6 +56,7 @@
 #include <sofa/helper/io/ImageBMP.h>
 
 #include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/simulation/common/ColourPickingVisitor.h>
 
 // define this if you want video and OBJ capture to be only done once per N iteration
 //#define CAPTURE_PERIOD 5
@@ -133,11 +139,24 @@ int QtViewer::DisableViewer()
 	return 0;
 }
 
+
+
+QGLFormat QtViewer::setupGLFormat()
+{
+    QGLFormat f = QGLFormat::defaultFormat();
+#if defined(QT_VERSION) && QT_VERSION >= 0x040200
+    std::cout << "QtViewer: disabling vertical refresh sync" << std::endl;
+    f.setSwapInterval(0); // disable vertical refresh sync
+#endif
+    return f;
+}
+
+
 // ---------------------------------------------------------
 // --- Constructor
 // ---------------------------------------------------------
-QtViewer::QtViewer(QWidget* parent, const char* name) :
-	QGLWidget(parent, name)
+QtViewer::QtViewer(QWidget* parent, const char* name)
+ : QGLWidget(setupGLFormat(), parent, name)
 {
 
 	groot = NULL;
@@ -225,6 +244,12 @@ void QtViewer::initializeGL(void)
 	{
 		//std::cout << "progname=" << sofa::gui::qt::progname << std::endl;
 		//sofa::helper::system::SetDirectory cwd(sofa::helper::system::SetDirectory::GetProcessFullPath(sofa::gui::qt::progname));
+
+//#ifdef __APPLE__
+//        std::cout << "QtViewer: disabling vertical refresh sync (Mac version)" << std::endl;
+//        const GLint swapInterval = 0;
+//        CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &swapInterval);
+//#endif
 
 		// Define light parameters
 		//_lightPosition[0] = 0.0f;
@@ -339,6 +364,8 @@ void QtViewer::initializeGL(void)
 
 		printf("GL initialized\n");
 	}
+
+  pick.setColourRenderCallback(new ColourPickingRenderCallBack(this) );
 
 	// switch to preset view
 	resetView();
@@ -646,6 +673,34 @@ void QtViewer::DrawLogo()
 	glMatrixMode(GL_MODELVIEW);
 }
 
+
+
+// ---------------------------------------------------------
+// ---
+// ---------------------------------------------------------
+void QtViewer::drawColourPicking()
+{
+ 
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+  glLoadIdentity();
+  glMultMatrixd(lastProjectionMatrix);
+  glMatrixMode(GL_MODELVIEW);
+
+  // Define background color
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+  sofa::simulation::ColourPickingVisitor cpv;
+  cpv.execute(sofa::simulation::getSimulation()->getContext() );
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+
+}
 // -------------------------------------------------------------------
 // ---
 // -------------------------------------------------------------------
@@ -916,6 +971,7 @@ void QtViewer::paintGL()
 
 	// draw the scene
 	DrawScene();
+
 	if (_video)
 	{
 #ifdef CAPTURE_PERIOD

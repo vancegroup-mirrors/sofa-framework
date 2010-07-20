@@ -55,17 +55,17 @@
 namespace sofa
 {
 
-  namespace gui
-  {
+namespace gui
+{
 
-    namespace qt
-    {
+namespace qt
+{
 
-      namespace viewer
-      {
+namespace viewer
+{
 
-	namespace qt
-	{
+namespace qt
+{
 
 	  //using namespace sofa::defaulttype;
 	  using sofa::defaulttype::Vector3;
@@ -75,8 +75,8 @@ namespace sofa
 	  using namespace sofa::component::collision;
 
 
-	  class QtViewer :public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer
-	    {
+class QtViewer :public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer
+{
 	      Q_OBJECT
 
 		private:
@@ -128,7 +128,6 @@ namespace sofa
 	      //GLuint			_logoTexture;
 	      Texture			*texLogo;
 
-
 	      ctime_t			_beginTime;
 
 	      double lastProjectionMatrix[16];
@@ -146,6 +145,7 @@ namespace sofa
 	      /// and can be used to unregister classes associated with in the the ObjectFactory.
 	      static int DisableViewer();
 
+	      static QGLFormat setupGLFormat();
 	      QtViewer( QWidget* parent, const char* name="" );
 	      ~QtViewer();
 
@@ -164,6 +164,7 @@ namespace sofa
 		  virtual void setView(const Vec3d& pos, const Quat &ori);
 		  virtual void moveView(const Vec3d& pos, const Quat &ori);
 		  virtual void captureEvent() { SofaViewer::captureEvent(); }
+      virtual void drawColourPicking ();  
 
 	    signals:
 	      void redrawn();
@@ -185,7 +186,6 @@ namespace sofa
 		{
 		  return groot;
 		}
-
 
 	      //void			reshape(int width, int height);
 	      int GetWidth()
@@ -244,7 +244,6 @@ namespace sofa
 	      void	DisplayMenu(void);
 	      void	DrawScene();
 
-
 	      void	ApplySceneTransformation(int x, int y);
 	      //int		handle(int event);	// required by FLTK
 
@@ -258,15 +257,15 @@ namespace sofa
 	      virtual void mouseMoveEvent ( QMouseEvent * e );
 	      virtual void wheelEvent ( QWheelEvent* e);
 	      virtual void mouseEvent ( QMouseEvent * e );
-	    };
+};
 
-	} // namespace qt
+} // namespace qt
 
-      } // namespace viewer
+} // namespace viewer
 
-    } //namespace qt
+} //namespace qt
 
-  } // namespace gui
+} // namespace gui
 
 } // namespace sofa
 

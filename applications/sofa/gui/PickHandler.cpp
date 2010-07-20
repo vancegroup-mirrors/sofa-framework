@@ -102,30 +102,6 @@ namespace sofa
       simulation::getSimulation()->getContext()->get(pipeline, core::objectmodel::BaseContext::SearchRoot);
 
       useCollisions = (pipeline != NULL);
-
-
- 
-
-
-#ifdef SOFA_GUI_QTOGREVIEWER
-      if (simulation::getSimulation()->DrawUtility.getSystemDraw() != sofa::helper::gl::DrawManager::OGRE)
-#endif
-      {
-        const char* version = (char*)glGetString( GL_VERSION);
-
-        _fboParams.depthInternalformat = GL_DEPTH_COMPONENT24;
-        if( strcmp(version,"3") ){
-          _fboParams.colorInternalformat = GL_RGBA32F;
-        }
-        else{
-          _fboParams.colorInternalformat = GL_RGBA16;
-        }
-        _fboParams.colorFormat         = GL_RGBA;
-        _fboParams.colorType           = GL_FLOAT;
-
-        _fbo.setFormat(_fboParams);
-        _fbo.init(GL_MAX_TEXTURE_SIZE,GL_MAX_TEXTURE_SIZE);
-      }
     }
 
     void PickHandler::reset()
@@ -375,7 +351,6 @@ namespace sofa
 
       }
 
-    
     component::collision::BodyPicked PickHandler::findCollisionUsingBruteForce(const defaulttype::Vector3& origin,
                                                                                const defaulttype::Vector3& direction,
                                                                                double maxLength)
@@ -402,9 +377,36 @@ namespace sofa
       return result;
     }
 
+    //WARNING: do not use this method with Ogre
     component::collision::BodyPicked PickHandler::findCollisionUsingColourCoding(const defaulttype::Vector3& origin, 
       const defaulttype::Vector3& direction)
     {
+
+      static bool firstTime=true;
+      if (firstTime)
+      {
+
+        _fboParams.depthInternalformat = GL_DEPTH_COMPONENT24;
+#ifdef GL_VERSION_3_0
+        if (GLEW_VERSION_3_0)
+        {
+          _fboParams.colorInternalformat = GL_RGBA32F;
+        }
+        else
+#endif
+        {
+          _fboParams.colorInternalformat = GL_RGBA16;
+        }
+        _fboParams.colorFormat         = GL_RGBA;
+        _fboParams.colorType           = GL_FLOAT;
+
+        _fbo.setFormat(_fboParams);
+        _fbo.init(GL_MAX_TEXTURE_SIZE,GL_MAX_TEXTURE_SIZE);
+
+        firstTime=false;
+      }
+
+
       BodyPicked result;
 
       sofa::defaulttype::Vec4f color;

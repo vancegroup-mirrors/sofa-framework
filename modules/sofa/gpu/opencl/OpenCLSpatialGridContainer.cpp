@@ -233,7 +233,7 @@ BARRIER(x,__FILE__,__LINE__);
 //NOT_IMPLEMENTED();
 }
 
-ShowVector *show_hash;
+//ShowVector *show_hash;
 
 sofa::helper::OpenCLKernel *SpatialGridContainer3f_findCellRange_kernel;
 void SpatialGridContainer_findCellRange(int cellBits, int index0, float cellWidth, int nbPoints, const gpu::opencl::_device_pointer particleHash8,gpu::opencl::_device_pointer cellRange,gpu::opencl::_device_pointer cellGhost)
@@ -241,11 +241,12 @@ void SpatialGridContainer_findCellRange(int cellBits, int index0, float cellWidt
 DEBUG_TEXT("SpatialGridContainer_findCellRange");
 BARRIER(particleHash8,__FILE__,__LINE__);
 
+
 opencl::myopenclMemsetDevice(0,cellRange, 0, ((1<<cellBits)+1)*sizeof(int));
 opencl::myopenclMemsetDevice(0,cellGhost, 0, ((1<<cellBits))*sizeof(int));
 
-if(show_hash==NULL)show_hash = new ShowVector("debug_hash");
-show_hash->addOpenCLVector<int>(cellRange,(1<<cellBits)+1);
+//if(show_hash==NULL)show_hash = new ShowVector("debug_hash");
+//show_hash->addOpenCLVector<int>(cellRange,(1<<cellBits)+1);
 
 	int BSIZE = gpu::opencl::OpenCLMemoryManager<float>::BSIZE;
 	SpatialGridContainer_CreateProgramWithFloat();
@@ -268,6 +269,7 @@ show_hash->addOpenCLVector<int>(cellRange,(1<<cellBits)+1);
 	work_size[0]=((nbPoints8%BSIZE)==0)?nbPoints8:BSIZE*(nbPoints8/BSIZE+1);
 
 	SpatialGridContainer3f_findCellRange_kernel->execute(0,1,NULL,work_size,local_size);	//note: num_device = const = 0
+
 
 DEBUG_TEXT("~SpatialGridContainer_findCellRange");
 BARRIER(particleHash8,__FILE__,__LINE__);

@@ -27,7 +27,10 @@
 
 #include <sofa/component/linearsolver/ParallelMatrixLinearSolver.h>
 
-#ifdef SOFA_COMPONENT_LINEARSOLVER_PARALLELMATRIXLINEARSOLVER_H
+#ifdef SOFA_HAVE_BOOST
+
+#include <sofa/component/misc/ParallelizeBuildMatrixEvent.h>
+#include <sofa/helper/AdvancedTimer.h>
 
 namespace sofa {
 
@@ -37,19 +40,30 @@ namespace linearsolver {
 
 template<class Matrix, class Vector>
 void Thread_invert<Matrix,Vector>::operator()() {	
-	(*run)=1;
+	sharedData.run=1;
 	while (true) {
-		bar->wait();
+		while (sharedData.ready_thread) usleep(50);
 		
-		if (! *run) break;
-	  
-		solver->invert(*(matrices[index]));
+		if (! sharedData.run) break;
+
+		if (sharedData.handeled) {
+			matrixAccessor.setGlobalMatrix(sharedData.matricesWork[indexwork]);
+			matrixAccessor.clear();
+			solver->getMatrixDimension(&matrixAccessor);
+			matrixAccessor.setupMatrices();
+			unsigned systemSize = matrixAccessor.getGlobalDimension();
+			sharedData.matricesWork[indexwork]->resize(systemSize,systemSize);
+			sharedData.matricesWork[indexwork]->clear();
+			solver->addMBK_ToMatrix(&matrixAccessor, sharedData.mFact, sharedData.bFact, sharedData.kFact);
+			matrixAccessor.computeGlobalMatrix();
+		}		
 		
-		ready_thread[0] = 1; //signal the main thread the invert is finish
+		solver->invert(*(sharedData.matricesWork[indexwork]));
 		
+		if(indexwork) indexwork=0;
+		else indexwork=1;
 		
-		if(index) index=0;
-		else index=1;
+		sharedData.ready_thread = 1; //signal the main thread the invert is finish
 	}	
 }  
   
@@ -65,22 +79,21 @@ ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::~ParallelMatrixLinearSolver()
 {
-    run = 0;
-    bar->wait();
+    sharedData.run = 0;
+    sharedData.ready_thread = 0;
     
     std::cout << "Wait for destoying thread" << std::endl;
     
     if (systemRHVector) delete systemRHVector;
     if (systemLHVector) delete systemLHVector;
     
-    if (matricesWork[0]) delete matricesWork[0];
-    if (matricesWork[1]) delete matricesWork[1];
+    if (sharedData.matricesWork[0]) delete sharedData.matricesWork[0];
+    if (sharedData.matricesWork[1]) delete sharedData.matricesWork[1];
     if (rotationWork[0]) delete rotationWork[0];
     if (rotationWork[1]) delete rotationWork[1];
     if (Rcur) delete Rcur;
-    delete bar;
+    //if (sharedData.bar) delete sharedData.bar;
 }
-
 
 template<class TMatrix, class TVector>
 void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
@@ -94,11 +107,12 @@ void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
     }
       
     first = true;
+    sharedData.handeled = false;
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::resetSystem() {
-    if (!frozen && matricesWork[indexwork]) matricesWork[indexwork]->clear();
+    if (!this->frozen && sharedData.matricesWork[indexwork]) sharedData.matricesWork[indexwork]->clear();
     if (systemRHVector) systemRHVector->clear();
     if (systemLHVector) systemLHVector->clear();
     solutionVecId = VecId();
@@ -106,101 +120,120 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::resetSystem() {
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
-    matricesWork[indexwork]->resize(n,n);
+    sharedData.matricesWork[indexwork]->resize(n,n);
     systemRHVector->resize(n);
     systemLHVector->resize(n);
-    systemSize = n;
+    sharedData.systemSize = n;
 }
 
 template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(double mFact, double bFact, double kFact) {
+void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix() {
   if (!this->frozen) {
-	matrixAccessor.setGlobalMatrix(matricesWork[indexwork]);
+	matrixAccessor.setGlobalMatrix(sharedData.matricesWork[indexwork]);
 	matrixAccessor.clear();
       
         this->getMatrixDimension(&matrixAccessor);
         matrixAccessor.setupMatrices();
         resizeSystem(matrixAccessor.getGlobalDimension());
-        matricesWork[indexwork]->clear();
-        this->addMBK_ToMatrix(&matrixAccessor, mFact, bFact, kFact);
+        sharedData.matricesWork[indexwork]->clear();
+        this->addMBK_ToMatrix(&matrixAccessor, sharedData.mFact, sharedData.bFact, sharedData.kFact);
         matrixAccessor.computeGlobalMatrix();
   }
   if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
   
   if (check_symetric.getValue()) {
-    for (unsigned i=0;i<matricesWork[indexwork]->colSize();i++) {
-	for (unsigned j=0;j<matricesWork[indexwork]->rowSize();j++) {
-	    double diff = matricesWork[indexwork]->element(j,i) - matricesWork[indexwork]->element(i,j);
+    for (unsigned i=0;i<sharedData.matricesWork[indexwork]->colSize();i++) {
+	for (unsigned j=0;j<sharedData.matricesWork[indexwork]->rowSize();j++) {
+	    double diff = sharedData.matricesWork[indexwork]->element(j,i) - sharedData.matricesWork[indexwork]->element(i,j);
 	    if ((diff<-0.0000001) || (diff>0.0000001)) {
-	      printf("ERROR : THE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix\n");
+	      std::cerr << "ERROR : THE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix" << std::endl;
 	      return;
 	    }
 	}
     }	
-    printf("THE MATRIX IS SYMETRIC\n");
+    std::cerr << "THE MATRIX IS SYMETRIC" << std::endl;
   }
 
 }
 
 template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
+void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {	  
 	useRotation = useWarping.getValue() && rotationFinders.size();
 	indRotationFinder = useRotationFinder.getValue()<rotationFinders.size() ? useRotationFinder.getValue() : 0;
 	
+	sharedData.mFact = mFact;
+	sharedData.bFact = bFact;
+	sharedData.kFact = kFact;
+	
 	if (first) {
 	    first = false;
-	    matricesWork[0] = new Matrix();
-	    matricesWork[1] = new Matrix();
+	    sharedData.matricesWork[0] = new Matrix();
+	    sharedData.matricesWork[1] = new Matrix();
 	    rotationWork[0] = new TRotationMatrix();
 	    rotationWork[1] = new TRotationMatrix();
 	    Rcur = new TRotationMatrix();
 	    systemLHVector = new Vector();
 	    systemRHVector = new Vector();
-
 	    
 	    //////////////////////////////////////////////////////////////
 	    //CompressedRowSparseMatrix doesn't store data until the first "non zero resize" plus clear 
 	    //When the bug will be fix thooses linge should be remove
 	    unsigned int nbRow=0, nbCol=0;
 	    this->getMatrixDimension(&nbRow,&nbCol);
-	    matricesWork[0]->resize(nbRow,nbRow);matricesWork[0]->clear();	    
-	    matricesWork[1]->resize(nbRow,nbRow);matricesWork[1]->clear();    
+	    sharedData.matricesWork[0]->resize(nbRow,nbRow);sharedData.matricesWork[0]->clear();	    
+	    sharedData.matricesWork[1]->resize(nbRow,nbRow);sharedData.matricesWork[1]->clear();    
 	    //////////////////////////////////////////////////////////////
-	    	    
-	    indexwork = 1;
-	    this->computeSystemMatrix(mFact,bFact,kFact);
-	    ready_thread = 0;
-	    bar = new boost::barrier(2);
+	    	
+	    sharedData.ready_thread = 1;	
+	    //sharedData.bar = new boost::barrier(2);
 	    std :: cout << "Launching the invert thread...." << std::endl;// on matrix[1]
-	    Thread_invert<Matrix,Vector> thi(bar,this,&ready_thread,&run,matricesWork,indexwork);
+	    Thread_invert<Matrix,Vector> thi(this,sharedData);
 	    boost::thread thrd(thi);
 	    
     	    indexwork = 0;
-	    this->computeSystemMatrix(mFact,bFact,kFact);
-	    this->invertSystem(); //only this thread use metho invert.
-
-   	    if (useMultiThread.getValue()) bar->wait(); //launch the second thread if we use it
-
+	    
+	    computeSystemMatrix();
+	    invertSystem(); //only this thread use metho invert.
+	    
+   	    if (useMultiThread.getValue()) {
+	      sofa::component::misc::ParallelizeBuildMatrixEvent event;
+	      this->getContext()->propagateEvent(&event);
+	      sharedData.handeled = event.isHandled();
+	      
+	      indexwork = 1;
+	      
+	      if (sharedData.handeled==false) computeSystemMatrix();
+	      else if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]); //copy for the second thread at init				  
+		
+	      sharedData.ready_thread = 0;//sharedData.bar->wait(); //launch the second thread if we use it	
+		
+	      indexwork = 0;		
+	    }
+	    
 	    nbstep_update = 1;
 	} else if (! useMultiThread.getValue()) {
-	    this->computeSystemMatrix(mFact,bFact,kFact);		    
-	    this->invertSystem();
-	    ready_thread = true;
-	} else if (ready_thread) {
-	    ready_thread = 0;
-	    	    
-	    this->computeSystemMatrix(mFact,bFact,kFact);
-	    	    
-	    bar->wait();
+	    this->computeSystemMatrix();
+	    this->invertSystem(); 
+	} else if (sharedData.ready_thread) {
+	    sofa::component::misc::ParallelizeBuildMatrixEvent event;
+	    this->getContext()->propagateEvent(&event);
+	    sharedData.handeled = event.isHandled();
 	    
-	    std::cout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << std::endl;
-	    nbstep_update = 1;
+	    if (! sharedData.handeled) computeSystemMatrix();
+	    else if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]); //copy for the second thread at init				  
 	    
+	    sharedData.ready_thread = 0;//sharedData.bar->wait(); //launch the second thread if we use it      
+	      
 	    if (indexwork) indexwork=0;
-	    else indexwork=1;	    
+	    else indexwork=1;
+	    
+	    matrixAccessor.setGlobalMatrix(sharedData.matricesWork[indexwork]);
+	  
+ 	    sout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << sendl;
+	    nbstep_update = 1;
 	} else nbstep_update++;
-	
-	if (useRotation) tmpVectorRotation.resize(systemSize);  
+
+	if (useRotation) tmpVectorRotation.resize(sharedData.systemSize);  	
 }
 
 template<class Matrix, class Vector>
@@ -216,17 +249,17 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v) {
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
-	if (useRotation && frozen) {
+	if (useRotation && this->frozen) {
 	    rotationFinders[indRotationFinder]->getRotations(Rcur);
 	    rotationWork[indexwork]->opMulTM(Rcur,Rcur);
 	}
 	
 	if (useRotation) {
 		Rcur->opMulTV(systemLHVector,systemRHVector);
-		this->solve(*matricesWork[indexwork], tmpVectorRotation, *systemLHVector);
+		this->solve(*sharedData.matricesWork[indexwork], tmpVectorRotation, *systemLHVector);
 		Rcur->opMulV(systemLHVector,&tmpVectorRotation);
 	} else {
-		this->solve(*matricesWork[indexwork], *systemLHVector, *systemRHVector);
+		this->solve(*sharedData.matricesWork[indexwork], *systemLHVector, *systemRHVector);
 	}
 	
 	if (!solutionVecId.isNull()) {
@@ -240,7 +273,7 @@ template<class Matrix, class Vector> template<class RMatrix, class JMatrix>
 bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMatrix& J, double fact) {
   const unsigned int Jrows = J.rowSize();
   const unsigned int Jcols = J.colSize();
-  if (Jcols != matricesWork[indexwork]->rowSize()) {
+  if (Jcols != sharedData.matricesWork[indexwork]->rowSize()) {
       serr << "LULinearSolver::addJMInvJt ERROR: incompatible J matrix size." << sendl;
       return false;
   }

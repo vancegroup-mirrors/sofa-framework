@@ -22,9 +22,13 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver
+#ifndef SOFA_COMPONENT_LINEARSOLVER_PARALLELMATRIXLINEARSOLVER_H
+#define SOFA_COMPONENT_LINEARSOLVER_PARALLELMATRIXLINEARSOLVER_H
 
 #include <sofa/component/linearsolver/MatrixLinearSolver.h>
+
+#ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver
+
 #define ParallelMatrixLinearSolver MatrixLinearSolver
 // namespace sofa {
 // namespace component {
@@ -37,10 +41,9 @@
 // }
 // }
 // }
+
 #else 
 
-#ifndef SOFA_COMPONENT_LINEARSOLVER_PARALLELMATRIXLINEARSOLVER_H
-#define SOFA_COMPONENT_LINEARSOLVER_PARALLELMATRIXLINEARSOLVER_H
 #include <sofa/simulation/common/SolverImpl.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/core/behavior/LinearSolver.h>
@@ -54,6 +57,11 @@
 #include <boost/thread/barrier.hpp>
 #include <sofa/helper/system/atomic.h>
 
+
+#include <sofa/core/behavior/BaseProjectiveConstraintSet.h>
+#include <sofa/core/behavior/BaseForceField.h>
+
+
 namespace sofa {
 
 namespace component {
@@ -66,13 +74,29 @@ class ParallelMatrixLinearSolverInternalData {
 	typedef typename TVector::Real Real;
 	typedef RotationMatrix<Real> TRotationMatrix;
 };
+
+template<class Matrix,class Vector>  
+class ParallelMatrixLinearSolverSharedData{
+  public :   
+	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
+    
+  	//boost::barrier * bar;
+	unsigned int systemSize;	    
+	Matrix * matricesWork[2];  
+	double mFact;
+	double bFact;
+	double kFact;
+	sofa::helper::system::atomic<int> handeled;
+	sofa::helper::system::atomic<int> ready_thread;
+	sofa::helper::system::atomic<int> run;
+};
  
 template<class Matrix, class Vector>
-class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public sofa::core::behavior::LinearSolver, public sofa::simulation::SolverImpl
+class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public BaseMatrixLinearSolver<Matrix,Vector>, public sofa::simulation::SolverImpl
 {
 public:
-	SOFA_CLASS2(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), sofa::core::behavior::LinearSolver, sofa::simulation::SolverImpl);
-      
+	SOFA_CLASS2(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), SOFA_TEMPLATE2(BaseMatrixLinearSolver,Matrix,Vector), sofa::simulation::SolverImpl);
+    
 	typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
 	typedef  std::list<int> ListIndex;
 	typedef typename Matrix::Real Real;
@@ -107,7 +131,7 @@ public:
 	void setSystemLHVector(VecId v);
 
 	/// Get the linear system matrix, or NULL if this solver does not build it
-	Matrix* getSystemMatrix() { return matricesWork[indexwork]; }
+	Matrix* getSystemMatrix() { return sharedData.matricesWork[indexwork]; }
 
 	/// Get the linear system right-hand term vector, or NULL if this solver does not build it
 	Vector* getSystemRHVector() { return systemRHVector; }
@@ -116,7 +140,7 @@ public:
 	Vector* getSystemLHVector() { return systemLHVector; }
 
 	/// Get the linear system matrix, or NULL if this solver does not build it
-	defaulttype::BaseMatrix* getSystemBaseMatrix() { return matricesWork[indexwork]; }
+	defaulttype::BaseMatrix* getSystemBaseMatrix() { return sharedData.matricesWork[indexwork]; }
 
 	/// Get the linear system right-hand term vector, or NULL if this solver does not build it
 	defaulttype::BaseVector* getSystemRHBaseVector() { return systemRHVector; }
@@ -129,7 +153,7 @@ public:
 
 	/// Invert the system, this method is optional because it's call when solveSystem() is called for the first time
 	virtual void invertSystem() {
-	    this->invert(*matricesWork[indexwork]);
+	    this->invert(*sharedData.matricesWork[indexwork]);
 	}
 
 	virtual std::string getTemplateName() const
@@ -162,6 +186,8 @@ public:
 	/// @return false if the solver does not support this operation, of it the system matrix is not invertible
 	bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 
+	void computeSystemMatrix();
+	
 protected:
 
 	/// newPartially solve the system
@@ -170,65 +196,50 @@ protected:
 	static Vector* createVector() {
 	    return new Vector;
 	}
-	
-	void computeSystemMatrix(double mFact, double bFact, double kFact);
 
 	
 	simulation::MultiNodeDataMap nodeMap;
 	simulation::MultiNodeDataMap writeNodeMap;
 
-	unsigned int systemSize;	    
-	Matrix * matricesWork[2];
 	DefaultMultiMatrixAccessor matrixAccessor;
-	TRotationMatrix * rotationWork[2];
+	
 	TRotationMatrix * Rcur;
 	int indexwork;
-	
+	ParallelMatrixLinearSolverSharedData<Matrix,Vector> sharedData;
 	
 	VecId solutionVecId;	
 	Vector* systemRHVector;
 	Vector* systemLHVector;
 	
+	ParallelMatrixLinearSolverInternalData<Vector> internalData;
+
+	TRotationMatrix * rotationWork[2];
 	bool useRotation;
 	unsigned indRotationFinder;
-	ParallelMatrixLinearSolverInternalData<Vector> internalData;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
 	Vector tmpVectorRotation;
 	
 	bool first;
-	boost::barrier * bar;
-	sofa::helper::system::atomic<int> ready_thread;
-	sofa::helper::system::atomic<int> run;
 	int nbstep_update;
 };
 
 template<class Matrix, class Vector>
 class Thread_invert {
 public :  
-	Thread_invert(boost::barrier * barg,
-			  ParallelMatrixLinearSolver<Matrix,Vector> * solver,
-			  sofa::helper::system::atomic<int> * ready_thread,
-			  sofa::helper::system::atomic<int> * run,
-			  Matrix ** matrices,
-			  int index = 1
-			  ) {
-		this->bar = barg;
+	Thread_invert(ParallelMatrixLinearSolver<Matrix,Vector> * solver,
+		      ParallelMatrixLinearSolverSharedData<Matrix,Vector> & s
+		      ) : sharedData(s) {
 		this->solver = solver;
-		this->ready_thread = ready_thread;
-		this->run = run;
-		this->matrices = matrices;
-		this->index = index;
+		this->indexwork = 1;
 	}
 
 	void operator()();
 
 protected :
-	boost::barrier * bar;
 	ParallelMatrixLinearSolver<Matrix,Vector> * solver;
-	sofa::helper::system::atomic<int> * ready_thread;
-	sofa::helper::system::atomic<int> * run;
-	Matrix ** matrices;
-	int index;
+	int indexwork;
+	DefaultMultiMatrixAccessor matrixAccessor;
+	ParallelMatrixLinearSolverSharedData<Matrix,Vector> & sharedData;
 }; 
 
 } // namespace linearsolver

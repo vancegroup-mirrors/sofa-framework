@@ -266,7 +266,7 @@ cl_context createContext(cl_device_type default_type)
     }
     if (selectedDeviceIndex >= (int)devices.size())
     {
-        std::cerr << "OPENCL ERROR: selected device " << selectedDeviceIndex << " NOT FOUND." << std::endl;
+		std::cerr << "OPENCL ERROR: selected device " << selectedDeviceIndex << " NOT FOUND." << std::endl;
         selectedDeviceIndex = -1;
     }
     if (selectedDeviceIndex < 0)
@@ -463,7 +463,7 @@ DEBUG_TEXT("~myopenclCreateKernel");
 template<>
 void myopenclSetKernelArg<_device_pointer>(cl_kernel kernel, int num_arg, const _device_pointer* arg)
 {
-    if (arg->offset) std::cerr << "OpenCL ERROR: non-zero offset " << arg->offset << std::endl;
+	if (arg->offset) std::cerr << "OpenCL ERROR: non-zero offset " << arg->offset << std::endl;
     myopenclSetKernelArg(kernel, num_arg, sizeof(cl_mem), (void*)&arg->m);
 }
 

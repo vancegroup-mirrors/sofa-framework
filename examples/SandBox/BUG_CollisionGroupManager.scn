@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<Node 	name="root" gravity="0 -9.81 0" dt="0.005" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+	<DefaultPipeline name="default1"  verbose="0"  draw="0"  depth="10" />
+	<BruteForceDetection name="N2" />
+	<MinProximityIntersection name="Proximity"  alarmDistance="0.75"  contactDistance="0.5" />
+	<DefaultContactManager name="Response"  response="default" />
+	<TreeCollisionGroupManager name="Group" />
+	<Node 	name="Torus" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+		<EulerSolver name="default0" />
+		<MechanicalObject template="Vec3d" name="default2"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="0 20 29"  rotation="0 0 64" />
+		<UniformMass template="Vec3d" name="default3"  totalmass="10" />
+		<RegularGridTopology name="default4"  n="6 5 2"  min="-7.5 -6 -1.75"  max="7.5 6 1.75"  p0="-7.5 -6 -1.75" />
+		<Node 	name="VisuTorus" tags="Visual" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+			<OglModel template="ExtVec3f" name="Visual"  fileMesh="mesh/torus2_scale3.obj"  translation="0 20 29"  material="Default Diffuse 1 0 0 1 1 Ambient 1 0 0 0.2 1 Specular 0 0 0 1 1 Emissive 0 0 0 1 1 Shininess 0 45" />
+			<BarycentricMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="default5"  object1="../.."  object2="Visual" />
+		</Node>
+		<Node 	name="Surf" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+			<MeshLoader name="meshLoader"  filename="mesh/torus2_scale3.obj" />
+			<MeshTopology name="default6" />
+			<MechanicalObject template="Vec3d" name="default7"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="0 20 29" />
+			<TTriangleModel template="Vec3d" name="default8"  contactFriction="0.2" />
+			<LineModel name="default9"  contactFriction="@[-1].contactFriction" />
+			<PointModel name="default10"  contactFriction="@[-1].contactFriction" />
+			<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="default11" />
+		</Node>
+		<RegularGridSpringForceField template="Vec3d" name="Springs"  stiffness="350"  damping="1"  linesStiffness="350"  linesDamping="1"  quadsStiffness="350"  quadsDamping="1"  cubesStiffness="350"  cubesDamping="1" />
+	</Node>
+	<Node 	name="Dragon" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+		<EulerSolver/>
+		<MechanicalObject template="Vec3d" name="default12"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="20 20 29"  rotation="33 0 0" />
+		<UniformMass template="Vec3d" name="default13"  totalmass="10" />
+		<RegularGridTopology name="default14"  n="6 5 3"  min="-11 -7 -4"  max="11 7 4"  p0="-11 -7 -4" />
+		<Node 	name="VisuDragon" tags="Visual" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+			<OglModel template="ExtVec3f" name="Visual"  fileMesh="mesh/dragon.obj"  translation="20 20 29"  material="Default Diffuse 1 1 0 0 1 Ambient 1 0.2 0 0 1 Specular 0 1 0 0 1 Emissive 0 1 0 0 1 Shininess 0 45" />
+			<BarycentricMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="default15"  object1="../.."  object2="Visual" />
+		</Node>
+		<Node 	name="Surf" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+			<MeshLoader name="meshLoader"  filename="mesh/dragon.obj" />
+			<MeshTopology name="default16" />
+			<MechanicalObject template="Vec3d" name="default17"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="20 20 29" />
+			<TTriangleModel template="Vec3d" name="default18"  contactFriction="0.3" />
+			<LineModel name="default19"  contactFriction="@[-1].contactFriction" />
+			<PointModel name="default20"  contactFriction="@[-1].contactFriction" />
+			<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="default21" />
+		</Node>
+		<RegularGridSpringForceField template="Vec3d" name="Springs"  stiffness="350"  damping="1"  linesStiffness="350"  linesDamping="1"  quadsStiffness="350"  quadsDamping="1"  cubesStiffness="350"  cubesDamping="1" />
+	</Node>
+	<Node 	name="Frog" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+		<EulerSolver name="default1" />
+		<MechanicalObject template="Vec3d" name="default22"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="-20 20 29"  rotation="0 10 0" />
+		<UniformMass template="Vec3d" name="default23"  totalmass="10" />
+		<RegularGridTopology name="default24"  n="6 3 5"  min="-10 -3 -7"  max="8 2.5 7"  p0="-10 -3 -7" />
+		<Node 	name="VisualFrog" tags="Visual" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+			<Node 	name="Visu1" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+				<OglModel template="ExtVec3f" name="VisualBody"  useNormals="0"  fileMesh="mesh/frog_body.obj"  translation="-20 20 29"  material="Default Diffuse 1 0.17 0.7 0.05 1 Ambient 1 0.034 0.14 0.01 1 Specular 0 0.17 0.7 0.05 1 Emissive 0 0.17 0.7 0.05 1 Shininess 0 45" />
+				<BarycentricMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="default25"  object1="../.."  object2="VisualBody" />
+			</Node>
+			<Node 	name="Visu2" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+				<OglModel template="ExtVec3f" name="VisualEyes"  useNormals="0"  fileMesh="mesh/frog_eyes.obj"  translation="-20 20 29"  material="Default Diffuse 1 0.04 0.19 0.52 1 Ambient 1 0.008 0.038 0.104 1 Specular 0 0.04 0.19 0.52 1 Emissive 0 0.04 0.19 0.52 1 Shininess 0 45" />
+				<BarycentricMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="default26"  object1="../.."  object2="VisualEyes" />
+			</Node>
+			<Node 	name="Visu3" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+				<OglModel template="ExtVec3f" name="VisualEyebrows"  useNormals="0"  fileMesh="mesh/frog_eyebrows.obj"  translation="-20 20 29"  material="Default Diffuse 1 0.44 0.43 0 1 Ambient 1 0.088 0.086 0 1 Specular 0 0.44 0.43 0 1 Emissive 0 0.44 0.43 0 1 Shininess 0 45" />
+				<BarycentricMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="default27"  object1="../.."  object2="VisualEyebrows" />
+			</Node>
+			<Node 	name="Visu4" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+				<OglModel template="ExtVec3f" name="VisualLips"  useNormals="0"  fileMesh="mesh/frog_lips.obj"  translation="-20 20 29"  material="Default Diffuse 1 0.47 0.25 0.03 1 Ambient 1 0.094 0.05 0.006 1 Specular 0 0.47 0.25 0.03 1 Emissive 0 0.47 0.25 0.03 1 Shininess 0 45" />
+				<BarycentricMapping template="Mapping&lt;Vec3d,ExtVec3f&gt;" name="default28"  object1="../.."  object2="VisualLips" />
+			</Node>
+		</Node>
+		<Node 	name="Surf" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+			<MeshLoader name="meshLoader"  filename="mesh/frog-push25.obj" />
+			<MeshTopology name="default29" />
+			<MechanicalObject template="Vec3d" name="default30"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="-20 20 29" />
+			<TTriangleModel template="Vec3d" name="default31"  contactFriction="0.4" />
+			<LineModel name="default32"  contactFriction="@[-1].contactFriction" />
+			<PointModel name="default33"  contactFriction="@[-1].contactFriction" />
+			<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="default34" />
+		</Node>
+		<RegularGridSpringForceField template="Vec3d" name="Springs"  stiffness="350"  damping="1"  linesStiffness="350"  linesDamping="1"  quadsStiffness="350"  quadsDamping="1"  cubesStiffness="350"  cubesDamping="1" />
+	</Node>
+	<Node 	name="Floor" gravity="0 -9.81 0" showVisualModels="1" showBehaviorModels="0" showCollisionModels="0" showBoundingCollisionModels="0" showMappings="0" showMechanicalMappings="0" showForceFields="0" showInteractionForceFields="0" showWireFrame="0" showNormals="0"  >
+		<MeshLoader name="meshLoader"  filename="mesh/floor2b.obj" />
+		<MeshTopology name="default35" />
+		<MechanicalObject template="Vec3d" name="default36"  useMask="1"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  internalForce="0 0 0"  derivX="0 0 0"  free_position="0 0 0"  free_velocity="0 0 0"  restScale="1"  translation="0 -10.25 0"  scale3d="0.5 0.5 0.5" />
+		<TTriangleModel template="Vec3d" name="Floor"  moving="0"  simulated="0"  contactFriction="1" />
+		<LineModel name="Floor"  moving="0"  simulated="0"  contactFriction="@[-1].contactFriction" />
+		<PointModel name="Floor"  moving="0"  simulated="0"  contactFriction="@[-1].contactFriction" />
+		<OglModel template="ExtVec3f" name="FloorV"  fileMesh="mesh/floor2b.obj"  texturename="textures/floor.bmp"  translation="0 -10 0"  scale3d="0.5 0.5 0.5" />
+	</Node>
+</Node>

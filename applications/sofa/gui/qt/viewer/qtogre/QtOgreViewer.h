@@ -38,7 +38,7 @@
 #include <sofa/helper/system/SetDirectory.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/common/Simulation.h>
-
+#include <viewer/ViewerFactory.h>
 #ifdef SOFA_QT4
 #include <QPaintEvent>
 #include <QWidget>
@@ -102,18 +102,26 @@ using namespace sofa::simulation;
 	      Q_OBJECT
 		public:
 
+
+
 	      std::string sceneName;
 
+        static void create(QtOgreViewer*& instance, const CreatorArgument& arg)
+        {
+          instance = new QtOgreViewer(arg.parent, arg.name.c_str() );
+        }      
+ 
+        /// Activate this class of viewer.
+        /// This method is called before the viewer is actually created
+        /// and can be used to register classes associated with in the the ObjectFactory.
+        static int EnableViewer();
 
-	      /// Activate this class of viewer.
-	      /// This method is called before the viewer is actually created
-	      /// and can be used to register classes associated with in the the ObjectFactory.
-	      static int EnableViewer();
-
-	      /// Disable this class of viewer.
-	      /// This method is called after the viewer is destroyed
-	      /// and can be used to unregister classes associated with in the the ObjectFactory.
-	      static int DisableViewer();
+        /// Disable this class of viewer.
+        /// This method is called after the viewer is destroyed
+        /// and can be used to unregister classes associated with in the the ObjectFactory.
+        static int DisableViewer();
+      
+ 
 
 	      QtOgreViewer( QWidget *parent=0, const char *name=0 );
 	      ~QtOgreViewer();

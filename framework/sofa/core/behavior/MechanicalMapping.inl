@@ -349,7 +349,7 @@ bool MechanicalMapping<In,Out>::checkApplyJT( InVecDeriv& out, const OutVecDeriv
     matrixApplyJT(tmp2, in, J);
 
     // compare tmp and tmp2
-    const int NOut = sofa::defaulttype::DataTypeInfo<typename Out::Deriv>::Size;
+    const int NOut = sofa::defaulttype::DataTypeInfo<typename In::Deriv>::Size;
     double diff_mean = 0, diff_max = 0, val1_mean = 0, val2_mean = 0;
     for (unsigned int i=0;i<tmp.size();++i)
         for (int j=0;j<NOut;++j)

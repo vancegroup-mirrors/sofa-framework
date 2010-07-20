@@ -29,7 +29,9 @@
 
 #include <qstring.h>
 #include <qwidget.h>
-
+#include <sofa/helper/Factory.h>
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/core/CollisionModel.h>
 #ifdef SOFA_QT4 
 #include <QEvent>
 #include <QMouseEvent> 
@@ -100,7 +102,10 @@ class SofaViewer
 {
 
 public:
-	SofaViewer()
+
+ 
+
+  SofaViewer()
 	: groot(NULL)
 	, m_isControlPressed(false)
 	, _video(false)
@@ -112,11 +117,12 @@ public:
 	,currentCamera(NULL)
 	{
 	}
-	virtual ~SofaViewer()
+	
+  virtual ~SofaViewer()
 	{
 	}
 
-  virtual void drawColourPicking () {};
+  virtual void drawColourPicking (core::CollisionModel::ColourCode /*code*/) {};
 
   
 
@@ -197,6 +203,10 @@ public:
         setCameraMode(component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE);
       else
         setCameraMode(component::visualmodel::BaseCamera::PERSPECTIVE_TYPE);
+       if ( viewerConf->getPickingMethodId() == gui::PickHandler::RAY_CASTING)
+         pick.setPickingMethod( gui::PickHandler::RAY_CASTING );
+       else
+        pick.setPickingMethod( gui::PickHandler::SELECTION_BUFFER);
     }
 
 	//Fonctions needed to take a screenshot
@@ -316,7 +326,9 @@ protected:
 			break;
 		}
 		case Qt::Key_Shift:
-			pick.activateRay(true);
+      GLint viewport[4]; 
+      glGetIntegerv(GL_VIEWPORT,viewport);
+			pick.activateRay(viewport[2],viewport[3]);
 			break;
 		case Qt::Key_B:
 			// --- change background
@@ -421,7 +433,8 @@ protected:
 		switch (e->key())
 		{
 		case Qt::Key_Shift:
-			pick.activateRay(false);
+			pick.deactivateRay();
+     
 			break;
 		case Qt::Key_Control:
 		{
@@ -512,14 +525,10 @@ protected:
     mousepos.x      = e->x();
     mousepos.y      = e->y();
 
-
-      
-    
-
 		if (e->state() & Qt::ShiftButton)
 		{
 
-			pick.activateRay(true);
+			pick.activateRay(viewport[2],viewport[3]);
       pick.updateMouse2D( mousepos );
 
 			//_sceneTransform.ApplyInverse();
@@ -565,7 +574,7 @@ protected:
 		}
 		else
 		{
-			pick.activateRay(false);
+			pick.activateRay(viewport[2],viewport[3]);
 		}
 
 	}
@@ -868,9 +877,8 @@ protected:
 
 
 protected:
-        sofa::component::visualmodel::BaseCamera* currentCamera;
+        sofa::component::visualmodel::BaseCamera* currentCamera;  
 
-  
 
 };
 
@@ -878,16 +886,18 @@ class ColourPickingRenderCallBack : public sofa::gui::CallBackRender
 {
 public: 
   ColourPickingRenderCallBack(SofaViewer* viewer):_viewer(viewer){};
-  virtual void render()
+  virtual void render(core::CollisionModel::ColourCode code)
   {
     if(_viewer){
-      _viewer->drawColourPicking();
+      _viewer->drawColourPicking(code);
     }
   };
 protected:
   SofaViewer* _viewer;
 
 };
+
+
 }
 }
 }

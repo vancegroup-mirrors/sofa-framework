@@ -485,7 +485,7 @@ namespace gl
 	}
       resetMaterial(colour);
     }
-  void DrawManager::drawSpheres(const std::vector<Vector3> &points, const std::vector<float> radius, const Vec<4,float> colour)
+  void DrawManager::drawSpheres(const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec<4,float> colour)
     {      
       setMaterial(colour);
       for (unsigned int i=0;i<points.size();++i)
@@ -502,7 +502,7 @@ namespace gl
       setMaterial(colour);
       /* create Vectors p and q, co-planar with the cylinder's cross-sectional disk */
       Vector3 p=tmp;
-      if (p[0] == 0.0 && p[1] == 0.0)
+      if (fabs(p[0]) + fabs(p[1]) < 0.00001*tmp.norm())
 	p[0] += 1.0;
       else
 	p[2] += 1.0;
@@ -652,7 +652,6 @@ namespace gl
 #endif
 	  };
       }
-
 
   void DrawManager::addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
                                 const Vector3 &normal,

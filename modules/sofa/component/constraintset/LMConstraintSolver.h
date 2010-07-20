@@ -37,7 +37,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Sparse>
-USING_PART_OF_NAMESPACE_EIGEN
 
 namespace sofa
 {
@@ -55,10 +54,11 @@ class SOFA_COMPONENT_CONSTRAINTSET_API LMConstraintSolver : public sofa::core::b
 protected:
     typedef sofa::core::VecId VecId;
     typedef sofa::core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
+
     typedef Eigen::Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
-    typedef Eigen::Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
-    typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
-    typedef Eigen::SparseVector<SReal,Eigen::RowMajor>    SparseVectorEigen;
+    typedef linearsolver::VectorEigen          VectorEigen;
+    typedef linearsolver::SparseMatrixEigen    SparseMatrixEigen;
+    typedef linearsolver::SparseVectorEigen    SparseVectorEigen;
     
     typedef helper::set< sofa::core::behavior::BaseMechanicalState* > SetDof;
     typedef std::map< const sofa::core::behavior::BaseMechanicalState *, SparseMatrixEigen > DofToMatrix;
@@ -92,6 +92,16 @@ protected:
     mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphKineticEnergy;
 
 
+
+    template <class T>
+    std::string printDimension(const T& m)
+    {
+      std::ostringstream out;
+      out << "(" << m.rows() << "," << m.cols() << ")";
+      return out.str();
+    }
+
+    void convertSparseToDense(const SparseMatrixEigen& sparseM, MatrixEigen& out) const;
  protected:
     /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
     virtual bool needPriorStatePropagation(core::behavior::BaseLMConstraint::ConstOrder order) const;
@@ -127,7 +137,7 @@ protected:
      **/
     virtual void constraintStateCorrection(VecId id, core::behavior::BaseConstraintSet::ConstOrder order,
                                            bool isPositionChangesUpdateVelocity,
-                                   const SparseMatrixEigen  &invM_Ltrans, 
+                                   const SparseMatrixEigen  &invM_Ltrans,
                                    const VectorEigen  &Lambda, 
                                    const sofa::helper::set< unsigned int > &dofUsed,
                                    sofa::core::behavior::BaseMechanicalState* dof) const;
@@ -152,6 +162,7 @@ protected:
     SetDof setDofs;
     DofToMask dofUsed;
     DofToMatrix invMass_Ltrans;
+    DofToMatrix LMatrices;
 
     MatrixEigen W;
     VectorEigen c;

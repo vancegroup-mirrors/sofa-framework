@@ -71,8 +71,10 @@ namespace sofa
     {
     public:
       virtual ~CallBackRender(){};
-      virtual void render() = 0;
+      virtual void render(core::CollisionModel::ColourCode code ) = 0;
     };
+
+   
 
     
 
@@ -80,13 +82,26 @@ namespace sofa
     {
       typedef sofa::component::collision::RayModel MouseCollisionModel;
       typedef sofa::component::container::MechanicalObject< defaulttype::Vec3Types > MouseContainer;
+   
     public:
-
+      enum PickingMethod
+        {
+          RAY_CASTING,
+          SELECTION_BUFFER
+        };
 
       PickHandler();
       ~PickHandler();
           
-      void activateRay(bool act);
+      void activateRay(int width, int height);
+      void deactivateRay();
+
+      void allocateSelectionBuffer(int width, int height);
+      void destroySelectionBuffer();
+
+
+      void setPickingMethod(PickingMethod method) { pickingMethod = method; } 
+      bool useSelectionBufferMethod() const { return (pickingMethod == SELECTION_BUFFER); } 
 
       void updateRay(const sofa::defaulttype::Vector3 &position, const sofa::defaulttype::Vector3 &orientation);
 
@@ -125,6 +140,7 @@ namespace sofa
       bool interactorInUse;
       MOUSE_STATUS mouseStatus;
       MOUSE_BUTTON mouseButton;
+      
 
       Node                *mouseNode;
       MouseContainer      *mouseContainer;
@@ -143,6 +159,7 @@ namespace sofa
 
       bool useCollisions;
       
+      
 
       //NONE is the number of Operations in use.
       helper::fixed_array< Operation*,NONE > operations;
@@ -151,6 +168,11 @@ namespace sofa
 
       CallBackRender* renderCallback;
 
+      PickingMethod pickingMethod;
+
+      bool _fboAllocated;
+
+
       BodyPicked findCollision();
       BodyPicked findCollisionUsingPipeline();
       BodyPicked findCollisionUsingBruteForce();
@@ -158,8 +180,9 @@ namespace sofa
 
       bool needToCastRay();     
       void setCompatibleInteractor();
-      BodyPicked _decodeColour(const sofa::defaulttype::Vec4f& colour,const defaulttype::Vector3& origin, 
-      const defaulttype::Vector3& direction);
+      void _decodeCollisionElement( BodyPicked& body, const sofa::defaulttype::Vec4f colour);
+      void _decodePosition(BodyPicked& body, const sofa::defaulttype::Vec4f& colour);
+      
     };
   }
 }

@@ -39,6 +39,9 @@
 
 
 #include <viewer/SofaViewer.h>
+
+#include <sofa/gui/qt/viewer/ViewerFactory.h>
+
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/helper/gl/Transformation.h>
@@ -75,7 +78,7 @@ namespace qt
 	  using namespace sofa::component::collision;
 
 
-class QtViewer :public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer
+class QtViewer : public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer  
 {
 	      Q_OBJECT
 
@@ -135,15 +138,23 @@ class QtViewer :public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer
 
 	    public:
 
-	      /// Activate this class of viewer.
-	      /// This method is called before the viewer is actually created
-	      /// and can be used to register classes associated with in the the ObjectFactory.
-	      static int EnableViewer();
+       
+       static void create(QtViewer*& instance, const CreatorArgument& arg)
+       {
+          instance = new QtViewer(arg.parent, arg.name.c_str() );
+       }  
 
-	      /// Disable this class of viewer.
-	      /// This method is called after the viewer is destroyed
-	      /// and can be used to unregister classes associated with in the the ObjectFactory.
-	      static int DisableViewer();
+        /// Activate this class of viewer.
+        /// This method is called before the viewer is actually created
+        /// and can be used to register classes associated with in the the ObjectFactory.
+        static int EnableViewer();
+
+        /// Disable this class of viewer.
+        /// This method is called after the viewer is destroyed
+        /// and can be used to unregister classes associated with in the the ObjectFactory.
+        static int DisableViewer();
+
+
 
 	      static QGLFormat setupGLFormat();
 	      QtViewer( QWidget* parent, const char* name="" );
@@ -164,7 +175,7 @@ class QtViewer :public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer
 		  virtual void setView(const Vec3d& pos, const Quat &ori);
 		  virtual void moveView(const Vec3d& pos, const Quat &ori);
 		  virtual void captureEvent() { SofaViewer::captureEvent(); }
-      virtual void drawColourPicking ();  
+      virtual void drawColourPicking (core::CollisionModel::ColourCode code);  
 
 	    signals:
 	      void redrawn();

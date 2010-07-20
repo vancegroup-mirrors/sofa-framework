@@ -11,7 +11,7 @@ class ShowVector
 	FILE* _file;
 	std::string _name;
 public:
-	ShowVector(char* fileName)
+	ShowVector(const char* fileName)
 	{
 		_file = fopen(fileName,"w");
 		_name = std::string(fileName);
@@ -32,9 +32,9 @@ public:
 		fprintf(_file,"%f",v);
 	}
 
-	void addTitle(char * str)
+	void addTitle(const char * str)
 	{
-		fprintf(_file,"yo%s\n",str);
+		fprintf(_file,"%s\n",str);
 	}
 
 	template <class T> void addVector(T* v,int size)
@@ -56,7 +56,7 @@ public:
 		sofa::gpu::opencl::myopenclEnqueueReadBuffer(0,tab,dp.m,dp.offset,size*sizeof(T));
 		addVector<T>(tab,size);
 
-		delete(tab);
+		delete[] tab;
 	}
 
 	template <class T> void addCudaVector(const void * dp,int size)
@@ -65,7 +65,7 @@ public:
 		sofa::gpu::cuda::mycudaMemcpyDeviceToHost(tab,dp,size*sizeof(T),0);
 		addVector<T>(tab,size);
 
-		delete(tab);
+		delete[] tab;
 	}
 };
 

@@ -3,7 +3,7 @@
 
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/common/Visitor.h>
-
+#include <sofa/core/CollisionModel.h>
 
 namespace sofa{
   namespace simulation{
@@ -12,7 +12,7 @@ namespace sofa{
     class SOFA_SIMULATION_COMMON_API ColourPickingVisitor : public Visitor
     {
       public:
-        ColourPickingVisitor(){};
+        ColourPickingVisitor(core::CollisionModel::ColourCode Method):method(Method){};
     void processCollisionModel(simulation::Node* /*node*/, core::CollisionModel* /*o*/); 
 
     virtual Result processNodeTopDown(simulation::Node* node);
@@ -21,6 +21,8 @@ namespace sofa{
 	    /// Only used for debugging / profiling purposes
 	      virtual const char* getCategoryName() const { return "collision"; }
         virtual const char* getClassName() const { return "ColourPickingVisitor"; }
+    private:
+      core::CollisionModel::ColourCode method;
     };
 
    

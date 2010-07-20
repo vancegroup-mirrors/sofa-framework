@@ -153,6 +153,16 @@ public:
     ///
     /// It is for instance used in RigidMapping to get the local coordinates of the object.
     virtual void disable() {}
+
+
+    /// Add Contact Point process
+    ///
+    /// Used for continuousFrictionContact response
+    /// beginAddContactPoint will reset the mapping
+    /// addContactPointFromInputMapping will add point in the duplicated mapping without using barycentric mappers
+    virtual void beginAddContactPoint(){serr<<" beginAddContactPoint is not implemented for this mapping"<<sendl; }
+    virtual int addContactPointFromInputMapping(const sofa::defaulttype::Vector3& /*pos*/, std::vector< std::pair<int, double> >& /*baryCoords*/)
+            {serr<<" addContactPointFromInputMapping is not implemented for this mapping"<<sendl; return 0; }
 };
 
 } // namespace behavior

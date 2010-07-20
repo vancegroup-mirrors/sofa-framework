@@ -20,7 +20,7 @@ namespace sofa{
     void ColourPickingVisitor::processCollisionModel(simulation::Node* /* node */ , core::CollisionModel* o)
     {
       using namespace core::objectmodel;
-      o->drawColourPicking();
+      o->drawColourPicking(method);
     }
 
   }

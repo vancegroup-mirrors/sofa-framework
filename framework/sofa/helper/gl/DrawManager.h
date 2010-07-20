@@ -82,8 +82,9 @@ namespace gl
                          const std::vector<Vector3>  &normal,
                          const Vec<4,float> colour);
 
-    void drawSpheres (const std::vector<Vector3> &points, const std::vector<float> radius, const Vec<4,float> colour);
+    void drawSpheres (const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec<4,float> colour);
     void drawSpheres (const std::vector<Vector3> &points, float radius, const Vec<4,float> colour);
+    //void drawFlatSpheres ( const std::vector<Vector3>& points, const std::vector<float>& radix, const std::vector< Vec<4,float> > colours); 
     void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subd=16);
     void drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
     void drawArrow   (const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);

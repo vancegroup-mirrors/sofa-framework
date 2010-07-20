@@ -75,6 +75,9 @@ namespace viewer
 
 namespace qt
 {
+
+
+
 using std::cout;
 using std::endl;
 using namespace sofa::defaulttype;
@@ -82,9 +85,13 @@ using namespace sofa::helper::gl;
 
 using sofa::simulation::getSimulation;
 
-//extern UserInterface*	GUI;
-//extern OBJmodel*		cubeModel;
+helper::Creator<SofaViewerFactory, QtViewer> QtViewer_class("qt",false);
+SOFA_DECL_CLASS ( QTGUI )
 
+
+ sofa::core::ObjectFactory::ClassEntry* classVisualModel;
+
+ static  bool enabled = false;
 
 // Mouse Interactor
 bool QtViewer::_mouseTrans = false;
@@ -108,39 +115,6 @@ float g_mModelView[16] =
 //float g_mCameraInverse[16] = {0};
 
 
-static bool enabled = false;
-sofa::core::ObjectFactory::ClassEntry* classVisualModel;
-
-/// Activate this class of viewer.
-/// This method is called before the viewer is actually created
-/// and can be used to register classes associated with in the the ObjectFactory.
-int QtViewer::EnableViewer()
-{
-	if (!enabled)
-	{
-		enabled = true;
-		// Replace generic visual models with OglModel
-		sofa::core::ObjectFactory::AddAlias("VisualModel", "OglModel", true,
-				&classVisualModel);
-	}
-	return 0;
-}
-
-/// Disable this class of viewer.
-/// This method is called after the viewer is destroyed
-/// and can be used to unregister classes associated with in the the ObjectFactory.
-int QtViewer::DisableViewer()
-{
-	if (enabled)
-	{
-		enabled = false;
-		sofa::core::ObjectFactory::ResetAlias("VisualModel", classVisualModel);
-	}
-	return 0;
-}
-
-
-
 QGLFormat QtViewer::setupGLFormat()
 {
     QGLFormat f = QGLFormat::defaultFormat();
@@ -150,7 +124,33 @@ QGLFormat QtViewer::setupGLFormat()
 #endif
     return f;
 }
-
+	/// Activate this class of viewer.
+	/// This method is called before the viewer is actually created
+	/// and can be used to register classes associated with in the the ObjectFactory.
+	int QtViewer::EnableViewer()
+	{
+	        if (!enabled)
+	        {
+	                enabled = true;
+	                // Replace generic visual models with OglModel
+	                sofa::core::ObjectFactory::AddAlias("VisualModel", "OglModel", true,
+	                                &classVisualModel);
+	        }
+	        return 0;
+	}
+	
+	/// Disable this class of viewer.
+	/// This method is called after the viewer is destroyed
+	/// and can be used to unregister classes associated with in the the ObjectFactory.
+	int QtViewer::DisableViewer()
+	{
+	        if (enabled)
+	        {
+	                enabled = false;
+	                sofa::core::ObjectFactory::ResetAlias("VisualModel", classVisualModel);
+	        }
+	        return 0;
+	}
 
 // ---------------------------------------------------------
 // --- Constructor
@@ -678,9 +678,10 @@ void QtViewer::DrawLogo()
 // ---------------------------------------------------------
 // ---
 // ---------------------------------------------------------
-void QtViewer::drawColourPicking()
+void QtViewer::drawColourPicking(core::CollisionModel::ColourCode code)
 {
- 
+  // Define background color
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION);
@@ -689,10 +690,8 @@ void QtViewer::drawColourPicking()
   glMultMatrixd(lastProjectionMatrix);
   glMatrixMode(GL_MODELVIEW);
 
-  // Define background color
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-  sofa::simulation::ColourPickingVisitor cpv;
+  sofa::simulation::ColourPickingVisitor cpv(code);
   cpv.execute(sofa::simulation::getSimulation()->getContext() );
 
   glMatrixMode(GL_PROJECTION);

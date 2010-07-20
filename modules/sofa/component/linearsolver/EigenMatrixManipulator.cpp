@@ -39,57 +39,40 @@ namespace sofa
         return *this;
       }
 
-      void LLineManipulator::buildSparseLine(const helper::vector< SparseVectorEigen >& lines, SparseVectorEigen &output) const
-      {
-        //TODO: improve estimation of non zero coeff
-        for (InternalData::const_iterator it=_data.begin(); it!=_data.end();++it)
-        {
-          const unsigned int indexConstraint=it->first;
-          const SReal factor=it->second;
-          output += lines[indexConstraint]*factor;
-        }
-      }
-
-
       void LMatrixManipulator::init(const SparseMatrixEigen& L)
       {
         const unsigned int numConstraint=L.rows();
         const unsigned int numDofs=L.cols();
         LMatrix.resize(numConstraint,SparseVectorEigen(numDofs));
-        for (unsigned int i=0;i<LMatrix.size();++i) LMatrix[i].startFill(0.3*numDofs);
+        for (unsigned int i=0;i<LMatrix.size();++i) LMatrix[i].reserve(0.3*numDofs);
         for (int k=0; k<L.outerSize(); ++k)
-        {
+        {          
           for (SparseMatrixEigen::InnerIterator it(L,k); it; ++it)
           {
             const unsigned int row=it.row();
             const unsigned int col=it.col();
-            const SReal value=it.value();
-            LMatrix[row].fill(col)=value;
+            const SReal value=it.value();            
+            LMatrix[row].insert(col)=value;
           }
         }
-
-        for (unsigned int i=0;i<LMatrix.size();++i) LMatrix[i].endFill();
+        for (unsigned int i=0;i<LMatrix.size();++i) LMatrix[i].finalize();
       }
 
 
 
       void LMatrixManipulator::buildLMatrix(const helper::vector<LLineManipulator> &lines, SparseMatrixEigen& matrix) const
       {
-        matrix.startFill(LMatrix.size()*LMatrix.size());
-
         for (unsigned int l=0;l<lines.size();++l)
         {
           const LLineManipulator& lManip=lines[l];
-
           SparseVectorEigen vector;
-          lManip.buildSparseLine(LMatrix,vector);
-
+          lManip.buildCombination(LMatrix,vector);
+          matrix.startVec(l);
           for (SparseVectorEigen::InnerIterator it(vector); it; ++it)
           {
-            matrix.fill(l,it.index())=it.value();
+            matrix.insertBack(l,it.index())=it.value();
           }
         }
-        matrix.endFill();
       }
 
 

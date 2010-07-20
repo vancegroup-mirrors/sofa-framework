@@ -58,6 +58,7 @@ contains (DEFINES, SOFA_DUMP_VISITOR_INFO){
 
 
 HEADERS += viewer/SofaViewer.h \
+		   viewer/ViewerFactory.h \
            GraphListenerQListView.h \
            GenGraphForm.h \
            AddObject.h \
@@ -89,7 +90,8 @@ HEADERS += viewer/SofaViewer.h \
            QMenuFilesRecentlyOpened.h \
            ImageQt.h 
 
-SOURCES += GraphListenerQListView.cpp \
+SOURCES += viewer/ViewerFactory.cpp \
+           GraphListenerQListView.cpp \
            GenGraphForm.cpp \
            AddObject.cpp \
            RealGUI.cpp \
@@ -118,6 +120,16 @@ SOURCES += GraphListenerQListView.cpp \
 		   QSofaStatWidget.cpp \
            QMenuFilesRecentlyOpened.cpp \
            ImageQt.cpp 
+
+contains (DEFINES, SOFA_QT4){
+HEADERS += QModelViewTableDataContainer.h \
+           QModelViewTableUpdater.h
+}
+
+!contains (DEFINES, SOFA_QT4){
+HEADERS += QTableDataContainer.h \
+           QTableUpdater.h
+}
 
 contains (DEFINES, SOFA_DUMP_VISITOR_INFO){
 HEADERS += GraphVisitor.h \

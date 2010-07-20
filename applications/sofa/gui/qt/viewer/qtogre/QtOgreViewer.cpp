@@ -34,8 +34,12 @@
 #include <sofa/gui/qt/viewer/qtogre/OgreShaderParameter.h>
 #include <sofa/gui/qt/viewer/qtogre/OgreShaderTextureUnit.h>
 #include <sofa/component/configurationsetting/OgreViewerSetting.h>
+
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
+
+#include <sofa/helper/Factory.inl>
+
 #include <sofa/simulation/common/Simulation.h>
 
 #include <sofa/core/objectmodel/KeypressedEvent.h>
@@ -52,10 +56,12 @@
 #ifdef __linux__
 #include <QX11Info>
 #endif
+#include <QWidget>
 #include <QLabel>
 #include <QToolBox>
 #include <QVBoxLayout>
 #else
+#include <qwidget.h>
 #include <qlabel.h>
 #include <qtoolbox.h>
 #endif
@@ -106,52 +112,59 @@ namespace sofa
 	namespace qtogre
 	{
 
+    SOFA_DECL_CLASS ( OgreGUI )
+
+    sofa::core::ObjectFactory::ClassEntry* classOglModel;
+    sofa::core::ObjectFactory::ClassEntry* classVisualModel;
+
+    static  bool enabled = false;
+
+    helper::Creator<SofaViewerFactory,QtOgreViewer> QtOgreViewer_class("ogre",false);
+    
+
+
 	  SOFA_LINK_CLASS(OgreVisualModel)
-      SOFA_LINK_CLASS(OgreShaderParameter)
-      SOFA_LINK_CLASS(OgreShaderTextureUnit)
+    SOFA_LINK_CLASS(OgreShaderParameter)
+    SOFA_LINK_CLASS(OgreShaderTextureUnit)
 
 	  using sofa::simulation::Simulation;
+          /// Activate this class of viewer.
+          /// This method is called before the viewer is actually created
+	          /// and can be used to register classes associated with in the the ObjectFactory.
+	          int QtOgreViewer::EnableViewer()
+	          {
+	            if (!enabled)
+	              {
+	                enabled = true;
+	                // Replace OpenGL visual models with OgreVisualModel
+	                sofa::core::ObjectFactory::AddAlias("OglModel", "OgreVisualModel", true, &classOglModel);
+	                sofa::core::ObjectFactory::AddAlias("VisualModel", "OgreVisualModel", true, &classVisualModel);
+	              }
+	            return 0;
+	          }
+	
+	          /// Disable this class of viewer.
+	          /// This method is called after the viewer is destroyed
+	          /// and can be used to unregister classes associated with in the the ObjectFactory.
+	          int QtOgreViewer::DisableViewer()
+	          {
+	            if (enabled)
+	              {
+	                enabled = false;
+	                // Replace OpenGL visual models with OgreVisualModel
+	                sofa::core::ObjectFactory::ResetAlias("OglModel", classOglModel);
+	                sofa::core::ObjectFactory::ResetAlias("VisualModel", classVisualModel);
+	              }
+	            return 0;
+	          }
+
 	  using sofa::component::visualmodel::OgreVisualModel;
-
-	  static bool enabled = false;
-	  sofa::core::ObjectFactory::ClassEntry* classOglModel;
-	  sofa::core::ObjectFactory::ClassEntry* classVisualModel;
-
-	  /// Activate this class of viewer.
-	  /// This method is called before the viewer is actually created
-	  /// and can be used to register classes associated with in the the ObjectFactory.
-	  int QtOgreViewer::EnableViewer()
-	  {
-	    if (!enabled)
-	      {
-		enabled = true;
-		// Replace OpenGL visual models with OgreVisualModel
-		sofa::core::ObjectFactory::AddAlias("OglModel", "OgreVisualModel", true, &classOglModel);
-		sofa::core::ObjectFactory::AddAlias("VisualModel", "OgreVisualModel", true, &classVisualModel);
-	      }
-	    return 0;
-	  }
-
-	  /// Disable this class of viewer.
-	  /// This method is called after the viewer is destroyed
-	  /// and can be used to unregister classes associated with in the the ObjectFactory.
-	  int QtOgreViewer::DisableViewer()
-	  {
-	    if (enabled)
-	      {
-		enabled = false;
-		// Replace OpenGL visual models with OgreVisualModel
-		sofa::core::ObjectFactory::ResetAlias("OglModel", classOglModel);
-		sofa::core::ObjectFactory::ResetAlias("VisualModel", classVisualModel);
-	      }
-	    return 0;
-	  }
 
 	  //Application principale
 	  QtOgreViewer::QtOgreViewer( QWidget *parent, const char *name )
 	    : QGLWidget( parent, name )
 	  {       
-        sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
+      sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
 	    dirLight = pointLight = spotLight = NULL;
 	    this->setName("ogre");
 #ifdef SOFA_QT4
@@ -161,9 +174,6 @@ namespace sofa
 	    setWFlags(Qt::WNoAutoErase);
 	    setWFlags(Qt::WStyle_StaysOnTop);
 #endif
-
-	    // Make sure this class is enabled
-	    EnableViewer();
 
 	    //*************************************************************************
 	    // Ogre Init
@@ -551,7 +561,7 @@ namespace sofa
             mRenderWindow->setActive(true);
             WId ogreWinId = 0x0;
             mRenderWindow->getCustomAttribute( "WINDOW", &ogreWinId );
-            this->create( ogreWinId );
+            //QWidget::create(ogreWinId);
 
 #ifdef SOFA_QT4
             setAttribute( Qt::WA_PaintOnScreen, true );

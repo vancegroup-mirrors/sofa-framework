@@ -37,6 +37,7 @@
 #include <fstream>
 
 #include <viewer/SofaViewer.h>
+#include <viewer/ViewerFactory.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/helper/gl/Transformation.h>
@@ -111,21 +112,38 @@ class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::SofaViewer
 
 	      bool _waitForRender;
 
-	    public:
+/*
+          viewerOGREAction->setIconText(QApplication::translate("GUI", "OGRE", 0, QApplication::UnicodeUTF8));
+        viewerOGREAction->setText(QApplication::translate("GUI", "&OGRE", 0, QApplication::UnicodeUTF8));
+*/	
+  public:
 
-	      /// Activate this class of viewer.
-	      /// This method is called before the viewer is actually created
-	      /// and can be used to register classes associated with in the the ObjectFactory.
-	      static int EnableViewer();
+       static void create(QtGLViewer*& instance, const CreatorArgument& arg)
+       {
+          instance = new QtGLViewer(arg.parent, arg.name.c_str() );
+       }      
 
-	      /// Disable this class of viewer.
-	      /// This method is called after the viewer is destroyed
-	      /// and can be used to unregister classes associated with in the the ObjectFactory.
-	      static int DisableViewer();
+       virtual const char* getViewerName() const { return "QGLViewer"; } 
 
-        virtual void drawColourPicking ();  
+       virtual const char* getAcceleratedViewerName() const { return "&QGLViewer"; }
 
-	      QtGLViewer( QWidget* parent, const char* name="" );
+         /// Activate this class of viewer.
+        /// This method is called before the viewer is actually created
+        /// and can be used to register classes associated with in the the ObjectFactory.
+        static int EnableViewer();
+
+        /// Disable this class of viewer.
+        /// This method is called after the viewer is destroyed
+        /// and can be used to unregister classes associated with in the the ObjectFactory.
+        static int DisableViewer();
+        
+        void RegisterVisualModels() ;
+
+       void UnregisterVisualModels() ; 
+      
+       virtual void drawColourPicking (core::CollisionModel::ColourCode code);  
+
+        QtGLViewer( QWidget* parent, const char* name="" );
 	      ~QtGLViewer();
 
 	      QWidget* getQWidget() { return this; }

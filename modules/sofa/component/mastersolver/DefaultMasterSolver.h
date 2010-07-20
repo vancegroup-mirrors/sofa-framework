@@ -48,6 +48,8 @@ public:
     DefaultMasterSolver();
 	virtual ~DefaultMasterSolver();
     void step (double dt);
+protected:
+    Data<bool> firstCollision;
 };
 
 } // namespace mastersolver

@@ -575,7 +575,7 @@ namespace sofa
         {
           if (std::string(it->getClass()) == std::string("Node"))
           {
-            buildNodeFromBaseElement(newNode, it,false); //Desactivate saving history
+            buildNodeFromBaseElement(newNode, it,true); //Desactivate saving history
           }
           else
           {

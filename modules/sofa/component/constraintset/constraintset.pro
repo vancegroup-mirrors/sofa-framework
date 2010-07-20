@@ -33,7 +33,9 @@ SOURCES += initConstraintSet.cpp \
 
 contains(DEFINES,SOFA_HAVE_EIGEN2){ 
 HEADERS += \
+           LMConstraintDirectSolver.h\
            LMConstraintSolver.h\
+           ContactDescription.h \
            DistanceLMConstraint.h \
            DistanceLMConstraint.inl \
            DistanceLMContactConstraint.h \
@@ -44,6 +46,7 @@ HEADERS += \
            DOFBlockerLMConstraint.inl 
            
 SOURCES += \           
+           LMConstraintDirectSolver.cpp\
            LMConstraintSolver.cpp\
            DistanceLMConstraint.cpp \
            DistanceLMContactConstraint.cpp \

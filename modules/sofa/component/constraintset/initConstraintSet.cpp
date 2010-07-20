@@ -62,6 +62,7 @@ SOFA_LINK_CLASS(DistanceLMConstraint)
 SOFA_LINK_CLASS(DistanceLMContactConstraint)
 SOFA_LINK_CLASS(DOFBlockerLMConstraint)
 SOFA_LINK_CLASS(FixedLMConstraint)
+SOFA_LINK_CLASS(LMConstraintDirectSolver)
 SOFA_LINK_CLASS(LMConstraintSolver)
 #endif
 

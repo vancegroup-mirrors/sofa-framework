@@ -71,6 +71,7 @@ SOURCES += initMisc.cpp \
 
 
 
+
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX

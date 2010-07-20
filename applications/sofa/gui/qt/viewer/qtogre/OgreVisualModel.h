@@ -30,6 +30,8 @@
 #include <Ogre.h>
 #include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
 
+#include "OgreShaderParameter.h"
+
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/VisualModel.h>
 #include <sofa/core/behavior/MappedModel.h>
@@ -91,21 +93,29 @@ namespace sofa
 
         int index;
         Indices indices;
-        Ogre::MaterialPtr material;
+        Ogre::MaterialPtr material;        
         std::string materialName;
+        std::string textureName;
 
         VecTriangles triangles;
         VecQuads quads;
 
         void init(int &idx);
-        void create(Ogre::ManualObject *,
+        void create(Ogre::ManualObject *, helper::vector< BaseOgreShaderParameter*> *,
                     const ResizableExtVector<Coord>& positions,
                     const ResizableExtVector<Coord>& normals,
                     const ResizableExtVector<TexCoord>& textCoords) const;
-        void update(Ogre::ManualObject *,
-                    const ResizableExtVector<Coord>& positions,
+        void update(const ResizableExtVector<Coord>& positions,
                     const ResizableExtVector<Coord>& normals,
                     const ResizableExtVector<TexCoord>& textCoords) const ;
+
+        Ogre::MaterialPtr createMaterial( const core::loader::Material &sofaMaterial, const std::string &shaderName);
+        void updateMaterial(const core::loader::Material &sofaMaterial);
+        void applyShaderParameters() const;
+
+        void updateMeshCustomParameter(Ogre::Entity *entity) const;
+
+        static int materialUniqueIndex;
       protected:
 
         void computeGlobalToLocalPrimitives();
@@ -113,6 +123,8 @@ namespace sofa
 
         helper::vector< InternalStructure > storage;
         const unsigned int maxPrimitives;
+        mutable Ogre::ManualObject *model;
+        mutable helper::vector< BaseOgreShaderParameter*>* shaderParameters;
       };
 
 
@@ -139,16 +151,12 @@ public:
 protected:
 
     void prepareMesh();
-    Ogre::MaterialPtr createMaterial(const core::loader::Material &sofaMaterial);
-    void updateMaterial(Ogre::MaterialPtr ogreMaterial, const core::loader::Material &sofaMaterial);
-
     void updateVisibility();
     void uploadSubMesh(const SubMesh& m);
     void uploadNormals();    
     void convertManualToMesh();
 
-    static int meshName;   
-    static int materialName;   
+    static int meshName;
 
     sofa::core::objectmodel::DataFileName materialFile;
     Data< bool > culling;
@@ -163,6 +171,8 @@ protected:
     Ogre::MaterialPtr currentMaterial;
     Ogre::MaterialPtr currentMaterialNormals;
 
+
+    helper::vector<BaseOgreShaderParameter*> shaderParameters;
 
     typedef std::map<std::string, SubMesh> MatToMesh;
     MatToMesh materialToMesh;

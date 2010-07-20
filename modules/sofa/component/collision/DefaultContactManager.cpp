@@ -77,8 +77,11 @@ sofa::helper::OptionsGroup DefaultContactManager::initializeResponseOptions(core
 
 void DefaultContactManager::init()
 {	
+  if (response.getValue().size() == 0)
+  {
 	core::collision::Pipeline *pipeline=static_cast<simulation::Node*>(getContext())->collisionPipeline;
 	response.setValue(initializeResponseOptions(pipeline));
+  }
 }
 void DefaultContactManager::cleanup()
 {

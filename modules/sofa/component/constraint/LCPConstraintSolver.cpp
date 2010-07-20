@@ -324,7 +324,7 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
         , merge_local_levels( initData(&merge_local_levels, 2, "merge_local_levels", "if merge_method is 1: up to the specified level of the multigrid, constraints are grouped locally, i.e. separately within each contact pairs, while on upper levels they are grouped globally independently of contact pairs."))
         , constraintGroups( initData(&constraintGroups, "group", "list of ID of groups of constraints to be handled by this solver."))
         , f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration"))
-          , showLevels( initData(&showLevels,0,"showLevels","Number of constraint levels to display"))
+        , showLevels( initData(&showLevels,0,"showLevels","Number of constraint levels to display"))
         , showCellWidth( initData(&showCellWidth, "showCellWidth", "Distance between each constraint cells"))
         , showTranslation( initData(&showTranslation, "showTranslation", "Position of the first cell"))
         , showLevelTranslation( initData(&showLevelTranslation, "showLevelTranslation", "Translation between levels"))
@@ -334,9 +334,10 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
         , lcp3(MAX_NUM_CONSTRAINTS)
         , _W(&lcp1.W)
         , lcp(&lcp1)
-        ,last_lcp(0)
+        , last_lcp(0)
         , _dFree(&lcp1.dFree)
         , _result(&lcp1.f)
+		, _Wdiag(NULL)
       {
 	_numConstraints = 0;
 	_mu = 0.0;
@@ -353,6 +354,12 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
 	_Wdiag = new SparseMatrix<double>();
 
       }
+
+	  LCPConstraintSolver::~LCPConstraintSolver()
+	  {
+		  if (_Wdiag != 0)
+			  delete _Wdiag;
+	  }
 
       void LCPConstraintSolver::init()
       {

@@ -28,6 +28,7 @@
 #include <sofa/gui/qt/viewer/qtogre/QtOgreViewer.h>
 #include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
 #include <sofa/gui/qt/viewer/qtogre/OgreVisualModel.h>
+#include <sofa/gui/qt/viewer/qtogre/OgreShaderParameter.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
 #include <sofa/simulation/common/Simulation.h>
@@ -101,6 +102,7 @@ namespace sofa
 	{
 
 	  SOFA_LINK_CLASS(OgreVisualModel)
+      SOFA_LINK_CLASS(OgreShaderParameter)
 
 	  using sofa::simulation::Simulation;
 	  using sofa::component::visualmodel::OgreVisualModel;
@@ -257,16 +259,20 @@ namespace sofa
 	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins.cfg");            
 #endif
 	    mRoot = new Ogre::Root(pluginsPath, ogrePath, ogreLog);
-	    Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
+//	    Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
 #ifndef WIN32
 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation("/","FileSystem","General");
 #endif
-            const std::vector< std::string > &paths=sofa::helper::system::DataRepository.getPaths();
-            for (unsigned int i=0;i<paths.size();++i)
-              Ogre::ResourceGroupManager::getSingleton().addResourceLocation(paths[i] ,"FileSystem","General");
- 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/config","FileSystem","General");
- 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials","FileSystem","General");
-            Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+        const std::vector< std::string > &paths=sofa::helper::system::DataRepository.getPaths();
+        for (unsigned int i=0;i<paths.size();++i)
+          Ogre::ResourceGroupManager::getSingleton().addResourceLocation(paths[i] ,"FileSystem","General");
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/config","FileSystem","General");
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/textures","FileSystem","General");
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/programs","FileSystem","General");
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/scripts","FileSystem","General");
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures","FileSystem","General");
+        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures/nvidia","FileSystem","General");
+//        Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
 	  }
 
@@ -508,7 +514,8 @@ namespace sofa
             WId ogreWinId = 0x0;
             mRenderWindow->getCustomAttribute( "WINDOW", &ogreWinId );
             this->create( ogreWinId );
-            
+
+//            Ogre::MaterialManager::getSingleton().load("Examples-Advanced.material", "General");
 #ifdef SOFA_QT4
             setAttribute( Qt::WA_PaintOnScreen, true );
             setAttribute( Qt::WA_NoBackground );
@@ -594,7 +601,7 @@ namespace sofa
 		mRenderWindow->removeViewport(0);
 	      }
 	    mVp = mRenderWindow->addViewport(mCamera);
-	    mVp->setBackgroundColour(loader.environment.backgroundColour);
+        mVp->setBackgroundColour(loader.environment.backgroundColour);
 	    mVp->setDimensions(0.0 ,0.0 , 1.0, 1.0);
 	    showEntireScene();
 
@@ -634,7 +641,7 @@ namespace sofa
 	    numSpotLight->setValue(loader.spotLights.size());
 	    //************************************************************************************************
 	    // Alter the camera aspect ratio to match the viewport
-	    mCamera->setAspectRatio(Real(mVp->getActualWidth()) / Real(mVp->getActualHeight()));
+        mCamera->setAspectRatio(Real(mVp->getActualWidth()) / Real(mVp->getActualHeight()));
 	  }
 
 	  void QtOgreViewer::showEntireScene()
@@ -677,7 +684,7 @@ namespace sofa
 	    zeroNode->setPosition(camera_position);
 	    mCamera->setPosition(camera_position);
 	    mCamera->moveRelative(Ogre::Vector3(0.0,0.0,2*std::max(size_world[0],std::max( size_world[1], size_world[2]))
-						));
+                        ));
 	    return;
 	  }
 
@@ -1288,7 +1295,7 @@ namespace sofa
 
 
 	  void QtOgreViewer::setBackgroundColour(float r, float g, float b)
-	  {
+      {
 	    SofaViewer::setBackgroundColour(r,g,b);
 	    mVp->setBackgroundColour(Ogre::ColourValue(r,g,b,1.0));
 	  }

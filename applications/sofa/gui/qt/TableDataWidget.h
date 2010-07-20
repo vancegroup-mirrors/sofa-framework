@@ -296,15 +296,33 @@ public:
     //typedef vector_data_trait<row_type> vhelper;
     typedef default_flat_data_trait<row_type> vhelper;
     typedef typename vhelper::value_type value_type;
+    typedef QVBoxLayout Layout;
 
     QSpinBox* wSize;
     QTableUpdater* wTable;
     QPushButtonUpdater* wDisplay;
     DataWidget * widget;
+    Layout* container_layout;
 
-    table_data_widget_container() : wSize(NULL), wTable(NULL), wDisplay(NULL), widget(NULL){}
     int rows;
     int cols;
+
+    table_data_widget_container() : wSize(NULL), wTable(NULL), wDisplay(NULL), widget(NULL), container_layout(NULL){}
+
+
+    bool createLayout( DataWidget* parent )
+    {
+      if( parent->layout() != NULL || container_layout != NULL) return false;
+      container_layout = new Layout(parent);
+      return true;
+    }
+
+   bool createLayout( QLayout* layout)
+   {
+      if ( container_layout != NULL ) return false;
+      container_layout = new Layout(layout);
+      return true;
+   }
 
 
     void setRowHeader(int r, const std::string& s)
@@ -364,7 +382,6 @@ public:
 
     bool createWidgets(DataWidget* parent, const data_type& d, bool readOnly)
     {       
-        QVBoxLayout* layout = new QVBoxLayout(parent);
         rows = 0;  
         int dataRows = rhelper::size(d);
 
@@ -398,9 +415,7 @@ public:
             fillTable(d);
             rows = dataRows;
           }
-        layout->add(wSize);
-        layout->add(wTable);
-        layout->add(wDisplay);
+   
 
         wTable->setDisplayed(isDisplayed()); 
 
@@ -566,6 +581,14 @@ public:
         for (int x=0; x<cols; ++x)
           setCell(y, x, *vhelper::get(*rhelper::get(d,y),x));  
       
+    }
+
+    void insertWidgets()
+    {
+      assert(container_layout);
+      container_layout->add(wSize);
+      container_layout->add(wTable);
+      container_layout->add(wDisplay);
     }
     
 };

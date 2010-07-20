@@ -433,12 +433,12 @@ public:
     }
 
         /// Normalize the vector.
-        void normalize()
+        void normalize(real threshold=(real)1e-20)
         {
-                real r = norm();
-                if (r>1e-10)
-                        for (int i=0;i<N;i++)
-                                this->elems[i]/=r;
+                const real r = norm();
+                if (r>threshold)
+                for (int i=0;i<N;i++)
+                  this->elems[i]/=r;
         }
 
         Vec cross( const Vec& b ) const

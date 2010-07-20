@@ -1,0 +1,91 @@
+// -------------------------------
+// Fur Section
+// -------------------------------
+
+vertex_program Sofa/FurVP cg
+{
+	source Sofa_Fur.cg
+	entry_point main_vp
+	profiles vs_1_1 arbvp1
+
+	default_params
+	{
+		param_named_auto lightPosition light_position_object_space 0
+		param_named_auto eyePosition camera_position_object_space
+//        param_named_auto passNumber pass_number
+        param_named_auto passIterationNumber pass_iteration_number
+		param_named_auto worldViewProj worldviewproj_matrix
+	}
+}
+
+fragment_program Sofa/FurFP cg
+{
+	source Sofa_Fur.cg
+	entry_point main_fp
+	profiles ps_1_1 arbfp1 fp20
+}
+
+
+
+material Sofa/Fur
+{
+	technique
+	{
+		// Base ambient pass
+
+        pass base_coat
+        {       
+            vertex_program_ref Sofa/FurVP
+            {          
+                param_named_auto furLength custom 5
+            }  
+            fragment_program_ref Sofa/FurFP
+            { 
+				param_named_auto ambient custom 1
+				param_named_auto diffuse custom 2
+				param_named_auto specular custom 3
+				param_named_auto shininess custom 4
+				param_named_auto K custom 6
+            }             
+            texture_unit
+            {
+              texture Fur.tga
+              tex_coord_set 0
+              filtering trilinear
+            }
+        } 
+
+    pass grow_fur
+    { 
+      depth_write off
+      lighting off
+      
+      scene_blend src_alpha one
+
+      iteration 10 //per_light: problem with per_light
+
+      vertex_program_ref Sofa/FurVP
+      {          
+                param_named_auto furLength custom 5
+      }
+
+      fragment_program_ref Sofa/FurFP
+      {
+				param_named_auto ambient custom 1
+				param_named_auto diffuse custom 2
+				param_named_auto specular custom 3
+				param_named_auto shininess custom 4
+				param_named_auto K custom 6
+      }    
+
+      texture_unit
+      {
+        texture Fur.tga
+        tex_coord_set 0
+        filtering trilinear
+      }
+    } 
+
+	}
+	
+}

@@ -111,6 +111,10 @@ class CudaBaseVector : public BaseVector {
 		void add(int i, SReal val) {
 			v[i] += (T)val;
 		}
+		
+		void operator=(const CudaBaseVector<Real> & e) {
+		    v = e.v;
+		}
 
 		static const char* Name(); /* {
 			return "CudaBaseVector";

@@ -76,7 +76,8 @@ contains(DEFINES,SOFA_HAVE_CSPARSE){
     HEADERS +=  \
                SparseCholeskySolver.h \
                SparseLUSolver.h \
-               SparseLDLSolver.h
+               SparseLDLSolver.h \
+	       SparseLDLSolver.inl
 
     SOURCES +=  \
                SparseCholeskySolver.cpp \

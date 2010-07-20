@@ -1,0 +1,109 @@
+// -------------------------------
+// Cel Shading Section
+// -------------------------------
+
+// A really basic ambient pass program, support for one texture coodinate set
+vertex_program Ogre/BasicVertexPrograms/AmbientOneTexture cg
+{
+	source Example_Basic.cg
+	entry_point ambientOneTexture_vp
+	profiles vs_1_1 arbvp1
+
+	default_params
+	{
+		param_named_auto worldViewProj worldviewproj_matrix
+		param_named_auto ambient ambient_light_colour
+	}
+	
+}
+
+vertex_program Sofa/CelShadingVP cg
+{
+	source Sofa_CelShading.cg
+	entry_point main_vp
+	profiles vs_1_1 arbvp1
+
+	default_params
+	{
+		param_named_auto lightPosition light_position_object_space 0
+		param_named_auto eyePosition camera_position_object_space
+		param_named_auto worldViewProj worldviewproj_matrix
+	}
+}
+
+fragment_program Sofa/CelShadingFP cg
+{
+	source Sofa_CelShading.cg
+	entry_point main_fp
+	profiles ps_1_1 arbfp1 fp20
+}
+
+
+
+material Sofa/CelShading
+{
+	technique
+	{
+		// Base ambient pass
+		pass ambient
+		{
+			// base colours, not needed for rendering, but as information
+			// to lighting pass categorisation routine
+			ambient 1 1 1
+			diffuse 0 0 0
+			specular 0 0 0 0 
+			// Really basic vertex program
+			vertex_program_ref Ogre/BasicVertexPrograms/AmbientOneTexture
+			{
+				param_named_auto worldViewProj worldviewproj_matrix
+				param_named_auto ambient ambient_light_colour
+			}
+			
+		}
+		pass perlight
+		{
+			// base colours, not needed for rendering, but as information
+			// to lighting pass categorisation routine
+			ambient 0 0 0 
+			
+			// do this for each light
+			iteration once_per_light
+
+			scene_blend add
+
+			vertex_program_ref Sofa/CelShadingVP
+			{
+				// map shininess from custom renderable param 1
+				param_named_auto shininess custom 4
+			}
+			fragment_program_ref Sofa/CelShadingFP
+			{
+				// map diffuse from custom renderable param 2
+				param_named_auto diffuse custom 2
+				// map specular from custom renderable param 3
+				param_named_auto specular custom 3
+			}
+			texture_unit
+			{
+				texture cel_shading_diffuse.png 1d
+				tex_address_mode clamp
+				filtering none
+			}
+			texture_unit
+			{
+				texture cel_shading_specular.png 1d
+				tex_address_mode clamp
+				filtering none
+			}
+			texture_unit
+			{
+				texture cel_shading_edge.png 1d
+				tex_address_mode clamp
+				filtering none
+			}
+		}
+
+	}
+	
+}
+

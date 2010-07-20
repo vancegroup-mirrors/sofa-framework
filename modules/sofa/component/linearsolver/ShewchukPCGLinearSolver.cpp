@@ -116,7 +116,6 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, 
 	if (first) { //We initialize all the preconditioners for the first step
 		for (unsigned int i=0;i<this->preconditioners.size();++i) {
 			preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);
-			preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);//dont know why the first setmbk doesn't wotk???
 		}
 		first = false;
 		next_refresh_iteration = 1;

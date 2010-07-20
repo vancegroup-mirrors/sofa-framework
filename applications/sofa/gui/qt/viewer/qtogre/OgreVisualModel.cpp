@@ -47,7 +47,7 @@ namespace sofa
       SOFA_DECL_CLASS(OgreVisualModel)
 
       int OgreVisualModel::meshName=0; //static counter to get unique name for entities
-      int OgreVisualModel::materialName=0; 
+      int SubMesh::materialUniqueIndex=0;
 
       bool OgreVisualModel::lightsEnabled=false;
 
@@ -90,39 +90,41 @@ namespace sofa
       }
 
 
-      void SubMesh::create(Ogre::ManualObject *ogreObject,
+      void SubMesh::create(Ogre::ManualObject *ogreObject,helper::vector< BaseOgreShaderParameter*> *parameters,
                            const ResizableExtVector<Coord>& positions,
                            const ResizableExtVector<Coord>& normals,
                            const ResizableExtVector<TexCoord>& textCoords) const
       {
-        const bool hasTexCoords= !(textCoords.empty());
+        model=ogreObject;
+        shaderParameters=parameters;
+        const bool hasTexCoords= !(textCoords.empty());       
+
         for (unsigned int i=0;i<storage.size();++i)
         {
-          ogreObject->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
+          model->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
           for (Indices::const_iterator it=storage[i].indices.begin(); it!=storage[i].indices.end();++it)
           {
             const int idx=*it;
-            ogreObject->position(positions[idx][0],positions[idx][1],positions[idx][2]);
-            ogreObject->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
-            if (hasTexCoords) ogreObject->textureCoord(textCoords[idx][0],textCoords[idx][1]);
+            model->position(positions[idx][0],positions[idx][1],positions[idx][2]);
+            model->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
+            if (hasTexCoords) model->textureCoord(textCoords[idx][0],textCoords[idx][1]);
           }
 
           for (unsigned int t=0;t<storage[i].triangles.size();++t)
           {
             const Triangle &T=storage[i].triangles[t];
-            ogreObject->triangle(T[0],T[1],T[2]);
+            model->triangle(T[0],T[1],T[2]);
           }
           for (unsigned int q=0;q<storage[i].quads.size();++q)
           {
             const Quad &Q=storage[i].quads[q];
-            ogreObject->quad(Q[0],Q[1],Q[2],Q[3]);
+            model->quad(Q[0],Q[1],Q[2],Q[3]);
           }
-          ogreObject->end();
+          model->end();
         }
       }
 
-      void SubMesh::update(Ogre::ManualObject *ogreObject,
-                           const ResizableExtVector<Coord>& positions,
+      void SubMesh::update(const ResizableExtVector<Coord>& positions,
                            const ResizableExtVector<Coord>& normals,
                            const ResizableExtVector<TexCoord>& textCoords) const
       {
@@ -130,28 +132,30 @@ namespace sofa
         const bool hasTexCoords= !(textCoords.empty());
         for (unsigned int i=0;i<storage.size();++i)
         {
-          ogreObject->beginUpdate(index+i);
+          model->beginUpdate(index+i);
 
           for (Indices::const_iterator it=storage[i].indices.begin(); it!=storage[i].indices.end();++it)
           {
             const int idx=*it;
-            ogreObject->position(positions[idx][0],positions[idx][1],positions[idx][2]);
-            ogreObject->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
-            if (hasTexCoords) ogreObject->textureCoord(textCoords[idx][0],textCoords[idx][1]);
+            model->position(positions[idx][0],positions[idx][1],positions[idx][2]);
+            model->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
+            if (hasTexCoords) model->textureCoord(textCoords[idx][0],textCoords[idx][1]);
           }
 
           for (unsigned int t=0;t<storage[i].triangles.size();++t)
           {
             const Triangle &T=storage[i].triangles[t];
-            ogreObject->triangle(T[0],T[1],T[2]);
+            model->triangle(T[0],T[1],T[2]);
           }
           for (unsigned int q=0;q<storage[i].quads.size();++q)
           {
             const Quad &Q=storage[i].quads[q];
-            ogreObject->quad(Q[0],Q[1],Q[2],Q[3]);
+            model->quad(Q[0],Q[1],Q[2],Q[3]);
           }
-          ogreObject->end();
+          model->end();
         }
+        applyShaderParameters();
+
       }
 
       //-------------------------------------------
@@ -166,11 +170,11 @@ namespace sofa
 
       OgreVisualModel::~OgreVisualModel()
       {
-        if (mSceneMgr->hasEntity(modelName+"ENTITY"))
-	  {	    
-            mSceneMgr->destroyEntity(modelName+"ENTITY");
-            Ogre::MeshManager::getSingleton().remove(modelName+"MESH");
-	  }
+        if (mSceneMgr && mSceneMgr->hasEntity(modelName+"ENTITY"))
+        {
+          mSceneMgr->destroyEntity(modelName+"ENTITY");
+          Ogre::MeshManager::getSingleton().remove(modelName+"MESH");
+        }
       }
       void OgreVisualModel::init()
       {
@@ -183,8 +187,8 @@ namespace sofa
                 needUpdate=true;
                 break;
               }
-          }          
-    }
+          }
+          this->getContext()->get< BaseOgreShaderParameter >(&shaderParameters);   }
 
       void OgreVisualModel::reinit()
       {
@@ -192,7 +196,7 @@ namespace sofa
 
         if (materials.getValue().empty())
         {
-          updateMaterial(materialToMesh.begin()->second.material, this->material.getValue());
+          materialToMesh.begin()->second.updateMaterial(this->material.getValue());
         }
         else
         {
@@ -200,7 +204,7 @@ namespace sofa
           for (unsigned int i=0;i<vecMaterials.size();++i)
           {
             const std::string &name=vecMaterials[i].name;
-            updateMaterial(materialToMesh[name].material, vecMaterials[i]);
+            materialToMesh[name].updateMaterial(vecMaterials[i]);
           }
         }
       }
@@ -232,7 +236,7 @@ namespace sofa
 
               //Create the Material to draw the normals
               s.str("");
-              s << "OgreNormalMaterial[" << ++materialName << "]" ;
+              s << "OgreNormalMaterial[" << ++SubMesh::materialUniqueIndex << "]" ;
               currentMaterialNormals = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
               currentMaterialNormals->setLightingEnabled(false);
           }
@@ -251,12 +255,12 @@ namespace sofa
               if (g.empty())
               {                
                 SubMesh &mesh=materialToMesh[this->material.getValue().name];
+                mesh.textureName = texturename.getValue();
 
                 for (int i=vertices.size()-1;i>=0;--i) mesh.indices.insert(i);
                 std::copy(triangles.begin(), triangles.end(), std::back_inserter(mesh.triangles));
                 std::copy(quads.begin(), quads.end(),  std::back_inserter(mesh.quads));
-                mesh.material = createMaterial(this->material.getValue());
-                mesh.materialName = this->material.getValue().name;
+                mesh.createMaterial(this->material.getValue(), materialFile.getValue());
               }
               else
               {
@@ -264,6 +268,7 @@ namespace sofa
                 for (unsigned int i=0;i<g.size();++i)
                 {                  
                   SubMesh &mesh=materialToMesh[g[i].materialName];
+
                   for (int t=0;t<g[i].nbt;++t)
                   {
                     const Triangle &T=triangles[g[i].t0+t];
@@ -281,18 +286,12 @@ namespace sofa
                     mesh.indices.insert(Q[3]);
                     mesh.quads.push_back(Q);
                   }
+
                   if (mesh.material.isNull())
-                  {                    
-                    if (g[i].materialId < 0)
-                    {
-                      mesh.material = createMaterial(this->material.getValue());
-                      mesh.materialName = this->material.getValue().name;
-                    }
-                    else
-                    {
-                      mesh.material = createMaterial(this->materials.getValue()[g[i].materialId]);
-                      mesh.materialName = this->materials.getValue()[g[i].materialId].name;
-                    }
+                  {
+                    mesh.textureName = texturename.getValue();
+                    if (g[i].materialId < 0) mesh.createMaterial(this->material.getValue(), materialFile.getValue());
+                    else                     mesh.createMaterial(this->materials.getValue()[g[i].materialId], materialFile.getValue());
                   }
                 }
               }
@@ -300,73 +299,110 @@ namespace sofa
               std::map<std::string, SubMesh>::iterator it;
               int idx=0;
               for (it=materialToMesh.begin();it!=materialToMesh.end();++it)
-              {                
+              {
                 it->second.init(idx);
               }
             }
       }
 
 
-      Ogre::MaterialPtr OgreVisualModel::createMaterial(const core::loader::Material &sofaMaterial)
-      {          
-          Ogre::MaterialPtr ogreMaterial;//=materialToMesh[sofaMaterial.name].material;
+      Ogre::MaterialPtr SubMesh::createMaterial(const core::loader::Material &sofaMaterial, const std::string &shaderName)
+      {
+        materialName = sofaMaterial.name;
+        std::ostringstream s;
+        s << "OgreVisualMaterial[" << ++materialUniqueIndex<< "]" ;
+        material = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
 
-//          if (ogreMaterial.isNull())
-//          {
-            //Create the Material for the object
-            std::ostringstream s;
-            s << "OgreVisualMaterial[" << ++materialName << "]" ;
-            ogreMaterial = Ogre::MaterialManager::getSingleton().create(s.str(), "General");
+        if (!shaderName.empty())
+        {
+          Ogre::MaterialPtr cel=Ogre::MaterialManager::getSingleton().createOrRetrieve(shaderName, "General").first;
+          *material=*cel;
+        }
 
-            ogreMaterial->setReceiveShadows(true);
-            ogreMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(true);
-//          }
-          updateMaterial(ogreMaterial,sofaMaterial);
+        material->setReceiveShadows(true);
+        material->getTechnique(0)->getPass(0)->setLightingEnabled(true);
 
-          return ogreMaterial;
+        updateMaterial(sofaMaterial);
+
+        return material;
       }
 
-      void OgreVisualModel::updateMaterial(Ogre::MaterialPtr ogreMaterial, const core::loader::Material &sofaMaterial)
-      {
-        //If a texture is specified
-        if (!texturename.getValue().empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",texturename.getValue()) )
-            ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(texturename.getValue());
+      void SubMesh::updateMaterial(const core::loader::Material &sofaMaterial)
+      {        
+        if (material.isNull()) return;
+
+        if (!textureName.empty() && Ogre::ResourceGroupManager::getSingleton().resourceExists("General",textureName) )
+          material->getTechnique(0)->getPass(0)->createTextureUnitState(textureName);
 
         if (sofaMaterial.useDiffuse)
-            ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(sofaMaterial.diffuse[0],sofaMaterial.diffuse[1],sofaMaterial.diffuse[2],sofaMaterial.diffuse[3]));
+          material->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(sofaMaterial.diffuse[0],sofaMaterial.diffuse[1],sofaMaterial.diffuse[2],sofaMaterial.diffuse[3]));
         else
-          ogreMaterial->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
+          material->getTechnique(0)->getPass(0)->setDiffuse(Ogre::ColourValue(0,0,0,0));
 
         if (sofaMaterial.useAmbient)
-          ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(sofaMaterial.ambient[0],sofaMaterial.ambient[1],sofaMaterial.ambient[2],sofaMaterial.ambient[3]));
+          material->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(sofaMaterial.ambient[0],sofaMaterial.ambient[1],sofaMaterial.ambient[2],sofaMaterial.ambient[3]));
         else
-          ogreMaterial->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
+          material->getTechnique(0)->getPass(0)->setAmbient(Ogre::ColourValue(0,0,0,0));
 
         if (sofaMaterial.useEmissive)
-          ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(sofaMaterial.emissive[0],sofaMaterial.emissive[1],sofaMaterial.emissive[2],sofaMaterial.emissive[3]));
+          material->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(sofaMaterial.emissive[0],sofaMaterial.emissive[1],sofaMaterial.emissive[2],sofaMaterial.emissive[3]));
         else
-          ogreMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
+          material->getTechnique(0)->getPass(0)->setSelfIllumination(Ogre::ColourValue(0,0,0,0));
 
         if (sofaMaterial.useSpecular)
-          ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(sofaMaterial.specular[0],sofaMaterial.specular[1],sofaMaterial.specular[2],sofaMaterial.specular[3]));
+          material->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(sofaMaterial.specular[0],sofaMaterial.specular[1],sofaMaterial.specular[2],sofaMaterial.specular[3]));
         else
-          ogreMaterial->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
+          material->getTechnique(0)->getPass(0)->setSpecular(Ogre::ColourValue(0,0,0,0));
 
         if (sofaMaterial.useShininess)
-          ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(sofaMaterial.shininess));
+          material->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(sofaMaterial.shininess));
         else
-          ogreMaterial->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
+          material->getTechnique(0)->getPass(0)->setShininess(Ogre::Real(45));
 
         if ( (sofaMaterial.useDiffuse && sofaMaterial.diffuse[3] < 1) ||
              (sofaMaterial.useAmbient && sofaMaterial.ambient[3] < 1) )
           {
-            ogreMaterial->setDepthWriteEnabled(false);
-            ogreMaterial->getTechnique(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-            ogreMaterial->setCullingMode(Ogre::CULL_NONE);
+            material->setDepthWriteEnabled(false);
+            material->getTechnique(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+            material->setCullingMode(Ogre::CULL_NONE);
           }
 
-        ogreMaterial->compile();
+        material->compile();
       }
+
+      void SubMesh::applyShaderParameters() const
+      {
+        for (unsigned int i=0;i<storage.size();++i)
+        {
+          Ogre::ManualObject::ManualObjectSection *section=model->getSection(index+i);
+          section->setCustomParameter(1, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getAmbient().ptr()));
+          section->setCustomParameter(2, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getDiffuse().ptr()));
+          section->setCustomParameter(3, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getSpecular().ptr()));
+          section->setCustomParameter(4, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getShininess(),0,0,0));
+          for (unsigned int p=0;p<shaderParameters->size();++p)
+          {
+            if ((*shaderParameters)[p]->isDirty())
+            {
+              Ogre::Vector4 value;
+              BaseOgreShaderParameter* parameter=(*shaderParameters)[p];
+              parameter->getValue(value);
+              section->setCustomParameter(parameter->getEntryPoint(), value);
+            }
+          }
+        }
+      }
+
+      void SubMesh::updateMeshCustomParameter(Ogre::Entity *entity) const
+      {
+        for (unsigned int i=0;i<storage.size();++i)
+        {
+          Ogre::SubEntity* section=entity->getSubEntity(index+i);
+          section->setCustomParameter(1, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getShininess(),0,0,0));
+          section->setCustomParameter(2, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getDiffuse().ptr()));
+          section->setCustomParameter(3, Ogre::Vector4(material->getTechnique(0)->getPass(0)->getSpecular().ptr()));
+       }
+    }
+
 
 
       void OgreVisualModel::uploadSubMesh(const SubMesh& m)
@@ -407,13 +443,13 @@ namespace sofa
       {       
         const ResizableExtVector<Coord>& vertices = this->getVertices();
         const ResizableExtVector<Coord>& vnormals = this->getVnormals();
-	for (unsigned int i = 0; i < vertices.size(); i++)
-	  {
-	    ogreNormalObject->position(vertices[i][0],vertices[i][1],vertices[i][2]);
-	    ogreNormalObject->position(vertices[i][0]+vnormals[i][0],vertices[i][1]+vnormals[i][1],vertices[i][2]+vnormals[i][2]);
-	    ogreNormalObject->index(2*i);
-            ogreNormalObject->index(2*i+1);
-	  }
+        for (unsigned int i = 0; i < vertices.size(); i++)
+        {
+          ogreNormalObject->position(vertices[i][0],vertices[i][1],vertices[i][2]);
+          ogreNormalObject->position(vertices[i][0]+vnormals[i][0],vertices[i][1]+vnormals[i][1],vertices[i][2]+vnormals[i][2]);
+          ogreNormalObject->index(2*i);
+          ogreNormalObject->index(2*i+1);
+        }
       }
 
       void OgreVisualModel::convertManualToMesh()
@@ -422,10 +458,16 @@ namespace sofa
 	  {	    
             mSceneMgr->destroyEntity(modelName+"ENTITY");
             Ogre::MeshManager::getSingleton().remove(modelName+"MESH");
-	  }
-	
+      }
+
         Ogre::MeshPtr ogreMesh = ogreObject->convertToMesh(modelName+"MESH", "General");
         Ogre::Entity *e = mSceneMgr->createEntity(modelName+"ENTITY", ogreMesh->getName());
+
+
+        for (MatToMesh::iterator it=materialToMesh.begin();it!=materialToMesh.end();++it)
+          it->second.updateMeshCustomParameter(e);
+
+
         mSceneMgr->getRootSceneNode()->attachObject(e);
       }
 
@@ -499,8 +541,9 @@ namespace sofa
 
         prepareMesh();
 
-        for (MatToMesh::iterator it=materialToMesh.begin();it!=materialToMesh.end();++it)
-          it->second.create(ogreObject,vertices,normals,texCoords);
+        for (MatToMesh::iterator it=materialToMesh.begin();it!=materialToMesh.end();++it)       
+          it->second.create(ogreObject,&shaderParameters,vertices,normals,texCoords);
+
 
         if (getContext()->getShowNormals())
         {
@@ -522,7 +565,7 @@ namespace sofa
 
         //Visual Model update
         for (MatToMesh::iterator it=materialToMesh.begin();it!=materialToMesh.end();++it)
-          it->second.update(ogreObject, vertices, normals,texCoords);
+          it->second.update(vertices, normals,texCoords);
 
         if (lightsEnabled && vertices.size() != 0) convertManualToMesh();
 

@@ -14,7 +14,7 @@ namespace gpu {
 
 namespace opencl {
 
-
+#define DEBUG_TEXT(t) printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
 
 
 sofa::helper::OpenCLProgram* OpenCLMemoryManager_program;
@@ -35,7 +35,11 @@ sofa::helper::OpenCLKernel * OpenCLMemoryManager_memsetDevice_kernel;
 
 void OpenCLMemoryManager_memsetDevice(int d, _device_pointer a, int value, size_t size)
 {
-	int BSIZE = gpu::opencl::OpenCLMemoryManager<float>::BSIZE;
+
+DEBUG_TEXT("OpenCLMemoryManager_memsetDevice");
+int BSIZE = gpu::opencl::OpenCLMemoryManager<float>::BSIZE;
+std::cout << "size:" << (int)size << "\toffset:" << a.offset/(sizeof(int)) << "\tsize2: " << (int)(size/(sizeof(int))) << "\tlocalsize:" << BSIZE << "\tworksize:" << (int)((((int)(size/(sizeof(int)))%BSIZE)==0)?(int)(size/(sizeof(int))):BSIZE*((int)(size/(sizeof(int)))/BSIZE+1)) << "\n";
+
 	unsigned int i;
 	unsigned int offset;
 
@@ -64,6 +68,8 @@ void OpenCLMemoryManager_memsetDevice(int d, _device_pointer a, int value, size_
 
 	OpenCLMemoryManager_memsetDevice_kernel->execute(d,1,NULL,work_size,local_size);
 
+
+DEBUG_TEXT("~OpenCLMemoryManager_memsetDevice");
 }
 
 

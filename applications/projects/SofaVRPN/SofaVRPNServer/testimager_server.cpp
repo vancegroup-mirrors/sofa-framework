@@ -32,7 +32,9 @@ int main (int argc, char * argv[])
 {
   static  int frame_number = 0;
   static  vrpn_uint8 buffer[g_sizeX*g_sizeY];
-  int	  channel_id;
+  int	  channel_id[3];
+
+  static  vrpn_uint8 bufferZero[g_sizeX*g_sizeY];
 
   // Need to have a global pointer to it so we can shut it down
   // in the signal handler (so we can close any open logfiles.)
@@ -47,10 +49,20 @@ int main (int argc, char * argv[])
     fprintf(stderr, "Could not open imager server\n");
     return -1;
   }
-  if ( (channel_id = g_is->add_channel("Slope")) == -1) {
+  if ( (channel_id[0] = g_is->add_channel("red")) == -1) {
     fprintf(stderr, "Could not add channel\n");
     return -1;
   }
+  if ( (channel_id[1] = g_is->add_channel("green")) == -1) {
+    fprintf(stderr, "Could not add channel\n");
+    return -1;
+  }
+  if ( (channel_id[2] = g_is->add_channel("blue")) == -1) {
+    fprintf(stderr, "Could not add channel\n");
+    return -1;
+  }
+
+
 
   // Generate about ten frames per second by sending one and then sleeping.
   // Better would be to mainloop() the connection much faster, and then
@@ -67,7 +79,9 @@ int main (int argc, char * argv[])
     int nRowsPerRegion=vrpn_IMAGER_MAX_REGIONu8/g_sizeX;
     int y;
     for(y=0; y<g_sizeY; y+=nRowsPerRegion) {
-      g_is->send_region_using_base_pointer(channel_id,0,g_sizeX-1,y,min(g_sizeY,y+nRowsPerRegion)-1, buffer, 1, g_sizeX, g_sizeY);
+      g_is->send_region_using_base_pointer(channel_id[0],0,g_sizeX-1,y,min(g_sizeY,y+nRowsPerRegion)-1, buffer, 1, g_sizeX, g_sizeY);
+      g_is->send_region_using_base_pointer(channel_id[1],0,g_sizeX-1,y,min(g_sizeY,y+nRowsPerRegion)-1, buffer, 1, g_sizeX, g_sizeY);
+      g_is->send_region_using_base_pointer(channel_id[2],0,g_sizeX-1,y,min(g_sizeY,y+nRowsPerRegion)-1, bufferZero, 1, g_sizeX, g_sizeY);
       g_is->mainloop();
     }
     g_is->send_end_frame(0, g_sizeX-1, 0, g_sizeY-1);

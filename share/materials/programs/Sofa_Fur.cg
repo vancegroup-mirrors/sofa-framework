@@ -1,0 +1,70 @@
+
+/* Cel shading vertex program for single-pass rendering
+   In this program, we want to calculate the diffuse and specular
+   ramp components, and the edge factor (for doing simple outlining)
+   For the outlining to look good, we need a pretty well curved model.
+*/
+void main_vp(float4 position	: POSITION,
+			 float3 normal		: NORMAL,
+			 float2 uv			: TEXCOORD0,
+			 // outputs
+			 out float4 oPosition  : POSITION,
+			 out float2 oUv		   : TEXCOORD0,
+             out float3 oNormal    : TEXCOORD1,
+             out float3 oHalfAngle : TEXCOORD2,
+             out float3 oLightDir  : TEXCOORD3,
+			 // parameters
+			 uniform float4 lightPosition, // object space
+			 uniform float3 eyePosition,   // object space
+			 uniform float passIterationNumber,
+			 uniform float furLength,
+			 uniform float4x4 worldViewProj)
+{
+    float4 newPosition = position + float4(normal*passIterationNumber*furLength,0);
+	oPosition = mul(worldViewProj, newPosition);
+    oNormal = normal;
+
+    float3 EyeDir = normalize(eyePosition - newPosition.xyz);
+    oUv=uv;
+
+
+    if (lightPosition.w == 0)
+        oLightDir = lightPosition.xyz;
+    else
+        oLightDir = normalize(lightPosition.xyz - position.xyz);
+
+    oHalfAngle   = normalize(oLightDir + EyeDir);    
+}
+
+float4 computeDiffuse(float3 lightDir, float4 d, float3 n)
+{
+    return d*max(dot(normalize(lightDir), n), 0.25);
+}
+
+float4 computeSpecular(float3 half, float4 s, float shini, float3 n)
+{
+    return s*pow(max(dot(normalize(half),n),0.1),shini);
+}
+
+void main_fp(float2 uv        	    : TEXCOORD0,
+             float3 normal			: TEXCOORD1,
+             float3 halfAngle	    : TEXCOORD2,   
+             float3 lightDir 	    : TEXCOORD3,
+			 // outputs
+			 out float4 colour	: COLOR,
+			 // parameters	
+			 uniform float4 ambient,
+			 uniform float4 shininess,
+			 uniform float4 diffuse,
+			 uniform float4 specular,
+             uniform float3 K,		 
+			 uniform sampler2D Fur : register(s0))
+{
+    float3 n = normalize(normal);
+
+    float4 furColour=tex2D(Fur,uv);
+    float4 d=computeDiffuse(lightDir,diffuse,n);
+    float4 s=computeSpecular( halfAngle, specular, shininess.x, n);
+    colour = K.x * ambient + furColour*( K.y *d  + K.z * s );   
+}
+			 

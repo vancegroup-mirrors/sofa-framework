@@ -48,6 +48,10 @@
 #include <sofa/component/linearsolver/SparseMatrix.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/component/misc/BaseRotationFinder.h>
+#include <sofa/component/linearsolver/RotationMatrix.h>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/barrier.hpp>
+#include <sofa/helper/system/atomic.h>
 
 namespace sofa {
 
@@ -55,6 +59,13 @@ namespace component {
 
 namespace linearsolver {
 
+template<class TVector>  
+class ParallelMatrixLinearSolverInternalData {
+  public :  
+	typedef typename TVector::Real Real;
+	typedef RotationMatrix<Real> TRotationMatrix;
+};
+ 
 template<class Matrix, class Vector>
 class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public sofa::core::behavior::LinearSolver, public sofa::simulation::SolverImpl
 {
@@ -64,9 +75,10 @@ public:
 	typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
 	typedef  std::list<int> ListIndex;
 	typedef typename Matrix::Real Real;
+	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
 
-	Data<bool> multiGroup;
 	Data<bool> useWarping;
+	Data<bool> useMultiThread;
 
 	ParallelMatrixLinearSolver();
 	virtual ~ParallelMatrixLinearSolver();
@@ -92,35 +104,29 @@ public:
 	void setSystemLHVector(VecId v);
 
 	/// Get the linear system matrix, or NULL if this solver does not build it
-	Matrix* getSystemMatrix() { return currentGroup->systemMatrix; }
+	Matrix* getSystemMatrix() { return matricesWork[indexwork]; }
 
 	/// Get the linear system right-hand term vector, or NULL if this solver does not build it
-	Vector* getSystemRHVector() { return currentGroup->systemRHVector; }
+	Vector* getSystemRHVector() { return systemRHVector; }
 
 	/// Get the linear system left-hand term vector, or NULL if this solver does not build it
-	Vector* getSystemLHVector() { return currentGroup->systemLHVector; }
+	Vector* getSystemLHVector() { return systemLHVector; }
 
 	/// Get the linear system matrix, or NULL if this solver does not build it
-	defaulttype::BaseMatrix* getSystemBaseMatrix() { return currentGroup->systemMatrix; }
+	defaulttype::BaseMatrix* getSystemBaseMatrix() { return matricesWork[indexwork]; }
 
 	/// Get the linear system right-hand term vector, or NULL if this solver does not build it
-	defaulttype::BaseVector* getSystemRHBaseVector() { return currentGroup->systemRHVector; }
+	defaulttype::BaseVector* getSystemRHBaseVector() { return systemRHVector; }
 
 	/// Get the linear system left-hand term vector, or NULL if this solver does not build it
-	defaulttype::BaseVector* getSystemLHBaseVector() { return currentGroup->systemLHVector; }
+	defaulttype::BaseVector* getSystemLHBaseVector() { return systemLHVector; }
 
 	/// Solve the system as constructed using the previous methods
 	virtual void solveSystem();
 
 	/// Invert the system, this method is optional because it's call when solveSystem() is called for the first time
 	virtual void invertSystem() {
-	    for (unsigned int g=0, nbg = isMultiSolve() ? 1 : getNbGroups(); g < nbg; ++g) { 
-		if (!isMultiSolve()) setGroup(g);
-		if (currentGroup->needInvert) {
-		  this->invert(*currentGroup->systemMatrix);
-		  currentGroup->needInvert = false;
-		}
-	    }
+	    this->invert(*matricesWork[indexwork]);
 	}
 
 	virtual std::string getTemplateName() const
@@ -153,124 +159,70 @@ public:
 	/// @return false if the solver does not support this operation, of it the system matrix is not invertible
 	bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 
-	bool isMultiGroup() const
-	{
-	    return multiGroup.getValue();
-	}
-
-	/// Returns true if this implementation can handle all integration groups at once
-	virtual bool isMultiSolve() const
-	{
-	    return false;
-	}
-
-	virtual simulation::MultiNodeDataMap* getNodeMap()
-	{
-	    if (isMultiGroup()) return &this->nodeMap;
-	    else                       return NULL;
-	}
-
-	virtual simulation::MultiNodeDataMap* getWriteNodeMap()
-	{
-	    if (isMultiGroup()) return &this->writeNodeMap;
-	    else                       return NULL;
-	}
-
-	virtual void createGroups();
-
-	int getNbGroups() const
-	{
-	    if (isMultiGroup()) return this->groups.size();
-	    else return 1;
-	}
-
-	void setGroup(int i)
-	{
-	    //serr << "setGroup("<<i<<")" << sendl;
-	    if (isMultiGroup() && (unsigned)i < this->groups.size())
-	    {
-		currentNode = groups[i];
-		currentGroup = &(gData[currentNode]);
-		nodeMap.clear();
-		nodeMap[currentNode] = 1.0;
-		writeNodeMap.clear();
-		writeNodeMap[currentNode] = 0.0;
-	    }
-	    else
-	    {
-		currentNode = dynamic_cast<simulation::Node*>(this->getContext());
-		currentGroup = &defaultGroup;
-		nodeMap.clear();
-		writeNodeMap.clear();
-	    }
-	}
-
-	double multiv_dot(VecId a, VecId b, helper::vector<double>& res)
-	{
-	    this->v_dot(a,b);
-	    finish();
-	    res.resize(groups.size());
-	    for (unsigned int g=0;g<groups.size();++g)
-	    {
-		simulation::MultiNodeDataMap::const_iterator it = writeNodeMap.find(groups[g]);
-		if (it == writeNodeMap.end())
-		    res[g] = 0.0;
-		else
-		    res[g] = it->second;
-	    }
-	    return result;
-	}
-
 protected:
 
 	/// newPartially solve the system
 	virtual void partial_solve(Matrix& /*M*/, Vector& /*partial_solution*/, Vector& /*sparse_rh*/, ListIndex& /* indices_solution*/, ListIndex& /* indices input */) {}
 
-	Vector* createVector();
-	static void deleteVector(Vector* v);
+	static Vector* createVector() {
+	    return new Vector;
+	}
+	
+	void computeSystemMatrix(double mFact, double bFact, double kFact);
 
-	Matrix* createMatrix();
-	static void deleteMatrix(Matrix* v);
-
+	
 	simulation::MultiNodeDataMap nodeMap;
 	simulation::MultiNodeDataMap writeNodeMap;
-	
-	void getRotations(Vector & R);
 
-	class GroupData
-	{
-	public:
-	    enum matrix_type{MATRIX1,MATRIX2};
-	  
-	    int systemSize;
-	    bool needInvert;
-	    Matrix* systemMatrix;
-	    matrix_type matrix_work;
-	    Vector* systemRHVector;
-	    Vector* systemLHVector;
-	    VecId solutionVecId;
-	    GroupData()
-	    : systemSize(0), needInvert(true), systemMatrix(NULL), systemRHVector(NULL), systemLHVector(NULL)
-	    {}
-	    ~GroupData()
-	    {
-		if (systemMatrix) deleteMatrix(systemMatrix);
-		if (systemRHVector) deleteVector(systemRHVector);
-		if (systemLHVector) deleteVector(systemLHVector);
-	    }
-	};
-	typedef std::map<simulation::Node*,GroupData> GroupDataMap;
-	typedef typename GroupDataMap::iterator GroupDataMapIter;
-	simulation::Node* currentNode;
-	GroupData* currentGroup;
-	std::vector<simulation::Node*> groups;
-	GroupDataMap gData;
-	GroupData defaultGroup;
+	unsigned int systemSize;	    
+	Matrix * matricesWork[2];
+	TRotationMatrix * rotationWork[2];
+	TRotationMatrix * Rcur;
+	int indexwork;
 	
-	Vector Rcurr;
-	Vector Rinv;	
-	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;
+	VecId solutionVecId;	
+	Vector* systemRHVector;
+	Vector* systemLHVector;
+	
+	bool useRotation;
+	ParallelMatrixLinearSolverInternalData<Vector> internalData;
+	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
+	Vector tmpVectorRotation;
+	
+	bool first;
+	boost::barrier * bar;
+	sofa::helper::system::atomic<int> ready_thread;
+	sofa::helper::system::atomic<int> run;
 };
+
+template<class Matrix, class Vector>
+class Thread_invert {
+public :  
+	Thread_invert(boost::barrier * barg,
+			  ParallelMatrixLinearSolver<Matrix,Vector> * solver,
+			  sofa::helper::system::atomic<int> * ready_thread,
+			  sofa::helper::system::atomic<int> * run,
+			  Matrix ** matrices,
+			  int index = 1
+			  ) {
+		this->bar = barg;
+		this->solver = solver;
+		this->ready_thread = ready_thread;
+		this->run = run;
+		this->matrices = matrices;
+		this->index = index;
+	}
+
+	void operator()();
+
+protected :
+	boost::barrier * bar;
+	ParallelMatrixLinearSolver<Matrix,Vector> * solver;
+	sofa::helper::system::atomic<int> * ready_thread;
+	sofa::helper::system::atomic<int> * run;
+	Matrix ** matrices;
+	int index;
+}; 
 
 } // namespace linearsolver
 

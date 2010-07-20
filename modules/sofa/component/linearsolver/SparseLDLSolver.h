@@ -35,16 +35,24 @@
 #include <ldl.h>
 
 #include <sofa/component/linearsolver/ParallelMatrixLinearSolver.inl>
+#include <sofa/defaulttype/BaseMatrix.h>
 
 namespace sofa {
 
 namespace component {
 
 namespace linearsolver {
-
+  
+class SparseLDLSolverInvertData : public defaulttype::MatrixInvertData {
+  public :
+	int n;
+	helper::vector<double> A_x,Lx,D,Y;
+	helper::vector<int> A_i,A_p, Li,Lp,Parent,Lnz,Flag,Pattern;
+};
+  
+  
 /// Direct linear solver based on Sparse LDL^T factorization, implemented with the CSPARSE library
 template<class TMatrix, class TVector>
-
 class SparseLDLSolver : public sofa::component::linearsolver::ParallelMatrixLinearSolver<TMatrix,TVector> {
   public :  
       SOFA_CLASS(SOFA_TEMPLATE2(SparseLDLSolver,TMatrix,TVector),SOFA_TEMPLATE2(sofa::component::linearsolver::ParallelMatrixLinearSolver,TMatrix,TVector));
@@ -61,11 +69,21 @@ class SparseLDLSolver : public sofa::component::linearsolver::ParallelMatrixLine
     ~SparseLDLSolver();
     void solve (Matrix& M, Vector& x, Vector& b);
     void invert(Matrix& M);
+    
+    /// Pre-construction check method called by ObjectFactory.
+    /// Check that DataTypes matches the MechanicalState.
+    template<class T>
+    static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg) {
+	return core::objectmodel::BaseObject::canCreate(obj, context, arg);
+    }
 
-private :
-	int n;
-	helper::vector<double> A_x,Lx,D,Y;
-	helper::vector<int> A_i,A_p, Li,Lp,Parent,Lnz,Flag,Pattern;
+    virtual std::string getTemplateName() const {
+        return templateName(this);
+    }
+
+    static std::string templateName(const SparseLDLSolver<TMatrix,TVector>* = NULL) {
+        return TVector::Name();
+    }    
 };
 
 #if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_LINEARSOLVER)

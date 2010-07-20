@@ -279,142 +279,151 @@ private:
 
 class SOFA_COMPONENT_CONSTRAINT_API LCPConstraintSolver : public sofa::core::behavior::ConstraintSolver
 {
-    typedef std::vector<core::behavior::BaseConstraintCorrection*> list_cc;
-    typedef std::vector<list_cc> VecListcc;
-    typedef sofa::core::VecId VecId;
+	typedef std::vector<core::behavior::BaseConstraintCorrection*> list_cc;
+	typedef std::vector<list_cc> VecListcc;
+	typedef sofa::core::VecId VecId;
 public:
-    SOFA_CLASS(LCPConstraintSolver, sofa::core::behavior::ConstraintSolver);
-
-          LCPConstraintSolver();
-
-          void init();
+	SOFA_CLASS(LCPConstraintSolver, sofa::core::behavior::ConstraintSolver);
 
 
-          bool prepareStates(double dt, VecId);
-          bool buildSystem(double dt, VecId);
-          bool solveSystem(double dt, VecId);
-          bool applyCorrection(double dt, VecId);   
- 
-          void draw();
+	/**
+	* @brief Default Constructor
+	*/
+	LCPConstraintSolver();
+
+	/**
+	* @brief Default Destructor 
+	*/
+	virtual ~LCPConstraintSolver();
+
+	void init();
 
 
-          Data<bool> displayTime;
-          Data<bool> initial_guess;
-          Data<bool> build_lcp;
-          Data < double > tol;
-          Data < int > maxIt;
-          Data < double > mu;
-          Data < double > minW;
-          Data < double > maxF;
-          Data<bool> multi_grid;
-          Data<int>  multi_grid_levels;
-          Data<int>  merge_method;
-          Data<int>  merge_spatial_step;
-          Data<int>  merge_local_levels;
+	bool prepareStates(double dt, VecId);
+	bool buildSystem(double dt, VecId);
+	bool solveSystem(double dt, VecId);
+	bool applyCorrection(double dt, VecId);   
 
-          Data < helper::set<int> > constraintGroups;
-
-          Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
-
-          Data<int> showLevels;
-          Data<double> showCellWidth;
-          Data<defaulttype::Vector3> showTranslation;
-          Data<defaulttype::Vector3> showLevelTranslation;
-
-          LCP* getLCP();
-          void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCPs until the next call to this function. This is used to prevent concurent access to the LCP when using a LCPForceFeedback through an haptic thread
-
-        private:
-          std::vector<core::behavior::BaseConstraintCorrection*> constraintCorrections;
-          void computeInitialGuess();
-          void keepContactForcesValue();
-
-          unsigned int _numConstraints;
-          double _mu;
+	void draw();
 
 
-          /// for built lcp ///
-          void build_LCP();
-          LCP lcp1, lcp2, lcp3; // Triple buffer for LCP.
-          LPtrFullMatrix<double>  *_W;
-          LCP *lcp,*last_lcp; /// use of last_lcp allows several LCPForceFeedback to be used in the same scene
+	Data<bool> displayTime;
+	Data<bool> initial_guess;
+	Data<bool> build_lcp;
+	Data < double > tol;
+	Data < int > maxIt;
+	Data < double > mu;
+	Data < double > minW;
+	Data < double > maxF;
+	Data<bool> multi_grid;
+	Data<int>  multi_grid_levels;
+	Data<int>  merge_method;
+	Data<int>  merge_spatial_step;
+	Data<int>  merge_local_levels;
 
-          /// multi-grid approach ///
-          void MultigridConstraintsMerge();
-          void MultigridConstraintsMerge_Compliance();
-          void MultigridConstraintsMerge_Spatial();
-          void build_Coarse_Compliance(std::vector<int> &/*constraint_merge*/, int /*sizeCoarseSystem*/);
-          LPtrFullMatrix<double>  _Wcoarse;
+	Data < helper::set<int> > constraintGroups;
 
-          //std::vector< int> _contact_group;
-          //std::vector< int> _constraint_group;
-          //std::vector<int> _group_lead;
+	Data<std::map < std::string, sofa::helper::vector<double> > > f_graph;
 
-          std::vector< std::vector< int > > hierarchy_contact_group;
-          std::vector< std::vector< int > > hierarchy_constraint_group;
-          std::vector< std::vector< double > > hierarchy_constraint_group_fact;
-          std::vector< unsigned int > hierarchy_num_group;
+	Data<int> showLevels;
+	Data<double> showCellWidth;
+	Data<defaulttype::Vector3> showTranslation;
+	Data<defaulttype::Vector3> showLevelTranslation;
 
-		
-          /// common built-unbuilt
-          simulation::Node *context;
-          FullVector<double> *_dFree, *_result;
-          ///
-          CTime timer;
-          CTime timerTotal;
+	LCP* getLCP();
+	void lockLCP(LCP* l1, LCP* l2=0); ///< Do not use the following LCPs until the next call to this function. This is used to prevent concurent access to the LCP when using a LCPForceFeedback through an haptic thread
 
-          double time;
-          double timeTotal;
-          double timeScale;
+private:
+	std::vector<core::behavior::BaseConstraintCorrection*> constraintCorrections;
+	void computeInitialGuess();
+	void keepContactForcesValue();
 
-		
-          /// for unbuilt lcp ///
-          void build_problem_info();
-          int lcp_gaussseidel_unbuilt(double *dfree, double *f);
-          int nlcp_gaussseidel_unbuilt(double *dfree, double *f);
-          int gaussseidel_unbuilt(double *dfree, double *f) { if (_mu == 0.0) return lcp_gaussseidel_unbuilt(dfree, f); else return nlcp_gaussseidel_unbuilt(dfree, f); }
+	unsigned int _numConstraints;
+	double _mu;
 
-          SparseMatrix<double> *_Wdiag;
-          //std::vector<helper::LocalBlock33 *> _Wdiag;
-          std::vector<core::behavior::BaseConstraintCorrection*> _cclist_elem1;
-          std::vector<core::behavior::BaseConstraintCorrection*> _cclist_elem2;
-		
-    typedef core::behavior::BaseConstraint::ConstraintBlockInfo ConstraintBlockInfo;
-    typedef core::behavior::BaseConstraint::PersistentID PersistentID;
-    typedef core::behavior::BaseConstraint::ConstCoord ConstCoord;
-    typedef core::behavior::BaseConstraint::ConstDeriv ConstDeriv;
-    typedef core::behavior::BaseConstraint::ConstArea ConstArea;
-		
-    typedef core::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
-    typedef core::behavior::BaseConstraint::VecPersistentID VecPersistentID;
-    typedef core::behavior::BaseConstraint::VecConstCoord VecConstCoord;
-    typedef core::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
-    typedef core::behavior::BaseConstraint::VecConstArea VecConstArea;
 
-    class ConstraintBlockBuf
-    {
-    public:
-        std::map<PersistentID,int> persistentToConstraintIdMap;
-        int nbLines; ///< how many dofs (i.e. lines in the matrix) are used by each constraint
-    };
+	/// for built lcp ///
+	void build_LCP();
+	LCP lcp1, lcp2, lcp3; // Triple buffer for LCP.
+	LPtrFullMatrix<double>  *_W;
+	LCP *lcp,*last_lcp; /// use of last_lcp allows several LCPForceFeedback to be used in the same scene
 
-    std::map<core::behavior::BaseConstraint*, ConstraintBlockBuf> _previousConstraints;
-    helper::vector< double > _previousForces;
+	/// multi-grid approach ///
+	void MultigridConstraintsMerge();
+	void MultigridConstraintsMerge_Compliance();
+	void MultigridConstraintsMerge_Spatial();
+	void build_Coarse_Compliance(std::vector<int> &/*constraint_merge*/, int /*sizeCoarseSystem*/);
+	LPtrFullMatrix<double>  _Wcoarse;
 
-    helper::vector< VecConstraintBlockInfo > hierarchy_constraintBlockInfo;
-    helper::vector< VecPersistentID > hierarchy_constraintIds;
-    helper::vector< VecConstCoord > hierarchy_constraintPositions;
-    helper::vector< VecConstDeriv > hierarchy_constraintDirections;
-    helper::vector< VecConstArea > hierarchy_constraintAreas;
+	//std::vector< int> _contact_group;
+	//std::vector< int> _constraint_group;
+	//std::vector<int> _group_lead;
 
-          // for gaussseidel_unbuilt
-          helper::vector< helper::LocalBlock33 > unbuilt_W33;
-          helper::vector< double > unbuilt_d;
+	std::vector< std::vector< int > > hierarchy_contact_group;
+	std::vector< std::vector< int > > hierarchy_constraint_group;
+	std::vector< std::vector< double > > hierarchy_constraint_group_fact;
+	std::vector< unsigned int > hierarchy_num_group;
 
-          helper::vector< double > unbuilt_W11;
-          helper::vector< double > unbuilt_invW11;
-          
-          bool isActive;
+
+	/// common built-unbuilt
+	simulation::Node *context;
+	FullVector<double> *_dFree, *_result;
+	///
+	CTime timer;
+	CTime timerTotal;
+
+	double time;
+	double timeTotal;
+	double timeScale;
+
+
+	/// for unbuilt lcp ///
+	void build_problem_info();
+	int lcp_gaussseidel_unbuilt(double *dfree, double *f);
+	int nlcp_gaussseidel_unbuilt(double *dfree, double *f);
+	int gaussseidel_unbuilt(double *dfree, double *f) { if (_mu == 0.0) return lcp_gaussseidel_unbuilt(dfree, f); else return nlcp_gaussseidel_unbuilt(dfree, f); }
+
+	SparseMatrix<double> *_Wdiag;
+	//std::vector<helper::LocalBlock33 *> _Wdiag;
+	std::vector<core::behavior::BaseConstraintCorrection*> _cclist_elem1;
+	std::vector<core::behavior::BaseConstraintCorrection*> _cclist_elem2;
+
+	typedef core::behavior::BaseConstraint::ConstraintBlockInfo ConstraintBlockInfo;
+	typedef core::behavior::BaseConstraint::PersistentID PersistentID;
+	typedef core::behavior::BaseConstraint::ConstCoord ConstCoord;
+	typedef core::behavior::BaseConstraint::ConstDeriv ConstDeriv;
+	typedef core::behavior::BaseConstraint::ConstArea ConstArea;
+
+	typedef core::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
+	typedef core::behavior::BaseConstraint::VecPersistentID VecPersistentID;
+	typedef core::behavior::BaseConstraint::VecConstCoord VecConstCoord;
+	typedef core::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
+	typedef core::behavior::BaseConstraint::VecConstArea VecConstArea;
+
+	class ConstraintBlockBuf
+	{
+	public:
+		std::map<PersistentID,int> persistentToConstraintIdMap;
+		int nbLines; ///< how many dofs (i.e. lines in the matrix) are used by each constraint
+	};
+
+	std::map<core::behavior::BaseConstraint*, ConstraintBlockBuf> _previousConstraints;
+	helper::vector< double > _previousForces;
+
+	helper::vector< VecConstraintBlockInfo > hierarchy_constraintBlockInfo;
+	helper::vector< VecPersistentID > hierarchy_constraintIds;
+	helper::vector< VecConstCoord > hierarchy_constraintPositions;
+	helper::vector< VecConstDeriv > hierarchy_constraintDirections;
+	helper::vector< VecConstArea > hierarchy_constraintAreas;
+
+	// for gaussseidel_unbuilt
+	helper::vector< helper::LocalBlock33 > unbuilt_W33;
+	helper::vector< double > unbuilt_d;
+
+	helper::vector< double > unbuilt_W11;
+	helper::vector< double > unbuilt_invW11;
+
+	bool isActive;
 };
 
 } // namespace constraint

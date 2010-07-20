@@ -36,226 +36,185 @@ namespace component {
 namespace linearsolver {
 
 template<class Matrix, class Vector>
+void Thread_invert<Matrix,Vector>::operator()() {	
+	(*run)=1;
+	while (*run) {
+		solver->invert(*(matrices[index]));
+		
+		ready_thread[0] = 1; //signal the main thread the invert is finish
+		
+		if (*run) bar->wait();
+		else break;
+		
+		if(index) index=0;
+		else index=1;
+		
+		std::cout << "thread swap" << std::endl;
+	}
+	
+	bar->wait();
+}  
+  
+  
+template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
-: multiGroup( initData( &multiGroup, false, "multiGroup", "activate multiple system solve, one for each child node" ) )
-, useWarping( initData( &useWarping, false, "useWarping", "use Warping around the solver" ) )
-, currentGroup(&defaultGroup)
+: useWarping( initData( &useWarping, true, "useWarping", "use Warping around the solver" ) )
+, useMultiThread( initData( &useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
 {}
 
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::~ParallelMatrixLinearSolver()
 {
-    //if (systemMatrix) deleteMatrix(systemMatrix);
-    //if (systemRHVector) deleteVector(systemRHVector);
-    //if (systemLHVector) deleteVector(systemLHVector);
-}
-
-
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::createGroups() {
-    simulation::Node* root = dynamic_cast<simulation::Node*>(this->getContext());
-    //defaultGroup.node = root;
-    nodeMap.clear();
-    writeNodeMap.clear();
-    for (GroupDataMapIter it = gData.begin(), itend = gData.end(); it != itend; ++it)
-        it->second.systemSize = 0;
-    if (isMultiGroup())
-    {
-        for (unsigned int g=0;g<root->child.size();++g)
-        {
-            simulation::Node* n = root->child[g];
-            nodeMap[n] = 0.0;
-        }
-
-        double dim = 0;
-        simulation::MechanicalGetDimensionVisitor(&dim).setNodeMap(&nodeMap).execute(root);
-
-        groups.clear();
-
-        for (unsigned int g=0;g<root->child.size();++g)
-        {
-            simulation::Node* n = root->child[g];
-            double gdim = nodeMap[ n ];
-            if (gdim <= 0) continue;
-            groups.push_back(n);
-            gData[n].systemSize = (int)gdim;
-            dim += gdim;
-        }
-
-        defaultGroup.systemSize = (int)dim;
-
-        // set nodemap to default (i.e. factor 1 for all non empty groups
-        nodeMap.clear();
-        writeNodeMap.clear();
-        for (unsigned int g=0;g<groups.size();++g)
-        {
-            nodeMap[ groups[g] ] = 1.0;
-            writeNodeMap[ groups[g] ] = 0.0;
-        }
-    }
-    else
-    {
-        groups.clear();
-        double dim = 0;
-        simulation::MechanicalGetDimensionVisitor(&dim).execute(root);
-        defaultGroup.systemSize = (int)dim;
-    }
-    currentNode = root;
-    currentGroup = &defaultGroup;
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::resetSystem()
-{
-    for (unsigned int g=0, nbg = isMultiSolve() ? 1 : getNbGroups(); g < nbg; ++g) { if (!isMultiSolve()) setGroup(g);
-    if (!frozen)
-    {
-        if (currentGroup->systemMatrix) currentGroup->systemMatrix->clear();
-        currentGroup->needInvert = true;
-    }
-    if (currentGroup->systemRHVector) currentGroup->systemRHVector->clear();
-    if (currentGroup->systemLHVector) currentGroup->systemLHVector->clear();
-    currentGroup->solutionVecId = VecId();
-    }
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n)
-{
-    if (!frozen)
-    {
-        if (!currentGroup->systemMatrix) currentGroup->systemMatrix = createMatrix();
-        currentGroup->systemMatrix->resize(n,n);
-    }
-    if (!currentGroup->systemRHVector) currentGroup->systemRHVector = createVector();
-    currentGroup->systemRHVector->resize(n);
-    if (!currentGroup->systemLHVector) currentGroup->systemLHVector = createVector();
-    currentGroup->systemLHVector->resize(n);
-    currentGroup->needInvert = true;
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
-    getRotations(Rinv);
-  
-    createGroups();
-    for (unsigned int g=0, nbg = isMultiSolve() ? 1 : getNbGroups(); g < nbg; ++g) { 
-      if (!isMultiSolve()) setGroup(g);
-      if (!this->frozen) {
-	  unsigned int nbRow=0, nbCol=0;
-	  //MechanicalGetMatrixDimensionVisitor(nbRow, nbCol).execute( getContext() );
-	  this->getMatrixDimension(&nbRow, &nbCol);
-	  resizeSystem(nbRow);
-	  currentGroup->systemMatrix->clear();
-	  unsigned int offset = 0;
-	  //MechanicalAddMBK_ToMatrixVisitor(currentGroup->systemMatrix, mFact, bFact, kFact, offset).execute( getContext() );
-	  this->addMBK_ToMatrix(currentGroup->systemMatrix, mFact, bFact, kFact, offset);
-      }
-    }
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::getRotations(Vector & R) {
-    if (! useWarping.getValue()) return;
+    run = 0;
+    std::cout << "Wait for destoying thread" << std::endl;
+    bar->wait();    
     
-    unsigned int size = currentGroup->systemSize; // dont know how it works if there is multigroup
-    R.resize(size*9);
+    if (systemRHVector) delete systemRHVector;
+    if (systemLHVector) delete systemLHVector;
     
-    if (rotationFinders.empty()) {
-	serr << "No rotation defined : use Identity !!";
-	for(unsigned int k = 0; k < size; k++)	{
-		R[k*9] = R[k*9+4] = R[k*9+8] = 1.0f;
-		R[k*9+1] = R[k*9+2] = R[k*9+3] = R[k*9+5] = R[k*9+6] = R[k*9+7] = 0.0f;
-	}
-    } else {
-        for (unsigned i=0;i<rotationFinders.size();i++) rotationFinders[i]->getRotations(&R);
-    }
-    
+    if (matricesWork[0]) delete matricesWork[0];
+    if (matricesWork[1]) delete matricesWork[1];
+    if (rotationWork[0]) delete rotationWork[0];
+    if (rotationWork[1]) delete rotationWork[1];
+    if (Rcur) delete Rcur;
+    delete bar;
 }
 
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemRHVector(VecId v)
-{
-    for (unsigned int g=0, nbg = isMultiSolve() ? 1 : getNbGroups(); g < nbg; ++g) { 
-	if (!isMultiSolve()) setGroup(g);
-	unsigned int offset = 0;
-	//MechanicalMultiVector2BaseVectorVisitor(v, systemRHVector, offset).execute( getContext() );
-	this->multiVector2BaseVector(v, currentGroup->systemRHVector, offset);
-    }
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v)
-{
-    for (unsigned int g=0, nbg = isMultiSolve() ? 1 : getNbGroups(); g < nbg; ++g) { if (!isMultiSolve()) setGroup(g);
-    currentGroup->solutionVecId = v;
-    unsigned int offset = 0;
-    //MechanicalMultiVector2BaseVectorVisitor(v, systemLHVector, offset).execute( getContext() );
-    this->multiVector2BaseVector(v, currentGroup->systemLHVector, offset);
-    }
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem()
-{
-    for (unsigned int g=0, nbg = isMultiSolve() ? 1 : getNbGroups(); g < nbg; ++g) { if (!isMultiSolve()) setGroup(g);
-    if (currentGroup->needInvert)
-    {
-        this->invert(*currentGroup->systemMatrix);
-        currentGroup->needInvert = false;
-    }
-    this->solve(*currentGroup->systemMatrix, *currentGroup->systemLHVector, *currentGroup->systemRHVector);
-    if (!currentGroup->solutionVecId.isNull())
-    {
-        unsigned int offset = 0;
-        v_clear(currentGroup->solutionVecId);
-        multiVectorPeqBaseVector(currentGroup->solutionVecId, currentGroup->systemLHVector, offset);
-    }
-    }
-}
-
-template<class Matrix, class Vector>
-Vector* ParallelMatrixLinearSolver<Matrix,Vector>::createVector()
-{
-    return new Vector;
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::deleteVector(Vector* v)
-{
-    delete v;
-}
-
-template<class Matrix, class Vector>
-Matrix* ParallelMatrixLinearSolver<Matrix,Vector>::createMatrix()
-{
-    return new Matrix;
-}
-
-template<class Matrix, class Vector>
-void ParallelMatrixLinearSolver<Matrix,Vector>::deleteMatrix(Matrix* v)
-{
-    delete v;
-}
 
 template<class TMatrix, class TVector>
 void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
     sofa::core::objectmodel::BaseContext * c = this->getContext();
 
     c->get<sofa::component::misc::BaseRotationFinder >(&rotationFinders, sofa::core::objectmodel::BaseContext::Local);
+    
+    sout << "Found " << rotationFinders.size() << " Rotation finders" << sendl;
+    
+    first = true;
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::resetSystem() {
+    if (!frozen && matricesWork[indexwork]) matricesWork[indexwork]->clear();
+    if (systemRHVector) systemRHVector->clear();
+    if (systemLHVector) systemLHVector->clear();
+    solutionVecId = VecId();
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
+    matricesWork[indexwork]->resize(n,n);
+    systemRHVector->resize(n);
+    systemLHVector->resize(n);
+    systemSize = n;
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(double mFact, double bFact, double kFact) {
+  if (!this->frozen) {
+      unsigned int nbRow=0, nbCol=0;
+      this->getMatrixDimension(&nbRow,&nbCol);
+      resizeSystem(nbRow);
+      matricesWork[indexwork]->clear();
+      unsigned int offset = 0;
+      this->addMBK_ToMatrix(matricesWork[indexwork], mFact, bFact, kFact, offset);
+  }
+  for (unsigned i=0;i<useRotation && rotationFinders.size();i++) rotationFinders[i]->getRotations(rotationWork[indexwork]);
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
+	useRotation = useWarping.getValue();
+    
+	if (first) {
+	    first = false;
+	    matricesWork[0] = new Matrix();
+	    matricesWork[1] = new Matrix();
+	    rotationWork[0] = new TRotationMatrix();
+	    rotationWork[1] = new TRotationMatrix();
+	    Rcur = new TRotationMatrix();
+	    systemLHVector = new Vector();
+	    systemRHVector = new Vector();
+
+	    
+	    //////////////////////////////////////////////////////////////
+	    //CompressedRowSparseMatrix doesn't store data until the first "non zero resize" plus clear 
+	    //When the bug will be fix thooses linge should be remove
+	    unsigned int nbRow=0, nbCol=0;
+	    this->getMatrixDimension(&nbRow,&nbCol);
+	    matricesWork[0]->resize(nbRow,nbRow);matricesWork[0]->clear();	    
+	    matricesWork[1]->resize(nbRow,nbRow);matricesWork[1]->clear();    
+	    //////////////////////////////////////////////////////////////
+	    
+	    indexwork = 0;
+	    this->computeSystemMatrix(mFact,bFact,kFact);
+	    this->invertSystem(); //only this thread use metho invert.
+	    
+	    indexwork = 1;
+	    this->computeSystemMatrix(mFact,bFact,kFact);
+	    
+	    ready_thread = 0;
+	    bar = new boost::barrier(2);
+	    std :: cout << "Launching the invert thread...." << std::endl;// on matrix[1]
+	    Thread_invert<Matrix,Vector> thi(bar,this,&ready_thread,&run,matricesWork,indexwork);
+	    boost::thread thrd(thi);
+	    
+	    indexwork = 0;
+	} else if (! useMultiThread.getValue()) {
+	    this->computeSystemMatrix(mFact,bFact,kFact);		    
+	    this->invertSystem();
+	} else if (ready_thread) {
+	    ready_thread = 0;
+	    	    
+	    this->computeSystemMatrix(mFact,bFact,kFact);
+	    bar->wait();
+	    if (indexwork) indexwork=0;
+	    else indexwork=1;
+	}
+	
+	if (useRotation) tmpVectorRotation.resize(systemSize);  
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemRHVector(VecId v) {
+    unsigned int offset = 0;
+    this->multiVector2BaseVector(v, systemRHVector, offset);
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v) {
+    solutionVecId = v;
+    unsigned int offset = 0;
+    this->multiVector2BaseVector(v, systemLHVector, offset);
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
+	if (useRotation && frozen) {
+	    for (unsigned i=0;i<rotationFinders.size();i++) rotationFinders[i]->getRotations(Rcur);
+	    rotationWork[indexwork]->opMulTM(Rcur,Rcur);
+	}
+	
+	if (useRotation) {
+		for (unsigned i=0;useRotation && i<rotationFinders.size();i++) Rcur->opMulTV(systemLHVector,systemRHVector);
+		this->solve(*matricesWork[indexwork], tmpVectorRotation, *systemLHVector);
+		for (unsigned i=0;useRotation && i<rotationFinders.size();i++) Rcur->opMulV(systemLHVector,&tmpVectorRotation);
+	} else {
+		this->solve(*matricesWork[indexwork], *systemLHVector, *systemRHVector);
+	}
+	
+	if (!solutionVecId.isNull()) {
+		unsigned int offset = 0;
+		v_clear(solutionVecId);
+		multiVectorPeqBaseVector(solutionVecId, systemLHVector, offset);
+	}
 }
 
 /// Default implementation of Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
-///
-/// TODO : put this implementation in ParallelMatrixLinearSolver class - fix problems mith Scattered Matrix
 template<class Matrix, class Vector> template<class RMatrix, class JMatrix>
-bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMatrix& J, double fact)
-{
+bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMatrix& J, double fact) {
   const unsigned int Jrows = J.rowSize();
   const unsigned int Jcols = J.colSize();
-  if (Jcols != currentGroup->systemMatrix->rowSize())
-  {
+  if (Jcols != matricesWork[indexwork]->rowSize()) {
       serr << "LULinearSolver::addJMInvJt ERROR: incompatible J matrix size." << sendl;
       return false;
   }
@@ -267,10 +226,10 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMat
   for (typename JMatrix::LineConstIterator jit1 = J.begin(); jit1 != jitend; ++jit1) {
       int row1 = jit1->first;
       // clear the right hand term:
-      currentGroup->systemRHVector->clear(); // currentGroup->systemMatrix->rowSize()
+      systemRHVector->clear(); // currentGroup->systemMatrix->rowSize()
       //double acc = 0.0;
       for (typename JMatrix::LElementConstIterator i1 = jit1->second.begin(), i1end = jit1->second.end(); i1 != i1end; ++i1) {
-	currentGroup->systemRHVector->add(i1->first,i1->second);       
+	systemRHVector->add(i1->first,i1->second);       
       }
 
       // STEP 2 : solve the system :
@@ -286,7 +245,7 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMat
 	      {
 		      int col2 = i2->first;
 		      double val2 = i2->second;
-		      acc += val2 * currentGroup->systemLHVector->element(col2);
+		      acc += val2 * systemLHVector->element(col2);
 	      }
 	      acc *= fact;
 	      //sout << "W("<<row1<<","<<row2<<") += "<<acc<<" * "<<fact<<sendl;

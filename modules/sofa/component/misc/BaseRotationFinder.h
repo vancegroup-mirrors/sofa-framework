@@ -37,20 +37,8 @@ namespace misc {
 /// Direct linear solver based on Sparse LDL^T factorization, implemented with the CSPARSE library
 class BaseRotationFinder : public virtual sofa::core::objectmodel::BaseObject {
   public:
-      ///for a block-diagonal matrix like :
-      ///a b c 0 0 0 0 0 0 
-      ///d e f 0 0 0 0 0 0
-      ///g h i 0 0 0 0 0 0 
-      ///0 0 0 j k l 0 0 0 
-      ///0 0 0 m n o 0 0 0
-      ///0 0 0 p q r 0 0 0
-      ///0 0 0 0 0 0 s t u
-      ///0 0 0 0 0 0 v w x
-      ///0 0 0 0 0 0 y z ù
-      ///write a vector like :
-      /// a b c d e f g h i j k l m n o p ...
-      
-      virtual void getRotations(defaulttype::BaseVector * m) = 0;
+ 
+      virtual void getRotations(defaulttype::BaseMatrix * m,int offset = 0) = 0;
 };
 
 } // namespace misc

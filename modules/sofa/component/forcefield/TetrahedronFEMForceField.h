@@ -33,6 +33,7 @@
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/component/component.h>
 #include <sofa/component/misc/BaseRotationFinder.h>
+#include <sofa/component/linearsolver/RotationMatrix.h>
 
 // corotational tetrahedron from
 // @InProceedings{NPF05,
@@ -151,23 +152,22 @@ public:
     	for (unsigned int i=0;i<_indexedElements->size();++i)
     		getRotation(*(Transformation*)&(vecR[i*9]),i);
     }
-    
-    void getRotations(defaulttype::BaseVector * vecR) {
-      	vecR->resize(_indexedElements->size()*9);
-    	for (unsigned int i=0;i<_indexedElements->size();++i) {
-		Transformation t;
-    		getRotation(t,i);
-		vecR->set(i*9  ,t[0][0]);
-		vecR->set(i*9+1,t[0][1]);
-		vecR->set(i*9+2,t[0][2]);
 
-		vecR->set(i*9+3,t[1][0]);
-		vecR->set(i*9+4,t[1][1]);
-		vecR->set(i*9+5,t[1][2]);
-
-		vecR->set(i*9+6,t[2][0]);
-		vecR->set(i*9+7,t[2][1]);
-		vecR->set(i*9+8,t[2][2]);		
+    void getRotations(defaulttype::BaseMatrix * rotations,int offset = 0) {
+	unsigned int nbdof = this->mstate->getX()->size();
+	
+      	rotations->resize(nbdof*3,nbdof*3);
+	if (component::linearsolver::RotationMatrix<Real> * diag = dynamic_cast<component::linearsolver::RotationMatrix<Real> *>(rotations)) {
+		for (unsigned int i=0;i<nbdof;++i) getRotation(*(Transformation*)&(diag->getVector()[i*9]),i);
+	} else {
+		for (unsigned int i=0;i<nbdof;++i) {
+		  Transformation t;
+		  getRotation(t,i);
+		  int e = offset+i*3;
+		  rotations->set(e+0,e+0,t[0][0]);rotations->set(e+0,e+1,t[0][1]);rotations->set(e+0,e+2,t[0][2]);		  
+		  rotations->set(e+1,e+0,t[1][0]);rotations->set(e+1,e+1,t[1][1]);rotations->set(e+1,e+2,t[1][2]);
+		  rotations->set(e+2,e+0,t[2][0]);rotations->set(e+2,e+1,t[2][1]);rotations->set(e+2,e+2,t[2][2]);		  
+		}
 	}
     }
 

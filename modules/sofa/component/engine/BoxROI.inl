@@ -50,24 +50,38 @@ using namespace core::topology;
 template <class DataTypes>
 BoxROI<DataTypes>::BoxROI()
 : boxes( initData(&boxes, "box", "Box defined by xmin,ymin,zmin, xmax,ymax,zmax") )
-, f_X0( initData (&f_X0, "rest_position", "Rest position coordinates of the degrees of freedom") )
+, f_X0( initData (&f_X0, "position", "Rest position coordinates of the degrees of freedom") )
 , f_edges(initData (&f_edges, "edges", "Edge Topology") )
 , f_triangles(initData (&f_triangles, "triangles", "Triangle Topology") )
 , f_tetrahedra(initData (&f_tetrahedra, "tetrahedra", "Tetrahedron Topology") )
+, f_computeEdges( initData(&f_computeEdges, true,"computeEdges","If true, will compute edge list and index list inside the ROI.") )
+, f_computeTriangles( initData(&f_computeTriangles, true,"computeTriangles","If true, will compute triangle list and index list inside the ROI.") )
+, f_computeTetrahedra( initData(&f_computeTetrahedra, true,"computeTetrahedra","If true, will compute tetrahedra list and index list inside the ROI.") )
 , f_indices( initData(&f_indices,"indices","Indices of the points contained in the ROI") )
 , f_edgeIndices( initData(&f_edgeIndices,"edgeIndices","Indices of the edges contained in the ROI") )
 , f_triangleIndices( initData(&f_triangleIndices,"triangleIndices","Indices of the triangles contained in the ROI") )
 , f_tetrahedronIndices( initData(&f_tetrahedronIndices,"tetrahedronIndices","Indices of the tetrahedra contained in the ROI") )
-, f_pointsInBox( initData(&f_pointsInBox,"pointsInBox","Points contained in the ROI") )
-, f_edgesInBox( initData(&f_edgesInBox,"edgesInBox","Edges contained in the ROI") )
-, f_trianglesInBox( initData(&f_trianglesInBox,"f_trianglesInBox","Triangles contained in the ROI") )
-, f_tetrahedraInBox( initData(&f_tetrahedraInBox,"f_tetrahedraInBox","Tetrahedra contained in the ROI") )
+, f_pointsInROI( initData(&f_pointsInROI,"pointsInROI","Points contained in the ROI") )
+, f_edgesInROI( initData(&f_edgesInROI,"edgesInROI","Edges contained in the ROI") )
+, f_trianglesInROI( initData(&f_trianglesInROI,"trianglesInROI","Triangles contained in the ROI") )
+, f_tetrahedraInROI( initData(&f_tetrahedraInROI,"tetrahedraInROI","Tetrahedra contained in the ROI") )
 , p_drawBoxes( initData(&p_drawBoxes,false,"drawBoxes","Draw Box(es)") )
 , p_drawPoints( initData(&p_drawPoints,false,"drawPoints","Draw Points") )
 , p_drawEdges( initData(&p_drawEdges,false,"drawEdges","Draw Edges") )
-, p_drawTriangles( initData(&p_drawTriangles,false,"drawTriangle","Draw Triangles") )
+, p_drawTriangles( initData(&p_drawTriangles,false,"drawTriangles","Draw Triangles") )
 , p_drawTetrahedra( initData(&p_drawTetrahedra,false,"drawTetrahedra","Draw Tetrahedra") )
+, _drawSize( initData(&_drawSize,0.0,"drawSize","rendering size for box and topological elements") )
 {
+    //Adding alias to handle old BoxROI input/output
+    addAlias(&f_pointsInROI,"pointsInBox");
+    addAlias(&f_edgesInROI,"edgesInBox");
+    addAlias(&f_trianglesInROI,"f_trianglesInBox");
+    addAlias(&f_tetrahedraInROI,"f_tetrahedraInBox");
+	addAlias(&f_X0,"rest_position");
+
+	//Adding alias to handle TrianglesInBoxROI input/output
+	addAlias(&p_drawBoxes,"isVisible");
+
     boxes.beginEdit()->push_back(Vec6(0,0,0,1,1,1));
     boxes.endEdit();
 
@@ -78,14 +92,13 @@ BoxROI<DataTypes>::BoxROI()
 template <class DataTypes>
 void BoxROI<DataTypes>::init()
 {
-
     if (!f_X0.isSet())
     {
 		MechanicalState<DataTypes>* mstate;
 		this->getContext()->get(mstate);
 		if (mstate)
 		{
-         BaseData* parent = mstate->findField("rest_position");
+         BaseData* parent = mstate->findField("position");
 			if (parent)
 			{
 				f_X0.setParent(parent);
@@ -113,7 +126,7 @@ void BoxROI<DataTypes>::init()
 		this->getContext()->get(topology);
 		if (topology)
 		{
-			if (!f_edges.isSet())
+         if (!f_edges.isSet() && f_computeEdges.getValue())
 			{
 				BaseData* eparent = topology->findField("edges");
 				if (eparent)
@@ -122,7 +135,7 @@ void BoxROI<DataTypes>::init()
 					f_edges.setReadOnly(true);
 				}
 			}
-			if (!f_triangles.isSet())
+         if (!f_triangles.isSet() && f_computeTriangles.getValue())
 			{
 				BaseData* tparent = topology->findField("triangles");
 				if (tparent)
@@ -131,7 +144,7 @@ void BoxROI<DataTypes>::init()
 					f_triangles.setReadOnly(true);
 				}
 			}
-         if (!f_tetrahedra.isSet())
+         if (!f_tetrahedra.isSet() && f_computeTetrahedra.getValue())
          {
             BaseData* tparent = topology->findField("tetrahedra");
             if (tparent)
@@ -152,10 +165,10 @@ void BoxROI<DataTypes>::init()
     addOutput(&f_edgeIndices);
     addOutput(&f_triangleIndices);
     addOutput(&f_tetrahedronIndices);
-    addOutput(&f_pointsInBox);
-    addOutput(&f_edgesInBox);
-    addOutput(&f_trianglesInBox);
-    addOutput(&f_tetrahedraInBox);
+    addOutput(&f_pointsInROI);
+    addOutput(&f_edgesInROI);
+    addOutput(&f_trianglesInROI);
+    addOutput(&f_tetrahedraInROI);
     setDirtyValue();
 }
 
@@ -222,6 +235,12 @@ void BoxROI<DataTypes>::update()
 
     helper::vector<Vec6>& vb = *(boxes.beginEdit());
 
+    if (vb.empty())
+    {
+       boxes.endEdit();
+       return;
+    }
+
     for (unsigned int bi=0;bi<vb.size();++bi)
     {
         if (vb[bi][0] > vb[bi][3]) std::swap(vb[bi][0],vb[bi][3]);
@@ -231,30 +250,38 @@ void BoxROI<DataTypes>::update()
 
     boxes.endEdit();
 
+    // Read accessor for input topology
     helper::ReadAccessor< Data<helper::vector<Edge> > > edges = f_edges;
     helper::ReadAccessor< Data<helper::vector<Triangle> > > triangles = f_triangles;
     helper::ReadAccessor< Data<helper::vector<Tetra> > > tetrahedra = f_tetrahedra;
 
+    // Write accessor for topological element indices in BOX
     SetIndex& indices = *f_indices.beginEdit();
     SetIndex& edgeIndices = *f_edgeIndices.beginEdit();
     SetIndex& triangleIndices = *f_triangleIndices.beginEdit();
     SetIndex& tetrahedronIndices = *f_tetrahedronIndices.beginEdit();
 
-    helper::WriteAccessor< Data<VecCoord > > pointsInBox = f_pointsInBox;
-    helper::WriteAccessor< Data<helper::vector<Edge> > > edgesInBox = f_edgesInBox;
-    helper::WriteAccessor< Data<helper::vector<Triangle> > > trianglesInBox = f_trianglesInBox;
+    // Write accessor for toplogical element in BOX
+    helper::WriteAccessor< Data<VecCoord > > pointsInROI = f_pointsInROI;
+    helper::WriteAccessor< Data<helper::vector<Edge> > > edgesInROI = f_edgesInROI;
+    helper::WriteAccessor< Data<helper::vector<Triangle> > > trianglesInROI = f_trianglesInROI;
+    helper::WriteAccessor< Data<helper::vector<Tetra> > > tetrahedraInROI = f_tetrahedraInROI;
 
-    helper::WriteAccessor< Data<helper::vector<Tetra> > > tetrahedraInBox = f_tetrahedraInBox;
-
+    // Clear lists
     indices.clear();
-    edgesInBox.clear();
-    trianglesInBox.clear();
-    tetrahedraInBox.clear();
-    pointsInBox.clear();
+    edgeIndices.clear();
+    triangleIndices.clear();
+    tetrahedronIndices.clear();
+
+    pointsInROI.clear();
+    edgesInROI.clear();
+    trianglesInROI.clear();
+    tetrahedraInROI.clear();
 
 
     const VecCoord* x0 = &f_X0.getValue();
 
+    //Points
     for( unsigned i=0; i<x0->size(); ++i )
     {
     	for (unsigned int bi=0;bi<vb.size();++bi)
@@ -262,164 +289,187 @@ void BoxROI<DataTypes>::update()
     		if (isPointInBox(i, vb[bi]))
     		{
                 indices.push_back(i);
-                pointsInBox.push_back((*x0)[i]);
+                pointsInROI.push_back((*x0)[i]);
                 break;
             }
         }
     }
 
-    for(unsigned int i=0 ; i<edges.size() ; i++)
+    //Edges
+    if (f_computeEdges.getValue())
     {
-    	Edge e = edges[i];
-    	for (unsigned int bi=0;bi<vb.size();++bi)
-    	{
-			if (isEdgeInBox(e, vb[bi]))
-			{
-				edgeIndices.push_back(i);
-				edgesInBox.push_back(e);
-				break;
-			}
-    	}
+       for(unsigned int i=0 ; i<edges.size() ; i++)
+       {
+          Edge e = edges[i];
+          for (unsigned int bi=0;bi<vb.size();++bi)
+          {
+             if (isEdgeInBox(e, vb[bi]))
+             {
+                edgeIndices.push_back(i);
+                edgesInROI.push_back(e);
+                break;
+             }
+          }
+       }
     }
 
-    for(unsigned int i=0 ; i<triangles.size() ; i++)
+    //Triangles
+    if (f_computeTriangles.getValue())
     {
-    	Triangle t = triangles[i];
-    	for (unsigned int bi=0;bi<vb.size();++bi)
-    	{
-			if (isTriangleInBox(t, vb[bi]))
-			{
-				triangleIndices.push_back(i);
-				trianglesInBox.push_back(t);
-				break;
-			}
-    	}
+       for(unsigned int i=0 ; i<triangles.size() ; i++)
+       {
+          Triangle t = triangles[i];
+          for (unsigned int bi=0;bi<vb.size();++bi)
+          {
+             if (isTriangleInBox(t, vb[bi]))
+             {
+                triangleIndices.push_back(i);
+                trianglesInROI.push_back(t);
+                break;
+             }
+          }
+       }
     }
 
-    for(unsigned int i=0 ; i<tetrahedra.size() ; i++)
+    //Tetrahedra
+    if (f_computeTetrahedra.getValue())
     {
-      Tetra t = tetrahedra[i];
-      for (unsigned int bi=0;bi<vb.size();++bi)
-      {
-         if (isTetrahedronInBox(t, vb[bi]))
-         {
-            tetrahedronIndices.push_back(i);
-            tetrahedraInBox.push_back(t);
-            break;
-         }
-      }
+       for(unsigned int i=0 ; i<tetrahedra.size() ; i++)
+       {
+          Tetra t = tetrahedra[i];
+          for (unsigned int bi=0;bi<vb.size();++bi)
+          {
+             if (isTetrahedronInBox(t, vb[bi]))
+             {
+                tetrahedronIndices.push_back(i);
+                tetrahedraInROI.push_back(t);
+                break;
+             }
+          }
+       }
     }
 
     f_indices.endEdit();
     f_edgeIndices.endEdit();
     f_triangleIndices.endEdit();
     f_tetrahedronIndices.endEdit();
-
 }
 
 template <class DataTypes>
 void BoxROI<DataTypes>::draw()
 {
-    if (!this->getContext()->getShowBehaviorModels())
-        return;
+   if (!this->getContext()->getShowBehaviorModels())
+      return;
 
-    const VecCoord* x0 = &f_X0.getValue();
-    glColor3f(0.0, 1.0, 1.0);
-    if( p_drawBoxes.getValue())
-    {
-        ///draw the boxes
-        glBegin(GL_LINES);
-        const helper::vector<Vec6>& vb=boxes.getValue();
-        for (unsigned int bi=0;bi<vb.size();++bi)
-        {
-            const Vec6& b=vb[bi];
-            const Real& Xmin=b[0];
-            const Real& Xmax=b[3];
-            const Real& Ymin=b[1];
-            const Real& Ymax=b[4];
-            const Real& Zmin=b[2];
-            const Real& Zmax=b[5];
-            glVertex3d(Xmin,Ymin,Zmin);
-            glVertex3d(Xmin,Ymin,Zmax);
-            glVertex3d(Xmin,Ymin,Zmin);
-            glVertex3d(Xmax,Ymin,Zmin);
-            glVertex3d(Xmin,Ymin,Zmin);
-            glVertex3d(Xmin,Ymax,Zmin);
-            glVertex3d(Xmin,Ymax,Zmin);
-            glVertex3d(Xmax,Ymax,Zmin);
-            glVertex3d(Xmin,Ymax,Zmin);
-            glVertex3d(Xmin,Ymax,Zmax);
-            glVertex3d(Xmin,Ymax,Zmax);
-            glVertex3d(Xmin,Ymin,Zmax);
-            glVertex3d(Xmin,Ymin,Zmax);
-            glVertex3d(Xmax,Ymin,Zmax);
-            glVertex3d(Xmax,Ymin,Zmax);
-            glVertex3d(Xmax,Ymax,Zmax);
-            glVertex3d(Xmax,Ymin,Zmax);
-            glVertex3d(Xmax,Ymin,Zmin);
-            glVertex3d(Xmin,Ymax,Zmax);
-            glVertex3d(Xmax,Ymax,Zmax);
-            glVertex3d(Xmax,Ymax,Zmin);
-            glVertex3d(Xmax,Ymin,Zmin);
-            glVertex3d(Xmax,Ymax,Zmin);
-            glVertex3d(Xmax,Ymax,Zmax);
-        }
-        glEnd();
-    }
-    if( p_drawPoints.getValue())
-	{
-      ///draw points in boxes
-		glBegin(GL_POINTS);
-		glPointSize(5.0);
-	    helper::ReadAccessor< Data<VecCoord > > pointsInBox = f_pointsInBox;
-		for (unsigned int i=0; i<pointsInBox.size() ;++i)
-		{
-			CPos p = DataTypes::getCPos(pointsInBox[i]);
-			helper::gl::glVertexT(p);
-		}
-		glEnd();
-	}
-    if( p_drawEdges.getValue())
-	{
-      ///draw edges in boxes
-		glBegin(GL_LINES);
-      helper::ReadAccessor< Data<helper::vector<Edge> > > edgesInBox = f_edgesInBox;
-		for (unsigned int i=0; i<edgesInBox.size() ;++i)
-		{
-			Edge e = edgesInBox[i];
-			for (unsigned int j=0 ; j<2 ;j++)
-			{
-				CPos p = DataTypes::getCPos((*x0)[e[j]]);
-				helper::gl::glVertexT(p);
-			}
-		}
-		glEnd();
-	}
-    if( p_drawTriangles.getValue())
-	{
-      ///draw triangles in boxes
-		glBegin(GL_TRIANGLES);
-      helper::ReadAccessor< Data<helper::vector<Triangle> > > trianglesInBox = f_trianglesInBox;
-		for (unsigned int i=0; i<trianglesInBox.size() ;++i)
-		{
-			Triangle t = trianglesInBox[i];
-			for (unsigned int j=0 ; j<3 ;j++)
-			{
-				CPos p = DataTypes::getCPos((*x0)[t[j]]);
-				helper::gl::glVertexT(p);
-			}
-		}
-		glEnd();
-	}
+   const VecCoord* x0 = &f_X0.getValue();
+   glColor3f(0.0, 1.0, 1.0);
 
-    if( p_drawTetrahedra.getValue())
+   ///draw the boxes
+   if( p_drawBoxes.getValue())
    {
-      ///draw tetrahedra in boxes
+      glDisable(GL_LIGHTING);
       glBegin(GL_LINES);
-      helper::ReadAccessor< Data<helper::vector<Tetra> > > tetrahedraInBox = f_tetrahedraInBox;
-      for (unsigned int i=0; i<tetrahedraInBox.size() ;++i)
+      const helper::vector<Vec6>& vb=boxes.getValue();
+      for (unsigned int bi=0;bi<vb.size();++bi)
       {
-         Tetra t = tetrahedraInBox[i];
+         const Vec6& b=vb[bi];
+         const Real& Xmin=b[0];
+         const Real& Xmax=b[3];
+         const Real& Ymin=b[1];
+         const Real& Ymax=b[4];
+         const Real& Zmin=b[2];
+         const Real& Zmax=b[5];
+         glVertex3d(Xmin,Ymin,Zmin);
+         glVertex3d(Xmin,Ymin,Zmax);
+         glVertex3d(Xmin,Ymin,Zmin);
+         glVertex3d(Xmax,Ymin,Zmin);
+         glVertex3d(Xmin,Ymin,Zmin);
+         glVertex3d(Xmin,Ymax,Zmin);
+         glVertex3d(Xmin,Ymax,Zmin);
+         glVertex3d(Xmax,Ymax,Zmin);
+         glVertex3d(Xmin,Ymax,Zmin);
+         glVertex3d(Xmin,Ymax,Zmax);
+         glVertex3d(Xmin,Ymax,Zmax);
+         glVertex3d(Xmin,Ymin,Zmax);
+         glVertex3d(Xmin,Ymin,Zmax);
+         glVertex3d(Xmax,Ymin,Zmax);
+         glVertex3d(Xmax,Ymin,Zmax);
+         glVertex3d(Xmax,Ymax,Zmax);
+         glVertex3d(Xmax,Ymin,Zmax);
+         glVertex3d(Xmax,Ymin,Zmin);
+         glVertex3d(Xmin,Ymax,Zmax);
+         glVertex3d(Xmax,Ymax,Zmax);
+         glVertex3d(Xmax,Ymax,Zmin);
+         glVertex3d(Xmax,Ymin,Zmin);
+         glVertex3d(Xmax,Ymax,Zmin);
+         glVertex3d(Xmax,Ymax,Zmax);
+      }
+      glEnd();
+   }
+
+   ///draw points in ROI
+   if( p_drawPoints.getValue())
+   {      
+      glDisable(GL_LIGHTING);
+      glBegin(GL_POINTS);
+      glPointSize(5.0);
+      helper::ReadAccessor< Data<VecCoord > > pointsInROI = f_pointsInROI;
+      for (unsigned int i=0; i<pointsInROI.size() ;++i)
+      {
+         CPos p = DataTypes::getCPos(pointsInROI[i]);
+         helper::gl::glVertexT(p);
+      }
+      glEnd();
+   }
+
+   ///draw edges in ROI
+   if( p_drawEdges.getValue())
+   {
+      glDisable(GL_LIGHTING);
+      glLineWidth((GLfloat)_drawSize.getValue());
+      glBegin(GL_LINES);
+      helper::ReadAccessor< Data<helper::vector<Edge> > > edgesInROI = f_edgesInROI;
+      for (unsigned int i=0; i<edgesInROI.size() ;++i)
+      {
+         Edge e = edgesInROI[i];
+         for (unsigned int j=0 ; j<2 ;j++)
+         {
+            CPos p = DataTypes::getCPos((*x0)[e[j]]);
+            helper::gl::glVertexT(p);
+         }
+      }
+      glEnd();
+   }
+
+   ///draw triangles in ROI
+   if( p_drawTriangles.getValue())
+   {
+      glDisable(GL_LIGHTING);
+      glLineWidth((GLfloat)_drawSize.getValue());
+      glBegin(GL_TRIANGLES);
+      helper::ReadAccessor< Data<helper::vector<Triangle> > > trianglesInROI = f_trianglesInROI;
+      for (unsigned int i=0; i<trianglesInROI.size() ;++i)
+      {
+         Triangle t = trianglesInROI[i];
+         for (unsigned int j=0 ; j<3 ;j++)
+         {
+            CPos p = DataTypes::getCPos((*x0)[t[j]]);
+            helper::gl::glVertexT(p);
+         }
+      }
+      glEnd();
+   }
+
+   ///draw tetrahedra in ROI
+   if( p_drawTetrahedra.getValue())
+   {
+      glDisable(GL_LIGHTING);
+      glLineWidth((GLfloat)_drawSize.getValue());
+      glBegin(GL_LINES);
+      helper::ReadAccessor< Data<helper::vector<Tetra> > > tetrahedraInROI = f_tetrahedraInROI;
+      for (unsigned int i=0; i<tetrahedraInROI.size() ;++i)
+      {
+         Tetra t = tetrahedraInROI[i];
          for (unsigned int j=0 ; j<4 ;j++)
          {
             CPos p = DataTypes::getCPos((*x0)[t[j]]);
@@ -440,6 +490,7 @@ void BoxROI<DataTypes>::draw()
       glEnd();
    }
 }
+
 
 template <class DataTypes>
 bool BoxROI<DataTypes>::addBBox(double* minBBox, double* maxBBox)

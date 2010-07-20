@@ -37,6 +37,7 @@
 #include <vector>
 
 #include <sofa/component/component.h>
+#include <sofa/helper/OptionsGroup.h>
 
 
 namespace sofa
@@ -148,27 +149,27 @@ typedef enum
           Data<VVD > coefs;
           Data<SVector<SVector<GeoCoord> > > weightGradients;
           Data<unsigned int> nbRefs;
-					public:
+        public:
           Data<bool> showBlendedFrame;
           Data<bool> showDefTensors;
-					Data<bool> showDefTensorsValues;
-					Data<double> showDefTensorScale;
-					Data<unsigned int> showFromIndex;
-					Data<bool> showDistancesValues;
-					Data<bool> showCoefs;
-					Data<double> showGammaCorrection;
-					Data<bool> showCoefsValues;
-					Data<bool> showReps;
-					Data<int> showValuesNbDecimals;
-					Data<double> showTextScaleFactor;
-					Data<bool> showGradients;
-					Data<bool> showGradientsValues;
-					Data<double> showGradientsScaleFactor;
+          Data<bool> showDefTensorsValues;
+          Data<double> showDefTensorScale;
+          Data<unsigned int> showFromIndex;
+          Data<bool> showDistancesValues;
+          Data<bool> showCoefs;
+          Data<double> showGammaCorrection;
+          Data<bool> showCoefsValues;
+          Data<bool> showReps;
+          Data<int> showValuesNbDecimals;
+          Data<double> showTextScaleFactor;
+          Data<bool> showGradients;
+          Data<bool> showGradientsValues;
+          Data<double> showGradientsScaleFactor;
 
-					protected:
-          Data<int /* = WeightingType*/> wheightingType;
-          Data<int /* = InterpolationType*/> interpolationType;
-          Data<int /* = DistanceType*/> distanceType;
+        protected:
+          Data<sofa::helper::OptionsGroup> wheightingType;
+          Data<sofa::helper::OptionsGroup> interpolationType;
+          Data<sofa::helper::OptionsGroup> distanceType;
           bool computeWeights;
           VVD distances;
           vector<vector<GeoCoord> > distGradients;

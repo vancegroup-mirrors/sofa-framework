@@ -36,6 +36,7 @@
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/loader/MeshLoader.h>
 #include <sofa/component/topology/PointSubset.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -50,7 +51,7 @@ using namespace core::behavior;
 using namespace core::objectmodel;
 
 /** 
- * This class find all the points located inside a given box.
+ * This class find all the points/edges/triangles/tetrahedra located inside a given box.
  */
 template <class DataTypes>
 class BoxROI : public core::DataEngine
@@ -64,18 +65,11 @@ public:
     typedef topology::PointSubset SetIndex;
     typedef typename DataTypes::CPos CPos;
 
-    typedef defaulttype::Vec<3,Real> Point;
     typedef unsigned int PointID;
     typedef core::topology::BaseMeshTopology::Edge Edge;
     typedef core::topology::BaseMeshTopology::Triangle Triangle;
     typedef core::topology::BaseMeshTopology::Tetra Tetra;
 
-protected:
-    bool isPointInBox(const CPos& p, const Vec6& b);
-    bool isPointInBox(const PointID& pid, const Vec6& b);
-    bool isEdgeInBox(const Edge& e, const Vec6& b);
-    bool isTriangleInBox(const Triangle& t, const Vec6& b);
-    bool isTetrahedronInBox(const Tetra& t, const Vec6& b);
 public:
 
     BoxROI();
@@ -126,22 +120,35 @@ public:
       return DataTypes::Name();
     }
 
+
+ protected:
+     bool isPointInBox(const CPos& p, const Vec6& b);
+     bool isPointInBox(const PointID& pid, const Vec6& b);
+     bool isEdgeInBox(const Edge& e, const Vec6& b);
+     bool isTriangleInBox(const Triangle& t, const Vec6& b);
+     bool isTetrahedronInBox(const Tetra& t, const Vec6& b);
+
+
+  public:
     //Input
     Data< helper::vector<Vec6> > boxes;
     Data<VecCoord> f_X0;
     Data<helper::vector<Edge> > f_edges;
     Data<helper::vector<Triangle> > f_triangles;
     Data<helper::vector<Tetra> > f_tetrahedra;
+    Data<bool> f_computeEdges;
+    Data<bool> f_computeTriangles;
+    Data<bool> f_computeTetrahedra;
 
     //Output
     Data<SetIndex> f_indices;
     Data<SetIndex> f_edgeIndices;
     Data<SetIndex> f_triangleIndices;
     Data<SetIndex> f_tetrahedronIndices;
-    Data<VecCoord > f_pointsInBox;
-    Data<helper::vector<Edge> > f_edgesInBox;
-    Data<helper::vector<Triangle> > f_trianglesInBox;
-    Data<helper::vector<Tetra> > f_tetrahedraInBox;
+    Data<VecCoord > f_pointsInROI;
+    Data<helper::vector<Edge> > f_edgesInROI;
+    Data<helper::vector<Triangle> > f_trianglesInROI;
+    Data<helper::vector<Tetra> > f_tetrahedraInROI;
 
     //Parameter
     Data<bool> p_drawBoxes;
@@ -149,15 +156,18 @@ public:
     Data<bool> p_drawEdges;
     Data<bool> p_drawTriangles;
     Data<bool> p_drawTetrahedra;
+    Data<double> _drawSize;
 };
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_ENGINE_BOXROI_CPP)
 #pragma warning(disable : 4231)
 #ifndef SOFA_FLOAT
 template class SOFA_COMPONENT_ENGINE_API BoxROI<defaulttype::Vec3dTypes>;
+template class SOFA_COMPONENT_ENGINE_API BoxROI<defaulttype::Rigid3dTypes>;
 #endif //SOFA_FLOAT
 #ifndef SOFA_DOUBLE
 template class SOFA_COMPONENT_ENGINE_API BoxROI<defaulttype::Vec3fTypes>;
+template class SOFA_COMPONENT_ENGINE_API BoxROI<defaulttype::Rigid3fTypes>;
 #endif //SOFA_DOUBLE
 #endif
 

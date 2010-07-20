@@ -64,8 +64,6 @@
 
 #include <sofa/helper/system/FileRepository.h>
 
-#define MAX_RECENTLY_OPENED 10
-
 #ifdef SOFA_QT4
 #include <QWidget>
 #include <QDockWidget>
@@ -129,7 +127,7 @@ namespace sofa
       typedef Q3ListView QListView;
       typedef Q3DockWindow QDockWindow;
       typedef QStackedWidget QWidgetStack;
-      typedef Q3TextEdit QTextEdit;      
+      typedef Q3TextEdit QTextEdit;
 #endif
 
 
@@ -305,6 +303,7 @@ namespace sofa
         timerStep(NULL),
         backgroundImage(NULL),
         left_stack(NULL),
+        recentlyOpenedFilesManager("config/Sofa.ini"),
         saveReloadFile(false)
       {
 
@@ -313,6 +312,14 @@ namespace sofa
 #ifdef SOFA_QT4
         fileMenu->removeAction(Action);
 #endif
+        //Configure Recently Opened Menu
+        const int indexRecentlyOpened=fileMenu->count()-2;
+        QMenu *recentMenu = recentlyOpenedFilesManager.createWidget(this);
+        fileMenu->insertItem(QPixmap(),recentMenu,indexRecentlyOpened,indexRecentlyOpened);
+        connect(recentMenu, SIGNAL(activated(int)), this, SLOT(fileRecentlyOpened(int)));
+
+
+
 
         displayFlag = new DisplayFlagWidget(tabView);
         connect( displayFlag, SIGNAL( change(int,bool)), this, SLOT(showhideElements(int,bool) ));
@@ -330,21 +337,10 @@ namespace sofa
 #ifdef SOFA_DUMP_VISITOR_INFO
         connect ( exportVisitorCheckbox, SIGNAL ( toggled ( bool ) ), this, SLOT ( setExportVisitor ( bool ) ) );
 #endif
-        connect( recentlyOpened, SIGNAL(activated(int)), this, SLOT(fileRecentlyOpened(int)));
-        //Recently Opened Files
-        std::string scenes ( "config/Sofa.ini" );
-        if ( !sofa::helper::system::DataRepository.findFile ( scenes ) )
-        {
-          std::string fileToBeCreated = sofa::helper::system::DataRepository.getFirstPath() + "/" + scenes;
 
-          std::ofstream ofile(fileToBeCreated.c_str());
-          ofile << "";
-          ofile.close();
-        }
+
         pathDumpVisitor = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + std::string( "/dumpVisitor.xml" );
-        scenes = sofa::helper::system::DataRepository.getFile ( scenes );
 
-        initRecentlyOpened();
         connect ( tabs, SIGNAL ( currentChanged ( QWidget* ) ), this, SLOT ( currentTabChanged ( QWidget* ) ) );
         
         //Create a Dock Window to receive the Sofa Recorder
@@ -465,69 +461,9 @@ namespace sofa
 
       void RealGUI::fileRecentlyOpened(int id)
       {
-        fileOpen(recentlyOpened->text(id).ascii());
+        fileOpen(recentlyOpenedFilesManager.getFilename((unsigned int)id));
       }
 
-      void RealGUI::initRecentlyOpened()
-      {
-        recentlyOpened->clear();
-        std::vector< std::string > list_files;
-
-
-        std::string scenes ( "config/Sofa.ini" );
-        scenes = sofa::helper::system::DataRepository.getFile ( scenes );
-
-
-        std::ifstream end(scenes.c_str());
-        std::string s;
-        while( std::getline(end,s) )
-        {
-          list_files.push_back(sofa::helper::system::DataRepository.getFile(s));
-          recentlyOpened->insertItem(QString(list_files.back().c_str()));
-        }
-        end.close();
-
-      }
-
-      void RealGUI::updateRecentlyOpened(std::string fileLoaded)
-      {
-#ifdef WIN32
-        for (unsigned int i=0;i<fileLoaded.size();++i)
-        {
-          if (fileLoaded[i] == '\\') fileLoaded[i] = '/';
-        }
-#endif
-        std::string scenes ( "config/Sofa.ini" );
-
-        scenes = sofa::helper::system::DataRepository.getFile ( scenes );
-
-        std::ofstream out;
-        out.open(scenes.c_str(),std::ios::out);
-        if (sofa::helper::system::DataRepository.findFile(fileLoaded))
-        {
-          fileLoaded = sofa::helper::system::DataRepository.getFile(fileLoaded);
-          out << fileLoaded << "\n";
-          recentlyOpened->insertItem(QString(fileLoaded.c_str()),-1,0);
-        }
-
-        for (unsigned int i=1;i<recentlyOpened->count() && i< MAX_RECENTLY_OPENED;++i)
-        {
-          std::string entry = (recentlyOpened->text(recentlyOpened->idAt(i))).ascii();
-          if (fileLoaded == entry)
-          {
-            recentlyOpened->removeItemAt(i);
-            --i;
-          }
-          else
-          {
-            out << entry << "\n";
-          }
-        }
-
-        while (recentlyOpened->count() > MAX_RECENTLY_OPENED) recentlyOpened->removeItemAt(MAX_RECENTLY_OPENED);
-
-        out.close();
-      }
 
       void RealGUI::setPixmap(std::string pixmap_filename, QPushButton* b)
       {
@@ -607,6 +543,7 @@ namespace sofa
         //--------
         SofaPluginManager::getInstance()->hide();        
         SofaMouseManager::getInstance()->hide();
+        SofaVideoRecorderManager::getInstance()->hide();
     
       }
 
@@ -900,8 +837,6 @@ namespace sofa
         simulation::Node* root = simulation::getSimulation()->load ( filename.c_str() );
         simulation::getSimulation()->init ( root );
 
-        configureGUI(root);
-
         if ( root == NULL )
         {
           qFatal ( "Failed to load %s",filename.c_str() );
@@ -910,6 +845,9 @@ namespace sofa
         }
         this->setWindowFilePath(filename.c_str());
         setScene ( root, filename.c_str(), temporaryFile );
+
+        configureGUI(root);
+
         //need to create again the output streams !!
         simulation::getSimulation()->gnuplotDirectory.setValue(gnuplot_directory);
         setExportGnuplot(exportGnuplotFilesCheckbox->isChecked());
@@ -970,7 +908,7 @@ namespace sofa
       {
         if (filename)
         {
-          if (!temporaryFile) updateRecentlyOpened(filename);
+          if (!temporaryFile) recentlyOpenedFilesManager.openFile(filename);
           setTitle ( filename );
           saveReloadFile=temporaryFile;
           std::string extension=sofa::helper::system::SetDirectory::GetExtension(filename);
@@ -1122,7 +1060,7 @@ namespace sofa
 
       //----------------------------------
       //Configuration
-      void RealGUI::setDimension ( int w, int h )
+      void RealGUI::setViewerResolution ( int w, int h )
       {
           QSize winSize = size();
           QSize viewSize = viewer->getQWidget()->size();
@@ -1146,7 +1084,25 @@ namespace sofa
       }
       void RealGUI::setFullScreen ()
       {
+
+#ifdef SOFA_QT4
+        QList<int> list;
+#else
+        QValueList<int> list;
+#endif
+        list.push_back ( 0 );
+        list.push_back ( this->width() );
+        QSplitter *splitter_ptr = dynamic_cast<QSplitter *> ( splitter2 );
+        splitter_ptr->setSizes ( list );
+
         showFullScreen();
+
+#ifndef SOFA_GUI_QT_NO_RECORDER
+        if (recorder) recorder->parentWidget()->hide();
+        statusBar()->addWidget( recorder->getFPSLabel());
+        statusBar()->addWidget( recorder->getTimeLabel());
+#endif
+
       }
 
       void RealGUI::setBackgroundColor(const defaulttype::Vector3& c)
@@ -1185,6 +1141,35 @@ namespace sofa
       }
 
   #endif
+
+      void RealGUI::setRecordPath(const std::string &
+#ifndef SOFA_GUI_QT_NO_RECORDER
+                                  path
+#endif
+                                  )
+      {
+#ifndef SOFA_GUI_QT_NO_RECORDER
+          if (recorder) recorder->SetRecordDirectory(path);
+#endif
+      }
+
+      void RealGUI::setGnuplotPath(const std::string &path)
+      {
+        simulation::getSimulation()->gnuplotDirectory.setValue(path);
+      }
+      void RealGUI::setViewerConfiguration(sofa::component::configurationsetting::ViewerSetting* viewerConf)
+      {
+        const defaulttype::Vec<2,int> &res=viewerConf->getResolution();
+        if (viewerConf->getFullscreen()) setFullScreen();
+        else setViewerResolution(res[0], res[1]);
+        viewer->configure(viewerConf);
+      }
+
+      void RealGUI::setMouseButtonConfiguration(sofa::component::configurationsetting::MouseButtonSetting *button)
+      {
+        SofaMouseManager::getInstance()->updateOperation(button);
+//        SofaMouseManager::getInstance()->updateContent();
+      }
 
 //--------------------------------------
       void RealGUI::changeInstrument(int id)
@@ -1415,6 +1400,11 @@ namespace sofa
       {
         SofaMouseManager::getInstance()->updateContent();
         SofaMouseManager::getInstance()->show();
+      }
+
+      void RealGUI::showVideoRecorderManager()
+      {
+    	  SofaVideoRecorderManager::getInstance()->show();
       }
 
       void RealGUI::editGnuplotDirectory()

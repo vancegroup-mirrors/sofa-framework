@@ -52,6 +52,11 @@ void initConfigurationSetting()
 } // namespace sofa
 
 ////////// BEGIN CLASS LIST //////////
+SOFA_LINK_CLASS(AddFrameButtonSetting)
+SOFA_LINK_CLASS(AttachBodyButtonSetting)
+SOFA_LINK_CLASS(FixPickedParticleButtonSetting)
+
 SOFA_LINK_CLASS(BackgroundSetting)
+SOFA_LINK_CLASS(SofaDefaultPathSetting)
 SOFA_LINK_CLASS(StatsSetting)
-SOFA_LINK_CLASS(ViewerDimensionSetting)
+SOFA_LINK_CLASS(ViewerSetting)

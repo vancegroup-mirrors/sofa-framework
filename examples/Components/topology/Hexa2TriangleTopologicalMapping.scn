@@ -17,7 +17,7 @@
 		<EulerImplicitSolver name="default1" printLog="0"/>
 		<CGLinearSolver template="GraphScattered" name="default2" printLog="0" iterations="100" threshold="1e-08"/>
 		<VoxelGridLoader name="gridLoader" printLog="0" filename="textures/Test_64_64_4.raw" voxelSize="1 1 1" resolution="64 64 4" bgValue="0"/>
-		<MechanicalObject template="Vec3d" name="Hexa" printLog="0" position="0 0 0"/>
+		<MechanicalObject template="Vec3d" name="Hexa" printLog="0" position="0 0 0" translation="5 5 5"/>
 		<DynamicSparseGridTopologyContainer name="Container" printLog="0"/>
 		<DynamicSparseGridTopologyModifier name="Modifier" printLog="0"/>
 		<DynamicSparseGridTopologyAlgorithms template="Vec3d" name="TopoAlgo" printLog="0"/>

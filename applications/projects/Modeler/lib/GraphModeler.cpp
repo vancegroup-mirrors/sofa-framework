@@ -28,9 +28,12 @@
 #include "AddPreset.h"
 
 #include <sofa/core/ComponentLibrary.h>
+#include <sofa/core/objectmodel/ConfigurationSetting.h>
+
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/gui/qt/ModifyObject.h>
 #include <sofa/gui/qt/FileManagement.h> //static functions to manage opening/ saving of files
+
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
 
@@ -39,6 +42,7 @@
 #include <sofa/simulation/common/xml/DataElement.h>
 #include <sofa/simulation/common/xml/XML.h>
 #include <sofa/simulation/common/XMLPrintVisitor.h>
+
 
 #ifdef SOFA_QT4
 #include <Q3Header>
@@ -360,12 +364,16 @@ namespace sofa
           assert(0);
         }
 
+        ModifyObjectFlags dialogFlags = ModifyObjectFlags();
+        dialogFlags.setFlagsForModeler();
+
         if (data){      //user clicked on a data
           current_Id_modifyDialog = data;
         }
         else{
           if(object){
             current_Id_modifyDialog = object; 
+            if (dynamic_cast<core::objectmodel::ConfigurationSetting*>(object)) dialogFlags.HIDE_FLAG=true;
           }
           else{
             assert(0);
@@ -383,8 +391,6 @@ namespace sofa
         }
 
 
-        ModifyObjectFlags dialogFlags = ModifyObjectFlags();
-        dialogFlags.setFlagsForModeler();
         ModifyObject *dialogModify = new ModifyObject( current_Id_modifyDialog,item,this,dialogFlags,item->text(0));
 
         connect(dialogModify, SIGNAL(beginObjectModification(sofa::core::objectmodel::Base*)), historyManager, SLOT(beginModification(sofa::core::objectmodel::Base*)));

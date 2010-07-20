@@ -90,11 +90,6 @@ namespace sofa
 #ifdef TRACKING_MOUSE
 		bool m_grabActived;
 #endif
-	      enum {
-		TRACKBALL_MODE = 1,
-		PAN_MODE = 2,
-		ZOOM_MODE = 3,
-	      };
 	      // Interaction
 	      enum {
 		XY_TRANSLATION = 1,
@@ -117,13 +112,7 @@ namespace sofa
 	      //	Quaternion		_newQuat;
 	      int				_mouseX, _mouseY;
 	      int				_savedMouseX, _savedMouseY;
-	      bool			_spinning;
-	      bool			_moving;
 
-	      float			_zoomSpeed;
-	      float			_panSpeed;
-
-	      Vector3			_previousEyePos;
 	      GLUquadricObj*	_arrow;
 	      GLUquadricObj*	_tube;
 	      GLUquadricObj*	_sphere;
@@ -171,9 +160,10 @@ namespace sofa
 	      virtual void setSizeW(int);
 	      virtual void setSizeH(int);
 
-		  virtual void getView(float* pos, float* ori) const;
-		  virtual void setView(float* pos, float* ori);
-		  virtual void moveView(float* pos, float* ori);
+		  virtual void getView(Vec3d& pos, Quat& ori) const;
+		  virtual void setView(const Vec3d& pos, const Quat &ori);
+		  virtual void moveView(const Vec3d& pos, const Quat &ori);
+		  virtual void captureEvent() { SofaViewer::captureEvent(); }
 
 	    signals:
 	      void redrawn();

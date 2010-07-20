@@ -1,4 +1,3 @@
-#ifndef SOFA_GUI_QT_DATAWIDGET_CPP
 #define SOFA_GUI_QT_DATAWIDGET_CPP
 
 #include "DataWidget.h"
@@ -158,5 +157,3 @@ namespace sofa{
     }//qt
   }//gui
 }//sofa
-
-#endif // SOFA_GUI_QT_DATAWIDGET_CPP

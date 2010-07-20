@@ -57,6 +57,8 @@ namespace sofa{
 	return fabs(atof(loadRecordTime->text().ascii()));
       }
 
+      QLabel *getTimeLabel(){return timeLabel;};
+      QLabel *getFPSLabel(){return fpsLabel;};
 public slots:
       void UpdateTime();
       void TimerStart(bool);

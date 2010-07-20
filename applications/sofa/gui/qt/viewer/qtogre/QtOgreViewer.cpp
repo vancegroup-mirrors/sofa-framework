@@ -188,8 +188,7 @@ namespace sofa
 	    number_visualModels=0;
 	    _video = false;
  	    pickDone=false;
-            showAxis=false;
-            perspectiveCamera=true;
+        showAxis=false;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 	    mResourcePath = macBundlePath() + "/Contents/Resources/";
@@ -303,6 +302,10 @@ namespace sofa
               static defaulttype::Vector3 axisZ(0,0,1);
               const Ogre::Real l=size_world.length();
 
+              const defaulttype::Vector3 posX=centerAxis+axisX*l*0.6;
+              const defaulttype::Vector3 posY=centerAxis+axisY*l*0.6;
+              const defaulttype::Vector3 posZ=centerAxis+axisZ*l*0.6;
+
               Ogre::Entity *axisXEntity;
               Ogre::Entity *axisYEntity;
               Ogre::Entity *axisZEntity;
@@ -326,9 +329,6 @@ namespace sofa
                   axisZEntity=mSceneMgr->getEntity("axisZ");
               }
 
-              const defaulttype::Vector3 posX=centerAxis+axisX*l*0.6;
-              const defaulttype::Vector3 posY=centerAxis+axisY*l*0.6;
-              const defaulttype::Vector3 posZ=centerAxis+axisZ*l*0.6;
               if (!axisXEntity->isAttached())
               {
                   nodeX->attachObject(axisXEntity);
@@ -702,6 +702,31 @@ namespace sofa
 	    resize();
 	  }
 
+      void QtOgreViewer::setCameraMode(component::visualmodel::Camera::CameraType mode)
+      {
+        SofaViewer::setCameraMode(mode);
+
+        switch (mode)
+        {
+        case component::visualmodel::Camera::ORTHOGRAPHIC_TYPE:
+          {
+            const sofa::defaulttype::Vector3 center((sceneMinBBox+sceneMaxBBox)*0.5);
+
+            Ogre::Vector3 cameraPosition(mCamera->getPosition());
+            const sofa::defaulttype::Vector3 cameraPos(cameraPosition.x,cameraPosition.y,cameraPosition.z);
+
+            SReal d=(center-cameraPos).norm();
+
+            mCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
+            SReal wRatio = mCamera->getOrthoWindowWidth()/mCamera->getOrthoWindowHeight();
+            mCamera->setOrthoWindow(d*wRatio,d);
+          }
+          break;
+        case component::visualmodel::Camera::PERSPECTIVE_TYPE:
+          mCamera->setProjectionType(Ogre::PT_PERSPECTIVE);
+          break;
+        }
+      }
 
 	  //*****************************************************************************************
 	  //Keyboard Events
@@ -777,31 +802,7 @@ namespace sofa
 			}
 		      mCamera->getSceneManager()->setShadowTechnique(shadow);
 		      break;
-		    }
-                  case Qt::Key_T:
-                    {
-                      perspectiveCamera = !perspectiveCamera;
-
-                      if (perspectiveCamera)
-                      {                          
-                          mCamera->setProjectionType(Ogre::PT_PERSPECTIVE);
-                      }
-                      else
-                      {
-                          const sofa::defaulttype::Vector3 center((sceneMinBBox+sceneMaxBBox)*0.5);
-
-                          Ogre::Vector3 cameraPosition(mCamera->getPosition());
-                          const sofa::defaulttype::Vector3 cameraPos(cameraPosition.x,cameraPosition.y,cameraPosition.z);
-
-                          SReal d=(center-cameraPos).norm();
-
-                          mCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
-                          SReal wRatio = mCamera->getOrthoWindowWidth()/mCamera->getOrthoWindowHeight();
-                          mCamera->setOrthoWindow(d*wRatio,d);
-
-                      }
-                      break;
-                    }
+            }
 		  default:
 		    {
 		      SofaViewer::keyPressEvent(e);
@@ -899,7 +900,7 @@ namespace sofa
               SReal displacement=evt->delta()*_factorWheel*0.0005;
             m_mTranslateVector.z +=  displacement;
 	    mCamera->moveRelative(m_mTranslateVector);
-            if (!perspectiveCamera)
+            if (currentCamera->getCameraType() == component::visualmodel::Camera::ORTHOGRAPHIC_TYPE)
             {                
                 SReal wRatio = mCamera->getOrthoWindowWidth()/mCamera->getOrthoWindowHeight();                
                 mCamera->setOrthoWindow(displacement*wRatio+mCamera->getOrthoWindowWidth(),
@@ -937,10 +938,9 @@ namespace sofa
 	  }
 
 	  void QtOgreViewer::moveRayPickInteractor(int eventX, int eventY)
-	  {
-
+	  {          
               Vec3d position, direction;
-              if (perspectiveCamera)
+              if (currentCamera->getCameraType() == component::visualmodel::Camera::PERSPECTIVE_TYPE)
               {
                   sofa::defaulttype::Vec3d  p0, px, py, pz, px1, py1;
                   GLint viewPort[4] = {0,0,width(), height()};
@@ -1027,6 +1027,7 @@ namespace sofa
                   Ogre::Vector3 d=mCamera->getUp().crossProduct(mCamera->getRight());
                   direction[0]=d.x; direction[1]=d.y; direction[2]=d.z;
                   position[0]=p.x;  position[1]=p.y;  position[2]=p.z;
+
               }
             pick.updateRay(position, direction);
 	  }

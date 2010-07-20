@@ -28,10 +28,11 @@
 #include <sofa/core/objectmodel/ConfigurationSetting.h>
 #include <sofa/helper/vector.h>
 
+#include <sofa/component/configurationsetting/SofaDefaultPathSetting.h>
 #include <sofa/component/configurationsetting/BackgroundSetting.h>
 #include <sofa/component/configurationsetting/StatsSetting.h>
-#include <sofa/component/configurationsetting/ViewerDimensionSetting.h>
 
+#include <algorithm>
 #include <string.h>
 
 namespace sofa
@@ -54,6 +55,19 @@ SofaGUI::~SofaGUI()
 
 void SofaGUI::configureGUI(sofa::simulation::Node *groot)
 {
+
+  sofa::component::configurationsetting::SofaDefaultPathSetting *defaultPath;
+  groot->get(defaultPath, sofa::core::objectmodel::BaseContext::SearchRoot);
+  if (defaultPath)
+  {
+    if (!defaultPath->getRecordPath().empty())
+      setRecordPath(defaultPath->getRecordPath());
+
+    if (!defaultPath->getGnuplotPath().empty())
+      setGnuplotPath(defaultPath->getGnuplotPath());
+  }
+
+
   //Background
   sofa::component::configurationsetting::BackgroundSetting *background;
   groot->get(background, sofa::core::objectmodel::BaseContext::SearchRoot);
@@ -79,16 +93,18 @@ void SofaGUI::configureGUI(sofa::simulation::Node *groot)
   }
 
   //Viewer Dimension
-  sofa::component::configurationsetting::ViewerDimensionSetting *dimension;
-  groot->get(dimension, sofa::core::objectmodel::BaseContext::SearchRoot);
-  if (dimension)
-  {
-    const defaulttype::Vec<2,int> &res=dimension->getDimension();
-    if (dimension->getFullscreen()) setFullScreen();
-    else setDimension(res[0], res[1]);
-  }
+  sofa::component::configurationsetting::ViewerSetting *viewerConf;
+  groot->get(viewerConf, sofa::core::objectmodel::BaseContext::SearchRoot);
+  if (viewerConf) setViewerConfiguration(viewerConf);
 
-  //TODO Mouse Manager using ConfigurationSetting component...
+  //TODO: Video Recorder Configuration
+
+  //Mouse Manager using ConfigurationSetting component...
+  sofa::helper::vector< sofa::component::configurationsetting::MouseButtonSetting*> mouseConfiguration;
+  groot->get<sofa::component::configurationsetting::MouseButtonSetting>(&mouseConfiguration, sofa::core::objectmodel::BaseContext::SearchRoot);
+
+  for (unsigned int i=0;i<mouseConfiguration.size();++i)  setMouseButtonConfiguration(mouseConfiguration[i]);
+
 }
 
 

@@ -33,6 +33,7 @@
 #include "GraphModeler.h"
 #include "FilterLibrary.h"
 #include "SofaTutorialManager.h"
+#include <sofa/gui/qt/QMenuFilesRecentlyOpened.h>
 
 #include <sofa/helper/Factory.h>
 
@@ -106,9 +107,7 @@ namespace sofa
           void fileOpen(std::string filename);
 
 	  /// Change the name of the main window
-	  void changeNameWindow(std::string filename);
-	  /// Update the menu Recently Opened Files...
-	  void updateRecentlyOpened(std::string fileLoaded);
+      void changeNameWindow(std::string filename);
 
     void changeTabName(GraphModeler *graph, const QString &name, const QString &suffix=QString());
     void setDebugBinary(bool b){debug=b;};
@@ -221,50 +220,53 @@ namespace sofa
      void redirectStdout();
 	protected:
      void displayHelpModeler();
-          //********************************************
-          //Left Part
-/*           QToolBox     *containerLibrary; */
-          SofaLibrary  *library;
-          FilterLibrary *filterLibrary;
 
-          //********************************************
-          //Right Part
-	  /// Widget containing all the graphs
-	  QTabWidget *sceneTab;	
-	  /// Current in-use graph 
-	  GraphModeler *graph; //currentGraph in Use
-	  /// Current opened Tab
-	  QWidget *tabGraph;
+     QMenuFilesRecentlyOpened recentlyOpenedFilesManager;
 
-          SofaTutorialManager *tuto;
+     //********************************************
+     //Left Part
+     /*           QToolBox     *containerLibrary; */
+     SofaLibrary  *library;
+     FilterLibrary *filterLibrary;
 
-          //********************************************
-	  /// Menu runSofa for the GUI
-	  std::vector< QAction* > listActionGUI;         
-	  /// Menu preset
-	  Q3PopupMenu *preset;
-	  /// Menu containing the opened simulations in the Modeler
-	  Q3PopupMenu *windowMenu;
+     //********************************************
+     //Right Part
+     /// Widget containing all the graphs
+     QTabWidget *sceneTab;
+     /// Current in-use graph
+     GraphModeler *graph; //currentGraph in Use
+     /// Current opened Tab
+     QWidget *tabGraph;
 
-          QTextBrowser *infoItem;
-	  /// Correspondance between a name clicked in the menu and a path to the preset
-	  std::map< std::string, std::string > mapPreset;
+     SofaTutorialManager *tuto;
 
+     //********************************************
+     /// Menu runSofa for the GUI
+     std::vector< QAction* > listActionGUI;
+     /// Menu preset
+     Q3PopupMenu *preset;
+     /// Menu containing the opened simulations in the Modeler
+     Q3PopupMenu *windowMenu;
 
-	  /// Map between a tabulation from the modeler to an object of type GraphModeler
-          std::map<  QWidget*, GraphModeler*> mapGraph;
-	  /// Map between a tabulation from the modeler to a Sofa Application
-	  std::multimap<  const QWidget*, Q3Process*> mapSofa;
-	  /// Map between an index of tabulation to the tabulation itself
-	  std::map< int, QWidget*> mapWindow;
+     QTextBrowser *infoItem;
+     /// Correspondance between a name clicked in the menu and a path to the preset
+     std::map< std::string, std::string > mapPreset;
 
 
+     /// Map between a tabulation from the modeler to an object of type GraphModeler
+     std::map<  QWidget*, GraphModeler*> mapGraph;
+     /// Map between a tabulation from the modeler to a Sofa Application
+     std::multimap<  const QWidget*, Q3Process*> mapSofa;
+     /// Map between an index of tabulation to the tabulation itself
+     std::map< int, QWidget*> mapWindow;
 
-	  /// Is ready to do a paste operation?
-	  bool isPasteReady;
 
-	  /// Number of components currently displayed in the library
-	  unsigned int displayComponents;
+
+     /// Is ready to do a paste operation?
+     bool isPasteReady;
+
+     /// Number of components currently displayed in the library
+     unsigned int displayComponents;
 
 
 	private:

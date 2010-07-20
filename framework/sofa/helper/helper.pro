@@ -139,3 +139,12 @@ contains(DEFINES,SOFA_HAVE_GLEW) {
     SOURCES += gl/FrameBufferObject.cpp \
         gl/GLSLShader.cpp
 }
+
+contains(DEFINES,SOFA_HAVE_FFMPEG) { # SOFA_HAVE_FFMPEG
+    HEADERS += \
+    	gl/VideoRecorder.h 
+
+    SOURCES += \
+    	gl/VideoRecorder.cpp 
+}
+

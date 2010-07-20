@@ -120,6 +120,7 @@ void MeshLoader::init()
           normals.setValue(computeNormals()); 
           facets.setValue(mesh->getFacets()); 
           delete mesh; 
+          mesh = NULL;
         }
 }
 

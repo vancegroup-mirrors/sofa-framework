@@ -31,6 +31,7 @@
 #include <sofa/simulation/common/SolveVisitor.h>
 
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/core/VecId.h>
 
 #include <sofa/helper/AdvancedTimer.h>
 #include <sofa/helper/system/thread/CTime.h>
@@ -78,96 +79,109 @@ void MasterContactSolver::init()
     }
 }
 
+
 void MasterContactSolver::step(double dt)
 {
-    simulation::Node *context =  (simulation::Node *)(this->getContext()); // access to current node
+	using helper::system::thread::CTime;
+	using sofa::helper::AdvancedTimer;
 
-    //helper::system::thread::CTime timer;
-    //helper::system::thread::CTime timerTotal;
-    double time = 0.0;
-    double timeTotal=0.0;
-    double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
-    if ( displayTime.getValue() )
-      {
-		  time = (double) helper::system::thread::CTime::getTime();
-        timeTotal = (double) helper::system::thread::CTime::getTime();
-        //sout<<"********* Start Iteration : " << _numConstraints << " constraints *********" <<sendl;
-      }
+	simulation::Node *context = (simulation::Node *)(this->getContext()); // access to current node
 
-    context->execute<simulation::CollisionResetVisitor>();
+	double time = 0.0;
+	double timeTotal = 0.0;
+	double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
 
-    // Update the BehaviorModels
-    // Required to allow the RayPickInteractor interaction
-	
-    if( f_printLog.getValue())
-      serr<<"updatePos called"<<sendl;
+	if (displayTime.getValue())
+	{
+		time = (double) CTime::getTime();
+		timeTotal = (double) CTime::getTime();
+		//sout << "********* Start Iteration : " << _numConstraints << " constraints *********" << sendl;
+	}
 
-    sofa::helper::AdvancedTimer::stepBegin("UpdatePosition");
-    simulation::BehaviorUpdatePositionVisitor updatePos(dt);
-    context->execute(&updatePos);
-    sofa::helper::AdvancedTimer::stepEnd  ("UpdatePosition");
-	
-    if( f_printLog.getValue())
-      serr<<"updatePos performed - beginVisitor called"<<sendl;
+	context->execute< simulation::CollisionResetVisitor >();
 
+	// Update the BehaviorModels
+	// Required to allow the RayPickInteractor interaction
 
-    simulation::MechanicalBeginIntegrationVisitor beginVisitor(dt);
-    context->execute(&beginVisitor);
+	if (f_printLog.getValue())
+		serr << "updatePos called" << sendl;
 
-    if( f_printLog.getValue())
-      serr<<"beginVisitor performed - SolveVisitor for freeMotion is called"<<sendl;	
-	
-    // Free Motion
-    sofa::helper::AdvancedTimer::stepBegin("FreeMotion");
-    simulation::SolveVisitor freeMotion(dt, true);
-    context->execute(&freeMotion);
-    sofa::helper::AdvancedTimer::stepBegin("PropagateFreePosition");
-    simulation::MechanicalPropagateFreePositionVisitor().execute(context);
-    sofa::helper::AdvancedTimer::stepEnd  ("PropagateFreePosition");
-    sofa::helper::AdvancedTimer::stepEnd  ("FreeMotion");
-	
-    if( f_printLog.getValue())
-      serr<<" SolveVisitor for freeMotion performed"<<sendl;	
+	AdvancedTimer::stepBegin("UpdatePosition");
+	simulation::BehaviorUpdatePositionVisitor updatePos(dt);
+	context->execute(&updatePos);
+	AdvancedTimer::stepEnd("UpdatePosition");
 
+	if (f_printLog.getValue())
+		serr << "updatePos performed - beginVisitor called" << sendl;
 
-    if ( displayTime.getValue() )
-      {
-        sout << " >>>>> Begin display MasterContactSolver time" << sendl;
-        sout<<" Free Motion " << ( (double) helper::system::thread::CTime::getTime() - time)*timeScale <<" ms" <<sendl;
+	simulation::MechanicalBeginIntegrationVisitor beginVisitor(dt);
+	context->execute(&beginVisitor);
 
-        time = (double) helper::system::thread::CTime::getTime();
-      }	 	
+	if (f_printLog.getValue())
+		serr << "beginVisitor performed - SolveVisitor for freeMotion is called" << sendl;	
 
-    // Collision detection and response creation
-    sofa::helper::AdvancedTimer::stepBegin("Collision");
-    computeCollision();
-    sofa::helper::AdvancedTimer::stepEnd  ("Collision");
+	// Free Motion
+	AdvancedTimer::stepBegin("FreeMotion");
+	simulation::SolveVisitor freeMotion(dt, true);
+	context->execute(&freeMotion);
+	AdvancedTimer::stepBegin("PropagateFreePosition");
+	simulation::MechanicalPropagateFreePositionVisitor().execute(context);
+	AdvancedTimer::stepEnd("PropagateFreePosition");
+	AdvancedTimer::stepEnd("FreeMotion");
 
-    if ( displayTime.getValue() )
-      {
-        sout<<" computeCollision " << ( (double) helper::system::thread::CTime::getTime() - time)*timeScale <<" ms" <<sendl;
-        time = (double) helper::system::thread::CTime::getTime();
-      }
+	if (f_printLog.getValue())
+		serr << " SolveVisitor for freeMotion performed" << sendl;
 
-    //SOLVE CONSTRAINT	
-    if (constraintSolver)
-    {
-        sofa::helper::AdvancedTimer::stepBegin("ConstraintSolver");
-        constraintSolver->solveConstraint(dt, core::VecId::freePosition());
-        sofa::helper::AdvancedTimer::stepEnd  ("ConstraintSolver");
-    }
+	if (displayTime.getValue())
+	{
+		sout << " >>>>> Begin display MasterContactSolver time" << sendl;
+		sout <<" Free Motion " << ((double)CTime::getTime() - time) * timeScale << " ms" << sendl;
 
+		time = (double)CTime::getTime();
+	}	 	
 
-    if ( displayTime.getValue() )
-      {
-        sout<<" contactCorrections " <<( (double) helper::system::thread::CTime::getTime() - time)*timeScale <<" ms" <<sendl;
-        sout << "<<<<<< End display MasterContactSolver time." << sendl;
-      }
+	// Collision detection and response creation
+	AdvancedTimer::stepBegin("Collision");
+	computeCollision();
+	AdvancedTimer::stepEnd  ("Collision");
 
+	if (displayTime.getValue())
+	{
+		sout << " computeCollision " << ((double) CTime::getTime() - time) * timeScale << " ms" << sendl;
+		time = (double)CTime::getTime();
+	}
 
-    simulation::MechanicalEndIntegrationVisitor endVisitor(dt);
-    context->execute(&endVisitor);
-  }
+	// Restore force, intForce and extForce on the correct vectors (MState permanent VecIds)
+	simulation::MechanicalResetForceVisitor resetForceVisitor(core::VecId::force());
+	simulation::MechanicalResetForceVisitor resetIntForceVisitor(core::VecId::internalForce());
+	simulation::MechanicalResetForceVisitor resetExtForceVisitor(core::VecId::externalForce());
+
+	context->execute(&resetForceVisitor);
+	context->execute(&resetIntForceVisitor);
+	context->execute(&resetExtForceVisitor);
+
+	// Solve constraints	
+	if (constraintSolver)
+	{
+		AdvancedTimer::stepBegin("ConstraintSolver");
+		constraintSolver->solveConstraint(dt, core::VecId::freePosition());
+		AdvancedTimer::stepEnd("ConstraintSolver");
+	}
+
+	if ( displayTime.getValue() )
+	{
+		sout << " contactCorrections " << ((double)CTime::getTime() - time) * timeScale << " ms" <<sendl;
+		sout << "<<<<<< End display MasterContactSolver time." << sendl;
+	}
+
+	simulation::MechanicalEndIntegrationVisitor endVisitor(dt);
+	context->execute(&endVisitor);
+
+	// Restore force, intForce and extForce on the correct vectors (MState permanent VecIds)
+	context->execute(&resetForceVisitor);
+	context->execute(&resetIntForceVisitor);
+	context->execute(&resetExtForceVisitor);
+}
 
 
 SOFA_DECL_CLASS(MasterContactSolver)

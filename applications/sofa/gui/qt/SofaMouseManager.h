@@ -63,12 +63,15 @@ namespace sofa
             return mapIndexOperation;
         }
 
+        void updateOperation( sofa::component::configurationsetting::MouseButtonSetting* setting);
+        void updateOperation( MOUSE_BUTTON button, const std::string &id);
+
+
         public slots:
         void selectOperation(int);
         
       protected:
-        void updateOperation( MOUSE_BUTTON button, const std::string &id);
-
+        void updateOperation(Operation* op);
         PickHandler *pickHandler;
         std::map< int, std::string > mapIndexOperation;
 

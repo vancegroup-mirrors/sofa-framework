@@ -61,10 +61,6 @@ namespace sofa
   namespace gui
   {
 
-
-      AttachOperation::AttachOperation():stiffness(1000.0)
-      {
-      };
     //*******************************************************************************************
     void AttachOperation::start()
     {

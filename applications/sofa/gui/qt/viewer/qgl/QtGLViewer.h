@@ -156,7 +156,7 @@ namespace sofa
 
 	      void moveRayPickInteractor(int eventX, int eventY);
 
-	      // 	static Quaternion _newQuat;
+          void setCameraMode(component::visualmodel::Camera::CameraType mode);
 
 
 	      QString helpString();
@@ -205,6 +205,7 @@ namespace sofa
 	      void saveView();
 	      void setSizeW(int);
 	      void setSizeH(int);
+	      virtual void captureEvent() { SofaViewer::captureEvent(); }
 
 	    signals:
 	      void redrawn();

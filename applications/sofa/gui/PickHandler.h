@@ -38,6 +38,8 @@
 #include <sofa/component/collision/RayModel.h>
 #include <sofa/component/collision/MouseInteractor.h>
 
+#include <sofa/component/configurationsetting/MouseButtonSetting.h>
+
 #include <sofa/helper/fixed_array.h>
 
 namespace sofa
@@ -83,14 +85,9 @@ namespace sofa
 
 
       Operation *getOperation(MOUSE_BUTTON button){return operations[button];}
-      Operation *changeOperation(MOUSE_BUTTON button, const std::string &op)
-      {
-        if (operations[button]) delete operations[button];
-        Operation *mouseOp=OperationFactory::Instanciate(op);
-        mouseOp->configure(this,button);
-        operations[button]=mouseOp;
-        return mouseOp;
-      }
+
+      Operation *changeOperation(sofa::component::configurationsetting::MouseButtonSetting* setting);
+      Operation *changeOperation(MOUSE_BUTTON button, const std::string &op);
       
       void addCallBack(CallBackPicker *c){callbacks.push_back(c);}
       helper::vector< CallBackPicker* > getCallBackPicker(){return callbacks;}

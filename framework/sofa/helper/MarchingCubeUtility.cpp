@@ -376,7 +376,7 @@ namespace sofa
     MarchingCubeUtility::MarchingCubeUtility()
         : cubeStep ( 1 ), convolutionSize ( 1 ),
         dataResolution ( 0,0,0 ), dataVoxelSize ( 1.0f,1.0f,1.0f ),
-				verticesOffset( 0)
+        verticesIndexOffset( 0), verticesTranslation( 0,0,0)
     {
 // // Computes non trivial faces.
 // int nonTrivialFaces[256];
@@ -417,9 +417,10 @@ namespace sofa
       float mu = ( isolevel - valp1 ) / ( valp2 - valp1 );
       p = p1 + ( p2 - p1 ) * mu;
       p = ( ( p + Vector3 ( 1.0f, 1.0f, 1.0f ) ) *0.5f ).linearProduct ( dataVoxelSize.linearProduct ( dataResolution ) ) + dataVoxelSize/2.0;
-	  p[0] = ( int ) helper::round( p[0]*PRECISION ) /PRECISION;
+      p[0] = ( int ) helper::round( p[0]*PRECISION ) /PRECISION;
       p[1] = ( int ) helper::round( p[1]*PRECISION ) /PRECISION;
       p[2] = ( int ) helper::round( p[2]*PRECISION ) /PRECISION;
+      p += verticesTranslation;
     }
 
 
@@ -543,7 +544,7 @@ namespace sofa
           else
           {
             //Add new Vertex in map
-						current_ID = map_indices.size() + verticesOffset;
+            current_ID = map_indices.size() + verticesIndexOffset;
             map_indices.push_back ( current_P );
             map_vertices.insert ( std::make_pair ( current_P, current_ID ) );
           }
@@ -834,14 +835,21 @@ namespace sofa
 
 
 
-		void MarchingCubeUtility::setVerticesOffset( unsigned int verticesOffset)
-		{
-			this->verticesOffset = verticesOffset;
-		}
+    void MarchingCubeUtility::setVerticesIndexOffset( unsigned int verticesIndexOffset)
+    {
+        this->verticesIndexOffset = verticesIndexOffset;
+    }
 
 
 
-		void MarchingCubeUtility::updateTriangleInRegularGridVector ( helper::vector< helper::vector<unsigned int /*regular grid space index*/> >& triangleIndexInRegularGrid, const Vec3i& coord, const GridCell& cell, unsigned int nbTriangles ) const
+    void MarchingCubeUtility::setVerticesTranslation( Vector3 verticesTranslation)
+    {
+        this->verticesTranslation = verticesTranslation;
+    }
+
+
+
+    void MarchingCubeUtility::updateTriangleInRegularGridVector ( helper::vector< helper::vector<unsigned int /*regular grid space index*/> >& triangleIndexInRegularGrid, const Vec3i& coord, const GridCell& cell, unsigned int nbTriangles ) const
     {
       vector<unsigned int> voxels;
       if ( cell.val[0] ) voxels.push_back ( ( coord[0]+0 ) + ( coord[1]+0 ) *dataResolution[0] + ( coord[2]+0 ) *dataResolution[0]*dataResolution[1] ); //les voxels occupes ds ce cube

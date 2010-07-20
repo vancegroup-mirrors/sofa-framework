@@ -105,16 +105,17 @@ public:
     graph_data_widget_container() : w(NULL) {}
 
 
-    bool createWidgets(DataWidget  * /* _widget*/ , QWidget* parent, const data_type& d, bool /*readOnly*/)
-    {
-	if (Q3GroupBox* box = dynamic_cast<Q3GroupBox*>(parent)) box->setColumns(1);
+    bool createWidgets(DataWidget* parent, const data_type& d, bool /*readOnly*/)
+    {            
 #ifdef SOFA_QT4
-	w = new Widget(QwtText(""), parent);
+    w = new Widget(QwtText(""), parent);
 #else
-	w = new Widget(parent, "Graph");
+    w = new Widget(parent, "Graph");
 #endif
 	w->insertLegend(new QwtLegend(), QwtPlot::BottomLegend);
 	w->setAxisScaleEngine(Widget::yLeft, new QwtLog10ScaleEngine);
+  QHBoxLayout* layout = new QHBoxLayout(parent);
+  layout->add(w);
 	readFromData(d);
 	return true;
     }

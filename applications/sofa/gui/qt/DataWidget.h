@@ -34,6 +34,8 @@
 #include <sofa/core/objectmodel/Base.h>
 #include <sofa/helper/Factory.h>
 
+
+
 #ifdef SOFA_QT4
 #include <QDialog>
 #include <QLineEdit>
@@ -70,16 +72,57 @@ namespace sofa{
      /**
      *\brief Abstract Interface of a qwidget which allows to edit a data.
      */
-
       class SOFA_SOFAGUIQT_API DataWidget : public QWidget
       {
         Q_OBJECT
+        public: 
+        //
+        // Factory related code
+        //
+
+        struct CreatorArgument
+        {
+          std::string name;
+          core::objectmodel::BaseData* data;
+          QWidget* parent;
+          bool readOnly;
+        };
+
+        template<class T>
+        static void create(T*& instance, const CreatorArgument& arg)
+        {
+          typename T::MyData* data = dynamic_cast<typename T::MyData*>(arg.data);
+          if(!data) return;
+          instance = new T(arg.parent, arg.name.c_str(), data);
+          instance->setEnabled(arg.readOnly);
+          if ( !instance->createWidgets() )
+          {
+            delete instance;
+            instance = NULL;
+          }
+        }
+
+             typedef sofa::helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument> DataWidgetFactory;
+
+
+      static DataWidget *CreateDataWidget(const DataWidget::CreatorArgument &dwarg)
+      {
+
+          DataWidget *datawidget_=0;
+          const std::string &widgetName=dwarg.data->getWidget();
+          if (widgetName.empty())
+            datawidget_ = DataWidgetFactory::CreateAnyObject(dwarg);
+          else
+            datawidget_ = DataWidgetFactory::CreateObject(widgetName, dwarg);
+          return datawidget_;
+      };
+
+
           public slots:
             /// Checks that widget has been edited
             /// emit DataOwnerDirty in case the name field has been modified  
             void updateDataValue()
             {
-              
               if(dirty){
                 std::string previousName = baseData->getOwner()->getName();
                 writeToData(); 
@@ -131,8 +174,10 @@ namespace sofa{
         inline virtual void setData( MyData* d)
         {
           baseData = d;
+          readFromData();
         }
-        
+
+
         /// BaseData pointer accessor function.  
         core::objectmodel::BaseData* getBaseData() const { return baseData; } 
         void updateVisibility()
@@ -161,34 +206,9 @@ namespace sofa{
         int counter;
      
         
-      public: 
-        //
-        // Factory related code
-        //
-
-        struct CreatorArgument
-        {
-          std::string name;
-          core::objectmodel::BaseData* data;
-          QWidget* parent;
-          bool readOnly;
-        };
-
-        template<class T>
-        static void create(T*& instance, const CreatorArgument& arg)
-        {
-          typename T::MyData* data = dynamic_cast<typename T::MyData*>(arg.data);
-          if(!data) return;
-          instance = new T(arg.parent, arg.name.c_str(), data);
-          instance->setEnabled(arg.readOnly);
-          if ( !instance->createWidgets() )
-          {
-            delete instance;
-            instance = NULL;
-          }
-          else instance->updateVisibility();
-        }
+  
       };
+
 
 
       /**
@@ -217,9 +237,6 @@ namespace sofa{
                 delete obj;
                 obj = NULL;
               }
-              else{
-                obj->updateVisibility();
-              }
             }
 
         }
@@ -237,8 +254,7 @@ namespace sofa{
         MyTData* Tdata;
       };
 
-      
-      typedef sofa::helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument> DataWidgetFactory;
+
 
       class QTableUpdater : virtual public Q3Table
       {
@@ -313,9 +329,12 @@ namespace sofa{
         QLineEdit *linkpath_edit;
       };
 
+typedef sofa::helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument> DataWidgetFactory;
+
+
 //MOC_SKIP_BEGIN
 #ifdef SOFA_QT4
-#if defined(WIN32) && !defined(SOFA_GUI_QT_DATAWIDGET_CPP)
+#if defined(WIN32) && !defined(SOFA_BUILD_SOFAGUIQT)
       //delay load of the specialized Factory class. unique definition reside in the cpp file. 
       extern template class SOFA_SOFAGUIQT_API helper::Factory<std::string, DataWidget, DataWidget::CreatorArgument>;
 #endif

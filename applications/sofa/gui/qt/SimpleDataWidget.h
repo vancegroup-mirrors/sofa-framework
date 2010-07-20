@@ -39,6 +39,17 @@
 #include <sofa/helper/Polynomial_LD.inl>
 #include <sofa/helper/OptionsGroup.h>
 
+#include <functional> 
+#ifdef SOFA_QT4
+#include <QLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QComboBox>
+#else
+#include <qlayout.h>
+#include <qcombobox.h>
+#endif
+
 
 #if !defined(INFINITY)
 #define INFINITY 9.0e10
@@ -53,7 +64,7 @@ namespace sofa
     {
 
       using sofa::helper::Quater;
-      
+
       /// This class is used to specify how to graphically represent a data type,
       /// by default using a simple QLineEdit
       template<class T>
@@ -71,7 +82,8 @@ namespace sofa
         {
           std::ostringstream o;
           o << d;
-          w->setText(QString(o.str().c_str()));
+          if (o.str() != w->text().ascii())
+            w->setText(QString(o.str().c_str()));
         }
         static void writeToData(Widget* w, data_type& d)
         {
@@ -86,20 +98,7 @@ namespace sofa
       };
 
 
-      template<class T>
-      class parent_data_widget_trait
-      {
-      public: 
-        typedef T data_type;
-        typedef Q3Grid Widget;
-        Widget* w;
 
-        static Widget* create(QWidget* parent, const data_type& )
-        {
-          return NULL;
-        }
-
-      };
 
 
       /// This class is used to create and manage the GUI of a data type,
@@ -111,29 +110,35 @@ namespace sofa
         typedef T data_type;
         typedef data_widget_trait<data_type> helper;
         typedef typename helper::Widget Widget;
-        typedef Q3Grid ParentWidget;
         Widget* w;
-        ParentWidget* parent_w;
    
-        data_widget_container() : w(NULL),parent_w(NULL) {  }
+        data_widget_container() : w(NULL) {  }
 
-        bool createWidgets(DataWidget * datawidget, QWidget* parent, const data_type& d, bool readOnly)
+        bool createWidgets(DataWidget* parent, const data_type& d, bool readOnly)
         {
-          parent_w = createParentWidget(parent,1);
-          assert(parent_w != NULL);
-          w = helper::create(parent_w,d);
+          w = helper::create(parent,d);
           if (w == NULL) return false;
-      
+     
           helper::readFromData(w, d);
           if (readOnly)
             w->setEnabled(false);
           else
-            helper::connectChanged(w, datawidget);
+            helper::connectChanged(w, parent);
+
+          if( parent->layout() != NULL)
+          {
+            parent->layout()->add(w);
+          }
+          else
+          {
+            QHBoxLayout* layout = new QHBoxLayout(parent);
+            layout->add(w);
+          }
           return true;
         }
         void setReadOnly(bool readOnly)
         {
-          parent_w->setEnabled(!readOnly);
+          w->setEnabled(!readOnly);
         }
         void readFromData(const data_type& d)
         {
@@ -142,11 +147,6 @@ namespace sofa
         void writeToData(data_type& d)
         {
           helper::writeToData(w, d);
-        }
-
-        ParentWidget* createParentWidget(QWidget* parent, int n )
-        {
-          return new ParentWidget(n,parent);
         }
       };
 
@@ -169,13 +169,18 @@ namespace sofa
         virtual bool createWidgets()
         {
           const data_type& d = this->getData()->virtualGetValue();
-          if (!container.createWidgets(this, this->parentWidget(), d, ! (this->isEnabled()) ))
+          if (!container.createWidgets(this, d, ! this->isEnabled() ) )
             return false;
           return true;
         }
         virtual void readFromData()
         {
           container.readFromData(this->getData()->virtualGetValue());      
+        }
+
+        virtual void setReadOnly(bool readOnly)
+        {
+          container.setReadOnly(readOnly);
         }
        
         virtual void writeToData()
@@ -184,7 +189,7 @@ namespace sofa
           container.writeToData(d);
           this->getData()->virtualSetValue(d);
         }
-        virtual unsigned int numColumnWidget() { return 3; }
+        virtual unsigned int numColumnWidget() { return 5; }
       };
 
       ////////////////////////////////////////////////////////////////
@@ -204,7 +209,8 @@ namespace sofa
         }
         static void readFromData(Widget* w, const data_type& d)
         {
-          w->setText(QString(d.c_str()));
+          if (w->text().ascii() != d)
+            w->setText(QString(d.c_str()));
         }
         static void writeToData(Widget* w, data_type& d)
         {
@@ -233,7 +239,8 @@ namespace sofa
         }
         static void readFromData(Widget* w, const data_type& d)
         {
-          w->setChecked(d);
+          if (w->isChecked() != d)
+            w->setChecked(d);
         }
         static void writeToData(Widget* w, data_type& d)
         {
@@ -260,16 +267,17 @@ namespace sofa
           Widget* w = new Widget(parent, "real");
           w->setMinFloatValue( (float)-INFINITY );
           w->setMaxFloatValue( (float)INFINITY );
-	  w->setMinimumWidth(20);
+          w->setMinimumWidth(20);
           return w;
         }
         static void readFromData(Widget* w, const data_type& d)
         {
-          w->setFloatValue(d);
+          if (d != w->getFloatDisplayedValue())
+            w->setFloatValue(d);
         }
         static void writeToData(Widget* w, data_type& d)
         {
-          d = (data_type) w->getFloatValue();
+          d = (data_type) w->getFloatDisplayedValue();
         }
         static void connectChanged(Widget* w, DataWidget* datawidget)
         {
@@ -303,6 +311,7 @@ namespace sofa
         }
         static void readFromData(Widget* w, const data_type& d)
         {
+          if ((int)d != w->value())
           w->setValue((int)d);
         }
         static void writeToData(Widget* w, data_type& d)
@@ -379,29 +388,29 @@ namespace sofa
         typedef T data_type;
         typedef vector_data_trait<data_type> vhelper;
         typedef typename vhelper::value_type value_type;
-        typedef Q3Grid ParentWidget;
         enum { N = vhelper::SIZE };
         Container w[N];
-        
-        ParentWidget* parent_w;
+
         fixed_vector_data_widget_container() {}
          
-        bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
+        bool createWidgets(DataWidget* parent, const data_type& d, bool readOnly)
         {
-          parent_w = createParentWidget(parent,N);
-          assert(parent_w != NULL);
+          if( parent->layout() == NULL)
+          {
+            new QHBoxLayout(parent);
+          }
+          
           for (int i=0; i<N; ++i)
-            if (!w[i].createWidgets(_widget,
-              parent_w, *vhelper::get(d,i), readOnly))
+            if (!w[i].createWidgets(parent, *vhelper::get(d,i), readOnly))
               return false;
-
+          
           return true;
         }
         void setReadOnly(bool readOnly)
         {
-          parent_w->setEnabled(!readOnly);
-          /*for (int i=0; i<N; ++i)
-            w[i].setReadOnly(readOnly);*/
+          
+          for (int i=0; i<N; ++i)
+            w[i].setReadOnly(readOnly);
         }
         void readFromData(const data_type& d)
         {
@@ -417,11 +426,6 @@ namespace sofa
             vhelper::set(v,d,i);
           }
         }
-
-        ParentWidget* createParentWidget(QWidget* parent, int n = 1)
-        {
-          return new ParentWidget(n,parent);
-        }
       };
 
       template<class T, class Container = data_widget_container< typename vector_data_trait< typename vector_data_trait<T>::value_type >::value_type> >
@@ -433,29 +437,29 @@ namespace sofa
         typedef typename rhelper::value_type row_type;
         typedef vector_data_trait<row_type> vhelper;
         typedef typename vhelper::value_type value_type;
-        typedef Q3Grid ParentWidget;
-
         enum { L = rhelper::SIZE };
         enum { C = vhelper::SIZE };
 
-        ParentWidget* parent_w;
         Container w[L][C];
         fixed_grid_data_widget_container() {}
         
-        bool createWidgets(DataWidget * _widget, QWidget* parent, const data_type& d, bool readOnly)
+        bool createWidgets(DataWidget* parent, const data_type& d, bool readOnly)
         {
-
-          parent_w = createParentWidget(parent,C);
-          assert(parent_w);
+          if( parent->layout() == NULL )
+          {
+            new QGridLayout(parent,L,C);
+          }
           for (int y=0; y<L; ++y)
             for (int x=0; x<C; ++x)
-              if (!w[y][x].createWidgets(_widget, parent_w, *vhelper::get(*rhelper::get(d,y),x), readOnly))
+              if (!w[y][x].createWidgets( parent, *vhelper::get(*rhelper::get(d,y),x), readOnly))
                 return false;
           return true;
         }
         void setReadOnly(bool readOnly)
         {
-          parent_w->setEnabled(!readOnly);
+          for (int y=0; y<L; ++y)
+            for (int x=0; x<C; ++x)
+              w[y][x].setReadOnly(readOnly);
         }
         void readFromData(const data_type& d)
         {
@@ -476,11 +480,6 @@ namespace sofa
             }
             rhelper::set(r,d,y);
           }
-        }
-        ParentWidget* createParentWidget(QWidget* parent, int n = 1)
-        {
-          return new ParentWidget(n,parent);
-          
         }
       };
 
@@ -662,8 +661,11 @@ namespace sofa
         static void readFromData(Widget* w, const data_type& d)
         {
           unsigned int m_length=d.getString().length();
-          w->setMaxLength(m_length+2);w->setReadOnly(true);
-          w->setText(QString(d.getString().c_str()));
+          if (w->text().ascii() != d.getString())
+          {
+            w->setMaxLength(m_length+2);w->setReadOnly(true);
+            w->setText(QString(d.getString().c_str()));
+          }
         }
         static void writeToData(Widget* , data_type& )
         {
@@ -728,10 +730,6 @@ namespace sofa
         ///In this method we  create the widgets and perform the signal / slots connections.
         virtual bool createWidgets();
 
-      protected slots:
-
-        void setbuttonchecked(int id_checked);
-
       protected:
         ///Implements how update the widgets knowing the data value.
         virtual void readFromData();
@@ -740,7 +738,8 @@ namespace sofa
         virtual void writeToData();
 
         QButtonGroup *buttonList;
-
+        QComboBox    *comboList;
+        bool buttonMode;
       };
 
 

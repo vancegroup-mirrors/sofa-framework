@@ -9,18 +9,28 @@ CONFIG += $$CONFIGLIBRARIES
 CONFIG -= staticlib
 CONFIG += dll
 
-DEFINES += SOFA_BUILD_COMPONENT_MISC
+DEFINES += SOFA_BUILD_COMPONENT_CONFIGURATIONSETTING
 
 HEADERS += initConfigurationSetting.h \
+           AddFrameButtonSetting.h \
+           AttachBodyButtonSetting.h \
            BackgroundSetting.h  \
+           FixPickedParticleButtonSetting.h \
+           MouseButtonSetting.h \
+           SofaDefaultPathSetting.h \
            StatsSetting.h \
-           ViewerDimensionSetting.h
+           ViewerSetting.h
 
 
 SOURCES += initConfigurationSetting.cpp \
+           AddFrameButtonSetting.cpp \
+           AttachBodyButtonSetting.cpp \
            BackgroundSetting.cpp \
+           FixPickedParticleButtonSetting.cpp \
+           MouseButtonSetting.cpp \
+           SofaDefaultPathSetting.cpp \
            StatsSetting.cpp \
-           ViewerDimensionSetting.cpp
+           ViewerSetting.cpp
 
 
 

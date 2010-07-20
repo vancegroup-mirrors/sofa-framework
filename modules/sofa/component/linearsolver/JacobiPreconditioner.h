@@ -52,8 +52,10 @@ public:
     Data<bool> f_verbose;
 
     JacobiPreconditioner();
-    void solve (Matrix& M, Vector& x, Vector& b);
+
     void setSystemMBKMatrix(double mFact, double bFact, double kFact);
+    void solve (Matrix& M, Vector& x, Vector& b);
+    void invert(Matrix& M);
     
     /// Pre-construction check method called by ObjectFactory.
     /// Check that DataTypes matches the MechanicalState.
@@ -69,12 +71,9 @@ public:
 
     static std::string templateName(const JacobiPreconditioner<TMatrix,TVector>* = NULL)
     {
-	return TVector::Name();
+        return TMatrix::Name();
     }
 	
-    
-protected :
-    TVector invDiag;
 };
 
 } // namespace linearsolver

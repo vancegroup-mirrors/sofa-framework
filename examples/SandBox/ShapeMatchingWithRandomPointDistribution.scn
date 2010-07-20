@@ -8,8 +8,8 @@
  			<MeshObjLoader name="meshLoader" filename="mesh/liver-smooth.obj" />
         	<Mesh name="meshTopo" src="@meshLoader"/>
         	<MechanicalObject name="liver_smooth" src="@meshLoader"/>
-        	<TrianglesInSphereROI name="surface" isVisible="true" centers="-2 2.5 0.8" radii="1.2" rest_position="@liver_smooth.rest_position" triangles="@meshTopo.triangles" drawSize="0" />
-        	<ExtrudeSurface template="Vec3d" isVisible="false" triangles="@meshTopo.triangles" name="extrusion" surfaceVertices="@liver_smooth.rest_position" surfaceTriangles="@surface.indices" heightFactor="0.5"/>
+        	<SphereROI name="surface" isVisible="true" centers="-2 2.5 0.8" radii="1.2" rest_position="@liver_smooth.rest_position" triangles="@meshTopo.triangles" drawSize="0" />
+        	<ExtrudeSurface template="Vec3d" isVisible="false" triangles="@meshTopo.triangles" name="extrusion" surfaceVertices="@liver_smooth.rest_position" surfaceTriangles="@surface.triangleIndices" heightFactor="0.5"/>
         	<RandomPointDistributionInSurface randomSeed="1243339265" name="distrib" isVisible="false" template="Vec3d" vertices="@extrusion.extrusionVertices" triangles="@extrusion.extrusionTriangles" numberOfInPoints="500" numberOfTests="3" minDistanceBetweenPoints="0.1"/>
         </Node>
         

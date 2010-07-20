@@ -25,7 +25,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include "OptionsGroup.h"
-
+#include <cstdlib>
 
 namespace sofa
 {
@@ -121,21 +121,24 @@ unsigned int OptionsGroup::getSelectedId() const
 	return selectedItem;
 }
 ///////////////////////////////////////
-std::string  OptionsGroup::getSelectedItem() const
+const std::string  &OptionsGroup::getSelectedItem() const
 {
-	std::string checkedString;
-	checkedString = textItems.operator[](selectedItem);
-	return checkedString;
+    return textItems[selectedItem];
 }
 ///////////////////////////////////////
 void OptionsGroup::readFromStream(std::istream & stream)
 {
 	std::string tempostring;
+
 	stream >> tempostring;
+
 	int id_stringinButtonList = isInButtonList(tempostring);
 	if (id_stringinButtonList == -1)
 	{
-		std::cout<<"WARNING(OptionsGroup) : \""<< tempostring <<"\" is not a parameter in button list :\" "<<(*this)<<"\""<< std::endl;
+        int idx=atoi(tempostring.c_str());
+        if (idx >=0 && idx < (int)size()) setSelectedItem(idx);
+        else
+          std::cerr<<"WARNING(OptionsGroup) : \""<< tempostring <<"\" is not a parameter in button list :\" "<<(*this)<<"\""<< std::endl;
 	}
 	else
 	{
@@ -145,20 +148,7 @@ void OptionsGroup::readFromStream(std::istream & stream)
 ///////////////////////////////////////
 void OptionsGroup::writeToStream(std::ostream & stream) const
 {
-
-	for(unsigned int i=0;i<textItems.size()-1;i++)
-	{
-		std::string tempostring= textItems.operator[](i);
-		stream<< tempostring << " ";
-	}
-}
-///////////////////////////////////////
-void OptionsGroup::TestOptionsGroup() const
-{
-	sofa::helper::OptionsGroup m_radiotrick;m_radiotrick.setNames(3,"hello1","hello2","hello3");
-	std::cout<<"Radio button :"<<m_radiotrick<<"    selectedId :"<<m_radiotrick.getSelectedId()<<"   getSelectedItem() :"<<m_radiotrick.getSelectedItem()<<std::endl;
-	std::cin>>m_radiotrick;
-	std::cout<<"Radio button :"<<m_radiotrick<<"    selectedId :"<<m_radiotrick.getSelectedId()<<"   getSelectedItem() :"<<m_radiotrick.getSelectedItem()<<std::endl;
+  stream << getSelectedItem();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////

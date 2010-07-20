@@ -44,8 +44,10 @@
 #include <sofa/gui/qt/AddObject.h>
 #include <sofa/gui/qt/ModifyObject.h>
 #include <sofa/gui/qt/DisplayFlagWidget.h>
+#include <sofa/gui/qt/QMenuFilesRecentlyOpened.h>
 #include <sofa/gui/qt/SofaPluginManager.h>
 #include <sofa/gui/qt/SofaMouseManager.h>
+#include <sofa/gui/qt/SofaVideoRecorderManager.h>
 
 #include <sofa/simulation/common/xml/XML.h>
 #include <sofa/helper/system/SetDirectory.h>
@@ -92,9 +94,6 @@ typedef QTextDrag Q3TextDrag;
 
 namespace sofa
 {
-  /*namespace simulation{
-    class Node;
-  }*/
 
 namespace gui
 {
@@ -163,7 +162,7 @@ public:
 	  virtual void setScene(Node* groot, const char* filename=NULL, bool temporaryFile=false);
 
       //Configuration methods
-      virtual void setDimension(int w, int h);
+      virtual void setViewerResolution(int w, int h);
       virtual void setFullScreen();
       virtual void setBackgroundColor(const defaulttype::Vector3& c);
       virtual void setBackgroundImage(const std::string& i);
@@ -173,6 +172,11 @@ public:
   #ifdef SOFA_DUMP_VISITOR_INFO
       virtual void setTraceVisitors(bool);
   #endif
+      virtual void setRecordPath(const std::string & path);
+      virtual void setGnuplotPath(const std::string & path);
+
+      virtual void setViewerConfiguration(sofa::component::configurationsetting::ViewerSetting* viewerConf);
+      virtual void setMouseButtonConfiguration(sofa::component::configurationsetting::MouseButtonSetting *button);
 
       virtual void setTitle( std::string windowTitle );
 
@@ -195,21 +199,21 @@ public:
 	  virtual void editGnuplotDirectory();
 	  virtual void showPluginManager();
 	  virtual void showMouseManager();
+      virtual void showVideoRecorderManager();
+
 
 	  void dragEnterEvent( QDragEnterEvent* event){event->accept();}
 	  void dropEvent(QDropEvent* event);
-	  
-    void initRecentlyOpened();
+
           
-	  public slots:
-    void NewRootNode(sofa::simulation::Node* root, const char* path);
-    void ActivateNode(sofa::simulation::Node* , bool );
-    void Update();
-    virtual void fileSaveAs(sofa::simulation::Node *node);	 
-    void LockAnimation(bool);
-    
-    void fileRecentlyOpened(int id);
-	  void updateRecentlyOpened(std::string fileLoaded);
+    public slots:
+      void NewRootNode(sofa::simulation::Node* root, const char* path);
+      void ActivateNode(sofa::simulation::Node* , bool );
+      void Update();
+      virtual void fileSaveAs(sofa::simulation::Node *node);
+      void LockAnimation(bool);
+
+      void fileRecentlyOpened(int id);
 	  void playpauseGUI(bool value);
 	  void step();
 	  void setDt(double);
@@ -276,7 +280,9 @@ public:
 	  WFloatLineEdit *background[3];
 	  QLineEdit *backgroundImage;
     QWidgetStack* left_stack;      
-	  
+
+    QMenuFilesRecentlyOpened recentlyOpenedFilesManager;
+
     std::string simulation_name;
 	  std::string gnuplot_directory;
 	  std::string pathDumpVisitor;

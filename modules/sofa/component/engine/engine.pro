@@ -14,6 +14,10 @@ DEFINES += SOFA_BUILD_COMPONENT_ENGINE
 HEADERS += initEngine.h \
            BoxROI.h \
            BoxROI.inl \
+           PlaneROI.h \
+           PlaneROI.inl \
+	   SphereROI.h \
+	   SphereROI.inl \
            ExtrudeSurface.h \
            ExtrudeSurface.inl \
            GroupFilterYoungModulus.h \
@@ -28,8 +32,6 @@ HEADERS += initEngine.h \
 	   TransformPosition.inl \
 	   TransformEngine.h \
 	   TransformEngine.inl \
-           PlaneROI.h \
-           PlaneROI.inl \
            PointsFromIndices.h \
            PointsFromIndices.inl \
            ValuesFromIndices.h \
@@ -40,18 +42,10 @@ HEADERS += initEngine.h \
            JoinPoints.inl \
            MapIndices.h \
            MapIndices.inl \
-	   PrimitivesInSphereROI.h \
-	   PrimitivesInSphereROI.inl \
            RandomPointDistributionInSurface.h \
            RandomPointDistributionInSurface.inl \
            Spiral.h \
            Spiral.inl \
-           TrianglesInBoxROI.h \
-           TrianglesInBoxROI.inl \
-           TrianglesInSphereROI.h \
-           TrianglesInSphereROI.inl \
-           TrianglesInPlaneROI.h \
-           TrianglesInPlaneROI.inl \
            Vertex2Frame.h \
            Vertex2Frame.inl \
            TextureInterpolation.h \
@@ -61,13 +55,13 @@ HEADERS += initEngine.h \
 
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
+           PlaneROI.cpp \
+	   SphereROI.cpp \
            ExtrudeSurface.cpp \
            GroupFilterYoungModulus.cpp \
            MergePoints.cpp \
            MergeSets.cpp \
 	   MeshBarycentricMapperEngine.cpp \
-           PlaneROI.cpp \
-	   PrimitivesInSphereROI.cpp \
 	   TransformPosition.cpp \
            TransformEngine.cpp \
            PointsFromIndices.cpp \
@@ -77,9 +71,6 @@ SOURCES += initEngine.cpp \
            MapIndices.cpp \
            RandomPointDistributionInSurface.cpp \
            Spiral.cpp \
-           TrianglesInBoxROI.cpp \
-           TrianglesInSphereROI.cpp \
-           TrianglesInPlaneROI.cpp \
            Vertex2Frame.cpp \
            TextureInterpolation.cpp \
            SubsetTopology.cpp

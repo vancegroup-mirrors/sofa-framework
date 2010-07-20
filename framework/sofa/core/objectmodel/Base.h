@@ -271,15 +271,20 @@ protected:
             exit( 1 );
         }
         m_fieldVec.push_back( std::make_pair(ln,field));
-	m_aliasData.insert(std::make_pair(ln,field));
+        m_aliasData.insert(std::make_pair(ln,field));
         res.owner = this;
         res.data = field;
         res.name = name;
         res.helpMsg = help;
         res.isDisplayed = isDisplayed;
         res.isReadOnly = isReadOnly;
-        const std::string prefix=std::string(name).substr(0,4);
-        if (prefix=="show" || prefix=="draw") res.group = "Visualization";
+
+        std::string nameStr(name);
+        if (nameStr.size() >= 4)
+        {
+          const std::string prefix=nameStr.substr(0,4);
+          if (prefix=="show" || prefix=="draw") res.group = "Visualization";
+        }
     }
 
     template<class T>

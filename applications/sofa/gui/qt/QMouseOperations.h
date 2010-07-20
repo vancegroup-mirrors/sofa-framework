@@ -27,6 +27,7 @@
  
 #include <sofa/gui/MouseOperations.h>
 #include <sofa/gui/qt/SofaMouseManager.h>
+
 #ifdef SOFA_QT4
 #include <QWidget>
 #include <QLineEdit>
@@ -54,26 +55,44 @@ namespace sofa
 
     namespace qt
     {
+      class DataWidget;
 
+      class QMouseOperation : public QWidget
+      {
+        Q_OBJECT
+      public:
+        DataWidget *createWidgetFromData(sofa::core::objectmodel::BaseData* data);
 
-      class QAttachOperation : public QWidget, public AttachOperation
+      public slots:
+        void WidgetDirty(bool);
+      };
+
+      class QAttachOperation : public QMouseOperation, public AttachOperation
       {
         Q_OBJECT
       public:
         QAttachOperation();
-        
-        double getStiffness() const;
-        double getArrowSize() const;
-        void configure(PickHandler *picker, MOUSE_BUTTON b)
-        {
-          AttachOperation::configure(picker, b);
-        }
+        void configure(PickHandler *picker, sofa::component::configurationsetting::MouseButtonSetting* button);
+
       protected:
-        QLineEdit *value;
-        QLineEdit *size;
+        DataWidget *stiffnessWidget;
+        DataWidget *arrowSizeWidget;
       };
 
-      
+
+      class QFixOperation : public QMouseOperation, public FixOperation
+      {
+        Q_OBJECT
+      public:
+        QFixOperation();
+        void configure(PickHandler *picker, sofa::component::configurationsetting::MouseButtonSetting* button);
+
+      protected:
+        DataWidget *stiffnessWidget;
+      };
+
+
+
       
       class QInciseOperation : public QWidget, public InciseOperation
       {
@@ -117,22 +136,6 @@ namespace sofa
          QSpinBox *snapingValue;
       };
 
-
-      
-      class QFixOperation : public QWidget, public FixOperation
-      {
-        Q_OBJECT
-      public:
-        QFixOperation();
-        double getStiffness() const;
-        void configure(PickHandler *picker, MOUSE_BUTTON b)
-        {
-          FixOperation::configure(picker, b);
-        }
-
-      protected:
-        QLineEdit *value;
-      };
 
 
       

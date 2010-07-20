@@ -24,11 +24,16 @@
 ******************************************************************************/
  
 #include <sofa/gui/qt/QMouseOperations.h>
+#include <sofa/gui/qt/QDisplayDataWidget.h>
+#include <sofa/gui/qt/DataWidget.h>
+#include <sofa/component/configurationsetting/AttachBodyButtonSetting.h>
+
 #ifdef SOFA_QT4
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QLabel>
+
 /*#include <QRadioButton>
 #include <QPushButton>*/
 #else
@@ -48,36 +53,93 @@ namespace sofa
 
     namespace qt
     {
+
+      DataWidget *QMouseOperation::createWidgetFromData(sofa::core::objectmodel::BaseData* data)
+      {
+        DataWidget::CreatorArgument arg;
+        arg.data = data;
+        arg.name =  arg.data->getName();
+        arg.parent = this;
+        arg.readOnly = arg.data->isReadOnly();
+        DataWidget *widget = DataWidget::CreateDataWidget(arg);
+        connect(widget, SIGNAL(WidgetDirty(bool)), this, SLOT(WidgetDirty(bool)));
+        return widget;
+      }
+
+      void QMouseOperation::WidgetDirty(bool b)
+      {
+        if (b)
+        {
+          DataWidget *dataW=(DataWidget*) sender();
+
+          dataW->updateDataValue();
+        }
+      }
+
+
       //*******************************************************************************************
       QAttachOperation::QAttachOperation()
       {
         //Building the GUI for the Attach Operation
+
         QHBoxLayout *layout=new QHBoxLayout(this);
         QLabel *label=new QLabel(QString("Stiffness"), this);
-        value=new QLineEdit(QString("1000.0"), this);
+        stiffnessWidget = createWidgetFromData(setting.getDataStiffness());
 
         QLabel *labelSize=new QLabel(QString("Arrow Size"), this);
-        size=new QLineEdit(QString("0.0"), this);
-        
+        arrowSizeWidget = createWidgetFromData(setting.getDataArrowSize());
+
         layout->addWidget(label);
-        layout->addWidget(value);
+        layout->addWidget(stiffnessWidget);
+        
+
         layout->addWidget(labelSize);
-        layout->addWidget(size);
+        layout->addWidget(arrowSizeWidget);
       }
 
-      double QAttachOperation::getStiffness() const
+
+      void QAttachOperation::configure(PickHandler *picker, sofa::component::configurationsetting::MouseButtonSetting* button)
       {
-        return atof(value->displayText().ascii());
-      }
+        if (sofa::component::configurationsetting::AttachBodyButtonSetting* attachSetting=dynamic_cast<sofa::component::configurationsetting::AttachBodyButtonSetting*>(button))
+        {
+          AttachOperation::configure(picker,GetMouseId(button->getButton()));
+          setting.getDataStiffness()->setValue(attachSetting->getStiffness());
+          setting.getDataArrowSize()->setValue(attachSetting->getArrowSize());
 
-      double QAttachOperation::getArrowSize() const
-      {
-        return atof(size->displayText().ascii());
+          stiffnessWidget->updateWidgetValue();
+          arrowSizeWidget->updateWidgetValue();
+        }
+        else AttachOperation::configure(picker,GetMouseId(button->getButton()));
       }
-
       //******************************************************************************************* 
 
-      
+
+      //*******************************************************************************************
+      QFixOperation::QFixOperation()
+      {
+        //Building the GUI for the Fix Operation
+        QHBoxLayout *layout=new QHBoxLayout(this);
+        QLabel *label=new QLabel(QString("Fixation"), this);
+        stiffnessWidget = createWidgetFromData(setting.getDataStiffness());
+
+        layout->addWidget(label);
+        layout->addWidget(stiffnessWidget);
+      }
+
+      void QFixOperation::configure(PickHandler *picker, sofa::component::configurationsetting::MouseButtonSetting* button)
+      {
+        if (sofa::component::configurationsetting::FixPickedParticleButtonSetting* fixSetting=dynamic_cast<sofa::component::configurationsetting::FixPickedParticleButtonSetting*>(button))
+        {
+          FixOperation::configure(picker,GetMouseId(button->getButton()));
+          setting.getDataStiffness()->setValue(fixSetting->getStiffness());
+
+          stiffnessWidget->updateWidgetValue();
+        }
+        else FixOperation::configure(picker,GetMouseId(button->getButton()));
+      }
+
+      //*******************************************************************************************
+
       //******************************************************************************************* 
       QInciseOperation::QInciseOperation()
             : finishIncision(0)
@@ -197,25 +259,6 @@ namespace sofa
 
       //******************************************************************************************* 
 
-      
-      //*******************************************************************************************
-      QFixOperation::QFixOperation()
-      {
-        //Building the GUI for the Fix Operation
-        QHBoxLayout *layout=new QHBoxLayout(this);
-        QLabel *label=new QLabel(QString("Fixation"), this);
-        value=new QLineEdit(QString("10000.0"), this);
-        
-        layout->addWidget(label);
-        layout->addWidget(value);        
-      }
-      
-      double QFixOperation::getStiffness() const
-      {
-        return atof(value->displayText().ascii());
-      }
-      
-      //*******************************************************************************************
 
       
       //******************************************************************************************* 

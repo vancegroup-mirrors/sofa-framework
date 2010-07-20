@@ -558,7 +558,9 @@ namespace gl
           normalsCloseCylinder2.push_back(-dir);
         }
       pointsCloseCylinder1.push_back(pointsCloseCylinder1[1]);
+      normalsCloseCylinder1.push_back(normalsCloseCylinder1[1]);
       pointsCloseCylinder2.push_back(pointsCloseCylinder2[1]);
+      normalsCloseCylinder2.push_back(normalsCloseCylinder2[1]);
 
 
       drawTriangleStrip(points, normals,colour);

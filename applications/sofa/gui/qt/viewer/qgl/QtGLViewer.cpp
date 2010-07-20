@@ -174,6 +174,8 @@ namespace sofa
 
 	    visualParameters.zNear = camera()->zNear();
 	    visualParameters.zFar = camera()->zFar();
+
+		connect( &captureTimer, SIGNAL(timeout()), this, SLOT(captureEvent()) );
 	  }
 
 
@@ -857,14 +859,31 @@ namespace sofa
 		static int counter = 0;
 		if ((counter++ % CAPTURE_PERIOD)==0)
 #endif
-		  screenshot(capture.findFilename(), 2);
 	      }
+
+		SofaViewer::captureEvent();
 
 	    if (_waitForRender)
 	      _waitForRender = false;
 
 	    emit( redrawn() );
 	  }
+
+      void QtGLViewer::setCameraMode(component::visualmodel::Camera::CameraType mode)
+      {
+        SofaViewer::setCameraMode(mode);
+
+        switch (mode)
+        {
+        case component::visualmodel::Camera::ORTHOGRAPHIC_TYPE:
+          camera()->setType( qglviewer::Camera::ORTHOGRAPHIC );
+          break;
+        case component::visualmodel::Camera::PERSPECTIVE_TYPE:
+          camera()->setType( qglviewer::Camera::PERSPECTIVE  );
+          break;
+        }
+      }
+
 
 	  // ----------------------------------------
 	  // --- Handle events (mouse, keyboard, ...)
@@ -890,25 +909,12 @@ namespace sofa
 		    {
 		      QGLViewer::keyPressEvent(e);
 		      break;
-		    }
-		  case Qt::Key_T:
-		    {
-		      if (camera()->type() == qglviewer::Camera::ORTHOGRAPHIC)
-			camera()->setType( qglviewer::Camera::PERSPECTIVE  );
-		      else
-			camera()->setType( qglviewer::Camera::ORTHOGRAPHIC );
-		      break;
-		    }
+            }
 		  case Qt::Key_C:
 		    {
 		      viewAll();
 		      break;
-		    }
-		  case Qt::Key_Escape:
-		    {
-		      emit(quit());
-		      break;
-		    }
+            }
 		  default:
 		    {
 		      SofaViewer::keyPressEvent(e);

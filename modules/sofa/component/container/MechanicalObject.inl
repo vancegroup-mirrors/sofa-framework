@@ -1313,9 +1313,11 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
 
       if (grid) grid->setP0(p0);
 
+      /*
       translation.setValue(Vector3());
       rotation.setValue(Vector3());
       scale.setValue(Vector3(1.0,1.0,1.0));
+      */
     }
     template <class DataTypes>
     void MechanicalObject<DataTypes>::storeResetState()
@@ -1669,7 +1671,7 @@ void MechanicalObject<DataTypes>::vAvail(VecId& v)
 #ifdef SOFA_SMP
             if (vectorsCoord[i] &&   vectorsCoordSharedAllocated[i])
 #else
-            if (vectorsCoord[i])
+            if ((vectorsCoord[i]) && ! vectorsCoord[i]->empty())
 #endif
                 v.index = i+1;
     }
@@ -1679,7 +1681,7 @@ void MechanicalObject<DataTypes>::vAvail(VecId& v)
 #ifdef SOFA_SMP
             if (vectorsDeriv[i] != NULL &&vectorsDerivSharedAllocated[i])
 #else
-            if (vectorsDeriv[i] != NULL)
+            if ((vectorsDeriv[i] != NULL) && ! (*vectorsDeriv[i]).empty())
 #endif
                 v.index = i+1;
     }

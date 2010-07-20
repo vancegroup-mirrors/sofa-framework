@@ -28,10 +28,6 @@ contains(DEFINES, SOFA_HAVE_FLOWVR){
 	SUBDIRS += SofaFlowVR
 }
 
-contains(DEFINES, SOFA_HAVE_SENSABLE){
-	SUBDIRS += SensAble
-}
-
 contains(DEFINES, SOFA_HAVE_CHAI3D){
 	SUBDIRS += Haptic
 }

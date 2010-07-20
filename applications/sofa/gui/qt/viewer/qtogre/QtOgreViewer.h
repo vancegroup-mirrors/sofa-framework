@@ -200,6 +200,8 @@ using namespace sofa::simulation;
 		  }
 	      }
 
+          void setCameraMode(component::visualmodel::Camera::CameraType mode);
+
 
 	      void addDirLight(std::string lightName=std::string());
 	      void addPointLight(std::string lightName=std::string());
@@ -221,7 +223,6 @@ using namespace sofa::simulation;
               sofa::defaulttype::Vector3 sceneMaxBBox;
 
               bool showAxis;
-              bool perspectiveCamera;
 
 	      std::string sceneFile;
 	      //Tab in the GUI containing the interface to configure the lights

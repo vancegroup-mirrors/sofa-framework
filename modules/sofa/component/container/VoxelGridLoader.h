@@ -32,91 +32,91 @@
 
 namespace sofa
 {
-  namespace helper{ namespace io { class Image; }}
+    namespace helper{ namespace io { class Image; }}
 
-  namespace component
-  {
-
-    namespace container
+    namespace component
     {
 
+        namespace container
+        {
 
-    class SOFA_COMPONENT_CONTAINER_API VoxelGridLoader : public MeshLoader
-    {
-      public:
-    	SOFA_CLASS(VoxelGridLoader,MeshLoader);
 
-        typedef defaulttype::Vec<3, int> Vec3i;
-        typedef defaulttype::Vec<6, int> Vec6i;
+            class SOFA_COMPONENT_CONTAINER_API VoxelGridLoader : public MeshLoader
+            {
+            public:
+                SOFA_CLASS(VoxelGridLoader,MeshLoader);
 
-        VoxelGridLoader();
-        virtual ~VoxelGridLoader();
+                typedef defaulttype::Vec<3, int> Vec3i;
+                typedef defaulttype::Vec<6, int> Vec6i;
 
-        virtual void init();
+                VoxelGridLoader();
+                virtual ~VoxelGridLoader();
+
+                virtual void init();
 
 		virtual void reinit();
 
-        virtual void clear();
+                virtual void clear();
 
-        virtual bool load ( const char* filename );
+                virtual bool load ( const char* filename );
 
-        void setVoxelSize ( const defaulttype::Vector3 vSize );
-        void getVoxelSize ( defaulttype::Vector3& vSize ) const;
+                void setVoxelSize ( const defaulttype::Vector3 vSize );
+                void getVoxelSize ( defaulttype::Vector3& vSize ) const;
 
-        void addBackgroundValue ( const int value );
-        int getBackgroundValue( const unsigned int idx = 0) const;
+                void addBackgroundValue ( const int value );
+                int getBackgroundValue( const unsigned int idx = 0) const;
 
 		void addActiveDataValue(const int value);
 		int getActiveDataValue(const unsigned int idx = 0) const;
 
-        void getResolution ( Vec3i& res ) const;
+                void getResolution ( Vec3i& res ) const;
 
 		int getDataSize() const;
 
-    unsigned char * getData();
-    const unsigned char * getData() const;
+                unsigned char * getData();
+                const unsigned char * getData() const;
 		
-    unsigned char * getSegmentID();
-    const unsigned char * getSegmentID() const;
+                unsigned char * getSegmentID();
+                const unsigned char * getSegmentID() const;
 
-    Vec6i getROI() const;
+                Vec6i getROI() const;
 
 		// fill the texture by 'image' only where there is the 'segmentation' of 'activeValue' and give the 3D texture sizes
 		void createSegmentation3DTexture( unsigned char **textureData, int& width, int& height, int& depth); 
 
 		void getIndicesInRegularGrid(helper::vector<unsigned int>& idxInRegularGrid) const;
 
-      private:
-        void setResolution ( const Vec3i res );
+            private:
+                void setResolution ( const Vec3i res );
 
 		bool isActive(const unsigned int idx) const;
 
-        helper::io::Image* loadImage ( const std::string& filename, const Vec3i& res, const int hsize) const;
+                helper::io::Image* loadImage ( const std::string& filename, const Vec3i& res, const int hsize) const;
 
-      protected:
-        Data< defaulttype::Vector3 >    voxelSize;
-        Data< Vec3i >                   dataResolution;
-		Data< Vec6i >                   roi;
-		Data< int >						headerSize;
+            protected:
+                Data< defaulttype::Vector3 > voxelSize;
+                Data< Vec3i > dataResolution;
+                Data< Vec6i > roi;
+                Data< int > headerSize;
                 sofa::core::objectmodel::DataFileName segmentationFile;
-		Data< int >						segmentationHeaderSize;
+                Data< int > segmentationHeaderSize;
 
-		Data< helper::vector<int> >     backgroundValue;
-		Data< helper::vector<int> >     activeValue;
+                Data< helper::vector<int> > backgroundValue;
+                Data< helper::vector<int> > activeValue;
 
-		Data<bool>						generateHexa;
+                Data<bool> generateHexa;
 
-        helper::vector<unsigned int>    _idxInRegularGrid;
+                helper::vector<unsigned int> _idxInRegularGrid;
 
-		helper::io::Image*				image;
-		helper::io::Image*				segmentation;
+                helper::io::Image* image;
+                helper::io::Image* segmentation;
 
-		int								bpp;
-    };
+                int bpp;
+            };
 
-    }
+        }
 
-  } // namespace component
+    } // namespace component
 
 } // namespace sofa
 

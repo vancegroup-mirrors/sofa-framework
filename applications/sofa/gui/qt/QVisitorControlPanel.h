@@ -9,7 +9,7 @@
 #include <qwidget.h>
 #endif
 
-#include "WFloatLineEdit.h"
+#include "WDoubleLineEdit.h"
 
 
 namespace sofa{
@@ -34,8 +34,8 @@ namespace sofa{
         void clearGraph();
       protected:
         QLineEdit *textFilter;
-        WFloatLineEdit *spinIndex;
-        WFloatLineEdit *spinRange;
+        WDoubleLineEdit *spinIndex;
+        WDoubleLineEdit *spinRange;
       };
  
     

@@ -33,7 +33,7 @@
 #include <sofa/defaulttype/VecTypes.h>
 //#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/fixed_array.h>
-#include "WFloatLineEdit.h"
+#include "WDoubleLineEdit.h"
 #include <limits.h>
 
 #include <sofa/helper/Polynomial_LD.inl>
@@ -270,28 +270,28 @@ namespace sofa
       /// float and double support
       ////////////////////////////////////////////////////////////////
 
-      template<class T>
+      template < typename T >
       class real_data_widget_trait
       {
       public:
         typedef T data_type;
-        typedef WFloatLineEdit Widget;
+        typedef WDoubleLineEdit Widget;
         static Widget* create(QWidget* parent, const data_type& /*d*/)
         {
           Widget* w = new Widget(parent, "real");
-          w->setMinFloatValue( (float)-INFINITY );
-          w->setMaxFloatValue( (float)INFINITY );
+          w->setMinValue( (data_type)-INFINITY );
+          w->setMaxValue( (data_type)INFINITY );
           w->setMinimumWidth(20);
           return w;
         }
         static void readFromData(Widget* w, const data_type& d)
         {
-          if (d != w->getFloatDisplayedValue())
-            w->setFloatValue(d);
+          if (d != w->getDisplayedValue())
+            w->setValue(d);
         }
         static void writeToData(Widget* w, data_type& d)
         {
-          d = (data_type) w->getFloatDisplayedValue();
+          d = (data_type) w->getDisplayedValue();
         }
         static void connectChanged(Widget* w, DataWidget* datawidget)
         {
@@ -300,13 +300,12 @@ namespace sofa
       };
 
       template<>
-      class data_widget_trait < float > : public real_data_widget_trait < float >
+      class data_widget_trait < float > : public real_data_widget_trait< float >
       {};
 
       template<>
-      class data_widget_trait < double > : public real_data_widget_trait < double >
+      class data_widget_trait < double > : public real_data_widget_trait< double >
       {};
-
 
       ////////////////////////////////////////////////////////////////
       /// int, unsigned int, char and unsigned char support

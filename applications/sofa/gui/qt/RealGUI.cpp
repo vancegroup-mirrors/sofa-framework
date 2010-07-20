@@ -118,7 +118,10 @@ namespace sofa
     namespace qt
     {
 
+  
+
       SOFA_LINK_CLASS(ImageQt);
+
 
 #ifdef SOFA_QT4
       typedef Q3ListView QListView;
@@ -207,6 +210,12 @@ namespace sofa
 #else
       typedef QApplication QSOFAApplication;
 #endif
+
+      RealGUI* gui = NULL;
+      QApplication* application = NULL;
+
+      const char* progname="";
+
 
       SofaGUI* RealGUI::CreateGUI ( const char* name, const std::vector<std::string>& options, sofa::simulation::Node* root, const char* filename )
       {
@@ -382,10 +391,10 @@ namespace sofa
         {
           std::ostringstream s;
           s<<"background" <<i;
-          background[i] = new WFloatLineEdit(colour,s.str().c_str());
-          background[i]->setMinFloatValue( 0.0f);
-          background[i]->setMaxFloatValue( 1.0f);
-          background[i]->setFloatValue( 1.0f);
+          background[i] = new WDoubleLineEdit(colour,s.str().c_str());
+          background[i]->setMinValue( 0.0f);
+          background[i]->setMaxValue( 1.0f);
+          background[i]->setValue( 1.0f);
 
           colourLayout->addWidget(background[i]);
           connect( background[i], SIGNAL( returnPressed() ), this, SLOT( updateBackgroundColour() ) );

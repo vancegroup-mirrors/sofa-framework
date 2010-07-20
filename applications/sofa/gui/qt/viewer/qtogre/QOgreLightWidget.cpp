@@ -89,42 +89,42 @@ namespace sofa
 	    connect(castShadows, SIGNAL( toggled(bool) ), this, SLOT( setDirty() ) );
 	    //Diffuse Colour	  
 	    globalLayout->addWidget(new QLabel(QString("Diffuse"), global),1,0);
-	    diffuse[0] = new WFloatLineEdit(global,"diffuseR");
+            diffuse[0] = new WDoubleLineEdit(global,"diffuseR");
 	    globalLayout->addWidget(diffuse[0],1,1);
-	    diffuse[0]->setMinFloatValue( 0.0f);
-	    diffuse[0]->setMaxFloatValue( 1.0f);
+	    diffuse[0]->setMinValue( 0.0f);
+	    diffuse[0]->setMaxValue( 1.0f);
  	    connect( diffuse[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    diffuse[1] = new WFloatLineEdit(global,"diffuseG");
+            diffuse[1] = new WDoubleLineEdit(global,"diffuseG");
 	    globalLayout->addWidget(diffuse[1],1,2);
-	    diffuse[1]->setMinFloatValue( 0.0f);
-	    diffuse[1]->setMaxFloatValue( 1.0f);
+	    diffuse[1]->setMinValue( 0.0f);
+	    diffuse[1]->setMaxValue( 1.0f);
  	    connect( diffuse[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    diffuse[2] = new WFloatLineEdit(global,"diffuseB");
+            diffuse[2] = new WDoubleLineEdit(global,"diffuseB");
 	    globalLayout->addWidget(diffuse[2],1,3);
-	    diffuse[2]->setMinFloatValue( 0.0f);
-	    diffuse[2]->setMaxFloatValue( 1.0f);
+	    diffuse[2]->setMinValue( 0.0f);
+	    diffuse[2]->setMaxValue( 1.0f);
  	    connect( diffuse[2], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 	    //Specular Colour	
 	    globalLayout->addWidget(new QLabel(QString("Specular"), global), 2,0);
-	    specular[0] = new WFloatLineEdit(global,"specularR");
+            specular[0] = new WDoubleLineEdit(global,"specularR");
 	    globalLayout->addWidget(specular[0],2,1);
-	    specular[0]->setMinFloatValue( 0.0f);
-	    specular[0]->setMaxFloatValue( 1.0f);
+	    specular[0]->setMinValue( 0.0f);
+	    specular[0]->setMaxValue( 1.0f);
  	    connect( specular[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    specular[1] = new WFloatLineEdit(global,"specularG");
+            specular[1] = new WDoubleLineEdit(global,"specularG");
 	    globalLayout->addWidget(specular[1],2,2);
-	    specular[1]->setMinFloatValue( 0.0f);
-	    specular[1]->setMaxFloatValue( 1.0f);
+	    specular[1]->setMinValue( 0.0f);
+	    specular[1]->setMaxValue( 1.0f);
  	    connect( specular[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    specular[2] = new WFloatLineEdit(global,"specularB");
+            specular[2] = new WDoubleLineEdit(global,"specularB");
 	    globalLayout->addWidget(specular[2],2,3);
-	    specular[2]->setMinFloatValue( 0.0f);
-	    specular[2]->setMaxFloatValue( 1.0f);
+	    specular[2]->setMinValue( 0.0f);
+	    specular[2]->setMaxValue( 1.0f);
  	    connect( specular[2], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 
 	    castShadows->setChecked(true);
-	    diffuse[0]->setFloatValue(1); diffuse[1]->setFloatValue(1); diffuse[2]->setFloatValue(1);
-	    specular[0]->setFloatValue(1); specular[1]->setFloatValue(1); specular[2]->setFloatValue(1);
+	    diffuse[0]->setValue(1); diffuse[1]->setValue(1); diffuse[2]->setValue(1);
+	    specular[0]->setValue(1); specular[1]->setValue(1); specular[2]->setValue(1);
 	  }
 
 	  QOgreLightWidget::~QOgreLightWidget()
@@ -144,15 +144,15 @@ namespace sofa
 	  void QOgreLightWidget::save(std::ofstream &out)
 	  {
 	    out << "\t\t\t\t<colourDiffuse ";
-	    out << "r=\"" << diffuse[0]->getFloatValue() << "\" ";
-	    out << "g=\"" << diffuse[1]->getFloatValue() << "\" ";
-	    out << "b=\"" << diffuse[2]->getFloatValue() << "\" />\n";
+	    out << "r=\"" << diffuse[0]->getValue() << "\" ";
+	    out << "g=\"" << diffuse[1]->getValue() << "\" ";
+	    out << "b=\"" << diffuse[2]->getValue() << "\" />\n";
 
 
 	    out << "\t\t\t\t<colourSpecular ";
-	    out << "r=\"" << specular[0]->getFloatValue() << "\" ";
-	    out << "g=\"" << specular[1]->getFloatValue() << "\" ";
-	    out << "b=\"" << specular[2]->getFloatValue() << "\" />\n";
+	    out << "r=\"" << specular[0]->getValue() << "\" ";
+	    out << "g=\"" << specular[1]->getValue() << "\" ";
+	    out << "b=\"" << specular[2]->getValue() << "\" />\n";
 	  }
 
 	  void QOgreLightWidget::restoreLight(std::string n)
@@ -169,8 +169,8 @@ namespace sofa
 	  {
 	    Ogre::Light *l = mSceneMgr->getLight(name);
 	    l->setCastShadows(castShadows->isChecked());
-	    l->setDiffuseColour(diffuse[0]->getFloatValue(),diffuse[1]->getFloatValue(),diffuse[2]->getFloatValue());
-	    l->setSpecularColour(specular[0]->getFloatValue(),specular[1]->getFloatValue(),specular[2]->getFloatValue());	    
+	    l->setDiffuseColour(diffuse[0]->getValue(),diffuse[1]->getValue(),diffuse[2]->getValue());
+	    l->setSpecularColour(specular[0]->getValue(),specular[1]->getValue(),specular[2]->getValue());	    
 	  }
 	  void QOgreLightWidget::updateInfo()
 	  {
@@ -180,8 +180,8 @@ namespace sofa
 	    const Ogre::ColourValue &s = l->getSpecularColour();
 	    for (unsigned int i=0;i<3;++i)
 	      {
-		diffuse[i]->setFloatValue(d[i]);
-		specular[i]->setFloatValue(s[i]);
+		diffuse[i]->setValue(d[i]);
+		specular[i]->setValue(s[i]);
 	      }
 	  }
 
@@ -190,23 +190,23 @@ namespace sofa
 	  {
 	    //Direction	
 	    globalLayout->addWidget(new QLabel(QString("Direction"), global),3,0);
-	    direction[0] = new WFloatLineEdit(global,"directionX");
+            direction[0] = new WDoubleLineEdit(global,"directionX");
 	    globalLayout->addWidget(direction[0],3,1);
-	    direction[0]->setMinFloatValue( (float)-INFINITY);
-	    direction[0]->setMaxFloatValue( (float) INFINITY);
+            direction[0]->setMinValue( (double)-INFINITY);
+            direction[0]->setMaxValue( (double) INFINITY);
  	    connect( direction[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    direction[1] = new WFloatLineEdit(global,"directionY");
+            direction[1] = new WDoubleLineEdit(global,"directionY");
 	    globalLayout->addWidget(direction[1],3,2);
-	    direction[1]->setMinFloatValue( (float)-INFINITY);
-	    direction[1]->setMaxFloatValue( (float) INFINITY);
+            direction[1]->setMinValue( (double)-INFINITY);
+            direction[1]->setMaxValue( (double) INFINITY);
  	    connect( direction[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    direction[2] = new WFloatLineEdit(global,"directionZ");
+            direction[2] = new WDoubleLineEdit(global,"directionZ");
 	    globalLayout->addWidget(direction[2],3,3);
-	    direction[2]->setMinFloatValue( (float)-INFINITY);
-	    direction[2]->setMaxFloatValue( (float) INFINITY);
+            direction[2]->setMinValue( (double)-INFINITY);
+            direction[2]->setMaxValue( (double) INFINITY);
  	    connect( direction[2], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 	    
-	    direction[0]->setFloatValue(0); direction[1]->setFloatValue(-1); direction[2]->setFloatValue(0); 
+	    direction[0]->setValue(0); direction[1]->setValue(-1); direction[2]->setValue(0); 
 
 	    addLight();
 	  }
@@ -227,9 +227,9 @@ namespace sofa
 	    out << "\">\n";
 
 	    out << "\t\t\t\t<normal ";
-	    out << "x=\"" << direction[0]->getFloatValue() << "\" ";
-	    out << "y=\"" << direction[1]->getFloatValue() << "\" ";
-	    out << "z=\"" << direction[2]->getFloatValue() << "\" />\n";
+	    out << "x=\"" << direction[0]->getValue() << "\" ";
+	    out << "y=\"" << direction[1]->getValue() << "\" ";
+	    out << "z=\"" << direction[2]->getValue() << "\" />\n";
 
 	    QOgreLightWidget::save(out);
 
@@ -255,7 +255,7 @@ namespace sofa
 	  {
 	    Ogre::Light *l = mSceneMgr->getLight(name);
 	    QOgreLightWidget::updateLight();
-	    l->setDirection(direction[0]->getFloatValue(),direction[1]->getFloatValue(),direction[2]->getFloatValue());
+	    l->setDirection(direction[0]->getValue(),direction[1]->getValue(),direction[2]->getValue());
 	  }
 
 	  void QOgreDirectionalLightWidget::updateInfo()
@@ -263,7 +263,7 @@ namespace sofa
 	    Ogre::Light *l = mSceneMgr->getLight(name);
 	    QOgreLightWidget::updateInfo();
 	    const Ogre::Vector3 &n = l->getDirection();	   
-	    for (unsigned int i=0;i<3;++i) direction[i]->setFloatValue(n[i]);
+	    for (unsigned int i=0;i<3;++i) direction[i]->setValue(n[i]);
 	  }
 
 
@@ -271,23 +271,23 @@ namespace sofa
 	  {
 	    //Position	
 	    globalLayout->addWidget(new QLabel(QString("Position"), global),3,0);
-	    position[0] = new WFloatLineEdit(global,"positionX");
+            position[0] = new WDoubleLineEdit(global,"positionX");
 	    globalLayout->addWidget(position[0],3,1);
-	    position[0]->setMinFloatValue( (float)-INFINITY);
-	    position[0]->setMaxFloatValue( (float) INFINITY);
+            position[0]->setMinValue( (double)-INFINITY);
+            position[0]->setMaxValue( (double) INFINITY);
  	    connect( position[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    position[1] = new WFloatLineEdit(global,"positionY");
+            position[1] = new WDoubleLineEdit(global,"positionY");
 	    globalLayout->addWidget(position[1],3,2);
-	    position[1]->setMinFloatValue( (float)-INFINITY);
-	    position[1]->setMaxFloatValue( (float) INFINITY);
+            position[1]->setMinValue( (double)-INFINITY);
+            position[1]->setMaxValue( (double) INFINITY);
  	    connect( position[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    position[2] = new WFloatLineEdit(global,"positionZ");
+            position[2] = new WDoubleLineEdit(global,"positionZ");
 	    globalLayout->addWidget(position[2],3,3);
-	    position[2]->setMinFloatValue( (float)-INFINITY);
-	    position[2]->setMaxFloatValue( (float) INFINITY);
+            position[2]->setMinValue( (double)-INFINITY);
+            position[2]->setMaxValue( (double) INFINITY);
  	    connect( position[2], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 
-	    position[0]->setFloatValue(0); position[1]->setFloatValue(50); position[2]->setFloatValue(0); 
+	    position[0]->setValue(0); position[1]->setValue(50); position[2]->setValue(0); 
 
 	    addLight();
 	  }
@@ -308,9 +308,9 @@ namespace sofa
 	    out << "\">\n";
 
 	    out << "\t\t\t\t<position ";
-	    out << "x=\"" << position[0]->getFloatValue() << "\" ";
-	    out << "y=\"" << position[1]->getFloatValue() << "\" ";
-	    out << "z=\"" << position[2]->getFloatValue() << "\" />\n";
+	    out << "x=\"" << position[0]->getValue() << "\" ";
+	    out << "y=\"" << position[1]->getValue() << "\" ";
+	    out << "z=\"" << position[2]->getValue() << "\" />\n";
 
 	    QOgreLightWidget::save(out);
 
@@ -336,7 +336,7 @@ namespace sofa
 	  {
 	    Ogre::Light *l = mSceneMgr->getLight(name);
 	    QOgreLightWidget::updateLight();
-	    l->setPosition(position[0]->getFloatValue(),position[1]->getFloatValue(),position[2]->getFloatValue());
+	    l->setPosition(position[0]->getValue(),position[1]->getValue(),position[2]->getValue());
 	  }
 
 	  void QOgrePointLightWidget::updateInfo()
@@ -344,7 +344,7 @@ namespace sofa
 	    Ogre::Light *l = mSceneMgr->getLight(name);
 	    QOgreLightWidget::updateInfo();
 	    const Ogre::Vector3 &n = l->getPosition();	   
-	    for (unsigned int i=0;i<3;++i) position[i]->setFloatValue(n[i]);
+	    for (unsigned int i=0;i<3;++i) position[i]->setValue(n[i]);
 	  }
 
 
@@ -352,59 +352,59 @@ namespace sofa
 	  {
 	    //Position	
 	    globalLayout->addWidget(new QLabel(QString("Position"), global),3,0);
-	    position[0] = new WFloatLineEdit(global,"positionX");
+            position[0] = new WDoubleLineEdit(global,"positionX");
 	    globalLayout->addWidget(position[0],3,1);
-	    position[0]->setMinFloatValue( (float)-INFINITY);
-	    position[0]->setMaxFloatValue( (float) INFINITY);
+            position[0]->setMinValue( (double)-INFINITY);
+            position[0]->setMaxValue( (double) INFINITY);
  	    connect( position[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    position[1] = new WFloatLineEdit(global,"positionY");
+            position[1] = new WDoubleLineEdit(global,"positionY");
 	    globalLayout->addWidget(position[1],3,2);
-	    position[1]->setMinFloatValue( (float)-INFINITY);
-	    position[1]->setMaxFloatValue( (float) INFINITY);
+            position[1]->setMinValue( (double)-INFINITY);
+            position[1]->setMaxValue( (double) INFINITY);
  	    connect( position[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    position[2] = new WFloatLineEdit(global,"positionZ");
+            position[2] = new WDoubleLineEdit(global,"positionZ");
 	    globalLayout->addWidget(position[2],3,3);
-	    position[2]->setMinFloatValue( (float)-INFINITY);
-	    position[2]->setMaxFloatValue( (float) INFINITY);
+            position[2]->setMinValue( (double)-INFINITY);
+            position[2]->setMaxValue( (double) INFINITY);
  	    connect( position[2], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 
 	    //Direction	
 	    globalLayout->addWidget(new QLabel(QString("Direction"), global),4,0);
-	    direction[0] = new WFloatLineEdit(global,"directionX");
+            direction[0] = new WDoubleLineEdit(global,"directionX");
 	    globalLayout->addWidget(direction[0],4,1);
-	    direction[0]->setMinFloatValue( (float)-INFINITY);
-	    direction[0]->setMaxFloatValue( (float) INFINITY);
+            direction[0]->setMinValue( (double)-INFINITY);
+            direction[0]->setMaxValue( (double) INFINITY);
  	    connect( direction[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    direction[1] = new WFloatLineEdit(global,"directionY");
+            direction[1] = new WDoubleLineEdit(global,"directionY");
 	    globalLayout->addWidget(direction[1],4,2);
-	    direction[1]->setMinFloatValue( (float)-INFINITY);
-	    direction[1]->setMaxFloatValue( (float) INFINITY);
+            direction[1]->setMinValue( (double)-INFINITY);
+            direction[1]->setMaxValue( (double) INFINITY);
  	    connect( direction[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
-	    direction[2] = new WFloatLineEdit(global,"directionZ");
+            direction[2] = new WDoubleLineEdit(global,"directionZ");
 	    globalLayout->addWidget(direction[2],4,3);
-	    direction[2]->setMinFloatValue( (float)-INFINITY);
-	    direction[2]->setMaxFloatValue( (float) INFINITY);
+            direction[2]->setMinValue( (double)-INFINITY);
+            direction[2]->setMaxValue( (double) INFINITY);
  	    connect( direction[2], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 
 	    //Range
 	    globalLayout->addWidget(new QLabel(QString("Range In"), global),5,0);
-	    range[0] = new WFloatLineEdit(global,"rangeIN");  range[0]->setMaximumWidth(SIZE_ENTRY);
+            range[0] = new WDoubleLineEdit(global,"rangeIN");  range[0]->setMaximumWidth(SIZE_ENTRY);
 	    globalLayout->addWidget(range[0],5,1);
-	    range[0]->setMinFloatValue( 0.0f);
-	    range[0]->setMaxFloatValue( 360.0f);
+	    range[0]->setMinValue( 0.0f);
+	    range[0]->setMaxValue( 360.0f);
  	    connect( range[0], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 
 	    globalLayout->addWidget(new QLabel(QString("Out"), global),5,2);
-	    range[1] = new WFloatLineEdit(global,"rangeOUT"); range[1]->setMaximumWidth(SIZE_ENTRY);
+            range[1] = new WDoubleLineEdit(global,"rangeOUT"); range[1]->setMaximumWidth(SIZE_ENTRY);
 	    globalLayout->addWidget(range[1],5,3);
-	    range[1]->setMinFloatValue( 0.0f);
-	    range[1]->setMaxFloatValue( 360.0f);
+	    range[1]->setMinValue( 0.0f);
+	    range[1]->setMaxValue( 360.0f);
  	    connect( range[1], SIGNAL( returnPressed() ), this, SLOT( setDirty() ) );
 
-	    position[0]->setFloatValue(0); position[1]->setFloatValue(50); position[2]->setFloatValue(0); 
-	    direction[0]->setFloatValue(0); direction[1]->setFloatValue(-1); direction[2]->setFloatValue(0); 
-	    range[0]->setFloatValue(30.0f);
-	    range[1]->setFloatValue(50.0f);
+	    position[0]->setValue(0); position[1]->setValue(50); position[2]->setValue(0); 
+	    direction[0]->setValue(0); direction[1]->setValue(-1); direction[2]->setValue(0); 
+	    range[0]->setValue(30.0f);
+	    range[1]->setValue(50.0f);
 
 
 	    addLight();
@@ -426,18 +426,18 @@ namespace sofa
 	    out << "\">\n";
 
 	    out << "\t\t\t\t<position ";
-	    out << "x=\"" << position[0]->getFloatValue() << "\" ";
-	    out << "y=\"" << position[1]->getFloatValue() << "\" ";
-	    out << "z=\"" << position[2]->getFloatValue() << "\" />\n";
+	    out << "x=\"" << position[0]->getValue() << "\" ";
+	    out << "y=\"" << position[1]->getValue() << "\" ";
+	    out << "z=\"" << position[2]->getValue() << "\" />\n";
 
 	    out << "\t\t\t\t<normal ";
-	    out << "x=\"" << direction[0]->getFloatValue() << "\" ";
-	    out << "y=\"" << direction[1]->getFloatValue() << "\" ";
-	    out << "z=\"" << direction[2]->getFloatValue() << "\" />\n";
+	    out << "x=\"" << direction[0]->getValue() << "\" ";
+	    out << "y=\"" << direction[1]->getValue() << "\" ";
+	    out << "z=\"" << direction[2]->getValue() << "\" />\n";
 
 	    out << "\t\t\t\t<lightRange ";
-	    out << "inner=\""  << range[0]->getFloatValue() << "\" ";
-	    out << "outer=\""  << range[1]->getFloatValue() << "\" ";
+	    out << "inner=\""  << range[0]->getValue() << "\" ";
+	    out << "outer=\""  << range[1]->getValue() << "\" ";
 	    out << "fallof=\"" << 1.0 << "\" />\n";
 
 	    QOgreLightWidget::save(out);
@@ -464,10 +464,10 @@ namespace sofa
 	  {
 	    Ogre::Light *l = mSceneMgr->getLight(name);
 	    QOgreLightWidget::updateLight();
-	    l->setPosition(position[0]->getFloatValue(),position[1]->getFloatValue(),position[2]->getFloatValue());
-	    l->setDirection(direction[0]->getFloatValue(),direction[1]->getFloatValue(),direction[2]->getFloatValue());
-	    Ogre::Radian in (Ogre::Degree(range[0]->getFloatValue()));
-	    Ogre::Radian out(Ogre::Degree(range[1]->getFloatValue()));
+	    l->setPosition(position[0]->getValue(),position[1]->getValue(),position[2]->getValue());
+	    l->setDirection(direction[0]->getValue(),direction[1]->getValue(),direction[2]->getValue());
+	    Ogre::Radian in (Ogre::Degree(range[0]->getValue()));
+	    Ogre::Radian out(Ogre::Degree(range[1]->getValue()));
 	    l->setSpotlightRange(in,out);
 	  }
 
@@ -479,13 +479,13 @@ namespace sofa
 	    const Ogre::Vector3 &d = l->getDirection();	  
 	    for (unsigned int i=0;i<3;++i) 
 	      {
-		position[i]->setFloatValue(n[i]);
-		direction[i]->setFloatValue(d[i]);
+		position[i]->setValue(n[i]);
+		direction[i]->setValue(d[i]);
 	      }
 	    Ogre::Degree in(Ogre::Radian(l->getSpotlightInnerAngle()));
 	    Ogre::Degree out(Ogre::Radian(l->getSpotlightOuterAngle()));
-	    range[0]->setFloatValue(in.valueDegrees());
-	    range[1]->setFloatValue(out.valueDegrees());
+	    range[0]->setValue(in.valueDegrees());
+	    range[1]->setValue(out.valueDegrees());
 	  }
 	}
       }

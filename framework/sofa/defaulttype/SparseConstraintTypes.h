@@ -96,7 +96,19 @@ namespace sofa
               return std::make_pair(_data.begin(), _data.end());
             }
 
-	bool empty() const { return _data.empty(); }
+		bool empty() const { return _data.empty(); }
+
+		 /// write to an output stream
+		inline friend std::ostream& operator << ( std::ostream& out, const SparseConstraint<T>& /*sc*/ )
+		{
+			return out;
+		}
+
+		/// read from an input stream
+		inline friend std::istream& operator >> ( std::istream& in, SparseConstraint<T>& /*sc*/ )
+		{
+			return in;
+		}
 
       protected:
         data_t _data;

@@ -31,7 +31,7 @@
 
 #include <Ogre.h>
 
-#include "../../WFloatLineEdit.h"
+#include "../../WDoubleLineEdit.h"
 #ifdef SOFA_QT4
 #include <QWidget>
 #include <Q3GroupBox>
@@ -109,8 +109,8 @@ namespace sofa
 
 	    //Parameters
 	    QCheckBox *castShadows;
-	    WFloatLineEdit *diffuse[3];
-	    WFloatLineEdit *specular[3];
+            WDoubleLineEdit *diffuse[3];
+            WDoubleLineEdit *specular[3];
 	  };
 
 	  class QOgreDirectionalLightWidget: public QOgreLightWidget
@@ -126,7 +126,7 @@ namespace sofa
 	  protected:
 	    void addLight();
 
-	    WFloatLineEdit *direction[3];
+            WDoubleLineEdit *direction[3];
 	  };
 
 
@@ -142,7 +142,7 @@ namespace sofa
 	    void updateInfo();
 	  protected:
 	    void addLight();
-	    WFloatLineEdit *position[3];
+            WDoubleLineEdit *position[3];
 	  };
 
 
@@ -158,9 +158,9 @@ namespace sofa
 	    void updateInfo();
 	  protected:
 	    void addLight();
-	    WFloatLineEdit *direction[3];
-	    WFloatLineEdit *position[3];
-	    WFloatLineEdit *range[2];
+            WDoubleLineEdit *direction[3];
+            WDoubleLineEdit *position[3];
+            WDoubleLineEdit *range[2];
 	  };
 	}
       }

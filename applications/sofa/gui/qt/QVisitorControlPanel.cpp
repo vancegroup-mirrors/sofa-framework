@@ -57,14 +57,14 @@ namespace sofa{
           
         QCheckBox *activation=new QCheckBox(QString("Trace State Vector"), exportStateParameters);
 
-        spinIndex = new WFloatLineEdit(exportStateParameters, "index");
-        spinIndex->setMinFloatValue( (float)-INFINITY );
-        spinIndex->setMaxFloatValue( (float)INFINITY );
+        spinIndex = new WDoubleLineEdit(exportStateParameters, "index");
+        spinIndex->setMinValue( (double)-INFINITY );
+        spinIndex->setMaxValue( (double)INFINITY );
         spinIndex->setIntValue(sofa::simulation::Visitor::GetFirstIndexStateVector());
         spinIndex->setMaximumWidth(50);
-        spinRange = new WFloatLineEdit(exportStateParameters, "range");
-        spinRange->setMinFloatValue( (float)-INFINITY );
-        spinRange->setMaxFloatValue( (float)INFINITY );
+        spinRange = new WDoubleLineEdit(exportStateParameters, "range");
+        spinRange->setMinValue( (double)-INFINITY );
+        spinRange->setMaxValue( (double)INFINITY );
         spinRange->setIntValue(sofa::simulation::Visitor::GetRangeStateVector());
         spinRange->setMaximumWidth(50);
 
@@ -100,13 +100,13 @@ namespace sofa{
       }
       void QVisitorControlPanel::changeFirstIndex()
       {
-          WFloatLineEdit *w=(WFloatLineEdit *) sender();
+          WDoubleLineEdit *w=(WDoubleLineEdit *) sender();
           int value=w->getIntValue();
           changeFirstIndex(value);
       }
       void QVisitorControlPanel::changeRange()
       {
-          WFloatLineEdit *w=(WFloatLineEdit *) sender();
+          WDoubleLineEdit *w=(WDoubleLineEdit *) sender();
           int value=w->getIntValue();
           changeRange(value);
       }

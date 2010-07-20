@@ -25,21 +25,21 @@
 #ifndef SOFA_COMPONENT_MECHANICALOBJECT_H
 #define SOFA_COMPONENT_MECHANICALOBJECT_H
 
-#include <sofa/core/behavior/MechanicalState.h>
-#include <sofa/core/topology/BaseMeshTopology.h>
-#include <sofa/core/objectmodel/XDataPtr.h>
-#include <sofa/core/objectmodel/VDataPtr.h>
-#include <sofa/defaulttype/BaseVector.h>
-#include <sofa/defaulttype/Quat.h>
 #include <sofa/component/component.h>
-#include <sofa/defaulttype/VecTypes.h>
-#include <sofa/defaulttype/RigidTypes.h>
-#include <sofa/defaulttype/LaparoscopicRigidTypes.h>
+
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/objectmodel/DataFileName.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
+
+#include <sofa/defaulttype/BaseVector.h>
+#include <sofa/defaulttype/LaparoscopicRigidTypes.h>
+#include <sofa/defaulttype/Quat.h>
+#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/defaulttype/VecTypes.h>
 
 #include <vector>
-#include <assert.h>
 #include <fstream>
+#include <assert.h>
 
 namespace sofa
 {
@@ -61,6 +61,9 @@ class MechanicalObjectInternalData
 public:
 };
 
+/**
+ * @brief MechanicalObject class
+ */
 template <class DataTypes>
 class MechanicalObject : public MechanicalState<DataTypes>
 {
@@ -82,69 +85,8 @@ public:
     typedef typename DataTypes::SparseVecDeriv::const_data_iterator SparseVecDerivIterator;
     typedef typename core::behavior::BaseMechanicalState::ConstraintBlock ConstraintBlock;
 
-protected:
-	VecCoord* x;
-	VecDeriv* v;
-	VecDeriv* f;
-	VecDeriv* internalForces;
-	VecDeriv* externalForces;
-	VecDeriv* dx;
-	VecCoord* x0;
-	VecCoord* reset_position;
-
-	VecDeriv* v0;
-	VecCoord* xfree; // stores the position of the mechanical objet after a free movement (p.e. gravity action)
-	VecDeriv* vfree; // stores the velocity of the mechanical objet after a free movement (p.e. gravity action)
-
-	// Constraints stored in the Mechanical State
-	// The storage is a SparseMatrix
-	// Each constraint (Type TConst) contains the index of the related DOF
-	VecConst *c;
-	sofa::helper::vector<unsigned int> constraintId;
-
-	bool initialized;
-	Data< Vector3 > translation;
-	Data< Vector3> rotation;
-        Data< Vector3 > scale;
-	Data< Vector3 > translation2;
-	Data< Vector3> rotation2;
-    sofa::core::objectmodel::DataFileName filename;
-    Data< bool> ignoreLoader;
-    Data<int> f_reserve;
-
-	/// @name Integration-related data
-	/// @{
-
-	sofa::helper::vector< VecCoord * > vectorsCoord;
-	sofa::helper::vector< VecDeriv * > vectorsDeriv;
-	sofa::helper::vector< VecConst * > vectorsConst;
-	int vsize; ///< Number of elements to allocate in vectors
-
-	void setVecCoord(unsigned int index, VecCoord* v);
-	void setVecDeriv(unsigned int index, VecDeriv* v);
-	void setVecConst(unsigned int index, VecConst* v);
-
-#ifdef SOFA_SMP
-	sofa::helper::vector< bool > vectorsCoordSharedAllocated;
-	sofa::helper::vector< bool > vectorsDerivSharedAllocated;
-#endif
-
-	/// @}
-  /// Given the numero of a constraint Equation, find the index in the VecConst C, where the constraint is actually stored
-  unsigned int getIdxConstraintFromId(unsigned int id) const;
-
-	MechanicalObjectInternalData<DataTypes> data;
-
-	friend class MechanicalObjectInternalData<DataTypes>;
-
-        std::ofstream* m_gnuplotFileX;
-        std::ofstream* m_gnuplotFileV;
-
-    class Loader;
-
-public:
-
     MechanicalObject();
+
     MechanicalObject& operator = ( const MechanicalObject& );
 
     virtual ~MechanicalObject();
@@ -155,44 +97,45 @@ public:
 
     virtual void parse ( BaseObjectDescription* arg );
 
-	XDataPtr<DataTypes>* const f_X;
-	VDataPtr<DataTypes>* const f_V;
-	VDataPtr<DataTypes>* const f_F;
-	VDataPtr<DataTypes>* const f_externalF;
-	VDataPtr<DataTypes>* const f_Dx;
-	XDataPtr<DataTypes>* const f_Xfree;
-	VDataPtr<DataTypes>* const f_Vfree;
+	Data< VecCoord > x;
+	Data< VecDeriv > v;
+	Data< VecDeriv > f;
+	Data< VecDeriv > internalForces;
+	Data< VecDeriv > externalForces;
+	Data< VecDeriv > dx;
+	Data< VecCoord > xfree;
+	Data< VecDeriv > vfree;
+	Data< VecCoord > x0;
+	Data< VecConst > c;
 
-	XDataPtr<DataTypes>* const f_X0;
+	Data< SReal > restScale;
 
-	Data<SReal> restScale;
+	Data< bool >	debugViewIndices;
+	Data< float >	debugViewIndicesScale;
 
-	Data<bool> debugViewIndices;
-	Data<float> debugViewIndicesScale;
+	virtual VecCoord* getX()				{ return getVecCoord(m_posId.index); }
+	virtual VecDeriv* getV()				{ return getVecDeriv(m_velId.index); }
+	virtual VecDeriv* getF()				{ return getVecDeriv(m_forceId.index); }
+	virtual VecDeriv* getExternalForces()	{ return getVecDeriv(m_externalForcesId.index); }
+	virtual VecDeriv* getDx()				{ return getVecDeriv(m_dxId.index); }
+	virtual VecConst* getC()				{ return getVecConst(m_constraintId.index); }
+	virtual VecCoord* getXfree()			{ return getVecCoord(m_freePosId.index); }
+	virtual VecDeriv* getVfree()			{ return getVecDeriv(m_freeVelId.index); }
+	virtual VecCoord* getX0()				{ return getVecCoord(m_x0Id.index); }
+	virtual VecCoord* getXReset()			{ return reset_position; }
 
-	virtual VecCoord* getX()  { f_X->beginEdit(); return x;  }
-	virtual VecDeriv* getV()  { f_V->beginEdit(); return v;  }
-	virtual VecDeriv* getF()  { return getVecDeriv(_forceId.index);  }
-	virtual VecDeriv* getExternalForces()  { f_externalF->beginEdit(); return externalForces;  }
-	virtual VecDeriv* getDx() { f_Dx->beginEdit(); return dx; }
-	virtual VecConst* getC() { return c;}
-	virtual VecCoord* getXfree() { f_Xfree->beginEdit(); return xfree; }
-	virtual VecDeriv* getVfree() { f_Vfree->beginEdit(); return vfree;  }
-	VecCoord* getX0() { f_X0->beginEdit(); return x0;}
-	virtual VecCoord* getXReset() { return reset_position; }
-
-	virtual const VecCoord* getX()  const { return x;  }
-	virtual const VecCoord* getX0()  const { return x0;  }
-	virtual const VecDeriv* getV()  const { return v;  }
-	virtual const VecDeriv* getV0()  const { return v0;  }
-	virtual const VecDeriv* getF()  const { return getVecDeriv(_forceId.index) ;  }
-	virtual const VecDeriv* getExternalForces()  const { return externalForces;  }
-	virtual const VecDeriv* getDx() const { return dx; }
-	virtual const VecConst* getC() const { return c; }
-	virtual const VecCoord* getXfree() const { return xfree; }
-	virtual const VecDeriv* getVfree()  const { return vfree;  }
-	virtual const VecCoord* getXReset() const { return reset_position; }
-
+	virtual const VecCoord* getX()				const	{ return getVecCoord(m_posId.index); }
+	virtual const VecDeriv* getV()				const	{ return getVecDeriv(m_velId.index); }
+	virtual const VecDeriv* getF()				const	{ return getVecDeriv(m_forceId.index); }
+	virtual const VecDeriv* getExternalForces() const	{ return getVecDeriv(m_externalForcesId.index); }
+	virtual const VecDeriv* getDx()				const	{ return getVecDeriv(m_dxId.index); }
+	virtual const VecConst* getC()				const	{ return getVecConst(m_constraintId.index);}
+	virtual const VecCoord* getXfree()			const	{ return getVecCoord(m_freePosId.index); }
+	virtual const VecDeriv* getVfree()			const	{ return getVecDeriv(m_freeVelId.index); }
+	virtual const VecCoord* getX0()				const	{ return getVecCoord(m_x0Id.index); }
+	virtual const VecCoord* getXReset()			const	{ return reset_position; }
+	virtual const VecDeriv* getV0()				const	{ return v0;  }
+	
 	virtual void init();
 	virtual void reinit();
 
@@ -219,9 +162,8 @@ public:
 
     virtual bool addBBox(double* minBBox, double* maxBBox);
 
-    int getSize() const {
-        return vsize;
-    }
+    int getSize() const { return vsize; }
+
     double getPX(int i) const { Real x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return (SReal)x; }
     double getPY(int i) const { Real x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return (SReal)y; }
     double getPZ(int i) const { Real x=0.0,y=0.0,z=0.0; DataTypes::get(x,y,z,(*getX())[i]); return (SReal)z; }
@@ -231,14 +173,10 @@ public:
      */
     void replaceValue (const int inputIndex, const int outputIndex);
 
-
-
     /** \brief Exchange values at indices idx1 and idx2.
      *
      */
     void swapValues (const int idx1, const int idx2);
-
-
 
     /** \brief Reorder values according to parameter.
      *
@@ -246,8 +184,6 @@ public:
      * newValue[ i ] = oldValue[ index[i] ];
      */
     void renumberValues( const sofa::helper::vector<unsigned int> &index );
-
-
 
     /** \brief Replace the value at index by the sum of the ancestors values weithed by the coefs.
      *
@@ -263,24 +199,29 @@ public:
 	// Force the position of a point (and force its velocity to zero value)
 	void forcePointPosition( const unsigned int i, const sofa::helper::vector< double >& m_x);
 
-	virtual void applyTranslation (const double dx,const double dy,const double dz);
+	/// @name Initial transformations application methods.
+	/// @{
 
-        // rotation using Euler Angles in degree
-        virtual void applyRotation (const double rx, const double ry, const double rz);
+	/// Apply translation vector to the position.
+	virtual void applyTranslation (const double dx, const double dy, const double dz);
+
+	/// Rotation using Euler Angles in degree.
+	virtual void applyRotation (const double rx, const double ry, const double rz);
 
 	virtual void applyRotation (const defaulttype::Quat q);
 
-        virtual void applyScale (const double sx,const double sy,const double sz);
+    virtual void applyScale (const double sx, const double sy, const double sz);
+
+	/// @}
 
 	/// Get the indices of the particles located in the given bounding box
 	void getIndicesInSpace(sofa::helper::vector<unsigned>& indices, Real xmin, Real xmax, Real ymin, Real ymax, Real zmin, Real zmax) const;
 
-
-	/// @Base Matrices and Vectors Interface
+	/// @name Base Matrices and Vectors Interface
 	/// @{
 
-        /// Load local mechanical data stored in the state in a (possibly smaller) vector
-        virtual void loadInVector(defaulttype::BaseVector *, VecId , unsigned int);
+    /// Load local mechanical data stored in the state in a (possibly smaller) vector
+    virtual void loadInVector(defaulttype::BaseVector *, VecId , unsigned int);
 
 	/// Load local mechanical data stored in the state in a global BaseVector basically stored in solvers
 	virtual void loadInBaseVector(defaulttype::BaseVector *, VecId , unsigned int &);
@@ -288,40 +229,41 @@ public:
 	/// Add data stored in a BaseVector to a local mechanical vector of the MechanicalState
 	virtual void addBaseVectorToState(VecId , defaulttype::BaseVector *, unsigned int &);
 
-        /// Add data stored in a Vector (whose size is smaller or equal to the State vector)  to a local mechanical vector of the MechanicalState
-        virtual void addVectorToState(VecId , defaulttype::BaseVector *, unsigned int &);
+    /// Add data stored in a Vector (whose size is smaller or equal to the State vector)  to a local mechanical vector of the MechanicalState
+    virtual void addVectorToState(VecId , defaulttype::BaseVector *, unsigned int &);
 
 	/// @}
 
+    /// Express the matrix L in term of block of matrices, using the indices of the lines in the VecConst container
+    virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &indices) const;
+    virtual SReal getConstraintJacobianTimesVecDeriv( unsigned int line, VecId id);
 
+    void setFilename(std::string s){filename.setValue(s);};
 
-        /// Express the matrix L in term of block of matrices, using the indices of the lines in the VecConst container
-        virtual std::list<ConstraintBlock> constraintBlocks( const std::list<unsigned int> &indices) const;
-        virtual SReal getConstraintJacobianTimesVecDeriv( unsigned int line, VecId id);
+	/// @name Initial transformations accessors.
+	/// @{
 
+    void setTranslation(double dx, double dy, double dz){translation.setValue(Vector3(dx,dy,dz));};
+    void setRotation(double rx, double ry, double rz){rotation.setValue(Vector3(rx,ry,rz));};
+    void setScale(double sx, double sy, double sz){scale.setValue(Vector3(sx,sy,sz));};
 
-        void setFilename(std::string s){filename.setValue(s);};
+	virtual Vector3 getTranslation() const {return translation.getValue();};
+	virtual Vector3 getRotation() const {return rotation.getValue();};
+	virtual Vector3 getScale() const {return scale.getValue();};
 
-        void setTranslation(double dx, double dy, double dz){translation.setValue(Vector3(dx,dy,dz));};
-        void setRotation(double rx, double ry, double rz){rotation.setValue(Vector3(rx,ry,rz));};
-        void setScale(double sx, double sy, double sz){scale.setValue(Vector3(sx,sy,sz));};
+	/// @}
 
-		virtual Vector3 getTranslation() const {return translation.getValue();};
-		virtual Vector3 getRotation() const {return rotation.getValue();};
-		virtual Vector3 getScale() const {return scale.getValue();};
+    void setIgnoreLoader(bool b){ignoreLoader.setValue(b);}
 
-
-        void setIgnoreLoader(bool b){ignoreLoader.setValue(b);}
-
-
-        std::string getFilename(){return filename.getValue();};
+    std::string getFilename(){return filename.getValue();};
 
 	virtual void addDxToCollisionModel(void);
 
     void setConstraintId(unsigned int);
-    sofa::helper::vector<unsigned int>& getConstraintId();
+    sofa::helper::vector< unsigned int >& getConstraintId();
+
 	/// Renumber the constraint ids with the given permutation vector
-	void renumberConstraintId(const sofa::helper::vector<unsigned>& renumbering);
+	void renumberConstraintId(const sofa::helper::vector< unsigned >& renumbering);
 
 
 	/// @name Integration related methods
@@ -351,15 +293,15 @@ public:
 #ifdef SOFA_SMP
 	virtual void vOp(VecId , VecId  = VecId::null(), VecId  = VecId::null(), double =1.0,a1::Shared<double> * =NULL);
 	virtual void vOpMEq(VecId , VecId  = VecId::null(),a1::Shared<double> * =NULL);
-        virtual void vDot(a1::Shared<double> *,VecId , VecId );
+	virtual void vDot(a1::Shared<double> *,VecId , VecId );
 #endif
 	virtual void vOp(VecId v, VecId a = VecId::null(), VecId b = VecId::null(), double f=1.0);
 
 	virtual void vMultiOp(const VMultiOp& ops);
 
-        virtual void vThreshold( VecId a, double threshold );
+	virtual void vThreshold( VecId a, double threshold );
 
-        virtual double vDot(VecId a, VecId b);
+	virtual double vDot(VecId a, VecId b);
 
 	virtual void setX(VecId v);
 
@@ -381,14 +323,14 @@ public:
 
 	virtual void resetConstraint();
 
-  virtual sofa::core::VecId getForceId() const { return _forceId; }
+	virtual sofa::core::VecId getForceId() const { return m_forceId; }
 
 
 	/// @}
 
 	/// @name Debug
 	/// @{
-        virtual void printDOF( VecId, std::ostream& =std::cerr, int firstIndex=0, int range=-1 ) const ;
+	virtual void printDOF( VecId, std::ostream& =std::cerr, int firstIndex=0, int range=-1 ) const ;
 	virtual unsigned printDOFWithElapsedTime(VecId, unsigned =0, unsigned =0, std::ostream& =std::cerr );
 	//
 	void draw();
@@ -403,10 +345,85 @@ public:
     virtual bool pickParticles(double rayOx, double rayOy, double rayOz, double rayDx, double rayDy, double rayDz, double radius0, double dRadius,
 			       std::multimap< double, std::pair<sofa::core::behavior::BaseMechanicalState*, int> >& particles);
 
-protected:    
-	sofa::core::topology::BaseMeshTopology* _topology;
-  sofa::core::VecId _forceId;
+protected :
 
+	VecCoord* reset_position;
+	VecDeriv* v0;
+
+	sofa::helper::vector< unsigned int > constraintId;
+
+	/// @name Initial geometric transformations
+	/// @{
+
+	Data< Vector3 > translation;
+	Data< Vector3 > rotation;
+	Data< Vector3 > scale;
+	Data< Vector3 > translation2;
+	Data< Vector3 > rotation2;
+
+	/// @}
+
+    sofa::core::objectmodel::DataFileName filename;
+    Data< bool> ignoreLoader;
+    Data< int > f_reserve;
+
+	bool m_initialized;
+
+	/// @name Integration-related data
+	/// @{
+
+	sofa::helper::vector< Data< VecCoord > * > vectorsCoord; ///< Coordinates DOFs vectors table (static and dynamic allocated)
+	sofa::helper::vector< Data< VecDeriv > * > vectorsDeriv; ///< Derivates DOFs vectors table (static and dynamic allocated)
+	sofa::helper::vector< Data< VecConst > * > vectorsConst; ///< Constraint vectors table
+
+	int vsize; ///< Number of elements to allocate in vectors
+
+	/**
+	 * @brief Inserts VecCoord DOF coordinates vector at index in the vectorsCoord container.
+	 */
+	void setVecCoord(unsigned int /*index*/, Data< VecCoord >* /*vCoord*/);
+
+	/**
+	 * @brief Inserts VecDeriv DOF derivates vector at index in the vectorsDeriv container.
+	 */
+	void setVecDeriv(unsigned int /*index*/, Data< VecDeriv >* /*vDeriv*/);
+
+	/**
+	 * @brief Inserts VecConst constraint vector at index in the vectorsCoord container.
+	 */
+	void setVecConst(unsigned int /*index*/, Data< VecConst> * /*vConst*/);
+
+#ifdef SOFA_SMP
+	sofa::helper::vector< bool > vectorsCoordSharedAllocated;
+	sofa::helper::vector< bool > vectorsDerivSharedAllocated;
+#endif
+
+	/// @}
+
+	/// Given the number of a constraint Equation, find the index in the VecConst C, where the constraint is actually stored
+	unsigned int getIdxConstraintFromId(unsigned int id) const;
+
+	MechanicalObjectInternalData<DataTypes> data;
+
+	friend class MechanicalObjectInternalData<DataTypes>;
+
+	std::ofstream* m_gnuplotFileX;
+	std::ofstream* m_gnuplotFileV;
+
+    class Loader;
+
+	sofa::core::topology::BaseMeshTopology* m_topology;
+	
+	sofa::core::VecId m_posId;
+	sofa::core::VecId m_velId;
+	sofa::core::VecId m_forceId;
+	sofa::core::VecId m_internalForcesId;
+	sofa::core::VecId m_externalForcesId;
+	sofa::core::VecId m_dxId;
+	sofa::core::VecId m_freePosId;
+	sofa::core::VecId m_freeVelId;
+	sofa::core::VecId m_x0Id;
+	sofa::core::VecId m_constraintId;
 };
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_CONTAINER_MECHANICALOBJECT_CPP)
@@ -429,7 +446,7 @@ extern template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<defaulttype:
 extern template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<defaulttype::LaparoscopicRigid3Types>;
 #endif
 
-}
+} // namespace container
 
 } // namespace component
 

@@ -178,7 +178,7 @@ namespace behavior
       void getEquationsUsed(ConstOrder Order, DataStorage &used0) const
 	  {
           constraintOrder_t::const_iterator g = constraintOrder.find(Order);
-          assert( g != constraintOrder.end() );
+          if (g == constraintOrder.end()) return;
 
           const helper::vector< BaseLMConstraint::ConstraintGroup* > &constraints = g->second;
           for (unsigned int idxGroupConstraint=0;idxGroupConstraint<constraints.size(); ++idxGroupConstraint)
@@ -189,15 +189,15 @@ namespace behavior
 	  }
 
 	  /// Get Right Hand Term
-	  virtual void getCorrections(ConstOrder Order, helper::vector<SReal>& c);
+      virtual void getCorrections(ConstOrder Order, helper::vector<SReal>& c);
 
 
 	  /// Get the internal structure: return all the constraint stored by their nature in a map
 	  virtual void getConstraints( std::map< ConstOrder, helper::vector< ConstraintGroup* > >  &i) { i=constraintOrder;}
 	  /// Get all the constraints stored of a given nature
 	  virtual const helper::vector< ConstraintGroup* > &getConstraintsOrder(ConstOrder Order) const { 
-	    constraintOrder_t::const_iterator c = constraintOrder.find( Order );
-	    assert( c != constraintOrder.end());
+        constraintOrder_t::const_iterator c = constraintOrder.find( Order );
+        assert( c != constraintOrder.end());
 	    return c->second;
 	  }
 
@@ -205,7 +205,7 @@ namespace behavior
 
 
 	  /// get the number of expressed constraints of a given order
-	  virtual unsigned int getNumConstraint(ConstOrder Order);
+      virtual unsigned int getNumConstraint(ConstOrder Order);
 
 
 	  /// get Mechanical State 1 where the constraint will be expressed (can be a Mapped mechanical state)
@@ -222,11 +222,11 @@ namespace behavior
 	  /// That way, we can optimize the time spent traversing the mappings
 	  /// Deactivated by default. The constraints using only a subset of particles should activate the mask,
 	  /// and during projectResponse(), insert the indices of the particles modified
-	  virtual bool useMask(){return false;}
+      virtual bool useMask() const {return false;}
 
 	  /// Methods to know if we have to propagate the state we want to constrain before computing the correction
 	  /// If the correction is computed with the simulatedDOF, there is no need, and we can reach a good speed-up
-	  virtual bool isCorrectionComputedWithSimulatedDOF(){return false;}
+      virtual bool isCorrectionComputedWithSimulatedDOF(ConstOrder) const {return false;}
 
 	  virtual void resetConstraint();
 	protected:

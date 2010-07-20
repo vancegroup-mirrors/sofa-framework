@@ -16,67 +16,63 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_OBJECTMODEL_XFIELD_H
-#define SOFA_CORE_OBJECTMODEL_XFIELD_H
+#ifndef SOFA_COMPONENT_LINEARSOLVER_EIGENMATRIXMANIPULATOR_H
+#define SOFA_COMPONENT_LINEARSOLVER_EIGENMATRIXMANIPULATOR_H
 
-#include <sofa/core/objectmodel/DataPtr.h>
+#include <sofa/helper/system/config.h>
+#include <sofa/helper/vector.h>
+
+#include <Eigen/Core>
+#include <Eigen/Sparse>
+USING_PART_OF_NAMESPACE_EIGEN
 
 namespace sofa
 {
 
-namespace core
+namespace component
 {
 
-namespace objectmodel
+namespace linearsolver
 {
 
-/**
- *  \brief Access to the getX() vector of a MechanicalObject.
- *
- *  @author Francois Faure
- */
-template<class DataTypes>
-class XDataPtr : public DataPtr<typename DataTypes::VecCoord>
-{
-public:
-    typedef typename DataTypes::VecCoord VecCoord;
-    
-    XDataPtr(VecCoord** ptr, const char* name)
-    : DataPtr<VecCoord>(0,name)
-            , m_coordPtr(ptr)
-    {}
+  typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen;
+  typedef Eigen::SparseVector<SReal,Eigen::RowMajor>    SparseVectorEigen;
 
-    ~XDataPtr()
-    {}
+  struct LMatrixManipulator;
 
-
-   void init(){this->ptr = *m_coordPtr;}
-
-    VecCoord* beginEdit()
+    struct LLineManipulator
     {
-        this->ptr = *m_coordPtr;
-        //serr<<"XDataPtr<DataTypes>::beginEdit()"<<sendl;
-        return this->DataPtr<VecCoord>::beginEdit();
-    }
+      friend struct LMatrixManipulator;
+    protected:
+      typedef std::pair<unsigned int, SReal> LineCombination;
+      typedef helper::vector< LineCombination > InternalData;
+    public:
+      LLineManipulator& addCombination(unsigned int idxConstraint, SReal factor);
 
-protected:
-    VecCoord** m_coordPtr;
 
-};
+    protected:
+      void buildSparseLine(const helper::vector< SparseVectorEigen >& lines, SparseVectorEigen &vector) const;
 
-} // namespace objectmodel
+      InternalData _data;
+    };
 
-} // namespace core
+    struct LMatrixManipulator
+    {
+      void init(const SparseMatrixEigen& L);
 
-} // namespace sofa
+      void buildLMatrix(const helper::vector<LLineManipulator> &lines, SparseMatrixEigen& matrix) const;
+
+      helper::vector< SparseVectorEigen > LMatrix;
+    };
+
+}
+}
+}
 
 #endif
-

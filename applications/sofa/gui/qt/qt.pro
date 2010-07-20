@@ -61,7 +61,6 @@ HEADERS += viewer/SofaViewer.h \
            GraphListenerQListView.h \
            GenGraphForm.h \
            AddObject.h \
-           Main.h \
            RealGUI.h \
 		   DataWidget.h \
 		   DataFilenameWidget.h \
@@ -73,7 +72,7 @@ HEADERS += viewer/SofaViewer.h \
 		   SofaGUIQt.h \
            StructDataWidget.h \
            TableDataWidget.h \
-           WFloatLineEdit.h \ 
+           WDoubleLineEdit.h \ 
            FileManagement.h \
            SofaPluginManager.h \
            SofaMouseManager.h \
@@ -90,8 +89,7 @@ HEADERS += viewer/SofaViewer.h \
            QMenuFilesRecentlyOpened.h \
            ImageQt.h 
 
-SOURCES += Main.cpp \
-           GraphListenerQListView.cpp \
+SOURCES += GraphListenerQListView.cpp \
            GenGraphForm.cpp \
            AddObject.cpp \
            RealGUI.cpp \
@@ -104,7 +102,7 @@ SOURCES += Main.cpp \
            SimpleDataWidget.cpp \
            StructDataWidget.cpp \
            TableDataWidget.cpp \
-           WFloatLineEdit.cpp \
+           WDoubleLineEdit.cpp \
            FileManagement.cpp \
            SofaPluginManager.cpp \
            SofaVideoRecorderManager.cpp \

@@ -69,10 +69,13 @@ contains(DEFINES,SOFA_HAVE_MKL){
 
 }
 
-contains(DEFINES, SOFA_HAVE_EIGEN2){        
-	HEADERS +=  LagrangeMultiplierComputation.h 
-}
 
+
+contains(DEFINES, SOFA_HAVE_EIGEN2){
+	HEADERS += EigenMatrixManipulator.h
+
+	SOURCES += EigenMatrixManipulator.cpp
+} 
 
 contains(DEFINES, SOFA_SMP){ # BEGIN SOFA_SMP
 	HEADERS += ParallelCGLinearSolver.h \

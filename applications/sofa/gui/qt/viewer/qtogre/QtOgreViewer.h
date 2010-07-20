@@ -32,7 +32,7 @@
 #include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
 #include <sofa/gui/qt/viewer/SofaViewer.h>
 #include <sofa/gui/qt/viewer/qtogre/QOgreLightWidget.h>
-#include "../../WFloatLineEdit.h"
+#include "../../WDoubleLineEdit.h"
 #include <sofa/helper/gl/Capture.h>
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
@@ -245,7 +245,7 @@ using namespace sofa::simulation;
 
 	      //Viewer Tab Widget
 	      QPushButton *saveLightsButton;
-	      WFloatLineEdit *ambient[3];
+              WDoubleLineEdit *ambient[3];
 	      //Lights	     
 	      QWidget  *dirLight; 
 	      QSpinBox *numDirLight;

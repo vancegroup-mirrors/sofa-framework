@@ -83,6 +83,45 @@ public:
 #ifdef SOFA_DUMP_VISITOR_INFO
    virtual void setReadWriteVectors() {}
 #endif
+    virtual const char* getClassName() const {
+        return "ParallelMechanicalVOpMecVisitor";
+    }
+    virtual std::string getInfos() const
+    {
+      std::string info="v=";
+      std::string aLabel;
+      std::string bLabel;
+      std::string fLabel;
+
+      std::ostringstream out;
+      out << "f["<<f<<"]";
+      fLabel+= out.str();
+
+      if (a != VecId::null())
+      {
+        info+="a";
+        aLabel="a[" + a.getName() + "] ";
+        if (b != VecId::null() )
+        {
+          info += "+b*f";
+          bLabel += "b[" + b.getName() + "] ";
+        }
+      }
+      else
+      {
+        if (b != VecId::null())
+        {
+          info += "b*f";
+          bLabel += "b[" + b.getName() + "] ";
+        }
+        else
+        {
+          info+="zero"; fLabel.clear();
+        }
+      }
+      info += " : with v[" + v.getName() + "] " + aLabel + bLabel + fLabel;
+      return info;
+    }
     ParallelMechanicalVOpMecVisitor(VecId v, VecId a = VecId::null(),Shared<double> *fSh=NULL)
             : v(v), a(a),fSh(fSh)
     {}
@@ -116,6 +155,42 @@ public:
 
     virtual const char* getClassName() const {
         return "ParallelMechanicalVOpVisitor";
+    }
+    virtual std::string getInfos() const
+    {
+      std::string info="v=";
+      std::string aLabel;
+      std::string bLabel;
+      std::string fLabel;
+
+      std::ostringstream out;
+      out << "f["<<f<<"]";
+      fLabel+= out.str();
+
+      if (a != VecId::null())
+      {
+        info+="a";
+        aLabel="a[" + a.getName() + "] ";
+        if (b != VecId::null() )
+        {
+          info += "+b*f";
+          bLabel += "b[" + b.getName() + "] ";
+        }
+      }
+      else
+      {
+        if (b != VecId::null())
+        {
+          info += "b*f";
+          bLabel += "b[" + b.getName() + "] ";
+        }
+        else
+        {
+          info+="zero"; fLabel.clear();
+        }
+      }
+      info += " : with v[" + v.getName() + "] " + aLabel + bLabel + fLabel;
+      return info;
     }
 
     ParallelMechanicalVOpVisitor(VecId v, VecId a = VecId::null(), VecId b = VecId::null(), double f=1.0,Shared<double> *fSh=NULL)
@@ -160,7 +235,12 @@ public:
     const char* getClassName() const {
         return "ParallelMechanicalVDotVisitor";
     }
-
+    virtual std::string getInfos() const
+    {
+        std::string name("v= a*b with a[");
+        name += a.getName() + "] and b[" + b.getName() + "]";
+        return name;
+    }
     /// Specify whether this action can be parallelized.
     virtual bool isThreadSafe() const
     {

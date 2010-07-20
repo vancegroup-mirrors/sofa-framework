@@ -32,6 +32,9 @@
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/component/component.h>
 
+
+#include <sofa/component/linearsolver/EigenMatrixManipulator.h>
+
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 USING_PART_OF_NAMESPACE_EIGEN
@@ -45,20 +48,23 @@ namespace component
 namespace constraintset
 {
 
+
   using core::behavior::BaseLMConstraint;
 class SOFA_COMPONENT_CONSTRAINTSET_API LMConstraintSolver : public sofa::core::behavior::ConstraintSolver
 {
 protected:
     typedef sofa::core::VecId VecId;
     typedef sofa::core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
-    typedef Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
-    typedef Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
+    typedef Eigen::Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
+    typedef Eigen::Matrix<SReal, Eigen::Dynamic, 1>              VectorEigen;
     typedef Eigen::SparseMatrix<SReal,Eigen::RowMajor>    SparseMatrixEigen; 
+    typedef Eigen::SparseVector<SReal,Eigen::RowMajor>    SparseVectorEigen;
     
     typedef helper::set< sofa::core::behavior::BaseMechanicalState* > SetDof;
     typedef std::map< const sofa::core::behavior::BaseMechanicalState *, SparseMatrixEigen > DofToMatrix;
     typedef std::map< const sofa::core::behavior::BaseMechanicalState *, helper::set<unsigned int> > DofToMask;
     typedef std::map< const sofa::core::behavior::BaseMechanicalState *, core::behavior::BaseConstraintCorrection* > DofToConstraintCorrection;
+
  public:
     SOFA_CLASS(LMConstraintSolver, sofa::core::behavior::ConstraintSolver);
     LMConstraintSolver();
@@ -80,14 +86,15 @@ protected:
     Data<bool> constraintVel;
     Data<bool> constraintPos;
     Data<unsigned int> numIterations;
-    Data<double> maxError;
+    Data<double> maxError;    
     mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphGSError;
     Data< bool > traceKineticEnergy;
     mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphKineticEnergy;
 
+
  protected:
     /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
-    virtual bool needPriorStatePropagation();
+    virtual bool needPriorStatePropagation(core::behavior::BaseLMConstraint::ConstOrder order) const;
 
     /// Construct the Right hand term of the system
     virtual void buildRightHandTerm      ( ConstOrder Order, const helper::vector< core::behavior::BaseLMConstraint* > &LMConstraints,
@@ -149,7 +156,6 @@ protected:
     MatrixEigen W;
     VectorEigen c;
     VectorEigen Lambda;
-
 
     //Persitent datas
     DofToMatrix invMassMatrix;

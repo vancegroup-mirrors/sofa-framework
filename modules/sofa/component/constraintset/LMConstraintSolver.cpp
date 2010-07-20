@@ -53,7 +53,7 @@ namespace sofa
                                                 constraintVel( initData( &constraintVel, false, "constraintVel", "Constraint the velocity")),
                                                 constraintPos( initData( &constraintPos, false, "constraintPos", "Constraint the position")),
                                                 numIterations( initData( &numIterations, (unsigned int)25, "numIterations", "Number of iterations for Gauss-Seidel when solving the Constraints")),
-                                                maxError( initData( &maxError, 0.0000001, "maxError", "threshold for the residue of the Gauss-Seidel algorithm")),
+                                                maxError( initData( &maxError, 0.0000001, "maxError", "threshold for the residue of the Gauss-Seidel algorithm")),                                                
                                                 graphGSError( initData(&graphGSError,"graphGSError","Graph of residuals at each iteration") ),
                                                 traceKineticEnergy( initData( &traceKineticEnergy, false, "traceKineticEnergy", "Trace the evolution of the Kinetic Energy throughout the solution of the system")),
                                                 graphKineticEnergy( initData(&graphKineticEnergy,"graphKineticEnergy","Graph of the kinetic energy of the system") )
@@ -88,10 +88,8 @@ namespace sofa
 
 
 
-      bool LMConstraintSolver::needPriorStatePropagation()
+      bool LMConstraintSolver::needPriorStatePropagation(core::behavior::BaseLMConstraint::ConstOrder order) const
       {
-        return true;
-
         using core::behavior::BaseLMConstraint;
         bool needPriorPropagation=false;
         {
@@ -99,7 +97,7 @@ namespace sofa
           this->getContext()->get<BaseLMConstraint>(&c, core::objectmodel::BaseContext::SearchDown);     
           for (unsigned int i=0;i<c.size();++i) 
             {
-              if (!c[i]->isCorrectionComputedWithSimulatedDOF())
+              if (!c[i]->isCorrectionComputedWithSimulatedDOF(order))
                 {
                   needPriorPropagation=true;
                   if (f_printLog.getValue()) serr << "Propagating the State because of "<< c[i]->getName() << sendl;
@@ -129,7 +127,7 @@ namespace sofa
         if      (order==core::behavior::BaseConstraintSet::ACC)
           {
             if (!constraintAcc.getValue()) return false;
-            if (needPriorStatePropagation())
+            if (needPriorStatePropagation(order))
               {
                 simulation::MechanicalPropagateDxVisitor propagateState(id,false);
                 propagateState.execute(this->getContext());
@@ -146,7 +144,7 @@ namespace sofa
         else if (order==core::behavior::BaseConstraintSet::VEL)
           {
             if (!constraintVel.getValue()) return false;
-            if (needPriorStatePropagation())
+            if (needPriorStatePropagation(order))
               {
                 simulation::MechanicalPropagateVVisitor propagateState(id,false);
                 propagateState.execute(this->getContext());
@@ -173,7 +171,7 @@ namespace sofa
           {
             if (!constraintPos.getValue()) return false;
 
-            if (needPriorStatePropagation())
+            if (needPriorStatePropagation(order))
               {
                 simulation::MechanicalPropagateXVisitor propagateState(id,false);
                 propagateState.execute(this->getContext());
@@ -311,8 +309,32 @@ namespace sofa
             setDofs.erase(const_cast<sofa::core::behavior::BaseMechanicalState*>(itCurrent->first));
             LMatrices.erase(itCurrent);
           }
+
+          /*
+          //How to use the Matrix manipulator: here, creates a matrix with the average of two consecutive lines
+          linearsolver::LMatrixManipulator manip;
+          //Init the manipulator with the full matrix
+          manip.init(matrix);
+
+          //Declare the new matrix: in our case, it will have half the number of lines
+          SparseMatrixEigen newL(matrix.rows()/2,matrix.cols());
+          //Specify the desired combination
+          helper::vector<linearsolver::LLineManipulator> rows(matrix.rows()/2);
+          for (unsigned int i=0;i<rows.size();++i)
+          {
+            //index of the line, and factor applied
+            rows[i].addCombination(i*2  ,0.5)
+                   .addCombination(i*2+1,0.5);
+          }
+
+          //Create the matrix
+          manip.buildLMatrix(rows,newL);
+          serr << "Previous L\n" << matrix << "\n-----------------------------------------------------\n";
+          serr << "Combined L\n" << newL << "\n\n\n" << sendl;
+          */
         }
         sofa::helper::AdvancedTimer::stepEnd("SolveConstraints "  + id.getName() + " BuildSystem L");
+
 
         //************************************************************
         // Building W=L0.M0^-1.L0^T + L1.M1^-1.L1^T + ... and M^-1.L^T
@@ -722,7 +744,7 @@ namespace sofa
                     const MatrixEigen &wb=blocks.first;
 
                     //Compute Sigma
-                    const VectorEigen &sigma = cb - wb * Lambda;
+                    VectorEigen sigma = cb; sigma -= (wb * Lambda).lazy();
 
                     VectorEigen newLambda=invWblock.marked<Eigen::SelfAdjoint>()*sigma;
                     constraint->LagrangeMultiplierEvaluation(Wblock.data(),sigma.data(), newLambda.data(),

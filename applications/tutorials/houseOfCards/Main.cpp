@@ -30,12 +30,15 @@
 #include <sofa/helper/ArgumentParser.h>
 #include <sofa/simulation/tree/TreeSimulation.h>
 #include <sofa/simulation/common/Node.h>
+#include <sofa/simulation/common/DeleteVisitor.h>
+
 
 #include <sofa/gui/GUIManager.h>
 #include <sofa/helper/system/FileRepository.h>
 
 #include <sofa/component/collision/MinProximityIntersection.h>
 #include <sofa/component/constraintset/LMConstraintSolver.h>
+#include <sofa/component/odesolver/EulerImplicitSolver.h>
 #include <sofa/component/linearsolver/CGLinearSolver.h>
 #include <sofa/core/CollisionModel.h>
 
@@ -53,144 +56,137 @@ std::string colors[7]={"red","green","blue","cyan","magenta","yellow","white"};
 
 SReal convertDegreeToRadian(const SReal& angle)
 {
-  const SReal PI=3.14159265;
-  return angle*PI/180.0;
+    const SReal PI=3.14159265;
+    return angle*PI/180.0;
 }
 
 Node *createCard(const Coord3& position, const Coord3& rotation)
 {
-  const std::string visualModel="mesh/card.obj";
-  const std::string collisionModel="mesh/card.obj";
-  const std::string inertiaMatrix="BehaviorModels/card.rigid";
-  static int colorIdx=0;
+    const std::string visualModel="mesh/card.obj";
+    const std::string collisionModel="mesh/card.obj";
+    const std::string inertiaMatrix="BehaviorModels/card.rigid";
+    static int colorIdx=0;
 
-  std::vector<std::string> modelTypes;
-  modelTypes.push_back("Triangle");
-  modelTypes.push_back("Line");
-  modelTypes.push_back("Point");
+    std::vector<std::string> modelTypes;
+    modelTypes.push_back("Triangle");
+    modelTypes.push_back("Line");
+    modelTypes.push_back("Point");
 
-  Node* card = sofa::ObjectCreator::CreateEulerSolverNode("Rigid","Implicit");
-  CGLinearSolverGraph *cgLinearSolver; card->get(cgLinearSolver);
-  cgLinearSolver->f_maxIter.setValue(25);
-  cgLinearSolver->f_tolerance.setValue(1e-25);
-  cgLinearSolver->f_smallDenominatorThreshold.setValue(1e-25);
+    Node* card = sofa::ObjectCreator::CreateEulerSolverNode("Rigid","Implicit");
+
+    sofa::component::odesolver::EulerImplicitSolver *odeSolver; card->get(odeSolver);
+    odeSolver->f_rayleighStiffness.setValue(0.1);
+    odeSolver->f_rayleighMass.setValue(0.1);
+
+    CGLinearSolverGraph *cgLinearSolver; card->get(cgLinearSolver);
+    cgLinearSolver->f_maxIter.setValue(20);
+    cgLinearSolver->f_tolerance.setValue(1e-7);
+    cgLinearSolver->f_smallDenominatorThreshold.setValue(1e-7);
 
 
-  sofa::component::constraintset::LMConstraintSolver *constraintSolver = new sofa::component::constraintset::LMConstraintSolver();
-  constraintSolver->constraintVel.setValue(true);
-  constraintSolver->constraintPos.setValue(true);
-  constraintSolver->numIterations.setValue(25);
+    sofa::component::constraintset::LMConstraintSolver *constraintSolver = new sofa::component::constraintset::LMConstraintSolver();
+    constraintSolver->constraintVel.setValue(true);
+    constraintSolver->constraintPos.setValue(true);
+    constraintSolver->numIterations.setValue(25);
 
-  card->addObject(constraintSolver);
+    card->addObject(constraintSolver);
 
-  MechanicalObjectRigid3* dofRigid = new MechanicalObjectRigid3; dofRigid->setName("Rigid Object");
-  dofRigid->setTranslation(position[0],position[1],position[2]);
-  dofRigid->setRotation(rotation[0],rotation[1],rotation[2]);
-  card->addObject(dofRigid);
+    MechanicalObjectRigid3* dofRigid = new MechanicalObjectRigid3; dofRigid->setName("Rigid Object");
+    dofRigid->setTranslation(position[0],position[1],position[2]);
+    dofRigid->setRotation(rotation[0],rotation[1],rotation[2]);
+    card->addObject(dofRigid);
 
-  UniformMassRigid3* uniMassRigid = new UniformMassRigid3;
-  uniMassRigid->setTotalMass(0.5);
-  uniMassRigid->setFileMass(inertiaMatrix);
-  card->addObject(uniMassRigid);
+    UniformMassRigid3* uniMassRigid = new UniformMassRigid3;
+    uniMassRigid->setTotalMass(1);
+    uniMassRigid->setFileMass(inertiaMatrix);
+    card->addObject(uniMassRigid);
 
-  //Node VISUAL
-  Node* RigidVisualNode = sofa::ObjectCreator::CreateVisualNodeRigid(dofRigid, visualModel,colors[(colorIdx++)%7]);
-  card->addChild(RigidVisualNode);
+    //Node VISUAL
+    Node* RigidVisualNode = sofa::ObjectCreator::CreateVisualNodeRigid(dofRigid, visualModel,colors[(colorIdx++)%7]);
+    card->addChild(RigidVisualNode);
 
-  //Node COLLISION
-  Node* RigidCollisionNode = sofa::ObjectCreator::CreateCollisionNodeRigid(dofRigid,collisionModel,modelTypes);
-  card->addChild(RigidCollisionNode);
+    //Node COLLISION
+    Node* RigidCollisionNode = sofa::ObjectCreator::CreateCollisionNodeRigid(dofRigid,collisionModel,modelTypes);
+    card->addChild(RigidCollisionNode);
 
-  return card;
+    return card;
 }
 
-Node *create2Cards(const Coord3& globalPosition, SReal distanceInBetween=SReal(0.1), SReal angle=SReal(15.0))
+std::pair<Node *, Node* > create2Cards(const Coord3& globalPosition, SReal distanceInBetween=SReal(0.1), SReal angle=SReal(15.0))
 {
-  //We assume the card has a one unit length
-  const SReal displacement=sin(convertDegreeToRadian(angle));
-  const Coord3 separation=Coord3(displacement+distanceInBetween,0,0);
-  Node *TwoCards=sofa::simulation::getSimulation()->newNode("TwoCards");
+    //We assume the card has a 2 unit length, centered in (0,0,0)
+    const SReal displacement=sin(convertDegreeToRadian(angle));
+    const Coord3 separation=Coord3(displacement+distanceInBetween,0,0);
 
-  //************************************
-  //Left Rigid Card
-  {
-    const Coord3 position=globalPosition + separation;
-    const Coord3 rotation(0,0,angle);
-    Node* leftCard = createCard(position, rotation);
-    TwoCards->addChild(leftCard);
-    leftCard->setName("LeftCard");
-  }
-  //************************************
-  //Right Rigid Card
-  {
-    const Coord3 position=globalPosition - separation;
-    const Coord3 rotation(0,0,-angle);
-    Node* rightCard = createCard(position, rotation);
-    TwoCards->addChild(rightCard);    
-    rightCard->setName("RightCard");
-  }
-  return TwoCards;
+    //************************************
+    //Left Rigid Card
+    const Coord3 positionLeft=globalPosition + separation;
+    const Coord3 rotationLeft(0,0,angle);
+    Node* leftCard = createCard(positionLeft, rotationLeft);
+
+    //************************************
+    //Right Rigid Card
+    const Coord3 positionRight=globalPosition - separation;
+    const Coord3 rotationRight(0,0,-angle);
+    Node* rightCard = createCard(positionRight, rotationRight);
+
+    return std::make_pair(leftCard, rightCard);
 }
 
 Node *createHouseOfCards(Node *root,  unsigned int size, SReal distanceInBetween=SReal(0.1), SReal angle=SReal(15.0))
 {
 
-  //Elements of the scene
-  //------------------------------------
-  Node* houseOfCards = getSimulation()->newNode("HouseOfCards");
-  root->addChild(houseOfCards);
+    //Elements of the scene
+    //------------------------------------
+    Node* houseOfCards = root;
 
-  //************************************
-  //Floor
-  {
-    Node* torusFixed = sofa::ObjectCreator::CreateObstacle("mesh/floor.obj", "mesh/floor.obj", "gray");
-    houseOfCards->addChild(torusFixed);
-  }
 
-  //Space between two levels of the house of cards
-  const SReal space=0.5;
-  //Size of a card
-  const SReal sizeCard=2;
-  //overlap of the cards
-  const SReal factor=0.95;
-  const SReal distanceH=sizeCard*factor;
-  const SReal distanceV=sizeCard*cos(convertDegreeToRadian(angle))+space;
+    //Space between two levels of the house of cards
+    const SReal space=0.5;
+    //Size of a card
+    const SReal sizeCard=2;
+    //overlap of the cards
+    const SReal factor=0.95;
+    const SReal distanceH=sizeCard*factor;
+    const SReal distanceV=sizeCard*cos(convertDegreeToRadian(angle))+space;
 
-  for (unsigned int i=0;i<size;++i)
-  {
-
-    //Create the 2Cards
-    for (unsigned int j=0;j<=i;++j)
+    for (unsigned int i=0;i<size;++i)
     {
-      Coord3 position=Coord3((i+j)*(distanceH)*0.5,
-                             (i-j)*(distanceV),
-                             0);
-      Node *cards=create2Cards(position,distanceInBetween, angle);
-      houseOfCards->addChild(cards);
-      std::ostringstream out;
-      out << "TwoCards["<< i << "|" << j << "]";
-      cards->setName(out.str());
+
+        //Create the 2Cards
+        for (unsigned int j=0;j<=i;++j)
+        {
+            Coord3 position=Coord3((i+j)*(distanceH)*0.5,
+                                   (i-j)*(distanceV),
+                                   0);
+            const std::pair<Node *, Node*> &cards=create2Cards(position,distanceInBetween, angle);
+            houseOfCards->addChild(cards.first);
+            houseOfCards->addChild(cards.second);
+            std::ostringstream out;
+            out << "Card["<< i << "|" << j << "]";
+            cards.first->setName("Left"+out.str());
+            cards.second->setName("Right"+out.str());
+        }
+
+        //Create the support for the cards
+        const Coord3 initPosition(0,sizeCard*0.5,0);
+        const Coord3 supportRotation(0,0,90);
+        for (unsigned int j=0;j<i;++j)
+        {
+            Coord3 position((i+j)*distanceH*0.5,
+                            (i-j)*distanceV-space*0.5+distanceInBetween*(j%2),
+                            0);
+            Node *supportCard=createCard(position-initPosition, supportRotation);
+            houseOfCards->addChild(supportCard);
+            std::ostringstream out;
+            out << "SupportCard["<< i << "|" << j << "]";
+            supportCard->setName(out.str());
+        }
     }
 
-    //Create the support for the cards
-    const Coord3 initPosition(0,sizeCard*0.5,0);
-    const Coord3 supportRotation(0,0,90);
-    for (unsigned int j=0;j<i;++j)
-    {
-      Coord3 position((i+j)*distanceH*0.5,
-                      (i-j)*distanceV-space*0.5+distanceInBetween*(j%2),
-                      0);
-      Node *supportCard=createCard(position-initPosition, supportRotation);
-      houseOfCards->addChild(supportCard);
-      std::ostringstream out;
-      out << "SupportCard["<< i << "|" << j << "]";
-      supportCard->setName(out.str());
-    }
-  }
 
 
-
-  return root;
+    return root;
 }
 
 
@@ -198,62 +194,101 @@ Node *createHouseOfCards(Node *root,  unsigned int size, SReal distanceInBetween
 int main(int argc, char** argv)
 {
 #ifndef WIN32
-  // Reset local settings to make sure that floating-point values are interpreted correctly
-  setlocale(LC_ALL,"C");
-  setlocale(LC_NUMERIC,"C");
+    // Reset local settings to make sure that floating-point values are interpreted correctly
+    setlocale(LC_ALL,"C");
+    setlocale(LC_NUMERIC,"C");
 #endif
 
-  glutInit(&argc,argv);
+    glutInit(&argc,argv);
 
 
-  std::string simulationType="tree";
-  unsigned int sizeHouseOfCards=4;
-  SReal angle=20.0;
-  SReal distanceInBetween=0.1;
-  SReal friction=1;
-  SReal contactDistance=0.02;
-
-  sofa::helper::parse("This is a SOFA application. Here are the command line arguments")
-      .option(&simulationType,'s',"simulation","type of the simulation(bgl,tree)")
-      .option(&sizeHouseOfCards,'l',"level","number of level of the house of cards")
-      .option(&angle,'a',"angle","angle formed by two cards")
-      .option(&distanceInBetween,'d',"distance","distance between two cards")
-      .option(&friction,'f',"friction","friction coeff")
-      .option(&contactDistance,'c',"contactDistance","contact distance")
-      (argc,argv);
-
-    sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
-
-  sofa::gui::GUIManager::Init(argv[0]);
-
-  // The graph root node
-  Node* root = sofa::ObjectCreator::CreateRootWithCollisionPipeline(simulationType,"distanceLMConstraint");
-  root->setGravityInWorld( Coord3(0,-10,0) );
-  root->setDt(0.001);
-
-  sofa::component::collision::MinProximityIntersection *intersection;
-  root->get(intersection, sofa::core::objectmodel::BaseContext::SearchDown);
-  intersection->alarmDistance.setValue(contactDistance);
-  intersection->contactDistance.setValue(contactDistance*0.5);
-
-  //Add the objects
-  createHouseOfCards(root,sizeHouseOfCards,distanceInBetween, angle);
+    std::string simulationType="tree";
+    unsigned int sizeHouseOfCards=4;
+    SReal angle=20.0;
+    SReal distanceInBetween=0.1;
+    SReal friction=1;
+    SReal contactDistance=0.02;
+	std::string gui = "";
 
 
-  const SReal contactFriction=sqrt(friction);
-  sofa::helper::vector< sofa::core::CollisionModel* > listCollisionModels;
-  root->getTreeObjects<sofa::core::CollisionModel>(&listCollisionModels);
-  for (unsigned int i=0;i<listCollisionModels.size();++i) listCollisionModels[i]->setContactFriction(contactFriction);
-  root->setAnimate(false);
+	std::string gui_help = "choose the UI (";
+	gui_help += sofa::gui::GUIManager::ListSupportedGUI('|');
+	gui_help += ")";
 
-  sofa::simulation::getSimulation()->exportXML(root,"HouseOfCards.xml", true);
+    sofa::helper::parse("This is a SOFA application. Here are the command line arguments")
+        .option(&simulationType,'s',"simulation","type of the simulation(bgl,tree)")
+        .option(&sizeHouseOfCards,'l',"level","number of level of the house of cards")
+        .option(&angle,'a',"angle","angle formed by two cards")
+        .option(&distanceInBetween,'d',"distance","distance between two cards")
+        .option(&friction,'f',"friction","friction coeff")
+        .option(&contactDistance,'c',"contactDistance","contact distance")
+        .option(&gui,'g',"gui",gui_help.c_str())
+        (argc,argv);
 
-  getSimulation()->init(root);
+        sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
 
 
-  //=======================================
-  // Run the main loop
-  sofa::gui::GUIManager::MainLoop(root);
+    // The graph root node
+    Node* root = sofa::ObjectCreator::CreateRootWithCollisionPipeline(simulationType,"distanceLMConstraint");
+    root->setGravityInWorld( Coord3(0,-10,0) );
+    root->setDt(0.001);
 
-  return 0;
+    sofa::component::collision::MinProximityIntersection *intersection;
+    root->get(intersection, sofa::core::objectmodel::BaseContext::SearchDown);
+    intersection->alarmDistance.setValue(contactDistance);
+    intersection->contactDistance.setValue(contactDistance*0.5);
+
+    //************************************
+    //Floor
+    Node* torusFixed = sofa::ObjectCreator::CreateObstacle("mesh/floor.obj", "mesh/floor.obj", "gray");
+    root->addChild(torusFixed);
+
+    //Add the objects
+    createHouseOfCards(root,sizeHouseOfCards,distanceInBetween, angle);
+
+
+    const SReal contactFriction=sqrt(friction);
+    sofa::helper::vector< sofa::core::CollisionModel* > listCollisionModels;
+    root->getTreeObjects<sofa::core::CollisionModel>(&listCollisionModels);
+    for (unsigned int i=0;i<listCollisionModels.size();++i) listCollisionModels[i]->setContactFriction(contactFriction);
+    root->setAnimate(false);
+
+	//=======================================
+	// Export the scene to file
+    const std::string fileName="HouseOfCards.xml";
+    sofa::simulation::getSimulation()->exportXML(root,fileName.c_str(), true);
+
+	//=======================================
+	// Destroy created scene: step needed, as I can't get rid of the locales (the mass can't init correctly as 0.1 is not considered as a floating point).
+    sofa::simulation::DeleteVisitor deleteScene;
+    root->execute(deleteScene);
+    delete root;
+  
+	//=======================================
+	// Create the GUI	
+	if (int err=sofa::gui::GUIManager::Init(argv[0],gui.c_str()))
+		return err;
+
+    if (int err=sofa::gui::GUIManager::createGUI(NULL))
+        return err;
+  
+    sofa::gui::GUIManager::SetDimension(800,600); 
+	//=======================================
+	// Load the Scene
+    sofa::simulation::Node* groot = dynamic_cast<sofa::simulation::Node*>( sofa::simulation::getSimulation()->load(fileName.c_str()));
+
+
+    sofa::simulation::getSimulation()->init(groot);
+    sofa::gui::GUIManager::SetScene(groot,fileName.c_str());
+
+
+	//=======================================
+	// Run the main loop
+    if (int err=sofa::gui::GUIManager::MainLoop(groot,fileName.c_str()))
+        return err;
+    groot = dynamic_cast<sofa::simulation::Node*>( sofa::gui::GUIManager::CurrentSimulation() );
+          
+
+	if (groot!=NULL) sofa::simulation::getSimulation()->unload(groot);
+	return 0;
 }

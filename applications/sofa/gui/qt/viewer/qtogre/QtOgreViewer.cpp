@@ -399,7 +399,7 @@ namespace sofa
                 mCamera->setPolygonMode(Ogre::PM_SOLID);
               if (needUpdateParameters)
               {
-                mSceneMgr->setAmbientLight(Ogre::ColourValue(ambient[0]->getFloatValue(),ambient[1]->getFloatValue(),ambient[2]->getFloatValue(),1));
+                mSceneMgr->setAmbientLight(Ogre::ColourValue(ambient[0]->getValue(),ambient[1]->getValue(),ambient[2]->getValue(),1));
 
                 for (unsigned int i=0;i<dirLightOgreWidget.size();++i)
                 {
@@ -593,9 +593,9 @@ namespace sofa
 	    
 
 	    mSceneMgr->setAmbientLight(loader.environment.ambientColour);
-	    ambient[0]->setFloatValue(loader.environment.ambientColour[0]);
-	    ambient[1]->setFloatValue(loader.environment.ambientColour[1]);
-        ambient[2]->setFloatValue(loader.environment.ambientColour[2]);
+        ambient[0]->setValue(loader.environment.ambientColour[0]);
+        ambient[1]->setValue(loader.environment.ambientColour[1]);
+        ambient[2]->setValue(loader.environment.ambientColour[2]);
 
 
 	    if (mSceneMgr->hasCamera("sofaCamera"))
@@ -1399,9 +1399,9 @@ namespace sofa
           {
             std::ostringstream s;
             s<<"ambient" <<i;
-            ambient[i] = new WFloatLineEdit(global,s.str().c_str());
-            ambient[i]->setMinFloatValue( 0.0f);
-            ambient[i]->setMaxFloatValue( 1.0f);
+            ambient[i] = new WDoubleLineEdit(global,s.str().c_str());
+            ambient[i]->setMinValue( 0.0f);
+            ambient[i]->setMaxValue( 1.0f);
             globalLayout->addWidget(ambient[i],2,i+1);
             connect( ambient[i], SIGNAL( returnPressed() ), this, SLOT( updateViewerParameters() ) );
           }
@@ -1589,9 +1589,9 @@ namespace sofa
 		out << "a=\"" << 0                              << "\" />\n";
 
 		out << "\t\t<colourAmbient ";
-		out << "r=\"" << ambient[0]->getFloatValue() << "\" ";
-		out << "g=\"" << ambient[1]->getFloatValue() << "\" ";
-		out << "b=\"" << ambient[2]->getFloatValue() << "\" />\n";
+        out << "r=\"" << ambient[0]->getValue() << "\" ";
+        out << "g=\"" << ambient[1]->getValue() << "\" ";
+        out << "b=\"" << ambient[2]->getValue() << "\" />\n";
 		out << "\t</environment>\n";
 		out << "\n";
 		out << "\t<nodes>\n";

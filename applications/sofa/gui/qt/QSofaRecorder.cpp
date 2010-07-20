@@ -431,8 +431,7 @@ namespace sofa{
         
         ReadStateCreator v(writeSceneName,false,init);
         v.addTag(core::objectmodel::Tag("AutoRecord"));
-	      v.execute(root);	
-	      std::cout << "Reading Recorded simulation with base name: " << writeSceneName << "\n";
+        v.execute(root);
       }
 
       void QSofaRecorder::addWriteState(const std::string& writeSceneName )
@@ -454,12 +453,13 @@ namespace sofa{
         std::string dir;
         bool ok;
         std::string filename(((RealGUI*)(qApp->mainWidget()))->windowFilePath().ascii());
-        dir = sofa::helper::system::SetDirectory::GetParentDir(filename.c_str()) + "/";
+        const std::string &parentDir=sofa::helper::system::SetDirectory::GetParentDir(filename.c_str());
+        if (parentDir.empty()) dir = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str()) + "/";
+        else dir = parentDir + "/";
 
 	      QString text = QInputDialog::getText("Record Simulation", "Enter the name of your simulation:", QLineEdit::Normal,
 					     QString::null, &ok, this );
         if (ok && !text.isEmpty() ){
-          if (dir == "") dir = ".";
 	        simulationBaseName_ = dir +  text.ascii();
           writeSceneName_ = record_directory + text.ascii();
           return true;

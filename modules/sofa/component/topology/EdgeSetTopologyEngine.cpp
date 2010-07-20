@@ -131,7 +131,7 @@ namespace topology
 
                   for (unsigned int i = 0; i <edgeList.size(); i++)
                   {
-                     ancestors[i].push_back(1.0);
+                     ancestors[i].push_back(1);
                      ancestors[i].push_back(edgeList[i]);
                   }
 

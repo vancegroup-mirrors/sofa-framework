@@ -26,9 +26,19 @@
 #define SOFA_COMPONENT_FORCEFIELD_RESTSHAPESPRINGFORCEFIELD_H
 
 #include <sofa/core/behavior/ForceField.h>
-#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/objectmodel/Data.h>
 #include <sofa/helper/vector.h>
+
+namespace sofa
+{
+	namespace core
+	{
+		namespace behavior
+		{
+			template< class T > class MechanicalState;
+		} // namespace behavior
+	} // namespace core
+} // namespace sofa
 
 namespace sofa
 {
@@ -39,12 +49,17 @@ namespace component
 namespace forcefield
 {
 
-  /** Apply constant forces to given degrees of freedom.  */
+/**
+ * @brief This class describes a simple elastic springs ForceField between DOFs positions and rest positions.
+ *
+ * Springs are applied to given degrees of freedom between their current positions and their rest shape positions.
+ * An external MechanicalState reference can also be passed to the ForceField as rest shape position.
+ */
 template<class DataTypes>
 class RestShapeSpringsForceField : public core::behavior::ForceField<DataTypes>
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(RestShapeSpringsForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+	SOFA_CLASS(SOFA_TEMPLATE(RestShapeSpringsForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
 	typedef core::behavior::ForceField<DataTypes> Inherit;
 	typedef typename DataTypes::VecCoord VecCoord;
@@ -52,45 +67,45 @@ public:
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
-	typedef helper::vector<unsigned int> VecIndex;
-	typedef helper::vector<Real>	 VecReal;
-public:
+	typedef helper::vector< unsigned int > VecIndex;
+	typedef helper::vector< Real >	 VecReal;
 		
 	Data< VecIndex > points;
 	Data< VecReal > stiffness;
 	Data< VecReal > angularStiffness;
-	Data<std::string> external_rest_shape;
+	Data< std::string > external_rest_shape;
 	Data< VecIndex > external_points; 
 	
-	sofa::core::behavior::MechanicalState<DataTypes>* restMState;
-	//sofa::core::behavior::MechanicalState<DataTypes>* restMState;	
-	bool useRestMState;
+	sofa::core::behavior::MechanicalState< DataTypes > *restMState;
+
 	VecDeriv Springs_dir;
 	
     RestShapeSpringsForceField();
-	///
+
+	/// BaseObject initialization method.
 	void init();
 	
-    /// Add the forces
+    /// Add the forces.
     virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
 
-    /// Constant force has null variation
+    /// Constant force has null variation.
     virtual void addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double );
 
-    
-        virtual double getPotentialEnergy(const VecCoord& ) const
+	virtual double getPotentialEnergy(const VecCoord& ) const
 	{	
 		sout << "getPotentialEnergy not implemented" << sendl; 
 		return 0.0;
 	};
 
-
+	/// Brings ForceField contribution to the global system stiffness matrix.
 	virtual void addKToMatrix(sofa::defaulttype::BaseMatrix * /*mat*/, double /*kFact*/, unsigned int &/*offset*/);
-	
-	
+		
 	virtual void draw();
 	bool addBBox(double* minBBox, double* maxBBox);
 
+private :
+	
+	bool useRestMState; /// An external MechanicalState is used as rest reference.
 };
 
 } // namespace forcefield

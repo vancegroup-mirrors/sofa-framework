@@ -81,7 +81,7 @@ BARRIER(cells,__FILE__,__LINE__);
 
 	int BSIZE = gpu::opencl::OpenCLMemoryManager<float>::BSIZE;
 	SPHFluidForceField_CreateProgramWithFloat();
-
+std::cout << BSIZE << " " << stringBSIZE << "\n";
 	if(SPHFluidForceFieldOpenCL3f_computeDensity_kernel==NULL)SPHFluidForceFieldOpenCL3f_computeDensity_kernel
 			= new sofa::helper::OpenCLKernel(SPHFluidForceFieldOpenCLFloat_program,"SPHFluidForceField_computeDensity");
 

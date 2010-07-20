@@ -25,8 +25,8 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 /* -------------------------------------------------------- */
-#ifndef __WFLOATLINEEDIT__
-#define __WFLOATLINEEDIT__
+#ifndef __WDOUBLELINEEDIT__
+#define __WDOUBLELINEEDIT__
 /* -------------------------------------------------------- */
 #include <qvalidator.h>
 #include <qlineedit.h>
@@ -37,21 +37,21 @@
 /* -------------------------------------------------------- */
 
 
-class WFloatLineEdit : public QLineEdit
+class WDoubleLineEdit : public QLineEdit
 {
   Q_OBJECT
-  Q_PROPERTY( float minFloatValue READ minFloatValue WRITE setMinFloatValue )
-  Q_PROPERTY( float maxFloatValue READ maxFloatValue WRITE setMaxFloatValue )
-  Q_PROPERTY( float floatValue    READ floatValue    WRITE setFloatValue )
-  Q_PROPERTY( int   intValue      READ intValue	     WRITE setIntValue )
+  Q_PROPERTY( double minValue READ minValue WRITE setMinValue )
+  Q_PROPERTY( double maxValue READ maxValue WRITE setMaxValue )
+  Q_PROPERTY( double Value    READ Value    WRITE setValue )
+  Q_PROPERTY( int    intValue READ intValue WRITE setIntValue )
 
  protected:
 
   int               m_iPercent;
-  float             m_fMinValue;
-  float             m_fMaxValue;
+  double            m_fMinValue;
+  double            m_fMaxValue;
   bool              m_bFirst;
-  mutable float     m_fValue;
+  mutable double    m_fValue;
   QDoubleValidator *m_DblValid;
   double            m_bInternal;
 
@@ -59,20 +59,20 @@ class WFloatLineEdit : public QLineEdit
   virtual void      keyPressEvent(QKeyEvent *);
  public:
 
-  WFloatLineEdit(QWidget *parent,const char *name);  
+  WDoubleLineEdit(QWidget *parent,const char *name);
 
-  float   minFloatValue() const { return (m_fMinValue);}
-  float   getMinFloatValue(){ emit(returnPressed()); return minFloatValue();}
-  void    setMinFloatValue(float f) {m_fMinValue=f; m_DblValid->setBottom(m_fMinValue); }
+  double  minValue() const { return (m_fMinValue);}
+  double  getMinValue(){ emit(returnPressed()); return minValue();}
+  void    setMinValue(double f) {m_fMinValue=f; m_DblValid->setBottom(m_fMinValue); }
 
   
-  float   maxFloatValue() const { return (m_fMaxValue);}
-  float   getMaxFloatValue(){ emit(returnPressed()); return maxFloatValue();}
-  void    setMaxFloatValue(float f) {m_fMaxValue=f; m_DblValid->setTop(m_fMaxValue); }
+  double  maxValue() const { return (m_fMaxValue);}
+  double  getMaxValue(){ emit(returnPressed()); return maxValue();}
+  void    setMaxValue(double f) {m_fMaxValue=f; m_DblValid->setTop(m_fMaxValue); }
 
-  float   floatValue() const { return (m_fValue);}
-  float   getFloatValue(){ emit(returnPressed()); return floatValue();}
-  void    setFloatValue(float f);
+  double  Value() const { return (m_fValue);}
+  double  getValue(){ emit(returnPressed()); return Value();}
+  void    setValue(double f);
   
   int     intValue() const { return static_cast<int>(m_fValue);}
   int     getIntValue(){ emit(returnPressed()); return intValue();}
@@ -81,18 +81,18 @@ class WFloatLineEdit : public QLineEdit
   int     valuePercent();
   
   //Return the value displayed: WARNING!! NO VALIDATION IS MADE!
-  float   getFloatDisplayedValue(){return text().toFloat();};
-  int     getIntDisplayedValue(){return static_cast<int>(text().toFloat());};
+  double  getDisplayedValue(){return text().toDouble();}
+  int     getIntDisplayedValue(){return static_cast<int>(text().toDouble());}
 
  signals:
 
-  void floatValueChanged(float);
+  void ValueChanged(double);
   void valuePercentChanged(int);
 
  protected slots:
 
-  void slotCalcFloatValue(const QString&);
-  void slotCalcFloatValue(float);
+  void slotCalcValue(const QString&);
+  void slotCalcValue(double);
   void slotReturnPressed();
 
  public slots:
@@ -103,5 +103,3 @@ class WFloatLineEdit : public QLineEdit
 /* -------------------------------------------------------- */
 #endif
 /* -------------------------------------------------------- */
-
-

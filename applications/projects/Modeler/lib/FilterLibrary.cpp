@@ -153,6 +153,12 @@ Between two filters, put a 'space'");
         FilterQuery query(textString);
         emit( filterList(query) );
       }
+
+      void FilterLibrary::clearText()
+      {
+        setText(QString());
+      }
+
     }
   }
 }

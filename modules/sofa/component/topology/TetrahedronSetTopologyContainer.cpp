@@ -480,6 +480,11 @@ const sofa::helper::vector<Tetrahedron> &TetrahedronSetTopologyContainer::getTet
 	  return m_tetrahedron.size();
 	}
 
+   unsigned int TetrahedronSetTopologyContainer::getNumberOfElements() const
+   {
+      return this->getNumberOfTetrahedra();
+   }
+
 	const sofa::helper::vector< sofa::helper::vector<unsigned int> > &TetrahedronSetTopologyContainer::getTetrahedraAroundVertexArray() 
 	{
 		if (!hasTetrahedraAroundVertex())

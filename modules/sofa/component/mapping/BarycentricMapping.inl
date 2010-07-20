@@ -65,24 +65,25 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace mapping
-    {
+namespace mapping
+{
 
-      using namespace sofa::defaulttype;
+using namespace sofa::defaulttype;
 
-      template <class BasicMapping>
-      BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMeshTopology * topology )
-          : Inherit ( from, to ), mapper ( NULL )
-      {
-        createMapperFromTopology ( topology );
-      }
+template <class BasicMapping>
+BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMeshTopology * topology )
+: Inherit ( from, to ), mapper ( NULL )
+{
+    createMapperFromTopology ( topology );
+}
 
       template <class In, class Out>
       void BarycentricMapperRegularGridTopology<In,Out>::clear ( int reserve )
       {
+        updateJ = true;
         map.clear();
         if ( reserve>0 ) map.reserve ( reserve );
       }
@@ -103,6 +104,7 @@ namespace sofa
       void BarycentricMapperRegularGridTopology<In,Out>::init ( const typename Out::VecCoord& out, const typename In::VecCoord& /*in*/ )
       {
         //if ( map.size() != 0 ) return;
+        updateJ = true;
 
         int outside = 0;
         clear ( out.size() );
@@ -126,6 +128,7 @@ namespace sofa
       template <class In, class Out>
       void BarycentricMapperSparseGridTopology<In,Out>::clear ( int reserve )
       {
+        updateJ = true;
         map.clear();
         if ( reserve>0 ) map.reserve ( reserve );
       }
@@ -146,6 +149,7 @@ namespace sofa
       void BarycentricMapperSparseGridTopology<In,Out>::init ( const typename Out::VecCoord& out, const typename In::VecCoord& /*in*/ )
       {
         if ( this->map.size() != 0 ) return;
+        updateJ = true;
         int outside = 0;
         clear ( out.size() );
 
@@ -1348,6 +1352,7 @@ namespace sofa
 
         if ((!maskTo)||(maskTo&& !(maskTo->isInUse())) )
           {
+              //std::cout << "BarycentricMapper: applyJ without masks" << std::endl;
             // 1D elements
               {
                 for ( unsigned int i=0;i<map1d.size();i++ )
@@ -1435,7 +1440,8 @@ namespace sofa
               }
           }
         else
-          {           
+          {
+              //std::cout << "BarycentricMapper: applyJ with masks" << std::endl;
             typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
@@ -2600,12 +2606,14 @@ template <class In, class Out>
 const sofa::defaulttype::BaseMatrix* BarycentricMapperMeshTopology<In,Out>::getJ(int outSize, int inSize)
 {
 
-    if (matrixJ && !updateJ)
+    if (matrixJ && !updateJ && matrixJ->rowBSize() == (unsigned)outSize && matrixJ->colBSize() == (unsigned)inSize)
         return matrixJ;
-
+    if (outSize > 0 && map1d.size()+map2d.size()+map3d.size() == 0)
+        return NULL; // error: maps not yet created ?
+    std::cout << "BarycentricMapperMeshTopology: creating " << outSize << "x" << inSize << " " << NOut << "x" << NIn << " J matrix" << std::endl;
     if (!matrixJ) matrixJ = new MatrixType;
     if (matrixJ->rowBSize() != (unsigned)outSize || matrixJ->colBSize() != (unsigned)inSize)
-        matrixJ->resizeBloc(outSize, inSize);
+        matrixJ->resize(outSize*NOut, inSize*NIn);
     else
         matrixJ->clear();
 
@@ -2709,7 +2717,105 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperMeshTopology<In,Out>::getJ
             }
         }
     }
+    matrixJ->compress();
+    std::cout << "J = " << *matrixJ << std::endl;
+    updateJ = false;
+    return matrixJ;
+}
 
+
+template <class In, class Out>
+const sofa::defaulttype::BaseMatrix* BarycentricMapperRegularGridTopology<In,Out>::getJ(int outSize, int inSize)
+{
+
+    if (matrixJ && !updateJ)
+        return matrixJ;
+
+    if (!matrixJ) matrixJ = new MatrixType;
+    if (matrixJ->rowBSize() != (unsigned)outSize || matrixJ->colBSize() != (unsigned)inSize)
+        matrixJ->resize(outSize*NOut, inSize*NIn);
+    else
+        matrixJ->clear();
+//         std::cerr << "BarycentricMapperRegularGridTopology<In,Out>::getJ() \n";
+
+    for ( unsigned int i=0;i<map.size();i++ )
+    {
+        const int out = i;
+#ifdef SOFA_NEW_HEXA
+        const topology::RegularGridTopology::Hexa cube = this->fromTopology->getHexaCopy ( this->map[i].in_index );
+#else
+        const topology::RegularGridTopology::Cube cube = this->fromTopology->getCubeCopy ( this->map[i].in_index );
+#endif
+        const OutReal fx = ( OutReal ) map[i].baryCoords[0];
+        const OutReal fy = ( OutReal ) map[i].baryCoords[1];
+        const OutReal fz = ( OutReal ) map[i].baryCoords[2];
+        addMatrixContrib(matrixJ, out, cube[0], ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) ));
+        addMatrixContrib(matrixJ, out, cube[1], ( ( fx ) * ( 1-fy ) * ( 1-fz ) ));
+#ifdef SOFA_NEW_HEXA
+        addMatrixContrib(matrixJ, out, cube[3], ( ( 1-fx ) * ( fy ) * ( 1-fz ) ));
+        addMatrixContrib(matrixJ, out, cube[2], ( ( fx ) * ( fy ) * ( 1-fz ) ));
+#else
+        addMatrixContrib(matrixJ, out, cube[2], ( ( 1-fx ) * ( fy ) * ( 1-fz ) ));
+        addMatrixContrib(matrixJ, out, cube[3], ( ( fx ) * ( fy ) * ( 1-fz ) ));
+#endif
+        addMatrixContrib(matrixJ, out, cube[4], ( ( 1-fx ) * ( 1-fy ) * ( fz ) ));
+        addMatrixContrib(matrixJ, out, cube[5], ( ( fx ) * ( 1-fy ) * ( fz ) ));
+#ifdef SOFA_NEW_HEXA
+        addMatrixContrib(matrixJ, out, cube[7], ( ( 1-fx ) * ( fy ) * ( fz ) ));
+        addMatrixContrib(matrixJ, out, cube[6], ( ( fx ) * ( fy ) * ( fz ) ));
+#else
+        addMatrixContrib(matrixJ, out, cube[6], ( ( 1-fx ) * ( fy ) * ( fz ) ));
+        addMatrixContrib(matrixJ, out, cube[7], ( ( fx ) * ( fy ) * ( fz ) ));
+#endif
+    }
+    updateJ = false;
+    return matrixJ;
+}
+
+template <class In, class Out>
+const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>::getJ(int outSize, int inSize)
+{
+
+    if (matrixJ && !updateJ)
+        return matrixJ;
+
+    if (!matrixJ) matrixJ = new MatrixType;
+    if (matrixJ->rowBSize() != (unsigned)outSize || matrixJ->colBSize() != (unsigned)inSize)
+        matrixJ->resize(outSize*NOut, inSize*NIn);
+    else
+        matrixJ->clear();
+//         std::cerr << "BarycentricMapperSparseGridTopology<In,Out>::getJ() \n";
+    
+    for ( unsigned int i=0;i<map.size();i++ )
+    {
+        const int out = i;
+#ifdef SOFA_NEW_HEXA
+        const topology::SparseGridTopology::Hexa cube = this->fromTopology->getHexahedron ( this->map[i].in_index );
+#else
+        const topology::SparseGridTopology::Cube cube = this->fromTopology->getCube ( this->map[i].in_index );
+#endif
+        const OutReal fx = ( OutReal ) map[i].baryCoords[0];
+        const OutReal fy = ( OutReal ) map[i].baryCoords[1];
+        const OutReal fz = ( OutReal ) map[i].baryCoords[2];
+        addMatrixContrib(matrixJ, out, cube[0], ( ( 1-fx ) * ( 1-fy ) * ( 1-fz ) ));
+        addMatrixContrib(matrixJ, out, cube[1], ( ( fx ) * ( 1-fy ) * ( 1-fz ) ));
+#ifdef SOFA_NEW_HEXA
+        addMatrixContrib(matrixJ, out, cube[3], ( ( 1-fx ) * ( fy ) * ( 1-fz ) ));
+        addMatrixContrib(matrixJ, out, cube[2], ( ( fx ) * ( fy ) * ( 1-fz ) ));
+#else
+        addMatrixContrib(matrixJ, out, cube[2], ( ( 1-fx ) * ( fy ) * ( 1-fz ) ));
+        addMatrixContrib(matrixJ, out, cube[3], ( ( fx ) * ( fy ) * ( 1-fz ) ));
+#endif
+        addMatrixContrib(matrixJ, out, cube[4], ( ( 1-fx ) * ( 1-fy ) * ( fz ) ));
+        addMatrixContrib(matrixJ, out, cube[5], ( ( fx ) * ( 1-fy ) * ( fz ) ));
+#ifdef SOFA_NEW_HEXA
+        addMatrixContrib(matrixJ, out, cube[7], ( ( 1-fx ) * ( fy ) * ( fz ) ));
+        addMatrixContrib(matrixJ, out, cube[6], ( ( fx ) * ( fy ) * ( fz ) ));
+#else
+        addMatrixContrib(matrixJ, out, cube[6], ( ( 1-fx ) * ( fy ) * ( fz ) ));
+        addMatrixContrib(matrixJ, out, cube[7], ( ( fx ) * ( fy ) * ( fz ) ));
+#endif
+    }
     updateJ = false;
     return matrixJ;
 }
@@ -3929,9 +4035,9 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperMeshTopology<In,Out>::getJ
 	  }
 	}
 
-    } // namespace mapping
+} // namespace mapping
 
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

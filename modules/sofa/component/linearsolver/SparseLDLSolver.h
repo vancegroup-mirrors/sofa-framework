@@ -26,7 +26,6 @@
 #define SOFA_COMPONENT_LINEARSOLVER_SparseLDLSolver_H
 
 #include <sofa/core/behavior/LinearSolver.h>
-#include <sofa/component/linearsolver/MatrixLinearSolver.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/component/linearsolver/SparseMatrix.h>
@@ -34,6 +33,8 @@
 #include <sofa/helper/map.h>
 #include <math.h>
 #include <ldl.h>
+
+#include <sofa/component/linearsolver/ParallelMatrixLinearSolver.inl>
 
 namespace sofa {
 
@@ -43,11 +44,12 @@ namespace linearsolver {
 
 /// Direct linear solver based on Sparse LDL^T factorization, implemented with the CSPARSE library
 template<class TMatrix, class TVector>
-class SparseLDLSolver : public sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector>
-{
-public:
-    SOFA_CLASS(SOFA_TEMPLATE2(SparseLDLSolver,TMatrix,TVector),SOFA_TEMPLATE2(sofa::component::linearsolver::MatrixLinearSolver,TMatrix,TVector));
 
+class SparseLDLSolver : public sofa::component::linearsolver::ParallelMatrixLinearSolver<TMatrix,TVector> {
+  public :  
+      SOFA_CLASS(SOFA_TEMPLATE2(SparseLDLSolver,TMatrix,TVector),SOFA_TEMPLATE2(sofa::component::linearsolver::ParallelMatrixLinearSolver,TMatrix,TVector));
+
+  public:
     typedef TMatrix Matrix;
     typedef TVector Vector;
     typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;

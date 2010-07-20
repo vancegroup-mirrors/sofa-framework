@@ -30,7 +30,10 @@ HEADERS +=  \
            DiagonalMatrix.h \
            SparseMatrix.h \
            CompressedRowSparseMatrix.h \
+	   GraphScatteredTypes.h \
            MatrixLinearSolver.h \
+	   ParallelMatrixLinearSolver.h \
+	   ParallelMatrixLinearSolver.inl \
            NewMatVector.h \
            NewMatMatrix.h \
            MatrixExpr.h \
@@ -49,7 +52,9 @@ SOURCES += \
            LULinearSolver.cpp \
            BTDLinearSolver.cpp \
            FullVector.cpp \
+	   GraphScatteredTypes.cpp \
            MatrixLinearSolver.cpp \
+	   ParallelMatrixLinearSolver.cpp \
            MultiCGLinearSolver.cpp
 
 

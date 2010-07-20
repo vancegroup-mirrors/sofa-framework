@@ -24,6 +24,7 @@
 ******************************************************************************/
 #include <sofa/component/mastersolver/MultiStepMasterSolver.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
 #include <math.h>
 #include <iostream>
 
@@ -62,7 +63,9 @@ void MultiStepMasterSolver::step(double dt)
     dt /= (ncollis*ninteg);
     for (int c=0;c<ncollis;++c)
     {
-        // First do collision detection and response creation
+        // First we reset the constraints
+        sofa::simulation::MechanicalResetConstraintVisitor().execute(this->getContext());
+        // Then do collision detection and response creation
         sout << "collision" << sendl;
         computeCollision();
         for (int i=0;i<ninteg;++i)

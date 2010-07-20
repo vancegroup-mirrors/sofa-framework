@@ -105,15 +105,14 @@ namespace sofa{
       QString str  = QString( getBaseData()->getValueString().c_str() );
       if( str.length() > TEXTSIZE_THRESHOLD ){
           innerWidget_.type = TEXTEDIT;
-          innerWidget_.widget.textEdit = new QTextEdit(this->parentWidget());
-          connect(innerWidget_.widget.textEdit , SIGNAL( textChanged() ), this, SLOT ( setWidgetDirty() ) );
-          innerWidget_.widget.textEdit->setText(str);
+          innerWidget_.widget.textEdit = new QTextEdit(this->parentWidget());innerWidget_.widget.textEdit->setText(str);
+          connect(innerWidget_.widget.textEdit , SIGNAL( textChanged() ), this, SLOT ( setWidgetDirty() ) );          
       }
       else{
           innerWidget_.type = LINEEDIT;
           innerWidget_.widget.lineEdit  = new QLineEdit(this->parentWidget());
-          connect( innerWidget_.widget.lineEdit, SIGNAL(textChanged(const QString&)), this, SLOT( setWidgetDirty() ) );
           innerWidget_.widget.lineEdit->setText(str);
+          connect( innerWidget_.widget.lineEdit, SIGNAL(textChanged(const QString&)), this, SLOT( setWidgetDirty() ) );
       }
      
       return true;
@@ -128,7 +127,6 @@ namespace sofa{
         else if(innerWidget_.type == LINEEDIT){
           innerWidget_.widget.lineEdit->setText(str);
         }
-      
     }
 
     void QDataSimpleEdit::writeToData()
@@ -142,7 +140,7 @@ namespace sofa{
         else if( innerWidget_.type == LINEEDIT){
           value = innerWidget_.widget.lineEdit->text().ascii();
         }
-	      getBaseData()->read(value);
+        getBaseData()->read(value);
       }
     }
 

@@ -285,9 +285,7 @@ namespace sofa{
       }
 
       void VectorMaterialDataWidget::readFromData()
-      {
-      
-        
+      {      
         VectorMaterial::const_iterator iter;
         const VectorMaterial& vecMaterial = getData()->virtualGetValue();
         if( vecMaterial.empty() ){
@@ -308,23 +306,19 @@ namespace sofa{
 
       void VectorMaterialDataWidget::changeMaterial( int index )
       {
-        using namespace sofa::core::loader;
-        
+        using namespace sofa::core::loader;        
+
+        //Save previous Material
         _materialDataWidget->updateDataValue();
-
         Material mat(_currentMaterial.virtualGetValue() );
-        
-        
-//        _comboBox->setItemText(_currentMaterialPos, QString(mat.name.c_str() ) );
-        _comboBox->setCurrentText( QString(mat.name.c_str() ) );
-        _comboBox->update();
-
         _vectorEditedMaterial[_currentMaterialPos] = mat;
+
+        //Update current Material
         _currentMaterialPos = index;
         _currentMaterial.setValue(_vectorEditedMaterial[index]);
 
-        _materialDataWidget->setData(&_currentMaterial);
-        
+        //Update Widget
+        _materialDataWidget->setData(&_currentMaterial);        
         _materialDataWidget->updateWidgetValue();
       }
 
@@ -335,14 +329,6 @@ namespace sofa{
         _materialDataWidget->updateDataValue();
         Material mat(_currentMaterial.virtualGetValue() );
         _vectorEditedMaterial[_currentMaterialPos] = mat;
-
-        int idx=_comboBox->currentItem();
-        for ( unsigned int i = 0; i < _vectorEditedMaterial.size(); i++){
-          _comboBox->setCurrentItem(i);
-          _comboBox->setCurrentText(QString( _vectorEditedMaterial[i].name.c_str() ) );
-        }
-        _comboBox->setCurrentItem(idx);
-
 
         VectorMaterial* vecMaterial = getData()->virtualBeginEdit();
         assert(vecMaterial->size() == _vectorEditedMaterial.size() );

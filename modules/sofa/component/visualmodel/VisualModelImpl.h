@@ -123,6 +123,9 @@ class SOFA_COMPONENT_VISUALMODEL_API VisualModelImpl : public core::VisualModel,
 public:
     SOFA_CLASS3(VisualModelImpl, core::VisualModel, ExtVec3fMappedModel, RigidMappedModel);
 
+    typedef Vec<2, float> TexCoord;
+    typedef helper::fixed_array<int, 3> Triangle;
+    typedef helper::fixed_array<int, 4> Quad;
 protected:
     // use types from ExtVec3fTypes
 
@@ -133,9 +136,6 @@ protected:
     typedef ExtVec3fTypes::VecDeriv VecDeriv;
 
 
-    typedef Vec<2, float> TexCoord;
-    typedef helper::fixed_array<int, 3> Triangle;
-    typedef helper::fixed_array<int, 4> Quad;
 	//typedef helper::fixed_array<int, 4> Tetrahedron;
 
     //ResizableExtVector<Coord>* inputVertices;
@@ -210,7 +210,7 @@ public:
         std::string materialName;
         std::string groupName;
         int materialId;
-        FaceGroup() : t0(0), nbt(0), q0(0), nbq(0), materialId(-1) {}
+        FaceGroup() : t0(0), nbt(0), q0(0), nbq(0), materialName("defaultMaterial"), groupName("defaultGroup"), materialId(-1) {}
         inline friend std::ostream& operator << (std::ostream& out, const FaceGroup &g)
         {
             out << g.groupName << " " << g.materialName << " " << g.materialId << " " << g.t0 << " " << g.nbt << " " << g.q0 << " " << g.nbq;
@@ -218,6 +218,7 @@ public:
         }
         inline friend std::istream& operator >> (std::istream& in, FaceGroup &g)
         {
+
             in >> g.groupName >> g.materialName >> g.materialId >> g.t0 >> g.nbt >> g.q0 >> g.nbq;
             return in;
         }

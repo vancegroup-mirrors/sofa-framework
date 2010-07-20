@@ -2327,6 +2327,7 @@ void MechanicalObject<DataTypes>::vFree(VecId v)
             if (getVecCoord(v.index))
             {
                 const VecCoord& x= *getVecCoord(v.index);
+				if (x.empty()) return;
                 for( unsigned i=first; i<max; ++i )
                 {
                     out<<x[i];
@@ -2339,6 +2340,7 @@ void MechanicalObject<DataTypes>::vFree(VecId v)
             if (getVecDeriv(v.index))
             {
                 const VecDeriv& x= *getVecDeriv(v.index);
+				if (x.empty()) return;
                 for( unsigned i=first; i<max; ++i )
                 {
                     out<<x[i];

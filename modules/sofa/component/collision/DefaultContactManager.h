@@ -59,28 +59,21 @@ public:
 
 	void createContacts(DetectionOutputMap& outputs);
 
+	void init();
 	void draw();
 
     template<class T>
     static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
       obj = new T;
-
       if (context)
       {
         context->addObject(obj);
         core::collision::Pipeline *pipeline=static_cast<simulation::Node*>(context)->collisionPipeline;
-        if (pipeline)
-        {
-          helper::set<std::string> listResponse=pipeline->getResponseList();
-          sofa::helper::OptionsGroup responseOptions(listResponse);
-          if (listResponse.find("default") != listResponse.end())
-            responseOptions.setSelectedItem("default");
-          obj->response.setValue(responseOptions);
-        }
+		sofa::helper::OptionsGroup options=initializeResponseOptions(pipeline);
+		obj->response.setValue(options);
       }
       if (arg) obj->parse(arg);
-
     }
 
 	virtual std::string getContactResponse(core::CollisionModel* model1, core::CollisionModel* model2);
@@ -94,6 +87,7 @@ public:
 
 
 protected:
+	static sofa::helper::OptionsGroup initializeResponseOptions(core::collision::Pipeline *pipeline);
 
 	std::map<Instance,ContactMap> storedContactMap;
 

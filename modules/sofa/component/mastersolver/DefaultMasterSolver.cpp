@@ -24,6 +24,7 @@
 ******************************************************************************/
 #include <sofa/component/mastersolver/DefaultMasterSolver.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
 #include <math.h>
 #include <iostream>
 
@@ -55,14 +56,18 @@ DefaultMasterSolver::~DefaultMasterSolver()
 
 void DefaultMasterSolver::step(double dt)
 {
-    // First do collision detection and response creation
-	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin collision" << sendl;
+    // First we reset the constraints
+        if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin constraints reset" << sendl;
+    sofa::simulation::MechanicalResetConstraintVisitor().execute(this->getContext());
+        if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end constraints reset" << sendl;
+    // Then do collision detection and response creation
+        if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin collision" << sendl;
     computeCollision();
-	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end collision" << sendl;
-    // Then integrate the time step
-	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
+        if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end collision" << sendl;
+    // And finaly integrate the time step
+        if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
     integrate(dt);
-	if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
+        if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
 }
 
 } // namespace mastersolver

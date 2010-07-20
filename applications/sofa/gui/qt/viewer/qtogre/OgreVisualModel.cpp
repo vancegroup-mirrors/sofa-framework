@@ -51,6 +51,111 @@ namespace sofa
 
       bool OgreVisualModel::lightsEnabled=false;
 
+
+
+      //-------------------------------------------
+      // SubMesh
+      //-------------------------------------------
+      void SubMesh::init(int &idx)
+      {
+        storage.clear();
+
+        const unsigned int numPrimitives=triangles.size()+2*quads.size();
+        storage.resize(1+numPrimitives/maxPrimitives);
+
+        index=idx; idx+=storage.size();
+
+        for (unsigned int i=0;i<triangles.size();++i)
+        {
+          const unsigned int storageIdx=i/maxPrimitives;
+          const Triangle &T=triangles[i];
+          for (unsigned int idx=0;idx<Triangle::size();++idx) storage[storageIdx].indices.insert(T[idx]);
+          storage[storageIdx].triangles.push_back(T);
+        }
+
+        for (unsigned int i=0;i<quads.size();++i)
+        {
+          const unsigned int storageIdx=(triangles.size()+i)/maxPrimitives;
+          const Quad &Q=quads[i];
+          for (unsigned int idx=0;idx<Quad::size();++idx)  storage[storageIdx].indices.insert(Q[idx]);
+          storage[storageIdx].quads.push_back(Q);
+        }
+
+        computeGlobalToLocalPrimitives();
+      }
+
+      void SubMesh::computeGlobalToLocalPrimitives()
+      {
+        for (unsigned int i=0;i<storage.size();++i) storage[i].computeGlobalToLocalPrimitives();
+      }
+
+
+      void SubMesh::create(Ogre::ManualObject *ogreObject,
+                           const ResizableExtVector<Coord>& positions,
+                           const ResizableExtVector<Coord>& normals,
+                           const ResizableExtVector<TexCoord>& textCoords) const
+      {
+        const bool hasTexCoords= !(textCoords.empty());
+        for (unsigned int i=0;i<storage.size();++i)
+        {
+          ogreObject->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
+          for (Indices::const_iterator it=storage[i].indices.begin(); it!=storage[i].indices.end();++it)
+          {
+            const int idx=*it;
+            ogreObject->position(positions[idx][0],positions[idx][1],positions[idx][2]);
+            ogreObject->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
+            if (hasTexCoords) ogreObject->textureCoord(textCoords[idx][0],textCoords[idx][1]);
+          }
+
+          for (unsigned int t=0;t<storage[i].triangles.size();++t)
+          {
+            const Triangle &T=storage[i].triangles[t];
+            ogreObject->triangle(T[0],T[1],T[2]);
+          }
+          for (unsigned int q=0;q<storage[i].quads.size();++q)
+          {
+            const Quad &Q=storage[i].quads[q];
+            ogreObject->quad(Q[0],Q[1],Q[2],Q[3]);
+          }
+          ogreObject->end();
+        }
+      }
+
+      void SubMesh::update(Ogre::ManualObject *ogreObject,
+                           const ResizableExtVector<Coord>& positions,
+                           const ResizableExtVector<Coord>& normals,
+                           const ResizableExtVector<TexCoord>& textCoords) const
+      {
+
+        const bool hasTexCoords= !(textCoords.empty());
+        for (unsigned int i=0;i<storage.size();++i)
+        {
+          ogreObject->beginUpdate(index+i);
+
+          for (Indices::const_iterator it=storage[i].indices.begin(); it!=storage[i].indices.end();++it)
+          {
+            const int idx=*it;
+            ogreObject->position(positions[idx][0],positions[idx][1],positions[idx][2]);
+            ogreObject->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
+            if (hasTexCoords) ogreObject->textureCoord(textCoords[idx][0],textCoords[idx][1]);
+          }
+
+          for (unsigned int t=0;t<storage[i].triangles.size();++t)
+          {
+            const Triangle &T=storage[i].triangles[t];
+            ogreObject->triangle(T[0],T[1],T[2]);
+          }
+          for (unsigned int q=0;q<storage[i].quads.size();++q)
+          {
+            const Quad &Q=storage[i].quads[q];
+            ogreObject->quad(Q[0],Q[1],Q[2],Q[3]);
+          }
+          ogreObject->end();
+        }
+      }
+
+      //-------------------------------------------
+
       OgreVisualModel::OgreVisualModel():
 	materialFile(initData(&materialFile,"materialOgre", "Name of the material used by Ogre")),
 	culling(initData(&culling,true, "culling", "Activate Back-face culling in Ogre")),
@@ -87,7 +192,7 @@ namespace sofa
 
         if (materials.getValue().empty())
         {
-          updateMaterial(subMeshes[0].material, this->material.getValue());
+          updateMaterial(materialToMesh.begin()->second.material, this->material.getValue());
         }
         else
         {
@@ -95,14 +200,7 @@ namespace sofa
           for (unsigned int i=0;i<vecMaterials.size();++i)
           {
             const std::string &name=vecMaterials[i].name;
-            for (unsigned int j=0;j<subMeshes.size();++j)
-            {
-              if (subMeshes[j].materialName == name)
-              {
-                updateMaterial(subMeshes[j].material, vecMaterials[i]);
-                break;
-              }
-            }
+            updateMaterial(materialToMesh[name].material, vecMaterials[i]);
           }
         }
       }
@@ -151,131 +249,70 @@ namespace sofa
 
               helper::vector<FaceGroup> &g=*(groups.beginEdit());
               if (g.empty())
-              {
-                  subMeshes.resize(1);
+              {                
+                SubMesh &mesh=materialToMesh[this->material.getValue().name];
 
-                  SubMesh &m=subMeshes[0];
-                  m.triangles.resize(triangles.size());
-                  m.quads.resize(quads.size());
-
-                  for (int i=vertices.size()-1;i>=0;--i) m.indices.insert(i);
-
-                  std::copy(triangles.begin(), triangles.end(), m.triangles.begin());
-                  std::copy(quads.begin(), quads.end(), m.quads.begin());
-                  m.material = createMaterial(this->material.getValue());
+                for (int i=vertices.size()-1;i>=0;--i) mesh.indices.insert(i);
+                std::copy(triangles.begin(), triangles.end(), std::back_inserter(mesh.triangles));
+                std::copy(quads.begin(), quads.end(),  std::back_inserter(mesh.quads));
+                mesh.material = createMaterial(this->material.getValue());
+                mesh.materialName = this->material.getValue().name;
               }
               else
               {
-
-                  for (unsigned int i=0;i<g.size();++i)
+                //Create a mesh for each material
+                for (unsigned int i=0;i<g.size();++i)
+                {                  
+                  SubMesh &mesh=materialToMesh[g[i].materialName];
+                  for (int t=0;t<g[i].nbt;++t)
                   {
-                      const int maxPrimitives=10000;
-                      const int currentPrimitives = g[i].nbt+g[i].nbq;
-                      for (int s=0;s<(currentPrimitives/maxPrimitives)+1;++s)
-                      {
-                          subMeshes.resize(subMeshes.size()+1);
-                          SubMesh &m=subMeshes.back();
-
-                          int minP=maxPrimitives*s;
-                          int maxP=maxPrimitives*(s+1);
-                          if (maxP > currentPrimitives) maxP = currentPrimitives;
-
-                          int minT=0, maxT=0;
-                          int minQ=0, maxQ=0;
-
-                          if (minP < g[i].nbt)
-                          {
-                              minT=minP;
-                              maxT=maxP;
-                              if (maxT > g[i].nbt) maxT=g[i].nbt;
-                              for ( int t=minT;t<maxT;++t)
-                              {
-                                  const Triangle &T=triangles[g[i].t0+t];
-                                  m.indices.insert(T[0]);
-                                  m.indices.insert(T[1]);
-                                  m.indices.insert(T[2]);
-                              }
-                          }
-                          else
-                          {
-                              minT=0; maxT=0;
-                          }
-
-
-                          if (maxP > g[i].nbt)
-                          {
-                              minQ=minP-g[i].nbt; if (minQ<0) minQ=0;
-                              maxQ=maxP-g[i].nbt;
-                              for ( int q=minQ;q<maxQ;++q)
-                              {
-                                  const Quad &Q=quads[g[i].q0+q];
-                                  m.indices.insert(Q[0]);
-                                  m.indices.insert(Q[1]);
-                                  m.indices.insert(Q[2]);
-                                  m.indices.insert(Q[3]);
-                              }
-                          }
-                          else
-                          {
-                              minQ=0; maxQ=0;
-                          }
-
-                          std::map< unsigned int, unsigned int > globalToLocalPrimitives;
-                          std::set<unsigned int >::const_iterator it;
-                          unsigned int idx=0;
-                          for (it=m.indices.begin();it!=m.indices.end();++it)
-                          {
-                              globalToLocalPrimitives.insert(std::make_pair(*it, idx++));
-                          }
-                          m.triangles.resize(maxT-minT);
-                          for ( int t=minT;t<maxT;++t)
-                          {
-                              const Triangle &T=triangles[g[i].t0+t];
-                              Triangle &newT=m.triangles[t-minT];
-                              newT[0]=globalToLocalPrimitives[T[0]];
-                              newT[1]=globalToLocalPrimitives[T[1]];
-                              newT[2]=globalToLocalPrimitives[T[2]];
-                          }
-                          m.quads.resize(maxQ-minQ);
-                          for ( int q=minQ;q<maxQ;++q)
-                          {
-                              const Quad &Q=quads[g[i].q0+q];
-                              Quad &newQ=m.quads[q-minQ];
-                              newQ[0]=globalToLocalPrimitives[Q[0]];
-                              newQ[1]=globalToLocalPrimitives[Q[1]];
-                              newQ[2]=globalToLocalPrimitives[Q[2]];
-                              newQ[3]=globalToLocalPrimitives[Q[3]];
-                          }
-
-                          if (g[i].materialId < 0)
-                          {
-                              m.material = createMaterial(this->material.getValue());
-                              m.materialName = this->material.getValue().name;
-                          }
-                          else
-                          {
-                              m.material = createMaterial(this->materials.getValue()[g[i].materialId]);
-                              m.materialName = this->materials.getValue()[g[i].materialId].name;
-                          }
-                      }
+                    const Triangle &T=triangles[g[i].t0+t];
+                    mesh.indices.insert(T[0]);
+                    mesh.indices.insert(T[1]);
+                    mesh.indices.insert(T[2]);
+                    mesh.triangles.push_back(T);
                   }
+                  for (int q=0;q<g[i].nbq;++q)
+                  {
+                    const Quad &Q=quads[g[i].q0+q];
+                    mesh.indices.insert(Q[0]);
+                    mesh.indices.insert(Q[1]);
+                    mesh.indices.insert(Q[2]);
+                    mesh.indices.insert(Q[3]);
+                    mesh.quads.push_back(Q);
+                  }
+                  if (mesh.material.isNull())
+                  {                    
+                    if (g[i].materialId < 0)
+                    {
+                      mesh.material = createMaterial(this->material.getValue());
+                      mesh.materialName = this->material.getValue().name;
+                    }
+                    else
+                    {
+                      mesh.material = createMaterial(this->materials.getValue()[g[i].materialId]);
+                      mesh.materialName = this->materials.getValue()[g[i].materialId].name;
+                    }
+                  }
+                }
               }
-          }
+
+              std::map<std::string, SubMesh>::iterator it;
+              int idx=0;
+              for (it=materialToMesh.begin();it!=materialToMesh.end();++it)
+              {                
+                it->second.init(idx);
+              }
+            }
       }
+
 
       Ogre::MaterialPtr OgreVisualModel::createMaterial(const core::loader::Material &sofaMaterial)
       {          
-          Ogre::MaterialPtr ogreMaterial;
-          for (unsigned int i=0;i<subMeshes.size();++i)
-          {
-            if (subMeshes[i].materialName == sofaMaterial.name)
-            {
-              ogreMaterial=subMeshes[i].material;
-              break;
-            }
-          }
-          if (ogreMaterial.isNull())
-          {
+          Ogre::MaterialPtr ogreMaterial;//=materialToMesh[sofaMaterial.name].material;
+
+//          if (ogreMaterial.isNull())
+//          {
             //Create the Material for the object
             std::ostringstream s;
             s << "OgreVisualMaterial[" << ++materialName << "]" ;
@@ -283,7 +320,7 @@ namespace sofa
 
             ogreMaterial->setReceiveShadows(true);
             ogreMaterial->getTechnique(0)->getPass(0)->setLightingEnabled(true);
-          }
+//          }
           updateMaterial(ogreMaterial,sofaMaterial);
 
           return ogreMaterial;
@@ -450,72 +487,63 @@ namespace sofa
           }
       }
 
-    void OgreVisualModel::internalDraw(bool /*transparent*/)
+      void OgreVisualModel::internalDraw(bool /*transparent*/)
       {
       const ResizableExtVector<Coord>& vertices = this->getVertices();
-      const ResizableExtVector<Triangle>& triangles = this->getTriangles();
-      const ResizableExtVector<Quad>& quads = this->getQuads();
-	if (!ogreObject)
-          {
+      const ResizableExtVector<Coord>& normals = this->getVnormals();
+      const ResizableExtVector<TexCoord>& texCoords= this->getVtexcoords();
+      if (!ogreObject)
+      {
 	    //If visual model is empty, return
-	    if (triangles.size() == 0 && quads.size() == 0) return;
+        if (getTriangles().empty() && getQuads().empty()) return;
 
-            prepareMesh();
-	    //Upload the indices
-            for (unsigned int i=0;i<subMeshes.size();++i)
-            {
-                const SubMesh& m=subMeshes[i];
-                ogreObject->begin(m.material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
-                uploadSubMesh(m);
-                ogreObject->end();
-            }
-            if (getContext()->getShowNormals())
-              {
-		ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST); 
-		uploadNormals();
-		ogreNormalObject->end();                              
-              }
+        prepareMesh();
+
+        for (MatToMesh::iterator it=materialToMesh.begin();it!=materialToMesh.end();++it)
+          it->second.create(ogreObject,vertices,normals,texCoords);
+
+        if (getContext()->getShowNormals())
+        {
+          ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST);
+          uploadNormals();
+          ogreNormalObject->end();
+        }
 	  }
-	else
-          {
-            updateVisibility();
-            if (!this->getContext()->getShowVisualModels()) return;
-            if (!needUpdate)
-            {
-                mSceneMgr->getRootSceneNode()->detachObject(ogreObject);
-                convertManualToMesh();
-                return;
-            }
+      else
+      {
+        updateVisibility();
+        if (!this->getContext()->getShowVisualModels()) return;
+        if (!needUpdate)
+        {
+          mSceneMgr->getRootSceneNode()->detachObject(ogreObject);
+          convertManualToMesh();
+          return;
+        }
 
         //Visual Model update
-            for (unsigned int i=0;i<subMeshes.size();++i)
-            {
-                const SubMesh& m=subMeshes[i];
-                ogreObject->beginUpdate(i);
-                uploadSubMesh(m);
-                ogreObject->end();
-            }
+        for (MatToMesh::iterator it=materialToMesh.begin();it!=materialToMesh.end();++it)
+          it->second.update(ogreObject, vertices, normals,texCoords);
 
-            if (lightsEnabled && vertices.size() != 0) convertManualToMesh();
+        if (lightsEnabled && vertices.size() != 0) convertManualToMesh();
 
-            if (this->getContext()->getShowNormals())
-            {
-                //Normals
-                if (ogreNormalObject->getNumSections())
-                {
-                    ogreNormalObject->beginUpdate(0);
-                    uploadNormals();
-                    ogreNormalObject->end();
-                }
-                else
-                {
-                    ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST);
-                    uploadNormals();
-                    ogreNormalObject->end();
-                }
-            }
+        if (this->getContext()->getShowNormals())
+        {
+          //Normals
+          if (ogreNormalObject->getNumSections())
+          {
+            ogreNormalObject->beginUpdate(0);
+            uploadNormals();
+            ogreNormalObject->end();
+          }
+          else
+          {
+            ogreNormalObject->begin(currentMaterialNormals->getName(), Ogre::RenderOperation::OT_LINE_LIST);
+            uploadNormals();
+            ogreNormalObject->end();
+          }
+        }
 	  }
-      }
+    }
 
       void OgreVisualModel::applyUVTransformation()
       {	
@@ -530,7 +558,7 @@ namespace sofa
  	translationTex.setValue(TexCoord(0,0));
       }
       int OgreVisualModelClass = sofa::core::RegisterObject("OGRE 3D Visual Model")
-	.add < OgreVisualModel >();
+                                 .add < OgreVisualModel >();
 
     }
   }

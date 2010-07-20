@@ -98,7 +98,7 @@ namespace sofa
 
         bool createWidgets(DataWidget * parent, const data_type& d, bool readOnly)
         {
- 
+
           if (!p.createWidgets( parent, d, readOnly))
             return false;
 
@@ -121,7 +121,7 @@ namespace sofa
           else
           {
             if (name && *name && N > 1){
-              parent->layout()->add(new QLabel(QString("name"),parent));
+              parent->layout()->add(new QLabel(QString(name),parent));
             }
           }
           if (!w.createWidgets(parent, *vhelper::get(d), readOnly || vhelper::readOnly()))

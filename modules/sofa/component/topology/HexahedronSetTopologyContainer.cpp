@@ -535,6 +535,13 @@ void HexahedronSetTopologyContainer::init()
 	  return (d_hexahedron.getValue()).size();
 	}
 
+
+   unsigned int HexahedronSetTopologyContainer::getNumberOfElements() const
+   {
+      return this->getNumberOfHexahedra();
+   }
+
+
 	const sofa::helper::vector< sofa::helper::vector<unsigned int> > &HexahedronSetTopologyContainer::getHexahedraAroundVertexArray() 
 	{
 		if(!hasHexahedraAroundVertex())

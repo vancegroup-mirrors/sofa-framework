@@ -469,7 +469,12 @@ const sofa::helper::vector<Triangle> & TriangleSetTopologyContainer::getTriangle
 
       unsigned int TriangleSetTopologyContainer::getNumberOfTriangles() const
       {
-	return (d_triangle.getValue()).size();
+         return (d_triangle.getValue()).size();
+      }
+
+      unsigned int TriangleSetTopologyContainer::getNumberOfElements() const
+      {
+         return this->getNumberOfTriangles();
       }
 
       const sofa::helper::vector< sofa::helper::vector<unsigned int> > &TriangleSetTopologyContainer::getTrianglesAroundVertexArray() 

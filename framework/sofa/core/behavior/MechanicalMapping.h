@@ -54,13 +54,29 @@ namespace behavior
  *  most computations correspond to multiply this matrix or its transpose to
  *  the given vectors.
  */
-template <class In, class Out>
-class MechanicalMapping : public Mapping<In,Out>, public BaseMechanicalMapping
+template <class TIn, class TOut>
+class MechanicalMapping : public Mapping<TIn,TOut>, public BaseMechanicalMapping
 {
 public:
-    SOFA_CLASS2(SOFA_TEMPLATE2(MechanicalMapping,In,Out), SOFA_TEMPLATE2(Mapping,In,Out), BaseMechanicalMapping);
+    SOFA_CLASS2(SOFA_TEMPLATE2(MechanicalMapping,TIn,TOut), SOFA_TEMPLATE2(Mapping,TIn,TOut), BaseMechanicalMapping);
+
+    /// Input Model Type
+    typedef TIn In;
+    /// Output Model Type
+    typedef TOut Out;
+
+    typedef typename In::VecCoord InVecCoord;
+    typedef typename In::VecDeriv InVecDeriv;
+    typedef typename In::VecConst InVecConst;
+
+    typedef typename Out::VecCoord OutVecCoord;
+    typedef typename Out::VecDeriv OutVecDeriv;
+    typedef typename Out::VecConst OutVecConst;
 
     Data<bool> f_isMechanical;
+#ifndef SOFA_SMP
+    Data<bool> f_checkJacobian;
+#endif
 
     MechanicalMapping(In* from, Out* to);
 
@@ -72,7 +88,7 @@ public:
     /// $ out += J^t in $
     ///
     /// This method must be reimplemented by all mappings.
-    virtual void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in ) = 0;
+    virtual void applyJT( InVecDeriv& out, const OutVecDeriv& in ) = 0;
 
     /// Apply the reverse mapping on constraint matrix.
     ///
@@ -80,13 +96,13 @@ public:
     /// $ Out += J^t In $
     ///
     /// This method must be reimplemented by all mappings if they need to support constraints.
-    virtual void applyJT( typename In::VecConst& /*out*/, const typename Out::VecConst& /*in*/ ) {}
+    virtual void applyJT( InVecConst& /*out*/, const OutVecConst& /*in*/ ) {}
 
     /// If the mapping input has a rotation velocity, it computes the subsequent acceleration
     /// created by the derivative terms
     /// $ a_out = w^(w^rel_pos)	$
     /// This method must be reimplemented by all mappings if they need to support composite accelerations
-    virtual void computeAccFromMapping(  typename Out::VecDeriv& /*acc_out*/, const typename In::VecDeriv& /*v_in*/, const typename In::VecDeriv& /*acc_in*/){}
+    virtual void computeAccFromMapping(  OutVecDeriv& /*acc_out*/, const InVecDeriv& /*v_in*/, const InVecDeriv& /*acc_in*/){}
 
         
     /// Get the source (upper) model.
@@ -181,6 +197,15 @@ public:
 
 protected:
     bool getShow() const { return this->getContext()->getShowMechanicalMappings(); }
+
+#ifndef SOFA_SMP
+    void matrixApplyJ( OutVecDeriv& out, const InVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
+    void matrixApplyJT( InVecDeriv& out, const OutVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
+    void matrixApplyJT( InVecConst& out, const OutVecConst& in, const sofa::defaulttype::BaseMatrix* J );
+    bool checkApplyJ( OutVecDeriv& out, const InVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
+    bool checkApplyJT( InVecDeriv& out, const OutVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
+    bool checkApplyJT( InVecConst& out, const OutVecConst& in, const sofa::defaulttype::BaseMatrix* J );
+#endif
 
 };
 

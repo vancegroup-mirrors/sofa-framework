@@ -61,15 +61,17 @@ ShewchukPCGLinearSolver<TMatrix,TVector>::ShewchukPCGLinearSolver()
 : f_maxIter( initData(&f_maxIter,(unsigned)25,"iterations","maximum number of iterations of the Conjugate Gradient solution") )
 , f_tolerance( initData(&f_tolerance,1e-5,"tolerance","desired precision of the Conjugate Gradient Solution (ratio of current residual norm over initial residual norm)") )
 , f_verbose( initData(&f_verbose,false,"verbose","Dump system state at each iteration") )
-, f_refresh( initData(&f_refresh,0,"refresh","Refresh iterations") )
-, use_precond( initData(&use_precond,true,"use_precond","Use preconditioners") )
+, f_update_iteration( initData(&f_update_iteration,(unsigned)0,"update_iteration","Number of CG iterations before next refresh of precondtioner") )
+, f_min_update_iteration( initData(&f_min_update_iteration,(unsigned)1,"min_update_iteration","minimum Number of iterations under the update_iteration is not updated") )
+, f_update_step( initData(&f_update_step,(unsigned)1,"update_step","Number of steps before the next refresh of precondtioners") )
+, f_use_precond( initData(&f_use_precond,true,"use_precond","Use preconditioners") )
 , f_preconditioners( initData(&f_preconditioners, "preconditioners", "If not empty: path to the solvers to use as preconditioners") )
 , f_graph( initData(&f_graph,"graph","Graph of residuals at each iteration") )    
 {
     f_graph.setWidget("graph");
 //    f_graph.setReadOnly(true);
-    iteration = 0;
     usePrecond = true;
+    first = true;
 }
 
 template<class TMatrix, class TVector>
@@ -78,8 +80,8 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::init() {
     BaseContext * c = this->getContext();
 
     const helper::vector<std::string>& precondNames = f_preconditioners.getValue();
-    if (precondNames.empty() || !use_precond.getValue()) {
-        c->get<sofa::core::behavior::LinearSolver>(&solvers,BaseContext::SearchDown);
+    if (precondNames.empty() && f_use_precond.getValue()) {
+	    c->get<sofa::core::behavior::LinearSolver>(&solvers,BaseContext::SearchDown);
     } else {
         for (unsigned int i=0;i<precondNames.size();++i) {
             sofa::core::behavior::LinearSolver* s = NULL;
@@ -96,7 +98,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::init() {
     }
 
     sout<<"Found " << this->preconditioners.size() << " preconditioners"<<sendl;
-
+    
     first = true;
 }
 
@@ -108,30 +110,35 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, 
 	Inherit::setSystemMBKMatrix(mFact,bFact,kFact);
 	
 	sofa::helper::AdvancedTimer::stepEnd("PCG::setSystemMBKMatrix(Precond)");
-	
-	usePrecond = use_precond.getValue();
 
 	if (preconditioners.size()==0) return;
-	
+
 	if (first) { //We initialize all the preconditioners for the first step
-		first = false;
-		if (iteration<=0) {
-			for (unsigned int i=0;i<this->preconditioners.size();++i) {
-				preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);
-			}
-			iteration = f_refresh.getValue();
-		} else {
-			iteration--;
+		for (unsigned int i=0;i<this->preconditioners.size();++i) {
+			preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);
+			preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);//dont know why the first setmbk doesn't wotk???
 		}
-	} else if (usePrecond ) { // We use only the first precond in the list 
+		first = false;
+		next_refresh_iteration = 1;
+		next_refresh_step = 1;
+	} else if (f_use_precond.getValue()) { // We use only the first precond in the list 
 		sofa::helper::AdvancedTimer::valSet("PCG::PrecondBuildMBK", 1);
 		sofa::helper::AdvancedTimer::stepBegin("PCG::PrecondSetSystemMBKMatrix");
 
-		if (iteration<=0) {
+		if (f_update_iteration.getValue()>0) {
+		  if (next_refresh_iteration>=f_update_iteration.getValue()) {
+			printf("Update with iterations\n");
 			preconditioners[0]->setSystemMBKMatrix(mFact,bFact,kFact);
-			iteration = f_refresh.getValue();
-		} else {
-			iteration--;
+			next_refresh_iteration=1;
+		  }
+		} else if (f_update_step.getValue()>0) {
+		  if (next_refresh_step>=f_update_step.getValue()) {
+			printf("Update with steps\n");
+			preconditioners[0]->setSystemMBKMatrix(mFact,bFact,kFact);
+			next_refresh_step=1;
+		  } else {
+			next_refresh_step++;
+		  }
 		}
 		sofa::helper::AdvancedTimer::stepEnd("PCG::PrecondSetSystemMBKMatrix");
 	}
@@ -343,6 +350,8 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 	  
 	  iter++;
 	}
+	
+	if (iter>f_min_update_iteration.getValue()) next_refresh_iteration+=iter-f_min_update_iteration.getValue();
 	sofa::helper::AdvancedTimer::valSet("PCG iterations", iter);
 
 	f_graph.endEdit();

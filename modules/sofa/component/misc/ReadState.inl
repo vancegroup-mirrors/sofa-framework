@@ -134,7 +134,7 @@ void ReadState::handleEvent(sofa::core::objectmodel::Event* event)
 
 void ReadState::setTime(double time)
 {
-    if (time < nextTime) {reset(); nextTime=0.0; loopTime=0.0; }
+  if (time+getContext()->getDt()*0.5 < lastTime) {reset();}
 }
 
 void ReadState::processReadState(double time)
@@ -145,7 +145,7 @@ void ReadState::processReadState(double time)
 }
 
 bool ReadState::readNext(double time, std::vector<std::string>& validLines)
-{
+{  
     if (!mmodel) return false;
     if (!infile
 #ifdef SOFA_HAVE_ZLIB
@@ -155,9 +155,9 @@ bool ReadState::readNext(double time, std::vector<std::string>& validLines)
         return false;
     lastTime = time;
     validLines.clear();
-    std::string line, cmd;
+    std::string line, cmd;    
     while (nextTime <= time)
-    {
+    {      
 #ifdef SOFA_HAVE_ZLIB
         if (gzfile)
         {
@@ -204,16 +204,15 @@ bool ReadState::readNext(double time, std::vector<std::string>& validLines)
         }
         //sout << "line= "<<line<<sendl;
         std::istringstream str(line);
-        str >> cmd;
+        str >> cmd;        
         if (cmd == "T=")
         {
             str >> nextTime;
-            nextTime += loopTime;
+            nextTime += loopTime;            
 	    //sout << "next time: " << nextTime << sendl;
             if (nextTime <= time) 
                 validLines.clear();
-        }
-
+        }        
         if (nextTime <= time)
             validLines.push_back(line);
     }

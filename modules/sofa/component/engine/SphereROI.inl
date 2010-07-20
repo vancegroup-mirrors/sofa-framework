@@ -78,7 +78,7 @@ SphereROI<DataTypes>::SphereROI()
 {
 	//Adding alias to handle TrianglesInSphereROI input/output
 	addAlias(&p_drawSphere,"isVisible");
-    addAlias(&triAngle,"angle");
+   addAlias(&triAngle,"angle");
 	addAlias(&f_indices,"pointIndices");
 	addAlias(&f_X0,"rest_position");
 
@@ -95,7 +95,7 @@ void SphereROI<DataTypes>::init()
      this->getContext()->get(mstate);
      if (mstate)
      {
-        BaseData* parent = mstate->findField("position");
+        BaseData* parent = mstate->findField("rest_position");
         if (parent)
         {
            f_X0.setParent(parent);

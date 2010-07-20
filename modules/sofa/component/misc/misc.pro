@@ -14,6 +14,7 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_MISC
 
 HEADERS += initMisc.h \
+	   BaseRotationFinder.h \
            CompareState.h \
            CompareTopology.h \
            DevAngleCollisionMonitor.h \

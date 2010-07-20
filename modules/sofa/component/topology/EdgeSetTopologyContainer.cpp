@@ -494,6 +494,11 @@ EdgeSetTopologyContainer::EdgeSetTopologyContainer()
 	  return (d_edge.getValue()).size();
 	}
 
+   unsigned int EdgeSetTopologyContainer::getNumberOfElements() const
+   {
+      return this->getNumberOfEdges();
+   }
+
 	const sofa::helper::vector< sofa::helper::vector<unsigned int> > &EdgeSetTopologyContainer::getEdgesAroundVertexArray() 
 	{
 		if(!hasEdgesAroundVertex())

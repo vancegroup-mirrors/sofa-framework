@@ -419,7 +419,7 @@ namespace sofa
 
       void LMConstraintSolver::buildLeftMatrix(const DofToMatrix& invMassMatrix, DofToMatrix& LMatrix, SparseMatrixEigen &LeftMatrix, DofToMatrix &invMass_Ltrans) const
       {
-        for (SetDof::iterator itDofs=setDofs.begin();itDofs!=setDofs.end(); ++itDofs)
+        for (SetDof::const_iterator itDofs=setDofs.begin();itDofs!=setDofs.end(); ++itDofs)
         {
           const sofa::core::behavior::BaseMechanicalState* dofs=*itDofs;
           const SparseMatrixEigen &invMass=invMassMatrix.find(dofs)->second;
@@ -432,10 +432,6 @@ namespace sofa
           invMass_Ltrans.insert( std::make_pair(dofs,invM_LTrans) );
           LeftMatrix += L*invM_LTrans;
         }
-
-        for (DofToMatrix::const_iterator itDofs=invMassMatrix.begin(); itDofs!=invMassMatrix.end();itDofs++)
-          {
-          }  
       }
 
 

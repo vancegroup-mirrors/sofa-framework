@@ -40,5 +40,5 @@ void SOFA_COMPONENT_FEM_API initFEM();
 
 } // namespace sofa
 
-#endif //SOFA_COMPONENT_FEM_INIT_H
+#endif /* SOFA_COMPONENT_FEM_INIT_H */
 

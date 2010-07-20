@@ -372,7 +372,7 @@ namespace sofa{
 	      }
       }
       void QSofaRecorder::loadSimulation(bool one_step )
-      {
+      {        
         Node* root = dynamic_cast<Node*>(getSimulation()->getContext());
         assert(root);
         if (timeSlider->maxValue() == 0) 
@@ -414,10 +414,13 @@ namespace sofa{
           double time = init_time + value/((float)timeSlider->maxValue())*(final_time-init_time);
           setCurrentTime(time);
         }
-        timeSlider->setValue(value);
-        timeSlider->update();
-		if(! this->record->isOn())
+        if (timeSlider->value() != value)
+        {
+          timeSlider->setValue(value);
+          timeSlider->update();
+          if(! this->record->isOn())
 			loadSimulation();
+        }
       }
 
       void QSofaRecorder::addReadState(const std::string& writeSceneName, bool init)

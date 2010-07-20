@@ -50,7 +50,7 @@ public:
 
     Data<double> alarmDistance;
     Data<double> contactDistance;
-	Data<bool> useLineLine;
+    Data<bool> useLineLine;
 
     LMDNewProximityIntersection();
 

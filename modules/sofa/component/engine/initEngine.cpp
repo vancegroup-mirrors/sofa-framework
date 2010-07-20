@@ -66,3 +66,5 @@ SOFA_LINK_CLASS(Vertex2Frame)
 SOFA_LINK_CLASS(TransformPosition)
 SOFA_LINK_CLASS(TransformEngine)
 SOFA_LINK_CLASS(TextureInterpolation)
+
+

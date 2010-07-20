@@ -47,6 +47,75 @@ namespace sofa
     namespace visualmodel
     {
 
+
+      class SubMesh
+      {
+
+        typedef VisualModelImpl::Triangle  Triangle;
+        typedef VisualModelImpl::Quad Quad;
+        typedef std::set< unsigned int > Indices;
+        typedef helper::vector< Triangle > VecTriangles;
+        typedef helper::vector< Quad > VecQuads;        
+        typedef ExtVec3fTypes::Coord Coord;
+        typedef Vec<2, float> TexCoord;
+
+        struct InternalStructure
+        {
+          Indices indices;
+          VecTriangles triangles;
+          VecQuads quads;
+
+          template <class T>
+           void  updatePrimitive(T& primitive)
+          {
+            for (unsigned int i=0;i<T::size();++i) primitive[i] = globalToLocalPrimitives[ primitive[i] ];
+          }
+
+          void computeGlobalToLocalPrimitives()
+          {
+            globalToLocalPrimitives.clear();
+            unsigned int idx=0;
+            for (Indices::const_iterator it=indices.begin();it!=indices.end();++it)
+              globalToLocalPrimitives.insert(std::make_pair(*it, idx++));
+
+            for (VecTriangles::iterator it=triangles.begin(); it!=triangles.end();++it) updatePrimitive(*it);
+            for (VecQuads::iterator it=quads.begin(); it!=quads.end();++it)             updatePrimitive(*it);
+          }
+
+          std::map< unsigned int, unsigned int > globalToLocalPrimitives;
+        };
+
+      public:
+
+        SubMesh():maxPrimitives(10000){};
+
+        int index;
+        Indices indices;
+        Ogre::MaterialPtr material;
+        std::string materialName;
+
+        VecTriangles triangles;
+        VecQuads quads;
+
+        void init(int &idx);
+        void create(Ogre::ManualObject *,
+                    const ResizableExtVector<Coord>& positions,
+                    const ResizableExtVector<Coord>& normals,
+                    const ResizableExtVector<TexCoord>& textCoords) const;
+        void update(Ogre::ManualObject *,
+                    const ResizableExtVector<Coord>& positions,
+                    const ResizableExtVector<Coord>& normals,
+                    const ResizableExtVector<TexCoord>& textCoords) const ;
+      protected:
+
+        void computeGlobalToLocalPrimitives();
+
+
+        helper::vector< InternalStructure > storage;
+        const unsigned int maxPrimitives;
+      };
+
+
 class OgreVisualModel : public sofa::component::visualmodel::VisualModelImpl
 {
 public:
@@ -68,15 +137,6 @@ public:
 
     static bool lightsEnabled;
 protected:
-    struct SubMesh
-    {
-        std::set< unsigned int > indices;
-        Ogre::MaterialPtr material;
-        std::string materialName;
-
-        helper::vector< Triangle > triangles;
-        helper::vector< Quad >     quads;
-    };
 
     void prepareMesh();
     Ogre::MaterialPtr createMaterial(const core::loader::Material &sofaMaterial);
@@ -103,7 +163,10 @@ protected:
     Ogre::MaterialPtr currentMaterial;
     Ogre::MaterialPtr currentMaterialNormals;
 
-    helper::vector<SubMesh> subMeshes;
+
+    typedef std::map<std::string, SubMesh> MatToMesh;
+    MatToMesh materialToMesh;
+
     bool needUpdate;
 };
     }

@@ -73,6 +73,12 @@ class SOFA_SIMULATION_COMMON_API MechanicalComputeEnergyVisitor : public sofa::s
 	/// Return a class name for this visitor
 	/// Only used for debugging / profiling purposes
 	virtual const char* getClassName() const { return "MechanicalComputeEnergyVisitor"; }
+
+#ifdef SOFA_DUMP_VISITOR_INFO
+    virtual void setReadWriteVectors()
+    {
+    }
+#endif
 	
 };
 

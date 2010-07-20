@@ -1,0 +1,17 @@
+<Node name="root" dt="0.01" showVisualModels="1" showBehaviorModels="0" showCollisionModels="1" showMappings="0" showForceFields="0" showWireFrame="1">
+	
+	<MeshObjLoader name="meshLoader" filename="mesh/aneurysmHighRes.obj" />
+	<Node>
+            <TriangleSetTopologyContainer src="@../meshLoader" />
+            <OglModel color="red"/>
+        </Node>
+
+        <!-- Options: targetedNumberOfEdges targetedRatioOfEdges -->
+        <DecimateMesh name="decimation" template="Vec3d" listening="true" inputVertices="@meshLoader.position" inputTriangles="@meshLoader.triangles" targetedRatioOfEdges="0.1"/>
+        
+	<Node>
+            <TriangleSetTopologyContainer position="@../decimation.outputPoints" triangles="@../decimation.outputTriangles" />
+            <OglModel color="green"/>
+        </Node>
+	
+</Node>

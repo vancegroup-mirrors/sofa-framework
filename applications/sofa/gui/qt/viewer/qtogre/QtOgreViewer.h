@@ -47,11 +47,15 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QGLWidget>
+#include <QButtonGroup>
+#include <QCheckBox>
 #else
 #include <qlayout.h>
 #include <qgroupbox.h>
 #include <qspinbox.h>
 #include <qpushbutton.h>
+#include <qbuttongroup.h>
+#include <qcheckbox.h>
 #include <qgl.h> 
 typedef QGroupBox Q3GroupBox;
 #endif
@@ -132,7 +136,10 @@ using namespace sofa::simulation;
 
 	      void moveRayPickInteractor(int eventX, int eventY);
 
+
+          void configure(sofa::component::configurationsetting::ViewerSetting* viewerConf);
 	      void setBackgroundColour(float r, float g, float b);
+          void setLightActivated(bool b);
 	    private:
 				
 	      Ogre::String mResourcePath;
@@ -200,13 +207,22 @@ using namespace sofa::simulation;
 		  }
 	      }
 
-          void setCameraMode(component::visualmodel::Camera::CameraType mode);
+          void setCameraMode(component::visualmodel::BaseCamera::CameraType mode);
 
 
 	      void addDirLight(std::string lightName=std::string());
 	      void addPointLight(std::string lightName=std::string());
 	      void addSpotLight(std::string lightName=std::string());
 	    protected:
+          void createTextures();
+          void createEffects();
+          void registerCompositors();
+
+          void addTabulationLights(QTabWidget *);
+          void addTabulationCompositor(QTabWidget *);
+
+          helper::vector<Ogre::String> mCompositorNames;
+
 	      Ogre::ManualObject* drawUtility;
 	      Ogre::MaterialPtr   drawMaterial;
 	      ctime_t _beginTime;
@@ -217,16 +233,16 @@ using namespace sofa::simulation;
 	      QPoint m_mousePressPos;
 	      QPoint m_mousePos;
 	      bool pickDone;
-              Ogre::Vector3 size_world;
+          Ogre::Vector3 size_world;
 
-              sofa::defaulttype::Vector3 sceneMinBBox;
-              sofa::defaulttype::Vector3 sceneMaxBBox;
+          sofa::defaulttype::Vector3 sceneMinBBox;
+          sofa::defaulttype::Vector3 sceneMaxBBox;
 
-              bool showAxis;
+          bool showAxis;
 
 	      std::string sceneFile;
 	      //Tab in the GUI containing the interface to configure the lights
-	      QWidget  *tabLights;
+          QWidget  *tabLights;
 
 	      //Viewer Tab Widget
 	      QPushButton *saveLightsButton;
@@ -244,6 +260,11 @@ using namespace sofa::simulation;
 	      bool needUpdateParameters;
 	      
 
+          //Tab in the GUI containing the interface to configure the compositor
+          QWidget  *tabCompositor;
+          QWidget  *compositorWidget;
+          helper::vector<QCheckBox*> compositorSelection;
+          helper::vector< std::string > initCompositing;
 
 	      Ogre::Vector3 m_mTranslateVector;
 	      Ogre::Radian m_mRotX, m_mRotY;
@@ -292,6 +313,8 @@ using namespace sofa::simulation;
 
               public slots:
 	      void updateViewerParameters();
+
+          void updateCompositor(bool);
 
 	      void resizeDirLight(int v);
 	      void resizePointLight(int v);

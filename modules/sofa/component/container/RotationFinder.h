@@ -16,6 +16,7 @@
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.inl>
 #include <sofa/component/component.h>
 #include <sofa/core/objectmodel/Event.h>
+#include <sofa/component/misc/BaseRotationFinder.h>
 
 /*
  *	This class find Rotation Matrix from two position states (rest and current state)
@@ -35,7 +36,7 @@ namespace container
 {
 
 template <class DataTypes>
-class RotationFinder : public virtual sofa::core::objectmodel::BaseObject
+class RotationFinder : public virtual sofa::component::misc::BaseRotationFinder
 {
 public:
 	SOFA_CLASS(RotationFinder,sofa::core::objectmodel::BaseObject);
@@ -90,6 +91,8 @@ public:
 	void init();
 
 	const helper::vector<Mat3x3>& getRotations();
+	
+	void getRotations(defaulttype::BaseMatrix * m,int offset = 0) ;
 
 	const helper::vector<DMat3x3>& getDRotations();
 

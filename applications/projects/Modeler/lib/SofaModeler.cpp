@@ -38,10 +38,6 @@
 #define MAX_RECENTLY_OPENED 10
 
 
-
-//Automatically create and destroy all the components available: easy way to verify the default constructor and destructor
-//#define TEST_CREATION_COMPONENT
-
 #ifdef SOFA_QT4
 #include <QToolBox>
 #include <QApplication>
@@ -580,7 +576,7 @@ namespace sofa
                 changeTabName(graph, QString(sofa::helper::system::SetDirectory::GetFileName(filename.c_str()).c_str()));
 		examplePath = sofa::helper::system::SetDirectory::GetParentDir(filename.c_str());
 //  	      }
-
+        recentlyOpenedFilesManager.openFile(filename);
 	  }
       }
 

@@ -62,7 +62,7 @@ material Sofa/Fur
       
       scene_blend src_alpha one
 
-      iteration 10 //per_light: problem with per_light
+      iteration 20 //per_light: problem with per_light
 
       vertex_program_ref Sofa/FurVP
       {          

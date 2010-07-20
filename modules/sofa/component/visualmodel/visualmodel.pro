@@ -18,7 +18,8 @@ HEADERS += initVisualModel.h \
     LightManager.h \
     PointSplatModel.h \
     OglRenderingSRGB.h \
-    Camera.h
+    BaseCamera.h \
+    InteractiveCamera.h
     
 SOURCES += initVisualModel.cpp \
     ClipPlane.cpp \
@@ -30,7 +31,8 @@ SOURCES += initVisualModel.cpp \
     LightManager.cpp \
     PointSplatModel.cpp \
     OglRenderingSRGB.cpp \
-    Camera.cpp
+    BaseCamera.cpp \
+    InteractiveCamera.cpp
     
 contains(DEFINES,SOFA_HAVE_GLEW) { 
     HEADERS += OglAttribute.h \

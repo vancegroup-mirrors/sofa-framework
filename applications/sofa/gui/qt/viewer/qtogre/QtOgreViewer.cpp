@@ -27,8 +27,11 @@
 #include <OgreConfigFile.h>
 #include <sofa/gui/qt/viewer/qtogre/QtOgreViewer.h>
 #include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
+#include "HelperLogics.h"
 #include <sofa/gui/qt/viewer/qtogre/OgreVisualModel.h>
 #include <sofa/gui/qt/viewer/qtogre/OgreShaderParameter.h>
+#include <sofa/gui/qt/viewer/qtogre/OgreShaderTextureUnit.h>
+#include <sofa/component/configurationsetting/OgreViewerSetting.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glu.h>
 #include <sofa/simulation/common/Simulation.h>
@@ -103,6 +106,7 @@ namespace sofa
 
 	  SOFA_LINK_CLASS(OgreVisualModel)
       SOFA_LINK_CLASS(OgreShaderParameter)
+      SOFA_LINK_CLASS(OgreShaderTextureUnit)
 
 	  using sofa::simulation::Simulation;
 	  using sofa::component::visualmodel::OgreVisualModel;
@@ -170,6 +174,9 @@ namespace sofa
 	    //*************************************************************************
 	    // Interface Init
 	    //*************************************************************************//
+        tabLights=0;
+        tabCompositor=0;
+
 	    _waitForRender = false;
 
 	    capture.setCounter();
@@ -188,8 +195,7 @@ namespace sofa
 	    _mouseInteractorSavedPosX = 0;
 	    _mouseInteractorSavedPosY = 0;
 	    number_visualModels=0;
-	    _video = false;
- 	    pickDone=false;
+	    _video = false; 	    
         showAxis=false;
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
@@ -216,7 +222,7 @@ namespace sofa
 	      delete mRoot;
 	      mRoot = NULL;
 	    }
-	    sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OPENGL);
+	    sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OPENGL);                
 	  };
 
 	  void QtOgreViewer::setup()
@@ -291,7 +297,7 @@ namespace sofa
       Ogre::RenderSystem* mRenderSystem = *pRend;
 #endif
 
-
+        mRenderSystem->setShadingType(Ogre::SO_PHONG);
 
 	    //RenderSystem
 	    mRoot->setRenderSystem(mRenderSystem);
@@ -367,84 +373,107 @@ namespace sofa
               simulation::getSimulation()->DrawUtility.drawArrow(centerAxis,posZ,
                                                                  l*0.005, defaulttype::Vec<4,float>(0.0f,0.0f,1.0f,1.0f));
 
+            }
+
+          //*****************************************************************************************
+          //called to redraw the window
+          void QtOgreViewer::updateIntern()
+          {
+            if(mRenderWindow == NULL) setupView();
+            if(mRenderWindow != NULL && !_waitForRender){
+              _waitForRender=true;
+              // 	      mRoot->_fireFrameStarted();
+
+              if (groot->getContext()->getShowWireFrame() && mCamera->getPolygonMode()!= Ogre::PM_WIREFRAME)
+                mCamera->setPolygonMode(Ogre::PM_WIREFRAME);
+              if (!groot->getContext()->getShowWireFrame() && mCamera->getPolygonMode()!= Ogre::PM_SOLID)
+                mCamera->setPolygonMode(Ogre::PM_SOLID);
+              if (needUpdateParameters)
+              {
+                mSceneMgr->setAmbientLight(Ogre::ColourValue(ambient[0]->getFloatValue(),ambient[1]->getFloatValue(),ambient[2]->getFloatValue(),1));
+
+                for (unsigned int i=0;i<dirLightOgreWidget.size();++i)
+                {
+                  dirLightOgreWidget[i]->updateLight();
+                }
+                for (unsigned int i=0;i<pointLightOgreWidget.size();++i)
+                {
+                  pointLightOgreWidget[i]->updateLight();
+                }
+                for (unsigned int i=0;i<spotLightOgreWidget.size();++i)
+                {
+                  spotLightOgreWidget[i]->updateLight();
+                }
+
+                needUpdateParameters = false;
+              }
+
+              //Not optimal, clear all the datas
+              sofa::simulation::getSimulation()->DrawUtility.clear();
+
+              static bool initViewer=false;
+              if (initViewer)
+              {
+                sofa::simulation::getSimulation()->draw(groot);
+                sofa::simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot());                
+
+                if (!initCompositing.empty())
+                {
+                  //reset the compositor selection
+                  for (unsigned int j=0;j<compositorSelection.size();++j) compositorSelection[j]->setChecked(false);
+
+                  for (unsigned int i=0;i<initCompositing.size();++i)
+                  {
+                    for (unsigned int j=0;j<compositorSelection.size();++j)
+                    {
+                      if (compositorSelection[j]->text().ascii() == initCompositing[i])
+                      {
+                        compositorSelection[j]->setChecked(true);
+                      }
+                    }
+                  }
+                  initCompositing.clear();
+                }
+
+              }
+              else
+              {
+                initViewer=true;
+              }
+
+              if (showAxis) drawSceneAxis();
+              //Remove previous mesh and entity
+              if (mSceneMgr->hasEntity("drawUtilityENTITY"))
+              {
+                mSceneMgr->destroyEntity("drawUtilityENTITY");
+              }
+              if (!Ogre::MeshManager::getSingleton().getByName("drawUtilityMESH").isNull())
+              {
+                Ogre::MeshManager::getSingleton().remove("drawUtilityMESH");
+              }
+              //If the drawUtility has something to display, we convert to Mesh
+              if (drawUtility->getNumSections())
+              {
+                Ogre::MeshPtr ogreMesh = drawUtility->convertToMesh("drawUtilityMESH", "General");
+                Ogre::Entity *e = mSceneMgr->createEntity("drawUtilityENTITY", ogreMesh->getName());
+                mSceneMgr->getRootSceneNode()->attachObject(e);
+              }
+              if (_video)
+              {
+#ifdef CAPTURE_PERIOD
+                static int counter = 0;
+                if ((counter++ % CAPTURE_PERIOD)==0)
+#endif
+                  screenshot(capture.findFilename(), 2);
+              }
+
+              moveCamera();
+              mRenderWindow->update();
+              mRoot->renderOneFrame();
+              if (_waitForRender) _waitForRender = false;
+            }
           }
 
-	  //*****************************************************************************************
-	  //called to redraw the window
-	  void QtOgreViewer::updateIntern()
-	  {
-	    if(mRenderWindow == NULL)
-        setupView();
-	    if(mRenderWindow != NULL && !_waitForRender){
-	      _waitForRender=true;
-// 	      mRoot->_fireFrameStarted();
-
-	      if (groot->getContext()->getShowWireFrame() && mCamera->getPolygonMode()!= Ogre::PM_WIREFRAME)
-		mCamera->setPolygonMode(Ogre::PM_WIREFRAME);
-	      if (!groot->getContext()->getShowWireFrame() && mCamera->getPolygonMode()!= Ogre::PM_SOLID)
-    mCamera->setPolygonMode(Ogre::PM_SOLID);
-	      if (needUpdateParameters)
-		{
-		  mSceneMgr->setAmbientLight(Ogre::ColourValue(ambient[0]->getFloatValue(),ambient[1]->getFloatValue(),ambient[2]->getFloatValue(),1));
-
-		  for (unsigned int i=0;i<dirLightOgreWidget.size();++i)
-		    {
-		      dirLightOgreWidget[i]->updateLight();
-		    }
-		  for (unsigned int i=0;i<pointLightOgreWidget.size();++i)
-		    {
-		      pointLightOgreWidget[i]->updateLight();
-		    }
-		  for (unsigned int i=0;i<spotLightOgreWidget.size();++i)
-		    {
-		      spotLightOgreWidget[i]->updateLight();
-		    }
-
-		  needUpdateParameters = false;
-    }
-	      //Not optimal, clear all the datas
-        sofa::simulation::getSimulation()->DrawUtility.clear();
-
-        static bool initViewer=false;
-        if (initViewer)
-        {
-          sofa::simulation::getSimulation()->draw(groot);
-          sofa::simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot());
-        }
-        else initViewer=true;
-
-        if (showAxis) drawSceneAxis();
-	      //Remove previous mesh and entity
-	      if (mSceneMgr->hasEntity("drawUtilityENTITY"))
-        {
-          mSceneMgr->destroyEntity("drawUtilityENTITY");
-		}
-	      if (!Ogre::MeshManager::getSingleton().getByName("drawUtilityMESH").isNull())
-		{
-		  Ogre::MeshManager::getSingleton().remove("drawUtilityMESH");
-    }
-	      //If the drawUtility has something to display, we convert to Mesh
-	      if (drawUtility->getNumSections())
-		{
-		  Ogre::MeshPtr ogreMesh = drawUtility->convertToMesh("drawUtilityMESH", "General");
-		  Ogre::Entity *e = mSceneMgr->createEntity("drawUtilityENTITY", ogreMesh->getName());
-		  mSceneMgr->getRootSceneNode()->attachObject(e);
-		}
-	      if (_video)
-		{
-#ifdef CAPTURE_PERIOD
-		  static int counter = 0;
-		  if ((counter++ % CAPTURE_PERIOD)==0)
-#endif
-		    screenshot(capture.findFilename(), 2);
-    }
-
-        moveCamera();
-        mRenderWindow->update();
-        mRoot->renderOneFrame();
-	      if (_waitForRender) _waitForRender = false;
-	    }
-	  }
 	  void QtOgreViewer::updateViewerParameters()
 	  {
 	    needUpdateParameters = true;
@@ -455,20 +484,20 @@ namespace sofa
 
           void QtOgreViewer::showEvent(QShowEvent *e)
           {
-              if (!mRoot) {setup();}
+            if (!mRoot) {setup();}
               QGLWidget::showEvent(e);
           }
 
           void QtOgreViewer::initializeGL()
           {
-              glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
           }
 
           void QtOgreViewer::paintGL()
           {
-              updateIntern();
-              emit( redrawn() );
-	  }
+            updateIntern();
+            emit( redrawn() );
+          }
 
 	  //*****************************************************************************************
 	  //Initialize the rendering window: create a sofa simulation, Ogre window...
@@ -515,7 +544,6 @@ namespace sofa
             mRenderWindow->getCustomAttribute( "WINDOW", &ogreWinId );
             this->create( ogreWinId );
 
-//            Ogre::MaterialManager::getSingleton().load("Examples-Advanced.material", "General");
 #ifdef SOFA_QT4
             setAttribute( Qt::WA_PaintOnScreen, true );
             setAttribute( Qt::WA_NoBackground );
@@ -558,10 +586,7 @@ namespace sofa
 	    mSceneMgr->setAmbientLight(loader.environment.ambientColour);
 	    ambient[0]->setFloatValue(loader.environment.ambientColour[0]);
 	    ambient[1]->setFloatValue(loader.environment.ambientColour[1]);
-	    ambient[2]->setFloatValue(loader.environment.ambientColour[2]);
-	    //By default, we don't use shadows
- 	    mSceneMgr->setShadowTechnique(SHADOWTYPE_NONE);
-	    shadow=SHADOWTYPE_NONE;
+        ambient[2]->setFloatValue(loader.environment.ambientColour[2]);
 
 
 	    if (mSceneMgr->hasCamera("sofaCamera"))
@@ -639,10 +664,270 @@ namespace sofa
 		  addSpotLight(loader.spotLights[i]);
 	      }
 	    numSpotLight->setValue(loader.spotLights.size());
+
+
+        //By default, we don't use shadows
+        setLightActivated(false);
+
 	    //************************************************************************************************
 	    // Alter the camera aspect ratio to match the viewport
         mCamera->setAspectRatio(Real(mVp->getActualWidth()) / Real(mVp->getActualHeight()));
 	  }
+
+      void QtOgreViewer::createTextures()
+      {
+
+        using namespace Ogre;
+
+        TexturePtr tex = TextureManager::getSingleton().createManual(
+            "HalftoneVolume",
+            "General",
+            TEX_TYPE_3D,
+            64,64,64,
+            0,
+            PF_A8
+        );
+
+        HardwarePixelBufferSharedPtr ptr = tex->getBuffer(0,0);
+        ptr->lock(HardwareBuffer::HBL_DISCARD);
+        const PixelBox &pb = ptr->getCurrentLock();
+        Ogre::uint8 *data = static_cast<Ogre::uint8*>(pb.data);
+
+        size_t height = pb.getHeight();
+        size_t width = pb.getWidth();
+        size_t depth = pb.getDepth();
+        size_t rowPitch = pb.rowPitch;
+        size_t slicePitch = pb.slicePitch;
+
+        for (size_t z = 0; z < depth; ++z)
+        {
+            for (size_t y = 0; y < height; ++y)
+            {
+                for(size_t x = 0; x < width; ++x)
+                {
+                    float fx = 32-(float)x+0.5f;
+                    float fy = 32-(float)y+0.5f;
+                    float fz = 32-((float)z)/3+0.5f;
+                    float distanceSquare = fx*fx+fy*fy+fz*fz;
+                    data[slicePitch*z + rowPitch*y + x] =  0x00;
+                    if (distanceSquare < 1024.0f)
+                        data[slicePitch*z + rowPitch*y + x] +=  0xFF;
+                }
+            }
+        }
+        ptr->unlock();
+
+        Ogre::Viewport *vp = mVp;
+
+        TexturePtr tex2 = TextureManager::getSingleton().createManual(
+            "DitherTex",
+            "General",
+            TEX_TYPE_2D,
+            vp->getActualWidth(),vp->getActualHeight(),1,
+            0,
+            PF_A8
+        );
+
+        HardwarePixelBufferSharedPtr ptr2 = tex2->getBuffer(0,0);
+        ptr2->lock(HardwareBuffer::HBL_DISCARD);
+        const PixelBox &pb2 = ptr2->getCurrentLock();
+        Ogre::uint8 *data2 = static_cast<Ogre::uint8*>(pb2.data);
+
+        size_t height2 = pb2.getHeight();
+        size_t width2 = pb2.getWidth();
+        size_t rowPitch2 = pb2.rowPitch;
+
+        for (size_t y = 0; y < height2; ++y)
+        {
+            for(size_t x = 0; x < width2; ++x)
+            {
+                data2[rowPitch2*y + x] = Ogre::Math::RangeRandom(64.0,192);
+            }
+        }
+
+        ptr2->unlock();
+      }
+
+      void QtOgreViewer::createEffects()
+      {
+        /// Motion blur effect
+        Ogre::CompositorPtr comp3 = Ogre::CompositorManager::getSingleton().create(
+            "MotionBlur", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+            );
+        {
+          Ogre::CompositionTechnique *t = comp3->createTechnique();
+          {
+            Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("scene");
+            def->width = 0;
+            def->height = 0;
+            def->formatList.push_back(Ogre::PF_R8G8B8);
+          }
+          {
+            Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("sum");
+            def->width = 0;
+            def->height = 0;
+            def->formatList.push_back(Ogre::PF_R8G8B8);
+          }
+          {
+            Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("temp");
+            def->width = 0;
+            def->height = 0;
+            def->formatList.push_back(Ogre::PF_R8G8B8);
+          }
+          /// Render scene
+          {
+            Ogre::CompositionTargetPass *tp = t->createTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_PREVIOUS);
+            tp->setOutputName("scene");
+          }
+          /// Initialisation pass for sum texture
+          {
+            Ogre::CompositionTargetPass *tp = t->createTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_PREVIOUS);
+            tp->setOutputName("sum");
+            tp->setOnlyInitial(true);
+          }
+          /// Do the motion blur
+          {
+            Ogre::CompositionTargetPass *tp = t->createTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_NONE);
+            tp->setOutputName("temp");
+            { Ogre::CompositionPass *pass = tp->createPass();
+              pass->setType(Ogre::CompositionPass::PT_RENDERQUAD);
+              pass->setMaterialName("Ogre/Compositor/Combine");
+              pass->setInput(0, "scene");
+              pass->setInput(1, "sum");
+            }
+          }
+          /// Copy back sum texture
+          {
+            Ogre::CompositionTargetPass *tp = t->createTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_NONE);
+            tp->setOutputName("sum");
+            { Ogre::CompositionPass *pass = tp->createPass();
+              pass->setType(Ogre::CompositionPass::PT_RENDERQUAD);
+              pass->setMaterialName("Ogre/Compositor/Copyback");
+              pass->setInput(0, "temp");
+            }
+          }
+          /// Display result
+          {
+            Ogre::CompositionTargetPass *tp = t->getOutputTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_NONE);
+            { Ogre::CompositionPass *pass = tp->createPass();
+              pass->setType(Ogre::CompositionPass::PT_RENDERQUAD);
+              pass->setMaterialName("Ogre/Compositor/MotionBlur");
+              pass->setInput(0, "sum");
+            }
+          }
+        }
+
+        /// Heat vision effect
+        Ogre::CompositorPtr comp4 = Ogre::CompositorManager::getSingleton().create(
+            "HeatVision", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+            );
+        {
+          Ogre::CompositionTechnique *t = comp4->createTechnique();
+          t->setCompositorLogicName("HeatVision");
+          {
+            Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("scene");
+            def->width = 256;
+            def->height = 256;
+            def->formatList.push_back(Ogre::PF_R8G8B8);
+          }
+          {
+            Ogre::CompositionTechnique::TextureDefinition *def = t->createTextureDefinition("temp");
+            def->width = 256;
+            def->height = 256;
+            def->formatList.push_back(Ogre::PF_R8G8B8);
+          }
+          /// Render scene
+          {
+            Ogre::CompositionTargetPass *tp = t->createTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_PREVIOUS);
+            tp->setOutputName("scene");
+          }
+          /// Light to heat pass
+          {
+            Ogre::CompositionTargetPass *tp = t->createTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_NONE);
+            tp->setOutputName("temp");
+            {
+              Ogre::CompositionPass *pass = tp->createPass();
+              pass->setType(Ogre::CompositionPass::PT_RENDERQUAD);
+              pass->setIdentifier(0xDEADBABE); /// Identify pass for use in listener
+              pass->setMaterialName("Fury/HeatVision/LightToHeat");
+              pass->setInput(0, "scene");
+            }
+          }
+          /// Display result
+          {
+            Ogre::CompositionTargetPass *tp = t->getOutputTargetPass();
+            tp->setInputMode(Ogre::CompositionTargetPass::IM_NONE);
+            {
+              Ogre::CompositionPass *pass = tp->createPass();
+              pass->setType(Ogre::CompositionPass::PT_RENDERQUAD);
+              pass->setMaterialName("Fury/HeatVision/Blur");
+              pass->setInput(0, "temp");
+            }
+          }
+        }
+      }
+
+      void QtOgreViewer::updateCompositor(bool v)
+      {
+        QCheckBox *check=(QCheckBox *) sender();
+        Ogre::CompositorManager::getSingleton().setCompositorEnabled(mVp,check->text().ascii(), v);
+        updateIntern();
+      }
+
+      void QtOgreViewer::registerCompositors()
+      {
+
+        bool fullInit= (mCompositorNames.empty());
+        //iterate through Compositor Managers resources and add name keys to menu
+        Ogre::CompositorManager::ResourceMapIterator resourceIterator =
+            Ogre::CompositorManager::getSingleton().getResourceIterator();
+
+
+        // add all compositor resources to the view container
+        while (resourceIterator.hasMoreElements())
+        {
+          Ogre::ResourcePtr resource = resourceIterator.getNext();
+          const Ogre::String& compositorName = resource->getName();
+          // Don't add base Ogre/Scene compositor to view
+          if (compositorName == "Ogre/Scene")
+            continue;
+
+          if (fullInit) mCompositorNames.push_back(compositorName);
+
+          int addPosition = -1;
+          if (compositorName == "HDR")
+          {
+            // HDR must be first in the chain
+            addPosition = 0;
+          }
+          try
+          {
+            Ogre::CompositorManager::getSingleton().addCompositor(mVp, compositorName, addPosition);
+            Ogre::CompositorManager::getSingleton().setCompositorEnabled(mVp, compositorName, false);
+          } catch (...) {
+          }
+        }
+        if (fullInit)
+        {
+          QGridLayout* grid=(QGridLayout* ) compositorWidget->layout();
+          const unsigned int maxRow=ceil(mCompositorNames.size()*0.5);
+          for (unsigned int i=0;i<mCompositorNames.size();++i)
+          {
+            int nextColumn= (i >= maxRow)?1:0;
+            QCheckBox *check = new QCheckBox(QString(mCompositorNames[i].c_str()),compositorWidget);
+            grid->addWidget(check,i%(maxRow),nextColumn);
+            compositorSelection.push_back(check);
+            connect(check, SIGNAL(toggled(bool)),this, SLOT(updateCompositor(bool)));
+          }
+        }
+      }
 
 	  void QtOgreViewer::showEntireScene()
 	  {
@@ -654,7 +939,7 @@ namespace sofa
 
 	    for (unsigned int i=0; i<visualModels.size(); i++)
 	      {
-		visualModels[i]->setOgreSceneManager(mSceneMgr);
+          visualModels[i]->setOgreSceneManager(mSceneMgr);
 	      }
 
 
@@ -709,13 +994,13 @@ namespace sofa
 	    resize();
 	  }
 
-      void QtOgreViewer::setCameraMode(component::visualmodel::Camera::CameraType mode)
+      void QtOgreViewer::setCameraMode(component::visualmodel::BaseCamera::CameraType mode)
       {
         SofaViewer::setCameraMode(mode);
 
         switch (mode)
         {
-        case component::visualmodel::Camera::ORTHOGRAPHIC_TYPE:
+        case component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE:
           {
             const sofa::defaulttype::Vector3 center((sceneMinBBox+sceneMaxBBox)*0.5);
 
@@ -729,7 +1014,7 @@ namespace sofa
             mCamera->setOrthoWindow(d*wRatio,d);
           }
           break;
-        case component::visualmodel::Camera::PERSPECTIVE_TYPE:
+        case component::visualmodel::BaseCamera::PERSPECTIVE_TYPE:
           mCamera->setProjectionType(Ogre::PT_PERSPECTIVE);
           break;
         }
@@ -794,20 +1079,7 @@ namespace sofa
 		  case Qt::Key_L:
 		    // --- Modify the shadow type
 		    {
-		      switch(shadow)
-                      {
-                      case Ogre::SHADOWTYPE_NONE:
-                          pickDone=true;
-                          shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
-                          sofa::component::visualmodel::OgreVisualModel::lightsEnabled=true;
-                          break;
-                      case Ogre::SHADOWTYPE_STENCIL_ADDITIVE:
-                      default:
-			  shadow = Ogre::SHADOWTYPE_NONE;
-                          sofa::component::visualmodel::OgreVisualModel::lightsEnabled=false;
-			  break;
-			}
-		      mCamera->getSceneManager()->setShadowTechnique(shadow);
+              setLightActivated(!shadow);
 		      break;
             }
 		  default:
@@ -907,7 +1179,7 @@ namespace sofa
               SReal displacement=evt->delta()*_factorWheel*0.0005;
             m_mTranslateVector.z +=  displacement;
 	    mCamera->moveRelative(m_mTranslateVector);
-            if (currentCamera->getCameraType() == component::visualmodel::Camera::ORTHOGRAPHIC_TYPE)
+            if (currentCamera->getCameraType() == component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE)
             {                
                 SReal wRatio = mCamera->getOrthoWindowWidth()/mCamera->getOrthoWindowHeight();                
                 mCamera->setOrthoWindow(displacement*wRatio+mCamera->getOrthoWindowWidth(),
@@ -919,19 +1191,40 @@ namespace sofa
 
 
 	  void QtOgreViewer::setScene(sofa::simulation::Node* scene, const char* filename, bool keepParams)
-	  {
+      {
+        //Create Compositors
+
+        pickDone=false;
  	    numDirLight->setValue(0);
 	    numPointLight->setValue(0);
 	    numSpotLight->setValue(0);
-            SofaViewer::setScene(scene, filename, keepParams);
-            createScene();
+        SofaViewer::setScene(scene, filename, keepParams);
+        createScene();
 	    sofa::simulation::getSimulation()->DrawUtility.setOgreObject(drawUtility);
 	    sofa::simulation::getSimulation()->DrawUtility.setPolygonMode(0,false); //Disable culling
 	    sofa::simulation::getSimulation()->DrawUtility.setSystemDraw(helper::gl::DrawManager::OGRE);
 	    sofa::simulation::getSimulation()->DrawUtility.setSceneMgr(mSceneMgr);
-            updateIntern();
-            resize();
+        updateIntern();
+        resize();
+
+
+        static bool firstTime = true;
+        if (firstTime)
+        {
+            // Register the compositor logics
+            // See comment in beginning of HelperLogics.h for explanation
+            Ogre::CompositorManager& compMgr = Ogre::CompositorManager::getSingleton();
+            compMgr.registerCompositorLogic("GaussianBlur", new GaussianBlurLogic);
+            compMgr.registerCompositorLogic("HDR", new HDRLogic);
+            compMgr.registerCompositorLogic("HeatVision", new HeatVisionLogic);
+            firstTime = false;
           }
+        createTextures();
+        createEffects();
+        registerCompositors();
+
+
+      }
 
 
 	  bool QtOgreViewer::updateInteractor(QMouseEvent * e)
@@ -947,7 +1240,7 @@ namespace sofa
 	  void QtOgreViewer::moveRayPickInteractor(int eventX, int eventY)
 	  {          
               Vec3d position, direction;
-              if (currentCamera->getCameraType() == component::visualmodel::Camera::PERSPECTIVE_TYPE)
+              if (currentCamera->getCameraType() == component::visualmodel::BaseCamera::PERSPECTIVE_TYPE)
               {
                   sofa::defaulttype::Vec3d  p0, px, py, pz, px1, py1;
                   GLint viewPort[4] = {0,0,width(), height()};
@@ -1034,7 +1327,6 @@ namespace sofa
                   Ogre::Vector3 d=mCamera->getUp().crossProduct(mCamera->getRight());
                   direction[0]=d.x; direction[1]=d.y; direction[2]=d.z;
                   position[0]=p.x;  position[1]=p.y;  position[2]=p.z;
-
               }
             pick.updateRay(position, direction);
 	  }
@@ -1043,104 +1335,133 @@ namespace sofa
 	  {
 	    if (tabLights)
 	      t->removePage(tabLights);
+        if (tabCompositor)
+          t->removePage(tabCompositor);
 	  }
 
 	  void QtOgreViewer::configureViewerTab(QTabWidget *t)
-	  {
+      {
+        /*
 	    if (dirLight)
-	      {
-		if (!tabLights)
-		  t->addTab(tabLights,QString("Lights"));
+        {
+          if (!tabLights)
+            t->addTab(tabLights,QString("Lights"));
 
-		return;
-	      }
-
-	    tabLights = new QWidget();
-	    t->addTab(tabLights,QString("Lights"));
-
-	    QVBoxLayout *l = new QVBoxLayout( tabLights, 0, 1, "tabLights");
-
-	    QToolBox *lightToolBox = new QToolBox(tabLights);
-	    lightToolBox->setCurrentIndex( 1 );
-	    //------------------------------------------------------------------------
-	    //Informations
-	    Q3GroupBox *groupInfo = new Q3GroupBox(QString("Information"), tabLights);
-	    groupInfo->setColumns(4);
-	    QWidget     *global    = new QWidget(groupInfo);
-	    QGridLayout *globalLayout = new QGridLayout(global);
-
-	    saveLightsButton = new QPushButton(QString("Save Lights"),global);
-	    globalLayout->addWidget(saveLightsButton,0,0);
-	    connect( saveLightsButton, SIGNAL( clicked() ), this, SLOT( saveLights() ) );
-
-	    globalLayout->addWidget(new QLabel(QString("Ambient"),global),2,0);
-	    for (unsigned int i=0;i<3;++i)
-	      {
-		std::ostringstream s;
-		s<<"ambient" <<i;
-		ambient[i] = new WFloatLineEdit(global,s.str().c_str());
-		ambient[i]->setMinFloatValue( 0.0f);
-		ambient[i]->setMaxFloatValue( 1.0f);
-		globalLayout->addWidget(ambient[i],2,i+1);
-		connect( ambient[i], SIGNAL( returnPressed() ), this, SLOT( updateViewerParameters() ) );
-	      }
-	    l->addWidget(groupInfo);
-	    //------------------------------------------------------------------------
-	    //Directional Lights
-	    dirLight  = new QWidget( tabLights);
-	    QVBoxLayout *dirLightLayout = new QVBoxLayout(dirLight);
-	    lightToolBox->addItem( dirLight,QString("Directional Lights"));
-
-	    //   Information
-	    Q3GroupBox *infoDirLight = new Q3GroupBox( QString("Information"), dirLight);
-	    infoDirLight->setColumns(3);
-	    dirLightLayout->addWidget(infoDirLight);
-
-	    new QLabel(QString("Number:"),infoDirLight);
-	    numDirLight = new QSpinBox(infoDirLight); numDirLight->setMaximumWidth(SIZE_ENTRY);
-	    connect( numDirLight, SIGNAL( valueChanged(int)), this, SLOT( resizeDirLight(int)));
-
-	    dirLightLayout->addStretch();
-	    //------------------------------------------------------------------------
-	    //Point Lights
-	    pointLight  = new QWidget( tabLights);
-	    QVBoxLayout *pointLightLayout = new QVBoxLayout(pointLight);
-	    lightToolBox->addItem( pointLight,QString("Point Lights"));
-
-	    //   Information
-	    Q3GroupBox *infoPointLight = new Q3GroupBox( QString("Information"), pointLight);
-	    infoPointLight->setColumns(3);
-	    pointLightLayout->addWidget(infoPointLight);
-
-
-	    new QLabel(QString("Number:"),infoPointLight);
-	    numPointLight = new QSpinBox(infoPointLight); numPointLight->setMaximumWidth(SIZE_ENTRY);
-	    connect( numPointLight, SIGNAL( valueChanged(int)), this, SLOT( resizePointLight(int)));
-
-	    pointLightLayout->addStretch();
-	    //------------------------------------------------------------------------
-	    //Spot Lights
-	    spotLight  = new QWidget( tabLights);
-	    QVBoxLayout *spotLightLayout = new QVBoxLayout(spotLight);
-	    lightToolBox->addItem( spotLight,QString("Spot Lights"));
-
-	    //   Information
-	    Q3GroupBox *infoSpotLight = new Q3GroupBox( QString("Information"), spotLight);
-	    infoSpotLight->setColumns(3);
-	    spotLightLayout->addWidget(infoSpotLight);
-
-
-	    new QLabel(QString("Number:"),infoSpotLight);
-	    numSpotLight = new QSpinBox(infoSpotLight); numSpotLight->setMaximumWidth(SIZE_ENTRY);
-	    connect( numSpotLight, SIGNAL( valueChanged(int)), this, SLOT( resizeSpotLight(int)));
-	    spotLightLayout->addStretch();
-
-	    //------------------------------------------------------------------------
-	    //Add the tool box
-	    l->addWidget(lightToolBox);
+          return;
+        }*/
+        addTabulationLights(t);
+        addTabulationCompositor(t);
 
 	    needUpdateParameters = true;
 	  }
+
+
+      void QtOgreViewer::addTabulationLights(QTabWidget *t)
+      {
+        if (!tabLights)
+        {
+          tabLights = new QWidget();
+
+
+          QVBoxLayout *l = new QVBoxLayout( tabLights, 0, 1, "tabLights");
+
+          QToolBox *lightToolBox = new QToolBox(tabLights);
+          lightToolBox->setCurrentIndex( 1 );
+          //------------------------------------------------------------------------
+          //Informations
+          Q3GroupBox *groupInfo = new Q3GroupBox(QString("Information"), tabLights);
+          groupInfo->setColumns(4);
+          QWidget     *global    = new QWidget(groupInfo);
+          QGridLayout *globalLayout = new QGridLayout(global);
+
+          saveLightsButton = new QPushButton(QString("Save Lights"),global);
+          globalLayout->addWidget(saveLightsButton,0,0);
+          connect( saveLightsButton, SIGNAL( clicked() ), this, SLOT( saveLights() ) );
+
+          globalLayout->addWidget(new QLabel(QString("Ambient"),global),2,0);
+          for (unsigned int i=0;i<3;++i)
+          {
+            std::ostringstream s;
+            s<<"ambient" <<i;
+            ambient[i] = new WFloatLineEdit(global,s.str().c_str());
+            ambient[i]->setMinFloatValue( 0.0f);
+            ambient[i]->setMaxFloatValue( 1.0f);
+            globalLayout->addWidget(ambient[i],2,i+1);
+            connect( ambient[i], SIGNAL( returnPressed() ), this, SLOT( updateViewerParameters() ) );
+          }
+          l->addWidget(groupInfo);
+          //------------------------------------------------------------------------
+          //Directional Lights
+          dirLight  = new QWidget( tabLights);
+          QVBoxLayout *dirLightLayout = new QVBoxLayout(dirLight);
+          lightToolBox->addItem( dirLight,QString("Directional Lights"));
+
+          //   Information
+          Q3GroupBox *infoDirLight = new Q3GroupBox( QString("Information"), dirLight);
+          infoDirLight->setColumns(3);
+          dirLightLayout->addWidget(infoDirLight);
+
+          new QLabel(QString("Number:"),infoDirLight);
+          numDirLight = new QSpinBox(infoDirLight); numDirLight->setMaximumWidth(SIZE_ENTRY);
+          connect( numDirLight, SIGNAL( valueChanged(int)), this, SLOT( resizeDirLight(int)));
+
+          dirLightLayout->addStretch();
+          //------------------------------------------------------------------------
+          //Point Lights
+          pointLight  = new QWidget( tabLights);
+          QVBoxLayout *pointLightLayout = new QVBoxLayout(pointLight);
+          lightToolBox->addItem( pointLight,QString("Point Lights"));
+
+          //   Information
+          Q3GroupBox *infoPointLight = new Q3GroupBox( QString("Information"), pointLight);
+          infoPointLight->setColumns(3);
+          pointLightLayout->addWidget(infoPointLight);
+
+
+          new QLabel(QString("Number:"),infoPointLight);
+          numPointLight = new QSpinBox(infoPointLight); numPointLight->setMaximumWidth(SIZE_ENTRY);
+          connect( numPointLight, SIGNAL( valueChanged(int)), this, SLOT( resizePointLight(int)));
+
+          pointLightLayout->addStretch();
+          //------------------------------------------------------------------------
+          //Spot Lights
+          spotLight  = new QWidget( tabLights);
+          QVBoxLayout *spotLightLayout = new QVBoxLayout(spotLight);
+          lightToolBox->addItem( spotLight,QString("Spot Lights"));
+
+          //   Information
+          Q3GroupBox *infoSpotLight = new Q3GroupBox( QString("Information"), spotLight);
+          infoSpotLight->setColumns(3);
+          spotLightLayout->addWidget(infoSpotLight);
+
+
+          new QLabel(QString("Number:"),infoSpotLight);
+          numSpotLight = new QSpinBox(infoSpotLight); numSpotLight->setMaximumWidth(SIZE_ENTRY);
+          connect( numSpotLight, SIGNAL( valueChanged(int)), this, SLOT( resizeSpotLight(int)));
+          spotLightLayout->addStretch();
+
+          //------------------------------------------------------------------------
+          //Add the tool box
+          l->addWidget(lightToolBox);
+        }
+        t->addTab(tabLights,QString("Lights"));
+      }
+      void QtOgreViewer::addTabulationCompositor(QTabWidget *t)
+      {
+        if (!tabCompositor)
+        {
+          tabCompositor = new QWidget();
+          QVBoxLayout* l=new QVBoxLayout(tabCompositor);
+          l->add( new QLabel(QString("Effects: "),tabCompositor));
+
+          compositorWidget = new QWidget(tabCompositor);
+          new QGridLayout(compositorWidget,0,2);
+          l->add(compositorWidget);
+
+          l->addSpacerItem(new QSpacerItem(10,10,QSizePolicy::Minimum, QSizePolicy::Expanding));
+        }
+        t->addTab(tabCompositor,QString("Compositor"));
+      }
 
 	  void QtOgreViewer::addDirLight(std::string lightName)
 	  {
@@ -1293,6 +1614,34 @@ namespace sofa
 	      }
 	  }
 
+      void QtOgreViewer::configure(sofa::component::configurationsetting::ViewerSetting* v)
+      {
+
+        SofaViewer::configure(v);
+        if (component::configurationsetting::OgreViewerSetting *viewerConf=dynamic_cast<component::configurationsetting::OgreViewerSetting *>(v))
+        {
+          initCompositing=viewerConf->getCompositors();
+          setLightActivated(viewerConf->getShadows());
+          mCamera->getSceneManager()->setShadowTechnique(shadow);
+
+        }
+      }
+
+      void QtOgreViewer::setLightActivated(bool b)
+      {
+        if (b)
+        {
+          pickDone=true;
+          shadow = Ogre::SHADOWTYPE_STENCIL_ADDITIVE;
+          sofa::component::visualmodel::OgreVisualModel::lightsEnabled=true;
+        }
+        else
+        {
+          shadow = Ogre::SHADOWTYPE_NONE;
+          sofa::component::visualmodel::OgreVisualModel::lightsEnabled=false;
+        }
+        mCamera->getSceneManager()->setShadowTechnique(shadow);
+      }
 
 	  void QtOgreViewer::setBackgroundColour(float r, float g, float b)
       {

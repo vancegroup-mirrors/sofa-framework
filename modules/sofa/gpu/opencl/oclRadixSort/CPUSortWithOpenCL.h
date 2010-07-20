@@ -29,8 +29,8 @@ public:
 
 		std::cout << "CPUSort values:" <<values.offset << "\nkeys"<< keys.offset <<"\n";
 
-		sofa::gpu::opencl::myopenclEnqueueReadBuffer(0,valueVector,values.m,0/*values.offset*/,numElements*sizeof(T));
-		sofa::gpu::opencl::myopenclEnqueueReadBuffer(0,keyVector,keys.m,0/*keys.offset*/,numElements*sizeof(int));
+		sofa::gpu::opencl::myopenclEnqueueReadBuffer(0,valueVector,values.m,values.offset,numElements*sizeof(T));
+		sofa::gpu::opencl::myopenclEnqueueReadBuffer(0,keyVector,keys.m,keys.offset,numElements*sizeof(int));
 
 		for(int i=0;i<numElements;i++)
 		{
@@ -53,8 +53,8 @@ public:
 			valueVector[j] = vecsort[j].value;
 		}
 
-		sofa::gpu::opencl::myopenclEnqueueWriteBuffer(0,values.m,0/*values.offset*/,valueVector,numElements*sizeof(T));
-		sofa::gpu::opencl::myopenclEnqueueWriteBuffer(0,keys.m,0/*keys.offset*/,keyVector,numElements*sizeof(int));
+		sofa::gpu::opencl::myopenclEnqueueWriteBuffer(0,values.m,values.offset,valueVector,numElements*sizeof(T));
+		sofa::gpu::opencl::myopenclEnqueueWriteBuffer(0,keys.m,keys.offset,keyVector,numElements*sizeof(int));
 	}
 
 private:

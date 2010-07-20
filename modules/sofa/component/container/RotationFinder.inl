@@ -15,7 +15,7 @@
 #include <sofa/helper/gl/template.h>
 #include <algorithm>
 #include <sofa/helper/system/thread/CTime.h>
-
+#include <sofa/component/linearsolver/RotationMatrix.h>
 
 namespace sofa
 {
@@ -33,7 +33,7 @@ RotationFinder<DataTypes>::RotationFinder()
 : topo(NULL)
 ,axisToFlip(initData(&axisToFlip, int(-1), "axisToFlip", "Flip Axis"))
 ,showRotations(initData(&showRotations, bool(false), "showRotations", "Show Rotations"))
-,neighborhoodLevel(initData(&neighborhoodLevel, int(0), "neighborhoodLevel", "Neighborhood level"))
+,neighborhoodLevel(initData(&neighborhoodLevel, int(1), "neighborhoodLevel", "Neighborhood level"))
 ,numOfClusters(initData(&numOfClusters, int(1), "numOfClusters", "Number of clusters"))
 ,maxIter(initData(&maxIter, unsigned(500), "maxIter", "Number of iterations to build the neighborhood"))
 ,epsilon(initData(&epsilon, Real(0.0000000001), "epsilon", "epsilon"))
@@ -342,6 +342,95 @@ const helper::vector<typename RotationFinder<DataTypes>::Mat3x3>& RotationFinder
 	}
 
 	return rotations;
+}
+
+template <class DataTypes>
+void RotationFinder<DataTypes>::getRotations(defaulttype::BaseMatrix * m,int offset) {
+    if (component::linearsolver::RotationMatrix<Real> * diag = dynamic_cast<component::linearsolver::RotationMatrix<Real> *>(m)) {
+  	const VecCoord& currentPositions = *mechanicalState->getX();
+	const VecCoord& restPositions = *mechanicalState->getX0();
+
+//	unsigned int nbPoints =  mechanicalState->getSize();
+
+	if (currentPositions.size() < 3)
+	{
+                serr << "RotationFinder : problem with mechanical state; return ID matrix..." << sendl;
+		rotations.clear();
+		return ;
+	}
+	//if mechanical state has changed, we must compute again x0_cm and qT
+	if(oldRestPositionSize != restPositions.size())
+	{
+		computeNeighborhood();
+//                createClusters();
+		computeQT();
+		oldRestPositionSize = restPositions.size();
+	}
+	
+        unsigned int nbShapes = pointNeighborhood.size();
+
+	diag->getVector().resize(nbShapes*9);
+
+	for (unsigned int i=0 ; i<nbShapes ; i++)
+	{
+	    //we compute A_pq matrix
+	    Mat3x3 A_pq(0);
+
+	    Coord temp;
+	    defaulttype::Mat<3,1,Real> p;
+	    defaulttype::Mat<1,3,Real> qT;
+
+            Coord center;
+	    Neighborhood::const_iterator it, itEnd;
+	    for (it = pointNeighborhood[i].begin(), itEnd = pointNeighborhood[i].end(); it != itEnd ; ++it)
+		center += currentPositions[*it];
+
+	    center /= pointNeighborhood[i].size();
+	    Xcm[i] = center;
+
+	    for (it = pointNeighborhood[i].begin(), itEnd = pointNeighborhood[i].end(); it != itEnd ; ++it)
+	    {
+		Coord neighbor = currentPositions[*it];
+		
+		temp = (neighbor - center);
+
+		for (unsigned int k=0 ;k<3 ;k++)
+			p[k][0] = temp[k];
+
+		qT[0] = restPositions[*it] - Xcm0[i];
+
+		A_pq += 1*(p*qT);
+	    }
+	    Mat3x3 R;
+	    Mat3x3 S;
+	    polar_decomp(A_pq, R, S);
+
+	    //test R is rotation or symmetry
+	    //-> negative if symmetry
+	    if (determinant(R) < 0)
+		flipAxis(R);
+
+	    *((Mat3x3 *) &diag->getVector()[i*9]) = R;
+	}
+    } else {
+	getRotations();
+	m->resize(rotations.size()*3,rotations.size()*3);
+	
+	for (unsigned i=0;i<rotations.size();i++) {
+	    int e = i*3+offset;
+	    m->set(e+0,e+0,rotations[i][0][0]);
+	    m->set(e+0,e+1,rotations[i][0][1]);
+	    m->set(e+0,e+2,rotations[i][0][2]);
+	    
+	    m->set(e+1,e+0,rotations[i][1][0]);
+	    m->set(e+1,e+1,rotations[i][1][1]);
+	    m->set(e+1,e+2,rotations[i][1][2]);
+	    
+	    m->set(e+2,e+0,rotations[i][2][0]);
+	    m->set(e+2,e+1,rotations[i][2][1]);
+	    m->set(e+2,e+2,rotations[i][2][2]);
+	}
+    }
 }
 
 template <class DataTypes>

@@ -55,7 +55,9 @@ HEADERS += initEngine.h \
            TextureInterpolation.h \
            TextureInterpolation.inl \
            SubsetTopology.h \
-           SubsetTopology.inl
+           SubsetTopology.inl \
+           RigidEngine.h \
+           RigidEngine.inl
 
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
@@ -78,7 +80,8 @@ SOURCES += initEngine.cpp \
            Spiral.cpp \
            Vertex2Frame.cpp \
            TextureInterpolation.cpp \
-           SubsetTopology.cpp
+           SubsetTopology.cpp \
+           RigidEngine.cpp
            
            
 

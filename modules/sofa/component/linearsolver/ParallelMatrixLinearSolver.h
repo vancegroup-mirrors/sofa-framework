@@ -79,6 +79,7 @@ public:
 
 	Data<bool> useWarping;
 	Data<bool> useMultiThread;
+	Data<bool> check_symetric;
 
 	ParallelMatrixLinearSolver();
 	virtual ~ParallelMatrixLinearSolver();
@@ -193,6 +194,7 @@ protected:
 	boost::barrier * bar;
 	sofa::helper::system::atomic<int> ready_thread;
 	sofa::helper::system::atomic<int> run;
+	int nbstep_update;
 };
 
 template<class Matrix, class Vector>

@@ -31,6 +31,7 @@
 #include <sofa/gui/qt/viewer/qtogre/DotSceneLoader.h>
 
 #include "OgreShaderParameter.h"
+#include "OgreShaderTextureUnit.h"
 
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/VisualModel.h>
@@ -93,15 +94,18 @@ namespace sofa
 
         int index;
         Indices indices;
-        Ogre::MaterialPtr material;        
+        Ogre::MaterialPtr material;
         std::string materialName;
+        std::string shaderName;
         std::string textureName;
+        core::loader::Material sofaMaterial;
 
         VecTriangles triangles;
         VecQuads quads;
 
         void init(int &idx);
-        void create(Ogre::ManualObject *, helper::vector< BaseOgreShaderParameter*> *,
+        void create(Ogre::ManualObject *,
+                    helper::vector< BaseOgreShaderParameter*> *,
                     const ResizableExtVector<Coord>& positions,
                     const ResizableExtVector<Coord>& normals,
                     const ResizableExtVector<TexCoord>& textCoords) const;
@@ -109,7 +113,7 @@ namespace sofa
                     const ResizableExtVector<Coord>& normals,
                     const ResizableExtVector<TexCoord>& textCoords) const ;
 
-        Ogre::MaterialPtr createMaterial( const core::loader::Material &sofaMaterial, const std::string &shaderName);
+        Ogre::MaterialPtr createMaterial(helper::vector< OgreShaderTextureUnit*> *, const core::loader::Material &sofaMaterial, const std::string &shaderName);
         void updateMaterial(const core::loader::Material &sofaMaterial);
         void applyShaderParameters() const;
 
@@ -125,6 +129,7 @@ namespace sofa
         const unsigned int maxPrimitives;
         mutable Ogre::ManualObject *model;
         mutable helper::vector< BaseOgreShaderParameter*>* shaderParameters;
+        helper::vector< OgreShaderTextureUnit*>* shaderTextureUnits;
       };
 
 
@@ -151,8 +156,7 @@ public:
 protected:
 
     void prepareMesh();
-    void updateVisibility();
-    void uploadSubMesh(const SubMesh& m);
+    void updateVisibility();    
     void uploadNormals();    
     void convertManualToMesh();
 
@@ -173,6 +177,7 @@ protected:
 
 
     helper::vector<BaseOgreShaderParameter*> shaderParameters;
+    helper::vector<OgreShaderTextureUnit*>   shaderTextureUnits;
 
     typedef std::map<std::string, SubMesh> MatToMesh;
     MatToMesh materialToMesh;

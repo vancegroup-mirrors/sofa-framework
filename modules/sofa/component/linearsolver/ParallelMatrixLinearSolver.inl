@@ -48,8 +48,6 @@ void Thread_invert<Matrix,Vector>::operator()() {
 		
 		if(index) index=0;
 		else index=1;
-		
-		std::cout << "thread swap" << std::endl;
 	}
 	
 	bar->wait();
@@ -60,6 +58,7 @@ template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
 : useWarping( initData( &useWarping, true, "useWarping", "use Warping around the solver" ) )
 , useMultiThread( initData( &useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
+, check_symetric( initData( &check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
 {}
 
 template<class Matrix, class Vector>
@@ -119,11 +118,25 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(double mFact
       this->addMBK_ToMatrix(matricesWork[indexwork], mFact, bFact, kFact, offset);
   }
   for (unsigned i=0;i<useRotation && rotationFinders.size();i++) rotationFinders[i]->getRotations(rotationWork[indexwork]);
+  
+  if (check_symetric.getValue()) {
+    for (unsigned i=0;i<matricesWork[indexwork]->colSize();i++) {
+	for (unsigned j=0;j<matricesWork[indexwork]->rowSize();j++) {
+	    double diff = matricesWork[indexwork]->element(j,i) - matricesWork[indexwork]->element(i,j);
+	    if ((diff<-0.0000001) || (diff>0.0000001)) {
+	      printf("ERROR : THE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix\n");
+	      return;
+	    }
+	}
+    }	
+    printf("THE MATRIX IS SYMETRIC\n");
+  }
+
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
-	useRotation = useWarping.getValue();
+	useRotation = useWarping.getValue() && rotationFinders.size();
     
 	if (first) {
 	    first = false;
@@ -159,6 +172,8 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    boost::thread thrd(thi);
 	    
 	    indexwork = 0;
+	    nbstep_update = 0;
+	    
 	} else if (! useMultiThread.getValue()) {
 	    this->computeSystemMatrix(mFact,bFact,kFact);		    
 	    this->invertSystem();
@@ -166,10 +181,15 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    ready_thread = 0;
 	    	    
 	    this->computeSystemMatrix(mFact,bFact,kFact);
+	    	    
 	    bar->wait();
+	    
+	    std::cout << "thread swap " << nbstep_update << " needed" << std::endl;
+	    nbstep_update = 0;
+	    
 	    if (indexwork) indexwork=0;
-	    else indexwork=1;
-	}
+	    else indexwork=1;	    
+	} else nbstep_update++;
 	
 	if (useRotation) tmpVectorRotation.resize(systemSize);  
 }

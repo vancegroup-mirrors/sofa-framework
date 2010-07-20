@@ -96,7 +96,7 @@ class CudaRotationMatrix : public defaulttype::BaseMatrix {
 		return;
 	  }
 	} 
-	
+
 	unsigned int k = 0,l = 0;
 	while (k < data.size()) {
 		result->set(l+0,data[k + 0] * v->element(l+0) + data[k + 1] * v->element(l+1) + data[k + 2] * v->element(l+2));
@@ -118,7 +118,7 @@ class CudaRotationMatrix : public defaulttype::BaseMatrix {
 		return;
 	  }
 	}       
-      
+
       	unsigned int k = 0,l = 0;
 	while (k < data.size()) {
 		result->set(l+0,data[k + 0] * v->element(l+0) + data[k + 3] * v->element(l+1) + data[k + 6] * v->element(l+2));

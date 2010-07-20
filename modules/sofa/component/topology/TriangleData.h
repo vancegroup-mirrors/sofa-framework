@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_TRIANGLEDATA_H
 #define SOFA_COMPONENT_TOPOLOGY_TRIANGLEDATA_H
 
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/helper/vector.h>
 
 namespace sofa
@@ -36,7 +36,7 @@ namespace component
 
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Triangle Triangle;
 
 	/** \brief Basic creation function for element of type T : simply calls default constructor.
@@ -160,8 +160,8 @@ namespace topology
 		{}
 
 		/// Handle TriangleSetTopology related events, ignore others.
-		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-								std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end );
+		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+								std::list< const core::topology::TopologyChange *>::const_iterator &end );
 
 		void setCreateFunction(void (*createFunc )(int, void*, T&, const Triangle&, const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double>& )) 
 		{

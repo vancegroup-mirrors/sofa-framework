@@ -27,7 +27,7 @@
 // Copyright: See COPYING file that comes with this distribution
 #include <sofa/component/forcefield/SpringEdgeDataForceField.inl>
 #include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/simulation/tree/xml/ObjectFactory.h>
 //#include <typeinfo>
 
@@ -49,7 +49,7 @@ using namespace sofa::defaulttype;
 template<class DataTypes>
 void create(SpringEdgeDataForceField<DataTypes>*& obj, simulation::xml::ObjectDescription* arg)
 {
-        simulation::xml::createWithParent< SpringEdgeDataForceField<DataTypes>, core::componentmodel::behavior::MechanicalState<DataTypes> >(obj, arg);
+        simulation::xml::createWithParent< SpringEdgeDataForceField<DataTypes>, core::behavior::MechanicalState<DataTypes> >(obj, arg);
 	if (obj != NULL)
 	{
 	    obj->parseFields( arg->getAttributeMap() );

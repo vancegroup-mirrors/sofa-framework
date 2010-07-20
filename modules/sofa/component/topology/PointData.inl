@@ -48,16 +48,16 @@ namespace topology
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename VecT>
-	void PointData<T,VecT>::handleTopologyEvents( std::list<  const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-												std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	void PointData<T,VecT>::handleTopologyEvents( std::list<  const core::topology::TopologyChange *>::const_iterator changeIt, 
+												std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			 case core::componentmodel::topology::TETRAHEDRAADDED:
+			 case core::topology::TETRAHEDRAADDED:
 			 {
 				 if (m_createTetrahedronFunc) 
 				 {
@@ -67,7 +67,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TETRAHEDRAREMOVED:
+			 case core::topology::TETRAHEDRAREMOVED:
 			 {
 				 if (m_destroyTetrahedronFunc) 
 				 {
@@ -77,7 +77,7 @@ namespace topology
 				 }
 				 break;
 			 }		
-			 case core::componentmodel::topology::TRIANGLESADDED:
+			 case core::topology::TRIANGLESADDED:
 			 {
 				 if (m_createTriangleFunc) 
 				 {
@@ -87,7 +87,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESREMOVED:
+			 case core::topology::TRIANGLESREMOVED:
 			 {
 				 if (m_destroyTriangleFunc) 
 				 {
@@ -97,7 +97,7 @@ namespace topology
 				 }
 				 break;
 			 }						 
-			 case core::componentmodel::topology::EDGESADDED:
+			 case core::topology::EDGESADDED:
 			 {
 				 if (m_createEdgeFunc) 
 				 {
@@ -107,7 +107,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::EDGESREMOVED:
+			 case core::topology::EDGESREMOVED:
 			 {
 				 if (m_destroyEdgeFunc) 
 				 {
@@ -117,14 +117,14 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::POINTSINDICESSWAP:
+			 case core::topology::POINTSINDICESSWAP:
 			 {
 				 unsigned int i1 = ( static_cast< const PointsIndicesSwap * >( *changeIt ) )->index[0];
 				 unsigned int i2 = ( static_cast< const PointsIndicesSwap* >( *changeIt ) )->index[1];
 				 swap( i1, i2 );
 				 break;
 			 }
-			 case core::componentmodel::topology::POINTSADDED:
+			 case core::topology::POINTSADDED:
 			 {
 				 unsigned int nbPoints = ( static_cast< const PointsAdded * >( *changeIt ) )->getNbAddedVertices();
 				 sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsAdded * >( *changeIt ) )->ancestorsList;
@@ -132,20 +132,20 @@ namespace topology
 				 add( nbPoints, ancestors, coefs );
 				 break;
 			 }
-			 case core::componentmodel::topology::POINTSREMOVED:
+			 case core::topology::POINTSREMOVED:
 			 {
 				 const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRemoved * >( *changeIt ) )->getArray();
 				 remove( tab );
 				 break;
 			 }
-			 case core::componentmodel::topology::POINTSRENUMBERING:
+			 case core::topology::POINTSRENUMBERING:
 			 {
 
 				 const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRenumbering * >( *changeIt ) )->getIndexArray(); 
 				 renumber( tab );
 				 break;
 			 }
-			 case core::componentmodel::topology::POINTSMOVED:
+			 case core::topology::POINTSMOVED:
 			 {
 			   const sofa::helper::vector< unsigned int >& indexList = ( static_cast< const PointsMoved * >( *changeIt ) )->indicesList;
 			   const sofa::helper::vector< sofa::helper::vector< unsigned int > > ancestors = ( static_cast< const PointsMoved * >( *changeIt ) )->ancestorsList;
@@ -161,7 +161,7 @@ namespace topology
 			   this->endEdit();
 			   break;
 			 }
-			 case core::componentmodel::topology::EDGESMOVED_REMOVING:
+			 case core::topology::EDGESMOVED_REMOVING:
 			 {
 			   if (m_destroyEdgeFunc) 
 			   {
@@ -172,7 +172,7 @@ namespace topology
 
 			   break;
 			 }
-			 case core::componentmodel::topology::EDGESMOVED_ADDING:
+			 case core::topology::EDGESMOVED_ADDING:
 			 {
 			   if (m_createEdgeFunc) 
 			   {
@@ -183,7 +183,7 @@ namespace topology
 
 			   break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESMOVED_REMOVING:
+			 case core::topology::TRIANGLESMOVED_REMOVING:
 			 {
 			   if (m_destroyTriangleFunc) 
 			   {
@@ -194,7 +194,7 @@ namespace topology
 			   
 			   break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESMOVED_ADDING:
+			 case core::topology::TRIANGLESMOVED_ADDING:
 			 {
 			   if (m_createTriangleFunc) 
 			   {

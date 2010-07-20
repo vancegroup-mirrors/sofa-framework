@@ -45,19 +45,19 @@ namespace topology
 
 
 	template <typename T>
-	void EdgeSubsetData<T>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-												std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
+	void EdgeSubsetData<T>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+												std::list< const core::topology::TopologyChange *>::const_iterator &end,
 												const unsigned int totalEdgeSetArraySize) 
 	{
 		setTotalEdgeSetArraySize(totalEdgeSetArraySize);
 
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			 case core::componentmodel::topology::TETRAHEDRAADDED:
+			 case core::topology::TETRAHEDRAADDED:
 			 {
 				 if (m_createTetrahedronFunc) 
 				 {
@@ -66,7 +66,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TETRAHEDRAREMOVED:
+			 case core::topology::TETRAHEDRAREMOVED:
 			 {
 				 if (m_destroyTetrahedronFunc) 
 				 {
@@ -75,7 +75,7 @@ namespace topology
 				 }
 				 break;
 			 }		
-			 case core::componentmodel::topology::TRIANGLESADDED:
+			 case core::topology::TRIANGLESADDED:
 			 {
 				 if (m_createTriangleFunc) 
 				 {
@@ -84,7 +84,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESREMOVED:
+			 case core::topology::TRIANGLESREMOVED:
 			 {
 				 if (m_destroyTriangleFunc) 
 				 {
@@ -93,13 +93,13 @@ namespace topology
 				 }
 				 break;
 			 }	
-			 case core::componentmodel::topology::EDGESADDED:
+			 case core::topology::EDGESADDED:
 			 {
 				 const EdgesAdded *ea=static_cast< const EdgesAdded * >( *changeIt );
 				 add( ea->getNbAddedEdges(), ea->edgeArray, ea->ancestorsList, ea->coefs );
 				 break;
 			 }
-			 case core::componentmodel::topology::EDGESREMOVED:
+			 case core::topology::EDGESREMOVED:
 			 {
 				 const std::vector<unsigned int> &tab = ( static_cast< const EdgesRemoved *>( *changeIt ) )->getArray();
 				 remove( tab );

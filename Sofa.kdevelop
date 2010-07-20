@@ -100,18 +100,18 @@
   </kdevdebugger>
   <kdevtrollproject>
     <run>
-      <mainprogram>/media/data/Sofa/bin/runSofa</mainprogram>
-      <programargs>-r</programargs>
+      <mainprogram>/home/3S-LAB/hpbui/SofaDev/bin/runSofa-latest</mainprogram>
+      <programargs>/home/3S-LAB/hpbui/SofaDev/applications/plugins/lem/maillage2.pscn</programargs>
       <directoryradio>build</directoryradio>
       <customdirectory>/</customdirectory>
       <terminal>false</terminal>
-      <autocompile>true</autocompile>
+      <autocompile>false</autocompile>
       <envvars>
         <envvar value="./lib/linux:./lib/sofa-plugins:/usr/local/cuda/lib:$LD_LIBRARY_PATH" name="LD_LIBRARY_PATH" />
         <envvar value="/usr/local/cuda/bin/:$PATH" name="PATH" />
       </envvars>
       <globaldebugarguments>/home/delaplaj/sofa/examples/Components/constraint/BoxConstraint.scn</globaldebugarguments>
-      <globalcwd>/media/data/Sofa</globalcwd>
+      <globalcwd>/home/3S-LAB/hpbui/SofaDev</globalcwd>
       <useglobalprogram>true</useglobalprogram>
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
@@ -191,7 +191,7 @@
       <includestyle>3</includestyle>
       <designerintegration>EmbeddedKDevDesigner</designerintegration>
       <qmake>/usr/bin/qmake</qmake>
-      <designer></designer>
+      <designer>/usr/bin/designer</designer>
       <designerpluginpaths/>
     </qt>
     <designerintegration>

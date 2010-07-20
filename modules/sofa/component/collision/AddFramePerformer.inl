@@ -53,7 +53,7 @@ namespace sofa
           }
         else
           {         
-            core::componentmodel::behavior::MechanicalState<DataTypes>* mstateCollision=dynamic_cast< core::componentmodel::behavior::MechanicalState<DataTypes>*  >(picked.mstate);            
+            core::behavior::MechanicalState<DataTypes>* mstateCollision=dynamic_cast< core::behavior::MechanicalState<DataTypes>*  >(picked.mstate);            
             if (!mstateCollision)
               {
                 this->interactor->serr << "uncompatible MState during Mouse Interaction " << this->interactor->sendl;

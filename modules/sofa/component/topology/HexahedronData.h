@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONDATA_H
 #define SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONDATA_H
 
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/helper/vector.h>
 #include <list>
 
@@ -37,7 +37,7 @@ namespace component
 
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Hexa Hexa;
 	typedef Hexa Hexahedron;
 
@@ -159,8 +159,8 @@ namespace topology
 		{}
 
 		/// Handle HexahedronSetTopology related events, ignore others.
-		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-								std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end );
+		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+								std::list< const core::topology::TopologyChange *>::const_iterator &end );
 
 		void setCreateFunction(void (*createFunc )(int, void*, T&, const Hexahedron&, const sofa::helper::vector< unsigned int >&, const sofa::helper::vector< double>& )) 
 		{

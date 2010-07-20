@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGYCHANGE_H
 #define SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGYCHANGE_H
 
-#include <sofa/core/componentmodel/topology/Topology.h>		// TopologyChange
+#include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 
 namespace sofa
@@ -34,22 +34,22 @@ namespace component
 {
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Triangle Triangle;
 
 	/** indicates that some triangles were added */
-	class TrianglesAdded : public core::componentmodel::topology::TopologyChange  
+	class TrianglesAdded : public core::topology::TopologyChange  
 	{
 	public:
 		TrianglesAdded(const unsigned int nT) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TRIANGLESADDED), 
+		: core::topology::TopologyChange(core::topology::TRIANGLESADDED), 
 		nTriangles(nT)
 		{ }
 
 		TrianglesAdded(const unsigned int nT, 
 						const sofa::helper::vector< Triangle >& _triangleArray,
 						const sofa::helper::vector< unsigned int >& trianglesIndex) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TRIANGLESADDED), 
+		: core::topology::TopologyChange(core::topology::TRIANGLESADDED), 
 		nTriangles(nT), 
 		triangleArray(_triangleArray), 
 		triangleIndexArray(trianglesIndex)
@@ -60,7 +60,7 @@ namespace topology
 						const sofa::helper::vector< unsigned int >& trianglesIndex,
 						const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
 						const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TRIANGLESADDED), 
+		: core::topology::TopologyChange(core::topology::TRIANGLESADDED), 
 		nTriangles(nT), 
 		triangleArray(_triangleArray), 
 		triangleIndexArray(trianglesIndex),
@@ -92,11 +92,11 @@ namespace topology
 	};
 
 	/** indicates that some triangles are about to be removed */
-	class TrianglesRemoved : public core::componentmodel::topology::TopologyChange  
+	class TrianglesRemoved : public core::topology::TopologyChange  
 	{
 	public:
 		TrianglesRemoved(const sofa::helper::vector<unsigned int> _tArray) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TRIANGLESREMOVED), 
+		: core::topology::TopologyChange(core::topology::TRIANGLESREMOVED), 
 		removedTrianglesArray(_tArray) 
 		{}
 
@@ -123,11 +123,11 @@ namespace topology
 	/** indicates that some triangles are about to be moved (i.e some/all of their vertices have just been moved)
 	 * TrianglesMoved_Removing First part, remove element concerned to force object to recompute global state with current positions
 	 */
-	class TrianglesMoved_Removing : public core::componentmodel::topology::TopologyChange  
+	class TrianglesMoved_Removing : public core::topology::TopologyChange  
 	{
 	public:
 	  TrianglesMoved_Removing (const sofa::helper::vector< unsigned int >& triangleShell)
-	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::TRIANGLESMOVED_REMOVING),
+	    : core::topology::TopologyChange (core::topology::TRIANGLESMOVED_REMOVING),
 	    trianglesAroundVertexMoved (triangleShell)
 	  {}
 
@@ -139,12 +139,12 @@ namespace topology
 	/** indicates that some triangles are about to be moved (i.e some/all of their vertices have just been moved)
 	 * TrianglesMoved_Adding Second part, recompute state of all elements previously removed, with new positions points
 	 */
-	class TrianglesMoved_Adding : public core::componentmodel::topology::TopologyChange  
+	class TrianglesMoved_Adding : public core::topology::TopologyChange  
 	{
 	public:
 	  TrianglesMoved_Adding (const sofa::helper::vector< unsigned int >& triangleShell,
 				 const sofa::helper::vector< Triangle >& triangleArray)
-	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::TRIANGLESMOVED_ADDING),
+	    : core::topology::TopologyChange (core::topology::TRIANGLESMOVED_ADDING),
 	    trianglesAroundVertexMoved (triangleShell), triangleArray2Moved (triangleArray)
 	  {}
 

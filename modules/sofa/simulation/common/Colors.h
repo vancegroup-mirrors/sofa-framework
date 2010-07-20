@@ -40,8 +40,8 @@ namespace Colors
 
 enum {
 	NODE = 0,
-	OBJECT = 1,
-	CONTEXT = 2,
+        OBJECT = 1,
+        CONTEXT = 2,
 	BMODEL = 3,
 	CMODEL = 4,
 	MMODEL = 5,
@@ -56,12 +56,14 @@ enum {
 	TOPOLOGY = 14,
 	VMODEL = 15,
 	LOADER = 16,
+        CONFIGURATIONSETTING = 17,
+        ALLCOLORS
 };
 
 // See http://www.graphviz.org/doc/info/colors.html
 // The following is mostly the "set312" colors
 
-static const char* COLOR[17]={
+static const char* COLOR[ALLCOLORS]={
 	/*Node                  =*/ "#dedede", // color 9
 	/*Object                =*/ "#ffffff", // white
 	/*Context               =*/ "#d7191c", // color spectral4/1
@@ -79,6 +81,7 @@ static const char* COLOR[17]={
 	/*Topology              =*/ "#ffed6f", // color 12
 	/*VisualModel           =*/ "#eefdea", // color 11 (brighter)
 	/*Loader                =*/ "#00daff", // cyan
+        /*ConfigurationSetting  =*/ "#ffc581", // pale pink
 };
 
 inline const char* getColor(const char* classname)
@@ -101,6 +104,7 @@ inline const char* getColor(const char* classname)
     if (!strcmp(classname,"Topology")) return COLOR[TOPOLOGY];
     if (!strcmp(classname,"VisualModel")) return COLOR[VMODEL];
     if (!strcmp(classname,"Loader")) return COLOR[LOADER];
+    if (!strcmp(classname,"ConfigurationSetting")) return COLOR[CONFIGURATIONSETTING];
     return "";
 
 }

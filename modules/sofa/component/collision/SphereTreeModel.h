@@ -37,7 +37,7 @@
 
 #include <sofa/core/CollisionModel.h>
 #include <sofa/component/container/MechanicalObject.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <vector>
 #include <iostream>
@@ -124,7 +124,7 @@ public:
 
         void applyScale (const double /*sx*/,const double /*sy*/,const double /*sz*/);
 
-        sofa::core::componentmodel::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return this; }
+        sofa::core::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return this; }
 
 	// -- CollisionModel interface
 

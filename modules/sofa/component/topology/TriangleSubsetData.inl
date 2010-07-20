@@ -43,19 +43,19 @@ namespace topology
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T>
-	void TriangleSubsetData<T>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-													std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
+	void TriangleSubsetData<T>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+													std::list< const core::topology::TopologyChange *>::const_iterator &end,
 													const unsigned int totalTriangleSetArraySize) 
 	{
 		setTotalTriangleSetArraySize(totalTriangleSetArraySize);
 
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			 case core::componentmodel::topology::TETRAHEDRAADDED:
+			 case core::topology::TETRAHEDRAADDED:
 			 {
 				 if (m_createTetrahedronFunc) {
 					 const TetrahedraAdded *ea=static_cast< const TetrahedraAdded* >( *changeIt );
@@ -63,7 +63,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TETRAHEDRAREMOVED:
+			 case core::topology::TETRAHEDRAREMOVED:
 			 {
 				 if (m_destroyTetrahedronFunc) {
 					 const TetrahedraRemoved *er=static_cast< const TetrahedraRemoved * >( *changeIt );
@@ -71,13 +71,13 @@ namespace topology
 				 }
 				 break;
 			 }		
-			 case core::componentmodel::topology::TRIANGLESADDED:
+			 case core::topology::TRIANGLESADDED:
 			 {
 				 const TrianglesAdded *ea=static_cast< const TrianglesAdded * >( *changeIt );
 				 add( ea->getNbAddedTriangles(), ea->triangleArray, ea->ancestorsList, ea->coefs );
 				 break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESREMOVED:
+			 case core::topology::TRIANGLESREMOVED:
 			 {
 				 const std::vector<unsigned int> &tab = ( static_cast< const TrianglesRemoved *>( *changeIt ) )->getArray();
 				 remove( tab );

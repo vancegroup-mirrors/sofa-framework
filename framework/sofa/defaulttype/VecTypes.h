@@ -522,8 +522,6 @@ struct DataTypeInfo< sofa::defaulttype::ResizableExtVector<T> > : public VectorT
 
 namespace core
 {
-namespace componentmodel
-{
 namespace behavior
 {
 
@@ -627,8 +625,6 @@ inline defaulttype::Vec<2, float> inertiaForce<
 }
 
 } // namespace behavoir
-
-} // namespace componentmodel
 
 } // namespace core
 

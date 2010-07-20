@@ -26,7 +26,7 @@ namespace component
 namespace container
 {
 using namespace sofa::helper::system::thread;
-using namespace sofa::core::componentmodel::topology;
+using namespace sofa::core::topology;
 
 template <class DataTypes>
 RotationFinder<DataTypes>::RotationFinder()

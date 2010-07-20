@@ -32,9 +32,9 @@
 
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/VisualModel.h>
-#include <sofa/core/componentmodel/behavior/MappedModel.h>
-#include <sofa/core/componentmodel/loader/Material.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/behavior/MappedModel.h>
+#include <sofa/core/loader/Material.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/component/visualmodel/VisualModelImpl.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 
@@ -78,7 +78,7 @@ protected:
     };
 
     void prepareMesh();
-    Ogre::MaterialPtr createMaterial(const core::componentmodel::loader::Material &sofaMaterial);
+    Ogre::MaterialPtr createMaterial(const core::loader::Material &sofaMaterial);
 
     void updateVisibility();
     void uploadSubMesh(const SubMesh& m);

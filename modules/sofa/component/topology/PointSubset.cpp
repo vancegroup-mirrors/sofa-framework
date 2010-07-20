@@ -40,25 +40,25 @@ namespace topology
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void PointSubset::handleTopologyEvents( std::list<  const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-										std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
+void PointSubset::handleTopologyEvents( std::list<  const core::topology::TopologyChange *>::const_iterator changeIt, 
+										std::list< const core::topology::TopologyChange *>::const_iterator &end,
 										const unsigned int totalPointSetArraySize) 
 {
 	setTotalPointSetArraySize(totalPointSetArraySize);
 	while( changeIt != end )
 	{
-		core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+		core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 		switch( changeType ) 
 		{
-		case core::componentmodel::topology::POINTSINDICESSWAP:
+		case core::topology::POINTSINDICESSWAP:
 		{
 			unsigned int i1 = ( static_cast< const PointsIndicesSwap * >( *changeIt ) )->index[0];
 			unsigned int i2 = ( static_cast< const PointsIndicesSwap* >( *changeIt ) )->index[1];
 			swap( i1, i2 );
 			break;
 		}
-		case core::componentmodel::topology::POINTSADDED:
+		case core::topology::POINTSADDED:
 		{
 			unsigned int nbPoints = ( static_cast< const PointsAdded * >( *changeIt ) )->getNbAddedVertices();
 			helper::vector< helper::vector< unsigned int > > ancestors = ( static_cast< const PointsAdded * >( *changeIt ) )->ancestorsList;
@@ -67,13 +67,13 @@ void PointSubset::handleTopologyEvents( std::list<  const core::componentmodel::
 			lastPointIndex+=nbPoints;
 			break;
 		}
-		case core::componentmodel::topology::POINTSREMOVED:
+		case core::topology::POINTSREMOVED:
 		{
 			const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRemoved * >( *changeIt ) )->getArray();
 			remove( tab );
 			break;
 		}
-		case core::componentmodel::topology::POINTSRENUMBERING:
+		case core::topology::POINTSRENUMBERING:
 		{
 			const sofa::helper::vector<unsigned int> &tab = ( static_cast< const PointsRenumbering * >( *changeIt ) )->getinv_IndexArray();
 			renumber( tab );

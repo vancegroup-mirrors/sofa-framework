@@ -25,8 +25,8 @@
 #ifndef SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELD_H
 
-#include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/behavior/ForceField.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/SparseGridTopology.h>
 #include <sofa/helper/vector.h>
 #include <sofa/defaulttype/VecTypes.h>
@@ -76,10 +76,10 @@ namespace sofa
        *     0---------1-->X
       */
       template<class DataTypes>
-      class HexahedronFEMForceField : virtual public core::componentmodel::behavior::ForceField<DataTypes>
+      class HexahedronFEMForceField : virtual public core::behavior::ForceField<DataTypes>
       {
       public:
-        SOFA_CLASS(SOFA_TEMPLATE(HexahedronFEMForceField, DataTypes), SOFA_TEMPLATE(core::componentmodel::behavior::ForceField, DataTypes));
+        SOFA_CLASS(SOFA_TEMPLATE(HexahedronFEMForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
         typedef typename DataTypes::VecCoord VecCoord;
         typedef typename DataTypes::VecDeriv VecDeriv;
@@ -88,13 +88,13 @@ namespace sofa
         typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
 
-        typedef core::componentmodel::topology::BaseMeshTopology::index_type Index;
+        typedef core::topology::BaseMeshTopology::index_type Index;
 #ifdef SOFA_NEW_HEXA
-		typedef core::componentmodel::topology::BaseMeshTopology::Hexa Element;
-		typedef core::componentmodel::topology::BaseMeshTopology::SeqHexahedra VecElement;
+		typedef core::topology::BaseMeshTopology::Hexa Element;
+		typedef core::topology::BaseMeshTopology::SeqHexahedra VecElement;
 #else
-		typedef core::componentmodel::topology::BaseMeshTopology::Cube Element;
-		typedef core::componentmodel::topology::BaseMeshTopology::SeqCubes VecElement;
+		typedef core::topology::BaseMeshTopology::Cube Element;
+		typedef core::topology::BaseMeshTopology::SeqCubes VecElement;
 #endif
 
 		static const int LARGE = 0;   ///< Symbol of mean large displacements tetrahedron solver (frame = edges mean on the 3 directions)
@@ -125,7 +125,7 @@ namespace sofa
         double m_potentialEnergy;
 
 
-        sofa::core::componentmodel::topology::BaseMeshTopology* _mesh;
+        sofa::core::topology::BaseMeshTopology* _mesh;
 		topology::SparseGridTopology* _sparseGrid;
         const VecElement *_indexedElements;
         Data< VecCoord > _initialPoints; ///< the intial positions of the points

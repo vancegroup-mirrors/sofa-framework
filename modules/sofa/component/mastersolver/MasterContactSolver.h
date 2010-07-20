@@ -25,13 +25,13 @@
 #ifndef SOFA_COMPONENT_ODESOLVER_MASTERCONTACTSOLVER_H
 #define SOFA_COMPONENT_ODESOLVER_MASTERCONTACTSOLVER_H
 
-#include <sofa/core/componentmodel/behavior/OdeSolver.h>
+#include <sofa/core/behavior/OdeSolver.h>
 #include <sofa/simulation/common/MasterSolverImpl.h>
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
-#include <sofa/core/componentmodel/behavior/ConstraintSolver.h>
-#include <sofa/core/componentmodel/behavior/BaseConstraintCorrection.h>
-#include <sofa/core/componentmodel/behavior/OdeSolver.h>
+#include <sofa/core/behavior/ConstraintSolver.h>
+#include <sofa/core/behavior/BaseConstraintCorrection.h>
+#include <sofa/core/behavior/OdeSolver.h>
 #include <sofa/component/odesolver/OdeSolverImpl.h>
 #include <sofa/component/constraint/LCPConstraintSolver.h>
 #include <sofa/helper/set.h>
@@ -61,7 +61,7 @@ public:
 
         Data<bool> displayTime;
 protected:
-        sofa::core::componentmodel::behavior::ConstraintSolver *constraintSolver;
+        sofa::core::behavior::ConstraintSolver *constraintSolver;
         constraint::LCPConstraintSolver* defaultSolver;
 };
 

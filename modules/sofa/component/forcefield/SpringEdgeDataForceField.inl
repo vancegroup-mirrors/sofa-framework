@@ -47,7 +47,7 @@ namespace component
 namespace forcefield
 {
 
-using namespace sofa::core::componentmodel::behavior;
+using namespace sofa::core::behavior;
 
 template<class DataTypes>
 void springCreationFunction(int index,
@@ -120,8 +120,8 @@ template <class DataTypes>
 		springArray[e]=Spring((Real)ks,(Real)kd,(Real)initpos);
 }
 template <class DataTypes>
-SpringEdgeDataForceField<DataTypes>::SpringEdgeDataForceField(core::componentmodel::behavior::MechanicalState<DataTypes>* _object)
-	: core::componentmodel::behavior::ForceField<DataTypes>(_object),object(_object),
+SpringEdgeDataForceField<DataTypes>::SpringEdgeDataForceField(core::behavior::MechanicalState<DataTypes>* _object)
+	: core::behavior::ForceField<DataTypes>(_object),object(_object),
 	m_filename( dataField(&m_filename,std::string("untitled"),"filename","File name from which the spring informations are loaded") ),
     m_stiffness( dataField(&m_stiffness,1.0,"stiffness","Default edge stiffness used in absence of file information") ),
     m_viscosity( dataField(&m_viscosity,1.0,"viscosity","Default edge viscosity used in absence of file information") )
@@ -196,10 +196,10 @@ void SpringEdgeDataForceField<DataTypes>::handleEvent( Event* e )
 		component::topology::TopologyChangedEvent *tce=dynamic_cast<component::topology::TopologyChangedEvent *>(e);
 		/// test that the event is a change of topology and that it
 		if ((tce) && (tce->getTopology()== this->getContext()->getMainTopology())) {
-			core::componentmodel::topology::BaseTopology *topology = static_cast<core::componentmodel::topology::BaseTopology *>(this->getContext()->getMainTopology());
+			core::topology::BaseTopology *topology = static_cast<core::topology::BaseTopology *>(this->getContext()->getMainTopology());
 
-			std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itBegin=topology->firstChange();
-			std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itEnd=topology->lastChange();
+			std::list<const core::topology::TopologyChange *>::const_iterator itBegin=topology->firstChange();
+			std::list<const core::topology::TopologyChange *>::const_iterator itEnd=topology->lastChange();
 			/// Topological events are handled by the EdgeData structure
 			springArray.handleTopologyEvents(itBegin,itEnd);
 		}

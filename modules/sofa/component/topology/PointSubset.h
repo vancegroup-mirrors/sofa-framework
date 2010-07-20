@@ -33,7 +33,7 @@
 
 namespace sofa
 {
-	namespace core{ namespace componentmodel{ namespace topology{ class TopologyChange; }}}
+	namespace core{ namespace topology{ class TopologyChange;} }
 
 namespace component
 {
@@ -90,8 +90,8 @@ namespace topology
 		{}
 
 		/// Handle PointSetTopology related events, ignore others.
-		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-								std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end,
+		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+								std::list< const core::topology::TopologyChange *>::const_iterator &end,
 								const unsigned int totalPointSetArraySize);
 
 		// defining operators so that pointSubset can be used in a Data (see Data class).

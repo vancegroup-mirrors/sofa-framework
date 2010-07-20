@@ -46,7 +46,7 @@ namespace mass
 
 
 using namespace	sofa::component::topology;
-using namespace core::componentmodel::topology;
+using namespace core::topology;
 
 
   template< class DataTypes, class MassType>
@@ -596,7 +596,7 @@ using namespace core::componentmodel::topology;
 
 
   using namespace sofa::defaulttype;
-  using namespace sofa::core::componentmodel::behavior;
+  using namespace sofa::core::behavior;
 
 
   template <class DataTypes, class MassType>
@@ -860,7 +860,7 @@ using namespace core::componentmodel::topology;
 
     // add weight and inertia force
     for (unsigned int i=0; i<x.size(); ++i)
-       f[i] += theGravity * vertexMass[i] * massLumpingCoeff + core::componentmodel::behavior::inertiaForce(vframe,aframe,vertexMass[i] * massLumpingCoeff ,x[i],v[i]);
+       f[i] += theGravity * vertexMass[i] * massLumpingCoeff + core::behavior::inertiaForce(vframe,aframe,vertexMass[i] * massLumpingCoeff ,x[i],v[i]);
   }
 
   

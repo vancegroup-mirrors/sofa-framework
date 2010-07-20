@@ -372,7 +372,7 @@ namespace sofa
     
     	// add weight and inertia force
 		for (unsigned int i=0;i<_particleMasses.size();i++) {
-			f[i] += this->getContext()->getLocalGravity()*_particleMasses[i] + core::componentmodel::behavior::inertiaForce(vframe,aframe,_particleMasses[i],x[i],v[i]);
+			f[i] += this->getContext()->getLocalGravity()*_particleMasses[i] + core::behavior::inertiaForce(vframe,aframe,_particleMasses[i],x[i],v[i]);
 		}
 #else
 		for (unsigned int i=0;i<_particleMasses.size();i++) {

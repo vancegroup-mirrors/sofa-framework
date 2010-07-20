@@ -45,7 +45,7 @@ namespace topology
 
 	using namespace std;
     using namespace sofa::defaulttype;
-    using namespace sofa::core::componentmodel::behavior;
+    using namespace sofa::core::behavior;
 		
 	void ManifoldEdgeSetTopologyModifier::init()
 	{

@@ -24,7 +24,7 @@
 ******************************************************************************/
 #define SOFA_COMPONENT_ENGINE_TRIANGLESINBOXROI_CPP
 #include <sofa/component/engine/TrianglesInBoxROI.inl>
-#include <sofa/core/componentmodel/behavior/Constraint.inl>
+#include <sofa/core/behavior/Constraint.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/defaulttype/RigidTypes.h>

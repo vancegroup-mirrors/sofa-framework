@@ -24,7 +24,7 @@
 ******************************************************************************/
 #include <sofa/simulation/common/Node.h>
 #include <sofa/component/topology/SparseGridTopology.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/helper/io/Mesh.h>
 #include <sofa/helper/fixed_array.h>
@@ -505,16 +505,16 @@ void SparseGridTopology::updateMesh()
 	//Creating if needed collision models and visual models
 	// 	    using sofa::simulation::Node;
 
-	sofa::helper::vector< sofa::core::componentmodel::topology::BaseMeshTopology * > list_meshf;
+	sofa::helper::vector< sofa::core::topology::BaseMeshTopology * > list_meshf;
 	sofa::helper::vector< sofa::helper::vector< Vec3f >* > list_Xf;
-	sofa::helper::vector< sofa::core::componentmodel::topology::BaseMeshTopology * > list_meshd;
+	sofa::helper::vector< sofa::core::topology::BaseMeshTopology * > list_meshd;
 	sofa::helper::vector< sofa::helper::vector< Vec3d >* > list_Xd;
 
 	//Get Collision Model
-	sofa::helper::vector< sofa::core::componentmodel::topology::BaseMeshTopology* > m_temp;
-	this->getContext()->get< sofa::core::componentmodel::topology::BaseMeshTopology >(&m_temp, sofa::core::objectmodel::BaseContext::SearchDown);
+	sofa::helper::vector< sofa::core::topology::BaseMeshTopology* > m_temp;
+	this->getContext()->get< sofa::core::topology::BaseMeshTopology >(&m_temp, sofa::core::objectmodel::BaseContext::SearchDown);
 
-	sofa::core::componentmodel::topology::BaseMeshTopology* collisionTopology=NULL;
+	sofa::core::topology::BaseMeshTopology* collisionTopology=NULL;
 	for (unsigned int i=0;i<m_temp.size();++i)
 	{
 		if (m_temp[i] != this) {collisionTopology = m_temp[i];break;}
@@ -524,7 +524,7 @@ void SparseGridTopology::updateMesh()
 	if ( collisionTopology != NULL && collisionTopology->getNbTriangles() == 0)
 	{
 #ifndef SOFA_FLOAT
-        core::componentmodel::behavior::MechanicalState< Vec3dTypes > *mecha_tempd = collisionTopology->getContext()->get< core::componentmodel::behavior::MechanicalState< Vec3dTypes > >();
+        core::behavior::MechanicalState< Vec3dTypes > *mecha_tempd = collisionTopology->getContext()->get< core::behavior::MechanicalState< Vec3dTypes > >();
 		if (mecha_tempd != NULL && mecha_tempd->getX()->size() < 2) //a triangle mesh has minimum 3elements
 		{
 
@@ -533,7 +533,7 @@ void SparseGridTopology::updateMesh()
 		}
 #endif
 #ifndef SOFA_DOUBLE
-		core::componentmodel::behavior::MechanicalState< Vec3fTypes > *mecha_tempf = collisionTopology->getContext()->get< core::componentmodel::behavior::MechanicalState< Vec3fTypes > >();
+		core::behavior::MechanicalState< Vec3fTypes > *mecha_tempf = collisionTopology->getContext()->get< core::behavior::MechanicalState< Vec3fTypes > >();
 		if (mecha_tempf != NULL && mecha_tempf->getX()->size() < 2) //a triangle mesh has minimum 3elements
 		{
 
@@ -573,7 +573,7 @@ void SparseGridTopology::getMesh(sofa::helper::io::Mesh &m)
 
 
 template< class T >
-void SparseGridTopology::constructCollisionModels(const sofa::helper::vector< sofa::core::componentmodel::topology::BaseMeshTopology * > &list_mesh,
+void SparseGridTopology::constructCollisionModels(const sofa::helper::vector< sofa::core::topology::BaseMeshTopology * > &list_mesh,
 	const sofa::helper::vector< sofa::helper::vector< Vec<3,T> >* > &list_X) 
 {
 	sofa::helper::vector< unsigned int>	triangles;
@@ -826,40 +826,52 @@ void SparseGridTopology::voxelizeTriangleMesh(helper::io::Mesh* mesh,
 	}
 
 	// TODO: regarder les cellules pleines, et les ajouter
-
-	vector<bool> alreadyTested(regularGrid.getNbHexahedra());
-	for(int w=0;w<regularGrid.getNbHexahedra();++w)
-		alreadyTested[w]=false;
-
+        vector<bool> alreadyTested(regularGrid.getNbHexahedra(),false);
+        std::stack< Vec3i > seed;
 	// x==0 and x=nx-2
 	for(int y=0;y<regularGrid.getNy()-1;++y)
 	{
 		for(int z=0;z<regularGrid.getNz()-1;++z)
-		{
-			propagateFrom( 0, y, z, regularGrid, regularGridTypes, alreadyTested );
-			propagateFrom( regularGrid.getNx()-2, y, z, regularGrid, regularGridTypes, alreadyTested );
+                {
+                        launchPropagationFromSeed(Vec3i(0,y,z), regularGrid, regularGridTypes, alreadyTested,seed );
+                        launchPropagationFromSeed(Vec3i(regularGrid.getNx()-2,y,z), regularGrid, regularGridTypes, alreadyTested,seed );
 		}
 		// y==0 and y=ny-2
 		for(int x=0;x<regularGrid.getNx()-1;++x)
-		{
+                {
 			for(int z=0;z<regularGrid.getNz()-1;++z)
 			{
-				propagateFrom( x, 0, z, regularGrid, regularGridTypes, alreadyTested );
-				propagateFrom( x, regularGrid.getNy()-2, z, regularGrid, regularGridTypes, alreadyTested );
+                                launchPropagationFromSeed(Vec3i(x,0,z), regularGrid, regularGridTypes, alreadyTested,seed );
+                                launchPropagationFromSeed(Vec3i(x,regularGrid.getNy()-2,z), regularGrid, regularGridTypes, alreadyTested,seed );
 			}
 			// z==0 and z==Nz-2
 			for(int y=0;y<regularGrid.getNy()-1;++y)
 			{
 				for(int x=0;x<regularGrid.getNx()-1;++x)
 				{
-					propagateFrom( x, y, 0, regularGrid, regularGridTypes, alreadyTested );
-					propagateFrom( x, y, regularGrid.getNz()-2, regularGrid, regularGridTypes, alreadyTested );
+                                        launchPropagationFromSeed(Vec3i(x,y,0), regularGrid, regularGridTypes, alreadyTested,seed );
+                                        launchPropagationFromSeed(Vec3i(x,y,regularGrid.getNz()-2), regularGrid, regularGridTypes, alreadyTested,seed );
 				}
 			}
 		}
-	}
+        }
 }
 
+
+void SparseGridTopology::launchPropagationFromSeed(const Vec3i &point,
+                                                   RegularGridTopology& regularGrid,
+                                                   vector<Type>& regularGridTypes,
+                                                   vector<bool>& alreadyTested,
+                                                   std::stack<Vec3i> &seed) const
+{
+    seed.push(point);
+    while (!seed.empty())
+    {
+        const Vec3i &s=seed.top();
+        seed.pop();
+        propagateFrom(s,regularGrid,regularGridTypes,alreadyTested,seed);
+    }
+}
 
 void SparseGridTopology::buildFromRegularGridTypes(RegularGridTopology& regularGrid, const vector<Type>& regularGridTypes)
 {
@@ -1558,27 +1570,33 @@ void SparseGridTopology::updateHexahedra()
 //}
 
 
-void SparseGridTopology::propagateFrom( const int i, const int j, const int k,
+void SparseGridTopology::propagateFrom( const Vec3i &point,
 	RegularGridTopology& regularGrid,
 	vector<Type>& regularGridTypes,
-	vector<bool>& alreadyTested  ) const
+        vector<bool>& alreadyTested,
+        std::stack< Vec<3,int> > &seed) const
 {
-	assert( i>=0 && i<=regularGrid.getNx()-2 && j>=0 && j<=regularGrid.getNy()-2 && k>=0 && k<=regularGrid.getNz()-2 );
+        const int x=point[0];
+        const int y=point[1];
+        const int z=point[2];
+        assert( x>=0 && x<=regularGrid.getNx()-2 && y>=0 && y<=regularGrid.getNy()-2 && z>=0 && z<=regularGrid.getNz()-2 );
 
-	unsigned indice = regularGrid.cube( i, j, k );
-
-	if( alreadyTested[indice] || regularGridTypes[indice] == BOUNDARY )
-		return;
+        unsigned indice = regularGrid.cube( x, y, z );
+//        std::cerr << "this=" << this << std::endl;
+//        std::cerr << indice << " : " << alreadyTested.size() << " :: " << regularGridTypes.size() << std::endl;
+        if( alreadyTested[indice] || regularGridTypes[indice] == BOUNDARY ) return;
 
 	alreadyTested[indice] = true;
 	regularGridTypes[indice] = OUTSIDE;
 
-	if(i>0) propagateFrom( i-1, j, k, regularGrid, regularGridTypes, alreadyTested );
-	if(i<regularGrid.getNx()-2) propagateFrom( i+1, j, k, regularGrid, regularGridTypes, alreadyTested );
-	if(j>0) propagateFrom( i, j-1, k, regularGrid, regularGridTypes, alreadyTested );
-	if(j<regularGrid.getNy()-2) propagateFrom( i, j+1, k, regularGrid, regularGridTypes, alreadyTested );
-	if(k>0) propagateFrom( i, j, k-1, regularGrid, regularGridTypes, alreadyTested );
-	if(k<regularGrid.getNz()-2) propagateFrom( i, j, k+1, regularGrid, regularGridTypes, alreadyTested );
+        if(x>0)                     seed.push(Vec3i(x-1,y,z));
+        if(x<regularGrid.getNx()-2) seed.push(Vec3i(x+1,y,z));
+
+        if(y>0)                     seed.push(Vec3i(x,y-1,z));
+        if(y<regularGrid.getNy()-2) seed.push(Vec3i(x,y+1,z));
+
+        if(z>0)                     seed.push(Vec3i(x,y,z-1));
+        if(z<regularGrid.getNz()-2) seed.push(Vec3i(x,y,z+1));
 }
 
 } // namespace topology

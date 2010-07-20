@@ -25,16 +25,16 @@
 #ifndef SOFA_COMPONENT_COLLISION_CARVINGMANAGER_H
 #define SOFA_COMPONENT_COLLISION_CARVINGMANAGER_H
 
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/componentmodel/collision/Intersection.h>
-#include <sofa/core/componentmodel/collision/NarrowPhaseDetection.h>
+#include <sofa/core/behavior/MechanicalState.h>
+#include <sofa/core/collision/Intersection.h>
+#include <sofa/core/collision/NarrowPhaseDetection.h>
 #include <sofa/core/CollisionModel.h>
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/defaulttype/Vec3Types.h>
 
-#include <sofa/core/componentmodel/behavior/BaseController.h>
+#include <sofa/core/behavior/BaseController.h>
 
 #include <fstream>
 
@@ -47,17 +47,17 @@ namespace component
 namespace collision
 {
 
-class SOFA_COMPONENT_COLLISION_API CarvingManager : public core::componentmodel::behavior::BaseController
+class SOFA_COMPONENT_COLLISION_API CarvingManager : public core::behavior::BaseController
 {
 public:
-	SOFA_CLASS(CarvingManager,sofa::core::componentmodel::behavior::BaseController);
+	SOFA_CLASS(CarvingManager,sofa::core::behavior::BaseController);
 
 	typedef defaulttype::Vec3Types DataTypes;
     typedef DataTypes::Coord Coord;
     typedef DataTypes::Real Real;
     
 	typedef core::CollisionModel ToolModel;
-    typedef helper::vector<core::componentmodel::collision::DetectionOutput> ContactVector;
+    typedef helper::vector<core::collision::DetectionOutput> ContactVector;
 
     Data < std::string > f_modelTool;
     Data < std::string > f_modelSurface;
@@ -72,8 +72,8 @@ public:
 protected:
     ToolModel* modelTool;
     core::CollisionModel* modelSurface;
-    core::componentmodel::collision::Intersection* intersectionMethod;
-    core::componentmodel::collision::NarrowPhaseDetection* detectionNP;
+    core::collision::Intersection* intersectionMethod;
+    core::collision::NarrowPhaseDetection* detectionNP;
 
 public:
     CarvingManager();

@@ -37,7 +37,7 @@ namespace sofa{
 
 
 		using namespace sofa::defaulttype;
-		using namespace core::componentmodel::behavior;
+		using namespace core::behavior;
 
 		SOFA_DECL_CLASS(HapticMapping);
 		// Register in the Factory

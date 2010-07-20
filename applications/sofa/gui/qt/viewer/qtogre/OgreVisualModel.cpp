@@ -29,8 +29,8 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/helper/io/Mesh.h>
 
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
-#include <sofa/core/componentmodel/behavior/BaseMechanicalMapping.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
+#include <sofa/core/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/BaseMapping.h>
 
 #include <iostream>
@@ -240,7 +240,7 @@ namespace sofa
           }
       }
 
-      Ogre::MaterialPtr OgreVisualModel::createMaterial(const core::componentmodel::loader::Material &sofaMaterial)
+      Ogre::MaterialPtr OgreVisualModel::createMaterial(const core::loader::Material &sofaMaterial)
       {          
           //Create the Material for the object
           Ogre::MaterialPtr ogreMaterial;

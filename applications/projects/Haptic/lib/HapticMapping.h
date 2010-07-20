@@ -29,7 +29,7 @@
 
 
 #include "ChaiDevice.h"
-#include "sofa/core/componentmodel/behavior/MechanicalMapping.h"
+#include "sofa/core/behavior/MechanicalMapping.h"
 #include "sofa/component/mapping/RigidRigidMapping.h"
 
 
@@ -41,8 +41,8 @@ namespace sofa{
 
                   using sofa::core::objectmodel::ChaiDevice;
                   using sofa::component::mapping::RigidRigidMapping;
-                  using sofa::core::componentmodel::behavior::MechanicalMapping;
-                  using sofa::core::componentmodel::behavior::MechanicalState;
+                  using sofa::core::behavior::MechanicalMapping;
+                  using sofa::core::behavior::MechanicalState;
 
 /**
 *	\brief specialized rigid to rigid mapping which link 

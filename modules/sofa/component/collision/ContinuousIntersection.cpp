@@ -26,7 +26,7 @@
 #include <sofa/component/collision/ContinuousIntersection.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/component/collision/ContinuousTriangleIntersection.h>
-#include <sofa/core/componentmodel/collision/Intersection.inl>
+#include <sofa/core/collision/Intersection.inl>
 #include <iostream>
 #include <algorithm>
 
@@ -65,7 +65,7 @@ int ContinuousIntersection::computeIntersection(Triangle& t1, Triangle& t2, Outp
 {
     ContinuousTriangleIntersection intersectionT(t1, t2);
     //sout<<"Distance correction between Triangle - Triangle"<<sendl;
-    core::componentmodel::collision::DetectionOutput* c = intersectionT.computeDetectionOutput(); // new DetectionOutput();
+    core::collision::DetectionOutput* c = intersectionT.computeDetectionOutput(); // new DetectionOutput();
     if (c == NULL)
         return 0;
     else

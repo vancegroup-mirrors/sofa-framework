@@ -43,16 +43,16 @@ namespace topology
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Alloc>
-	void TriangleData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-													 std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	void TriangleData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+													 std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			case core::componentmodel::topology::TETRAHEDRAADDED:
+			case core::topology::TETRAHEDRAADDED:
 			{
 				if (m_createTetrahedronFunc) 
 				{
@@ -61,7 +61,7 @@ namespace topology
 				}
 				break;
 			}
-			case core::componentmodel::topology::TETRAHEDRAREMOVED:
+			case core::topology::TETRAHEDRAREMOVED:
 			{
 				if (m_destroyTetrahedronFunc) 
 				{
@@ -70,20 +70,20 @@ namespace topology
 				}
 				break;
 			}		
-			case core::componentmodel::topology::TRIANGLESADDED:
+			case core::topology::TRIANGLESADDED:
 			  {
 				const TrianglesAdded *ta = static_cast< const TrianglesAdded * >( *changeIt );
 				add( ta->getNbAddedTriangles(), ta->triangleArray, ta->ancestorsList, ta->coefs );
 				break;
 			}
 
-			case core::componentmodel::topology::TRIANGLESREMOVED:
+			case core::topology::TRIANGLESREMOVED:
 			{
 				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const TrianglesRemoved *>( *changeIt ) )->getArray();
 				remove( tab );
 				break;
 			}
-			case core::componentmodel::topology::TRIANGLESMOVED_REMOVING:
+			case core::topology::TRIANGLESMOVED_REMOVING:
 			{
 			  const sofa::helper::vector< unsigned int >& triList = ( static_cast< const TrianglesMoved_Removing *>( *changeIt ) )->trianglesAroundVertexMoved;
 			  sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
@@ -94,7 +94,7 @@ namespace topology
 			  this->endEdit();
 			  break;
 			}
-			case core::componentmodel::topology::TRIANGLESMOVED_ADDING:
+			case core::topology::TRIANGLESMOVED_ADDING:
 			{
 			  const sofa::helper::vector< unsigned int >& triList = ( static_cast< const TrianglesMoved_Adding *>( *changeIt ) )->trianglesAroundVertexMoved;
 			  const sofa::helper::vector< Triangle >& triArray = ( static_cast< const TrianglesMoved_Adding *>( *changeIt ) )->triangleArray2Moved;

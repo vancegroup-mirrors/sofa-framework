@@ -78,8 +78,8 @@ namespace sofa
         //Components
         simulation::Node                                            *parentNode;
         simulation::Node                                            *nodeRayPick;
-        sofa::core::componentmodel::behavior::BaseMechanicalState   *mouseInSofa;
-        sofa::core::componentmodel::behavior::BaseMechanicalMapping *mouseMapping;
+        sofa::core::behavior::BaseMechanicalState   *mouseInSofa;
+        sofa::core::behavior::BaseMechanicalMapping *mouseMapping;
         sofa::component::collision::BaseMouseInteractor             *mouseInteractor;
       };
 
@@ -91,7 +91,7 @@ namespace sofa
         typedef sofa::component::container::MechanicalObject< defaulttype::Vec3Types > MousePosition;
         typedef sofa::component::container::MechanicalObject< DataTypes > MouseContainer;
         typedef sofa::component::collision::MouseInteractor< DataTypes > Interactor;
-        typedef sofa::component::mapping::IdentityMapping<sofa::core::componentmodel::behavior::MechanicalMapping<sofa::core::componentmodel::behavior::MechanicalState< defaulttype::Vec3Types>, sofa::core::componentmodel::behavior::MechanicalState< DataTypes > > > IdentityMechanicalMapping;
+        typedef sofa::component::mapping::IdentityMapping<sofa::core::behavior::MechanicalMapping<sofa::core::behavior::MechanicalState< defaulttype::Vec3Types>, sofa::core::behavior::MechanicalState< DataTypes > > > IdentityMechanicalMapping;
 
       public:
  

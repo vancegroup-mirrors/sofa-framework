@@ -35,6 +35,7 @@
 
 #include <sofa/helper/io/Mesh.h>
 #include <sofa/component/container/VoxelGridLoader.h>
+#include <stack>
 
 namespace sofa
 {
@@ -233,10 +234,17 @@ protected:
 	helper::vector< float > _massCoefs; ///< a stiffness coefficient per hexa (BOUNDARY=.5, FULL=1)
 	
 	/// start from a seed cell (i,j,k) the OUTSIDE filling is propagated to neighboor cells until meet a BOUNDARY cell (this function is called from all border cells of the RegularGrid)
-	void propagateFrom( const int i, const int j, const int k,  
-						RegularGridTopology& regularGrid, 
-						vector<Type>& regularGridTypes, 
-						vector<bool>& alreadyTested  ) const;
+        void launchPropagationFromSeed(const Vec3i& point,
+                                       RegularGridTopology& regularGrid,
+                                       vector<Type>& regularGrdidTypes,
+                                       vector<bool>& alreadyTested,
+                                       std::stack<Vec3i>& seed) const;
+
+        void propagateFrom(  const Vec3i& point,
+                             RegularGridTopology& regularGrid,
+                             vector<Type>& regularGridTypes,
+                             vector<bool>& alreadyTested,
+                             std::stack< Vec<3,int> > &seed) const;
 	
 	void computeBoundingBox(const helper::vector<Vector3>& vertices,
 									SReal& xmin, SReal& xmax,
@@ -266,7 +274,7 @@ protected:
 	void buildFromVoxelGridLoader(VoxelGridLoader * loader);
 	
 	template< class T>
-	void constructCollisionModels(const sofa::helper::vector< sofa::core::componentmodel::topology::BaseMeshTopology * > &list_mesh,
+	void constructCollisionModels(const sofa::helper::vector< sofa::core::topology::BaseMeshTopology * > &list_mesh,
 				      const sofa::helper::vector< sofa::helper::vector< Vec<3,T> >* >            &list_X) ;
 	
 	SparseGridTopology* _finerSparseGrid; ///< an eventual finer sparse grid that can be used to built this coarser sparse grid

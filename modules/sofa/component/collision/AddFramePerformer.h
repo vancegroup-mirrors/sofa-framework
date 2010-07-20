@@ -43,7 +43,7 @@ namespace sofa
       template <class DataTypes>
         class AddFramePerformer: public TInteractionPerformer<DataTypes>
       {
-        typedef typename sofa::component::mapping::SkinningMapping<sofa::component::mapping::MechanicalMapping< core::componentmodel::behavior::MechanicalState<StdRigidTypes<3, typename DataTypes::Real> >, core::componentmodel::behavior::MechanicalState<DataTypes> > > SMapping;
+        typedef typename sofa::component::mapping::SkinningMapping<sofa::component::mapping::MechanicalMapping< core::behavior::MechanicalState<StdRigidTypes<3, typename DataTypes::Real> >, core::behavior::MechanicalState<DataTypes> > > SMapping;
 
       public:
         AddFramePerformer(BaseMouseInteractor *i);

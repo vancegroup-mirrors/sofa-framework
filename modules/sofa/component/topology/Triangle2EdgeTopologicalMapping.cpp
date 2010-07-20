@@ -52,7 +52,7 @@ namespace topology
 using namespace sofa::defaulttype;
 
 using namespace sofa::component::topology;
-using namespace sofa::core::componentmodel::topology;
+using namespace sofa::core::topology;
 
 SOFA_DECL_CLASS(Triangle2EdgeTopologicalMapping)
 
@@ -159,7 +159,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 
 				switch( changeType ) {
 
-				case core::componentmodel::topology::ENDING_EVENT:
+				case core::topology::ENDING_EVENT:
 					{
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - ENDING_EVENT" << sendl;
 						to_tstm->propagateTopologicalChanges();
@@ -168,7 +168,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 						break;
 					}
 
-				case core::componentmodel::topology::EDGESREMOVED:
+				case core::topology::EDGESREMOVED:
 					{											
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - EDGESREMOVED" << sendl;
 
@@ -251,7 +251,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 						break;
 					}
 
-				case core::componentmodel::topology::TRIANGLESREMOVED:
+				case core::topology::TRIANGLESREMOVED:
 					{						
 
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - TRIANGLESREMOVED" << sendl;
@@ -333,7 +333,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 						break;
 					}				
 
-					case core::componentmodel::topology::POINTSREMOVED:
+					case core::topology::POINTSREMOVED:
 					{
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - POINTSREMOVED" << sendl;
 						
@@ -355,7 +355,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 						break;
 					}
 
-					case core::componentmodel::topology::POINTSRENUMBERING:
+					case core::topology::POINTSRENUMBERING:
 					{
 						//sout << "INFO_print : Hexa2TriangleTopologicalMapping - POINTSREMOVED" << sendl;
 						
@@ -383,7 +383,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 					}
 
 					/*
-					case core::componentmodel::topology::EDGESADDED:
+					case core::topology::EDGESADDED:
 					{						
 
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - EDGESADDED" << sendl;
@@ -427,7 +427,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 					}
 					*/					
 
-					case core::componentmodel::topology::TRIANGLESADDED:
+					case core::topology::TRIANGLESADDED:
 					{						
 
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - TRIANGLESADDED" << sendl;
@@ -513,7 +513,7 @@ void Triangle2EdgeTopologicalMapping::updateTopologicalMappingTopDown(){
 					}					
 					
 					
-					case core::componentmodel::topology::POINTSADDED:
+					case core::topology::POINTSADDED:
 					{
 						//sout << "INFO_print : Triangle2EdgeTopologicalMapping - POINTSADDED" << sendl;					
 

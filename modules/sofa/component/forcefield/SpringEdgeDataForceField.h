@@ -25,8 +25,8 @@
 #ifndef SOFA_COMPONENT_FORCEFIELD_SPRINGEDGEDATAFORCEFIELD_H
 #define SOFA_COMPONENT_FORCEFIELD_SPRINGEDGEDATAFORCEFIELD_H
 
-#include <sofa/core/componentmodel/behavior/ForceField.h>
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/behavior/ForceField.h>
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/component/topology/EdgeData.h>
 #include <sofa/component/topology/EdgeData.inl>
 #include <sofa/defaulttype/Vec.h>
@@ -47,10 +47,10 @@ using namespace sofa::defaulttype;
 //using namespace sofa::core::objectmodel;
 
 template<class DataTypes>
-class SpringEdgeDataForceField : public core::componentmodel::behavior::ForceField<DataTypes>
+class SpringEdgeDataForceField : public core::behavior::ForceField<DataTypes>
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(SpringEdgeDataForceField, DataTypes), SOFA_TEMPLATE(core::componentmodel::behavior::ForceField, DataTypes));
+  SOFA_CLASS(SOFA_TEMPLATE(SpringEdgeDataForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
@@ -83,7 +83,7 @@ protected:
 	bool updateMatrix;
 	/// where the springs information are stored
 	component::topology::EdgeData<Spring> springArray;
-	core::componentmodel::behavior::MechanicalState<DataTypes>* object;
+	core::behavior::MechanicalState<DataTypes>* object;
 	/// the EdgeSet topology used to get the list of edges
 	component::topology::EdgeSetTopology<DataTypes> *topology;
 	/// the filename where to load the spring information
@@ -100,11 +100,11 @@ protected:
 
 public:
 	
-	SpringEdgeDataForceField(core::componentmodel::behavior::MechanicalState<DataTypes>* _object);
+	SpringEdgeDataForceField(core::behavior::MechanicalState<DataTypes>* _object);
 	
 	bool load(const char *filename);
 	
-	core::componentmodel::behavior::MechanicalState<DataTypes>* getObject() { return object; }
+	core::behavior::MechanicalState<DataTypes>* getObject() { return object; }
 
 	virtual void init();
 

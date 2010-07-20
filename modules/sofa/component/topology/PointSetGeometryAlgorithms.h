@@ -25,9 +25,9 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_POINTSETGEOMETRYALGORITHMS_H
 #define SOFA_COMPONENT_TOPOLOGY_POINTSETGEOMETRYALGORITHMS_H
 
-#include <sofa/core/componentmodel/topology/BaseTopology.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/topology/BaseTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/component/component.h>
@@ -41,18 +41,18 @@ namespace component
 
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
-	using core::componentmodel::behavior::MechanicalState;
+	using core::topology::BaseMeshTopology;
+	using core::behavior::MechanicalState;
     typedef BaseMeshTopology::PointID PointID;
 		
 	/**
 	* A class that can perform some geometric computation on a set of points.
 	*/
 	template<class DataTypes>
-	class PointSetGeometryAlgorithms : public core::componentmodel::topology::GeometryAlgorithms
+	class PointSetGeometryAlgorithms : public core::topology::GeometryAlgorithms
 	{
 	public:
-        SOFA_CLASS(SOFA_TEMPLATE(PointSetGeometryAlgorithms,DataTypes),core::componentmodel::topology::GeometryAlgorithms);
+        SOFA_CLASS(SOFA_TEMPLATE(PointSetGeometryAlgorithms,DataTypes),core::topology::GeometryAlgorithms);
 		
 		typedef typename DataTypes::Real Real;
 		typedef typename DataTypes::Coord Coord;
@@ -99,13 +99,13 @@ namespace topology
 		const Coord& getPointRestPosition(const PointID pointId) const;
 
 		/** \brief Returns the object where the mechanical DOFs are stored */
-		sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *getDOF() const { return object;	}
+		sofa::core::behavior::MechanicalState<DataTypes> *getDOF() const { return object;	}
 
 		float PointIndicesScale;
 	
 	template<class T>
 	static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg) {
-	    if (context->getMechanicalState() && dynamic_cast<sofa::core::componentmodel::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
+	    if (context->getMechanicalState() && dynamic_cast<sofa::core::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
 			    return false;
 	    return BaseObject::canCreate(obj, context, arg);	    
 	}	
@@ -122,8 +122,8 @@ namespace topology
 
 	protected:
 		/** the object where the mechanical DOFs are stored */
-		sofa::core::componentmodel::behavior::MechanicalState<DataTypes> *object;
-		sofa::core::componentmodel::topology::BaseMeshTopology* m_topology;
+		sofa::core::behavior::MechanicalState<DataTypes> *object;
+		sofa::core::topology::BaseMeshTopology* m_topology;
 		Data<float> showIndicesScale;
 		Data<bool> showPointIndices;
 	};

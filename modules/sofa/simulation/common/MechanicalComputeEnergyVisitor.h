@@ -65,10 +65,10 @@ class SOFA_SIMULATION_COMMON_API MechanicalComputeEnergyVisitor : public sofa::s
     double getPotentialEnergy();
 
     /// Process the BaseMass
-    virtual Result fwdMass(simulation::Node* /*node*/, core::componentmodel::behavior::BaseMass* mass);
+    virtual Result fwdMass(simulation::Node* /*node*/, core::behavior::BaseMass* mass);
 
     /// Process the BaseForceField
-    virtual Result fwdForceField(simulation::Node* /*node*/, core::componentmodel::behavior::BaseForceField* f);
+    virtual Result fwdForceField(simulation::Node* /*node*/, core::behavior::BaseForceField* f);
  
 	/// Return a class name for this visitor
 	/// Only used for debugging / profiling purposes

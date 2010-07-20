@@ -25,7 +25,7 @@
 #ifndef SOFA_SIMULATION_TREE_MASTERSOLVERIMPL_H
 #define SOFA_SIMULATION_TREE_MASTERSOLVERIMPL_H
 
-#include <sofa/core/componentmodel/behavior/MasterSolver.h>
+#include <sofa/core/behavior/MasterSolver.h>
 #include <sofa/simulation/common/common.h>
 #include <sofa/simulation/common/Node.h>
 
@@ -44,7 +44,7 @@ namespace simulation
  *
  */
 
-class SOFA_SIMULATION_COMMON_API MasterSolverImpl : public sofa::core::componentmodel::behavior::MasterSolver
+class SOFA_SIMULATION_COMMON_API MasterSolverImpl : public sofa::core::behavior::MasterSolver
 {
 public:
 
@@ -64,8 +64,8 @@ public:
     virtual void integrate(double dt);
 	
 	protected:
-		typedef simulation::Node::Sequence<core::componentmodel::behavior::OdeSolver> Solvers;
-		typedef core::componentmodel::collision::Pipeline Pipeline;
+		typedef simulation::Node::Sequence<core::behavior::OdeSolver> Solvers;
+		typedef core::collision::Pipeline Pipeline;
 		const Solvers& getSolverSequence();
 // 		Pipeline* getPipeline();
 

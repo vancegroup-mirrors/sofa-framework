@@ -22,12 +22,12 @@ HEADERS += initEngine.h \
            MergePoints.inl \
            MergeSets.h \
            MergeSets.inl \
-	       MeshBarycentricMapperEngine.h \
-	       MeshBarycentricMapperEngine.inl \
-	       TransformPosition.h \
-	       TransformPosition.inl \
-	       TransformEngine.h \
-	       TransformEngine.inl \
+	   MeshBarycentricMapperEngine.h \
+	   MeshBarycentricMapperEngine.inl \
+	   TransformPosition.h \
+	   TransformPosition.inl \
+	   TransformEngine.h \
+	   TransformEngine.inl \
            PlaneROI.h \
            PlaneROI.inl \
            PointsFromIndices.h \
@@ -40,8 +40,8 @@ HEADERS += initEngine.h \
            JoinPoints.inl \
            MapIndices.h \
            MapIndices.inl \
-	       PrimitivesInSphereROI.h \
-	       PrimitivesInSphereROI.inl \
+	   PrimitivesInSphereROI.h \
+	   PrimitivesInSphereROI.inl \
            RandomPointDistributionInSurface.h \
            RandomPointDistributionInSurface.inl \
            Spiral.h \
@@ -55,7 +55,9 @@ HEADERS += initEngine.h \
            Vertex2Frame.h \
            Vertex2Frame.inl \
            TextureInterpolation.h \
-           TextureInterpolation.inl
+           TextureInterpolation.inl \
+           SubsetTopology.h \
+           SubsetTopology.inl
 
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
@@ -65,8 +67,8 @@ SOURCES += initEngine.cpp \
            MergeSets.cpp \
 	   MeshBarycentricMapperEngine.cpp \
            PlaneROI.cpp \
-	  	   PrimitivesInSphereROI.cpp \
-	  	   TransformPosition.cpp \
+	   PrimitivesInSphereROI.cpp \
+	   TransformPosition.cpp \
            TransformEngine.cpp \
            PointsFromIndices.cpp \
            ValuesFromIndices.cpp \
@@ -79,7 +81,8 @@ SOURCES += initEngine.cpp \
            TrianglesInSphereROI.cpp \
            TrianglesInPlaneROI.cpp \
            Vertex2Frame.cpp \
-           TextureInterpolation.cpp
+           TextureInterpolation.cpp \
+           SubsetTopology.cpp
            
            
 

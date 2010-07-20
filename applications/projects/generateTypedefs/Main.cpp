@@ -287,8 +287,8 @@ void writeFile(const CategoryLibrary &category,  TYPES t, std::ostream &generalO
     {
       typedefFile << "\
 //Default files needed to create a Mapping\n\
-#include <sofa/core/componentmodel/behavior/State.h>\n\
-#include <sofa/core/componentmodel/behavior/MappedModel.h>\n\
+#include <sofa/core/behavior/State.h>\n\
+#include <sofa/core/behavior/MappedModel.h>\n\
 #include <sofa/core/Mapping.h>\n\
 ";
     }
@@ -296,8 +296,8 @@ void writeFile(const CategoryLibrary &category,  TYPES t, std::ostream &generalO
     {      
       typedefFile << "\
 //Default files needed to create a Mechanical Mapping\n\
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>\n\
-#include <sofa/core/componentmodel/behavior/MechanicalMapping.h>\n\
+#include <sofa/core/behavior/MechanicalState.h>\n\
+#include <sofa/core/behavior/MechanicalMapping.h>\n\
 ";
     }
   typedefFile << "\n\n";  
@@ -405,16 +405,16 @@ int main(int , char** )
   templateExtension.insert(std::make_pair("Vec6d", "6d"));
   templateExtension.insert(std::make_pair("Vec4d", "4d"));
   templateExtension.insert(std::make_pair("Vec3d", "3d"));
-  templateExtension.insert(std::make_pair("Vec2d", "1d"));
-  templateExtension.insert(std::make_pair("Vec1d", "2d"));
+  templateExtension.insert(std::make_pair("Vec2d", "2d"));
+  templateExtension.insert(std::make_pair("Vec1d", "1d"));
   templateExtension.insert(std::make_pair("Rigid", "Rigid3d"));
   templateExtension.insert(std::make_pair("Rigid2d", "Rigid2d"));
 
   templateExtension.insert(std::make_pair("Vec6f", "6f"));
   templateExtension.insert(std::make_pair("Vec4f", "4f"));
   templateExtension.insert(std::make_pair("Vec3f", "3f"));
-  templateExtension.insert(std::make_pair("Vec2f", "1f"));
-  templateExtension.insert(std::make_pair("Vec1f", "2f"));
+  templateExtension.insert(std::make_pair("Vec2f", "2f"));
+  templateExtension.insert(std::make_pair("Vec1f", "1f"));
   templateExtension.insert(std::make_pair("Rigid3f", "Rigid3f"));
   templateExtension.insert(std::make_pair("Rigid2f", "Rigid2f"));
   templateExtension.insert(std::make_pair("ExtVec3f", "Ext3f"));

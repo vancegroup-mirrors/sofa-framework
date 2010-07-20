@@ -25,7 +25,7 @@
 #include <sofa/component/odesolver/OdeSolverImpl.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/Node.h>
-#include <sofa/core/componentmodel/behavior/LinearSolver.h>
+#include <sofa/core/behavior/LinearSolver.h>
 
 #include <sofa/defaulttype/Quat.h>
 
@@ -84,13 +84,13 @@ void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 void OdeSolverImpl::solveConstraint(double dt, VecId id)
 {
   simulation::Node *node=(simulation::Node*)getContext();
-  for (simulation::Node::Sequence< core::componentmodel::behavior::ConstraintSolver >::iterator it=node->constraintSolver.begin(); it!=node->constraintSolver.end();++it)
+  for (simulation::Node::Sequence< core::behavior::ConstraintSolver >::iterator it=node->constraintSolver.begin(); it!=node->constraintSolver.end();++it)
     {
       (*it)->solveConstraint(dt, id);
     }
 }
 
-using sofa::core::componentmodel::behavior::LinearSolver;
+using sofa::core::behavior::LinearSolver;
 using sofa::core::objectmodel::BaseContext;
 
 void OdeSolverImpl::m_resetSystem()

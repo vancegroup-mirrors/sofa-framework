@@ -27,6 +27,7 @@
 
 #include "CudaTypes.h"
 #include <sofa/component/linearsolver/FullMatrix.h>
+#include <sofa/defaulttype/BaseVector.h>
 
 //#define DEBUG_BASE
 
@@ -67,6 +68,10 @@ class CudaBaseVector : public BaseVector {
   		typedef T Real;
 
 		CudaVector<T>& getCudaVector() {
+			return v;
+		}
+
+		const CudaVector<T>& getCudaVector() const {
 			return v;
 		}
 
@@ -186,7 +191,8 @@ class CudaBaseMatrix : public BaseMatrix {
 		static const char* Name();
 		
 		CudaBaseVector<Real> operator*(const CudaBaseVector<Real> & v) const {
-		    CudaBaseVector<Real> res(rowSize());
+		    CudaBaseVector<Real> res;
+			res.resize(rowSize());
 		    CudaBaseMatrixKernels<Real>::matrix_vector_product(rowSize(),
 								        m.deviceRead(),
 								        m.getPitch(),

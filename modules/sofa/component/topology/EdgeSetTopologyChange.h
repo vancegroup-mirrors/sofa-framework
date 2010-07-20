@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_EDGESETTOPOLOGYCHANGE_H
 #define SOFA_COMPONENT_TOPOLOGY_EDGESETTOPOLOGYCHANGE_H
 
-#include <sofa/core/componentmodel/topology/Topology.h>		// TopologyChange
+#include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 
 namespace sofa
@@ -36,22 +36,22 @@ namespace component
 
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Edge Edge;
 
 	/** indicates that some edges were added */
-	class EdgesAdded : public core::componentmodel::topology::TopologyChange  
+	class EdgesAdded : public core::topology::TopologyChange  
 	{
     public:
 		EdgesAdded(const unsigned int nE) 
-			: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::EDGESADDED), 
+			: core::topology::TopologyChange(core::topology::EDGESADDED), 
 			nEdges(nE)
 		{ }
 
 		EdgesAdded(const unsigned int nE, 
 			const sofa::helper::vector< Edge >& edgesList,
 			const sofa::helper::vector< unsigned int >& edgesIndex) 
-			: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::EDGESADDED), 
+			: core::topology::TopologyChange(core::topology::EDGESADDED), 
 			nEdges(nE), 
 			edgeArray(edgesList), 
 			edgeIndexArray(edgesIndex)
@@ -61,7 +61,7 @@ namespace topology
 			const sofa::helper::vector< Edge >& edgesList,
 			const sofa::helper::vector< unsigned int >& edgesIndex,
 			const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors) 
-			: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::EDGESADDED), 
+			: core::topology::TopologyChange(core::topology::EDGESADDED), 
 			nEdges(nE), 
 			edgeArray(edgesList), 
 			edgeIndexArray(edgesIndex), 
@@ -73,7 +73,7 @@ namespace topology
 			const sofa::helper::vector< unsigned int >& edgesIndex,
 			const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
 			const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) 
-			: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::EDGESADDED), 
+			: core::topology::TopologyChange(core::topology::EDGESADDED), 
 			nEdges(nE), 
 			edgeArray(edgesList), 
 			edgeIndexArray(edgesIndex), 
@@ -103,11 +103,11 @@ namespace topology
 
 
 	/** indicates that some edges are about to be removed */
-	class EdgesRemoved : public core::componentmodel::topology::TopologyChange  
+	class EdgesRemoved : public core::topology::TopologyChange  
 	{
 	public:
 		EdgesRemoved(const sofa::helper::vector<unsigned int> _eArray)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::EDGESREMOVED), 
+		: core::topology::TopologyChange(core::topology::EDGESREMOVED), 
 		removedEdgesArray(_eArray) 
 		{}
 
@@ -131,11 +131,11 @@ namespace topology
 	/** indicates that some edges are about to be moved (i.e one or both of their vertices have just been moved)
 	 * EdgesMoved_Removing First part, remove element concerned to force object to recompute global state with current positions
 	 */
-	class EdgesMoved_Removing : public core::componentmodel::topology::TopologyChange  
+	class EdgesMoved_Removing : public core::topology::TopologyChange  
 	{
 	public:
 	  EdgesMoved_Removing (const sofa::helper::vector< unsigned int >& edgeShell)
-	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::EDGESMOVED_REMOVING),
+	    : core::topology::TopologyChange (core::topology::EDGESMOVED_REMOVING),
 	    edgesAroundVertexMoved (edgeShell)
 	  {}
 
@@ -148,12 +148,12 @@ namespace topology
 	 * EdgesMoved_Adding Second part, recompute state of all elements previously removed, with new positions points
 	 */
 	
-	class EdgesMoved_Adding : public core::componentmodel::topology::TopologyChange  
+	class EdgesMoved_Adding : public core::topology::TopologyChange  
 	{
 	public:
 	  EdgesMoved_Adding (const sofa::helper::vector< unsigned int >& edgeShell,
 			     const sofa::helper::vector< Edge >& edgeArray)
-	    : core::componentmodel::topology::TopologyChange (core::componentmodel::topology::EDGESMOVED_ADDING),
+	    : core::topology::TopologyChange (core::topology::EDGESMOVED_ADDING),
 	    edgesAroundVertexMoved (edgeShell), edgeArray2Moved (edgeArray)
 	  {}
 

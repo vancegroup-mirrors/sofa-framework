@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_POINTDATA_H
 #define SOFA_COMPONENT_TOPOLOGY_POINTDATA_H
 
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/helper/vector.h>
 #include <sofa/component/component.h>
 #include <list>
@@ -187,8 +187,8 @@ namespace topology
 		{}
 
 		/// Handle PointSetTopology related events, ignore others.
-		void handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-									std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end );
+		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+									std::list< const core::topology::TopologyChange *>::const_iterator &end );
 
 		void setCreateFunction(t_createFunc createFunc) 
 		{

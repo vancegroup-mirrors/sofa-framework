@@ -899,6 +899,9 @@ namespace sofa
        
         simulation::Node* root = simulation::getSimulation()->load ( filename.c_str() );
         simulation::getSimulation()->init ( root );
+
+        configureGUI(root);
+
         if ( root == NULL )
         {
           qFatal ( "Failed to load %s",filename.c_str() );
@@ -1117,6 +1120,8 @@ namespace sofa
       
       }
 
+      //----------------------------------
+      //Configuration
       void RealGUI::setDimension ( int w, int h )
       {
           QSize winSize = size();
@@ -1143,6 +1148,45 @@ namespace sofa
       {
         showFullScreen();
       }
+
+      void RealGUI::setBackgroundColor(const defaulttype::Vector3& c)
+      {
+        background[0]->setText(QString::number(c[0]));
+        background[1]->setText(QString::number(c[1]));
+        background[2]->setText(QString::number(c[2]));
+        updateBackgroundColour();
+      }
+
+      void RealGUI::setBackgroundImage(const std::string& c)
+      {
+        backgroundImage->setText(QString(c.c_str()));
+        updateBackgroundImage();
+      }
+
+      void RealGUI::setDumpState(bool b)
+      {
+        dumpStateCheckBox->setChecked(b);
+      }
+
+      void RealGUI::setLogTime(bool b)
+      {
+        displayComputationTimeCheckBox->setChecked(b);
+      }
+
+      void RealGUI::setExportState(bool b)
+      {
+        exportGnuplotFilesCheckbox->setChecked(b);
+      }
+
+  #ifdef SOFA_DUMP_VISITOR_INFO
+      void RealGUI::setTraceVisitors(bool b)
+      {
+        exportVisitorCheckbox->setChecked(b);
+      }
+
+  #endif
+
+//--------------------------------------
       void RealGUI::changeInstrument(int id)
       {
         std::cout << "Activation instrument "<<id<<std::endl;

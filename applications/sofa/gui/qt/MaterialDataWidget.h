@@ -1,7 +1,7 @@
 #ifndef MATERIAL_DATAWIDGET_H
 #define MATERIAL_DATAWIDGET_H
 #include <sofa/gui/qt/DataWidget.h>
-#include <sofa/core/componentmodel/loader/Material.h>
+#include <sofa/core/loader/Material.h>
 #include <sofa/defaulttype/Vec.h>
 
 
@@ -59,14 +59,14 @@ namespace sofa{
         void raiseQColorDialog();
       };
 
-      class MaterialDataWidget : public TDataWidget<sofa::core::componentmodel::loader::Material>
+      class MaterialDataWidget : public TDataWidget<sofa::core::loader::Material>
       {
         Q_OBJECT
       public:
         MaterialDataWidget(QWidget* parent, 
           const char* name, 
-          core::objectmodel::TData<sofa::core::componentmodel::loader::Material>* data):
-          TDataWidget<sofa::core::componentmodel::loader::Material>(parent,name,data) 
+          core::objectmodel::TData<sofa::core::loader::Material>* data):
+          TDataWidget<sofa::core::loader::Material>(parent,name,data) 
         {};
 
         virtual bool createWidgets();
@@ -89,15 +89,15 @@ namespace sofa{
       };
 
 
-      typedef helper::vector<sofa::core::componentmodel::loader::Material> VectorMaterial;
+      typedef helper::vector<sofa::core::loader::Material> VectorMaterial;
        class VectorMaterialDataWidget : public TDataWidget< VectorMaterial >
   {
     Q_OBJECT
   public:
     VectorMaterialDataWidget(QWidget* parent, 
       const char* name,
-      core::objectmodel::TData< helper::vector<sofa::core::componentmodel::loader::Material> >* data):
-    TDataWidget< helper::vector<sofa::core::componentmodel::loader::Material> >(parent,name,data),
+      core::objectmodel::TData< helper::vector<sofa::core::loader::Material> >* data):
+    TDataWidget< helper::vector<sofa::core::loader::Material> >(parent,name,data),
     _materialDataWidget(NULL),
     _currentMaterial(0,data->isDisplayed(),data->isReadOnly(),data->getOwner()),
     _comboBox(NULL)
@@ -115,7 +115,7 @@ namespace sofa{
 
     MaterialDataWidget* _materialDataWidget;
     VectorMaterial _vectorEditedMaterial;
-    core::objectmodel::Data<sofa::core::componentmodel::loader::Material> _currentMaterial;
+    core::objectmodel::Data<sofa::core::loader::Material> _currentMaterial;
     QComboBox* _comboBox;
     int _currentMaterialPos;
     protected slots:

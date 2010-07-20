@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_POINTSETTOPOLOGYCHANGE_H
 #define SOFA_COMPONENT_TOPOLOGY_POINTSETTOPOLOGYCHANGE_H
 
-#include <sofa/core/componentmodel/topology/Topology.h>		// TopologyChange
+#include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 #include <sofa/component/component.h>
 
@@ -39,11 +39,11 @@ namespace topology
 {
 
 	/** indicates that the indices of two points are being swapped */
-	class PointsIndicesSwap : public core::componentmodel::topology::TopologyChange
+	class PointsIndicesSwap : public core::topology::TopologyChange
 	{
 	public:
 		PointsIndicesSwap(const unsigned int i1,const unsigned int i2)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSINDICESSWAP)
+		: core::topology::TopologyChange(core::topology::POINTSINDICESSWAP)
 		{
 			index[0]=i1;
 			index[1]=i2;
@@ -54,19 +54,19 @@ namespace topology
 	};
 
 	/** indicates that some points were added */
-	class PointsAdded : public core::componentmodel::topology::TopologyChange
+	class PointsAdded : public core::topology::TopologyChange
 	{
 	public:
 
 		PointsAdded(const unsigned int nV)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSADDED)
+		: core::topology::TopologyChange(core::topology::POINTSADDED)
 		, nVertices(nV)
 		{ }
 
 		PointsAdded(const unsigned int nV,
 					const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
 					const sofa::helper::vector< sofa::helper::vector< double       > >& baryCoefs)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSADDED)
+		: core::topology::TopologyChange(core::topology::POINTSADDED)
 		, nVertices(nV), ancestorsList(ancestors), coefs(baryCoefs)
 		{ }
 
@@ -79,11 +79,11 @@ namespace topology
 	};
 
 	/** indicates that some points are about to be removed */
-	class PointsRemoved : public core::componentmodel::topology::TopologyChange
+	class PointsRemoved : public core::topology::TopologyChange
 	{
 	public:
 		PointsRemoved(const sofa::helper::vector<unsigned int>& _vArray)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSREMOVED),
+		: core::topology::TopologyChange(core::topology::POINTSREMOVED),
 		removedVertexArray(_vArray)
 		{ }
 
@@ -95,17 +95,17 @@ namespace topology
 
 
 	/** indicates that the indices of all points have been renumbered */
-	class PointsRenumbering : public core::componentmodel::topology::TopologyChange
+	class PointsRenumbering : public core::topology::TopologyChange
 	{
 	public:
 
 		PointsRenumbering()
-			: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSRENUMBERING)
+			: core::topology::TopologyChange(core::topology::POINTSRENUMBERING)
 		{ }
 
 		PointsRenumbering(const sofa::helper::vector< unsigned int >& indices,
 						  const sofa::helper::vector< unsigned int >& inv_indices)
-			: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSRENUMBERING),
+			: core::topology::TopologyChange(core::topology::POINTSRENUMBERING),
 			indexArray(indices), inv_indexArray(inv_indices)
 		{ }
 
@@ -120,14 +120,14 @@ namespace topology
 
 
 	/** indicates that some points were moved */
-	class PointsMoved : public core::componentmodel::topology::TopologyChange
+	class PointsMoved : public core::topology::TopologyChange
 	{
 	public:
 
 	  PointsMoved(const sofa::helper::vector<unsigned int>& indices,
                       const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
                       const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs)
-	  : core::componentmodel::topology::TopologyChange(core::componentmodel::topology::POINTSMOVED)
+	  : core::topology::TopologyChange(core::topology::POINTSMOVED)
 	  , indicesList(indices), ancestorsList(ancestors), baryCoefsList(baryCoefs)
 	  {}
 

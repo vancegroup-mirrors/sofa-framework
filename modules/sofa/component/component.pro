@@ -25,5 +25,6 @@ SUBDIRS += controller            #forcefield + constraint dependency
 SUBDIRS += collision             #linearsolver+odesolver+forcefield+mapping+constraint+visualmodel
 SUBDIRS += engine                #collision dependency
 SUBDIRS += misc                  #full dependencies
+SUBDIRS += configurationsetting  #full dependencies
 SUBDIRS += libcomponent.pro
 

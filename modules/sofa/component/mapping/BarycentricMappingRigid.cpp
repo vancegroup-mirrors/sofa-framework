@@ -28,10 +28,10 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/core/componentmodel/behavior/MappedModel.h>
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/behavior/MappedModel.h>
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/Mapping.inl>
-#include <sofa/core/componentmodel/behavior/MechanicalMapping.inl>
+#include <sofa/core/behavior/MechanicalMapping.inl>
 
 
 #include <sofa/helper/PolarDecompose.h>
@@ -51,7 +51,7 @@ namespace sofa
 
             using namespace sofa::defaulttype;
             using namespace core;
-            using namespace core::componentmodel::behavior;
+            using namespace core::behavior;
 
             SOFA_DECL_CLASS(BarycentricMappingRigid)
 
@@ -489,7 +489,7 @@ namespace sofa
 
                     }
                 } else {
-                    typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+                    typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
                     const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -561,7 +561,7 @@ namespace sofa
                 }                
                 else
                 {
-                    typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+                    typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
                     const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -601,17 +601,17 @@ namespace sofa
         if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
           return;
 
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
 
-        for ( std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt = itBegin;
+        for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
         {
-          const core::componentmodel::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
+          const core::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
           switch ( changeType )
           {
               //TODO: implementation of BarycentricMapperHexahedronSetTopology<In,Out>::handleTopologyChange()
-            case core::componentmodel::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
+            case core::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
             {
 				if(!_invalidIndex.empty())
 				{
@@ -650,23 +650,23 @@ namespace sofa
 				}
             }
             break;
-            case core::componentmodel::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
+            case core::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
               break;
-            case core::componentmodel::topology::POINTSADDED:        ///< For PointsAdded.
+            case core::topology::POINTSADDED:        ///< For PointsAdded.
               break;
-            case core::componentmodel::topology::POINTSREMOVED:      ///< For PointsRemoved.
+            case core::topology::POINTSREMOVED:      ///< For PointsRemoved.
               break;
-            case core::componentmodel::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
+            case core::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
               break;
-            case core::componentmodel::topology::TRIANGLESADDED:  ///< For Triangles Added.
+            case core::topology::TRIANGLESADDED:  ///< For Triangles Added.
               break;
-            case core::componentmodel::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
+            case core::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
               break;
-            case core::componentmodel::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
+            case core::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
             {
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
+            case core::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
             {
 // std::cout << "BarycentricMapperHexahedronSetTopology() HEXAHEDRAREMOVED" << std::endl;
               const unsigned int nbHexahedra = this->fromTopology->getNbHexahedra();
@@ -718,7 +718,7 @@ namespace sofa
               }
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
+            case core::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
               break;
             default:
               break;
@@ -735,17 +735,17 @@ namespace sofa
         if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
           return;
 
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
 
-        for ( std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt = itBegin;
+        for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
         {
-          const core::componentmodel::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
+          const core::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
           switch ( changeType )
           {
               //TODO: implementation of BarycentricMapperHexahedronSetTopology<In,Out>::handleTopologyChange()
-            case core::componentmodel::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
+            case core::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
             {
 				if(!_invalidIndex.empty())
 				{
@@ -784,23 +784,23 @@ namespace sofa
 				}
             }
             break;
-            case core::componentmodel::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
+            case core::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
               break;
-            case core::componentmodel::topology::POINTSADDED:        ///< For PointsAdded.
+            case core::topology::POINTSADDED:        ///< For PointsAdded.
               break;
-            case core::componentmodel::topology::POINTSREMOVED:      ///< For PointsRemoved.
+            case core::topology::POINTSREMOVED:      ///< For PointsRemoved.
               break;
-            case core::componentmodel::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
+            case core::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
               break;
-            case core::componentmodel::topology::TRIANGLESADDED:  ///< For Triangles Added.
+            case core::topology::TRIANGLESADDED:  ///< For Triangles Added.
               break;
-            case core::componentmodel::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
+            case core::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
               break;
-            case core::componentmodel::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
+            case core::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
             {
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
+            case core::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
             {
 // std::cout << "BarycentricMapperHexahedronSetTopology() HEXAHEDRAREMOVED" << std::endl;
               const unsigned int nbHexahedra = this->fromTopology->getNbHexahedra();
@@ -852,7 +852,7 @@ namespace sofa
               }
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
+            case core::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
               break;
             default:
               break;
@@ -868,17 +868,17 @@ namespace sofa
         if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
           return;
 
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
 
-        for ( std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt = itBegin;
+        for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
         {
-          const core::componentmodel::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
+          const core::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
           switch ( changeType )
           {
               //TODO: implementation of BarycentricMapperHexahedronSetTopology<In,Out>::handleTopologyChange()
-            case core::componentmodel::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
+            case core::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
             {
 				if(!_invalidIndex.empty())
 				{
@@ -917,23 +917,23 @@ namespace sofa
 				}
             }
             break;
-            case core::componentmodel::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
+            case core::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
               break;
-            case core::componentmodel::topology::POINTSADDED:        ///< For PointsAdded.
+            case core::topology::POINTSADDED:        ///< For PointsAdded.
               break;
-            case core::componentmodel::topology::POINTSREMOVED:      ///< For PointsRemoved.
+            case core::topology::POINTSREMOVED:      ///< For PointsRemoved.
               break;
-            case core::componentmodel::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
+            case core::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
               break;
-            case core::componentmodel::topology::TRIANGLESADDED:  ///< For Triangles Added.
+            case core::topology::TRIANGLESADDED:  ///< For Triangles Added.
               break;
-            case core::componentmodel::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
+            case core::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
               break;
-            case core::componentmodel::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
+            case core::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
             {
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
+            case core::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
             {
 // std::cout << "BarycentricMapperHexahedronSetTopology() HEXAHEDRAREMOVED" << std::endl;
               const unsigned int nbHexahedra = this->fromTopology->getNbHexahedra();
@@ -985,7 +985,7 @@ namespace sofa
               }
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
+            case core::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
               break;
             default:
               break;
@@ -1002,17 +1002,17 @@ namespace sofa
         if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
           return;
 
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
 
-        for ( std::list<const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt = itBegin;
+        for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
         {
-          const core::componentmodel::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
+          const core::topology::TopologyChangeType changeType = ( *changeIt )->getChangeType();
           switch ( changeType )
           {
               //TODO: implementation of BarycentricMapperHexahedronSetTopology<In,Out>::handleTopologyChange()
-            case core::componentmodel::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
+            case core::topology::ENDING_EVENT:       ///< To notify the end for the current sequence of topological change events
             {
 				if(!_invalidIndex.empty())
 				{
@@ -1051,23 +1051,23 @@ namespace sofa
 				}
             }
             break;
-            case core::componentmodel::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
+            case core::topology::POINTSINDICESSWAP:  ///< For PointsIndicesSwap.
               break;
-            case core::componentmodel::topology::POINTSADDED:        ///< For PointsAdded.
+            case core::topology::POINTSADDED:        ///< For PointsAdded.
               break;
-            case core::componentmodel::topology::POINTSREMOVED:      ///< For PointsRemoved.
+            case core::topology::POINTSREMOVED:      ///< For PointsRemoved.
               break;
-            case core::componentmodel::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
+            case core::topology::POINTSRENUMBERING:  ///< For PointsRenumbering.
               break;
-            case core::componentmodel::topology::TRIANGLESADDED:  ///< For Triangles Added.
+            case core::topology::TRIANGLESADDED:  ///< For Triangles Added.
               break;
-            case core::componentmodel::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
+            case core::topology::TRIANGLESREMOVED:  ///< For Triangles Removed.
               break;
-            case core::componentmodel::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
+            case core::topology::HEXAHEDRAADDED:     ///< For HexahedraAdded.
             {
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
+            case core::topology::HEXAHEDRAREMOVED:   ///< For HexahedraRemoved.
             {
 // std::cout << "BarycentricMapperHexahedronSetTopology() HEXAHEDRAREMOVED" << std::endl;
               const unsigned int nbHexahedra = this->fromTopology->getNbHexahedra();
@@ -1119,7 +1119,7 @@ namespace sofa
               }
             }
             break;
-            case core::componentmodel::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
+            case core::topology::HEXAHEDRARENUMBERING: ///< For HexahedraRenumbering.
               break;
             default:
               break;

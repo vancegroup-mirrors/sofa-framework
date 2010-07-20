@@ -55,7 +55,7 @@ namespace topology
 using namespace sofa::defaulttype;
 
 using namespace sofa::component::topology;
-using namespace sofa::core::componentmodel::topology;
+using namespace sofa::core::topology;
 
 /// Input Topology
 typedef BaseMeshTopology In;
@@ -213,7 +213,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 								
 				switch( changeType ) {
 
-				case core::componentmodel::topology::ENDING_EVENT:
+				case core::topology::ENDING_EVENT:
 					{
 						//sout << "INFO_print : TopologicalMapping - ENDING_EVENT" << sendl;
 						to_tstm->propagateTopologicalChanges();
@@ -222,7 +222,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 						break;
 					}
 
-				case core::componentmodel::topology::QUADSADDED:
+				case core::topology::QUADSADDED:
 					{
 						//sout << "INFO_print : TopologicalMapping - QUADSADDED" << sendl;
 						if (fromModel) {
@@ -267,7 +267,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 						}
 						break;
 					}
-				case core::componentmodel::topology::QUADSREMOVED:
+				case core::topology::QUADSREMOVED:
 					{
 						//sout << "INFO_print : TopologicalMapping - QUADSREMOVED" << sendl;
 
@@ -374,7 +374,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 						break;
 					}
 
-					case core::componentmodel::topology::POINTSREMOVED:
+					case core::topology::POINTSREMOVED:
 					{
 						//sout << "INFO_print : TopologicalMapping - POINTSREMOVED" << sendl;
 						
@@ -398,7 +398,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 					}
 
 					
-					case core::componentmodel::topology::POINTSRENUMBERING:
+					case core::topology::POINTSRENUMBERING:
 					{
 						//sout << "INFO_print : Hexa2QuadTopologicalMapping - POINTSREMOVED" << sendl;
 						
@@ -426,7 +426,7 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 					}
 
 					
-					case core::componentmodel::topology::POINTSADDED:
+					case core::topology::POINTSADDED:
 					{
 						//sout << "INFO_print : Quad2TriangleTopologicalMapping - POINTSADDED" << sendl;
 

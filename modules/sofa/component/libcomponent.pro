@@ -35,6 +35,7 @@ LIBS += -lsofacomponentmapping$$LIBSUFFIX
 LIBS += -lsofacomponentconstraint$$LIBSUFFIX
 LIBS += -lsofacomponentcollision$$LIBSUFFIX
 LIBS += -lsofacomponentmisc$$LIBSUFFIX
+LIBS += -lsofacomponentconfigurationsetting$$LIBSUFFIX
 LIBS += -lsofacomponentengine$$LIBSUFFIX
 
 LIBS += $$SOFA_EXT_LIBS 

@@ -140,7 +140,7 @@ bool ContinuousTriangleIntersection::isCollision(void)
 
 }
 
-core::componentmodel::collision::DetectionOutput* ContinuousTriangleIntersection::computeDetectionOutput (void)
+core::collision::DetectionOutput* ContinuousTriangleIntersection::computeDetectionOutput (void)
 {
 	SReal t[3], u[3], v[3];
 	double dt = 0.01; //Scene::getInstance()->getDt();
@@ -177,7 +177,7 @@ core::componentmodel::collision::DetectionOutput* ContinuousTriangleIntersection
 	intersectEdgeEdge(t[2], u[2], v[2], tr1.p2(), tr1.p3(), tr1.v2(), tr1.v3(), tr2.p2(), tr2.p3(), tr2.v2(), tr2.v3(), dt);
 
 	// compute the point and so on
-	core::componentmodel::collision::DetectionOutput *detectionOutput = new core::componentmodel::collision::DetectionOutput();
+	core::collision::DetectionOutput *detectionOutput = new core::collision::DetectionOutput();
 	detectionOutput->elem = std::pair<core::CollisionElementIterator, core::CollisionElementIterator>(tr1, tr2);
 
 	return detectionOutput;

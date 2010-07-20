@@ -10,7 +10,7 @@
 
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/objectmodel/BaseObject.h>
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/component/topology/TriangleSetTopologyContainer.h>
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.inl>
@@ -48,14 +48,14 @@ public:
 	typedef defaulttype::Mat<3,3,Real> Mat3x3;
 	typedef helper::fixed_array<Mat3x3,9> DMat3x3;
 
-	typedef core::componentmodel::topology::BaseMeshTopology::PointID Point;
+	typedef core::topology::BaseMeshTopology::PointID Point;
 
 	typedef std::set<Point> Neighborhood;
 	typedef helper::vector<Neighborhood> VecNeighborhood;
 
 private:
-    core::componentmodel::behavior::MechanicalState<DataTypes>* mechanicalState;
-    core::componentmodel::topology::BaseMeshTopology* topo;
+    core::behavior::MechanicalState<DataTypes>* mechanicalState;
+    core::topology::BaseMeshTopology* topo;
 
 	//rest data
 	Coord x0_cm;
@@ -117,7 +117,7 @@ public:
     template<class T>
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
-        if (dynamic_cast<core::componentmodel::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
+        if (dynamic_cast<core::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
             return false;
         return BaseObject::canCreate(obj, context, arg);
     }

@@ -316,7 +316,7 @@ void SensAble::updatePosition(double /* dt */) {
 	sphereModel->setSphere( 0, pos, 0.5*scale.getValue() );
 
 	
-	typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
+	typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
 
 	//if (deviceData.m_buttonState1)
 	if (bRenderForce)

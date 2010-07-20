@@ -38,7 +38,7 @@ namespace component {
 namespace linearsolver {
 
 using namespace sofa::defaulttype;
-using namespace sofa::core::componentmodel::behavior;
+using namespace sofa::core::behavior;
 using namespace sofa::simulation;
 using namespace sofa::core::objectmodel;
 using sofa::helper::system::thread::CTime;

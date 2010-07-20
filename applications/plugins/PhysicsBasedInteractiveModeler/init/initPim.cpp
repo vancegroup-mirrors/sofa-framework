@@ -57,6 +57,7 @@ using namespace plugins::pim::gui::qt;
                 SOFA_PIM_API void initExternalModule();
                 SOFA_PIM_API const char* getModuleName();
                 SOFA_PIM_API const char* getModuleVersion();
+	        SOFA_PIM_API const char* getModuleLicense();
                 SOFA_PIM_API const char* getModuleDescription();
                 SOFA_PIM_API const char* getModuleComponentList();
 	}
@@ -78,6 +79,11 @@ using namespace plugins::pim::gui::qt;
 	const char* getModuleVersion()
 	{
 		return "beta 1.0";
+	}
+
+	const char* getModuleLicense()
+	{
+		return "LGPL";
 	}
 
 	const char* getModuleDescription()

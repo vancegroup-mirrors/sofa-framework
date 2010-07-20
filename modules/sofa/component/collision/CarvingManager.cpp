@@ -24,14 +24,14 @@
 ******************************************************************************/
 #include "CarvingManager.h"
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/core/componentmodel/collision/DetectionOutput.h>
+#include <sofa/core/collision/DetectionOutput.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
 #include <sofa/core/objectmodel/OmniEvent.h>
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
 
-#include <sofa/core/componentmodel/topology/TopologicalMapping.h>
+#include <sofa/core/topology/TopologicalMapping.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/component/collision/TopologicalChangeManager.h>
 #include <sofa/helper/AdvancedTimer.h>
@@ -82,7 +82,7 @@ void CarvingManager::init()
         //modelSurface = getContext()->get<TriangleSetModel>(core::objectmodel::BaseContext::SearchDown);
         std::vector<core::CollisionModel*> models;
         getContext()->get<core::CollisionModel>(&models, core::objectmodel::BaseContext::SearchRoot);
-	    sofa::core::componentmodel::topology::TopologicalMapping * topoMapping;
+	    sofa::core::topology::TopologicalMapping * topoMapping;
         for (unsigned int i=0;i<models.size();++i)
         {
             core::CollisionModel* m = models[i];
@@ -97,8 +97,8 @@ void CarvingManager::init()
     {
         modelSurface = getContext()->get<core::CollisionModel>(f_modelSurface.getValue());
     }
-    intersectionMethod = getContext()->get<core::componentmodel::collision::Intersection>();
-    detectionNP = getContext()->get<core::componentmodel::collision::NarrowPhaseDetection>();
+    intersectionMethod = getContext()->get<core::collision::Intersection>();
+    detectionNP = getContext()->get<core::collision::NarrowPhaseDetection>();
     bool error = false;
     if (modelTool == NULL) { serr << "CarvingManager: modelTool not found"<<sendl; error = true; }
     if (modelSurface == NULL) { serr << "CarvingManager: modelSurface not found"<<sendl; error = true; }
@@ -150,14 +150,14 @@ void CarvingManager::doCarve()
     detectionNP->addCollisionPairs(vectCMPair);
     detectionNP->endNarrowPhase();
     
-    const core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap& detectionOutputs = detectionNP->getDetectionOutputs();
+    const core::collision::NarrowPhaseDetection::DetectionOutputMap& detectionOutputs = detectionNP->getDetectionOutputs();
 
     sofa::helper::AdvancedTimer::stepEnd("CarveCollision");
     
     //sout << "CarvingManager: process contacts" << sendl;
 
     const ContactVector* contacts = NULL;
-    core::componentmodel::collision::NarrowPhaseDetection::DetectionOutputMap::const_iterator it = detectionOutputs.begin(); //find(std::make_pair(modelSurface,modelTool));
+    core::collision::NarrowPhaseDetection::DetectionOutputMap::const_iterator it = detectionOutputs.begin(); //find(std::make_pair(modelSurface,modelTool));
     if (it != detectionOutputs.end())
     {
 #ifndef NDEBUG

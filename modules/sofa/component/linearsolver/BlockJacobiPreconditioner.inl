@@ -35,7 +35,7 @@
 #include <iostream>
 #include "sofa/helper/system/thread/CTime.h"
 #include <sofa/core/objectmodel/BaseContext.h>
-#include <sofa/core/componentmodel/behavior/LinearSolver.h>
+#include <sofa/core/behavior/LinearSolver.h>
 #include <math.h>
 #include <sofa/component/linearsolver/DiagonalMatrix.h>
 
@@ -46,7 +46,7 @@ namespace component {
 namespace linearsolver {
 
 using namespace sofa::defaulttype;
-using namespace sofa::core::componentmodel::behavior;
+using namespace sofa::core::behavior;
 using namespace sofa::simulation;
 using namespace sofa::core::objectmodel;
 using std::cerr;

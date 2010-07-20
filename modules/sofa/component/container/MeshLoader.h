@@ -32,7 +32,7 @@
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/helper/io/MeshTopologyLoader.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h> //Need to include this file in order to have the definition of SOFA_NEW_HEXA !
+#include <sofa/core/topology/BaseMeshTopology.h> //Need to include this file in order to have the definition of SOFA_NEW_HEXA !
 #include <sofa/component/component.h>
 
 namespace sofa

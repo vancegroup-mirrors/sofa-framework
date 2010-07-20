@@ -161,9 +161,20 @@ public:
 	  virtual void fileOpen(std::string filename, bool temporaryFile=false);
     virtual void fileOpenSimu(std::string filename);
 	  virtual void setScene(Node* groot, const char* filename=NULL, bool temporaryFile=false);
-    virtual void setDimension(int w, int h);
-    virtual void setFullScreen();
-	  virtual void setTitle( std::string windowTitle );
+
+      //Configuration methods
+      virtual void setDimension(int w, int h);
+      virtual void setFullScreen();
+      virtual void setBackgroundColor(const defaulttype::Vector3& c);
+      virtual void setBackgroundImage(const std::string& i);
+      virtual void setDumpState(bool);
+      virtual void setLogTime(bool);
+      virtual void setExportState(bool);
+  #ifdef SOFA_DUMP_VISITOR_INFO
+      virtual void setTraceVisitors(bool);
+  #endif
+
+      virtual void setTitle( std::string windowTitle );
 
 	  //public slots:
 	  virtual void fileNew();

@@ -82,7 +82,7 @@ bool LCPConstraintSolver::prepareStates(double /*dt*/, VecId id)
         sofa::helper::AdvancedTimer::StepVar vtimer("PrepareStates");
 
 	last_lcp = lcp;
-	core::componentmodel::behavior::BaseMechanicalState::VecId dx_id = core::componentmodel::behavior::BaseMechanicalState::VecId::dx();
+	core::behavior::BaseMechanicalState::VecId dx_id = core::behavior::BaseMechanicalState::VecId::dx();
 	simulation::MechanicalVOpVisitor(dx_id).execute( context); //dX=0
     simulation::MechanicalPropagateDxVisitor(dx_id,true,true).execute( context); //Propagate dX //ignore the mask here
 
@@ -95,7 +95,7 @@ bool LCPConstraintSolver::prepareStates(double /*dt*/, VecId id)
 
         for (unsigned int i=0;i<constraintCorrections.size();i++)
           {
-            core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+            core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
             cc->resetContactForce();
           }
 
@@ -267,7 +267,7 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
     //	MechanicalApplyContactForceVisitor(_result).execute(context);
     for (unsigned int i=0;i<constraintCorrections.size();i++)
     {
-        core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+        core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
         cc->applyContactForce(_result);
     }
     sofa::helper::AdvancedTimer::stepEnd  ("Apply Contact Force");
@@ -285,7 +285,7 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
     sofa::helper::AdvancedTimer::stepBegin("Reset Contact Force");
     for (unsigned int i=0;i<constraintCorrections.size();i++)
     {
-        core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+        core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
         cc->resetContactForce();
     }
     sofa::helper::AdvancedTimer::stepEnd ("Reset Contact Force");
@@ -356,7 +356,7 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
 
       void LCPConstraintSolver::init()
       {
-        core::componentmodel::behavior::ConstraintSolver::init();
+        core::behavior::ConstraintSolver::init();
 
 		// Prevents ConstraintCorrection accumulation due to multiple MasterSolver initialization on dynamic components Add/Remove operations.
 		if (!constraintCorrections.empty())
@@ -364,7 +364,7 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
 			constraintCorrections.clear();
 		}
 
-        getContext()->get<core::componentmodel::behavior::BaseConstraintCorrection>(&constraintCorrections, core::objectmodel::BaseContext::SearchDown);
+        getContext()->get<core::behavior::BaseConstraintCorrection>(&constraintCorrections, core::objectmodel::BaseContext::SearchDown);
 
         context = (simulation::Node*) getContext();
       }
@@ -409,7 +409,7 @@ void LCPConstraintSolver::build_LCP()
     if (this->f_printLog.getValue()) sout<<" computeCompliance in "  << constraintCorrections.size()<< " constraintCorrections" <<sendl;
     for (unsigned int i=0;i<constraintCorrections.size();i++)
     {
-        core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+        core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
         cc->getCompliance(_W);
     }
     sofa::helper::AdvancedTimer::stepEnd  ("Get Compliance");
@@ -459,7 +459,7 @@ void LCPConstraintSolver::build_LCP()
           _Wcoarse.resize(sizeCoarseSystem,sizeCoarseSystem);
           for (unsigned int i=0;i<constraintCorrections.size();i++)
             {
-              core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+              core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
               cc->getComplianceWithConstraintMerge(&_Wcoarse, constraint_merge);
             }
       }
@@ -867,7 +867,7 @@ void LCPConstraintSolver::computeInitialGuess()
     {
         const ConstraintBlockInfo& info = constraintBlockInfo[cb];
         if (!info.hasId) continue;
-        std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintBlockBuf>::const_iterator previt = _previousConstraints.find(info.parent);
+        std::map<core::behavior::BaseConstraint*, ConstraintBlockBuf>::const_iterator previt = _previousConstraints.find(info.parent);
         if (previt == _previousConstraints.end()) continue;
         const ConstraintBlockBuf& buf = previt->second;
         const int c0 = info.const0;
@@ -896,7 +896,7 @@ void LCPConstraintSolver::keepContactForcesValue()
     for (unsigned int c=0;c<_numConstraints;++c)
         _previousForces[c] = (*_result)[c];
     // clear previous history
-    for (std::map<core::componentmodel::behavior::BaseConstraint*, ConstraintBlockBuf>::iterator it = _previousConstraints.begin(), itend = _previousConstraints.end(); it != itend; ++it)
+    for (std::map<core::behavior::BaseConstraint*, ConstraintBlockBuf>::iterator it = _previousConstraints.begin(), itend = _previousConstraints.end(); it != itend; ++it)
     {
         ConstraintBlockBuf& buf = it->second;
         for (std::map<PersistentID,int>::iterator it2 = buf.persistentToConstraintIdMap.begin(), it2end = buf.persistentToConstraintIdMap.end(); it2 != it2end; ++it2)
@@ -963,7 +963,7 @@ void LCPConstraintSolver::keepContactForcesValue()
 	
 	for (unsigned int i=0;i<constraintCorrections.size();i++)
           {
-            core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];	
+            core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];	
             cc->resetForUnbuiltResolution(f, contact_sequence); 
           }
 	 
@@ -992,7 +992,7 @@ void LCPConstraintSolver::keepContactForcesValue()
           for (unsigned int i=0;i<constraintCorrections.size();i++)
             {
 
-              core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+              core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
               if(cc->hasConstraintNumber(3*c1))
                 {
                   if(elem1){
@@ -1272,7 +1272,7 @@ void LCPConstraintSolver::keepContactForcesValue()
     
         for (unsigned int i=0;i<constraintCorrections.size();i++)
           {
-            core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+            core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
             cc->resetForUnbuiltResolution(f, contact_sequence); 
           }
     
@@ -1298,7 +1298,7 @@ void LCPConstraintSolver::keepContactForcesValue()
           for (unsigned int i=0;i<constraintCorrections.size();i++)
             {
             
-              core::componentmodel::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
+              core::behavior::BaseConstraintCorrection* cc = constraintCorrections[i];
               if(cc->hasConstraintNumber(c1))
                 {
                   if(elem1){

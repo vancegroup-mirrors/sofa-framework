@@ -42,22 +42,22 @@ namespace topology
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Alloc>
-	void HexahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-														std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	void HexahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+														std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			case core::componentmodel::topology::HEXAHEDRAADDED:
+			case core::topology::HEXAHEDRAADDED:
 			{
 				const HexahedraAdded *ta=static_cast< const HexahedraAdded * >( *changeIt );
 				add( ta->getNbAddedHexahedra(), ta->hexahedronArray, ta->ancestorsList, ta->coefs );
 				break;
 			}
-			case core::componentmodel::topology::HEXAHEDRAREMOVED:
+			case core::topology::HEXAHEDRAREMOVED:
 			{
 				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const HexahedraRemoved *>( *changeIt ) )->getArray();
 				remove( tab );

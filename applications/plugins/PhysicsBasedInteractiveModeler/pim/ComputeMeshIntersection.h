@@ -32,8 +32,8 @@
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
-#include <sofa/core/componentmodel/behavior/MechanicalState.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/behavior/MechanicalState.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/component/topology/MeshTopology.h>
 
@@ -43,8 +43,8 @@ namespace plugins
 namespace pim
 {
 
-using namespace sofa::core::componentmodel::behavior;
-using namespace sofa::core::componentmodel::topology;
+using namespace sofa::core::behavior;
+using namespace sofa::core::topology;
 using namespace sofa::core::objectmodel;
 using namespace sofa::component::topology;
 
@@ -75,6 +75,8 @@ public:
     Data<VecCoord> d_muscleLayerVertex, d_fatLayerVertex, d_intersectionVertex;
     Data<VecTriangles> d_muscleLayerTriangles, d_fatLayerTriangles, d_intersectionTriangles;
     Data< vector<Quad> > d_intersectionQuads;
+    Data< vector<unsigned int> > d_index;
+
     MeshTopology topology;
     std::map<unsigned int, unsigned int> intersectionIndices;
     Data<bool> d_print_log;

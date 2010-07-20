@@ -29,7 +29,7 @@
 #include <HD/hd.h>
 #include <sofa/helper/LCPcalc.h>
 
-#include <sofa/core/componentmodel/behavior/BaseController.h>
+#include <sofa/core/behavior/BaseController.h>
 
 namespace sofa
 {
@@ -75,7 +75,7 @@ typedef struct {
 /**
 * Omni driver
 */
-class OmniDriver : public core::componentmodel::behavior::BaseController
+class OmniDriver : public core::behavior::BaseController
 {
 
 public:

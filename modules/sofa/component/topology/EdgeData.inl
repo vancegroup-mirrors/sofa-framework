@@ -44,16 +44,16 @@ namespace topology
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Alloc>
-	void EdgeData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-												std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	void EdgeData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+												std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			 case core::componentmodel::topology::TETRAHEDRAADDED:
+			 case core::topology::TETRAHEDRAADDED:
 			 {
 				 if (m_createTetrahedronFunc) 
 				 {
@@ -63,7 +63,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TETRAHEDRAREMOVED:
+			 case core::topology::TETRAHEDRAREMOVED:
 			 {
 				 if (m_destroyTetrahedronFunc) 
 				 {
@@ -73,7 +73,7 @@ namespace topology
 				 }
 				 break;
 			 }		
-			 case core::componentmodel::topology::TRIANGLESADDED:
+			 case core::topology::TRIANGLESADDED:
 			 {
 				 if (m_createTriangleFunc) 
 				 {
@@ -83,7 +83,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESREMOVED:
+			 case core::topology::TRIANGLESREMOVED:
 			 {
 				 if (m_destroyTriangleFunc) 
 				 {
@@ -93,7 +93,7 @@ namespace topology
 				 }
 				 break;
 			 }	
-			 case core::componentmodel::topology::QUADSADDED:
+			 case core::topology::QUADSADDED:
 			 {
 				 if (m_createQuadFunc) 
 				 {
@@ -103,7 +103,7 @@ namespace topology
 				 }
 				 break;
 			 }
-			 case core::componentmodel::topology::QUADSREMOVED:
+			 case core::topology::QUADSREMOVED:
 			 {
 				 if (m_destroyQuadFunc) 
 				 {
@@ -113,19 +113,19 @@ namespace topology
 				 }
 				 break;
 			 }	
-			 case core::componentmodel::topology::EDGESADDED:
+			 case core::topology::EDGESADDED:
 			 {
 				 const EdgesAdded *ea=static_cast< const EdgesAdded * >( *changeIt );
 				 add( ea->getNbAddedEdges(), ea->edgeArray, ea->ancestorsList, ea->coefs );
 				 break;
 			 }
-			 case core::componentmodel::topology::EDGESREMOVED:
+			 case core::topology::EDGESREMOVED:
 			 {
 				 const sofa::helper::vector<unsigned int> &tab = ( static_cast< const EdgesRemoved *>( *changeIt ) )->getArray();
 				 remove( tab );
 				 break;
 			 }
-			 case core::componentmodel::topology::EDGESMOVED_REMOVING:
+			 case core::topology::EDGESMOVED_REMOVING:
 			 {
 			   const sofa::helper::vector< unsigned int >& edgeList = ( static_cast< const EdgesMoved_Removing *>( *changeIt ) )->edgesAroundVertexMoved;
 			   sofa::helper::vector<T, Alloc>& data = *(this->beginEdit());
@@ -136,7 +136,7 @@ namespace topology
 			   this->endEdit();
 			   break;
 			 }
-			 case core::componentmodel::topology::EDGESMOVED_ADDING:
+			 case core::topology::EDGESMOVED_ADDING:
 			 {
 			  const sofa::helper::vector< unsigned int >& edgeList = ( static_cast< const EdgesMoved_Adding *>( *changeIt ) )->edgesAroundVertexMoved;
 			  const sofa::helper::vector< Edge >& edgeArray = ( static_cast< const EdgesMoved_Adding *>( *changeIt ) )->edgeArray2Moved;
@@ -157,7 +157,7 @@ namespace topology
 			  this->endEdit();
 			  break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESMOVED_REMOVING:
+			 case core::topology::TRIANGLESMOVED_REMOVING:
 			 {
 			   if (m_destroyTriangleFunc) 
 			   {
@@ -168,7 +168,7 @@ namespace topology
 			   
 			   break;
 			 }
-			 case core::componentmodel::topology::TRIANGLESMOVED_ADDING:
+			 case core::topology::TRIANGLESMOVED_ADDING:
 			 {
 			   if (m_createTriangleFunc) 
 			   {

@@ -45,7 +45,7 @@ namespace odesolver
 {
 
 using namespace sofa::defaulttype;
-using namespace core::componentmodel::behavior;
+using namespace core::behavior;
 
 CGImplicitSolver::CGImplicitSolver()
         : f_maxIter( initData(&f_maxIter,(unsigned)25,"iterations","maximum number of iterations of the Conjugate Gradient solution") )
@@ -243,7 +243,7 @@ void CGImplicitSolver::solve(double dt)
         r.peq(q,-alpha);                // r = r - alpha q
 #else // single-operation optimization
         {
-  	    typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+  	    typedef core::behavior::BaseMechanicalState::VMultiOp VMultiOp;
 	    VMultiOp ops;
             ops.resize(2);
             ops[0].first = (VecId)x;
@@ -275,7 +275,7 @@ void CGImplicitSolver::solve(double dt)
 
 #else // single-operation optimization
     {
-        typedef core::componentmodel::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+        typedef core::behavior::BaseMechanicalState::VMultiOp VMultiOp;
 	VMultiOp ops;
         ops.resize(2);
         ops[0].first = (VecId)vel;

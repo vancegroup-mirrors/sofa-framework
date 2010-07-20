@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETTOPOLOGYCHANGE_H     
 #define SOFA_COMPONENT_TOPOLOGY_TETRAHEDRONSETTOPOLOGYCHANGE_H
 
-#include <sofa/core/componentmodel/topology/Topology.h>		// TopologyChange
+#include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 
 namespace sofa
@@ -36,23 +36,23 @@ namespace component
 
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Tetra Tetra;
 	typedef Tetra Tetrahedron;
 
 	/** indicates that some tetrahedra were added */
-	class TetrahedraAdded : public core::componentmodel::topology::TopologyChange  
+	class TetrahedraAdded : public core::topology::TopologyChange  
 	{
 	public:
 		TetrahedraAdded(const unsigned int nT) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TETRAHEDRAADDED), 
+		: core::topology::TopologyChange(core::topology::TETRAHEDRAADDED), 
 		nTetrahedra(nT)
 		{ }
 
 		TetrahedraAdded(const unsigned int nT, 
 						const sofa::helper::vector< Tetrahedron >& _tetrahedronArray,
 						const sofa::helper::vector< unsigned int >& tetrahedraIndex) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TETRAHEDRAADDED), 
+		: core::topology::TopologyChange(core::topology::TETRAHEDRAADDED), 
 		nTetrahedra(nT), 
 		tetrahedronArray(_tetrahedronArray), 
 		tetrahedronIndexArray(tetrahedraIndex)
@@ -63,7 +63,7 @@ namespace topology
 						const sofa::helper::vector< unsigned int >& tetrahedraIndex,
 						const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
 						const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TETRAHEDRAADDED), 
+		: core::topology::TopologyChange(core::topology::TETRAHEDRAADDED), 
 		nTetrahedra(nT), 
 		tetrahedronArray(_tetrahedronArray), 
 		tetrahedronIndexArray(tetrahedraIndex),
@@ -90,11 +90,11 @@ namespace topology
 	};
 
 	/** indicates that some tetrahedra are about to be removed */
-	class TetrahedraRemoved : public core::componentmodel::topology::TopologyChange  
+	class TetrahedraRemoved : public core::topology::TopologyChange  
 	{
 	public:
 		TetrahedraRemoved(const sofa::helper::vector<unsigned int> _tArray) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::TETRAHEDRAREMOVED), 
+		: core::topology::TopologyChange(core::topology::TETRAHEDRAREMOVED), 
 		removedTetrahedraArray(_tArray) 
 		{ }
 

@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_QUADSETTOPOLOGYCHANGE_H
 #define SOFA_COMPONENT_TOPOLOGY_QUADSETTOPOLOGYCHANGE_H
 
-#include <sofa/core/componentmodel/topology/Topology.h>		// TopologyChange
+#include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 
 namespace sofa
@@ -34,22 +34,22 @@ namespace component
 {
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Quad Quad;
     
 	/** indicates that some quads were added */
-	class QuadsAdded : public core::componentmodel::topology::TopologyChange  
+	class QuadsAdded : public core::topology::TopologyChange  
 	{
 	public:
 		QuadsAdded(const unsigned int nT) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::QUADSADDED), 
+		: core::topology::TopologyChange(core::topology::QUADSADDED), 
 		nQuads(nT)
 		{ }
 
 		QuadsAdded(const unsigned int nT, 
 					const sofa::helper::vector< Quad >& _quadArray,
 					const sofa::helper::vector< unsigned int >& quadsIndex) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::QUADSADDED), 
+		: core::topology::TopologyChange(core::topology::QUADSADDED), 
 		nQuads(nT), 
 		quadArray(_quadArray), 
 		quadIndexArray(quadsIndex)
@@ -60,7 +60,7 @@ namespace topology
 					const sofa::helper::vector< unsigned int >& quadsIndex,
 					const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
 					const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::QUADSADDED), 
+		: core::topology::TopologyChange(core::topology::QUADSADDED), 
 		nQuads(nT), 
 		quadArray(_quadArray), 
 		quadIndexArray(quadsIndex),
@@ -92,11 +92,11 @@ namespace topology
 	};
 
 	/** indicates that some quads are about to be removed */
-	class QuadsRemoved : public core::componentmodel::topology::TopologyChange  
+	class QuadsRemoved : public core::topology::TopologyChange  
 	{
 	public:
 		QuadsRemoved(const sofa::helper::vector<unsigned int> _qArray)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::QUADSREMOVED), 
+		: core::topology::TopologyChange(core::topology::QUADSREMOVED), 
 		removedQuadsArray(_qArray) 
 		{ }
 

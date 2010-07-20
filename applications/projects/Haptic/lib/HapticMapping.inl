@@ -42,7 +42,7 @@ namespace sofa{
 
 
 
-using sofa::core::componentmodel::behavior::MechanicalMapping;
+using sofa::core::behavior::MechanicalMapping;
 using sofa::component::mapping::RigidRigidMapping;
 
 using sofa::defaulttype::Matrix4;

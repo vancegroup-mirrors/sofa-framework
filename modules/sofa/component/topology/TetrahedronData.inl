@@ -41,22 +41,22 @@ namespace topology
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Alloc>
-	void TetrahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-														std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	void TetrahedronData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+														std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
-			case core::componentmodel::topology::TETRAHEDRAADDED:
+			case core::topology::TETRAHEDRAADDED:
 			{
 				const TetrahedraAdded *ta = static_cast< const TetrahedraAdded * >( *changeIt );
 				add( ta->getNbAddedTetrahedra(), ta->tetrahedronArray, ta->ancestorsList, ta->coefs );
 				break;
 			}
-			case core::componentmodel::topology::TETRAHEDRAREMOVED:
+			case core::topology::TETRAHEDRAREMOVED:
 			{
 				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const TetrahedraRemoved *>( *changeIt ) )->getArray();
 				remove( tab );

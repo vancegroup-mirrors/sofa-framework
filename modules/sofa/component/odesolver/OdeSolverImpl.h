@@ -26,9 +26,9 @@
 #define SOFA_COMPONENT_ODESOLVER_ODESOLVERIMPL_H
 
 #include <sofa/simulation/common/SolverImpl.h>
-#include <sofa/core/componentmodel/behavior/OdeSolver.h>
-#include <sofa/core/componentmodel/behavior/LinearSolver.h>
-#include <sofa/core/componentmodel/behavior/BaseConstraintCorrection.h>
+#include <sofa/core/behavior/OdeSolver.h>
+#include <sofa/core/behavior/LinearSolver.h>
+#include <sofa/core/behavior/BaseConstraintCorrection.h>
 #include <sofa/component/linearsolver/FullMatrix.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 
@@ -47,14 +47,14 @@ namespace odesolver
 {
 
 
-class SOFA_COMPONENT_ODESOLVER_API OdeSolverImpl : public sofa::core::componentmodel::behavior::OdeSolver, public simulation::SolverImpl
+class SOFA_COMPONENT_ODESOLVER_API OdeSolverImpl : public sofa::core::behavior::OdeSolver, public simulation::SolverImpl
 {
 public:
-    typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
-    typedef sofa::core::componentmodel::behavior::MultiVector<OdeSolverImpl> MultiVector;
-    typedef sofa::core::componentmodel::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
-    typedef sofa::core::componentmodel::behavior::MechanicalMatrix MechanicalMatrix;
-    typedef sofa::core::componentmodel::behavior::BaseLMConstraint::ConstOrder ConstOrder;
+    typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
+    typedef sofa::core::behavior::MultiVector<OdeSolverImpl> MultiVector;
+    typedef sofa::core::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
+    typedef sofa::core::behavior::MechanicalMatrix MechanicalMatrix;
+    typedef sofa::core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
 
 
     OdeSolverImpl();

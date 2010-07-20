@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_MECHANICALOBJECT_INL 
 
 #include <sofa/component/container/MechanicalObject.h>
-#include <sofa/core/componentmodel/topology/BaseMeshTopology.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #ifdef SOFA_SMP
 #include <sofa/component/container/MechanicalObjectTasks.inl>
 #endif
@@ -67,7 +67,7 @@ namespace sofa
     namespace container
     {
 	using namespace topology;
-	using namespace sofa::core::componentmodel::topology;
+	using namespace sofa::core::topology;
 
     using namespace sofa::defaulttype;
     template <class DataTypes>
@@ -302,7 +302,7 @@ namespace sofa
 	template <class DataTypes>
 	void MechanicalObject<DataTypes>::handleStateChange()
 	{
-		using sofa::core::componentmodel::topology::TopologyChange;
+		using sofa::core::topology::TopologyChange;
 
 		std::list< const TopologyChange * >::const_iterator itBegin = _topology->firstStateChange();
 		std::list< const TopologyChange * >::const_iterator itEnd = _topology->lastStateChange();
@@ -313,7 +313,7 @@ namespace sofa
 
 			switch( changeType )
 			{
-				case core::componentmodel::topology::POINTSADDED:
+				case core::topology::POINTSADDED:
 				{
 					using sofa::helper::vector;
 
@@ -355,7 +355,7 @@ namespace sofa
 					}
 					break;
 				}
-				case core::componentmodel::topology::POINTSREMOVED:
+				case core::topology::POINTSREMOVED:
 				{
 					const sofa::helper::vector<unsigned int> tab = ( static_cast< const PointsRemoved * >( *itBegin ) )->getArray();
 
@@ -370,7 +370,7 @@ namespace sofa
 					resize( prevSizeMechObj - tab.size() );
 					break;
 				}
-				case core::componentmodel::topology::POINTSMOVED: 
+				case core::topology::POINTSMOVED: 
 				{
 					using sofa::helper::vector;
 
@@ -408,7 +408,7 @@ namespace sofa
 
 					break;
 				}
-				case core::componentmodel::topology::POINTSRENUMBERING:
+				case core::topology::POINTSRENUMBERING:
 				{
 					const sofa::helper::vector<unsigned int> &tab = ( static_cast< const PointsRenumbering * >( *itBegin ) )->getIndexArray();
 
@@ -1508,7 +1508,7 @@ void MechanicalObject<DataTypes>::addVectorToState(VecId dest, defaulttype::Base
             }
           else
             {                
-              typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;          
+              typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;          
               const ParticleMask::InternalStorage &indices=this->forceMask.getEntries();
               ParticleMask::InternalStorage::const_iterator it;
               for (it=indices.begin();it!=indices.end();it++)
@@ -2394,7 +2394,7 @@ void MechanicalObject<DataTypes>::vFree(VecId v)
         }
       else
         {                
-          typedef core::componentmodel::behavior::BaseMechanicalState::ParticleMask ParticleMask;          
+          typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;          
           const ParticleMask::InternalStorage &indices=this->forceMask.getEntries();
           ParticleMask::InternalStorage::const_iterator it;
           for (it=indices.begin();it!=indices.end();it++)
@@ -2456,7 +2456,7 @@ void MechanicalObject<DataTypes>::renumberConstraintId(const sofa::helper::vecto
 }
 
 template <class DataTypes>
-std::list<core::componentmodel::behavior::BaseMechanicalState::ConstraintBlock> MechanicalObject<DataTypes>::constraintBlocks( const std::list<unsigned int> &indices) const
+std::list<core::behavior::BaseMechanicalState::ConstraintBlock> MechanicalObject<DataTypes>::constraintBlocks( const std::list<unsigned int> &indices) const
 {
   const unsigned int dimensionDeriv = defaulttype::DataTypeInfo< Deriv >::size();
   assert( indices.size() > 0 );
@@ -3247,7 +3247,7 @@ void MechanicalObject < DataTypes >::printDOF (VecId /*v*/,
 /// Returns false if this object does not support picking
 template <class DataTypes>
 bool MechanicalObject<DataTypes>::pickParticles(double rayOx, double rayOy, double rayOz, double rayDx, double rayDy, double rayDz, double radius0, double dRadius,
-		   std::multimap< double, std::pair<sofa::core::componentmodel::behavior::BaseMechanicalState*, int> >& particles)
+		   std::multimap< double, std::pair<sofa::core::behavior::BaseMechanicalState*, int> >& particles)
 {
     if (DataTypeInfo<Coord>::size() == 2 || DataTypeInfo<Coord>::size() == 3
 	|| (DataTypeInfo<Coord>::size() == 7 && DataTypeInfo<Deriv>::size() == 6))

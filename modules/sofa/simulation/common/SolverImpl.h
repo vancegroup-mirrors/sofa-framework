@@ -25,8 +25,8 @@
 #ifndef SOFA_SIMULATION_SOLVERIMPL_H
 #define SOFA_SIMULATION_SOLVERIMPL_H
 
-#include <sofa/core/componentmodel/behavior/OdeSolver.h>
-#include <sofa/core/componentmodel/behavior/LinearSolver.h>
+#include <sofa/core/behavior/OdeSolver.h>
+#include <sofa/core/behavior/LinearSolver.h>
 #include <sofa/simulation/common/common.h>
 
 namespace sofa
@@ -45,7 +45,7 @@ class MechanicalVisitor;
 class SOFA_SIMULATION_COMMON_API SolverImpl : public virtual sofa::core::objectmodel::BaseObject
 {
 public:
-    typedef sofa::core::componentmodel::behavior::BaseMechanicalState::VecId VecId;
+    typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
     typedef std::map<core::objectmodel::BaseContext*, double> MultiNodeDataMap;
 
     SolverImpl();

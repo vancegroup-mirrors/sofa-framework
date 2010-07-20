@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_TOPOLOGY_TOPOLOGYCHANGEDEVENT_H
 
 #include <sofa/core/objectmodel/Event.h>
-#include <sofa/core/componentmodel/topology/BaseTopology.h>
+#include <sofa/core/topology/BaseTopology.h>
 
 namespace sofa
 {
@@ -43,15 +43,15 @@ namespace topology
 	class TopologyChangedEvent : public sofa::core::objectmodel::Event
 	{
 	protected:
-		core::componentmodel::topology::BaseTopology *topology;
+		core::topology::BaseTopology *topology;
 
 	public:
-		TopologyChangedEvent( core::componentmodel::topology::BaseTopology *_topology) : topology(_topology) {
+		TopologyChangedEvent( core::topology::BaseTopology *_topology) : topology(_topology) {
 		}
 
 		~TopologyChangedEvent(){}
 
-		core::componentmodel::topology::BaseTopology *getTopology() const{
+		core::topology::BaseTopology *getTopology() const{
 			return topology;
 		}
 	};

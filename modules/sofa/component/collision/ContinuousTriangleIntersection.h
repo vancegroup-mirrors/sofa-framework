@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_COLLISION_CONTINUOUSTRIANGLEINTERSECTION_H
 #define SOFA_COMPONENT_COLLISION_CONTINUOUSTRIANGLEINTERSECTION_H
 #include <sofa/component/collision/Triangle.h>
-#include <sofa/core/componentmodel/collision/DetectionOutput.h>
+#include <sofa/core/collision/DetectionOutput.h>
 #include <math.h>
 
 
@@ -124,7 +124,7 @@ private:
 public:
 	ContinuousTriangleIntersection (Triangle& t1, Triangle& t2);
 	~ContinuousTriangleIntersection(void);
-	core::componentmodel::collision::DetectionOutput* computeDetectionOutput (void);
+	core::collision::DetectionOutput* computeDetectionOutput (void);
 	bool isCollision(void);
 
 	static const SReal EPSILON;

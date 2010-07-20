@@ -69,7 +69,15 @@ namespace loader
       gmshFormat = 2;
       // 		std::cout << "Gmsh format 2.0" << std::endl;
       std::string line;
-      std::getline(file, line); // we don't care about this line
+      std::getline(file, line); // we don't care about this line (2 0 8)
+      // modifiacation of Phuoc
+      if(line.empty())
+      {
+              file >> cmd;
+              std::getline(file, line); // we don't care about this line (0 8)
+      }
+      // end of modification of Phuoc
+
       file >> cmd;
       if (cmd != "$EndMeshFormat") // it should end with $EndMeshFormat
       {
@@ -177,7 +185,8 @@ namespace loader
       {
 	// version 1.0 format is 
 	// elm-number elm-type reg-phys reg-elem number-of-nodes <node-number-list ...>
-	file >> index >> etype >> rphys >> relem >> nnodes;      }
+        file >> index >> etype >> rphys >> relem >> nnodes;
+      }
       else if (gmshFormat == 2) 
       {
 	// version 2.0 format is
@@ -192,6 +201,9 @@ namespace loader
 	    
 	switch (etype)
 	{
+            case 15: //point
+              nnodes = 1;
+              break;
 	    case 1: // Line
 	      nnodes = 2;
 	      break;

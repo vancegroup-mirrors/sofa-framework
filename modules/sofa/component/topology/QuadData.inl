@@ -42,17 +42,17 @@ namespace topology
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Alloc>
-	void QuadData<T,Alloc>::handleTopologyEvents( std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator changeIt, 
-												std::list< const core::componentmodel::topology::TopologyChange *>::const_iterator &end ) 
+	void QuadData<T,Alloc>::handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+												std::list< const core::topology::TopologyChange *>::const_iterator &end ) 
 	{
 		while( changeIt != end )
 		{
-			core::componentmodel::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
+			core::topology::TopologyChangeType changeType = (*changeIt)->getChangeType();
 
 			switch( changeType ) 
 			{
 			/*
-			case core::componentmodel::topology::HEXAHEDRAADDED:
+			case core::topology::HEXAHEDRAADDED:
 			{
 				if (m_createHexahedronFunc) 
 				{
@@ -61,7 +61,7 @@ namespace topology
 				}
 				break;
 			}
-			case core::componentmodel::topology::HEXAHEDRAREMOVED:
+			case core::topology::HEXAHEDRAREMOVED:
 			{
 				if (m_destroyHexahedronFunc) 
 				{
@@ -71,14 +71,14 @@ namespace topology
 				break;
 			}
 			*/
-			case core::componentmodel::topology::QUADSADDED:
+			case core::topology::QUADSADDED:
 			{
 				const QuadsAdded *qa=static_cast< const QuadsAdded * >( *changeIt );
 				add( qa->getNbAddedQuads(), qa->quadArray, qa->ancestorsList, qa->coefs );
 				break;
 			}
 
-			case core::componentmodel::topology::QUADSREMOVED:
+			case core::topology::QUADSREMOVED:
 			{
 				const sofa::helper::vector<unsigned int> &tab = ( static_cast< const QuadsRemoved *>( *changeIt ) )->getArray();
 				remove( tab );

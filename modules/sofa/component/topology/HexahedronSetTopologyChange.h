@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETTOPOLOGYCHANGE_H
 #define SOFA_COMPONENT_TOPOLOGY_HEXAHEDRONSETTOPOLOGYCHANGE_H
 
-#include <sofa/core/componentmodel/topology/Topology.h>		// TopologyChange
+#include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 
 namespace sofa
@@ -34,23 +34,23 @@ namespace component
 {
 namespace topology
 {
-	using core::componentmodel::topology::BaseMeshTopology;
+	using core::topology::BaseMeshTopology;
 	typedef BaseMeshTopology::Hexa Hexa;
 	typedef Hexa Hexahedron;
 
 	/** indicates that some hexahedra were added */
-	class HexahedraAdded : public core::componentmodel::topology::TopologyChange  
+	class HexahedraAdded : public core::topology::TopologyChange  
 	{
 	public:
 		HexahedraAdded(const unsigned int nT)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::HEXAHEDRAADDED), 
+		: core::topology::TopologyChange(core::topology::HEXAHEDRAADDED), 
 		nHexahedra(nT)
 		{ }
 
 		HexahedraAdded(const unsigned int nT, 
 					const sofa::helper::vector< Hexahedron >& _hexahedronArray,
 					const sofa::helper::vector< unsigned int >& hexahedraIndex) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::HEXAHEDRAADDED), 
+		: core::topology::TopologyChange(core::topology::HEXAHEDRAADDED), 
 		nHexahedra(nT), 
 		hexahedronArray(_hexahedronArray), 
 		hexahedronIndexArray(hexahedraIndex)
@@ -61,7 +61,7 @@ namespace topology
 					const sofa::helper::vector< unsigned int >& hexahedraIndex,
 					const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ancestors,
 					const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) 
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::HEXAHEDRAADDED), 
+		: core::topology::TopologyChange(core::topology::HEXAHEDRAADDED), 
 		nHexahedra(nT), 
 		hexahedronArray(_hexahedronArray), 
 		hexahedronIndexArray(hexahedraIndex),
@@ -83,11 +83,11 @@ namespace topology
 	};
 
 	/** indicates that some hexahedra are about to be removed */
-	class HexahedraRemoved : public core::componentmodel::topology::TopologyChange  
+	class HexahedraRemoved : public core::topology::TopologyChange  
 	{
 	public:
 		HexahedraRemoved(const sofa::helper::vector<unsigned int> _tArray)
-		: core::componentmodel::topology::TopologyChange(core::componentmodel::topology::HEXAHEDRAREMOVED), 
+		: core::topology::TopologyChange(core::topology::HEXAHEDRAREMOVED), 
 		removedHexahedraArray(_tArray) 
 		{ }
 

@@ -33,8 +33,6 @@
 #include <sofa/component/contextobject/initContextObject.h>
 #include <sofa/component/controller/initController.h>
 #include <sofa/component/engine/initEngine.h>
-
-#include <sofa/component/fem/initFEM.h>
 #include <sofa/component/forcefield/initForceField.h>
 #include <sofa/component/interactionforcefield/initInteractionForceField.h>
 #include <sofa/component/linearsolver/initLinearSolver.h>
@@ -69,9 +67,6 @@ void init()
     	initContextObject();
     	initController();
         initEngine();
-
-        initFEM();
-
     	initForceField();
     	initInteractionForceField();
     	initLinearSolver();

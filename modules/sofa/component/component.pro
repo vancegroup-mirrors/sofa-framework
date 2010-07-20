@@ -10,7 +10,6 @@ SUBDIRS += loader
 SUBDIRS += odesolver
 SUBDIRS += forcefield
 SUBDIRS += mass
-SUBDIRS += fem
 SUBDIRS += behaviormodel
 SUBDIRS += visualmodel
 SUBDIRS += contextobject

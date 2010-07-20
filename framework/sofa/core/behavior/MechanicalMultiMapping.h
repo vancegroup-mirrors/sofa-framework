@@ -44,6 +44,30 @@ template< class In, class Out >
 class MechanicalMultiMapping : public MultiMapping<In,Out>, public BaseMechanicalMapping
 {
 public:
+    typedef typename In::VecCoord InVecCoord;
+    typedef typename In::VecDeriv InVecDeriv;
+
+    typedef typename Out::VecCoord OutVecCoord;
+    typedef typename Out::VecDeriv OutVecDeriv;
+
+#ifdef SOFA_SMP
+
+    defaulttype::SharedVector<OutVecDeriv *> VecOutFreeVel;
+    defaulttype::SharedVector<const InVecDeriv *> VecInFreeVel;
+    defaulttype::SharedVector<OutVecCoord *> VecOutPos;
+    defaulttype::SharedVector<const InVecCoord *> VecInPos;
+    defaulttype::SharedVector<OutVecDeriv *> VecOutVel;
+    defaulttype::SharedVector<const InVecDeriv *> VecInVel;
+    defaulttype::SharedVector<OutVecDeriv*> VecOutDx;
+    defaulttype::SharedVector<const InVecDeriv*> VecInDx;
+
+    defaulttype::SharedVector<const OutVecDeriv*> VecOutForce;
+    defaulttype::SharedVector<InVecDeriv*> VecInForce;
+    defaulttype::SharedVector<const OutVecDeriv*> VecOutForce2;
+    defaulttype::SharedVector<InVecDeriv*> VecInForce2;
+
+#endif
+
           SOFA_CLASS2(SOFA_TEMPLATE2(MechanicalMultiMapping,In,Out), SOFA_TEMPLATE2(MultiMapping,In,Out), BaseMechanicalMapping);
 
           Data<bool> f_isMechanical;

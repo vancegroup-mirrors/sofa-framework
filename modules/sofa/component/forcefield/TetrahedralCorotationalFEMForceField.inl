@@ -382,6 +382,8 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(M
         (1-2*poissonRatio)/(2*(1-poissonRatio));
 	materialMatrix *= (youngModulus*(1-poissonRatio))/((1+poissonRatio)*(1-2*poissonRatio));
 
+	//std::cout<<" C ="<<materialMatrix<<std::endl;
+
 	// divide by 36 times volumes of the element
 	const VecCoord *X0=this->mstate->getX0();
 
@@ -394,7 +396,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(M
 	{
 		serr << "ERROR: Negative volume for tetra "<<a<<','<<b<<','<<c<<','<<d<<"> = "<<volumes6/6<<sendl;
 	}
-	materialMatrix  /= volumes6;
+	materialMatrix  /= (volumes6);//*6 christian
     /// @TODO: in TetrahedronFEMForceField, the stiffness matrix is divided by 6 compared to the code in TetrahedralCorotationalFEMForceField. Check which is the correct one...
 	//materialMatrix  /= volumes6*6;
 }
@@ -1402,6 +1404,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::printStiffnessMatrix(int i
 
 	computeStiffnessMatrix(JKJt,tmp,tetrahedronInf[idTetra].materialMatrix,tetrahedronInf[idTetra].strainDisplacementMatrix,Rot);
 
+/*
 	std::cout<<"TetrahedralCorotationalFEMForceField<DataTypes>::  Element "<<idTetra <<"   ===STIFNESSMATRIX===="<<std::endl;
 	for(int inode=0;inode<4;inode++)
 	{
@@ -1420,10 +1423,12 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::printStiffnessMatrix(int i
 			}
 			std::cout<<" |"<<std::endl;
 		}
+		std::cout<<std::endl;
 	}
 
 	//<<JKJt<<std::endl
 	std::cout<<"==============================================================="<<std::endl;
+*/
 }
 
 

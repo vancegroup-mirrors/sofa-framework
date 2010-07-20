@@ -20,7 +20,6 @@ LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentmastersolver$$LIBSUFFIX
-LIBS += -lsofacomponentfem$$LIBSUFFIX
 LIBS += -lsofacomponentinteractionforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentcontextobject$$LIBSUFFIX
 LIBS += -lsofacomponentbehaviormodel$$LIBSUFFIX
@@ -93,6 +92,7 @@ HEADERS += mycuda.h \
 
 SOURCES += mycuda.cpp \
            CudaBoxROI.cpp  \
+	   CudaRestShapeSpringsForceField.cpp  \
 	   CudaIndexValueMapper.cpp \
            CudaMechanicalObject.cpp \
            CudaUniformMass.cpp \

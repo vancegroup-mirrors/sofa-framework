@@ -23,7 +23,7 @@ LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentloader$$LIBSUFFIX
 LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentmastersolver$$LIBSUFFIX
-LIBS += -lsofacomponentfem$$LIBSUFFIX
+
 
 LIBS += -lsofacomponentinteractionforcefield$$LIBSUFFIX
 LIBS += -lsofacomponentcontextobject$$LIBSUFFIX

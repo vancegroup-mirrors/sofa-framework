@@ -218,6 +218,7 @@ protected:
 	unsigned indRotationFinder;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
 	Vector tmpVectorRotation;
+	SparseMatrix<Real> JR;
 	
 	bool first;
 	int nbstep_update;

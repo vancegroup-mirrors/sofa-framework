@@ -49,8 +49,8 @@
 #include <sofa/helper/rmath.h>
 #include <sofa/helper/accessor.h>
 #include <sstream>
-
 #include <map>
+#include <memory>
 
 namespace sofa
 {
@@ -458,16 +458,18 @@ void VisualModelImpl::setMesh(helper::io::Mesh &objLoader, bool tex)
   computeBBox();
 }
 
-bool VisualModelImpl::load(const std::string& filename, const std::string& loader, const std::string& textureName)
+bool VisualModelImpl::load(const std::string& filename,
+                           const std::string& loader,
+                           const std::string& textureName)
 {
     bool tex = !textureName.empty() || putOnlyTexCoords.getValue();
-    if (!textureName.empty() )
+    if (!textureName.empty())
     {
-      std::string textureFilename(textureName);
-      if (sofa::helper::system::DataRepository.findFile (textureFilename))
-        tex = loadTexture(textureName);
-      else
-          serr <<"Texture \""<<textureName <<"\" not found" << sendl;
+        std::string textureFilename(textureName);
+        if (sofa::helper::system::DataRepository.findFile(textureFilename))
+            tex = loadTexture(textureName);
+        else
+            serr << "Texture \"" << textureName << "\" not found" << sendl;
     }
 
     // Make sure all Data are up-to-date
@@ -479,48 +481,56 @@ bool VisualModelImpl::load(const std::string& filename, const std::string& loade
     field_triangles.updateIfDirty();
     field_quads.updateIfDirty();
 
-
     if (!filename.empty() && (field_vertices.getValue()).size() == 0)
     {
-      std::string meshFilename(filename);
-      if (sofa::helper::system::DataRepository.findFile (meshFilename))
-      {
-        //name = filename;
-        helper::io::Mesh *objLoader;
-        if (loader.empty())
-            objLoader = helper::io::Mesh::Create(filename);
-        else
-            objLoader = helper::io::Mesh::Create(loader, filename);
-
-        if (!objLoader)
+        std::string meshFilename(filename);
+        if (sofa::helper::system::DataRepository.findFile(meshFilename))
         {
-            return false;
+            //name = filename;
+            std::auto_ptr<helper::io::Mesh> objLoader;
+            if (loader.empty())
+            {
+                objLoader.reset(helper::io::Mesh::Create(filename));
+            }
+            else
+            {
+                objLoader.reset(helper::io::Mesh::Create(loader, filename));
+            }
+
+            if (objLoader.get() == 0)
+            {
+                return false;
+            }
+            else
+            {
+                //Modified: previously, the texture coordinates were not loaded correctly if no texture name was specified.
+                //setMesh(*objLoader,tex);
+                setMesh(*objLoader, true);
+                //sout << "VisualModel::load, vertices.size = "<< vertices.size() <<sendl;
+            }
         }
         else
         {
-          //Modified: previously, the texture coordinates were not loaded correctly if no texture name was specified.
-        //setMesh(*objLoader,tex);
-        setMesh(*objLoader,true);
-	  //sout << "VisualModel::load, vertices.size = "<< vertices.size() <<sendl;
-	}
-      }
-      else
-        serr <<"Mesh \""<< filename <<"\" not found" << sendl;
+            serr << "Mesh \"" << filename << "\" not found" << sendl;
+        }
     }
     else
     {
-      if ((field_vertices.getValue()).size() == 0)
-      {
-          sout << "VisualModel: will use Topology."<<sendl;
-          useTopology = true;
-      }
-      else  computeBBox();
-      modified = true;
+        if ((field_vertices.getValue()).size() == 0)
+        {
+            sout << "VisualModel: will use Topology." << sendl;
+            useTopology = true;
+        }
+        else
+        {
+            computeBBox();
+        }
+        modified = true;
     }
 
     if (!xformsModified)
     {
-         // add one identity matrix
+        // add one identity matrix
         xforms.resize(1);
     }
     applyUVTransformation();

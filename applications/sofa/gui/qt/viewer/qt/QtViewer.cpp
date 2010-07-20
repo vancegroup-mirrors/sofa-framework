@@ -89,7 +89,7 @@ helper::Creator<SofaViewerFactory, QtViewer> QtViewer_class("qt",false);
 SOFA_DECL_CLASS ( QTGUI )
 
 
- sofa::core::ObjectFactory::ClassEntry* classVisualModel;
+ sofa::core::ObjectFactory::ClassEntryPtr classVisualModel;
 
  static  bool enabled = false;
 
@@ -1606,7 +1606,7 @@ void QtViewer::resetView()
 			in.close();
 			fileRead = true;
 		}
-	}
+        }
 
 	if (!fileRead)
 	{
@@ -1650,11 +1650,11 @@ void QtViewer::saveView()
 {
 	if (!sceneFileName.empty())
 	{
-		std::string viewFileName = sceneFileName + ".view";
+                std::string viewFileName = sceneFileName + ".view";
 		std::ofstream out(viewFileName.c_str());
 		if (!out.fail())
 		{
-			const Vec3d& camPosition = currentCamera->getLookAt();
+                        const Vec3d& camPosition = currentCamera->getPosition();
 			const Quat& camOrientation = currentCamera->getOrientation();
 
 			out << camPosition[0] << " "

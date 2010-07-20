@@ -71,6 +71,7 @@ contains(DEFINES,SOFA_HAVE_VRPN){
 	SUBDIRS += extlibs/VRPN
 }
 
+
 SUBDIRS += framework
 SUBDIRS += modules
 SUBDIRS += applications

@@ -229,7 +229,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    
 	    matrixAccessor.setGlobalMatrix(sharedData.matricesWork[indexwork]);
 	  
- 	    sout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << sendl;
+ 	    std::cout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << std::endl;
 	    nbstep_update = 1;
 	} else nbstep_update++;
 
@@ -271,8 +271,10 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
 /// Default implementation of Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
 template<class Matrix, class Vector> template<class RMatrix, class JMatrix>
 bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMatrix& J, double fact) {
-  const unsigned int Jrows = J.rowSize();
-  const unsigned int Jcols = J.colSize();
+  Rcur->opMulJ(&JR,&J);
+  
+  const unsigned int Jrows = JR.rowSize();
+  const unsigned int Jcols = JR.colSize();
   if (Jcols != sharedData.matricesWork[indexwork]->rowSize()) {
       serr << "LULinearSolver::addJMInvJt ERROR: incompatible J matrix size." << sendl;
       return false;
@@ -280,14 +282,14 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMat
 
   if (!Jrows) return false;
 
-  const typename JMatrix::LineConstIterator jitend = J.end();
+  const typename SparseMatrix<Real>::LineConstIterator jitend = JR.end();
 	  // STEP 1 : put each line of matrix Jt in the right hand term of the system
-  for (typename JMatrix::LineConstIterator jit1 = J.begin(); jit1 != jitend; ++jit1) {
+  for (typename SparseMatrix<Real>::LineConstIterator jit1 = JR.begin(); jit1 != jitend; ++jit1) {
       int row1 = jit1->first;
       // clear the right hand term:
       systemRHVector->clear(); // currentGroup->systemMatrix->rowSize()
       //double acc = 0.0;
-      for (typename JMatrix::LElementConstIterator i1 = jit1->second.begin(), i1end = jit1->second.end(); i1 != i1end; ++i1) {
+      for (typename SparseMatrix<Real>::LElementConstIterator i1 = jit1->second.begin(), i1end = jit1->second.end(); i1 != i1end; ++i1) {
 	systemRHVector->add(i1->first,i1->second);       
       }
 
@@ -296,11 +298,11 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(RMatrix& result, JMat
 
 
       // STEP 3 : project the result using matrix J
-      for (typename JMatrix::LineConstIterator jit2 = jit1; jit2 != jitend; ++jit2)
+      for (typename SparseMatrix<Real>::LineConstIterator jit2 = jit1; jit2 != jitend; ++jit2)
       {
 	      int row2 = jit2->first;
 	      double acc = 0.0;
-	      for (typename JMatrix::LElementConstIterator i2 = jit2->second.begin(), i2end = jit2->second.end(); i2 != i2end; ++i2)
+	      for (typename SparseMatrix<Real>::LElementConstIterator i2 = jit2->second.begin(), i2end = jit2->second.end(); i2 != i2end; ++i2)
 	      {
 		      int col2 = i2->first;
 		      double val2 = i2->second;

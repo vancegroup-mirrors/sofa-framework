@@ -114,8 +114,8 @@ namespace sofa
 
     SOFA_DECL_CLASS ( OgreGUI )
 
-    sofa::core::ObjectFactory::ClassEntry* classOglModel;
-    sofa::core::ObjectFactory::ClassEntry* classVisualModel;
+    sofa::core::ObjectFactory::ClassEntryPtr classOglModel;
+    sofa::core::ObjectFactory::ClassEntryPtr classVisualModel;
 
     static  bool enabled = false;
 

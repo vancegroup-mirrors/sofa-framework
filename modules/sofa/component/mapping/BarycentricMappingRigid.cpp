@@ -489,7 +489,7 @@ namespace sofa
 
                     }
                 } else {
-                    typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+                    typedef helper::ParticleMask ParticleMask;
                     const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -561,7 +561,7 @@ namespace sofa
                 }                
                 else
                 {
-                    typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+                    typedef helper::ParticleMask ParticleMask;
                     const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 

@@ -22,10 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_FEM_INIT_H
-#define SOFA_COMPONENT_FEM_INIT_H
-
-#include <sofa/component/component.h>
+#include "CudaTypes.h"
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/component/forcefield/RestShapeSpringsForceField.inl>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -33,12 +34,39 @@ namespace sofa
 namespace component
 {
 
+namespace forcefield
+{
 
-void SOFA_COMPONENT_FEM_API initFEM();
+template class RestShapeSpringsForceField<gpu::cuda::CudaVec3fTypes>;
+template class RestShapeSpringsForceField<gpu::cuda::CudaVec3f1Types>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+template class RestShapeSpringsForceField<gpu::cuda::CudaVec3dTypes>;
+template class RestShapeSpringsForceField<gpu::cuda::CudaVec3d1Types>;
+#endif // SOFA_GPU_CUDA_DOUBLE
+
+} // namespace engine
 
 } // namespace component
 
+namespace gpu
+{
+
+namespace cuda
+{
+
+SOFA_DECL_CLASS(CudaRestShapeSpringsForceField)
+
+int RestShapeSpringsForceFieldCudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
+.add< component::forcefield::RestShapeSpringsForceField<CudaVec3fTypes> >()
+.add< component::forcefield::RestShapeSpringsForceField<CudaVec3f1Types> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::forcefield::RestShapeSpringsForceField<CudaVec3dTypes> >()
+.add< component::forcefield::RestShapeSpringsForceField<CudaVec3d1Types> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
+;
+
+} // namespace cuda
+
+} // namespace gpu
+
 } // namespace sofa
-
-#endif /* SOFA_COMPONENT_FEM_INIT_H */
-

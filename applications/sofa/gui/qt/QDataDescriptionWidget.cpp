@@ -50,7 +50,7 @@ namespace sofa{
 
 
             //Class description
-            core::ObjectFactory::ClassEntry* entry = core::ObjectFactory::getInstance()->getEntry(object->getClassName());
+            core::ObjectFactory::ClassEntryPtr& entry = core::ObjectFactory::getInstance()->getEntry(object->getClassName());
             if (entry != NULL && ! entry->creatorList.empty())
             {
               Q3GroupBox *box = new Q3GroupBox(this, QString("Class"));
@@ -61,7 +61,7 @@ namespace sofa{
                 new QLabel(QString("Description"), box);
                 (new QLabel(QString(entry->description.c_str()), box))->setMinimumWidth(20);
               }
-              std::map<std::string, core::ObjectFactory::Creator*>::iterator it = entry->creatorMap.find(object->getTemplateName());
+              core::ObjectFactory::CreatorMap::iterator it = entry->creatorMap.find(object->getTemplateName());
               if (it != entry->creatorMap.end() && *it->second->getTarget())
               {
                 new QLabel(QString("Provided by"), box);

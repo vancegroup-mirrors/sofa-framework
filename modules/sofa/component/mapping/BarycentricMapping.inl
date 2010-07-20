@@ -880,8 +880,8 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
 
 		BaseMechanicalState *dofFrom = static_cast< simulation::Node* >(this->fromModel->getContext())->mechanicalState;
 		BaseMechanicalState *dofTo = static_cast< simulation::Node* >(this->toModel->getContext())->mechanicalState;
-		BaseMechanicalState::ParticleMask *maskFrom = &dofFrom->forceMask;
-		BaseMechanicalState::ParticleMask *maskTo = NULL;
+        helper::ParticleMask *maskFrom = &dofFrom->forceMask;
+        helper::ParticleMask *maskTo = NULL;
 		
 		if (dofTo)
 			maskTo = &dofTo->forceMask;             
@@ -1456,7 +1456,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
         else
           {
               //std::cout << "BarycentricMapper: applyJ with masks" << std::endl;
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
             const unsigned int sizeMap1d=map1d.size();
@@ -1594,7 +1594,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
         else
           {
 
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -1669,7 +1669,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -1727,7 +1727,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -1767,7 +1767,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
         else
           {
 
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -1810,7 +1810,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
         else
           {
 
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -1854,7 +1854,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -1904,7 +1904,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2046,7 +2046,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2210,7 +2210,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
         else
           {
 
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2296,7 +2296,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {            
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2364,7 +2364,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {            
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2407,7 +2407,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2453,7 +2453,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2503,7 +2503,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 
@@ -2566,7 +2566,7 @@ BarycentricMapping<BasicMapping>::BarycentricMapping ( In* from, Out* to, BaseMe
           }
         else
           {
-            typedef core::behavior::BaseMechanicalState::ParticleMask ParticleMask;
+            typedef helper::ParticleMask ParticleMask;
             const ParticleMask::InternalStorage &indices=maskTo->getEntries();
 
 

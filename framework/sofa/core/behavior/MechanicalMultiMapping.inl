@@ -85,7 +85,9 @@ MechanicalMultiMapping<In,Out>::MechanicalMultiMapping()
             this->updateMapping();
             propagateXfree();
          }
- 
+
+#ifndef SOFA_SMP
+
          template < class In, class Out>
          void MechanicalMultiMapping<In,Out>::propagateX()
          {
@@ -216,6 +218,197 @@ MechanicalMultiMapping<In,Out>::MechanicalMultiMapping()
 
            this->applyJT(vecOutForce, vecInForce);
          }
+
+#else
+
+         using sofa::core::ParallelMultiMappingApply;
+         using sofa::core::ParallelMultiMappingApplyJ;
+
+         template <class T>
+         struct ParallelMultiMappingApplyJT
+         {
+           void operator()(void *m, Shared_rw< defaulttype::SharedVector<typename T::In::VecDeriv*> > out, Shared_r<defaulttype::SharedVector<const typename T::Out::VecDeriv* > > in){
+             ((T *)m)->applyJT(out.access(), in.read());
+           }
+         };
+         template <class T>
+         struct ParallelMultiMappingApplyJTCPU
+         {
+           void operator()(void *m, Shared_rw< defaulttype::SharedVector<typename T::In::VecDeriv*> > out, Shared_r<defaulttype::SharedVector<const typename T::Out::VecDeriv* > > in){
+             ((T *)m)->applyJT(out.access(), in.read());
+           }
+         };
+
+         template<class T>
+         struct ParallelComputeAccFromMultiMapping
+         {
+           void operator()(void *m, Shared_rw< defaulttype::SharedVector<typename T::Out::VecDeriv*> > acc_out, Shared_r<typename T::In::VecDeriv> v_in,Shared_r<typename T::In::VecDeriv> acc_in){
+             ((T *)m)->::computeAccFromMapping(acc_out.access(), v_in.read(), acc_in.read());
+           }
+         };
+
+
+         template <class In, class Out>
+         struct ParallelComputeAccFromMultiMapping< MechanicalMultiMapping<In, Out> >
+         {
+                 void operator()(MechanicalMultiMapping<In,Out> *m,Shared_rw< defaulttype::SharedVector<typename Out::VecDeriv*> > acc_out, Shared_r<defaulttype::SharedVector<const typename In::VecDeriv*> > v_in,Shared_r<defaulttype::SharedVector<const typename In::VecDeriv* > > acc_in){
+                         m->computeAccFromMapping(acc_out.access(),v_in.read(),acc_in.read());
+                 }
+         };
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::propagateX()
+         {
+             if( this->fromModels.empty() || this->toModels.empty() )
+                return;
+
+             const VecId &idCoord = VecId::position();
+             VecOutPos.resize(0);
+             getVecOutCoord(idCoord, VecOutPos);
+             VecInPos.resize(0);
+             getConstVecInCoord(idCoord, VecInPos);
+
+             Task<ParallelMultiMappingApplyCPU< MultiMapping<In,Out> >,ParallelMultiMappingApply< MultiMapping<In,Out> > >(this,*VecOutPos, *VecInPos);
+         }
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::propagateXfree()
+         {
+             if( this->fromModels.empty() || this->toModels.empty() )
+                 return;
+
+             const VecId &idDeriv = VecId::freePosition();
+             VecOutFreeVel.resize(0);
+             getVecOutDeriv(idDeriv, VecOutFreeVel);
+             VecInFreeVel.resize(0);
+             getConstVecInDeriv(idDeriv, VecInFreeVel);
+
+             Task<ParallelMultiMappingApplyCPU< MultiMapping<In,Out> >,ParallelMultiMappingApply< MultiMapping<In,Out> > >(this,*VecOutFreeVel, *VecInFreeVel);
+         }
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::propagateDx()
+         {
+             if( this->fromModels.empty() || this->toModels.empty() )
+                 return;
+
+             const VecId &idDeriv = VecId::dx();
+             VecOutDx.resize(0);
+             getVecOutDeriv(idDeriv, VecOutDx);
+             VecInDx.resize(0);
+             getConstVecInDeriv(idDeriv, VecInDx);
+
+             Task<ParallelMultiMappingApplyJCPU< MultiMapping<In,Out> >,ParallelMultiMappingApplyJ< MultiMapping<In,Out> > >(this,*VecOutDx, *VecInDx);
+         }
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::propagateV()
+         {
+             if( this->fromModels.empty() || this->toModels.empty() )
+                 return;
+
+             const VecId &idDeriv = VecId::velocity();
+             VecOutVel.resize(0);
+             getVecOutDeriv(idDeriv, VecOutVel);
+             VecInVel.resize(0);
+             getConstVecInDeriv(idDeriv, VecInVel);
+
+             Task<ParallelMultiMappingApplyJCPU< MultiMapping<In,Out> >,ParallelMultiMappingApplyJ< MultiMapping<In,Out> > >(this,*VecOutVel, *VecInVel);
+         }
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::propagateA()
+         {
+             if( this->fromModels.empty() || this->toModels.empty() )
+                 return;
+
+             const VecId &v = VecId::velocity();
+             const VecId &dx = VecId::dx();
+
+             VecOutDx.resize(0);
+             getVecOutDeriv(dx, VecOutDx);
+             VecInVel.resize(0);
+             getConstVecInDeriv(v, VecInVel);
+             VecInDx.resize(0);
+             getConstVecInDeriv(dx, VecInDx);
+
+             Task<ParallelComputeAccFromMultiMapping<MechanicalMultiMapping <In,Out> > >(this,*VecOutDx, *VecInVel, *VecInDx );
+         }
+
+
+         template <class T, class Container>
+         struct GetForceVectorFunctor
+         {
+           GetForceVectorFunctor(Container &vector):v(vector){};
+           void operator()(T* mstate)
+           {
+             v.push_back(mstate->getVecDeriv(mstate->getForceId().index));
+           }
+
+         protected:
+           Container &v;
+         };
+
+
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::accumulateForce()
+         {
+
+             if( this->fromModels.empty() || this->toModels.empty() )
+                 return;
+
+             VecInForce.resize(0);
+             GetForceVectorFunctor<In, defaulttype::SharedVector<typename In::VecDeriv*> > InF(VecInForce);
+             std::for_each(this->fromModels.begin(), this->fromModels.end(), InF);
+
+
+             VecOutForce.resize(0);
+             GetForceVectorFunctor<Out, defaulttype::SharedVector<const typename Out::VecDeriv*> > OutF(VecOutForce);
+             std::for_each(this->toModels.begin(), this->toModels.end(), OutF);
+
+             Task<ParallelMultiMappingApplyJTCPU< MechanicalMultiMapping<In,Out> >,ParallelMultiMappingApplyJT< MechanicalMultiMapping<In,Out> > >(this,*VecInForce, *VecOutForce);
+
+         }
+
+         template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::accumulateDf()
+         {
+             if( this->fromModels.empty() || this->toModels.empty() )
+                 return;
+
+             VecInForce2.resize(0);
+             GetForceVectorFunctor<In, defaulttype::SharedVector<typename In::VecDeriv*> > InF(VecInForce2);
+             std::for_each(this->fromModels.begin(), this->fromModels.end(), InF);
+
+             VecOutForce2.resize(0);
+             GetForceVectorFunctor<Out, defaulttype::SharedVector<const typename Out::VecDeriv*> > OutF(VecOutForce2);
+             std::for_each(this->toModels.begin(), this->toModels.end(), OutF);
+
+             Task<ParallelMultiMappingApplyJTCPU< MechanicalMultiMapping<In,Out> >,ParallelMultiMappingApplyJT< MechanicalMultiMapping<In,Out> > >(this,*VecInForce2, *VecOutForce2);
+         }
+
+         /*template <class In, class Out>
+         void MechanicalMultiMapping<In,Out>::accumulateConstraint()
+         {
+             // moi //
+             if (this->fromModel!=NULL && this->toModel->getC()!=NULL && this->fromModel->getC()!=NULL)
+                 {
+                         applyJT(*this->fromModel->getC(), *this->toModel->getC());
+                        // Task<ParallelMultiMappingApplyJTCPU<MechanicalMultiMapping<In,Out> >,ParallelMultiMappingApplyJT<MechanicalMultiMapping<In,Out> >  >(this,**this->fromModel->getC(), **this->toModel->getC());
+                         // Accumulate contacts indices through the MechanicalMapping
+                         std::vector<unsigned int>::iterator it = this->toModel->getConstraintId().begin();
+                         std::vector<unsigned int>::iterator itEnd = this->toModel->getConstraintId().end();
+
+                         while (it != itEnd)
+                         {
+                                 this->fromModel->setConstraintId(* it);
+                                 it++;
+                         }
+                 }
+
+         }*/
+         #endif // SOFA_SMP
       
 } // namespace behavior
 

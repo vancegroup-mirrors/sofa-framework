@@ -25,6 +25,8 @@
 #ifndef SOFA_COMPONENT_LINEARSOLVER_ROTATIONMATRIX_H
 #define SOFA_COMPONENT_LINEARSOLVER_ROTATIONMATRIX_H
 
+#include <sofa/component/linearsolver/SparseMatrix.h>
+
 namespace sofa {
 
 namespace component {
@@ -132,6 +134,27 @@ class RotationMatrix : public defaulttype::BaseMatrix {
 	}
 	defaulttype::BaseMatrix::opMulTM(bresult,bm);
     }
+    
+    template<typename TReal, typename JMatrix>
+    void opMulJ(typename component::linearsolver::SparseMatrix<TReal> * JR,JMatrix * J) {
+	JR->clear();
+	JR->resize(J->rowSize(),J->colSize());
+
+	//compute JR = J * R
+	for (typename JMatrix::LineConstIterator jit1 = J->begin(); jit1 != J->end(); jit1++) {
+		int l = jit1->first;
+		for (typename JMatrix::LElementConstIterator i1 = jit1->second.begin(); i1 != jit1->second.end();) {
+			int c = i1->first;
+			Real v0 = i1->second;i1++;if (i1==jit1->second.end()) break;
+			Real v1 = i1->second;i1++;if (i1==jit1->second.end()) break;
+			Real v2 = i1->second;i1++;
+			JR->set(l,c+0,v0 * data[(c+0)*3+0] + v1 * data[(c+1)*3+0] + v2 * data[(c+2)*3+0] );
+			JR->set(l,c+1,v0 * data[(c+0)*3+1] + v1 * data[(c+1)*3+1] + v2 * data[(c+2)*3+1] );
+			JR->set(l,c+2,v0 * data[(c+0)*3+2] + v1 * data[(c+1)*3+2] + v2 * data[(c+2)*3+2] );
+		}
+	}	
+    }
+
 
 private :
     helper::vector<Real> data;

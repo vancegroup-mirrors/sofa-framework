@@ -694,6 +694,7 @@ namespace sofa
       class data_widget_container < Quater<T> > : public fixed_vector_data_widget_container < Quater<T> >
       {};
 
+
       ////////////////////////////////////////////////////////////////
       /// sofa::helper::Polynomial_LD support
       ////////////////////////////////////////////////////////////////

@@ -22,11 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_CONSTRAINT_FixedRotationConstraint_H
-#define SOFA_COMPONENT_CONSTRAINT_FixedRotationConstraint_H
-
-#include <sofa/core/behavior/Constraint.h>
-#include <sofa/defaulttype/Quat.h>
+#include "CudaTypes.h"
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/component/engine/IndexValueMapper.inl>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -34,59 +34,39 @@ namespace sofa
 namespace component
 {
 
-namespace constraint
+namespace engine
 {
 
+template class IndexValueMapper<gpu::cuda::CudaVec3fTypes>;
+template class IndexValueMapper<gpu::cuda::CudaVec3f1Types>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+template class IndexValueMapper<gpu::cuda::CudaVec3dTypes>;
+template class IndexValueMapper<gpu::cuda::CudaVec3d1Types>;
+#endif // SOFA_GPU_CUDA_DOUBLE
 
-using namespace sofa::helper;
-using namespace sofa::defaulttype;
-
-
-/** Prevents rotation around X or Y or Z axis
-*/
-template <class DataTypes>
-class FixedRotationConstraint : public core::behavior::Constraint<DataTypes>
-{
-public:
-	SOFA_CLASS(SOFA_TEMPLATE(FixedRotationConstraint,DataTypes),SOFA_TEMPLATE(sofa::core::behavior::Constraint, DataTypes));
-
-    typedef typename DataTypes::VecCoord VecCoord;
-    typedef typename DataTypes::VecDeriv VecDeriv;
-    typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
-    typedef typename DataTypes::Coord Coord;
-    typedef typename DataTypes::Deriv Deriv;
-    typedef typename DataTypes::Real Real;
-    typedef Vec<3,Real> Vec3;
-	
-public:
-
-    FixedRotationConstraint();
-    virtual ~FixedRotationConstraint();
-
-    void init();
-    template <class DataDeriv>
-        void projectResponseT(DataDeriv& dx);
-
-    void projectResponse(VecDeriv& dx);
-    void projectResponse(SparseVecDeriv& dx);
-    virtual void projectVelocity(VecDeriv& dx); ///< project dx to constrained space (dx models a velocity)
-    virtual void projectPosition(VecCoord& x); ///< project x to constrained space (x models a position)
-
-    virtual void draw();
-		
-
-protected :
-    Data< bool > FixedXRotation;
-    Data< bool > FixedYRotation;
-    Data< bool > FixedZRotation;
-    vector<Quat> previousOrientation;
-};
-
-} // namespace constraint
+} // namespace engine
 
 } // namespace component
 
+namespace gpu
+{
+
+namespace cuda
+{
+
+SOFA_DECL_CLASS(CudaIndexValueMapper)
+
+int IndexValueMapperClass = core::RegisterObject("Supports GPU-side computations using CUDA")
+.add< component::engine::IndexValueMapper<CudaVec3fTypes> >()
+.add< component::engine::IndexValueMapper<CudaVec3f1Types> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::engine::IndexValueMapper<CudaVec3dTypes> >()
+.add< component::engine::IndexValueMapper<CudaVec3d1Types> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
+;
+
+} // namespace cuda
+
+} // namespace gpu
+
 } // namespace sofa
-
-
-#endif

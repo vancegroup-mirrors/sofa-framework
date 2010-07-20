@@ -31,6 +31,8 @@ HEADERS +=  initConstraint.h \
            LinearSolverConstraintCorrection.inl \
            ParabolicConstraint.h \
            ParabolicConstraint.inl \
+           PartialFixedConstraint.h \
+           PartialFixedConstraint.inl \
            PrecomputedConstraintCorrection.h \
            PrecomputedConstraintCorrection.inl \
            UncoupledConstraintCorrection.h \
@@ -53,6 +55,7 @@ SOURCES += initConstraint.cpp \
            LCPConstraintSolver.cpp \
            LinearSolverConstraintCorrection.cpp \
            ParabolicConstraint.cpp \
+           PartialFixedConstraint.cpp \
            PrecomputedConstraintCorrection.cpp \
            UncoupledConstraintCorrection.cpp \
            UnilateralInteractionConstraint.cpp \

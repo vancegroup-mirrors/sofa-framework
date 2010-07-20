@@ -67,7 +67,7 @@ MultiCGLinearSolver<TMatrix,TVector>::MultiCGLinearSolver()
     this->multiGroup.setValue(true);
     this->multiGroup.setReadOnly(true);
     f_graph.setWidget("graph");
-    f_graph.setReadOnly(true);
+//    f_graph.setReadOnly(true);
 #ifdef DISPLAY_TIME
     timeStamp = 1.0 / (double)CTime::getRefTicksPerSec();
 #endif

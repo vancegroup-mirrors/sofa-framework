@@ -22,8 +22,8 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_CONSTRAINT_LINEARVELOCITYCONSTRAINT_H
-#define SOFA_COMPONENT_CONSTRAINT_LINEARVELOCITYCONSTRAINT_H
+#ifndef SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_H
+#define SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_H
 
 #include <sofa/core/behavior/Constraint.h>
 #include <sofa/core/behavior/MechanicalState.h>
@@ -35,6 +35,7 @@
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
+#include <set>
 
 namespace sofa
 {
@@ -45,20 +46,25 @@ namespace component
 namespace constraint
 {
 
+using helper::vector;
+using core::objectmodel::Data;
+using namespace sofa::core::objectmodel;
+using namespace sofa::defaulttype;
+
 /** impose a motion to given DOFs (translation and rotation)
 	The motion between 2 key times is linearly interpolated
 */
 template <class DataTypes>
-class LinearVelocityConstraint : public core::behavior::Constraint<DataTypes>
+class PartialLinearMovementConstraint : public core::behavior::Constraint<DataTypes>
 {
 public:
-	SOFA_CLASS(SOFA_TEMPLATE(LinearVelocityConstraint,DataTypes),SOFA_TEMPLATE(core::behavior::Constraint,DataTypes));
+    SOFA_CLASS(SOFA_TEMPLATE(PartialLinearMovementConstraint,DataTypes),SOFA_TEMPLATE(sofa::core::behavior::Constraint, DataTypes));
 
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
-    typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
+	typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
 	typedef typename DataTypes::Real Real;
 	typedef topology::PointSubset SetIndex;
 	typedef helper::vector<unsigned int> SetIndexArray;
@@ -69,38 +75,44 @@ public :
 	/// the key frames when the motion is defined by the user
 	Data<helper::vector<Real> > m_keyTimes;
 	/// the motions corresponding to the key frames
-	Data<VecDeriv > m_keyVelocities;
-  /// the coordinates on which to applay velocities
-  Data<SetIndex> m_coordinates;
+	Data<VecDeriv > m_keyMovements;
 
 	/// the key times surrounding the current simulation time (for interpolation)
 	Real prevT, nextT;
-	///the velocities corresponding to the surrouding key times
-	Deriv prevV, nextV;
-	///position at the previous step for constrained DOFs position
+	///the motions corresponding to the surrouding key times
+	Deriv prevM, nextM;
+	///initial constrained DOFs position
 	VecCoord x0;
 
-	LinearVelocityConstraint();
+    enum{ NumDimensions = DataTypes::Deriv::static_size };
+    typedef sofa::helper::fixed_array<bool,NumDimensions> Vec6Bool;
+    Data<Vec6Bool> movedDirections;  ///< Defines the directions in which the particles are moved: true (or 1) for fixed, false (or 0) for free.
 
-	virtual ~LinearVelocityConstraint();
+    PartialLinearMovementConstraint();
 
-	///methods to add/remove some indices, keyTimes, keyVelocity
+    virtual ~PartialLinearMovementConstraint();
+
+	///methods to add/remove some indices, keyTimes, keyMovement
 	void clearIndices();
 	void addIndex(unsigned int index);
 	void removeIndex(unsigned int index);
-	void clearKeyVelocities();
+	void clearKeyMovements();
 	/**add a new key movement
 	@param time : the simulation time you want to set a movement (in sec)
 	@param movement : the corresponding motion
 	for instance, addKeyMovement(1.0, Deriv(5,0,0) ) will set a translation of 5 in x direction a time 1.0s
 	**/
-	void addKeyVelocity(Real time, Deriv movement);
+	void addKeyMovement(Real time, Deriv movement);
 
 
 	/// -- Constraint interface
-    void init();
-    void projectResponse(VecDeriv& dx);
-    void projectResponse(SparseVecDeriv& dx);
+	void init();
+	void reset();
+  template <class DataDeriv>
+		void projectResponseT(DataDeriv& dx);
+	void projectResponse(VecDeriv& dx);
+	void projectResponse(SparseVecDeriv& dx);
+
 	virtual void projectVelocity(VecDeriv& dx); ///< project dx to constrained space (dx models a velocity)
 	virtual void projectPosition(VecCoord& x); ///< project x to constrained space (x models a position)
 
@@ -122,23 +134,33 @@ protected:
 	/// Define RemovalFunction (for topology changes)
 	static void FCRemovalFunction ( int , void*);
 
+private:
+
+  /// to keep the time corresponding to the key times
+  Real currentTime;
+
+  /// to know if we found the key times
+  bool finished;
+
+  /// find previous and next time keys
+  void findKeyTimes();
 };
 
 
-#if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINT_LINEARVELOCITYCONSTRAINT_CPP)
+#if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_CPP)
 #ifndef SOFA_FLOAT
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec3dTypes>;
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec2dTypes>;
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec1dTypes>;
-//extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec6dTypes>;
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Rigid3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec2dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec1dTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec6dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Rigid3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec3fTypes>;
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec2fTypes>;
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec1fTypes>;
-//extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Vec6fTypes>;
-extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<defaulttype::Rigid3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec2fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec1fTypes>;
+//extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Vec6fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINT_API PartialLinearMovementConstraint<defaulttype::Rigid3fTypes>;
 #endif
 #endif
 
@@ -151,5 +173,4 @@ extern template class SOFA_COMPONENT_CONSTRAINT_API LinearVelocityConstraint<def
 
 
 #endif
-
 

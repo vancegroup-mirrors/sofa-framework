@@ -38,6 +38,8 @@ HEADERS += initEngine.h \
            ValuesFromIndices.inl \
            IndicesFromValues.h \
            IndicesFromValues.inl \
+           IndexValueMapper.h \
+           IndexValueMapper.inl \
            JoinPoints.h \
            JoinPoints.inl \
            MapIndices.h \
@@ -67,6 +69,7 @@ SOURCES += initEngine.cpp \
            PointsFromIndices.cpp \
            ValuesFromIndices.cpp \
            IndicesFromValues.cpp \
+           IndexValueMapper.cpp \
            JoinPoints.cpp \
            MapIndices.cpp \
            RandomPointDistributionInSurface.cpp \

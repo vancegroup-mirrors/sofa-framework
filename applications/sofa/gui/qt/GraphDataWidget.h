@@ -28,12 +28,20 @@
 #define SOFA_GUI_QT_GRAPHDATAWIDGET_H
 
 #include <sofa/gui/qt/TableDataWidget.h>
+#include <sofa/gui/qt/FileManagement.h>
+
+#include <sofa/simulation/common/Simulation.h>
+#include <sofa/helper/system/SetDirectory.h>
+
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/component/topology/PointData.h>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_legend.h>
 #include <qwt_scale_engine.h>
+#include <qwt_plot_printfilter.h>
+
+#include <fstream>
 
 namespace sofa
 {
@@ -86,118 +94,223 @@ public:
     }
 };
 
+class GraphSetting
+{
+public:
+  virtual ~GraphSetting(){};
+  virtual void exportGNUPlot(const std::string &baseFileName) const=0;
+#ifdef SOFA_QT4
+  virtual void exportImage(const std::string &baseFileName) const=0;
+#endif
+};
+
+class GraphOptionWidget: public QWidget
+{
+  Q_OBJECT
+public:
+
+  GraphOptionWidget(const std::string &dataName, GraphSetting *graphConf);
+public slots:
+
+  void openFindFileDialog();
+  void exportGNUPlot();
+//MOC_SKIP_BEGIN
+#ifdef SOFA_QT4
+  void exportImage();
+#endif
+//MOC_SKIP_END
+
+protected:
+  QPushButton* exportGNUPLOTButton;
+  QLineEdit *fileGNUPLOTLineEdit;
+  QPushButton* findGNUPLOTFile;
+#ifdef SOFA_QT4
+  QPushButton* exportImageButton;
+  QLineEdit *fileImageLineEdit;
+  QPushButton* findImageFile;
+#endif
+  GraphSetting *graph;
+};
+
+
+
+
+template <class DataType>
+    class GraphWidget: public GraphSetting
+{
+public:
+  typedef DataType data_type;
+  typedef vector_data_trait<DataType> trait;
+  typedef typename trait::value_type curve_type;
+  typedef QwtPlot Widget;
+  typedef QwtPlotCurve Curve;
+  typedef QwtDataAccess<curve_type> CurveData;
+
+  GraphWidget(QWidget *parent)
+  {
+  #ifdef SOFA_QT4
+    w = new Widget(QwtText(""), parent);
+  #else
+    w = new Widget(parent, "Graph");
+  #endif
+
+    w->insertLegend(new QwtLegend(), QwtPlot::BottomLegend);
+    w->setAxisScaleEngine(Widget::yLeft, new QwtLog10ScaleEngine);
+  }
+
+  virtual ~GraphWidget(){};
+
+  QWidget *getWidget(){return w;}
+
+  void readFromData(const data_type& d0)
+  {
+    currentData=d0;
+    const data_type& d = currentData;
+    int s = curve.size();
+    int n = trait::size(d);
+    for (int i=0;i<n;++i)
+    {
+      const curve_type* v = trait::get(d,i);
+      const char* name = trait::header(d,i);
+      if (i >= s)
+      {
+        Curve *c;
+        QString s;
+        if (name && *name) s = name;
+        c = new Curve(s);
+        c->attach(w);
+        switch(i % 6)
+        {
+        case 0 : c->setPen(QPen(Qt::red)); break;
+        case 1 : c->setPen(QPen(Qt::green)); break;
+        case 2 : c->setPen(QPen(Qt::blue)); break;
+        case 3 : c->setPen(QPen(Qt::cyan)); break;
+        case 4 : c->setPen(QPen(Qt::magenta)); break;
+        case 5 : c->setPen(QPen(Qt::yellow)); break;
+        }
+        CurveData* cd = new CurveData;
+        cd->setData(v);
+        c->setData(*cd);
+        curve.push_back(c);
+        cdata.push_back(cd);
+        s = i+1;
+      }
+      else
+      {
+        Curve* c = curve[i];
+        CurveData* cd = cdata[i];
+        QString s;
+        if (name && *name) s = name;
+        if (s != c->title().text())
+          c->setTitle(s);
+        cd->setData(v);
+        c->setData(*cd);
+      }
+      rect = rect.unite(cdata[i]->boundingRect());
+    }
+    if (s != n)
+    {
+      for (int i=n; i < s; ++i)
+      {
+        Curve* c = curve[i];
+        CurveData* cd = cdata[i];
+        c->detach();
+        delete c;
+        delete cd;
+      }
+      curve.resize(n);
+      cdata.resize(n);
+      s = n;
+    }
+    if (n > 0 && !rect.isNull())
+    {
+      w->setAxisScale(Widget::yLeft, rect.top(), rect.bottom());
+      w->setAxisScale(Widget::xBottom, rect.left(), rect.right());
+    }
+    w->replot();
+  }
+
+  void exportGNUPlot(const std::string &baseFileName) const
+  {
+    int n = trait::size(currentData);
+    for (int i=0;i<n;++i)
+    {
+      const curve_type& v = *(trait::get(currentData,i));
+      const std::string filename=baseFileName + std::string("_") + getCurveFilename(i) + std::string(".txt");
+      std::cerr << "Export GNUPLOT file: " + filename << std::endl;
+      std::ofstream gnuplotFile(filename.c_str());
+      for (unsigned int idx=0;idx<v.size();++idx)
+        gnuplotFile << idx << " " << v[idx] << "\n";
+      gnuplotFile.close();
+    }
+  }
+#ifdef SOFA_QT4
+  void exportImage(const std::string &baseFileName) const
+  {
+    const std::string filename=baseFileName+".png";
+    QwtPlotPrintFilter filter;
+    filter.setOptions(QwtPlotPrintFilter::PrintAll);
+    QImage image(w->width(), w->height(),QImage::Format_RGB32);
+    image.fill(0xffffffff); //white image
+    w->print(image,filter);
+    std::cerr << "Export Image: " << filename << std::endl;
+    image.save(filename.c_str());
+  }
+#endif
+protected:
+  std::string getCurveFilename(unsigned int idx) const
+  {
+    std::string name(trait::header(currentData,idx));
+    std::replace(name.begin(),name.end(),' ', '_');
+    return name;
+  }
+
+  Widget* w;
+
+  helper::vector<Curve*> curve;
+  helper::vector<CurveData*> cdata;
+  data_type currentData;
+  QwtDoubleRect rect;
+
+};
+
+
+
 template<class T>
 class graph_data_widget_container
 {
 public:
-    typedef T data_type;
-    typedef vector_data_trait<T> trait;
-    typedef typename trait::value_type curve_type;
-    typedef QwtPlot Widget;
-    typedef QwtPlotCurve Curve;
-    typedef QwtDataAccess<curve_type> CurveData;
+  typedef T data_type;
+  typedef GraphWidget<T> Widget;
 
-    Widget* w;
-    helper::vector<Curve*> curve;
-    helper::vector<CurveData*> cdata;
-    data_type currentData;
-    QwtDoubleRect rect;
-    graph_data_widget_container() : w(NULL) {}
+  Widget* w;
+  GraphOptionWidget *options;
+  graph_data_widget_container() : w(NULL), options(NULL) {}
 
 
-    bool createWidgets(DataWidget* parent, const data_type& d, bool /*readOnly*/)
-    {            
-#ifdef SOFA_QT4
-    w = new Widget(QwtText(""), parent);
-#else
-    w = new Widget(parent, "Graph");
-#endif
-	w->insertLegend(new QwtLegend(), QwtPlot::BottomLegend);
-	w->setAxisScaleEngine(Widget::yLeft, new QwtLog10ScaleEngine);
-  QHBoxLayout* layout = new QHBoxLayout(parent);
-  layout->add(w);
-	readFromData(d);
+  bool createWidgets(DataWidget* parent, const data_type& d, bool /*readOnly*/)
+  {
+    QVBoxLayout* layout = new QVBoxLayout(parent);
+
+    w = new Widget(parent);
+
+    options = new GraphOptionWidget(parent->getBaseData()->getName(),w);
+
+    layout->add(w->getWidget());
+    layout->add(options);
+    w->readFromData(d);
 	return true;
-    }
-    void setReadOnly(bool /*readOnly*/)
-    {
-    }
-    void readFromData(const data_type& d0)
-    {
-        currentData = d0;
-        const data_type& d = currentData;
-	int s = curve.size();
-	int n = trait::size(d);
-	for (int i=0;i<n;++i)
-	{
-	    const curve_type* v = trait::get(d,i);
-	    const char* name = trait::header(d,i);
-	    if (i >= s)
-	    {
-		Curve *c;
-		QString s;
-		if (name && *name) s = name;
-		c = new Curve(s);
-		c->attach(w);
-		switch(i % 6)
-		{
-		case 0 : c->setPen(QPen(Qt::red)); break;
-		case 1 : c->setPen(QPen(Qt::green)); break;
-		case 2 : c->setPen(QPen(Qt::blue)); break;
-		case 3 : c->setPen(QPen(Qt::cyan)); break;
-		case 4 : c->setPen(QPen(Qt::magenta)); break;
-		case 5 : c->setPen(QPen(Qt::yellow)); break;
-		}
-		CurveData* cd = new CurveData;
-		cd->setData(v);
-		c->setData(*cd);
-		curve.push_back(c);
-		cdata.push_back(cd);
-		s = i+1;
-	    }
-	    else
-	    {
-		Curve* c = curve[i];
-		CurveData* cd = cdata[i];
-		QString s;
-		if (name && *name) s = name;
-		if (s != c->title().text())
-		    c->setTitle(s);
-		cd->setData(v);
-		c->setData(*cd);
-	    }
-	    rect = rect.unite(cdata[i]->boundingRect());
-	}
-	if (s != n)
-	{
-	    for (int i=n; i < s; ++i)
-	    {
-            Curve* c = curve[i];
-            CurveData* cd = cdata[i];
-            c->detach();
-            delete c;
-            delete cd;
-	    }
-	    curve.resize(n);
-	    cdata.resize(n);
-        s = n;
-	}
-	if (n > 0 && !rect.isNull())
-	{
-	    w->setAxisScale(Widget::yLeft, rect.top(), rect.bottom());
-	    w->setAxisScale(Widget::xBottom, rect.left(), rect.right());
-	}
-	w->replot();
-    }
-    void writeToData(data_type& /*d*/)
-    {
-    }
-    bool processChange(const QObject* sender)
-    {
-	if (sender == w)
-	    return true;
-	return false;
-    }
+  }
+  void setReadOnly(bool /*readOnly*/)
+  {
+  }
+  void readFromData(const data_type& d0)
+  {
+    w->readFromData(d0);
+  }
+  void writeToData(data_type& /*d*/)
+  {
+  }
 };
 
 template<class T>

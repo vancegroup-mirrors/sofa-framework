@@ -71,28 +71,26 @@ public:
 //	void init();
 //	void reinit();
 
-private:
-        /*Data<VecCoord> f_points;
+        virtual std::string getTemplateName() const
+        {
+            return templateName(this);
+        }
 
-	Data<Real> p_dx, p_dy, p_dz;
-	Data<Real> p_scale;
+        static std::string templateName(const VRPNImager<DataTypes>* = NULL)
+        {
+          return DataTypes::Name();
+        }
 
-
-	VRPNTrackerData trackerData;
-	vrpn_Tracker_Remote* tkr;
-        sofa::helper::RandomGenerator rg;*/
-
-        //bool                    g_quit = false; //< Set to true when time to quit
-        //vrpn_Connection *g_connection;          //< Set if logging is enabled.
+private:       
         vrpn_Imager_Remote      *g_imager;      //< Imager client object
         VRPNImagerData  imagerData;
+        unsigned int imageTextureID;
 
         bool connectToServer();
 	void update();
+        void draw();
 
-	void handleEvent(sofa::core::objectmodel::Event* event);        
-	//DEBUG
-        //double angleX, angleY, angleZ;
+	void handleEvent(sofa::core::objectmodel::Event* event);        	
 };
 
 #if defined(WIN32) && !defined(SOFAVRPNCLIENT_VRPNIMAGER_CPP_)

@@ -32,7 +32,7 @@
 			<TriangleSetTopologyModifier name="Modifier" printLog="0"/>
 			<TriangleSetTopologyAlgorithms template="Vec3d" name="TopoAlgo" printLog="0"/>
 			<TriangleSetGeometryAlgorithms template="Vec3d" name="GeomAlgo" printLog="0"/>
-			<Hexa2TriangleTopologicalMapping name="TopoMapping" printLog="0" listening="1" object1="../../Container" object2="Container"/>
+			<Hexa2TriangleTopologicalMapping name="TopoMapping" printLog="0" listening="1" object1="../../Container" object2="Container" smoothIterations="10"/>
 			<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="BarycentricMapping" printLog="0" object1="../../Hexa" object2="Triangles" hexamap="0 "/>
 			<Node 	name="Visual Model" 
 				gravity="0 -9.81 0" 

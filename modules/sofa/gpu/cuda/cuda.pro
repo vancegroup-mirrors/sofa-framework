@@ -89,6 +89,7 @@ HEADERS += mycuda.h \
 
 SOURCES += mycuda.cpp \
            CudaBoxROI.cpp  \
+	   CudaIndexValueMapper.cpp \
            CudaMechanicalObject.cpp \
            CudaUniformMass.cpp \
            CudaFixedConstraint.cpp \

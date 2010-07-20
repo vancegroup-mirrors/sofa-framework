@@ -164,22 +164,36 @@ void FixedConstraint<DataTypes>::init()
 }
 
 template <class DataTypes>
-void FixedConstraint<DataTypes>::projectResponse(VecDeriv& res)
+    template <class DataDeriv>
+void FixedConstraint<DataTypes>::projectResponseT(DataDeriv& dx)
 {
+//  projectResponseTest(dx);
     const SetIndexArray & indices = f_indices.getValue().getArray();
-  //serr<<"FixedConstraint<DataTypes>::projectResponse, res.size()="<<res.size()<<sendl;
-  	if( f_fixAll.getValue()==true ) {  // fix everyting
-		for( unsigned i=0; i<res.size(); i++ )
-			res[i] = Deriv();
+  //serr<<"FixedConstraint<DataTypes>::projectResponse, dx.size()="<<dx.size()<<sendl;
+    if( f_fixAll.getValue()==true ) {  // fix everyting
+        for( int i=0; i<topology->getNbPoints(); ++i )
+            dx[i] = Deriv();
 	}
 	else {
     for (SetIndexArray::const_iterator it = indices.begin();
         it != indices.end();
         ++it)
     {
-        res[*it] = Deriv();
+        dx[*it] = Deriv();
     }
 	}
+}
+
+template <class DataTypes>
+void FixedConstraint<DataTypes>::projectResponse(VecDeriv& dx)
+{
+  projectResponseT<VecDeriv>(dx);
+}
+
+template <class DataTypes>
+void FixedConstraint<DataTypes>::projectResponse(SparseVecDeriv& dx)
+{
+  projectResponseT<SparseVecDeriv>(dx);
 }
 
 // projectVelocity applies the same changes on velocity vector as projectResponse on position vector :

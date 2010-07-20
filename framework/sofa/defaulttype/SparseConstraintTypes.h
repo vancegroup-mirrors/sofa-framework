@@ -57,12 +57,15 @@ namespace sofa
           _data[index] = value;
         }
 
-/*         T& getDataAt(unsigned int index) */
-/*           { */
-/*             typename data_t::iterator it = _data.find(index); */
-/*             assert(it != _data.end()); */
-/*             return it->second; */
-/*           }; */
+        T& operator[] (unsigned int index)
+        {
+            return _data[index];
+        }
+
+        const T& operator[] (unsigned int index) const
+        {
+            return _data[index];
+        }
 
         const_data_iterator find( unsigned int index) const
         {

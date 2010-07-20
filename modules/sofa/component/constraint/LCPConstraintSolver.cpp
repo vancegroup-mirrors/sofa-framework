@@ -344,7 +344,7 @@ bool LCPConstraintSolver::applyCorrection(double /*dt*/, VecId )
 	constraintGroups.endEdit();
 
 	f_graph.setWidget("graph");
-	f_graph.setReadOnly(true);
+//	f_graph.setReadOnly(true);
 
 	//_numPreviousContact=0;
 	//_PreviousContactList = (contactBuf *)malloc(MAX_NUM_CONSTRAINTS * sizeof(contactBuf));

@@ -71,6 +71,7 @@ public:
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::Deriv Deriv;
     typedef typename DataTypes::VecDeriv VecDeriv;
+    typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
     typedef helper::vector<Real> VecDensity;
     
     typedef core::behavior::MechanicalState<DataTypes> MechanicalModel;
@@ -259,22 +260,35 @@ public:
 		}
 	}
 
-	virtual void projectResponse(VecDeriv& res) ///< project dx to constrained space
-	{
-		if (!this->mstate) return;
-		if (lastparticles.empty()) return;
-		//sout << "ParticleSource: projectResponse of last particle ("<<lastparticle<<")."<<sendl;
-		double time = this->getContext()->getTime();
-		if (time < f_start.getValue() || time > f_stop.getValue()) return;
-		// constraint the last value
-		for (unsigned int s=0; s<lastparticles.size(); s++)
-		{
-			//HACK: TODO understand why these conditions can be reached
-			if (lastparticles[s] >= res.size()) continue;
 
-			res[lastparticles[s]] = Deriv();
-		}
-	}
+        template <class DataDeriv>
+     void projectResponseT(DataDeriv& res) ///< project dx to constrained space
+    {
+        if (!this->mstate) return;
+        if (lastparticles.empty()) return;
+        //sout << "ParticleSource: projectResponse of last particle ("<<lastparticle<<")."<<sendl;
+        double time = this->getContext()->getTime();
+        if (time < f_start.getValue() || time > f_stop.getValue()) return;
+        // constraint the last value
+        for (unsigned int s=0; s<lastparticles.size(); s++)
+        {
+            //HACK: TODO understand why these conditions can be reached
+            if (lastparticles[s] >= (unsigned int) this->mstate->getSize()) continue;
+
+            res[lastparticles[s]] = Deriv();
+        }
+    }
+
+    void projectResponse(VecDeriv& dx)
+    {
+      projectResponseT(dx);
+    }
+
+    void projectResponse(SparseVecDeriv& dx)
+    {
+      projectResponseT(dx);
+    }
+
     
 	virtual void projectVelocity(VecDeriv& res) ///< project dx to constrained space (dx models a velocity)
 	{

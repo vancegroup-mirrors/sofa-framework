@@ -1,0 +1,20 @@
+<Node name="root" dt="0.01" gravity="0 -9.81 0" showBehaviorModels="0" showCollisionModels="0" showVisualModels="1">
+
+	<Node name="tracking">
+		<!--<VRPNImager name="Images" template="StdRigidTypes<3, double>" listening="true" serverName="localhost" serverPort="3883" deviceName="TestImage" />-->
+		<VRPNImager name="Images" template="Rigid" listening="true" serverName="golden" serverPort="3883" deviceName="TestImage" />
+	</Node>
+	<!--<Node name="Mecha">
+		<MechanicalObject name="mechaCenterTool" template="Rigid" position="@../tracking/ircams.points" debugViewIndices="true" />
+		<UniformMass mass="1 1 0.01 0 0 0 0.1 0 0 0 0.1" />
+		<Node name="Visu">
+			<OglModel name="visual_instrument" fileMesh="mesh/phaco_fine.obj"  dz="-0.1" scale="0.1" /> 
+			<RigidMapping object1="../../mechaCenterTool" object2="visual_instrument" index="0" />
+		</Node>
+	</Node>	-->
+	
+	<!--<Node name="debug" >
+		<OglModel filename="mesh/dragon.obj" scale="1 1 1"/>
+	</Node>-->
+
+	</Node>

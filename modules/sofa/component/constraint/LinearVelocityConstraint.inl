@@ -181,6 +181,12 @@ void LinearVelocityConstraint<DataTypes>::projectResponse(VecDeriv& )
 }
 
 template <class DataTypes>
+void LinearVelocityConstraint<DataTypes>::projectResponse(SparseVecDeriv& )
+{
+
+}
+
+template <class DataTypes>
 void LinearVelocityConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 {
 	Real cT = (Real) this->getContext()->getTime(); 

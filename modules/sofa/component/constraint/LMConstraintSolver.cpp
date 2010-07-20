@@ -55,17 +55,17 @@ namespace sofa
                                                 numIterations( initData( &numIterations, (unsigned int)25, "numIterations", "Number of iterations for Gauss-Seidel when solving the Constraints")),
                                                 maxError( initData( &maxError, 0.0000001, "maxError", "Max error for Gauss-Seidel algorithm when solving the constraints")),
                                                 graphGSError( initData(&graphGSError,"graphGSError","Graph of residuals at each iteration") ),
-                                                traceKineticEnergy( initData( &traceKineticEnergy, false, "traceKineticEnergy", "Trace the evolution of the Kinetic Energy throughout the solution of the system")),
+                                                traceKineticEnergy( initData( &traceKineticEnergy, true, "traceKineticEnergy", "Trace the evolution of the Kinetic Energy throughout the solution of the system")),
                                                 graphKineticEnergy( initData(&graphKineticEnergy,"graphKineticEnergy","Graph of the kinetic energy of the system") ),
                                                 W(NULL), c(NULL), Lambda(NULL)
       {
           graphGSError.setGroup("Statistics");
           graphGSError.setWidget("graph");
-          graphGSError.setReadOnly(true);
+//          graphGSError.setReadOnly(true);
 
           graphKineticEnergy.setGroup("Statistics");
           graphKineticEnergy.setWidget("graph");
-          graphKineticEnergy.setReadOnly(true);
+//          graphKineticEnergy.setReadOnly(true);
 
           traceKineticEnergy.setGroup("Statistics");
           this->f_listening.setValue(true);
@@ -100,6 +100,8 @@ namespace sofa
 
       bool LMConstraintSolver::needPriorStatePropagation()
       {
+        return true;
+
         using core::behavior::BaseLMConstraint;
         bool needPriorPropagation=false;
         {
@@ -145,6 +147,7 @@ namespace sofa
             LMConstraintVisitor.setOrder(orderState);
             LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
             
+            simulation::MechanicalProjectJacobianMatrixVisitor().execute(this->getContext());
 #ifdef SOFA_DUMP_VISITOR_INFO
             arg.push_back(std::make_pair("Order", "Acceleration"));
 #endif
@@ -158,11 +161,17 @@ namespace sofa
                 simulation::MechanicalPropagateVVisitor propagateState(Order,false);
                 propagateState.execute(this->getContext());
               }
-        
+            else
+            {
+              simulation::MechanicalProjectVelocityVisitor projectVel(this->getContext()->getTime());
+              projectVel.execute(this->getContext());
+            }
 
             // calling writeConstraintEquations
             LMConstraintVisitor.setOrder(orderState);
             LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
+
+            simulation::MechanicalProjectJacobianMatrixVisitor().execute(this->getContext());
 
 #ifdef SOFA_DUMP_VISITOR_INFO
             arg.push_back(std::make_pair("Order", "Velocity"));
@@ -179,6 +188,11 @@ namespace sofa
                 simulation::MechanicalPropagateXVisitor propagateState(Order,false);
                 propagateState.execute(this->getContext());
               }
+            else
+            {
+              simulation::MechanicalProjectPositionVisitor projectPos(this->getContext()->getTime());
+              projectPos.execute(this->getContext());
+            }
             // calling writeConstraintEquations
             LMConstraintVisitor.setOrder(orderState);
             LMConstraintVisitor.setTags(getTags()).execute(this->getContext());
@@ -287,6 +301,19 @@ namespace sofa
           }
         buildLMatrices(orderState, LMConstraints, LMatrices, dofUsed);
 
+        //Remove empty L Matrices
+        for (DofToMatrix::iterator it=LMatrices.begin();it!=LMatrices.end();)
+        {
+          SparseMatrixEigen& matrix= it->second;
+          DofToMatrix::iterator itCurrent=it;
+          ++it;
+          if (!matrix.nonZeros()) //Empty Matrix: act as an obstacle
+          {
+            LMatrices.erase(itCurrent);
+            invMassMatrix.erase(itCurrent->first);
+            setDofs.erase(const_cast<sofa::core::behavior::BaseMechanicalState*>(itCurrent->first));
+          }
+        }
 
         //************************************************************
         // Building W=L0.M0^-1.L0^T + L1.M1^-1.L1^T + ... and M^-1.L^T
@@ -392,19 +419,22 @@ namespace sofa
 
       void LMConstraintSolver::buildLeftMatrix(const DofToMatrix& invMassMatrix, DofToMatrix& LMatrix, SparseMatrixEigen &LeftMatrix, DofToMatrix &invMass_Ltrans) const
       {
+        for (SetDof::iterator itDofs=setDofs.begin();itDofs!=setDofs.end(); ++itDofs)
+        {
+          const sofa::core::behavior::BaseMechanicalState* dofs=*itDofs;
+          const SparseMatrixEigen &invMass=invMassMatrix.find(dofs)->second;
+          SparseMatrixEigen &L=LMatrix[dofs]; L.endFill();
+
+          if (f_printLog.getValue()) sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
+          if (f_printLog.getValue())  sout << "Matrix M-1 for " << dofs->getName() << "\n" << invMass << sendl;
+
+          const SparseMatrixEigen &invM_LTrans=invMass.marked<Eigen::SelfAdjoint|Eigen::UpperTriangular>()*L.transpose();
+          invMass_Ltrans.insert( std::make_pair(dofs,invM_LTrans) );
+          LeftMatrix += L*invM_LTrans;
+        }
+
         for (DofToMatrix::const_iterator itDofs=invMassMatrix.begin(); itDofs!=invMassMatrix.end();itDofs++)
           {
-            const sofa::core::behavior::BaseMechanicalState* dofs=itDofs->first;
-            const SparseMatrixEigen &invMass=itDofs->second;
-
-            SparseMatrixEigen &L=LMatrix[dofs]; L.endFill();
-
-            if (f_printLog.getValue()) sout << "Matrix L for " << dofs->getName() << "\n" << L << sendl;
-            if (f_printLog.getValue())  sout << "Matrix M-1 for " << dofs->getName() << "\n" << invMass << sendl;
-
-            const SparseMatrixEigen &invM_LTrans=invMass.marked<Eigen::SelfAdjoint|Eigen::UpperTriangular>()*L.transpose();
-            invMass_Ltrans.insert( std::make_pair(dofs,invM_LTrans) );
-            LeftMatrix += L*invM_LTrans;
           }  
       }
 
@@ -441,7 +471,6 @@ namespace sofa
               }
             constraintOffset += equationsUsed.size();
           }
-
       }
 
   

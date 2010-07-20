@@ -25,7 +25,7 @@
 #ifndef SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_INL
 #define SOFA_COMPONENT_CONSTRAINT_LINEARMOVEMENTCONSTRAINT_INL
 
-#include <sofa/component/constraint/LinearMovementConstraint.h>
+#include <sofa/component/constraint/PartialLinearMovementConstraint.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/behavior/Constraint.inl>
 #include <sofa/helper/gl/template.h>
@@ -54,9 +54,9 @@ using namespace sofa::core::behavior;
 
 // Define TestNewPointFunction
 template< class DataTypes>
-bool LinearMovementConstraint<DataTypes>::FCTestNewPointFunction(int /*nbPoints*/, void* param, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& )
+bool PartialLinearMovementConstraint<DataTypes>::FCTestNewPointFunction(int /*nbPoints*/, void* param, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& )
 {
-	LinearMovementConstraint<DataTypes> *fc= (LinearMovementConstraint<DataTypes> *)param;
+    PartialLinearMovementConstraint<DataTypes> *fc= (PartialLinearMovementConstraint<DataTypes> *)param;
 	if (fc) {
 		return true;
 	}else{
@@ -66,9 +66,9 @@ bool LinearMovementConstraint<DataTypes>::FCTestNewPointFunction(int /*nbPoints*
 
 // Define RemovalFunction
 template< class DataTypes>
-void LinearMovementConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
+void PartialLinearMovementConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
 {
-	LinearMovementConstraint<DataTypes> *fc= (LinearMovementConstraint<DataTypes> *)param;
+    PartialLinearMovementConstraint<DataTypes> *fc= (PartialLinearMovementConstraint<DataTypes> *)param;
 	if (fc) {
 		fc->removeIndex((unsigned int) pointIndex);
 	}
@@ -76,11 +76,12 @@ void LinearMovementConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void
 } 
 
 template <class DataTypes>
-LinearMovementConstraint<DataTypes>::LinearMovementConstraint()
+PartialLinearMovementConstraint<DataTypes>::PartialLinearMovementConstraint()
 : core::behavior::Constraint<DataTypes>(NULL)
 , m_indices( initData(&m_indices,"indices","Indices of the constrained points") )
 , m_keyTimes(  initData(&m_keyTimes,"keyTimes","key times for the movements") )
 , m_keyMovements(  initData(&m_keyMovements,"movements","movements corresponding to the key times") )
+, movedDirections( initData(&movedDirections,"movedDirections","for each direction, 1 if moved, 0 if free") )
 {
     // default to indice 0
     m_indices.beginEdit()->push_back(0);
@@ -91,11 +92,15 @@ LinearMovementConstraint<DataTypes>::LinearMovementConstraint()
 	m_keyTimes.endEdit();
 	m_keyMovements.beginEdit()->push_back( Deriv() );
 	m_keyMovements.endEdit();
+    Vec6Bool movedDirection;
+    for( unsigned i=0; i<NumDimensions; i++)
+        movedDirection[i] = true;
+    movedDirections.setValue(movedDirection);
 }
 
 
 // Handle topological changes
-template <class DataTypes> void LinearMovementConstraint<DataTypes>::handleTopologyChange()
+template <class DataTypes> void PartialLinearMovementConstraint<DataTypes>::handleTopologyChange()
 {	
 	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
 	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
@@ -105,33 +110,33 @@ template <class DataTypes> void LinearMovementConstraint<DataTypes>::handleTopol
 }
 
 template <class DataTypes>
-LinearMovementConstraint<DataTypes>::~LinearMovementConstraint()
+PartialLinearMovementConstraint<DataTypes>::~PartialLinearMovementConstraint()
 {
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::clearIndices()
+void PartialLinearMovementConstraint<DataTypes>::clearIndices()
 {
     m_indices.beginEdit()->clear();
     m_indices.endEdit();
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::addIndex(unsigned int index)
+void PartialLinearMovementConstraint<DataTypes>::addIndex(unsigned int index)
 {
     m_indices.beginEdit()->push_back(index);
     m_indices.endEdit();
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::removeIndex(unsigned int index)
+void PartialLinearMovementConstraint<DataTypes>::removeIndex(unsigned int index)
 {
     removeValue(*m_indices.beginEdit(),index);
     m_indices.endEdit();
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::clearKeyMovements()
+void PartialLinearMovementConstraint<DataTypes>::clearKeyMovements()
 {
 	m_keyTimes.beginEdit()->clear();
     m_keyTimes.endEdit();
@@ -140,7 +145,7 @@ void LinearMovementConstraint<DataTypes>::clearKeyMovements()
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::addKeyMovement(Real time, Deriv movement)
+void PartialLinearMovementConstraint<DataTypes>::addKeyMovement(Real time, Deriv movement)
 {
     m_keyTimes.beginEdit()->push_back( time );
     m_keyTimes.endEdit();
@@ -152,7 +157,7 @@ void LinearMovementConstraint<DataTypes>::addKeyMovement(Real time, Deriv moveme
 
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::init()
+void PartialLinearMovementConstraint<DataTypes>::init()
 {
     this->core::behavior::Constraint<DataTypes>::init();
 
@@ -176,7 +181,7 @@ void LinearMovementConstraint<DataTypes>::init()
 
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::reset()
+void PartialLinearMovementConstraint<DataTypes>::reset()
 {
 	nextT = prevT = 0.0;
 	nextM = prevM = Deriv();
@@ -187,40 +192,42 @@ void LinearMovementConstraint<DataTypes>::reset()
 
 
 template <class DataTypes> template <class DataDeriv>
-    void LinearMovementConstraint<DataTypes>::projectResponseT(DataDeriv& dx)
+void PartialLinearMovementConstraint<DataTypes>::projectResponseT(DataDeriv& dx)
 {
-  Real cT = (Real) this->getContext()->getTime();
-  if ((cT != currentTime) || !finished)
-  {
-    findKeyTimes();
-  }
+        Real cT = (Real) this->getContext()->getTime();
+        Vec6Bool movedDirection = movedDirections.getValue();
+        if ((cT != currentTime) || !finished)
+        {
+                findKeyTimes();
+        }
 
-  if (finished && nextT != prevT)
-  {
-    const SetIndexArray & indices = m_indices.getValue().getArray();
+        if (finished && nextT != prevT)
+        {
+                const SetIndexArray & indices = m_indices.getValue().getArray();
 
-    //set the motion to the Dofs
-    for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
-    {
-      dx[*it] = Deriv();
-    }
-  }
+                //set the motion to the Dofs
+                for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+                {
+                    for( unsigned j=0; j<NumDimensions; j++)
+                        if(movedDirection[j]) dx[*it][j] = (Real) 0.0;
+                }
+        }
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::projectResponse(VecDeriv& dx)
+void PartialLinearMovementConstraint<DataTypes>::projectResponse(VecDeriv& res)
 {
-  projectResponseT(dx);
+  projectResponseT(res);
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::projectResponse(SparseVecDeriv& dx)
+void PartialLinearMovementConstraint<DataTypes>::projectResponse(SparseVecDeriv& res)
 {
-  projectResponseT(dx);
+  projectResponseT(res);
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
+void PartialLinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 {
 	Real cT = (Real) this->getContext()->getTime(); 
 	if ((cT != currentTime) || !finished)
@@ -242,7 +249,7 @@ void LinearMovementConstraint<DataTypes>::projectVelocity(VecDeriv& dx)
 
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
+void PartialLinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
 {
 	Real cT = (Real) this->getContext()->getTime(); 
 
@@ -258,7 +265,7 @@ void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
 	{
 		findKeyTimes();
 	}
-
+    Vec6Bool movedDirection = movedDirections.getValue();
 	//if we found 2 keyTimes, we have to interpolate a velocity (linear interpolation)
 	if(finished && nextT != prevT)
 	{
@@ -270,13 +277,14 @@ void LinearMovementConstraint<DataTypes>::projectPosition(VecCoord& x)
 		//set the motion to the Dofs 
 		for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
 		{
-			x[*it] = x0[*it] + m ;
+            for( unsigned j=0; j< NumDimensions; j++)
+            if(movedDirection[j]) x[*it][j] = x0[*it][j] + m[j] ;
 		}
 	}
 }
 
 template <class DataTypes>
-void LinearMovementConstraint<DataTypes>::findKeyTimes()
+void PartialLinearMovementConstraint<DataTypes>::findKeyTimes()
 {
 	Real cT = (Real) this->getContext()->getTime();
 	finished = false;
@@ -311,7 +319,7 @@ void LinearMovementConstraint<DataTypes>::findKeyTimes()
 
 //display the path the constrained dofs will go through
   template <class DataTypes>
-  void LinearMovementConstraint<DataTypes>::draw()
+  void PartialLinearMovementConstraint<DataTypes>::draw()
   {
     if (!this->getContext()->getShowBehaviorModels() || m_keyTimes.getValue().size() == 0 ) return;
     glDisable (GL_LIGHTING);
@@ -332,9 +340,9 @@ void LinearMovementConstraint<DataTypes>::findKeyTimes()
 
 // Specialization for rigids
 template <>
-void LinearMovementConstraint<Rigid3dTypes >::draw();
+void PartialLinearMovementConstraint<Rigid3dTypes >::draw();
 template <>
-void LinearMovementConstraint<Rigid3fTypes >::draw();
+void PartialLinearMovementConstraint<Rigid3fTypes >::draw();
 
 } // namespace constraint
 

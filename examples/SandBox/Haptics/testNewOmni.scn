@@ -1,0 +1,65 @@
+<!-- 
+Using DistanceGrid collision:
+ + Added a driver for the Omni phantom device 
+ + Added a mechanical state controller that gathers data from the phantom and updates the position of a representation of the device in the simulation 
+ + Added a computation (EnslavementForceFeedback) of the haptic forces 
+ + Added VectorSpringForceField && JointSpringForceField to link the mouvements of the Omni phantom and the instrument
+-->
+
+<Node name="root" dt="0.001" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0" >
+
+	<!--<Object type="Gravity" name="G" gravity="0 -9.8 0" />-->
+	<NewOmniDriver Scale="2" positionBase="-0.0 -0.3 -0.2" orientationBase="0 -0.7071 0.0 0.7071" permanent="1" forceScale="1.0" OmniVisu="1" listening="true" handleEventTriggersUpdate="true"/>
+		 
+	<Object type="CollisionPipeline" name="pipeline" depth="6" verbose="0"/>
+	<Object type="BruteForceDetection" name="detection" />
+	<Object type="CollisionResponse" name="response" response="default" />
+	<Object type="MinProximityIntersection" name="proximity" alarmDistance="0.03" contactDistance="0.03" />
+	
+	<Node name="Tooth" >
+		<Node name="VisualModel" >
+			<Object type="OglModel" name="ToothVisualModel" fileMesh="data/mesh/tooth_closed.obj" color="white" />
+		</Node>
+		<Node name="CollisionModel" >
+			<Object type="DistanceGrid" fileRigidDistanceGrid="data/mesh/tooth-closed3-128.fmesh" scale="1.0" usePoints="0" proximity="0.0" contactStiffness="50.0" contactFriction="0.0"/>
+		</Node>
+	</Node>
+	
+	<Node name="Omni">
+		<Object type="MechanicalObject" template="Rigid" name="DOFs" position="1.2 1.6 -3.55  0 0 0 1"/>
+		<Object type="MechanicalStateController" template="Rigid" listening="true" mainDirection="-1.0 0.0 0.0" handleEventTriggersUpdate="true"/>
+		<Node name="RefModel">
+			<Object type="MeshLoader" filename="data/mesh/dental_instrument_centerline.obj" />
+			<Object type="Mesh" />
+ 			<Object type="MechanicalObject" name="instrumentCollisionState" rx="180" rz="150" dx="-1.2" dy="-1.6" dz="3.55"/>
+			<Object type="RigidMapping" />
+		</Node>
+	</Node>
+
+	<Node name="Instrument" >
+		<Object type="EulerImplicitSolver" name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
+		<Object type="CGLinearSolver" name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" /> 
+		<Object type="MechanicalObject" name="instrumentState" template="Rigid" position="1.2 1.6 -3.55  0 0 0 1"/>
+		<Object type="UniformMass" name="mass" totalmass="0.05" filename="BehaviorModels/dental_instrument.rigid" />
+		<Object type="EnslavementForceFeedback" activate="true" stiffness="3.0"/> 
+
+
+		<Node name="VisualModel" >
+			<Object type="OglModel" name="InstrumentVisualModel" fileMesh="data/mesh/dental_instrument.obj" color="1.0 0.2 0.2 1.0" rx="180" rz="150" dx="-1.2" dy="-1.6" dz="3.55"/>
+			<Object type="RigidMapping" name="MM->VM mapping" object1="instrumentState" object2="InstrumentVisualModel" />
+		</Node>
+		<Node name="CollisionModel" >
+			<Object type="MeshLoader" filename="data/mesh/dental_instrument_centerline.obj" />
+			<Object type="Mesh" name="InstrumentCollisionModel"  />
+			<Object type="MechanicalObject" name="instrumentCollisionState" rx="180" rz="150" dx="-1.2" dy="-1.6" dz="3.55"/>
+			<Object type="Triangle" name="instrument" contactStiffness="10" />
+			<Object type="Line" name="instrument" contactStiffness="10" />
+			<Object type="Point" name="instrument" contactStiffness="10" /> 
+			<Object type="RigidMapping" name="MM->CM mapping" object1="instrumentState" object2="instrumentCollisionState" />
+		</Node>
+		<Object type="VectorSpringForceField"  object1="Omni/RefModel/instrumentCollisionState" object2="Instrument/CollisionModel/instrumentCollisionState" stiffness="300" viscosity="0" />
+		<Object type="JointSpringForceField" template="Rigid" name="joint springs" object1="Omni" object2="instrumentState" 
+		spring="BEGIN_SPRING 0 0 KS_T 500 500  KS_R 500.0 50.0  KS_B 500.0  KD 0.0 END_SPRING"  />
+	</Node>
+
+</Node>

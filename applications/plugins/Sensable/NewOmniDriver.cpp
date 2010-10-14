@@ -95,12 +95,14 @@ bool isSchedulerError(const HDErrorInfo *error)
 
 HDCallbackCode HDCALLBACK stateCallback(void *userData)
 {
+        //cout << "NewOmniDriver::stateCallback BEGIN" << endl;
 	OmniData* data = static_cast<OmniData*>(userData);
 	//FIXME : Apparenlty, this callback is run before the mechanical state initialisation. I've found no way to know whether the mechcanical state is initialized or not, so i wait ...
 	//static int wait = 0;
 
 	if (data->servoDeviceData.stop)
 	{
+                //cout << ""
 		return HD_CALLBACK_DONE;
 	}
 
@@ -112,14 +114,14 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	HHD hapticHD = hdGetCurrentDevice();
 	hdBeginFrame(hapticHD);
 
-	data->servoDeviceData.id = hapticHD;
+        data->servoDeviceData.id = hapticHD;
 
 	//static int renderForce = true;
 
 	// Retrieve the current button(s).
 	hdGetIntegerv(HD_CURRENT_BUTTONS, &data->servoDeviceData.m_buttonState);
 
-	//hdGetDoublev(HD_CURRENT_POSITION, data->servoDeviceData.m_devicePosition);
+        hdGetDoublev(HD_CURRENT_POSITION, data->servoDeviceData.m_devicePosition);
 	// Get the column major transform
 	HDdouble transform[16];
 	hdGetDoublev(HD_CURRENT_TRANSFORM, transform);
@@ -134,7 +136,8 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	rot.fromMatrix(mrot);
 	rot.normalize();
 	    
-	Vec3d pos(transform[12+0]*0.001, transform[12+1]*0.001, transform[12+2]*0.001); // omni pos is in mm => sofa simulation are in meters by default
+        double factor = 0.001;
+        Vec3d pos(transform[12+0]*factor, transform[12+1]*factor, transform[12+2]*factor); // omni pos is in mm => sofa simulation are in meters by default
 	data->servoDeviceData.pos=pos;
 	
 	// verify that the quaternion does not flip:
@@ -142,14 +145,14 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 		for (int i=0;i<4;i++)
 			rot[i] *= -1;
 
-	data->servoDeviceData.quat[0] = rot[0];
+        data->servoDeviceData.quat[0] = rot[0];
 	data->servoDeviceData.quat[1] = rot[1];
 	data->servoDeviceData.quat[2] = rot[2];
-	data->servoDeviceData.quat[3] = rot[3];
+        data->servoDeviceData.quat[3] = rot[3];
 	
 	
 	/// COMPUTATION OF THE vituralTool 6D POSITION IN THE World COORDINATES
-	SolidTypes<double>::Transform baseOmni_H_endOmni(pos* data->scale, rot);
+        SolidTypes<double>::Transform baseOmni_H_endOmni(pos* data->scale, rot);
 	SolidTypes<double>::Transform world_H_virtualTool = data->world_H_baseOmni * baseOmni_H_endOmni * data->endOmni_H_virtualTool;	
 	
 	Vec3d world_pos_tool = world_H_virtualTool.getOrigin();
@@ -176,8 +179,6 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	SolidTypes<double>::SpatialVector Wrench_endOmni_inEndOmni = data->endOmni_H_virtualTool * Wrench_tool_inTool;
 	// we compute its value in the baseOmni frame
 	SolidTypes<double>::SpatialVector Wrench_endOmni_inBaseOmni( baseOmni_H_endOmni.projectVector(Wrench_endOmni_inEndOmni.getForce()), baseOmni_H_endOmni.projectVector(Wrench_endOmni_inEndOmni.getTorque()) );
-	
-
 
 	double currentForce[3];
 	currentForce[0] = Wrench_endOmni_inBaseOmni.getForce()[0] * data->forceScale;
@@ -187,11 +188,10 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
  	if((data->servoDeviceData.m_buttonState & HD_DEVICE_BUTTON_1) || data->permanent_feedback)
 		hdSetDoublev(HD_CURRENT_FORCE, currentForce);
 
-	++data->servoDeviceData.nupdates;
+        ++data->servoDeviceData.nupdates;
 	hdEndFrame(hapticHD);
 
-
-	 HDErrorInfo error;
+        /* HDErrorInfo error;
 	if (HD_DEVICE_ERROR(error = hdGetError()))
 	{
 		printError(stderr, &error, "Error during scheduler callback");
@@ -199,13 +199,14 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 		{
 			return HD_CALLBACK_DONE;
 		}
-	}
+        }*/
 /*
  	OmniX = data->servoDeviceData.transform[12+0]*0.1;
 	OmniY =	data->servoDeviceData.transform[12+1]*0.1;
 	OmniZ =	data->servoDeviceData.transform[12+2]*0.1;
 */
 
+        //cout << "NewOmniDriver::stateCallback END" << endl;
 	return HD_CALLBACK_CONTINUE;
 }
 
@@ -242,8 +243,8 @@ HDCallbackCode HDCALLBACK stopCallback(void *pUserData)
 /**
  * Sets up the device,
  */
-int initDevice(OmniData& data)
-{
+int NewOmniDriver::initDevice(OmniData& data)
+{        
 	if (isInitialized) return 0;
 	isInitialized = true;
 
@@ -264,10 +265,10 @@ int initDevice(OmniData& data)
 		hHD = hdInitDevice(HD_DEFAULT_DEVICE);
 		if (HD_DEVICE_ERROR(error = hdGetError())) 
 		{
-			printError(stderr, &error, "Failed to initialize the device");
+                        printError(stderr, &error, "[NewOmni] Failed to initialize the device");
 			return -1;
 		}
-		printf("Found device %s\n",hdGetString(HD_DEVICE_MODEL_TYPE));
+                printf("[NewOmni] Found device %s\n",hdGetString(HD_DEVICE_MODEL_TYPE));
 
 		hdEnable(HD_FORCE_OUTPUT);
 		hdEnable(HD_MAX_FORCE_CLAMPING);
@@ -276,7 +277,7 @@ int initDevice(OmniData& data)
 		hdStartScheduler();
 		if (HD_DEVICE_ERROR(error = hdGetError())) 
 		{
-			printError(stderr, &error, "Failed to start the scheduler");
+                        printError(stderr, &error, "[NewOmni] Failed to start the scheduler");
 			return -1;
 		}
 	}
@@ -297,8 +298,8 @@ int initDevice(OmniData& data)
 }
 
 NewOmniDriver::NewOmniDriver()
-: scale(initData(&scale, 0.1, "scale","Default scale applied to the Phantom Coordinates. "))
-, forceScale(initData(&forceScale, 1.0, "forceScale","Default forceScale applied to the force feedback. "))
+: forceScale(initData(&forceScale, 1.0, "forceScale","Default forceScale applied to the force feedback. "))
+, scale(initData(&scale, 1.0, "scale","Default scale applied to the Phantom Coordinates. "))
 , positionBase(initData(&positionBase, Vec3d(0,0,0), "positionBase","Position of the interface base in the scene world coordinates"))
 , orientationBase(initData(&orientationBase, Quat(0,0,0,1), "orientationBase","Orientation of the interface base in the scene world coordinates"))
 , positionTool(initData(&positionTool, Vec3d(0,0,0), "positionTool","Position of the tool in the omni end effector frame"))
@@ -306,6 +307,7 @@ NewOmniDriver::NewOmniDriver()
 , permanent(initData(&permanent, false, "permanent" , "Apply the force feedback permanently"))
 , omniVisu(initData(&omniVisu, false, "omniVisu", "Visualize the position of the interface in the virtual scene"))
 , visu_base(NULL)
+, visu_end(NULL)
 {
 	
 	this->f_listening.setValue(true);
@@ -341,10 +343,14 @@ void NewOmniDriver::setForceFeedback(ForceFeedback* ff)
 	data.forceFeedback = ff;
 };
 
+void NewOmniDriver::init() {
+    std::cout << "[NewOmni] init" << endl;
+}
+
+
 void NewOmniDriver::bwdInit()
 {
-
-	//std::cout << "NewOmniDriver::init()" << std::endl;
+        std::cout<<"NewOmniDriver::bwdInit() is called"<<std::endl;
 	simulation::Node *context = dynamic_cast<simulation::Node *>(this->getContext()); // access to current node
 	ForceFeedback *ff = context->getTreeObject<ForceFeedback>();
 	
@@ -352,28 +358,20 @@ void NewOmniDriver::bwdInit()
 	{
 		this->setForceFeedback(ff);
 	}
-	//std::cerr << "setForceFeedback(ff) ok" << std::endl;
-
+        //std::cerr << "setForceFeedback(ff) ok" << std::endl;
 	setDataValue();
+        //std::cerr << "NewOmniDriver::bwdInit() setDataValueOK" << std::endl;
 
-
-
-	//std::cerr << "data init ok" << std::endl;
-
-	if(initDevice(data)==-1){
+        if(initDevice(data)==-1){
 		noDevice=true;
 		std::cout<<"WARNING NO DEVICE"<<std::endl;
-	}
-	std::cerr  << "NewOmniDriver::init() done" << std::endl;
-
-	
-	
+	}	
 }
 
 
 void NewOmniDriver::setDataValue()
 {
-	data.scale = scale.getValue();
+        data.scale = scale.getValue();
 	data.forceScale = forceScale.getValue();
 	Quat q = orientationBase.getValue();
 	q.normalize();
@@ -393,35 +391,38 @@ void NewOmniDriver::reset()
 
 void NewOmniDriver::reinitVisual()
 {
-	if(visu_base!=NULL)
-	{
-			delete(visu_base);
-			visu_base = new sofa::component::visualmodel::OglModel();
-			visu_base->fileMesh.setValue("mesh/omni_test2.obj");
-			visu_base->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
-			visu_end->setColor(1.0f,1.0f,1.0f,1.0f);
-			visu_base->init();
-			visu_base->initVisual();
-			visu_base->updateVisual();
-			visu_base->applyRotation(orientationBase.getValue());
-			visu_base->applyTranslation( positionBase.getValue()[0],positionBase.getValue()[1], positionBase.getValue()[2]);
+    cout << "NewOmniDriver::reinitVisual() is called " << endl;
+    if(visu_base!=NULL)
+    {
+        cout << "visu_base = " << visu_base << endl;
+        delete(visu_base);
+        visu_base = new sofa::component::visualmodel::OglModel();
+        visu_base->fileMesh.setValue("mesh/omni_test2.obj");
+        visu_base->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
+        visu_end->setColor(1.0f,1.0f,1.0f,1.0f);
+        visu_base->init();
+        visu_base->initVisual();
+        visu_base->updateVisual();
+        visu_base->applyRotation(orientationBase.getValue());
+        visu_base->applyTranslation( positionBase.getValue()[0],positionBase.getValue()[1], positionBase.getValue()[2]);
 
-	}
+    }
 
-	if (visu_end != NULL)
-	{
-			//serr<<"create visual model for NewOmniDriver end"<<sendl;
-		delete(visu_end);
-		visu_end = new sofa::component::visualmodel::OglModel();
-		visu_end->fileMesh.setValue("mesh/stylus.obj");
-		visu_end->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
-		visu_end->setColor(1.0f,0.3f,0.0f,1.0f);
-		visu_end->init();
-		visu_end->initVisual();
-		visu_end->updateVisual();			
-	}
+    if (visu_end != NULL)
+    {
+        //serr<<"create visual model for NewOmniDriver end"<<sendl;
+        cout << "visu_end = " << visu_end << endl;
+        delete(visu_end);
+        visu_end = new sofa::component::visualmodel::OglModel();
+        visu_end->fileMesh.setValue("mesh/stylus.obj");
+        visu_end->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
+        visu_end->setColor(1.0f,0.3f,0.0f,1.0f);
+        visu_end->init();
+        visu_end->initVisual();
+        visu_end->updateVisual();
+    }
 
-	
+
 }
 
 void NewOmniDriver::reinit()
@@ -429,8 +430,8 @@ void NewOmniDriver::reinit()
 	std::cout<<"NewOmniDriver::reinit() is called" <<std::endl;
 	this->cleanup();
 	this->bwdInit();
-
-	this->reinitVisual();
+        this->reinitVisual();
+        std::cout<<"NewOmniDriver::reinit() done" <<std::endl;
 
 
 //////////////// visu_base: place the visual model of the NewOmniDriver
@@ -447,56 +448,51 @@ void NewOmniDriver::reinit()
 
 void NewOmniDriver::draw()
 {
+    cout << "NewOmniDriver::draw is called" << endl;
+    if(omniVisu.getValue())
+    {
+        if (visu_base == NULL)
+        {
+            cout << "Creating visu_base" << endl;
+            // create visual object
+            //serr<<"create visual model for NewOmniDriver base"<<sendl;
+            visu_base = new sofa::component::visualmodel::OglModel();
+            visu_base->fileMesh.setValue("mesh/omni_test2.obj");
+            visu_base->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
+            visu_base->init();
+            visu_base->initVisual();
+            visu_base->updateVisual();
+            visu_base->applyRotation(orientationBase.getValue());
+            visu_base->applyTranslation( positionBase.getValue()[0],positionBase.getValue()[1], positionBase.getValue()[2]);
+            //getContext()->addObject(visu_base);
+        }
 
 
+        if (visu_end == NULL)
+        {
+            //serr<<"create visual model for NewOmniDriver end"<<sendl;
+            visu_end = new sofa::component::visualmodel::OglModel();
+            visu_end->fileMesh.setValue("mesh/stylus.obj");
+            visu_end->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
+            visu_end->setColor(1.0f,0.3f,0.0f,1.0f);
+            visu_end->init();
+            visu_end->initVisual();
+            visu_end->updateVisual();
+        }
 
-	if(omniVisu.getValue())
-	{
-		if (visu_base == NULL)
-		{
-			// create visual object
-			//serr<<"create visual model for NewOmniDriver base"<<sendl;
-			visu_base = new sofa::component::visualmodel::OglModel();
-			visu_base->fileMesh.setValue("mesh/omni_test2.obj");
-			visu_base->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
-			visu_base->init();
-			visu_base->initVisual();
-			visu_base->updateVisual();
-			visu_base->applyRotation(orientationBase.getValue());
-			visu_base->applyTranslation( positionBase.getValue()[0],positionBase.getValue()[1], positionBase.getValue()[2]);
-			//getContext()->addObject(visu_base);
-		}
-		
-
-		if (visu_end == NULL)
-		{
-			//serr<<"create visual model for NewOmniDriver end"<<sendl;
-			visu_end = new sofa::component::visualmodel::OglModel();
-			visu_end->fileMesh.setValue("mesh/stylus.obj");
-			visu_end->scale.setValue(defaulttype::Vector3(scale.getValue(),scale.getValue(),scale.getValue()));
-			visu_end->setColor(1.0f,0.3f,0.0f,1.0f);
-			visu_end->init();
-			visu_end->initVisual();
-			visu_end->updateVisual();			
-
-		}
-
-		// compute position of the endOmni in worldframe
-		SolidTypes<double>::Transform baseOmni_H_endOmni(data.deviceData.pos*data.scale, data.deviceData.quat);
+        // compute position of the endOmni in worldframe
+        SolidTypes<double>::Transform baseOmni_H_endOmni(data.deviceData.pos*data.scale, data.deviceData.quat);
 		SolidTypes<double>::Transform world_H_endOmni = data.world_H_baseOmni * baseOmni_H_endOmni ;
 
 		sofa::component::visualmodel::RigidMappedModel::VecCoord* x_rigid = visu_end->getRigidX();
-		x_rigid->resize(1);
+                x_rigid->resize(1);                
 		(*x_rigid)[0].getOrientation() = world_H_endOmni.getOrientation();
-		(*x_rigid)[0].getCenter() =  world_H_endOmni.getOrigin();
-
-
-
-	
-		// draw the 2 visual models
-		visu_base->drawVisual();
-		visu_end->drawVisual();
-	}
+                (*x_rigid)[0].getCenter() =  world_H_endOmni.getOrigin();
+	                
+        // draw the 2 visual models
+        visu_base->drawVisual();
+        visu_end->drawVisual();
+    }
 }
 
 void NewOmniDriver::onKeyPressedEvent(core::objectmodel::KeypressedEvent *kpe)
@@ -530,9 +526,12 @@ void NewOmniDriver::handleEvent(core::objectmodel::Event *event)
 			
 			
 			/// COMPUTATION OF THE vituralTool 6D POSITION IN THE World COORDINATES
-			SolidTypes<double>::Transform baseOmni_H_endOmni(data.deviceData.pos*data.scale, data.deviceData.quat);
+                        SolidTypes<double>::Transform baseOmni_H_endOmni(data.deviceData.pos*data.scale, data.deviceData.quat);
 			SolidTypes<double>::Transform world_H_virtualTool = data.world_H_baseOmni * baseOmni_H_endOmni * data.endOmni_H_virtualTool;
 
+
+                        // store actual position of interface for the forcefeedback (as it will be used as soon as new LCP will be computed)
+                        data.forceFeedback->setReferencePosition(world_H_virtualTool);
 
 			/// TODO : SHOULD INCLUDE VELOCITY !!
 			sofa::core::objectmodel::OmniEvent omniEvent(data.deviceData.id, world_H_virtualTool.getOrigin(), world_H_virtualTool.getOrientation() , data.deviceData.m_buttonState);

@@ -51,7 +51,8 @@ namespace sofa
   {
 
     PickHandler::PickHandler():interactorInUse(false), mouseStatus(DEACTIVATED),mouseButton(NONE),renderCallback(NULL),
-      pickingMethod(RAY_CASTING),_fboAllocated(false)
+      pickingMethod(RAY_CASTING),
+      _fboAllocated(false)
     {
       operations[LEFT] = operations[MIDDLE] = operations[RIGHT] = NULL;
 
@@ -445,6 +446,7 @@ namespace sofa
     {
       assert(_fboAllocated);    
       BodyPicked result;
+      result.dist =  0;
       sofa::defaulttype::Vec4f color;
       int x = mousePosition.x;
       int y = mousePosition.screenHeight - mousePosition.y;

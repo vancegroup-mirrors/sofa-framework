@@ -63,8 +63,32 @@ using sofa::helper::SVector;
 #define WEIGHT_HERMITE 3
 #define WEIGHT_SPLINE 4
 
+////////////// Definitions to avoid multiple specializations //////////////////
+// See "Substitution failure is not an error" desgin patern and boost::enable_if
+// http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
+// http://www.boost.org/doc/libs/1_36_0/libs/utility/enable_if.html
+template <bool B, class T = void>
+  struct enable_if_c {
+    typedef T type;
+};
 
+template <class T>
+struct enable_if_c<false, T> {};
 
+template <class Cond, class T = void> 
+struct enable_if : public enable_if_c<Cond::value, T> {};
+
+template <class T, class T2>
+struct Equal {
+  typedef char ok;
+  typedef long nok;
+  
+  static ok test(const T t, const T t2);
+  static nok test(...);
+
+  static const bool value=(sizeof(test(T(),T2()))==sizeof(ok));
+};
+///////////////////////////////////////////////////////////////////////////////
 
 
 template <class BasicMapping>
@@ -93,48 +117,48 @@ public:
           //enum { InDerivDim=In::DataTypes::deriv_total_size };
           enum { InDOFs=In::DataTypes::deriv_total_size };
           enum { InAt=0 };
-          typedef defaulttype::Mat<N,N,Real> Mat;
-          typedef defaulttype::Mat<3,3,Real> Mat33;
-          typedef defaulttype::Mat<3,InDOFs,Real> Mat3xIn;
+          typedef defaulttype::Mat<N,N,InReal> Mat;
+          typedef defaulttype::Mat<3,3,InReal> Mat33;
+          typedef defaulttype::Mat<3,InDOFs,InReal> Mat3xIn;
           typedef vector<Mat3xIn> VMat3xIn;
           typedef vector<VMat3xIn> VVMat3xIn;
-          typedef defaulttype::Mat<InAt,3,Real> MatInAtx3;
+          typedef defaulttype::Mat<InAt,3,InReal> MatInAtx3;
           typedef vector<MatInAtx3> VMatInAtx3;
           typedef vector<VMatInAtx3> VVMatInAtx3;
-          typedef defaulttype::Mat<3,6,Real> Mat36;
+          typedef defaulttype::Mat<3,6,InReal> Mat36;
           typedef vector<Mat36> VMat36;
           typedef vector<VMat36> VVMat36;
-          typedef defaulttype::Mat<3,7,Real> Mat37;
-          typedef defaulttype::Mat<3,8,Real> Mat38;
-          typedef defaulttype::Mat<3,9,Real> Mat39;
-          typedef defaulttype::Mat<4,3,Real> Mat43;
+          typedef defaulttype::Mat<3,7,InReal> Mat37;
+          typedef defaulttype::Mat<3,8,InReal> Mat38;
+          typedef defaulttype::Mat<3,9,InReal> Mat39;
+          typedef defaulttype::Mat<4,3,InReal> Mat43;
           typedef vector<Mat43> VMat43;
-          typedef defaulttype::Mat<4,4,Real> Mat44;
-          typedef defaulttype::Mat<6,3,Real> Mat63;
-          typedef defaulttype::Mat<6,6,Real> Mat66;
+          typedef defaulttype::Mat<4,4,InReal> Mat44;
+          typedef defaulttype::Mat<6,3,InReal> Mat63;
+          typedef defaulttype::Mat<6,6,InReal> Mat66;
           typedef vector<Mat66> VMat66;
           typedef vector<VMat66> VVMat66;
-          typedef defaulttype::Mat<6,7,Real> Mat67;
-          typedef defaulttype::Mat<6,InDOFs,Real> Mat6xIn;
-          typedef defaulttype::Mat<7,6,Real> Mat76;
+          typedef defaulttype::Mat<6,7,InReal> Mat67;
+          typedef defaulttype::Mat<6,InDOFs,InReal> Mat6xIn;
+          typedef defaulttype::Mat<7,6,InReal> Mat76;
           typedef vector<Mat76> VMat76;
-          typedef defaulttype::Mat<8,3,Real> Mat83;
-          typedef defaulttype::Mat<8,6,Real> Mat86;
+          typedef defaulttype::Mat<8,3,InReal> Mat83;
+          typedef defaulttype::Mat<8,6,InReal> Mat86;
           typedef vector<Mat86> VMat86;
-          typedef defaulttype::Mat<8,8,Real> Mat88;
+          typedef defaulttype::Mat<8,8,InReal> Mat88;
           typedef vector<Mat88> VMat88;
-          typedef defaulttype::Mat<InDOFs,3,Real> MatInx3;
+          typedef defaulttype::Mat<InDOFs,3,InReal> MatInx3;
 
-          typedef defaulttype::Vec<3,Real> Vec3;
+          typedef defaulttype::Vec<3,InReal> Vec3;
           typedef vector<Vec3> VVec3;
           typedef vector<VVec3> VVVec3;
-          typedef defaulttype::Vec<4,Real> Vec4;
-          typedef defaulttype::Vec<6,Real> Vec6;
+          typedef defaulttype::Vec<4,InReal> Vec4;
+          typedef defaulttype::Vec<6,InReal> Vec6;
           typedef vector<Vec6> VVec6;
           typedef vector<VVec6> VVVec6;
-          typedef defaulttype::Vec<8,Real> Vec8;
-          typedef defaulttype::Vec<9,Real> Vec9;
-          typedef defaulttype::Vec<InDOFs,Real> VecIn;
+          typedef defaulttype::Vec<8,InReal> Vec8;
+          typedef defaulttype::Vec<9,InReal> Vec9;
+          typedef defaulttype::Vec<InDOFs,InReal> VecIn;
           typedef Quater<InReal> Quat;
           typedef sofa::helper::vector< VecCoord > VecVecCoord;
           typedef SVector<double> VD;
@@ -142,6 +166,7 @@ public:
 
           typedef Coord GeoCoord;
           typedef VecCoord GeoVecCoord;
+          typedef defaulttype::StdRigidTypes<N,InReal> RigidType;
         protected:
           vector<Coord> initPos; // pos: point coord in the local reference frame of In[i].
           vector<Coord> rotatedPoints;
@@ -232,6 +257,18 @@ public:
           }
 
           inline void getLocalCoord( Coord& result, const typename defaulttype::StdRigidTypes<N, InReal>::Coord& inCoord, const Coord& coord) const;
+
+          template<class TCoord>
+          inline typename enable_if<Equal<typename RigidType::Coord, TCoord> >::type _apply( typename Out::VecCoord& out, const sofa::helper::vector<typename RigidType::Coord>& in);
+
+          template<class TDeriv>
+          inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJ( typename Out::VecDeriv& out, const sofa::helper::vector<typename RigidType::Deriv>& in);
+
+          template<class TDeriv>
+          inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in);
+
+          template<class T>
+          inline typename enable_if<Equal<RigidType, T> >::type _applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
 };
 
       using core::Mapping;

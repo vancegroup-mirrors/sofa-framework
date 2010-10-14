@@ -104,8 +104,6 @@ template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3
 
 
 
-
-
 } // namespace mapping
 
 } // namespace component

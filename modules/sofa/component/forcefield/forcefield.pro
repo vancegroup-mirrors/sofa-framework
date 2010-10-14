@@ -15,140 +15,106 @@ DEFINES += SOFA_BUILD_COMPONENT_FORCEFIELD
 HEADERS += initForceField.h \
            BeamFEMForceField.h \
            BeamFEMForceField.inl \
-           BoxStiffSpringForceField.h \
-           BoxStiffSpringForceField.inl \
+           ConicalForceField.h \
+           ConicalForceField.inl \
            ConstantForceField.h \
            ConstantForceField.inl \
            DistanceGridForceField.h \
            DistanceGridForceField.inl \
            EdgePressureForceField.h \
            EdgePressureForceField.inl \
-           FrameSpringForceField.h \
-           FrameSpringForceField.inl \
-           LennardJonesForceField.h \
-           LennardJonesForceField.inl \
-           SPHFluidForceField.h \
-           SPHFluidForceField.inl \
-           OscillatingTorsionPressureForceField.h \
-           OscillatingTorsionPressureForceField.inl \
-           ParticlesRepulsionForceField.h \
-           ParticlesRepulsionForceField.inl \
-           PlaneForceField.h \
-           PlaneForceField.inl \
-           SphereForceField.h \
-           SphereForceField.inl \
-           ConicalForceField.h \
-           ConicalForceField.inl \
            EllipsoidForceField.h \
            EllipsoidForceField.inl \
-           PenalityContactForceField.h \
-           PenalityContactForceField.inl \
-           QuadBendingSprings.h \
-           QuadBendingSprings.inl \
-           QuadularBendingSprings.h \
-           QuadularBendingSprings.inl \
-           RestShapeSpringsForceField.h \
-           RestShapeSpringsForceField.inl \
-           SpringForceField.h \
-           SpringForceField.inl \
-           StiffSpringForceField.h \
-           StiffSpringForceField.inl \
-           SurfacePressureForceField.h \
-           SurfacePressureForceField.inl \
-           JointSpringForceField.h \
-           JointSpringForceField.inl \
-           MeshSpringForceField.h \
-           MeshSpringForceField.inl \
-           RegularGridSpringForceField.h \
-           RegularGridSpringForceField.inl \
-           TensorForceField.h \
+           HexahedralFEMForceField.h \
+           HexahedralFEMForceField.inl \
            HexahedralFEMForceFieldAndMass.h \
            HexahedralFEMForceFieldAndMass.inl \
+           HexahedronFEMForceField.h \
+           HexahedronFEMForceField.inl \
+           HexahedronFEMForceFieldAndMass.h \
+           HexahedronFEMForceFieldAndMass.inl \
+           LennardJonesForceField.h \
+           LennardJonesForceField.inl \
            NonUniformHexahedralFEMForceFieldAndMass.h \
            NonUniformHexahedralFEMForceFieldAndMass.inl \
            NonUniformHexahedronFEMForceFieldAndMass.h \
            NonUniformHexahedronFEMForceFieldAndMass.inl \
            NonUniformHexahedronFEMForceFieldDensity.h \
            NonUniformHexahedronFEMForceFieldDensity.inl \
-           TetrahedronFEMForceField.h \
-           TetrahedronFEMForceField.inl \
-           HexahedronFEMForceField.h \
-           HexahedronFEMForceField.inl \
-           HexahedralFEMForceField.h \
-           HexahedralFEMForceField.inl \
-           HexahedronFEMForceFieldAndMass.h \
-           HexahedronFEMForceFieldAndMass.inl \
-           TetrahedralTensorMassForceField.h \
-           TetrahedralTensorMassForceField.inl \
+           OscillatingTorsionPressureForceField.h \
+           OscillatingTorsionPressureForceField.inl \
+           ParticlesRepulsionForceField.h \
+           ParticlesRepulsionForceField.inl \
+           PlaneForceField.h \
+           PlaneForceField.inl \
+           QuadularBendingSprings.h \
+           QuadularBendingSprings.inl \
+           RestShapeSpringsForceField.h \
+           RestShapeSpringsForceField.inl \
+           SphereForceField.h \
+           SphereForceField.inl \
+           SPHFluidForceField.h \
+           SPHFluidForceField.inl \
+           SurfacePressureForceField.h \
+           SurfacePressureForceField.inl \
            TetrahedralCorotationalFEMForceField.h \
            TetrahedralCorotationalFEMForceField.inl \
-           TriangleBendingSprings.h \
-           TriangleBendingSprings.inl \
-           TriangularBendingSprings.h \
-           TriangularBendingSprings.inl \
-           TriangleFEMForceField.h \
-           TriangularFEMForceField.h \
-           TriangularAnisotropicFEMForceField.h \
+           TetrahedralTensorMassForceField.h \
+           TetrahedralTensorMassForceField.inl \
+           TetrahedronFEMForceField.h \
+           TetrahedronFEMForceField.inl \
            TrianglePressureForceField.h \
            TrianglePressureForceField.inl \
+           TriangularAnisotropicFEMForceField.h \
+           TriangularBendingSprings.h \
+           TriangularBendingSprings.inl \
            TriangularBiquadraticSpringsForceField.h \
            TriangularBiquadraticSpringsForceField.inl \
+           TriangleFEMForceField.h \
+           TriangularFEMForceField.h \
            TriangularQuadraticSpringsForceField.h \
            TriangularQuadraticSpringsForceField.inl \
            TriangularTensorMassForceField.h \
            TriangularTensorMassForceField.inl \
            VaccumSphereForceField.h \
-           VaccumSphereForceField.inl \
-           VectorSpringForceField.h \
-           VectorSpringForceField.inl
+           VaccumSphereForceField.inl
 
            
 SOURCES += initForceField.cpp \
            BeamFEMForceField.cpp \
-           BoxStiffSpringForceField.cpp \
+           ConicalForceField.cpp \
            ConstantForceField.cpp \
            DistanceGridForceField.cpp \
            EdgePressureForceField.cpp \
-           LennardJonesForceField.cpp \
-           PlaneForceField.cpp \
-           SphereForceField.cpp \
-           ConicalForceField.cpp \
            EllipsoidForceField.cpp \
-           FrameSpringForceField.cpp \
-           SPHFluidForceField.cpp \
-           OscillatingTorsionPressureForceField.cpp \	   
-           ParticlesRepulsionForceField.cpp \
-           SpringForceField.cpp \
-           StiffSpringForceField.cpp \
-           SurfacePressureForceField.cpp \
-           JointSpringForceField.cpp \
-           PenalityContactForceField.cpp \
-           MeshSpringForceField.cpp \
-           QuadularBendingSprings.cpp \
-           QuadBendingSprings.cpp \
-           RegularGridSpringForceField.cpp \
-           RestShapeSpringsForceField.cpp \
+           HexahedralFEMForceField.cpp \
            HexahedralFEMForceFieldAndMass.cpp \
+           HexahedronFEMForceField.cpp \
+           HexahedronFEMForceFieldAndMass.cpp \
+           LennardJonesForceField.cpp \
            NonUniformHexahedralFEMForceFieldAndMass.cpp \
            NonUniformHexahedronFEMForceFieldAndMass.cpp \
            NonUniformHexahedronFEMForceFieldDensity.cpp \
-           TetrahedronFEMForceField.cpp \
-           HexahedronFEMForceField.cpp \
-           HexahedralFEMForceField.cpp \
-           HexahedronFEMForceFieldAndMass.cpp \
-           TetrahedralTensorMassForceField.cpp \
+           OscillatingTorsionPressureForceField.cpp \
+           ParticlesRepulsionForceField.cpp \
+           PlaneForceField.cpp \
+           QuadularBendingSprings.cpp \
+           RestShapeSpringsForceField.cpp \
+           SphereForceField.cpp \
+           SPHFluidForceField.cpp \
+           SurfacePressureForceField.cpp \
            TetrahedralCorotationalFEMForceField.cpp \
-           TriangleBendingSprings.cpp \
+           TetrahedralTensorMassForceField.cpp \
+           TetrahedronFEMForceField.cpp \
+           TrianglePressureForceField.cpp \
+           TriangularAnisotropicFEMForceField.cpp \
            TriangularBendingSprings.cpp \
+           TriangularBiquadraticSpringsForceField.cpp \
            TriangleFEMForceField.cpp \
            TriangularFEMForceField.cpp \
-           TriangularAnisotropicFEMForceField.cpp \
-           TrianglePressureForceField.cpp \
-           TriangularBiquadraticSpringsForceField.cpp \
            TriangularQuadraticSpringsForceField.cpp \
            TriangularTensorMassForceField.cpp \
-           VaccumSphereForceField.cpp \
-           VectorSpringForceField.cpp
+           VaccumSphereForceField.cpp
            
 
 contains(DEFINES,SOFA_TEST_FRICTION){

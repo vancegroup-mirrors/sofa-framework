@@ -30,8 +30,8 @@
 #include <sofa/gui/qt/SimpleDataWidget.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/LaparoscopicRigidTypes.h>
-#include <sofa/component/forcefield/SpringForceField.h>
-#include <sofa/component/forcefield/JointSpringForceField.h>
+#include <sofa/component/interactionforcefield/SpringForceField.h>
+#include <sofa/component/interactionforcefield/JointSpringForceField.h>
 /* #include <../../../projects/vulcain/lib/DiscreteElementModel.h> */
 #include <sofa/helper/io/Mesh.h>
 
@@ -452,7 +452,7 @@ namespace sofa
       /// sofa::component::forcefield::LinearSpring support
       ////////////////////////////////////////////////////////////////
 
-#define CLASS typename sofa::component::forcefield::LinearSpring< T >
+#define CLASS typename sofa::component::interactionforcefield::LinearSpring< T >
 
       template<class T>
       class struct_data_trait < CLASS >
@@ -481,7 +481,7 @@ namespace sofa
       /// sofa::component::forcefield::JointSpring support
       ////////////////////////////////////////////////////////////////
 
-#define CLASS typename sofa::component::forcefield::JointSpring< T >
+#define CLASS typename sofa::component::interactionforcefield::JointSpring< T >
 
       template<class T>
       class struct_data_trait < CLASS >

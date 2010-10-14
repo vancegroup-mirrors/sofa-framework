@@ -59,7 +59,6 @@ SOFA_LINK_CLASS(MechanicalStateController)
 SOFA_LINK_CLASS(NullForceFeedback)
 SOFA_LINK_CLASS(EnslavementForceFeedback)
 SOFA_LINK_CLASS(LCPForceFeedback)
-SOFA_LINK_CLASS(VMechanismsForceFeedback)
 
 #ifdef SOFA_HAVE_SENSABLE
 SOFA_LINK_CLASS(OmniDriver)

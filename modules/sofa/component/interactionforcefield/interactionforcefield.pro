@@ -13,14 +13,56 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_INTERACTIONFORCEFIELD
 
 HEADERS += \
-          RepulsiveSpringForceField.h \
-          RepulsiveSpringForceField.inl \
-          InteractionEllipsoidForceField.h \
-          InteractionEllipsoidForceField.inl
+		initInteractionForceField.h        \
+		BoxStiffSpringForceField.h         \
+		BoxStiffSpringForceField.inl       \
+		FrameSpringForceField.h            \
+		FrameSpringForceField.inl          \
+		InteractionEllipsoidForceField.h   \
+		InteractionEllipsoidForceField.inl \
+		JointSpringForceField.h            \
+		JointSpringForceField.inl          \
+		MeshSpringForceField.h             \
+		MeshSpringForceField.inl           \
+		PenalityContactForceField.h        \
+		PenalityContactForceField.inl      \
+		QuadBendingSprings.h               \
+		QuadBendingSprings.inl             \
+		RegularGridSpringForceField.h      \
+		RegularGridSpringForceField.inl    \
+		RepulsiveSpringForceField.h        \
+		RepulsiveSpringForceField.inl      \
+#	SparseGridSpringForceField.h           \
+#	SparseGridSpringForceField.inl         \
+		SpringForceField.h                 \
+		SpringForceField.inl               \
+		StiffSpringForceField.h            \
+		StiffSpringForceField.inl          \
+		TriangleBendingSprings.h           \
+		TriangleBendingSprings.inl         \
+		VectorSpringForceField.h           \
+		VectorSpringForceField.inl
            
-SOURCES += initInteractionForceField.cpp \
-          RepulsiveSpringForceField.cpp \
-          InteractionEllipsoidForceField.cpp
+SOURCES += \
+		initInteractionForceField.cpp      \
+		BoxStiffSpringForceField.cpp       \
+		FrameSpringForceField.cpp          \
+		InteractionEllipsoidForceField.cpp \
+		JointSpringForceField.cpp          \
+		MeshSpringForceField.cpp           \
+		PenalityContactForceField.cpp      \
+		QuadBendingSprings.cpp             \
+		RegularGridSpringForceField.cpp    \
+		RepulsiveSpringForceField.cpp      \
+#	SparseGridSpringForceField.cpp         \
+		SpringForceField.cpp               \
+		StiffSpringForceField.cpp          \
+		TriangleBendingSprings.cpp         \
+		VectorSpringForceField.cpp       
+
+
+
+
 
 
 

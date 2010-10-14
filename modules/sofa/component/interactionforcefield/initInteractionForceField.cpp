@@ -51,7 +51,27 @@ void initInteractionForceField()
 
 } // namespace sofa
 
+
 ////////// BEGIN CLASS LIST //////////
 SOFA_LINK_CLASS(InteractionEllipsoidForceField)
 SOFA_LINK_CLASS(RepulsiveSpringForceField)
 
+
+
+
+
+
+////////// Moving From namespace component::forcefield //////////
+SOFA_LINK_CLASS(SpringForceField)
+SOFA_LINK_CLASS(JointSpringForceField)
+SOFA_LINK_CLASS(MeshSpringForceField)
+SOFA_LINK_CLASS(PenalityContactForceField)
+SOFA_LINK_CLASS(QuadBendingSprings)
+SOFA_LINK_CLASS(RegularGridSpringForceField)
+SOFA_LINK_CLASS(BoxStiffSpringForceField)
+SOFA_LINK_CLASS(StiffSpringForceField)
+SOFA_LINK_CLASS(TriangleBendingSprings)
+SOFA_LINK_CLASS(VectorSpringForceField)
+SOFA_LINK_CLASS(FrameSpringForceField)
+
+//SOFA_LINK_CLASS(SparseGridSpringForceField)

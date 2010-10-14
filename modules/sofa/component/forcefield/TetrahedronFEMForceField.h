@@ -197,7 +197,9 @@ public:
     Data<bool> _assembling;
 
     TetrahedronFEMForceField()
-    : _mesh(NULL)
+	  : parallelDataSimu(NULL)
+	,parallelDataThrd(NULL)
+	,_mesh(NULL)
     , _indexedElements(NULL)
     , needUpdateTopology(false)
     , _initialPoints(core::objectmodel::BaseObject::initData(&_initialPoints, "initialPoints", "Initial Position"))
@@ -208,6 +210,8 @@ public:
     , _updateStiffnessMatrix(core::objectmodel::BaseObject::initData(&_updateStiffnessMatrix,false,"updateStiffnessMatrix",""))
     , _assembling(core::objectmodel::BaseObject::initData(&_assembling,false,"computeGlobalMatrix",""))
     {
+		parallelDataInit[0]=0;
+		parallelDataInit[1]=0;
         this->addAlias(&_assembling, "assembling");
     }
     

@@ -29,7 +29,6 @@
 
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/topology/BaseTopologyObject.h>
-#include <sofa/core/objectmodel/Data.h>
 
 #include <sofa/helper/list.h>
 
@@ -183,41 +182,6 @@ public:
 
 
 
-
-/** A class that contains a description of the topology (set of edges, triangles, adjacency information, ...) */
-class SOFA_CORE_API TopologyEngine : public sofa::core::DataEngine
-{
-public:
-   SOFA_CLASS(TopologyEngine, DataEngine);
-   typedef sofa::helper::list<sofa::core::objectmodel::BaseData *> _topologicalDataList;
-   typedef sofa::helper::list<sofa::core::objectmodel::BaseData *>::iterator _iterator;
-
-   TopologyEngine(){};
-
-   virtual ~TopologyEngine() {}
-
-   virtual void init();
-
-   virtual void handleTopologyChange(){};
-
-protected:
-
-   Data <sofa::helper::list<const TopologyChange *> >m_changeList;
-
-   _topologicalDataList m_topologicalData;
-
-public:
-   unsigned int getNumberOfTopologicalDataLinked() {return m_topologicalData.size();}
-
-   void addTopologicalData(sofa::core::objectmodel::BaseData& topologicalData);
-
-   void removeTopoligicalData(sofa::core::objectmodel::BaseData& topologicalData);
-
-};
-
-
-
-
 	/** A class that contains a description of the topology (set of edges, triangles, adjacency information, ...) */
 class SOFA_CORE_API TopologyContainer : public sofa::core::topology::BaseTopologyObject,
                                         public core::topology::BaseMeshTopology
@@ -275,19 +239,19 @@ protected:
 
 		/** \brief Provides an iterator on the first element in the list of TopologyChange objects.
 		 */
-      sofa::helper::list<const TopologyChange *>::const_iterator firstChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator beginChange() const;
 
 		/** \brief Provides an iterator on the last element in the list of TopologyChange objects.
 		 */
-      sofa::helper::list<const TopologyChange *>::const_iterator lastChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator endChange() const;
 
 		/** \brief Provides an iterator on the first element in the list of StateChange objects.
 		 */
-      sofa::helper::list<const TopologyChange *>::const_iterator firstStateChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator beginStateChange() const;
 
 		/** \brief Provides an iterator on the last element in the list of StateChange objects.
 		 */
-      sofa::helper::list<const TopologyChange *>::const_iterator lastStateChange() const;
+      sofa::helper::list<const TopologyChange *>::const_iterator endStateChange() const;
 	
 
 		/** \brief Free each Topology changes in the list and remove them from the list
@@ -304,30 +268,38 @@ protected:
       
       /// TopologyEngine interactions
       ///@{
-      virtual const TopologyEngine* getPointSetTopologyEngine(){return NULL;}
+      const sofa::helper::list<TopologyEngine *> &getTopologyEngineList() const { return m_topologyEngineList; }
 
-      virtual const TopologyEngine* getEdgeSetTopologyEngine(){return NULL;}
+      /** \brief Adds a TopologyEngine to the list.
+      */
+      virtual void addTopologyEngine(TopologyEngine* _topologyEngine);
 
-      virtual const TopologyEngine* getTriangleSetTopologyEngine(){return NULL;}
 
-      virtual const TopologyEngine* getQuadSetTopologyEngine(){return NULL;}
+      /** \brief Provides an iterator on the first element in the list of TopologyEngine objects.
+       */
+      sofa::helper::list<TopologyEngine *>::const_iterator beginTopologyEngine() const;
 
-      virtual const TopologyEngine* getTetrahedronSetTopologyEngine(){return NULL;}
+      /** \brief Provides an iterator on the last element in the list of TopologyEngine objects.
+       */
+      sofa::helper::list<TopologyEngine *>::const_iterator endTopologyEngine() const;
 
-      virtual const TopologyEngine* getHexahedronSetTopologyEngine(){return NULL;}
+      /** \brief Free each Topology changes in the list and remove them from the list
+      *
+      */
+      void resetTopologyEngineList();
+
       ///@}
 
 
-	private:
+   protected:
 		/// Array of topology modifications that have already occured (addition) or will occur next (deletion).
       Data <sofa::helper::list<const TopologyChange *> >m_changeList;
 
 		/// Array of state modifications that have already occured (addition) or will occur next (deletion).
       Data <sofa::helper::list<const TopologyChange *> >m_stateChangeList;
 
-   protected:
-      /// Contains the actual topology data and give acces to it (nature of these data heavily depends on the kind of topology).
-      TopologyEngine *m_topologyEngine;
+      /// List of topology engines which will interact on all topological Data.
+      sofa::helper::list<TopologyEngine *> m_topologyEngineList;
 	};
 
 

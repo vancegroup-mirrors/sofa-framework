@@ -3702,8 +3702,8 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>
       template <class In, class Out>
       void BarycentricMapperEdgeSetTopology<In,Out>::handleTopologyChange()
       {
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -3737,8 +3737,8 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>
       template <class In, class Out>
       void BarycentricMapperTriangleSetTopology<In,Out>::handleTopologyChange()
       {
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -3772,8 +3772,8 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>
       template <class In, class Out>
       void BarycentricMapperQuadSetTopology<In,Out>::handleTopologyChange()
       {
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -3807,8 +3807,8 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>
       template <class In, class Out>
       void BarycentricMapperTetrahedronSetTopology<In,Out>::handleTopologyChange()
       {
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -3843,11 +3843,11 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>
       void BarycentricMapperHexahedronSetTopology<In,Out>::handleTopologyChange()
       {
 
-        if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
+        if ( this->fromTopology->beginChange() == this->fromTopology->endChange() )
           return;
 
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -4042,8 +4042,8 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperSparseGridTopology<In,Out>
 	  }
 	  else if(t == topology_to)
 	  {
-          const std::list<const core::topology::TopologyChange *>::const_iterator itBegin = topology_to->firstChange();
-          const std::list<const core::topology::TopologyChange *>::const_iterator itEnd = topology_to->lastChange();
+          const std::list<const core::topology::TopologyChange *>::const_iterator itBegin = topology_to->beginChange();
+          const std::list<const core::topology::TopologyChange *>::const_iterator itEnd = topology_to->endChange();
 
 		  dynamicMapper->handlePointEvents ( itBegin, itEnd );
 	  }

@@ -598,11 +598,11 @@ namespace sofa
       void BarycentricMapperHexahedronSetTopology<defaulttype::Vec3dTypes, defaulttype::Rigid3dTypes>::handleTopologyChange()
       {
 
-        if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
+        if ( this->fromTopology->beginChange() == this->fromTopology->endChange() )
           return;
 
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -732,11 +732,11 @@ namespace sofa
       void BarycentricMapperHexahedronSetTopology<defaulttype::Vec3fTypes, defaulttype::Rigid3fTypes>::handleTopologyChange()
       {
 
-        if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
+        if ( this->fromTopology->beginChange() == this->fromTopology->endChange() )
           return;
 
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -865,11 +865,11 @@ namespace sofa
       void BarycentricMapperHexahedronSetTopology<defaulttype::Vec3dTypes, defaulttype::Rigid3fTypes>::handleTopologyChange()
       {
 
-        if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
+        if ( this->fromTopology->beginChange() == this->fromTopology->endChange() )
           return;
 
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )
@@ -999,11 +999,11 @@ namespace sofa
       void BarycentricMapperHexahedronSetTopology<defaulttype::Vec3fTypes, defaulttype::Rigid3dTypes>::handleTopologyChange()
       {
 
-        if ( this->fromTopology->firstChange() == this->fromTopology->lastChange() )
+        if ( this->fromTopology->beginChange() == this->fromTopology->endChange() )
           return;
 
-        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->firstChange();
-        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->lastChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itBegin = this->fromTopology->beginChange();
+        std::list<const core::topology::TopologyChange *>::const_iterator itEnd = this->fromTopology->endChange();
 
         for ( std::list<const core::topology::TopologyChange *>::const_iterator changeIt = itBegin;
                 changeIt != itEnd; ++changeIt )

@@ -42,219 +42,270 @@
 
 namespace sofa
 {
+
 namespace helper
 {
+
 namespace gl
 {
 
-FrameBufferObject::FrameBufferObject()
-:width(0)
-,height(0)
-,depthTexture(0)
-,initialized(false)
-{
+    FrameBufferObject::FrameBufferObject(bool depthTexture, bool enableDepth, bool enableColor)
+        :width(0)
+        ,height(0)
+        ,depthTextureID(0)
+        ,colorTextureID(0)
+        ,initialized(false)
+        ,depthTexture(depthTexture)
+        ,enableDepth(enableDepth)
+        ,enableColor(enableColor)
+    {
 
-}
+    }
 
-FrameBufferObject::FrameBufferObject(const fboParameters& fboParams)
-:width(0)
-,height(0)
-,depthTexture(0)
-,initialized(false)
-,_fboParams(fboParams),
-_systemDraw(sofa::helper::gl::DrawManager::OPENGL)
-{
-}
-                                     
-
-FrameBufferObject::~FrameBufferObject()
-{
-	destroy();
-}
-
-void FrameBufferObject::destroy()
-{
-	if(initialized)
-	{
-		//glDeleteTextures( 1, &depthTexture );
-		glDeleteRenderbuffersEXT(1, &depthTexture);
-    glDeleteTextures( 1, &colorTexture );
-		glDeleteFramebuffersEXT( 1, &id );
-    initialized = false;
-	}
-}
-
-bool FrameBufferObject::checkFBO()
-{
-
-  GLenum status;                                            
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	switch(status) {
-		case GL_FRAMEBUFFER_COMPLETE_EXT:
-			return true;
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
-			assert(false && "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT");
-			return false;
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
-			assert(false && "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT");
-			return false;
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-			assert(false && "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT");
-			return false;
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
-			assert(false && "GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT");
-			return false;
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
-			assert(false && "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT");
-			return false;
-			break;
-		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
-			assert(false && "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT");
-			return false;
-			break;
-		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-			assert(false && "GL_FRAMEBUFFER_UNSUPPORTED_EXT");
-			return false;
-			break;
-		default:
-			assert(false && "Unknown ERROR");
-			return false;
-  }
+    FrameBufferObject::FrameBufferObject(const fboParameters& fboParams, bool depthTexture, bool enableDepth, bool enableColor)
+        :width(0)
+        ,height(0)
+        ,depthTextureID(0)
+        ,colorTextureID(0)
+        ,initialized(false)
+        ,_fboParams(fboParams)
+        ,depthTexture(depthTexture)
+        ,enableDepth(enableDepth)
+        ,enableColor(enableColor)
+        ,_systemDraw(sofa::helper::gl::DrawManager::OPENGL)
+    {
+    }
 
 
-}
+    FrameBufferObject::~FrameBufferObject()
+    {
+        destroy();
+    }
 
-void FrameBufferObject::init(unsigned int width, unsigned height)
-{
-	if (!initialized)
-	{
-		this->width = width;
-		this->height = height;
-		glGenFramebuffersEXT(1, &id);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, id);
-		createDepthBuffer();
-		initDepthBuffer();
-    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depthTexture);
-		//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depthTexture, 0);
-		createColorBuffer();
-		initColorBuffer();
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, colorTexture, 0);
+    void FrameBufferObject::destroy()
+    {
+        if(initialized)
+        {
+            if(enableDepth)
+            {
+                if(depthTexture)
+                    glDeleteTextures( 1, &depthTextureID );
+                else
+                    glDeleteRenderbuffersEXT(1, &depthTextureID);
+            }
 
-		glDrawBuffer(GL_BACK);
-		glReadBuffer(GL_BACK);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+            if(enableColor)
+            {
+                glDeleteTextures( 1, &colorTextureID );
+            }
 
-    #ifdef _DEBUG
-      checkFBO();
-    #endif
-		initialized=true;
-	}
-	else
-		setSize(width, height);
-}
+            glDeleteFramebuffersEXT( 1, &id );
+            initialized = false;
+        }
+    }
 
-void FrameBufferObject::start()
-{
-	if (initialized)
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, id);
+    bool FrameBufferObject::checkFBO()
+    {
 
-	glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
-	glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        GLenum status;
+        status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+        switch(status) {
+        case GL_FRAMEBUFFER_COMPLETE_EXT:
+            return true;
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
+            assert(false && "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT");
+            return false;
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
+            assert(false && "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT");
+            return false;
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
+            assert(false && "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT");
+            return false;
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
+            assert(false && "GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT");
+            return false;
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
+            assert(false && "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT");
+            return false;
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
+            assert(false && "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT");
+            return false;
+            break;
+        case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
+            assert(false && "GL_FRAMEBUFFER_UNSUPPORTED_EXT");
+            return false;
+            break;
+        default:
+            assert(false && "Unknown ERROR");
+            return false;
+        }
 
-}
 
-void FrameBufferObject::stop()
-{
-	if (initialized)
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    }
 
-	glDrawBuffer(GL_BACK);
-	glReadBuffer(GL_BACK);
-}
+    void FrameBufferObject::init(unsigned int width, unsigned height)
+    {
+        if (!initialized)
+        {
+            this->width = width;
+            this->height = height;
+            glGenFramebuffersEXT(1, &id);
+            glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, id);
 
-GLuint FrameBufferObject::getDepthTexture()
-{
-	return depthTexture;
-}
+            if(enableDepth)
+            {
+                createDepthBuffer();
+                initDepthBuffer();
 
-GLuint FrameBufferObject::getColorTexture()
-{
-	return colorTexture;
-}
+                //choice between rendering depth into a texture or a renderbuffer
+                if(depthTexture)
+                    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depthTextureID, 0);
+                else
+                    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depthTextureID);
+            }
 
-void FrameBufferObject::setSize(unsigned int width, unsigned height)
-{
-	if (initialized)
-	{
-		this->width = width;
-		this->height = height;
+            if(enableColor)
+            {
+                createColorBuffer();
+                initColorBuffer();
+                glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, colorTextureID, 0);
+            }
 
-		initDepthBuffer();
-		initColorBuffer();
-	}
-}
+            glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-void FrameBufferObject::createDepthBuffer()
-{
-	//Depth Texture
-	//glEnable(GL_TEXTURE_2D);
-	//glGenTextures(1, &depthTexture);
-  glGenRenderbuffersEXT(1, &depthTexture);
+            if(enableColor)
+            {
+                glDrawBuffer(GL_BACK);
+                glReadBuffer(GL_BACK);;
+            }
 
-}
+#ifdef _DEBUG
+            checkFBO();
+#endif
+            initialized=true;
+        }
+        else
+            setSize(width, height);
+    }
 
-void FrameBufferObject::createColorBuffer()
-{
-	//Color Texture
-	glEnable(GL_TEXTURE_2D);
-	glGenTextures(1, &colorTexture);
-}
+    void FrameBufferObject::start()
+    {
+        if (initialized)
+        {
+            glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, id);
 
-void FrameBufferObject::initDepthBuffer()
-{
-  /*
-	glBindTexture(GL_TEXTURE_2D, depthTexture);
+            if(enableColor)
+            {
+                glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+                glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+            }
+        }
+    }
 
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+    void FrameBufferObject::stop()
+    {
+        if (initialized)
+        {
+            glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, _fboParams.depthInternalformat , width, height, 0,GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-	glBindTexture(GL_TEXTURE_2D, 0);
-  */
-  glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, depthTexture);
-  glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, width, height);
-  glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
-}
+            if(enableColor)
+            {
+                glDrawBuffer(GL_BACK);
+                glReadBuffer(GL_BACK);
+            }
+        }
+    }
 
-void FrameBufferObject::initColorBuffer()
-{
-	glBindTexture(GL_TEXTURE_2D, colorTexture);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+    GLuint FrameBufferObject::getDepthTexture()
+    {
+        return depthTextureID;
+    }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, _fboParams.colorInternalformat,  width, height, 0, _fboParams.colorFormat, _fboParams.colorType, NULL);
-	glBindTexture(GL_TEXTURE_2D, 0);
+    GLuint FrameBufferObject::getColorTexture()
+    {
+        return colorTextureID;
+    }
 
-}
+    void FrameBufferObject::setSize(unsigned int width, unsigned height)
+    {
+        if (initialized)
+        {
+            this->width = width;
+            this->height = height;
+
+            if(enableDepth)
+                initDepthBuffer();
+            if(enableColor)
+                initColorBuffer();
+        }
+    }
+
+    void FrameBufferObject::createDepthBuffer()
+    {
+        //Depth Texture
+        glEnable(GL_TEXTURE_2D);
+        if(depthTexture)
+            glGenTextures(1, &depthTextureID);
+        else
+            glGenRenderbuffersEXT(1, &depthTextureID);
+
+    }
+
+    void FrameBufferObject::createColorBuffer()
+    {
+        //Color Texture
+        glEnable(GL_TEXTURE_2D);
+        glGenTextures(1, &colorTextureID);
+    }
+
+    void FrameBufferObject::initDepthBuffer()
+    {
+        if(depthTexture)
+        {
+            glBindTexture(GL_TEXTURE_2D, depthTextureID);
+            glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+            glTexImage2D(GL_TEXTURE_2D, 0, _fboParams.depthInternalformat , width, height, 0,GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+        else
+        {
+            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, depthTextureID);
+            glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, width, height);
+            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+
+        }
+    }
+
+    void FrameBufferObject::initColorBuffer()
+    {
+        glBindTexture(GL_TEXTURE_2D, colorTextureID);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+        glTexImage2D(GL_TEXTURE_2D, 0, _fboParams.colorInternalformat,  width, height, 0, _fboParams.colorFormat, _fboParams.colorType, NULL);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+    }
 #ifdef SOFA_GUI_QTOGREVIEWER
-void FrameBufferObject::_initOGRE(unsigned int width, unsigned int height) 
-{
-    _texture = Ogre::TextureManager::getSingleton().createManual("rttText", 
-    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-    Ogre::TEX_TYPE_2D,width,height,0, Ogre::PF_FLOAT16_RGBA, Ogre::TU_RENDERTARGET);
-/*
+    void FrameBufferObject::_initOGRE(unsigned int width, unsigned int height)
+    {
+        _texture = Ogre::TextureManager::getSingleton().createManual("rttText",
+                                                                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                                                                     Ogre::TEX_TYPE_2D,width,height,0, Ogre::PF_FLOAT16_RGBA, Ogre::TU_RENDERTARGET);
+        /*
    Ogre::RenderTexture *renderTexture = texture->getBuffer()->getRenderTarget();
    
    Ogre::Camera* mCamera = mSceneMgr->getCamera("sofaCamera");
@@ -264,11 +315,11 @@ void FrameBufferObject::_initOGRE(unsigned int width, unsigned int height)
    renderTexture->getViewport(0)->setBackgroundColour(Ogre::ColourValue::Black);
    renderTexture->getViewport(0)->setOverlaysEnabled(false);
    */
-}
+    }
 #endif
 
-} //gl
+} //namespace gl
 
-} //helper
+} //namespace helper
 
-} //sofa
+} //namespace sofa

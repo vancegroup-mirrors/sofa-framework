@@ -34,9 +34,7 @@
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/helper/fixed_array.h>
 #include <sofa/helper/vector.h>
-#include <sofa/helper/list.h>
 
-#include <sofa/core/DataEngine.h>
 #include <sofa/core/core.h>
 
 namespace sofa
@@ -306,45 +304,37 @@ public:
     /// @deprecated
     virtual int getRevision() const { return 0; }
 
-    /// return true if the given cube is active, i.e. it contains or is surrounded by mapped points.
-    /// @deprecated
-    virtual bool isCubeActive(int /*index*/) { return true; }
-
     /// Management of topological changes and state changes
     /// @{
 
     /** \brief Provides an iterator on the first element in the list of TopologyChange objects.
 	 */
-   virtual sofa::helper::list<const TopologyChange *>::const_iterator firstChange() const;
+   virtual sofa::helper::list<const TopologyChange *>::const_iterator beginChange() const;
 
 	/** \brief Provides an iterator on the last element in the list of TopologyChange objects.
 	 */
-   virtual sofa::helper::list<const TopologyChange *>::const_iterator lastChange() const;
+   virtual sofa::helper::list<const TopologyChange *>::const_iterator endChange() const;
 
 	/** \brief Provides an iterator on the first element in the list of StateChange objects.
 	 */
-   virtual sofa::helper::list<const TopologyChange *>::const_iterator firstStateChange() const;
+   virtual sofa::helper::list<const TopologyChange *>::const_iterator beginStateChange() const;
 
 	/** \brief Provides an iterator on the last element in the list of StateChange objects.
 	 */
-   virtual sofa::helper::list<const TopologyChange *>::const_iterator lastStateChange() const;
+   virtual sofa::helper::list<const TopologyChange *>::const_iterator endStateChange() const;
 
+   /** \brief Adds a TopologyEngine to the list.
+   */
+   virtual void addTopologyEngine(TopologyEngine* _topologyEngine);
+
+   /** \brief Provides an iterator on the first element in the list of TopologyEngine objects.
+    */
+   virtual sofa::helper::list<TopologyEngine *>::const_iterator beginTopologyEngine() const;
+
+   /** \brief Provides an iterator on the last element in the list of TopologyEngine objects.
+    */
+   virtual sofa::helper::list<TopologyEngine *>::const_iterator endTopologyEngine() const;
     /// @}
-
-   /// Get acces to TopologyEngine. Should be overwritten in corresponding container
-   ///@{
-   virtual const DataEngine* getPointSetTopologyEngine(){return NULL;}
-
-   virtual const DataEngine* getEdgeSetTopologyEngine(){return NULL;}
-
-   virtual const DataEngine* getTriangleSetTopologyEngine(){return NULL;}
-
-   virtual const DataEngine* getQuadSetTopologyEngine(){return NULL;}
-
-   virtual const DataEngine* getTetrahedronSetTopologyEngine(){return NULL;}
-
-   virtual const DataEngine* getHexahedronSetTopologyEngine(){return NULL;}
-   ///@}
 
 	// functions returning border elements. To be moved in a mapping.
 	virtual const sofa::helper::vector <TriangleID>& getTrianglesOnBorder();
@@ -353,7 +343,7 @@ public:
 
 	virtual const sofa::helper::vector <PointID>& getPointsOnBorder();
 
- protected:
+protected:
 
 	sofa::core::objectmodel::DataFileName fileTopology;
 };

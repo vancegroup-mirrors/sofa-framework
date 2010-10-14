@@ -75,6 +75,7 @@ void Scan::scanExclusiveLarge(
     unsigned int batchSize,
     unsigned int arrayLength
 ){
+
 	ERROR_OFFSET(d_Dst);
 	ERROR_OFFSET(d_Src);
     //Check power-of-two factorization

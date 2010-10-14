@@ -129,6 +129,8 @@ namespace sofa
       void DOFBlockerLMConstraint<DataTypes>::buildConstraintMatrix(unsigned int &constraintId, core::VecId /*position*/)
       {          
         if (!idxEquations.empty()) return;
+
+        MatrixDeriv& c = *this->constrainedObject1->getC();
         const SetIndexArray &indices = f_indices.getValue().getArray();
         const helper::vector<Deriv> &axis=BlockedAxis.getValue();
         idxEquations.resize(indices.size());
@@ -138,8 +140,7 @@ namespace sofa
             const unsigned int index=*it;
             for (unsigned int i=0;i<axis.size();++i)
               {
-                SparseVecDeriv V; V.add(index,axis[i]);
-                registerEquationInJ1(constraintId, V);
+                c.writeLine(constraintId).addCol(index,axis[i]);
                 idxEquations[numParticle].push_back(constraintId++);
               }
             this->constrainedObject1->forceMask.insertEntry(index);

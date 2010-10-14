@@ -78,10 +78,12 @@ public:
     typedef typename DataTypes::VecCoord VecCoord;
     /// Container of Deriv values with the same API as sofa::helper::vector.
     typedef typename DataTypes::VecDeriv VecDeriv;
-    /// Sparse vector of Deriv values (defining coefficient of a constraint).
-    typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
-    /// Vector of constraints (i.e. of SparseVecDeriv).
-    typedef typename DataTypes::VecConst VecConst;
+    ///// Sparse vector of Deriv values (defining coefficient of a constraint).
+    //typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
+    ///// Vector of constraints (i.e. of SparseVecDeriv).
+    //typedef typename DataTypes::VecConst VecConst;
+	/// Sparse matrix containing derivative values (constraints)
+	typedef typename DataTypes::MatrixDeriv MatrixDeriv;
 
     virtual ~State() { }
 

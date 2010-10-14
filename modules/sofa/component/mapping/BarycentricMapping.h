@@ -175,7 +175,7 @@ public:
     }
       virtual void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in ) = 0;
       virtual void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in ) = 0;
-      virtual void applyJT( typename In::VecConst& out, const typename Out::VecConst& in ) = 0;
+      virtual void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in ) = 0;
       virtual void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
 
 	  //-- test mapping partiel
@@ -310,7 +310,7 @@ public:
 	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-	  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+	  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
     const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
 	  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
@@ -435,7 +435,7 @@ public:
     void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
     void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
     void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-    void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+    void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
     const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
     void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
@@ -515,7 +515,7 @@ public:
     void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
     void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
     void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-    void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+    void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
     const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
     void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
@@ -599,7 +599,7 @@ public:
 	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-	  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+	  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 	  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	  // handle topology changes in the From topology
@@ -685,7 +685,7 @@ public:
 		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 		  // handle topology changes in the From topology
@@ -771,7 +771,7 @@ public:
 		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 		  // handle topology changes in the From topology
@@ -886,7 +886,7 @@ public:
 		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
                   virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize) {
@@ -983,7 +983,7 @@ public:
 		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
 		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
 		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
   		  //-- test mapping partiel
@@ -1040,14 +1040,12 @@ public:
 	typedef typename InDataTypes::VecDeriv InVecDeriv;
 	typedef typename InDataTypes::Coord InCoord;
 	typedef typename InDataTypes::Deriv InDeriv;
-	typedef typename InDataTypes::SparseVecDeriv InSparseVecDeriv;
 	typedef typename InDataTypes::Real Real;
 	typedef typename Out::DataTypes OutDataTypes;
 	typedef typename OutDataTypes::VecCoord OutVecCoord;
 	typedef typename OutDataTypes::VecDeriv OutVecDeriv;
 	typedef typename OutDataTypes::Coord OutCoord;
 	typedef typename OutDataTypes::Deriv OutDeriv;
-	typedef typename OutDataTypes::SparseVecDeriv OutSparseVecDeriv;
 	typedef typename OutDataTypes::Real OutReal;
 
 	typedef core::topology::BaseMeshTopology BaseMeshTopology;
@@ -1112,7 +1110,7 @@ public:
 
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 
-	void applyJT( typename In::VecConst& out, const typename Out::VecConst& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ();
 

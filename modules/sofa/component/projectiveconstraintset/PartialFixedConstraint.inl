@@ -197,7 +197,7 @@ namespace sofa
               projectResponseT(res);
             }
             template <class DataTypes>
-                    void PartialFixedConstraint<DataTypes>::projectResponse(SparseVecDeriv& res)
+                    void PartialFixedConstraint<DataTypes>::projectResponse(MatrixDerivRowType& res)
             {
               projectResponseT(res);
             }

@@ -182,6 +182,58 @@ void BeamLinearMapping<BasicMapping>::applyJT( typename In::VecDeriv& out, const
 // There is a specificity of this propagateConstraint: we have to find the application point on the childModel
 // in order to compute the right constaint on the rigidModel.
 template <class BasicMapping>
+void BeamLinearMapping<BasicMapping>::applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
+{
+	const typename In::VecCoord& x = *this->fromModel->getX();
+
+	typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
+
+	for (typename Out::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
+	{
+		typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin();
+		typename Out::MatrixDeriv::ColConstIterator colItEnd = rowIt.end();
+		
+		if (colIt != colItEnd)
+		{
+			typename In::MatrixDeriv::RowIterator o = out.writeLine(rowIt.index());
+		
+			// computation of (Jt.n)
+			for (typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
+			{
+				unsigned int indexIn = colIt.index();
+				Deriv data = (Deriv) colIt.val();
+
+				// interpolation
+				Coord inpos = points[indexIn];
+				int in0 = helper::rfloor(inpos[0]);
+				if (in0<0) 
+					in0 = 0; 
+				else if (in0 > (int)x.size()-2) 
+					in0 = x.size()-2;
+				inpos[0] -= in0;	
+				Real fact = (Real)inpos[0];
+				fact = (Real)3.0*(fact*fact) - (Real)2.0*(fact*fact*fact);
+			
+				// weighted value of the constraint direction
+				Deriv w_n = data;	
+			
+				// Compute the mapped Constraint on the beam nodes
+				InDeriv direction0;
+				direction0.getVCenter() = w_n * (1-fact);
+				direction0.getVOrientation() = cross(rotatedPoints0[indexIn], w_n) * (1-fact);
+				InDeriv direction1;
+				direction1.getVCenter() = w_n * (fact);
+				direction1.getVOrientation() = cross(rotatedPoints1[indexIn], w_n) * (fact);
+			
+				o.addCol(in0, direction0);
+				o.addCol(in0+1, direction1);
+			}
+		}
+	}
+}
+
+/*
+template <class BasicMapping>
 void BeamLinearMapping<BasicMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
 {
 	const typename In::VecCoord& x = *this->fromModel->getX();
@@ -223,6 +275,7 @@ void BeamLinearMapping<BasicMapping>::applyJT( typename In::VecConst& out, const
 
 	}
 }
+*/
 
 template <class BasicMapping>
 void BeamLinearMapping<BasicMapping>::draw()

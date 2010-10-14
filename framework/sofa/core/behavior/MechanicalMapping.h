@@ -70,11 +70,13 @@ public:
 
     typedef typename In::VecCoord InVecCoord;
     typedef typename In::VecDeriv InVecDeriv;
-    typedef typename In::VecConst InVecConst;
+	typedef typename In::MatrixDeriv InMatrixDeriv;
+//    typedef typename In::VecConst InVecConst;
 
     typedef typename Out::VecCoord OutVecCoord;
     typedef typename Out::VecDeriv OutVecDeriv;
-    typedef typename Out::VecConst OutVecConst;
+	typedef typename Out::MatrixDeriv OutMatrixDeriv;
+//    typedef typename Out::VecConst OutVecConst;
 
     Data<bool> f_isMechanical;
 #ifndef SOFA_SMP
@@ -99,7 +101,7 @@ public:
     /// $ Out += J^t In $
     ///
     /// This method must be reimplemented by all mappings if they need to support constraints.
-    virtual void applyJT( InVecConst& /*out*/, const OutVecConst& /*in*/ ) {}
+    virtual void applyJT( InMatrixDeriv& /*out*/, const OutMatrixDeriv& /*in*/ ) {}
 
     /// If the mapping input has a rotation velocity, it computes the subsequent acceleration
     /// created by the derivative terms
@@ -204,10 +206,10 @@ protected:
 #ifndef SOFA_SMP
     void matrixApplyJ( OutVecDeriv& out, const InVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
     void matrixApplyJT( InVecDeriv& out, const OutVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
-    void matrixApplyJT( InVecConst& out, const OutVecConst& in, const sofa::defaulttype::BaseMatrix* J );
+    void matrixApplyJT( InMatrixDeriv& out, const OutMatrixDeriv& in, const sofa::defaulttype::BaseMatrix* J );
     bool checkApplyJ( OutVecDeriv& out, const InVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
     bool checkApplyJT( InVecDeriv& out, const OutVecDeriv& in, const sofa::defaulttype::BaseMatrix* J );
-    bool checkApplyJT( InVecConst& out, const OutVecConst& in, const sofa::defaulttype::BaseMatrix* J );
+    bool checkApplyJT( InMatrixDeriv& out, const OutMatrixDeriv& in, const sofa::defaulttype::BaseMatrix* J );
 #endif
 
 };

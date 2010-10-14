@@ -60,7 +60,7 @@ public:
 
           virtual void applyJT( const helper::vector<typename In1::VecDeriv*>& outDeriv1 ,const helper::vector<typename In2::VecDeriv*>& outDeriv2 , const helper::vector<const typename Out::VecDeriv*>& inDeriv ) = 0;
 
-          virtual void applyJT( const helper::vector<typename In1::VecConst*>& /*outConstraint1*/ , const helper::vector<typename In2::VecConst*>& /*outConstraint2*/ , const helper::vector<const typename Out::VecConst*>& /*inConstraint*/ ){};
+          virtual void applyJT( const helper::vector<typename In1::MatrixDeriv*>& /*outConstraint1*/ , const helper::vector<typename In2::MatrixDeriv*>& /*outConstraint2*/ , const helper::vector<const typename Out::MatrixDeriv*>& /*inConstraint*/ ){};
 
           virtual void propagateX();
 

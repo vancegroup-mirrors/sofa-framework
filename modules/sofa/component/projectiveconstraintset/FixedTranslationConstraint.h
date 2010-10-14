@@ -52,47 +52,49 @@ class FixedTranslationConstraint : public core::behavior::ProjectiveConstraintSe
 public:
 	SOFA_CLASS(SOFA_TEMPLATE(FixedTranslationConstraint,DataTypes),SOFA_TEMPLATE(sofa::core::behavior::ProjectiveConstraintSet, DataTypes));
 
-  typedef typename DataTypes::VecCoord VecCoord;
-  typedef typename DataTypes::VecDeriv VecDeriv;
-  typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
-  typedef typename DataTypes::Coord Coord;
-  typedef typename DataTypes::Deriv Deriv;
-  typedef topology::PointSubset SetIndex;
-  typedef sofa::helper::vector<unsigned int> SetIndexArray;
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::MatrixDeriv MatrixDeriv;
+	typedef typename DataTypes::MatrixDeriv::RowType MatrixDerivRowType;
+	typedef typename DataTypes::Coord Coord;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef topology::PointSubset SetIndex;
+	typedef sofa::helper::vector<unsigned int> SetIndexArray;
 
 protected:
-  FixedTranslationConstraintInternalData<DataTypes> data;
-  friend class FixedTranslationConstraintInternalData<DataTypes>;
+	FixedTranslationConstraintInternalData<DataTypes> data;
+	friend class FixedTranslationConstraintInternalData<DataTypes>;
 
 public:
-  Data<SetIndex> f_indices;
-  Data<bool> f_fixAll;
-  Data<double> _drawSize;
-  Data<SetIndex> f_coordinates;
+	Data<SetIndex> f_indices;
+	Data<bool> f_fixAll;
+	Data<double> _drawSize;
+	Data<SetIndex> f_coordinates;
 
-  FixedTranslationConstraint();
+	FixedTranslationConstraint();
 
-  virtual ~FixedTranslationConstraint();
+	virtual ~FixedTranslationConstraint();
 
-  // methods to add/remove some indices
-  void clearIndices();
-  void addIndex(unsigned int index);
-  void removeIndex(unsigned int index);
+	// methods to add/remove some indices
+	void clearIndices();
+	void addIndex(unsigned int index);
+	void removeIndex(unsigned int index);
 
-  // -- Constraint interface
-  void init();
-  template <class DataDeriv>
-      void projectResponseT(DataDeriv& dx);
+	// -- Constraint interface
+	void init();
 
-  void projectResponse(VecDeriv& dx);
-  void projectResponse(SparseVecDeriv& dx);
-  virtual void projectVelocity(VecDeriv& /*v*/) {}; ///< project v to constrained space (v models a velocity)
-  virtual void projectPosition(VecCoord& /*x*/) {}; ///< project x to constrained space (x models a position)
+	template <class DataDeriv>
+	void projectResponseT(DataDeriv& dx);
+
+	void projectResponse(VecDeriv& dx);
+	void projectResponse(MatrixDerivRowType& dx);
+	virtual void projectVelocity(VecDeriv& /*v*/) {}; ///< project v to constrained space (v models a velocity)
+	virtual void projectPosition(VecCoord& /*x*/) {}; ///< project x to constrained space (x models a position)
 
 	// Handle topological changes
 	virtual void handleTopologyChange();
 
-  virtual void draw();
+	virtual void draw();
 
 	/// this constraint is holonomic
 	bool isHolonomic() {return true;}

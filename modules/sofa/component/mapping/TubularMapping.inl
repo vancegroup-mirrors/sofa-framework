@@ -189,18 +189,48 @@ void TubularMapping<BasicMapping>::applyJT( typename In::VecDeriv& out, const ty
 	
 }
 
+template <class BasicMapping>
+void TubularMapping<BasicMapping>::applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in)
+{	
+	// useful for a Mechanical Mapping that propagates forces from the output DOFs to the input DOFs
+	unsigned int N = m_nbPointsOnEachCircle.getValue();
+	
+	typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
+	
+	for (typename Out::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
+	{
+		typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin();
+		typename Out::MatrixDeriv::ColConstIterator colItEnd = rowIt.end();
 
+		// Creates a constraints if the input constraint is not empty.
+		if (colIt != colItEnd)
+		{
+			typename In::MatrixDeriv::RowIterator o = out.writeLine(rowIt.index());
+			
+			for (typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
+			{
+				// index of the node
+				const unsigned int iIn = colIt.index();
+				const Deriv f = (Deriv) colIt.val();
+				Deriv v, omega;
+				v+=f;
+				omega += cross(rotatedPoints[iIn],f);
+				unsigned int Iout = iIn/N;
+				InDeriv result(v, omega);
+
+				o.addCol(Iout, result);	
+			}
+		}
+	}	
+}
+
+/*
 template <class BasicMapping>
 void TubularMapping<BasicMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in)
 {	
 	// usefull for a Mechanical Mapping that propagates forces from the output DOFs to the input DOFs
 
 	//sout << "INFO_print : pass HERE applyJT !!!" << sendl;
-	
-	/*if(in.size() != rotatedPoints.size()){
-		rotatedPoints.resize(in.size());
-	}
-	*/
 	
 	//std::cerr<< "INFO_print : pass HERE applyJT : numConstraint= " <<in.size()<<std::endl;
 	
@@ -246,7 +276,7 @@ void TubularMapping<BasicMapping>::applyJT( typename In::VecConst& out, const ty
 	//std::cerr<< " applyJT ended !!!" <<std::endl;
 			
 }
-
+*/
 
 
 

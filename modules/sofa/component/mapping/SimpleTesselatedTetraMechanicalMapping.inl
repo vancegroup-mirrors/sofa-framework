@@ -129,6 +129,53 @@ void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::
     }
 }
 
+
+template <class BaseMapping>
+void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
+{
+    if (!topoMap) return;
+    
+    const topology::PointData<int>& pointSource = topoMap->getPointSource();
+    if (pointSource.getValue().empty()) return;
+    
+    const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
+
+	typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
+	
+	for (typename Out::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
+	{
+		typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin();
+		typename Out::MatrixDeriv::ColConstIterator colItEnd = rowIt.end();
+
+		// Creates a constraints if the input constraint is not empty.
+		if (colIt != colItEnd)
+		{
+			typename In::MatrixDeriv::RowIterator o = out.writeLine(rowIt.index());
+			
+			for (typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
+			{
+				unsigned int indexIn = colIt.index();
+           	 	OutDeriv data = (OutDeriv) colIt.val();
+           	 	
+	   		 	int source = pointSource.getValue()[indexIn];
+				if (source > 0)
+	    		{
+	    			o.addCol(source-1, data);
+	    		}
+	    		else if (source < 0)
+	    		{
+					core::topology::BaseMeshTopology::Edge e = edges[-source-1];
+					InDeriv f =  data;
+					f*=0.5f;
+					o.addCol(e[0] , f);
+					o.addCol(e[1] , f);
+	    		}
+			}
+		}
+	}
+}
+
+/*
 template <class BaseMapping>
 void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
 {
@@ -166,6 +213,7 @@ void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::
 	}
     }
 }
+*/
 
 } // namespace mapping
 

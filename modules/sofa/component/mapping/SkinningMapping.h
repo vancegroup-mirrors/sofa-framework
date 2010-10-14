@@ -36,7 +36,6 @@
 
 #include <vector>
 
-#include <sofa/component/mapping/BasicSkinningMapping.h>
 #include <sofa/component/component.h>
 #include <sofa/helper/OptionsGroup.h>
 
@@ -54,18 +53,25 @@ using sofa::helper::vector;
 using sofa::helper::Quater;
 using sofa::helper::SVector;
 
+#define DISTANCE_EUCLIDIAN 0
+#define DISTANCE_GEODESIC 1
+#define DISTANCE_HARMONIC 2
 
-
+#define WEIGHT_NONE 0
+#define WEIGHT_INVDIST_SQUARE 1
+#define WEIGHT_LINEAR 2
+#define WEIGHT_HERMITE 3
+#define WEIGHT_SPLINE 4
 
 
 
 
 
 template <class BasicMapping>
-class SkinningMapping : public BasicSkinningMapping<BasicMapping>
+class SkinningMapping : public BasicMapping
 {
 public:
-    SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), SOFA_TEMPLATE ( BasicSkinningMapping, BasicMapping ) );
+    SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
           typedef BasicMapping Inherit;
           typedef typename Inherit::In In;
           typedef typename Inherit::Out Out;
@@ -80,28 +86,38 @@ public:
           typedef typename In::Coord InCoord;
           typedef typename In::Deriv InDeriv;
           typedef typename In::VecCoord VecInCoord;
-            typedef typename In::Real InReal;
-            typedef typename Out::Real Real;
+          typedef typename In::Real InReal;
+          typedef typename Out::Real Real;
           enum { N=DataTypes::spatial_dimensions };
+          enum { InDerivDim=In::DataTypes::deriv_total_size };
           typedef defaulttype::Mat<N,N,Real> Mat;
-          //typedef defaulttype::Mat<3,1,Real> Mat31;
           typedef defaulttype::Mat<3,3,Real> Mat33;
+          typedef defaulttype::Mat<3,InDerivDim,Real> Mat3xIn;
+          typedef vector<Mat3xIn> VMat3xIn;
+          typedef vector<VMat3xIn> VVMat3xIn;
           typedef defaulttype::Mat<3,6,Real> Mat36;
           typedef vector<Mat36> VMat36;
           typedef vector<VMat36> VVMat36;
+          typedef defaulttype::Mat<3,7,Real> Mat37;
           typedef defaulttype::Mat<3,8,Real> Mat38;
+          typedef defaulttype::Mat<4,3,Real> Mat43;
+          typedef vector<Mat43> VMat43;
           typedef defaulttype::Mat<4,4,Real> Mat44;
-          //typedef defaulttype::Mat<6,1,Real> Mat61;
           typedef defaulttype::Mat<6,3,Real> Mat63;
           typedef defaulttype::Mat<6,6,Real> Mat66;
           typedef vector<Mat66> VMat66;
           typedef vector<VMat66> VVMat66;
-          //typedef defaulttype::Mat<8,1,Real> Mat81;
+          typedef defaulttype::Mat<6,7,Real> Mat67;
+          typedef defaulttype::Mat<6,InDerivDim,Real> Mat6xIn;
+          typedef defaulttype::Mat<7,6,Real> Mat76;
+          typedef vector<Mat76> VMat76;
           typedef defaulttype::Mat<8,3,Real> Mat83;
           typedef defaulttype::Mat<8,6,Real> Mat86;
           typedef vector<Mat86> VMat86;
           typedef defaulttype::Mat<8,8,Real> Mat88;
           typedef vector<Mat88> VMat88;
+          typedef defaulttype::Mat<12,3,Real> Mat12x3;
+
           typedef defaulttype::Vec<3,Real> Vec3;
           typedef vector<Vec3> VVec3;
           typedef vector<VVec3> VVVec3;
@@ -110,6 +126,7 @@ public:
           typedef vector<Vec6> VVec6;
           typedef vector<VVec6> VVVec6;
           typedef defaulttype::Vec<8,Real> Vec8;
+          typedef defaulttype::Vec<12,Real> Vec12;
           typedef Quater<InReal> Quat;
           typedef sofa::helper::vector< VecCoord > VecVecCoord;
           typedef SVector<double> VD;
@@ -117,12 +134,113 @@ public:
 
           typedef Coord GeoCoord;
           typedef VecCoord GeoVecCoord;
+        protected:
+          vector<Coord> initPos; // pos: point coord in the local reference frame of In[i].
+          vector<Coord> rotatedPoints;
+
+          helper::ParticleMask* maskFrom;
+          helper::ParticleMask* maskTo;
+
+          Data<vector<int> > repartition;
+          Data<VVD > coefs;
+          Data<SVector<SVector<GeoCoord> > > weightGradients;
+          Data<unsigned int> nbRefs;
+        public:
+          Data<bool> showBlendedFrame;
+          Data<bool> showDefTensors;
+          Data<bool> showDefTensorsValues;
+          Data<double> showDefTensorScale;
+          Data<unsigned int> showFromIndex;
+          Data<bool> showDistancesValues;
+          Data<bool> showCoefs;
+          Data<double> showGammaCorrection;
+          Data<bool> showCoefsValues;
+          Data<bool> showReps;
+          Data<int> showValuesNbDecimals;
+          Data<double> showTextScaleFactor;
+          Data<bool> showGradients;
+          Data<bool> showGradientsValues;
+          Data<double> showGradientsScaleFactor;
+
+        protected:
+          Data<sofa::helper::OptionsGroup> wheightingType;
+          Data<sofa::helper::OptionsGroup> distanceType;
+          bool computeWeights;
+          VVD distances;
+          vector<vector<GeoCoord> > distGradients;
+
+          inline void computeInitPos();
+          inline void computeDistances();
+          inline void sortReferences( vector<int>& references);
 
         public:
           SkinningMapping ( In* from, Out* to );
           virtual ~SkinningMapping();
 
-        };
+          void init();
+
+          void apply ( typename Out::VecCoord& out, const typename In::VecCoord& in );
+          void applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+          void applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+          void applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+
+          void draw();
+          void clear();
+
+          // Weights
+          void setWeightsToHermite();
+          void setWeightsToInvDist();
+          void setWeightsToLinear();
+          inline void updateWeights();
+          inline void getDistances( int xfromBegin);
+
+          // Accessors
+          void setNbRefs ( unsigned int nb )
+          {
+            nbRefs.setValue ( nb );
+          }
+          void setWeightCoefs ( VVD& weights );
+          void setRepartition ( vector<int> &rep );
+          void setComputeWeights ( bool val )
+          {
+            computeWeights=val;
+          }
+          unsigned int getNbRefs()
+          {
+            return nbRefs.getValue();
+          }
+          const VVD& getWeightCoefs()
+          {
+            return coefs.getValue();
+          }
+          const vector<int>& getRepartition()
+          {
+            return repartition.getValue();
+          }
+          bool getComputeWeights()
+          {
+            return computeWeights;
+          }
+
+};
+
+      using core::Mapping;
+      using core::behavior::MechanicalMapping;
+      using core::behavior::MappedModel;
+      using core::behavior::State;
+      using core::behavior::MechanicalState;
+
+      using sofa::defaulttype::Vec2dTypes;
+      using sofa::defaulttype::Vec3dTypes;
+      using sofa::defaulttype::Vec2fTypes;
+      using sofa::defaulttype::Vec3fTypes;
+      using sofa::defaulttype::ExtVec2fTypes;
+      using sofa::defaulttype::ExtVec3fTypes;
+      using sofa::defaulttype::Rigid2dTypes;
+      using sofa::defaulttype::Rigid3dTypes;
+      using sofa::defaulttype::Rigid2fTypes;
+      using sofa::defaulttype::Rigid3fTypes;
+
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_CPP)
 #pragma warning(disable : 4231)

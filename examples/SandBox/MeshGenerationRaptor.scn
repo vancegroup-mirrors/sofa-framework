@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<Node showForceFields="1">
+<!--
+    <CollisionPipeline verbose="0" name="CollisionPipeline"/>
+    <BruteForceDetection name="N2" />
+    <DiscreteIntersection/>
+    <CollisionResponse response="default" name="collision response"/>
+-->
+    <Node name="input">
+	    <MeshObjLoader name="surface" filename="mesh/raptor8k1.obj"/>
+	    <MeshGenerationFromPolyhedron name="stuffing" inputPoints="@surface.position" inputTriangles="@surface.triangles"  inputQuads="@surface.quads" printLog="true"
+	    facetAngle="20" facetSize="0.18" facetApproximation="0.025" cellRatio="3" cellSize="0.3"
+	    odt="false" odt_max_it="200"
+	    perturb="true" exude_max_time="20"/>
+<!--	  8418:    facetAngle="20" facetSize="0.2" facetApproximation="0.03" cellRatio="3" cellSize="0.4" -->
+<!--	 12580:    facetAngle="20" facetSize="0.18" facetApproximation="0.025" cellRatio="3" cellSize="0.3" -->
+<!--	 14667:    facetAngle="20" facetSize="0.15" facetApproximation="0.025" cellRatio="3" cellSize="0.27" -->
+<!--	 19409:    facetAngle="20" facetSize="0.13" facetApproximation="0.023" cellRatio="3" cellSize="0.24" -->
+<!--	 23371:    facetAngle="20" facetSize="0.12" facetApproximation="0.021" cellRatio="3" cellSize="0.22" -->
+<!--	 26865:    facetAngle="20" facetSize="0.11" facetApproximation="0.02" cellRatio="3" cellSize="0.21" -->
+<!--	 31320:    facetAngle="20" facetSize="0.1" facetApproximation="0.02" cellRatio="3" cellSize="0.2"-->
+<!--	 45286:    facetAngle="20" facetSize="0.08" facetApproximation="0.018" cellRatio="3" cellSize="0.18" -->
+<!--	 79678:    facetAngle="20" facetSize="0.06" facetApproximation="0.015" cellRatio="3" cellSize="0.15" -->
+<!--	108684:    facetAngle="20" facetSize="0.05" facetApproximation="0.013" cellRatio="3" cellSize="0.14" -->
+<!--	171297:    facetAngle="20" facetSize="0.04" facetApproximation="0.012" cellRatio="3" cellSize="0.12" -->
+<!--	305742:    facetAngle="20" facetSize="0.03" facetApproximation="0.012" cellRatio="3" cellSize="0.1" -->
+
+    </Node>
+    <Node name="output">
+		<EulerImplicitSolver/>
+		<CGLinearSolver iterations="20" tolerance="1e-5" threshold="1e-20"/>
+        <Mesh name="volume" points="@../input/stuffing.outputPoints" tetras="@../input/stuffing.outputTetras"/>
+		<MechanicalObject template="Vec3d"/>
+        <VTKExporter filename="outputMesh" position="@../input/stuffing.outputPoints" edges="0" tetras="1" listening="true"/>
+		<UniformMass totalmass="2" />
+		<TetrahedronFEMForceField name="FEM" youngModulus="1" poissonRatio="0.4" />
+		<BoxConstraint box="-25 10 10 -15 20 20" />
+
+		<Node name="Surf">
+			<Mesh tags="LDI SelfCollision" filename="mesh/raptor_8kp.obj"/>
+			<MechanicalObject template="Vec3d" />
+            <TriangleModel />
+			<BarycentricMapping isMechanical="1" />
+		</Node>
+		
+		<Node name="Visu">
+			<OglModel name="Visual" fileMesh="mesh/raptor_35kp.obj" material="Default Diffuse 1 0.5 1.0 0.6 1.0 Ambient 1 0.3 0.6 0.3 1 Specular 1 0.7 1.0 0.7 1 Emissive 0 1 1 1 1 Shininess 1 200"/>
+			<BarycentricMapping object1="../.." object2="Visual"/>
+		</Node>
+		
+		<Node name="Visu2">
+			<OglModel name="Visual" fileMesh="mesh/raptorProps_25kp.obj" material="Default Diffuse 1 0.25 0.25 0.3 1.0 Ambient 1 0.15 0.15 0.15 1 Specular 1 0.7 0.7 0.7 1 Emissive 0 1 1 1 1 Shininess 1 2000"/>
+			<BarycentricMapping object1="../.." object2="Visual"/>
+		</Node>
+
+<!--        <Node>
+          <OglModel name="V" src="@../../input/surface" />
+          <BarycentricMapping object2="V" />
+        </Node>-->
+    </Node>
+</Node>

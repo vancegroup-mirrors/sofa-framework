@@ -85,16 +85,14 @@ public:
     typedef typename behavior::BaseConstraintCorrection Inherit;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
-    typedef typename DataTypes::VecConst VecConst;
-    typedef typename DataTypes::VecConst::iterator VecConstIt;
+    typedef typename DataTypes::MatrixDeriv MatrixDeriv;
+	typedef typename DataTypes::MatrixDeriv::RowConstIterator MatrixDerivRowConstIterator;
+	typedef typename DataTypes::MatrixDeriv::ColConstIterator MatrixDerivColConstIterator;
+	typedef typename DataTypes::MatrixDeriv::RowIterator MatrixDerivRowIterator;
+	typedef typename DataTypes::MatrixDeriv::ColIterator MatrixDerivColIterator;
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
-    typedef typename defaulttype::SparseConstraint<Deriv> SparseConstraint;
-    typedef typename SparseConstraint::const_data_iterator ConstraintIterator;
     typedef std::list<int> ListIndex;
-
-    typedef typename DataTypes::SparseVecDeriv Const;
-
 
     LinearSolverConstraintCorrection(behavior::MechanicalState<DataTypes> *mm = NULL);
 
@@ -105,8 +103,8 @@ public:
     /// Retrieve the associated MechanicalState
     behavior::MechanicalState<DataTypes>* getMState() { return mstate; }
 
-        virtual void getCompliance(defaulttype::BaseMatrix* W);
-        virtual void getComplianceMatrix(defaulttype::BaseMatrix* ) const;
+    virtual void getCompliance(defaulttype::BaseMatrix* W);
+    virtual void getComplianceMatrix(defaulttype::BaseMatrix* ) const;
 
     virtual void applyContactForce(const defaulttype::BaseVector *f);
 

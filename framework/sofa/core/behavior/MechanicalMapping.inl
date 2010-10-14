@@ -196,15 +196,15 @@ void MechanicalMapping<In,Out>::accumulateConstraint()
         else
             applyJT(*this->fromModel->getC(), *this->toModel->getC());
 
-		// Accumulate contacts indices through the MechanicalMapping
-		std::vector<unsigned int>::iterator it = this->toModel->getConstraintId().begin();
-		std::vector<unsigned int>::iterator itEnd = this->toModel->getConstraintId().end();
+		//// Accumulate contacts indices through the MechanicalMapping
+		//std::vector<unsigned int>::iterator it = this->toModel->getConstraintId().begin();
+		//std::vector<unsigned int>::iterator itEnd = this->toModel->getConstraintId().end();
 
-		while (it != itEnd)
-		{
-			this->fromModel->setConstraintId(*it);
-			it++;
-		}
+		//while (it != itEnd)
+		//{
+		//	this->fromModel->setConstraintId(*it);
+		//	it++;
+		//}
 	}
 }
 
@@ -439,7 +439,7 @@ void MechanicalMapping<In,Out>::matrixApplyJT( InVecDeriv& out, const OutVecDeri
 }
 
 template <class In, class Out>
-bool MechanicalMapping<In,Out>::checkApplyJT( InVecConst& out, const OutVecConst& in, const sofa::defaulttype::BaseMatrix* J )
+bool MechanicalMapping<In,Out>::checkApplyJT( InMatrixDeriv& out, const OutMatrixDeriv& in, const sofa::defaulttype::BaseMatrix* J )
 {
     applyJT(out, in);
     if (!J)
@@ -452,7 +452,7 @@ bool MechanicalMapping<In,Out>::checkApplyJT( InVecConst& out, const OutVecConst
 }
 
 template <class In, class Out>
-void MechanicalMapping<In,Out>::matrixApplyJT( InVecConst& /*out*/, const OutVecConst& /*in*/, const sofa::defaulttype::BaseMatrix* /*J*/ )
+void MechanicalMapping<In,Out>::matrixApplyJT( InMatrixDeriv& /*out*/, const OutMatrixDeriv& /*in*/, const sofa::defaulttype::BaseMatrix* /*J*/ )
 {
     serr << "matrixApplyJT for VecConst NOT IMPLEMENTED" << sendl;
 }

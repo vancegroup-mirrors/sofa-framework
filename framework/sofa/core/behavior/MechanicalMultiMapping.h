@@ -60,6 +60,9 @@ public:
     defaulttype::SharedVector<const InVecDeriv *> VecInVel;
     defaulttype::SharedVector<OutVecDeriv*> VecOutDx;
     defaulttype::SharedVector<const InVecDeriv*> VecInDx;
+    defaulttype::SharedVector<const InVecDeriv *> VecInVel2;
+    defaulttype::SharedVector<OutVecDeriv*> VecOutDx2;
+    defaulttype::SharedVector<const InVecDeriv*> VecInDx2;
 
     defaulttype::SharedVector<const OutVecDeriv*> VecOutForce;
     defaulttype::SharedVector<InVecDeriv*> VecInForce;
@@ -77,14 +80,14 @@ public:
           virtual ~MechanicalMultiMapping() {};
 
           virtual helper::vector<BaseMechanicalState*> getMechFrom();
- 
+
           virtual helper::vector<BaseMechanicalState*> getMechTo();
 
           virtual void init();
 
           virtual void applyJT( const helper::vector<typename In::VecDeriv*>& outDeriv , const helper::vector<const typename Out::VecDeriv*>& inDeriv ) = 0;
 
-          virtual void applyJT( const helper::vector<typename In::VecConst*>& /*outConstraint*/ , const helper::vector<const typename Out::VecConst*>& /*inConstraint*/ ){};
+          virtual void applyJT( const helper::vector< typename In::MatrixDeriv* >& /*outConstraint*/ , const helper::vector< const typename Out::MatrixDeriv* >& /*inConstraint*/ ){};
 
           virtual void propagateX();
 
@@ -130,4 +133,4 @@ public:
 
 } // namespace sofa
 
-#endif 
+#endif

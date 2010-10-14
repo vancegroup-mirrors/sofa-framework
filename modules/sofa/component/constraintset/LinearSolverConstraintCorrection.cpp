@@ -49,22 +49,15 @@ int LinearSolverContactCorrectionClass = core::RegisterObject("")
 #endif
 ;
 #ifndef SOFA_FLOAT
-  template class LinearSolverConstraintCorrection<Vec3dTypes>;
-  template class LinearSolverConstraintCorrection<Vec1dTypes>;
-  template class LinearSolverConstraintCorrection<Rigid3dTypes>;
+template class LinearSolverConstraintCorrection<Vec3dTypes>;
+template class LinearSolverConstraintCorrection<Vec1dTypes>;
+template class LinearSolverConstraintCorrection<Rigid3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-  template class LinearSolverConstraintCorrection<Vec3fTypes>;
-  template class LinearSolverConstraintCorrection<Vec1fTypes>;
-  template class LinearSolverConstraintCorrection<Rigid3fTypes>;
+template class LinearSolverConstraintCorrection<Vec3fTypes>;
+template class LinearSolverConstraintCorrection<Vec1fTypes>;
+template class LinearSolverConstraintCorrection<Rigid3fTypes>;
 #endif
-    //template class LinearSolverConstraintCorrection<Vec3fTypes>;
-    //template class LinearSolverConstraintCorrection<Vec2dTypes>;
-    //template class LinearSolverConstraintCorrection<Vec2fTypes>;
-    //template class LinearSolverConstraintCorrection<Vec1fTypes>;
-    //template class LinearSolverConstraintCorrection<Rigid3fTypes>;
-    //template class LinearSolverConstraintCorrection<Rigid2dTypes>;
-    //template class LinearSolverConstraintCorrection<Rigid2fTypes>;
 
 
 } // namespace collision

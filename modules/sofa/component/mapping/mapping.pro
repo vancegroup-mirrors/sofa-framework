@@ -15,15 +15,13 @@ DEFINES += SOFA_BUILD_COMPONENT_MAPPING
 
 HEADERS +=  initMapping.h \
            ArticulatedSystemMapping.h \
-           ArticulatedSystemMapping.inl \
+		   ArticulatedSystemMapping.inl \
            BarycentricMapping.h \
            BarycentricMapping.inl \
-           BasicSkinningMapping.h \
-           BasicSkinningMapping.inl \
            BeamLinearMapping.h \
            BeamLinearMapping.inl \
-	   CenterPointMechanicalMapping.h \
-	   CenterPointMechanicalMapping.inl \
+		   CenterPointMechanicalMapping.h \
+		   CenterPointMechanicalMapping.inl \
            CenterOfMassMapping.h \
            CenterOfMassMapping.inl \
            CenterOfMassMultiMapping.h \
@@ -32,8 +30,8 @@ HEADERS +=  initMapping.h \
            CenterOfMassMulti2Mapping.inl \
            CurveMapping.h \
            CurveMapping.inl \
-	   ExternalInterpolationMapping.h \
-	   ExternalInterpolationMapping.inl \
+		   ExternalInterpolationMapping.h \
+		   ExternalInterpolationMapping.inl \
            IdentityMapping.h \
            IdentityMapping.inl \
            ImplicitSurfaceMapping.h \
@@ -48,8 +46,8 @@ HEADERS +=  initMapping.h \
            RigidMapping.inl \
            RigidRigidMapping.h \
            RigidRigidMapping.inl \
-	   SimpleTesselatedTetraMechanicalMapping.h \
-	   SimpleTesselatedTetraMechanicalMapping.inl \
+		   SimpleTesselatedTetraMechanicalMapping.h \
+	       SimpleTesselatedTetraMechanicalMapping.inl \
            SkinningMapping.h \
            SkinningMapping.inl \
            SPHFluidSurfaceMapping.h \
@@ -72,7 +70,7 @@ SOURCES += initMapping.cpp \
            CenterOfMassMultiMapping.cpp \
            CenterOfMassMulti2Mapping.cpp \
            CurveMapping.cpp \
-	   ExternalInterpolationMapping.cpp \
+		   ExternalInterpolationMapping.cpp \
            IdentityMapping.cpp \
            ImplicitSurfaceMapping.cpp \
            LaparoscopicRigidMapping.cpp \
@@ -80,7 +78,7 @@ SOURCES += initMapping.cpp \
            RigidRigidMapping.cpp \
            LineSetSkinningMapping.cpp \
            Mesh2PointMechanicalMapping.cpp \
-	   SimpleTesselatedTetraMechanicalMapping.cpp \
+	       SimpleTesselatedTetraMechanicalMapping.cpp \
            SkinningMapping.cpp \
            SPHFluidSurfaceMapping.cpp \
            SubsetMapping.cpp \    

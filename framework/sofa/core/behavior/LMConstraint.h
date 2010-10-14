@@ -55,105 +55,119 @@ template<class DataTypes1,class DataTypes2>
 class LMConstraint : public BaseLMConstraint
 {
 public:
-    SOFA_CLASS(SOFA_TEMPLATE2(LMConstraint,DataTypes1,DataTypes2), BaseLMConstraint);
+	SOFA_CLASS(SOFA_TEMPLATE2(LMConstraint,DataTypes1,DataTypes2), BaseLMConstraint);
 
-	  typedef typename DataTypes1::Real Real1;
-	  typedef typename DataTypes1::VecCoord VecCoord1;
-	  typedef typename DataTypes1::VecDeriv VecDeriv1;
-	  typedef typename DataTypes1::Coord Coord1;
-	  typedef typename DataTypes1::Deriv Deriv1;
-	  typedef typename DataTypes1::VecConst VecConst1;
-	  typedef typename DataTypes1::SparseVecDeriv SparseVecDeriv1;
+	typedef typename DataTypes1::Real Real1;
+	typedef typename DataTypes1::VecCoord VecCoord1;
+	typedef typename DataTypes1::VecDeriv VecDeriv1;
+	typedef typename DataTypes1::Coord Coord1;
+	typedef typename DataTypes1::Deriv Deriv1;
+	typedef typename DataTypes1::MatrixDeriv MatrixDeriv1;
+	typedef typename DataTypes1::MatrixDeriv::RowConstIterator MatrixDeriv1RowConstIterator;
+	typedef typename DataTypes1::MatrixDeriv::ColConstIterator MatrixDeriv1ColConstIterator;
+	typedef typename DataTypes1::MatrixDeriv::RowIterator MatrixDeriv1RowIterator;
+	typedef typename DataTypes1::MatrixDeriv::ColIterator MatrixDeriv1ColIterator;
+	typedef typename DataTypes1::MatrixDeriv::RowType MatrixDerivRowType1;
 
-	  typedef typename DataTypes2::Real Real2;
-	  typedef typename DataTypes2::VecCoord VecCoord2;
-	  typedef typename DataTypes2::VecDeriv VecDeriv2;
-	  typedef typename DataTypes2::Coord Coord2;
-	  typedef typename DataTypes2::Deriv Deriv2;
-	  typedef typename DataTypes2::VecConst VecConst2;
-	  typedef typename DataTypes2::SparseVecDeriv SparseVecDeriv2;
+	typedef typename DataTypes2::Real Real2;
+	typedef typename DataTypes2::VecCoord VecCoord2;
+	typedef typename DataTypes2::VecDeriv VecDeriv2;
+	typedef typename DataTypes2::Coord Coord2;
+	typedef typename DataTypes2::Deriv Deriv2;
+	typedef typename DataTypes2::MatrixDeriv MatrixDeriv2;
+	typedef typename DataTypes2::MatrixDeriv::RowConstIterator MatrixDeriv2RowConstIterator;
+	typedef typename DataTypes2::MatrixDeriv::ColConstIterator MatrixDeriv2ColConstIterator;
+	typedef typename DataTypes2::MatrixDeriv::RowIterator MatrixDeriv2RowIterator;
+	typedef typename DataTypes2::MatrixDeriv::ColIterator MatrixDeriv2ColIterator;
+	typedef typename DataTypes2::MatrixDeriv::RowType MatrixDerivRowType2;
 
           
- LMConstraint( MechanicalState<DataTypes1> *dof1, MechanicalState<DataTypes2> *dof2):constrainedObject1(dof1),constrainedObject2(dof2),simulatedObject1(dof1),simulatedObject2(dof2){}	  
- LMConstraint():constrainedObject1(NULL),constrainedObject2(NULL),simulatedObject1(NULL),simulatedObject2(NULL){}
-	  
-	  virtual ~LMConstraint();
+	LMConstraint( MechanicalState<DataTypes1> *dof1, MechanicalState<DataTypes2> *dof2)
+		: constrainedObject1(dof1)
+		, constrainedObject2(dof2)
+		, simulatedObject1(dof1)
+		, simulatedObject2(dof2)
+	{
+	
+	}
 
-	  virtual void init();
+	LMConstraint()
+		: constrainedObject1(NULL)
+		, constrainedObject2(NULL)
+		, simulatedObject1(NULL)
+		, simulatedObject2(NULL)
+	{
+	
+	}
 
-          /// get Mechanical State 1 where the constraint will be expressed (can be a Mapped mechanical state)
-          virtual BaseMechanicalState* getConstrainedMechModel1() const {return constrainedObject1;}
-          /// get Mechanical State 2 where the constraint will be expressed (can be a Mapped mechanical state)
-          virtual BaseMechanicalState* getConstrainedMechModel2() const {return constrainedObject2;}
+	virtual ~LMConstraint();
 
-          /// get Mechanical State 1 where the constraint will be solved
-          virtual BaseMechanicalState* getSimulatedMechModel1() const {return simulatedObject1;}
-          /// get Mechanical State 2 where the constraint will be solved
-          virtual BaseMechanicalState* getSimulatedMechModel2() const {return simulatedObject2;}
+	virtual void init();
+
+	/// get Mechanical State 1 where the constraint will be expressed (can be a Mapped mechanical state)
+	virtual BaseMechanicalState* getConstrainedMechModel1() const {return constrainedObject1;}
+	/// get Mechanical State 2 where the constraint will be expressed (can be a Mapped mechanical state)
+	virtual BaseMechanicalState* getConstrainedMechModel2() const {return constrainedObject2;}
+
+	/// get Mechanical State 1 where the constraint will be solved
+	virtual BaseMechanicalState* getSimulatedMechModel1() const {return simulatedObject1;}
+	/// get Mechanical State 2 where the constraint will be solved
+	virtual BaseMechanicalState* getSimulatedMechModel2() const {return simulatedObject2;}
 
 
-	  /// Pre-construction check method called by ObjectFactory.
-	  template<class T>
-	    static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
-	    {
-	      if (arg->getAttribute("object1") || arg->getAttribute("object2"))
+	/// Pre-construction check method called by ObjectFactory.
+	template<class T>
+	static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
+	{
+		if (arg->getAttribute("object1") || arg->getAttribute("object2"))
 		{
-		  if (dynamic_cast<MechanicalState<DataTypes1>*>(arg->findObject(arg->getAttribute("object1",".."))) == NULL)
-		    return false;
-		  if (dynamic_cast<MechanicalState<DataTypes2>*>(arg->findObject(arg->getAttribute("object2",".."))) == NULL)
-		    return false;
+			if (dynamic_cast<MechanicalState<DataTypes1>*>(arg->findObject(arg->getAttribute("object1",".."))) == NULL)
+				return false;
+			if (dynamic_cast<MechanicalState<DataTypes2>*>(arg->findObject(arg->getAttribute("object2",".."))) == NULL)
+				return false;
 		}
-	      else
+		else
 		{
-		  if (dynamic_cast<MechanicalState<DataTypes1>*>(context->getMechanicalState()) == NULL)
-		    return false;
+			if (dynamic_cast<MechanicalState<DataTypes1>*>(context->getMechanicalState()) == NULL)
+				return false;
 		}
-	      return sofa::core::objectmodel::BaseObject::canCreate(obj, context, arg);
-	    }
+		return sofa::core::objectmodel::BaseObject::canCreate(obj, context, arg);
+	}
 
-	  /// Construction method called by ObjectFactory.
-	  template<class T>
-	    static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
-	    {
-	      sofa::core::objectmodel::BaseObject::create(obj, context, arg);
-	      if (arg && (arg->getAttribute("object1") || arg->getAttribute("object2")))
+	/// Construction method called by ObjectFactory.
+	template<class T>
+	static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
+	{
+		sofa::core::objectmodel::BaseObject::create(obj, context, arg);
+		if (arg && (arg->getAttribute("object1") || arg->getAttribute("object2")))
 		{
-		  obj->constrainedObject1 = dynamic_cast<MechanicalState<DataTypes1>*>(arg->findObject(arg->getAttribute("object1","..")));
-		  obj->constrainedObject2 = dynamic_cast<MechanicalState<DataTypes2>*>(arg->findObject(arg->getAttribute("object2","..")));
+			obj->constrainedObject1 = dynamic_cast<MechanicalState<DataTypes1>*>(arg->findObject(arg->getAttribute("object1","..")));
+			obj->constrainedObject2 = dynamic_cast<MechanicalState<DataTypes2>*>(arg->findObject(arg->getAttribute("object2","..")));
 		}
-	      else if (context)
+		else if (context)
 		{
-		  obj->constrainedObject1 =
-		    obj->constrainedObject2 =
-		    dynamic_cast<MechanicalState<DataTypes1>*>(context->getMechanicalState());
+			obj->constrainedObject1 =
+			obj->constrainedObject2 =
+			dynamic_cast<MechanicalState<DataTypes1>*>(context->getMechanicalState());
 		}
-	    }
+	}
 
+	virtual std::string getTemplateName() const
+	{
+		return templateName(this);
+	}
 
-	  virtual std::string getTemplateName() const
-	    {
-	      return templateName(this);
-	    }
+	static std::string templateName(const LMConstraint<DataTypes1,DataTypes2>* = NULL)
+	{
+		return std::string("[") + DataTypes1::Name() + std::string(",") + DataTypes2::Name() + std::string("]");
+	}
 
-	  static std::string templateName(const LMConstraint<DataTypes1,DataTypes2>* = NULL)
-	  {
-	    return std::string("[") + DataTypes1::Name() + std::string(",") + DataTypes2::Name() + std::string("]");
-	  }
+protected:
+	MechanicalState<DataTypes1> *constrainedObject1;
+	MechanicalState<DataTypes2> *constrainedObject2;
 
-
-	protected:
-          /// Insert in the Vector C (VecConst) of each constrainedObject the equation expressed using SparseVecDeriv
-          /// Returns the index where the lines have been entered
-          void  registerEquationInJ1( unsigned int constraintId, const SparseVecDeriv1 &C1) const;
-          void  registerEquationInJ2( unsigned int constraintId, const SparseVecDeriv2 &C2) const;
-
-	  MechanicalState<DataTypes1> *constrainedObject1;
-	  MechanicalState<DataTypes2> *constrainedObject2;
-
-          BaseMechanicalState         *simulatedObject1;
-          BaseMechanicalState         *simulatedObject2;
-
-
+	BaseMechanicalState         *simulatedObject1;
+	BaseMechanicalState         *simulatedObject2;
 };
 
 #if defined(WIN32) && !defined(SOFA_BUILD_CORE)

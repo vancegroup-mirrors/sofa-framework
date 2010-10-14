@@ -44,7 +44,9 @@ HEADERS += initMisc.h \
            EvalSurfaceDistance.h \
            EvalSurfaceDistance.inl \
            MeshTetraStuffing.h \
-           TopologicalChangeProcessor.h
+           TopologicalChangeProcessor.h \
+           VTKExporter.h \
+           MeshExporter.h
 
 
 SOURCES += initMisc.cpp \
@@ -67,7 +69,9 @@ SOURCES += initMisc.cpp \
            EvalPointsDistance.cpp \
            EvalSurfaceDistance.cpp \
            MeshTetraStuffing.cpp \
-           TopologicalChangeProcessor.cpp
+           TopologicalChangeProcessor.cpp \
+           VTKExporter.cpp \
+           MeshExporter.cpp
 
 
 

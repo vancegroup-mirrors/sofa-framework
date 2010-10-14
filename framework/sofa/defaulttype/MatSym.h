@@ -1,35 +1,35 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
-*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
-*                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
-* under the terms of the GNU Lesser General Public License as published by    *
-* the Free Software Foundation; either version 2.1 of the License, or (at     *
-* your option) any later version.                                             *
-*                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
-* for more details.                                                           *
-*                                                                             *
-* You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
-*******************************************************************************
-*                              SOFA :: Framework                              *
-*                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
-*                                                                             *
-* Contact information: contact@sofa-framework.org                             *
-******************************************************************************/
+ *       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+ *                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
+ *                                                                             *
+ * This library is free software; you can redistribute it and/or modify it     *
+ * under the terms of the GNU Lesser General Public License as published by    *
+ * the Free Software Foundation; either version 2.1 of the License, or (at     *
+ * your option) any later version.                                             *
+ *                                                                             *
+ * This library is distributed in the hope that it will be useful, but WITHOUT *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+ * for more details.                                                           *
+ *                                                                             *
+ * You should have received a copy of the GNU Lesser General Public License    *
+ * along with this library; if not, write to the Free Software Foundation,     *
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+ *******************************************************************************
+ *                              SOFA :: Framework                              *
+ *                                                                             *
+ * Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
+ * H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
+ * M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+ *                                                                             *
+ * Contact information: contact@sofa-framework.org                             *
+ ******************************************************************************/
 #ifndef SOFA_DEFAULTTYPE_MATSYM_H
 #define SOFA_DEFAULTTYPE_MATSYM_H
 
 #include <sofa/helper/system/config.h>
 #include <sofa/defaulttype/Vec.h>
-#include <assert.h>
+#include <cassert>
 #include <boost/static_assert.hpp>
 #include <iostream>
 #include <sofa/defaulttype/Mat.h>
@@ -47,106 +47,105 @@ using std::endl;
 
 template <int D,class real=float>
 class MatSym : public VecNoInit<D*(D+1)/2,real>
-        //class Mat : public Vec<L,Vec<C,real> >
+//class Mat : public Vec<L,Vec<C,real> >
 {
- public:
+public:
 
- // enum { N = L*C };
+	// enum { N = L*C };
 
-  typedef real Real;
-  typedef Vec<D,Real> Coord;
-  
+	typedef real Real;
+	typedef Vec<D,Real> Coord;
 
-    MatSym()
-    {
-	clear();
-    }
 
-    explicit MatSym(NoInit)
-    {
-    }
+	MatSym()
+	{
+		clear();
+	}
+
+	explicit MatSym(NoInit)
+	{
+	}
 	/// Constructor from 6 elements
-  explicit MatSym(const real& v1,const real& v2,const real& v3,const real& v4,const real& v5,const real& v6)
-  {
-              this->elems[0] = v1;
-			  this->elems[1] = v2;
-			  this->elems[2] = v3;
-			  this->elems[3] = v4;
-			  this->elems[4] = v5;
-			  this->elems[5] = v6;
-  }
+	explicit MatSym(const real& v1,const real& v2,const real& v3,const real& v4,const real& v5,const real& v6)
+	{
+		this->elems[0] = v1;
+		this->elems[1] = v2;
+		this->elems[2] = v3;
+		this->elems[3] = v4;
+		this->elems[4] = v5;
+		this->elems[5] = v6;
+	}
 
 
 
 
-  /// Constructor from an element
-  explicit MatSym(const int sizeM,const real& v)
-  {
-      for( int i=0; i<sizeM*(sizeM+1)/2; i++ )
-              this->elems[i] = v;
-  }
+	/// Constructor from an element
+	explicit MatSym(const int sizeM,const real& v)
+	{
+		for( int i=0; i<sizeM*(sizeM+1)/2; i++ )
+			this->elems[i] = v;
+	}
 
-  /// Constructor from another matrix
-  template<typename real2>
-  MatSym(const MatSym<D,real2>& m)
-  {
-    std::copy(m.begin(), m.begin()+D*(D+1)/2, this->begin());
-  }
-
-
-  /// Assignment from another matrix
-  template<typename real2> void operator=(const MatSym<D,real2>& m)
-  {
-    std::copy(m.begin(), m.begin()+D*(D+1)/2, this->begin());
-  }
-
-  
-  /// Sets each element to 0.
-  void clear()
-  {
-    for (int i=0;i<D*(D+1)/2;i++)
-      this->elems[i]=0;
-  }
-
-  /// Sets each element to r.
-  void fill(real r)
-  {
-    for (int i=0;i<D*(D+1)/2;i++)
-      this->elems[i].fill(r);
-  }
-
-  /// Write access to element (i,j).
- inline real& operator()(int i, int j)
-  {
-	  if(i>=j) 
-	  {  return this->elems[(i*(i+1))/2+j];}
-	  else 
-	  {return this->elems[(j*(j+1))/2+i];}
-  }
-
-  /// Read-only access to element (i,j).
- inline const real& operator()(int i, int j) const
-  {
-    	  if(i>=j) 
-	  {  return this->elems[(i*(i+1))/2+j];}
-	  else 
-	  {return this->elems[(j*(j+1))/2+i];}
-  }
-
- //convert matrix to sym
-//template<int D>
-void Mat2Sym( const Mat<D,D,real>& M, MatSym<D,real>& W) 
-
-{
-  for (int j=0; j<D; j++)
-    for (int i=0; i <= j; i++)
-      W(i,j) = (Real)((M(i,j) + M(j,i))/2.0);
-}
+	/// Constructor from another matrix
+	template<typename real2>
+	MatSym(const MatSym<D,real2>& m)
+	{
+		std::copy(m.begin(), m.begin()+D*(D+1)/2, this->begin());
+	}
 
 
-  //convert into 3*3 matrix
+	/// Assignment from another matrix
+	template<typename real2> void operator=(const MatSym<D,real2>& m)
+	{
+		std::copy(m.begin(), m.begin()+D*(D+1)/2, this->begin());
+	}
 
-/*  Mat<D,D,real> convert() const
+
+	/// Sets each element to 0.
+	void clear()
+	{
+		for (int i=0;i<D*(D+1)/2;i++)
+			this->elems[i]=0;
+	}
+
+	/// Sets each element to r.
+	void fill(real r)
+	{
+		for (int i=0;i<D*(D+1)/2;i++)
+			this->elems[i].fill(r);
+	}
+
+	/// Write access to element (i,j).
+	inline real& operator()(int i, int j)
+    		{
+		if(i>=j)
+		{  return this->elems[(i*(i+1))/2+j];}
+		else
+		{return this->elems[(j*(j+1))/2+i];}
+    		}
+
+	/// Read-only access to element (i,j).
+	inline const real& operator()(int i, int j) const
+			{
+		if(i>=j)
+		{  return this->elems[(i*(i+1))/2+j];}
+		else
+		{return this->elems[(j*(j+1))/2+i];}
+			}
+
+	//convert matrix to sym
+	//template<int D>
+	void Mat2Sym( const Mat<D,D,real>& M, MatSym<D,real>& W)
+	{
+		for (int j=0; j<D; j++)
+			for (int i=0; i <= j; i++)
+				W(i,j) = (Real)((M(i,j) + M(j,i))/2.0);
+	}
+
+
+	//convert into 3*3 matrix
+
+	/*  Mat<D,D,real> convert() const
   {
 	  Mat<D,D,real> m;
 	  for(int k=0; k<D;k++){
@@ -156,214 +155,214 @@ void Mat2Sym( const Mat<D,D,real>& M, MatSym<D,real>& W)
 	}
 	  return m;
   }
-*/
-  /// Set matrix to identity.
-  void identity()
-  {
-	  for (int i=0;i<D;i++){
-		this->elems[i*(i+1)/2+i]=1;	
-		  for (int j=i+1;j<D;j++){	
-      this->elems[i*(i+1)/2+j]=0;
-		  }
-	  }
-  }
+	 */
+	/// Set matrix to identity.
+	void identity()
+	{
+		for (int i=0;i<D;i++){
+			this->elems[i*(i+1)/2+i]=1;
+			for (int j=i+1;j<D;j++){
+				this->elems[i*(i+1)/2+j]=0;
+			}
+		}
+	}
 
-    /// @name Tests operators
-    /// @{
+	/// @name Tests operators
+	/// @{
 
-    bool operator==(const MatSym<D,real>& b) const
-    {
-        for (int i=0;i<D*(D+1)/2;i++)
-            if (!(this->elems[i]==b[i])) return false;
-        return true;
-    }
+	bool operator==(const MatSym<D,real>& b) const
+			{
+		for (int i=0;i<D*(D+1)/2;i++)
+			if (!(this->elems[i]==b[i])) return false;
+		return true;
+			}
 
-    bool operator!=(const MatSym< D,real>& b) const
-    {
-        for (int i=0;i<D*(D+1)/2;i++)
-            if (this->elems[i]!=b[i]) return true;
-        return false;
-    }
+	bool operator!=(const MatSym< D,real>& b) const
+			{
+		for (int i=0;i<D*(D+1)/2;i++)
+			if (this->elems[i]!=b[i]) return true;
+		return false;
+			}
 
 
-    /// @}
+	/// @}
 
-  // LINEAR ALGEBRA
+	// LINEAR ALGEBRA
 
 	/// Matrix multiplication operator: product of two symmetric matrices
-  //template <int D>
-  Mat<D,D,real> SymSymMultiply(const MatSym<D,real>& m) const
-  {
-    Mat<D,D,real> r(NOINIT);
-	
-	for(int i=0;i<D;i++){
-      for(int j=0;j<D;j++) {
-	r[i][j]=(*this)(i,0) * m(0,j);
-	for(int k=1;k<D;k++) { r[i][j] += (*this)(i,k) * m(k,j);}
-      }
-	}
-    return r;
-  }
+	//template <int D>
+	Mat<D,D,real> SymSymMultiply(const MatSym<D,real>& m) const
+			{
+		Mat<D,D,real> r(NOINIT);
 
-  //Multiplication by a non symmetric matrix on the right
-
- // template <int D>
-  Mat<D,D,real> SymMatMultiply(const Mat<D,D,real>& m) const
-  {
-    Mat<D,D,real> r(NOINIT);
-	
-	for(int i=0;i<D;i++){
-      for(int j=0;j<D;j++)
-      {
-	r[i][j]=(*this)(i,0) * m[0][j];
-	for(int k=1;k<D;k++){
-	  r[i][j] += (*this)(i,k) * m[k][j];
-	}
-      }
-	}
-    return r;
-  }
-  //Multiplication by a non symmetric matrix on the left
-
- // template <int D>
-  Mat<D,D,real> MatSymMultiply(const Mat<D,D,real>& m) const
-  {
-    Mat<D,D,real> r(NOINIT);
-	
-	for(int i=0;i<D;i++){
-      for(int j=0;j<D;j++)
-      {
-	r[i][j]=m(i,0)* (*this)(0,j);
-	for(int k=1;k<D;k++){
-	  r[i][j] += m(i,k) * (*this)(k,j);
-	}
-      }
-	}
-    return r;
-  }
-  
-
-  /// Matrix addition operator with a symmetric matrix
-  MatSym< D,real> operator+(const MatSym<D,real>& m) const
-  {
-    MatSym< D,real> r;
-    for(int i = 0; i < D*(D+1)/2; i++)
-      r[i] = (*this)[i] + m[i];
-    return r;
-  }
-
-  /// Matrix addition operator with a non-symmetric matrix
-  Mat<D,D,real> operator+(const Mat<D,D,real>& m) const
-  {
-    Mat<D,D,real> r(NOINIT);
-	for(int i = 0; i < D; i++){
-		for(int j=0;j<D;j++){
-			r[i][j]=(*this)(i,j)+m[i][j];
+		for(int i=0;i<D;i++){
+			for(int j=0;j<D;j++) {
+				r[i][j]=(*this)(i,0) * m(0,j);
+				for(int k=1;k<D;k++) { r[i][j] += (*this)(i,k) * m(k,j);}
+			}
 		}
-	}
-    return r;
-		
-  }
-  /// Matrix substractor operator with a symmetric matrix
-  MatSym< D,real> operator-(const MatSym< D,real>& m) const
-  {
-    MatSym<D,real> r;
-    for(int i = 0; i < D*(D+1)/2; i++)
-      r[i] = (*this)[i] - m[i];
-    return r;
-  }
+		return r;
+			}
 
-  /// Matrix substractor operator with a non-symmetric matrix
-  Mat<D,D,real> operator-(const Mat<D,D,real>& m) const
-  {
-    Mat<D,D,real> r(NOINIT);
-	for(int i = 0; i < D; i++){
-		for(int j=0;j<D;j++){
-			r[i][j]=(*this)(i,j)-m[i][j];
+	//Multiplication by a non symmetric matrix on the right
+
+	// template <int D>
+	Mat<D,D,real> SymMatMultiply(const Mat<D,D,real>& m) const
+			{
+		Mat<D,D,real> r(NOINIT);
+
+		for(int i=0;i<D;i++){
+			for(int j=0;j<D;j++)
+			{
+				r[i][j]=(*this)(i,0) * m[0][j];
+				for(int k=1;k<D;k++){
+					r[i][j] += (*this)(i,k) * m[k][j];
+				}
+			}
 		}
+		return r;
+			}
+	//Multiplication by a non symmetric matrix on the left
+
+	// template <int D>
+	Mat<D,D,real> MatSymMultiply(const Mat<D,D,real>& m) const
+			{
+		Mat<D,D,real> r(NOINIT);
+
+		for(int i=0;i<D;i++){
+			for(int j=0;j<D;j++)
+			{
+				r[i][j]=m(i,0)* (*this)(0,j);
+				for(int k=1;k<D;k++){
+					r[i][j] += m(i,k) * (*this)(k,j);
+				}
+			}
+		}
+		return r;
+			}
+
+
+	/// Matrix addition operator with a symmetric matrix
+	MatSym< D,real> operator+(const MatSym<D,real>& m) const
+			{
+		MatSym< D,real> r;
+		for(int i = 0; i < D*(D+1)/2; i++)
+			r[i] = (*this)[i] + m[i];
+		return r;
+			}
+
+	/// Matrix addition operator with a non-symmetric matrix
+	Mat<D,D,real> operator+(const Mat<D,D,real>& m) const
+			{
+		Mat<D,D,real> r(NOINIT);
+		for(int i = 0; i < D; i++){
+			for(int j=0;j<D;j++){
+				r[i][j]=(*this)(i,j)+m[i][j];
+			}
+		}
+		return r;
+
+			}
+	/// Matrix substractor operator with a symmetric matrix
+	MatSym< D,real> operator-(const MatSym< D,real>& m) const
+			{
+		MatSym<D,real> r;
+		for(int i = 0; i < D*(D+1)/2; i++)
+			r[i] = (*this)[i] - m[i];
+		return r;
+			}
+
+	/// Matrix substractor operator with a non-symmetric matrix
+	Mat<D,D,real> operator-(const Mat<D,D,real>& m) const
+			{
+		Mat<D,D,real> r(NOINIT);
+		for(int i = 0; i < D; i++){
+			for(int j=0;j<D;j++){
+				r[i][j]=(*this)(i,j)-m[i][j];
+			}
+		}
+		return r;
+
+			}
+
+
+	/// Multiplication operator Matrix * Vector.
+	Coord operator*(const Coord& v) const
+			{
+
+
+		Coord r(NOINIT);
+		for(int i=0;i<D;i++)
+		{
+			r[i]=(*this)(i,0) * v[0];
+			for(int j=1;j<D;j++)
+				r[i] += (*this)(i,j) * v[j];
+		}
+		return r;
+			}
+
+
+	/// Scalar multiplication operator.
+	MatSym<D,real> operator*(real f) const
+			{
+		MatSym<D,real> r(NOINIT);
+		for(int i=0;i<D*(D+1)/2;i++)
+			r[i] = (*this)[i] * f;
+		return r;
+			}
+
+	/// Scalar matrix multiplication operator.
+	friend MatSym<D,real> operator*(real r, const MatSym< D,real>& m)
+	{
+		return m*r;
 	}
-    return r;
-		
-  }
+
+	/// Scalar division operator.
+	MatSym< D,real> operator/(real f) const
+			{
+		MatSym< D,real> r(NOINIT);
+		for(int i=0;i<D*(D+1)/2;i++)
+			r[i] = (*this)[i] / f;
+		return r;
+			}
+
+	/// Scalar multiplication assignment operator.
+	void operator *=(real r)
+				  {
+		for(int i=0;i<D*(D+1)/2;i++)
+			this->elems[i]*=r;
+				  }
+
+	/// Scalar division assignment operator.
+	void operator /=(real r)
+				  {
+		for(int i=0;i<D*(D+1)/2;i++)
+			this->elems[i]/=r;
+				  }
+
+	/// Addition assignment operator.
+	void operator +=(const MatSym< D,real>& m)
+				  {
+		for(int i=0;i<D*(D+1)/2;i++)
+			this->elems[i]+=m[i];
+				  }
 
 
-  /// Multiplication operator Matrix * Vector.
-  Coord operator*(const Coord& v) const
-  {
-	
-	  
-	Coord r(NOINIT);
-    for(int i=0;i<D;i++)
-    {
-      r[i]=(*this)(i,0) * v[0];
-      for(int j=1;j<D;j++)
-	r[i] += (*this)(i,j) * v[j];
-    }
-    return r;
-  }
 
- 
-  /// Scalar multiplication operator.
-  MatSym<D,real> operator*(real f) const
-  {
-    MatSym<D,real> r(NOINIT);
-    for(int i=0;i<D*(D+1)/2;i++) 
-	r[i] = (*this)[i] * f;
-    return r;
-  }
+	/// Substraction assignment operator.
+	void operator -=(const MatSym< D,real>& m)
+				  {
+		for(int i=0;i<D*(D+1)/2;i++)
+			this->elems[i]-=m[i];
+				  }
 
-  /// Scalar matrix multiplication operator.
-  friend MatSym<D,real> operator*(real r, const MatSym< D,real>& m)
-  {
-    return m*r;
-  }
+	/// Invert matrix m
+	bool invert(const MatSym<D,real>& m)
+	{
 
-  /// Scalar division operator.
-  MatSym< D,real> operator/(real f) const
-  {
-    MatSym< D,real> r(NOINIT);
-	  for(int i=0;i<D*(D+1)/2;i++)
-			  r[i] = (*this)[i] / f;
-	  return r;
-  }
+		return invertMatrix((*this), m);
 
-  /// Scalar multiplication assignment operator.
-  void operator *=(real r)
-  {
-    for(int i=0;i<D*(D+1)/2;i++)
-      this->elems[i]*=r;
-  }
-
-  /// Scalar division assignment operator.
-  void operator /=(real r)
-  {
-    for(int i=0;i<D*(D+1)/2;i++)
-      this->elems[i]/=r;
-  }
-
-  /// Addition assignment operator.
-  void operator +=(const MatSym< D,real>& m)
-  {
-    for(int i=0;i<D*(D+1)/2;i++)
-      this->elems[i]+=m[i];
-  }
-
-  
-
-  /// Substraction assignment operator.
-  void operator -=(const MatSym< D,real>& m)
-  {
-    for(int i=0;i<D*(D+1)/2;i++)
-      this->elems[i]-=m[i];
-  }
-
-  /// Invert matrix m
-  bool invert(const MatSym<D,real>& m)
-  {
-	
-    return invertMatrix((*this), m);
-	
-  }
+	}
 
 };
 
@@ -373,11 +372,11 @@ template<class real>
 inline real determinant(const MatSym<3,real>& m)
 {
 	return m(0,0)*m(1,1)*m(2,2)
-	     + m(1,0)*m(2,1)*m(0,2)
-	     + m(2,0)*m(0,1)*m(1,2)
-	     - m(0,0)*m(2,1)*m(1,2)
-	     - m(1,0)*m(0,1)*m(2,2)
-	     - m(2,0)*m(1,1)*m(0,2);
+	    				 + m(1,0)*m(2,1)*m(0,2)
+	    				 + m(2,0)*m(0,1)*m(1,2)
+	    				 - m(0,0)*m(2,1)*m(1,2)
+	    				 - m(1,0)*m(0,1)*m(2,2)
+	    				 - m(2,0)*m(1,1)*m(0,2);
 }
 
 
@@ -387,99 +386,99 @@ inline real determinant(const MatSym<3,real>& m)
 template<int S, class real>
 bool invertMatrix(MatSym<S,real>& dest, const MatSym<S,real>& from)
 {
-  int i, j, k;
-  Vec<S,int> r, c, row, col;
+	int i, j, k;
+	Vec<S,int> r, c, row, col;
 
-  MatSym<S,real> m1 = from;
-  MatSym<S,real> m2;
-  m2.identity();
+	MatSym<S,real> m1 = from;
+	MatSym<S,real> m2;
+	m2.identity();
 
-  for ( k = 0; k < S; k++ )
-  {
-    // Choosing the pivot
-    real pivot = 0;
-    for (i = 0; i < S; i++)
-    {
-      if (row[i])
-	continue;
-      for (j = 0; j < S; j++)
-      {
-	if (col[j])
-	  continue;
-	real t = m1(i,j); if (t<0) t=-t;
-	if ( t > pivot)
+	for ( k = 0; k < S; k++ )
 	{
-	  pivot = t;
-	  r[k] = i;
-	  c[k] = j;
+		// Choosing the pivot
+		real pivot = 0;
+		for (i = 0; i < S; i++)
+		{
+			if (row[i])
+				continue;
+			for (j = 0; j < S; j++)
+			{
+				if (col[j])
+					continue;
+				real t = m1(i,j); if (t<0) t=-t;
+				if ( t > pivot)
+				{
+					pivot = t;
+					r[k] = i;
+					c[k] = j;
+				}
+			}
+		}
+
+		if (pivot <= (real) MIN_DETERMINANT)
+		{
+			cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
+			return false;
+		}
+
+		row[r[k]] = col[c[k]] = 1;
+		pivot = m1(r[k],c[k]);
+
+		// Normalization
+		for (j=0; j<S; j++){
+			m1[r[k]*(r[k]+1)/2+j] /= pivot;
+			m1(r[k],c[k]) = 1;
+			m2[r[k]*(r[k]+1)/2+j] /= pivot;
+		}
+
+		// Reduction
+		for (i = 0; i < S; i++)
+		{
+			if (i != r[k])
+			{
+				for (j=0; j<S; j++){
+
+					real f = m1(i,c[k]);
+					m1[i*(i+1)/2+j] -= m1[r[k]*(r[k]+1)/2+j]*f; m1(i,c[k]) = 0;
+					m2[i*(i+1)/2+j] -= m2[r[k]*(r[k]+1)/2+j]*f;
+				}
+			}
+		}
 	}
-      }
-    }
 
-    if (pivot <= (real) MIN_DETERMINANT)
-    {
-      cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
-      return false;
-    }
+	for (i = 0; i < S; i++)
+		for (j = 0; j < S; j++)
+			if (c[j] == i)
+				row[i] = r[j];
 
-    row[r[k]] = col[c[k]] = 1;
-    pivot = m1(r[k],c[k]);
-
-    // Normalization
-	for (j=0; j<S; j++){
-    m1[r[k]*(r[k]+1)/2+j] /= pivot; 
-	m1(r[k],c[k]) = 1;
-    m2[r[k]*(r[k]+1)/2+j] /= pivot;
+	for ( i = 0; i < S; i++ ){
+		for (j=0; j<S; j++){
+			dest[i*(i+1)/2+j] = m2[row[i]*(row[i]+1)/2+j];
+		}
 	}
 
-    // Reduction
-    for (i = 0; i < S; i++)
-    {
-      if (i != r[k])
-      {
-		  for (j=0; j<S; j++){
-
-	real f = m1(i,c[k]);
-	m1[i*(i+1)/2+j] -= m1[r[k]*(r[k]+1)/2+j]*f; m1(i,c[k]) = 0;
-	m2[i*(i+1)/2+j] -= m2[r[k]*(r[k]+1)/2+j]*f;
-		  }
-      }
-    }
-  }
-
-  for (i = 0; i < S; i++)
-    for (j = 0; j < S; j++)
-      if (c[j] == i)
-	row[i] = r[j];
-
-  for ( i = 0; i < S; i++ ){
-	  for (j=0; j<S; j++){
-    dest[i*(i+1)/2+j] = m2[row[i]*(row[i]+1)/2+j];
-	  }
-  }
-
-  return true;
+	return true;
 }
 
 /// Matrix inversion (special case 3x3).
 template<class real>
 bool invertMatrix(MatSym<3,real>& dest, const MatSym<3,real>& from)
 {
-  real det=determinant(from);
+	real det=determinant(from);
 
-  if ( -(real) MIN_DETERMINANT<=det && det<=(real) MIN_DETERMINANT){
-    cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
-    return false;
-  }
+	if ( -(real) MIN_DETERMINANT<=det && det<=(real) MIN_DETERMINANT){
+		cerr<<"Warning: invertMatrix finds too small determinant, matrix = "<<from<<endl;
+		return false;
+	}
 
-  dest(0,0)= (from(1,1)*from(2,2) - from(2,1)*from(1,2))/det;
-  dest(1,0)= (from(1,2)*from(2,0) - from(2,2)*from(1,0))/det;
-  dest(2,0)= (from(1,0)*from(2,1) - from(2,0)*from(1,1))/det;
-  dest(1,1)= (from(2,2)*from(0,0) - from(0,2)*from(2,0))/det;
-  dest(2,1)= (from(2,0)*from(0,1) - from(0,0)*from(2,1))/det;
-  dest(2,2)= (from(0,0)*from(1,1) - from(1,0)*from(0,1))/det;
+	dest(0,0)= (from(1,1)*from(2,2) - from(2,1)*from(1,2))/det;
+	dest(1,0)= (from(1,2)*from(2,0) - from(2,2)*from(1,0))/det;
+	dest(2,0)= (from(1,0)*from(2,1) - from(2,0)*from(1,1))/det;
+	dest(1,1)= (from(2,2)*from(0,0) - from(0,2)*from(2,0))/det;
+	dest(2,1)= (from(2,0)*from(0,1) - from(0,0)*from(2,1))/det;
+	dest(2,2)= (from(0,0)*from(1,1) - from(1,0)*from(0,1))/det;
 
-  return true;
+	return true;
 }
 /*
 /// Matrix inversion (special case 2x2).
@@ -646,7 +645,7 @@ T1 pythag(const T1 a, const T2 b)
 \pre a: original matrix, destroyed to become u
 \pre w: diagonal vector
 \pre v: matrix
- 
+
 template< int m, int n, typename Real>
 void svddcmp(Mat<m,n,Real> &a, Vec<n,Real> &w, Mat<n,m,Real> &v)
 {

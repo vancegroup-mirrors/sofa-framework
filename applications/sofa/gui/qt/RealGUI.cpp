@@ -525,7 +525,7 @@ namespace sofa
 	        {
             RegisterViewer(viewerName);
   	          viewer = viewer::SofaViewerFactory::CreateObject( viewerName, arg );
-              viewerQGLViewerAction->setOn ( true );
+              viewerOpenGLAction->setOn ( true );
           }
 	#else
 	        viewerOpenGLAction->setEnabled ( false );

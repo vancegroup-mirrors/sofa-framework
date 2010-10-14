@@ -177,7 +177,8 @@ class CudaBaseMatrix : public BaseMatrix {
 // 				  m[j][i] = (T)(0.0);
 // 				}
 // 			}
-			m.memsetHost();
+			m.clear();
+			//m.memsetHost();
 		}
 
 		void set(int i, int j, double v) {

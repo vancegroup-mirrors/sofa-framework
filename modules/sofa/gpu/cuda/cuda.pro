@@ -91,11 +91,12 @@ HEADERS += mycuda.h \
 
 SOURCES += mycuda.cpp \
            CudaBoxROI.cpp  \
+	   CudaBeamLinearMapping.cpp \
 	   CudaRestShapeSpringsForceField.cpp  \
 	   CudaIndexValueMapper.cpp \
            CudaMechanicalObject.cpp \
            CudaUniformMass.cpp \
-					 CudaExtraMonitor.cpp \
+	   CudaExtraMonitor.cpp \
            CudaFixedConstraint.cpp \
            CudaFixedTranslationConstraint.cpp \
            CudaLinearMovementConstraint.cpp \
@@ -111,7 +112,7 @@ SOURCES += mycuda.cpp \
            CudaDistanceGridCollisionModel.cpp \
            CudaCollision.cpp \
            CudaCollisionDetection.cpp \
-		   CudaSphereModel.cpp \
+	   CudaSphereModel.cpp \
            CudaPointModel.cpp \
            CudaTriangleModel.cpp \
            CudaPenalityContactForceField.cpp \

@@ -30,6 +30,13 @@
 
 namespace sofa
 {
+namespace core
+{
+namespace objectmodel
+{
+  class BaseObjectDescription;
+}
+}
 
 namespace component
 {
@@ -49,9 +56,12 @@ public:
     void setGnuplotPath(const std::string& f){gnuplotPath.setValue(f);}
     const std::string &getGnuplotPath() const {return gnuplotPath.getValue();}
 
+    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );
+
 protected:
     Data<std::string> recordPath;
     Data<std::string> gnuplotPath;
+    Data<helper::vector<std::string> > envPath;
 };
 
 }

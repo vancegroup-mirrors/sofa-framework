@@ -183,8 +183,9 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	double currentForce[3];
 	currentForce[0] = Wrench_endOmni_inBaseOmni.getForce()[0] * data->forceScale;
 	currentForce[1] = Wrench_endOmni_inBaseOmni.getForce()[1] * data->forceScale;
-	currentForce[2] = Wrench_endOmni_inBaseOmni.getForce()[2] * data->forceScale;
+	currentForce[2] = Wrench_endOmni_inBaseOmni.getForce()[2] * data->forceScale;     
 
+        //cout << "OMNIDATA " << world_H_virtualTool.getOrigin() << " " << Wrench_tool_inWorld.getForce() << endl; // << currentForce[0] << " " << currentForce[1] << " " << currentForce[2] << endl;
  	if((data->servoDeviceData.m_buttonState & HD_DEVICE_BUTTON_1) || data->permanent_feedback)
 		hdSetDoublev(HD_CURRENT_FORCE, currentForce);
 
@@ -448,7 +449,7 @@ void NewOmniDriver::reinit()
 
 void NewOmniDriver::draw()
 {
-    cout << "NewOmniDriver::draw is called" << endl;
+    //cout << "NewOmniDriver::draw is called" << endl;
     if(omniVisu.getValue())
     {
         if (visu_base == NULL)

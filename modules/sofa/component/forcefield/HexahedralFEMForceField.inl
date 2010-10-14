@@ -257,7 +257,7 @@ void HexahedralFEMForceField<DataTypes>::computeElementStiffness( ElementStiffne
 			K[j][i] = K[i][j];
 		}
 
-
+/*
 std::cout<<"HexahedralFEMForceField<DataTypes>::computeElementStiffness:  Element "<<"   ===STIFNESSMATRIX===="<<std::endl;
 for(int inode=0;inode<8;inode++)
 {
@@ -281,7 +281,7 @@ for(int inode=0;inode<8;inode++)
 
 //<<K<<std::endl
 std::cout<<"==============================================================="<<std::endl;
-
+*/
 
 
 }

@@ -25,6 +25,8 @@
 
 #include <sofa/component/configurationsetting/SofaDefaultPathSetting.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/helper/system/FileRepository.h>
+#include <sofa/helper/system/SetDirectory.h>
 
 namespace sofa
 {
@@ -44,7 +46,32 @@ namespace configurationsetting
     SofaDefaultPathSetting::SofaDefaultPathSetting():
             recordPath(initData(&recordPath, "recordPath", "Path where will be saved the data of the recorded simulation"))
             , gnuplotPath(initData(&gnuplotPath, "gnuplotPath", "Path where will be saved the gnuplot files"))
+            , envPath(initData(&envPath, "environmentPath", "Paths to add to the default DataRepository" ))
     {
+     
+    }
+
+    void SofaDefaultPathSetting::parse(sofa::core::objectmodel::BaseObjectDescription* arg )
+    {
+      using namespace helper::system;
+      BaseObject::parse(arg);
+      helper::vector<std::string>* vecPaths = envPath.beginEdit();
+      helper::vector<std::string>::const_iterator iter;
+      std::string currentDir = helper::system::SetDirectory::GetCurrentDir();
+      std::string absolutePath;
+      for( iter = vecPaths->begin(); iter != vecPaths->end(); ++iter)
+      {
+        if( SetDirectory::IsAbsolute( *iter ) )
+        {
+          helper::system::DataRepository.addLastPath(*iter);
+        }
+        else 
+        {
+          absolutePath = SetDirectory::GetRelativeFromDir( (*iter).c_str() , currentDir.c_str() ); 
+          helper::system::DataRepository.addLastPath( absolutePath );
+        }
+      }
+      envPath.endEdit();
     }
 
 }

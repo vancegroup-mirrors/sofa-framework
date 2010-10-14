@@ -76,10 +76,12 @@ public:
 
 	/// Constant force has null variation
 	virtual void addDForce (VecDeriv& , const VecDeriv& ){}
-	
-        
-        virtual double getPotentialEnergy(const VecCoord& x) const;
-	
+
+	/// Constant force has null variation
+	virtual void addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* /*matrix*/, double /*kFact*/) {}
+
+    virtual double getPotentialEnergy(const VecCoord& x) const;
+
 	void draw();
 	bool addBBox(double* minBBox, double* maxBBox);
 };

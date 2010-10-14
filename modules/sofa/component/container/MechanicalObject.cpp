@@ -61,7 +61,6 @@ int MechanicalObjectClass = core::RegisterObject("mechanical state vectors")
 .add< MechanicalObject<Vec6dTypes> >()
 .add< MechanicalObject<Rigid3dTypes> >()
 .add< MechanicalObject<Rigid2dTypes> >()
-.add< MechanicalObject<Affine3dTypes> >()
 #endif
 #ifndef SOFA_DOUBLE
 .add< MechanicalObject<Vec2fTypes> >()
@@ -69,7 +68,6 @@ int MechanicalObjectClass = core::RegisterObject("mechanical state vectors")
 .add< MechanicalObject<Vec6fTypes> >()
 .add< MechanicalObject<Rigid3fTypes> >()
 .add< MechanicalObject<Rigid2fTypes> >()
-.add< MechanicalObject<Affine3fTypes> >()
 #endif
 .add< MechanicalObject<LaparoscopicRigid3Types> >()
 ;
@@ -83,7 +81,6 @@ template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Vec1dTypes>;
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Vec6dTypes>;
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Rigid3dTypes>;
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Rigid2dTypes>;
-template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Affine3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Vec3fTypes>;
@@ -92,7 +89,6 @@ template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Vec1fTypes>;
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Vec6fTypes>;
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Rigid3fTypes>;
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Rigid2fTypes>;
-template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<Affine3fTypes>;
 #endif
 template class SOFA_COMPONENT_CONTAINER_API MechanicalObject<LaparoscopicRigid3Types>;
 

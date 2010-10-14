@@ -58,8 +58,6 @@ template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid2fTypes>, M
 template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid2fTypes> > ;
 template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3fTypes> > ;
 
-
-
 template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3fTypes> >;
 template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3dTypes> >;
 template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Vec1fTypes> >;

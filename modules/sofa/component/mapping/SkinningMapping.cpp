@@ -29,6 +29,8 @@
 #include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/behavior/MechanicalMapping.inl>
 #include <sofa/core/Mapping.inl>
+
+
 namespace sofa
 {
 
@@ -74,6 +76,9 @@ int SkinningMappingClass = core::RegisterObject("skin a model from a set of rigi
 
 
 // Affine Types
+
+
+// Quadratic Types
 ;
 
 #ifndef SOFA_FLOAT

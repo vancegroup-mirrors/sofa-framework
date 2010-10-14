@@ -253,6 +253,7 @@ extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3dTy
 extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3dTypes> > ;
 extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1dTypes>, MechanicalState<Rigid3fTypes> > ;
 extern template class SOFA_CORE_API MechanicalMapping< MechanicalState<Vec1fTypes>, MechanicalState<Rigid3dTypes> > ;
+
 #endif
 
 } // namespace behavior

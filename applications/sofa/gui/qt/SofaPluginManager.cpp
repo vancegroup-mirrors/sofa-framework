@@ -94,10 +94,10 @@ namespace sofa
 			typedef const char* (*componentStr)();
 
  			for (int i=1 ; i<=size; i++){
-				QString titi;
-				titi = titi.setNum(i);
+                QString config;
+                config = config.setNum(i);
 
-		        settings.beginGroup(titi);
+                settings.beginGroup(config);
  				QString sfile = settings.readEntry("/location");
 				settings.endGroup();
 
@@ -219,6 +219,7 @@ namespace sofa
 		{
 			//get the selected item
 			Q3ListViewItem * curItem = listPlugins->selectedItem();
+            if (!curItem) return;
 			QString location = curItem->text(LOCATION_COLUMN); //get the location value
 			//remove it from the list view 
 			listPlugins->removeItem(curItem);
@@ -231,9 +232,9 @@ namespace sofa
 			int size = settings.readNumEntry("/size");
 
 			for (int i=1 ; i<=size; i++){
-				QString titi;
-				titi = titi.setNum(i);
-				settings.beginGroup(titi);
+                QString config;
+                config = config.setNum(i);
+                settings.beginGroup(config);
 				  QString sfile = settings.readEntry("/location");
 				  if (sfile == location)
 					settings.removeEntry("/location");

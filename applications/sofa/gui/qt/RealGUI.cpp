@@ -670,6 +670,7 @@ namespace sofa
         SofaMouseManager::getInstance()->setPickHandler(viewer->getPickHandler());
         viewer->getPickHandler()->addCallBack( new InformationOnPickCallBack(this) );
 
+        guiName=viewerName;
       }
 
       void RealGUI::viewerOpenGL()

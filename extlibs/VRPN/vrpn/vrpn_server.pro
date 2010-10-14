@@ -11,7 +11,7 @@ CONFIG += $$CONFIGLIBRARIES
 QUATINCLUDES = ../quat
 ATMELINCLUDES = atmellib/
 
-LIBS += -ldl -lvrpn_quat -lvrpn_atmellib
+LIBS += -ldl -lvrpn_quat$$LIBSUFFIX -lvrpn_atmellib$$LIBSUFFIX
 contains(DEFINES,VRPN_USE_WIIUSE){
 	LIBS += -lwiiuse
 }

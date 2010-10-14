@@ -95,6 +95,7 @@ SOURCES += mycuda.cpp \
 	   CudaIndexValueMapper.cpp \
            CudaMechanicalObject.cpp \
            CudaUniformMass.cpp \
+					 CudaExtraMonitor.cpp \
            CudaFixedConstraint.cpp \
            CudaFixedTranslationConstraint.cpp \
            CudaLinearMovementConstraint.cpp \

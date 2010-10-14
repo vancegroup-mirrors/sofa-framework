@@ -87,7 +87,7 @@ namespace sofa
             void graphModified(bool);
             void undoEnabled(bool);
             void redoEnabled(bool);
-            void historyMessage(const std::string&);
+            void displayMessage(const std::string&);
         protected:
             void clearHistoryUndo();
             void clearHistory();

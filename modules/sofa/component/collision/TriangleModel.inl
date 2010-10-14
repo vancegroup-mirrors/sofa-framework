@@ -134,10 +134,13 @@ namespace sofa
         const unsigned nquads = _topology->getNbQuads();
         const unsigned newsize = ntris+2*nquads;
 
-        int revision = _topology->getRevision();
-        if (revision == meshRevision && newsize==(unsigned)size) {
-          return;
-        }
+        //int revision = _topology->getRevision();
+        //if (newsize==(unsigned)size)
+        //{
+            //Mesh revision is deprecated in BaseMeshTopology
+            //if(revision == meshRevision)
+            //return;
+        //}
         needsUpdate=true;
 
         resize(newsize);
@@ -187,7 +190,7 @@ namespace sofa
         }
         updateFlags();
         updateNormals();
-        meshRevision = revision;
+        //meshRevision = revision;
       }
 
       template<class DataTypes>
@@ -272,7 +275,7 @@ namespace sofa
       void TTriangleModel<DataTypes>::handleTopologyChange()
       {
         //bool debug_mode = false;
-
+        updateFromTopology();
         if (triangles != &mytriangles)
         {
           // We use the same triangle array as the topology -> only resize and recompute flags
@@ -639,8 +642,8 @@ namespace sofa
       {
         if (getContext()->getShowCollisionModels())
         {
-          if( size != _topology->getNbTriangles())
-            updateFromTopology();
+          //if( size != _topology->getNbTriangles())
+          //  updateFromTopology();
 
           if (bothSide.getValue() || getContext()->getShowWireFrame())
             simulation::getSimulation()->DrawUtility.setPolygonMode(0,getContext()->getShowWireFrame());
@@ -742,7 +745,7 @@ namespace sofa
       void TTriangleModel<DataTypes>::computeBoundingTree(int maxDepth)
       {
         CubeModel* cubeModel = createPrevious<CubeModel>();
-        updateFromTopology();
+        //updateFromTopology();
 
         if (needsUpdate && !cubeModel->empty()) cubeModel->resize(0);
 
@@ -851,7 +854,7 @@ namespace sofa
       void TTriangleModel<DataTypes>::computeContinuousBoundingTree(double dt, int maxDepth)
       {	
         CubeModel* cubeModel = createPrevious<CubeModel>();
-        updateFromTopology();
+        //updateFromTopology();
         if (needsUpdate) cubeModel->resize(0);
         if (!isMoving() && !cubeModel->empty() && !needsUpdate) return; // No need to recompute BBox if immobile
 

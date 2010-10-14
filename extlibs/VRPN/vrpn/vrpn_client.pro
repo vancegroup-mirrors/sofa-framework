@@ -10,7 +10,7 @@ CONFIG += $$CONFIGLIBRARIES
 
 QUATINCLUDES = ../quat
 
-LIBS += -ldl -lvrpn_quat
+LIBS += -ldl -lvrpn_quat$$LIBSUFFIX
 contains(DEFINES,VRPN_USE_WIIUSE){
 	LIBS += -lwiiuse
 }

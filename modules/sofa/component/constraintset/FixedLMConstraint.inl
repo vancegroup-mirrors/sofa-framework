@@ -169,7 +169,7 @@ namespace sofa
 
 
       template<class DataTypes>
-      void FixedLMConstraint<DataTypes>::writeConstraintEquations(VecId id, ConstOrder Order)
+      void FixedLMConstraint<DataTypes>::writeConstraintEquations(unsigned int& lineNumber, VecId id, ConstOrder Order)
       {
 
         typedef core::behavior::BaseMechanicalState::VecId VecId;
@@ -180,7 +180,7 @@ namespace sofa
           {
             const unsigned int index = *it;
 
-            core::behavior::BaseLMConstraint::ConstraintGroup *constraint = this->addGroupConstraint(Order);
+            core::behavior::ConstraintGroup *constraint = this->addGroupConstraint(Order);
             SReal correctionX=0,correctionY=0,correctionZ=0;
             switch(Order)
               {
@@ -211,9 +211,9 @@ namespace sofa
                 }
               };
             
-            constraint->addConstraint( idxX[counter], -correctionX);
-            constraint->addConstraint( idxY[counter], -correctionY);
-            constraint->addConstraint( idxZ[counter], -correctionZ);
+            constraint->addConstraint( lineNumber, idxX[counter], -correctionX);
+            constraint->addConstraint( lineNumber, idxY[counter], -correctionY);
+            constraint->addConstraint( lineNumber, idxZ[counter], -correctionZ);
             
           }
       }

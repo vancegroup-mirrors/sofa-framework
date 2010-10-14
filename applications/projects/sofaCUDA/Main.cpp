@@ -243,7 +243,7 @@ if(dynamicGpuPrioritary)
             if(i%20==0)
               mycudaPrintMem();
 #endif
-                std::cerr << "All Time: " << ((CTime::getRefTime()-t2)/(CTime::getRefTicksPerSec()/1000))*0.001 << " seconds " << std::endl;
+//                std::cerr << "All Time: " << ((CTime::getRefTime()-t2)/(CTime::getRefTicksPerSec()/1000))*0.001 << " seconds " << std::endl;
 		if (save)
 		{
 			if(interval&&i%interval==1){

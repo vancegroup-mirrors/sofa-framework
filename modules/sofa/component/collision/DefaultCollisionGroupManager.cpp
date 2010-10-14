@@ -76,8 +76,8 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 	for(sofa::helper::vector<Contact*>::const_iterator cit = contacts.begin(); cit != contacts.end(); cit++)
 	{
 		Contact* contact = *cit;
-                simulation::Node* group1 = getIntegrationNode(contact->getCollisionModels().first);
-                simulation::Node* group2 = getIntegrationNode(contact->getCollisionModels().second);
+        simulation::Node* group1 = getIntegrationNode(contact->getCollisionModels().first);
+        simulation::Node* group2 = getIntegrationNode(contact->getCollisionModels().second);
 		simulation::Node* group = NULL;
 		if (group1==NULL || group2==NULL)
 		{
@@ -85,21 +85,23 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 		else if (group1 == group2)
 		{
 			// same group, no new group necessary
-			group = group1;
+            group = group1;
 		}
 		else if (simulation::Node* parent=findCommonParent(group1,group2))
-		{
+        {
 			// we can merge the groups
 			// if solvers are compatible...
             bool mergeSolvers = (!group1->solver.empty() || !group2->solver.empty());
 			SolverSet solver;
             if (mergeSolvers)
                 solver = SolverMerger::merge(group1->solver[0], group2->solver[0]);
+
+
             //else std::cout << "New integration group below multi-group solver" << std::endl;
             if (!mergeSolvers || solver.odeSolver!=NULL)
 			{
 				bool group1IsColl = groupSet.find(group1)!=groupSet.end();
-				bool group2IsColl = groupSet.find(group2)!=groupSet.end();
+                bool group2IsColl = groupSet.find(group2)!=groupSet.end();
 				if (!group1IsColl && !group2IsColl)
 				{
 					char groupName[32];
@@ -115,7 +117,7 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
 					group->updateSimulationContext();
 					group->moveChild((simulation::Node*)group1);
 					group->moveChild((simulation::Node*)group2);
-					groupSet.insert(group);
+                    groupSet.insert(group);
 				}
 				else if (group1IsColl)
 				{
@@ -183,7 +185,7 @@ void DefaultCollisionGroupManager::createGroups(core::objectmodel::BaseContext* 
                     group->removeObject(solver2);
                     delete solver2;
                 }
-                if (solver.linearSolver)
+                if (solver.odeSolver)
                     group->addObject(solver.odeSolver);
 				if (solver.linearSolver)
 				    group->addObject(solver.linearSolver);

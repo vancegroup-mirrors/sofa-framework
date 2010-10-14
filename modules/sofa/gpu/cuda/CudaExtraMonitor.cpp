@@ -16,51 +16,51 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include "BaseConstraint.h"
+#include "CudaTypes.h"
+
+#include <sofa/component/misc/ExtraMonitor.h>
+#include <sofa/component/misc/ExtraMonitor.inl>
+#include <sofa/component/misc/Monitor.inl>
+
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
 
-namespace core
+namespace component
 {
 
-namespace behavior
+namespace misc
 {
 
+template class ExtraMonitor<gpu::cuda::CudaRigid3fTypes>;
 
-void BaseConstraint::getConstraintViolation(defaulttype::BaseVector *v, VecId vId, ConstOrder /*order*/ )
+}// namespace misc
+
+}// namespace component
+
+
+namespace gpu
 {
-	if (vId.type == VecId::V_COORD)
-	{
-		bool freePos = false;
 
-		if (vId == VecId::freePosition())
-			freePos = true;
-			
-		getConstraintValue(v, freePos);
-	}
-	else if (vId.type == VecId::V_DERIV)
-	{
-
-	}
-}
-
-void BaseConstraint::projectResponse(double **)
+namespace cuda
 {
-}
 
+SOFA_DECL_CLASS(CudaExtraMonitor)
 
+int ExtraMonitorCudaClass = core::RegisterObject("Supports GPU-side computation using CUDA")
+.add< component::misc::ExtraMonitor<CudaRigid3fTypes> >()
+;
 
-} // namespace behavior
+}// namespace cuda
 
-} // namespace core
+}// namespace gpu
 
-} // namespace sofa
+}// namespace sofa

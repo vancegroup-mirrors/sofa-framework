@@ -94,7 +94,7 @@ void BoxROI<DataTypes>::init()
 {
     if (!f_X0.isSet())
     {
-		MechanicalState<DataTypes>* mstate;
+                BaseMechanicalState* mstate;
 		this->getContext()->get(mstate);
 		if (mstate)
 		{
@@ -200,7 +200,7 @@ bool BoxROI<DataTypes>::isEdgeInBox(const Edge& e, const Vec6& b)
     CPos p1 =  DataTypes::getCPos((*x0)[e[1]]);
     CPos c = (p1+p0)*0.5;
 
-	return isPointInBox(c,b);
+    return isPointInBox(c,b);
 }
 
 template <class DataTypes>

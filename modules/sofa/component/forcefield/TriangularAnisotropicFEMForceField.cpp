@@ -87,7 +87,6 @@ void TriangularAnisotropicFEMForceField<DataTypes>::TRQSTriangleCreationFunction
 	if (ff) {
 		
 		const Triangle &t = ff->_topology->getTriangle(triangleIndex);
-
 		Index a = t[0];
 		Index b = t[1];
 		Index c = t[2];
@@ -115,7 +114,8 @@ void TriangularAnisotropicFEMForceField<DataTypes>::init()
 	//reinit();
 }
 
-template <class DataTypes>void TriangularAnisotropicFEMForceField<DataTypes>::reinit()
+template <class DataTypes>
+void TriangularAnisotropicFEMForceField<DataTypes>::reinit()
 {
 	localFiberDirection.beginEdit();
 	//f_poisson2.setValue(Inherited::f_poisson.getValue()*(f_young2.getValue()/Inherited::f_young.getValue()));
@@ -186,13 +186,16 @@ void TriangularAnisotropicFEMForceField<DataTypes>::computeMaterialStiffness(int
 	const helper::vector<Real> & young2Array = f_young2.getValue();
 	const helper::vector<Real> & poissonArray = Inherited::f_poisson.getValue();
 	const helper::vector<Real> & poisson2Array = f_poisson2.getValue();
-	
-	Q11 = youngArray[i] /(1-poissonArray[i]*poisson2Array[i]);
-	Q12 = poissonArray[i]*young2Array[i]/(1-poissonArray[i]*poisson2Array[i]);
-	Q22 = young2Array[i]/(1-poissonArray[i]*poisson2Array[i]);
-	Q66 = (Real)(youngArray[i] / (2.0*(1 + poissonArray[i])));
-	
 
+    unsigned int index = 0;
+    if (i < (int) youngArray.size() )
+        index = i;
+
+    Q11 = youngArray[index] /(1-poissonArray[index]*poisson2Array[index]);
+    Q12 = poissonArray[index]*young2Array[index]/(1-poissonArray[index]*poisson2Array[index]);
+    Q22 = young2Array[index]/(1-poissonArray[index]*poisson2Array[index]);
+    Q66 = (Real)(youngArray[index] / (2.0*(1 + poissonArray[index])));
+	
 	//if (i >= (int) localFiberDirection.size())
 	//	localFiberDirection.resize(i+1);
     
@@ -211,7 +214,7 @@ void TriangularAnisotropicFEMForceField<DataTypes>::computeMaterialStiffness(int
         double theta = (double)f_theta.getValue()*M_PI/180.0;	
         fiberDirGlobal = Coord((Real)cos(theta), (Real)sin(theta), 0); // was fiberDir
     }
-
+    
     helper::vector<Deriv>& lfd = *(localFiberDirection.beginEdit());
 
     Deriv& fiberDirLocal = lfd[i]; // orientation of the fiber in the local frame of the element (orthonormal frame)
@@ -276,12 +279,12 @@ void TriangularAnisotropicFEMForceField<DataTypes>::computeMaterialStiffness(int
  	tinfo->materialMatrix[2][1] = K26;
  	tinfo->materialMatrix[2][2] = K66;
 
- 	tinfo->materialMatrix *= (Real)(1.0/12.0);
+        //tinfo->materialMatrix *= (Real)(1.0/12.0);
 	
-	//sout << "Young1=" << Inherited::f_young.getValue() << endl;
-	//sout << "Young2=" << f_young2.getValue() << endl;
-	//sout << "Poisson1=" << Inherited::f_poisson.getValue() << endl;
-	//sout << "Poisson2=" << f_poisson2.getValue() << endl;
+	//serr << "Young1=" << Inherited::f_young.getValue() << endl;
+	//serr << "Young2=" << f_young2.getValue() << endl;
+	//serr << "Poisson1=" << Inherited::f_poisson.getValue() << endl;
+	//serr << "Poisson2=" << f_poisson2.getValue() << endl;
 
 	localFiberDirection.endEdit();
 	Inherited::triangleInfo.endEdit();

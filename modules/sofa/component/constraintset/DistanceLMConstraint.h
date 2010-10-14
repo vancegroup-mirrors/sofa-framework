@@ -96,7 +96,7 @@ namespace sofa
 
 	  // -- LMConstraint interface
       void buildConstraintMatrix(unsigned int &constraintId, core::VecId position);
-      void writeConstraintEquations(VecId id, ConstOrder order);
+      void writeConstraintEquations(unsigned int& lineNumber, VecId id, ConstOrder order);
 
 
 

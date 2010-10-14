@@ -183,51 +183,52 @@ namespace constraintset
 
         };
 
-      /* ACTION 3 : gets the vector of constraint values */
-      /* ACTION 3 : gets the vector of constraint values */
-      class MechanicalGetConstraintValueVisitor : public simulation::MechanicalVisitor
-        {
-        public:
+/* ACTION 3 : gets the vector of constraint values */
+/* ACTION 3 : gets the vector of constraint values */
+class MechanicalGetConstraintValueVisitor : public simulation::MechanicalVisitor
+{
+public:
 
-        MechanicalGetConstraintValueVisitor(BaseVector *v): _v(v) // , _numContacts(numContacts)
-          {
+	MechanicalGetConstraintValueVisitor(BaseVector *v): _v(v) // , _numContacts(numContacts)
+	{
 #ifdef SOFA_DUMP_VISITOR_INFO
-            setReadWriteVectors();
+		setReadWriteVectors();
 #endif
-          }
+	}
 
-          virtual Result fwdConstraintSet(simulation::Node* node, core::behavior::BaseConstraintSet* cSet)
-          {
-            if (core::behavior::BaseConstraint *c=dynamic_cast<core::behavior::BaseConstraint*>(cSet))
-            {
-              //sout << c->getName()<<"->getConstraintValue()"<<sendl;
-              ctime_t t0 = begin(node, c);
-              c->getConstraintValue(_v /*, _numContacts*/);
-              end(node, c, t0);
-            }
-            return RESULT_CONTINUE;
-          }
+	virtual Result fwdConstraintSet(simulation::Node* node, core::behavior::BaseConstraintSet* cSet)
+	{
+		if (core::behavior::BaseConstraint *c=dynamic_cast<core::behavior::BaseConstraint*>(cSet))
+		{
+			//sout << c->getName()<<"->getConstraintValue()"<<sendl;
+			ctime_t t0 = begin(node, c);
+			//c->getConstraintValue(_v);
+			c->getConstraintViolation(_v, VecId::freePosition());
+			end(node, c, t0);
+		}
+		return RESULT_CONTINUE;
+	}
 
+	// This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+	virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::behavior::BaseMechanicalMapping* /*map*/)
+	{
+		return false; // !map->isMechanical();
+	}
 
-          // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
-          virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::behavior::BaseMechanicalMapping* /*map*/)
-          {
-              return false; // !map->isMechanical();
-          }
-
-          /// Return a class name for this visitor
-          /// Only used for debugging / profiling purposes
-          virtual const char* getClassName() const { return "MechanicalGetConstraintValueVisitor";}
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalGetConstraintValueVisitor";}
 
 #ifdef SOFA_DUMP_VISITOR_INFO
-          void setReadWriteVectors()
-          {
-          }
+	void setReadWriteVectors()
+	{
+	}
 #endif
-        private:
-          BaseVector* _v; // vector for constraint values
-          // unsigned int &_numContacts; // we need an offset to fill the vector _v if differents contact class are created
-        };
+
+private:
+	BaseVector* _v; // vector for constraint values
+	// unsigned int &_numContacts; // we need an offset to fill the vector _v if differents contact class are created
+};
 
 
 class MechanicalGetConstraintInfoVisitor : public simulation::MechanicalVisitor

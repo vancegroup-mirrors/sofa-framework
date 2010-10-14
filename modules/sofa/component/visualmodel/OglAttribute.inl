@@ -58,8 +58,9 @@ namespace sofa
 
       template < int size, unsigned int type, class DataTypes>
       OglAttribute< size, type, DataTypes>::~OglAttribute()
-      {
-         glDeleteBuffersARB(1, &_abo);
+      {        
+        if (_abo != GLuint(-1) )
+          glDeleteBuffersARB(1, &_abo);
       }
 
 

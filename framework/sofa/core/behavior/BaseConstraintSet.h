@@ -31,6 +31,8 @@
 #include <sofa/core/VecId.h>
 #include <sofa/core/core.h>
 
+#include <sofa/defaulttype/BaseVector.h>
+
 
 namespace sofa
 {
@@ -41,46 +43,53 @@ namespace core
 namespace behavior
 {
 
-  class SOFA_CORE_API BaseConstraintSet : public virtual objectmodel::BaseObject
-  {
-  public:
-      SOFA_CLASS(BaseConstraintSet, objectmodel::BaseObject);
+class SOFA_CORE_API BaseConstraintSet : public virtual objectmodel::BaseObject
+{
+public:
+	SOFA_CLASS(BaseConstraintSet, objectmodel::BaseObject);
 
-      /// Description of the order of the constraint
-      enum ConstOrder{POS,VEL,ACC};
-
-
-      BaseConstraintSet()
-      : group(initData(&group, 0, "group", "ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle."))
-      {
-      }
-
-      virtual ~BaseConstraintSet() { }
-
-      virtual void resetConstraint(){};
-
-      /**
-       *  \brief Construct the Jacobian Matrix
-       *
-       *  \param constraintId is the index of the next constraint equation: when building the constraint matrix, you have to use this index, and then update it
-       *  \param x is the state vector containing the positions used to determine the line of the Jacobian Matrix
-       **/
-      virtual void buildConstraintMatrix(unsigned int &constraintId, core::VecId x=core::VecId::position())=0;
+	/// Description of the order of the constraint
+	enum ConstOrder{POS,VEL,ACC};
 
 
-      /// says if the constraint is holonomic or not
-      /// holonomic constraints can be processed using different methods such as :
-      /// projection - reducing the degrees of freedom - simple lagrange multiplier process
-      /// Non-holonomic constraints (like contact, friction...) need more specific treatments
-      virtual bool isHolonomic() {return false; }
+	BaseConstraintSet()
+	: group(initData(&group, 0, "group", "ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle."))
+	, m_constraintIndex(initData(&m_constraintIndex, (unsigned int)0, "constraintIndex", "Constraint index (first index in the right hand term resolution vector)"))
+	{
+	}
 
-      /// If the constraint is applied only on a subset of particles.
-      /// That way, we can optimize the time spent traversing the mappings
-      /// Deactivated by default. The constraints using only a subset of particles should activate the mask,
-      /// and during projectResponse(), insert the indices of the particles modified
-      virtual bool useMask() const {return false;}
+	virtual ~BaseConstraintSet() { }
+
+	virtual void resetConstraint(){};
+
+	/**
+	*  \brief Construct the Jacobian Matrix
+	*
+	*  \param constraintId is the index of the next constraint equation: when building the constraint matrix, you have to use this index, and then update it
+	*  \param x is the state vector containing the positions used to determine the line of the Jacobian Matrix
+	**/
+	virtual void buildConstraintMatrix(unsigned int &constraintId, core::VecId x=core::VecId::position()) = 0;
+
+	/// Construct the Constraint violations vector
+	virtual void getConstraintViolation(defaulttype::BaseVector *v, VecId vId, ConstOrder order = POS) = 0;
+
+
+	/// says if the constraint is holonomic or not
+	/// holonomic constraints can be processed using different methods such as :
+	/// projection - reducing the degrees of freedom - simple lagrange multiplier process
+	/// Non-holonomic constraints (like contact, friction...) need more specific treatments
+	virtual bool isHolonomic() {return false; }
+
+	/// If the constraint is applied only on a subset of particles.
+	/// That way, we can optimize the time spent traversing the mappings
+	/// Deactivated by default. The constraints using only a subset of particles should activate the mask,
+	/// and during projectResponse(), insert the indices of the particles modified
+	virtual bool useMask() const {return false;}
+
 protected:
-  Data<int> group;
+
+	Data< int > group;
+	Data< unsigned int > m_constraintIndex; /// Constraint index (first index in the right hand term resolution vector)
 };
 
 } // namespace behavior

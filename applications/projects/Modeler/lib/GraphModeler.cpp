@@ -27,6 +27,7 @@
 #include "GraphModeler.h"
 #include "AddPreset.h"
 
+
 #include <sofa/core/ComponentLibrary.h>
 #include <sofa/core/objectmodel/ConfigurationSetting.h>
 
@@ -42,6 +43,7 @@
 #include <sofa/simulation/common/xml/DataElement.h>
 #include <sofa/simulation/common/xml/XML.h>
 #include <sofa/simulation/common/XMLPrintVisitor.h>
+
 
 
 #ifdef SOFA_QT4
@@ -88,7 +90,7 @@ namespace sofa
           connect(historyManager, SIGNAL(undoEnabled(bool)),   this, SIGNAL(undoEnabled(bool)));
           connect(historyManager, SIGNAL(redoEnabled(bool)),   this, SIGNAL(redoEnabled(bool)));
           connect(historyManager, SIGNAL(graphModified(bool)), this, SIGNAL(graphModified(bool)));
-          connect(historyManager, SIGNAL(historyMessage(const std::string&)), this, SIGNAL(historyMessage(const std::string&)));
+          connect(historyManager, SIGNAL(displayMessage(const std::string&)), this, SIGNAL(displayMessage(const std::string&)));
 
 #ifdef SOFA_QT4
       connect(this, SIGNAL(doubleClicked ( Q3ListViewItem *)), this, SLOT( doubleClick(Q3ListViewItem *)));
@@ -290,23 +292,30 @@ namespace sofa
       }
 
 
-
-
-      BaseObject *GraphModeler::getObject(Q3ListViewItem *item)
+      Base* GraphModeler::getComponent(Q3ListViewItem *item) const
       {
+        if (!item) return NULL;
         std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it;
         for (it = graphListener->items.begin();it != graphListener->items.end();it++)
         {
           if (it->second == item)
           {
-            return dynamic_cast< BaseObject *>(it->first);
+            return it->first;
           }
         }
         return NULL;
       }
 
 
-      GNode *GraphModeler::getGNode(const QPoint &pos)
+
+      BaseObject *GraphModeler::getObject(Q3ListViewItem *item) const
+      {
+        Base* component=getComponent(item);
+        return dynamic_cast<BaseObject*>(component);
+      }
+
+
+      GNode *GraphModeler::getGNode(const QPoint &pos) const
       {
         Q3ListViewItem *item = itemAt(pos);
         if (!item) return NULL;
@@ -315,36 +324,20 @@ namespace sofa
 
 
 
-      GNode *GraphModeler::getGNode(Q3ListViewItem *item)
+      GNode *GraphModeler::getGNode(Q3ListViewItem *item) const
       {
         if (!item) return NULL;
-        sofa::core::objectmodel::Base *object;
-        std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it;
-        for (it = graphListener->items.begin();it != graphListener->items.end();it++)
-        {
-          if (it->second == item)
-          {
-            object = it->first;
-            break;
-          }
-        }
-        if (it == graphListener->items.end()) return NULL;
+        sofa::core::objectmodel::Base *component=getComponent(item);
 
-        if (dynamic_cast<GNode*>(it->first)) return dynamic_cast<GNode*>(it->first);
+        std::map<core::objectmodel::Base*, Q3ListViewItem* >::iterator it;
+
+        if (GNode *node=dynamic_cast<GNode*>(component)) return node;
         else
         {
           item = item->parent();
-          for (it = graphListener->items.begin();it != graphListener->items.end();it++)
-          {
-            if (it->second == item)
-            {
-              object = it->first;
-              break;
-            }
-          }
-          if (it == graphListener->items.end()) return NULL;
-          if (dynamic_cast<GNode*>(it->first)) return dynamic_cast<GNode*>(it->first);
-          else return NULL;
+          component=getComponent(item);
+          if (GNode *node=dynamic_cast<GNode*>(component)) return node;
+          return NULL;
         }
       }
 
@@ -466,6 +459,7 @@ namespace sofa
 //        }
 
         contextMenu->insertItem("Modify"  , this, SLOT( openModifyObject()));
+        contextMenu->insertItem("GlobalModification"  , this, SLOT( globalModification()));
         contextMenu->popup ( point, index );
 
       }
@@ -544,6 +538,25 @@ namespace sofa
       }
 
 
+      void GraphModeler::globalModification()
+      {
+        //Get all the components which can be modified
+        helper::vector< Q3ListViewItem* > selection;
+        getSelectedItems(selection);
+
+        helper::vector< Q3ListViewItem* > hierarchySelection;
+        for (unsigned int i=0;i<selection.size();++i) getComponentHierarchy(selection[i], hierarchySelection);
+
+        helper::vector< Base* > allComponentsSelected;
+        for (unsigned int i=0;i<hierarchySelection.size();++i) allComponentsSelected.push_back(getComponent(hierarchySelection[i]));
+
+        sofa::gui::qt::GlobalModification *window=new sofa::gui::qt::GlobalModification(allComponentsSelected, historyManager);
+
+        connect(window, SIGNAL(displayMessage(const std::string&)), this, SIGNAL(displayMessage(const std::string&)));
+
+        window->show();
+      }
+
 
       GNode *GraphModeler::buildNodeFromBaseElement(GNode *node,xml::BaseElement *elem, bool saveHistory)
       {
@@ -575,7 +588,7 @@ namespace sofa
         {
           if (std::string(it->getClass()) == std::string("Node"))
           {
-            buildNodeFromBaseElement(newNode, it,true); //Desactivate saving history
+            buildNodeFromBaseElement(newNode, it,true);
           }
           else
           {
@@ -860,6 +873,22 @@ namespace sofa
         }
 
       }
+
+      void GraphModeler::changeComponentDataValue(const std::string &name, const std::string &value, Base* component) const
+      {
+        if (!component) return;
+        historyManager->beginModification(component);
+        const std::vector< BaseData* > &data=component->findGlobalField(name);
+        if (data.empty()) //this data is not present in the current component
+          return;
+
+        std::string v(value);
+        for (unsigned int i=0;i<data.size();++i) data[i]->read(v);
+
+        historyManager->endModification(component);
+
+      }
+
 
       Base *GraphModeler::getComponentAbove(Q3ListViewItem *item)
       {

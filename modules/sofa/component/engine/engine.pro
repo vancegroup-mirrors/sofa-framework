@@ -59,7 +59,9 @@ HEADERS += initEngine.h \
            SubsetTopology.h \
            SubsetTopology.inl \
            RigidEngine.h \
-           RigidEngine.inl
+           RigidEngine.inl \
+           ValuesFromPositions.h \
+           ValuesFromPositions.inl
 
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
@@ -84,7 +86,8 @@ SOURCES += initEngine.cpp \
            Vertex2Frame.cpp \
            TextureInterpolation.cpp \
            SubsetTopology.cpp \
-           RigidEngine.cpp
+           RigidEngine.cpp \
+           ValuesFromPositions.cpp
            
            
 

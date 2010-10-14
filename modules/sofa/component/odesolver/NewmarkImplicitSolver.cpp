@@ -63,8 +63,8 @@ void NewmarkImplicitSolver::solve(double dt,sofa::core::behavior::BaseMechanical
     MultiVector f(this, VecId::force());
     MultiVector b(this, VecId::V_DERIV);
     MultiVector a(this, VecId::V_DERIV);
-    MultiVector aResult(this, VecId::V_DERIV);
-	MultiVector dx(this,VecId::dx());
+    MultiVector aResult(this, VecId(VecId::V_DERIV,14));
+        //MultiVector dx(this,VecId::dx());
 
 
     const double h = dt;
@@ -120,7 +120,7 @@ finally computes the new position and velocity.
 		
 	}
 
-    addMBKv(b, -rM, 0,rK+h);                                                    
+    addMBKv(b, -rM, 1,rK+h);                                                    
   // b += -h K v
 
     if( verbose )
@@ -135,7 +135,7 @@ finally computes the new position and velocity.
 
     MultiMatrix matrix(this);
 
-	matrix = MechanicalMatrix::K * (-h*h*beta - h*rK) + MechanicalMatrix::B*(-h)*gamma + MechanicalMatrix::M * (1 + h*gamma*rM);
+	matrix = MechanicalMatrix::K * (-h*h*beta - h*rK*gamma) + MechanicalMatrix::B*(-h)*gamma + MechanicalMatrix::M * (1 + h*gamma*rM);
     
     //if( verbose )
     //	serr<<"NewmarkImplicitSolver, matrix = "<< MechanicalMatrix::K *(h*h*beta + h*rK) + MechanicalMatrix::M * (1 + h*gamma*rM) << " = " << matrix<<sendl;

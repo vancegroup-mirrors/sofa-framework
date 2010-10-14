@@ -1628,7 +1628,7 @@ public:
 class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public MechanicalVisitor
 {
  public:
- MechanicalWriteLMConstraint(){
+  MechanicalWriteLMConstraint():offset(0){
 #ifdef SOFA_DUMP_VISITOR_INFO
     setReadWriteVectors();
 #endif
@@ -1657,7 +1657,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public Mechanical
     }
 
 
-  virtual void clear(){datasC.clear();}
+  virtual void clear(){datasC.clear(); offset=0;}
   virtual const std::vector< core::behavior::BaseLMConstraint *> &getConstraints() const {return datasC;}
   virtual unsigned int numConstraint(){return datasC.size();}
 
@@ -1678,6 +1678,7 @@ class SOFA_SIMULATION_COMMON_API MechanicalWriteLMConstraint : public Mechanical
 #endif
 
  protected:
+    unsigned int offset;
     core::behavior::BaseLMConstraint::ConstOrder order;
     core::VecId id;
     helper::vector< core::behavior::BaseLMConstraint *> datasC;

@@ -31,6 +31,7 @@
 
 #include "AddPreset.h"
 #include "GraphHistoryManager.h"
+#include "GlobalModification.h"
 #include <sofa/core/SofaLibrary.h>
 
 #include <sofa/simulation/common/Simulation.h>
@@ -138,6 +139,22 @@ namespace sofa
       }
     }
 
+
+    template <class T>
+    void getComponentHierarchy(Q3ListViewItem *item, T &hierarchy)
+    {
+      if (!item) return;
+      hierarchy.push_back(item);
+      item = item->firstChild();
+      if (!item) return;
+      getComponentHierarchy(item, hierarchy);
+      while (item->nextSibling())
+      {
+        item = item->nextSibling();
+        getComponentHierarchy(item, hierarchy);
+      }
+    }
+
 	/// Says if there is something to undo
         bool isUndoEnabled(){return historyManager->isUndoEnabled();}
 	/// Says if there is something to redo
@@ -181,7 +198,7 @@ namespace sofa
         void undoEnabled(bool);
         void redoEnabled(bool);
         void graphModified(bool);
-        void historyMessage(const std::string &);
+        void displayMessage(const std::string &);
 
 	public slots:
         void editUndo(){emit undo();}
@@ -204,7 +221,10 @@ namespace sofa
 	/// Context Menu Operation: expanding all the nodes below the current one
 	void expandNode();
 	/// Context Menu Operation: loading a node as a child of the current one
-	GNode *loadNode();
+	GNode *loadNode();    
+    /// Context Menu Operation: process to a global modification of a Data
+    void globalModification();
+
 	/// Load a file given the node in which it will be added
         GNode *loadNode(GNode*, std::string, bool saveHistory=true);
 	/// Context Menu Operation: loading a preset: open the window of configuration
@@ -227,17 +247,21 @@ namespace sofa
 
         bool getSaveFilename(std::string &filename);
 	/// Given a position, get the GNode corresponding (if the point is on a component, it returns the GNode parent)
-	GNode      *getGNode(const QPoint &pos); 
+    GNode      *getGNode(const QPoint &pos) const;
 
+    /// Given a item of the list, return the GNode corresponding
+    Base      *getComponent(Q3ListViewItem *item) const;
 	/// Given a item of the list, return the GNode corresponding
-	GNode      *getGNode(Q3ListViewItem *item);
+    GNode      *getGNode(Q3ListViewItem *item) const;
 	/// Get the component corresponding to the item, NULL if the item is a GNode
-	BaseObject *getObject(Q3ListViewItem *item);
+    BaseObject *getObject(Q3ListViewItem *item) const;
 
 	/// Insert a GNode in the scene
 	GNode      *addGNode(GNode *parent, GNode *node=NULL, bool saveHistory=true);	
 	/// Insert a Component in the scene
 	BaseObject *addComponent(GNode *parent, const ClassEntry* entry, const std::string& templateName, bool saveHistory=true, bool displayWarning=true );
+
+     void changeComponentDataValue(const std::string &name, const std::string &value, Base* component) const ;
 
 	/// Find the Sofa Component above the item
 	Base *getComponentAbove(Q3ListViewItem *item);

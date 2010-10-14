@@ -74,20 +74,20 @@ protected:
 	  int age;      ///< how old is this contact
 
 
-          Contact(int _m1=0, int _m2=0, int _index1=0, int _index2=0, Deriv _norm=Deriv(), Real _dist=(Real)0, Real _ks=(Real)0, Real _mu_s=(Real)0, Real _mu_v=(Real)0, Real _pen=(Real)0, int _age=0)
+		Contact(int _m1=0, int _m2=0, int _index1=0, int _index2=0, Deriv _norm=Deriv(), Real _dist=(Real)0, Real _ks=(Real)0, Real _mu_s=(Real)0, Real _mu_v=(Real)0, Real _pen=(Real)0, int _age=0)
 	    : m1(_m1),m2(_m2),index1(_index1),index2(_index2),norm(_norm),dist(_dist),ks(_ks),mu_s(_mu_s),mu_v(_mu_v),pen(_pen),age(_age)
 	    {
 	    }
 
 
         inline friend std::istream& operator >> ( std::istream& in, Contact& c ){
-	  in>>c.m1>>c.m2>>c.index1>>c.index2>>c.norm>>c.dist>>c.ks>>c.mu_s>>c.mu_v>>c.pen>>c.age;
+			in>>c.m1>>c.m2>>c.index1>>c.index2>>c.norm>>c.dist>>c.ks>>c.mu_s>>c.mu_v>>c.pen>>c.age;
             return in;
         }
 
         inline friend std::ostream& operator << ( std::ostream& out, const Contact& c ){
-	  out << c.m1<< " " <<c.m2<< " " << c.index1<< " " <<c.index2<< " " <<c.norm<< " " <<c.dist<<" " <<c.ks<<" " <<c.mu_s<<" " <<c.mu_v<<" " <<c.pen<<" " <<c.age;
-	  return out;
+			out << c.m1<< " " <<c.m2<< " " << c.index1<< " " <<c.index2<< " " <<c.norm<< " " <<c.dist<<" " <<c.ks<<" " <<c.mu_s<<" " <<c.mu_v<<" " <<c.pen<<" " <<c.age;
+			return out;
         }
 	};
 	
@@ -102,7 +102,7 @@ public:
 	{
 	}
 	
-        PenalityContactForceField()
+	PenalityContactForceField()
 	{
 	}
 	
@@ -114,16 +114,18 @@ public:
 	
 	virtual void addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2, double kFactor, double bFactor);
 	
-        virtual double getPotentialEnergy(const VecCoord&, const VecCoord&) const;
+	virtual double getPotentialEnergy(const VecCoord&, const VecCoord&) const;
+
+	const helper::vector< Contact >& getContact() const { return contacts.getValue();};
 	 
 	// -- tool grabing utility
 	void grabPoint( const core::behavior::MechanicalState<defaulttype::Vec3Types> *tool, 
-			const helper::vector< unsigned int > &index, 
-                        helper::vector< std::pair< core::objectmodel::BaseObject*, defaulttype::Vec3f> > &result, 
-			helper::vector< unsigned int > &triangle,
-		        helper::vector< unsigned int > &index_point) ;
+					const helper::vector< unsigned int > &index, 
+                    helper::vector< std::pair< core::objectmodel::BaseObject*, defaulttype::Vec3f> > &result, 
+					helper::vector< unsigned int > &triangle,
+					helper::vector< unsigned int > &index_point) ;
 	
-        virtual bool useMask() const {return true;}
+	virtual bool useMask() const {return true;}
 
 	void draw();
 };

@@ -68,53 +68,6 @@ BaseCamera::~BaseCamera()
 }
 
 
-void BaseCamera::init()
-{
-        if(p_position.isSet())
-        {
-                if(!p_orientation.isSet())
-                {
-                        p_distance.setValue((p_lookAt.getValue() - p_position.getValue()).norm());
-
-                        Quat q  = getOrientationFromLookAt(p_position.getValue(), p_lookAt.getValue());
-                        p_orientation.setValue(q);
-                }
-                else if(!p_lookAt.isSet())
-                {
-                        //distance assumed to be set
-                        if(!p_distance.isSet())
-                                sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
-
-                        Vec3 lookat = getLookAtFromOrientation(p_position.getValue(), p_distance.getValue(), p_orientation.getValue());
-                        p_lookAt.setValue(lookat);
-                }
-                else
-                {
-                        serr << "Too many missing parameters ; taking default ..." << sendl;
-                }
-        }
-        else
-        {
-                if(p_lookAt.isSet() && p_orientation.isSet())
-                {
-                        //distance assumed to be set
-                        if(!p_distance.isSet())
-                                sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
-
-                        Vec3 pos = getPositionFromOrientation(p_lookAt.getValue(), p_distance.getValue(), p_orientation.getValue());
-                        p_position.setValue(pos);
-                }
-                else
-                {
-                        serr << "Too many missing parameters ; taking default ..." << sendl;
-                }
-        }
-
-        currentLookAt = p_lookAt.getValue();
-        currentDistance = p_distance.getValue();
-
-}
-
 void BaseCamera::translate(const Vec3& t)
 {
     Vec3 &pos = *p_position.beginEdit();
@@ -138,13 +91,6 @@ void BaseCamera::rotate(const Quat& r)
     rot = rot * r;
     rot.normalize();
     p_orientation.endEdit();
-}
-
-void BaseCamera::moveCamera(const Vec3 &p, const Quat &q)
-{
-    translate(p);
-    translateLookAt(p);
-    rotate(q);
 }
 
 BaseCamera::Vec3 BaseCamera::cameraToWorldCoordinates(const Vec3& p)
@@ -174,6 +120,52 @@ void BaseCamera::getOpenGLMatrix(double mat[16])
 	world_H_cam.inversed().writeOpenGlMatrix(mat);
 }
 
+void BaseCamera::init()
+{
+	if(p_position.isSet())
+	{
+		if(!p_orientation.isSet())
+		{
+			p_distance.setValue((p_lookAt.getValue() - p_position.getValue()).norm());
+
+			Quat q  = getOrientationFromLookAt(p_position.getValue(), p_lookAt.getValue());
+			p_orientation.setValue(q);
+		}
+		else if(!p_lookAt.isSet())
+		{
+			//distance assumed to be set
+			if(!p_distance.isSet())
+				sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
+
+			Vec3 lookat = getLookAtFromOrientation(p_position.getValue(), p_distance.getValue(), p_orientation.getValue());
+			p_lookAt.setValue(lookat);
+		}
+		else
+		{
+			serr << "Too many missing parameters ; taking default ..." << sendl;
+		}
+	}
+	else
+	{
+		if(p_lookAt.isSet() && p_orientation.isSet())
+		{
+			//distance assumed to be set
+			if(!p_distance.isSet())
+				sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
+
+			Vec3 pos = getPositionFromOrientation(p_lookAt.getValue(), p_distance.getValue(), p_orientation.getValue());
+			p_position.setValue(pos);
+		}
+		else
+		{
+			serr << "Too many missing parameters ; taking default ..." << sendl;
+		}
+	}
+
+	currentLookAt = p_lookAt.getValue();
+	currentDistance = p_distance.getValue();
+
+}
 
 void BaseCamera::reinit()
 {
@@ -206,9 +198,9 @@ BaseCamera::Quat BaseCamera::getOrientationFromLookAt(const BaseCamera::Vec3 &po
     yAxis = zAxis.cross(xAxis);
 
     Quat q;
-    q = Quat::createQuaterFromFrame(xAxis, yAxis, zAxis);
+    q = q.createQuaterFromFrame(xAxis, yAxis, zAxis);
     q.normalize();
-    return q;
+	return q;
 }
 
 
@@ -327,53 +319,6 @@ void BaseCamera::computeZ()
 
 	}
 }
-
-void BaseCamera::setView(const Vec3& position, const Quat &orientation)
-{
-    p_position.setValue(position);
-    p_orientation.setValue(orientation);
-    computeZ();
-}
-
-void BaseCamera::setDefaultView(const Vec3 & gravity)
-{
-    const Vec3 & minBBox = p_minBBox.getValue();
-    const Vec3 & maxBBox = p_maxBBox.getValue();
-    sceneCenter = (minBBox + maxBBox)*0.5;
-
-    //LookAt
-    p_lookAt.setValue(sceneCenter);
-    currentLookAt = p_lookAt.getValue();
-
-    //Orientation
-    Vec3 xAxis (1.0, 0.0, 0.0);
-    Vec3 yAxis = -gravity;
-    yAxis.normalize();
-
-    if( 1.0 - fabs(dot(xAxis, yAxis)) < 0.001)
-        xAxis = Vec3(0.0,1.0,0.0);
-
-    Vec3 zAxis = xAxis.cross(yAxis);
-    zAxis.normalize();
-    xAxis = yAxis.cross(zAxis);
-    xAxis.normalize();
-    Quat q = Quat::createQuaterFromFrame(xAxis, yAxis, zAxis);
-    q.normalize();
-    p_orientation.setValue(q);
-
-    //Distance
-    double coeff = 3.0;
-    double dist = (minBBox - sceneCenter).norm() * coeff;
-    p_distance.setValue(dist);
-    currentDistance = dist;
-
-    //Position
-    Vec3 pos = currentLookAt + zAxis*dist;
-    p_position.setValue(pos);
-
-    computeZ();
-}
-
 
 } // namespace visualmodel
 

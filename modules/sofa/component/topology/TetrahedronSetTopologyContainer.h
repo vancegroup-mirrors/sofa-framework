@@ -452,6 +452,15 @@ namespace topology
 		 */
 		virtual TetrahedraAroundTriangle& getTetrahedraAroundTriangleForModification(const TriangleID triangleIndex); 
 
+
+      /** \brief function to create appropriate pointer to TopologyEngine class.
+        *
+        * @return false if creation failed
+        */
+      virtual bool createTopologyEngine();
+
+      /** \brief return pointer to topologyEngine*/
+      const sofa::core::topology::TopologyEngine* getTetrahedronSetTopologyEngine();
 		
 	protected:
 
@@ -476,6 +485,8 @@ namespace topology
 		/// for each triangle provides the set of tetrahedra adjacent to that triangle.
 		sofa::helper::vector< TetrahedraAroundTriangle > m_tetrahedraAroundTriangle;
 		virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
+
+      sofa::component::topology::TetrahedronSetTopologyEngine* m_topologyEngine;
 	};
 
 } // namespace topology

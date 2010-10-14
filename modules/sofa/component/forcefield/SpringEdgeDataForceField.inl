@@ -198,8 +198,8 @@ void SpringEdgeDataForceField<DataTypes>::handleEvent( Event* e )
 		if ((tce) && (tce->getTopology()== this->getContext()->getMainTopology())) {
 			core::topology::BaseTopology *topology = static_cast<core::topology::BaseTopology *>(this->getContext()->getMainTopology());
 
-			std::list<const core::topology::TopologyChange *>::const_iterator itBegin=topology->beginChange();
-			std::list<const core::topology::TopologyChange *>::const_iterator itEnd=topology->endChange();
+			std::list<const core::topology::TopologyChange *>::const_iterator itBegin=topology->firstChange();
+			std::list<const core::topology::TopologyChange *>::const_iterator itEnd=topology->lastChange();
 			/// Topological events are handled by the EdgeData structure
 			springArray.handleTopologyEvents(itBegin,itEnd);
 		}

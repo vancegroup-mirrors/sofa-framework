@@ -63,6 +63,7 @@ namespace topology
    /** \brief Topological Engine which will handle all PointData */
    class PointSetTopologyEngine;
 
+
 	/** \brief A class for storing point related data. Automatically manages topology changes.
 	*
 	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
@@ -87,7 +88,7 @@ namespace topology
 
 
 		/// Creation function, called when adding elements.
-      typedef void (*t_createFunc)(int, void*, T&, const sofa::helper::vector< unsigned int > & /*ancestors*/, const sofa::helper::vector< double >& /*coefs*/);
+		typedef void (*t_createFunc)(int, void*, T&, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&);
 		/// Destruction function, called when deleting elements.
 		typedef void (*t_destroyFunc)(int, void*, T&);
 
@@ -209,8 +210,6 @@ namespace topology
 		/// Handle PointSetTopology related events, ignore others.
 		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
                                  std::list< const core::topology::TopologyChange *>::const_iterator &end );
-
-     // void update();
 
       /// Creation function, called when adding elements.
 		void setCreateFunction(t_createFunc createFunc) 

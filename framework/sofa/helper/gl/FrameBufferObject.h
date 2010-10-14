@@ -49,65 +49,62 @@ namespace helper
 namespace gl
 {
 
-    struct SOFA_HELPER_API fboParameters
-    {
-        GLint  depthInternalformat; // GL_DEPTHCOMPONENT16 GL_DEPTHCOMPONENT24...
-        GLint  colorInternalformat; // GL_RGB8, GL_RGB16...
-        GLenum colorFormat; // GL_RGB, GL_RGBA, GL_BGR...
-        GLenum colorType; // GL_UNSIGNED_BYTE GL_UNSIGNED_INT...
+struct SOFA_HELPER_API fboParameters
+{
+   GLint  depthInternalformat; // GL_DEPTHCOMPONENT16 GL_DEPTHCOMPONENT24...
+   GLint  colorInternalformat; // GL_RGB8, GL_RGB16...
+   GLenum colorFormat; // GL_RGB, GL_RGBA, GL_BGR... 
+   GLenum colorType; // GL_UNSIGNED_BYTE GL_UNSIGNED_INT...
 
-        fboParameters()
-        {
-            depthInternalformat = GL_DEPTH_COMPONENT24;
-            colorInternalformat = GL_RGBA8;
-            colorFormat = GL_RGBA;
-            colorType = GL_UNSIGNED_BYTE;
-        }
-    };
+   fboParameters()
+   {
+     depthInternalformat = GL_DEPTH_COMPONENT24;
+     colorInternalformat = GL_RGBA8;
+     colorFormat = GL_RGBA;
+     colorType = GL_UNSIGNED_BYTE;
+   }
+};
 
-    class SOFA_HELPER_API FrameBufferObject
-    {
-    private:
-        unsigned int width, height;
-        GLuint id;
-        GLuint depthTextureID, colorTextureID;
-        bool initialized;
-        fboParameters _fboParams;
-        bool depthTexture;
-        bool enableDepth;
-        bool enableColor;
-        sofa::helper::gl::DrawManager::MODEDISPLAY _systemDraw;
+class SOFA_HELPER_API FrameBufferObject 
+{
 
-    public:
-        FrameBufferObject(bool depthTexture = false, bool enableDepth = true, bool enableColor = true);
-        virtual ~FrameBufferObject();
+private:
+	unsigned int width, height;
+	GLuint id;
+	GLuint depthTexture, colorTexture;
+	bool initialized;
+  fboParameters _fboParams;
+  sofa::helper::gl::DrawManager::MODEDISPLAY _systemDraw;
+public:
+	FrameBufferObject();
+  virtual ~FrameBufferObject();
 
-        FrameBufferObject(const fboParameters& FboFormat, bool depthTexture = false, bool enableDepth = true, bool enableColor = true);
-        void setFormat(const fboParameters& fboParams) { _fboParams = fboParams; };
-        void setModeDisplay( const sofa::helper::gl::DrawManager::MODEDISPLAY systemDraw) { _systemDraw = systemDraw; };
+  FrameBufferObject(const fboParameters& FboFormat);
+  void setFormat(const fboParameters& fboParams) { _fboParams = fboParams; };
+  void setModeDisplay( const sofa::helper::gl::DrawManager::MODEDISPLAY systemDraw) { _systemDraw = systemDraw; };
 
-        void init(unsigned int width, unsigned height);
-        void destroy();
+	void init(unsigned int width, unsigned height);
+	void destroy();
 
-        void start();
-        void stop();
+	void start();
+	void stop();
 
-        bool checkFBO();
+  bool checkFBO();
 
-        void setSize(unsigned int width, unsigned height);
+	void setSize(unsigned int width, unsigned height);
 
-        GLuint getDepthTexture();
-        GLuint getColorTexture();
+	GLuint getDepthTexture();
+	GLuint getColorTexture();
 
-        void createDepthBuffer();
-        void createColorBuffer();
-        void initDepthBuffer();
-        void initColorBuffer();
 
-    private:
+	void createDepthBuffer();
+	void createColorBuffer();
+	void initDepthBuffer();
+	void initColorBuffer();
+private:
 #ifdef SOFA_GUI_QTOGREVIEWER
-        void _initOGRE( unsigned int width, unsigned int height);
-        Ogre::TexturePtr _texture;
+  void _initOGRE( unsigned int width, unsigned int height);
+  Ogre::TexturePtr _texture;
 #endif 
 
 

@@ -76,6 +76,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::CFTetrahedronCreationFunct
 		case SMALL :
 			ff->computeMaterialStiffness(tetrahedronIndex,a,b,c,d);
 			ff->initSmall(tetrahedronIndex,a,b,c,d);
+			ff->printStiffnessMatrix(tetrahedronIndex);////////////////////////////////////////////////////////
 			break;
 		case LARGE :
 			ff->computeMaterialStiffness(tetrahedronIndex,a,b,c,d);
@@ -92,8 +93,8 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::CFTetrahedronCreationFunct
 
 template <class DataTypes> void TetrahedralCorotationalFEMForceField<DataTypes>::handleTopologyChange()
 {
-	std::list<const TopologyChange *>::const_iterator itBegin=_topology->beginChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=_topology->endChange();
+	std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 	tetrahedronInfo.handleTopologyEvents(itBegin,itEnd);
 }
@@ -381,6 +382,8 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(M
         (1-2*poissonRatio)/(2*(1-poissonRatio));
 	materialMatrix *= (youngModulus*(1-poissonRatio))/((1+poissonRatio)*(1-2*poissonRatio));
 
+	//std::cout<<" C ="<<materialMatrix<<std::endl;
+
 	// divide by 36 times volumes of the element
 	const VecCoord *X0=this->mstate->getX0();
 
@@ -625,13 +628,12 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::initSmall(int i, Index&a, 
 	computeStrainDisplacement(tetrahedronInf[i].strainDisplacementMatrix, (*X0)[a], (*X0)[b], (*X0)[c], (*X0)[d] );
 
 	tetrahedronInfo.endEdit();
-
-	this->printStiffnessMatrix(i);////////////////////////////////////////////////////////////////
 }
 
 template<class DataTypes>
 void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall( Vector& f, const Vector & p,Index elementIndex )
 {
+    //serr<<"TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall"<<sendl;
 
 	const Tetrahedron t=_topology->getTetrahedron(elementIndex);
 	const VecCoord *X0=this->mstate->getX0();
@@ -681,7 +683,6 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::accumulateForceSmall( Vect
 
 		StiffnessMatrix JKJt,tmp;
 		computeStiffnessMatrix(JKJt,tmp,tetrahedronInf[elementIndex].materialMatrix,tetrahedronInf[elementIndex].strainDisplacementMatrix,Rot);
-
 
 		//erase the stiffness matrix at each time step
 		if(elementIndex==0)
@@ -1403,7 +1404,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::printStiffnessMatrix(int i
 
 	computeStiffnessMatrix(JKJt,tmp,tetrahedronInf[idTetra].materialMatrix,tetrahedronInf[idTetra].strainDisplacementMatrix,Rot);
 
-
+/*
 	std::cout<<"TetrahedralCorotationalFEMForceField<DataTypes>::  Element "<<idTetra <<"   ===STIFNESSMATRIX===="<<std::endl;
 	for(int inode=0;inode<4;inode++)
 	{
@@ -1427,7 +1428,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::printStiffnessMatrix(int i
 
 	//<<JKJt<<std::endl
 	std::cout<<"==============================================================="<<std::endl;
-
+*/
 }
 
 

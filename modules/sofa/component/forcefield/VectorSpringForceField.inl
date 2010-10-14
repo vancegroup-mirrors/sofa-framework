@@ -252,8 +252,8 @@ void VectorSpringForceField<DataTypes>::handleEvent( Event* e )
             sofa::component::topology::TopologyChangedEvent *tce=dynamic_cast<sofa::component::topology::TopologyChangedEvent *>(e);
             /// test that the event is a change of topology and that it
             if ((tce) && edgeMod /*&& (tce->getMeshTopology()== _topology )*/) {
-                std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=_topology->beginChange();
-                std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=_topology->endChange();
+                std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+                std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=_topology->lastChange();
                 /// Topological events are handled by the EdgeData structure
                 springArray.handleTopologyEvents(itBegin,itEnd);
             }

@@ -36,7 +36,6 @@
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
-#include <sofa/defaulttype/AffineTypes.h>
 
 #include <vector>
 #include <fstream>

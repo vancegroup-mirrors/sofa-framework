@@ -277,8 +277,8 @@ namespace sofa
         {
           // We use the same triangle array as the topology -> only resize and recompute flags
 
-          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=_topology->beginChange();
-          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=_topology->endChange();
+          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=_topology->lastChange();
           //elems.handleTopologyEvents(itBegin,itEnd);
 
           while( itBegin != itEnd )
@@ -325,8 +325,8 @@ namespace sofa
 
         if (topoMod) { // dynamic topology
 
-          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=_topology->beginChange();
-          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=_topology->endChange();
+          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+          std::list<const sofa::core::topology::TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 
           while( itBegin != itEnd )

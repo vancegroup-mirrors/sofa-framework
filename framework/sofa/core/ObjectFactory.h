@@ -30,6 +30,7 @@
 #include <sofa/helper/system/config.h>
 #include <sofa/core/objectmodel/BaseObjectDescription.h>
 #include <sofa/core/objectmodel/BaseContext.h>
+#include <boost/shared_ptr.hpp>
 /*
 #include <sofa/core/objectmodel/ContextObject.h>
 #include <sofa/core/VisualModel.h>
@@ -82,10 +83,10 @@ public:
     class Creator;
     class ClassEntry;
 
-    typedef std::map<std::string, Creator*>                 CreatorMap;
-    typedef std::list< std::pair<std::string, Creator*> > CreatorList;
-    typedef std::map<std::string, ClassEntry*>              ClassEntryMap;
-    typedef std::vector<ClassEntry*>                        ClassEntryList;
+    typedef std::map<std::string, Creator*> CreatorMap;
+    typedef std::list< std::pair< std::string, Creator* > > CreatorList;
+    typedef boost::shared_ptr<ClassEntry> ClassEntryPtr;
+    typedef std::map<std::string, ClassEntryPtr> ClassEntryMap;
 
     /// Abstract interface of objects used to create instances of a given type
     class Creator
@@ -133,7 +134,6 @@ public:
                 it != itEnd; ++it)
             {
                 delete it->second;
-                it->second = 0;
             }
         }
     };
@@ -141,21 +141,18 @@ public:
 protected:
 
     /// Main class registry
-    ClassEntryMap registry;
-    ClassEntryList classEntries;
+    std::map<std::string, ClassEntryPtr> registry;
 
 public:
 
-    ~ObjectFactory();
-
     /// Get an entry given a class name (or alias)
-    ClassEntry* getEntry(std::string classname);
+    ClassEntryPtr& getEntry(std::string classname);
 
     /// Test if a creator exists for a given classname
     bool hasCreator(std::string classname);
 
     /// Fill the given vector with all the registered classes
-    void getAllEntries(std::vector<ClassEntry*>& result);
+    void getAllEntries(std::vector<ClassEntryPtr>& result);
 
     /// Add an alias name for an already registered class
     ///
@@ -163,13 +160,13 @@ public:
     /// \param result   class pointed to by the new alias
     /// \param force    set to true if this method should override any entry already registered for this name
     /// \param previous (output) previous ClassEntry registered for this name
-    bool addAlias(std::string name, std::string result, bool force=false, ClassEntry** previous = NULL);
+    bool addAlias(std::string name, std::string result, bool force=false, ClassEntryPtr* previous = NULL);
 
     /// Reset an alias to a previous state
     ///
     /// \param name     name of the new alias
     /// \param previous previous ClassEntry that need to be registered back for this name
-    void resetAlias(std::string name, ClassEntry* previous);
+    void resetAlias(std::string name, ClassEntryPtr& previous);
 
     /// Create an object given a context and a description.
     objectmodel::BaseObject* createObject(objectmodel::BaseContext* context, objectmodel::BaseObjectDescription* arg);
@@ -184,13 +181,13 @@ public:
     }
 
     /// \copydoc addAlias
-    static bool AddAlias(std::string name, std::string result, bool force=false, ClassEntry** previous = NULL)
+    static bool AddAlias(std::string name, std::string result, bool force=false, ClassEntryPtr* previous = NULL)
     {
         return getInstance()->addAlias(name, result, force, previous);
     }
 
     /// \copydoc resetAlias
-    static void ResetAlias(std::string name, ClassEntry* previous)
+    static void ResetAlias(std::string name, ClassEntryPtr& previous)
     {
         getInstance()->resetAlias(name, previous);
     }

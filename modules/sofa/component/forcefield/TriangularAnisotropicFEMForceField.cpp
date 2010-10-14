@@ -138,8 +138,8 @@ template <class DataTypes>void TriangularAnisotropicFEMForceField<DataTypes>::re
 
 template <class DataTypes>void TriangularAnisotropicFEMForceField<DataTypes>::handleTopologyChange()
 {
-	std::list<const TopologyChange *>::const_iterator itBegin=_topology->beginChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=_topology->endChange();
+	std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 	localFiberDirection.handleTopologyEvents(itBegin,itEnd);
 	Inherited::handleTopologyChange();

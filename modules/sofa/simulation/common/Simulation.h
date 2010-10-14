@@ -32,7 +32,6 @@
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/simulation/common/xml/BaseElement.h>
 #include <sofa/simulation/common/xml/XML.h>
-#include <memory>
 
 namespace sofa
 {
@@ -158,7 +157,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	///generic function to process xml tree (after loading the xml structure from the 2 previous functions)
 	static Node* processXML(xml::BaseElement* xml, const char *filename);
 
-	static std::auto_ptr<Simulation> theSimulation;
+	static  Simulation* theSimulation;
 };
 
 /// Set the (unique) simulation which controls the scene

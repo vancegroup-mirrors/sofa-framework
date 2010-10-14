@@ -82,8 +82,8 @@ void CenterPointTopologicalMapping::updateTopologicalMappingTopDown()
 {
 	if(fromModel && toModel)
 	{
-      std::list<const TopologyChange *>::const_iterator changeIt = fromModel->beginChange();
-      std::list<const TopologyChange *>::const_iterator itEnd = fromModel->endChange();
+		std::list<const TopologyChange *>::const_iterator changeIt = fromModel->firstChange();
+		std::list<const TopologyChange *>::const_iterator itEnd = fromModel->lastChange();
 
 		PointSetTopologyModifier *to_pstm;
 		toModel->getContext()->get(to_pstm);

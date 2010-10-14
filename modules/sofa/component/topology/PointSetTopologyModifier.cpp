@@ -179,40 +179,21 @@ namespace topology
 
 	void PointSetTopologyModifier::propagateTopologicalChanges()
 	{
-		if (m_container->beginChange() == m_container->endChange()) return; // nothing to do if no event is stored
+		if (m_container->firstChange() == m_container->lastChange()) return; // nothing to do if no event is stored
 		sofa::simulation::TopologyChangeVisitor a(m_container);
 
 // std::cout << getName() << " propagation du truc: " << getContext()->getName() << std::endl;
-// for( std::list<const core::topology::TopologyChange *>::const_iterator it = m_container->beginChange(); it != m_container->endChange(); it++)
+// for( std::list<const core::topology::TopologyChange *>::const_iterator it = m_container->firstChange(); it != m_container->lastChange(); it++)
 // std:: cout << (*it)->getChangeType() << std::endl;
 
-      getContext()->executeVisitor(&a);
-
-      //TODO: temporary code to test topology engine pipeline. Commented by default for the moment
-      //this->propagateTopologicalEngineChanges();
-
-      // remove the changes we just propagated, so that we don't send them again next time
-		m_container->resetTopologyChangeList();          
+                getContext()->executeVisitor(&a);
+		// remove the changes we just propagated, so that we don't send then again next time
+		m_container->resetTopologyChangeList();
 	}
-
-   void PointSetTopologyModifier::propagateTopologicalEngineChanges()
-   {
-      std::cout << "PointSetTopologyModifier::propagateTopologicalEngineChanges()" << std::endl;
-
-      if (m_container->beginChange() == m_container->endChange()) return; // nothing to do if no event is stored
-
-      sofa::helper::list<sofa::core::topology::TopologyEngine*>::const_iterator engineIt;
-      for (engineIt = m_container->beginTopologyEngine(); engineIt != m_container->endTopologyEngine(); ++engineIt)
-      {
-         (*engineIt)->update();
-      }
-
-      std::cout << "PointSetTopologyModifier::propagateTopologicalEngineChanges() end" << std::endl;
-   }
 
 	void PointSetTopologyModifier::propagateStateChanges()
 	{
-		if (m_container->beginStateChange() == m_container->endStateChange()) return; // nothing to do if no event is stored
+		if (m_container->firstStateChange() == m_container->lastStateChange()) return; // nothing to do if no event is stored
 		sofa::simulation::StateChangeVisitor a(m_container);
 		getContext()->executeVisitor(&a);
 

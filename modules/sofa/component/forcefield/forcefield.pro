@@ -62,14 +62,6 @@ HEADERS += initForceField.h \
            RegularGridSpringForceField.h \
            RegularGridSpringForceField.inl \
            TensorForceField.h \
-           HexahedralFEMForceFieldAndMass.h \
-           HexahedralFEMForceFieldAndMass.inl \
-           NonUniformHexahedralFEMForceFieldAndMass.h \
-           NonUniformHexahedralFEMForceFieldAndMass.inl \
-           NonUniformHexahedronFEMForceFieldAndMass.h \
-           NonUniformHexahedronFEMForceFieldAndMass.inl \
-           NonUniformHexahedronFEMForceFieldDensity.h \
-           NonUniformHexahedronFEMForceFieldDensity.inl \
            TetrahedronFEMForceField.h \
            TetrahedronFEMForceField.inl \
            HexahedronFEMForceField.h \
@@ -128,10 +120,6 @@ SOURCES += initForceField.cpp \
            QuadBendingSprings.cpp \
            RegularGridSpringForceField.cpp \
            RestShapeSpringsForceField.cpp \
-           HexahedralFEMForceFieldAndMass.cpp \
-           NonUniformHexahedralFEMForceFieldAndMass.cpp \
-           NonUniformHexahedronFEMForceFieldAndMass.cpp \
-           NonUniformHexahedronFEMForceFieldDensity.cpp \
            TetrahedronFEMForceField.cpp \
            HexahedronFEMForceField.cpp \
            HexahedralFEMForceField.cpp \

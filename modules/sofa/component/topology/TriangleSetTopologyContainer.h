@@ -303,6 +303,15 @@ namespace sofa
 	void clearBorderElementLists();
 			
 
+   /** \brief function to create appropriate pointer to TopologyEngine class.
+     *
+     * @return false if creation failed
+     */
+   virtual bool createTopologyEngine();
+
+   /** \brief return pointer to topologyEngine*/
+   const sofa::core::topology::TopologyEngine* getTriangleSetTopologyEngine();
+
       protected:
 
 	/** \brief Returns a non-const list of triangle indices around a given DOF for subsequent modification.
@@ -343,6 +352,8 @@ namespace sofa
 
 	/// Set of point indices on topology border.
 	sofa::helper::vector <PointID> m_pointsOnBorder;
+
+   sofa::component::topology::TriangleSetTopologyEngine* m_topologyEngine;
 
 	virtual void loadFromMeshLoader(sofa::component::container::MeshLoader* loader);
       };

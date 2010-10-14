@@ -141,8 +141,8 @@ void CudaVisualModel< TDataTypes >::reinit()
 
 template<class TDataTypes>
 void CudaVisualModel< TDataTypes >::handleTopologyChange() {
-   std::list<const core::topology::TopologyChange *>::const_iterator itBegin=topology->beginChange();
-   std::list<const core::topology::TopologyChange *>::const_iterator itEnd=topology->endChange();
+	std::list<const core::topology::TopologyChange *>::const_iterator itBegin=topology->firstChange();
+	std::list<const core::topology::TopologyChange *>::const_iterator itEnd=topology->lastChange();
 
 	while( itBegin != itEnd )
 	{

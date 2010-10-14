@@ -42,9 +42,7 @@
 // }
 // }
 
-#else
-
-#define SOFA_HAVE_PARALLELMATRIXLINEARSOLVER
+#else 
 
 #include <sofa/simulation/common/SolverImpl.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>

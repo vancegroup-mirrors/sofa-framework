@@ -22,8 +22,6 @@ HEADERS += initEngine.h \
 	   SphereROI.inl \
            ExtrudeSurface.h \
            ExtrudeSurface.inl \
-           GenerateRigidMass.h \
-           GenerateRigidMass.inl \
            GroupFilterYoungModulus.h \
            GroupFilterYoungModulus.inl \
            MergePoints.h \
@@ -66,7 +64,6 @@ SOURCES += initEngine.cpp \
            PlaneROI.cpp \
 	   SphereROI.cpp \
            ExtrudeSurface.cpp \
-           GenerateRigidMass.cpp \
            GroupFilterYoungModulus.cpp \
            MergePoints.cpp \
            MergeSets.cpp \

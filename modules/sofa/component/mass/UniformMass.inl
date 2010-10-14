@@ -123,8 +123,8 @@ namespace sofa
 
         if ( bmt != 0 )
           {
-            std::list< const TopologyChange * >::const_iterator it = bmt->beginChange();
-            std::list< const TopologyChange * >::const_iterator itEnd = bmt->endChange();
+            std::list< const TopologyChange * >::const_iterator it = bmt->firstChange();
+            std::list< const TopologyChange * >::const_iterator itEnd = bmt->lastChange();
 
             while ( it != itEnd )
               {

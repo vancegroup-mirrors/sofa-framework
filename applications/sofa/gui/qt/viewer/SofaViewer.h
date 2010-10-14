@@ -179,11 +179,7 @@ public:
                                 currentCamera = new component::visualmodel::InteractiveCamera();
 				//std::cout << "Create Default Camera" << std::endl;
 			}
-                        sofa::defaulttype::Vec3d minBBox, maxBBox;
-
-                        sofa::simulation::getSimulation()->computeBBox(groot, minBBox.ptr(),maxBBox.ptr());
-
-                        currentCamera->setBoundingBox(minBBox, maxBBox);
+			//else std::cout << "Find a Camera" << std::endl;
 
 		}
 
@@ -247,7 +243,7 @@ public:
 		ori[2] = camOrientation[2];
 		ori[3] = camOrientation[3];
 	}
-
+	;
 	virtual void setView(const Vec3d& pos, const Quat &ori)
 	{
 		Vec3d position;
@@ -273,14 +269,6 @@ public:
 		currentCamera->moveCamera(pos, ori);
 		getQWidget()->update();
 	}
-
-        virtual void newView()
-        {
-            if (!currentCamera || !groot)
-                    return;
-
-            currentCamera->setDefaultView(groot->getGravityInWorld());
-        }
 
 	virtual void resetView()
 	{

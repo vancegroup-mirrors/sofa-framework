@@ -98,8 +98,8 @@ LinearVelocityConstraint<DataTypes>::LinearVelocityConstraint()
 // Handle topological changes
 template <class DataTypes> void LinearVelocityConstraint<DataTypes>::handleTopologyChange()
 {	
-	std::list<const TopologyChange *>::const_iterator itBegin=topology->beginChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=topology->endChange();
+	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
 
 	m_indices.beginEdit()->handleTopologyEvents(itBegin,itEnd,this->getMState()->getSize());
 

@@ -36,7 +36,6 @@
 
 #include <vector>
 
-#include <sofa/component/mapping/BasicSkinningMapping.h>
 #include <sofa/component/component.h>
 #include <sofa/helper/OptionsGroup.h>
 
@@ -54,18 +53,41 @@ using sofa::helper::vector;
 using sofa::helper::Quater;
 using sofa::helper::SVector;
 
+#define DISTANCE_EUCLIDIAN 0
+#define DISTANCE_GEODESIC 1
+#define DISTANCE_HARMONIC 2
 
+#define WEIGHT_NONE 0
+#define WEIGHT_INVDIST_SQUARE 1
+#define WEIGHT_LINEAR 2
+#define WEIGHT_HERMITE 3
+#define WEIGHT_SPLINE 4
 
+#define INTERPOLATION_LINEAR 0
+#define INTERPOLATION_DUAL_QUATERNION 1
 
+/*
+typedef enum
+{
+	DISTANCE_EUCLIDIAN, DISTANCE_GEODESIC, DISTANCE_HARMONIC
+} DistanceType;
 
+typedef enum
+{
+	WEIGHT_LINEAR, WEIGHT_INVDIST_SQUARE, WEIGHT_HERMITE
+} WeightingType;
 
+typedef enum
+{
+	INTERPOLATION_LINEAR, INTERPOLATION_DUAL_QUATERNION
+} InterpolationType;*/
 
 
 template <class BasicMapping>
-class SkinningMapping : public BasicSkinningMapping<BasicMapping>
+class SkinningMapping : public BasicMapping
 {
 public:
-    SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), SOFA_TEMPLATE ( BasicSkinningMapping, BasicMapping ) );
+    SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
           typedef BasicMapping Inherit;
           typedef typename Inherit::In In;
           typedef typename Inherit::Out Out;
@@ -110,19 +132,125 @@ public:
           typedef vector<Vec6> VVec6;
           typedef vector<VVec6> VVVec6;
           typedef defaulttype::Vec<8,Real> Vec8;
-          typedef Quater<InReal> Quat;
-          typedef sofa::helper::vector< VecCoord > VecVecCoord;
-          typedef SVector<double> VD;
+					typedef Quater<InReal> Quat;
+					typedef sofa::helper::vector< VecCoord > VecVecCoord;
+					typedef SVector<double> VD;
           typedef SVector<SVector<double> > VVD;
 
           typedef Coord GeoCoord;
           typedef VecCoord GeoVecCoord;
+        protected:
+          vector<Coord> initPos; // pos: point coord in the world reference frame
+          vector<Coord> rotatedPoints;
+
+          helper::ParticleMask* maskFrom;
+          helper::ParticleMask* maskTo;
+
+          Data<vector<int> > repartition;
+          Data<VVD > coefs;
+          Data<SVector<SVector<GeoCoord> > > weightGradients;
+          Data<unsigned int> nbRefs;
+        public:
+          Data<bool> showBlendedFrame;
+          Data<bool> showDefTensors;
+          Data<bool> showDefTensorsValues;
+          Data<double> showDefTensorScale;
+          Data<unsigned int> showFromIndex;
+          Data<bool> showDistancesValues;
+          Data<bool> showCoefs;
+          Data<double> showGammaCorrection;
+          Data<bool> showCoefsValues;
+          Data<bool> showReps;
+          Data<int> showValuesNbDecimals;
+          Data<double> showTextScaleFactor;
+          Data<bool> showGradients;
+          Data<bool> showGradientsValues;
+          Data<double> showGradientsScaleFactor;
+
+        protected:
+          Data<sofa::helper::OptionsGroup> wheightingType;
+          Data<sofa::helper::OptionsGroup> interpolationType;
+          Data<sofa::helper::OptionsGroup> distanceType;
+          bool computeWeights;
+          VVD distances;
+          vector<vector<GeoCoord> > distGradients;
+
+          inline void computeInitPos();
+          inline void computeDistances();
+          inline void sortReferences( vector<int>& references);
 
         public:
           SkinningMapping ( In* from, Out* to );
           virtual ~SkinningMapping();
 
+          void init();
+
+          void apply ( typename Out::VecCoord& out, const typename In::VecCoord& in );
+          void applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+          void applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+          void applyJT ( typename In::VecConst& out, const typename Out::VecConst& in );
+
+          void draw();
+          void clear();
+
+          // Weights
+          void setWeightsToHermite();
+          void setWeightsToInvDist();
+          void setWeightsToLinear();
+          inline void updateWeights();
+          inline void getDistances( int xfromBegin);
+          //inline void temporaryUpdateWeightsAfterInsertion( VVD& w, VecVecCoord& dw, int xfromBegin);
+
+          // Interpolations
+          void setInterpolationToLinear();
+          void setInterpolationToDualQuaternion();
+
+          // Accessors
+          void setNbRefs ( unsigned int nb )
+          {
+            nbRefs.setValue ( nb );
+          }
+          void setWeightCoefs ( VVD& weights );
+          void setRepartition ( vector<int> &rep );
+          void setComputeWeights ( bool val )
+          {
+            computeWeights=val;
+          }
+          unsigned int getNbRefs()
+          {
+            return nbRefs.getValue();
+          }
+          const VVD& getWeightCoefs()
+          {
+            return coefs.getValue();
+          }
+          const vector<int>& getRepartition()
+          {
+            return repartition.getValue();
+          }
+          bool getComputeWeights()
+          {
+            return computeWeights;
+          }
+
         };
+
+      using core::Mapping;
+      using core::behavior::MechanicalMapping;
+      using core::behavior::MappedModel;
+      using core::behavior::State;
+      using core::behavior::MechanicalState;
+
+      using sofa::defaulttype::Vec2dTypes;
+      using sofa::defaulttype::Vec3dTypes;
+      using sofa::defaulttype::Vec2fTypes;
+      using sofa::defaulttype::Vec3fTypes;
+      using sofa::defaulttype::ExtVec2fTypes;
+      using sofa::defaulttype::ExtVec3fTypes;
+      using sofa::defaulttype::Rigid2dTypes;
+      using sofa::defaulttype::Rigid3dTypes;
+      using sofa::defaulttype::Rigid2fTypes;
+      using sofa::defaulttype::Rigid3fTypes;
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_CPP)
 #pragma warning(disable : 4231)

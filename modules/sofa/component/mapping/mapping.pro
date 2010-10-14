@@ -18,8 +18,6 @@ HEADERS +=  initMapping.h \
            ArticulatedSystemMapping.inl \
            BarycentricMapping.h \
            BarycentricMapping.inl \
-           BasicSkinningMapping.h \
-           BasicSkinningMapping.inl \
            BeamLinearMapping.h \
            BeamLinearMapping.inl \
 	   CenterPointMechanicalMapping.h \

@@ -202,8 +202,8 @@ void Quad2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 
 		if (toModel) {
 
-			std::list<const TopologyChange *>::const_iterator itBegin=fromModel->beginChange();
-			std::list<const TopologyChange *>::const_iterator itEnd=fromModel->endChange();
+			std::list<const TopologyChange *>::const_iterator itBegin=fromModel->firstChange();
+			std::list<const TopologyChange *>::const_iterator itEnd=fromModel->lastChange();
 
 			sofa::helper::vector <unsigned int>& Loc2GlobVec = *(Loc2GlobDataVec.beginEdit());
 

@@ -84,8 +84,8 @@ FixedTranslationConstraint<DataTypes>::FixedTranslationConstraint()
 template <class DataTypes> 
 void FixedTranslationConstraint<DataTypes>::handleTopologyChange()
 {
-	std::list<const TopologyChange *>::const_iterator itBegin=topology->beginChange();
-	std::list<const TopologyChange *>::const_iterator itEnd=topology->endChange();
+	std::list<const TopologyChange *>::const_iterator itBegin=topology->firstChange();
+	std::list<const TopologyChange *>::const_iterator itEnd=topology->lastChange();
 
 	f_indices.beginEdit()->handleTopologyEvents(itBegin,itEnd,this->getMState()->getSize());
 

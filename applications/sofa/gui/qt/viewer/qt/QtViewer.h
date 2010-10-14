@@ -70,81 +70,79 @@ namespace viewer
 namespace qt
 {
 
-    //using namespace sofa::defaulttype;
-    using sofa::defaulttype::Vector3;
-    using sofa::defaulttype::Quaternion;
-    using namespace sofa::helper::gl;
-    using namespace sofa::helper::system::thread;
-    using namespace sofa::component::collision;
+	  //using namespace sofa::defaulttype;
+	  using sofa::defaulttype::Vector3;
+	  using sofa::defaulttype::Quaternion;
+	  using namespace sofa::helper::gl;
+	  using namespace sofa::helper::system::thread;
+	  using namespace sofa::component::collision;
 
 
-    class QtViewer : public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer
-    {
-        Q_OBJECT
+class QtViewer : public QGLWidget,  public sofa::gui::qt::viewer::SofaViewer  
+{
+	      Q_OBJECT
 
-    private:
+		private:
 #ifdef TRACKING
-        double savedX;
-        double savedY;
-        bool firstTime;
-        bool tracking;
+		double savedX;
+		double savedY;
+		bool firstTime;
+		bool tracking;
 #endif // TRACKING
 
 #ifdef TRACKING_MOUSE
-        bool m_grabActived;
+		bool m_grabActived;
 #endif
-        // Interaction
-        enum {
-            XY_TRANSLATION = 1,
-            Z_TRANSLATION = 2,
-        };
+	      // Interaction
+	      enum {
+		XY_TRANSLATION = 1,
+		Z_TRANSLATION = 2,
+	      };
 
-        enum { MINMOVE = 10 };
+	      enum { MINMOVE = 10 };
 
-        VisualParameters visualParameters;
+	      VisualParameters visualParameters;
 
-        QTimer* timerAnimate;
-        int				_W, _H;
-        int				_clearBuffer;
-        bool			_lightModelTwoSides;
-        float			_lightPosition[4];
+	      QTimer* timerAnimate;
+	      int				_W, _H;
+	      int				_clearBuffer;
+	      bool			_lightModelTwoSides;
+	      float			_lightPosition[4];
 
-        Trackball		_currentTrackball;
-        Trackball		_newTrackball;
-        //	Quaternion		_currentQuat;
-        //	Quaternion		_newQuat;
-        int				_mouseX, _mouseY;
-        int				_savedMouseX, _savedMouseY;
+	      Trackball		_currentTrackball;
+	      Trackball		_newTrackball;
+	      //	Quaternion		_currentQuat;
+	      //	Quaternion		_newQuat;
+	      int				_mouseX, _mouseY;
+	      int				_savedMouseX, _savedMouseY;
 
-        GLUquadricObj*	_arrow;
-        GLUquadricObj*	_tube;
-        GLUquadricObj*	_sphere;
-        GLUquadricObj*	_disk;
-        GLuint			_numOBJmodels;
-        GLuint			_materialMode;
-        GLboolean		_facetNormal;
-        float			_zoom;
-        int				_renderingMode;
+	      GLUquadricObj*	_arrow;
+	      GLUquadricObj*	_tube;
+	      GLUquadricObj*	_sphere;
+	      GLUquadricObj*	_disk;
+	      GLuint			_numOBJmodels;
+	      GLuint			_materialMode;
+	      GLboolean		_facetNormal;
+	      float			_zoom;
+	      int				_renderingMode;
 
-        bool _waitForRender;
+	      bool _waitForRender;
 
-        //GLuint			_logoTexture;
-        Texture			*texLogo;
+	      //GLuint			_logoTexture;
+	      Texture			*texLogo;
 
-        ctime_t			_beginTime;
+	      ctime_t			_beginTime;
 
-        double lastProjectionMatrix[16];
-        double lastModelviewMatrix[16];
+	      double lastProjectionMatrix[16];
+	      double lastModelviewMatrix[16];
 
-    public:
+	    public:
 
-        static const std::string VIEW_FILE_EXTENSION;
-
-
-        static void create(QtViewer*& instance, const CreatorArgument& arg)
-        {
-            instance = new QtViewer(arg.parent, arg.name.c_str() );
-        }
+       
+       static void create(QtViewer*& instance, const CreatorArgument& arg)
+       {
+          instance = new QtViewer(arg.parent, arg.name.c_str() );
+       }  
 
         /// Activate this class of viewer.
         /// This method is called before the viewer is actually created
@@ -158,120 +156,119 @@ namespace qt
 
 
 
-        static QGLFormat setupGLFormat();
-        QtViewer( QWidget* parent, const char* name="" );
-        ~QtViewer();
+	      static QGLFormat setupGLFormat();
+	      QtViewer( QWidget* parent, const char* name="" );
+	      ~QtViewer();
 
-        QWidget* getQWidget() { return this; }
+	      QWidget* getQWidget() { return this; }
 
-        bool ready(){return _waitForRender;};
-        void wait(){_waitForRender = true;};
+	      bool ready(){return _waitForRender;};
+	      void wait(){_waitForRender = true;};
 
-    public slots:
-        void resetView();
-        virtual void saveView();
-        virtual void setSizeW(int);
-        virtual void setSizeH(int);
+	      public slots:
+	      void resetView();
+	      virtual void saveView();
+	      virtual void setSizeW(int);
+	      virtual void setSizeH(int);
 
-        virtual void getView(Vec3d& pos, Quat& ori) const;
-        virtual void setView(const Vec3d& pos, const Quat &ori);
-        virtual void newView();
-        virtual void moveView(const Vec3d& pos, const Quat &ori);
-        virtual void captureEvent() { SofaViewer::captureEvent(); }
-        virtual void drawColourPicking (core::CollisionModel::ColourCode code);
+		  virtual void getView(Vec3d& pos, Quat& ori) const;
+		  virtual void setView(const Vec3d& pos, const Quat &ori);
+		  virtual void moveView(const Vec3d& pos, const Quat &ori);
+		  virtual void captureEvent() { SofaViewer::captureEvent(); }
+      virtual void drawColourPicking (core::CollisionModel::ColourCode code);  
 
-    signals:
-        void redrawn();
-        void resizeW( int );
-        void resizeH( int );
-        void quit();
-
-
-    protected:
-
-        void calcProjection();
-        void initializeGL();
-        void paintGL();
-        void resizeGL( int w, int h );
-
-    public:
-        void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool keepParams=false);
-        sofa::simulation::Node* getScene()
-        {
-            return groot;
-        }
-
-        //void			reshape(int width, int height);
-        int GetWidth()
-        {
-            return _W;
-        };
-        int GetHeight()
-        {
-            return _H;
-        };
-
-        void	UpdateOBJ(void);
-        void moveRayPickInteractor(int eventX, int eventY);
-        /////////////////
-        // Interaction //
-        /////////////////
-
-        bool _mouseInteractorTranslationMode;
-        bool _mouseInteractorRotationMode;
-        int _translationMode;
-        Quaternion _mouseInteractorCurrentQuat;
-        Vector3 _mouseInteractorAbsolutePosition;
-        Trackball _mouseInteractorTrackball;
-        void ApplyMouseInteractorTransformation(int x, int y);
-
-        static Quaternion _mouseInteractorNewQuat;
-        static Vector3 _mouseInteractorRelativePosition;
-        static Quaternion _newQuat;
-        static Quaternion _currentQuat;
-        static bool _mouseTrans;
-        static bool _mouseRotate;
+	    signals:
+	      void redrawn();
+	      void resizeW( int );
+	      void resizeH( int );
+	      void quit();
 
 
-        QString helpString();
+	    protected:
 
-        virtual void setBackgroundImage(std::string imageFileName);
+	      void calcProjection();
+	      void initializeGL();
+	      void paintGL();
+	      void resizeGL( int w, int h );
 
-    private:
+	    public:
+	      void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool keepParams=false);
+	      sofa::simulation::Node* getScene()
+		{
+		  return groot;
+		}
 
-        void	InitGFX(void);
-        void	PrintString(void* font, char* string);
-        void	Display3DText(float x, float y, float z, char* string);
-        void	DrawAxis(double xpos, double ypos, double zpos, double arrowSize);
-        void	DrawBox(SReal* minBBox, SReal* maxBBox, SReal r=0.0);
-        void	DrawXYPlane(double zo, double xmin, double xmax, double ymin,
-                                double ymax, double step);
-        void	DrawYZPlane(double xo, double ymin, double ymax, double zmin,
-                                double zmax, double step);
-        void	DrawXZPlane(double yo, double xmin, double xmax, double zmin,
-                                double zmax, double step);
-        void	CreateOBJmodelDisplayList(int material_mode);
-        //int     loadBMP(char *filename, TextureImage *texture);
-        //void	LoadGLTexture(char *Filename);
-        void	DrawLogo(void);
-        void	DisplayOBJs();
-        void	DisplayMenu(void);
-        void	DrawScene();
+	      //void			reshape(int width, int height);
+	      int GetWidth()
+	      {
+		return _W;
+	      };
+	      int GetHeight()
+	      {
+		return _H;
+	      };
 
-        void	ApplySceneTransformation(int x, int y);
-        //int		handle(int event);	// required by FLTK
+	      void	UpdateOBJ(void);
+	      void moveRayPickInteractor(int eventX, int eventY);
+	      /////////////////
+	      // Interaction //
+	      /////////////////
 
-    protected:
-        //virtual bool event ( QEvent * e );
+	      bool _mouseInteractorTranslationMode;
+	      bool _mouseInteractorRotationMode;
+	      int _translationMode;
+	      Quaternion _mouseInteractorCurrentQuat;
+	      Vector3 _mouseInteractorAbsolutePosition;
+	      Trackball _mouseInteractorTrackball;
+	      void ApplyMouseInteractorTransformation(int x, int y);
 
-        virtual void keyPressEvent ( QKeyEvent * e );
-        virtual void keyReleaseEvent ( QKeyEvent * e );
-        virtual void mousePressEvent ( QMouseEvent * e );
-        virtual void mouseReleaseEvent ( QMouseEvent * e );
-        virtual void mouseMoveEvent ( QMouseEvent * e );
-        virtual void wheelEvent ( QWheelEvent* e);
-        virtual bool mouseEvent ( QMouseEvent * e );
-    };
+	      static Quaternion _mouseInteractorNewQuat;
+	      static Vector3 _mouseInteractorRelativePosition;
+	      static Quaternion _newQuat;
+	      static Quaternion _currentQuat;
+	      static bool _mouseTrans;
+	      static bool _mouseRotate;
+
+
+	      QString helpString();
+	      
+	      virtual void setBackgroundImage(std::string imageFileName);
+	      
+	    private:
+
+	      void	InitGFX(void);
+	      void	PrintString(void* font, char* string);
+	      void	Display3DText(float x, float y, float z, char* string);
+	      void	DrawAxis(double xpos, double ypos, double zpos, double arrowSize);
+	      void	DrawBox(SReal* minBBox, SReal* maxBBox, SReal r=0.0);
+	      void	DrawXYPlane(double zo, double xmin, double xmax, double ymin,
+				    double ymax, double step);
+	      void	DrawYZPlane(double xo, double ymin, double ymax, double zmin,
+				    double zmax, double step);
+	      void	DrawXZPlane(double yo, double xmin, double xmax, double zmin,
+				    double zmax, double step);
+	      void	CreateOBJmodelDisplayList(int material_mode);
+	      //int     loadBMP(char *filename, TextureImage *texture);
+	      //void	LoadGLTexture(char *Filename);
+	      void	DrawLogo(void);
+	      void	DisplayOBJs();
+	      void	DisplayMenu(void);
+	      void	DrawScene();
+
+	      void	ApplySceneTransformation(int x, int y);
+	      //int		handle(int event);	// required by FLTK
+
+	    protected:
+	      //virtual bool event ( QEvent * e );
+
+	      virtual void keyPressEvent ( QKeyEvent * e );
+	      virtual void keyReleaseEvent ( QKeyEvent * e );
+	      virtual void mousePressEvent ( QMouseEvent * e );
+	      virtual void mouseReleaseEvent ( QMouseEvent * e );
+	      virtual void mouseMoveEvent ( QMouseEvent * e );
+	      virtual void wheelEvent ( QWheelEvent* e);
+	      virtual void mouseEvent ( QMouseEvent * e );
+};
 
 } // namespace qt
 

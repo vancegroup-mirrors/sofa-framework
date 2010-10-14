@@ -150,7 +150,7 @@ namespace sofa
         return child;
       }
 
-      BaseObject *GraphModeler::addComponent(GNode *parent, const ClassEntry* entry, const std::string &templateName, bool saveHistory, bool displayWarning)
+      BaseObject *GraphModeler::addComponent(GNode *parent, const ClassEntryPtr& entry, const std::string &templateName, bool saveHistory, bool displayWarning)
       {
         BaseObject *object=NULL;
         if (!parent || !entry) return object;
@@ -586,7 +586,7 @@ namespace sofa
             templatename = it->getAttribute(templateAttribute, "");
 
 
-            const ClassEntry *info = component->getEntry();
+            const ClassEntryPtr& info = component->getEntry();
             BaseObject *newComponent=addComponent(newNode, info, templatename, saveHistory,displayWarning);
             if (!newComponent) continue;
             configureElement(newComponent, it);

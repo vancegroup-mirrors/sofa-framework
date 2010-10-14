@@ -147,21 +147,9 @@ Monomial_LD<Real,N> & Monomial_LD<Real,N>::operator-=(const Monomial_LD<Real,N> 
 template<typename Real, unsigned int N>
 Monomial_LD<Real,N> & Monomial_LD<Real,N>::operator*=(const Monomial_LD<Real,N> & b)
 {
-	//std::cout<<"Monomial_LD<Real,N>::operator*=(const Monomial_LD<Real,N> & b)"
-	//		<<"===========================befor mulstip" <<*this <<std::endl;
-	///////////////////////////////////////////////////////
-
-
 	coef*=b.coef;
 	for(unsigned int i=0;i<N;i++)
 		powers[i] += b.powers[i];
-
-
-	///////////////////////////////////////////////////////
-	//std::cout<<"===========================Multiple with   "<< b<<std::endl;
-
-	//std::cout<<"===========================after mulstip" <<*this<<  "   "<< std::endl;
-	////////////////////////////////////////////////////////
 	return *this;
 }
 ////////////////////////////////
@@ -200,16 +188,10 @@ Real Monomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int idvar) const
 			{
 				value*=(Real) pow(x[i],powers[i]);
 			}
-			else if(powers[i]>0)
+			else
 			{
 				value*=(Real) powers[i];//derivate
 				value*=(Real) pow(x[i],(powers[i]-1));
-				//std::cout<<"Monomial_LD<Real,N>::operator() ================="<<std::endl
-				//		<<"Monomial "<<(*this)<< "  point "<<x<<"   derivvar"<<idvar<< "value"<<value<<std::endl;
-			}
-			else
-			{
-				value *= (Real)0.;
 			}
 		}
 
@@ -484,36 +466,17 @@ template<typename Real, unsigned int N>
 Polynomial_LD<Real,N>  & Polynomial_LD<Real,N>::operator*=(const Polynomial_LD<Real,N> & b)
 {
 
+	Polynomial_LD<Real,N> old(*this);
+	listOfMonoMial.resize(this->nbOfMonomial*(b.nbOfMonomial));
 
-	Polynomial_LD<Real,N> old=(*this);
-
-	///////////////////////////////////////////////////////
-	//std::cout<<"Polynomial_LD<Real,N>::operator*=(const Polynomial_LD<Real,N> & b)"
-	//		<<"Polynomial_LD befor mulstip" <<old <<std::endl;
-	///////////////////////////////////////////////////////
-
-	listOfMonoMial.resize(listOfMonoMial.size()*(b.listOfMonoMial.size()));
-
-	//std::cout<<"Polynomial_LD<Real,N>::operator*=(const Polynomial_LD<Real,N> & b)"
-	//		<<"Polynomial_LD befor mulstip" <<(*this) <<std::endl;
-
-	unsigned int m_counter=0;
-	for(unsigned int ita=0;ita<old.listOfMonoMial.size();ita++)
+	for(unsigned int ita=0;ita<old.nbOfMonomial;ita++)
 	{
-		for(unsigned int itb=0;itb<b.listOfMonoMial.size();itb++)
+		for(unsigned int itb=0;itb<b.nbOfMonomial;itb++)
 		{
-			//std::cout<<"m_counter = "<<m_counter<<"  ita="<<ita<<" itb="<<itb;
-			listOfMonoMial[m_counter]=old.listOfMonoMial[ita]*b.listOfMonoMial[itb];
-			//std::cout<<" Monomial_LD " <<old.listOfMonoMial[ita] <<" * "<<b.listOfMonoMial[itb] << "  = "<<listOfMonoMial[m_counter]<<std::endl;
-			m_counter++;
+			listOfMonoMial[ita+itb]=old.listOfMonoMial[ita]*b.listOfMonoMial[itb];
 		}
+
 	}
-
-	///////////////////////////////////////////////////////
-	//std::cout<<"Polynomial_LD Multiple with   "<< b <<std::endl;
-
-	//std::cout<<"Polynomial_LD after mulstip" <<(*this)<<  "   "<< std::endl;
-	////////////////////////////////////////////////////////
 
 	this->sort();
 	return *this;
@@ -556,16 +519,9 @@ Real Polynomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int iderive) c
 	{
 		for(MonomialConstIterator it=listOfMonoMial.begin();it != listOfMonoMial.end();++it)
 		{
-			result += it->operator()(x,iderive);
-			//std::cout<<"Polynomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int iderive) "<<std::endl
-			//		<<"monome "<<(*it)  <<"   point  "<< x << "  iderive"<<iderive  <<"   result  "<<it->operator()(x,iderive)<<std::endl;
-
-
+			result += (*it).operator()(x,iderive);
 		}
 	}
-
-	//std::cout<<"Polynomial_LD<Real,N>::operator()(const RNpoint & x,unsigned int iderive) "<<std::endl<<"polynome "<<(*this)  <<"   point  "<< x << "  iderive"<<iderive  <<"   result  "<<result<<std::endl;
-
 	return result;
 }
 ////////////////////////////////
@@ -711,9 +667,9 @@ void Polynomial_LD<Real,N>::sort()
 
 		while(itb!=listOfMonoMial.end())
 		{
-			if (ita->isSamePowers((*itb)))
+			if ((*ita).isSamePowers((*itb)))
 			{
-				ita->coef += (*itb).coef;
+				(*ita).coef += (*itb).coef;
 				itb=listOfMonoMial.erase(itb);itb--;
 			}
 			++itb;

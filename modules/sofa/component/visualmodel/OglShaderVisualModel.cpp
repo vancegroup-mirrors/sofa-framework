@@ -183,8 +183,8 @@ void OglShaderVisualModel::handleTopologyChange()
   VisualModelImpl::handleTopologyChange();
   if (_topology) {
 	  bool update=false;
-	  std::list<const TopologyChange *>::const_iterator itBegin=_topology->beginChange();
-	  std::list<const TopologyChange *>::const_iterator itEnd=_topology->endChange();
+	  std::list<const TopologyChange *>::const_iterator itBegin=_topology->firstChange();
+	  std::list<const TopologyChange *>::const_iterator itEnd=_topology->lastChange();
 
 	  while( itBegin != itEnd )
 	  {

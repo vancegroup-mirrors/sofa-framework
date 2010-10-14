@@ -41,10 +41,8 @@ namespace sofa
 
       Simulation* getSimulation()
       {
-        if ( simulation::Simulation::theSimulation.get() == 0 )
-        {
-          setSimulation( new TreeSimulation );
-        }
+        if ( simulation::Simulation::theSimulation==NULL )
+          setSimulation( new TreeSimulation() );
         return simulation::getSimulation();
       }
 
@@ -60,12 +58,13 @@ namespace sofa
 
       Node *TreeSimulation::getVisualRoot()
       {
-          if (visualNode.get() == 0)
+          if (visualNode) return visualNode;
+          else
           {
-              visualNode.reset(new GNode("VisualNode"));
+              visualNode= new GNode("VisualNode");
               visualNode->addTag(core::objectmodel::Tag("Visual"));
+              return visualNode;
           }
-          return visualNode.get();
       }
 
       /// Create a new node

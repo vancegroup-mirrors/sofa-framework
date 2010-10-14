@@ -27,6 +27,7 @@
 
 #include <sofa/simulation/common/Simulation.h>
 #include <sofa/simulation/tree/tree.h>
+#include <memory>
 
 namespace sofa
 {
@@ -53,7 +54,7 @@ Derives from BaseObject in order to model the parameters as Datas, which makes t
       /// Create a new Node of the simulation
       Node* newNode(const std::string& name);
     protected:
-      Node *visualNode;
+      std::auto_ptr<Node> visualNode;
     };
 
 /** Get the (unique) simulation which controls the scene.

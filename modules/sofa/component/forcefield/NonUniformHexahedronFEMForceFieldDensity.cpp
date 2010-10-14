@@ -22,3 +22,47 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+
+#include <sofa/component/forcefield/NonUniformHexahedronFEMForceFieldDensity.inl>
+#include <sofa/core/behavior/ForceField.inl>
+#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/core/ObjectFactory.h>
+//#include <typeinfo>
+ 
+ 
+namespace sofa
+{
+
+namespace component
+{
+
+namespace forcefield
+{
+
+using namespace sofa::defaulttype;
+
+SOFA_DECL_CLASS(NonUniformHexahedronFEMForceFieldDensity)
+
+// Register in the Factory
+int NonUniformHexahedronFEMForceFieldDensityClass = core::RegisterObject("Non uniform Hexahedral finite elements")
+#ifndef SOFA_FLOAT
+.add< NonUniformHexahedronFEMForceFieldDensity<Vec3dTypes> >()
+#endif
+#ifndef SOFA_DOUBLE
+.add< NonUniformHexahedronFEMForceFieldDensity<Vec3fTypes> >()
+#endif
+;
+
+#ifndef SOFA_FLOAT
+template class NonUniformHexahedronFEMForceFieldDensity<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+template class NonUniformHexahedronFEMForceFieldDensity<Vec3fTypes>;
+#endif
+
+} // namespace forcefield
+
+} // namespace component
+
+} // namespace sofa
+

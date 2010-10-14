@@ -89,10 +89,12 @@ helper::Creator<SofaViewerFactory, QtViewer> QtViewer_class("qt",false);
 SOFA_DECL_CLASS ( QTGUI )
 
 
- sofa::core::ObjectFactory::ClassEntryPtr classVisualModel;
+sofa::core::ObjectFactory::ClassEntry* classVisualModel;
 
- static  bool enabled = false;
+static  bool enabled = false;
 
+
+const std::string QtViewer::VIEW_FILE_EXTENSION = "qglviewer.view";
 // Mouse Interactor
 bool QtViewer::_mouseTrans = false;
 bool QtViewer::_mouseRotate = false;
@@ -1306,218 +1308,221 @@ void QtViewer::mouseMoveEvent(QMouseEvent * e)
 		firstTime = true;
 	}
 #endif // TRACKING
-	mouseEvent(e);
-
-	SofaViewer::mouseMoveEvent(e);
+        //if the mouse move is not "interactive", give the event to the camera
+        if(!mouseEvent(e))
+            SofaViewer::mouseMoveEvent(e);
 }
 
 // ---------------------- Here are the mouse controls for the scene  ----------------------
-void QtViewer::mouseEvent(QMouseEvent * e)
+bool QtViewer::mouseEvent(QMouseEvent * e)
 {
-	int eventX = e->x();
-	int eventY = e->y();
-	if (_mouseInteractorRotationMode)
-	{
-		switch (e->type())
-		{
-		case QEvent::MouseButtonPress:
-			// Mouse left button is pushed
-			if (e->button() == Qt::LeftButton)
-			{
-				_mouseInteractorMoving = true;
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-			break;
+    bool isInteractive = false;
+    int eventX = e->x();
+    int eventY = e->y();
+    if (_mouseInteractorRotationMode)
+    {
+        switch (e->type())
+        {
+        case QEvent::MouseButtonPress:
+            // Mouse left button is pushed
+            if (e->button() == Qt::LeftButton)
+            {
+                _mouseInteractorMoving = true;
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+            break;
 
 		case QEvent::MouseMove:
-			//
-			break;
+            //
+            break;
 
 		case QEvent::MouseButtonRelease:
-			// Mouse left button is released
-			if (e->button() == Qt::LeftButton)
-			{
-				if (_mouseInteractorMoving)
-				{
-					_mouseInteractorMoving = false;
-				}
-			}
-			break;
+            // Mouse left button is released
+            if (e->button() == Qt::LeftButton)
+            {
+                if (_mouseInteractorMoving)
+                {
+                    _mouseInteractorMoving = false;
+                }
+            }
+            break;
 
 		default:
-			break;
-		}
-		ApplyMouseInteractorTransformation(eventX, eventY);
-	}
-	else if (_mouseInteractorTranslationMode)
-	{
-		switch (e->type())
-		{
-		case QEvent::MouseButtonPress:
-			// Mouse left button is pushed
-			if (e->button() == Qt::LeftButton)
-			{
-				_translationMode = XY_TRANSLATION;
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-				_mouseInteractorMoving = true;
-			}
-			// Mouse right button is pushed
-			else if (e->button() == Qt::RightButton)
-			{
-				_translationMode = Z_TRANSLATION;
-				_mouseInteractorSavedPosY = eventY;
-				_mouseInteractorMoving = true;
-			}
+            break;
+        }
+        ApplyMouseInteractorTransformation(eventX, eventY);
+    }
+    else if (_mouseInteractorTranslationMode)
+    {
+        switch (e->type())
+        {
+        case QEvent::MouseButtonPress:
+            // Mouse left button is pushed
+            if (e->button() == Qt::LeftButton)
+            {
+                _translationMode = XY_TRANSLATION;
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+                _mouseInteractorMoving = true;
+            }
+            // Mouse right button is pushed
+            else if (e->button() == Qt::RightButton)
+            {
+                _translationMode = Z_TRANSLATION;
+                _mouseInteractorSavedPosY = eventY;
+                _mouseInteractorMoving = true;
+            }
 
-			break;
+            break;
 
 		case QEvent::MouseButtonRelease:
-			// Mouse left button is released
-			if ((e->button() == Qt::LeftButton) && (_translationMode
-					== XY_TRANSLATION))
-			{
-				_mouseInteractorMoving = false;
-			}
-			// Mouse right button is released
-			else if ((e->button() == Qt::RightButton) && (_translationMode
-					== Z_TRANSLATION))
-			{
-				_mouseInteractorMoving = false;
-			}
-			break;
+            // Mouse left button is released
+            if ((e->button() == Qt::LeftButton) && (_translationMode
+                                                    == XY_TRANSLATION))
+            {
+                _mouseInteractorMoving = false;
+            }
+            // Mouse right button is released
+            else if ((e->button() == Qt::RightButton) && (_translationMode
+                                                          == Z_TRANSLATION))
+            {
+                _mouseInteractorMoving = false;
+            }
+            break;
 
 		default:
-			break;
-		}
+            break;
+        }
 
-		ApplyMouseInteractorTransformation(eventX, eventY);
-	}
-	else if (e->state() & Qt::ShiftButton)
-	{
-		//_moving = false;
-		SofaViewer::mouseEvent(e);
-	}
-	else if (e->state() & Qt::ControlButton)
-	{
-		moveLaparoscopic(e);
-	}
-	else if (e->state() & Qt::AltButton)
-	{
-		//_moving = false;
-		switch (e->type())
-		{
-		case QEvent::MouseButtonPress:
-			// Mouse left button is pushed
-			if (e->button() == Qt::LeftButton)
-			{
-				_navigationMode = BTLEFT_MODE;
-				_mouseInteractorMoving = true;
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-			// Mouse right button is pushed
-			else if (e->button() == Qt::RightButton)
-			{
-				_navigationMode = BTRIGHT_MODE;
-				_mouseInteractorMoving = true;
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-			// Mouse middle button is pushed
-			else if (e->button() == Qt::MidButton)
-			{
-				_navigationMode = BTMIDDLE_MODE;
-				_mouseInteractorMoving = true;
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-			break;
+        ApplyMouseInteractorTransformation(eventX, eventY);
+    }
+    else if (e->state() & Qt::ShiftButton)
+    {
+        isInteractive = true;
+        SofaViewer::mouseEvent(e);
+    }
+    else if (e->state() & Qt::ControlButton)
+    {
+        isInteractive = true;
+        moveLaparoscopic(e);
+    }
+    else if (e->state() & Qt::AltButton)
+    {
+        isInteractive = true;
+        switch (e->type())
+        {
+        case QEvent::MouseButtonPress:
+            // Mouse left button is pushed
+            if (e->button() == Qt::LeftButton)
+            {
+                _navigationMode = BTLEFT_MODE;
+                _mouseInteractorMoving = true;
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+            // Mouse right button is pushed
+            else if (e->button() == Qt::RightButton)
+            {
+                _navigationMode = BTRIGHT_MODE;
+                _mouseInteractorMoving = true;
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+            // Mouse middle button is pushed
+            else if (e->button() == Qt::MidButton)
+            {
+                _navigationMode = BTMIDDLE_MODE;
+                _mouseInteractorMoving = true;
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+            break;
 
 		case QEvent::MouseMove:
-			//
-			break;
+            //
+            break;
 
 		case QEvent::MouseButtonRelease:
-			// Mouse left button is released
-			if (e->button() == Qt::LeftButton)
-			{
-				if (_mouseInteractorMoving)
-				{
-					_mouseInteractorMoving = false;
-				}
-			}
-			// Mouse right button is released
-			else if (e->button() == Qt::RightButton)
-			{
-				if (_mouseInteractorMoving)
-				{
-					_mouseInteractorMoving = false;
-				}
-			}
-			// Mouse middle button is released
-			else if (e->button() == Qt::MidButton)
-			{
-				if (_mouseInteractorMoving)
-				{
-					_mouseInteractorMoving = false;
-				}
-			}
-			break;
+            // Mouse left button is released
+            if (e->button() == Qt::LeftButton)
+            {
+                if (_mouseInteractorMoving)
+                {
+                    _mouseInteractorMoving = false;
+                }
+            }
+            // Mouse right button is released
+            else if (e->button() == Qt::RightButton)
+            {
+                if (_mouseInteractorMoving)
+                {
+                    _mouseInteractorMoving = false;
+                }
+            }
+            // Mouse middle button is released
+            else if (e->button() == Qt::MidButton)
+            {
+                if (_mouseInteractorMoving)
+                {
+                    _mouseInteractorMoving = false;
+                }
+            }
+            break;
 
 		default:
-			break;
-		}
-		if (_mouseInteractorMoving && _navigationMode == BTLEFT_MODE)
-		{
-			int dx = eventX - _mouseInteractorSavedPosX;
-			int dy = eventY - _mouseInteractorSavedPosY;
-			if (dx || dy)
-			{
-				_lightPosition[0] -= dx * 0.1;
-				_lightPosition[1] += dy * 0.1;
-				std::cout << "Light = " << _lightPosition[0] << " "
-						<< _lightPosition[1] << " " << _lightPosition[2]
-						<< std::endl;
-				update();
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-		}
-		else if (_mouseInteractorMoving && _navigationMode == BTRIGHT_MODE)
-		{
-			int dx = eventX - _mouseInteractorSavedPosX;
-			int dy = eventY - _mouseInteractorSavedPosY;
-			if (dx || dy)
-			{
-				//g_DepthBias[0] += dx*0.01;
-				g_DepthBias[1] += dy * 0.01;
-				std::cout << "Depth bias = " << g_DepthBias[0] << " "
-						<< g_DepthBias[1] << std::endl;
-				update();
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-		}
-		else if (_mouseInteractorMoving && _navigationMode == BTMIDDLE_MODE)
-		{
+            break;
+        }
+        if (_mouseInteractorMoving && _navigationMode == BTLEFT_MODE)
+        {
+            int dx = eventX - _mouseInteractorSavedPosX;
+            int dy = eventY - _mouseInteractorSavedPosY;
+            if (dx || dy)
+            {
+                _lightPosition[0] -= dx * 0.1;
+                _lightPosition[1] += dy * 0.1;
+                std::cout << "Light = " << _lightPosition[0] << " "
+                        << _lightPosition[1] << " " << _lightPosition[2]
+                        << std::endl;
+                update();
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+        }
+        else if (_mouseInteractorMoving && _navigationMode == BTRIGHT_MODE)
+        {
+            int dx = eventX - _mouseInteractorSavedPosX;
+            int dy = eventY - _mouseInteractorSavedPosY;
+            if (dx || dy)
+            {
+                //g_DepthBias[0] += dx*0.01;
+                g_DepthBias[1] += dy * 0.01;
+                std::cout << "Depth bias = " << g_DepthBias[0] << " "
+                        << g_DepthBias[1] << std::endl;
+                update();
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+        }
+        else if (_mouseInteractorMoving && _navigationMode == BTMIDDLE_MODE)
+        {
 
-			int dx = eventX - _mouseInteractorSavedPosX;
-			int dy = eventY - _mouseInteractorSavedPosY;
-			if (dx || dy)
-			{
-				g_DepthOffset[0] += dx * 0.01;
-				g_DepthOffset[1] += dy * 0.01;
-				std::cout << "Depth offset = " << g_DepthOffset[0] << " "
-						<< g_DepthOffset[1] << std::endl;
-				update();
-				_mouseInteractorSavedPosX = eventX;
-				_mouseInteractorSavedPosY = eventY;
-			}
-		}
-	}
+            int dx = eventX - _mouseInteractorSavedPosX;
+            int dy = eventY - _mouseInteractorSavedPosY;
+            if (dx || dy)
+            {
+                g_DepthOffset[0] += dx * 0.01;
+                g_DepthOffset[1] += dy * 0.01;
+                std::cout << "Depth offset = " << g_DepthOffset[0] << " "
+                        << g_DepthOffset[1] << std::endl;
+                update();
+                _mouseInteractorSavedPosX = eventX;
+                _mouseInteractorSavedPosY = eventY;
+            }
+        }
+    }
 
+        return isInteractive;
 }
 
 void QtViewer::moveRayPickInteractor(int eventX, int eventY)
@@ -1590,7 +1595,7 @@ void QtViewer::resetView()
 
 	if (!sceneFileName.empty())
 	{
-		std::string viewFileName = sceneFileName + ".view";
+                std::string viewFileName = sceneFileName + "." + VIEW_FILE_EXTENSION;
 		std::ifstream in(viewFileName.c_str());
 		if (!in.fail())
 		{
@@ -1605,30 +1610,27 @@ void QtViewer::resetView()
 
 			in.close();
 			fileRead = true;
+
+                        setView(position, orientation);
 		}
         }
 
+        //if there is no .view file , look at the center of the scene bounding box
+        // and with a Up vector in the same axis as the gravity
 	if (!fileRead)
 	{
-
-		position[0] = 0.0;
-		position[1] = 0.0;
-		if (sceneBBoxIsValid && visualParameters.maxBBox[0]	> visualParameters.minBBox[0])
-			position[2]	= -(visualParameters.maxBBox - visualParameters.minBBox).norm();
-		else
-			position[2] = -50.0;
-
-		orientation[0] = 0.17;
-		orientation[1] = -0.83;
-		orientation[2] = -0.26;
-		orientation[3] = -0.44;
+            newView();
 	}
 
-	setView(position, orientation);
-
 	update();
+
 	//SofaViewer::resetView();
 	//ResetScene();
+}
+
+void QtViewer::newView()
+{
+        SofaViewer::newView();
 }
 
 void QtViewer::getView(Vec3d& pos, Quat& ori) const
@@ -1650,7 +1652,7 @@ void QtViewer::saveView()
 {
 	if (!sceneFileName.empty())
 	{
-                std::string viewFileName = sceneFileName + ".view";
+                std::string viewFileName = sceneFileName + "." + VIEW_FILE_EXTENSION;
 		std::ofstream out(viewFileName.c_str());
 		if (!out.fail())
 		{

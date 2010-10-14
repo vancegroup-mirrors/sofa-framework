@@ -80,8 +80,10 @@ HEADERS += component.h \
            topology/ManifoldTetrahedronSetTopologyContainer.h \
            topology/MeshTopology.h \
            topology/Mesh2PointTopologicalMapping.h \
+           topology/MultilevelHexahedronSetTopologyContainer.h \
            topology/PointData.h \
            topology/PointData.inl \
+           topology/PointSetTopologyEngine.h \
            topology/PointSetGeometryAlgorithms.h \
            topology/PointSetTopologyAlgorithms.h \
            topology/PointSetTopologyChange.h \
@@ -103,6 +105,8 @@ HEADERS += component.h \
            topology/RegularGridTopology.h \
            topology/SimpleTesselatedHexaTopologicalMapping.h \
            topology/SimpleTesselatedTetraTopologicalMapping.h \
+           topology/SparseGridMultipleTopology.h \
+           topology/SparseGridRamificationTopology.h  \
            topology/SparseGridTopology.h \
            topology/Tetra2TriangleTopologicalMapping.h \
            topology/TetrahedronData.h \
@@ -127,7 +131,6 @@ HEADERS += component.h \
            topology/TriangleSetTopologyAlgorithms.inl \
            topology/TriangleSubsetData.h \
            topology/TriangleSubsetData.inl \
-           topology/PointSetTopologyEngine.h \
            topology/EdgeSetTopologyEngine.h \
            topology/TriangleSetTopologyEngine.h \
            topology/QuadSetTopologyEngine.h \
@@ -177,7 +180,8 @@ SOURCES +=  \
            topology/ManifoldTetrahedronSetTopologyContainer.cpp \
            topology/MeshTopology.cpp \
            topology/Mesh2PointTopologicalMapping.cpp \
-           topology/PointData.cpp \
+           topology/MultilevelHexahedronSetTopologyContainer.cpp \
+           topology/PointSetTopologyEngine.cpp \
            topology/PointSetGeometryAlgorithms.cpp \
            topology/PointSetTopologyAlgorithms.cpp \
            topology/PointSetTopologyContainer.cpp \
@@ -191,6 +195,8 @@ SOURCES +=  \
            topology/RegularGridTopology.cpp \
            topology/SimpleTesselatedHexaTopologicalMapping.cpp \
            topology/SimpleTesselatedTetraTopologicalMapping.cpp \
+           topology/SparseGridMultipleTopology.cpp \
+           topology/SparseGridRamificationTopology.cpp   \
            topology/SparseGridTopology.cpp \
            topology/Tetra2TriangleTopologicalMapping.cpp \
            topology/TetrahedronSetGeometryAlgorithms.cpp \
@@ -202,7 +208,6 @@ SOURCES +=  \
            topology/TriangleSetTopologyAlgorithms.cpp \
            topology/TriangleSetTopologyContainer.cpp \
            topology/TriangleSetTopologyModifier.cpp \
-           topology/PointSetTopologyEngine.cpp \
            topology/EdgeSetTopologyEngine.cpp \
            topology/TriangleSetTopologyEngine.cpp \
            topology/QuadSetTopologyEngine.cpp \

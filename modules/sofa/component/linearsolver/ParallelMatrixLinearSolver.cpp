@@ -24,7 +24,7 @@
 ******************************************************************************/
 #include <sofa/component/linearsolver/ParallelMatrixLinearSolver.h>
 
-#ifdef SOFA_COMPONENT_LINEARSOLVER_PARALLELMATRIXLINEARSOLVER_H
+#ifdef SOFA_HAVE_PARALLELMATRIXLINEARSOLVER
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/MechanicalMatrixVisitor.h>
 #include <sofa/simulation/common/MechanicalVPrintVisitor.h>

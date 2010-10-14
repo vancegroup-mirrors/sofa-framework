@@ -27,7 +27,6 @@
 
 #include "CudaTetrahedronFEMForceField.h"
 #include <sofa/component/forcefield/TetrahedronFEMForceField.inl>
-
 namespace sofa
 {
 
@@ -625,26 +624,27 @@ void TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDe
 {
     Data& data = m->data;
     {
-		
-	data.vecTmpRotation.resize(data.nbVertex*9);	
-	data.getRotations(m,data.vecTmpRotation,prefetch);
-		
-	rotations->resize(data.nbVertex*3,data.nbVertex*3);
-	for (int i=0;i<data.nbVertex;i++) {
-	  int i9 = i*9;
-	  int e = offset+i*3;
-	  rotations->set(e+0,e+0,data.vecTmpRotation[i9+0]);
-	  rotations->set(e+0,e+1,data.vecTmpRotation[i9+1]);
-	  rotations->set(e+0,e+2,data.vecTmpRotation[i9+2]);
-	  
-	  rotations->set(e+1,e+0,data.vecTmpRotation[i9+3]);
-	  rotations->set(e+1,e+1,data.vecTmpRotation[i9+4]);
-	  rotations->set(e+1,e+2,data.vecTmpRotation[i9+5]);
-	  
-	  rotations->set(e+2,e+0,data.vecTmpRotation[i9+6]);
-	  rotations->set(e+2,e+1,data.vecTmpRotation[i9+7]);
-	  rotations->set(e+2,e+2,data.vecTmpRotation[i9+8]);	  
-	}
+      data.vecTmpRotation.resize(data.nbVertex*9);	
+      data.getRotations(m,data.vecTmpRotation,prefetch);
+      rotations->resize(data.nbVertex*3,data.nbVertex*3);
+
+      {
+	  for (int i=0;i<data.nbVertex;i++) {
+	    int i9 = i*9;
+	    int e = offset+i*3;
+	    rotations->set(e+0,e+0,data.vecTmpRotation[i9+0]);
+	    rotations->set(e+0,e+1,data.vecTmpRotation[i9+1]);
+	    rotations->set(e+0,e+2,data.vecTmpRotation[i9+2]);
+	    
+	    rotations->set(e+1,e+0,data.vecTmpRotation[i9+3]);
+	    rotations->set(e+1,e+1,data.vecTmpRotation[i9+4]);
+	    rotations->set(e+1,e+2,data.vecTmpRotation[i9+5]);
+	    
+	    rotations->set(e+2,e+0,data.vecTmpRotation[i9+6]);
+	    rotations->set(e+2,e+1,data.vecTmpRotation[i9+7]);
+	    rotations->set(e+2,e+2,data.vecTmpRotation[i9+8]);	  
+	  }
+      }
     }
 }
 

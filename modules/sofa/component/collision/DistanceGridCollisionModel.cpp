@@ -513,8 +513,6 @@ void FFDDistanceGridCollisionModel::init()
     for (int e=0; e<ffdMesh->getNbCubes(); e++)
 #endif
     {
-        if (ffdMesh->isCubeActive( e ))
-        {
             if (c != e)
                 elems[c].points.swap(elems[e].points); // move the list of points to the new
             elems[c].elem = e;
@@ -532,7 +530,6 @@ void FFDDistanceGridCollisionModel::init()
             elems[c].invDP[2] = 1/elems[c].initDP[2];
             elems[c].grid = grid;
             ++c;
-        }
     }
     resize(c);
 

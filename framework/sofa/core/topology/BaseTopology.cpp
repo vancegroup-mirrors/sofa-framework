@@ -97,26 +97,42 @@ namespace topology
       m_stateChangeList.endEdit();
    }
 
+   void TopologyContainer::addTopologyEngine(TopologyEngine *_topologyEngine)
+   {
+      m_topologyEngineList.push_back(_topologyEngine);
+      m_topologyEngineList.back()->m_changeList.setParent(&this->m_changeList);
+   }
 
-   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::lastChange() const
+
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::endChange() const
 	{
       return (m_changeList.getValue()).end();
 	}
 
-   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::firstChange() const
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::beginChange() const
 	{
       return (m_changeList.getValue()).begin();
 	}
 
-   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::lastStateChange() const
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::endStateChange() const
 	{
       return (m_stateChangeList.getValue()).end();
 	}
 
-   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::firstStateChange() const
+   sofa::helper::list<const TopologyChange *>::const_iterator TopologyContainer::beginStateChange() const
 	{
       return (m_stateChangeList.getValue()).begin();
 	}
+
+   sofa::helper::list<TopologyEngine *>::const_iterator TopologyContainer::endTopologyEngine() const
+   {
+      return m_topologyEngineList.end();
+   }
+
+   sofa::helper::list<TopologyEngine *>::const_iterator TopologyContainer::beginTopologyEngine() const
+   {
+      return m_topologyEngineList.begin();
+   }
 
 	void TopologyContainer::resetTopologyChangeList()
 	{
@@ -144,21 +160,15 @@ namespace topology
       m_stateChangeList.endEdit();
 	}
 
-
-   // TopologyEngine implementation
-   void TopologyEngine::init()
+   void TopologyContainer::resetTopologyEngineList()
    {
-      DataEngine::init();
-   }
+      for (std::list<TopologyEngine *>::iterator it=m_topologyEngineList.begin();
+         it!=m_topologyEngineList.end();++it)
+      {
+         delete (*it);
+      }
 
-   void TopologyEngine::addTopologicalData(sofa::core::objectmodel::BaseData& topologicalData)
-   {
-      m_topologicalData.push_back(&topologicalData);
-   }
-
-   void TopologyEngine::removeTopoligicalData(sofa::core::objectmodel::BaseData& topologicalData)
-   {
-      m_topologicalData.remove(&topologicalData);
+      m_topologyEngineList.clear();
    }
 
 

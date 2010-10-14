@@ -50,7 +50,7 @@ namespace sofa{
 
 
             //Class description
-            core::ObjectFactory::ClassEntryPtr& entry = core::ObjectFactory::getInstance()->getEntry(object->getClassName());
+            core::ObjectFactory::ClassEntry* entry = core::ObjectFactory::getInstance()->getEntry(object->getClassName());
             if (entry != NULL && ! entry->creatorList.empty())
             {
               Q3GroupBox *box = new Q3GroupBox(this, QString("Class"));

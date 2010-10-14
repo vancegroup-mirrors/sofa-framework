@@ -72,29 +72,37 @@ public:
         typedef typename Coord::value_type Real;
         typedef typename defaulttype::Rigid3dTypes Rigid;
         typedef sofa::component::mapping::BarycentricMapping< MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Rigid3dTypes> > >   BarycentricMapping3_VtoR;
+
+        typedef defaulttype::Mat<6,3,Real> MappingBlockType;
+        typedef defaulttype::Mat<6,6,Real> BeamBlockType;
+        typedef defaulttype::Mat<3,6,Real> TempBlockType;
+        typedef defaulttype::Mat<3,3,Real> TetraBlockType;
+
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<MappingBlockType>::ColBlockConstIterator MappingColBlockConstIterator;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<BeamBlockType>::ColBlockConstIterator BeamColBlockConstIterator;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<TempBlockType>::ColBlockConstIterator TempColBlockConstIterator;
+
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<MappingBlockType>::RowBlockConstIterator MappingRowBlockConstIterator;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<BeamBlockType>::RowBlockConstIterator BeamRowBlockConstIterator;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<TempBlockType>::RowBlockConstIterator TempRowBlockConstIterator;
+
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<MappingBlockType>::BlockConstAccessor MappingBlockConstAccessor;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<BeamBlockType>::BlockConstAccessor BeamBlockConstAccessor;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<TempBlockType>::BlockConstAccessor TempBlockConstAccessor;
+
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<MappingBlockType>::BlockAccessor MappingBlockAccessor;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<BeamBlockType>::BlockAccessor BeamBlockAccessor;
+        typedef typename sofa::component::linearsolver::CompressedRowSparseMatrix<TempBlockType>::BlockAccessor TempBlockAccessor;
+
+
 protected:
         BeamFEMForceField<Rigid> *mappedBeamForceField;
         BarycentricMapping3_VtoR *mappingBeamTetra;
         core::behavior::MechanicalState<Vec3dTypes>* parenchymaMO;
         core::behavior::MechanicalState<Rigid>* beamMO;
 
-        /*core::objectmodel::Data<Coord> _center;
-	core::objectmodel::Data<Deriv> _size;
-	core::objectmodel::Data<Real> _speed;
-
-	core::objectmodel::Data<Real> _stiffness;
-	core::objectmodel::Data<Real> _damping;
-
-        defaulttype::Vec<6,PlaneForceFieldT*> _planes;*/
-
 public:
-        MappedBeamToTetraForceField(core::behavior::MechanicalState<DataTypes>* object=NULL, const std::string& /*name*/="")
-        /*: core::behavior::ForceField<DataTypes>(object)
-	, _center(initData(&_center, Coord(0,0,0), "center", "box center"))
-	, _size(initData(&_size, Deriv(1,1,1), "size", "box size"))
-	, _speed(initData(&_speed, (Real)0.001, "speed", "rotation speed"))
-	, _stiffness(initData(&_stiffness, (Real)500.0, "stiffness", "penality force stiffness"))
-        , _damping(initData(&_damping, (Real)5.0, "damping", "penality force damping"))*/
+        MappedBeamToTetraForceField(core::behavior::MechanicalState<DataTypes>* /*object*/=NULL, const std::string& /*name*/="")
 	{		
 	}
 
@@ -102,7 +110,6 @@ public:
         ~MappedBeamToTetraForceField()
 	{
 	}
-
 
         virtual void init();
 

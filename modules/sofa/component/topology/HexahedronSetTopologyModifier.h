@@ -64,6 +64,10 @@ namespace topology
 		virtual ~HexahedronSetTopologyModifier() {}
 
 		virtual void init();
+
+      /// TODO: temporary duplication of topological events (commented by default)
+      virtual void propagateTopologicalEngineChanges();
+
 		
 		/** \brief Sends a message to warn that some hexahedra were added in this topology.
 		*

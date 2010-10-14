@@ -549,6 +549,24 @@ namespace topology
 		m_container->checkTopology();
 	}
 
+   void TetrahedronSetTopologyModifier::propagateTopologicalEngineChanges()
+   {
+      if (m_container->beginChange() == m_container->endChange()) return; // nothing to do if no event is stored
+
+      std::list <sofa::core::objectmodel::DDGNode* > _outs = (m_container->d_tetrahedron).getOutputs();
+      std::list <sofa::core::objectmodel::DDGNode* >::iterator it;
+
+      std::cout << "Number of outputs for tetrahedra array: " << _outs.size() << std::endl;
+      for ( it = _outs.begin(); it!=_outs.end(); ++it)
+      {
+         sofa::core::topology::TopologyEngine* topoEngine = dynamic_cast<sofa::core::topology::TopologyEngine*>( (*it));
+         if (topoEngine)
+            topoEngine->update();
+      }
+
+      TriangleSetTopologyModifier::propagateTopologicalEngineChanges();
+   }
+
 } // namespace topology
 
 } // namespace component

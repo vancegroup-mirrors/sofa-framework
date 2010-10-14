@@ -135,15 +135,15 @@ namespace sofa
           template<typename real2>
           void operator*= ( real2 a )
           {
-            vCenter *= a;
-            vAffine *= a;
+            vCenter *= (Real)a;
+            vAffine *= (Real)a;
           }
 
           template<typename real2>
           void operator/= ( real2 a )
           {
-            vCenter /= a;
-            vAffine /= a;
+            vCenter /= (Real)a;
+            vAffine /= (Real)a;
           }
 
           AffineDeriv<3, real> operator* ( float a ) const
@@ -162,7 +162,17 @@ namespace sofa
 
           AffineDeriv<3, real> operator - () const
             {
-              return AffineDeriv ( -vCenter, -vAffine );
+              Affine tmp;
+              tmp[0][0] = - vAffine[0][0];
+              tmp[0][1] = - vAffine[0][1];
+              tmp[0][2] = - vAffine[0][2];
+              tmp[1][0] = - vAffine[1][0];
+              tmp[1][1] = - vAffine[1][1];
+              tmp[1][2] = - vAffine[1][2];
+              tmp[2][0] = - vAffine[2][0];
+              tmp[2][1] = - vAffine[2][1];
+              tmp[2][2] = - vAffine[2][2];
+              return AffineDeriv ( -vCenter, tmp );
             }
 
           AffineDeriv<3, real> operator - ( const AffineDeriv<3, real>& a ) const
@@ -277,7 +287,7 @@ namespace sofa
           {
           }
 
-          void clear() { center.clear(); affine.clear(); }
+          void clear() { center.clear(); affine.identity(); }
 
           template<typename real2>
           void operator = ( const AffineCoord<3, real2>& c )

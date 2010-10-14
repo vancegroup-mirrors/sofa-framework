@@ -61,8 +61,8 @@ namespace topology
 	}
 
    /** \brief Topological Engine which will handle all PointData */
-   class PointSetTopologyEngine;
-
+   //class PointSetTopologyEngine<typename T, typename VecT>;
+     
 	/** \brief A class for storing point related data. Automatically manages topology changes.
 	*
 	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
@@ -71,7 +71,7 @@ namespace topology
 	template< class T, class VecT = helper::vector<T> > 
 	class PointData : public sofa::core::objectmodel::Data< VecT >//public container_type 
 	{
-      friend class PointSetTopologyEngine;
+     // friend class PointSetTopologyEngine<T, VecT>;
 
 	public:
       typedef T value_type;
@@ -132,7 +132,8 @@ namespace topology
                    m_createTetrahedronFunc(0), m_destroyTetrahedronFunc(0),
                    m_createHexahedronFunc(0), m_destroyHexahedronFunc(0),
                    m_createParam(createParam), m_destroyParam(destroyParam)
-		{}
+      {
+      }
 
 		/// Constructor
 		PointData(size_type n, const T& value) : sofa::core::objectmodel::Data< container_type >(0, false, false)
@@ -204,13 +205,13 @@ namespace topology
                     m_createTetrahedronFunc(0), m_destroyTetrahedronFunc(0),
                     m_createHexahedronFunc(0), m_destroyHexahedronFunc(0),
                     m_createParam(createParam), m_destroyParam(destroyParam)
-		{}
+      {
+      }
 
 		/// Handle PointSetTopology related events, ignore others.
 		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
                                  std::list< const core::topology::TopologyChange *>::const_iterator &end );
 
-     // void update();
 
       /// Creation function, called when adding elements.
 		void setCreateFunction(t_createFunc createFunc) 
@@ -344,7 +345,22 @@ namespace topology
 		}
 #endif /* POINT_DATA_VECTOR_ACCESS */
 
-	private:
+
+      t_createFunc m_createFunc;
+      t_destroyFunc m_destroyFunc;
+      t_createEdgeFunc m_createEdgeFunc;
+      t_destroyEdgeFunc m_destroyEdgeFunc;
+      t_createTriangleFunc m_createTriangleFunc;
+      t_destroyTriangleFunc m_destroyTriangleFunc;
+      t_createQuadFunc m_createQuadFunc;
+      t_destroyQuadFunc m_destroyQuadFunc;
+      t_createTetrahedronFunc m_createTetrahedronFunc;
+      t_destroyTetrahedronFunc m_destroyTetrahedronFunc;
+      t_createHexahedronFunc m_createHexahedronFunc;
+      t_destroyHexahedronFunc m_destroyHexahedronFunc;
+
+
+
 		/// Swaps values at indices i1 and i2.
 		void swap( unsigned int i1, unsigned int i2 );
 
@@ -365,19 +381,7 @@ namespace topology
                  const sofa::helper::vector< sofa::helper::vector< double > >& coefs);
 
 	private:
-		t_createFunc m_createFunc;
-		t_destroyFunc m_destroyFunc;
-		t_createEdgeFunc m_createEdgeFunc;
-		t_destroyEdgeFunc m_destroyEdgeFunc;
-		t_createTriangleFunc m_createTriangleFunc;
-		t_destroyTriangleFunc m_destroyTriangleFunc;
-		t_createQuadFunc m_createQuadFunc;
-		t_destroyQuadFunc m_destroyQuadFunc;
-		t_createTetrahedronFunc m_createTetrahedronFunc;
-		t_destroyTetrahedronFunc m_destroyTetrahedronFunc;
-      t_createHexahedronFunc m_createHexahedronFunc;
-      t_destroyHexahedronFunc m_destroyHexahedronFunc;
-		
+
 		/** Parameter to be passed to creation function.
 		*
 		* Warning : construction and destruction of this object is not of the responsibility of PointData.

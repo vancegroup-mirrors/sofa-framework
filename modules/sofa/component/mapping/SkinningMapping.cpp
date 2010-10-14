@@ -45,9 +45,11 @@ using namespace core;
 using namespace core::behavior;
 
 
+
 // Register in the Factory
 int SkinningMappingClass = core::RegisterObject("skin a model from a set of rigid dofs")
 
+// Rigid Types
 #ifndef SOFA_FLOAT
 .add< SkinningMapping< MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3dTypes> > > >()
 .add< SkinningMapping< Mapping< State<Rigid3dTypes>, MappedModel<Vec3dTypes> > > >()
@@ -69,6 +71,9 @@ int SkinningMappingClass = core::RegisterObject("skin a model from a set of rigi
 .add< SkinningMapping< Mapping< State<Rigid3fTypes>, MappedModel<Vec3dTypes> > > >()
 #endif
 #endif
+
+
+// Affine Types
 ;
 
 #ifndef SOFA_FLOAT
@@ -91,6 +96,9 @@ template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3
 template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3fTypes>, MappedModel<Vec3dTypes> > >;
 #endif
 #endif
+
+
+
 
 
 } // namespace mapping

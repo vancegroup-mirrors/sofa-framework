@@ -1,17 +1,17 @@
 <Node name="root" dt="0.00095" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1" gravity="0 -9.8 0">
 
     <Node name="Cube">
-        <Object type="CentralDifferenceSolver" rayleighMass="5" />
-        <Object type="RegularGrid"
+        <CentralDifferenceSolver rayleighMass="5" />
+        <RegularGrid
             nx="15" ny="15" nz="15"
             xmin="0" xmax="0.1"
             ymin="0" ymax="0.1"
             zmin="0" zmax="0.1"
         />
-        <Object type="MechanicalObject" template="CudaVec3f" />
-        <Object type="UniformMass" totalmass="1" />
-        <Object type="BoxConstraint" box="0.0 0.0 0.0 0.1 0.0 0.1" />
-        <Object type="CudaTetrahedronSuperTLEDForceField" name="FEM" youngModulus="3000" poissonRatio="0.45" viscoelasticity="0" anisotropy="0" preferredDirection="0 0.707 0.707"/>
+        <MechanicalObject template="CudaVec3f" />
+        <UniformMass totalmass="1" />
+        <BoxConstraint box="0.0 0.0 0.0 0.1 0.0 0.1" />
+        <CudaHexahedronTLEDForceField name="FEM" youngModulus="3000" poissonRatio="0.45" isViscoelastic="0" isAnisotropic="0" preferredDirection="0 0.707 0.707"/>
     </Node> 
 
 </Node>

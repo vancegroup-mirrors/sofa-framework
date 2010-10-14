@@ -189,6 +189,7 @@ void BasicSkinningMapping<BasicMapping>::init()
     VecInCoord& xfrom = *this->fromModel->getX0();
     if ( this->initPos.empty() && this->toModel!=NULL && computeWeights==true && coefs.getValue().size() ==0 )
     {
+      /* Temporary remove optimistaion. TODO: reactivate this when the different types will be instanciated
         if ( wheightingType.getValue().getSelectedId() == WEIGHT_LINEAR || wheightingType.getValue().getSelectedId() == WEIGHT_HERMITE )
             nbRefs.setValue ( 2 );
 
@@ -197,7 +198,8 @@ void BasicSkinningMapping<BasicMapping>::init()
 
         if ( xfrom.size() < nbRefs.getValue())
             nbRefs.setValue ( xfrom.size() );
-
+*/
+        nbRefs.setValue ( xfrom.size() );
 
         computeDistances();
         vector<int>& m_reps = * ( repartition.beginEdit() );
@@ -210,6 +212,7 @@ void BasicSkinningMapping<BasicMapping>::init()
     {
         computeInitPos();
     }
+
 
     this->BasicMapping::init();
 }
@@ -441,7 +444,6 @@ void BasicSkinningMapping<BasicMapping>::apply ( typename Out::VecCoord& out, co
             out[i] = Coord();
             for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
             {
-
                 const int& idx=nbRefs.getValue() *i+m;
                 const int& idxReps=m_reps[idx];
 
@@ -451,6 +453,7 @@ void BasicSkinningMapping<BasicMapping>::apply ( typename Out::VecCoord& out, co
                 // And add each reference frames contributions to the new position out[i]
                 out[i] += ( in[idxReps ].getCenter() + rotatedPoints[idx] ) * m_coefs[idxReps][i];
             }
+            
         }
 }
 
@@ -689,6 +692,7 @@ void BasicSkinningMapping<BasicMapping>::draw()
     //*/
 
 }
+
 
 
 

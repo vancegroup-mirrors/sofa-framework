@@ -228,7 +228,7 @@ void HexahedralFEMForceField<DataTypes>::computeElementStiffness( ElementStiffne
 
 	for(int i=0;i<8;++i)
 	{
-		Mat33 k = vol*integrateStiffness(  _coef[i][0], _coef[i][1],_coef[i][2],  _coef[i][0], _coef[i][1],_coef[i][2], M[0][0], M[0][1],M[2][2], J_1  );
+		Mat33 k = vol*integrateStiffness(  _coef[i][0], _coef[i][1],_coef[i][2],  _coef[i][0], _coef[i][1],_coef[i][2], M[0][0], M[0][1],M[3][3], J_1  );
 
 		for(int m=0;m<3;++m)
 		{
@@ -240,7 +240,7 @@ void HexahedralFEMForceField<DataTypes>::computeElementStiffness( ElementStiffne
 
 		for(int j=i+1;j<8;++j)
 		{
-			Mat33 k = vol*integrateStiffness(  _coef[i][0], _coef[i][1],_coef[i][2],  _coef[j][0], _coef[j][1],_coef[j][2], M[0][0], M[0][1],M[2][2], J_1  );
+			Mat33 k = vol*integrateStiffness(  _coef[i][0], _coef[i][1],_coef[i][2],  _coef[j][0], _coef[j][1],_coef[j][2], M[0][0], M[0][1],M[3][3], J_1  );
 
 			for(int m=0;m<3;++m)
 				for(int l=0;l<3;++l)

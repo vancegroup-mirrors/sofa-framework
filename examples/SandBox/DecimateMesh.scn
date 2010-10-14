@@ -7,7 +7,7 @@
         </Node>
 
         <!-- Options: targetedNumberOfEdges targetedRatioOfEdges -->
-        <DecimateMesh name="decimation" template="Vec3d" listening="true" inputVertices="@meshLoader.position" inputTriangles="@meshLoader.triangles" targetedRatioOfEdges="0.1"/>
+        <DecimateMesh name="decimation" template="Vec3d" inputVertices="@meshLoader.position" inputTriangles="@meshLoader.triangles" targetedRatioOfEdges="0.1" writeToFile="true"/>
         
 	<Node>
             <TriangleSetTopologyContainer position="@../decimation.outputPoints" triangles="@../decimation.outputTriangles" />

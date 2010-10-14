@@ -58,7 +58,10 @@ namespace topology
 		virtual ~EdgeSetTopologyModifier() {}
 
 		virtual void init();
-		
+
+      /// TODO: temporary duplication of topological events (commented by default)
+      virtual void propagateTopologicalEngineChanges();
+
 		/** \brief Sends a message to warn that some edges were added in this topology.
 		*
 		* \sa addEdgesProcess

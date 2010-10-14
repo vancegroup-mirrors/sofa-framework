@@ -882,6 +882,25 @@ namespace topology
 
      return true;
   }
+
+
+  void EdgeSetTopologyModifier::propagateTopologicalEngineChanges()
+  {
+     if (m_container->beginChange() == m_container->endChange()) return; // nothing to do if no event is stored
+
+     std::list <sofa::core::objectmodel::DDGNode* > _outs = (m_container->d_edge).getOutputs();
+     std::list <sofa::core::objectmodel::DDGNode* >::iterator it;
+
+      std::cout << "Number of outputs for edge array: " << _outs.size() << std::endl;
+     for ( it = _outs.begin(); it!=_outs.end(); ++it)
+     {
+        sofa::core::topology::TopologyEngine* topoEngine = dynamic_cast<sofa::core::topology::TopologyEngine*>( (*it));
+        if (topoEngine)
+           topoEngine->update();
+     }
+
+     PointSetTopologyModifier::propagateTopologicalEngineChanges();
+  }
   
 } // namespace topology
 

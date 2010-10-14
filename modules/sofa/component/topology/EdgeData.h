@@ -64,7 +64,7 @@ namespace topology
 	}
 
    /** \brief Topological Engine which will handle all EdgeData */
-   class EdgeSetTopologyEngine;
+   //class EdgeSetTopologyEngine;
 
 
 	/** \brief A class for storing Edge related data. Automatically manages topology changes.
@@ -75,7 +75,7 @@ namespace topology
 	template< class T, class Alloc = helper::CPUMemoryManager<T> >
 	class EdgeData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
-      friend class EdgeSetTopologyEngine;
+      //friend class EdgeSetTopologyEngine;
 
 	public:
 		/// size_type
@@ -302,7 +302,7 @@ namespace topology
          return result;
       }
 
-	private:
+   //private:
 		/// Swaps values at indices i1 and i2.
 		void swap( unsigned int i1, unsigned int i2 );
 
@@ -316,7 +316,7 @@ namespace topology
 		void remove( const sofa::helper::vector<unsigned int> &index );
 
 
-   private:
+   //private:
       t_createFunc m_createFunc;
       t_destroyFunc m_destroyFunc;
       t_createTriangleFunc m_createTriangleFunc;
@@ -328,6 +328,7 @@ namespace topology
       t_createHexahedronFunc m_createHexahedronFunc;
       t_destroyHexahedronFunc m_destroyHexahedronFunc;
 
+   private:
 		/** Parameter to be passed to creation function.
 		*
 		* Warning : construction and destruction of this object is not of the responsibility of EdgeData.

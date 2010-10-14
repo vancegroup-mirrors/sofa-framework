@@ -47,8 +47,9 @@ namespace topology
 	////////////////////////////////////////implementation//////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 	template <typename T, typename VecT>
-	void PointData<T,VecT>::handleTopologyEvents( std::list<  const core::topology::TopologyChange *>::const_iterator changeIt, 
+   void PointData<T,VecT>::handleTopologyEvents( std::list<  const core::topology::TopologyChange *>::const_iterator changeIt,
                                                  std::list< const core::topology::TopologyChange *>::const_iterator &end )
 	{
 		while( changeIt != end )

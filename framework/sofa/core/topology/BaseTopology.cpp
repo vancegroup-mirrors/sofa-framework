@@ -76,6 +76,14 @@ namespace topology
 
 	// TopologyContainer implementation
 
+
+   TopologyContainer::~TopologyContainer()
+   {
+      resetTopologyChangeList();
+      resetStateChangeList();
+      resetTopologyEngineList();
+   }
+
 	void TopologyContainer::init()
 	{
           core::topology::BaseMeshTopology::init();

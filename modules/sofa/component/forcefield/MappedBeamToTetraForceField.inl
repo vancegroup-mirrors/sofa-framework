@@ -31,7 +31,13 @@
 #include <assert.h>
 #include <iostream>
 
+#include <fstream>
+
 #include <sofa/component/forcefield/MappedBeamToTetraForceField.h>
+
+
+#include <time.h>
+#include <sys/time.h>
 
 
 namespace sofa
@@ -67,41 +73,89 @@ namespace sofa
             }
 
             template<class DataTypes>
-            void MappedBeamToTetraForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v)
+            void MappedBeamToTetraForceField<DataTypes>::addForce(VecDeriv& /*f*/, const VecCoord& /*x*/, const VecDeriv& /*v*/)
             {
                 //std::cout << "AddForce in MappedFF" << std::endl;
             }
 
             template<class DataTypes>
-            void MappedBeamToTetraForceField<DataTypes>::addDForce(VecDeriv& f1, const VecDeriv& dx1, double kFactor, double bFactor)
+            void MappedBeamToTetraForceField<DataTypes>::addDForce(VecDeriv& /*f1*/, const VecDeriv& /*dx1*/, double /*kFactor*/, double /*bFactor*/)
             {
                 //std::cout << "AddDForce in MappedFF" << std::endl;
             }
 
             template<class DataTypes>
             void MappedBeamToTetraForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset)
-            {                
-                std::cout << "AddKToMatrix in MappedFF" << std::endl;
-                std::cout << "K = " << k << " offset = " << offset << std::endl;
-                //get stiffness matrix from the beam FEM
-                unsigned int nbBeamElements = mappedBeamForceField->getNbBeams();
-                unsigned int nbBeamDOFs = 6;
-                unsigned int nbBeamNodes = beamMO->getSize();
+            {
 
-                std::cout << "Number of beam elements = " << nbBeamElements << std::endl;
-                std::cout << "Number of beam nodes = " << nbBeamNodes << std::endl;
+                unsigned int nbBeamDOFs = beamMO->getSize();              
+                unsigned int nbTetDOFs =  mat->rowSize()/3;   //this is not OK
 
-                sofa::component::linearsolver::SparseMatrix<Real> beamMatrix(nbBeamDOFs*nbBeamNodes,nbBeamDOFs*nbBeamNodes);                
+                sofa::component::linearsolver::CompressedRowSparseMatrix<BeamBlockType> beamMatrix;
+                beamMatrix.resizeBloc(nbBeamDOFs, nbBeamDOFs);                                
+
                 mappedBeamForceField->addKToMatrix(&beamMatrix, k, offset);
-                //std::cout << "BeamMatrix = " << beamMatrix << std::endl;
-                //std::cout << "size = " << beamMatrix.rowSize() << " X "  << beamMatrix.colSize() << std::endl;
 
-                //get J from the mapping
+                const sofa::component::linearsolver::CompressedRowSparseMatrix<MappingBlockType> * mappingMatrix;
+                mappingMatrix = dynamic_cast<const sofa::component::linearsolver::CompressedRowSparseMatrix<MappingBlockType> *>(mappingBeamTetra->getJ());
+
+                MappingBlockType mappingBuffer;
+                BeamBlockType beamBuffer;
+
+                sofa::component::linearsolver::CompressedRowSparseMatrix<TempBlockType> tempMatrix;
+                tempMatrix.resizeBloc(nbTetDOFs, nbBeamDOFs);
+
+                for (int mappingRowIndex = 0; mappingRowIndex < mappingMatrix->nBlocRow; mappingRowIndex++) {   //through X, must take each row  (but test can be added)
+                    for (MappingColBlockConstIterator mappingColIter = mappingMatrix->bRowBegin(mappingRowIndex); mappingColIter < mappingMatrix->bRowEnd(mappingRowIndex); mappingColIter++) {  //take non zero blocks in row, determines the row in K)
+                        MappingBlockConstAccessor mappingBlock = mappingColIter.bloc();
+                        const MappingBlockType& mappingBlockData = *(const MappingBlockType*)mappingBlock.elements(mappingBuffer.ptr());
+                        int mappingColIndex = mappingBlock.getCol();
+                        for (BeamColBlockConstIterator beamColIter = beamMatrix.bRowBegin(mappingRowIndex); beamColIter < beamMatrix.bRowEnd(mappingRowIndex); beamColIter++) {
+                            BeamBlockConstAccessor beamBlock = beamColIter.bloc();
+                            const BeamBlockType& beamBlockData = *(const BeamBlockType*)beamBlock.elements(beamBuffer.ptr());
+                            int beamColIndex = beamBlock.getCol();                            
+                            TempBlockType tempBlockData(0.0);
+                            //multiply the block, could be done more efficiently
+                            for (int i = 0; i < 3; i++)
+                                for (int j = 0; j < 6; j++)
+                                    for (int k = 0; k < 6; k++)
+                                        tempBlockData(i,j) += mappingBlockData(k,i)*beamBlockData(k,j);                            
+                            tempMatrix.blocAdd(mappingColIndex, beamColIndex, tempBlockData.ptr());
+                        }
+                    }
+                }
+
+                TempBlockType tempBuffer;
+                for (int tempRowIndex = 0; tempRowIndex < tempMatrix.nBlocRow; tempRowIndex++) {
+                    for (TempColBlockConstIterator tempColIter = tempMatrix.bRowBegin(tempRowIndex); tempColIter < tempMatrix.bRowEnd(tempRowIndex); tempColIter++) {
+                        TempBlockConstAccessor tempBlock = tempColIter.bloc();
+                        const TempBlockType& tempBlockData = *(const TempBlockType*) tempBlock.elements(tempBuffer.ptr());
+                        int tempColIndex = tempBlock.getCol();
+                        for (MappingColBlockConstIterator mappingColIter = mappingMatrix->bRowBegin(tempColIndex); mappingColIter < mappingMatrix->bRowEnd(tempColIndex); mappingColIter++) {
+                            MappingBlockConstAccessor mappingBlock = mappingColIter.bloc();
+                            const MappingBlockType &mappingBlockData = *(const MappingBlockType*) mappingBlock.elements(mappingBuffer.ptr());
+                            int mappingColIndex = mappingBlock.getCol();
+                            TetraBlockType tetraBlockData(0.0);
+                            //multiply the block, could be done more efficiently
+                            for (int i = 0; i < 3; i++)
+                                for (int j = 0; j < 3; j++) {
+                                    for (int k = 0; k < 6; k++)
+                                        tetraBlockData(i,j) += tempBlockData(i,k) * mappingBlockData(k,j);
+                                    //because input matrix is  BaseMatrix, we do it like this for now
+                                    mat->add(3*tempRowIndex+i, 3*mappingColIndex+j, tetraBlockData(i,j));
+                                }                            
+                            //mat->blocAdd(tempRowIndex,mappingColIndex,tetraBlockData.ptr());   //if mat is block matrix
+                        }
+                    }
+                }         
+
             }
 
+
             template <class DataTypes>
-                    double MappedBeamToTetraForceField<DataTypes>::getPotentialEnergy(const VecCoord&x) const
+                    double MappedBeamToTetraForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/) const
             {
+                return(0.0);
             }
 
             template<class DataTypes>
@@ -109,7 +163,7 @@ namespace sofa
             {
             }
 
-	} // namespace forcefield
+        } // namespace forcefield
 
     } // namespace component
 

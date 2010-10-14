@@ -51,13 +51,18 @@ namespace sofa
       public:
         SOFA_CLASS(TriangleSetTopologyModifier,EdgeSetTopologyModifier);
 
-	TriangleSetTopologyModifier(){}
+   TriangleSetTopologyModifier()
+      : list_Out(initData(&list_Out,"list_Out","triangles with at least one null values."))
+   {}
 
 	virtual ~TriangleSetTopologyModifier() {}
 
 	virtual void init();
 
    virtual void reinit();
+
+   /// TODO: temporary duplication of topological events (commented by default)
+   virtual void propagateTopologicalEngineChanges();
 
 	/** \brief Sends a message to warn that some triangles were added in this topology.
 	 *
@@ -275,6 +280,7 @@ namespace sofa
 	 */
 	virtual void addTrianglesPostProcessing(const sofa::helper::vector <Triangle>& triangles);
 
+   Data<sofa::helper::vector <unsigned int> > list_Out;
       private:
 	TriangleSetTopologyContainer*	m_container;
       };

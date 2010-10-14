@@ -63,7 +63,7 @@ namespace topology
 	}
 
    /** \brief Topological Engine which will handle all TriangleData */
-   class TriangleSetTopologyEngine;
+   //class TriangleSetTopologyEngine;
 
 
 	/** \brief A class for storing Triangle related data. Automatically manages topology changes.
@@ -74,7 +74,7 @@ namespace topology
 	template< class T, class Alloc = helper::CPUMemoryManager<T> >
 	class TriangleData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
-      friend class TriangleSetTopologyEngine;
+      //friend class TriangleSetTopologyEngine;
 
 	public:
 		/// size_type
@@ -196,7 +196,6 @@ namespace topology
                                  std::list< const core::topology::TopologyChange *>::const_iterator &end );
 
 
-
       /// Creation function, called when adding elements.
       void setCreateFunction(t_createFunc createFunc)
       {
@@ -278,7 +277,7 @@ namespace topology
       }
 
 
-	private:
+   //private:
 		/// Swaps values at indices i1 and i2.
 		void swap( unsigned int i1, unsigned int i2 );
 
@@ -291,7 +290,7 @@ namespace topology
 		/// Remove the values corresponding to the Triangles removed.
 		void remove( const sofa::helper::vector<unsigned int> &index );
 
-   private:
+   //private:
       t_createFunc m_createFunc;
       t_destroyFunc m_destroyFunc;
       t_createQuadFunc m_createQuadFunc;
@@ -301,6 +300,7 @@ namespace topology
       t_createHexahedronFunc m_createHexahedronFunc;
       t_destroyHexahedronFunc m_destroyHexahedronFunc;
 
+   private:
 		/** Parameter to be passed to creation function.
 		*
 		* Warning : construction and destruction of this object is not of the responsibility of TriangleData.

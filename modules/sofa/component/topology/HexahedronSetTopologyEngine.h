@@ -41,15 +41,22 @@ namespace topology
 {
    using core::topology::BaseTopology;
 
+   template< class T, class Alloc = helper::CPUMemoryManager<T> >
    class HexahedronSetTopologyEngine : public sofa::core::topology::TopologyEngine
    {
    public:
-      SOFA_CLASS(HexahedronSetTopologyEngine, sofa::core::topology::TopologyEngine);
+      //SOFA_CLASS(HexahedronSetTopologyEngine, sofa::core::topology::TopologyEngine);
+      typedef HexahedronData<T,Alloc> t_topologicalData;
 
-      typedef sofa::helper::list<HexahedronData<void*> *> _topologicalDataList;
-      typedef sofa::helper::list<HexahedronData<void*> *>::iterator _iterator;
+      typedef typename t_topologicalData::t_createFunc t_createFunc;
+      typedef typename t_topologicalData::t_destroyFunc t_destroyFunc;
 
       HexahedronSetTopologyEngine();
+
+      HexahedronSetTopologyEngine(t_topologicalData* _topologicalData);
+
+      HexahedronSetTopologyEngine(t_topologicalData* _topologicalData, sofa::core::topology::BaseMeshTopology* _topology);
+
 
       virtual ~HexahedronSetTopologyEngine() {}
 
@@ -59,11 +66,31 @@ namespace topology
 
       virtual void update();
 
-      virtual void handleTopologyChange();
+      void ApplyTopologyChanges();
+
+      void registerTopology(sofa::core::topology::BaseMeshTopology* _topology);
+
+      void registerTopologicalData(t_topologicalData *topologicalData) {m_topologicalData = topologicalData;}
+
+      /// Creation function, called when adding elements.
+      void setCreateFunction(t_createFunc createFunc);
+      /// Destruction function, called when deleting elements.
+      void setDestroyFunction(t_destroyFunc destroyFunc);
+
+      /// Creation function, called when adding parameter to those elements.
+      void setDestroyParameter( void* destroyParam );
+      /// Destruction function, called when removing parameter to those elements.
+      void setCreateParameter( void* createParam );
+
+      /// Function to link DataEngine with Data array from topology
+      void linkToHexahedronDataArray();
 
    protected:
-      _topologicalDataList m_topologicalData;
+      t_topologicalData* m_topologicalData;
+      sofa::core::topology::TopologyContainer* m_topology;
 
+   public:
+      bool m_hexahedraLinked;
    };
 
 

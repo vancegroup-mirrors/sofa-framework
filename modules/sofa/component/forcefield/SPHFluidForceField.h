@@ -155,16 +155,16 @@ if(a<=0)return 0;
 	//        = -6C/h2 ( 1 - r2/h2 )2 D
 	Real constGradWd(Real h) const
 	{
-//		return -6*constWd(h)/(h*h);
-		return -6*constWd(h)/h;
+		return -6*constWd(h)/(h*h);
+//		return -6*constWd(h)/h;
 	}
 
 	Deriv gradWd(const Deriv& d, Real r_h, Real C)
 	{
 		Real a = (1-r_h*r_h);
 if(a<=0)return Deriv();
-//		return d*(C*a*a);
-		return d*(C*a*a)*r_h;
+		return d*(C*a*a);
+//		return d*(C*a*a)*r_h;
 	}
 
 
@@ -347,24 +347,24 @@ public:
 
 Real GetMonaghanKernel(Real r,Real smoothRadius)
 {
-	float h = smoothRadius/2;
+	float h = (float)smoothRadius/2;
 
-	float q = r / h;
+	float q = (float)r / h;
 
-	static float norm = 15.0 / (14 * 3.141592);
+	static float norm = (float)15.0 / (float)(14 * 3.141592);
 
 
 	static float h2 = h * h;
 
 	float q2 = (2-q);
-	if (q<=1.5)
+	if (q<=1)
 	{
 		float q1 = (1-q);
 		return (norm / h2) * (q2*q2*q2 - 4*q1*q1*q1);
 	}
 	else if (q>1.0 && q<=2.0)
 	{
-		return norm / h2 * q2*q2*q2;
+		return (norm / h2) * q2*q2*q2;
 	}
 	else return 0.0;
 }
@@ -372,12 +372,12 @@ Real GetMonaghanKernel(Real r,Real smoothRadius)
 
 Real GetMonaghanGrad(Real r,Real smoothRadius)
 {
-	float h = smoothRadius/2;
-	float q= r / h;
+	float h = (float)smoothRadius/2;
+	float q = (float)r / h;
 
 
 	static float h4 = pow(h,4);
-	static float norm = 15.0 / (14 * M_PI * h4);
+	static float norm = (float)15.0 / (float)(14 * M_PI * h4);
 
 	if (q<=1.0)
 	{
@@ -393,11 +393,11 @@ Real GetMonaghanGrad(Real r,Real smoothRadius)
 
 Real GetMonaghanLap(Real r, Real smoothRadius)
 {
-	float h = smoothRadius/2;
+	float h = (float)smoothRadius/2;
 
-	float q= r / h;
+	float q = (float)r / h;
 
-	static float norm = 15.0 / (14 * 3.141592);
+	static float norm = (float)15.0 / (float)(14 * 3.141592);
 
 	static float h2 = h * h;
 	if (q<=1.0)

@@ -86,28 +86,38 @@ public:
           typedef typename In::Coord InCoord;
           typedef typename In::Deriv InDeriv;
           typedef typename In::VecCoord VecInCoord;
-            typedef typename In::Real InReal;
-            typedef typename Out::Real Real;
+          typedef typename In::Real InReal;
+          typedef typename Out::Real Real;
           enum { N=DataTypes::spatial_dimensions };
+          enum { InDerivDim=In::DataTypes::deriv_total_size };
           typedef defaulttype::Mat<N,N,Real> Mat;
-          //typedef defaulttype::Mat<3,1,Real> Mat31;
           typedef defaulttype::Mat<3,3,Real> Mat33;
+          typedef defaulttype::Mat<3,InDerivDim,Real> Mat3xIn;
+          typedef vector<Mat3xIn> VMat3xIn;
+          typedef vector<VMat3xIn> VVMat3xIn;
           typedef defaulttype::Mat<3,6,Real> Mat36;
           typedef vector<Mat36> VMat36;
           typedef vector<VMat36> VVMat36;
+          typedef defaulttype::Mat<3,7,Real> Mat37;
           typedef defaulttype::Mat<3,8,Real> Mat38;
+          typedef defaulttype::Mat<4,3,Real> Mat43;
+          typedef vector<Mat43> VMat43;
           typedef defaulttype::Mat<4,4,Real> Mat44;
-          //typedef defaulttype::Mat<6,1,Real> Mat61;
           typedef defaulttype::Mat<6,3,Real> Mat63;
           typedef defaulttype::Mat<6,6,Real> Mat66;
           typedef vector<Mat66> VMat66;
           typedef vector<VMat66> VVMat66;
-          //typedef defaulttype::Mat<8,1,Real> Mat81;
+          typedef defaulttype::Mat<6,7,Real> Mat67;
+          typedef defaulttype::Mat<6,InDerivDim,Real> Mat6xIn;
+          typedef defaulttype::Mat<7,6,Real> Mat76;
+          typedef vector<Mat76> VMat76;
           typedef defaulttype::Mat<8,3,Real> Mat83;
           typedef defaulttype::Mat<8,6,Real> Mat86;
           typedef vector<Mat86> VMat86;
           typedef defaulttype::Mat<8,8,Real> Mat88;
           typedef vector<Mat88> VMat88;
+          typedef defaulttype::Mat<12,3,Real> Mat12x3;
+
           typedef defaulttype::Vec<3,Real> Vec3;
           typedef vector<Vec3> VVec3;
           typedef vector<VVec3> VVVec3;
@@ -116,15 +126,16 @@ public:
           typedef vector<Vec6> VVec6;
           typedef vector<VVec6> VVVec6;
           typedef defaulttype::Vec<8,Real> Vec8;
-					typedef Quater<InReal> Quat;
-					typedef sofa::helper::vector< VecCoord > VecVecCoord;
-					typedef SVector<double> VD;
+          typedef defaulttype::Vec<12,Real> Vec12;
+          typedef Quater<InReal> Quat;
+          typedef sofa::helper::vector< VecCoord > VecVecCoord;
+          typedef SVector<double> VD;
           typedef SVector<SVector<double> > VVD;
 
           typedef Coord GeoCoord;
           typedef VecCoord GeoVecCoord;
         protected:
-          vector<Coord> initPos; // pos: point coord in the world reference frame
+          vector<Coord> initPos; // pos: point coord in the local reference frame of In[i].
           vector<Coord> rotatedPoints;
 
           helper::ParticleMask* maskFrom;
@@ -182,7 +193,6 @@ public:
           void setWeightsToLinear();
           inline void updateWeights();
           inline void getDistances( int xfromBegin);
-          //inline void temporaryUpdateWeightsAfterInsertion( VVD& w, VecVecCoord& dw, int xfromBegin);
 
           // Accessors
           void setNbRefs ( unsigned int nb )
@@ -212,8 +222,7 @@ public:
             return computeWeights;
           }
 
-
-        };
+};
 
       using core::Mapping;
       using core::behavior::MechanicalMapping;

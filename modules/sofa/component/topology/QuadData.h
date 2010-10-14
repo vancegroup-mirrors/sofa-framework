@@ -63,7 +63,7 @@ namespace topology
 	}
 
    /** \brief Topological Engine which will handle all QuadData */
-   class QuadSetTopologyEngine;
+   //class QuadSetTopologyEngine;
 
 	/** \brief A class for storing Quad related data. Automatically manages topology changes.
 	*
@@ -73,7 +73,7 @@ namespace topology
 	template< class T, class Alloc = helper::CPUMemoryManager<T> >
 	class QuadData : public sofa::core::objectmodel::Data<sofa::helper::vector<T, Alloc> >
 	{
-      friend class QuadSetTopologyEngine;
+      //friend class QuadSetTopologyEngine;
 
 	public:
 		/// size_type
@@ -223,7 +223,7 @@ namespace topology
       void applyDestroyHexahedronFunction(const sofa::helper::vector<unsigned int> & indices);
 
 
-	private:
+   //private:
 		/// Swaps values at indices i1 and i2.
 		void swap( unsigned int i1, unsigned int i2 );
 
@@ -237,12 +237,12 @@ namespace topology
 		void remove( const sofa::helper::vector<unsigned int> &index );
 
 
-	private:
+   //private:
       t_createFunc m_createFunc;
       t_destroyFunc m_destroyFunc;
       t_createHexahedronFunc m_createHexahedronFunc;
       t_destroyHexahedronFunc m_destroyHexahedronFunc;
-
+   private:
 		/** Parameter to be passed to creation function.
 		*
 		* Warning : construction and destruction of this object is not of the responsibility of QuadData.

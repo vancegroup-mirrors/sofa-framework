@@ -104,10 +104,12 @@ contains(DEFINES,SOFA_HAVE_TAUCS){
 
     HEADERS +=  \
                SparseTAUCSSolver.h \
+	       SparseTAUCSLUSolver.h \
 	       IncompleteTAUCSSolver.h
 
     SOURCES +=  \
                SparseTAUCSSolver.cpp \
+	       SparseTAUCSLUSolver.cpp \
 	       IncompleteTAUCSSolver.cpp
 
 }

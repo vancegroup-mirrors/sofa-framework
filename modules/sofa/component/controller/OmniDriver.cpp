@@ -71,7 +71,7 @@ static HHD hHD = HD_INVALID_HANDLE ;
 static bool isInitialized = false;
 static HDSchedulerHandle hStateHandle = HD_INVALID_HANDLE;
 
-void printError(FILE *stream, const HDErrorInfo *error,
+void printError_OLD(FILE *stream, const HDErrorInfo *error,
                    const char *message)
 {
     fprintf(stream, "%s\n", hdGetErrorString(error->errorCode));
@@ -81,7 +81,7 @@ void printError(FILE *stream, const HDErrorInfo *error,
     fprintf(stream, "Message: %s\n", message);
 }
 
-bool isSchedulerError(const HDErrorInfo *error)
+bool isSchedulerError_OLD(const HDErrorInfo *error)
 {
     switch (error->errorCode)
     {
@@ -97,32 +97,34 @@ bool isSchedulerError(const HDErrorInfo *error)
     }
 }
 
-static bool firstCB = true;
+static bool firstCB_OLD = true;
 
 sofa::helper::TSimpleTimer<1000,10> mytimer;
 
-HDCallbackCode HDCALLBACK stateCallback(void *userData)
+HDCallbackCode HDCALLBACK updateDeviceCallback_OLD(void *userData)
 {
-    if (!firstCB)
-        mytimer.stop();
-
-    firstCB = false;
-
-    mytimer.start("CB");
+        cout << "[OldOmni] UpdateCallBack" << endl;
+        /*if (!firstCB_OLD)
+            mytimer.stop();
+        firstCB_OLD = false;
+        mytimer.start("CB");*/
 
 	OmniData* data = static_cast<OmniData*>(userData);
-	//FIXME : Apparenlty, this callback is run before the mechanical state initialisation. I've found no way to know whether the mechcanical state is initialized or not, so i wait ...
-	//static int wait = 0;
+        //FIXME : Apparently, this callback is run before the mechanical state initialisation. I've found no way to know whether the mechcanical state is initialized or not, so i wait ...
+        //static int wait = 0;
 
-	if (data->servoDeviceData.stop)
+        /*if (data->servoDeviceData.stop)
 	{
+                cout << "HD_DONE" << endl;
 		return HD_CALLBACK_DONE;
 	}
 
 	if (!data->servoDeviceData.ready)
 	{
+                cout << "HD_CONTINUE" << endl;
 		return HD_CALLBACK_CONTINUE;
-	}
+        }
+        cout << "PASSED" << endl;*/
 
 	HHD hapticHD = hdGetCurrentDevice();
 	hdBeginFrame(hapticHD);
@@ -134,9 +136,12 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	// Retrieve the current button(s).
 	hdGetIntegerv(HD_CURRENT_BUTTONS, &data->servoDeviceData.m_buttonState);
 
-	//hdGetDoublev(HD_CURRENT_POSITION, data->servoDeviceData.m_devicePosition);
-	// Get the column major transform
-	HDdouble transform[16];
+        hdGetDoublev(HD_CURRENT_POSITION, data->servoDeviceData.m_devicePosition);
+
+        //cout << "Getting the position of device: " << data->servoDeviceData.m_devicePosition << endl;
+
+        // Get the column major transform
+        HDdouble transform[16];
 	hdGetDoublev(HD_CURRENT_TRANSFORM, transform);
 
 	// Swap the X and Z axis
@@ -166,35 +171,37 @@ HDCallbackCode HDCALLBACK stateCallback(void *userData)
 	//if(data->servoDeviceData.m_buttonState1)
 	//	renderForce = !renderForce;
 
-    mytimer.step("Force");
+        /*mytimer.step("Force");*/
 
 	double fx=0.0, fy=0.0, fz=0.0;
 	if (data->forceFeedback != NULL)
 		(data->forceFeedback)->computeForce(data->servoDeviceData.pos[0], data->servoDeviceData.pos[1], data->servoDeviceData.pos[2], data->servoDeviceData.quat[0], data->servoDeviceData.quat[1], data->servoDeviceData.quat[2], data->servoDeviceData.quat[3], fx, fy, fz);
 
-    mytimer.step("OpenHaptics");
+        mytimer.step("OpenHaptics");
 
 	double currentForce[3];
 	currentForce[0] = ( data->rotation[0][0] * fx + data->rotation[1][0] * fy + data->rotation[2][0] * fz) * data->forceScale;
 	currentForce[1] = ( data->rotation[0][1] * fx + data->rotation[1][1] * fy + data->rotation[2][1] * fz) * data->forceScale;
 	currentForce[2] = ( data->rotation[0][2] * fx + data->rotation[1][2] * fy + data->rotation[2][2] * fz) * data->forceScale;
 
- 	if((data->servoDeviceData.m_buttonState & HD_DEVICE_BUTTON_1) || data->permanent_feedback)
-		hdSetDoublev(HD_CURRENT_FORCE, currentForce);
+        //cout << "Current force" << currentForce << endl;
+        //if((data->servoDeviceData.m_buttonState & HD_DEVICE_BUTTON_1) || data->permanent_feedback)
+                hdSetDoublev(HD_CURRENT_FORCE, currentForce);
 
-	++data->servoDeviceData.nupdates;
-	hdEndFrame(hapticHD);
+        /*++data->servoDeviceData.nupdates;*/
 
 
-	 HDErrorInfo error;
+
+        HDErrorInfo error;
 	if (HD_DEVICE_ERROR(error = hdGetError()))
 	{
-		printError(stderr, &error, "Error during scheduler callback");
-		if (isSchedulerError(&error))
+                printError_OLD(stderr, &error, "Error during scheduler callback");
+                if (isSchedulerError_OLD(&error))
 		{
 			return HD_CALLBACK_DONE;
 		}
-	}
+        }
+        hdEndFrame(hapticHD);
 /*
  	OmniX = data->servoDeviceData.transform[12+0]*0.1;
 	OmniY =	data->servoDeviceData.transform[12+1]*0.1;
@@ -218,17 +225,19 @@ void exitHandler()
 }
 
 
-HDCallbackCode HDCALLBACK copyDeviceDataCallback(void *pUserData)
+HDCallbackCode HDCALLBACK copyDeviceDataCallback_OLD(void *pUserData)
 {
 	OmniData *data = static_cast<OmniData*>(pUserData);
 	memcpy(&data->deviceData, &data->servoDeviceData, sizeof(DeviceData));
-	//data->servoDeviceData.quat[0] = data->servoDeviceData.quat[1] = data->servoDeviceData.quat[2] = data->servoDeviceData.quat[3] = 0.0;
+	//data->servoDeviceData.quat[0] = data->servoDeviceData.quat[1] = data->servoDeviceData.quat[2] = data->servoDeviceData.quat[3] = 0.0;        
+        cout << "Copy CB:" << endl << data->servoDeviceData.m_devicePosition << endl << data->servoDeviceData.pos <<  endl << data->servoDeviceData.quat << endl;
+
 	data->servoDeviceData.nupdates = 0;
 	data->servoDeviceData.ready = true;
-    return HD_CALLBACK_DONE;
+        return HD_CALLBACK_DONE;
 }
 
-HDCallbackCode HDCALLBACK stopCallback(void *pUserData)
+HDCallbackCode HDCALLBACK stopCallback_OLD(void *pUserData)
 {
 	OmniData *data = static_cast<OmniData*>(pUserData);
 	data->servoDeviceData.stop = true;
@@ -238,8 +247,9 @@ HDCallbackCode HDCALLBACK stopCallback(void *pUserData)
 /**
  * Sets up the device,
  */
-int initDevice(OmniData& data)
+int initDevice_OLD(OmniData& data)
 {
+        cout << "[OldOmni] Init Device Start" << endl;
 	if (isInitialized) return 0;
 	isInitialized = true;
 
@@ -253,37 +263,42 @@ int initDevice(OmniData& data)
 	data.servoDeviceData.quat[2] = 0;
 	data.servoDeviceData.quat[3] = 1;
 
-    HDErrorInfo error;
-    // Initialize the device, must be done before attempting to call any hd functions.
+        HDErrorInfo error;
+        // Initialize the device, must be done before attempting to call any hd functions.
 	if (hHD == HD_INVALID_HANDLE)
 	{
 		hHD = hdInitDevice(HD_DEFAULT_DEVICE);
 		if (HD_DEVICE_ERROR(error = hdGetError())) 
 		{
-			printError(stderr, &error, "Failed to initialize the device");
+                        //printError_OLD(stderr, &error, "Failed to initialize the device");
+                        hduPrintError(stderr, &error, "Failed to initialize the device");
 			return -1;
 		}
 		printf("Found device %s\n",hdGetString(HD_DEVICE_MODEL_TYPE));
 
-		hdEnable(HD_FORCE_OUTPUT);
-		hdEnable(HD_MAX_FORCE_CLAMPING);
+                hStateHandle = hdScheduleAsynchronous( updateDeviceCallback_OLD, (void*) &data, HD_MAX_SCHEDULER_PRIORITY);
+                //hStateHandle = hdScheduleAsynchronous( updateDeviceCallback_OLD, 0, HD_MAX_SCHEDULER_PRIORITY);
+
+                hdEnable(HD_FORCE_OUTPUT);
+                hdEnable(HD_MAX_FORCE_CLAMPING);
 
 		// Start the servo loop scheduler.
 		hdStartScheduler();
 		if (HD_DEVICE_ERROR(error = hdGetError())) 
 		{
-			printError(stderr, &error, "Failed to start the scheduler");
+                        //printError_OLD(stderr, &error, "Failed to start the scheduler");
+                        hduPrintError(stderr, &error, "Failed to start the scheduler");
 			return -1;
 		}
 	}
 
 	data.servoDeviceData.ready = false;
 	data.servoDeviceData.stop = false;
-    hStateHandle = hdScheduleAsynchronous( stateCallback, (void*) &data, HD_MAX_SCHEDULER_PRIORITY);
+
 
     if (HD_DEVICE_ERROR(error = hdGetError()))
     {
-        printError(stderr, &error, "Failed to initialize haptic device");
+        printError_OLD(stderr, &error, "Failed to initialize haptic device");
         fprintf(stderr, "\nPress any key to quit.\n");
         getchar();
         exit(-1);
@@ -299,7 +314,7 @@ OmniDriver::OmniDriver()
 , orientation(initData(&orientation, Vec3d(0,0,0), "orientation","Default orientation applied to the Phantom Coordinates"))
 , permanent(initData(&permanent, false, "permanent" , "Apply the force feedback permanently"))
 {
-	serr<<"toto"<<sendl;
+        cerr<<"toto"<<sendl;
 	this->f_listening.setValue(true);
 	data.forceFeedback = new NullForceFeedback();
 }
@@ -310,8 +325,8 @@ OmniDriver::~OmniDriver()
 
 void OmniDriver::cleanup()
 {
-	sout << "OmniDriver::cleanup()" << sendl;
-	hdScheduleSynchronous(stopCallback, (void*) &data, HD_MIN_SCHEDULER_PRIORITY);
+        cout << "OmniDriver::cleanup()" << sendl;
+        hdScheduleSynchronous(stopCallback_OLD, (void*) &data, HD_MIN_SCHEDULER_PRIORITY);
     //exitHandler();
     isInitialized = false;
 //    delete forceFeedback;
@@ -319,7 +334,7 @@ void OmniDriver::cleanup()
 
 void OmniDriver::setForceFeedback(ForceFeedback* ff)
 {
-	sout << "change ff" << endl;
+        cout << "change ff" << endl;
 	if(data.forceFeedback)
 		delete data.forceFeedback;
 	data.forceFeedback = ff;
@@ -327,7 +342,7 @@ void OmniDriver::setForceFeedback(ForceFeedback* ff)
 
 void OmniDriver::init()
 {
-	sout << "OmniDriver::init()" << sendl;
+        cout << "OmniDriver::init()" << sendl;
 	this->reinit();
 }
 
@@ -347,8 +362,8 @@ void OmniDriver::reinit()
 	Vector3 radV = orientation.getValue() * M_PI/180;
 	Quaternion q = helper::Quater<double>::createFromRotationVector(radV);
 	q.toMatrix(data.rotation);
-	initDevice(data);
-	sout << "OmniDriver::init() done" << sendl;
+        initDevice_OLD(data);
+        cout << "OmniDriver::init() done" << sendl;
 
 	data.permanent_feedback = permanent.getValue();
 }
@@ -358,13 +373,14 @@ void OmniDriver::handleEvent(core::objectmodel::Event *event)
 	if (dynamic_cast<sofa::simulation::AnimateBeginEvent *>(event))
 	{
 		//getData(); // copy data->servoDeviceData to gDeviceData
-		hdScheduleSynchronous(copyDeviceDataCallback, (void *) &data, HD_MIN_SCHEDULER_PRIORITY);
+                hdScheduleSynchronous(copyDeviceDataCallback_OLD, (void *) &data, HD_MIN_SCHEDULER_PRIORITY);
 		if (data.deviceData.ready)
 		{
-			data.deviceData.quat.normalize();
-			//sout << "driver is working ! " << data->servoDeviceData.transform[12+0] << endl;
+			data.deviceData.quat.normalize();                        
 
 			sofa::core::objectmodel::OmniEvent omniEvent(data.deviceData.id, data.deviceData.pos, data.deviceData.quat, data.deviceData.m_buttonState);
+
+                        cout << "driver is working ! " << data.deviceData.pos << endl;
 
 			this->getContext()->propagateEvent(&omniEvent);
 		}

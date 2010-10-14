@@ -32,7 +32,7 @@
 #include <sofa/core/topology/BaseMeshTopology.h>
 
 #include <sofa/component/collision/TriangleModel.h>
-
+#include <sofa/component/collision/SphereModel.h>
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -48,7 +48,6 @@ namespace component
 {
 	namespace collision{
       class TetrahedronModel;
-		class SphereModel;
 	}
 }
 

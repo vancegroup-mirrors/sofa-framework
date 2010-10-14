@@ -25,11 +25,10 @@
 #ifndef SOFA_GPU_CUDA_CUDASPHEREMODEL_H
 #define SOFA_GPU_CUDA_CUDASPHEREMODEL_H
 
+#include <sofa/gpu/cuda/gpucuda.h>
 #include "CudaTypes.h"
 
-#include <sofa/core/CollisionModel.h>
-#include <sofa/component/container/MechanicalObject.h>
-#include "CudaMechanicalObject.h"
+#include <sofa/component/collision/SphereModel.h>
 
 namespace sofa
 {
@@ -40,95 +39,17 @@ namespace gpu
 namespace cuda
 {
 
-using namespace sofa::defaulttype;
-  /* typedef sofa::component::collision::SphereModel <gpu::cuda::CudaVec3fTypes> CudaSphereModel; */
+typedef sofa::component::collision::TSphereModel<gpu::cuda::CudaVec3Types> CudaSphereModel; 
+typedef sofa::component::collision::TSphere<gpu::cuda::CudaVec3Types> CudaSphere; 
 
-class CudaSphereModel;
-  /* typedef sofa::component::collision::Sphere <gpu::cuda::CudaVec3fTypes> CudaSphere; */
-
-class CudaSphere : public core::TCollisionElementIterator<CudaSphereModel>
-{
-public:
-	typedef SReal Real;
-	typedef CudaVec3fTypes::Coord Coord;
-
-	CudaSphere(CudaSphereModel* model, int index);
-
-	explicit CudaSphere(const core::CollisionElementIterator& i);
-
-
-	const Coord& center() const;
-	const Coord& p() const;
-	const Coord& pFree() const;
-	const Coord& v() const; 
-	SReal r() const;
-}; 
-
-class CudaSphereModel : public core::CollisionModel
-{
-public:
-  SOFA_CLASS(CudaSphereModel,core::CollisionModel);
-	typedef CudaVec3fTypes InDataTypes;
-	typedef CudaVec3fTypes DataTypes;
-	typedef DataTypes::VecCoord VecCoord;
-	typedef DataTypes::VecDeriv VecDeriv;
-	typedef DataTypes::Coord Coord;
-	typedef DataTypes::Deriv Deriv;
-	typedef DataTypes::Real Real;
-	typedef DataTypes::VecReal VecReal;
-	typedef CudaSphere Element;
-	friend class CudaSphere;
-	
-	CudaSphereModel();
-
-	virtual void init();
-
-	// -- CollisionModel interface
-	
-	virtual void resize(int size);
-
-	virtual void computeBoundingTree(int maxDepth=0);
-
-	//virtual void computeContinuousBoundingTree(double dt, int
-	//maxDepth=0);
-	
-	void draw(int index);
-
-	void draw();
-
-	core::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return mstate; }
-	
-	const VecReal& getR() const { return this->radius.getValue(); }
-	
-protected:
-	core::behavior::MechanicalState<InDataTypes>* mstate;
-
-	Data< VecReal > radius;
-	Data< SReal > defaultRadius;
-
-	Real getRadius(const int i) const; /// return the radius of the given sphere
-
-
-};
-
-inline CudaSphere::CudaSphere(CudaSphereModel* model, int index)
-: core::TCollisionElementIterator<CudaSphereModel>(model, index)
-{}
-
-inline CudaSphere::CudaSphere(const core::CollisionElementIterator& i)
-: core::TCollisionElementIterator<CudaSphereModel>(static_cast<CudaSphereModel*>(i.getCollisionModel()), i.getIndex())
-{}
-
-
-inline const CudaSphere::Coord& CudaSphere::center() const { return (*model->mstate->getX())[index]; }
-
-inline const CudaSphere::Coord& CudaSphere::p() const { return (*model->mstate->getX())[index]; }
-
-inline const CudaSphere::Coord& CudaSphere::pFree() const { return (*model->mstate->getXfree())[index]; }
-
-inline const CudaSphere::Coord& CudaSphere::v() const { return (*model->mstate->getV())[index]; } 
-
-inline CudaSphere::Real CudaSphere::r() const { return (CudaSphere::Real) model->getRadius((unsigned)index); } 
+#if defined(WIN32) && !defined(SOFA_BUILD_GPU_CUDA)
+extern template class SOFA_GPU_CUDA_API sofa::component::collision::TSphereModel<sofa::gpu::cuda::CudaVec3fTypes>;
+extern template class SOFA_GPU_CUDA_API sofa::component::collision::TSphereModel<sofa::gpu::cuda::CudaVec3f1Types>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+extern template class SOFA_GPU_CUDA_API sofa::component::collision::TSphereModel<sofa::gpu::cuda::CudaVec3dTypes>;
+extern template class SOFA_GPU_CUDA_API sofa::component::collision::TSphereModel<sofa::gpu::cuda::CudaVec3d1Types>;
+#endif // SOFA_GPU_CUDA_DOUBLE
+#endif
 
 } // namespace cuda
 

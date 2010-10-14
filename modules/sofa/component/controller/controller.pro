@@ -25,7 +25,9 @@ HEADERS += initController.h \
            NullForceFeedback.h \
            EnslavementForceFeedback.h \
            LCPForceFeedback.h \
-           LCPForceFeedback.inl
+           LCPForceFeedback.inl \
+	   VMechanismsForceFeedback.h \
+	   VMechanismsForceFeedback.inl
 
 SOURCES += initController.cpp \
            ArticulatedHierarchyController.cpp \
@@ -35,7 +37,8 @@ SOURCES += initController.cpp \
            MechanicalStateController.cpp \
            NullForceFeedback.cpp \
            EnslavementForceFeedback.cpp \
-           LCPForceFeedback.cpp
+           LCPForceFeedback.cpp \
+	   VMechanismsForceFeedback.cpp
 
 contains(DEFINES,SOFA_HAVE_SENSABLE){
     HEADERS +=  OmniDriver.h
@@ -50,6 +53,8 @@ LIBS += -lsofacomponentbase$$LIBSUFFIX
 LIBS += -lsofacomponentprojectiveconstraintset$$LIBSUFFIX
 LIBS += -lsofacomponentconstraintset$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
+LIBS += -lsofacomponentmastersolver$$LIBSUFFIX
+
 LIBS += $$SOFA_EXT_LIBS 
 
 macx : LIBS += -framework GLUT 

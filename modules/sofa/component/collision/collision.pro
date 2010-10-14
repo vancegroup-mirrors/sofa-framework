@@ -78,6 +78,7 @@ HEADERS += initCollision.h \
            SpatialGridPointModel.h \
            Sphere.h \
            SphereModel.h \
+		   SphereModel.inl \
            SphereTreeModel.h \
            SubsetContactMapper.h \
            SubsetContactMapper.inl \

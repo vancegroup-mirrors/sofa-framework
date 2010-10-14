@@ -116,6 +116,14 @@ class CudaBaseVector : public BaseVector {
 		    v = e.v;
 		}
 
+		const void* deviceRead() {
+		    return v.deviceRead();
+		}
+		
+		void * deviceWrite() {
+		    return v.deviceWrite();
+		}
+
 		static const char* Name(); /* {
 			return "CudaBaseVector";
             }*/

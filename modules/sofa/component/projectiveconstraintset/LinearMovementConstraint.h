@@ -35,6 +35,8 @@
 #include <sofa/component/topology/PointSubset.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <set>
 
 namespace sofa
@@ -46,7 +48,6 @@ namespace component
 namespace projectiveconstraintset
 {
 
-using helper::vector;
 using core::objectmodel::Data;
 using namespace sofa::core::objectmodel;
 using namespace sofa::defaulttype;
@@ -59,74 +60,79 @@ class LinearMovementConstraint : public core::behavior::ProjectiveConstraintSet<
 {
 public:
 	SOFA_CLASS(SOFA_TEMPLATE(LinearMovementConstraint,TDataTypes),SOFA_TEMPLATE(sofa::core::behavior::ProjectiveConstraintSet, TDataTypes));
+
     typedef TDataTypes DataTypes;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
     typedef typename DataTypes::MatrixDeriv MatrixDeriv;
-	typedef typename DataTypes::MatrixDeriv::RowType MatrixDerivRowType;
-	typedef typename DataTypes::Coord Coord;
-	typedef typename DataTypes::Deriv Deriv;
-	typedef typename DataTypes::Real Real;
-	typedef topology::PointSubset SetIndex;
-	typedef helper::vector<unsigned int> SetIndexArray;
+    typedef typename DataTypes::MatrixDeriv::RowType MatrixDerivRowType;
+    typedef typename DataTypes::Coord Coord;
+    typedef typename DataTypes::Deriv Deriv;
+    typedef typename DataTypes::Real Real;
+    typedef topology::PointSubset SetIndex;
+    typedef helper::vector<unsigned int> SetIndexArray;
 
 public :
-	/// indices of the DOFs the constraint is applied to
-	Data<SetIndex> m_indices;
-	/// the key frames when the motion is defined by the user
-	Data<helper::vector<Real> > m_keyTimes;
-	/// the motions corresponding to the key frames
-	Data<VecDeriv > m_keyMovements;
+    /// indices of the DOFs the constraint is applied to
+    Data<SetIndex> m_indices;
+    /// the key frames when the motion is defined by the user
+    Data<helper::vector<Real> > m_keyTimes;
+    /// the motions corresponding to the key frames
+    Data<VecDeriv > m_keyMovements;
 
-	/// attributes to precise display
-	/// if showMovement is true we display the expected movement
-	/// otherwise we show which are the fixed dofs
-	Data< bool > showMovement; 
+    /// attributes to precise display
+    /// if showMovement is true we display the expected movement
+    /// otherwise we show which are the fixed dofs
+    Data< bool > showMovement;
 
-	/// the key times surrounding the current simulation time (for interpolation)
-	Real prevT, nextT;
-	///the motions corresponding to the surrouding key times
-	Deriv prevM, nextM;
-	///initial constrained DOFs position
-	VecCoord x0;
+    /// the key times surrounding the current simulation time (for interpolation)
+    Real prevT, nextT;
+    ///the motions corresponding to the surrouding key times
+    Deriv prevM, nextM;
+    ///initial constrained DOFs position
+    VecCoord x0;
 
-	LinearMovementConstraint();
+    LinearMovementConstraint();
 
-	virtual ~LinearMovementConstraint();
+    virtual ~LinearMovementConstraint();
 
-	///methods to add/remove some indices, keyTimes, keyMovement
-	void clearIndices();
-	void addIndex(unsigned int index);
-	void removeIndex(unsigned int index);
-	void clearKeyMovements();
-	/**add a new key movement
-	@param time : the simulation time you want to set a movement (in sec)
-	@param movement : the corresponding motion
-	for instance, addKeyMovement(1.0, Deriv(5,0,0) ) will set a translation of 5 in x direction a time 1.0s
-	**/
-	void addKeyMovement(Real time, Deriv movement);
+    ///methods to add/remove some indices, keyTimes, keyMovement
+    void clearIndices();
+    void addIndex(unsigned int index);
+    void removeIndex(unsigned int index);
+    void clearKeyMovements();
+    /**add a new key movement
+    @param time : the simulation time you want to set a movement (in sec)
+    @param movement : the corresponding motion
+    for instance, addKeyMovement(1.0, Deriv(5,0,0) ) will set a translation of 5 in x direction a time 1.0s
+    **/
+    void addKeyMovement(Real time, Deriv movement);
 
 
-	/// -- Constraint interface
-	void init();
+    /// -- Constraint interface
+    void init();
     void reset();
     template <class DataDeriv>
         void projectResponseT(DataDeriv& dx);
 
     void projectResponse(VecDeriv& dx);
-    void projectResponse(MatrixDerivRowType& dx);
+	void projectResponse(MatrixDerivRowType& dx);
 	virtual void projectVelocity(VecDeriv& dx); ///< project dx to constrained space (dx models a velocity)
 	virtual void projectPosition(VecCoord& x); ///< project x to constrained space (x models a position)
 
-	/// Handle topological changes
-	virtual void handleTopologyChange();
+    /// Handle topological changes
+    virtual void handleTopologyChange();
 
-	virtual void draw();
+    virtual void draw();
 
-	/// this constraint is holonomic
-	bool isHolonomic() {return true;}
+    /// this constraint is holonomic
+    bool isHolonomic() {return true;}
 
 protected:
+    template <class MyCoord>
+    void interpolatePosition(Real cT, typename boost::disable_if<boost::is_same<MyCoord, RigidCoord<3, Real> >, VecCoord>::type& x);
+    template <class MyCoord>
+    void interpolatePosition(Real cT, typename boost::enable_if<boost::is_same<MyCoord, RigidCoord<3, Real> >, VecCoord>::type& x);
 
 	sofa::core::topology::BaseMeshTopology* topology;
 	

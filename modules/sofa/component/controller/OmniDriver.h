@@ -27,6 +27,10 @@
 
 //Sensable include
 #include <HD/hd.h>
+#include <HDU/hdu.h>
+#include <HDU/hduError.h>
+#include <HDU/hduVector.h>
+
 #include <sofa/helper/LCPcalc.h>
 
 #include <sofa/core/behavior/BaseController.h>
@@ -51,7 +55,7 @@ typedef struct {
 		HHD id;
         int nupdates;
         int m_buttonState;					/* Has the device button has been pressed. */
-        // hduVector3Dd m_devicePosition;	/* Current device coordinates. */
+        hduVector3Dd m_devicePosition;                          /* Current device coordinates. */
         HDErrorInfo m_error;
         Vec3d pos;
         Quat quat;

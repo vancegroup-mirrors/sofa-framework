@@ -69,7 +69,7 @@ namespace sofa {
 namespace component {
 
 namespace linearsolver {
-
+  
 template<class TVector>  
 class ParallelMatrixLinearSolverInternalData {
   public :  
@@ -77,20 +77,46 @@ class ParallelMatrixLinearSolverInternalData {
 	typedef RotationMatrix<Real> TRotationMatrix;
 };
 
+template<class Matrix, class Vector>
+class Thread_invert;
+
 template<class Matrix,class Vector>  
-class ParallelMatrixLinearSolverSharedData{
+class ParallelMatrixLinearSolverSharedData {
   public :   
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
     
   	//boost::barrier * bar;
 	unsigned int systemSize;	    
-	Matrix * matricesWork[2];  
+	Matrix * matricesWork[2]; 
+	MatrixInvertData * invertData[3];
+	TRotationMatrix * rotationWork[2];
 	double mFact;
 	double bFact;
 	double kFact;
 	sofa::helper::system::atomic<int> handeled;
 	sofa::helper::system::atomic<int> ready_thread;
 	sofa::helper::system::atomic<int> run;
+	
+	ParallelMatrixLinearSolverSharedData() {
+	    run=0;
+	    matricesWork[0] = NULL;
+	    matricesWork[1] = NULL;
+	    rotationWork[0] = NULL;
+	    rotationWork[1] = NULL;
+	    invertData[0] = NULL;
+	    invertData[1] = NULL;
+	    invertData[2] = NULL;
+	}
+	
+	~ParallelMatrixLinearSolverSharedData() {
+	    if (invertData[0]) delete invertData[0];
+	    if (invertData[1]) delete invertData[1];
+	    if (invertData[2]) delete invertData[2];
+	    if (matricesWork[0]) delete matricesWork[0];
+	    if (matricesWork[1]) delete matricesWork[1];
+	    if (rotationWork[0]) delete rotationWork[0];
+	    if (rotationWork[1]) delete rotationWork[1];
+	}
 };
  
 template<class Matrix, class Vector>
@@ -212,18 +238,30 @@ protected:
 	VecId solutionVecId;	
 	Vector* systemRHVector;
 	Vector* systemLHVector;
-	
-	ParallelMatrixLinearSolverInternalData<Vector> internalData;
 
-	TRotationMatrix * rotationWork[2];
+	MatrixInvertData * getMatrixInvertData(Matrix * m) {
+	    if (sharedData.matricesWork[0] == m) {
+	      if (sharedData.invertData[0] == NULL) sharedData.invertData[0]=createInvertData();
+	      return sharedData.invertData[0];
+	    }
+	    if (sharedData.matricesWork[1] == m) {
+	      if (sharedData.invertData[1] == NULL) sharedData.invertData[1]=createInvertData();
+	      return sharedData.invertData[1];
+	    }
+	    if (sharedData.invertData[2] == NULL) sharedData.invertData[2]=createInvertData();
+	    return sharedData.invertData[2];
+	}
+	
+	virtual MatrixInvertData * createInvertData() = 0;
+	
 	bool useRotation;
 	unsigned indRotationFinder;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
 	Vector tmpVectorRotation;
 	SparseMatrix<Real> JR;
 	
-	bool first;
 	int nbstep_update;
+	Thread_invert<Matrix,Vector> * thread;
 };
 
 template<class Matrix, class Vector>

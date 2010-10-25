@@ -549,7 +549,7 @@ namespace sofa
 	        {
             RegisterViewer(viewerName);
   	          viewer = viewer::SofaViewerFactory::CreateObject(viewerName, arg );
-              viewerQGLViewerAction->setOn ( true );
+              viewerOGREAction->setOn ( true );
           }
 	#else
 	        viewerOGREAction->setEnabled ( false );
@@ -925,10 +925,13 @@ namespace sofa
         root->execute(act);
 #endif // SOFA_HAVE_CHAI3D
 
-       resetScene(); 
        viewer->getQWidget()->setFocus();
        viewer->getQWidget()->show();
        viewer->getQWidget()->update();
+
+#ifdef SOFA_GUI_QTOGREVIEWER
+       resetScene();
+#endif
 
 
       }

@@ -92,7 +92,7 @@ SkinningMapping<BasicMapping>::SkinningMapping ( In* from, Out* to )
     wheightingTypeOptions.setSelectedItem(WEIGHT_INVDIST_SQUARE);
     wheightingType.setValue(wheightingTypeOptions);
 
-    sofa::helper::OptionsGroup distanceTypeOptions(3,"Euclidian","Geodesic", "Harmonic");
+    sofa::helper::OptionsGroup distanceTypeOptions(4,"Euclidian","Geodesic", "Harmonic", "StiffnessDiffusion");
     distanceTypeOptions.setSelectedItem(DISTANCE_EUCLIDIAN);
     distanceType.setValue(distanceTypeOptions);
 }
@@ -491,7 +491,7 @@ void SkinningMapping<BasicMapping>::applyJT ( typename In::VecDeriv& out, const 
 template <class BasicMapping>
 void SkinningMapping<BasicMapping>::applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
 {
-  _applyJT_Matrix<typename In::DataTypes>( out, in);
+  _applyJT_Matrix<typename In::DataTypes::MatrixDeriv>( out, in);
 }
 
 template <class BasicMapping>
@@ -731,8 +731,8 @@ typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::Deri
 
 
 template <class BasicMapping>
-template<class T>
-typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType, T> >::type SkinningMapping<BasicMapping>::_applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in)
+template<class TMatrixDeriv>
+typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::MatrixDeriv, TMatrixDeriv> >::type SkinningMapping<BasicMapping>::_applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in)
 {
     const vector<int>& m_reps = repartition.getValue();
     const VVD& m_weights = weights.getValue();

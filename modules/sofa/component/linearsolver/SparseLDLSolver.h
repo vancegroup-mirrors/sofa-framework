@@ -43,12 +43,6 @@ namespace component {
 
 namespace linearsolver {
   
-class SparseLDLSolverInvertData : public defaulttype::MatrixInvertData {
-  public :
-	int n;
-	helper::vector<double> A_x,Lx,D,Y;
-	helper::vector<int> A_i,A_p, Li,Lp,Parent,Lnz,Flag,Pattern;
-};
   
   
 /// Direct linear solver based on Sparse LDL^T factorization, implemented with the CSPARSE library
@@ -84,6 +78,21 @@ class SparseLDLSolver : public sofa::component::linearsolver::ParallelMatrixLine
     static std::string templateName(const SparseLDLSolver<TMatrix,TVector>* = NULL) {
         return TVector::Name();
     }    
+    
+    MatrixInvertData * createInvertData() {
+      return new SparseLDLSolverInvertData();
+    }
+    
+    
+  protected :
+    
+    class SparseLDLSolverInvertData : public MatrixInvertData {
+      public :
+	    int n;
+	    helper::vector<double> A_x,Lx,D,Y;
+	    helper::vector<int> A_i,A_p, Li,Lp,Parent,Lnz,Flag,Pattern;
+    };
+
 };
 
 #if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_LINEARSOLVER)

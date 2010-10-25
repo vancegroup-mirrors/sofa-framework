@@ -43,6 +43,7 @@ namespace sofa{
       class QTableViewUpdater : virtual public QTableView
       {
         Q_OBJECT
+
       public:
         QTableViewUpdater (QWidget * parent = 0):
         QTableView(parent)
@@ -53,11 +54,13 @@ namespace sofa{
         {
           this->setShown(b);
         }
+	
       };
 
       class QTableModelUpdater : virtual public QStandardItemModel
       {
         Q_OBJECT
+
       public:
         QTableModelUpdater ( int numRows, int numCols, QWidget * parent = 0, const char * /*name*/ = 0 ):
         QStandardItemModel(numRows, numCols, parent)
@@ -108,7 +111,6 @@ namespace sofa{
               }
             }
           }
-
       };
 
     }

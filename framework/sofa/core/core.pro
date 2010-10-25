@@ -199,7 +199,6 @@ SOURCES +=  \
           loader/MeshLoader.cpp 
 
 
-
 contains(DEFINES,SOFA_SMP){
 HEADERS +=  \
 					CallContext.h \

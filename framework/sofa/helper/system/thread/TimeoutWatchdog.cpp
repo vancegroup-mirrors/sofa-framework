@@ -24,27 +24,79 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/helper/vector.h>
-#include <sofa/helper/Factory.h>
-#include <sofa/helper/BackTrace.h>
-#include <cassert>
+
+#ifdef SOFA_HAVE_BOOST
+
+#include "TimeoutWatchdog.h"
 #include <iostream>
 
 namespace sofa
 {
-
 namespace helper
 {
- 
-DEBUG_OUT_V(int cptid = 0);
-  
-void SOFA_HELPER_API vector_access_failure(const void* vec, unsigned size, unsigned i, const std::type_info& type)
+namespace system
 {
-    std::cerr << "ERROR in vector<"<<gettypename(type)<<"> " << std::hex << (long)vec << std::dec << " size " << size << " : invalid index " << (int)i << std::endl;
-	BackTrace::dump();
-	assert(i < size);
+namespace thread
+{
+/**
+ * Default constructor.
+ */
+TimeoutWatchdog::TimeoutWatchdog()
+    : timeout_sec(0)
+{
 }
 
-} // namespace helper
+/**
+ * Destructor: interrupts the watchdog and cleans-up.
+ */
+TimeoutWatchdog::~TimeoutWatchdog()
+{
+    if(timeout_sec > 0)
+    {
+        //std::cout << "Waiting for watchdog thread" << std::endl;
+        watchdogThread.interrupt();
+        watchdogThread.join();
+        //std::cout << "Watchdog thread closed" << std::endl;
+    }
+}
 
-} // namespace sofa
+/**
+ * Starts a thread that will terminate the program after the specified duration elapses.
+ */
+void TimeoutWatchdog::start(unsigned timeout_sec)
+{
+    this->timeout_sec = timeout_sec;
+    if(timeout_sec > 0)
+    {
+        boost::thread newThread(boost::bind(&TimeoutWatchdog::threadProc, this));
+        watchdogThread.swap(newThread);
+    }
+}
+
+/**
+ * The thread "main" procedure: waits until the program lifespan has elapsed.
+ */
+void TimeoutWatchdog::threadProc()
+{
+    //std::cout << "Entering watchdog thread" << std::endl;
+
+    // sleep method is interruptible, when calling interrupt() from another thread
+    // this thread should end inside the sleep method.
+    boost::thread::sleep(boost::get_system_time() + boost::posix_time::seconds(timeout_sec));
+
+    if(!boost::this_thread::interruption_requested())
+    {
+        std::cerr << "The program has been running for more than "
+            << timeout_sec <<
+            " seconds. It is going to shut down now." << std::endl;
+        exit(-1);
+    }
+}
+
+}
+}
+}
+}
+
+#endif // SOFA_HAVE_BOOST
+

@@ -57,7 +57,6 @@ namespace sofa
 
       void TriangleSetTopologyModifier::reinit()
       {
-         //char* toto[256];
          const sofa::helper::vector <unsigned int>& vertexToBeRemoved = this->list_Out.getValue();
 
 

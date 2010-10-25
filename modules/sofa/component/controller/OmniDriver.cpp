@@ -314,7 +314,7 @@ OmniDriver::OmniDriver()
 , orientation(initData(&orientation, Vec3d(0,0,0), "orientation","Default orientation applied to the Phantom Coordinates"))
 , permanent(initData(&permanent, false, "permanent" , "Apply the force feedback permanently"))
 {
-        cerr<<"toto"<<sendl;
+    std::cerr << "OmniDriver::OmniDriver()" << std::endl;
 	this->f_listening.setValue(true);
 	data.forceFeedback = new NullForceFeedback();
 }
@@ -325,7 +325,7 @@ OmniDriver::~OmniDriver()
 
 void OmniDriver::cleanup()
 {
-        cout << "OmniDriver::cleanup()" << sendl;
+    std::cout << "OmniDriver::cleanup()" << std::endl;
         hdScheduleSynchronous(stopCallback_OLD, (void*) &data, HD_MIN_SCHEDULER_PRIORITY);
     //exitHandler();
     isInitialized = false;
@@ -342,7 +342,7 @@ void OmniDriver::setForceFeedback(ForceFeedback* ff)
 
 void OmniDriver::init()
 {
-        cout << "OmniDriver::init()" << sendl;
+        cout << "OmniDriver::init()" << endl;
 	this->reinit();
 }
 
@@ -363,7 +363,7 @@ void OmniDriver::reinit()
 	Quaternion q = helper::Quater<double>::createFromRotationVector(radV);
 	q.toMatrix(data.rotation);
         initDevice_OLD(data);
-        cout << "OmniDriver::init() done" << sendl;
+        cout << "OmniDriver::init() done" << endl;
 
 	data.permanent_feedback = permanent.getValue();
 }

@@ -69,8 +69,12 @@ public:
     void solve (Matrix& M, Vector& x, Vector& b);
     void invert(Matrix& M);
 
+    MatrixInvertData * createInvertData() {
+      return new SparsePARDISOSolverInvertData(f_symmetric.getValue(),sout,serr);
+    }
+
 protected:
-    class SparsePARDISOSolverInvertData : public defaulttype::MatrixInvertData {
+    class SparsePARDISOSolverInvertData : public MatrixInvertData {
     public :
         CompressedRowSparseMatrix<double> Mfiltered;
         SparsePARDISOSolver<Matrix,Vector>* solver;
@@ -81,13 +85,7 @@ protected:
         int pardiso_mtype;
         bool factorized;
 
-        SparsePARDISOSolverInvertData()
-        : solver(NULL)
-        , pardiso_initerr(1)
-        , pardiso_mtype(0)
-        , factorized(false)
-        {
-        }
+        SparsePARDISOSolverInvertData(int f_symmetric,std::ostream & sout,std::ostream & serr);
 
         ~SparsePARDISOSolverInvertData()
         {

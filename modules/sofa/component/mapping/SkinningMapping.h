@@ -56,6 +56,7 @@ using sofa::helper::SVector;
 #define DISTANCE_EUCLIDIAN 0
 #define DISTANCE_GEODESIC 1
 #define DISTANCE_HARMONIC 2
+#define DISTANCE_STIFFNESS_DIFFUSION 3
 
 #define WEIGHT_NONE 0
 #define WEIGHT_INVDIST_SQUARE 1
@@ -267,8 +268,8 @@ public:
           template<class TDeriv>
           inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in);
 
-          template<class T>
-          inline typename enable_if<Equal<RigidType, T> >::type _applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
+          template<class TMatrixDeriv>
+          inline typename enable_if<Equal<typename RigidType::MatrixDeriv, TMatrixDeriv> >::type _applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
 };
 
       using core::Mapping;

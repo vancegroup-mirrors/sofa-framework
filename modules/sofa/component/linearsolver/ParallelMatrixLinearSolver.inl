@@ -41,8 +41,8 @@ namespace linearsolver {
 template<class Matrix, class Vector>
 void Thread_invert<Matrix,Vector>::operator()() {	
 	sharedData.run=1;
-	while (true) {
-		while (sharedData.ready_thread) usleep(50);
+	while (sharedData.run) {
+		while (sharedData.ready_thread && sharedData.run) usleep(50);
 		
 		if (! sharedData.run) break;
 
@@ -53,7 +53,7 @@ void Thread_invert<Matrix,Vector>::operator()() {
 			matrixAccessor.setupMatrices();
 			unsigned systemSize = matrixAccessor.getGlobalDimension();
 			sharedData.matricesWork[indexwork]->resize(systemSize,systemSize);
-			sharedData.matricesWork[indexwork]->clear();
+			//sharedData.matricesWork[indexwork]->clear();
 			solver->addMBK_ToMatrix(&matrixAccessor, sharedData.mFact, sharedData.bFact, sharedData.kFact);
 			matrixAccessor.computeGlobalMatrix();
 		}		
@@ -65,6 +65,8 @@ void Thread_invert<Matrix,Vector>::operator()() {
 		
 		sharedData.ready_thread = 1; //signal the main thread the invert is finish
 	}	
+	
+	sharedData.ready_thread = 1;
 }  
   
   
@@ -74,25 +76,32 @@ ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
 , useRotationFinder( initData( &useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
 , useMultiThread( initData( &useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
 , check_symetric( initData( &check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
-{}
+{
+    thread = NULL;
+    
+    sharedData.matricesWork[0] = new Matrix();
+    sharedData.rotationWork[0] = new TRotationMatrix();
+    Rcur = new TRotationMatrix();
+    systemLHVector = new Vector();
+    systemRHVector = new Vector();
+    
+    sharedData.ready_thread = 1;
+    indexwork = 0;
+}
 
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::~ParallelMatrixLinearSolver()
 {
-    sharedData.run = 0;
-    sharedData.ready_thread = 0;
-    
-    std::cout << "Wait for destoying thread" << std::endl;
+    if (thread) {
+      std::cout << "Wait for destoying thread" << std::endl;
+      sharedData.run = 0;
+      while (!sharedData.ready_thread) sleep(100);
+      delete thread;
+    }
     
     if (systemRHVector) delete systemRHVector;
     if (systemLHVector) delete systemLHVector;
-    
-    if (sharedData.matricesWork[0]) delete sharedData.matricesWork[0];
-    if (sharedData.matricesWork[1]) delete sharedData.matricesWork[1];
-    if (rotationWork[0]) delete rotationWork[0];
-    if (rotationWork[1]) delete rotationWork[1];
     if (Rcur) delete Rcur;
-    //if (sharedData.bar) delete sharedData.bar;
 }
 
 template<class TMatrix, class TVector>
@@ -105,8 +114,9 @@ void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
     for (unsigned i=0;i<rotationFinders.size();i++) {
       sout << i << " : " << rotationFinders[i]->getName() << sendl;
     }
-      
-    first = true;
+    
+    indexwork = 0;
+    sharedData.ready_thread = 1;      
     sharedData.handeled = false;
 }
 
@@ -135,11 +145,11 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix() {
         this->getMatrixDimension(&matrixAccessor);
         matrixAccessor.setupMatrices();
         resizeSystem(matrixAccessor.getGlobalDimension());
-        sharedData.matricesWork[indexwork]->clear();
+        //sharedData.matricesWork[indexwork]->clear();
         this->addMBK_ToMatrix(&matrixAccessor, sharedData.mFact, sharedData.bFact, sharedData.kFact);
         matrixAccessor.computeGlobalMatrix();
   }
-  if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+  if (useRotation) rotationFinders[indRotationFinder]->getRotations(sharedData.rotationWork[indexwork]);
   
   if (check_symetric.getValue()) {
     for (unsigned i=0;i<sharedData.matricesWork[indexwork]->colSize();i++) {
@@ -164,63 +174,27 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	sharedData.mFact = mFact;
 	sharedData.bFact = bFact;
 	sharedData.kFact = kFact;
-	
-	if (first) {
-	    first = false;
-	    sharedData.matricesWork[0] = new Matrix();
-	    sharedData.matricesWork[1] = new Matrix();
-	    rotationWork[0] = new TRotationMatrix();
-	    rotationWork[1] = new TRotationMatrix();
-	    Rcur = new TRotationMatrix();
-	    systemLHVector = new Vector();
-	    systemRHVector = new Vector();
-	    
-	    //////////////////////////////////////////////////////////////
-	    //CompressedRowSparseMatrix doesn't store data until the first "non zero resize" plus clear 
-	    //When the bug will be fix thooses linge should be remove
-	    unsigned int nbRow=0, nbCol=0;
-	    this->getMatrixDimension(&nbRow,&nbCol);
-	    sharedData.matricesWork[0]->resize(nbRow,nbRow);sharedData.matricesWork[0]->clear();	    
-	    sharedData.matricesWork[1]->resize(nbRow,nbRow);sharedData.matricesWork[1]->clear();    
-	    //////////////////////////////////////////////////////////////
-	    	
-	    sharedData.ready_thread = 1;	
-	    //sharedData.bar = new boost::barrier(2);
-	    std :: cout << "Launching the invert thread...." << std::endl;// on matrix[1]
-	    Thread_invert<Matrix,Vector> thi(this,sharedData);
-	    boost::thread thrd(thi);
-	    
-    	    indexwork = 0;
-	    
-	    computeSystemMatrix();
-	    invertSystem(); //only this thread use metho invert.
-	    
-   	    if (useMultiThread.getValue()) {
-	      sofa::component::misc::ParallelizeBuildMatrixEvent event;
-	      this->getContext()->propagateEvent(&event);
-	      sharedData.handeled = event.isHandled();
-	      
-	      indexwork = 1;
-	      
-	      if (sharedData.handeled==false) computeSystemMatrix();
-	      else if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]); //copy for the second thread at init				  
-		
-	      sharedData.ready_thread = 0;//sharedData.bar->wait(); //launch the second thread if we use it	
-		
-	      indexwork = 0;		
-	    }
-	    
-	    nbstep_update = 1;
-	} else if (! useMultiThread.getValue()) {
+
+	if (! useMultiThread.getValue()) {
 	    this->computeSystemMatrix();
 	    this->invertSystem(); 
 	} else if (sharedData.ready_thread) {
+	    if (thread==NULL) {
+		computeSystemMatrix();
+		invertSystem(); //only this thread use metho invert.	    
+		
+		sharedData.matricesWork[1] = new Matrix();
+		sharedData.rotationWork[1] = new TRotationMatrix();
+		
+		indexwork = 1;
+	    }
+	  
 	    sofa::component::misc::ParallelizeBuildMatrixEvent event;
 	    this->getContext()->propagateEvent(&event);
 	    sharedData.handeled = event.isHandled();
 	    
 	    if (! sharedData.handeled) computeSystemMatrix();
-	    else if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]); //copy for the second thread at init				  
+	    else if (useRotation) rotationFinders[indRotationFinder]->getRotations(sharedData.rotationWork[indexwork]); //copy for the second thread at init				  
 	    
 	    sharedData.ready_thread = 0;//sharedData.bar->wait(); //launch the second thread if we use it      
 	      
@@ -229,11 +203,15 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 	    
 	    matrixAccessor.setGlobalMatrix(sharedData.matricesWork[indexwork]);
 	  
- 	    std::cout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << std::endl;
+	    if (thread==NULL) {
+		std :: cout << "Launching the invert thread...." << std::endl;// on matrix[1]
+		thread = new Thread_invert<Matrix,Vector>(this,sharedData);
+		boost::thread thrd(*thread);
+	    } else {
+		std::cout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << std::endl;
+	    }
 	    nbstep_update = 1;
 	} else nbstep_update++;
-
-	if (useRotation) tmpVectorRotation.resize(sharedData.systemSize);  	
 }
 
 template<class Matrix, class Vector>
@@ -250,8 +228,9 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v) {
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
 	if (useRotation && this->frozen) {
+	    tmpVectorRotation.resize(sharedData.systemSize);  
 	    rotationFinders[indRotationFinder]->getRotations(Rcur);
-	    rotationWork[indexwork]->opMulTM(Rcur,Rcur);
+	    sharedData.rotationWork[indexwork]->opMulTM(Rcur,Rcur);
 	}
 	
 	if (useRotation) {

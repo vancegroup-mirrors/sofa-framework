@@ -698,7 +698,7 @@ void TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDe
     if (dynamic_cast<sofa::component::misc::ParallelizeBuildMatrixEvent*>(event)) { //this event shoul be launch before the addKToMatrix
       	if (m->parallelDataInit[1] == NULL) m->createParallelData(); 	
 	m->data.parallelRotation = m->data.state;
-	m->data.parallelRotation.hostRead();
+        m->data.parallelRotation.hostRead();
 	m->parallelDataThrd = m->parallelDataSimu;
 	event->setHandled();
     }

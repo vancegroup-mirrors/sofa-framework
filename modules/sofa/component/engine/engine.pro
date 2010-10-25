@@ -89,7 +89,7 @@ SOURCES += initEngine.cpp \
            RigidEngine.cpp \
            ValuesFromPositions.cpp
            
-           
+      
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofacomponentbase$$LIBSUFFIX

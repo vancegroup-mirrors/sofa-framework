@@ -24,27 +24,51 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/helper/vector.h>
-#include <sofa/helper/Factory.h>
-#include <sofa/helper/BackTrace.h>
-#include <cassert>
-#include <iostream>
+
+#ifndef SOFA_HELPER_SYSTEM_THREAD_TIMEOUTWATCHDOG
+#define SOFA_HELPER_SYSTEM_THREAD_TIMEOUTWATCHDOG
+
+#ifdef SOFA_HAVE_BOOST
+
+#include <sofa/helper/helper.h>
+#include <boost/thread/thread.hpp>
 
 namespace sofa
 {
-
 namespace helper
 {
- 
-DEBUG_OUT_V(int cptid = 0);
-  
-void SOFA_HELPER_API vector_access_failure(const void* vec, unsigned size, unsigned i, const std::type_info& type)
+namespace system
 {
-    std::cerr << "ERROR in vector<"<<gettypename(type)<<"> " << std::hex << (long)vec << std::dec << " size " << size << " : invalid index " << (int)i << std::endl;
-	BackTrace::dump();
-	assert(i < size);
+namespace thread
+{
+
+/**
+ * Instances of this class prevents the current program from running longer than a specified duration.
+ */
+class SOFA_HELPER_API TimeoutWatchdog
+{
+public:
+    TimeoutWatchdog();
+    ~TimeoutWatchdog();
+
+    void start(unsigned timeout_sec);
+
+private:
+    void threadProc();
+
+    unsigned timeout_sec;
+    boost::thread watchdogThread;
+
+private:
+    TimeoutWatchdog(const TimeoutWatchdog&);
+    TimeoutWatchdog& operator=(TimeoutWatchdog&);
+};
+
+}
+}
+}
 }
 
-} // namespace helper
+#endif // SOFA_HAVE_BOOST
 
-} // namespace sofa
+#endif // SOFA_HELPER_SYSTEM_THREAD_TIMEOUTWATCHDOG

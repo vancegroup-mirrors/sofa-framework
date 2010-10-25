@@ -28,6 +28,7 @@
 #include <sofa/defaulttype/BaseVector.h>
 #include <sofa/component/component.h>
 #include <sofa/helper/rmath.h>
+#include <sofa/helper/vector.h>
 
 #include <iostream>
 #include <vector>
@@ -59,6 +60,16 @@ protected:
     T* data;
     Index cursize;
     Index allocsize;
+
+    void checkIndex(Index n) const
+    {
+#if !defined(SOFA_NO_VECTOR_ACCESS_FAILURE) && !defined(NDEBUG)
+	if ((unsigned int)n >= (unsigned int)cursize)
+	    sofa::helper::vector_access_failure(this, cursize, n, typeid(*this));
+#endif
+    }
+
+
 public:
 
     FullVector()
@@ -153,27 +164,32 @@ public:
 
     T& operator[](Index i)
     {
+	checkIndex(i);
         return data[i];
     }
 
     const T& operator[](Index i) const
     {
+	checkIndex(i);
         return data[i];
     }
 
     SReal element(int i) const
     {
+	checkIndex(i);
         return data[i];
     }
 
     void set(int i, SReal v)
     {
+	checkIndex(i);
         data[i] = (Real)v;
     }
 
     void add(int i, SReal v)
     {
-      data[i] +=  (Real)v;
+	checkIndex(i);
+	data[i] +=  (Real)v;
     }
 
     unsigned int size() const
@@ -183,18 +199,21 @@ public:
 
     FullVector<T> sub(int i, int n)
     {
+	if (n > 0) checkIndex(i+n-1);
         return FullVector<T>(data+i,n);
     }
 
     template<class TV>
     void getsub(int i, int n, TV& v)
     {
+	if (n > 0) checkIndex(i+n-1);
         v = FullVector<T>(data+i,n);
     }
 
     template<class TV>
     void setsub(int i, int n, const TV& v)
     {
+	if (n > 0) checkIndex(i+n-1);
         FullVector<T>(data+i,n) = v;
     }
 
@@ -205,7 +224,7 @@ public:
         std::copy(a.begin(), a.end(), begin());
     }
 
-	void operator=(const T& a)
+    void operator=(const T& a)
     {
         std::fill(begin(), end(), a);
     }

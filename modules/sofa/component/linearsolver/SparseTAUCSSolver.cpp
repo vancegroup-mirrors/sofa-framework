@@ -76,12 +76,7 @@ template<class TMatrix, class TVector>
 void SparseTAUCSSolver<TMatrix,TVector>::invert(Matrix& M) {
     M.compress();
     
-    SparseTAUCSSolverInvertData * data = (SparseTAUCSSolverInvertData *) M.getMatrixInvertData();
-    if (data==NULL) {	    
-      M.setMatrixInvertData(new SparseTAUCSSolverInvertData());
-      data = (SparseTAUCSSolverInvertData *) M.getMatrixInvertData();
-    }
-    
+    SparseTAUCSSolverInvertData * data = (SparseTAUCSSolverInvertData *) getMatrixInvertData(&M);
     if (f_symmetric.getValue())
     {
 	data->Mfiltered.copyUpperNonZeros(M);
@@ -105,7 +100,7 @@ void SparseTAUCSSolver<TMatrix,TVector>::invert(Matrix& M) {
     data->matrix_taucs.rowind = (int *) &(data->Mfiltered.getColsIndex()[0]);
     data->matrix_taucs.values.d = (double*) &(data->Mfiltered.getColsValue()[0]);
     helper::vector<char*> opts;
-    
+
     const helper::vector<std::string>& options = f_options.getValue();
     if (options.size()==0) {
       opts.push_back((char *) "taucs.factor.LLT=true");
@@ -143,16 +138,11 @@ void SparseTAUCSSolver<TMatrix,TVector>::invert(Matrix& M) {
 	}
 	serr << "TAUCS factorization failed: " << er << sendl;
     }
-
 }
 
 template<class TMatrix, class TVector>
 void SparseTAUCSSolver<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r) {
-    SparseTAUCSSolverInvertData * data = (SparseTAUCSSolverInvertData *) M.getMatrixInvertData();  
-    if (data==NULL) {
-      z = r;
-      return;      
-    }
+    SparseTAUCSSolverInvertData * data = (SparseTAUCSSolverInvertData *) getMatrixInvertData(&M);  
   
     helper::vector<char*> opts;
     const helper::vector<std::string>& options = f_options.getValue();
@@ -201,6 +191,8 @@ SOFA_DECL_CLASS(SparseTAUCSSolver)
 int SparseTAUCSSolverClass = core::RegisterObject("Direct linear solvers implemented with the TAUCS library")
 .add< SparseTAUCSSolver< CompressedRowSparseMatrix<double>,FullVector<double> > >()
 .add< SparseTAUCSSolver< CompressedRowSparseMatrix<defaulttype::Mat<3,3,double> >,FullVector<double> > >(true)
+.add< SparseTAUCSSolver< CompressedRowSparseMatrix<float>,FullVector<float> > >()
+.add< SparseTAUCSSolver< CompressedRowSparseMatrix<defaulttype::Mat<3,3,float> >,FullVector<float> > >()
 .addAlias("TAUCSSolver")
 ;
 

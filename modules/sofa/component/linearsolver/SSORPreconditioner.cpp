@@ -64,11 +64,7 @@ SSORPreconditioner<TMatrix,TVector>::SSORPreconditioner()
 // solve (D+U) * D^-1 * ( D + U)
 template<class TMatrix, class TVector>
 void SSORPreconditioner<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r) {
-	SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) M.getMatrixInvertData();  
-	if (data==NULL) {
-	  z = r;
-	  return;      
-	}      
+	SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) getMatrixInvertData(&M);  
   
 	//double t2 = CTime::getRefTime();
 	const int n = M.rowSize();
@@ -100,11 +96,7 @@ void SSORPreconditioner<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r
 
 template<>
 void SSORPreconditioner<SparseMatrix<double>, FullVector<double> >::solve (Matrix& M, Vector& z, Vector& r) {
-	SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) M.getMatrixInvertData();  
-	if (data==NULL) {
-	  z = r;
-	  return;      
-	}    
+	SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) getMatrixInvertData(&M);  
   
 	const int n = M.rowSize();
 	const Real w = (Real)f_omega.getValue();
@@ -141,11 +133,7 @@ void SSORPreconditioner<SparseMatrix<double>, FullVector<double> >::solve (Matri
 
 template<>
 void SSORPreconditioner<CompressedRowSparseMatrix<double>, FullVector<double> >::solve (Matrix& M, Vector& z, Vector& r) {
-    SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) M.getMatrixInvertData();  
-    if (data==NULL) {
-      z = r;
-      return;      
-    }    
+    SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) getMatrixInvertData(&M);  
   
     const int n = M.rowSize();
     const Real w = (Real)f_omega.getValue();
@@ -194,11 +182,7 @@ void SSORPreconditioner<CompressedRowSparseMatrix<double>, FullVector<double> >:
 //template<int B, class Real>
 template<>
 void SSORPreconditioner< CompressedRowSparseMatrix< defaulttype::Mat<B,B,Real> >, FullVector<Real> >::solve(Matrix& M, Vector& z, Vector& r) {
-    SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) M.getMatrixInvertData();  
-    if (data==NULL) {
-      z = r;
-      return;      
-    }    
+    SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) getMatrixInvertData(&M);  
   
     //const int n = M.rowSize();
     const int nb = M.rowBSize();
@@ -285,12 +269,8 @@ void SSORPreconditioner< CompressedRowSparseMatrix< defaulttype::Mat<B,B,Real> >
 
 template<class TMatrix, class TVector>
 void SSORPreconditioner<TMatrix,TVector>::invert(Matrix& M) {
-	SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) M.getMatrixInvertData();  
-	if (data==NULL) {
-	  M.setMatrixInvertData(new SSORPreconditionerInvertData());
-	  data = (SSORPreconditionerInvertData *) M.getMatrixInvertData();
-	}
-  
+	SSORPreconditionerInvertData * data = (SSORPreconditionerInvertData *) getMatrixInvertData(&M);  
+	  
 	int n = M.rowSize();
 	data->inv_diag.resize(n);
 	for (int j=0;j<n;j++) data->inv_diag[j] = 1.0 / M.element(j,j);

@@ -50,7 +50,8 @@
 #include <qcombobox.h>
 #endif
 
-
+/*
+*/
 #if !defined(INFINITY)
 #define INFINITY 9.0e10
 #endif
@@ -694,7 +695,8 @@ namespace sofa
       class data_widget_container < Quater<T> > : public fixed_vector_data_widget_container < Quater<T> >
       {};
 
-
+      /*
+*/
       ////////////////////////////////////////////////////////////////
       /// sofa::helper::Polynomial_LD support
       ////////////////////////////////////////////////////////////////

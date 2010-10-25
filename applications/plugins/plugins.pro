@@ -11,6 +11,10 @@ contains (DEFINES, SOFA_HAVE_ARTRACK) {
 SUBDIRS += ARTrack
 }
 
+contains (DEFINES, SOFA_HAVE_SENSABLE) {
+SUBDIRS += Sensable
+}
+
 contains (DEFINES, SOFA_HAVE_XITACT) {
 SUBDIRS += Xitact
 }

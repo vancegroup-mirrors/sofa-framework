@@ -111,14 +111,19 @@ _fillWeighted(initData(&_fillWeighted, true, "fillWeighted", "Is quantity of mat
 	convolutionSize(initData(&convolutionSize, (unsigned int) 0, "convolutionSize", "Dimension of the convolution kernel to smooth the voxels. 0 if no smoothing is required.")),
 	vertices(initData(&vertices, "vertices", "Input mesh vertices")),
 	facets(initData(&facets, "facets", "Input mesh facets")),
-    input_triangles(initData(&input_triangles, "input_triangles", "Input mesh triangles")),
-    input_quads(initData(&input_quads, "input_quads", "Input mesh quads"))
+	input_triangles(initData(&input_triangles, "input_triangles", "Input mesh triangles")),
+	input_quads(initData(&input_quads, "input_quads", "Input mesh quads"))
 {
 	isVirtual = _isVirtual;
 	_alreadyInit = false;
 	_finerSparseGrid = NULL;
 	_coarserSparseGrid = NULL;
 	_usingMC = false;
+	
+	//Add alias to use MeshLoader
+	addAlias(&vertices,"position");
+	addAlias(&input_triangles,"triangles");
+	addAlias(&input_quads,"quads");
 }
 
 

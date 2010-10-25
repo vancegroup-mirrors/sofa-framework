@@ -33,6 +33,7 @@
 #include <sofa/helper/map.h>
 #include <math.h>
 #include <sofa/component/linearsolver/CompressedRowSparseMatrix.h>
+#include <taucs_lib.h>
 
 // include all headers included in taucs.h to fix errors on macx
 #ifndef WIN32
@@ -42,10 +43,6 @@
 #include <assert.h>
 #include <float.h>
 #include <stdlib.h>
-
-extern "C" {
-#include <taucs.h>
-}
 
 namespace sofa {
 
@@ -91,6 +88,10 @@ public:
     void solve (Matrix& M, Vector& x, Vector& b);
     void invert(Matrix& M);
 
+    MatrixInvertData * createInvertData() {
+      return new IncompleteTAUCSSolverInvertData();
+    }    
+    
 protected:
     typedef struct {
       taucs_ccs_matrix** B;
@@ -102,7 +103,7 @@ protected:
       double          maxits;
     } recvaidya_args;
     
-    class IncompleteTAUCSSolverInvertData : public defaulttype::MatrixInvertData {
+    class IncompleteTAUCSSolverInvertData : public MatrixInvertData {
       public :
 	    CompressedRowSparseMatrix<double> Mfiltered;
 	    int* perm;

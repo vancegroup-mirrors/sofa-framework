@@ -14,7 +14,7 @@ LIBS += $$SOFA_EXT_LIBS
 LIBS -= -lphysicalmodel$$LIBSUFFIX
 LIBS -= -lload$$LIBSUFFIX
 LIBS -= -lcolladadom$$LIBSUFFIX
-LIBS += -ltinyxml
+LIBS += -ltinyxml$$LIBSUFFIX
 
 CONFIG += warn_off
 

@@ -70,4 +70,3 @@ SOFA_LINK_CLASS(TextureInterpolation)
 SOFA_LINK_CLASS(ValuesFromPositions)
 SOFA_LINK_CLASS(ValuesFromIndices)
 
-

@@ -79,22 +79,25 @@ void CompareState::processCompareState()
     for (std::vector<std::string>::iterator it=validLines.begin();it!=validLines.end();++it)
     {
         std::istringstream str(*it);
-	std::string cmd;
+		std::string cmd;
         str >> cmd;
+
         double currentError=0;
-        if (cmd == "X=")
+        if (cmd.compare("X=") == 0)
         {
             currentError = mmodel->compareX(str);
             totalError_X +=currentError;
             dofError_X +=currentError/(double)this->mmodel->getSize();
         }
-        else if (cmd == "V=")
-        {
+        else if (cmd.compare("V=") == 0) 
+        { 
             currentError = mmodel->compareV(str);
             totalError_V +=currentError;
             dofError_V += currentError/(double)this->mmodel->getSize();
         }
     }
+
+	sout << "totalError_X = " << totalError_X << ", totalError_V = " << totalError_V << sendl;
 }
 
 

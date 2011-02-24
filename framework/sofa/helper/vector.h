@@ -677,7 +677,8 @@ protected:
 	if (MemoryManager::SUPPORT_GL_BUFFER) {
 	    unmapBuffer();
 	    if (this->allocSize > 0 && bufferIsRegistered) {
-		MemoryManager::bufferUnregister(bufferObject);
+		//MemoryManager::bufferUnregister(bufferObject);
+		MemoryManager::bufferFree(bufferObject);
 		bufferIsRegistered = false;
 	    }
 	}
@@ -1019,6 +1020,16 @@ void removeIndex( std::vector<T,TT>& v, size_t index )
  	v[index] = v.back();
  	v.pop_back();
 }
+
+#ifdef DEBUG_OUT_VECTOR
+#undef DEBUG_OUT_V
+#undef SPACEP 
+#undef SPACEM 
+#undef SPACEN 
+#else 
+#undef DEBUG_OUT_V
+#endif
+
 
 
 } // namespace helper

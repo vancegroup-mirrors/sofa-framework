@@ -41,6 +41,18 @@
 #include <iostream>
 #include <sofa/gpu/cuda/CudaMemoryManager.h>
 
+//#define DEBUG_OUT_MATRIX
+
+#ifdef DEBUG_OUT_MATRIX
+#define DEBUG_OUT_M(a) a
+#define SPACEP std::cout << "(" << hostIsValid << "," << (deviceIsValid) << ") " ;for(int espaceaff=0;espaceaff<spaceDebug;espaceaff++) std::cout << "  ";spaceDebug++; std::cout << ">" 
+#define SPACEM std::cout << "(" << hostIsValid << "," << (deviceIsValid) << ") " ;spaceDebug--;for(int espaceaff=0;espaceaff<spaceDebug;espaceaff++) std::cout << "  "; std::cout << "<"
+#define SPACEN std::cout << "(" << hostIsValid << "," << (deviceIsValid) << ") " ;for(int espaceaff=0;espaceaff<spaceDebug;espaceaff++) std::cout << "  "; std::cout << "|"
+#else 
+#define DEBUG_OUT_M(a)
+#endif
+
+
 namespace sofa
 {
 
@@ -63,45 +75,52 @@ public :
 
 };
 
-template<class T>
+template<class T, class MemoryManager = CudaMemoryManager<T> >
 class CudaMatrix
 {
 public:
+	typedef CudaMatrix<T> Matrix;
         typedef T      value_type;
         typedef size_t size_type;
 
-protected:
+private:
         size_type    sizeX;     ///< Current size of the vector
         size_type    sizeY;     ///< Current size of the vector
-        size_type    pitch;     ///< Row alignment on the GPU
-        size_type    hostAllocSize;  ///< Allocated size
-        size_type    deviceAllocSize;///< Allocated size
+        size_type    pitch_device;     ///< Row alignment on the GPU
+        size_type    pitch_host;     ///< Row alignment on the GPU
+        size_type    allocSizeY;  ///< Allocated size
         void*        devicePointer;  ///< Pointer to the data on the GPU side
         T*           hostPointer;    ///< Pointer to the data on the CPU side
         mutable bool deviceIsValid;  ///< True if the data on the GPU is currently valid
         mutable bool hostIsValid;    ///< True if the data on the CPU is currently valid
+        DEBUG_OUT_M(mutable int spaceDebug);
 public:
 
         CudaMatrix()
-        : sizeX ( 0 ), sizeY( 0 ), pitch(0), hostAllocSize ( 0 ), deviceAllocSize ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )
-        {}
+        : sizeX ( 0 ), sizeY( 0 ), pitch_device(0), pitch_host ( 0 ), allocSizeY ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )
+        {
+	  DEBUG_OUT_M(spaceDebug = 0);
+	}
 
-		  CudaMatrix(size_t x, size_t y, size_t size)
-        : sizeX ( 0 ), sizeY ( 0 ), pitch(0), hostAllocSize ( 0 ), deviceAllocSize ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )	{
-                resize (x,y,size);
+	CudaMatrix(size_t x, size_t y, size_t size)
+        : sizeX ( 0 ), sizeY ( 0 ), pitch_device(0), pitch_host ( 0 ), allocSizeY ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )	{
+	  resize (x,y,size);
+	  DEBUG_OUT_M(spaceDebug = 0);
         }
 
         CudaMatrix(const CudaMatrix<T>& v )
-        : sizeX ( 0 ), sizeY ( 0 ), pitch(0), hostAllocSize ( 0 ), deviceAllocSize ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )	{
-                *this = v;
+        : sizeX ( 0 ), sizeY ( 0 ), pitch_device(0), pitch_host ( 0 ), allocSizeY ( 0 ), devicePointer ( NULL ), hostPointer ( NULL ), deviceIsValid ( true ), hostIsValid ( true )	{
+	  *this = v;
+	  DEBUG_OUT_M(spaceDebug = 0);
         }
 
         void clear() {
+		DEBUG_OUT_M(SPACEP << "Clear" << std::endl);
+                sizeX = 0;
                 sizeY = 0;
-                sizeY = 0;
-                pitch = 0;
                 deviceIsValid = true;
                 hostIsValid = true;
+		DEBUG_OUT_M(SPACEM << "Clear" << std::endl);
         }
 
         ~CudaMatrix() {
@@ -117,17 +136,32 @@ public:
                 return sizeY;
         }
 
-        size_type getPitch() const {
-                return pitch;
+        size_type getPitchDevice() const {
+                return pitch_device;
         }
+        
+        size_type getPitchHost() const {
+                return pitch_host;
+        }
+        
         bool empty() const {
                 return sizeX==0 || sizeY==0;
         }
 	
 	void memsetHost(int v = 0) {
-	    memset(hostPointer,v,sizeY*sizeX*sizeof(T));
+	    DEBUG_OUT_M(SPACEP << "memsetHost" << std::endl);
+	    MemoryManager::memsetHost(hostPointer,v,pitch_host*sizeY);
 	    hostIsValid = true;
 	    deviceIsValid = false;
+	    DEBUG_OUT_M(SPACEM << "memsetHost" << std::endl);
+	}
+
+	void memsetDevice(int v = 0) {
+	    DEBUG_OUT_M(SPACEP << "memsetHost" << std::endl);
+	    MemoryManager::memsetDevice(0,devicePointer, v, pitch_device*sizeY);
+	    hostIsValid = false;
+	    deviceIsValid = true;
+	    DEBUG_OUT_M(SPACEM << "memsetHost" << std::endl);
 	}
 
 	void invalidateDevices() {
@@ -140,66 +174,196 @@ public:
 	    deviceIsValid = true;
 	}
 
-        void fastResize(size_type x,size_type y,size_type WARP_SIZE) {
-			size_type s = x*y;
+        void fastResize(size_type y,size_type x,size_type WARP_SIZE=MemoryManager::BSIZE) {
+	    DEBUG_OUT_M(SPACEP << "fastResize : " << x << " " << y << " WArp_Size=" << WARP_SIZE << " sizeof(T)=" << sizeof(T) << std::endl);
 
-			if (s > hostAllocSize) {
-				hostAllocSize = ( s>2*hostAllocSize || s > 1024*1024 ) ? s : 2*hostAllocSize;
-				// always allocate multiples of BSIZE values
-						//hostAllocSize = ( hostAllocSize+WARP_SIZE-1 )/WARP_SIZE * WARP_SIZE;
-				T* prevHostPointer = hostPointer;
+	    if ( x==0 || y==0) {
+	      clear();
+	      DEBUG_OUT_M(SPACEM << std::endl);
+	      return;
+	    }
+    	    if ( sizeX==x && sizeY==y) {
+	      DEBUG_OUT_M(SPACEM << std::endl);
+	      return;
+	    }
+	    
+	    size_type d_x = x;
+	    size_type d_y = y;
+	    
+	    if (WARP_SIZE==0) {
+	      d_x = x;
+	      d_y = y;
+	    } else {
+	      d_x = ((d_x+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
+	      d_y = ((d_y+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
+	    }
+	    size_type allocSize = d_x*d_y*sizeof(T);
 
-				if ( prevHostPointer != NULL ) mycudaFreeHost ( prevHostPointer );
-				void* newHostPointer = NULL;
-				mycudaMallocHost ( &newHostPointer, hostAllocSize*sizeof ( T ) );
-				hostPointer = (T*)newHostPointer;
-			}
+	    if ( !sizeX && !sizeY) { //special case anly reserve
+		  DEBUG_OUT_M(SPACEN << "Is in ( !sizeX && !sizeY)" << std::endl);
+		  if (allocSize > pitch_host*allocSizeY) {
+		    T* prevHostPointer = hostPointer;
+		    MemoryManager::hostAlloc( (void **) &hostPointer, allocSize );pitch_host = d_x*sizeof(T);
+		    DEBUG_OUT_M(SPACEN << "Allocate Host : " << ((int) hostPointer) << " HostPitch = " << pitch_host << std::endl);
+		    if ( prevHostPointer != NULL ) MemoryManager::hostFree( prevHostPointer );
+		    
+		    void* prevDevicePointer = devicePointer;
+		    
+		    mycudaMallocPitch(&devicePointer, &pitch_device, d_x*sizeof(T), d_y);
+		    DEBUG_OUT_M(SPACEN << "Allocate Device : " << ((int) devicePointer) << " DevicePitch = " << pitch_device << std::endl);
+		    if ( prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
 
+		    allocSizeY = d_y;
+		  }
+	    } else if (x <= pitch_host) { 
+		  DEBUG_OUT_M(SPACEN << "Is in (x <= pitch_host)" << std::endl);
+		  if (d_y > allocSizeY) { // allocate
+		    DEBUG_OUT_M(SPACEN << "Is in (y > allocSizeY)" << std::endl);
+		    T* prevHostPointer = hostPointer;
+		    MemoryManager::hostAlloc( (void **) &hostPointer, allocSize);
+		    DEBUG_OUT_M(SPACEN << "Allocate Host : " << ((int) hostPointer) << " HostPitch = " << pitch_host << std::endl);
+		    if (hostIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemcpyHost from 0 to " << (pitch_host*sizeY) << std::endl);
+		      std::copy ( prevHostPointer, prevHostPointer+(pitch_host*sizeY), hostPointer);
+		    }
+		    if ( prevHostPointer != NULL ) MemoryManager::hostFree( prevHostPointer );		    
+		    
+		    void* prevDevicePointer = devicePointer;
+		    mycudaMallocPitch(&devicePointer, &pitch_device, pitch_device, d_y); //pitch_device should not be modified
+		    DEBUG_OUT_M(SPACEN << "Allocate Device : " << ((int) devicePointer) << " DevicePitch = " << pitch_device << std::endl);
+		    if (deviceIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemcpyDevice from 0 to " << (pitch_device*sizeY) << std::endl);
+		      MemoryManager::memcpyDeviceToDevice (0, devicePointer, prevDevicePointer, pitch_device*sizeY );
+		    }
+		    if ( prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );  
+		    
+		    allocSizeY = d_y;
+		  }
+	    } else { //necessary to change layout....
+		  std::cerr << "ERROR : resize column is not implemented in CudaMatrix, you must copy data in another matrix" << std::endl;
+		  DEBUG_OUT_M(SPACEM << std::endl);	
+		  return;
+	    }
+	    
+	    sizeX = x;sizeY = y;
 
-			if (WARP_SIZE==0) pitch = x*sizeof(T);
-			else pitch = ((x+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE*sizeof(T);
-
-			size_type ypitch = y;
-			if (WARP_SIZE==0) ypitch = y;
-			else ypitch = ((y+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
-
-			if ( ypitch*pitch > deviceAllocSize ) {
-				if (ypitch < 2 * ((deviceAllocSize+pitch-1) / pitch) && ypitch < 1024) {
-					ypitch = 2 * ((deviceAllocSize+pitch-1) / pitch);
-				}
-
-				void* prevDevicePointer = devicePointer;
-				if (prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
-
-				mycudaMallocPitch(&devicePointer, &pitch, pitch, ypitch);
-				deviceAllocSize = ypitch*pitch;
-			}
-				 /*
-				 if (y*x > deviceAllocSize) {
-					 void* prevDevicePointer = devicePointer;
-					 if (prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
-
-					 mycudaMallocPitch(&devicePointer, &pitch, x*sizeof(T), y);
-					 deviceAllocSize = y*x;
-				 }
-				 */
-			sizeX = x;
-			sizeY = y;
-			deviceIsValid = true;
-			hostIsValid = true;
+	    DEBUG_OUT_M(SPACEM << "fastResize" << std::endl);
         }
 
-		  void resize (size_type x,size_type y,size_t WARP_SIZE=BSIZE) {
-			  fastResize(x,y,WARP_SIZE);
+	void resize (size_type y,size_type x,size_t WARP_SIZE=MemoryManager::BSIZE) {
+	    DEBUG_OUT_M(SPACEP << "reisze : " << x << " " << y << " WArp_Size=" << WARP_SIZE << " sizeof(T)=" << sizeof(T) << std::endl);
+
+	    if ((x==0) || (y==0)) {
+	      clear();
+	      DEBUG_OUT_M(SPACEM << std::endl);
+	      return;
+	    }
+    	    if ((sizeX==x) && (sizeY==y)) {
+	      DEBUG_OUT_M(SPACEM << std::endl);	
+	      return;
+	    }
+	    
+	    size_type d_x = x;
+	    size_type d_y = y;
+	    
+	    if (WARP_SIZE==0) {
+	      d_x = x;
+	      d_y = y;
+	    } else {
+	      d_x = ((d_x+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
+	      d_y = ((d_y+WARP_SIZE-1)/WARP_SIZE)*WARP_SIZE;
+	    }
+	    size_type allocSize = d_x*d_y*sizeof(T);
+
+	    if ( !sizeX && !sizeY) { //special case anly reserve
+		  DEBUG_OUT_M(SPACEN << "Is in ( !sizeX && !sizeY)" << std::endl);
+		  if (allocSize > pitch_host*allocSizeY) {
+		    T* prevHostPointer = hostPointer;
+		    MemoryManager::hostAlloc( (void **) &hostPointer, allocSize );pitch_host = d_x*sizeof(T);
+		    DEBUG_OUT_M(SPACEN << "Allocate Host : " << ((unsigned long) hostPointer) << " HostPitch = " << pitch_host << std::endl);
+		    if ( prevHostPointer != NULL ) MemoryManager::hostFree( prevHostPointer );
+		    
+		    void* prevDevicePointer = devicePointer;
+		    mycudaMallocPitch(&devicePointer, &pitch_device, d_x*sizeof(T), d_y);
+		    DEBUG_OUT_M(SPACEN << "Allocate Device : " << ((unsigned long) devicePointer) << " DevicePitch = " << pitch_device << std::endl);
+		    if ( prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );
+
+		    allocSizeY = d_y;
+		  }
+		  if (hostIsValid) {
+		    DEBUG_OUT_M(SPACEN << "MemsetHost from 0 to " << (pitch_host*y) << std::endl);
+		    MemoryManager::memsetHost(hostPointer,0,pitch_host*y);
+		  }
+		  if (deviceIsValid) {
+		    DEBUG_OUT_M(SPACEN << "MemsetDevice from 0 to " << (pitch_device*y) << std::endl);
+		    MemoryManager::memsetDevice(0,devicePointer, 0, pitch_device*y);		      
+		  }
+	    } else if (x <= pitch_host) { 
+		  DEBUG_OUT_M(SPACEN << "Is in (x <= pitch_host)" << std::endl);
+		  if (d_y > allocSizeY) { // allocate
+		    DEBUG_OUT_M(SPACEN << "Is in (y > allocSizeY)" << std::endl);
+		    T* prevHostPointer = hostPointer;
+		    MemoryManager::hostAlloc( (void **) &hostPointer, allocSize);
+		    DEBUG_OUT_M(SPACEN << "Allocate Host : " << ((unsigned long) hostPointer) << " HostPitch = " << pitch_host << std::endl);
+		    if (hostIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemcpyHost from 0 to " << (pitch_host*sizeY) << std::endl);
+		      std::copy ( prevHostPointer, prevHostPointer+(pitch_host*sizeY), hostPointer);
+		    }
+		    if ( prevHostPointer != NULL ) MemoryManager::hostFree( prevHostPointer );		    
+		    
+		    void* prevDevicePointer = devicePointer;
+		    mycudaMallocPitch(&devicePointer, &pitch_device, pitch_device, d_y); //pitch_device should not be modified
+		    DEBUG_OUT_M(SPACEN << "Allocate Device : " << ((unsigned long) devicePointer) << " DevicePitch = " << pitch_device << std::endl);
+		    if (deviceIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemcpyDevice from 0 to " << (pitch_device*sizeY) << std::endl);
+		      MemoryManager::memcpyDeviceToDevice (0, devicePointer, prevDevicePointer, pitch_device*sizeY );
+		    }
+		    if ( prevDevicePointer != NULL ) mycudaFree ( prevDevicePointer );  
+		    
+		    allocSizeY = d_y;
+		  }
+		  if (y > sizeY) {
+		    DEBUG_OUT_M(SPACEN << "Is in (y > sizeY)" << std::endl);
+		    if (hostIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemsetHost from " << pitch_host*sizeY << " to " << (pitch_host*y) << std::endl);
+		      MemoryManager::memsetHost((T*) (((char*)hostPointer)+pitch_host*sizeY),0,pitch_host*(y-sizeY));
+		    }
+		    
+		    if (deviceIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemsetDevice from " << pitch_device*sizeY << " to " << (pitch_device*y) << std::endl);
+		      MemoryManager::memsetDevice(0,((char*)devicePointer) + (pitch_device*sizeY), 0, pitch_device*(y-sizeY));
+		    }
+		  }
+		  if (x > sizeX) {
+		    DEBUG_OUT_M(SPACEN << "Is in (x > sizeX)" << std::endl);
+		    if (hostIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemsetHost for each line from " << (sizeX*sizeof(T)) << " to " << (sizeof(T)*(x-sizeX)) << std::endl);
+		      for (unsigned j=0;j<y;j++) MemoryManager::memsetHost((T*) (((char*)hostPointer)+pitch_host*j+sizeX*sizeof(T)),0,sizeof(T)*(x-sizeX));
+		    }
+		    
+		    if (deviceIsValid) {
+		      DEBUG_OUT_M(SPACEN << "MemsetDevice for each line from " << (sizeX*sizeof(T)) << " to " << (sizeof(T)*(x-sizeX)) << std::endl);
+		      for (unsigned j=0;j<y;j++) MemoryManager::memsetDevice(0,((char*)devicePointer)+(pitch_device*j+sizeX*sizeof(T)), 0, sizeof(T)*(x-sizeX));
+		    }
+		  }		  
+	    } else { //necessary to change layout....
+		  std::cerr << "ERROR : resize column is not implemented in CudaMatrix, you must copy data in another matrix" << std::endl;
+		  DEBUG_OUT_M(SPACEM);
+		  return;
+	    }
+	    
+	    sizeX = x;sizeY = y;
+
+	    DEBUG_OUT_M(SPACEM << "reisze" << std::endl);
         }
 
         void swap ( CudaMatrix<T>& v ) {
 #define VSWAP(type, var) { type t = var; var = v.var; v.var = t; }
                 VSWAP ( size_type, sizeX );
                 VSWAP ( size_type, sizeY );
-                VSWAP ( size_type, pitch );
-                VSWAP ( size_type, hostAllocSize );
-                VSWAP ( size_type, deviceAllocSize );
+                VSWAP ( size_type, pitch_device );
+		VSWAP ( size_type, pitch_host );
+                VSWAP ( size_type, allocSizeY );
                 VSWAP ( void*    , devicePointer );
                 VSWAP ( T*       , hostPointer );
                 VSWAP ( bool     , deviceIsValid );
@@ -207,26 +371,27 @@ public:
 #undef VSWAP
         }
 
-        const void* deviceRead ( int x=0, int y=0 ) const {
-                copyToDevice();
-                return (const T*)(( ( const char* ) devicePointer ) +(y*pitch+x*sizeof(T)));
+        const void* deviceRead ( int y=0, int x=0 ) const {
+		copyToDevice();
+		return ((T*) ((char*)devicePointer) + pitch_device*y) + x;
+		
         }
 
-        void* deviceWrite ( int x=0, int y=0 )	{
+        void* deviceWrite ( int y=0, int x=0 )	{
                 copyToDevice();
                 hostIsValid = false;
-                return (T*)(( ( const char* ) devicePointer ) +(y*pitch+x*sizeof(T)));
+                return ((T*) (((char*)devicePointer) + pitch_device*y)) + x;
         }
 
-        const T* hostRead ( int x=0, int y=0 ) const {
+        const T* hostRead ( int y=0, int x=0 ) const {
                 copyToHost();
-                return hostPointer+(y*sizeX+x);
+                return ((const T*) (((char*) hostPointer)+(y*pitch_host))) + x;
         }
 
-        T* hostWrite ( int x=0, int y=0 ) {
+        T* hostWrite ( int y=0, int x=0 ) {
                 copyToHost();
                 deviceIsValid = false;
-                return hostPointer+(y*sizeX+x);
+                return ((T*) (((char*) hostPointer)+(y*pitch_host))) + x;
         }
 
         bool isHostValid() const {
@@ -237,48 +402,67 @@ public:
                 return deviceIsValid;
         }
 
-        const T& operator() (size_type x,size_type y) const	{
-                checkIndex (x,y);
-                return hostRead(x,y);
+        const T& operator() (size_type y,size_type x) const	{
+                checkIndex (y,x);
+                return hostRead(y,x);
         }
 
-        T& operator() (size_type x,size_type y)	{
-                checkIndex (x,y);
-                return hostWrite(x,y);
+        T& operator() (size_type y,size_type x)	{
+                checkIndex (y,x);
+                return hostWrite(y,x);
         }
 
         const T* operator[] (size_type y) const	{
-                checkIndex (0,y);
-                return hostRead(0,y);
+                checkIndex (y,0);
+                return hostRead(y,0);
         }
 
         T* operator[] (size_type y)	{
-                checkIndex (0,y);
-                return hostWrite(0,y);
+                checkIndex (y,0);
+                return hostWrite(y,0);
         }
 
-        const T& getCached (size_type x,size_type y) const {
-                checkIndex (x,y);
-                return hostPointer[y*sizeX+x];
+        const T& getCached (size_type y,size_type x) const {
+                checkIndex (y,x);
+                return ((T*) (((char*) hostPointer)+(y*pitch_host))) + x;
         }
+        
+	friend std::ostream& operator<< ( std::ostream& os, const Matrix & mat ) {
+		mat.hostRead();
+		os << "[\n";
+		for (unsigned j=0;j<mat.getSizeY();j++) {
+		  os << "[ ";
+		  for (unsigned i=0;i<mat.getSizeX();i++) {
+		    os << " " << mat[j][i];
+		  }
+		  os << "]\n";
+		}
+		os << "]\n";
+		return os;
+	}
 
 protected:
         void copyToHost() const
         {
                 if ( hostIsValid ) return;
+       		DEBUG_OUT_M(SPACEN << "copyToHost" << std::endl);	      
+
 //#ifndef NDEBUG
                 if (mycudaVerboseLevel>=LOG_TRACE) std::cout << "CUDA: GPU->CPU copy of "<<sofa::core::objectmodel::Base::decodeTypeName ( typeid ( *this ) ) <<": "<<sizeX*sizeof(T) <<" B"<<std::endl;
 //#endif
-                mycudaMemcpyDeviceToHost2D ( hostPointer, sizeX*sizeof(T), devicePointer, pitch, sizeX*sizeof(T), sizeY);
+		DEBUG_OUT_M(SPACEN << "copyToHost host : " << ((unsigned long) hostPointer) << " pitchH : " << pitch_host << " | device : " << ((unsigned long)devicePointer) << " pitchD : " << pitch_device << " | (" << sizeX*sizeof(T) << "," << sizeY << ")" << std::endl);	      
+                mycudaMemcpyDeviceToHost2D ( hostPointer, pitch_host, devicePointer, pitch_device, sizeX*sizeof(T), sizeY);
                 hostIsValid = true;
         }
         void copyToDevice() const
         {
                 if ( deviceIsValid ) return;
+                
 //#ifndef NDEBUG
                 if (mycudaVerboseLevel>=LOG_TRACE) std::cout << "CUDA: CPU->GPU copy of "<<sofa::core::objectmodel::Base::decodeTypeName ( typeid ( *this ) ) <<": "<<sizeX*sizeof(T) <<" B"<<std::endl;
 //#endif
-                mycudaMemcpyHostToDevice2D ( devicePointer, pitch, hostPointer, sizeX*sizeof(T),  sizeX*sizeof(T), sizeY);
+		DEBUG_OUT_M(SPACEN << "copyToDevice device : " << ((unsigned long)devicePointer) << " pitchD : " << pitch_device << " | host : " << ((unsigned long) hostPointer) << " pitchH : " << pitch_host << " | (" << sizeX*sizeof(T) << "," << sizeY << ")" << std::endl);	      
+                mycudaMemcpyHostToDevice2D ( devicePointer, pitch_device, hostPointer, pitch_host,  sizeX*sizeof(T), sizeY);
                 deviceIsValid = true;
         }
 
@@ -287,7 +471,7 @@ protected:
         {
         }
 #else
-        void checkIndex ( size_type x,size_type y) const
+        void checkIndex ( size_type y,size_type x) const
         {
                 assert (x<this->sizeX);
                 assert (y<this->sizeY);
@@ -369,6 +553,7 @@ public:
 
 typedef sofa::defaulttype::Vec3f Vec3f;
 typedef sofa::defaulttype::Vec2f Vec2f;
+typedef sofa::defaulttype::Vec6f Vec6f;
 
 using defaulttype::Vec;
 using defaulttype::NoInit;
@@ -597,6 +782,15 @@ inline const char* CudaVec3f1Types::Name()
     return "CudaVec3f1";
 }
 
+typedef CudaVectorTypes<Vec6f,Vec6f,float> CudaVec6fTypes;
+typedef CudaVec6fTypes CudaVec6Types;
+
+template<>
+inline const char* CudaVec6fTypes::Name()
+{
+    return "CudaVec6f";
+}
+
 template<int N, typename real>
 class CudaRigidTypes;
 
@@ -606,7 +800,7 @@ class CudaRigidTypes<3, real>
 public:
     typedef real Real;
     typedef sofa::defaulttype::RigidCoord<3,real> Coord;
-    typedef sofa::defaulttype::RigidDeriv<3,real> Deriv;
+    typedef sofa::defaulttype::Vec<6,real> Deriv;
     typedef typename Coord::Vec3 Vec3;
     typedef typename Coord::Quat Quat;
     typedef CudaVector<Coord> VecCoord;
@@ -625,12 +819,12 @@ public:
 	static const CRot& getCRot(const Coord& c) { return c.getOrientation(); }
 	static void setCRot(Coord& c, const CRot& v) { c.getOrientation() = v; }
 
-    typedef typename Deriv::Pos DPos;
-    typedef typename Deriv::Rot DRot;
-	static const DPos& getDPos(const Deriv& d) { return d.getVCenter(); }
-	static void setDPos(Deriv& d, const DPos& v) { d.getVCenter() = v; }
-	static const DRot& getDRot(const Deriv& d) { return d.getVOrientation(); }
-	static void setDRot(Deriv& d, const DRot& v) { d.getVOrientation() = v; }
+        typedef typename sofa::defaulttype::StdRigidTypes<3,Real>::DPos DPos;
+        typedef typename sofa::defaulttype::StdRigidTypes<3,Real>::DRot DRot;
+        static const DPos& getDPos(const Deriv& d) { return getVCenter(d); }
+        static void setDPos(Deriv& d, const DPos& v) { getVCenter(d) = v; }
+        static const DRot& getDRot(const Deriv& d) { return getVOrientation(d); }
+        static void setDRot(Deriv& d, const DRot& v) { getVOrientation(d) = v; }
 
     template<typename T>
     static void set(Coord& r, T x, T y, T z)
@@ -668,7 +862,7 @@ public:
     template<typename T>
     static void set(Deriv& r, T x, T y, T z)
     {
-        Vec3& c = r.getVCenter();
+        Vec3& c = getVCenter(r);
         if ( c.size() >0 )
             c[0] = (Real) x;
         if ( c.size() >1 )
@@ -680,7 +874,7 @@ public:
     template<typename T>
     static void get(T& x, T& y, T& z, const Deriv& r)
     {
-        const Vec3& c = r.getVCenter();
+        const Vec3& c = getVCenter(r);
         x = ( c.size() >0 ) ? (T) c[0] : (T) 0.0;
         y = ( c.size() >1 ) ? (T) c[1] : (T) 0.0;
         z = ( c.size() >2 ) ? (T) c[2] : (T) 0.0;
@@ -689,7 +883,7 @@ public:
     template<typename T>
     static void add(Deriv& r, T x, T y, T z)
     {
-        Vec3& c = r.getVCenter();
+        Vec3& c = getVCenter(r);
         if ( c.size() >0 )
             c[0] += (Real) x;
         if ( c.size() >1 )
@@ -769,6 +963,7 @@ inline const char* CudaRigid3fTypes::Name()
 #ifdef SOFA_GPU_CUDA_DOUBLE
 using sofa::defaulttype::Vec3d;
 using sofa::defaulttype::Vec2d;
+using sofa::defaulttype::Vec6d;
 typedef Vec3r1<double> Vec3d1;
 
 typedef CudaVectorTypes<Vec3d,Vec3d,double> CudaVec3dTypes;
@@ -796,6 +991,16 @@ inline const char* CudaVec3d1Types::Name()
 {
     return "CudaVec3d1";
 }
+
+typedef CudaVectorTypes<Vec6d,Vec6d,double> CudaVec6dTypes;
+// typedef CudaVec6dTypes CudaVec6Types;
+
+template<>
+inline const char* CudaVec6dTypes::Name()
+{
+    return "CudaVec6d";
+}
+
 
 typedef CudaRigidTypes<3,double> CudaRigid3dTypes;
 //typedef CudaRigid3dTypes CudaRigid3Types;
@@ -906,9 +1111,9 @@ public:
     iterator end() { return data+vref.size(); }
 
     void clear() { vref.clear(); }
-    void resize(size_type s, bool init = true) { if (init) vref.resize(s); else vref.fastResize(s); }
-    void reserve(size_type s) { vref.reserve(s); }
-    void push_back(const_reference v) { vref.push_back(v); }
+    void resize(size_type s, bool init = true) { if (init) vref.resize(s); else vref.fastResize(s); data = vref.hostWrite(); }
+    void reserve(size_type s) { vref.reserve(s); data = vref.hostWrite(); }
+    void push_back(const_reference v) { vref.push_back(v); data = vref.hostWrite(); }
 
     inline friend std::ostream& operator<< ( std::ostream& os, const WriteAccessor<container_type>& vec )
     {
@@ -960,5 +1165,15 @@ template<> struct DataTypeName<sofa::gpu::cuda::Vec3d1> { static const char* nam
 } // namespace defaulttype
 
 } // namespace sofa
+
+#ifdef DEBUG_OUT_MATRIX
+#undef DEBUG_OUT_M
+#undef SPACEP
+#undef SPACEM
+#undef SPACEN
+#undef DEBUG_OUT_MATRIX
+#else 
+#undef DEBUG_OUT_M
+#endif
 
 #endif

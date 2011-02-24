@@ -5,6 +5,8 @@
 #include <sofa/core/objectmodel/Data.h>
 #include <sofa/core/objectmodel/BaseContext.h>
 
+#include <sofa/helper/vector.h>
+
 namespace sofa
 {
 
@@ -43,7 +45,11 @@ public:
     template<class RealObject>
     static RealObject* parse( const char* XMLkeyword, core::objectmodel::BaseObjectDescription* arg )
     {
-        RealObject* obj = NULL;
+    if (arg == NULL)
+    {
+      return NULL;
+    }
+    RealObject* obj = NULL;
 		const char *ptr_attr = NULL;
 		ptr_attr = arg->getAttribute(XMLkeyword,NULL);
 
@@ -89,17 +95,19 @@ public:
 
     //operator BaseState*() { return refObject; }
     template<class RealObject>
-    RealObject* getObject(sofa::core::objectmodel::BaseContext* context)
+    RealObject* getObject(sofa::core::objectmodel::BaseContext* context) const
     {
         RealObject* res = NULL;
 
-        if(refObject == NULL)
-        {
-            res = context->get<RealObject>(refStr);
-            refObject = res;
-        }
-        else
-            res = dynamic_cast<RealObject*>( refObject );
+		//this method need to be const (i.e do not touch any members)
+		//consequently, it is not possible to do 'update-on-read'
+        //if(refObject == NULL)
+        //{
+        res = context->get<RealObject>(refStr);
+        //    refObject = res;
+        //}
+        //else
+        //res = dynamic_cast<RealObject*>( refObject );
 
         return res;
     }
@@ -163,29 +171,35 @@ public:
     }
 };
 
+
+		
 class SOFA_CORE_API VectorObjectRef : public std::vector<ObjectRef>
 {
 private:
-
-	static const helper::vector<std::string> tokenize(const std::string &str, char token)
+	static const helper::vector<std::string> tokenize(const std::string &str)
 	{
-		helper::vector<std::string> res;
-		std::string subValue;
-		size_t startPosAt = 0;
-		size_t nextPosAt = str.find(token, startPosAt);
+		helper::vector<std::string> word_s;
+		std::string word;
+		unsigned int it=0;
+		while (str[it] ==' ') ++it;
 
-		while(nextPosAt != std::string::npos)
+		while(it<str.length())
 		{
-			subValue = str.substr(startPosAt, nextPosAt);
-			res.push_back(subValue);
-			startPosAt = nextPosAt + 1;
-			nextPosAt = str.find(token, startPosAt);
-		}
+			if((str[it]!=' ') && (str[it]!=','))
+			{
+				word.push_back(str[it]);
+			}
+			else if(!word.empty())
+			{
+				word_s.push_back(word);
+				word.clear();
+			}
 
-		subValue = str.substr(startPosAt, nextPosAt);
-		res.push_back(subValue);
-		
-		return res;
+			++it;
+		}
+		if(!word.empty()) word_s.push_back(word);
+
+		return word_s;
 	}
 
 public:
@@ -202,13 +216,15 @@ public:
 			return false;
 
 		std::string attr(ptr_attr);
-		const helper::vector<std::string> listStrings = VectorObjectRef::tokenize(attr, ' ');
+		const helper::vector<std::string> listStrings = VectorObjectRef::tokenize(attr);
 
 		for(unsigned int i=0 ; i<listStrings.size() ; i++)
 		{
 			RealObject* obj = ObjectRef::parseString<RealObject>(listStrings[i], arg);
-			if(obj == NULL)
+			if(obj == NULL){
+				vObj.clear();
 				return false;
+			}
 			vObj.push_back(obj);
 		}
 		return true;
@@ -220,7 +236,7 @@ public:
 		std::string subValue;
 		is >> isStr;
 
-		const helper::vector<std::string> listStrings = VectorObjectRef::tokenize(isStr, ' ');
+		const helper::vector<std::string> listStrings = VectorObjectRef::tokenize(isStr);
 		for(unsigned int i=0 ; i<listStrings.size() ; i++)
 		{
 			ObjectRef objRef;
@@ -243,6 +259,14 @@ public:
 		}
 
         return os;
+    }
+
+    const ObjectRef& operator[] ( unsigned int i ) const {
+    	return this->at(i);
+	}
+
+    ObjectRef& operator[] ( unsigned int  i ) {
+    	return this->at(i);
     }
 
     inline friend std::ostream& operator<< ( std::ostream& os, const VectorObjectRef& ref)
@@ -368,7 +392,6 @@ public:
 				objRefs.push_back(objRef);
 			else
 				this->getOwner()->serr << v[i] << "is not a correct link (Have you forgotten the @ ?)" << this->getOwner()->sendl;
-			objRefs.push_back(objRef);
 		}
 
 		this->endEdit();

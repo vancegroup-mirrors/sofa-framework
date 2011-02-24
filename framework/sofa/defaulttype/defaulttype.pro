@@ -27,14 +27,14 @@ HEADERS += \
 	  DataTypeInfo.h \
           Frame.h \ 
           LaparoscopicRigidTypes.h \
-		  MapMapSparseMatrix.h \
+          MapMapSparseMatrix.h \
           Mat.h \
           Quat.h \
           Quat.inl \
           RigidTypes.h \
           SolidTypes.h \
           SolidTypes.inl \
-          SparseConstraintTypes.h \
+          #SparseConstraintTypes.h \
           Vec.h \
           VecTypes.h \
 	    MatSym.h \

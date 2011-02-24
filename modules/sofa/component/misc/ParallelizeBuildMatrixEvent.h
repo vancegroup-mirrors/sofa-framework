@@ -35,7 +35,7 @@ namespace misc {
 
 using namespace sofa::defaulttype;
 
-class SOFA_CORE_API ParallelizeBuildMatrixEvent : public sofa::core::objectmodel::Event
+class ParallelizeBuildMatrixEvent : public sofa::core::objectmodel::Event
 {
 public:
 
@@ -43,8 +43,7 @@ public:
 
 	virtual ~ParallelizeBuildMatrixEvent() {}
 
-        virtual const char* getClassName() const { return "ParallelizeBuildMatrixEvent"; }
-
+	virtual const char* getClassName() const { return "ParallelizeBuildMatrixEvent"; }
 };
 
 

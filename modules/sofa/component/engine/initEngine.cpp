@@ -52,6 +52,7 @@ void initEngine()
 } // namespace sofa
 
 ////////// BEGIN CLASS LIST //////////
+SOFA_LINK_CLASS(AverageCoord)
 SOFA_LINK_CLASS(BoxROI)
 SOFA_LINK_CLASS(PlaneROI)
 SOFA_LINK_CLASS(SphereROI)

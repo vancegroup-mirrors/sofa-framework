@@ -497,15 +497,15 @@ namespace gl
 
   
   void DrawManager::drawCone(const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subd)
-    {      
+    {
       Vector3 tmp = p2-p1;
       setMaterial(colour);
       /* create Vectors p and q, co-planar with the cylinder's cross-sectional disk */
       Vector3 p=tmp;
       if (fabs(p[0]) + fabs(p[1]) < 0.00001*tmp.norm())
-	p[0] += 1.0;
+        p[0] += 1.0;
       else
-	p[2] += 1.0;
+        p[2] += 1.0;
       Vector3 q;
       q = p.cross(tmp);
       p = tmp.cross(q);
@@ -539,21 +539,21 @@ namespace gl
           st = sin(theta);
           ct = cos(theta);
           /* construct normal */
-	  tmp = p*ct+q*st;
+          tmp = p*ct+q*st;
           /* set the normal for the two subseqent points */
-	  normals.push_back(tmp);
+          normals.push_back(tmp);
 
           /* point on disk 1 */
           Vector3 w(p1);
           w += tmp*radius1;
-	  points.push_back(w);
+          points.push_back(w);
           pointsCloseCylinder1.push_back(w);
           normalsCloseCylinder1.push_back(dir);
 
           /* point on disk 2 */
           w=p2;
           w += tmp*radius2;
-	  points.push_back(w);          
+          points.push_back(w);          
           pointsCloseCylinder2.push_back(w);
           normalsCloseCylinder2.push_back(-dir);
         }
@@ -569,6 +569,26 @@ namespace gl
 
       resetMaterial(colour);
     }
+
+  void DrawManager::drawCube( const float& radius, const Vec<4,float>& colour, const int& subd)
+  {
+      // X Axis
+      drawCylinder( Vector3(-1.0, -1.0, -1.0), Vector3(1.0, -1.0, -1.0), radius, colour, subd);
+      drawCylinder( Vector3(-1.0,  1.0, -1.0), Vector3(1.0,  1.0, -1.0), radius, colour, subd);
+      drawCylinder( Vector3(-1.0, -1.0,  1.0), Vector3(1.0, -1.0,  1.0), radius, colour, subd);
+      drawCylinder( Vector3(-1.0,  1.0,  1.0), Vector3(1.0,  1.0,  1.0), radius, colour, subd);
+      // Y Axis
+      drawCylinder( Vector3(-1.0, -1.0, -1.0), Vector3(-1.0, 1.0, -1.0), radius, colour, subd);
+      drawCylinder( Vector3(-1.0, -1.0,  1.0), Vector3(-1.0, 1.0,  1.0), radius, colour, subd);
+      drawCylinder( Vector3( 1.0, -1.0, -1.0), Vector3( 1.0, 1.0, -1.0), radius, colour, subd);
+      drawCylinder( Vector3( 1.0, -1.0,  1.0), Vector3( 1.0, 1.0,  1.0), radius, colour, subd);
+      // Z Axis
+      drawCylinder( Vector3(-1.0, -1.0, -1.0), Vector3(-1.0, -1.0, 1.0), radius, colour, subd);
+      drawCylinder( Vector3(-1.0,  1.0, -1.0), Vector3(-1.0,  1.0, 1.0), radius, colour, subd);
+      drawCylinder( Vector3( 1.0, -1.0, -1.0), Vector3( 1.0, -1.0, 1.0), radius, colour, subd);
+      drawCylinder( Vector3( 1.0,  1.0, -1.0), Vector3( 1.0,  1.0, 1.0), radius, colour, subd);
+  }
+
 
   void DrawManager::drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour, int subd)
     {      
@@ -610,10 +630,16 @@ namespace gl
             break;
 #endif
         };
-
-
     }
 
+
+    void DrawManager::drawPlus ( const float& radius, const Vec<4,float>& colour, const int& subd)
+    {
+      drawCylinder( Vector3(-1.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0), radius, colour, subd);
+      drawCylinder( Vector3(0.0, -1.0, 0.0), Vector3(0.0, 1.0, 0.0), radius, colour, subd);
+      drawCylinder( Vector3(0.0, 0.0, -1.0), Vector3(0.0, 0.0, 1.0), radius, colour, subd);
+    }
+    
 
   void DrawManager::addPoint(const Vector3 &p, const Vec<4,float> &c)
     {

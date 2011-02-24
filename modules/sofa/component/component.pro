@@ -6,6 +6,7 @@ include($${SOFA_DIR}/sofa.cfg)
 SUBDIRS += libbase.pro
 
 #NO dependencies
+
 SUBDIRS += loader
 SUBDIRS += odesolver
 SUBDIRS += forcefield
@@ -16,7 +17,6 @@ SUBDIRS += contextobject
 
 SUBDIRS += interactionforcefield #forcefield dependency
 SUBDIRS += linearsolver          #forcefield + odesolver dependency
-
 SUBDIRS += mapping               #forcefield + visualmodel dependency
 SUBDIRS += projectiveconstraintset            #forcefield + odesolver + linearsolver + mass dependency
 SUBDIRS += constraintset         #forcefield + odesolver + linearsolver + mass dependency

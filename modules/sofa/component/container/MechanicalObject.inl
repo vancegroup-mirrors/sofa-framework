@@ -97,8 +97,10 @@ MechanicalObject<DataTypes>::MechanicalObject()
 	, reset_position(initData(&reset_position, "reset_position", "reset position coordinates of the degrees of freedom"))
 	, reset_velocity(initData(&reset_velocity, "reset_velocity", "reset velocity coordinates of the degrees of freedom"))
 	, restScale(initData(&restScale, (SReal)1.0, "restScale", "optional scaling of rest position coordinates (to simulated pre-existing internal tension)"))
-	, debugViewIndices(initData(&debugViewIndices, (bool) false, "debugViewIndices", "Debug : view indices"))
-	, debugViewIndicesScale(initData(&debugViewIndicesScale, (float) 0.0001, "debugViewIndicesScale", "Debug : scale for view indices"))
+  , showObject(initData(&showObject, (bool) false, "showObject", "Show objects"))
+  , showObjectScale(initData(&showObjectScale, (float) 0.1, "showObjectScale", "Scale for object display"))
+  , showIndices(initData(&showIndices, (bool) false, "showIndices", "Show indices"))
+  , showIndicesScale(initData(&showIndicesScale, (float) 0.0001, "showIndicesScale", "Scale for indices display"))
 	, translation(initData(&translation, Vector3(), "translation", "Translation of the DOFs"))
 	, rotation(initData(&rotation, Vector3(), "rotation", "Rotation of the DOFs"))
 	, scale(initData(&scale, Vector3(1.0,1.0,1.0), "scale3d", "Scale of the DOFs in 3 dimensions"))
@@ -108,6 +110,7 @@ MechanicalObject<DataTypes>::MechanicalObject()
 	, ignoreLoader(initData(&ignoreLoader, (bool) false, "ignoreLoader", "Is the Mechanical Object do not use a loader"))
 	, f_reserve(initData(&f_reserve, 0, "reserve", "Size to reserve when creating vectors"))
 	, vsize(0)
+	, data(this)
 	, m_gnuplotFileX(NULL)
 	, m_gnuplotFileV(NULL)
 {
@@ -729,7 +732,7 @@ void MechanicalObject<DataTypes>::copyToBaseVector(defaulttype::BaseVector * des
 		{
 			for (unsigned int j = 0; j < coordDim; j++)
 			{
-				Real tmp;
+				Real tmp = (Real)0.0;
 				DataTypeInfo<Coord>::getValue(vSrc[i], j, tmp);
 				dest->set(offset + i * coordDim + j, tmp);
 			}
@@ -807,7 +810,7 @@ void MechanicalObject<DataTypes>::addToBaseVector(defaulttype::BaseVector* dest,
         {
             for (unsigned int j = 0; j < coordDim; j++)
             {
-                Real tmp;
+                Real tmp = (Real)0.0;
                 DataTypeInfo<Coord>::getValue(vSrc[i], j, tmp);
                 dest->add(offset + i * coordDim + j, tmp);
             }
@@ -856,7 +859,7 @@ void MechanicalObject<DataTypes>::addFromBaseVectorSameSize(VecId dest, const de
         {
             for (unsigned int j = 0; j < coordDim; j++)
             {
-                Real tmp;
+                Real tmp = (Real)0.0;
                 DataTypeInfo<Coord>::getValue(vDest[i], j, tmp);
                 DataTypeInfo<Coord>::setValue(vDest[i], j, tmp + src->element(offset + i * coordDim + j));
             }
@@ -873,7 +876,7 @@ void MechanicalObject<DataTypes>::addFromBaseVectorSameSize(VecId dest, const de
         {
             for (unsigned int j = 0; j < derivDim; j++)
             {
-                Real tmp;
+                Real tmp = (Real)0.0;
                 DataTypeInfo<Deriv>::getValue(vDest[i], j, tmp);
                 DataTypeInfo<Deriv>::setValue(vDest[i], j, tmp + src->element(offset + i * derivDim + j));
             }
@@ -904,7 +907,7 @@ void MechanicalObject<DataTypes>::addFromBaseVectorDifferentSize(VecId dest, con
     {
       for (unsigned int j=0; j<coordDim; ++j)
       {
-        Real tmp;
+        Real tmp = (Real)0.0;
         DataTypeInfo<Coord>::getValue(vDest[i+offset],j,tmp);
         DataTypeInfo<Coord>::setValue(vDest[i+offset],j, tmp + src->element(i*coordDim+j));
       }
@@ -921,7 +924,7 @@ void MechanicalObject<DataTypes>::addFromBaseVectorDifferentSize(VecId dest, con
     {
       for (unsigned int j=0; j<derivDim; ++j)
       {
-        Real tmp;
+        Real tmp = (Real)0.0;
         DataTypeInfo<Deriv>::getValue(vDest[i+offset],j,tmp);
         DataTypeInfo<Deriv>::setValue(vDest[i+offset],j, tmp + src->element(i*derivDim+j));
       }
@@ -941,7 +944,7 @@ void MechanicalObject<DataTypes>::addDxToCollisionModel()
 
 	for (unsigned int i = 0; i < xfree_ra.size(); i++)
 	{
-		x_wa[i] = xfree_ra[i] + dx_ra[i];
+            x_wa[i] = xfree_ra[i] + dx_ra[i];
 	}
 }
 
@@ -2562,19 +2565,30 @@ bool MechanicalObject<DataTypes>::addBBox(double* minBBox, double* maxBBox)
 	return true;
 }
 
+#ifndef SOFA_FLOAT
+template<>
+void MechanicalObject<defaulttype::Rigid3dTypes>::draw();
+#endif
+#ifndef SOFA_DOUBLE
+template<>
+void MechanicalObject<defaulttype::Rigid3fTypes>::draw();
+#endif
+template<>
+void MechanicalObject<defaulttype::LaparoscopicRigid3Types>::draw();
+
 template <class DataTypes>
 void MechanicalObject<DataTypes>::draw()
 {
 	Mat<4,4, GLfloat> modelviewM;
 	Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
 	sofa::simulation::Node* context;
-	if (debugViewIndices.getValue())
+	if (showIndices.getValue())
 	{
 		context = dynamic_cast<sofa::simulation::Node*>(this->getContext());
 		glColor3f(1.0,1.0,1.0);
 		glDisable(GL_LIGHTING);
 		sofa::simulation::getSimulation()->computeBBox((sofa::simulation::Node*)context, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
-		float scale = (sceneMaxBBox - sceneMinBBox).norm() * debugViewIndicesScale.getValue();
+		float scale = (sceneMaxBBox - sceneMinBBox).norm() * showIndicesScale.getValue();
 
 		for (int i=0 ; i< vsize ; i++)
 		{
@@ -2610,6 +2624,18 @@ void MechanicalObject<DataTypes>::draw()
 			glPopMatrix();
 		}
 	}
+	
+	if (showObject.getValue())
+  {
+    glPushAttrib(GL_LIGHTING_BIT);
+    glDisable(GL_LIGHTING);
+    const float& scale = showObjectScale.getValue();
+    vector<Vector3> positions;
+    for (int i = 0; i < vsize; ++i)
+      positions[i] = Vector3(getPX(i), getPY(i), getPZ(i));
+    simulation::getSimulation()->DrawUtility.drawPoints(positions,scale,Vec<4,float>(1.0,1.0,1.0,1.0));
+    glPopAttrib();
+  }
 }
 
 #ifdef SOFA_SMP

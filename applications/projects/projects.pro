@@ -13,7 +13,7 @@ SUBDIRS += generateTypedefs
 #Projects using Qt4: if no QtViewer is available, we deactivate their compilation
 contains (DEFINES, SOFA_GUI_QTVIEWER) || contains (DEFINES, SOFA_GUI_QGLVIEWER) || contains (DEFINES, SOFA_GUI_QTOGREVIEWER) {
     SUBDIRS += Modeler
-    SUBDIRS += sofaConfiguration
+#    SUBDIRS += sofaConfiguration
 }
 
 contains (DEFINES, SOFA_GPU_CUDA) {

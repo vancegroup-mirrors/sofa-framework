@@ -147,7 +147,7 @@ namespace sofa
                 }
               }
 
-              this->sout << "inserting " << keepPoint.size() << " points ... ";
+              std::cout << "inserting " << keepPoint.size() << " points ... ";
 
               unsigned int pointIdx = 0;
               seqPoints.resize ( keepPoint.size() );
@@ -170,9 +170,9 @@ namespace sofa
                   }
                   keepPoint.clear();
 
-                  this->sout << " done. " << this->sendl;
+                  std::cout << " done. " << std::endl;
 
-                  this->sout << "[VoxelGridLoader::init] inserting hexa ... ";
+                  std::cout << "[VoxelGridLoader::init] inserting hexa ... ";
 
                   for ( unsigned int k=(unsigned)ROI[2]; k<=(unsigned)ROI[5]; ++k )
                     for ( unsigned int j=(unsigned)ROI[1]; j<=(unsigned)ROI[4]; ++j )
@@ -196,7 +196,7 @@ namespace sofa
                         }
                       }
 
-                      this->sout << "done. (" << seqHexahedra.size() << ")" << this->sendl;
+                      std::cout << "done. (" << seqHexahedra.size() << ")" << std::endl;
         }
         else
         {
@@ -204,7 +204,7 @@ namespace sofa
           const unsigned int numVoxelsY = dataResolution.getValue()[1];
           //	  const unsigned int numVoxelsZ = dataResolution.getValue()[2];
 
-          this->sout << "[VoxelGridLoader::init] inserting points ... ";
+          std::cout << "[VoxelGridLoader::init] inserting points ... ";
 
           for ( unsigned int k=(unsigned)ROI[2]; k<=(unsigned)ROI[5]; ++k )
             for ( unsigned int j=(unsigned)ROI[1]; j<=(unsigned)ROI[4]; ++j )
@@ -224,7 +224,7 @@ namespace sofa
                 }
               }
 
-              this->sout << "done. (" << seqPoints.size() << ")" << this->sendl;
+              std::cout << "done. (" << seqPoints.size() << ")" << std::endl;
         }
       }
 

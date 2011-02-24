@@ -52,28 +52,26 @@ void RestShapeSpringsForceField<Rigid3dTypes>::addForce(DataVecDeriv& f, const D
     sofa::helper::WriteAccessor< core::objectmodel::Data< VecDeriv > > f1 = f;
     sofa::helper::ReadAccessor< core::objectmodel::Data< VecCoord > > p1 = x;
 
-    VecCoord p_0;
-
-    if (useRestMState)
-        p_0 = *restMState->getX();
-    else
-        p_0 = *this->mstate->getX0();
+    VecCoord p_0 = *pp_0;
 
     f1.resize(p1.size());
 
-    const VecIndex& indices = points.getValue();
-    const VecIndex& ext_indices = external_points.getValue();
+	if (recompute_indices.getValue())
+	{
+		recomputeIndices();
+    }
+
     const VecReal& k = stiffness.getValue();
     const VecReal& k_a = angularStiffness.getValue();
 
-    for (unsigned int i=0; i<indices.size(); i++)
+    for (unsigned int i = 0; i < m_indices.size(); i++)
     {
-        const unsigned int index = indices[i];
-        const unsigned int ext_index = ext_indices[i];
+        const unsigned int index = m_indices[i];
+        const unsigned int ext_index = m_ext_indices[i];
 
         // translation
         Vec3f dx = p1[index].getCenter() - p_0[ext_index].getCenter();
-        f1[index].getVCenter() -=  dx * k[i] ;
+        getVCenter(f1[index]) -=  dx * k[i] ;
 
         // rotation
         Quat dq = p1[index].getOrientation() * p_0[ext_index].getOrientation().inverse();
@@ -91,7 +89,7 @@ void RestShapeSpringsForceField<Rigid3dTypes>::addForce(DataVecDeriv& f, const D
             dq.quatToAxis(dir, angle);
 
         //std::cout<<"dq : "<<dq <<"  dir :"<<dir<<"  angle :"<<angle<<std::endl;
-        f1[index].getVOrientation() -= dir * angle * k_a[i] ;
+        getVOrientation(f1[index]) -= dir * angle * k_a[i] ;
     }
 }
 
@@ -102,15 +100,17 @@ void RestShapeSpringsForceField<Rigid3dTypes>::addDForce(DataVecDeriv& df, const
     sofa::helper::WriteAccessor< core::objectmodel::Data< VecDeriv > > df1 = df;
     sofa::helper::ReadAccessor< core::objectmodel::Data< VecDeriv > > dx1 = dx;
 
-    const VecIndex& indices = points.getValue();
     const VecReal& k = stiffness.getValue();
     const VecReal& k_a = angularStiffness.getValue();
     double kFactor = mparams->kFactor();
 
-    for (unsigned int i=0; i<indices.size(); i++)
+	unsigned int curIndex = 0;
+
+    for (unsigned int i=0; i<m_indices.size(); i++)
     {
-        df1[indices[i]].getVCenter()	 -=  dx1[indices[i]].getVCenter()      * k[i]   * kFactor ;
-        df1[indices[i]].getVOrientation() -=  dx1[indices[i]].getVOrientation() * k_a[i] * kFactor ;
+		curIndex = m_indices[i];
+        getVCenter(df1[curIndex])	 -=  getVCenter(dx1[curIndex]) * k[i] * kFactor ;
+        getVOrientation(df1[curIndex]) -=  getVOrientation(dx1[curIndex]) * k_a[i] * kFactor ;
     }
 }
 
@@ -118,7 +118,6 @@ void RestShapeSpringsForceField<Rigid3dTypes>::addDForce(DataVecDeriv& df, const
 template<>
 void RestShapeSpringsForceField<Rigid3dTypes>::addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams* mparams )
 {
-    const VecIndex& indices = points.getValue();
     const VecReal& k = stiffness.getValue();
     const VecReal& k_a = angularStiffness.getValue();
     const int N = 6;
@@ -129,9 +128,9 @@ void RestShapeSpringsForceField<Rigid3dTypes>::addKToMatrix(const sofa::core::be
 
     unsigned int curIndex = 0;
 
-    for (unsigned int index = 0; index < indices.size(); index++)
+    for (unsigned int index = 0; index < m_indices.size(); index++)
     {
-        curIndex = indices[index];
+        curIndex = m_indices[index];
 
         // translation
         for(int i = 0; i < 3; i++)
@@ -148,18 +147,18 @@ void RestShapeSpringsForceField<Rigid3dTypes>::addKToMatrix(const sofa::core::be
 
 
     /* debug
-std::cout<<"MAT obtained : size: ("<<mat->rowSize()<<" * "<<mat->colSize()<<")\n"<<std::endl;
+	std::cout<<"MAT obtained : size: ("<<mat->rowSize()<<" * "<<mat->colSize()<<")\n"<<std::endl;
 
-for (unsigned int col=0; col<mat->colSize(); col++)
-{
-    for (unsigned int row=0; row<mat->rowSize(); row++)
-    {
-            std::cout<<" "<<mat->element(row, col);
-    }
+	for (unsigned int col=0; col<mat->colSize(); col++)
+	{
+		for (unsigned int row=0; row<mat->rowSize(); row++)
+		{
+				std::cout<<" "<<mat->element(row, col);
+		}
 
-    std::cout<<""<<std::endl;
-}
-*/
+		std::cout<<""<<std::endl;
+	}
+	*/
 }
 
 
@@ -173,27 +172,26 @@ void RestShapeSpringsForceField<Rigid3fTypes>::addForce(DataVecDeriv& f, const D
     sofa::helper::WriteAccessor< core::objectmodel::Data< VecDeriv > > f1 = f;
     sofa::helper::ReadAccessor< core::objectmodel::Data< VecCoord > > p1 = x;
 
-    VecCoord p_0;
-    if (useRestMState)
-        p_0 = *restMState->getX();
-    else
-        p_0 = *this->mstate->getX0();
+    VecCoord p_0 = *pp_0;
 
     f1.resize(p1.size());
 
-    const VecIndex& indices = points.getValue();
-    const VecIndex& ext_indices=external_points.getValue();
+	if (recompute_indices.getValue())
+	{
+		recomputeIndices();
+    }
+
     const VecReal& k = stiffness.getValue();
     const VecReal& k_a = angularStiffness.getValue();
 
-    for (unsigned int i=0; i<indices.size(); i++)
+    for (unsigned int i=0; i<m_indices.size(); i++)
     {
-        const unsigned int index = indices[i];
-        const unsigned int ext_index = ext_indices[i];
+        const unsigned int index = m_indices[i];
+        const unsigned int ext_index = m_ext_indices[i];
 
         // translation
         Vec3f dx = p1[index].getCenter() - p_0[ext_index].getCenter();
-        f1[index].getVCenter() -=  dx * k[i] ;
+        getVCenter(f1[index]) -=  dx * k[i] ;
 
         // rotation
         Quat dq = p1[index].getOrientation() * p_0[ext_index].getOrientation().inverse();
@@ -205,7 +203,7 @@ void RestShapeSpringsForceField<Rigid3fTypes>::addForce(DataVecDeriv& f, const D
         dq.quatToAxis(dir, angle);
 
         //std::cout<<"dq : "<<dq <<"  dir :"<<dir<<"  angle :"<<angle<<std::endl;
-        f1[index].getVOrientation() -= dir * angle * k_a[i] ;
+        getVOrientation(f1[index]) -= dir * angle * k_a[i] ;
     }
 }
 
@@ -217,14 +215,17 @@ void RestShapeSpringsForceField<Rigid3fTypes>::addDForce(DataVecDeriv& df, const
     sofa::helper::ReadAccessor< core::objectmodel::Data< VecDeriv > > dx1 = dx;
     double kFactor = mparams->kFactor();
 
-    const VecIndex& indices = points.getValue();
     const VecReal& k = stiffness.getValue();
     const VecReal& k_a = angularStiffness.getValue();
 
-    for (unsigned int i=0; i<indices.size(); i++)
+	unsigned int curIndex = 0;
+
+    for (unsigned int i=0; i<m_indices.size(); i++)
     {
-        df1[indices[i]].getVCenter()      -=  dx1[indices[i]].getVCenter()      * k[i]   * kFactor ;
-        df1[indices[i]].getVOrientation() -=  dx1[indices[i]].getVOrientation() * k_a[i] * kFactor ;
+//		curIndex = m_indices[index];
+                curIndex = m_indices[i];  // Fix by FF, just a guess
+        getVCenter(df1[curIndex])      -=  getVCenter(dx1[curIndex])      * k[i]   * kFactor ;
+        getVOrientation(df1[curIndex]) -=  getVOrientation(dx1[curIndex]) * k_a[i] * kFactor ;
     }
 }
 
@@ -232,7 +233,6 @@ void RestShapeSpringsForceField<Rigid3fTypes>::addDForce(DataVecDeriv& df, const
 template<>
 void RestShapeSpringsForceField<Rigid3fTypes>::addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams* mparams )
 {
-    const VecIndex& indices = points.getValue();
     const VecReal& k = stiffness.getValue();
     const VecReal& k_a = angularStiffness.getValue();
     const int N = 6;
@@ -245,9 +245,9 @@ void RestShapeSpringsForceField<Rigid3fTypes>::addKToMatrix(const sofa::core::be
     unsigned int curIndex = 0;
 
 
-    for (unsigned int index = 0; index < indices.size(); index++)
+    for (unsigned int index = 0; index < m_indices.size(); index++)
     {
-        curIndex = indices[index];
+        curIndex = m_indices[index];
 
         // translation
         for(int i = 0; i < 3; i++)

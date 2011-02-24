@@ -43,9 +43,11 @@ SOFA_DECL_CLASS(CudaFixedConstraint)
 int FixedConstraintCudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
 .add< component::projectiveconstraintset::FixedConstraint<CudaVec3fTypes> >()
 .add< component::projectiveconstraintset::FixedConstraint<CudaVec3f1Types> >()
+.add< component::projectiveconstraintset::FixedConstraint<CudaVec6fTypes> >()
 #ifdef SOFA_GPU_CUDA_DOUBLE
 .add< component::projectiveconstraintset::FixedConstraint<CudaVec3dTypes> >()
 .add< component::projectiveconstraintset::FixedConstraint<CudaVec3d1Types> >()
+.add< component::projectiveconstraintset::FixedConstraint<CudaVec6dTypes> >()
 #endif // SOFA_GPU_CUDA_DOUBLE
 ;
 

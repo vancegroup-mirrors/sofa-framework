@@ -270,30 +270,6 @@ void RigidMapping<TIn, TOut>::init()
     }
 
     this->Inherit::init();
-
-    sofa::component::container::MultiMeshLoader * loader;
-    this->getContext()->get(loader);
-    if (loader)
-    {
-        sofa::helper::vector<unsigned int>& rep = *repartition.beginEdit();
-        unsigned int cpt = 0;
-        const InVecCoord& xfrom = *this->fromModel->getX();
-        const VecCoord& xto = *this->toModel->getX();
-
-        for (unsigned int i = 0; i < loader->getNbMeshs(); i++)
-        {
-            rep.push_back(loader->getNbPoints(i));
-            if (globalToLocalCoords.getValue() == true)
-            {
-                for (unsigned int j = 0; j < loader->getNbPoints(i); j++, cpt++)
-                {
-                    (*points.beginEdit())[cpt]
-                        = xfrom[i].inverseRotate(xto[cpt] - xfrom[i].getCenter());
-                }
-            }
-        }
-        repartition.endEdit();
-    }
 }
 
 template <class TIn, class TOut>
@@ -530,7 +506,7 @@ void RigidMapping<TIn, TOut>::applyJ(Data<VecDeriv>& dOut, const Data<InVecDeriv
                 }
                 ++it;
             }
-            out[outIdx] = in[inIdx].velocityAtRotatedPoint(rotatedPoints[outIdx]);
+            out[outIdx] = velocityAtRotatedPoint( in[inIdx], rotatedPoints[outIdx] );
         }
     }
 }
@@ -605,8 +581,8 @@ void RigidMapping<TIn, TOut>::applyJT(Data<InVecDeriv>& dOut, const Data<VecDeri
                 }
                 ++it;
             }
-            out[outIdx].getVCenter() += in[inIdx];
-            out[outIdx].getVOrientation() += (DRot) cross(rotatedPoints[inIdx], in[inIdx]);
+            getVCenter(out[outIdx]) += in[inIdx];
+            getVOrientation(out[outIdx]) +=  cross(rotatedPoints[inIdx], in[inIdx]);
 
         }
         if (isMaskInUse)

@@ -47,8 +47,8 @@ namespace constraintset
 template<class DataTypes>
 LinearSolverConstraintCorrection<DataTypes>::LinearSolverConstraintCorrection(behavior::MechanicalState<DataTypes> *mm)
     : wire_optimization(initData(&wire_optimization, false, "wire_optimization", "constraints are reordered along a wire-like topology (from tip to base)"))
-    , solverName(initData(&solverName, std::string(""), "solverName", "name of the constraint solver"))
-    , mstate(mm), odesolver(NULL), linearsolver(NULL)
+    , solverName( initData(&solverName, "solverName", "name of the constraint solver") )
+    , mstate(mm), odesolver(NULL)
 {
 }
 
@@ -71,14 +71,24 @@ void LinearSolverConstraintCorrection<DataTypes>::init()
     //     odesolver = c->get< behavior::OdeSolver >();
     //     linearsolver = c->get< behavior::LinearSolver >();
     odesolver=getOdeSolver(c);
-    if (solverName.getValue() == "") linearsolver=getLinearSolver(c);
-    else linearsolver=getLinearSolverByName(c,solverName.getValue());
+    const helper::vector<std::string>& solverNames = solverName.getValue();
+    if (solverNames.size() == 0) {
+      linearsolvers.push_back(c->get<behavior::LinearSolver>());
+    } else {
+      for (unsigned int i=0;i<solverNames.size();++i) {
+            sofa::core::behavior::LinearSolver* s = NULL;
+            c->get(s, solverNames[i]);
+            if (s) linearsolvers.push_back(s);
+            else serr << "Solver \"" << solverNames[i] << "\" not found." << sendl;
+      }
+    }
+    
     if (odesolver == NULL)
     {
         serr << "LinearSolverConstraintCorrection: ERROR no OdeSolver found."<<sendl;
         return;
     }
-    if (linearsolver == NULL)
+    if (linearsolvers.size()==0)
     {
         serr << "LinearSolverConstraintCorrection: ERROR no LinearSolver found."<<sendl;
         return;
@@ -104,7 +114,7 @@ void LinearSolverConstraintCorrection<DataTypes>::init()
 template<class DataTypes>
 void LinearSolverConstraintCorrection<DataTypes>::getCompliance(defaulttype::BaseMatrix* W)
 {
-    if (!mstate || !odesolver || !linearsolver) return;
+    if (!mstate || !odesolver || (linearsolvers.size()==0)) return;
 
     // use the OdeSolver to get the position integration factor
     //const double factor = 1.0;
@@ -123,7 +133,7 @@ void LinearSolverConstraintCorrection<DataTypes>::getCompliance(defaulttype::Bas
         linearsolver::FullMatrix<Real> Minv;
         Minv.resize(numDOFReals,numDOFReals);
         // use the Linear solver to compute J*inv(M)*Jt, where M is the mechanical linear system matrix
-        linearsolver->addJMInvJt(&Minv, &J, factor);
+	linearsolvers[0]->addJMInvJt(&Minv, &J, factor);
         double err=0,fact=0;
         for (unsigned int i=0;i<numDOFReals;++i)
             for (unsigned int j=0;j<numDOFReals;++j)
@@ -172,13 +182,13 @@ void LinearSolverConstraintCorrection<DataTypes>::getCompliance(defaulttype::Bas
     }
 
     // use the Linear solver to compute J*inv(M)*Jt, where M is the mechanical linear system matrix
-    linearsolver->addJMInvJt(W, &J, factor);
+    for (unsigned i=0;i<linearsolvers.size();i++) linearsolvers[i]->addJMInvJt(W, &J, factor);
 }
 
 template<class DataTypes>
 void LinearSolverConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttype::BaseMatrix* Minv) const
 {
-    if (!mstate || !odesolver || !linearsolver) return;
+    if (!mstate || !odesolver || (linearsolvers.size()==0)) return;
 
     // use the OdeSolver to get the position integration factor
     //const double factor = 1.0;
@@ -198,7 +208,7 @@ void LinearSolverConstraintCorrection<DataTypes>::getComplianceMatrix(defaulttyp
 
     Minv->resize(numDOFReals,numDOFReals);
     // use the Linear solver to compute J*inv(M)*Jt, where M is the mechanical linear system matrix
-    linearsolver->addJMInvJt(Minv, &J, factor);
+    linearsolvers[0]->addJMInvJt(Minv, &J, factor);
     double err=0,fact=0;
     for (unsigned int i=0;i<numDOFReals;++i)
         for (unsigned int j=0;j<numDOFReals;++j)
@@ -282,9 +292,10 @@ void LinearSolverConstraintCorrection<DataTypes>::applyContactForce(const defaul
 #endif
     //for (unsigned int i=0; i< numDOFs; i++)
     //    sout << "f("<<i<<")="<<force[i]<<sendl;
-    linearsolver->setSystemRHVector(forceID);
-    linearsolver->setSystemLHVector(dxID);
-    linearsolver->solveSystem();
+    linearsolvers[0]->setSystemRHVector(forceID);
+    linearsolvers[0]->setSystemLHVector(dxID);
+    linearsolvers[0]->solveSystem();
+
     //TODO: tell the solver not to recompute the matrix
 
     // use the OdeSolver to get the position integration factor
@@ -293,11 +304,10 @@ void LinearSolverConstraintCorrection<DataTypes>::applyContactForce(const defaul
     // use the OdeSolver to get the position integration factor
     const double velocityFactor = odesolver->getVelocityIntegrationFactor();
 
-
-    Data<VecCoord> xData     = *mstate->write(core::VecCoordId::position());
-    Data<VecDeriv> vData     = *mstate->write(core::VecDerivId::velocity());
-    Data<VecCoord> xfreeData = *mstate->read(core::ConstVecCoordId::freePosition());
-    Data<VecDeriv> vfreeData = *mstate->read(core::ConstVecDerivId::freeVelocity());
+    Data<VecCoord>& xData     = *mstate->write(core::VecCoordId::position());
+    Data<VecDeriv>& vData     = *mstate->write(core::VecDerivId::velocity());
+    const Data<VecCoord> & xfreeData = *mstate->read(core::ConstVecCoordId::freePosition());
+    const Data<VecDeriv> & vfreeData = *mstate->read(core::ConstVecDerivId::freeVelocity());
     VecCoord& x = *xData.beginEdit();
     VecDeriv& v = *vData.beginEdit();
     const VecCoord& x_free = xfreeData.getValue();
@@ -531,12 +541,12 @@ std::list<int>::const_iterator lit(I_last_Dforce.begin()), lend(I_last_Dforce.en
     core::VecDerivId forceID(core::VecDerivId::V_FIRST_DYNAMIC_INDEX);
     core::VecDerivId dxID = core::VecDerivId::dx();
 
-    linearsolver->setSystemRHVector(forceID);
-    linearsolver->setSystemLHVector(dxID);
+    linearsolvers[0]->setSystemRHVector(forceID);
+    linearsolvers[0]->setSystemLHVector(dxID);
 
-    systemMatrix_buf   = linearsolver->getSystemBaseMatrix();
-    systemRHVector_buf = linearsolver->getSystemRHBaseVector();
-    systemLHVector_buf = linearsolver->getSystemLHBaseVector();
+    systemMatrix_buf   = linearsolvers[0]->getSystemBaseMatrix();
+    systemRHVector_buf = linearsolvers[0]->getSystemRHBaseVector();
+    systemLHVector_buf = linearsolvers[0]->getSystemLHBaseVector();
 
     // systemRHVector_buf is set to constraint_force;
     //std::cerr<<"WARNING: resize is called"<<std::endl;
@@ -548,8 +558,8 @@ std::list<int>::const_iterator lit(I_last_Dforce.begin()), lend(I_last_Dforce.en
 
     for ( int i=0; i<mstate->getSize(); i++)
     {
-        for  (unsigned int j=0; j<derivDim; j++)
-            systemRHVector_buf->set(i*derivDim+j, constraint_force[i][j]);
+	for  (unsigned int j=0; j<derivDim; j++)
+	    systemRHVector_buf->set(i*derivDim+j, constraint_force[i][j]);
     }
 
     // debug !!
@@ -574,7 +584,7 @@ void LinearSolverConstraintCorrection<DataTypes>::addConstraintDisplacement(doub
 
     last_disp = begin;
 
-    linearsolver->partial_solve(Vec_I_list_dof[last_disp], Vec_I_list_dof[last_force], _new_force);
+    linearsolvers[0]->partial_solve(Vec_I_list_dof[last_disp], Vec_I_list_dof[last_force], _new_force);
 
     _new_force = false;
 
@@ -657,7 +667,7 @@ if (df[begin]<0)
 template<class DataTypes>
 void LinearSolverConstraintCorrection<DataTypes>::getBlockDiagonalCompliance(defaulttype::BaseMatrix* W, int begin, int end)
 {
-    if (!mstate || !odesolver || !linearsolver) return;
+    if (!mstate || !odesolver || (linearsolvers.size()==0)) return;
 
     // use the OdeSolver to get the position integration factor
     const double factor = odesolver->getPositionIntegrationFactor(); //*odesolver->getPositionIntegrationFactor(); // dt*dt
@@ -706,7 +716,7 @@ void LinearSolverConstraintCorrection<DataTypes>::getBlockDiagonalCompliance(def
     }
 
     // use the Linear solver to compute J*inv(M)*Jt, where M is the mechanical linear system matrix
-    linearsolver->addJMInvJt(W, &J, factor);
+    linearsolvers[0]->addJMInvJt(W, &J, factor);
 
     // construction of  Vec_I_list_dof : vector containing, for each constraint block, the list of dof concerned
 

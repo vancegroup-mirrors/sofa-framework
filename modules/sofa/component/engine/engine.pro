@@ -14,6 +14,8 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_ENGINE
 
 HEADERS += initEngine.h \
+           AverageCoord.h \
+           AverageCoord.inl \
            BoxROI.h \
            BoxROI.inl \
 					Distances.h \
@@ -66,6 +68,7 @@ HEADERS += initEngine.h \
            ValuesFromPositions.inl
 
 SOURCES += initEngine.cpp \
+           AverageCoord.cpp \
            BoxROI.cpp \
 					Distances.cpp \
            PlaneROI.cpp \

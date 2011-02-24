@@ -240,16 +240,25 @@ namespace sofa
 	  void QtOgreViewer::setup()
 	  {
 
+      std::cout << "setupResources()...";
 	    setupResources();
+      std::cout << "done." << std::endl;
 
+      std::cout << "setupConfiguration()...";
 	    setupConfiguration();
+      std::cout << "done." << std::endl;
 	    //if(!configure()) {std::cout << "No configuration \a\n";exit(0);}
 
+      std::cout << "setupView()...";
 	    setupView();
+      std::cout << "done." << std::endl;
+
 
 	    Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
+      std::cout << "loadResources()...";
 	    loadResources();
+      std::cout << "done." << std::endl;
 	  }
 
 
@@ -273,6 +282,7 @@ namespace sofa
 		ofile.close();
               }
 	    ogreLog = sofa::helper::system::DataRepository.getFile("config/Ogre.log");
+      ogrePath = sofa::helper::system::DataRepository.getFile("config/ogre.cfg");
 #ifdef _WINDOWS
 #ifdef NDEBUG
 	    pluginsPath = sofa::helper::system::DataRepository.getFile("config/plugins_win.cfg");           
@@ -284,7 +294,15 @@ namespace sofa
 
 #endif 
 #endif // OGRE_STATIC_LIB
+      std::cout << "pluginsPath: " << pluginsPath << std::endl;
+      std::cout << "ogrePath: " << ogrePath << std::endl;
+      std::cout << "ogreLog: " << ogreLog << std::endl;
 	    mRoot = new Ogre::Root(pluginsPath, ogrePath, ogreLog);
+      if( mRoot == NULL)
+      {
+        std::cerr << "Failed to create Ogre::Root" << std::endl;
+        
+      }
 //        Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_LOW);
 #ifndef WIN32
 	    Ogre::ResourceGroupManager::getSingleton().addResourceLocation("/","FileSystem","General");
@@ -298,7 +316,7 @@ namespace sofa
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/programs","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/scripts","FileSystem","General");
         Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures","FileSystem","General");
-        Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures/nvidia","FileSystem","General");
+        //Ogre::ResourceGroupManager::getSingleton().addResourceLocation(sofa::helper::system::DataRepository.getFirstPath() +"/materials/textures/nvidia","FileSystem","General");
 	  }
 
 
@@ -315,7 +333,14 @@ namespace sofa
       Ogre::RenderSystemList::iterator pRend = mRoot->getAvailableRenderers()->begin();
       Ogre::RenderSystem* mRenderSystem = *pRend;
 #endif
-
+      if ( mRenderSystem )
+      {
+        std::cout << "Render System set :" << std::endl;
+        std::cout << mRenderSystem->getName() << std::endl;
+      }
+      else{
+        std::cout << "Failed to retrieve a valid Render System !" << std::endl;
+      }
         mRenderSystem->setShadingType(Ogre::SO_PHONG);
 
 	    //RenderSystem
@@ -555,13 +580,17 @@ namespace sofa
 
 #endif
             //Finally create our window.
+            std::cout<< "createRenderWindow :" << width() << "x" << height() << "...";
             mRenderWindow = mRoot->createRenderWindow("OgreWindow", width(), height(), false, &params);
+            std::cout<< "done.";
 
-
+           
             mRenderWindow->setActive(true);
             WId ogreWinId = 0x0;
+
             mRenderWindow->getCustomAttribute( "WINDOW", &ogreWinId );
             //QWidget::create(ogreWinId);
+
 
 #ifdef SOFA_QT4
             setAttribute( Qt::WA_PaintOnScreen, true );

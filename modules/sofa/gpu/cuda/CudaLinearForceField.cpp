@@ -22,53 +22,50 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_MASTERSOLVER_MASTERCONTACTSOLVER_H
-#define SOFA_COMPONENT_MASTERSOLVER_MASTERCONTACTSOLVER_H
+#include "CudaTypes.h"
+#include "CudaLinearForceField.inl"
 
-#include <sofa/core/behavior/OdeSolver.h>
-#include <sofa/simulation/common/MasterSolverImpl.h>
-#include <sofa/simulation/common/Node.h>
-#include <sofa/simulation/common/MechanicalVisitor.h>
-#include <sofa/core/behavior/ConstraintSolver.h>
-#include <sofa/core/behavior/BaseConstraintCorrection.h>
-#include <sofa/core/behavior/OdeSolver.h>
-//#include <sofa/component/odesolver/OdeSolverImpl.h>
-#include <sofa/component/constraintset/LCPConstraintSolver.h>
-#include <sofa/helper/set.h>
-
+#include <sofa/defaulttype/RigidTypes.h>
+#include <sofa/core/ObjectFactory.h>
 namespace sofa
 {
 
 namespace component
 {
 
-namespace mastersolver
+namespace forcefield
 {
 
-using namespace sofa::defaulttype;
-using namespace sofa::component::linearsolver;
-using namespace helper::system::thread;
+template class LinearForceField<gpu::cuda::CudaVec6fTypes>;
+template class LinearForceField<gpu::cuda::CudaRigid3fTypes>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+template class LinearForceField<gpu::cuda::CudaVec6dTypes>;
+template class LinearForceField<gpu::cuda::CudaRigid3dTypes>;
+#endif // SOFA_GPU_CUDA_DOUBLE
 
-class SOFA_COMPONENT_MASTERSOLVER_API MasterContactSolver : public sofa::simulation::MasterSolverImpl
+}// namespace forcefield
+
+}// namespace component
+
+namespace gpu
 {
-public:
-	SOFA_CLASS(MasterContactSolver, sofa::simulation::MasterSolverImpl);
-        MasterContactSolver();
-        void step (double dt, const sofa::core::ExecParams* params);
-        void init();
 
-        virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );
+namespace cuda
+{
 
-        Data<bool> displayTime;
-protected:
-        sofa::core::behavior::ConstraintSolver *constraintSolver;
-        constraintset::LCPConstraintSolver* defaultSolver;
-};
+SOFA_DECL_CLASS(CudaLinearForceField)
 
-} // namespace mastersolver
+int LinearForceFieldCudaClass = core::RegisterObject("Supports GPU-side computation using CUDA")
+.add< component::forcefield::LinearForceField<CudaVec6fTypes> >()
+.add< component::forcefield::LinearForceField<CudaRigid3fTypes> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::forcefield::LinearForceField<CudaVec6dTypes> >()
+.add< component::forcefield::LinearForceField<CudaRigid3dTypes> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
+;
 
-} // namespace component
+}// namespace cuda
 
-} // namespace sofa
+}// namespace gpu
 
-#endif
+}// namespace sofa

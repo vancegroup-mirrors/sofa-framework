@@ -47,29 +47,21 @@ int SkinningMappingClass = core::RegisterObject("skin a model from a set of rigi
 
 // Rigid Types
 #ifndef SOFA_FLOAT
-.add< SkinningMapping< Rigid3dTypes, Vec3dTypes > >()
-.add< SkinningMapping< Rigid3dTypes, ExtVec3fTypes > >()
+                           .add< SkinningMapping< Rigid3dTypes, Vec3dTypes > >()
+                           .add< SkinningMapping< Rigid3dTypes, ExtVec3fTypes > >()
 #endif
 #ifndef SOFA_DOUBLE
-.add< SkinningMapping< Rigid3fTypes, Vec3fTypes > >()
-.add< SkinningMapping< Rigid3fTypes, ExtVec3fTypes > >()
+                           .add< SkinningMapping< Rigid3fTypes, Vec3fTypes > >()
+                           .add< SkinningMapping< Rigid3fTypes, ExtVec3fTypes > >()
 #endif
 
 #ifndef SOFA_FLOAT
 #ifndef SOFA_DOUBLE
-.add< SkinningMapping< Rigid3dTypes, Vec3fTypes > >()
-.add< SkinningMapping< Rigid3fTypes, Vec3dTypes > >()
+                           .add< SkinningMapping< Rigid3dTypes, Vec3fTypes > >()
+                           .add< SkinningMapping< Rigid3fTypes, Vec3dTypes > >()
 #endif
 #endif
-
-// Rigid with Elastons
-
-
-// Affine Types
-
-
-// Quadratic Types
-;
+                           ;
 
 #ifndef SOFA_FLOAT
 template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3dTypes, Vec3dTypes >;

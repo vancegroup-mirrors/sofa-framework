@@ -17,13 +17,13 @@ HEADERS += initMasterSolver.h \
            DefaultMasterSolver.h \
            MultiStepMasterSolver.h \
            MultiTagMasterSolver.h \
-           MasterContactSolver.h 
+           FreeMotionMasterSolver.h 
 
 SOURCES += initMasterSolver.cpp \
            DefaultMasterSolver.cpp \
            MultiStepMasterSolver.cpp \
            MultiTagMasterSolver.cpp \
-           MasterContactSolver.cpp
+           FreeMotionMasterSolver.cpp
 
 
 

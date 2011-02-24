@@ -4,7 +4,7 @@
 
 #include <sofa/component/controller/LCPForceFeedback.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
-#include <sofa/component/constraintset/LCPConstraintSolver.h>
+#include <sofa/component/constraintset/ConstraintSolverImpl.h>
 #include <sofa/core/objectmodel/BaseContext.h>
 
 #include <algorithm>
@@ -38,12 +38,12 @@ bool derivRigid3Vectors(const typename DataTypes::VecCoord& x0, const typename D
  	d.resize(sz0);
 	for(unsigned int i=0;i<szmin;++i)
  	{
- 		d[i].getVCenter() = x1[i].getCenter() - x0[i].getCenter();
+                getVCenter(d[i]) = x1[i].getCenter() - x0[i].getCenter();
  		// Pas de prise en charge des rotations
  	}
 	for(unsigned int i=szmin;i<sz0;++i)
 	{
- 		d[i].getVCenter() = - x0[i].getCenter();
+                getVCenter(d[i]) = - x0[i].getCenter();
 	}
 	return true;
 }
@@ -66,7 +66,7 @@ bool derivVectors<Rigid3dTypes>(const Rigid3dTypes::VecCoord& x0, const Rigid3dT
 template <>
 double computeDot<Rigid3dTypes>(const Rigid3dTypes::Deriv& v0, const Rigid3dTypes::Deriv& v1)
 {
-	return dot(v0.getVCenter(),v1.getVCenter());
+        return dot(getVCenter(v0),getVCenter(v1));
 }
 
 #endif
@@ -80,7 +80,7 @@ bool derivVectors<Rigid3fTypes>(const Rigid3fTypes::VecCoord& x0, const Rigid3fT
 template <>
 double computeDot<Rigid3fTypes>(const Rigid3fTypes::Deriv& v0, const Rigid3fTypes::Deriv& v1)
 {
-	return dot(v0.getVCenter(),v1.getVCenter());
+        return dot(getVCenter(v0),getVCenter(v1));
 }
 
 #endif
@@ -104,9 +104,9 @@ LCPForceFeedback<DataTypes>::LCPForceFeedback()
 	haptic_freq(0.0)
 {
 	this->f_listening.setValue(true);
-	mLcp[0] = 0;
-	mLcp[1] = 0;
-	mLcp[2] = 0;
+	mCP[0] = NULL;
+	mCP[1] = NULL;
+	mCP[2] = NULL;
 	mCurBufferId = 0;
 	mNextBufferId = 0;
 	mIsCuBufferInUse = false;
@@ -127,9 +127,9 @@ void LCPForceFeedback<DataTypes>::init()
 		return;
 	}
 	
-    c->get(lcpconstraintSolver);
+    c->get(constraintSolver);
 	
-	if (!lcpconstraintSolver)
+	if (!constraintSolver)
 	{
 		serr << "LCPForceFeedback has no binding MasterContactSolver. Initialisation failed." << sendl;
 		return;
@@ -155,7 +155,7 @@ void LCPForceFeedback<DataTypes>::computeForce(const VecCoord& state,  VecDeriv&
 	forces.resize(stateSize);
 
 
-	if(!lcpconstraintSolver||!mState)
+	if(!constraintSolver||!mState)
 		return;
 
 
@@ -176,16 +176,15 @@ void LCPForceFeedback<DataTypes>::computeForce(const VecCoord& state,  VecDeriv&
 	const MatrixDeriv& constraints = mConstraints[mCurBufferId];
 //	std::vector<int> &id_buf = mId_buf[mCurBufferId];
 	VecCoord &val = mVal[mCurBufferId];
-    component::constraintset::LCP* lcp = mLcp[mCurBufferId];
+    component::constraintset::ConstraintProblem* cp = mCP[mCurBufferId];
 
-	if(!lcp)
+	if(!cp)
 	{
 		mIsCuBufferInUse = false;
 		return;
 	}
 
-	if( (lcp->getMu() > 0.0 
-		) && (!constraints.empty()))
+	if(!constraints.empty())
 	{
 		VecDeriv dx;
 		
@@ -200,15 +199,12 @@ void LCPForceFeedback<DataTypes>::computeForce(const VecCoord& state,  VecDeriv&
 
 			for (MatrixDerivColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
 			{
-				lcp->getDfree()[rowIt.index()] += computeDot<DataTypes>(colIt.val(), dx[colIt.index()]);
+				cp->getDfree()[rowIt.index()] += computeDot<DataTypes>(colIt.val(), dx[colIt.index()]);
 			}
 		}
 
-		double tol = lcp->getTolerance();
-		int max = 100;
-
-		tol *= 0.001;
-			helper::nlcp_gaussseidelTimed(lcp->getNbConst(), lcp->getDfree(), lcp->getW(), lcp->getF(), lcp->getMu(), tol, max, true, 0.0008);
+		// Solving constraints
+		cp->solveTimed(cp->tolerance * 0.001, 100, 0.0008);	// tol, maxIt, timeout
 
 		// Restore Dfree
 		for (MatrixDerivRowConstIterator rowIt = constraints.begin(); rowIt != rowItEnd; ++rowIt)
@@ -217,7 +213,7 @@ void LCPForceFeedback<DataTypes>::computeForce(const VecCoord& state,  VecDeriv&
 
 			for (MatrixDerivColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
 			{
-				lcp->getDfree()[rowIt.index()] -= computeDot<DataTypes>(colIt.val(), dx[colIt.index()]);
+				cp->getDfree()[rowIt.index()] -= computeDot<DataTypes>(colIt.val(), dx[colIt.index()]);
 			}
 		}
 
@@ -226,13 +222,13 @@ void LCPForceFeedback<DataTypes>::computeForce(const VecCoord& state,  VecDeriv&
 
 		for (MatrixDerivRowConstIterator rowIt = constraints.begin(); rowIt != rowItEnd; ++rowIt)
 		{
-			if (lcp->getF()[rowIt.index()] != 0.0)
+			if (cp->getF()[rowIt.index()] != 0.0)
 			{
 				MatrixDerivColConstIterator colItEnd = rowIt.end();
 
 				for (MatrixDerivColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
 				{
-					tempForces[colIt.index()] += colIt.val() * lcp->getF()[rowIt.index()];
+					tempForces[colIt.index()] += colIt.val() * cp->getF()[rowIt.index()];
 				}
 			}
 		}
@@ -252,14 +248,14 @@ void LCPForceFeedback<DataTypes>::handleEvent(sofa::core::objectmodel::Event *ev
 	if (!dynamic_cast<sofa::simulation::AnimateEndEvent*>(event))
 		return;
 
-	if (!lcpconstraintSolver)
+	if (!constraintSolver)
 		return;
 
 	if (!mState)
 		return;
     
-	component::constraintset::LCP* new_lcp = lcpconstraintSolver->getLCP();
-	if (!new_lcp)
+	component::constraintset::ConstraintProblem* new_cp = constraintSolver->getConstraintProblem();
+	if (!new_cp)
 		return;
 
 	// Find available buffer
@@ -282,7 +278,7 @@ void LCPForceFeedback<DataTypes>::handleEvent(sofa::core::objectmodel::Event *ev
 	VecCoord& val = mVal[buf_index];
 
 	// Update LCP
-	mLcp[buf_index] = new_lcp;
+	mCP[buf_index] = new_cp;
 
 	// Update Val
 	val = mState->read(sofa::core::VecCoordId::freePosition())->getValue();
@@ -303,11 +299,11 @@ void LCPForceFeedback<DataTypes>::handleEvent(sofa::core::objectmodel::Event *ev
 	// valid buffer
 	mNextBufferId = buf_index;
 
-	// Lock lcp to prevent its use by the SOfa thread while it is used by haptic thread
+	// Lock lcp to prevent its use by the SOFA thread while it is used by haptic thread
 	if(mIsCuBufferInUse)
-		lcpconstraintSolver->lockLCP(mLcp[mCurBufferId], mLcp[mNextBufferId]);
+		constraintSolver->lockConstraintProblem(mCP[mCurBufferId], mCP[mNextBufferId]);
 	else
-		lcpconstraintSolver->lockLCP(mLcp[mNextBufferId]);
+		constraintSolver->lockConstraintProblem(mCP[mNextBufferId]);
 }
 
 
@@ -331,9 +327,9 @@ void LCPForceFeedback<Rigid3fTypes>::computeForce(double x, double y, double z, 
 	state.resize(1);
 	state[0].getCenter() = sofa::defaulttype::Vec3f((float)x,(float)y,(float)z);
 	computeForce(state,forces);
-	fx = forces[0].getVCenter().x();
-	fy = forces[0].getVCenter().y();
-	fz = forces[0].getVCenter().z();
+        fx = getVCenter(forces[0]).x();
+        fy = getVCenter(forces[0]).y();
+        fz = getVCenter(forces[0]).z();
 }
 #endif
 
@@ -347,9 +343,9 @@ void LCPForceFeedback<Rigid3dTypes>::computeForce(double x, double y, double z, 
 	state.resize(1);
 	state[0].getCenter() = sofa::defaulttype::Vec3d(x,y,z);
 	computeForce(state,forces);
-	fx = forces[0].getVCenter().x();
-	fy = forces[0].getVCenter().y();
-	fz = forces[0].getVCenter().z();
+        fx = getVCenter(forces[0]).x();
+        fy = getVCenter(forces[0]).y();
+        fz = getVCenter(forces[0]).z();
 }
 #endif
 

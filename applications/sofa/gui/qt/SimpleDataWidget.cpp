@@ -108,10 +108,8 @@ Creator<DataWidgetFactory, SimpleDataWidget< fixed_array<double,8> > > DWClass_f
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Quater<float> > > DWClass_Quatf("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Quater<double> > > DWClass_Quatd("default",true);
 
-/*
-*/
-using sofa::helper::Polynomial_LD;
 
+using sofa::helper::Polynomial_LD;
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<double,5> > >DWClass_PolynomialLD5d("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<double,4> > >DWClass_PolynomialLD4d("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<double,3> > >DWClass_PolynomialLD3d("default",true);
@@ -122,7 +120,8 @@ Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<float ,
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<float ,3> > >DWClass_PolynomialLD3f("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<float ,2> > >DWClass_PolynomialLD2f("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< sofa::helper::Polynomial_LD<float ,1> > >DWClass_PolynomialLD1f("default",true);
-
+using sofa::core::objectmodel::ObjectRef;
+Creator<DataWidgetFactory, SimpleDataWidget< sofa::core::objectmodel::ObjectRef > >DWClass_ObjectRef("default",true);
 
 Creator<DataWidgetFactory, SimpleDataWidget< Mat<2,2,float> > > DWClass_Mat22f("default",true);
 Creator<DataWidgetFactory, SimpleDataWidget< Mat<2,2,double> > > DWClass_Mat22d("default",true);
@@ -229,6 +228,8 @@ void RadioDataWidget::writeToData()
 
 	this->getData()->virtualSetValue(m_radiotrick);
 }
+
+
 
 } // namespace qt
 

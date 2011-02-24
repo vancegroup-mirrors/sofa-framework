@@ -136,7 +136,7 @@ void ForceField<DataTypes>::addDForce(MultiVecDerivId dfId , const MechanicalPar
 			addDForce(*dfId[mstate].write(), *mparams->readDx(mstate), mparams);
 
 			if (!mparams->getKFactorUsed())
-				serr << "WARNING " << getClassName() << " addDForce doesn't take Stiffness Matrix contribution into account" << sendl;
+                            serr << "WARNING " << getClassName() << " (in ForceField<DataTypes>::addDForce): please use mparams->kFactor() in addDForce" << sendl;
 	}
 }
 
@@ -237,7 +237,7 @@ void ForceField<DataTypes>::addBToMatrix(const sofa::core::behavior::MultiMatrix
 template<class DataTypes>
 void ForceField<DataTypes>::addBToMatrix(sofa::defaulttype::BaseMatrix * /*mat*/, double /*bFact*/, unsigned int &/*offset*/)
 {
-    serr << "ERROR("<<getClassName()<<"): addBToMatrix not implemented." << sendl;
+//    serr << "ERROR("<<getClassName()<<"): addBToMatrix not implemented." << sendl;
 }
 
 

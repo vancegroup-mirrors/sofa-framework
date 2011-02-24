@@ -632,11 +632,36 @@ Visitor::Result MechanicalVInitVisitor<vtype>::fwdMechanicalState(simulation::No
 }
 
 template< VecType vtype> 
+Visitor::Result MechanicalVInitVisitor<vtype>::fwdMappedMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
+{
+	if (m_propagate)
+	{
+		mm->vInit(vDest.getId(mm), vSrc.getId(mm), this->params);
+	}
+
+    return RESULT_CONTINUE;
+}
+
+template< VecType vtype> 
+std::string  MechanicalVInitVisitor<vtype>::getInfos() const
+{
+    std::string name = "[" + vDest.getName() + "]";
+    return name;
+}
+
+template< VecType vtype> 
 Visitor::Result  MechanicalVAvailVisitor<vtype>::fwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
 {
     mm->vAvail( v, this->params );
     this->states.insert(mm);
     return RESULT_CONTINUE;
+}
+
+template< VecType vtype> 
+std::string  MechanicalVAvailVisitor<vtype>::getInfos() const
+{
+    std::string name="[" + v.getName() + "]";
+    return name;
 }
 
 template< VecType vtype> 
@@ -646,11 +671,26 @@ Visitor::Result MechanicalVAllocVisitor<vtype>::fwdMechanicalState(simulation::N
     return RESULT_CONTINUE;
 }
 
+
+template< VecType vtype> 
+std::string  MechanicalVAllocVisitor<vtype>::getInfos() const
+{
+    std::string name="[" + v.getName() + "]";
+    return name;
+}
+
 template< VecType vtype> 
 Visitor::Result MechanicalVFreeVisitor<vtype>::fwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
 {
     mm->vFree( v.getId(mm), this->params );
     return RESULT_CONTINUE;
+}
+
+template< VecType vtype> 
+std::string  MechanicalVFreeVisitor<vtype>::getInfos() const
+{
+    std::string name="[" + v.getName() + "]";
+    return name;
 }
 
 Visitor::Result MechanicalVOpVisitor::fwdMechanicalState(VisitorContext* ctx, core::behavior::BaseMechanicalState* mm)
@@ -1163,7 +1203,11 @@ Visitor::Result MechanicalPropagatePositionVisitor::fwdProjectiveConstraintSet(s
 }
 
 
+#ifdef SOFA_SUPPORT_MAPPED_MASS
 Visitor::Result MechanicalPropagatePositionAndVelocityVisitor::fwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
+#else
+Visitor::Result MechanicalPropagatePositionAndVelocityVisitor::fwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* /*mm*/)
+#endif
 {
     //mm->setX(x);
     //mm->setV(v);
@@ -1225,7 +1269,7 @@ MechanicalSetPositionAndVelocityVisitor::MechanicalSetPositionAndVelocityVisitor
 }
 #else
 MechanicalSetPositionAndVelocityVisitor::MechanicalSetPositionAndVelocityVisitor(const sofa::core::MechanicalParams* mparams ,
-                                                                                 double time, MultiVecCoordId x, MultiVecDerivId v)
+                                                                                 double /*time*/, MultiVecCoordId x, MultiVecDerivId v)
 : MechanicalVisitor(mparams) , t(t), x(x), v(v)
 {
 #ifdef SOFA_DUMP_VISITOR_INFO

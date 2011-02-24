@@ -30,7 +30,6 @@
 #include <sofa/helper/io/Mesh.h>
 
 #include <sofa/core/topology/BaseMeshTopology.h>
-#include <sofa/core/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/BaseMapping.h>
 
 #include <iostream>
@@ -548,10 +547,10 @@ namespace sofa
 // 	    vtexcoords[i][0] = vtexcoords[i][0];
 // 	    vtexcoords[i][1] = 1-vtexcoords[i][1];
 // 	  }
-	this->applyUVScale(scaleTex.getValue()[0], scaleTex.getValue()[1]);
-	this->applyUVTranslation(translationTex.getValue()[0],translationTex.getValue()[1]);
- 	scaleTex.setValue(TexCoord(1,1));
- 	translationTex.setValue(TexCoord(0,0));
+	this->applyUVScale(m_scaleTex.getValue()[0], m_scaleTex.getValue()[1]);
+	this->applyUVTranslation(m_translationTex.getValue()[0],m_translationTex.getValue()[1]);
+ 	m_scaleTex.setValue(TexCoord(1,1));
+ 	m_translationTex.setValue(TexCoord(0,0));
       }
       int OgreVisualModelClass = sofa::core::RegisterObject("OGRE 3D Visual Model")
                                  .add < OgreVisualModel >();

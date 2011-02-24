@@ -879,7 +879,10 @@ namespace sofa
         if (sofaBinary.empty()) //If no specific binary is specified, we use runSofa
         {
           std::string binaryName="runSofa";
-          if (debug) binaryName+='d';
+#ifndef NDEBUG
+          binaryName+='d';
+#endif
+      
 #ifdef WIN32
           sofaBinary = binPath + binaryName + ".exe";
 #else

@@ -27,25 +27,52 @@
 
 #include <sofa/component/linearsolver/MatrixLinearSolver.h>
 
-#if 1 // TODO replace this line by the following one and fix this class
-//#ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver
+#ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver  
 
-#define ParallelMatrixLinearSolver MatrixLinearSolver
-// namespace sofa {
-// namespace component {
-// namespace linearsolver {
-// template<class Matrix, class Vector>
-// class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public SOFA_EXPORT_DYNAMIC_LIBRARY MatrixLinearSolver<Matrix,Vector> {
-// public:
-//     SOFA_CLASS(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector),SOFA_TEMPLATE2(sofa::component::linearsolver::MatrixLinearSolver,Matrix,Vector));
-// };
-// }
-// }
-// }
+namespace sofa {
+
+namespace component {
+
+namespace linearsolver {
+
+template<class Matrix, class Vector>
+class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public MatrixLinearSolver<Matrix,Vector> {
+  public :
+    SOFA_CLASS(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), SOFA_TEMPLATE2(MatrixLinearSolver,Matrix,Vector));  
+    
+    Data<bool> useWarping;
+    Data<unsigned> useRotationFinder;
+    Data<bool> useMultiThread;
+    Data<bool> check_symetric;
+
+    ParallelMatrixLinearSolver()
+    : MatrixLinearSolver<Matrix,Vector>()
+    , useWarping( initData( &useWarping, false, "useWarping", "use Warping around the solver" ) )
+    , useRotationFinder( initData( &useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
+    , useMultiThread( initData( &useMultiThread, false, "useMultiThread", "use MultiThraded version of the solver" ) )
+    , check_symetric( initData( &check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
+    {
+	if (useMultiThread.getValue()) serr << "WARINIG : you must activate SOFA_HAVE_BOOST to use parallel version of the solver" << sendl;
+    }
+    
+    virtual bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {      
+      return addWarrpedJMInvJt(result,J,fact);
+    }
+
+    virtual bool addWarrpedJMInvJt(defaulttype::BaseMatrix* /*result*/, defaulttype::BaseMatrix* /*J*/, double /*fact*/) {
+      return false;
+    }
+};
+
+}
+
+}
+
+}
 
 #else
 
-#define SOFA_HAVE_PARALLELMATRIXLINEARSOLVER
+#define SOFA_PARALLEL_UPDATE_LINEAR_SOLVER
 
 #include <sofa/simulation/common/SolverImpl.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
@@ -56,79 +83,35 @@
 #include <sofa/component/misc/BaseRotationFinder.h>
 #include <sofa/component/linearsolver/RotationMatrix.h>
 #include <sofa/component/linearsolver/DefaultMultiMatrixAccessor.h>
+#include <sofa/core/behavior/BaseProjectiveConstraintSet.h>
+#include <sofa/core/behavior/BaseForceField.h>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <sofa/helper/system/atomic.h>
-
-
-#include <sofa/core/behavior/BaseProjectiveConstraintSet.h>
-#include <sofa/core/behavior/BaseForceField.h>
-
-
+    
 namespace sofa {
 
 namespace component {
 
-namespace linearsolver {
-  
+namespace linearsolver {    
+    
 template<class TVector>  
 class ParallelMatrixLinearSolverInternalData {
   public :  
 	typedef typename TVector::Real Real;
 	typedef RotationMatrix<Real> TRotationMatrix;
+	typedef SparseMatrix<Real> JRMatrixType;
 };
 
 template<class Matrix, class Vector>
-class Thread_invert;
-
-template<class Matrix,class Vector>  
-class ParallelMatrixLinearSolverSharedData {
-  public :   
-	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
-    
-  	//boost::barrier * bar;
-	unsigned int systemSize;	    
-	Matrix * matricesWork[2]; 
-	MatrixInvertData * invertData[3];
-	TRotationMatrix * rotationWork[2];
-	double mFact;
-	double bFact;
-	double kFact;
-	sofa::helper::system::atomic<int> handeled;
-	sofa::helper::system::atomic<int> ready_thread;
-	sofa::helper::system::atomic<int> run;
-	
-	ParallelMatrixLinearSolverSharedData() {
-	    run=0;
-	    matricesWork[0] = NULL;
-	    matricesWork[1] = NULL;
-	    rotationWork[0] = NULL;
-	    rotationWork[1] = NULL;
-	    invertData[0] = NULL;
-	    invertData[1] = NULL;
-	    invertData[2] = NULL;
-	}
-	
-	~ParallelMatrixLinearSolverSharedData() {
-	    if (invertData[0]) delete invertData[0];
-	    if (invertData[1]) delete invertData[1];
-	    if (invertData[2]) delete invertData[2];
-	    if (matricesWork[0]) delete matricesWork[0];
-	    if (matricesWork[1]) delete matricesWork[1];
-	    if (rotationWork[0]) delete rotationWork[0];
-	    if (rotationWork[1]) delete rotationWork[1];
-	}
-};
- 
-template<class Matrix, class Vector>
-class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public BaseMatrixLinearSolver<Matrix,Vector>, public sofa::simulation::SolverImpl
-{
+class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public BaseMatrixLinearSolver<Matrix, Vector> {
 public:
-	SOFA_CLASS2(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), SOFA_TEMPLATE2(BaseMatrixLinearSolver,Matrix,Vector), sofa::simulation::SolverImpl);
-
+	SOFA_CLASS(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), SOFA_TEMPLATE2(BaseMatrixLinearSolver,Matrix,Vector));
+	
 	typedef  std::list<int> ListIndex;
 	typedef typename Matrix::Real Real;
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
+	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::JRMatrixType JRMatrixType;
 
 	Data<bool> useWarping;
 	Data<unsigned> useRotationFinder;
@@ -149,17 +132,17 @@ public:
 	/// Note that this automatically resizes the linear system to the number of active degrees of freedoms
 	///
 	/// @todo Should we put this method in a specialized class for mechanical systems, or express it using more general terms (i.e. coefficients of the second order ODE to solve)
-	void setSystemMBKMatrix(double mFact=0.0, double bFact=0.0, double kFact=0.0);
+	void setSystemMBKMatrix(const core::MechanicalParams* mparams);
 
 	/// Set the linear system right-hand term vector, from the values contained in the (Mechanical/Physical)State objects
-	void setSystemRHVector(VecId v);
+	void setSystemRHVector(core::MultiVecDerivId v);
 
 	/// Set the initial estimate of the linear system left-hand term vector, from the values contained in the (Mechanical/Physical)State objects
 	/// This vector will be replaced by the solution of the system once solveSystem is called
-	void setSystemLHVector(VecId v);
-
+	void setSystemLHVector(core::MultiVecDerivId v);
+	
 	/// Get the linear system matrix, or NULL if this solver does not build it
-	Matrix* getSystemMatrix() { return sharedData.matricesWork[indexwork]; }
+	Matrix* getSystemMatrix() { return matricesWork[indexwork]; }
 
 	/// Get the linear system right-hand term vector, or NULL if this solver does not build it
 	Vector* getSystemRHVector() { return systemRHVector; }
@@ -168,7 +151,7 @@ public:
 	Vector* getSystemLHVector() { return systemLHVector; }
 
 	/// Get the linear system matrix, or NULL if this solver does not build it
-	defaulttype::BaseMatrix* getSystemBaseMatrix() { return sharedData.matricesWork[indexwork]; }
+	defaulttype::BaseMatrix* getSystemBaseMatrix() { return matricesWork[indexwork]; }
 
 	void updateSystemMatrix();
 
@@ -182,41 +165,34 @@ public:
 	virtual void solveSystem();
 
 	/// Invert the system, this method is optional because it's call when solveSystem() is called for the first time
-	virtual void invertSystem() {
-	    this->invert(*sharedData.matricesWork[indexwork]);
-	}
+	virtual void invertSystem();
 
-	virtual std::string getTemplateName() const
-	{
+	virtual std::string getTemplateName() const {
 	    return templateName(this);
 	}
 
-	static std::string templateName(const ParallelMatrixLinearSolver<Matrix,Vector>* = NULL)
-	{
+	static std::string templateName(const ParallelMatrixLinearSolver<Matrix,Vector>* = NULL) {
 	    return Matrix::Name();
 	}
 
-	virtual void invert(Matrix& /*M*/) {}
+	virtual void invert(Matrix& ) {}
 	
 	void init();
 
 	virtual void solve(Matrix& M, Vector& solution, Vector& rh) = 0;
-
-	/// Default implementation of Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
-	///
-	/// TODO : put this implementation in ParallelMatrixLinearSolver class - fix problems mith Scattered Matrix
-
-	template<class RMatrix, class JMatrix>
-	bool addJMInvJt(RMatrix& result, JMatrix& J, double fact);
 	
-	/// Default implementation of Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
-	///
+	/// Wrapper on the correct method
 	/// @param result the variable where the result will be added
 	/// @param J the matrix J to use
 	/// @return false if the solver does not support this operation, of it the system matrix is not invertible
 	bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 
-	void computeSystemMatrix();
+	/// Default implementation of Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
+	template<class RMatrix, class JMatrix>
+	bool addJMInvJt(Matrix & M, RMatrix& result, JMatrix& J, double fact);	
+	
+	/// Call the addJMInvJt default method but warp the J matrix before if necessary
+	virtual bool addWarrpedJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 	
 protected:
 
@@ -226,64 +202,97 @@ protected:
 	static Vector* createVector() {
 	    return new Vector;
 	}
-
 	
-	simulation::MultiNodeDataMap nodeMap;
-	simulation::MultiNodeDataMap writeNodeMap;
+	void prepareVisitor(Visitor* v) {
+	    v->setTags(this->getTags());
+	}
 
-	DefaultMultiMatrixAccessor matrixAccessor;
-	
-	TRotationMatrix * Rcur;
-	int indexwork;
-	ParallelMatrixLinearSolverSharedData<Matrix,Vector> sharedData;
-	
-	VecId solutionVecId;	
-	Vector* systemRHVector;
-	Vector* systemLHVector;
-
-	MatrixInvertData * getMatrixInvertData(Matrix * m) {
-	    if (sharedData.matricesWork[0] == m) {
-	      if (sharedData.invertData[0] == NULL) sharedData.invertData[0]=createInvertData();
-	      return sharedData.invertData[0];
-	    }
-	    if (sharedData.matricesWork[1] == m) {
-	      if (sharedData.invertData[1] == NULL) sharedData.invertData[1]=createInvertData();
-	      return sharedData.invertData[1];
-	    }
-	    if (sharedData.invertData[2] == NULL) sharedData.invertData[2]=createInvertData();
-	    return sharedData.invertData[2];
+	void prepareVisitor(simulation::BaseMechanicalVisitor* v) {
+            prepareVisitor((Visitor*)v);
 	}
 	
+	template<class T>
+	void executeVisitor(T v) {
+	    prepareVisitor(&v);
+	    v.execute( this->getContext() );
+	}
+	
+	Vector* createPersistentVector() {
+	    return new Vector;
+	}
+
+	Matrix* createMatrix() {
+	    return new Matrix;
+	}
+	
+	TRotationMatrix* createRotationMatrix() {
+	    return new TRotationMatrix;
+	}
+	
+	MatrixInvertData * getMatrixInvertData(Matrix * m);
 	virtual MatrixInvertData * createInvertData() = 0;
 	
+	int getDimension(const core::MechanicalParams* mparams,int id);
+	void computeSystemMatrix(const core::MechanicalParams* mparams,int id);	
+	
+	int indexwork;	
 	bool useRotation;
+	
 	unsigned indRotationFinder;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
-	Vector tmpVectorRotation;
-	SparseMatrix<Real> JR;
-	
+		
 	int nbstep_update;
-	Thread_invert<Matrix,Vector> * thread;
+	Vector* systemRHVector;
+	Vector* systemLHVector;
+	TRotationMatrix * Rcur;
+	Vector * tmpVectorRotation;
+	
+	int systemSize;
+	Matrix * matricesWork[2]; 
+	DefaultMultiMatrixAccessor * matrixAccessor[2];
+	MatrixInvertData * invertData[3];
+	TRotationMatrix * rotationWork[2];
+	Vector * tmpComputeCompliance[2];
+	
+	JRMatrixType JR;
+	core::MultiVecDerivId solutionVecId;
+	core::MechanicalParams params;
+	
+	sofa::helper::system::atomic<int> handeled;
+	sofa::helper::system::atomic<int> ready_thread;
+	sofa::helper::system::atomic<int> run;
+	
+
+	class Thread_invert {
+	    public :  
+		Thread_invert(ParallelMatrixLinearSolver<Matrix,Vector> * s) {
+			this->solver = s;
+			solver->sout << "Creating thread ... " << solver->sendl;			
+			
+		}
+
+		void operator()() {
+			int indexwork;
+			solver->run=1;
+			while (solver->run) {
+				while (solver->ready_thread && solver->run) usleep(50);
+				if (solver->indexwork) indexwork = 0;
+				else indexwork = 1;
+				if (! solver->run) break;
+				if (solver->handeled) solver->computeSystemMatrix(&solver->params,indexwork);
+				if (! solver->run) break;
+				solver->invert(*(solver->matricesWork[indexwork]));
+				if (! solver->run) break;	
+				solver->ready_thread = 1; //signal the main thread the invert is finish
+			}
+			solver->ready_thread = 1;
+		} 
+
+	    protected :
+		ParallelMatrixLinearSolver<Matrix,Vector> * solver;
+	}; 
+	boost::thread * thread;
 };
-
-template<class Matrix, class Vector>
-class Thread_invert {
-public :  
-	Thread_invert(ParallelMatrixLinearSolver<Matrix,Vector> * solver,
-		      ParallelMatrixLinearSolverSharedData<Matrix,Vector> & s
-		      ) : sharedData(s) {
-		this->solver = solver;
-		this->indexwork = 1;
-	}
-
-	void operator()();
-
-protected :
-	ParallelMatrixLinearSolver<Matrix,Vector> * solver;
-	int indexwork;
-	DefaultMultiMatrixAccessor matrixAccessor;
-	ParallelMatrixLinearSolverSharedData<Matrix,Vector> & sharedData;
-}; 
 
 } // namespace linearsolver
 
@@ -292,4 +301,5 @@ protected :
 } // namespace sofa
 
 #endif
+
 #endif

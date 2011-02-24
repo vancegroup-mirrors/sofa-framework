@@ -30,6 +30,11 @@
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
 #include <sofa/helper/system/FileRepository.h>
+#include <sofa/component/container/MechanicalObject.inl>
+#include <sofa/core/State.h>
+
+
+
 
 
 
@@ -50,6 +55,8 @@ SOFA_DECL_CLASS(SphereTreeModel)
 using namespace sofa::defaulttype;
 using namespace std;
 
+
+
 int SphereTreeModelClass = core::RegisterObject("CollisionModel based on a hierarchy of bounding spheres")
 .add< SphereTreeModel >()
 .addAlias("SphereTree")
@@ -57,13 +64,19 @@ int SphereTreeModelClass = core::RegisterObject("CollisionModel based on a hiera
 
 SphereTreeModel::SphereTreeModel(double radius)
 : defaultRadius(initData(&defaultRadius, radius, "radius","TODO"))
+,mstate(NULL)
 {
 }
 
 
+void SphereTreeModel::init()
+{
+  mstate = dynamic_cast< core::behavior::MechanicalState<DataTypes>* > (this->getContext()->getMechanicalState());
+}
+
 void SphereTreeModel::resize(int size)
 {   // Correcting sizes
-	this->component::container::MechanicalObject<Vec3Types>::resize(size);
+	mstate->resize(size);
 	this->core::CollisionModel::resize(size);
 	//this->elems.resize(size);
 	
@@ -90,7 +103,7 @@ int SphereTreeModel::addSphere(const Vector3& pos, SReal radius)
 void SphereTreeModel::setSphere(int i, const Vector3& pos, SReal r)
 {
 	if ((unsigned)i >= (unsigned) size) return;
-	helper::WriteAccessor<Data<VecCoord> > xData = *this->write(core::VecCoordId::position());
+	helper::WriteAccessor<Data<VecCoord> > xData = *mstate->write(core::VecCoordId::position());
 	xData.wref()[i] = pos;
 	radius[i] = r;
 }
@@ -208,7 +221,7 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
 
 void SphereTreeModel::applyScale(const double sx,const double sy,const double sz)
 {
-        Inherit::applyScale(sx,sy,sz);
+        mstate->applyScale(sx,sy,sz);
         sout << "Applying scale " << sx << " to " << size << " spheres" << sendl;
 	for (int i=0;i<size;i++)
                 radius[i] *= sx;
@@ -217,7 +230,7 @@ void SphereTreeModel::applyScale(const double sx,const double sy,const double sz
 
 void SphereTreeModel::draw(int index)
 {
-	Vector3 p = (*getX())[index];
+	Vector3 p = (*mstate->getX())[index];
 	glPushMatrix();
 	glTranslated(p[0], p[1], p[2]);
 	glutWireSphere(radius[index], 16, 8);

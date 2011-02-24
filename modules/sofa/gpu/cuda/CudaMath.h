@@ -53,6 +53,9 @@ class CudaVec3;
 template<class real>
 class CudaVec4;
 
+template<class real>
+class CudaVec6;
+
 template<>
 class CudaVec2<float> : public float2
 {
@@ -114,9 +117,39 @@ public:
     }
 };
 
+struct float6
+{
+  float3 pos;
+  float3 rot;
+};
+
+template<>
+class CudaVec6<float> : public float6
+{
+public:
+    typedef float Real;
+    static __inline__ __device__ __host__ CudaVec6<float> make(Real x, Real y, Real z=0)
+    {
+	CudaVec6<float> r; r.pos.x = x; r.pos.y = y;  r.pos.z = z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec6<float> make(float3 v, float3 w)
+    {
+	CudaVec6<float> r; r.pos.x = v.x; r.pos.y = v.y;  r.pos.z = v.z; r.rot.x = w.x; r.rot.y = w.y; r.rot.z = w.z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec6<float> make(Real x, Real y, Real z, Real rx, Real ry, Real rz)
+    {
+      CudaVec6<float> r; r.pos.x = x; r.pos.y = y; r.pos.z = z; r.rot.x = rx; r.rot.y = ry; r.rot.z = rz; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec6<float> make(float6 v)
+    {
+      CudaVec6<float> r; r.pos.x = v.pos.x; r.pos.y = v.pos.y; r.pos.z = v.pos.z; r.rot.x = v.rot.x; r.rot.y = v.rot.y; r.rot.z = v.rot.z; return r;
+    }
+};
+
 typedef CudaVec2<float> CudaVec2f;
 typedef CudaVec3<float> CudaVec3f;
 typedef CudaVec4<float> CudaVec4f;
+typedef CudaVec6<float> CudaVec6f;
 
 #ifdef SOFA_GPU_CUDA_DOUBLE
 
@@ -197,9 +230,39 @@ public:
     }
 };
 
+struct double6
+{
+  double3 pos;
+  double3 rot;
+};
+
+template<>
+class CudaVec6<double> : public double6
+{
+public:
+    typedef double Real;
+    static __inline__ __device__ __host__ CudaVec6<double> make(Real x, Real y, Real z=0)
+    {
+	CudaVec6<double> r; r.pos.x = x; r.pos.y = y;  r.pos.z = z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec6<double> make(double3 v, double3 w)
+    {
+	CudaVec6<double> r; r.pos.x = v.x; r.pos.y = v.y;  r.pos.z = v.z; r.rot.x = w.x; r.rot.y = w.y; r.rot.z = w.z; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec6<double> make(Real x, Real y, Real z, Real rx, Real ry, Real rz)
+    {
+      CudaVec6<double> r; r.pos.x = x; r.pos.y = y; r.pos.z = z; r.rot.x = rx; r.rot.y = ry; r.rot.z = rz; return r;
+    }
+    static __inline__ __device__ __host__ CudaVec6<double> make(double6 v)
+    {
+      CudaVec6<double> r; r.pos.x = v.pos.x; r.pos.y = v.pos.y; r.pos.z = v.pos.z; r.rot.x = v.rot.x; r.rot.y = v.rot.y; r.rot.z = v.rot.z; return r;
+    }
+};
+
 typedef CudaVec2<double> CudaVec2d;
 typedef CudaVec3<double> CudaVec3d;
 typedef CudaVec4<double> CudaVec4d;
+typedef CudaVec6<double> CudaVec6d;
 
 #endif // SOFA_GPU_CUDA_DOUBLE
 
@@ -382,6 +445,30 @@ __device__ CudaVec4<real> createQuaterFromEuler(CudaVec3<real> v)
 	quat.y = cos(a0)*sin(a1)*cos(a2) + sin(a0)*cos(a1)*sin(a2);
 	quat.z = cos(a0)*cos(a1)*sin(a2) - sin(a0)*sin(a1)*cos(a2);
 	return quat;
+}
+
+template<class real>
+__device__ CudaVec4<real> vectQuatMult(CudaVec4<real> a, const CudaVec3<real> vect)
+{
+        CudaVec4<real>	ret;
+
+        ret.w = (real) (-(vect.x * a.x + vect.y * a.y + vect.z * a.z));
+        ret.x = (real) (vect.x * a.w + vect.y * a.z - vect.z * a.y);
+        ret.y = (real) (vect.y * a.w + vect.z * a.x - vect.x * a.z);
+        ret.z = (real) (vect.z * a.w + vect.x * a.y - vect.y * a.x);
+
+        return ret;
+}
+
+template<class real>
+__device__ void operator+=(CudaVec6<real>& a, CudaVec6<real> b)
+{
+	a.pos.x += b.pos.x;
+	a.pos.y += b.pos.y;
+	a.pos.z += b.pos.z;
+	a.rot.x += b.rot.x;
+	a.rot.y += b.rot.y;
+	a.rot.z += b.rot.z;
 }
 
 template<class real>

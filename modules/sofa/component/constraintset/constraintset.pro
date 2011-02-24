@@ -14,6 +14,7 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_CONSTRAINTSET
 
 HEADERS +=  initConstraintSet.h \
+		   ConstraintSolverImpl.h \
            LCPConstraintSolver.h \
 		   LinearSolverConstraintCorrection.h \
            LinearSolverConstraintCorrection.inl \
@@ -25,6 +26,7 @@ HEADERS +=  initConstraintSet.h \
            UnilateralInteractionConstraint.inl 
 
 SOURCES += initConstraintSet.cpp \
+		   ConstraintSolverImpl.cpp \
            LCPConstraintSolver.cpp \
 		   LinearSolverConstraintCorrection.cpp \
            PrecomputedConstraintCorrection.cpp \

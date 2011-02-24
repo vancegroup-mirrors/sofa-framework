@@ -14,7 +14,7 @@ Using DistanceGrid collision:
 	<Object type="CollisionPipeline" name="pipeline" depth="6" verbose="0"/>
 	<Object type="BruteForceDetection" name="detection" />
 	<Object type="CollisionResponse" name="response" response="default" />
-	<Object type="MinProximityIntersection" name="proximity" alarmDistance="0.03" contactDistance="0.03" />
+	<Object type="DiscreteIntersection" name="proximity"/>
 	
 	<Node name="Tooth" >
 		<Node name="VisualModel" >

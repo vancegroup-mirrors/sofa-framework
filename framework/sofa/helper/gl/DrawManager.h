@@ -85,10 +85,12 @@ namespace gl
     void drawSpheres (const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec<4,float> colour);
     void drawSpheres (const std::vector<Vector3> &points, float radius, const Vec<4,float> colour);
     //void drawFlatSpheres ( const std::vector<Vector3>& points, const std::vector<float>& radix, const std::vector< Vec<4,float> > colours); 
-    void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subd=16);
+    void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subdRadius=16);
+    void drawCube    (const float& radius, const Vec<4,float>& colour, const int& subd=16); // Draw a cube of size one centered on the current point.
     void drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
     void drawArrow   (const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
     void drawFrame   (const Vector3& position, const Quaternion &orientation, const Vec<3,float> &size);
+    void drawPlus    (const float& radius, const Vec<4,float>& colour, const int& subd=16); // Draw a plus sign of size one centered on the current point.
 
 
 

@@ -78,16 +78,6 @@ public:
     virtual Vector3 getScale() const {return scale.getValue();}
     /// @}
 
-
-protected:
-    void updateMesh();
-private:
-    void updateElements();
-    void updatePoints();
-    void updateNormals();
-
-protected:
-
     // Point coordinates in 3D in double.
     Data< helper::vector<sofa::defaulttype::Vec<3,SReal> > > positions;
 
@@ -96,7 +86,7 @@ protected:
     Data< helper::vector< helper::fixed_array <unsigned int,3> > > triangles;
     Data< helper::vector< helper::fixed_array <unsigned int,4> > > quads;
     Data< helper::vector< helper::vector <unsigned int> > > polygons;
-    
+
     // Tab of 3D elements composition
     Data< helper::vector< helper::fixed_array<unsigned int,4> > > tetrahedra;
     Data< helper::vector< helper::fixed_array<unsigned int,8> > > hexahedra;
@@ -120,6 +110,17 @@ protected:
     Data< Vector3 > translation;
     Data< Vector3 > rotation;
     Data< Vector3 > scale;
+
+protected:
+    void updateMesh();
+private:
+    void updateElements();
+    void updatePoints();
+    void updateNormals();
+
+protected:
+
+   
 
     void addPosition(helper::vector<sofa::defaulttype::Vec<3,SReal> >* pPositions, const sofa::defaulttype::Vec<3,SReal> &p);
     void addPosition(helper::vector<sofa::defaulttype::Vec<3,SReal> >* pPositions,  SReal x, SReal y, SReal z);

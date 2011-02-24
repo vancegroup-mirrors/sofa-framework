@@ -122,14 +122,6 @@ SOURCES += initForceField.cpp \
            TriangularTensorMassForceField.cpp \
            VaccumSphereForceField.cpp
 
-contains(DEFINES,SOFA_HAVE_EIGEN2){
-HEADERS += \
-           NonUniformHexahedralFEMForceFieldAndMassCorrected.h \
-           NonUniformHexahedralFEMForceFieldAndMassCorrected.inl
-
-SOURCES += \
-           NonUniformHexahedralFEMForceFieldAndMassCorrected.cpp
-}
            
 
 contains(DEFINES,SOFA_TEST_FRICTION){

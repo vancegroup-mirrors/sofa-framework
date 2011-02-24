@@ -197,9 +197,9 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
 
   AddCollisionModels(CollisionNode, elements);
     
-  BarycentricMechanicalMapping3_to_3* mechaMapping = new BarycentricMechanicalMapping3_to_3(dof, dof_surf);
-  mechaMapping->setPathObject1("../..");
-  mechaMapping->setPathObject2("..");
+  BarycentricMapping3_to_3* mechaMapping = new BarycentricMapping3_to_3(dof, dof_surf);
+  mechaMapping->setPathInputObject("@..");
+  mechaMapping->setPathOutPutObject("@.");
   CollisionNode->addObject(mechaMapping);
 
   return CollisionNode;
@@ -211,6 +211,8 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
   simulation::Node* VisualNode = simulation::getSimulation()->newNode("Visu");
 
   const std::string nameVisual="Visual";
+  const std::string refVisual = "@" + nameVisual; 
+  const std::string refDof = "@.." + dof->getName();
   component::visualmodel::OglModel* visual = new component::visualmodel::OglModel;
   visual->setName(nameVisual);
   visual->setFilename(sofa::helper::system::DataRepository.getFile(filename));
@@ -221,8 +223,8 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
 
   BarycentricMapping3_to_Ext3* mapping = new BarycentricMapping3_to_Ext3(dof, visual);
   mapping->setName("Mapping Visual");
-  mapping->setPathObject1("../..");
-  mapping->setPathObject2(nameVisual);
+  mapping->setPathInputObject(refDof);
+  mapping->setPathOutPutObject(refVisual);
   VisualNode->addObject(mapping);
 
   return VisualNode;
@@ -233,6 +235,9 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
   simulation::Node *ObjectCreator::CreateCollisionNodeRigid(MechanicalObjectRigid3* dofRigid,  const std::string &filename, const std::vector<std::string> &elements,
                                                             const Deriv3& translation, const Deriv3 &rotation)
   {
+    const std::string refdofRigid = "@../" + dofRigid->getName();
+    const std::string dofSurfName = "CollisionObject";
+    const std::string refdofSurf = "@"+dofSurfName;
   //Node COLLISION
   simulation::Node* CollisionNode = simulation::getSimulation()->newNode("Collision");
 
@@ -244,16 +249,16 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
   component::topology::MeshTopology* meshTorus_surf= new component::topology::MeshTopology;
   CollisionNode->addObject(meshTorus_surf);
 
-  MechanicalObject3* dof_surf = new MechanicalObject3; dof_surf->setName("Collision Object ");
+  MechanicalObject3* dof_surf = new MechanicalObject3; dof_surf->setName(dofSurfName);
   dof_surf->setTranslation(translation[0],translation[1],translation[2]);
   dof_surf->setRotation(rotation[0],rotation[1],rotation[2]);
   CollisionNode->addObject(dof_surf);
 
   AddCollisionModels(CollisionNode, elements);
 
-  RigidMechanicalMappingRigid3_to_3* mechaMapping = new RigidMechanicalMappingRigid3_to_3(dofRigid, dof_surf);  
-  mechaMapping->setPathObject1("../..");
-  mechaMapping->setPathObject2("..");
+  RigidMappingRigid3_to_3* mechaMapping = new RigidMappingRigid3_to_3(dofRigid, dof_surf);  
+  mechaMapping->setPathInputObject(refdofRigid);
+  mechaMapping->setPathOutPutObject(refdofSurf);
   CollisionNode->addObject(mechaMapping);
 
   return CollisionNode;
@@ -265,6 +270,8 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
   simulation::Node* RigidVisualNode = simulation::getSimulation()->newNode("Visu");
 
   const std::string nameVisual="Visual";
+  const std::string refVisual="@"+nameVisual;
+  const std::string refdofRigid="@../"+dofRigid->getName();
   component::visualmodel::OglModel* visualRigid = new component::visualmodel::OglModel;
   visualRigid->setName(nameVisual);
   visualRigid->setFilename(sofa::helper::system::DataRepository.getFile(filename));
@@ -275,8 +282,8 @@ simulation::Node *ObjectCreator::CreateRootWithCollisionPipeline(const std::stri
 
   RigidMappingRigid3_to_Ext3* mappingRigid = new RigidMappingRigid3_to_Ext3(dofRigid, visualRigid);
   mappingRigid->setName("Mapping Visual");
-  mappingRigid->setPathObject1("../..");
-  mappingRigid->setPathObject2(nameVisual);
+  mappingRigid->setPathInputObject(refdofRigid);
+  mappingRigid->setPathOutPutObject(refVisual);
   RigidVisualNode->addObject(mappingRigid);
   return RigidVisualNode;
   }

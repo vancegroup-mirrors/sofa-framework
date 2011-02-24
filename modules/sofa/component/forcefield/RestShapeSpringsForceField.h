@@ -76,12 +76,12 @@ public:
     typedef core::objectmodel::Data<VecCoord> DataVecCoord;
     typedef core::objectmodel::Data<VecDeriv> DataVecDeriv;
 
-    Data< VecIndex > points;
+    Data< helper::vector< unsigned int > > points;
     Data< VecReal > stiffness;
     Data< VecReal > angularStiffness;
     Data< std::string > external_rest_shape;
-    Data< VecIndex > external_points;
-    Data< bool > recomput_indices;
+    Data< helper::vector< unsigned int > > external_points;
+    Data< bool > recompute_indices;
 
     sofa::core::behavior::MechanicalState< DataTypes > *restMState;
 
@@ -106,13 +106,15 @@ public:
 
 protected :
 
-    VecIndex indices;
+	void recomputeIndices();
+
+    VecIndex m_indices;
     VecReal k;
-    VecIndex ext_indices;
+    VecIndex m_ext_indices;
     const VecCoord* pp_0;
 private :
 
-        bool useRestMState; /// An external MechanicalState is used as rest reference.
+	bool useRestMState; /// An external MechanicalState is used as rest reference.
 };
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_RESTSHAPESPRINGFORCEFIELD_CPP)

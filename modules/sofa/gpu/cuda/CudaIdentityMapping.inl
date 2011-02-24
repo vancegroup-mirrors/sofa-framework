@@ -55,10 +55,13 @@ namespace component
 namespace mapping
 {
 
-using namespace gpu::cuda;
+using namespace sofa::defaulttype;
+using namespace sofa::core;
+using namespace sofa::core::behavior;
+using namespace sofa::gpu::cuda;
 
 template <>
-void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* mparams )
+void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecCoord& out = *dOut.beginEdit();
 	const InVecCoord& in = dIn.getValue();
@@ -67,7 +70,7 @@ void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::appl
 }
 
 template <>
-void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecDeriv& out = *dOut.beginEdit();
 	const InVecDeriv& in = dIn.getValue();
@@ -77,7 +80,7 @@ void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::appl
 }
 
 template <>
-void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	InVecDeriv& out = *dOut.beginEdit();
 	const OutVecDeriv& in = dIn.getValue();
@@ -85,10 +88,40 @@ void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::appl
 	dOut.endEdit();
 }
 
+template <>
+void IdentityMapping<gpu::cuda::CudaVec3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT(Data<InMatrixDeriv>& dOut, const Data<MatrixDeriv>& dIn, const core::ConstraintParams * /*cparams*/)
+{
+	InMatrixDeriv& out = *dOut.beginEdit();
+	const MatrixDeriv & in = dIn.getValue();
+
+	gpu::cuda::CudaVec3fTypes::MatrixDeriv::RowConstIterator rowItEnd = in.end();
+	
+	for (gpu::cuda::CudaVec3fTypes::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
+	{
+		gpu::cuda::CudaVec3fTypes::MatrixDeriv::ColConstIterator colIt = rowIt.begin();
+		gpu::cuda::CudaVec3fTypes::MatrixDeriv::ColConstIterator colItEnd = rowIt.end();
+
+		// Creates a constraints if the input constraint is not empty.
+		if (colIt != colItEnd)
+		{
+			gpu::cuda::CudaVec3fTypes::MatrixDeriv::RowIterator o = out.writeLine(rowIt.index());
+
+			while (colIt != colItEnd)
+			{
+				o.addCol(colIt.index(), colIt.val());
+
+				++colIt;
+			}
+		}
+	}
+
+	dOut.endEdit();
+}
+
 //////// CudaVec3f1
 
 template <>
-void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* mparams )
+void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecCoord& out = *dOut.beginEdit();
 	const InVecCoord& in = dIn.getValue();
@@ -98,7 +131,7 @@ void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::ap
 }
 
 template <>
-void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecDeriv& out = *dOut.beginEdit();
 	const InVecDeriv& in = dIn.getValue();
@@ -108,13 +141,15 @@ void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::ap
 }
 
 template <>
-void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void IdentityMapping<gpu::cuda::CudaVec3f1Types, gpu::cuda::CudaVec3f1Types>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	InVecDeriv& out = *dOut.beginEdit();
 	const OutVecDeriv& in = dIn.getValue();
     gpu::cuda::MechanicalObjectCudaVec3f1_vPEq(out.size(), out.deviceWrite(), in.deviceRead());
 	dOut.endEdit();
 }
+
+
 
 } // namespace mapping
 

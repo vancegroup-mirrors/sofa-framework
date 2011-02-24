@@ -253,6 +253,8 @@ namespace sofa
 
 	/// @}
 
+   /// Will change order of vertices in triangle: t[1] <=> t[2]
+   void reOrientateTriangle(TriangleID id);
 
       protected:
 	

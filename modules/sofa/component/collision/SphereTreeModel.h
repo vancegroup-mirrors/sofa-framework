@@ -36,10 +36,11 @@
 #define SOFA_COMPONENT_COLLISION_SPHERETREEMODEL_H
 
 #include <sofa/core/CollisionModel.h>
-#include <sofa/component/container/MechanicalObject.h>
+#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/core/objectmodel/Data.h>
+#include <sofa/component/collision/initCollision.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -69,6 +70,7 @@ public:
     typedef DataTypes::Real Real;
     typedef DataTypes::Coord Coord;
     typedef DataTypes::Deriv Deriv;
+
 	/** @brief Constructor. */
 	SingleSphere(SphereTreeModel* model, int index);
 
@@ -94,19 +96,35 @@ public:
     @brief A Sphere Tree based collision object: No tool to generation .sph file are provided by Sofa. 
       Tools can be found at http://isg.cs.tcd.ie/spheretree/ . If you manage to integrate an automatic generation tool to provide .sph files from .obj, don't hesitate to share it to the Sofa's comunity.
  */
-class SOFA_COMPONENT_COLLISION_API SphereTreeModel : public component::container::MechanicalObject<Vec3Types>, public core::CollisionModel
+class SOFA_COMPONENT_COLLISION_API SphereTreeModel : public core::CollisionModel
 {
-public:
-    SOFA_CLASS2(SphereTreeModel, SOFA_TEMPLATE(component::container::MechanicalObject, Vec3Types), core::CollisionModel);
-
-	typedef component::container::MechanicalObject<Vec3Types> Inherit;
+  
+public: 
+  SOFA_CLASS( SphereTreeModel, core::CollisionModel);
 	typedef Vec3Types InDataTypes;
 	typedef Vec3Types DataTypes;
+  typedef Vec3Types::VecCoord VecCoord;
+  typedef Vec3Types::VecDeriv VecDeriv;
 	typedef SingleSphere Element;
 	friend class SingleSphere;
 
 	/** @brief Constructor */
 	SphereTreeModel(double radius = 1.0);
+
+  template<class T>
+  static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
+  {
+    if (dynamic_cast<core::behavior::MechanicalState<Vec3Types>*>(context->getMechanicalState()) == NULL)
+      return false;
+    return BaseObject::canCreate(obj, context, arg);
+  }
+
+  virtual void init();
+
+  const VecCoord& getX() const { return *(mstate->getX()); }
+
+
+
 		
 	/** @brief Add a new sphere to the tree. It actually increases the size of the DOF's of the
 	model setting the radius and the center*/
@@ -119,14 +137,11 @@ public:
 		Windows executables to obtain the file are available at cesarmendoza_serrano@yahoo.fr*/
 	bool load(const char* filename);
 
-        void applyScale (const double /*sx*/,const double /*sy*/,const double /*sz*/);
+  void applyScale (const double /*sx*/,const double /*sy*/,const double /*sz*/);
 
-        sofa::core::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return this; }
+  sofa::core::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return mstate; }
 
-	// -- CollisionModel interface
-
-	// remove ambiguity
-	int getSize() const { return Inherit::getSize(); }
+	
 
 	/* @brief It "resizes" the vector of DOF's of the collision model. It is normally used after
 		adding a new element to the tree*/
@@ -165,7 +180,9 @@ protected:
 	sofa::helper::vector<double> radius;	
 
 	/** @brief default radius */
-	Data<double> defaultRadius;		
+	Data<double> defaultRadius;
+
+  sofa::core::behavior::MechanicalState<Vec3Types>* mstate;
 
 };
 
@@ -185,17 +202,17 @@ inline SingleSphere::SingleSphere(core::CollisionElementIterator& i)
 
 inline const Vector3& SingleSphere::center() const
 {
-	return (*model->getX())[index]; 
+	return (*this->model->mstate->getX())[index]; 
 }
 
 inline const Vector3& SingleSphere::v() const
 {
-	return (*model->getV())[index];
+	return (*this->model->mstate->getV())[index];
 }
 
 inline void SingleSphere::setCenter( double x, double y, double z ) 
 {
-    helper::WriteAccessor<Data<SphereTreeModel::VecCoord> > xData = *model->write(core::VecCoordId::position());
+    helper::WriteAccessor<Data<SphereTreeModel::VecCoord> > xData = *this->model->mstate->write(core::VecCoordId::position());
     Coord& center = xData.wref()[index];
     center.x() = (SReal)x;
     center.y() = (SReal)y;

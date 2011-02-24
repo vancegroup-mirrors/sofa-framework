@@ -53,7 +53,7 @@ template <>
       ( theGravity, g[0], g[1], g[2]);
   for (unsigned int i=0;i<_x.size();i++)
   {
-    e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
+    e -= getVCenter(theGravity) * masses[i].mass * _x[i].getCenter();
   }
   return e;
 }
@@ -71,7 +71,7 @@ template <>
       ( theGravity, g[0], g[1], g[2]);
   for (unsigned int i=0;i<_x.size();i++)
   {
-    e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
+    e -= getVCenter(theGravity) * masses[i].mass * _x[i].getCenter();
   }
   return e;
 }
@@ -224,7 +224,7 @@ template <>
       ( theGravity, g[0], g[1], g[2]);
     for (unsigned int i=0;i<_x.size();i++)
       {
-	e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
+        e -= getVCenter(theGravity) * masses[i].mass * _x[i].getCenter();
       }
     return e;
   }
@@ -243,7 +243,7 @@ template <>
       ( theGravity, g[0], g[1], g[2]);
     for (unsigned int i=0;i<_x.size();i++)
       {
-	e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
+        e -= getVCenter(theGravity) * masses[i].mass * _x[i].getCenter();
       }
     return e;
   }

@@ -80,23 +80,31 @@ void OglShadowShader::init()
 
 void OglShadowShader::initShaders(unsigned int /* numberOfLights */, bool softShadow)
 {
-        if(!softShadow)
-        {
-            vertexFilenames.push_back( PATH_TO_SHADOW_VERTEX_SHADERS );
-            fragmentFilenames.push_back( PATH_TO_SHADOW_FRAGMENT_SHADERS );
-        }
-        else
-        {
-            vertexFilenames.push_back( PATH_TO_SOFT_SHADOW_VERTEX_SHADERS );
-            fragmentFilenames.push_back( PATH_TO_SOFT_SHADOW_FRAGMENT_SHADERS );
-        }
+    if(!softShadow)
+    {
+        vertexFilenames.push_back( PATH_TO_SHADOW_VERTEX_SHADERS );
+		vertexFilenames.push_back( PATH_TO_SHADOW_VERTEX_SHADERS );
+        fragmentFilenames.push_back( PATH_TO_SHADOW_FRAGMENT_SHADERS );
+		fragmentFilenames.push_back( PATH_TO_SHADOW_FRAGMENT_SHADERS );
+    } 
+    else
+    {
+        vertexFilenames.push_back( PATH_TO_SOFT_SHADOW_VERTEX_SHADERS );
+		vertexFilenames.push_back( PATH_TO_SOFT_SHADOW_VERTEX_SHADERS );
+        fragmentFilenames.push_back( PATH_TO_SOFT_SHADOW_FRAGMENT_SHADERS );
+		fragmentFilenames.push_back( PATH_TO_SOFT_SHADOW_FRAGMENT_SHADERS );
+    }
 
+	shaderVector.push_back(new sofa::helper::gl::GLSLShader());
 	shaderVector.push_back(new sofa::helper::gl::GLSLShader());
 
 	std::ostringstream oss;
 	oss << LightManager::MAX_NUMBER_OF_LIGHTS;
 
 	this->addDefineMacro(0,std::string("MAX_NUMBER_OF_LIGHTS"), oss.str());
+	this->addDefineMacro(0,std::string("ENABLE_SHADOW"), "0");
+	this->addDefineMacro(1,std::string("MAX_NUMBER_OF_LIGHTS"), oss.str());
+	this->addDefineMacro(1,std::string("ENABLE_SHADOW"), "1");
 
 }
 

@@ -22,7 +22,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/component/mastersolver/MasterContactSolver.h>
+#include <sofa/component/mastersolver/FreeMotionMasterSolver.h>
 
 #include <sofa/simulation/common/AnimateVisitor.h>
 #include <sofa/simulation/common/BehaviorUpdatePositionVisitor.h>
@@ -50,19 +50,19 @@ namespace component
 namespace mastersolver
 {
 
-MasterContactSolver::MasterContactSolver()
+FreeMotionMasterSolver::FreeMotionMasterSolver()
 : constraintSolver(NULL), defaultSolver(NULL)
 {
 }
 
-void MasterContactSolver::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
+void FreeMotionMasterSolver::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
 {
     defaultSolver = new constraintset::LCPConstraintSolver;
     defaultSolver->parse(arg);
 }
 
 
-void MasterContactSolver::init()
+void FreeMotionMasterSolver::init()
 {
     getContext()->get(constraintSolver, core::objectmodel::BaseContext::SearchDown);
     if (constraintSolver == NULL && defaultSolver != NULL)
@@ -80,7 +80,7 @@ void MasterContactSolver::init()
 }
 
 
-void MasterContactSolver::step(double dt, const sofa::core::ExecParams* params)
+void FreeMotionMasterSolver::step(double dt, const sofa::core::ExecParams* params)
 {
 	using helper::system::thread::CTime;
 	using sofa::helper::AdvancedTimer;
@@ -100,7 +100,7 @@ void MasterContactSolver::step(double dt, const sofa::core::ExecParams* params)
 
 	// This solver will work in freePosition and freeVelocity vectors.
 	// We need to initialize them if it's not already done.
-	simulation::MechanicalVInitVisitor<V_COORD>(VecCoordId::freePosition(), ConstVecCoordId::position()).execute(context);
+	simulation::MechanicalVInitVisitor<V_COORD>(VecCoordId::freePosition(), ConstVecCoordId::position(), true).execute(context);
 	simulation::MechanicalVInitVisitor<V_DERIV>(VecDerivId::freeVelocity(), ConstVecDerivId::velocity()).execute(context);
 
 	context->execute< simulation::CollisionResetVisitor >(params);
@@ -145,7 +145,7 @@ void MasterContactSolver::step(double dt, const sofa::core::ExecParams* params)
 
 	if (displayTime.getValue())
 	{
-		sout << " >>>>> Begin display MasterContactSolver time" << sendl;
+		sout << " >>>>> Begin display FreeMotionMasterSolver time" << sendl;
 		sout <<" Free Motion " << ((double)CTime::getTime() - time) * timeScale << " ms" << sendl;
 
 		time = (double)CTime::getTime();
@@ -180,7 +180,7 @@ void MasterContactSolver::step(double dt, const sofa::core::ExecParams* params)
 	if ( displayTime.getValue() )
 	{
 		sout << " contactCorrections " << ((double)CTime::getTime() - time) * timeScale << " ms" <<sendl;
-		sout << "<<<<<< End display MasterContactSolver time." << sendl;
+		sout << "<<<<<< End display FreeMotionMasterSolver time." << sendl;
 	}
 
 	simulation::MechanicalEndIntegrationVisitor endVisitor(dt, params);
@@ -194,10 +194,11 @@ void MasterContactSolver::step(double dt, const sofa::core::ExecParams* params)
 }
 
 
-SOFA_DECL_CLASS(MasterContactSolver)
+SOFA_DECL_CLASS(FreeMotionMasterSolver)
 
-int MasterContactSolverClass = core::RegisterObject("Constraint solver")
-.add< MasterContactSolver >()
+int FreeMotionMasterSolverClass = core::RegisterObject("Constraint solver")
+.addAlias("MasterContactSolver")
+.add< FreeMotionMasterSolver >()
 ;
 
 } // namespace odesolver

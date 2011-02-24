@@ -61,7 +61,7 @@ namespace mapping
 using namespace gpu::cuda;
 
 template <>
-void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecCoord& out = *dOut.beginEdit();
 	const InVecCoord& in = dIn.getValue();
@@ -87,7 +87,7 @@ void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply
 }
 
 template <>
-void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecDeriv& out = *dOut.beginEdit();
 	const InVecDeriv& in = dIn.getValue();
@@ -95,8 +95,8 @@ void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply
     const VecCoord& points = this->points.getValue();
     Deriv v,omega;
     out.recreate(points.size());
-    v = in[index.getValue()].getVCenter();
-    omega = in[index.getValue()].getVOrientation();
+    v = getVCenter(in[index.getValue()]);
+    omega = getVOrientation(in[index.getValue()]);
     //for(unsigned int i=0;i<points.size();i++)
     //{
     //    // out = J in
@@ -109,7 +109,7 @@ void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply
 }
 
 template <>
-void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	InVecDeriv& out = *dOut.beginEdit();
 	const OutVecDeriv& in = dIn.getValue();
@@ -126,8 +126,8 @@ void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply
         v += tmp[2*i];
         omega += tmp[2*i+1];
     }
-    out[index.getValue()].getVCenter() += v;
-    out[index.getValue()].getVOrientation() += omega;
+    getVCenter(out[index.getValue()]) += v;
+    getVOrientation(out[index.getValue()]) += omega;
 
 	dOut.endEdit();
 }
@@ -135,7 +135,7 @@ void RigidMapping<gpu::cuda::CudaRigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply
 //////// Rigid3d ////////
 
 template <>
-void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecCoord& out = *dOut.beginEdit();
 	const InVecCoord& in = dIn.getValue();
@@ -161,7 +161,7 @@ void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::apply( 
 }
 
 template <>
-void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecDeriv& out = *dOut.beginEdit();
 	const InVecDeriv& in = dIn.getValue();
@@ -169,8 +169,8 @@ void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJ(
     const VecCoord& points = this->points.getValue();
     Deriv v,omega;
     out.recreate(points.size());
-    v = in[index.getValue()].getVCenter();
-    omega = in[index.getValue()].getVOrientation();
+    v = getVCenter(in[index.getValue()]);
+    omega = getVOrientation(in[index.getValue()]);
     //for(unsigned int i=0;i<points.size();i++)
     //{
     //    // out = J in
@@ -183,7 +183,7 @@ void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJ(
 }
 
 template <>
-void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	InVecDeriv& out = *dOut.beginEdit();
 	const OutVecDeriv& in = dIn.getValue();
@@ -200,8 +200,8 @@ void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJT
         v += tmp[2*i];
         omega += tmp[2*i+1];
     }
-    out[index.getValue()].getVCenter() += v;
-    out[index.getValue()].getVOrientation() += omega;
+    getVCenter(out[index.getValue()]) += v;
+    getVOrientation(out[index.getValue()]) += omega;
 
 	dOut.endEdit();
 }
@@ -209,7 +209,7 @@ void RigidMapping<defaulttype::Rigid3dTypes, gpu::cuda::CudaVec3fTypes>::applyJT
 //////// Rigid3f ////////
 
 template <>
-void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecCoord& out = *dOut.beginEdit();
 	const InVecCoord& in = dIn.getValue();
@@ -235,7 +235,7 @@ void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::apply( 
 }
 
 template <>
-void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	OutVecDeriv& out = *dOut.beginEdit();
 	const InVecDeriv& in = dIn.getValue();
@@ -243,8 +243,8 @@ void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ(
     const VecCoord& points = this->points.getValue();
     Deriv v,omega;
     out.recreate(points.size());
-    v = in[index.getValue()].getVCenter();
-    omega = in[index.getValue()].getVOrientation();
+    v = getVCenter(in[index.getValue()]);
+    omega = getVOrientation(in[index.getValue()]);
     //for(unsigned int i=0;i<points.size();i++)
     //{
     //    // out = J in
@@ -257,7 +257,7 @@ void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJ(
 }
 
 template <>
-void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* mparams )
+void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* /*mparams*/ )
 {
 	InVecDeriv& out = *dOut.beginEdit();
 	const OutVecDeriv& in = dIn.getValue();
@@ -274,8 +274,8 @@ void RigidMapping<defaulttype::Rigid3fTypes, gpu::cuda::CudaVec3fTypes>::applyJT
         v += tmp[2*i];
         omega += tmp[2*i+1];
     }
-    out[index.getValue()].getVCenter() += v;
-    out[index.getValue()].getVOrientation() += omega;
+    getVCenter(out[index.getValue()]) += v;
+    getVOrientation(out[index.getValue()]) += omega;
 
 	dOut.endEdit();
 }

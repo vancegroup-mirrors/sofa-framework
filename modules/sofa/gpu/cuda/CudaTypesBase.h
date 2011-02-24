@@ -83,6 +83,14 @@ class CudaBaseVector : public BaseVector {
 			return v[i];
 		}
 
+		void fastResize(int nbRow) {
+			v.fastResize(nbRow);
+		}
+
+		void fastResize(int nbRow,int warp_size) {
+			v.fastResize(nbRow,warp_size);
+		}
+
 		void resize(int nbRow) {
 			v.resize(nbRow);
 		}
@@ -124,6 +132,14 @@ class CudaBaseVector : public BaseVector {
 		    return v.deviceWrite();
 		}
 
+		const T* hostRead() {
+		    return v.hostRead();
+		}
+		
+		T * hostWrite() {
+		    return v.hostWrite();
+		}
+
 		static const char* Name(); /* {
 			return "CudaBaseVector";
             }*/
@@ -148,11 +164,19 @@ class CudaBaseMatrix : public BaseMatrix {
 		}
 
 		void resize(int nbRow, int nbCol) {
-			m.resize(nbCol,nbRow,BSIZE);
+			m.resize(nbRow,nbCol);
 		}
 
 		void resize(int nbRow, int nbCol,int ws) {
-			m.resize(nbCol,nbRow,ws);
+			m.resize(nbRow,nbCol,ws);
+		}
+
+		void fastResize(int nbRow, int nbCol) {
+			m.fastResize(nbRow,nbCol);
+		}
+
+		void fastResize(int nbRow, int nbCol,int ws) {
+			m.fastResize(nbRow,nbCol,ws);
 		}
 
 		unsigned int rowSize() const {
@@ -163,8 +187,12 @@ class CudaBaseMatrix : public BaseMatrix {
 			return m.getSizeX();
 		}
 
-		SReal element(int i, int j) const {
-			return m[i][j];
+		SReal element(int j, int i) const {
+			return m[j][i];
+		}
+
+		T* operator[] ( int i ) {
+			return m[i];
 		}
 
 		const T* operator[] ( int i ) const {
@@ -181,34 +209,34 @@ class CudaBaseMatrix : public BaseMatrix {
 			//m.memsetHost();
 		}
 
-		void set(int i, int j, double v) {
+		void set(int j, int i, double v) {
 #ifdef DEBUG_BASE
 			if ((j>=rowSize()) || (i>=colSize())) {
 				printf("forbidden acces %d %d\n",j,i);
 				exit(1);
 			}
 #endif
-			m[i][j] = (T)v;
+			m[j][i] = (T)v;
 		}
 
-		void add(int i, int j, double v) {
+		void add(int j, int i, double v) {
 #ifdef DEBUG_BASE
 			if ((j>=rowSize()) || (i>=colSize())) {
 				printf("forbidden acces %d %d\n",j,i);
 				exit(1);
 			}
 #endif
-			m[i][j] += (T)v;
+			m[j][i] += (T)v;
 		}
 
 		static const char* Name();
 		
 		CudaBaseVector<Real> operator*(const CudaBaseVector<Real> & v) const {
 		    CudaBaseVector<Real> res;
-			res.resize(rowSize());
+		    res.fastResize(rowSize());
 		    CudaBaseMatrixKernels<Real>::matrix_vector_product(rowSize(),
 								        m.deviceRead(),
-								        m.getPitch(),
+								        m.getPitchDevice(),
 								        v.getCudaVector().deviceRead(),
 								        res.getCudaVector().deviceWrite());
 		    return res;
@@ -217,7 +245,7 @@ class CudaBaseMatrix : public BaseMatrix {
 		void mult(CudaBaseVector<Real>& v,CudaBaseVector<Real> & r) {
 		    CudaBaseMatrixKernels<Real>::matrix_vector_product(rowSize(),
 								        m.deviceRead(),
-								        m.getPitch(),
+								        m.getPitchDevice(),
 								        r.getCudaVector().deviceRead(),
 								        v.getCudaVector().deviceWrite());
 		}
@@ -228,6 +256,27 @@ class CudaBaseMatrix : public BaseMatrix {
 
 		void invalidatehost() {
 		    m.invalidatehost();
+		}
+		
+		const void* deviceRead() {
+		    return m.deviceRead();
+		}
+		
+		void * deviceWrite() {
+		    return m.deviceWrite();
+		}
+		
+		int getPitchDevice() {
+		    return m.getPitchDevice();
+		}
+		
+		int getPitchHost() {
+		    return m.getPitchHost();
+		}	
+		
+		friend std::ostream& operator<< ( std::ostream& os, const CudaBaseMatrix<T> & mat ) {
+			os << mat;
+			return os;
 		}
 
 	private :

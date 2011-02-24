@@ -56,14 +56,11 @@ using sofa::component::topology::TriangleSetTopologyContainer;
 template <class TIn, class TOut>
 SkinningMapping<TIn, TOut>::SkinningMapping (core::State<In>* from, core::State<Out>* to )
         : Inherit ( from, to )
-        , repartition ( initData ( &repartition,"repartition","repartition between input DOFs and skinned vertices" ) )
+        , nbRefs ( initData ( &nbRefs, ( unsigned ) 3,"nbRefs","Number of primitives influencing each point." ) )
+        , repartition ( initData ( &repartition,"repartition","Repartition between input DOFs and skinned vertices." ) )
         , weights ( initData ( &weights,"weights","weights list for the influences of the references Dofs" ) )
         , weightGradients ( initData ( &weightGradients,"weightGradients","weight gradients list for the influences of the references Dofs" ) )
-        , nbRefs ( initData ( &nbRefs, ( unsigned ) 3,"nbRefs","nb references for skinning" ) )
         , showBlendedFrame ( initData ( &showBlendedFrame, false, "showBlendedFrame","weights list for the influences of the references Dofs" ) )
-        , showDefTensors ( initData ( &showDefTensors, false, "showDefTensors","show computed deformation tensors." ) )
-        , showDefTensorsValues ( initData ( &showDefTensorsValues, false, "showDefTensorsValues","Show Deformation Tensors Values." ) )
-        , showDefTensorScale ( initData ( &showDefTensorScale, 1.0, "showDefTensorScale","deformation tensor scale." ) )
         , showFromIndex ( initData ( &showFromIndex, ( unsigned ) 0, "showFromIndex","Displayed From Index." ) )
         , showDistancesValues ( initData ( &showDistancesValues, false, "showDistancesValues","Show dstances values." ) )
         , showWeights ( initData ( &showWeights, false, "showWeights","Show coeficients." ) )
@@ -111,22 +108,22 @@ void SkinningMapping<TIn, TOut>::computeInitPos ( )
     const VecCoord& xto = ( this->toModel->getX0()->size() == 0)?*this->toModel->getX():*this->toModel->getX0();
     const VecInCoord& xfrom = *this->fromModel->getX0();
 
-    const vector<int>& m_reps = repartition.getValue();
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
 
-        initPos.resize ( xto.size() * nbRefs.getValue() );
-        for ( unsigned int i = 0; i < xto.size(); i++ )
-            for ( unsigned int m = 0; m < nbRefs.getValue(); m++ )
-            {
-                const int& idx=nbRefs.getValue() *i+m;
-                const int& idxReps=m_reps[idx];
-                getLocalCoord( initPos[idx], xfrom[idxReps], xto[i]);
-            }
+    initPos.resize ( xto.size() * nbRef );
+    for ( unsigned int i = 0; i < xto.size(); i++ )
+        for ( unsigned int m = 0; m < nbRef; m++ )
+        {
+            const int& idx=nbRef *i+m;
+            const int& idxReps=m_reps[idx];
+            getLocalCoord( initPos[idx], xfrom[idxReps], xto[i]);
+        }
 }
 
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::computeDistances ()
 {
-
     this->getDistances( 0);
 }
 
@@ -138,15 +135,17 @@ void SkinningMapping<TIn, TOut>::getDistances( int xfromBegin)
 
     switch ( distanceType.getValue().getSelectedId() )
     {
-    case DISTANCE_EUCLIDIAN:
+    case SM_DISTANCE_EUCLIDIAN:
     {
-        distances.resize( xfrom0.size());
-        distGradients.resize( xfrom0.size());
-        for ( unsigned int i = xfromBegin; i < xfrom0.size(); ++i ) // for each new frame
+        const unsigned int& toSize = xto0.size();
+        const unsigned int& fromSize = xfrom0.size();
+        distances.resize( fromSize);
+        distGradients.resize( fromSize);
+        for ( unsigned int i = xfromBegin; i < fromSize; ++i ) // for each new frame
         {
-            distances[i].resize ( xto0.size() );
-            distGradients[i].resize ( xto0.size() );
-            for ( unsigned int j=0;j<xto0.size();++j )
+            distances[i].resize (toSize);
+            distGradients[i].resize (toSize);
+            for ( unsigned int j=0;j<toSize;++j )
             {
                 distGradients[i][j] = xto0[j] - xfrom0[i].getCenter();
                 distances[i][j] = distGradients[i][j].norm();
@@ -160,19 +159,19 @@ void SkinningMapping<TIn, TOut>::getDistances( int xfromBegin)
 }
 
 template <class TIn, class TOut>
-void SkinningMapping<TIn, TOut>::sortReferences( vector<int>& references)
+void SkinningMapping<TIn, TOut>::sortReferences( vector<unsigned int>& references)
 {
-    const VecCoord& xto = ( this->toModel->getX0()->size() == 0)?*this->toModel->getX():*this->toModel->getX0();
-    const VecInCoord& xfrom = *this->fromModel->getX0();
-    const unsigned int& nbRef = nbRefs.getValue();
+    const unsigned int& toSize = this->toModel->getX()->size();
+    const unsigned int& fromSize = this->fromModel->getX0()->size();
+    const unsigned int& nbRef = this->nbRefs.getValue();
 
     references.clear();
-    references.resize ( nbRefs.getValue() *xto.size() );
-    for ( unsigned int i=0;i<nbRefs.getValue() *xto.size();i++ )
+    references.resize (nbRef*toSize);
+    for ( unsigned int i=0;i< nbRef *toSize;i++ )
         references[i] = -1;
 
-    for ( unsigned int i=0;i<xfrom.size();i++ )
-        for ( unsigned int j=0;j<xto.size();j++ )
+    for ( unsigned int i=0;i<fromSize;i++ )
+        for ( unsigned int j=0;j<toSize;j++ )
             for ( unsigned int k=0; k<nbRef; k++ )
             {
                 const int idxReps=references[nbRef*j+k];
@@ -190,58 +189,68 @@ void SkinningMapping<TIn, TOut>::sortReferences( vector<int>& references)
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::normalizeWeights()
 {
-    const unsigned int xtoSize = this->toModel->getX()->size();
-    const unsigned int& nbRef = nbRefs.getValue();
+    const unsigned int& xtoSize = this->toModel->getX()->size();
+    const unsigned int& nbRef = this->nbRefs.getValue();
     VVD& m_weights = * ( weights.beginEdit() );
     SVector<SVector<GeoCoord> >& m_dweight = * ( weightGradients.beginEdit());
+    VVMat33& m_ddweight = this->weightGradients2;
 
     // Normalise weights & dweights
-    for (unsigned int j = 0; j < xtoSize; ++j)
+    for (unsigned int i = 0; i < xtoSize; ++i)
     {
-      double sumWeights = 0;
-      Vec3 sumGrad;
+        double sumWeights = 0,wn;
+        Vec3 sumGrad,dwn;
+        sumGrad.fill(0);
+        Mat33 sumGrad2,ddwn;
+        sumGrad2.fill(0);
 
-      // Compute norm
-      for (unsigned int i = 0; i < nbRef; ++i)
-      {
-        sumWeights += m_weights[i][j];
-        sumGrad += m_dweight[i][j];
-      }
-      
-      // Normalise
-      for (unsigned int i = 0; i < nbRef; ++i)
-      {
-        m_weights[i][j] /= sumWeights;
-        m_dweight[i][j] = (m_dweight[i][j] - sumGrad * m_weights[i][j]) / sumWeights;
-      }
+        // Compute norm
+        for (unsigned int j = 0; j < nbRef; ++j)
+        {
+            sumWeights += m_weights[i][j];
+            sumGrad += m_dweight[i][j];
+            sumGrad2 += m_ddweight[i][j];
+        }
+
+        // Normalise
+        if (sumWeights!=0)
+            for (unsigned int j = 0; j < nbRef; ++j)
+            {
+                wn=m_weights[i][j]/sumWeights;
+                dwn=(m_dweight[i][j] - sumGrad*wn)/sumWeights;
+                for (unsigned int o=0;o<3;o++) for (unsigned int p=0;p<3;p++) ddwn[o][p]=(m_ddweight[i][j][o][p] - wn*sumGrad2[o][p] - sumGrad[o]*dwn[p] - sumGrad[p]*dwn[o])/sumWeights;
+                m_ddweight[i][j]=ddwn;
+                m_dweight[i][j]=dwn;
+                m_weights[i][j] =wn;
+            }
     }
 }
-
 
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::init()
 {
-    distanceType.beginEdit()->setSelectedItem(DISTANCE_EUCLIDIAN);
+    distanceType.beginEdit()->setSelectedItem(SM_DISTANCE_EUCLIDIAN);
     distanceType.endEdit();
     const VecInCoord& xfrom = *this->fromModel->getX0();
     if ( this->initPos.empty() && this->toModel!=NULL && computeWeights==true && weights.getValue().size() ==0 )
     {
-      /* Temporary remove optimistaion. TODO: reactivate this when the different types will be instanciated
+        //*
         if ( wheightingType.getValue().getSelectedId() == WEIGHT_LINEAR || wheightingType.getValue().getSelectedId() == WEIGHT_HERMITE )
-            nbRefs.setValue ( 2 );
+            this->nbRefs.setValue ( 2 );
 
         if ( wheightingType.getValue().getSelectedId() == WEIGHT_SPLINE)
-            nbRefs.setValue ( 4 );
+            this->nbRefs.setValue ( 4 );
 
-        if ( xfrom.size() < nbRefs.getValue())
-            nbRefs.setValue ( xfrom.size() );
-*/
-        nbRefs.setValue ( xfrom.size() );
+        if ( xfrom.size() < this->nbRefs.getValue())
+            this->nbRefs.setValue ( xfrom.size() );
+        /*/
+        this->nbRefs.setValue ( xfrom.size() );
+        //*/
 
         computeDistances();
-        vector<int>& m_reps = * ( repartition.beginEdit() );
+        vector<unsigned int>& m_reps = * ( this->repartition.beginEdit() );
         sortReferences ( m_reps);
-        repartition.endEdit();
+        this->repartition.endEdit();
         updateWeights ();
         computeInitPos ();
     }
@@ -249,7 +258,6 @@ void SkinningMapping<TIn, TOut>::init()
     {
         computeInitPos();
     }
-
 
     Inherit::init();
 }
@@ -263,22 +271,22 @@ void SkinningMapping<TIn, TOut>::clear()
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::setWeightsToHermite()
 {
-  wheightingType.beginEdit()->setSelectedItem(WEIGHT_HERMITE);
-  wheightingType.endEdit();
+    wheightingType.beginEdit()->setSelectedItem(WEIGHT_HERMITE);
+    wheightingType.endEdit();
 }
 
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::setWeightsToLinear()
 {
-  wheightingType.beginEdit()->setSelectedItem(WEIGHT_LINEAR);
-  wheightingType.endEdit();
+    wheightingType.beginEdit()->setSelectedItem(WEIGHT_LINEAR);
+    wheightingType.endEdit();
 }
 
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::setWeightsToInvDist()
 {
-  wheightingType.beginEdit()->setSelectedItem(WEIGHT_INVDIST_SQUARE);
-  wheightingType.endEdit();
+    wheightingType.beginEdit()->setSelectedItem(WEIGHT_INVDIST_SQUARE);
+    wheightingType.endEdit();
 }
 
 template <class TIn, class TOut>
@@ -289,68 +297,88 @@ void SkinningMapping<TIn, TOut>::updateWeights ()
 
     VVD& m_weights = * ( weights.beginEdit() );
     SVector<SVector<GeoCoord> >& m_dweight = * ( weightGradients.beginEdit());
-    const vector<int>& m_reps = repartition.getValue();
+    VVMat33& m_ddweight = this->weightGradients2;
 
-    m_weights.resize ( xfrom.size() );
-    for ( unsigned int i=0;i<xfrom.size();i++ )
-        m_weights[i].resize ( xto.size() );
-    m_dweight.resize ( xfrom.size() );
-    for ( unsigned int i=0;i<xfrom.size();i++ )
-        m_dweight[i].resize ( xto.size() );
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
+
+    m_weights.resize ( xto.size() );
+    for ( unsigned int i=0;i<xto.size();i++ )        m_weights[i].resize ( nbRef );
+    m_dweight.resize ( xto.size() );
+    for ( unsigned int i=0;i<xto.size();i++ )        m_dweight[i].resize ( nbRef );
+    m_ddweight.resize( xto.size() );
+    for ( unsigned int i=0;i<xto.size();i++ )        m_ddweight[i].resize( nbRef );
 
     switch ( wheightingType.getValue().getSelectedId() )
     {
     case WEIGHT_NONE:
     {
-        for ( unsigned int j=0;j<xto.size();j++ )
-            for ( unsigned int i=0;i<nbRefs.getValue();i++ )
+        for ( unsigned int i=0;i<xto.size();i++ )
+            for ( unsigned int j=0;j<nbRef;j++ )
             {
-                int indexFrom = m_reps[nbRefs.getValue() *j + i];
-                    m_weights[indexFrom][j] = distances[indexFrom][j];
-                    m_dweight[indexFrom][j] = distGradients[indexFrom][j];
+                int indexFrom = m_reps[nbRef*i+j];
+                    m_weights[i][j] = distances[indexFrom][i];
+                    m_dweight[i][j] = distGradients[indexFrom][i];
             }
         break;
     }
     case WEIGHT_LINEAR:
     {
-        vector<int> tmpReps;
+        vector<unsigned int> tmpReps;
         sortReferences( tmpReps);
         for ( unsigned int i=0;i<xto.size();i++ )
         {
-            for ( unsigned int j=0;j<xfrom.size();j++ )
+            for ( unsigned int j=0;j<nbRef;j++ )
             {
-                m_weights[j][i] = 0.0;
-                m_dweight[j][i] = Coord();
+                m_weights[i][j] = 0.0;
+                m_dweight[i][j] = GeoCoord();
+                m_ddweight[i][j].fill(0);
             }
             Vec3d r1r2, r1p;
-            r1r2 = xfrom[tmpReps[nbRefs.getValue() *i+1]].getCenter() - xfrom[tmpReps[nbRefs.getValue() *i+0]].getCenter();
-            r1p  = xto[i] - xfrom[tmpReps[nbRefs.getValue() *i+0]].getCenter();
+            r1r2 = xfrom[tmpReps[nbRef *i+1]].getCenter() - xfrom[tmpReps[nbRef *i+0]].getCenter();
+            r1p  = xto[i] - xfrom[tmpReps[nbRef *i+0]].getCenter();
             double r1r2NormSquare = r1r2.norm()*r1r2.norm();
             double wi = ( r1r2*r1p ) / ( r1r2NormSquare);
 
             // Abscisse curviligne
-            m_weights[tmpReps[nbRefs.getValue() *i+0]][i] = ( 1 - wi );
-            m_weights[tmpReps[nbRefs.getValue() *i+1]][i] = wi;
-            m_dweight[tmpReps[nbRefs.getValue() *i+0]][i] = -r1r2 / r1r2NormSquare;
-            m_dweight[tmpReps[nbRefs.getValue() *i+1]][i] = r1r2 / r1r2NormSquare;
+            m_weights[i][0] = ( 1 - wi );
+            m_weights[i][1] = wi;
+            m_dweight[i][0] = -r1r2 / r1r2NormSquare;
+            m_dweight[i][1] = r1r2 / r1r2NormSquare;
+            //m_ddweight[i][0] = ;
+            //m_ddweight[i][1] = ;
         }
         break;
     }
     case WEIGHT_INVDIST_SQUARE:
     {
-        for ( unsigned int j=0;j<xto.size();j++ )
+        for ( unsigned int i=0;i<xto.size();i++ )
         {
-            for ( unsigned int i=0;i<nbRefs.getValue();i++ )
+            for ( unsigned int j=0;j<nbRef;j++ )
             {
-                int indexFrom = m_reps[nbRefs.getValue() *j + i];
-                if ( distances[indexFrom][j])
-                    m_weights[indexFrom][j] = 1 / (distances[indexFrom][j]*distances[indexFrom][j]);
+                int indexFrom = m_reps[nbRef*i+j];
+                double d2=distances[indexFrom][i]*distances[indexFrom][i];
+                double d3=d2*distances[indexFrom][i];
+                double d4=d3*distances[indexFrom][i];
+
+                m_ddweight[i][j].fill(0);
+                if (d2)
+                {
+                    m_weights[i][j] = 1 / d2;
+                    m_dweight[i][j] = - distGradients[indexFrom][i] / d3* 2.0;
+                    m_ddweight[i][j][0][0]-=2.0/d4;
+                    m_ddweight[i][j][1][1]-=2.0/d4;
+                    m_ddweight[i][j][2][2]-=2.0/d4;
+                    for (unsigned int k=0;k<3;k++)
+                        for (unsigned int m=0;m<3;m++)
+                            m_ddweight[i][j][k][m]+=distGradients[indexFrom][i][k]*distGradients[indexFrom][i][m]*8.0/d2;
+                }
                 else
-                    m_weights[indexFrom][j] = 0xFFF;
-                if ( distances[indexFrom][j])
-                    m_dweight[indexFrom][j] = - distGradients[indexFrom][j] / (double)(distances[indexFrom][j]*distances[indexFrom][j]*distances[indexFrom][j]) * 2.0;
-                else
-                    m_dweight[indexFrom][j] = Coord();
+                {
+                    m_weights[i][j] = 0xFFF;
+                    m_dweight[i][j] = GeoCoord();
+                }
+
             }
         }
 
@@ -358,72 +386,74 @@ void SkinningMapping<TIn, TOut>::updateWeights ()
     }
     case WEIGHT_HERMITE:
     {
-        vector<int> tmpReps;
+        vector<unsigned int> tmpReps;
         sortReferences( tmpReps);
         for ( unsigned int i=0;i<xto.size();i++ )
         {
-            for ( unsigned int j=0;j<xfrom.size();j++ )
+            for ( unsigned int j=0;j<nbRef;j++ )
             {
-                m_weights[j][i] = 0.0;
-                m_dweight[j][i] = Coord();
+                m_weights[i][j] = 0.0;
+                m_dweight[i][j] = GeoCoord();
             }
             Vec3d r1r2, r1p;
             double wi;
-            r1r2 = xfrom[tmpReps[nbRefs.getValue() *i+1]].getCenter() - xfrom[tmpReps[nbRefs.getValue() *i+0]].getCenter();
-            r1p  = xto[i] - xfrom[tmpReps[nbRefs.getValue() *i+0]].getCenter();
+            r1r2 = xfrom[tmpReps[nbRef *i+1]].getCenter() - xfrom[tmpReps[nbRef *i+0]].getCenter();
+            r1p  = xto[i] - xfrom[tmpReps[nbRef *i+0]].getCenter();
             double r1r2NormSquare = r1r2.norm()*r1r2.norm();
             wi = ( r1r2*r1p ) / r1r2NormSquare;
 
             // Fonctions d'Hermite
-            m_weights[tmpReps[nbRefs.getValue() *i+0]][i] = 1-3*wi*wi+2*wi*wi*wi;
-            m_weights[tmpReps[nbRefs.getValue() *i+1]][i] = 3*wi*wi-2*wi*wi*wi;
+            m_weights[i][0] = 1-3*wi*wi+2*wi*wi*wi;
+            m_weights[i][1] = 3*wi*wi-2*wi*wi*wi;
 
             r1r2.normalize();
-            m_dweight[tmpReps[nbRefs.getValue() *i+0]][i] = -r1r2 * (6*wi-6*wi*wi) / (r1r2NormSquare);
-            m_dweight[tmpReps[nbRefs.getValue() *i+1]][i] = r1r2 * (6*wi-6*wi*wi) / (r1r2NormSquare);
+            m_dweight[i][0] = -r1r2 * (6*wi-6*wi*wi) / (r1r2NormSquare);
+            m_dweight[i][1] = r1r2 * (6*wi-6*wi*wi) / (r1r2NormSquare);
         }
         break;
     }
     case WEIGHT_SPLINE:
     {
-        if( xfrom.size() < 4 || nbRefs.getValue() < 4)
+        if ( xfrom.size() < 4 || nbRef < 4)
         {
-          serr << "Error ! To use WEIGHT_SPLINE, you must use at least 4 DOFs and set nbRefs to 4.\n WEIGHT_SPLINE requires also the DOFs are ordered along z-axis." << sendl;
-          return;
+            serr << "Error ! To use WEIGHT_SPLINE, you must use at least 4 DOFs and set nbRefs to 4.\n WEIGHT_SPLINE requires also the DOFs are ordered along z-axis." << sendl;
+            return;
         }
-        vector<int> tmpReps;
+        vector<unsigned int> tmpReps;
         sortReferences( tmpReps);
         for ( unsigned int i=0;i<xto.size();i++ )
         {
             // Clear all weights and dweights.
-            for ( unsigned int j=0;j<xfrom.size();j++ )
+            for ( unsigned int j=0;j<nbRef;j++ )
             {
-                m_weights[j][i] = 0.0;
-                m_dweight[j][i] = Coord();
+                m_weights[i][j] = 0.0;
+                m_dweight[i][j] = GeoCoord();
             }
             // Get the 4 nearest DOFs.
             vector<unsigned int> sortedFrames;
-            for( unsigned int j = 0; j < 4; ++j)
-              sortedFrames.push_back( tmpReps[nbRefs.getValue() *i+j]);
+            for ( unsigned int j = 0; j < 4; ++j)
+                sortedFrames.push_back( tmpReps[nbRef *i+j]);
             std::sort( sortedFrames.begin(), sortedFrames.end());
-            
-            if( xto[i][2] < xfrom[sortedFrames[1]].getCenter()[2])
+
+            if ( xto[i][2] < xfrom[sortedFrames[1]].getCenter()[2])
             {
-              sortedFrames.clear();
-              sortedFrames.push_back( 0);
-              sortedFrames.push_back( 0);
-              sortedFrames.push_back( 1);
-              sortedFrames.push_back( 2);
+                vector<unsigned int> sortedFramesCpy = sortedFrames;
+                sortedFrames.clear();
+                sortedFrames.push_back( sortedFramesCpy[0]);
+                sortedFrames.push_back( sortedFramesCpy[0]);
+                sortedFrames.push_back( sortedFramesCpy[1]);
+                sortedFrames.push_back( sortedFramesCpy[2]);
             }
-            else if( xto[i][2] > xfrom[sortedFrames[2]].getCenter()[2])
+            else if ( xto[i][2] > xfrom[sortedFrames[2]].getCenter()[2])
             {
-              sortedFrames.clear();
-              sortedFrames.push_back( sortedFrames[1]);
-              sortedFrames.push_back( sortedFrames[2]);
-              sortedFrames.push_back( sortedFrames[3]);
-              sortedFrames.push_back( sortedFrames[3]);
+                vector<unsigned int> sortedFramesCpy = sortedFrames;
+                sortedFrames.clear();
+                sortedFrames.push_back( sortedFramesCpy[1]);
+                sortedFrames.push_back( sortedFramesCpy[2]);
+                sortedFrames.push_back( sortedFramesCpy[3]);
+                sortedFrames.push_back( sortedFramesCpy[3]);
             }
-              
+
             // Compute u
             Vec3d r1r2 = xfrom[sortedFrames[2]].getCenter() - xfrom[sortedFrames[1]].getCenter();
             Vec3d r1p  = xto[i] - xfrom[sortedFrames[1]].getCenter();
@@ -431,16 +461,16 @@ void SkinningMapping<TIn, TOut>::updateWeights ()
             double u = ( r1r2*r1p ) / r1r2NormSquare;
 
             // Set weights and dweights.
-            m_weights[sortedFrames[0]][i] = 1-3*u*u+2*u*u*u;
-            m_weights[sortedFrames[1]][i] = u*u*u - 2*u*u + u;
-            m_weights[sortedFrames[2]][i] = 3*u*u-2*u*u*u;
-            m_weights[sortedFrames[3]][i] = u*u*u - u*u;
+            m_weights[i][0] = 1-3*u*u+2*u*u*u;
+            m_weights[i][1] = u*u*u - 2*u*u + u;
+            m_weights[i][2] = 3*u*u-2*u*u*u;
+            m_weights[i][3] = u*u*u - u*u;
 
             r1r2.normalize();
-            m_dweight[sortedFrames[0]][i] = -r1r2 * (6*u - 6*u*u) / (r1r2NormSquare);
-            m_dweight[sortedFrames[1]][i] = r1r2 * (3*u*u - 4*u + 1) / (r1r2NormSquare);
-            m_dweight[sortedFrames[2]][i] = r1r2 * (6*u - 6*u*u) / (r1r2NormSquare);
-            m_dweight[sortedFrames[3]][i] = r1r2 * (3*u*u - 2*u) / (r1r2NormSquare);
+            m_dweight[i][0] = -r1r2 * (6*u - 6*u*u) / (r1r2NormSquare);
+            m_dweight[i][1] = r1r2 * (3*u*u - 4*u + 1) / (r1r2NormSquare);
+            m_dweight[i][2] = r1r2 * (6*u - 6*u*u) / (r1r2NormSquare);
+            m_dweight[i][3] = r1r2 * (3*u*u - 2*u) / (r1r2NormSquare);
         }
         break;
     }
@@ -463,179 +493,45 @@ void SkinningMapping<TIn, TOut>::setWeightCoefs ( VVD &weights )
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::setRepartition ( vector<int> &rep )
 {
-    vector<int> * m_reps = repartition.beginEdit();
+    vector<unsigned int> * m_reps = this->repartition.beginEdit();
     m_reps->clear();
     m_reps->insert ( m_reps->begin(), rep.begin(), rep.end() );;
-    repartition.endEdit();
+    this->repartition.endEdit();
 }
 
 
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::apply ( typename Out::VecCoord& out, const typename In::VecCoord& in )
 {
-	_apply< InCoord >(out, in);
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
+    const VVD& m_weights = weights.getValue();
+
+    rotatedPoints.resize ( initPos.size() );
+    out.resize ( initPos.size() / nbRef );
+    for ( unsigned int i=0 ; i<out.size(); i++ )
+    {
+        out[i] = Coord();
+        for ( unsigned int j = 0; j < nbRef; ++j)
+        {
+            const int& idx=nbRef *i+j;
+            const int& idxReps=m_reps[idx];
+
+            // Save rotated points for applyJ/JT
+            rotatedPoints[idx] = in[idxReps].getOrientation().rotate ( initPos[idx] );
+
+            // And add each reference frames contributions to the new position out[i]
+            out[i] += ( in[idxReps ].getCenter() + rotatedPoints[idx] ) * m_weights[i][j];
+        }
+    }
 }
 
 
 template <class TIn, class TOut>
 void SkinningMapping<TIn, TOut>::applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
 {
-	_applyJ< InDeriv >(out, in);
-}
-
-template <class TIn, class TOut>
-void SkinningMapping<TIn, TOut>::applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
-{
-	_applyJT< InDeriv >(out, in);
-}
-
-
-template <class TIn, class TOut>
-void SkinningMapping<TIn, TOut>::applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
-{
-	_applyJT_Matrix< InMatrixDeriv >( out, in);
-}
-
-template <class TIn, class TOut>
-void SkinningMapping<TIn, TOut>::draw()
-{
-    const typename Out::VecCoord& xto = *this->toModel->getX();
-    const typename In::VecCoord& xfrom = *this->fromModel->getX();
-    const vector<int>& m_reps = repartition.getValue();
-    const VVD& m_weights = weights.getValue();
-    const SVector<SVector<GeoCoord> >& dw = weightGradients.getValue();
-    const unsigned int nbRef = nbRefs.getValue();
-    const int valueScale = showValuesNbDecimals.getValue();
-    int scale = 1;
-    for (int i = 0; i < valueScale; ++i) scale *= 10;
-    const double textScale = showTextScaleFactor.getValue();
-
-    glDisable ( GL_LIGHTING );
-
-    if ( this->getShow() )
-    {
-        // Display mapping links between in and out elements
-            glDisable ( GL_LIGHTING );
-            glPointSize ( 1 );
-            glColor4f ( 1,1,0,1 );
-            glBegin ( GL_LINES );
-
-            for ( unsigned int i=0; i<xto.size(); i++ )
-            {
-                for ( unsigned int m=0 ; m<nbRef; m++ )
-                {
-                    const int idxReps=m_reps[nbRef *i+m];
-                    double coef = m_weights[idxReps][i];
-                    if ( coef > 0.0 )
-                    {
-                        glColor4d ( coef,coef,0,1 );
-                        helper::gl::glVertexT ( xfrom[m_reps[nbRef *i+m] ].getCenter() );
-                        helper::gl::glVertexT ( xto[i] );
-                    }
-                }
-            }
-            glEnd();
-    }
-
-    // Display  m_reps for each points
-    if ( showReps.getValue())
-    {
-        for ( unsigned int i=0;i<xto.size();i++ )
-            sofa::helper::gl::GlText::draw ( m_reps[nbRef*i+0]*scale, xto[i], textScale );
-    }
-
-    // Display distances for each points
-    if ( showDistancesValues.getValue())
-    {
-        glColor3f( 1.0, 1.0, 1.0);
-        for ( unsigned int i=0;i<xto.size();i++ )
-            sofa::helper::gl::GlText::draw ( (int)(distances[m_reps[i*nbRef+showFromIndex.getValue()%distances.size()]][i]*scale), xto[i], textScale );
-    }
-
-    // Display distance gradients values for each points
-    if ( showGradientsValues.getValue())
-    {
-        char txt[100];
-        glColor3f( 0.5, 0.5, 0.5);
-        for ( unsigned int i=0;i<xto.size();i++ )
-        {
-            const Vec3& grad = dw[m_reps[i*nbRef+showFromIndex.getValue()%dw.size()]][i];
-            sprintf( txt, "( %i, %i, %i)", (int)(grad[0]*scale), (int)(grad[1]*scale), (int)(grad[2]*scale));
-            sofa::helper::gl::GlText::draw ( txt, xto[i], textScale );
-        }
-    }
-
-    // Display weights for each points
-    if ( showWeightsValues.getValue())
-    {
-        glColor3f( 1.0, 1.0, 1.0);
-        for ( unsigned int i=0;i<xto.size();i++ )
-            sofa::helper::gl::GlText::draw ( (int)(m_weights[m_reps[i*nbRef+showFromIndex.getValue()%m_weights.size()]][i]*scale), xto[i], textScale );
-    }
-
-    // Display weights gradients for each points
-    if ( showGradients.getValue())
-    {
-        glColor3f ( 0.0, 1.0, 0.3 );
-        glBegin ( GL_LINES );
-        for ( unsigned int j = 0; j < xto.size(); j++ )
-        {
-            const GeoCoord& gradMap = dw[m_reps[j*nbRef+showFromIndex.getValue()%dw.size()]][j];
-            const Coord& point = xto[j];
-            glVertex3f ( point[0], point[1], point[2] );
-            glVertex3f ( point[0] + gradMap[0] * showGradientsScaleFactor.getValue(), point[1] + gradMap[1] * showGradientsScaleFactor.getValue(), point[2] + gradMap[2] * showGradientsScaleFactor.getValue() );
-        }
-        glEnd();
-    }
-    //*/
-
-}
-
-
-
-template <class TIn, class TOut>
-void SkinningMapping<TIn, TOut>::getLocalCoord( Coord& result, const typename defaulttype::StdRigidTypes<N, InReal>::Coord& inCoord, const Coord& coord) const
-{
-  result = inCoord.getOrientation().inverseRotate ( coord - inCoord.getCenter() );
-}
-
-
-
-// Generic Apply (old one in .inl)
-template <class TIn, class TOut>
-template<class TCoord>
-typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Coord, TCoord > >::type
-SkinningMapping<TIn, TOut>::_apply( typename Out::VecCoord& out, const sofa::helper::vector<typename RigidType::Coord>& in)
-{
-    const vector<int>& m_reps = repartition.getValue();
-    const VVD& m_weights = weights.getValue();
-
-        rotatedPoints.resize ( initPos.size() );
-        out.resize ( initPos.size() / nbRefs.getValue() );
-        for ( unsigned int i=0 ; i<out.size(); i++ )
-        {
-            out[i] = Coord();
-            for ( unsigned int j = 0; j < nbRefs.getValue(); ++j)
-            {
-                const int& idx=nbRefs.getValue() *i+j;
-                const int& idxReps=m_reps[idx];
-
-                // Save rotated points for applyJ/JT
-                rotatedPoints[idx] = in[idxReps].getOrientation().rotate ( initPos[idx] );
-
-                // And add each reference frames contributions to the new position out[i]
-                out[i] += ( in[idxReps ].getCenter() + rotatedPoints[idx] ) * m_weights[idxReps][i];
-            }
-            
-        }
-}
-
-
-template <class TIn, class TOut>
-template<class TDeriv>
-typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, TDeriv> >::type SkinningMapping<TIn, TOut>::_applyJ( typename Out::VecDeriv& out, const sofa::helper::vector<typename RigidType::Deriv>& in)
-{
-    const vector<int>& m_reps = repartition.getValue();
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
     const VVD& m_weights = weights.getValue();
     const VecCoord& xto = *this->toModel->getX();
     out.resize ( xto.size() );
@@ -646,14 +542,14 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, 
         for ( unsigned int i=0;i<out.size();i++ )
         {
             out[i] = Deriv();
-            for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+            for ( unsigned int j=0 ; j<nbRef; j++ )
             {
-                const int idx=nbRefs.getValue() *i+m;
+                const int idx=nbRef *i+j;
                 const int idxReps=m_reps[idx];
 
-                v = in[idxReps].getVCenter();
-                omega = in[idxReps].getVOrientation();
-                out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_weights[idxReps][i];
+                v = getVCenter(in[idxReps]);
+                omega = getVOrientation(in[idxReps]);
+                out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_weights[i][j];
             }
         }
     }
@@ -667,25 +563,24 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, 
         {
             const int i= ( int ) ( *it );
             out[i] = Deriv();
-            for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+            for ( unsigned int j=0 ; j<nbRef; j++ )
             {
-                const int idx=nbRefs.getValue() *i+m;
+                const int idx=nbRef *i+j;
                 const int idxReps=m_reps[idx];
 
-                v = in[idxReps].getVCenter();
-                omega = in[idxReps].getVOrientation();
-                out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_weights[idxReps][i];
+                v = getVCenter(in[idxReps]);
+                omega = getVOrientation(in[idxReps]);
+                out[i] += ( v - cross ( rotatedPoints[idx],omega ) ) * m_weights[i][j];
             }
         }
     }
 }
 
-
 template <class TIn, class TOut>
-template<class TDeriv>
-typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, TDeriv> >::type SkinningMapping<TIn, TOut>::_applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in)
+void SkinningMapping<TIn, TOut>::applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 {
-    const vector<int>& m_reps = repartition.getValue();
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
     const VVD& m_weights = weights.getValue();
 
     Deriv v,omega;
@@ -694,15 +589,15 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, 
         maskFrom->setInUse ( false );
         for ( unsigned int i=0;i<in.size();i++ )
         {
-            for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+            for ( unsigned int j=0 ; j<nbRef; j++ )
             {
                 Deriv f = in[i];
                 v = f;
-                const int idx=nbRefs.getValue() *i+m;
+                const int idx=nbRef *i+j;
                 const int idxReps=m_reps[idx];
                 omega = cross ( rotatedPoints[idx],f );
-                out[idxReps].getVCenter() += v * m_weights[idxReps][i];
-                out[idxReps].getVOrientation() += omega * m_weights[idxReps][i];
+                getVCenter(out[idxReps]) += v * m_weights[i][j];
+                getVOrientation(out[idxReps]) += omega * m_weights[i][j];
             }
         }
     }
@@ -715,15 +610,15 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, 
         for ( it=indices.begin();it!=indices.end();it++ )
         {
             const int i= ( int ) ( *it );
-            for ( unsigned int m=0 ; m<nbRefs.getValue(); m++ )
+            for ( unsigned int j=0 ; j<nbRef; j++ )
             {
                 Deriv f = in[i];
                 v = f;
-                const int idx=nbRefs.getValue() *i+m;
+                const int idx=nbRef *i+j;
                 const int idxReps=m_reps[idx];
                 omega = cross ( rotatedPoints[idx],f );
-                out[idxReps].getVCenter() += v * m_weights[idxReps][i];
-                out[idxReps].getVOrientation() += omega * m_weights[idxReps][i];
+                getVCenter(out[idxReps]) += v * m_weights[i][j];
+                getVOrientation(out[idxReps]) += omega * m_weights[i][j];
 
                 maskFrom->insertEntry ( idxReps );
             }
@@ -733,12 +628,11 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, 
 
 
 template <class TIn, class TOut>
-template<class TMatrixDeriv>
-typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::MatrixDeriv, TMatrixDeriv> >::type SkinningMapping<TIn, TOut>::_applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in)
+void SkinningMapping<TIn, TOut>::applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
 {
-    const vector<int>& m_reps = repartition.getValue();
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
     const VVD& m_weights = weights.getValue();
-    const unsigned int nbr = nbRefs.getValue();
     const unsigned int nbp = this->fromModel->getX()->size();
     Deriv omega;
     typename In::VecDeriv v;
@@ -762,12 +656,13 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::MatrixD
             unsigned int indexPoint = colIt.index();
             Deriv data = ( Deriv ) colIt.val();
 
-            for (unsigned int m = 0 ; m < nbr; m++)
+            for (unsigned int j = 0 ; j < nbRef; j++)
             {
-                omega = cross(rotatedPoints[nbr * indexPoint + m], data);
-                flags[m_reps[nbr * indexPoint + m]] = true;
-                v[m_reps[nbr * indexPoint + m]].getVCenter() += data * m_weights[m_reps[nbr * indexPoint + m]][indexPoint];
-                v[m_reps[nbr * indexPoint + m]].getVOrientation() += omega * m_weights[m_reps[nbr * indexPoint + m]][indexPoint];
+                const int idxReps=m_reps[nbRef *indexPoint+j];
+                omega = cross(rotatedPoints[nbRef * indexPoint + j], data);
+                flags[idxReps] = true;
+                getVCenter(v[idxReps]) += data * m_weights[indexPoint][j];
+                getVOrientation(v[idxReps]) += omega * m_weights[indexPoint][j];
             }
 
             for (unsigned int j = 0 ; j < nbp; j++)
@@ -787,7 +682,154 @@ typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::MatrixD
     }
 }
 
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::draw()
+{
+    const typename Out::VecCoord& xto = *this->toModel->getX();
+    const typename In::VecCoord& xfrom = *this->fromModel->getX();
+    const unsigned int nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
+    const VVD& m_weights = weights.getValue();
+    const SVector<SVector<GeoCoord> >& dw = weightGradients.getValue();
+    const int valueScale = showValuesNbDecimals.getValue();
+    int scale = 1;
+    for (int i = 0; i < valueScale; ++i) scale *= 10;
+    const double textScale = showTextScaleFactor.getValue();
 
+    glDisable ( GL_LIGHTING );
+
+    if ( this->getShow() )
+    {
+        // Display mapping links between in and out elements
+        glDisable ( GL_LIGHTING );
+        glPointSize ( 1 );
+        glColor4f ( 1,1,0,1 );
+        glBegin ( GL_LINES );
+
+        for ( unsigned int i=0; i<xto.size(); i++ )
+        {
+            for ( unsigned int m=0 ; m<nbRef; m++ )
+            {
+                const int idxReps=m_reps[nbRef *i+m];
+                double coef = m_weights[i][m];
+                if ( coef > 0.0 )
+                {
+                    glColor4d ( coef,coef,0,1 );
+                    helper::gl::glVertexT ( xfrom[idxReps].getCenter() );
+                    helper::gl::glVertexT ( xto[i] );
+                }
+            }
+        }
+        glEnd();
+    }
+
+    // Display  m_reps for each points
+    if ( showReps.getValue())
+    {
+        for ( unsigned int i=0;i<xto.size();i++ )
+            sofa::helper::gl::GlText::draw ( m_reps[nbRef*i+0]*scale, xto[i], textScale );
+    }
+
+    // Display distances for each points
+    if ( showDistancesValues.getValue())
+    {
+        glColor3f( 1.0, 1.0, 1.0);
+        for ( unsigned int i=0;i<xto.size();i++ )
+        {
+            bool influenced;
+            unsigned int refIndex;
+            reverseRepartition(influenced, refIndex, i, showFromIndex.getValue()%distances.size());
+            if ( influenced)
+            {
+                sofa::helper::gl::GlText::draw ( (int)(distances[refIndex][i]*scale), xto[i], textScale );
+            }
+        }
+    }
+
+    // Display distance gradients values for each points
+    if ( showGradientsValues.getValue())
+    {
+        char txt[100];
+        glColor3f( 0.5, 0.5, 0.5);
+        for ( unsigned int i=0;i<xto.size();i++ )
+        {
+            bool influenced;
+            unsigned int refIndex;
+            reverseRepartition(influenced, refIndex, i, showFromIndex.getValue()%distances.size());
+            if ( influenced)
+            {
+                const Vec3& grad = dw[i][refIndex];
+                sprintf( txt, "( %i, %i, %i)", (int)(grad[0]*scale), (int)(grad[1]*scale), (int)(grad[2]*scale));
+                sofa::helper::gl::GlText::draw ( txt, xto[i], textScale );
+            }
+        }
+    }
+
+    // Display weights for each points
+    if ( showWeightsValues.getValue())
+    {
+        glColor3f( 1.0, 1.0, 1.0);
+        for ( unsigned int i=0;i<xto.size();i++ )
+        {
+            bool influenced;
+            unsigned int indexRep;
+            reverseRepartition(influenced, indexRep, i, showFromIndex.getValue()%distances.size());
+            if ( influenced)
+            {
+                sofa::helper::gl::GlText::draw ( (int)(m_weights[i][indexRep]*scale), xto[i], textScale );
+            }
+        }
+    }
+
+    // Display weights gradients for each points
+    if ( showGradients.getValue())
+    {
+        glColor3f ( 0.0, 1.0, 0.3 );
+        glBegin ( GL_LINES );
+        for ( unsigned int i = 0; i < xto.size(); i++ )
+        {
+            bool influenced;
+            unsigned int indexRep;
+            reverseRepartition(influenced, indexRep, i, showFromIndex.getValue()%distances.size());
+            if (influenced)
+            {
+                const GeoCoord& gradMap = dw[i][indexRep];
+                const Coord& point = xto[i];
+                glVertex3f ( point[0], point[1], point[2] );
+                glVertex3f ( point[0] + gradMap[0] * showGradientsScaleFactor.getValue(), point[1] + gradMap[1] * showGradientsScaleFactor.getValue(), point[2] + gradMap[2] * showGradientsScaleFactor.getValue() );
+            }
+        }
+        glEnd();
+    }
+    //*/
+
+}
+
+
+
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::getLocalCoord( Coord& result, const typename In::Coord& inCoord, const Coord& coord) const
+{
+    result = inCoord.pointToChild ( coord );
+}
+
+
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::reverseRepartition( bool& influenced, unsigned int& realIndex, const unsigned int& pointIndex, const unsigned int& frameIndex)
+{
+    const unsigned int& nbRef = this->nbRefs.getValue();
+    const vector<unsigned int>& m_reps = this->repartition.getValue();
+    influenced = false;
+    for ( unsigned int j = 0; j < nbRef; ++j)
+    {
+        if ( m_reps[pointIndex*nbRef+j] == frameIndex)
+        {
+            influenced = true;
+            realIndex = j;
+            return;
+        }
+    }
+}
 
 
 } // namespace mapping

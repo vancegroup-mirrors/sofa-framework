@@ -355,8 +355,9 @@ using namespace core::topology;
 	const Tetrahedron &t = MMM->_topology->getTetrahedron(tetrahedronAdded[i]);
 
 	// Compute rest mass of conserne tetrahedron = density * tetrahedron volume. 
-	if(MMM->tetraGeo){
-	  mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronAdded[i]))/(typename DataTypes::Real)10.0;
+        if(MMM->tetraGeo)
+        {
+          mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronAdded[i]))/(typename DataTypes::Real)10.0;
 	}
 
 	// Adding mass
@@ -364,6 +365,7 @@ using namespace core::topology;
 	  VertexMasses[ t[j] ] += mass;
       }
     }
+
   }
 
   
@@ -387,7 +389,7 @@ using namespace core::topology;
 
 	// Compute rest mass of conserne triangle = density * tetrahedron volume. 
 	if(MMM->tetraGeo){
-	  mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronAdded[i]))/(typename DataTypes::Real)20.0;
+          mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronAdded[i]))/(typename DataTypes::Real)20.0;
 	}
 
 	// Adding mass edges of concerne triangle
@@ -418,7 +420,7 @@ using namespace core::topology;
 
 	// Compute rest mass of conserne tetrahedron = density * tetrahedron volume. 
 	if(MMM->tetraGeo){
-	  mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronRemoved[i]))/(typename DataTypes::Real)10.0;
+          mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronRemoved[i]))/(typename DataTypes::Real)10.0;
 	}
 
 	// Removing mass
@@ -449,7 +451,7 @@ using namespace core::topology;
 
 	// Compute rest mass of conserne triangle = density * tetrahedron volume. 
 	if(MMM->tetraGeo){
-	  mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronRemoved[i]))/(typename DataTypes::Real)20.0;
+          mass=(densityM * MMM->tetraGeo->computeRestTetrahedronVolume(tetrahedronRemoved[i]))/(typename DataTypes::Real)20.0;
 	}
 
 	// Removing mass edges of concerne triangle
@@ -606,6 +608,7 @@ using namespace core::topology;
     , m_massDensity( initData(&m_massDensity, (Real)1.0,"massDensity", "mass density that allows to compute the  particles masses from a mesh topology and geometry.\nOnly used if > 0") )
     , showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
     , showAxisSize( initData(&showAxisSize, 1.0f, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
+    , lumping( initData(&lumping, true, "lumping","boolean if you need to use a lumped mass matrix") )
     , topologyType(TOPOLOGY_UNKNOWN)
     , massLumpingCoeff(0.0)
   {
@@ -751,6 +754,7 @@ using namespace core::topology;
          EdgeMassTetrahedronCreationFunction(tetrahedraAdded, (void*) this, my_edgeMassInfo);
          massLumpingCoeff = 2.5;
       }
+
       else if (_topology->getNbQuads()>0 && quadGeo)  // Quad topology
       {
          // create vector tensor by calling the quad creation function on the entire mesh
@@ -809,21 +813,56 @@ using namespace core::topology;
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::addMDx(DataVecDeriv& vres, const DataVecDeriv& vdx, double factor, const core::MechanicalParams*)
   {
-
     const MassVector &vertexMass= vertexMassInfo.getValue();
+    const MassVector &edgeMass= edgeMassInfo.getValue();
        
-		helper::WriteAccessor< DataVecDeriv > res = vres;
-		helper::ReadAccessor< DataVecDeriv > dx = vdx;
-    if (factor == 1.0)
+    helper::WriteAccessor< DataVecDeriv > res = vres;
+    helper::ReadAccessor< DataVecDeriv > dx = vdx;
+
+
+
+    //using a lumped matrix (default)
+    if(this->lumping.getValue())
     {
-      for (unsigned int i=0;i<dx.size();i++)
-         res[i] += dx[i] * vertexMass[i]  * massLumpingCoeff;
+        if(factor==1.0)
+        {
+            for (unsigned int i=0;i<dx.size();i++)
+               res[i] += dx[i] * vertexMass[i] * massLumpingCoeff;
+
+        }
+        else
+        {
+            for (unsigned int i=0;i<dx.size();i++)
+               res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
+        }
+
     }
+
+    //using a sparse matrix
     else
     {
-      for (unsigned int i=0;i<dx.size();i++)
-         res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
-    }
+        unsigned int nbEdges=_topology->getNbEdges();
+        unsigned int v0,v1;
+
+        for (unsigned int i=0;i<dx.size();i++)
+        {
+           res[i] += dx[i] * vertexMass[i] * (Real)factor;
+        }
+
+       Real tempMass;
+
+       for (unsigned int j=0; j<nbEdges; ++j)
+       {
+           tempMass = edgeMass[j] *(Real)factor;
+
+           v0=_topology->getEdge(j)[0];
+           v1=_topology->getEdge(j)[1];
+
+           res[v0] += dx[v1] * tempMass ;
+           res[v1] += dx[v0] * tempMass ;
+
+       }
+     }
   }
 
 
@@ -833,7 +872,25 @@ using namespace core::topology;
   {
     (void)a;
     (void)f;
-    serr << "WARNING: the methode 'accFromF' can't be used with MeshMatrixMass as this mass matrix can't be inversed easily." << sendl;
+//    if(!this->lumping.getValue())
+        serr << "WARNING: the methode 'accFromF' can't be used with MeshMatrixMass as this SPARSE mass matrix can't be inversed easily. \nPlease proceed to mass lumping." << sendl;
+//    else
+//    {
+//        std::cout<< "\t--- Inversion of M after mass lumping";
+
+//        const MassVector &vertexMass= vertexMassInfo.getValue();
+//        unsigned int vertexNb = vertexMass.size();
+
+//        helper::WriteAccessor< DataVecDeriv > _acc = a;
+//        const VecDeriv& _f = f.getValue();
+
+//        for (unsigned int i=0;i<vertexNb;i++)
+//        {
+//            _acc[i] = _f[i] / (massLumpingCoeff * vertexMass[i]);
+//        }
+
+//    }
+
     return;
   }
 
@@ -841,13 +898,16 @@ using namespace core::topology;
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::addForce(DataVecDeriv& vf, const DataVecCoord& vx, const DataVecDeriv& vv, const core::MechanicalParams*)
   {
+
     //if gravity was added separately (in solver's "solve" method), then nothing to do here
     if(this->m_separateGravity.getValue())
-      return;
+        return ;
+//    else
+//        return; // add to avoid the function
 
-		helper::WriteAccessor< DataVecDeriv > f = vf;
-		helper::ReadAccessor< DataVecCoord > x = vx;
-		helper::ReadAccessor< DataVecDeriv > v = vv;
+    helper::WriteAccessor< DataVecDeriv > f = vf;
+    helper::ReadAccessor< DataVecCoord > x = vx;
+    helper::ReadAccessor< DataVecDeriv > v = vv;
 
     const MassVector &vertexMass= vertexMassInfo.getValue();
     
@@ -963,6 +1023,7 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const
     for (unsigned int i=0;i<vertexMass.size();i++)
       calc(r.matrix, vertexMass[i], r.offset + N*i, mFactor);
 
+
     for (unsigned int i=0; i<nbEdges; ++i)
     {
       v0=_topology->getEdge(i)[0];
@@ -971,7 +1032,12 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const
       calc(r.matrix, edgeMass[i], r.offset + v0, r.offset + v1, mFactor);
       calc(r.matrix, edgeMass[i], r.offset + v1, r.offset + v0, mFactor);
     }
+
+
   }
+
+
+
 
   
 
@@ -990,7 +1056,6 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const
   {
-
     const unsigned int dimension = defaulttype::DataTypeInfo<Deriv>::size();
     if (m->rowSize() != dimension || m->colSize() != dimension) m->resize(dimension,dimension);
 

@@ -64,7 +64,7 @@ void ConstantForceField<DataTypes>::addForce(DataVecDeriv& f1, const DataVecCoor
 	sofa::helper::WriteAccessor< core::objectmodel::Data< VecDeriv > > _f1 = f1;	
 	_f1.resize(p1.getValue().size());
 
-        //std::cout << "Points = " << points.getValue() << std::endl;
+        sout << "Points = " << points.getValue() << sendl;
         Deriv singleForce;
         if (totalForce.getValue()[0] != 0.0 || totalForce.getValue()[1] != 0.0 || totalForce.getValue()[2] != 0.0) {
             for (unsigned comp = 0; comp < totalForce.getValue().size(); comp++)
@@ -75,22 +75,26 @@ void ConstantForceField<DataTypes>::addForce(DataVecDeriv& f1, const DataVecCoor
             //std::cout << "Setting forces for each node to = " << singleForce << std::endl;
         }
 
-	const VecIndex& indices = points.getValue();
-	const VecDeriv& f = forces.getValue();
+        const VecIndex& indices = points.getValue();
+        sout << "indices = " << indices << sendl;
+        const VecDeriv& f = forces.getValue();
         //const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
 	const Deriv f_end = (f.empty()? singleForce : f[f.size()-1]);
 	unsigned int i = 0;
 
 	if (!indexFromEnd.getValue())
 	{
-		for (; i < f.size(); i++)
+                for (; i < f.size(); i++)
 		{
-			_f1[indices[i]] += f[i];
+//                    sout<<"_f1[indices[i]] += f[i], "<< _f1[indices.empty() ? i : indices[i]] << " += " << f[i] << sendl;
+                    _f1[ indices.empty() ? i : indices[i] ] += f[i];  // if indices are not set, use the force indices
+
 		}
 		for (; i < indices.size(); i++)
 		{
-			_f1[indices[i]] += f_end;
-		}
+//                    sout<<"_f1[indices[i]] += f_end, "<< _f1[indices[i]] << " += " << f_end << sendl;
+                    _f1[indices[i]] += f_end;
+                }
 	}
 	else
 	{

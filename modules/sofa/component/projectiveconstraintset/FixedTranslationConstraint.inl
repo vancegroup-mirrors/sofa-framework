@@ -142,7 +142,7 @@ void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res, con
     {
         for (int i = 0; i < topology->getNbPoints(); ++i)
         {
-            res[i].getVCenter() -= res[i].getVCenter();
+            getVCenter(res[i]) -= getVCenter(res[i]);
         }
     }
     else
@@ -150,7 +150,7 @@ void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res, con
         for (SetIndexArray::const_iterator it = indices.begin(); it
             != indices.end(); ++it)
         {
-            res[*it].getVCenter() -= res[*it].getVCenter();
+            getVCenter(res[*it]) -= getVCenter(res[*it]);
         }
     }
 }
@@ -218,6 +218,10 @@ void FixedTranslationConstraint<DataTypes>::draw()
     glEnd();
 }
 
+template<>
+void FixedTranslationConstraint<Vec6dTypes>::draw();
+template<>
+void FixedTranslationConstraint<Vec6fTypes>::draw();
 
 } // namespace constraint
 

@@ -24,7 +24,6 @@
 ******************************************************************************/
 #include <sofa/component/controller/LCPForceFeedback.inl>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/component/mastersolver/MasterContactSolver.h>
 #include <sofa/helper/LCPcalc.h>
 #include <sofa/defaulttype/RigidTypes.h>
 

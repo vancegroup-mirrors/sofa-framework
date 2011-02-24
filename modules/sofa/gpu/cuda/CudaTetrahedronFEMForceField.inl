@@ -201,6 +201,10 @@ using namespace gpu::cuda;
 template<class TCoord, class TDeriv, class TReal>
 void TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::reinit(Main* m)
 {
+    if (!m->_mesh->getTetrahedra().empty()) {
+	    m->_indexedElements = & (m->_mesh->getTetrahedra());
+    }
+  
     Data& data = m->data;
     m->parallelDataSimu->strainDisplacements.resize( m->_indexedElements->size() );
     m->parallelDataSimu->materialsStiffnesses.resize(m->_indexedElements->size() );
@@ -711,7 +715,7 @@ void TetrahedronFEMForceFieldInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDe
     { return true; }						       \
     template<> void TetrahedronFEMForceField< T >::reinit() \
     { data.reinit(this); } \
-    template<> void TetrahedronFEMForceField< T >::addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* mparams) \
+    template<> void TetrahedronFEMForceField< T >::addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* /*mparams*/) \
     { \
 		VecDeriv& f = *d_f.beginEdit(); \
 		const VecCoord& x = d_x.getValue(); \

@@ -52,7 +52,7 @@ int ValuesFromIndicesClass = core::RegisterObject("Find the values given a list 
 .add< ValuesFromIndices<defaulttype::Vec2d> >()
 .add< ValuesFromIndices<defaulttype::Vec3d> >()
 .add< ValuesFromIndices<defaulttype::Rigid2dTypes::Coord> >()
-.add< ValuesFromIndices<defaulttype::Rigid2dTypes::Deriv> >()
+//.add< ValuesFromIndices<defaulttype::Rigid2dTypes::Deriv> >()  WARNING: removed because «duplicate instanciation» (changes on RigidDeriv)
 .add< ValuesFromIndices<defaulttype::Rigid3dTypes::Coord> >()
 .add< ValuesFromIndices<defaulttype::Rigid3dTypes::Deriv> >()
 #endif //SOFA_FLOAT
@@ -61,7 +61,7 @@ int ValuesFromIndicesClass = core::RegisterObject("Find the values given a list 
 .add< ValuesFromIndices<defaulttype::Vec2f> >()
 .add< ValuesFromIndices<defaulttype::Vec3f> >()
 .add< ValuesFromIndices<defaulttype::Rigid2fTypes::Coord> >()
-.add< ValuesFromIndices<defaulttype::Rigid2fTypes::Deriv> >()
+//.add< ValuesFromIndices<defaulttype::Rigid2fTypes::Deriv> >() WARNING: removed because «duplicate instanciation» (changes on RigidDeriv)
 .add< ValuesFromIndices<defaulttype::Rigid3fTypes::Coord> >()
 .add< ValuesFromIndices<defaulttype::Rigid3fTypes::Deriv> >()
 #endif //SOFA_DOUBLE
@@ -79,7 +79,7 @@ template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<double>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Vec2d>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Vec3d>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid2dTypes::Coord>;
-template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid2dTypes::Deriv>;
+//template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid2dTypes::Deriv>;   WARNING: removed because «duplicate instanciation» (???)
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid3dTypes::Coord>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid3dTypes::Deriv>;
 #endif //SOFA_FLOAT
@@ -88,7 +88,7 @@ template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<float>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Vec2f>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Vec3f>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid2fTypes::Coord>;
-template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid2fTypes::Deriv>;
+//template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid2fTypes::Deriv>;   WARNING: removed because «duplicate instanciation» (???)
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid3fTypes::Coord>;
 template class SOFA_COMPONENT_ENGINE_API ValuesFromIndices<defaulttype::Rigid3fTypes::Deriv>;
 #endif //SOFA_DOUBLE

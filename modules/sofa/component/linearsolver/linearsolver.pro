@@ -39,6 +39,8 @@ HEADERS +=  \
            NewMatVector.h \
            NewMatMatrix.h \
            MatrixExpr.h \
+	   GenerateBenchSolver.h \
+	   GenerateBenchSolver.inl \
 #           MultiCGLinearSolver.h \
            matrix_bloc_traits.h
 
@@ -57,7 +59,7 @@ SOURCES += \
 	   GraphScatteredTypes.cpp \
            DefaultMultiMatrixAccessor.cpp \
            MatrixLinearSolver.cpp \
-	   ParallelMatrixLinearSolver.cpp \
+	   GenerateBenchSolver.cpp \
 #           MultiCGLinearSolver.cpp
 
 
@@ -101,7 +103,12 @@ contains(DEFINES,SOFA_HAVE_CSPARSE){
 }
 
 contains(DEFINES,SOFA_HAVE_TAUCS){
-
+win32{
+  # BLAS
+  LIBS *= -lblas_win32_MT
+  # LAPACK
+  LIBS *= -llapack_win32_MT
+  }
     HEADERS +=  \
                SparseTAUCSSolver.h \
 	       SparseTAUCSLUSolver.h \
@@ -129,6 +136,7 @@ LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX
 LIBS += -lsofacomponentodesolver$$LIBSUFFIX
 LIBS += -lsofacomponentforcefield$$LIBSUFFIX
+LIBS += -lsofacomponentbase$$LIBSUFFIX
 
 LIBS += $$SOFA_EXT_LIBS 
 

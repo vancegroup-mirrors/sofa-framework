@@ -49,9 +49,9 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
     contacts.resize(i+1);
     Contact& c = contacts[i];
 
-	//sout<<"delta : "<<delta<<" - deltaFree : "<<deltaFree <<sendl;
-	//sout<<"P : "<<P<<" - PFree : "<<Pfree <<sendl;
-	//sout<<"Q : "<<Q<<" - QFree : "<<Qfree <<sendl;
+    std::cout<<"delta : "<<delta<<" - deltaFree : "<<deltaFree <<std::endl;
+    std::cout<<"P : "<<P<<" - PFree : "<<Pfree <<std::endl;
+    std::cout<<"Q : "<<Q<<" - QFree : "<<Qfree <<std::endl;
 
 
 // for visu
@@ -71,12 +71,30 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
     c.mu = mu;
 	c.contactId = id;
     c.localId = localid;
-	
 
-    if (rabs(delta - deltaFree) > 0.001 * delta)
+	Deriv PPfree = Pfree-P;
+    Deriv QQfree = Qfree-Q;
+    Real ref_dist = PPfree.norm()+QQfree.norm();
+
+    if (helper::rabs(delta) < 0.00001*ref_dist && helper::rabs(deltaFree) < 0.00001*ref_dist  )
+    {
+
+        std::cout<<" case0 "<<std::endl;
+
+        dt=0.0;
+        c.dfree = deltaFree;
+        c.dfree_t = dot(Pfree-P, c.t) - dot(Qfree-Q, c.t);
+        c.dfree_s = dot(Pfree-P, c.s) - dot(Qfree-Q, c.s);
+
+        return;
+
+    }
+	 
+    if (helper::rabs(delta - deltaFree) > 0.001 * delta)
     {
         dt = delta / (delta - deltaFree);
         if (dt > 0.0 && dt < 1.0  ){
+            std::cout<<" case1 : dt = "<<dt<<std::endl;
             sofa::defaulttype::Vector3 Qt, Pt;
             Qt = Q*(1-dt) + Qfree*dt;
             Pt = P*(1-dt) + Pfree*dt;
@@ -89,6 +107,7 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
         {
             if (deltaFree < 0.0)
             {
+                std::cout<<" case2 "<<std::endl;
                 dt=0.0;
                 c.dfree = deltaFree; // dot(Pfree-P, c.norm) - dot(Qfree-Q, c.norm);
                 //printf("\n dt = %f, c.dfree = %f, deltaFree=%f, delta = %f", dt, c.dfree, deltaFree, delta);
@@ -97,6 +116,7 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
             }
             else
             {
+                std::cout<<" case3 "<<std::endl;
                 dt=1.0;
                 c.dfree = deltaFree;
                 c.dfree_t = 0;
@@ -106,10 +126,11 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
     }
     else
     {
+        std::cout<<" case4 "<<std::endl;
         dt = 0;
         c.dfree = deltaFree;
-        c.dfree_t = 0;
-        c.dfree_s = 0;
+        c.dfree_t = dot(Pfree-P, c.t) - dot(Qfree-Q, c.t);
+        c.dfree_s = dot(Pfree-P, c.s) - dot(Qfree-Q, c.s);
         //printf("\n dt = %f, c.dfree = %f, deltaFree=%f, delta = %f", dt, c.dfree, deltaFree, delta);
     }
 
@@ -136,6 +157,10 @@ void UnilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(DataMatri
 			c.id = contactId++;
 
 			MatrixDerivRowIterator c1_it = c1.writeLine(c.id);
+			/*
+			c1_it.addCol(c.m1, Deriv(1,0,0) * (-c.norm * Deriv(1,0,0)));
+			c1_it.addCol(c.m2, Deriv(1,0,0) * (c.norm * Deriv(1,0,0)));
+			*/
 			c1_it.addCol(c.m1, -c.norm);
 			c1_it.addCol(c.m2, c.norm);
 			
@@ -166,10 +191,18 @@ void UnilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(DataMatri
 
 			c.id = contactId++;
 
+//			std::cout << c.norm << std::endl;
+
+			const Deriv u(1,0,0);
+
+//			std::cout << c.norm.linearProduct(u) << std::endl;
+
 			MatrixDerivRowIterator c1_it = c1.writeLine(c.id);
-			c1_it.addCol(c.m1, -c.norm);
+			c1_it.addCol(c.m1, -c.norm);	
+		//	c1_it.addCol(c.m1, -c.norm.linearProduct(u));
 
 			MatrixDerivRowIterator c2_it = c2.writeLine(c.id);
+		//	c2_it.addCol(c.m2, c.norm.linearProduct(u));
 			c2_it.addCol(c.m2, c.norm);
 			
 			if (c.mu > 0.0)
@@ -210,6 +243,8 @@ void UnilateralInteractionConstraint<DataTypes>::getConstraintViolation(defaultt
 		{
 			v->set(c.id+1,c.dfree_t); // dfree_t & dfree_s are added to v to compute the friction 
 			v->set(c.id+2,c.dfree_s);
+
+            std::cout<<"constraint ["<<i<<"] => dfree = ["<<c.dfree<<" "<<c.dfree_t<<" "<<c.dfree_s<<"]"<<std::endl;
 		}
 	}
 }
@@ -259,8 +294,8 @@ void UnilateralInteractionConstraint<DataTypes>::draw()
 	for (unsigned int i=0; i<contacts.size(); i++)
 	{
 		glLineWidth(1);
-		glColor4f(1,0,0,1);
 		const Contact& c = contacts[i];
+		glColor4f(1,0.5,0,1);
 		helper::gl::glVertexT(c.P);
 		helper::gl::glVertexT(c.Q);
 		glColor4f(1,1,0,1);

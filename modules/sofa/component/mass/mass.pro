@@ -43,4 +43,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(mass-local.cfg) 
+exists(mass-local.cfg): include(mass-local.cfg) 

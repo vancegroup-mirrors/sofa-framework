@@ -79,4 +79,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(interactionforcefield-local.cfg) 
+exists(interactionforcefield-local.cfg): include(interactionforcefield-local.cfg) 

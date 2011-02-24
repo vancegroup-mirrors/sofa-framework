@@ -30,6 +30,7 @@
 #include <sofa/component/component.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <iostream>
+#include <map>
 #include <deque>
 
 
@@ -106,7 +107,6 @@ protected:
 	Real epsilon;
 	bool yetIntegrated;
 
-	std::deque<double> prevForces;
 	
 public:
 

@@ -98,7 +98,8 @@ namespace sofa
         model=ogreObject;
         shaderParameters=parameters;
 
-        const bool hasTexCoords= !(textCoords.empty());       
+        const bool hasTexCoords= !(textCoords.empty());
+        const bool hasNormals = !(normals.empty());
 
         for (unsigned int i=0;i<storage.size();++i)
         {
@@ -107,7 +108,7 @@ namespace sofa
           {
             const int idx=*it;
             model->position(positions[idx][0],positions[idx][1],positions[idx][2]);
-            model->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
+            if(hasNormals) model->normal(normals[idx][0],normals[idx][1],normals[idx][2]);
             if (hasTexCoords) model->textureCoord(textCoords[idx][0],textCoords[idx][1]);
           }
 
@@ -211,9 +212,7 @@ namespace sofa
       bool OgreVisualModel::loadTexture(const std::string& filename)
       {      
         std::string file=filename;
-        sofa::helper::system::DataRepository.findFile(file);
-        Inherit::loadTexture(file);
-        return true;
+        return sofa::helper::system::DataRepository.findFile(file);
       }
 
       void OgreVisualModel::prepareMesh()

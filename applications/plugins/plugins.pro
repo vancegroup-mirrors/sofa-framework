@@ -4,7 +4,6 @@ TEMPLATE = subdirs
 include($${SOFA_DIR}/sofa.cfg)
 CONFIG -= ordered
 
-
 SUBDIRS += PluginExample
 
 contains (DEFINES, SOFA_HAVE_ARTRACK) {
@@ -20,5 +19,4 @@ SUBDIRS += Xitact
 }
 
 
-!include(plugins-local.cfg) {
-}
+exists(plugins-local.cfg): include(plugins-local.cfg)

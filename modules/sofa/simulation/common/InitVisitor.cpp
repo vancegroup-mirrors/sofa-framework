@@ -44,7 +44,7 @@ namespace simulation
 	node->initialize(); 
 #ifdef SOFA_SMP_NUMA 
     	if(node->getProcessor()!=-1){
-	std::cerr<<"set prefered"<<node->getProcessor()/2<<std::endl;
+	std::cerr<<"set preferred cpu "<<node->getProcessor()/2<<std::endl;
 		numa_set_preferred(node->getProcessor()/2);
 		}
 #endif
@@ -53,10 +53,6 @@ namespace simulation
 	for(unsigned int i=0; i<node->object.size(); ++i) 
         {
             node->object[i]->init();
-            if (node->object[i]->canPrefetch())
-            {
-                simulation::getSimulation()->setPrefetching( node->object[i]->canPrefetch() );
-            }
         }
         return RESULT_CONTINUE;
     }

@@ -53,15 +53,18 @@ GenerateBenchSolver<TMatrix,TVector>::GenerateBenchSolver()
 , file_system( initData(&file_system,std::string("file_system"),"file_system","Filename for the system") )
 , dump_constraint( initData(&dump_constraint,false,"dump_constraint","Dump the Jmatrix at the next time step") )
 , file_constraint( initData(&file_constraint,std::string("file_constraint"),"file_constraint","Filename for the J matrix") )
+, f_one_step( initData(&f_one_step,true,"one_step","Generate the matrix only for the next step else erase the file each step") )
 {
 }
 
 template<class TMatrix, class TVector>
 void GenerateBenchSolver<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r) {
     if (dump_system.getValue()) {
-	bool * dump = dump_system.beginEdit();
-	dump[0] = false;
-	dump_system.endEdit();
+	if (f_one_step.getValue()) {
+	  bool * dump = dump_system.beginEdit();
+	  dump[0] = false;
+	  dump_system.endEdit();
+	}
 
 	std::ofstream file(file_system.getValue().c_str(), std::fstream::out | std::fstream::binary);
 
@@ -99,9 +102,11 @@ void GenerateBenchSolver<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& 
 template<class TMatrix, class TVector> template<class RMatrix, class JMatrix>
 bool GenerateBenchSolver<TMatrix,TVector>::addJMInvJt(RMatrix& /*result*/, JMatrix& J, double fact) {
       if (dump_constraint.getValue()) {
-	  bool * dump = dump_constraint.beginEdit();
-	  dump[0] = false;
-	  dump_constraint.endEdit();
+	  if (f_one_step.getValue()) {
+	    bool * dump = dump_constraint.beginEdit();
+	    dump[0] = false;
+	    dump_constraint.endEdit();
+	  }
 
 	  std::ofstream file(file_constraint.getValue().c_str(), std::fstream::out | std::fstream::binary);
 	  //file.seekp(0, std::ios::end);
@@ -158,7 +163,7 @@ bool GenerateBenchSolver<TMatrix,TVector>::addJMInvJt(defaulttype::BaseMatrix* r
       } else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) {
 	return addJMInvJt(*result,*j,fact);
       } else {
-	serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addWarrpedJMInvJt" << sendl;
+	serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
 	return false;
       }
 }

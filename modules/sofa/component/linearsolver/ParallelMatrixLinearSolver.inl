@@ -310,7 +310,7 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(Matrix & M, RMatrix& 
 }
 
 template<class Matrix, class Vector>
-bool ParallelMatrixLinearSolver<Matrix,Vector>::addWarrpedJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {
+bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {
       if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) {
 	return addJMInvJt(*M,*result,*j,fact);
       } else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) {
@@ -331,20 +331,22 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(defaulttype::BaseMatr
 
       if (!Jrows) return false;
   
-      if (useRotation) {
-	  JR.resize(Jrows,Jcols);     
-	
-	  if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) {
-	    Rcur->opMulJ(&JR,j);
-	  } else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) {
-	    Rcur->opMulJ(&JR,j);
-	  } else {
-	    serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
-	    return false;
-	  }
-	  
-	  return addWarrpedJMInvJt(matricesWork[indexwork],result,&JR,fact);
-      } else return addWarrpedJMInvJt(matricesWork[indexwork],result,J,fact);
+//       if (useRotation) {
+// 	  JR.resize(Jrows,Jcols);     
+// 	
+// 	  if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) {
+// 	    Rcur->opMulJ(&JR,j);
+// 	  } else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) {
+// 	    Rcur->opMulJ(&JR,j);
+// 	  } else {
+// 	    serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
+// 	    return false;
+// 	  }
+// 	  
+// 	  return addWarrpedJMInvJt(matricesWork[indexwork],result,&JR,fact);
+//       } else return addWarrpedJMInvJt(matricesWork[indexwork],result,J,fact);
+
+      return addJMInvJt(matricesWork[indexwork],result,J,fact);
 }
 
 } // namespace linearsolver

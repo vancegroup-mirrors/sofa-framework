@@ -14,5 +14,5 @@ SUBDIRS += chainHybrid
 contains (DEFINES, SOFA_HAVE_EIGEN2) {	
 SUBDIRS += houseOfCards
 }
-!include(tutorials-local.cfg) {
-}
+
+exists(tutorials-local.cfg): include(tutorials-local.cfg)

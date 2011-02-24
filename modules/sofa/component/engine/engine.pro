@@ -108,4 +108,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(engine-local.cfg) 
+exists(engine-local.cfg): include(engine-local.cfg) 

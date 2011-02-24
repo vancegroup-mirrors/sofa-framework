@@ -18,7 +18,6 @@ HEADERS += initOdeSolver.h \
            EulerSolver.h \
            EulerImplicitSolver.h \
            NewmarkImplicitSolver.h \
-#           OdeSolverImpl.h \
            RungeKutta2Solver.h \
            RungeKutta4Solver.h \
            StaticSolver.h
@@ -29,7 +28,6 @@ SOURCES += initOdeSolver.cpp \
            EulerSolver.cpp \
            EulerImplicitSolver.cpp \
            NewmarkImplicitSolver.cpp \
-#           OdeSolverImpl.cpp \
            RungeKutta2Solver.cpp \
            RungeKutta4Solver.cpp \
            StaticSolver.cpp
@@ -47,4 +45,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(odesolver-local.cfg) 
+exists(odesolver-local.cfg): include(odesolver-local.cfg) 

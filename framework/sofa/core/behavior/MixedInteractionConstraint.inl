@@ -73,7 +73,7 @@ void MixedInteractionConstraint<DataTypes1, DataTypes2>::getConstraintViolation(
 {
 	if (cParams)
 	{
-		getConstraintViolation(v, *cParams->readX(mstate1), *cParams->readX(mstate2), *cParams->readV(mstate1), *cParams->readV(mstate2), cParams);
+                getConstraintViolation(v, *cParams->readX(mstate1), *cParams->readX(mstate2), *cParams->readV(mstate1), *cParams->readV(mstate2), cParams);
 	}
 }
 

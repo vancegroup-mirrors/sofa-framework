@@ -70,4 +70,4 @@ macx:LIBS += -framework GLUT
 
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
-include(visualmodel-local.cfg)
+exists(visualmodel-local.cfg): include(visualmodel-local.cfg)

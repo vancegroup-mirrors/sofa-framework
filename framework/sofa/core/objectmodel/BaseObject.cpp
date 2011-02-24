@@ -321,9 +321,6 @@ void BaseObject::storeResetState()
 void BaseObject::reset()
 { }
 
-void BaseObject::writeState( std::ostream& )
-{ }
-
 /// Called just before deleting this object
 /// Any object in the tree bellow this object that are to be removed will be removed only after this call,
 /// so any references this object holds should still be valid.
@@ -352,13 +349,6 @@ void BaseObject::handleTopologyChange(core::topology::Topology* t)
 	}
 }
 
-/// Handle state Changes from a given Topology
-void BaseObject::handleStateChange(core::topology::Topology* t)
-{
-	if (t == this->getContext()->getTopology())
-		handleStateChange();
-}
-
 // void BaseObject::setListening( bool b )
 // {
 //     m_isListening = b;
@@ -384,24 +374,6 @@ double BaseObject::getTime() const
 {
 	return getContext()->getTime();
 }
-
-#ifdef WIN32
-__declspec(thread)
-#elif !defined(__APPLE__)
-__thread
-#endif
-	bool tls_prefetching = false;
-
-void BaseObject::setPrefetching(bool b)
-{
-	tls_prefetching = b;
-}
-
-bool BaseObject::isPrefetching()
-{
-	return tls_prefetching;
-}
-
 
 } // namespace objectmodel
 

@@ -27,6 +27,10 @@
 
 #include <sofa/component/linearsolver/MatrixLinearSolver.h>
 
+#ifdef WIN32
+#define usleep(micro) Sleep(micro/1000)
+#endif 
+
 #ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver  
 
 namespace sofa {
@@ -55,13 +59,13 @@ class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public MatrixLine
 	if (useMultiThread.getValue()) serr << "WARINIG : you must activate SOFA_HAVE_BOOST to use parallel version of the solver" << sendl;
     }
     
-    virtual bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {      
-      return addWarrpedJMInvJt(result,J,fact);
-    }
+//     virtual bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {      
+//       return false;
+//     }
 
-    virtual bool addWarrpedJMInvJt(defaulttype::BaseMatrix* /*result*/, defaulttype::BaseMatrix* /*J*/, double /*fact*/) {
-      return false;
-    }
+//     virtual bool addWarrpedJMInvJt(defaulttype::BaseMatrix* /*result*/, defaulttype::BaseMatrix* /*J*/, double /*fact*/) {
+//       return false;
+//     }
 };
 
 }
@@ -74,7 +78,6 @@ class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public MatrixLine
 
 #define SOFA_PARALLEL_UPDATE_LINEAR_SOLVER
 
-#include <sofa/simulation/common/SolverImpl.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/core/behavior/LinearSolver.h>
 #include <sofa/component/component.h>
@@ -191,8 +194,7 @@ public:
 	template<class RMatrix, class JMatrix>
 	bool addJMInvJt(Matrix & M, RMatrix& result, JMatrix& J, double fact);	
 	
-	/// Call the addJMInvJt default method but warp the J matrix before if necessary
-	virtual bool addWarrpedJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
+	virtual bool addJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 	
 protected:
 

@@ -31,4 +31,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(contextobject-local.cfg) 
+exists(contextobject-local.cfg): include(contextobject-local.cfg) 

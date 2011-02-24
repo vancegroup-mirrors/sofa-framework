@@ -187,5 +187,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(collision-local.cfg) 
-                             
+exists(collision-local.cfg): include(collision-local.cfg) 

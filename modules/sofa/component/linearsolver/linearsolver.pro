@@ -41,7 +41,6 @@ HEADERS +=  \
            MatrixExpr.h \
 	   GenerateBenchSolver.h \
 	   GenerateBenchSolver.inl \
-#           MultiCGLinearSolver.h \
            matrix_bloc_traits.h
 
 SOURCES += \ 
@@ -59,8 +58,7 @@ SOURCES += \
 	   GraphScatteredTypes.cpp \
            DefaultMultiMatrixAccessor.cpp \
            MatrixLinearSolver.cpp \
-	   GenerateBenchSolver.cpp \
-#           MultiCGLinearSolver.cpp
+	   GenerateBenchSolver.cpp
 
 
 contains(DEFINES,SOFA_HAVE_MKL){
@@ -145,4 +143,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(linearsolver-local.cfg) 
+exists(linearsolver-local.cfg): include(linearsolver-local.cfg) 

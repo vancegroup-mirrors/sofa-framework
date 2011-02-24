@@ -47,7 +47,8 @@ public:
 
     ~Color();
 
-	static void setHSVA( float h, float s, float v, float a );
+    static void setHSVA( float h, float s, float v, float a );
+    static void getHSVA( float* rgba, float h, float s, float v, float a );
 };
 
 } // namespace gl

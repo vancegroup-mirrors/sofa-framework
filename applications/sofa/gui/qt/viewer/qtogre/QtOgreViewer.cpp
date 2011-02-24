@@ -552,7 +552,7 @@ namespace sofa
             Ogre::String externalWindowHandleParams;
 
 #ifdef SOFA_QT4            
-#if defined(WIN32)
+#if defined(Q_WS_MAC) || defined(WIN32)
             //positive integer for W32 (HWND handle) - According to Ogre Docs
 //            externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(winId()));
             externalWindowHandleParams = Ogre::StringConverter::toString((unsigned int)(this->parentWidget()->winId()));

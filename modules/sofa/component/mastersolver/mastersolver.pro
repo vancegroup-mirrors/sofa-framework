@@ -40,4 +40,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(mastersolver-local.cfg) 
+exists(mastersolver-local.cfg): include(mastersolver-local.cfg) 

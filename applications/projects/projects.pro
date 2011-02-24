@@ -33,5 +33,4 @@ contains(DEFINES, SOFA_HAVE_CHAI3D){
 }
 
 
-!include(projects-local.cfg) {
-}
+exists(projects-local.cfg): include(projects-local.cfg)

@@ -128,8 +128,6 @@ RigidMapping<TIn, TOut>::RigidMapping(core::State< In >* from, core::State< Out 
 	, indexFromEnd(initData(&indexFromEnd, false, "indexFromEnd", "input DOF index starts from the end of input DOFs vector"))
 	, repartition(initData(&repartition, "repartition", "number of dest dofs per entry dof"))
 	, globalToLocalCoords(initData(&globalToLocalCoords, "globalToLocalCoords", "are the output DOFs initially expressed in global coordinates"))
-	, contactDuplicate(initData(&contactDuplicate, false, "contactDuplicate", "if true, this mapping is a copy of an input mapping and is used to gather contact points (ContinuousFrictionContact Response)"))
-	, nameOfInputMap(initData(&nameOfInputMap, "nameOfInputMap", "if contactDuplicate==true, it provides the name of the input mapping"))
 	, matrixJ()
 	, updateJ(false)
 {
@@ -182,35 +180,6 @@ int RigidMapping<TIn, TOut>::addPoint(const Coord& c, int indexFrom)
     return i;
 }
 
-template <class TIn, class TOut>
-void RigidMapping<TIn, TOut>::beginAddContactPoint()
-{
-    this->clear(0);
-    this->toModel->resize(0);
-}
-
-template <class TIn, class TOut>
-int RigidMapping<TIn, TOut>::addContactPointFromInputMapping(const sofa::defaulttype::Vector3& pos, std::vector< std::pair<int, double> > & /*baryCoords*/)
-{
-    const typename In::VecCoord& xfrom = *this->fromModel->getX();
-
-    Coord posContact;
-    for (unsigned int i = 0; i < 3; i++)
-        posContact[i] = (Real) pos[i];
-
-    unsigned int inputIdx = _inputMapping->index.getValue();
-
-    this->index.setValue(inputIdx);
-    this->repartition.setValue(_inputMapping->repartition.getValue());
-    Coord x_local = xfrom[inputIdx].inverseRotate(posContact - xfrom[inputIdx].getCenter());
-
-    this->addPoint(x_local, inputIdx);
-
-    int index= points.getValue().size() -1;
-    this->toModel->resize(index+1);
-
-    return index;
-}
 
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::init()
@@ -270,20 +239,6 @@ void RigidMapping<TIn, TOut>::init()
     }
 
     this->Inherit::init();
-}
-
-template <class TIn, class TOut>
-void RigidMapping<TIn, TOut>::bwdInit()
-{
-    if(contactDuplicate.getValue()==true)
-    {
-        const std::string path = nameOfInputMap.getValue();
-        this->fromModel->getContext()->get(_inputMapping, sofa::core::objectmodel::BaseContext::SearchRoot);
-        if(_inputMapping==NULL)
-            serr<<"WARNING : can not found the input  Mapping"<<sendl;
-        else
-            sout<<"input Mapping named "<<_inputMapping->getName()<<" is found"<<sendl;
-    }
 }
 
 /*

@@ -60,10 +60,6 @@ template class SOFA_COMPONENT_CONSTRAINTSET_API UnilateralInteractionConstraint<
 #endif
 
 
-
-
-
-
 } // namespace constraintset
 
 } // namespace component

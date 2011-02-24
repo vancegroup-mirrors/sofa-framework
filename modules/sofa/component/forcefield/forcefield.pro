@@ -145,4 +145,4 @@ macx : LIBS += -framework GLUT
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
 
-include(forcefield-local.cfg) 
+exists(forcefield-local.cfg): include(forcefield-local.cfg) 

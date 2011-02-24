@@ -18,16 +18,16 @@ namespace sofa{
         VisitorExecuteFunc(core::objectmodel::BaseContext& ctx):ctx(ctx){};
 
         template< class Visitor >
-        void operator()(Visitor* pv, bool prefetch = false ) 
+        void operator()(Visitor* pv)
         {
           prepareVisitor(pv);
-          pv->execute(&ctx, prefetch );
+          pv->execute(&ctx);
         }
         template< class Visitor >
-        void operator()(Visitor v, bool prefetch = false ) 
+        void operator()(Visitor v)
         {
           prepareVisitor(&v);
-          v.execute(&ctx, prefetch );
+          v.execute(&ctx);
         }
       protected:
         void prepareVisitor( sofa::simulation::Visitor* v)
@@ -36,11 +36,6 @@ namespace sofa{
         }
         void prepareVisitor( sofa::simulation::BaseMechanicalVisitor* mv)
         {
-            /*     if (v->writeNodeData())
-            v->setNodeMap(this->getWriteNodeMap());
-        else
-            v->setNodeMap(this->getNodeMap()); 
-            */
           prepareVisitor( (sofa::simulation::Visitor*)mv );
         }
       };

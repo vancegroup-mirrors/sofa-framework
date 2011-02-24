@@ -39,9 +39,10 @@ namespace constraintset
 template<>
 SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection< defaulttype::Rigid3dTypes >::rotateConstraints(bool back)
 {
-	VecCoord& x = *mstate->getX();
-	MatrixDeriv& c = *mstate->getC();
-	VecCoord& x0 = *mstate->getX0();
+	const VecCoord& x = *mstate->getX();
+	const VecCoord& x0 = *mstate->getX0();
+	helper::WriteAccessor<Data<MatrixDeriv> > cData = *mstate->write(core::MatrixDerivId::holonomicC());
+	MatrixDeriv& c = cData.wref();
 
 	// On fait tourner les normales (en les ramenant dans le "pseudo" repere initial)
 
@@ -71,51 +72,11 @@ SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection< defaultty
                  wn_i= q.rotate(n.getVOrientation());
             }
 
-
 			// on passe les normales du repere global au repere local
 			n.getVCenter() = n_i;
 			n.getVOrientation() = wn_i;
 		}
 	}
-
-	//VecCoord& x = *mstate->getX();
-	//VecConst& constraints = *mstate->getC();
-	//VecCoord& x0 = *mstate->getX0();
-
-	//unsigned int numConstraints = constraints.size();
-	////	int sizemax=0;
-	////	int index_const = -1;
-	//// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
-	//for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	//{
-	//	ConstraintIterator itConstraint;
-	//	std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
-	//	for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-	//	{
-	//		unsigned int dof = itConstraint->first;
-	//		Deriv& n = itConstraint->second;
-	//		const int localRowNodeIdx = dof;
-	//		Quat q;
-	//		if (m_restRotations.getValue())
-	//			q = x[localRowNodeIdx].getOrientation() * x0[localRowNodeIdx].getOrientation().inverse();
-	//		else
-	//			q = x[localRowNodeIdx].getOrientation();
-
- //           Vec3d n_i = q.inverseRotate(n.getVCenter());
- //           Vec3d wn_i= q.inverseRotate(n.getVOrientation());
- //           if(back)
- //           {
- //                n_i = q.rotate(n.getVCenter());
- //                wn_i= q.rotate(n.getVOrientation());
- //           }
-
-
-	//		// on passe les normales du repere global au repere local
-	//		n.getVCenter() = n_i;
-	//		n.getVOrientation() = wn_i;
-
-	//	}
-	//}
 }
 
 
@@ -130,9 +91,10 @@ SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection<defaulttyp
 template<>
 SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection<defaulttype::Rigid3dTypes>::rotateResponse(){
 
-	VecDeriv& dx = *mstate->getDx();
-	VecCoord& x = *mstate->getX();
-	VecCoord& x0 = *mstate->getX0();
+	helper::WriteAccessor<Data<VecDeriv> > dxData = *mstate->write(core::VecDerivId::dx());
+	VecDeriv& dx = dxData.wref();
+	const VecCoord& x = *mstate->getX();
+	const VecCoord& x0 = *mstate->getX0();
 	for(unsigned int j = 0; j < dx.size(); j++)
 	{
 		// on passe les deplacements du repere local (au repos) au repere global
@@ -174,9 +136,10 @@ SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection<defaulttyp
 template<>
 SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection< defaulttype::Rigid3fTypes >::rotateConstraints(bool back)
 {
-	VecCoord& x = *mstate->getX();
-	MatrixDeriv& c = *mstate->getC();
-	VecCoord& x0 = *mstate->getX0();
+	const VecCoord& x = *mstate->getX();
+	const VecCoord& x0 = *mstate->getX0();
+	helper::WriteAccessor<Data<MatrixDeriv> > cData = *mstate->write(core::MatrixDerivId::holonomicC());
+	MatrixDeriv& c = cData.wref();
 
 	// On fait tourner les normales (en les ramenant dans le "pseudo" repere initial)
 
@@ -212,48 +175,6 @@ SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection< defaultty
 			n.getVOrientation() = wn_i;
 		}
 	}
-
-
-	//VecCoord& x = *mstate->getX();
-	//VecConst& constraints = *mstate->getC();
-	//VecCoord& x0 = *mstate->getX0();
-
-	//unsigned int numConstraints = constraints.size();
-	////	int sizemax=0;
-	////	int index_const = -1;
-	//// on fait tourner les normales (en les ramenant dans le "pseudo" repere initial) //
-	//for(unsigned int curRowConst = 0; curRowConst < numConstraints; curRowConst++)
-	//{
-	//	ConstraintIterator itConstraint;
-
-	//	std::pair< ConstraintIterator, ConstraintIterator > iter=constraints[curRowConst].data();
-	//	for (itConstraint=iter.first;itConstraint!=iter.second;itConstraint++)
-	//	{
-	//		unsigned int dof = itConstraint->first;
-	//		Deriv& n = itConstraint->second;
-	//		const int localRowNodeIdx = dof;
-	//		Quat q;
-	//		if (m_restRotations.getValue())
-	//			q = x[localRowNodeIdx].getOrientation() * x0[localRowNodeIdx].getOrientation().inverse();
-	//		else
-	//			q = x[localRowNodeIdx].getOrientation();
-
-
-
- //           Vec3d n_i = q.inverseRotate(n.getVCenter());
- //           Vec3d wn_i= q.inverseRotate(n.getVOrientation());
- //           if(back)
- //           {
- //                n_i = q.rotate(n.getVCenter());
- //                wn_i= q.rotate(n.getVOrientation());
- //           }
-
-	//		// on passe les normales du repere global au repere local
-	//		n.getVCenter() = n_i;
-	//		n.getVOrientation() = wn_i;
-
-	//	}
-	//}
 }
 
 
@@ -264,11 +185,12 @@ SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection<defaulttyp
 
 
 template<>
-SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateResponse(){
-
-	VecDeriv& dx = *mstate->getDx();
-	VecCoord& x = *mstate->getX();
-	VecCoord& x0 = *mstate->getX0();
+SOFA_COMPONENT_CONSTRAINTSET_API void PrecomputedConstraintCorrection<defaulttype::Rigid3fTypes>::rotateResponse()
+{
+    helper::WriteAccessor<Data<VecDeriv> > dxData = *mstate->write(core::VecDerivId::dx());
+    VecDeriv& dx = dxData.wref();
+	const VecCoord& x = *mstate->getX();
+	const VecCoord& x0 = *mstate->getX0();
 	for(unsigned int j = 0; j < dx.size(); j++)
 	{
 		// on passe les deplacements du repere local (au repos) au repere global

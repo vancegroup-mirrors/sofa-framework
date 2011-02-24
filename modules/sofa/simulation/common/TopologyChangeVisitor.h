@@ -39,44 +39,48 @@ class SOFA_SIMULATION_COMMON_API TopologyChangeVisitor : public Visitor
 {
 
 public:
-		TopologyChangeVisitor(core::topology::Topology* source)
-		: /*root(NULL),*/ source(source)
-		{}
+    TopologyChangeVisitor(core::topology::Topology* source, const sofa::core::ExecParams* params)
+	: Visitor(params), /*root(NULL),*/ source(source)
+    {}
 
-		virtual ~TopologyChangeVisitor(){}
+    virtual ~TopologyChangeVisitor() {}
 
-                virtual void processTopologyChangeNoCheck(simulation::Node* node, core::objectmodel::BaseObject* obj);
-                virtual void processTopologyChange(simulation::Node* node, core::objectmodel::BaseObject* obj);
+    virtual void processTopologyChangeNoCheck(simulation::Node* node, core::objectmodel::BaseObject* obj);
+    virtual void processTopologyChange(simulation::Node* node, core::objectmodel::BaseObject* obj);
 
-		virtual Result processNodeTopDown(simulation::Node* node);
-		virtual void processNodeBottomUp(simulation::Node* node);
+    virtual Result processNodeTopDown(simulation::Node* node);
+    virtual void processNodeBottomUp(simulation::Node* node);
 
-		/// Specify whether this action can be parallelized.
-		virtual bool isThreadSafe() const { return true; }
+    /// Specify whether this action can be parallelized.
+    virtual bool isThreadSafe() const { return true; }
 
-		/// Return a category name for this action.
-		/// Only used for debugging / profiling purposes
-		virtual const char* getCategoryName() const { return "topologyChange"; }
-                virtual const char* getClassName() const { return "TopologyChangeVisitor"; }
-                virtual std::string getInfos() const { return "Topology:" + source->getName(); }
+    /// Return a category name for this action.
+    /// Only used for debugging / profiling purposes
+    virtual const char* getCategoryName() const { return "topologyChange"; }
+    virtual const char* getClassName() const { return "TopologyChangeVisitor"; }
+    virtual std::string getInfos() const { return "Topology:" + source->getName(); }
 
 protected:
-		/// Flag to know the number of iterations of the overloaded method processNodeTopDown
-		//simulation::Node* root;
+    /// Flag to know the number of iterations of the overloaded method processNodeTopDown
+    //simulation::Node* root;
 
     core::topology::Topology* source;
 };
+
 //Only triggers the handleTopologyChange method
 class SOFA_SIMULATION_COMMON_API HandleTopologyChangeVisitor: public Visitor
 {
-
 public:
-                virtual Result processNodeTopDown(simulation::Node* node);
+    HandleTopologyChangeVisitor(const sofa::core::ExecParams* params)
+	: Visitor(params)
+    {}
 
-                /// Return a category name for this action.
-                /// Only used for debugging / profiling purposes
-                virtual const char* getCategoryName() const { return "topologyChange"; }
-                virtual const char* getClassName() const { return "HandleTopologyChangeVisitor"; }
+    virtual Result processNodeTopDown(simulation::Node* node);
+
+    /// Return a category name for this action.
+    /// Only used for debugging / profiling purposes
+    virtual const char* getCategoryName() const { return "topologyChange"; }
+    virtual const char* getClassName() const { return "HandleTopologyChangeVisitor"; }
 };
 
 

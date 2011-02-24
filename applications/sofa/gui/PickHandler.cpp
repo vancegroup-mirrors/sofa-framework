@@ -65,12 +65,12 @@ namespace sofa
       
       mouseCollision = new MouseCollisionModel;
       mouseCollision->setNbRay(1);
-      mouseCollision->getRay(0).l() = 1000000;
+      mouseCollision->getRay(0).setL(1000000);
       mouseCollision->setName("MouseCollisionModel");
       mouseNode->addObject(mouseCollision);
       
 
-      mouseNode->init();
+      mouseNode->init(sofa::core::ExecParams::defaultInstance());
       mouseContainer->init();
       mouseCollision->init();
 
@@ -253,9 +253,9 @@ namespace sofa
     {
       if (!interactorInUse) return;
 
-      mouseCollision->getRay(0).origin() = position+orientation*interaction->mouseInteractor->getDistanceFromMouse();
-      mouseCollision->getRay(0).direction() = orientation;
-      simulation::MechanicalPropagatePositionVisitor().execute(mouseCollision->getContext());
+      mouseCollision->getRay(0).setOrigin( position+orientation*interaction->mouseInteractor->getDistanceFromMouse() );
+      mouseCollision->getRay(0).setDirection( orientation );
+      simulation::MechanicalPropagatePositionVisitor(0, sofa::core::VecCoordId::position(), true, sofa::core::MechanicalParams::defaultInstance()).execute(mouseCollision->getContext());
 
       if (needToCastRay())
         {          
@@ -420,7 +420,7 @@ namespace sofa
     {
       BodyPicked result;
       // Look for particles hit by this ray
-      simulation::MechanicalPickParticlesVisitor picker(origin, direction, maxLength, 0);
+      simulation::MechanicalPickParticlesVisitor picker(origin, direction, maxLength, 0, sofa::core::ExecParams::defaultInstance() );
       core::objectmodel::BaseNode* rootNode = dynamic_cast<core::objectmodel::BaseNode*>(sofa::simulation::getSimulation()->getContext());
 
       if (rootNode) picker.execute(rootNode->getContext());

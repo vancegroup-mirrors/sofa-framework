@@ -120,7 +120,7 @@ void HexahedronFEMForceField<DataTypes>::init()
 
 	if (_initialPoints.getValue().size() == 0)
 	{
-	  VecCoord& p = *this->mstate->getX();
+	  const VecCoord& p = *this->mstate->getX();
 	  _initialPoints.setValue(p);
 	}
 
@@ -199,14 +199,15 @@ template <class DataTypes>
 
 
 template<class DataTypes>
-void HexahedronFEMForceField<DataTypes>::addForce (VecDeriv& f, const VecCoord& p, const VecDeriv& /*v*/)
+void HexahedronFEMForceField<DataTypes>::addForce (DataVecDeriv& f, const DataVecCoord& p, const DataVecDeriv& /*v*/, const core::MechanicalParams* /*mparams*/)
 {
-	f.resize(p.size());
+	WDataRefVecDeriv _f = f;
+	RDataRefVecCoord _p = p;
+
+	_f.resize(_p.size());
 
 	unsigned int i=0;
 	typename VecElement::const_iterator it;
-
-
 
 	switch(method)
 	{
@@ -214,7 +215,7 @@ void HexahedronFEMForceField<DataTypes>::addForce (VecDeriv& f, const VecCoord& 
 		{
 			for(it=_indexedElements->begin();it!=_indexedElements->end();++it,++i)
 			{
-				accumulateForceLarge( f, p, i, *it );
+				accumulateForceLarge( _f, _p, i, *it );
 			}
 			break;
 		}
@@ -222,7 +223,7 @@ void HexahedronFEMForceField<DataTypes>::addForce (VecDeriv& f, const VecCoord& 
 		{
 			for(it=_indexedElements->begin();it!=_indexedElements->end();++it,++i)
 			{
-				accumulateForcePolar( f, p, i, *it );
+				accumulateForcePolar( _f, _p, i, *it );
 			}
 			break;
 		}
@@ -232,56 +233,51 @@ void HexahedronFEMForceField<DataTypes>::addForce (VecDeriv& f, const VecCoord& 
 }
 
 template<class DataTypes>
-void HexahedronFEMForceField<DataTypes>::addDForce (VecDeriv& v, const VecDeriv& x)
+void HexahedronFEMForceField<DataTypes>::addDForce (DataVecDeriv& v, const DataVecDeriv& x, const core::MechanicalParams *mparams)
 {
-	if( v.size()!=x.size() ) v.resize(x.size());
+	WDataRefVecDeriv _df = v;
+	RDataRefVecCoord _dx = x;
+	Real kFactor = (Real)mparams->kFactor();
 
+	if (_df.size() != _dx.size())
+		_df.resize(_dx.size());
 
-		unsigned int i=0;
-		typename VecElement::const_iterator it;
+	unsigned int i = 0;
+	typename VecElement::const_iterator it;
 
-				for(it = _indexedElements->begin() ; it != _indexedElements->end() ; ++it, ++i)
-				{
+	for(it = _indexedElements->begin() ; it != _indexedElements->end() ; ++it, ++i)
+	{
+		// Transformation R_0_2;
+		// R_0_2.transpose(_rotations[i]);
 
-// 					Transformation R_0_2;
-// 					R_0_2.transpose(_rotations[i]);
+		Displacement X;
 
-					Displacement X;
-
-					for(int w=0;w<8;++w)
-					{
-						Coord x_2;
+		for(int w=0;w<8;++w)
+		{
+			Coord x_2;
 #ifndef SOFA_NEW_HEXA
-						x_2 = _rotations[i] * x[(*it)[_indices[w]]];
+			x_2 = _rotations[i] * _dx[(*it)[_indices[w]]];
 #else
-						x_2 = _rotations[i] * x[(*it)[w]];
+			x_2 = _rotations[i] * _dx[(*it)[w]];
 #endif
-						X[w*3] = x_2[0];
-						X[w*3+1] = x_2[1];
-						X[w*3+2] = x_2[2];
-					}
+			X[w*3] = x_2[0];
+			X[w*3+1] = x_2[1];
+			X[w*3+2] = x_2[2];
+		}
 
-					Displacement F;
-					computeForce( F, X, _elementStiffnesses.getValue()[i] );
+		Displacement F;
+		computeForce( F, X, _elementStiffnesses.getValue()[i] );
 
-					for(int w=0;w<8;++w)
+		for(int w=0;w<8;++w)
+		{
 #ifndef SOFA_NEW_HEXA
-								v[(*it)[_indices[w]]] -= _rotations[i].multTranspose( Deriv( F[w*3],  F[w*3+1],  F[w*3+2]  ) );
+		_df[(*it)[_indices[w]]] -= _rotations[i].multTranspose(Deriv(F[w*3], F[w*3+1], F[w*3+2])) * kFactor;
 #else
-						v[(*it)[w]] -= _rotations[i].multTranspose( Deriv( F[w*3],  F[w*3+1],  F[w*3+2]  ) );
+		_df[(*it)[w]] -= _rotations[i].multTranspose(Deriv(F[w*3], F[w*3+1], F[w*3+2])) * kFactor;
 #endif
-				}
-
+		}
+	}
 }
-
-template <class DataTypes>
-    double HexahedronFEMForceField<DataTypes>::getPotentialEnergy(const VecCoord&) const
-{
-    serr<<"HexahedronFEMForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
-}
-
-
 
 template <class DataTypes>
 const typename HexahedronFEMForceField<DataTypes>::Transformation& HexahedronFEMForceField<DataTypes>::getRotation(const unsigned elemidx)
@@ -533,33 +529,33 @@ void HexahedronFEMForceField<DataTypes>::computeElementStiffness( ElementStiffne
 	K=K1;
 #endif
 
-	  K *= (Real)stiffnessFactor;
-      if (verbose) {
-  sout<<"============================HexahedronFEMForceField<DataTypes>::computeElementStiffness:  Element "<<"   ===STIFNESSMATRIX===="<<sendl;
-  for(int inode=0;inode<8;inode++)
-  {
-	for(int icomp=0;icomp<3;icomp++)
-	{
-		int imatrix=inode*3+icomp;
+	K *= (Real)stiffnessFactor;
 
-		for(int jnode=0;jnode<8;jnode++)
+	if (verbose) {
+		sout<<"============================HexahedronFEMForceField<DataTypes>::computeElementStiffness:  Element "<<"   ===STIFNESSMATRIX===="<<sendl;
+		for(int inode=0;inode<8;inode++)
 		{
-			std::cout<<"| ";
-			for(int jcomp=0;jcomp<3;jcomp++)
+			for(int icomp=0;icomp<3;icomp++)
 			{
-				   int jmatrix=jnode*3+jcomp;
-				sout<<K[imatrix][jmatrix]<<" ";
+				int imatrix=inode*3+icomp;
+
+				for(int jnode=0;jnode<8;jnode++)
+				{
+					std::cout<<"| ";
+					for(int jcomp=0;jcomp<3;jcomp++)
+					{
+						int jmatrix=jnode*3+jcomp;
+						sout<<K[imatrix][jmatrix]<<" ";
+					}
+				}
+				sout<<" |"<<sendl;
 			}
+			sout<<sendl;
 		}
-		sout<<" |"<<sendl;
+
+		//<<K<<std::endl
+		sout<<"==============================================================="<<sendl;
 	}
-	sout<<sendl;
-  }
-
-  //<<K<<std::endl
-  sout<<"==============================================================="<<sendl;
-      }
-
 }
 
 
@@ -916,7 +912,7 @@ void HexahedronFEMForceField<DataTypes>::computeRotationLarge( Transformation &r
 }
 
 template<class DataTypes>
-void HexahedronFEMForceField<DataTypes>::accumulateForceLarge( Vector& f, const Vector & p, int i, const Element&elem )
+void HexahedronFEMForceField<DataTypes>::accumulateForceLarge( WDataRefVecDeriv &f, RDataRefVecCoord &p, int i, const Element&elem )
 {
 	Vec<8,Coord> nodes;
 	for(int w=0;w<8;++w)
@@ -1045,7 +1041,7 @@ void HexahedronFEMForceField<DataTypes>::computeRotationPolar( Transformation &r
 
 
 template<class DataTypes>
-void HexahedronFEMForceField<DataTypes>::accumulateForcePolar( Vector& f, const Vector & p, int i, const Element&elem )
+void HexahedronFEMForceField<DataTypes>::accumulateForcePolar( WDataRefVecDeriv &f, RDataRefVecCoord &p, int i, const Element&elem )
 {
 	Vec<8,Coord> nodes;
 	for(int j=0;j<8;++j)
@@ -1107,7 +1103,7 @@ void HexahedronFEMForceField<DataTypes>::accumulateForcePolar( Vector& f, const 
 
 
 template<class DataTypes>
-    void HexahedronFEMForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset)
+    void HexahedronFEMForceField<DataTypes>::addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams* mparams)
 {
     // Build Matrix Block for this ForceField
     int i,j,n1, n2, e;
@@ -1116,12 +1112,15 @@ template<class DataTypes>
 
     Index node1, node2;
 
+		sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
+
     for(it = _indexedElements->begin(), e=0 ; it != _indexedElements->end() ; ++it,++e)
     {
         const ElementStiffness &Ke = _elementStiffnesses.getValue()[e];
 //         const Transformation& Rt = _rotations[e];
 //         Transformation R; R.transpose(Rt);
 
+				Real kFactor = (Real)mparams->kFactor();
         // find index of node 1
         for (n1=0; n1<8; n1++)
         {
@@ -1143,7 +1142,7 @@ template<class DataTypes>
 									 Coord(Ke[3*n1+2][3*n2+0],Ke[3*n1+2][3*n2+1],Ke[3*n1+2][3*n2+2])) ) * _rotations[e];
                 for(i=0; i<3; i++)
                     for (j=0; j<3; j++)
-                        mat->add(offset+3*node1+i, offset+3*node2+j, - tmp[i][j]*k);
+                        r.matrix->add(r.offset+3*node1+i, r.offset+3*node2+j, - tmp[i][j]*kFactor);
             }
         }
     }
@@ -1306,4 +1305,4 @@ void HexahedronFEMForceField<DataTypes>::draw()
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELD_INL

@@ -16,6 +16,8 @@ DEFINES += SOFA_BUILD_COMPONENT_ENGINE
 HEADERS += initEngine.h \
            BoxROI.h \
            BoxROI.inl \
+					Distances.h \
+					Distances.inl \
            PlaneROI.h \
            PlaneROI.inl \
 	   SphereROI.h \
@@ -65,6 +67,7 @@ HEADERS += initEngine.h \
 
 SOURCES += initEngine.cpp \
            BoxROI.cpp \
+					Distances.cpp \
            PlaneROI.cpp \
 	   SphereROI.cpp \
            ExtrudeSurface.cpp \

@@ -5,5 +5,5 @@ include($${SOFA_DIR}/sofa.cfg)
 
 SUBDIRS += sofa
 SUBDIRS += projects
-SUBDIRS += tutorials
+#SUBDIRS += tutorials
 SUBDIRS += plugins

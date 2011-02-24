@@ -49,23 +49,19 @@ using namespace sofa::core::topology;
 template< class DataTypes>
 bool FixedTranslationConstraint<DataTypes>::FCTestNewPointFunction(int /*nbPoints*/, void* param, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& )
 {
-	FixedTranslationConstraint<DataTypes> *fc= (FixedTranslationConstraint<DataTypes> *)param;
-	if (fc) {
-		return true;
-	}else{
-		return false;
-	}
+	FixedTranslationConstraint<DataTypes> *fc = (FixedTranslationConstraint<DataTypes> *) param;
+    return fc != 0;
 }
 
 // Define RemovalFunction
 template< class DataTypes>
 void FixedTranslationConstraint<DataTypes>::FCRemovalFunction(int pointIndex, void* param)
 {
-	FixedTranslationConstraint<DataTypes> *fc= (FixedTranslationConstraint<DataTypes> *)param;
-	if (fc) {
-		fc->removeIndex((unsigned int) pointIndex);
-	}
-	return;
+	FixedTranslationConstraint<DataTypes> *fc = (FixedTranslationConstraint<DataTypes> *) param;
+    if (fc)
+    {
+        fc->removeIndex((unsigned int) pointIndex);
+    }
 }
 
 template< class DataTypes>
@@ -75,9 +71,9 @@ FixedTranslationConstraint<DataTypes>::FixedTranslationConstraint()
 , f_fixAll( BaseObject::initData(&f_fixAll,false,"fixAll","filter all the DOF to implement a fixed object") )
 , _drawSize( BaseObject::initData(&_drawSize,0.0,"drawSize","0 -> point based rendering, >0 -> radius of spheres") )
 {
-  // default to indice 0
-  f_indices.beginEdit()->push_back(0);
-  f_indices.endEdit();
+    // default to indice 0
+    f_indices.beginEdit()->push_back(0);
+    f_indices.endEdit();
 }
 
 // Handle topological changes
@@ -88,7 +84,6 @@ void FixedTranslationConstraint<DataTypes>::handleTopologyChange()
 	std::list<const TopologyChange *>::const_iterator itEnd=topology->endChange();
 
 	f_indices.beginEdit()->handleTopologyEvents(itBegin,itEnd,this->getMState()->getSize());
-
 }
 
 template <class DataTypes>
@@ -100,22 +95,22 @@ FixedTranslationConstraint<DataTypes>::~FixedTranslationConstraint()
 template <class DataTypes>                                                               
 void FixedTranslationConstraint<DataTypes>::clearIndices()                                 
 {
-  f_indices.beginEdit()->clear();
-  f_indices.endEdit();                                                                 
+    f_indices.beginEdit()->clear();
+    f_indices.endEdit();
 }   
 
 template <class DataTypes>                                                               
 void FixedTranslationConstraint<DataTypes>::addIndex(unsigned int index)                   
 {
-  f_indices.beginEdit()->push_back(index);
-  f_indices.endEdit();                                                                 
+    f_indices.beginEdit()->push_back(index);
+    f_indices.endEdit();
 }   
 
 template <class DataTypes>                                                               
 void FixedTranslationConstraint<DataTypes>::removeIndex(unsigned int index)                
 {
-  removeValue(*f_indices.beginEdit(),index);
-  f_indices.endEdit();                                                                 
+    removeValue(*f_indices.beginEdit(),index);
+    f_indices.endEdit();
 } 
 
 // -- Constraint interface
@@ -124,50 +119,74 @@ void FixedTranslationConstraint<DataTypes>::init()
 {
   this->core::behavior::ProjectiveConstraintSet<DataTypes>::init();
 
-  topology = this->getContext()->getMeshTopology();
+    topology = this->getContext()->getMeshTopology();
 
-	// Initialize functions and parameters
-	topology::PointSubset my_subset = f_indices.getValue();
+    // Initialize functions and parameters
+    topology::PointSubset my_subset = f_indices.getValue();
 
-	my_subset.setTestFunction(FCTestNewPointFunction);
-	my_subset.setRemovalFunction(FCRemovalFunction);
+    my_subset.setTestFunction(FCTestNewPointFunction);
+    my_subset.setRemovalFunction(FCRemovalFunction);
 
-	my_subset.setTestParameter( (void *) this );
-	my_subset.setRemovalParameter( (void *) this );
+    my_subset.setTestParameter((void *) this);
+    my_subset.setRemovalParameter((void *) this);
 
-}// FixedTranslationConstraint::init
+}
 
 
 template <class DataTypes> template <class DataDeriv>
-void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res)
+void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res, const core::MechanicalParams* /*mparams*/)
 {
-  const SetIndexArray & indices = f_indices.getValue().getArray();
+    const SetIndexArray & indices = f_indices.getValue().getArray();
 
-  if (f_fixAll.getValue() == true) 
-  {
-    for( int i=0; i<topology->getNbPoints(); ++i )
+    if (f_fixAll.getValue() == true)
     {
-      res[i].getVCenter() -= res[i].getVCenter();
+        for (int i = 0; i < topology->getNbPoints(); ++i)
+        {
+            res[i].getVCenter() -= res[i].getVCenter();
+        }
     }
-  }
-  else
-  {
-    for(SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    else
     {
-      res[*it].getVCenter() -= res[*it].getVCenter();
+        for (SetIndexArray::const_iterator it = indices.begin(); it
+            != indices.end(); ++it)
+        {
+            res[*it].getVCenter() -= res[*it].getVCenter();
+        }
     }
-  }
-}// FixedTranslationConstraint::projectResponse
-
-template <class DataTypes>
-void FixedTranslationConstraint<DataTypes>::projectResponse(VecDeriv& res)
-{
-  projectResponseT(res);
 }
+
 template <class DataTypes>
-void FixedTranslationConstraint<DataTypes>::projectResponse(MatrixDerivRowType& res)
+void FixedTranslationConstraint<DataTypes>::projectResponse(DataVecDeriv& resData, const core::MechanicalParams* mparams)
 {
-  projectResponseT(res);
+    helper::WriteAccessor<DataVecDeriv> res = resData;
+    projectResponseT(res.wref(), mparams);
+}
+
+template <class DataTypes>
+void FixedTranslationConstraint<DataTypes>::projectVelocity(DataVecDeriv& /*vData*/, const core::MechanicalParams* /*mparams*/)
+{
+
+}
+
+template <class DataTypes>
+void FixedTranslationConstraint<DataTypes>::projectPosition(DataVecCoord& /*xData*/, const core::MechanicalParams* /*mparams*/)
+{
+
+}
+
+template <class DataTypes>
+void FixedTranslationConstraint<DataTypes>::projectJacobianMatrix(DataMatrixDeriv& cData, const core::MechanicalParams* mparams)
+{
+    helper::WriteAccessor<DataMatrixDeriv> c = cData;
+
+    MatrixDerivRowIterator rowIt = c->begin();
+    MatrixDerivRowIterator rowItEnd = c->end();
+
+    while (rowIt != rowItEnd)
+    {
+        projectResponseT<MatrixDerivRowType>(rowIt.row(), mparams);
+        ++rowIt;
+    }
 }
 
 
@@ -175,29 +194,29 @@ template <class DataTypes>
 void FixedTranslationConstraint<DataTypes>::draw()
 {
 	const SetIndexArray & indices = f_indices.getValue().getArray();
-	if (!this->getContext()->getShowBehaviorModels()) return;
-	VecCoord& x = *this->mstate->getX();
-	glDisable (GL_LIGHTING);
-	glPointSize(10);
-	glColor4f (1,0.5,0.5,1);
-	glBegin (GL_POINTS);
-	if( f_fixAll.getValue()==true )
-  {
-	  for (unsigned i=0; i<x.size(); i++ )
+    if (!this->getContext()->getShowBehaviorModels())
+        return;
+    const VecCoord& x = *this->mstate->getX();
+    glDisable(GL_LIGHTING);
+    glPointSize(10);
+    glColor4f(1, 0.5, 0.5, 1);
+    glBegin(GL_POINTS);
+    if (f_fixAll.getValue() == true)
     {
-	    gl::glVertexT(x[i].getCenter());
+        for (unsigned i = 0; i < x.size(); i++)
+        {
+            gl::glVertexT(x[i].getCenter());
+        }
     }
-  }
-	else
-  {
-	  for (SetIndex::const_iterator it = indices.begin(); it != indices.end(); ++it)
+    else
     {
-		  gl::glVertexT(x[*it].getCenter());
+        for (SetIndex::const_iterator it = indices.begin(); it != indices.end(); ++it)
+        {
+            gl::glVertexT(x[*it].getCenter());
+        }
     }
-  }
-	glEnd();
-
-}// FixedTranslationConstraint::draw
+    glEnd();
+}
 
 
 } // namespace constraint

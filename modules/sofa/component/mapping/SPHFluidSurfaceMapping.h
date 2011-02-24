@@ -30,11 +30,12 @@
 #endif
 
 #include <sofa/component/forcefield/SPHFluidForceField.h>
-#include <sofa/core/Mapping.h>
-#include <sofa/core/behavior/MechanicalState.h>
-#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/component/topology/MeshTopology.h>
-#include <sofa/helper/MarchingCubeUtility.h> // for marching cube tables
+
+#include <sofa/core/Mapping.h>
+
+#include <sofa/defaulttype/VecTypes.h>
+
 #include <vector>
 
 namespace sofa
@@ -47,6 +48,7 @@ namespace mapping
 {
 
 using namespace sofa::component::container;
+
 
 template <class InDataTypes, class OutDataTypes>
 class SPHFluidSurfaceMappingGridTypes : public SpatialGridTypes<InDataTypes>
@@ -98,6 +100,7 @@ public:
     enum { GRIDDIM_LOG2 = 3 };
 };
 
+
 template <class In, class Out>
 class SPHFluidSurfaceMapping : public core::Mapping<In, Out>, public topology::MeshTopology
 {
@@ -116,7 +119,7 @@ public:
     typedef typename In::Deriv InDeriv;
     typedef typename InCoord::value_type InReal;
 
-    SPHFluidSurfaceMapping(In* from, Out* to)
+	SPHFluidSurfaceMapping(core::State<In>* from, core::State<Out>* to)
       : Inherit(from, to),
       mStep(initData(&mStep,0.5,"step","Step")),
       mRadius(initData(&mRadius,2.0,"radius","Radius")),
@@ -157,11 +160,11 @@ public:
 
     void init();
 
-    void apply( OutVecCoord& out, const InVecCoord& in );
+    void apply(Data<OutVecCoord>& dOut, const Data<InVecCoord>& dIn, const core::MechanicalParams *mparams);
 
-    void applyJ( OutVecDeriv& out, const InVecDeriv& in );
+	void applyJ(Data<OutVecDeriv>& dOut, const Data<InVecDeriv>& dIn, const core::MechanicalParams *mparams);
 
-    //void applyJT( InVecDeriv& out, const OutVecDeriv& in );
+    //void applyJT(Data<InVecDeriv>& dOut, const Data<OutVecDeriv>& dIn, const core::MechanicalParams *mparams);
 
     void draw();
 
@@ -172,12 +175,12 @@ protected:
     Data< double > mIsoValue;
 
 
-    typedef forcefield::SPHFluidForceField<typename In::DataTypes> SPHForceField;
+    typedef forcefield::SPHFluidForceField<In> SPHForceField;
     SPHForceField* sph;
 
     // Marching cube data
 
-	typedef SPHFluidSurfaceMappingGridTypes<typename In::DataTypes, typename Out::DataTypes> GridTypes;
+	typedef SPHFluidSurfaceMappingGridTypes<In, Out> GridTypes;
 
     typedef SpatialGrid<GridTypes> Grid;
     typedef typename Grid::Cell Cell;
@@ -199,22 +202,22 @@ protected:
 
     OutReal getValue(const SubGrid* g, int cx, int cy, int cz)
     {
-	if (cx < 0) { g = g->neighbors[0]; cx+=GRIDDIM; } else if (cx >= GRIDDIM) { g = g->neighbors[1]; cx-=GRIDDIM; }
-	if (cy < 0) { g = g->neighbors[2]; cy+=GRIDDIM; } else if (cy >= GRIDDIM) { g = g->neighbors[3]; cy-=GRIDDIM; }
-	if (cz < 0) { g = g->neighbors[4]; cz+=GRIDDIM; } else if (cz >= GRIDDIM) { g = g->neighbors[5]; cz-=GRIDDIM; }
-	return g->cell[(cz*GRIDDIM+cy)*GRIDDIM+cx].data.val;
+		if (cx < 0) { g = g->neighbors[0]; cx+=GRIDDIM; } else if (cx >= GRIDDIM) { g = g->neighbors[1]; cx-=GRIDDIM; }
+		if (cy < 0) { g = g->neighbors[2]; cy+=GRIDDIM; } else if (cy >= GRIDDIM) { g = g->neighbors[3]; cy-=GRIDDIM; }
+		if (cz < 0) { g = g->neighbors[4]; cz+=GRIDDIM; } else if (cz >= GRIDDIM) { g = g->neighbors[5]; cz-=GRIDDIM; }
+		return g->cell[(cz*GRIDDIM+cy)*GRIDDIM+cx].data.val;
     }
 
     OutDeriv calcGrad(const GridEntry& g, int x, int y, int z)
     {
-	x-=g.first[0]*GRIDDIM;
-	y-=g.first[1]*GRIDDIM;
-	z-=g.first[2]*GRIDDIM;
-	OutDeriv n;
-	n[0] = getValue(g.second, x+1,y,z) - getValue(g.second, x-1,y,z);
-	n[1] = getValue(g.second, x,y+1,z) - getValue(g.second, x,y-1,z);
-	n[2] = getValue(g.second, x,y,z+1) - getValue(g.second, x,y,z-1);
-	return n;
+		x-=g.first[0]*GRIDDIM;
+		y-=g.first[1]*GRIDDIM;
+		z-=g.first[2]*GRIDDIM;
+		OutDeriv n;
+		n[0] = getValue(g.second, x+1,y,z) - getValue(g.second, x-1,y,z);
+		n[1] = getValue(g.second, x,y+1,z) - getValue(g.second, x,y-1,z);
+		n[2] = getValue(g.second, x,y,z+1) - getValue(g.second, x,y,z-1);
+		return n;
     }
 
     template<int C>
@@ -222,19 +225,19 @@ protected:
     {
         int p = out.size();
         OutCoord pos = OutCoord((OutReal)x,(OutReal)y,(OutReal)z);
-	OutReal interp = (iso-v0)/(v1-v0);
-        pos[C] += interp;
-        out.resize(p+1);
-        out[p] = pos * mStep.getValue();
-	if (normals)
-	{
-	    normals->resize(p+1);
-	    OutDeriv& n = (*normals)[p];
-	    OutDeriv n0 = calcGrad(g, x,y,z);
-	    OutDeriv n1 = calcGrad(g, (C==0)?x+1:x,(C==1)?y+1:y,(C==2)?z+1:z);
-	    n = n0 + (n1-n0) * interp;
-	    n.normalize();
-	}
+		OutReal interp = (iso-v0)/(v1-v0);
+		pos[C] += interp;
+		out.resize(p+1);
+		out[p] = pos * mStep.getValue();
+		if (normals)
+		{
+			normals->resize(p+1);
+			OutDeriv& n = (*normals)[p];
+			OutDeriv n0 = calcGrad(g, x,y,z);
+			OutDeriv n1 = calcGrad(g, (C==0)?x+1:x,(C==1)?y+1:y,(C==2)?z+1:z);
+			n = n0 + (n1-n0) * interp;
+			n.normalize();
+		}
         return p;
     }
 
@@ -258,6 +261,31 @@ protected:
     }
 
 };
+
+
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+using sofa::defaulttype::ExtVec3fTypes;
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_SPHFLUIDSURFACEMAPPING_CPP)  //// ATTENTION PB COMPIL WIN3Z
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_MAPPING_API SPHFluidSurfaceMapping< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API SPHFluidSurfaceMapping< Vec3dTypes, ExtVec3fTypes >;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_MAPPING_API SPHFluidSurfaceMapping< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API SPHFluidSurfaceMapping< Vec3fTypes, ExtVec3fTypes >;
+#endif
+
+#ifndef SOFA_FLOAT
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_MAPPING_API SPHFluidSurfaceMapping< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API SPHFluidSurfaceMapping< Vec3fTypes, Vec3dTypes >;
+#endif
+#endif
+#endif
+
 
 } // namespace mapping
 

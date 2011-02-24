@@ -51,97 +51,97 @@ template<class DataTypes>
 class PlaneForceField : public core::behavior::ForceField<DataTypes>
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(PlaneForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
-	typedef core::behavior::ForceField<DataTypes> Inherit;
-	typedef typename DataTypes::VecCoord VecCoord;
-	typedef typename DataTypes::VecDeriv VecDeriv;
-	typedef typename DataTypes::Coord Coord;
-	typedef typename DataTypes::Deriv Deriv;
-	typedef typename Coord::value_type Real;
+    SOFA_CLASS(SOFA_TEMPLATE(PlaneForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+    typedef core::behavior::ForceField<DataTypes> Inherit;
+    typedef typename DataTypes::VecCoord VecCoord;
+    typedef typename DataTypes::VecDeriv VecDeriv;
+    typedef typename DataTypes::Coord Coord;
+    typedef typename DataTypes::Deriv Deriv;
+    typedef typename Coord::value_type Real;
+    typedef core::objectmodel::Data<VecCoord> DataVecCoord;
+    typedef core::objectmodel::Data<VecDeriv> DataVecDeriv;
 
 protected:
-	sofa::helper::vector<unsigned int> contacts;
+    sofa::helper::vector<unsigned int> contacts;
 
-	PlaneForceFieldInternalData<DataTypes> data;
+    PlaneForceFieldInternalData<DataTypes> data;
 
 public:
 
-	Data<Deriv> planeNormal;
-	Data<Real> planeD;
-	Data<Real> stiffness;
-	Data<Real> damping;
-	Data<defaulttype::Vec3f> color;
-	Data<bool> bDraw;
-	Data<Real> drawSize;
+    Data<Deriv> planeNormal;
+    Data<Real> planeD;
+    Data<Real> stiffness;
+    Data<Real> damping;
+    Data<defaulttype::Vec3f> color;
+    Data<bool> bDraw;
+    Data<Real> drawSize;
 
     /// optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)
     Data< defaulttype::Vec<2,int> > localRange;
 
-	PlaneForceField()
-	: planeNormal(initData(&planeNormal, "normal", "plane normal"))
-	, planeD(initData(&planeD, (Real)0, "d", "plane d coef"))
-	, stiffness(initData(&stiffness, (Real)500, "stiffness", "force stiffness"))
-	, damping(initData(&damping, (Real)5, "damping", "force damping"))
-	, color(initData(&color, defaulttype::Vec3f(0.0f,.5f,.2f), "color", "plane color"))
-	, bDraw(initData(&bDraw, false, "draw", "enable/disable drawing of plane"))
-	, drawSize(initData(&drawSize, (Real)10.0f, "drawSize", "plane display size if draw is enabled"))
-	, localRange( initData(&localRange, defaulttype::Vec<2,int>(-1,-1), "localRange", "optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)" ) )
-	{
-	   Deriv n;
-	   DataTypes::set(n, 0, 1, 0);
-	   planeNormal.setValue(n);
-	}
+    PlaneForceField()
+        : planeNormal(initData(&planeNormal, "normal", "plane normal"))
+        , planeD(initData(&planeD, (Real)0, "d", "plane d coef"))
+        , stiffness(initData(&stiffness, (Real)500, "stiffness", "force stiffness"))
+        , damping(initData(&damping, (Real)5, "damping", "force damping"))
+        , color(initData(&color, defaulttype::Vec3f(0.0f,.5f,.2f), "color", "plane color"))
+        , bDraw(initData(&bDraw, false, "draw", "enable/disable drawing of plane"))
+        , drawSize(initData(&drawSize, (Real)10.0f, "drawSize", "plane display size if draw is enabled"))
+        , localRange( initData(&localRange, defaulttype::Vec<2,int>(-1,-1), "localRange", "optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)" ) )
+    {
+        Deriv n;
+        DataTypes::set(n, 0, 1, 0);
+        planeNormal.setValue(n);
+    }
 
     virtual bool canPrefetch() const { return false; }
 
-	void setPlane(const Deriv& normal, Real d)
-	{
-		Real n = normal.norm();
-		planeNormal.setValue( normal / n);
-		planeD.setValue( d / n );
-	}
+    void setPlane(const Deriv& normal, Real d)
+    {
+        Real n = normal.norm();
+        planeNormal.setValue( normal / n);
+        planeD.setValue( d / n );
+    }
 
-	void setMState(  core::behavior::MechanicalState<DataTypes>* mstate ){ this->mstate = mstate; }
+    void setMState(  core::behavior::MechanicalState<DataTypes>* mstate ){ this->mstate = mstate; }
 
-	void setStiffness(Real stiff)
-	{
-		stiffness.setValue( stiff );
-	}
+    void setStiffness(Real stiff)
+    {
+        stiffness.setValue( stiff );
+    }
 
-	void setDamping(Real damp)
-	{
-		damping.setValue( damp );
-	}
+    void setDamping(Real damp)
+    {
+        damping.setValue( damp );
+    }
 
-	void rotate( Deriv axe, Real angle ); // around the origin (0,0,0)
+    void rotate( Deriv axe, Real angle ); // around the origin (0,0,0)
 
-	virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
 
-    virtual void addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
+    virtual void addForce(DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v, const core::MechanicalParams* mparams);
+    virtual void addDForce(DataVecDeriv& df, const DataVecDeriv& dx, const core::MechanicalParams* mparams);
 
-    virtual double getPotentialEnergy(const VecCoord& x) const;
+    virtual void updateStiffness( const VecCoord& x );
 
-	virtual void updateStiffness( const VecCoord& x );
+    virtual void addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams* mparams );
 
-    virtual void addKToMatrix(sofa::defaulttype::BaseMatrix *, SReal, unsigned int &);
-
-	void draw();
-	void drawPlane(float size=0.0f);
-	bool addBBox(double* minBBox, double* maxBBox);
+    void draw();
+    void drawPlane(float size=0.0f);
+    bool addBBox(double* minBBox, double* maxBBox);
 
 };
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_INTERACTIONFORCEFIELD_PLANEFORCEFIELD_CPP)
 #pragma warning(disable : 4231)
 #ifndef SOFA_FLOAT
-extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec3dTypes>;
-extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec2dTypes>;
-extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec1dTypes>;
+    extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec3dTypes>;
+    extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec2dTypes>;
+    extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec1dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec3fTypes>;
-extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec2fTypes>;
-extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec1fTypes>;
+    extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec3fTypes>;
+    extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec2fTypes>;
+    extern template class SOFA_COMPONENT_FORCEFIELD_API PlaneForceField<defaulttype::Vec1fTypes>;
 #endif
 #endif
 

@@ -175,11 +175,11 @@ namespace sofa
         node->setShowNormals(flags->getFlag(simulation::Node::NORMALS));
 
 
-        node->execute< sofa::simulation::UpdateVisualContextVisitor >();
+        node->execute< sofa::simulation::UpdateVisualContextVisitor >(sofa::core::ExecParams::defaultInstance());
         if (!node->nodeInVisualGraph.empty())
         {
           node->nodeInVisualGraph->copyContext((core::objectmodel::Context&) *(node->getContext()));
-          node->nodeInVisualGraph->execute< sofa::simulation::UpdateVisualContextVisitor >();
+          node->nodeInVisualGraph->execute< sofa::simulation::UpdateVisualContextVisitor >(sofa::core::ExecParams::defaultInstance());
         }
       }
       

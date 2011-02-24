@@ -75,11 +75,11 @@ namespace sofa
 			mouseMapping = new IdentityMechanicalMapping(mecha, static_cast<MouseContainer*>(mouseInSofa));
 			nodeRayPick->addObject(mouseMapping);
 
-			mouseMapping->setMechanical(false);
+			mouseMapping->setNonMechanical();
 
-                        mouseInSofa->init();
-                        mouseInteractor->init();                        
-                        mouseMapping->init();
+            mouseInSofa->init();
+            mouseInteractor->init();                        
+            mouseMapping->init();
 
 			parentNode->removeChild(nodeRayPick);
 		}

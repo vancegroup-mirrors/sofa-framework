@@ -25,45 +25,43 @@
 #define SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELDANDMASS_CPP
 #include <sofa/component/forcefield/HexahedronFEMForceFieldAndMass.inl>
 #include <sofa/defaulttype/VecTypes.h>
-#include <sofa/core/behavior/ForceField.inl>
-#include <sofa/core/behavior/Mass.inl>
 #include <sofa/core/ObjectFactory.h>
 
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace forcefield
-    {
+namespace forcefield
+{
 
-      using namespace sofa::defaulttype;
+using namespace sofa::defaulttype;
 
 
-      SOFA_DECL_CLASS(HexahedronFEMForceFieldAndMass)
+SOFA_DECL_CLASS(HexahedronFEMForceFieldAndMass)
 
-      // Register in the Factory
-      int HexahedronFEMForceFieldAndMassClass = core::RegisterObject("Hexahedral finite elements with mass")
+// Register in the Factory
+int HexahedronFEMForceFieldAndMassClass = core::RegisterObject("Hexahedral finite elements with mass")
 #ifndef SOFA_FLOAT
-	.add< HexahedronFEMForceFieldAndMass<Vec3dTypes> >()
+.add< HexahedronFEMForceFieldAndMass<Vec3dTypes> >()
 #endif
 #ifndef SOFA_DOUBLE
-	.add< HexahedronFEMForceFieldAndMass<Vec3fTypes> >()
+.add< HexahedronFEMForceFieldAndMass<Vec3fTypes> >()
 #endif
-	;
+;
 
 #ifndef SOFA_FLOAT
-      template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass<Vec3dTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass<Vec3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-      template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass<Vec3fTypes>;
+template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMass<Vec3fTypes>;
 #endif
 
 
-    } // namespace forcefield
+} // namespace forcefield
 
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

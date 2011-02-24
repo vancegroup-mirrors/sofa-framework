@@ -37,10 +37,11 @@
 
 #ifdef SOFA_SMP
 #include <sofa/simulation/tree/SMPSimulation.h>
-#else
- #include <sofa/simulation/tree/TreeSimulation.h>
 #endif
+#include <sofa/simulation/tree/TreeSimulation.h>
 #include <sofa/component/init.h>
+#include <sofa/component/misc/ReadState.h>
+#include <sofa/component/misc/CompareState.h>
 #include <sofa/helper/Factory.h>
 #include <sofa/helper/BackTrace.h>
 #include <sofa/helper/system/FileRepository.h>
@@ -99,12 +100,12 @@ void loadVerificationData(std::string& directory, std::string& filename, sofa::s
 	std::cout << "loadVerificationData " << refFile << std::endl;
 
 
-	sofa::component::misc::CompareStateCreator compareVisitor;
+	sofa::component::misc::CompareStateCreator compareVisitor(sofa::core::ExecParams::defaultInstance());
 	compareVisitor.setCreateInMapping(true);
 	compareVisitor.setSceneName(refFile);
 	compareVisitor.execute(node);
 
-	sofa::component::misc::ReadStateActivator v_read(true);
+	sofa::component::misc::ReadStateActivator v_read(true, sofa::core::ExecParams::defaultInstance());
 	v_read.execute(node);
 }
 
@@ -115,7 +116,7 @@ int main(int argc, char** argv)
 {
 	//std::cout << "Using " << sofa::helper::system::atomic<int>::getImplName()<<" atomics." << std::endl;
 
-  sofa::helper::BackTrace::autodump();
+	sofa::helper::BackTrace::autodump();
 
 
 	std::string fileName ;
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
 	bool        printFactory = false;
 	bool        loadRecent = false;
 	bool        temporaryFile = false;
-	int nbIterations=0;
+	int			nbIterations = 0;
 
 	std::string gui = "";
 	std::string verif = "";
@@ -160,39 +161,43 @@ int main(int argc, char** argv)
 	.option(&affinity,'f',"affinity","Enable aFfinity base Work Stealing")
 #endif
 	(argc,argv);
+
 #ifdef SOFA_SMP
-int ac=0;
-char **av=NULL;
+	int ac = 0;
+	char **av = NULL;
 
-Util::KaapiComponentManager::prop["util.globalid"]="0";
-Util::KaapiComponentManager::prop["sched.strategy"]="I";
-if(!disableStealing)
-Util::KaapiComponentManager::prop["sched.stealing"]="true";
-if(nProcs!="")
-	Util::KaapiComponentManager::prop["community.thread.poolsize"]=nProcs;
-if(affinity){
-  Util::KaapiComponentManager::prop["sched.stealing"]="true";
-	Util::KaapiComponentManager::prop["sched.affinity"]="true";
-}
+	Util::KaapiComponentManager::prop["util.globalid"]="0";
+	Util::KaapiComponentManager::prop["sched.strategy"]="I";
+	if(!disableStealing)
+		Util::KaapiComponentManager::prop["sched.stealing"]="true";
+	if(nProcs!="")
+		Util::KaapiComponentManager::prop["community.thread.poolsize"]=nProcs;
+	if(affinity)
+	{
+		Util::KaapiComponentManager::prop["sched.stealing"]="true";
+		Util::KaapiComponentManager::prop["sched.affinity"]="true";
+	}
 
-        a1::Community com = a1::System::join_community( ac, av);
+	a1::Community com = a1::System::join_community( ac, av);
 #endif /* SOFA_SMP */
 
 	if(gui!="batch") glutInit(&argc,argv);
 #ifdef SOFA_GPU_CUDA
-        sofa::gpu::cuda::mycudaInit();
+	sofa::gpu::cuda::mycudaInit();
 #endif
 
 #ifdef SOFA_SMP
-        if (simulationType == "smp")  sofa::simulation::setSimulation(new sofa::simulation::tree::SMPSimulation());
-        else          
+	if (simulationType == "smp")
+		sofa::simulation::setSimulation(new sofa::simulation::tree::SMPSimulation());
+	else          
 #endif
-                                      sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
+	sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
           
 	sofa::component::init();
 	sofa::simulation::xml::initXml();
 	
-	if (!files.empty()) fileName = files[0];
+	if (!files.empty())
+		fileName = files[0];
 
 	for (unsigned int i=0;i<plugins.size();i++)
 		loadPlugin(plugins[i].c_str());
@@ -205,49 +210,52 @@ if(affinity){
 		sofa::gui::GUIManager::AddGUIOption(oss.str().c_str());
 	}
 
-	if (int err=sofa::gui::GUIManager::Init(argv[0],gui.c_str()))
+	if (int err = sofa::gui::GUIManager::Init(argv[0],gui.c_str()))
 		return err;
 
-        if (fileName.empty())
-          {
-            if (loadRecent) // try to reload the latest scene
-              {
-                std::string scenes = "config/Sofa.ini"; 
-                scenes = sofa::helper::system::DataRepository.getFile( scenes );
-                std::ifstream mrulist(scenes.c_str());
-                std::getline(mrulist,fileName);
-                mrulist.close();
-              }
-            else
-              fileName = "Demos/liver.scn";
+	if (fileName.empty())
+	{
+		if (loadRecent) // try to reload the latest scene
+		{
+			std::string scenes = "config/Sofa.ini"; 
+			scenes = sofa::helper::system::DataRepository.getFile( scenes );
+			std::ifstream mrulist(scenes.c_str());
+			std::getline(mrulist,fileName);
+			mrulist.close();
+		}
+		else
+			fileName = "Demos/liver.scn";
 
-            fileName = sofa::helper::system::DataRepository.getFile(fileName);
-          }
+		fileName = sofa::helper::system::DataRepository.getFile(fileName);
+	}
 
 
 	if (int err=sofa::gui::GUIManager::createGUI(NULL))
           return err;
 
     //To set a specific resolution for the viewer, use the component ViewerDimensionSetting in you scene graph
-    sofa::gui::GUIManager::SetDimension(800,600); 
+	sofa::gui::GUIManager::SetDimension(800,600); 
 
-        sofa::simulation::Node* groot = dynamic_cast<sofa::simulation::Node*>( sofa::simulation::getSimulation()->load(fileName.c_str()));
-        if (groot==NULL)  groot = sofa::simulation::getSimulation()->newNode("");
+	sofa::simulation::Node* groot = dynamic_cast<sofa::simulation::Node*>( sofa::simulation::getSimulation()->load(fileName.c_str()));
+	if (groot==NULL)
+	{
+		groot = sofa::simulation::getSimulation()->newNode("");
+	}
 
-		if (!verif.empty())
+	if (!verif.empty())
 	{
 		loadVerificationData(verif, fileName, groot);
 	}
 
-        sofa::simulation::getSimulation()->init(groot);
-        sofa::gui::GUIManager::SetScene(groot,fileName.c_str(), temporaryFile);
+	sofa::simulation::getSimulation()->init(groot);
+	sofa::gui::GUIManager::SetScene(groot,fileName.c_str(), temporaryFile);
 
 
 	//=======================================
-        //Apply Options
+	//Apply Options
 
-        if (startAnim)  groot->setAnimate(true);
-
+	if (startAnim)
+		groot->setAnimate(true);
    
 	if (printFactory) 
 	{
@@ -259,11 +267,13 @@ if(affinity){
 
 	//=======================================
 	// Run the main loop
-        if (int err=sofa::gui::GUIManager::MainLoop(groot,fileName.c_str()))
-          return err;
-        groot = dynamic_cast<sofa::simulation::Node*>( sofa::gui::GUIManager::CurrentSimulation() );
-          
+	if (int err = sofa::gui::GUIManager::MainLoop(groot,fileName.c_str()))
+		return err;
+	
+	groot = dynamic_cast<sofa::simulation::Node*>( sofa::gui::GUIManager::CurrentSimulation() );      
 
-	if (groot!=NULL) sofa::simulation::getSimulation()->unload(groot);
+	if (groot!=NULL)
+		sofa::simulation::getSimulation()->unload(groot);
+
 	return 0;
 }

@@ -34,8 +34,13 @@ namespace simulation
 {
 
 
-ExportOBJVisitor::ExportOBJVisitor(std::ostream* out,std::ostream* mtl)
-: out(out), mtl(mtl), ID(0), vindex(0), nindex(0), tindex(0)
+ExportOBJVisitor::ExportOBJVisitor(std::ostream* out, const core::ExecParams* params)
+: Visitor(params) , out(out), mtl(NULL), ID(0), vindex(0), nindex(0), tindex(0)
+{
+}
+
+ExportOBJVisitor::ExportOBJVisitor(std::ostream* out,std::ostream* mtl, const core::ExecParams* params)
+: Visitor(params) , out(out), mtl(mtl), ID(0), vindex(0), nindex(0), tindex(0)
 {
 }
 
@@ -45,39 +50,24 @@ ExportOBJVisitor::~ExportOBJVisitor()
 
 void ExportOBJVisitor::processVisualModel(Node* /*node*/, core::VisualModel* vm)
 {
-// 	GL::OglModel* oglmodel = dynamic_cast<GL::OglModel*>(vm);
-// 	if (oglmodel != NULL)
-// 	{
-// 		std::string name = node->getPathName() + "/" + oglmodel->getName();
-
 	std::ostringstream oname;
 	oname << ++ID << "_" << vm->getName();
 	
-// 	name += oglmodel->getName();
-	
-	
-	// 		*out << "g "<<name<<"\n";
-	                //oglmodel->exportOBJ(out,mtl,vindex,nindex,tindex); // does not compile
-// 	oglmodel->exportOBJ("Which-string-here_?",out,mtl,vindex,nindex,tindex); // changed by FF 
-
-	
-		vm->exportOBJ(oname.str(),out,mtl,vindex,nindex,tindex);
-// 	}
-
+	vm->exportOBJ(oname.str(),out,mtl,vindex,nindex,tindex);
 }
 
-  simulation::Visitor::Result ExportOBJVisitor::processNodeTopDown(Node* node)
+simulation::Visitor::Result ExportOBJVisitor::processNodeTopDown(Node* node)
 {
 	//simulation::Node* node = static_cast<simulation::Node*>(n);
 	for_each(this, node, node->visualModel,              &ExportOBJVisitor::processVisualModel);
 	for_each(this, node, node->visualModelInVisualGraph, &ExportOBJVisitor::processVisualModel);
 
-        for (simulation::Node::ChildIterator itChild = node->childInVisualGraph.begin(); itChild != node->childInVisualGraph.end(); ++itChild)
-        {
-            simulation::Node *child=*itChild;
-            ExportOBJVisitor act (out,mtl);
-            child->execute ( &act );
-        }
+	for (simulation::Node::ChildIterator itChild = node->childInVisualGraph.begin(); itChild != node->childInVisualGraph.end(); ++itChild)
+	{
+		simulation::Node *child=*itChild;
+		ExportOBJVisitor act (out,mtl, params);
+		child->execute ( &act );
+	}
 
 	return RESULT_CONTINUE;
 }

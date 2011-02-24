@@ -39,21 +39,23 @@ namespace sofa
 
 namespace simulation
 {
-  using namespace sofa::defaulttype;
+
+using namespace sofa::defaulttype;
 
 class SOFA_SIMULATION_COMMON_API TransformationVisitor : public Visitor
 {
 public:
-	TransformationVisitor()
-	  {
+	TransformationVisitor(const sofa::core::ExecParams* params)
+    : Visitor(params)
+    {
 	    translation = Vector3();
 	    rotation = Vector3();
-            scale = Vector3(1.0,1.0,1.0);
-	  }
+        scale = Vector3(1.0,1.0,1.0);
+    }
 
 	void setTranslation(SReal dx, SReal dy, SReal dz){ translation = Vector3(dx,dy,dz);}
 	void setRotation(SReal rx, SReal ry, SReal rz){    rotation=Vector3(rx,ry,rz);	}
-        void setScale(SReal sx, SReal sy, SReal sz){scale=Vector3(sx,sy,sz);}
+    void setScale(SReal sx, SReal sy, SReal sz){scale=Vector3(sx,sy,sz);}
 
 
 	void processVisualModel(simulation::Node* node, core::VisualModel* v);
@@ -66,12 +68,12 @@ public:
 	/// Return a category name for this action.
 	/// Only used for debugging / profiling purposes
 	virtual const char* getCategoryName() const { return "instrument"; }
-        virtual const char* getClassName() const { return "TransformationVisitor"; }
+    virtual const char* getClassName() const { return "TransformationVisitor"; }
 
- protected:
+protected:
 	Vector3 translation;
-        Vector3 rotation;
-        Vector3 scale;
+    Vector3 rotation;
+    Vector3 scale;
 };
 
 } // namespace simulation

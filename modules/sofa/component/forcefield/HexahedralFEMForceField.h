@@ -77,7 +77,7 @@ template<class DataTypes>
 class HexahedralFEMForceField : virtual public core::behavior::ForceField<DataTypes>
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(HexahedralFEMForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+	SOFA_CLASS(SOFA_TEMPLATE(HexahedralFEMForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
 	typedef typename DataTypes::VecCoord VecCoord;
 	typedef typename DataTypes::VecDeriv VecDeriv;
@@ -85,16 +85,20 @@ public:
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
+	typedef core::objectmodel::Data<VecCoord> DataVecCoord;
+	typedef core::objectmodel::Data<VecDeriv> DataVecDeriv;
+	typedef helper::ReadAccessor< DataVecCoord > RDataRefVecCoord;
+	typedef helper::WriteAccessor< DataVecDeriv > WDataRefVecDeriv;
 
 	typedef core::topology::BaseMeshTopology::index_type Index;
 	typedef core::topology::BaseMeshTopology::Hexa Element;
 	typedef core::topology::BaseMeshTopology::SeqHexahedra VecElement;
 
-  typedef Vec<24, Real> Displacement;		///< the displacement vector
+	typedef Vec<24, Real> Displacement;		///< the displacement vector
 
 	typedef Mat<6, 6, Real> MaterialStiffness;	///< the matrix of material stiffness
 	typedef vector<MaterialStiffness> VecMaterialStiffness;  ///< a vector of material stiffness matrices
-  typedef Mat<24, 24, Real> ElementMass;
+	typedef Mat<24, 24, Real> ElementMass;
 
 	typedef Mat<24, 24, Real> ElementStiffness;
 	typedef vector<ElementStiffness> VecElementStiffness;
@@ -106,7 +110,7 @@ public:
 protected:
 
 
-  
+
 
 	typedef Mat<3, 3, Real> Mat33;
 	typedef Mat33 Transformation; ///< matrix for rigid transformations like rotations
@@ -169,11 +173,9 @@ public:
 	virtual void init();
 	virtual void reinit();		
 
-	virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+	virtual void addForce (DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v, const core::MechanicalParams* mparams);
 
-	virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
-
-        virtual double getPotentialEnergy(const VecCoord& x) const;
+	virtual void addDForce (DataVecDeriv& df, const DataVecDeriv& dx, const core::MechanicalParams* mparams);
 
 	// handle topological changes
 	virtual void handleTopologyChange();
@@ -194,12 +196,12 @@ protected:
 	////////////// large displacements method
 	void initLarge(const int i);
 	void computeRotationLarge( Transformation &r, Coord &edgex, Coord &edgey);
-	virtual void accumulateForceLarge( Vector& f, const Vector & p, const int i);
+	virtual void accumulateForceLarge( WDataRefVecDeriv& f, RDataRefVecCoord& p, const int i);
 
 	////////////// polar decomposition method
 	void initPolar(const int i);
 	void computeRotationPolar( Transformation &r, Vec<8,Coord> &nodes);
-	virtual void accumulateForcePolar( Vector& f, const Vector & p, const int i);
+	virtual void accumulateForcePolar( WDataRefVecDeriv& f, RDataRefVecCoord & p, const int i);
 
 	/// the callback function called when a hexahedron is created
 	static void FHexahedronCreationFunction (int , void* , 
@@ -239,4 +241,4 @@ extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedralFEMForceField<defa
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_HEXAHEDRALFEMFORCEFIELD_H

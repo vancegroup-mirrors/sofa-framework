@@ -25,125 +25,124 @@
 #ifndef SOFA_COMPONENT_CONSTRAINTSET_DISTANCELMCONSTRAINT_H
 #define SOFA_COMPONENT_CONSTRAINTSET_DISTANCELMCONSTRAINT_H
 
+#include <sofa/core/VecId.h>
+#include <sofa/core/ConstraintParams.h>
 #include <sofa/core/behavior/BaseMass.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/behavior/LMConstraint.h>
 #include <sofa/simulation/common/Node.h>
+
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace constraintset
-    {
+namespace constraintset
+{
 
-      using helper::vector;
-      using core::objectmodel::Data;
-      using namespace sofa::core::objectmodel;
+using helper::vector;
+using core::objectmodel::Data;
+using namespace sofa::core::objectmodel;
 
-      /// This class can be overridden if needed for additionnal storage within template specializations.
-      template <class DataTypes>
-	class DistanceLMConstraintInternalData
-	{
-	};
-
-
+/// This class can be overridden if needed for additionnal storage within template specializations.
+template <class DataTypes>
+class DistanceLMConstraintInternalData
+{
+};
 
 
-      /** Keep two particules at an initial distance
-       */
-      template <class DataTypes>
-	class DistanceLMConstraint :  public core::behavior::LMConstraint<DataTypes,DataTypes>
-	{
-	public:
-		SOFA_CLASS(SOFA_TEMPLATE(DistanceLMConstraint,DataTypes),SOFA_TEMPLATE2(sofa::core::behavior::LMConstraint, DataTypes, DataTypes));
-
-	  typedef typename DataTypes::VecCoord VecCoord;
-	  typedef typename DataTypes::VecDeriv VecDeriv;
-	  typedef typename DataTypes::Deriv Deriv;
-      typedef typename DataTypes::MatrixDeriv MatrixDeriv;
-      typedef typename DataTypes::MatrixDeriv::RowIterator MatrixDerivRowIterator;
-	  typedef typename core::behavior::MechanicalState<DataTypes> MechanicalState;
-
-	  typedef typename sofa::core::topology::BaseMeshTopology::SeqEdges SeqEdges;
-	  typedef typename sofa::core::topology::BaseMeshTopology::Edge Edge;
 
 
-	  typedef typename core::behavior::BaseMechanicalState::VecId VecId;
-    typedef core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
+/** Keep two particules at an initial distance
+*/
+template <class DataTypes>
+class DistanceLMConstraint :  public core::behavior::LMConstraint<DataTypes,DataTypes>
+{
+public:
+	SOFA_CLASS(SOFA_TEMPLATE(DistanceLMConstraint,DataTypes),SOFA_TEMPLATE2(sofa::core::behavior::LMConstraint, DataTypes, DataTypes));
 
-	protected:
-	  DistanceLMConstraintInternalData<DataTypes> data;
-	  friend class DistanceLMConstraintInternalData<DataTypes>;
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef typename DataTypes::MatrixDeriv MatrixDeriv;
+	typedef typename DataTypes::MatrixDeriv::RowIterator MatrixDerivRowIterator;
+	typedef typename core::behavior::MechanicalState<DataTypes> MechanicalState;
+
+	typedef typename sofa::core::topology::BaseMeshTopology::SeqEdges SeqEdges;
+	typedef typename sofa::core::topology::BaseMeshTopology::Edge Edge;
+
+	typedef core::ConstraintParams::ConstOrder ConstOrder;
+
+protected:
+	DistanceLMConstraintInternalData<DataTypes> data;
+	friend class DistanceLMConstraintInternalData<DataTypes>;
+
+public:
+	DistanceLMConstraint( MechanicalState *dof)
+		: core::behavior::LMConstraint<DataTypes,DataTypes>(dof,dof)
+		, vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))	      
+	{};
+
+	DistanceLMConstraint( MechanicalState *dof1, MechanicalState * dof2)
+		: core::behavior::LMConstraint<DataTypes,DataTypes>(dof1,dof2)
+		, vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
+	{};
 	
-	public:
-	DistanceLMConstraint( MechanicalState *dof):
-          core::behavior::LMConstraint<DataTypes,DataTypes>(dof,dof),
-          vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))	      
-	      {};
-	DistanceLMConstraint( MechanicalState *dof1, MechanicalState * dof2):
-          core::behavior::LMConstraint<DataTypes,DataTypes>(dof1,dof2),
-	  vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
-	      {};
-	DistanceLMConstraint():
-	    vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain")){}
+	 DistanceLMConstraint()
+		: vecConstraint(Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
+	{}
 
-	  ~DistanceLMConstraint(){}; 
-	  
-	  void init();
-	  void reinit();
+	~DistanceLMConstraint(){};
 
-	  // -- LMConstraint interface
-      void buildConstraintMatrix(unsigned int &constraintId, core::VecId position);
-      void writeConstraintEquations(unsigned int& lineNumber, VecId id, ConstOrder order);
+	void init();
+	void reinit();
 
+	// -- LMConstraint interface
+	
+  void buildConstraintMatrix(core::MultiMatrixDerivId cId, unsigned int &cIndex, const core::ConstraintParams* cParams);
+	void writeConstraintEquations(unsigned int& lineNumber, core::MultiVecId id, ConstOrder order);
+ 
+	virtual void draw();
 
+	bool isCorrectionComputedWithSimulatedDOF(core::ConstraintParams::ConstOrder /*order*/) const
+	{
+		simulation::Node* node1=(simulation::Node*) this->constrainedObject1->getContext();
+		simulation::Node* node2=(simulation::Node*) this->constrainedObject2->getContext();
+		if (node1->mechanicalMapping.empty() && node2->mechanicalMapping.empty()) return true;
+		else return false;
+	}
 
-	  virtual void draw();
+	bool useMask() const {return true;}
 
-          bool isCorrectionComputedWithSimulatedDOF(core::behavior::BaseLMConstraint::ConstOrder /*order*/) const
-          {
-              simulation::Node* node1=(simulation::Node*) this->constrainedObject1->getContext();
-              simulation::Node* node2=(simulation::Node*) this->constrainedObject2->getContext();
-              if (node1->mechanicalMapping.empty() && node2->mechanicalMapping.empty()) return true;
-              else return false;
-          }
-          bool useMask() const {return true;}
+	std::string getTemplateName() const
+	{
+		return templateName(this);
+	}
+	static std::string templateName(const DistanceLMConstraint<DataTypes>* = NULL)
+	{
+		return DataTypes::Name();
+	}
 
+  //Edges involving a distance constraint
+  Data< SeqEdges > vecConstraint;
 
+protected :
+	
+	///Compute the length of an edge given the vector of coordinates corresponding
+	double lengthEdge(const Edge &e, const VecCoord &x1,const VecCoord &x2) const;
+	///Compute the direction of the constraint
+	Deriv getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
+	void updateRestLength();
 
+	// Base Components of the current context
+	core::topology::BaseMeshTopology *topology;  
 
-          std::string getTemplateName() const
-            {
-              return templateName(this);
-            }
-          static std::string templateName(const DistanceLMConstraint<DataTypes>* = NULL)
-          {
-            return DataTypes::Name();
-          }
+	helper::vector<  unsigned int > registeredConstraints;
 
-
-
-
-
-	protected :
-	  //Edges involving a distance constraint
-	  Data< SeqEdges > vecConstraint;
-	  ///Compute the length of an edge given the vector of coordinates corresponding
-	  double lengthEdge(const Edge &e, const VecCoord &x1,const VecCoord &x2) const;
-	  ///Compute the direction of the constraint
-	  Deriv getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
-	  void updateRestLength();
-
-	  // Base Components of the current context
-	  core::topology::BaseMeshTopology *topology;  
-
-          helper::vector<  unsigned int > registeredConstraints;
-
-	  // rest length pre-computated
-	  sofa::helper::vector< double > l0;
-	};
+	// rest length pre-computated
+	sofa::helper::vector< double > l0;
+};
 
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_CONSTRAINTSET_DISTANCELMCONSTRAINT_CPP)
@@ -158,9 +157,9 @@ extern template class SOFA_COMPONENT_CONSTRAINTSET_API DistanceLMConstraint<defa
 #endif
 #endif
 
-    } // namespace constraintset
+} // namespace constraintset
 
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

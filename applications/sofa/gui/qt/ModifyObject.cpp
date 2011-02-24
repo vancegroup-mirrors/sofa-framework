@@ -375,7 +375,7 @@ namespace sofa
             if (sofa::core::objectmodel::BaseObject *obj = dynamic_cast< sofa::core::objectmodel::BaseObject* >(node)){
               obj->reinit();
             }
-            else if (simulation::Node *n = dynamic_cast< simulation::Node *>(node)) n->reinit();
+            else if (simulation::Node *n = dynamic_cast< simulation::Node *>(node)) n->reinit(sofa::core::ExecParams::defaultInstance());
           }
 
         }

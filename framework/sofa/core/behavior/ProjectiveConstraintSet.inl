@@ -40,8 +40,8 @@ namespace behavior
 
 template<class DataTypes>
 ProjectiveConstraintSet<DataTypes>::ProjectiveConstraintSet(MechanicalState<DataTypes> *mm)
-: endTime( initData(&endTime,(Real)-1,"endTime","The constraint stops acting after the given value.\nUse a negative value for infinite constraints") )
-, mstate(mm)
+	: endTime( initData(&endTime,(Real)-1,"endTime","The constraint stops acting after the given value.\nUse a negative value for infinite constraints") )
+	, mstate(mm)
 {
 }
 
@@ -53,187 +53,163 @@ ProjectiveConstraintSet<DataTypes>::~ProjectiveConstraintSet()
 template <class DataTypes>
 bool ProjectiveConstraintSet<DataTypes>::isActive() const
 {
-    if( endTime.getValue()<0 ) return true;
-    return endTime.getValue()>getContext()->getTime();
+	if( endTime.getValue()<0 ) return true;
+	return endTime.getValue()>getContext()->getTime();
 }
 
 template<class DataTypes>
 void ProjectiveConstraintSet<DataTypes>::init()
 {
-    BaseProjectiveConstraintSet::init();
-    mstate = dynamic_cast< MechanicalState<DataTypes>* >(getContext()->getMechanicalState());
+	BaseProjectiveConstraintSet::init();
+	mstate = dynamic_cast< MechanicalState<DataTypes>* >(getContext()->getMechanicalState());
 }
 
 template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectJacobianMatrix()
+void ProjectiveConstraintSet<DataTypes>::projectJacobianMatrix(MultiMatrixDerivId cId, const MechanicalParams* mparams)
 {
 	if (!isActive())
 		return;
 
 	if (mstate)
 	{
-		MatrixDeriv *c = mstate->getC();
-
-		MatrixDerivRowIterator rowIt = c->begin();
-		MatrixDerivRowIterator rowItEnd = c->end();
-
-		while (rowIt != rowItEnd)
-		{
-			projectResponse(rowIt.row());
-			++rowIt;
-		}
+		projectJacobianMatrix(*cId[mstate].write(), mparams);
 	}
 }
 
-#ifndef SOFA_SMP
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectResponse()
+#ifdef SOFA_SMP
+template<class T>
+struct projectResponseTask
 {
-    if( !isActive() ) return;
-    if (mstate)
-      {
-        mstate->forceMask.setInUse(this->useMask());
-        projectResponse(*mstate->getDx());
-      }
+	void operator()(void *c, Shared_rw< objectmodel::Data< typename T::VecDeriv> > dx, const MechanicalParams* mparams)
+	{
+		((T *)c)->T::projectResponse(dx.access(), mparams);
+	}
+};
+
+template<class T>
+struct projectVelocityTask
+{
+	void operator()(void *c, Shared_rw< objectmodel::Data< typename T::VecDeriv> > v, const MechanicalParams* mparams)
+	{
+		((T *)c)->T::projectVelocity(v.access(), mparams);
+	}
+};
+
+template<class T>
+struct projectPositionTask
+{
+	void operator()(void *c, Shared_rw< objectmodel::Data< typename T::VecCoord> > x, const MechanicalParams* mparams)
+	{
+		((T *)c)->T::projectPosition(x.access(), mparams);
+	}
+};
+
+template<class DataTypes>
+struct projectResponseTask<ProjectiveConstraintSet< DataTypes > >
+{
+	void operator()(ProjectiveConstraintSet<DataTypes>  *c, Shared_rw< objectmodel::Data< typename DataTypes::VecDeriv> > dx, const MechanicalParams* mparams)
+	{
+		c->projectResponse(dx.access(), mparams);
+	}
+};
+
+template<class DataTypes>
+struct projectVelocityTask<ProjectiveConstraintSet< DataTypes > >
+{
+	void operator()(ProjectiveConstraintSet<DataTypes>  *c, Shared_rw< objectmodel::Data< typename DataTypes::VecDeriv> > v, const MechanicalParams* mparams)
+	{
+		c->projectVelocity(v.access(), mparams);
+	}
+};
+
+template<class DataTypes>
+struct projectPositionTask<ProjectiveConstraintSet< DataTypes > >
+{
+	void operator()(ProjectiveConstraintSet<DataTypes>  *c, Shared_rw< objectmodel::Data< typename DataTypes::VecCoord> > x, const MechanicalParams* mparams)
+	{
+		c->projectPosition(x.access(), mparams);
+	}
+};
+#endif /* SOFA_SMP */
+
+template<class DataTypes>
+void ProjectiveConstraintSet<DataTypes>::projectResponse(MultiVecDerivId dxId, const MechanicalParams* mparams)
+{
+	if (!isActive())
+		return;
+
+	if (mstate)
+	{
+		mstate->forceMask.setInUse(this->useMask());
+#ifdef SOFA_SMP
+		if (mparams->execMode() == ExecParams::EXEC_KAAPI)
+			Task<projectResponseTask<ProjectiveConstraintSet< DataTypes > > >(this,
+					**defaulttype::getShared(*dxId[mstate].write()), mparams);
+		else
+#endif /* SOFA_SMP */
+			projectResponse(*dxId[mstate].write(), mparams);
+	}
 }
 
 template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectVelocity()
+void ProjectiveConstraintSet<DataTypes>::projectVelocity(MultiVecDerivId vId, const MechanicalParams* mparams)
 {
-    if( !isActive() ) return;
-    if (mstate)
-      {
-        mstate->forceMask.setInUse(this->useMask());
-        projectVelocity(*mstate->getV());
-      }
+	if (!isActive())
+		return;
+
+	if (mstate)
+	{
+		mstate->forceMask.setInUse(this->useMask());
+#ifdef SOFA_SMP
+		if (mparams->execMode() == ExecParams::EXEC_KAAPI)
+			Task<projectVelocityTask<ProjectiveConstraintSet< DataTypes > > >(this,
+					**defaulttype::getShared(*vId[mstate].write()), mparams);
+		else
+#endif /* SOFA_SMP */
+		projectVelocity(*vId[mstate].write(), mparams);
+	}
 }
 
 template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectPosition()
+void ProjectiveConstraintSet<DataTypes>::projectPosition(MultiVecCoordId xId, const MechanicalParams* mparams)
 {
-    if( !isActive() ) return;
-    if (mstate)
-      {
-        mstate->forceMask.setInUse(this->useMask());
-        projectPosition(*mstate->getX());      
-      }
-}
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectFreeVelocity()
-{
-    if( !isActive() ) return;
-    if (mstate)
-      {
-        mstate->forceMask.setInUse(this->useMask());
-        projectVelocity(*mstate->getVfree());
-      }
-}
+	if (!isActive())
+		return;
 
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectFreePosition()
-{
-    if( !isActive() ) return;
-    if (mstate)
-      {
-        mstate->forceMask.setInUse(this->useMask());
-        projectPosition(*mstate->getXfree());
-      }
+	if (mstate)
+	{
+		mstate->forceMask.setInUse(this->useMask());
+#ifdef SOFA_SMP
+		if (mparams->execMode() == ExecParams::EXEC_KAAPI)
+			Task<projectPositionTask<ProjectiveConstraintSet< DataTypes > > >(this,
+					**defaulttype::getShared(*xId[mstate].write()), mparams);
+		else
+#endif /* SOFA_SMP */
+		projectPosition(*xId[mstate].write(), mparams);      
+	}
 }
-
-#endif
 
 #ifdef SOFA_SMP
 
-template<class T>
-struct projectResponseTask{
-  void operator()(  void *c, Shared_rw< typename T::VecDeriv> dx){
-    ((T *)c)->T::projectResponse(dx.access());
-     }
-};
+// TODO
+// template<class DataTypes>
+// void ProjectiveConstraintSet<DataTypes>::projectFreeVelocity()
+// {
+// 	if( !isActive() ) return;
+// 	if (mstate)
+// 		Task<projectVelocityTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getVfree());
+// }
+// 
+// template<class DataTypes>
+// void ProjectiveConstraintSet<DataTypes>::projectFreePosition()
+// {
+// 	if( !isActive() ) return;
+// 	if (mstate)
+// 		Task<projectPositionTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getXfree());
+// }
 
-template<class T>
-struct projectVelocityTask{
-  void operator()(  void *c, Shared_rw< typename T::VecDeriv> v){
-    ((T *)c)->T::projectVelocity(v.access());
-  }
-};
+#endif /* SOFA_SMP */
 
-template<class T>
-struct projectPositionTask{
-  void operator()(  void *c, Shared_rw< typename T::VecCoord> x){
-    ((T *)c)->T::projectPosition(x.access());
-  }
-};
-
-
-
-
-template<class DataTypes>
-struct projectResponseTask<ProjectiveConstraintSet< DataTypes > >{
-    void operator()(   ProjectiveConstraintSet<DataTypes>  *c, Shared_rw< typename DataTypes::VecDeriv> dx){
-	c->projectResponse(dx.access());
-		
-
-	}
-};
-
-template<class DataTypes>
-struct projectVelocityTask<ProjectiveConstraintSet< DataTypes > >{
-    void operator()(   ProjectiveConstraintSet<DataTypes>  *c, Shared_rw< typename DataTypes::VecDeriv> v){
-	c->projectVelocity(v.access());
-		
-
-	}
-};
-
-template<class DataTypes>
-struct projectPositionTask<ProjectiveConstraintSet< DataTypes > >{
-    void operator()(   ProjectiveConstraintSet<DataTypes>  *c, Shared_rw< typename DataTypes::VecCoord> x){
-	c->projectPosition(x.access());
-		
-
-	}
-};
-
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectResponse()
-{
-    if( !isActive() ) return;
-    if (mstate)
-    Task<projectResponseTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getDx());
-
-}
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectVelocity()
-{
-    if( !isActive() ) return;
-    if (mstate)
-    Task<projectVelocityTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getV());
-    }
-
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectPosition()
-{
-    if( !isActive() ) return;
-    if (mstate)
-    Task<projectPositionTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getX());
-}
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectFreeVelocity()
-{
-    if( !isActive() ) return;
-    if (mstate)
-    Task<projectVelocityTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getVfree());
-    }
-
-template<class DataTypes>
-void ProjectiveConstraintSet<DataTypes>::projectFreePosition()
-{
-    if( !isActive() ) return;
-    if (mstate)
-    Task<projectPositionTask<ProjectiveConstraintSet< DataTypes > > >(this,**mstate->getXfree());
-}
-#endif
 } // namespace behavior
 
 } // namespace core

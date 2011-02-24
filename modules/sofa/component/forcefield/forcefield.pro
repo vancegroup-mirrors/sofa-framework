@@ -35,6 +35,8 @@ HEADERS += initForceField.h \
            HexahedronFEMForceFieldAndMass.inl \
            LennardJonesForceField.h \
            LennardJonesForceField.inl \
+           LinearForceField.h \
+           LinearForceField.inl \
            NonUniformHexahedralFEMForceFieldAndMass.h \
            NonUniformHexahedralFEMForceFieldAndMass.inl \
            NonUniformHexahedronFEMForceFieldAndMass.h \
@@ -66,12 +68,15 @@ HEADERS += initForceField.h \
            TrianglePressureForceField.h \
            TrianglePressureForceField.inl \
            TriangularAnisotropicFEMForceField.h \
+		   TriangularAnisotropicFEMForceField.inl \
            TriangularBendingSprings.h \
            TriangularBendingSprings.inl \
            TriangularBiquadraticSpringsForceField.h \
            TriangularBiquadraticSpringsForceField.inl \
            TriangleFEMForceField.h \
+		   TriangleFEMForceField.inl \
            TriangularFEMForceField.h \
+           TriangularFEMForceField.inl \
            TriangularQuadraticSpringsForceField.h \
            TriangularQuadraticSpringsForceField.inl \
            TriangularTensorMassForceField.h \
@@ -92,6 +97,7 @@ SOURCES += initForceField.cpp \
            HexahedronFEMForceField.cpp \
            HexahedronFEMForceFieldAndMass.cpp \
            LennardJonesForceField.cpp \
+           LinearForceField.cpp \
            NonUniformHexahedralFEMForceFieldAndMass.cpp \
            NonUniformHexahedronFEMForceFieldAndMass.cpp \
            NonUniformHexahedronFEMForceFieldDensity.cpp \
@@ -115,6 +121,15 @@ SOURCES += initForceField.cpp \
            TriangularQuadraticSpringsForceField.cpp \
            TriangularTensorMassForceField.cpp \
            VaccumSphereForceField.cpp
+
+contains(DEFINES,SOFA_HAVE_EIGEN2){
+HEADERS += \
+           NonUniformHexahedralFEMForceFieldAndMassCorrected.h \
+           NonUniformHexahedralFEMForceFieldAndMassCorrected.inl
+
+SOURCES += \
+           NonUniformHexahedralFEMForceFieldAndMassCorrected.cpp
+}
            
 
 contains(DEFINES,SOFA_TEST_FRICTION){
@@ -125,6 +140,7 @@ contains(DEFINES,SOFA_TEST_FRICTION){
     SOURCES += PenalityContactFrictionForceField.cpp 
 
 }
+
 
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX

@@ -65,8 +65,8 @@ namespace mastersolver
   
     
 
-  void MultiTagMasterSolver::step(double dt)
-  {
+void MultiTagMasterSolver::step(double dt, const sofa::core::ExecParams* params)
+{
 
     sofa::core::objectmodel::TagSet::iterator it;
 
@@ -75,13 +75,13 @@ namespace mastersolver
       this->addTag (*it);
 
       if (this->f_printLog.getValue()) sout << "MultiTagMasterSolver::step, begin constraints reset" << sendl;
-      sofa::simulation::MechanicalResetConstraintVisitor().execute(this->getContext());
+      sofa::simulation::MechanicalResetConstraintVisitor(params).execute(this->getContext());
       if (this->f_printLog.getValue()) sout << "MultiTagMasterSolver::step, end constraints reset" << sendl;
       if (this->f_printLog.getValue()) sout << "MultiTagMasterSolver::step, begin collision for tag: "<< *it << sendl;
-      computeCollision();
+      computeCollision(params);
       if (this->f_printLog.getValue()) sout << "MultiTagMasterSolver::step, end collision" << sendl;
       if (this->f_printLog.getValue()) sout << "MultiTagMasterSolver::step, begin integration  for tag: "<< *it << sendl;
-      integrate(dt);
+      integrate(dt, params);
       if (this->f_printLog.getValue()) sout << "MultiTagMasterSolver::step, end integration" << sendl;
    
       this->removeTag (*it);

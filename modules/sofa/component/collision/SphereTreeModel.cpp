@@ -90,7 +90,8 @@ int SphereTreeModel::addSphere(const Vector3& pos, SReal radius)
 void SphereTreeModel::setSphere(int i, const Vector3& pos, SReal r)
 {
 	if ((unsigned)i >= (unsigned) size) return;
-	(*this->getX())[i] = pos;
+	helper::WriteAccessor<Data<VecCoord> > xData = *this->write(core::VecCoordId::position());
+	xData.wref()[i] = pos;
 	radius[i] = r;
 }
 

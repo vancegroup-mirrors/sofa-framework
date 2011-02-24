@@ -26,7 +26,7 @@
 #define SOFA_COMPONENT_ODESOLVER_EULERIMPLICITSOLVER_H
 
 #include <sofa/core/behavior/OdeSolver.h>
-#include <sofa/component/odesolver/OdeSolverImpl.h>
+#include <sofa/component/component.h>
 
 
 namespace sofa
@@ -47,54 +47,54 @@ using namespace sofa::defaulttype;
  * This is based on [Baraff and Witkin, Large Steps in Cloth Simulation, SIGGRAPH 1998]
  * The integration scheme is based on the following equations:
  *
- *   $x_{t+h} = x_t + h v_{t+h}$
- *   $v_{t+h} = v_t + h a_{t+h}$
+ *   \f$x_{t+h} = x_t + h v_{t+h}\f$
+ *   \f$v_{t+h} = v_t + h a_{t+h}\f$
  *
  *   The unknown is
- *   $v_{t+h} - v_t = dv$
+ *   \f$v_{t+h} - v_t = dv\f$
  *
  *   Newton's law is
- *   $ M dv = h f(t+h) $
- *   $ M dv = h ( f(t) + K dx     + (B - r_M M + r_K K) dv )$
- *   $ M dv = h ( f(t) + K h dv   + (B - r_M M + r_K K) dv )$
+ *   \f$ M dv = h f(t+h) \f$
+ *   \f$ M dv = h ( f(t) + K dx     + (B - r_M M + r_K K) dv )\f$
+ *   \f$ M dv = h ( f(t) + K h dv   + (B - r_M M + r_K K) dv )\f$
  *
- *   $ M $ is the mass matrix.
- *   $ K = df/dx $ is the stiffness implemented (or not) by the force fields.
- *   $ B = df/dv $ is the damping implemented (or not) by the force fields.
- *   An additional, uniform Rayleigh damping  $- r_M M + r_K K$ is imposed by the solver.
+ *   \f$ M \f$ is the mass matrix.
+ *   \f$ K = df/dx \f$ is the stiffness implemented (or not) by the force fields.
+ *   \f$ B = df/dv \f$ is the damping implemented (or not) by the force fields.
+ *   An additional, uniform Rayleigh damping  \f$- r_M M + r_K K\f$ is imposed by the solver.
  *
  * This corresponds to the following equation system:
  *
- *   $ ( (1+r_M) M - h B - h(h + r_K) K ) dv = h ( f(t) + h K dv - r_M M dv )$
+ *   \f$ ( (1+r_M) M - h B - h(h + r_K) K ) dv = h ( f(t) + h K dv - r_M M dv )\f$
  *
  * Moreover, the projective constraints filter out the forbidden motions.
- * This is equivalent with multiplying vectors with a projection matrix $P$.
+ * This is equivalent with multiplying vectors with a projection matrix \f$P\f$.
  * Finally, the equation system set by this ode solver is:
  *
- *   $ P ( (1+r_M) M - h B - h(h + r_K) K ) P dv = P h ( f(t) + h K dv - r_M M dv )$
+ *   \f$ P ( (1+r_M) M - h B - h(h + r_K) K ) P dv = P h ( f(t) + h K dv - r_M M dv )\f$
  *
  *** 1st Order ***
  *
  * This integration scheme is based on the following eqation:
  *
- *   $x_{t+h} = x_t + h v_{t+h}$
+ *   \f$x_{t+h} = x_t + h v_{t+h}\f$
  *
  * Applied to this mechanical system:
  *
- *   $ M v_t = f_ext $
+ *   \f$ M v_t = f_ext \f$
  *
- *   $ M v_{t+h} = f_ext{t+h} $
- *   $           = f_ext{t} + h (df_ext/dt){t+h} $
- *   $           = f_ext{t} + h (df_ext/dx){t+h} v_{t+h} $
- *   $           = f_ext{t} - h K v_{t+h} $
+ *   \f$ M v_{t+h} = f_ext{t+h} \f$
+ *   \f$           = f_ext{t} + h (df_ext/dt){t+h} \f$
+ *   \f$           = f_ext{t} + h (df_ext/dx){t+h} v_{t+h} \f$
+ *   \f$           = f_ext{t} - h K v_{t+h} \f$
  *
- *   $ ( M + h K ) v_{t+h} = f_ext $
+ *   \f$ ( M + h K ) v_{t+h} = f_ext \f$
  *
  */
- class SOFA_COMPONENT_ODESOLVER_API EulerImplicitSolver : public sofa::component::odesolver::OdeSolverImpl
+ class SOFA_COMPONENT_ODESOLVER_API EulerImplicitSolver : public sofa::core::behavior::OdeSolver
 {
 public:
-    SOFA_CLASS(EulerImplicitSolver, sofa::component::odesolver::OdeSolverImpl);
+    SOFA_CLASS(EulerImplicitSolver, sofa::core::behavior::OdeSolver);
     
     Data<double> f_rayleighStiffness;
     Data<double> f_rayleighMass;
@@ -106,7 +106,7 @@ public:
 
     void init();
     
-    void solve (double dt, sofa::core::behavior::BaseMechanicalState::VecId xResult, sofa::core::behavior::BaseMechanicalState::VecId vResult);
+    void solve (double dt, sofa::core::MultiVecCoordId xResult, sofa::core::MultiVecDerivId vResult, const core::ExecParams* params);
     
     /// Given a displacement as computed by the linear system inversion, how much will it affect the velocity
     ///

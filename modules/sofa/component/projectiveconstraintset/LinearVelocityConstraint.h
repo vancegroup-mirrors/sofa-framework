@@ -48,81 +48,81 @@ namespace projectiveconstraintset
 /** impose a motion to given DOFs (translation and rotation)
 	The motion between 2 key times is linearly interpolated
 */
-template <class DataTypes>
-class LinearVelocityConstraint : public core::behavior::ProjectiveConstraintSet<DataTypes>
+template <class TDataTypes>
+class LinearVelocityConstraint : public core::behavior::ProjectiveConstraintSet<TDataTypes>
 {
 public:
-	SOFA_CLASS(SOFA_TEMPLATE(LinearVelocityConstraint,DataTypes),SOFA_TEMPLATE(core::behavior::ProjectiveConstraintSet,DataTypes));
+	SOFA_CLASS(SOFA_TEMPLATE(LinearVelocityConstraint,TDataTypes),SOFA_TEMPLATE(core::behavior::ProjectiveConstraintSet,TDataTypes));
 
+    typedef TDataTypes DataTypes;
     typedef typename DataTypes::VecCoord VecCoord;
     typedef typename DataTypes::VecDeriv VecDeriv;
     typedef typename DataTypes::MatrixDeriv MatrixDeriv;
-	typedef typename DataTypes::MatrixDeriv::RowType MatrixDerivRowType;
-	typedef typename DataTypes::Coord Coord;
-	typedef typename DataTypes::Deriv Deriv;
-	typedef typename DataTypes::Real Real;
+    typedef typename DataTypes::Coord Coord;
+    typedef typename DataTypes::Deriv Deriv;
+    typedef typename DataTypes::Real Real;
+    typedef typename MatrixDeriv::RowType MatrixDerivRowType;
+    typedef Data<VecCoord> DataVecCoord;
+    typedef Data<VecDeriv> DataVecDeriv;
+    typedef Data<MatrixDeriv> DataMatrixDeriv;
 	typedef topology::PointSubset SetIndex;
 	typedef helper::vector<unsigned int> SetIndexArray;
 
 public :
-	/// indices of the DOFs the constraint is applied to
-	Data<SetIndex> m_indices;
-	/// the key frames when the motion is defined by the user
-	Data<helper::vector<Real> > m_keyTimes;
-	/// the motions corresponding to the key frames
-	Data<VecDeriv > m_keyVelocities;
-  /// the coordinates on which to applay velocities
-  Data<SetIndex> m_coordinates;
+    /// indices of the DOFs the constraint is applied to
+    Data<SetIndex> m_indices;
+    /// the key frames when the motion is defined by the user
+    Data<helper::vector<Real> > m_keyTimes;
+    /// the motions corresponding to the key frames
+    Data<VecDeriv > m_keyVelocities;
+    /// the coordinates on which to applay velocities
+    Data<SetIndex> m_coordinates;
 
-	/// the key times surrounding the current simulation time (for interpolation)
-	Real prevT, nextT;
-	///the velocities corresponding to the surrouding key times
-	Deriv prevV, nextV;
-	///position at the previous step for constrained DOFs position
-	VecCoord x0;
+    /// the key times surrounding the current simulation time (for interpolation)
+    Real prevT, nextT;
+    ///the velocities corresponding to the surrouding key times
+    Deriv prevV, nextV;
+    ///position at the previous step for constrained DOFs position
+    VecCoord x0;
 
-	LinearVelocityConstraint();
+    LinearVelocityConstraint();
 
-	virtual ~LinearVelocityConstraint();
+    virtual ~LinearVelocityConstraint();
 
-	///methods to add/remove some indices, keyTimes, keyVelocity
-	void clearIndices();
-	void addIndex(unsigned int index);
-	void removeIndex(unsigned int index);
-	void clearKeyVelocities();
-	/**add a new key movement
-	@param time : the simulation time you want to set a movement (in sec)
-	@param movement : the corresponding motion
-	for instance, addKeyMovement(1.0, Deriv(5,0,0) ) will set a translation of 5 in x direction a time 1.0s
-	**/
-	void addKeyVelocity(Real time, Deriv movement);
+    ///methods to add/remove some indices, keyTimes, keyVelocity
+    void clearIndices();
+    void addIndex(unsigned int index);
+    void removeIndex(unsigned int index);
+    void clearKeyVelocities();
+    /**add a new key movement
+    @param time : the simulation time you want to set a movement (in sec)
+    @param movement : the corresponding motion
+    for instance, addKeyMovement(1.0, Deriv(5,0,0) ) will set a translation of 5 in x direction a time 1.0s
+    **/
+    void addKeyVelocity(Real time, Deriv movement);
 
 
-	/// -- Constraint interface
+    /// -- Constraint interface
     void init();
-    void projectResponse(VecDeriv& dx);
-    void projectResponse(MatrixDerivRowType& dx);
-	virtual void projectVelocity(VecDeriv& dx); ///< project dx to constrained space (dx models a velocity)
-	virtual void projectPosition(VecCoord& x); ///< project x to constrained space (x models a position)
+    void projectResponse(DataVecDeriv& resData, const core::MechanicalParams* mparams);
+    void projectVelocity(DataVecDeriv& vData, const core::MechanicalParams* mparams);
+    void projectPosition(DataVecCoord& xData, const core::MechanicalParams* mparams);
+    void projectJacobianMatrix(DataMatrixDeriv& cData, const core::MechanicalParams* mparams);
 
-	/// Handle topological changes
-	virtual void handleTopologyChange();
+    /// Handle topological changes
+    virtual void handleTopologyChange();
 
-	virtual void draw();
-
-	/// this constraint is holonomic
-	bool isHolonomic() {return true;}
+    virtual void draw();
 
 protected:
 
-	sofa::core::topology::BaseMeshTopology* topology;
-	
-	/// Define TestNewPointFunction (for topology changes)
+    sofa::core::topology::BaseMeshTopology* topology;
+
+    /// Define TestNewPointFunction (for topology changes)
     static bool FCTestNewPointFunction(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& );
 
-	/// Define RemovalFunction (for topology changes)
-	static void FCRemovalFunction ( int , void*);
-
+    /// Define RemovalFunction (for topology changes)
+    static void FCRemovalFunction ( int , void*);
 };
 
 

@@ -22,6 +22,9 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#ifndef SOFA_COMPONENT_FORCEFIELD_TRIANGLEPRESSUREFORCEFIELD_INL
+#define SOFA_COMPONENT_FORCEFIELD_TRIANGLEPRESSUREFORCEFIELD_INL
+
 #include <sofa/component/forcefield/TrianglePressureForceField.h>
 #include <sofa/component/topology/TriangleSubsetData.inl>
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
@@ -81,8 +84,9 @@ template <class DataTypes> void TrianglePressureForceField<DataTypes>::init()
 
 
 template <class DataTypes> 
-void TrianglePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& /*x*/, const VecDeriv& /*v*/)
+void TrianglePressureForceField<DataTypes>::addForce(DataVecDeriv& d_f, const DataVecCoord& /* d_x */, const DataVecDeriv& /* d_v */, const core::MechanicalParams* /* mparams */)
 {
+	VecDeriv& f = *d_f.beginEdit();
 	Deriv force;
 
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
@@ -95,13 +99,13 @@ void TrianglePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord
 		f[_topology->getTriangle((*it).first)[2]]+=force;
 
 	}
+	 d_f.endEdit();
 }
 
-template <class DataTypes> 
-    double TrianglePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/) const
+template<class DataTypes>
+void TrianglePressureForceField<DataTypes>::addDForce(DataVecDeriv& /* d_df */, const DataVecDeriv& /* d_dx */, const core::MechanicalParams* /* mparams */)
 {
-    serr<<"TrianglePressureForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
+	//Todo
 }
 
 template<class DataTypes>
@@ -216,3 +220,5 @@ void TrianglePressureForceField<DataTypes>::draw()
 } // namespace component
 
 } // namespace sofa
+
+#endif // SOFA_COMPONENT_FORCEFIELD_TRIANGLEPRESSUREFORCEFIELD_INL

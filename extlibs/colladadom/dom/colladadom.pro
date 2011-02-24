@@ -10,11 +10,9 @@ CONFIG += $$CONFIGLIBRARIES
 #DEFINES *= DOM_INCLUDE_LIBXML
 DEFINES *= DOM_INCLUDE_TINYXML TINYXML NO_ZAE NO_BOOST
 
-LIBS += $$SOFA_EXT_LIBS
 LIBS -= -lphysicalmodel$$LIBSUFFIX
 LIBS -= -lload$$LIBSUFFIX
 LIBS -= -lcolladadom$$LIBSUFFIX
-LIBS += -ltinyxml$$LIBSUFFIX
 
 CONFIG += warn_off
 
@@ -40,8 +38,9 @@ win32 {
     BUILDID=vc8
   }
 #  LIBS += external-libs/pcre/lib/$$BUILDID/pcrecpp$$PCRESUFFIX external-libs/pcre/lib/$$BUILDID/pcre$$PCRESUFFIX
-  QMAKE_LIBDIR += external-libs/pcre/lib/$$BUILDID
+  QMAKE_LIBDIR += external-libs/pcre/lib/$$BUILDID external-libs/tinyxml/lib/$$BUILDID
   LIBS += -lpcrecpp$$PCRESUFFIX -lpcre$$PCRESUFFIX
+  LIBS += -ltinyxml$$LIBSUFFIX
   INCLUDEPATH *= include include/1.4 external-libs/pcre
 }
 

@@ -65,6 +65,10 @@ public:
     const Coord& p() const;
     const Coord& pFree() const;
     const Coord& v() const;
+
+	/// Return true if the element stores a free position vector
+	bool hasFreePosition() const;
+
     Real r() const;
 };
 
@@ -124,6 +128,8 @@ public:
     template<class T>
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
+        if (dynamic_cast<core::behavior::MechanicalState<TDataTypes>*>(context->getMechanicalState()) == NULL && context->getMechanicalState() != NULL)
+            return false;
         /*if (dynamic_cast<core::behavior::MechanicalState<TDataTypes>*>(context->getMechanicalState()) == NULL)
             return false;*/
         return BaseObject::canCreate(obj, context, arg);
@@ -183,13 +189,16 @@ template<class DataTypes>
 inline const typename DataTypes::Coord& TSphere<DataTypes>::p() const { return (*this->model->mstate->getX())[this->index]; }
 
 template<class DataTypes>
-inline const typename DataTypes::Coord& TSphere<DataTypes>::pFree() const { return (*this->model->mstate->getXfree())[this->index]; }
+inline const typename DataTypes::Coord& TSphere<DataTypes>::pFree() const { return (*this->model->mstate->read(core::ConstVecCoordId::freePosition()))[this->index]; }
 
 template<class DataTypes>
 inline const typename DataTypes::Coord& TSphere<DataTypes>::v() const { return (*this->model->mstate->getV())[this->index]; }
 
 template<class DataTypes>
 inline typename DataTypes::Real TSphere<DataTypes>::r() const { return (Real) this->model->getRadius((unsigned)this->index); }
+
+template<class DataTypes>
+inline bool TSphere<DataTypes>::hasFreePosition() const { return this->model->mstate->read(core::ConstVecCoordId::freePosition())->isSet(); }
 
 using namespace sofa::defaulttype;
 typedef TSphereModel<Vec3Types> SphereModel;

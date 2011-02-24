@@ -47,149 +47,163 @@ namespace component
 namespace constraintset
 {
 
-      using namespace sofa::defaulttype;
-      using namespace sofa::component::linearsolver;
-      using namespace helper::system::thread;
+using namespace sofa::defaulttype;
+using namespace sofa::component::linearsolver;
+using namespace helper::system::thread;
 
 
-      /// Christian : WARNING: this class is already defined in sofa::helper
-      class   LCP
-      {
-     public:
-        int maxConst;
-        LPtrFullMatrix<double> W;
-        FullVector<double> dFree, f;
-        double tol;
-        int numItMax;
-        unsigned int nbConst;
-        bool useInitialF;
-        double mu;
-        int dim;
-      private:
-        bool lok;
+/// Christian : WARNING: this class is already defined in sofa::helper
+class LCP
+{
+public:
+	int maxConst;
+	LPtrFullMatrix<double> W;
+	FullVector<double> dFree, f;
+	double tol;
+	int numItMax;
+	unsigned int nbConst;
+	bool useInitialF;
+	double mu;
+	int dim;
 
-      public:
-        LCP(unsigned int maxConstraint);
-        ~LCP();
-        void reset(void);
-        //LCP& operator=(LCP& lcp);
-        inline double** getW(void) {return W.lptr();};
-        inline double& getMu(void) { return mu;};
-        inline double* getDfree(void) {return dFree.ptr();};
-        inline int getDfreeSize(void) {return dFree.size();};
-        inline double getTolerance(void) {return tol;};
-        inline void setTol(double t) {tol = t;};
-        inline double getMaxIter(void) {return numItMax;};
-        inline double* getF(void) {return f.ptr();};
-        inline bool useInitialGuess(void) {return useInitialF;};
-        inline unsigned int getNbConst(void) {return nbConst;};
-        inline void setNbConst(unsigned int nbC) {nbConst = nbC;};
-        inline unsigned int getMaxConst(void) {return maxConst;};
-        void setMaxConst(unsigned int nbC);
+private:
+	bool lok;
 
-        inline bool isLocked(void) {return false;};
-        inline void lock(void) {lok = true;};
-        inline void unlock(void) {lok = false;};
-        inline void wait(void) {while(lok) ; } //infinite loop?
-      };
+protected:
+	LCP() : maxConst(0), tol(0.00001), numItMax(1000), useInitialF(true), mu(0.0), dim(0), lok(false) {}
 
+public:
+	LCP(unsigned int maxConstraint);
+	virtual ~LCP();
+	void reset(void);
+	//LCP& operator=(LCP& lcp);
+	inline double** getW(void) {return W.lptr();}
+	inline double& getMu(void) { return mu;}
+	inline double* getDfree(void) {return dFree.ptr();}
+	inline int getDfreeSize(void) {return dFree.size();}
+	inline double getTolerance(void) {return tol;}
+	inline void setTolerance(double t) {tol = t;}
+	inline int getMaxIter(void) {return numItMax;}
+	inline void setMaxIter(int m) {numItMax = m;}
+	inline double* getF(void) {return f.ptr();}
+	inline bool useInitialGuess(void) {return useInitialF;}
+	inline unsigned int getNbConst(void) {return nbConst;}
+	virtual void setNbConst(unsigned int nbC) {nbConst = nbC;}
+	inline unsigned int getMaxConst(void) {return maxConst;}
+	virtual void setMaxConst(unsigned int nbC);
 
-
-      class MechanicalResetContactForceVisitor : public simulation::MechanicalVisitor
-        {
-        public:
-          VecId force;
-          MechanicalResetContactForceVisitor()
-            {
-            }
-
-          virtual Result fwdMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
-          {
-            ctime_t t0 = begin(node, ms);
-            ms->resetContactForce();
-            end(node, ms, t0);
-            return RESULT_CONTINUE;
-          }
-
-          virtual Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
-          {
-            ctime_t t0 = begin(node, ms);
-            ms->resetForce();
-            end(node, ms, t0);
-            return RESULT_CONTINUE;
-          }
-
-          // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
-          virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::behavior::BaseMechanicalMapping* /*map*/)
-          {
-              return false; // !map->isMechanical();
-          }
-
-            /// Return a class name for this visitor
-            /// Only used for debugging / profiling purposes
-            virtual const char* getClassName() const { return "MechanicalResetContactForceVisitor";}
-
-#ifdef SOFA_DUMP_VISITOR_INFO
-          void setReadWriteVectors()
-          {
-          }
-#endif
-        };
-
-      /* ACTION 2 : Apply the Contact Forces on mechanical models & Compute displacements */
-      class SOFA_COMPONENT_MASTERSOLVER_API MechanicalApplyContactForceVisitor : public simulation::MechanicalVisitor
-        {
-        public:
-          VecId force;
-        MechanicalApplyContactForceVisitor(double *f):_f(f)
-          {
-          }
-          virtual Result fwdMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
-          {
-            ctime_t t0 = begin(node, ms);
-            ms->applyContactForce(_f);
-            end(node, ms, t0);
-            return RESULT_CONTINUE;
-          }
-
-          virtual Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
-          {
-            ctime_t t0 = begin(node, ms);
-            ms->applyContactForce(_f);
-            end(node, ms, t0);
-            return RESULT_CONTINUE;
-          }
+	inline bool isLocked(void) {return false;}
+	inline void lock(void) {lok = true;}
+	inline void unlock(void) {lok = false;}
+	inline void wait(void) {while(lok) ; } //infinite loop?
+};
 
 
-          // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
-          virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::behavior::BaseMechanicalMapping* /*map*/)
-          {
-              return false; // !map->isMechanical();
-          }
 
-          /// Return a class name for this visitor
-          /// Only used for debugging / profiling purposes
-          virtual const char* getClassName() const { return "MechanicalApplyContactForceVisitor";}
+class MechanicalResetContactForceVisitor : public simulation::BaseMechanicalVisitor
+{
+public:
+	//core::MultiVecDerivId force;
+	MechanicalResetContactForceVisitor(/*core::MultiVecDerivId force,*/ const core::ExecParams* params)
+		: simulation::BaseMechanicalVisitor(params)
+	//	, force(force)
+	{
+	}
+
+	virtual Result fwdMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
+	{
+		ctime_t t0 = begin(node, ms);
+		ms->resetContactForce(/*force*/);
+		end(node, ms, t0);
+		return RESULT_CONTINUE;
+	}
+
+	virtual Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
+	{
+		ctime_t t0 = begin(node, ms);
+		ms->resetForce(/*force*/);
+		end(node, ms, t0);
+		return RESULT_CONTINUE;
+	}
+
+	// This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+	virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* /*map*/)
+	{
+		return false; // !map->isMechanical();
+	}
+
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalResetContactForceVisitor";}
 
 #ifdef SOFA_DUMP_VISITOR_INFO
-          void setReadWriteVectors()
-          {
-          }
+	void setReadWriteVectors()
+	{
+	}
+#endif
+};
+
+
+/// Apply the Contact Forces on mechanical models & Compute displacements
+class SOFA_COMPONENT_MASTERSOLVER_API MechanicalApplyContactForceVisitor : public simulation::BaseMechanicalVisitor
+{
+public:
+	//VecId force;
+	MechanicalApplyContactForceVisitor(double *f, const core::ExecParams* params)
+		: simulation::BaseMechanicalVisitor(params)
+		, _f(f)
+	{
+	}
+
+	virtual Result fwdMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
+	{
+		ctime_t t0 = begin(node, ms);
+		ms->applyContactForce(_f);
+		end(node, ms, t0);
+		return RESULT_CONTINUE;
+	}
+
+	virtual Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* ms)
+	{
+		ctime_t t0 = begin(node, ms);
+		ms->applyContactForce(_f);
+		end(node, ms, t0);
+		return RESULT_CONTINUE;
+	}
+
+
+	// This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+	virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* /*map*/)
+	{
+		return false; // !map->isMechanical();
+	}
+
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalApplyContactForceVisitor";}
+
+#ifdef SOFA_DUMP_VISITOR_INFO
+	void setReadWriteVectors()
+	{
+	}
 #endif
 
-        private:
-          double *_f; // vector of contact forces from lcp //
-          // to be multiplied by constraint direction in mechanical models //
+private:
+	double *_f; // vector of contact forces from lcp //
+	// to be multiplied by constraint direction in mechanical models //
 
-        };
+};
 
-/* ACTION 3 : gets the vector of constraint values */
-/* ACTION 3 : gets the vector of constraint values */
-class MechanicalGetConstraintValueVisitor : public simulation::MechanicalVisitor
+
+/// Gets the vector of constraint values
+class MechanicalGetConstraintValueVisitor : public simulation::BaseMechanicalVisitor
 {
 public:
 
-	MechanicalGetConstraintValueVisitor(BaseVector *v): _v(v) // , _numContacts(numContacts)
+	MechanicalGetConstraintValueVisitor(BaseVector *v, const core::ConstraintParams* params)
+		: simulation::BaseMechanicalVisitor(params)
+		, cparams(params)
+		, m_v(v)
 	{
 #ifdef SOFA_DUMP_VISITOR_INFO
 		setReadWriteVectors();
@@ -198,19 +212,17 @@ public:
 
 	virtual Result fwdConstraintSet(simulation::Node* node, core::behavior::BaseConstraintSet* cSet)
 	{
-		if (core::behavior::BaseConstraint *c=dynamic_cast<core::behavior::BaseConstraint*>(cSet))
+		if (core::behavior::BaseConstraintSet *c=dynamic_cast<core::behavior::BaseConstraintSet*>(cSet))
 		{
-			//sout << c->getName()<<"->getConstraintValue()"<<sendl;
 			ctime_t t0 = begin(node, c);
-			//c->getConstraintValue(_v);
-			c->getConstraintViolation(_v, VecId::freePosition());
+			c->getConstraintViolation(m_v, cparams);
 			end(node, c, t0);
 		}
 		return RESULT_CONTINUE;
 	}
 
-	// This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
-	virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::behavior::BaseMechanicalMapping* /*map*/)
+	/// This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+	virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* /*map*/)
 	{
 		return false; // !map->isMechanical();
 	}
@@ -226,69 +238,84 @@ public:
 #endif
 
 private:
-	BaseVector* _v; // vector for constraint values
-	// unsigned int &_numContacts; // we need an offset to fill the vector _v if differents contact class are created
+	/// Constraint parameters
+	const sofa::core::ConstraintParams *cparams;
+
+	/// Vector for constraint values
+	BaseVector* m_v;
 };
 
 
-class MechanicalGetConstraintInfoVisitor : public simulation::MechanicalVisitor
+class MechanicalGetConstraintInfoVisitor : public simulation::BaseMechanicalVisitor
 {
 public:
-    typedef core::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
-    typedef core::behavior::BaseConstraint::VecPersistentID VecPersistentID;
-    typedef core::behavior::BaseConstraint::VecConstCoord VecConstCoord;
-    typedef core::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
-    typedef core::behavior::BaseConstraint::VecConstArea VecConstArea;
+	typedef core::behavior::BaseConstraint::VecConstraintBlockInfo VecConstraintBlockInfo;
+	typedef core::behavior::BaseConstraint::VecPersistentID VecPersistentID;
+	typedef core::behavior::BaseConstraint::VecConstCoord VecConstCoord;
+	typedef core::behavior::BaseConstraint::VecConstDeriv VecConstDeriv;
+	typedef core::behavior::BaseConstraint::VecConstArea VecConstArea;
 
-    MechanicalGetConstraintInfoVisitor(VecConstraintBlockInfo& blocks, VecPersistentID& ids, VecConstCoord& positions, VecConstDeriv& directions, VecConstArea& areas)
-    : _blocks(blocks), _ids(ids), _positions(positions), _directions(directions), _areas(areas)
-    {
+	MechanicalGetConstraintInfoVisitor(VecConstraintBlockInfo& blocks, VecPersistentID& ids, VecConstCoord& positions, VecConstDeriv& directions, VecConstArea& areas, const core::ExecParams* params)
+		: simulation::BaseMechanicalVisitor(params)
+		, _blocks(blocks)
+		, _ids(ids)
+		, _positions(positions)
+		, _directions(directions)
+		, _areas(areas)
+	{
 #ifdef SOFA_DUMP_VISITOR_INFO
-        setReadWriteVectors();
+		setReadWriteVectors();
 #endif
-    }
-    
-    virtual Result fwdConstraintSet(simulation::Node* node, core::behavior::BaseConstraintSet* cSet)
-    {
-      if (core::behavior::BaseConstraint *c=dynamic_cast<core::behavior::BaseConstraint*>(cSet))
-      {
-        ctime_t t0 = begin(node, c);
-        c->getConstraintInfo(_blocks, _ids, _positions, _directions, _areas);
-        end(node, c, t0);
-      }
-        return RESULT_CONTINUE;
-    }
-    
+	}
 
-    // This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
-    virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::behavior::BaseMechanicalMapping* /*map*/)
-    {
-        return false; // !map->isMechanical();
-    }
+	virtual Result fwdConstraintSet(simulation::Node* node, core::behavior::BaseConstraintSet* cSet)
+	{
+		if (core::behavior::BaseConstraint *c=dynamic_cast<core::behavior::BaseConstraint*>(cSet))
+		{
+			ctime_t t0 = begin(node, c);
+			c->getConstraintInfo(_blocks, _ids, _positions, _directions, _areas);
+			end(node, c, t0);
+		}
+		return RESULT_CONTINUE;
+	}
 
-    /// Return a class name for this visitor
-    /// Only used for debugging / profiling purposes
-    virtual const char* getClassName() const { return "MechanicalGetConstraintInfoVisitor";}
+
+	// This visitor must go through all mechanical mappings, even if isMechanical flag is disabled
+	virtual bool stopAtMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* /*map*/)
+	{
+		return false; // !map->isMechanical();
+	}
+
+	/// Return a class name for this visitor
+	/// Only used for debugging / profiling purposes
+	virtual const char* getClassName() const { return "MechanicalGetConstraintInfoVisitor";}
 
 #ifdef SOFA_DUMP_VISITOR_INFO
-    void setReadWriteVectors()
-    {
-    }
+	void setReadWriteVectors()
+	{
+	}
 #endif
 private:
-    VecConstraintBlockInfo& _blocks;
-    VecPersistentID& _ids;
-    VecConstCoord& _positions;
-    VecConstDeriv& _directions;
-    VecConstArea& _areas;
+	VecConstraintBlockInfo& _blocks;
+	VecPersistentID& _ids;
+	VecConstCoord& _positions;
+	VecConstDeriv& _directions;
+	VecConstArea& _areas;
 };
 
+class SOFA_COMPONENT_CONSTRAINTSET_API LCPConstraintSolverInterface : public sofa::core::behavior::ConstraintSolver
+{
+public:
+	virtual LCP* getLCP() = 0;
+	virtual void lockLCP(LCP* l1, LCP* l2=0) = 0; ///< Do not use the following LCPs until the next call to this function. This is used to prevent concurent access to the LCP when using a LCPForceFeedback through an haptic thread
+};
 
-class SOFA_COMPONENT_CONSTRAINTSET_API LCPConstraintSolver : public sofa::core::behavior::ConstraintSolver
+class SOFA_COMPONENT_CONSTRAINTSET_API LCPConstraintSolver : public LCPConstraintSolverInterface
 {
 	typedef std::vector<core::behavior::BaseConstraintCorrection*> list_cc;
 	typedef std::vector<list_cc> VecListcc;
-	typedef sofa::core::VecId VecId;
+	typedef sofa::core::MultiVecId MultiVecId;
+
 public:
 	SOFA_CLASS(LCPConstraintSolver, sofa::core::behavior::ConstraintSolver);
 
@@ -305,11 +332,10 @@ public:
 
 	void init();
 
-
-	bool prepareStates(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder=core::behavior::BaseConstraintSet::POS);
-	bool buildSystem(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder=core::behavior::BaseConstraintSet::POS);
-	bool solveSystem(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder=core::behavior::BaseConstraintSet::POS);
-	bool applyCorrection(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder=core::behavior::BaseConstraintSet::POS);   
+	bool prepareStates(double dt, MultiVecId, core::ConstraintParams::ConstOrder = core::ConstraintParams::POS);
+	bool buildSystem(double dt, MultiVecId, core::ConstraintParams::ConstOrder = core::ConstraintParams::POS);
+	bool solveSystem(double dt, MultiVecId, core::ConstraintParams::ConstOrder = core::ConstraintParams::POS);
+	bool applyCorrection(double dt, MultiVecId, core::ConstraintParams::ConstOrder = core::ConstraintParams::POS);   
 
 	void draw();
 
@@ -317,16 +343,16 @@ public:
 	Data<bool> displayTime;
 	Data<bool> initial_guess;
 	Data<bool> build_lcp;
-	Data < double > tol;
-	Data < int > maxIt;
-	Data < double > mu;
-	Data < double > minW;
-	Data < double > maxF;
+	Data<double> tol;
+	Data<int> maxIt;
+	Data<double> mu;
+	Data<double> minW;
+	Data<double> maxF;
 	Data<bool> multi_grid;
-	Data<int>  multi_grid_levels;
-	Data<int>  merge_method;
-	Data<int>  merge_spatial_step;
-	Data<int>  merge_local_levels;
+	Data<int> multi_grid_levels;
+	Data<int> merge_method;
+	Data<int> merge_spatial_step;
+	Data<int> merge_local_levels;
 
 	Data < helper::set<int> > constraintGroups;
 

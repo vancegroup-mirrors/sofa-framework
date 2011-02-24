@@ -39,12 +39,10 @@
 #include <sofa/component/container/MechanicalObject.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/core/objectmodel/Data.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
-
-
-
 
 namespace sofa
 {
@@ -106,7 +104,6 @@ public:
 	typedef Vec3Types DataTypes;
 	typedef SingleSphere Element;
 	friend class SingleSphere;
-	DataTypes::VecCoord VecCoord;
 
 	/** @brief Constructor */
 	SphereTreeModel(double radius = 1.0);
@@ -198,7 +195,11 @@ inline const Vector3& SingleSphere::v() const
 
 inline void SingleSphere::setCenter( double x, double y, double z ) 
 {
-	(*model->getX())[index] = Vector3((SReal)x, (SReal)y, (SReal)z);
+    helper::WriteAccessor<Data<SphereTreeModel::VecCoord> > xData = *model->write(core::VecCoordId::position());
+    Coord& center = xData.wref()[index];
+    center.x() = (SReal)x;
+    center.y() = (SReal)y;
+    center.z() = (SReal)z;
 }
 
 inline double SingleSphere::r() const

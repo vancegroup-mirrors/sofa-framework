@@ -15,7 +15,7 @@ DEFINES += SOFA_BUILD_COMPONENT_CONSTRAINTSET
 
 HEADERS +=  initConstraintSet.h \
            LCPConstraintSolver.h \
-           LinearSolverConstraintCorrection.h \
+		   LinearSolverConstraintCorrection.h \
            LinearSolverConstraintCorrection.inl \
            PrecomputedConstraintCorrection.h \
            PrecomputedConstraintCorrection.inl \
@@ -26,12 +26,12 @@ HEADERS +=  initConstraintSet.h \
 
 SOURCES += initConstraintSet.cpp \
            LCPConstraintSolver.cpp \
-           LinearSolverConstraintCorrection.cpp \
+		   LinearSolverConstraintCorrection.cpp \
            PrecomputedConstraintCorrection.cpp \
            UncoupledConstraintCorrection.cpp \
            UnilateralInteractionConstraint.cpp 
 
-contains(DEFINES,SOFA_HAVE_EIGEN2){ 
+contains(DEFINES,SOFA_HAVE_EIGEN2){
 HEADERS += \
            LMConstraintDirectSolver.h\
            LMConstraintSolver.h\

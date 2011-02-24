@@ -64,6 +64,9 @@ public:
     typedef typename DataTypes::Deriv    Deriv   ;
     typedef typename Coord::value_type   Real    ;
 
+	typedef core::objectmodel::Data<VecCoord> DataVecCoord;
+    typedef core::objectmodel::Data<VecDeriv> DataVecDeriv;
+
 
 	class Mat3 : public fixed_array<Deriv,3>
 	{
@@ -150,22 +153,24 @@ public:
 
 	virtual ~TriangularQuadraticSpringsForceField();
 
-        virtual double getPotentialEnergy(const VecCoord& x) const;
-
 	virtual void init();
-	virtual void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);
-	virtual void addDForce(VecDeriv& df, const VecDeriv& dx);
+
+    virtual void addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* mparams);
+    virtual void addDForce(DataVecDeriv& d_df, const DataVecDeriv& d_dx, const core::MechanicalParams* mparams);
 
 	virtual Real getLambda() const { return lambda;}
 	virtual Real getMu() const { return mu;}
 
-	void setYoungModulus(const double modulus) {
+	void setYoungModulus(const double modulus) 
+	{
 		f_youngModulus.setValue((Real)modulus);
 	}
-	void setPoissonRatio(const double ratio) {
+	void setPoissonRatio(const double ratio) 
+	{
 		f_poissonRatio.setValue((Real)ratio);
 	}
-	void includeAngularSprings(const bool useAngularSprings) {
+	void includeAngularSprings(const bool useAngularSprings) 
+	{
 		f_useAngularSprings.setValue(useAngularSprings);
 	}
 
@@ -194,13 +199,28 @@ protected :
 	static void TRQSTriangleDestroyFunction ( int , void* , TriangleRestInformation &);
 
 };
+
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_TRIANGULARQUADRATICSPRINGSFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API TriangularQuadraticSpringsForceField<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API TriangularQuadraticSpringsForceField<Vec3fTypes>;
+#endif
+
+
+#endif // defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_TRIANGULARQUADRATICSPRINGSFORCEFIELD_CPP)
+
+
 } //namespace forcefield
 
-} // namespace Components
+} // namespace component
 
+} // namespace sofa
 
-} // namespace Sofa
-
-
-
-#endif /* _TriangularQuadraticSpringsForceField_H_ */
+#endif /* SOFA_COMPONENT_FORCEFIELD_TRIANGULARQUADRATICSPRINGSFORCEFIELD_H */

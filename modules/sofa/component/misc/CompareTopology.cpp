@@ -304,8 +304,9 @@ void CompareTopology::processCompareTopology()
 
 
 
-CompareTopologyCreator::CompareTopologyCreator()
-  : sceneName("")
+CompareTopologyCreator::CompareTopologyCreator(const core::ExecParams* params)
+:Visitor(params)
+, sceneName("")
 #ifdef SOFA_HAVE_ZLIB
 , extension(".txt.gz")
 #else
@@ -317,8 +318,9 @@ CompareTopologyCreator::CompareTopologyCreator()
 {
 }
 
-CompareTopologyCreator::CompareTopologyCreator(const std::string &n, bool i, int c)
-: sceneName(n)
+CompareTopologyCreator::CompareTopologyCreator(const std::string &n, const core::ExecParams* params, bool i, int c)
+:Visitor(params)
+, sceneName(n)
 #ifdef SOFA_HAVE_ZLIB
 , extension(".txt.gz")
 #else
@@ -368,14 +370,15 @@ simulation::Visitor::Result CompareTopologyCreator::processNodeTopDown( simulati
 }
 
 
-  CompareTopologyResult::CompareTopologyResult()
-  {
+CompareTopologyResult::CompareTopologyResult(const core::ExecParams* params)
+:Visitor(params)
+{
     TotalError = 0;
     numCompareTopology = 0;
     listError.resize (5);
     for (unsigned int i = 0; i<5; i++)
-      listError[i] = 0;
-  }
+        listError[i] = 0;
+}
   
   
 

@@ -22,6 +22,9 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#ifndef SOFA_COMPONENT_FORCEFIELD_OSCILLATINGTORSIONPRESSUREFORCEFIELD_INL
+#define SOFA_COMPONENT_FORCEFIELD_OSCILLATINGTORSIONPRESSUREFORCEFIELD_INL
+
 #include <sofa/component/forcefield/OscillatingTorsionPressureForceField.h>
 #include <sofa/component/topology/TriangleSubsetData.inl>
 #include <sofa/component/topology/TriangleSetGeometryAlgorithms.h>
@@ -44,10 +47,6 @@ using namespace sofa::defaulttype;
 using namespace core::topology;
 
 
-
-
-
-
 template <class DataTypes> OscillatingTorsionPressureForceField<DataTypes>::~OscillatingTorsionPressureForceField()
 {
 	//file.close();
@@ -64,11 +63,11 @@ template <class DataTypes> void  OscillatingTorsionPressureForceField<DataTypes>
 }
 template <class DataTypes> void OscillatingTorsionPressureForceField<DataTypes>::init()
 {
-    //serr << "initializing OscillatingTorsionPressureForceField" << sendl;
-    this->core::behavior::ForceField<DataTypes>::init();
+	//serr << "initializing OscillatingTorsionPressureForceField" << sendl;
+	this->core::behavior::ForceField<DataTypes>::init();
 	//file.open("testsofa.dat");
-    // normalize axis:
-    axis.setValue( axis.getValue() / axis.getValue().norm() );
+	// normalize axis:
+	axis.setValue( axis.getValue() / axis.getValue().norm() );
 
 	_topology = this->getContext()->getMeshTopology();
 
@@ -79,16 +78,16 @@ template <class DataTypes> void OscillatingTorsionPressureForceField<DataTypes>:
 		selectTrianglesFromString();
 	}
 
-  int numPts = _topology->getNbPoints();
-  relMomentToApply.resize( numPts );
-  pointActive.resize( numPts );
-  vecFromCenter.resize( numPts );
-  distFromCenter.resize( numPts );
-  momentDir.resize( numPts );
-  origVecFromCenter.resize( numPts );
-  origCenter.resize( numPts );
+	int numPts = _topology->getNbPoints();
+	relMomentToApply.resize( numPts );
+	pointActive.resize( numPts );
+	vecFromCenter.resize( numPts );
+	distFromCenter.resize( numPts );
+	momentDir.resize( numPts );
+	origVecFromCenter.resize( numPts );
+	origCenter.resize( numPts );
 
-  initTriangleInformation();
+	initTriangleInformation();
 
 }
 
@@ -96,102 +95,83 @@ template <class DataTypes> void OscillatingTorsionPressureForceField<DataTypes>:
 template<class DataTypes>
 double OscillatingTorsionPressureForceField<DataTypes>::getAmplitude()
 {
-  double t = this->getContext()->getTime();
-  double val = cos( 6.2831853 * frequency.getValue() * t );
-  return val;
+	double t = this->getContext()->getTime();
+	double val = cos( 6.2831853 * frequency.getValue() * t );
+	return val;
 }
 
 
 template <class DataTypes> 
-void OscillatingTorsionPressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& /*v*/)
+void OscillatingTorsionPressureForceField<DataTypes>::addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& /* d_v */, const core::MechanicalParams* /* mparams */)
 {
-	
+	VecDeriv& f = *d_f.beginEdit();
+	const VecCoord& x = d_x.getValue();
+
 	Deriv force;
-  Coord forceDir, deltaPos;
-//  const VecCoord& x0 = *this->mstate->getX0();
-  Real avgRotAngle = 0;
-  Real totalDist = 0;
-  
+	Coord forceDir, deltaPos;
+	Real avgRotAngle = 0;
+	Real totalDist = 0;
+
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
 
-  // calculate average rotation angle:
-  for (unsigned int i=0; i<x.size(); i++) if (pointActive[i])
-  {
-    vecFromCenter[i] = getVecFromRotAxis( x[i] );
-    distFromCenter[i] = vecFromCenter[i].norm();
-    if (distFromCenter[i] > 1e-10 && origVecFromCenter[i].norm() > 1e-10) {
-      avgRotAngle += distFromCenter[i] * getAngle( vecFromCenter[i], origVecFromCenter[i] );
-      totalDist += distFromCenter[i];
-    }
-  }
-   avgRotAngle /= totalDist;
-   std::cout << "Angle = " << 57.295779513 * avgRotAngle;
-   
-   rotationAngle = avgRotAngle;
+	// calculate average rotation angle:
+	for (unsigned int i=0; i<x.size(); i++) if (pointActive[i])
+	{
+		vecFromCenter[i] = getVecFromRotAxis( x[i] );
+		distFromCenter[i] = vecFromCenter[i].norm();
+		if (distFromCenter[i] > 1e-10 && origVecFromCenter[i].norm() > 1e-10) {
+			avgRotAngle += distFromCenter[i] * getAngle( vecFromCenter[i], origVecFromCenter[i] );
+			totalDist += distFromCenter[i];
+		}
+	}
+	avgRotAngle /= totalDist;
+
+	rotationAngle = avgRotAngle;
 
 
-   //double da = 360.0 / 6.2831853 * rotationAngle;
- //  file <<this->getContext()->getTime() << " " << getAmplitude()*0.01 << " " << avgRotAngle << std::endl;
+	//double da = 360.0 / 6.2831853 * rotationAngle;
+	//  file <<this->getContext()->getTime() << " " << getAmplitude()*0.01 << " " << avgRotAngle << std::endl;
 
 
-  // calculate and apply penalty forces to ideal positions
-  defaulttype::Quat quat( axis.getValue(), avgRotAngle );
-  Real avgError = 0, maxError = 0;
-  int pointCnt = 0;
-  Real appliedMoment = 0;
-  for (unsigned int i=0; i<x.size(); i++) if (pointActive[i])
-  {
-    Coord idealPos = quat.rotate( origVecFromCenter[i] ) + origCenter[i];
-    deltaPos = idealPos - x[i];
-    force = deltaPos * penalty.getValue();// * 100*deltaPos.norm();
-    f[i] += force;
-    // get amount of force that is a moment and store
-    if (distFromCenter[i] > 1e-10 && origVecFromCenter[i].norm() > 1e-10) {
-      momentDir[i] = axis.getValue().cross( vecFromCenter[i] ); momentDir[i].normalize();
-      appliedMoment += dot( force, momentDir[i] ) * distFromCenter[i];
-    }
-    // error stats
-    Real error = deltaPos.norm();
-    if (error > maxError) maxError = error;
-    avgError += error;
-    pointCnt++;
-  }
-  avgError /= (Real)pointCnt;
-  //std::cout << "  AE = " << avgError << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
+	// calculate and apply penalty forces to ideal positions
+	defaulttype::Quat quat( axis.getValue(), avgRotAngle );
+	Real avgError = 0, maxError = 0;
+	int pointCnt = 0;
+	Real appliedMoment = 0;
+	for (unsigned int i=0; i<x.size(); i++) if (pointActive[i])
+	{
+		Coord idealPos = quat.rotate( origVecFromCenter[i] ) + origCenter[i];
+		deltaPos = idealPos - x[i];
+		force = deltaPos * penalty.getValue();// * 100*deltaPos.norm();
+		f[i] += force;
+		// get amount of force that is a moment and store
+		if (distFromCenter[i] > 1e-10 && origVecFromCenter[i].norm() > 1e-10) {
+			momentDir[i] = axis.getValue().cross( vecFromCenter[i] ); momentDir[i].normalize();
+			appliedMoment += dot( force, momentDir[i] ) * distFromCenter[i];
+		}
+		// error stats
+		Real error = deltaPos.norm();
+		if (error > maxError) maxError = error;
+		avgError += error;
+		pointCnt++;
+	}
+	avgError /= (Real)pointCnt;
+	//std::cout << "  AE = " << avgError << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
 
-  // apply remaining moment
-  //Real check = 0;
-  Real remainingMoment = moment.getValue() * getAmplitude() - appliedMoment;
-  for (unsigned int i=0; i<x.size(); i++) if (pointActive[i])
-  {
-    if (distFromCenter[i] > 1e-10) {
-      force = momentDir[i] * remainingMoment * relMomentToApply[i] / distFromCenter[i];
-      //check += force.norm() * distFromCenter[i];
-      f[i] += force;  
-    }
-  }
-  //std::cout << "RM=" << remainingMoment << "  CHK=" << check << std::endl;
-  std::cout << "  RM = " << remainingMoment << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
+	// apply remaining moment
+	//Real check = 0;
+	Real remainingMoment = moment.getValue() * getAmplitude() - appliedMoment;
+	for (unsigned int i=0; i<x.size(); i++) if (pointActive[i])
+	{
+		if (distFromCenter[i] > 1e-10) {
+			force = momentDir[i] * remainingMoment * relMomentToApply[i] / distFromCenter[i];
+			//check += force.norm() * distFromCenter[i];
+			f[i] += force;  
+		}
+	}
+	//std::cout << "RM=" << remainingMoment << "  CHK=" << check << std::endl;
+	//std::cout << "  RM = " << remainingMoment << "  ME = " << maxError << "  AM = " << appliedMoment << std::endl;
 }
-
-
-template <class DataTypes> 
-void OscillatingTorsionPressureForceField<DataTypes>::addDForce (VecDeriv& , const VecDeriv& , double , double )
-{
-  /*for (int i=0; i<dx.size(); i++) if (pointActive[i])
-  {
-    df[i] -= dx[i] * penalty.getValue() * kFactor;
-  }*/
-}
-
-
-template <class DataTypes> 
-    double OscillatingTorsionPressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/) const
-{
-    serr<<"OscillatingTorsionPressureForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
-}
-
 
 template<class DataTypes>
 void OscillatingTorsionPressureForceField<DataTypes>::initTriangleInformation()
@@ -199,40 +179,40 @@ void OscillatingTorsionPressureForceField<DataTypes>::initTriangleInformation()
 	sofa::component::topology::TriangleSetGeometryAlgorithms<DataTypes>* triangleGeo; 
 	this->getContext()->get(triangleGeo);	
 
-  const VecCoord *x0 = triangleGeo->getDOF()->getX0();
-  int idx[3];
-  Real d[10];
-  
+	const VecCoord *x0 = triangleGeo->getDOF()->getX0();
+	int idx[3];
+	Real d[10];
+
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
 
 	for(it=trianglePressureMap.begin(); it!=trianglePressureMap.end(); it++ )
 	{
-	  (*it).second.area=triangleGeo->computeRestTriangleArea((*it).first);
-    // calculate distances for corner and intermediate points
-    for (int i=0; i<3; i++) {
-      idx[i] = _topology->getTriangle((*it).first)[i];
-      pointActive[idx[i]] = true;
-      origVecFromCenter[idx[i]] = getVecFromRotAxis( (*x0)[idx[i]] );
-      origCenter[idx[i]] = (*x0)[idx[i]] - origVecFromCenter[idx[i]];
-      d[i] = origVecFromCenter[idx[i]].norm();
-    }
-    d[3] = (d[0]+d[1])/2;
-    d[4] = (d[1]+d[2])/2;
-    d[5] = (d[2]+d[0])/2;
-    d[6] = (d[0]+d[3]+d[5])/3;
-    d[7] = (d[1]+d[4]+d[3])/3;
-    d[8] = (d[2]+d[5]+d[4])/3;
-    d[9] = (d[0]+d[1]+d[2])/3;
+		(*it).second.area=triangleGeo->computeRestTriangleArea((*it).first);
+		// calculate distances for corner and intermediate points
+		for (int i=0; i<3; i++) {
+			idx[i] = _topology->getTriangle((*it).first)[i];
+			pointActive[idx[i]] = true;
+			origVecFromCenter[idx[i]] = getVecFromRotAxis( (*x0)[idx[i]] );
+			origCenter[idx[i]] = (*x0)[idx[i]] - origVecFromCenter[idx[i]];
+			d[i] = origVecFromCenter[idx[i]].norm();
+		}
+		d[3] = (d[0]+d[1])/2;
+		d[4] = (d[1]+d[2])/2;
+		d[5] = (d[2]+d[0])/2;
+		d[6] = (d[0]+d[3]+d[5])/3;
+		d[7] = (d[1]+d[4]+d[3])/3;
+		d[8] = (d[2]+d[5]+d[4])/3;
+		d[9] = (d[0]+d[1]+d[2])/3;
 
-    relMomentToApply[idx[0]] += (d[0]*d[0] + d[3]*d[3] + d[5]*d[5] + d[6]*d[6] + d[9]*d[9]) * d[0] * (*it).second.area / 3;
-    relMomentToApply[idx[1]] += (d[1]*d[1] + d[4]*d[4] + d[3]*d[3] + d[7]*d[7] + d[9]*d[9]) * d[1] * (*it).second.area / 3;
-    relMomentToApply[idx[2]] += (d[2]*d[2] + d[5]*d[5] + d[4]*d[4] + d[8]*d[8] + d[9]*d[9]) * d[2] * (*it).second.area / 3;  
-  }
+		relMomentToApply[idx[0]] += (d[0]*d[0] + d[3]*d[3] + d[5]*d[5] + d[6]*d[6] + d[9]*d[9]) * d[0] * (*it).second.area / 3;
+		relMomentToApply[idx[1]] += (d[1]*d[1] + d[4]*d[4] + d[3]*d[3] + d[7]*d[7] + d[9]*d[9]) * d[1] * (*it).second.area / 3;
+		relMomentToApply[idx[2]] += (d[2]*d[2] + d[5]*d[5] + d[4]*d[4] + d[8]*d[8] + d[9]*d[9]) * d[2] * (*it).second.area / 3;  
+	}
 
-  // normalize value to moment 1
-  Real totalMoment = 0;
-  for (unsigned int i=0; i<relMomentToApply.size(); i++) totalMoment += relMomentToApply[i];
-  for (unsigned int i=0; i<relMomentToApply.size(); i++) relMomentToApply[i] /= totalMoment;
+	// normalize value to moment 1
+	Real totalMoment = 0;
+	for (unsigned int i=0; i<relMomentToApply.size(); i++) totalMoment += relMomentToApply[i];
+	for (unsigned int i=0; i<relMomentToApply.size(); i++) relMomentToApply[i] /= totalMoment;
 }
 
 
@@ -256,7 +236,7 @@ void OscillatingTorsionPressureForceField<DataTypes>::selectTrianglesAlongPlane(
 		{
 			// insert a dummy element : computation of pressure done later
 			TrianglePressureInformation t;
-      t.area = 0;
+			t.area = 0;
 			trianglePressureMap[n]=t;
 		}
 	}
@@ -272,7 +252,7 @@ void OscillatingTorsionPressureForceField<DataTypes>::selectTrianglesFromString(
 		const char *str=inputString.c_str();
 		for(i=0;(i<inputString.length())&&(str[i]!=',');++i) ;
 		TrianglePressureInformation t;
-    t.area = 0;
+		t.area = 0;
 		if (i==inputString.length()) {
 			trianglePressureMap[(unsigned int)atoi(str)]=t;
 			inputString+=i;
@@ -301,7 +281,7 @@ void OscillatingTorsionPressureForceField<DataTypes>::draw()
 
 	glBegin(GL_TRIANGLES);
 	glColor4f(0,1,0,1);
-	
+
 	typename topology::TriangleSubsetData<TrianglePressureInformation>::iterator it;
 
 	for(it=trianglePressureMap.begin(); it!=trianglePressureMap.end(); it++ )
@@ -321,3 +301,5 @@ void OscillatingTorsionPressureForceField<DataTypes>::draw()
 } // namespace component
 
 } // namespace sofa
+
+#endif // SOFA_COMPONENT_FORCEFIELD_OSCILLATINGTORSIONPRESSUREFORCEFIELD_INL

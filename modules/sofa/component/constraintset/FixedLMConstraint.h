@@ -34,123 +34,137 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace constraintset
-    {
+namespace constraintset
+{
 
-      using namespace sofa::core::topology;
-      /// This class can be overridden if needed for additionnal storage within template specializations.
-      template <class DataTypes>
-	class FixedLMConstraintInternalData
+using namespace sofa::core::topology;
+/// This class can be overridden if needed for additionnal storage within template specializations.
+template <class DataTypes>
+class FixedLMConstraintInternalData
+{
+};
+
+
+
+
+/** Keep two particules at an initial distance
+*/
+template <class DataTypes>
+class FixedLMConstraint :  public core::behavior::LMConstraint<DataTypes,DataTypes>
+{
+public:
+	SOFA_CLASS(SOFA_TEMPLATE(FixedLMConstraint,DataTypes),SOFA_TEMPLATE2(sofa::core::behavior::LMConstraint, DataTypes, DataTypes));
+
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::Coord Coord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef typename DataTypes::MatrixDeriv MatrixDeriv;
+	typedef typename DataTypes::MatrixDeriv::RowIterator MatrixDerivRowIterator;
+	typedef typename core::behavior::MechanicalState<DataTypes> MechanicalState;
+
+
+	typedef sofa::component::topology::PointSubset SetIndex;
+	typedef helper::vector<unsigned int> SetIndexArray;
+
+	typedef core::ConstraintParams::ConstOrder ConstOrder;
+
+protected:
+	FixedLMConstraintInternalData<DataTypes> data;
+	friend class FixedLMConstraintInternalData<DataTypes>;
+
+public:
+	FixedLMConstraint( MechanicalState *dof)
+		: core::behavior::LMConstraint<DataTypes,DataTypes>(dof,dof)
+		, f_indices(core::objectmodel::Base::initData(&f_indices, "indices", "List of the index of particles to be fixed"))
+		, _drawSize(core::objectmodel::Base::initData(&_drawSize,0.0,"drawSize","0 -> point based rendering, >0 -> radius of spheres") )           
+	{};
+
+	FixedLMConstraint()
+		: f_indices(core::objectmodel::Base::initData(&f_indices, "indices", "List of the index of particles to be fixed"))
+		, _drawSize(core::objectmodel::Base::initData(&_drawSize,0.0,"drawSize","0 -> point based rendering, >0 -> radius of spheres") )           
+	{};
+
+	~FixedLMConstraint(){}; 
+
+	void clearConstraints();
+	void addConstraint(unsigned int index);
+	void removeConstraint(unsigned int index);
+
+	// Handle topological changes
+	virtual void handleTopologyChange();
+
+	void init();
+	void draw();
+	void initFixedPosition();
+	void reset(){initFixedPosition();};
+
+	// -- LMConstraint interface
+  void buildConstraintMatrix(core::MultiMatrixDerivId cId, unsigned int &cIndex, const core::ConstraintParams* cParams);
+	void writeConstraintEquations(unsigned int& lineNumber, core::MultiVecId id, ConstOrder order);
+
+
+	std::string getTemplateName() const
 	{
-	};
-
-
-
-
-      /** Keep two particules at an initial distance
-       */
-      template <class DataTypes>
-	class FixedLMConstraint :  public core::behavior::LMConstraint<DataTypes,DataTypes>
+		return templateName(this);
+	}
+	static std::string templateName(const FixedLMConstraint<DataTypes>* = NULL)
 	{
-	public:
-		SOFA_CLASS(SOFA_TEMPLATE(FixedLMConstraint,DataTypes),SOFA_TEMPLATE2(sofa::core::behavior::LMConstraint, DataTypes, DataTypes));
+		return DataTypes::Name();
+	}
 
-	  typedef typename DataTypes::VecCoord VecCoord;
-	  typedef typename DataTypes::Coord Coord;
-	  typedef typename DataTypes::VecDeriv VecDeriv;
-	  typedef typename DataTypes::Deriv Deriv;
-      typedef typename DataTypes::MatrixDeriv MatrixDeriv;
-      typedef typename DataTypes::MatrixDeriv::RowIterator MatrixDerivRowIterator;
-	  typedef typename core::behavior::MechanicalState<DataTypes> MechanicalState;
+	bool isCorrectionComputedWithSimulatedDOF(ConstOrder /*order*/) const
+	{
+		simulation::Node* node=(simulation::Node*) this->constrainedObject1->getContext();
+		if (node->mechanicalMapping.empty()) return true;
+		else return false;
+	}
 
+	bool useMask() const {return true;}
 
-    typedef sofa::component::topology::PointSubset SetIndex;
-    typedef helper::vector<unsigned int> SetIndexArray;
+  Data<SetIndex> f_indices;
+  Data<double> _drawSize;
 
-	  typedef typename core::behavior::BaseMechanicalState::VecId VecId;
-    typedef core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
+protected :
 
-	protected:
-	  FixedLMConstraintInternalData<DataTypes> data;
-	  friend class FixedLMConstraintInternalData<DataTypes>;
-	
-	public:
-	FixedLMConstraint( MechanicalState *dof):
-          core::behavior::LMConstraint<DataTypes,DataTypes>(dof,dof),
-            f_indices(core::objectmodel::Base::initData(&f_indices, "indices", "List of the index of particles to be fixed")),
-            _drawSize(core::objectmodel::Base::initData(&_drawSize,0.0,"drawSize","0 -> point based rendering, >0 -> radius of spheres") )           
-	      {};
-	FixedLMConstraint():
-          f_indices(core::objectmodel::Base::initData(&f_indices, "indices", "List of the index of particles to be fixed")),
-            _drawSize(core::objectmodel::Base::initData(&_drawSize,0.0,"drawSize","0 -> point based rendering, >0 -> radius of spheres") )           
-              {}
-
-	  ~FixedLMConstraint(){}; 
-	  
-          void clearConstraints();
-          void addConstraint(unsigned int index);
-          void removeConstraint(unsigned int index);
-
-          // Handle topological changes
-          virtual void handleTopologyChange();
-          
-	  void init();
-          void draw();
-          void initFixedPosition();
-          void reset(){initFixedPosition();};
-
-	  // -- LMConstraint interface
-          void buildConstraintMatrix(unsigned int &constraintId, core::VecId position);
-      void writeConstraintEquations(unsigned int& lineNumber, VecId id, ConstOrder order);
-
-
-          std::string getTemplateName() const
-            {
-              return templateName(this);
-            }
-          static std::string templateName(const FixedLMConstraint<DataTypes>* = NULL)
-          {
-            return DataTypes::Name();
-          }
+	Deriv X,Y,Z;
+	SetIndexArray idxX, idxY, idxZ;
+	std::map< unsigned int, Coord> restPosition;
 
 
 
 
-
-          bool isCorrectionComputedWithSimulatedDOF(core::behavior::BaseLMConstraint::ConstOrder /*order*/) const
-          {
-              simulation::Node* node=(simulation::Node*) this->constrainedObject1->getContext();
-              if (node->mechanicalMapping.empty()) return true;
-              else return false;
-          }
-          bool useMask() const {return true;}
-	protected :
-
-          Deriv X,Y,Z;
-          SetIndexArray idxX, idxY, idxZ;
-          std::map< unsigned int, Coord> restPosition;
-
-          Data<SetIndex> f_indices;
-          Data<double> _drawSize;
+	sofa::core::topology::BaseMeshTopology* topology;
 
 
-          sofa::core::topology::BaseMeshTopology* topology;
-        
+	// Define TestNewPointFunction
+	static bool FCTestNewPointFunction(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& );
 
-          // Define TestNewPointFunction
-          static bool FCTestNewPointFunction(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >& );
+	// Define RemovalFunction
+	static void FCRemovalFunction ( int , void*);
 
-          // Define RemovalFunction
-          static void FCRemovalFunction ( int , void*);
+};
 
-	};
 
-    } // namespace constraintset
+#if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_CONSTRAINTSET)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<defaulttype::Vec3dTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<defaulttype::Rigid3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<defaulttype::Vec3fTypes>;
+extern template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<defaulttype::Rigid3fTypes>;
+#endif
+#endif
 
-  } // namespace component
+
+} // namespace constraintset
+
+} // namespace component
 
 } // namespace sofa
 

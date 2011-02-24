@@ -25,9 +25,7 @@
 #ifndef SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_H
 #define SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_H
 
-#include <sofa/core/behavior/MechanicalMapping.h>
-#include <sofa/core/behavior/MechanicalState.h>
-#include <sofa/core/behavior/MappedModel.h>
+#include <sofa/core/Mapping.h>
 
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
@@ -57,6 +55,7 @@ using sofa::helper::SVector;
 #define DISTANCE_GEODESIC 1
 #define DISTANCE_HARMONIC 2
 #define DISTANCE_STIFFNESS_DIFFUSION 3
+#define DISTANCE_HARMONIC_STIFFNESS 4
 
 #define WEIGHT_NONE 0
 #define WEIGHT_INVDIST_SQUARE 1
@@ -92,235 +91,226 @@ struct Equal {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-template <class BasicMapping>
-class SkinningMapping : public BasicMapping
+template <class TIn, class TOut>
+class SkinningMapping : public core::Mapping<TIn, TOut>
 {
 public:
-    SOFA_CLASS ( SOFA_TEMPLATE ( SkinningMapping,BasicMapping ), BasicMapping );
-          typedef BasicMapping Inherit;
-          typedef typename Inherit::In In;
-          typedef typename Inherit::Out Out;
-          typedef typename Out::DataTypes DataTypes;
-          typedef typename Out::VecCoord VecCoord;
-          typedef typename Out::VecDeriv VecDeriv;
-          typedef typename Out::Coord Coord;
-          typedef typename Out::Deriv Deriv;
-          typedef typename defaulttype::SparseConstraint<Deriv> OutSparseConstraint;
-          typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
+  SOFA_CLASS(SOFA_TEMPLATE2(SkinningMapping,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut));
 
-          typedef typename In::Coord InCoord;
-          typedef typename In::Deriv InDeriv;
-          typedef typename In::VecCoord VecInCoord;
-          typedef typename In::VecDeriv VecInDeriv;
-          typedef typename In::Real InReal;
-          typedef typename Out::Real Real;
-          enum { N=DataTypes::spatial_dimensions };
-          //enum { InDerivDim=In::DataTypes::deriv_total_size };
-          enum { InDOFs=In::DataTypes::deriv_total_size };
-          enum { InAt=0 };
-          typedef defaulttype::Mat<N,N,InReal> Mat;
-          typedef defaulttype::Mat<3,3,InReal> Mat33;
-          typedef defaulttype::Mat<3,InDOFs,InReal> Mat3xIn;
-          typedef vector<Mat3xIn> VMat3xIn;
-          typedef vector<VMat3xIn> VVMat3xIn;
-          typedef defaulttype::Mat<InAt,3,InReal> MatInAtx3;
-          typedef vector<MatInAtx3> VMatInAtx3;
-          typedef vector<VMatInAtx3> VVMatInAtx3;
-          typedef defaulttype::Mat<3,6,InReal> Mat36;
-          typedef vector<Mat36> VMat36;
-          typedef vector<VMat36> VVMat36;
-          typedef defaulttype::Mat<3,7,InReal> Mat37;
-          typedef defaulttype::Mat<3,8,InReal> Mat38;
-          typedef defaulttype::Mat<3,9,InReal> Mat39;
-          typedef defaulttype::Mat<4,3,InReal> Mat43;
-          typedef vector<Mat43> VMat43;
-          typedef defaulttype::Mat<4,4,InReal> Mat44;
-          typedef defaulttype::Mat<6,3,InReal> Mat63;
-          typedef defaulttype::Mat<6,6,InReal> Mat66;
-          typedef vector<Mat66> VMat66;
-          typedef vector<VMat66> VVMat66;
-          typedef defaulttype::Mat<6,7,InReal> Mat67;
-          typedef defaulttype::Mat<6,InDOFs,InReal> Mat6xIn;
-          typedef defaulttype::Mat<7,6,InReal> Mat76;
-          typedef vector<Mat76> VMat76;
-          typedef defaulttype::Mat<8,3,InReal> Mat83;
-          typedef defaulttype::Mat<8,6,InReal> Mat86;
-          typedef vector<Mat86> VMat86;
-          typedef defaulttype::Mat<8,8,InReal> Mat88;
-          typedef vector<Mat88> VMat88;
-          typedef defaulttype::Mat<InDOFs,3,InReal> MatInx3;
+    typedef core::Mapping<TIn, TOut> Inherit;
+    typedef TIn In;
+    typedef TOut Out;
 
-          typedef defaulttype::Vec<3,InReal> Vec3;
-          typedef vector<Vec3> VVec3;
-          typedef vector<VVec3> VVVec3;
-          typedef defaulttype::Vec<4,InReal> Vec4;
-          typedef defaulttype::Vec<6,InReal> Vec6;
-          typedef vector<Vec6> VVec6;
-          typedef vector<VVec6> VVVec6;
-          typedef defaulttype::Vec<8,InReal> Vec8;
-          typedef defaulttype::Vec<9,InReal> Vec9;
-          typedef defaulttype::Vec<InDOFs,InReal> VecIn;
-          typedef Quater<InReal> Quat;
-          typedef sofa::helper::vector< VecCoord > VecVecCoord;
-          typedef SVector<double> VD;
-          typedef SVector<SVector<double> > VVD;
+	typedef Out DataTypes;
 
-          typedef Coord GeoCoord;
-          typedef VecCoord GeoVecCoord;
-          typedef defaulttype::StdRigidTypes<N,InReal> RigidType;
-        protected:
-          vector<Coord> initPos; // pos: point coord in the local reference frame of In[i].
-          vector<Coord> rotatedPoints;
+	typedef typename Out::VecCoord VecCoord;
+	typedef typename Out::VecDeriv VecDeriv;
+	typedef typename Out::Coord Coord;
+	typedef typename Out::Deriv Deriv;
+	typedef typename Out::MatrixDeriv OutMatrixDeriv;
+	typedef typename Out::Real Real;
+	
 
-          helper::ParticleMask* maskFrom;
-          helper::ParticleMask* maskTo;
+	typedef typename In::Coord InCoord;
+	typedef typename In::Deriv InDeriv;
+	typedef typename In::VecCoord VecInCoord;
+	typedef typename In::VecDeriv VecInDeriv;
+	typedef typename In::MatrixDeriv InMatrixDeriv;
+	typedef typename In::Real InReal;
+	
+	enum { N=DataTypes::spatial_dimensions };
+	//enum { InDerivDim=In::DataTypes::deriv_total_size };
+	enum { InDOFs=In::deriv_total_size };
+	enum { InAt=0 };
+	typedef defaulttype::Mat<N,N,InReal> Mat;
+	typedef defaulttype::Mat<3,3,InReal> Mat33;
+	typedef defaulttype::Mat<3,InDOFs,InReal> Mat3xIn;
+	typedef vector<Mat3xIn> VMat3xIn;
+	typedef vector<VMat3xIn> VVMat3xIn;
+	typedef defaulttype::Mat<InAt,3,InReal> MatInAtx3;
+	typedef vector<MatInAtx3> VMatInAtx3;
+	typedef vector<VMatInAtx3> VVMatInAtx3;
+	typedef defaulttype::Mat<3,6,InReal> Mat36;
+	typedef vector<Mat36> VMat36;
+	typedef vector<VMat36> VVMat36;
+	typedef defaulttype::Mat<3,7,InReal> Mat37;
+	typedef defaulttype::Mat<3,8,InReal> Mat38;
+	typedef defaulttype::Mat<3,9,InReal> Mat39;
+	typedef defaulttype::Mat<4,3,InReal> Mat43;
+	typedef vector<Mat43> VMat43;
+	typedef defaulttype::Mat<4,4,InReal> Mat44;
+	typedef defaulttype::Mat<6,3,InReal> Mat63;
+	typedef defaulttype::Mat<6,6,InReal> Mat66;
+	typedef vector<Mat66> VMat66;
+	typedef vector<VMat66> VVMat66;
+	typedef defaulttype::Mat<6,7,InReal> Mat67;
+	typedef defaulttype::Mat<6,InDOFs,InReal> Mat6xIn;
+	typedef defaulttype::Mat<7,6,InReal> Mat76;
+	typedef vector<Mat76> VMat76;
+	typedef defaulttype::Mat<8,3,InReal> Mat83;
+	typedef defaulttype::Mat<8,6,InReal> Mat86;
+	typedef vector<Mat86> VMat86;
+	typedef defaulttype::Mat<8,8,InReal> Mat88;
+	typedef vector<Mat88> VMat88;
+	typedef defaulttype::Mat<InDOFs,3,InReal> MatInx3;
 
-          Data<vector<int> > repartition;
-          Data<VVD> weights;
-          Data<SVector<SVector<GeoCoord> > > weightGradients;
-          Data<unsigned int> nbRefs;
-        public:
-          Data<bool> showBlendedFrame;
-          Data<bool> showDefTensors;
-          Data<bool> showDefTensorsValues;
-          Data<double> showDefTensorScale;
-          Data<unsigned int> showFromIndex;
-          Data<bool> showDistancesValues;
-          Data<bool> showWeights;
-          Data<double> showGammaCorrection;
-          Data<bool> showWeightsValues;
-          Data<bool> showReps;
-          Data<int> showValuesNbDecimals;
-          Data<double> showTextScaleFactor;
-          Data<bool> showGradients;
-          Data<bool> showGradientsValues;
-          Data<double> showGradientsScaleFactor;
+	typedef defaulttype::Vec<3,InReal> Vec3;
+	typedef vector<Vec3> VVec3;
+	typedef vector<VVec3> VVVec3;
+	typedef defaulttype::Vec<4,InReal> Vec4;
+	typedef defaulttype::Vec<6,InReal> Vec6;
+	typedef vector<Vec6> VVec6;
+	typedef vector<VVec6> VVVec6;
+	typedef defaulttype::Vec<8,InReal> Vec8;
+	typedef defaulttype::Vec<9,InReal> Vec9;
+	typedef defaulttype::Vec<InDOFs,InReal> VecIn;
+	typedef Quater<InReal> Quat;
+	typedef sofa::helper::vector< VecCoord > VecVecCoord;
+	typedef SVector<double> VD;
+	typedef SVector<SVector<double> > VVD;
 
-        protected:
-          Data<sofa::helper::OptionsGroup> wheightingType;
-          Data<sofa::helper::OptionsGroup> distanceType;
-          bool computeWeights;
-          VVD distances;
-          vector<vector<GeoCoord> > distGradients;
+	typedef Coord GeoCoord;
+	typedef VecCoord GeoVecCoord;
+	typedef defaulttype::StdRigidTypes<N,InReal> RigidType;
+protected:
+	vector<Coord> initPos; // pos: point coord in the local reference frame of In[i].
+	vector<Coord> rotatedPoints;
 
-          inline void computeInitPos();
-          inline void computeDistances();
-          inline void sortReferences( vector<int>& references);
-          inline void normalizeWeights();
+	helper::ParticleMask* maskFrom;
+	helper::ParticleMask* maskTo;
 
-        public:
-          SkinningMapping ( In* from, Out* to );
-          virtual ~SkinningMapping();
+	Data<vector<int> > repartition;
+	Data<VVD> weights;
+	Data<SVector<SVector<GeoCoord> > > weightGradients;
+	Data<unsigned int> nbRefs;
+public:
+	Data<bool> showBlendedFrame;
+	Data<bool> showDefTensors;
+	Data<bool> showDefTensorsValues;
+	Data<double> showDefTensorScale;
+	Data<unsigned int> showFromIndex;
+	Data<bool> showDistancesValues;
+	Data<bool> showWeights;
+	Data<double> showGammaCorrection;
+	Data<bool> showWeightsValues;
+	Data<bool> showReps;
+	Data<int> showValuesNbDecimals;
+	Data<double> showTextScaleFactor;
+	Data<bool> showGradients;
+	Data<bool> showGradientsValues;
+	Data<double> showGradientsScaleFactor;
 
-          void init();
+protected:
+	Data<sofa::helper::OptionsGroup> wheightingType;
+	Data<sofa::helper::OptionsGroup> distanceType;
+	bool computeWeights;
+	VVD distances;
+	vector<vector<GeoCoord> > distGradients;
 
-          void apply ( typename Out::VecCoord& out, const typename In::VecCoord& in );
-          void applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-          void applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-          void applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	inline void computeInitPos();
+	inline void computeDistances();
+	inline void sortReferences( vector<int>& references);
+	inline void normalizeWeights();
 
-          void draw();
-          void clear();
+public:
+	SkinningMapping (core::State<In>* from, core::State<Out>* to );
+	virtual ~SkinningMapping();
 
-          // Weights
-          void setWeightsToHermite();
-          void setWeightsToInvDist();
-          void setWeightsToLinear();
-          inline void updateWeights();
-          inline void getDistances( int xfromBegin);
+	void init();
 
-          // Accessors
-          void setNbRefs ( unsigned int nb )
-          {
-            nbRefs.setValue ( nb );
-          }
-          void setWeightCoefs ( VVD& weights );
-          void setRepartition ( vector<int> &rep );
-          void setComputeWeights ( bool val )
-          {
-            computeWeights=val;
-          }
-          unsigned int getNbRefs()
-          {
-            return nbRefs.getValue();
-          }
-          const VVD& getWeightCoefs()
-          {
-            return weights.getValue();
-          }
-          const vector<int>& getRepartition()
-          {
-            return repartition.getValue();
-          }
-          bool getComputeWeights()
-          {
-            return computeWeights;
-          }
+	void apply(typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void applyJ(typename Out::VecDeriv& out, const typename In::VecDeriv& in);
+	void applyJT(typename In::VecDeriv& out, const typename Out::VecDeriv& in);
+	void applyJT(typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
 
-          inline void getLocalCoord( Coord& result, const typename defaulttype::StdRigidTypes<N, InReal>::Coord& inCoord, const Coord& coord) const;
+	void draw();
+	void clear();
 
-          template<class TCoord>
-          inline typename enable_if<Equal<typename RigidType::Coord, TCoord> >::type _apply( typename Out::VecCoord& out, const sofa::helper::vector<typename RigidType::Coord>& in);
+	// Weights
+	void setWeightsToHermite();
+	void setWeightsToInvDist();
+	void setWeightsToLinear();
+	inline void updateWeights();
+	inline void getDistances( int xfromBegin);
 
-          template<class TDeriv>
-          inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJ( typename Out::VecDeriv& out, const sofa::helper::vector<typename RigidType::Deriv>& in);
+	// Accessors
+	void setNbRefs ( unsigned int nb )
+	{
+		nbRefs.setValue ( nb );
+	}
+	void setWeightCoefs ( VVD& weights );
+	void setRepartition ( vector<int> &rep );
+	void setComputeWeights ( bool val )
+	{
+		computeWeights=val;
+	}
+	unsigned int getNbRefs() const
+	{
+		return nbRefs.getValue();
+	}
+	const VVD& getWeightCoefs() const
+	{
+		return weights.getValue();
+	}
+	const vector<int>& getRepartition() const
+	{
+		return repartition.getValue();
+	}
+	bool getComputeWeights() const
+	{
+		return computeWeights;
+	}
 
-          template<class TDeriv>
-          inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in);
+	inline void getLocalCoord( Coord& result, const typename defaulttype::StdRigidTypes<N, InReal>::Coord& inCoord, const Coord& coord) const;
 
-          template<class TMatrixDeriv>
-          inline typename enable_if<Equal<typename RigidType::MatrixDeriv, TMatrixDeriv> >::type _applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
+
+  // Samples (default)
+  template<class TCoord>
+  inline typename enable_if<Equal<typename RigidType::Coord, TCoord> >::type _apply( typename Out::VecCoord& out, const sofa::helper::vector<typename RigidType::Coord>& in);
+
+
+	template<class TDeriv>
+	inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJ( typename Out::VecDeriv& out, const sofa::helper::vector<typename RigidType::Deriv>& in);
+
+	template<class TDeriv>
+	inline typename enable_if<Equal<typename RigidType::Deriv, TDeriv> >::type _applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in);
+
+	template<class TMatrixDeriv>
+	inline typename enable_if<Equal<typename RigidType::MatrixDeriv, TMatrixDeriv> >::type _applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
 };
 
-      using core::Mapping;
-      using core::behavior::MechanicalMapping;
-      using core::behavior::MappedModel;
-      using core::behavior::State;
-      using core::behavior::MechanicalState;
-
-      using sofa::defaulttype::Vec2dTypes;
-      using sofa::defaulttype::Vec3dTypes;
-      using sofa::defaulttype::Vec2fTypes;
-      using sofa::defaulttype::Vec3fTypes;
-      using sofa::defaulttype::ExtVec2fTypes;
-      using sofa::defaulttype::ExtVec3fTypes;
-      using sofa::defaulttype::Rigid2dTypes;
-      using sofa::defaulttype::Rigid3dTypes;
-      using sofa::defaulttype::Rigid2fTypes;
-      using sofa::defaulttype::Rigid3fTypes;
-
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+using sofa::defaulttype::ExtVec3fTypes;
+using sofa::defaulttype::Rigid3dTypes;
+using sofa::defaulttype::Rigid3fTypes;
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_CPP)
 #pragma warning(disable : 4231)
 #ifndef SOFA_FLOAT
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3dTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3dTypes>, MappedModel<Vec3dTypes> > >;
-// template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3dTypes>, MappedModel<ExtVec3dTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3dTypes>, MappedModel<ExtVec3fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3dTypes, ExtVec3fTypes >;
 #endif
 #ifndef SOFA_DOUBLE
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3fTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3fTypes>, MappedModel<Vec3fTypes> > >;
-// template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3fTypes>, MappedModel<ExtVec3dTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3fTypes>, MappedModel<ExtVec3fTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3fTypes, ExtVec3fTypes >;
 #endif
 #ifndef SOFA_FLOAT
 #ifndef SOFA_DOUBLE
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< MechanicalMapping< MechanicalState<Rigid3dTypes>, MechanicalState<Vec3fTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< MechanicalMapping< MechanicalState<Rigid3fTypes>, MechanicalState<Vec3dTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3dTypes>, MappedModel<Vec3fTypes> > >;
-      extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Mapping< State<Rigid3fTypes>, MappedModel<Vec3dTypes> > >;
+extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API SkinningMapping< Rigid3fTypes, Vec3dTypes >;
 #endif
 #endif
+
 
 
 #endif //defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_CPP)
 
 
 
-    } // namespace mapping
+} // namespace mapping
 
-  } // namespace component
+} // namespace component
 
 } // namespace sofa
 

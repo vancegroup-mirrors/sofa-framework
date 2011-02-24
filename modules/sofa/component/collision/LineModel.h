@@ -64,6 +64,9 @@ public:
 
 	const Vector3& v1() const;
 	const Vector3& v2() const;
+
+	/// Return true if the element stores a free position vector
+	bool hasFreePosition() const;
 	
 	bool activated(core::CollisionModel *cm = 0) const;
 
@@ -182,11 +185,13 @@ inline unsigned Line::i2() const { return model->elems[index].i2; }
 inline const Vector3& Line::p1() const { return (*model->mstate->getX())[model->elems[index].i1]; }
 inline const Vector3& Line::p2() const { return (*model->mstate->getX())[model->elems[index].i2]; }
     
-inline const Vector3& Line::p1Free() const { return (*model->mstate->getXfree())[model->elems[index].i1]; }
-inline const Vector3& Line::p2Free() const { return (*model->mstate->getXfree())[model->elems[index].i2]; }
+inline const Vector3& Line::p1Free() const { return model->mstate->read(core::ConstVecCoordId::freePosition())->getValue()[model->elems[index].i1]; }
+inline const Vector3& Line::p2Free() const { return model->mstate->read(core::ConstVecCoordId::freePosition())->getValue()[model->elems[index].i2]; }
 
 inline const Vector3& Line::v1() const { return (*model->mstate->getV())[model->elems[index].i1]; }
 inline const Vector3& Line::v2() const { return (*model->mstate->getV())[model->elems[index].i2]; }
+
+inline bool Line::hasFreePosition() const { return model->mstate->read(core::ConstVecCoordId::freePosition())->isSet(); }
 
 inline bool Line::activated(core::CollisionModel *cm) const 
 {

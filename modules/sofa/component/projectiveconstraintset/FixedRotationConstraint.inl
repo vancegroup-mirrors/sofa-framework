@@ -77,120 +77,117 @@ void FixedRotationConstraint<DataTypes>::init()
 }
 
 template <class DataTypes>
-void FixedRotationConstraint<DataTypes>::projectResponse(VecDeriv& /*res*/)
+void FixedRotationConstraint<DataTypes>::projectResponse(DataVecDeriv& /*res*/, const core::MechanicalParams* /*mparams*/)
 {
 
 }
 
 template <class DataTypes>
-void FixedRotationConstraint<DataTypes>::projectResponse(MatrixDerivRowType& /*res*/)
+void FixedRotationConstraint<DataTypes>::projectJacobianMatrix(DataMatrixDeriv& /*res*/, const core::MechanicalParams* /*mparams*/)
 {
 
 }
 
 template <class DataTypes>
-void FixedRotationConstraint<DataTypes>::projectVelocity(VecDeriv& /*dx*/)
+void FixedRotationConstraint<DataTypes>::projectVelocity(DataVecDeriv& /*dx*/, const core::MechanicalParams* /*mparams*/)
 {
 
 }
-
 
 template <class DataTypes>
-void FixedRotationConstraint<DataTypes>::projectPosition(VecCoord& x)
+void FixedRotationConstraint<DataTypes>::projectPosition(DataVecCoord& xData, const core::MechanicalParams* /*mparams*/)
 {
-
-if (FixedXRotation.getValue() == true)
-{
-    for (unsigned int i = 0; i < x.size(); i++)
+    helper::WriteAccessor<DataVecCoord> x = xData;
+    if (FixedXRotation.getValue() == true)
     {
-        // Current orientations
-        Quat Q = x[i].getOrientation();
+        for (unsigned int i = 0; i < x.size(); i++)
+        {
+            // Current orientations
+            Quat Q = x[i].getOrientation();
 
-        // Previous orientations
-        Quat Q_prev = previousOrientation[i];
+            // Previous orientations
+            Quat Q_prev = previousOrientation[i];
 
-        Vec3 edgez, edgey_prev, edgex, edgey;
-        Mat<3, 3, Real > R;
+            Vec3 edgez, edgey_prev, edgex, edgey;
+            Mat<3, 3, Real > R;
 
-       
-        edgex = Q.rotate(Vec3(1.0, 0.0, 0.0));
-        edgey_prev = Q_prev.rotate(Vec3(0.0, 1.0, 0.0));
-        edgez = cross(edgex, edgey_prev);
-        edgey = cross(edgez, edgex);
-        R[0][0] = edgex[0];    R[0][1] = edgex[1];    R[0][2] = edgex[2];
-        R[1][0] = edgey[0];    R[1][1] = edgey[1];    R[1][2] = edgey[2];
-        R[2][0] = edgez[0];    R[2][1] = edgez[1];    R[2][2] = edgez[2];
 
-        Quat newOrientation;
-        newOrientation.fromMatrix(R.transposed());
-        x[i].getOrientation() = newOrientation;
+            edgex = Q.rotate(Vec3(1.0, 0.0, 0.0));
+            edgey_prev = Q_prev.rotate(Vec3(0.0, 1.0, 0.0));
+            edgez = cross(edgex, edgey_prev);
+            edgey = cross(edgez, edgex);
+            R[0][0] = edgex[0];    R[0][1] = edgex[1];    R[0][2] = edgex[2];
+            R[1][0] = edgey[0];    R[1][1] = edgey[1];    R[1][2] = edgey[2];
+            R[2][0] = edgez[0];    R[2][1] = edgez[1];    R[2][2] = edgez[2];
 
-        // Stores orientations for next iteration
-        previousOrientation[i] = newOrientation;
+            Quat newOrientation;
+            newOrientation.fromMatrix(R.transposed());
+            x[i].getOrientation() = newOrientation;
+
+            // Stores orientations for next iteration
+            previousOrientation[i] = newOrientation;
+        }
     }
-}
-
-if (FixedYRotation.getValue() == true)
-{
-    for (unsigned int i = 0; i < x.size(); i++)
+    if (FixedYRotation.getValue() == true)
     {
-        // Current orientations
-        Quat Q = x[i].getOrientation();
+        for (unsigned int i = 0; i < x.size(); i++)
+        {
+            // Current orientations
+            Quat Q = x[i].getOrientation();
 
-        // Previous orientations
-        Quat Q_prev = previousOrientation[i];
+            // Previous orientations
+            Quat Q_prev = previousOrientation[i];
 
-        Vec3 edgez, edgez_prev, edgex, edgey;
-        Mat<3, 3, Real > R;
+            Vec3 edgez, edgez_prev, edgex, edgey;
+            Mat<3, 3, Real > R;
 
-       
-        edgey = Q.rotate(Vec3(0.0, 1.0, 0.0));
-        edgez_prev = Q_prev.rotate(Vec3(0.0, 0.0, 1.0));
-        edgex = cross(edgey, edgez_prev);
-        edgez = cross(edgex, edgey);
-        R[0][0] = edgex[0];    R[0][1] = edgex[1];    R[0][2] = edgex[2];
-        R[1][0] = edgey[0];    R[1][1] = edgey[1];    R[1][2] = edgey[2];
-        R[2][0] = edgez[0];    R[2][1] = edgez[1];    R[2][2] = edgez[2];
 
-        Quat newOrientation;
-        newOrientation.fromMatrix(R.transposed());
-        x[i].getOrientation() = newOrientation;
+            edgey = Q.rotate(Vec3(0.0, 1.0, 0.0));
+            edgez_prev = Q_prev.rotate(Vec3(0.0, 0.0, 1.0));
+            edgex = cross(edgey, edgez_prev);
+            edgez = cross(edgex, edgey);
+            R[0][0] = edgex[0];    R[0][1] = edgex[1];    R[0][2] = edgex[2];
+            R[1][0] = edgey[0];    R[1][1] = edgey[1];    R[1][2] = edgey[2];
+            R[2][0] = edgez[0];    R[2][1] = edgez[1];    R[2][2] = edgez[2];
 
-        // Stores orientations for next iteration
-        previousOrientation[i] = newOrientation;
+            Quat newOrientation;
+            newOrientation.fromMatrix(R.transposed());
+            x[i].getOrientation() = newOrientation;
+
+            // Stores orientations for next iteration
+            previousOrientation[i] = newOrientation;
+        }
     }
-}
-if (FixedZRotation.getValue() == true)
-{
-    for (unsigned int i = 0; i < x.size(); i++)
+    if (FixedZRotation.getValue() == true)
     {
-        // Current orientations
-        Quat Q = x[i].getOrientation();
+        for (unsigned int i = 0; i < x.size(); i++)
+        {
+            // Current orientations
+            Quat Q = x[i].getOrientation();
 
-        // Previous orientations
-        Quat Q_prev = previousOrientation[i];
+            // Previous orientations
+            Quat Q_prev = previousOrientation[i];
 
-        Vec3 edgez, edgex_prev, edgex, edgey;
-        Mat<3, 3, Real > R;
+            Vec3 edgez, edgex_prev, edgex, edgey;
+            Mat<3, 3, Real > R;
 
-       
-        edgez = Q.rotate(Vec3(0.0, 0.0, 1.0));
-        edgex_prev = Q_prev.rotate(Vec3(1.0, 0.0, 0.0));
-        edgey = cross(edgez, edgex_prev);
-        edgex = cross(edgey, edgez);
-        R[0][0] = edgex[0];    R[0][1] = edgex[1];    R[0][2] = edgex[2];
-        R[1][0] = edgey[0];    R[1][1] = edgey[1];    R[1][2] = edgey[2];
-        R[2][0] = edgez[0];    R[2][1] = edgez[1];    R[2][2] = edgez[2];
 
-        Quat newOrientation;
-        newOrientation.fromMatrix(R.transposed());
-        x[i].getOrientation() = newOrientation;
+            edgez = Q.rotate(Vec3(0.0, 0.0, 1.0));
+            edgex_prev = Q_prev.rotate(Vec3(1.0, 0.0, 0.0));
+            edgey = cross(edgez, edgex_prev);
+            edgex = cross(edgey, edgez);
+            R[0][0] = edgex[0];    R[0][1] = edgex[1];    R[0][2] = edgex[2];
+            R[1][0] = edgey[0];    R[1][1] = edgey[1];    R[1][2] = edgey[2];
+            R[2][0] = edgez[0];    R[2][1] = edgez[1];    R[2][2] = edgez[2];
 
-        // Stores orientations for next iteration
-        previousOrientation[i] = newOrientation;
+            Quat newOrientation;
+            newOrientation.fromMatrix(R.transposed());
+            x[i].getOrientation() = newOrientation;
+
+            // Stores orientations for next iteration
+            previousOrientation[i] = newOrientation;
+        }
     }
-}
-
 }
 
 

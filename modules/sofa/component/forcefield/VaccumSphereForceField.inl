@@ -48,17 +48,17 @@ namespace forcefield
 template<class DataTypes>
 void VaccumSphereForceField<DataTypes>::init()
 {
-    this->Inherit::init();
-    if (centerState.getValue().empty())
-    {
-	centerDOF = NULL;
-    }
-    else
-    {
-	this->getContext()->get(centerDOF, centerState.getValue());
-	if (centerDOF == NULL)
-		serr << "Error loading centerState" << sendl;
-    }
+	this->Inherit::init();
+	if (centerState.getValue().empty())
+	{
+		centerDOF = NULL;
+	}
+	else
+	{
+		this->getContext()->get(centerDOF, centerState.getValue());
+		if (centerDOF == NULL)
+			serr << "Error loading centerState" << sendl;
+	}
 }
 // f  = -stiffness * (x -c ) * (|x-c|-r)/|x-c|
 // fi = -stiffness * (xi-ci) * (|x-c|-r)/|x-c|
@@ -77,134 +77,138 @@ void VaccumSphereForceField<DataTypes>::init()
 // df = -stiffness * ( (x-c)/|x-c| * dot(dx,(x-c)/|x-c|) * r/|x-c|   + dx * (1 - r/|x-c|) )
 
 template<class DataTypes>
-void VaccumSphereForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1)
+void VaccumSphereForceField<DataTypes>::addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* /* mparams */)
 {
-    if (!active.getValue()) return;
+	if (!active.getValue()) return;
 
-    if (centerDOF)
-	sphereCenter.setValue((*centerDOF->getX())[0]);
+	VecDeriv& f1 = *d_f.beginEdit();
+	const VecCoord& p1 = d_x.getValue();
+	const VecDeriv& v1 = d_v.getValue();
 
-    const Coord center = sphereCenter.getValue();
-    const Real r = sphereRadius.getValue();
-    const Real r2 = r*r;
-    this->contacts.beginEdit()->clear();
-    f1.resize(p1.size());
-    for (unsigned int i=0; i<p1.size(); i++)
-    {
-        Coord dp = p1[i] - center;
-	if (dp.norm() <= filter.getValue()) continue;
-        Real norm2 = dp.norm2();
-        if (norm2<r2)
-        {
-            Real norm = helper::rsqrt(norm2);
-            Real d = norm - r;
-            Real forceIntensity = -this->stiffness.getValue()*d;
-            Real dampingIntensity = -this->damping.getValue()*d;
-            Deriv force = dp*(forceIntensity/norm) - v1[i]*dampingIntensity;
-            f1[i]+=force;
-            Contact c;
-            c.index = i;
-            c.normal = dp / norm;
-            c.fact = r / norm;
-            this->contacts.beginEdit()->push_back(c);
-        }
-    }
-    this->contacts.endEdit();
+	if (centerDOF)
+		sphereCenter.setValue((*centerDOF->getX())[0]);
+
+	const Coord center = sphereCenter.getValue();
+	const Real r = sphereRadius.getValue();
+	const Real r2 = r*r;
+	this->contacts.beginEdit()->clear();
+	f1.resize(p1.size());
+	for (unsigned int i=0; i<p1.size(); i++)
+	{
+		Coord dp = p1[i] - center;
+		if (dp.norm() <= filter.getValue()) continue;
+		Real norm2 = dp.norm2();
+		if (norm2<r2)
+		{
+			Real norm = helper::rsqrt(norm2);
+			Real d = norm - r;
+			Real forceIntensity = -this->stiffness.getValue()*d;
+			Real dampingIntensity = -this->damping.getValue()*d;
+			Deriv force = dp*(forceIntensity/norm) - v1[i]*dampingIntensity;
+			f1[i]+=force;
+			Contact c;
+			c.index = i;
+			c.normal = dp / norm;
+			c.fact = r / norm;
+			this->contacts.beginEdit()->push_back(c);
+		}
+	}
+	this->contacts.endEdit();
+	d_f.endEdit();
 }
 
 template<class DataTypes>
-void VaccumSphereForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
+void VaccumSphereForceField<DataTypes>::addDForce(DataVecDeriv& d_df, const DataVecDeriv& d_dx, const core::MechanicalParams* mparams)
 {
-    if (!active.getValue()) return;
+	if (!active.getValue()) return;
 
-    df1.resize(dx1.size());
-    const Real fact = (Real)(-this->stiffness.getValue()*kFactor);
-    for (unsigned int i=0; i<this->contacts.getValue().size(); i++)
-    {
-        const Contact& c = (this->contacts.getValue())[i];
-        assert((unsigned)c.index<dx1.size());
-        Deriv du = dx1[c.index];
-        Deriv dforce; dforce = (c.normal * ((du*c.normal)*c.fact) + du * (1 - c.fact))*fact;
-        df1[c.index] += dforce;
-    }
+	VecDeriv& df1 = *d_df.beginEdit();
+	const VecDeriv& dx1 = d_dx.getValue();
+
+	df1.resize(dx1.size());
+	double kFactor = mparams->kFactor();
+	const Real fact = (Real)(-this->stiffness.getValue()*kFactor);
+	for (unsigned int i=0; i<this->contacts.getValue().size(); i++)
+	{
+		const Contact& c = (this->contacts.getValue())[i];
+		assert((unsigned)c.index<dx1.size());
+		Deriv du = dx1[c.index];
+		Deriv dforce; dforce = (c.normal * ((du*c.normal)*c.fact) + du * (1 - c.fact))*fact;
+		df1[c.index] += dforce;
+	}
+
+	d_df.endEdit();
 }
 
 template<class DataTypes>
 void VaccumSphereForceField<DataTypes>::updateStiffness( const VecCoord& x )
 {
-    if (!active.getValue()) return;
+	if (!active.getValue()) return;
 
-    if (centerDOF)
-	sphereCenter.setValue((*centerDOF->getX())[0]);
+	if (centerDOF)
+		sphereCenter.setValue((*centerDOF->getX())[0]);
 
-    const Coord center = sphereCenter.getValue();
-    const Real r = sphereRadius.getValue();
-    const Real r2 = r*r;
-    this->contacts.beginEdit()->clear();
-    for (unsigned int i=0; i<x.size(); i++)
-    {
-        Coord dp = x[i] - center;
-        Real norm2 = dp.norm2();
-        if (norm2<r2)
-        {
-            Real norm = helper::rsqrt(norm2);
-            Contact c;
-            c.index = i;
-            c.normal = dp / norm;
-            c.fact = r / norm;
-            this->contacts.beginEdit()->push_back(c);
-        }
-    }
-    this->contacts.endEdit();
-}
-
-template <class DataTypes> 
-double VaccumSphereForceField<DataTypes>::getPotentialEnergy(const VecCoord&) const
-{
-    serr<<"VaccumSphereForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
+	const Coord center = sphereCenter.getValue();
+	const Real r = sphereRadius.getValue();
+	const Real r2 = r*r;
+	this->contacts.beginEdit()->clear();
+	for (unsigned int i=0; i<x.size(); i++)
+	{
+		Coord dp = x[i] - center;
+		Real norm2 = dp.norm2();
+		if (norm2<r2)
+		{
+			Real norm = helper::rsqrt(norm2);
+			Contact c;
+			c.index = i;
+			c.normal = dp / norm;
+			c.fact = r / norm;
+			this->contacts.beginEdit()->push_back(c);
+		}
+	}
+	this->contacts.endEdit();
 }
 
 template <class DataTypes> 
 void VaccumSphereForceField<DataTypes>::handleEvent(sofa::core::objectmodel::Event* event)
 {
-    if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
-    {
-        if (ev->getKey() == keyEvent.getValue())
-        {
-            active.setValue(true);
-        }
-    }
-    else if (sofa::core::objectmodel::KeyreleasedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeyreleasedEvent*>(event))
-    {
-        if (ev->getKey() == keyEvent.getValue())
-        {
-            active.setValue(false);
-        }
-    }
+	if (sofa::core::objectmodel::KeypressedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeypressedEvent*>(event))
+	{
+		if (ev->getKey() == keyEvent.getValue())
+		{
+			active.setValue(true);
+		}
+	}
+	else if (sofa::core::objectmodel::KeyreleasedEvent* ev = dynamic_cast<sofa::core::objectmodel::KeyreleasedEvent*>(event))
+	{
+		if (ev->getKey() == keyEvent.getValue())
+		{
+			active.setValue(false);
+		}
+	}
 }
 
 
 template<class DataTypes>
 void VaccumSphereForceField<DataTypes>::draw()
 {
-    if (!active.getValue()) return;
+	if (!active.getValue()) return;
 
-    if (!this->getContext()->getShowForceFields()) return;
-    if (!bDraw.getValue()) return;
+	if (!this->getContext()->getShowForceFields()) return;
+	if (!bDraw.getValue()) return;
 
-    const Coord center = sphereCenter.getValue();
-    const Real r = sphereRadius.getValue();
+	const Coord center = sphereCenter.getValue();
+	const Real r = sphereRadius.getValue();
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_COLOR_MATERIAL);
-    glColor3f(color.getValue()[0],color.getValue()[1],color.getValue()[2]);
-    glPushMatrix();
-    glTranslated(center[0], center[1], center[2]);
-    glutSolidSphere(r*0.99,32,16); // slightly reduce rendered radius
-    glPopMatrix();
-    glDisable(GL_LIGHTING);
-    glDisable(GL_COLOR_MATERIAL);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(color.getValue()[0],color.getValue()[1],color.getValue()[2]);
+	glPushMatrix();
+	glTranslated(center[0], center[1], center[2]);
+	glutSolidSphere(r*0.99,32,16); // slightly reduce rendered radius
+	glPopMatrix();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_COLOR_MATERIAL);
 }
 
 
@@ -214,4 +218,4 @@ void VaccumSphereForceField<DataTypes>::draw()
 
 } // namespace sofa
 
-#endif
+#endif //SOFA_COMPONENT_FORCEFIELD_VACCUMSPHEREFORCEFIELD_INL

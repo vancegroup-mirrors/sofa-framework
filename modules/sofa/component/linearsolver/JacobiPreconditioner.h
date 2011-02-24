@@ -48,12 +48,11 @@ public:
     typedef TMatrix Matrix;
     typedef TVector Vector;
     typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;
-    typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
     Data<bool> f_verbose;
 
     JacobiPreconditioner();
 
-    void setSystemMBKMatrix(double mFact, double bFact, double kFact);
+    void setSystemMBKMatrix(const core::MechanicalParams* mparams);
     void solve (Matrix& M, Vector& x, Vector& b);
     void invert(Matrix& M);
     

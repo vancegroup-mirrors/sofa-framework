@@ -162,7 +162,7 @@ namespace topology
     Triangle vertexTriangle2 = m_container->getTriangle (trianglesIndex2remove[1]);
 	
     Triangle newTri;
-    typename DataTypes::VecCoord& coords = *(m_geometryAlgorithms->getDOF()->getX());
+    const typename DataTypes::VecCoord& coords = *(m_geometryAlgorithms->getDOF()->getX());
     typename DataTypes::Coord tri1[3], tri2[3];
     
     newTri[0] = vertexTriangle1[ edgeInTri1 ];

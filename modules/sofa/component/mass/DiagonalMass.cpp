@@ -41,35 +41,37 @@ using namespace sofa::defaulttype;
 
 #ifndef SOFA_FLOAT
 template <>
-    double DiagonalMass<Rigid3dTypes, Rigid3dMass>::getPotentialEnergy( const VecCoord& x ) const
+    double DiagonalMass<Rigid3dTypes, Rigid3dMass>::getPotentialEnergy( const DataVecCoord& x, const core::MechanicalParams* /*mparams*/) const
 {
   double e = 0;
   const MassVector &masses= f_mass.getValue();
+	const VecCoord& _x = x.getValue();
     // gravity
   Vec3d g ( this->getContext()->getLocalGravity() );
   Deriv theGravity;
   DataTypes::set
       ( theGravity, g[0], g[1], g[2]);
-  for (unsigned int i=0;i<x.size();i++)
+  for (unsigned int i=0;i<_x.size();i++)
   {
-    e -= theGravity.getVCenter()*masses[i].mass*x[i].getCenter();
+    e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
   }
   return e;
 }
 
 template <>
-    double DiagonalMass<Rigid2dTypes, Rigid2dMass>::getPotentialEnergy( const VecCoord& x ) const
+    double DiagonalMass<Rigid2dTypes, Rigid2dMass>::getPotentialEnergy( const DataVecCoord& x, const core::MechanicalParams* /*mparams*/) const
 {
   double e = 0;
   const MassVector &masses= f_mass.getValue();
+	const VecCoord& _x = x.getValue();
     // gravity
   Vec3d g ( this->getContext()->getLocalGravity() );
   Deriv theGravity;
   DataTypes::set
       ( theGravity, g[0], g[1], g[2]);
-  for (unsigned int i=0;i<x.size();i++)
+  for (unsigned int i=0;i<_x.size();i++)
   {
-    e -= theGravity.getVCenter()*masses[i].mass*x[i].getCenter();
+    e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
   }
   return e;
 }
@@ -92,7 +94,7 @@ template <>
   {
     const MassVector &masses= f_mass.getValue();
     if (!getContext()->getShowBehaviorModels()) return;
-    VecCoord& x = *mstate->getX();
+    const VecCoord& x = *mstate->getX();
     Real totalMass=0;
     RigidTypes::Vec3 gravityCenter;
     for (unsigned int i=0; i<x.size(); i++)
@@ -191,7 +193,7 @@ template <>
   {
     const MassVector &masses= f_mass.getValue();
     if (!getContext()->getShowBehaviorModels()) return;
-    VecCoord& x = *mstate->getX();
+    const VecCoord& x = *mstate->getX();
     for (unsigned int i=0; i<x.size(); i++)
       {
         if (masses[i].mass == 0) continue;
@@ -210,36 +212,38 @@ template <>
 #endif
 #ifndef SOFA_DOUBLE
   template <>
-      double DiagonalMass<Rigid3fTypes, Rigid3fMass>::getPotentialEnergy( const VecCoord& x ) const
+      double DiagonalMass<Rigid3fTypes, Rigid3fMass>::getPotentialEnergy( const DataVecCoord& x, const core::MechanicalParams* /*mparams*/) const
   {
     double e = 0;
     const MassVector &masses= f_mass.getValue();
+		const VecCoord& _x = x.getValue();
     // gravity
     Vec3d g ( this->getContext()->getLocalGravity() );
     Deriv theGravity;
     DataTypes::set
       ( theGravity, g[0], g[1], g[2]);
-    for (unsigned int i=0;i<x.size();i++)
+    for (unsigned int i=0;i<_x.size();i++)
       {
-	e -= theGravity.getVCenter()*masses[i].mass*x[i].getCenter();
+	e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
       }
     return e;
   }
 
   template <>
-      double DiagonalMass<Rigid2fTypes, Rigid2fMass>::getPotentialEnergy( const VecCoord& x ) const
+      double DiagonalMass<Rigid2fTypes, Rigid2fMass>::getPotentialEnergy( const DataVecCoord& x, const core::MechanicalParams* /*mparams*/) const
   {
     double e = 0;
 
     const MassVector &masses= f_mass.getValue();
+		const VecCoord& _x = x.getValue();
     // gravity
     Vec3d g ( this->getContext()->getLocalGravity() );
     Deriv theGravity;
     DataTypes::set
       ( theGravity, g[0], g[1], g[2]);
-    for (unsigned int i=0;i<x.size();i++)
+    for (unsigned int i=0;i<_x.size();i++)
       {
-	e -= theGravity.getVCenter()*masses[i].mass*x[i].getCenter();
+	e -= theGravity.getVCenter()*masses[i].mass*_x[i].getCenter();
       }
     return e;
   }
@@ -254,7 +258,7 @@ template <>
   {
     const MassVector &masses= f_mass.getValue();
     if (!getContext()->getShowBehaviorModels()) return;
-    VecCoord& x = *mstate->getX();
+    const VecCoord& x = *mstate->getX();
     Real totalMass=0;
     RigidTypes::Vec3 gravityCenter;
     for (unsigned int i=0; i<x.size(); i++)
@@ -323,7 +327,7 @@ template <>
       {
 	const MassVector &masses= f_mass.getValue();
 	if (!getContext()->getShowBehaviorModels()) return;
-	VecCoord& x = *mstate->getX();
+	const VecCoord& x = *mstate->getX();
 	for (unsigned int i=0; i<x.size(); i++)
 	{
         if (masses[i].mass == 0) continue;

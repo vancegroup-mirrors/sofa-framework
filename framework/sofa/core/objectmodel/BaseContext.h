@@ -30,6 +30,7 @@
 #include <sofa/core/objectmodel/Base.h>
 #include <sofa/core/objectmodel/Tag.h>
 #include <sofa/core/objectmodel/ClassInfo.h>
+#include <sofa/core/ExecParams.h>
 #include <sofa/defaulttype/SolidTypes.h>
 #include <set>
 #ifdef SOFA_SMP
@@ -195,6 +196,9 @@ public:
 
 	/// @name Containers
 	/// @{
+
+	/// Mechanical Degrees-of-Freedom
+	virtual BaseObject* getState() const;
 
 	/// Mechanical Degrees-of-Freedom
 	virtual BaseObject* getMechanicalState() const;
@@ -445,7 +449,7 @@ public:
 	virtual void executeVisitor( simulation::Visitor* );
 
 	/// Propagate an event 
-	virtual void propagateEvent( Event* );
+	virtual void propagateEvent( Event*, const core::ExecParams* params = core::ExecParams::defaultInstance() );
 
 	/// @}
 

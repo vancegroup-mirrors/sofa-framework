@@ -25,7 +25,6 @@
 #include <sofa/simulation/common/InitVisitor.h>
 #include <sofa/simulation/common/MechanicalVisitor.h>
 #include <sofa/simulation/common/Simulation.h>
-#include <sofa/core/behavior/BaseMechanicalMapping.h>
 #include <sofa/core/BaseMapping.h>
 #include <sofa/core/VisualModel.h>
 
@@ -174,14 +173,12 @@ namespace simulation
           std::list< core::BaseMapping* >::iterator it;
           for (it=mappings.begin();it!=mappings.end();)
           {
-              std::list< core::BaseMapping* >::iterator itMapping=it;
-              ++it;
-              if (// core::behavior::BaseMechanicalMapping* m=
-                  dynamic_cast<core::behavior::BaseMechanicalMapping*>( *itMapping ))
-              {
-                  // if (m->isMechanical())
-                      mappings.erase(itMapping);
-              }
+			std::list< core::BaseMapping* >::iterator itMapping = it;
+
+			++it;
+		    
+			if ((*itMapping)->isMechanical())
+				mappings.erase(itMapping);
           }
           MoveObjectFunctor< core::BaseMapping > moveVisualMappings(simuToVisu);
           std::for_each(mappings.begin(), mappings.end(), moveVisualMappings);

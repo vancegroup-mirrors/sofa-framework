@@ -39,7 +39,7 @@ HEADERS +=  \
            NewMatVector.h \
            NewMatMatrix.h \
            MatrixExpr.h \
-           MultiCGLinearSolver.h \
+#           MultiCGLinearSolver.h \
            matrix_bloc_traits.h
 
 SOURCES += \ 
@@ -58,7 +58,7 @@ SOURCES += \
            DefaultMultiMatrixAccessor.cpp \
            MatrixLinearSolver.cpp \
 	   ParallelMatrixLinearSolver.cpp \
-           MultiCGLinearSolver.cpp
+#           MultiCGLinearSolver.cpp
 
 
 contains(DEFINES,SOFA_HAVE_MKL){

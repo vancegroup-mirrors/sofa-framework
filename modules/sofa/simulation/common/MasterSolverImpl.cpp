@@ -47,31 +47,31 @@ MasterSolverImpl::MasterSolverImpl()
 MasterSolverImpl::~MasterSolverImpl()
 {}
 
-void MasterSolverImpl::computeCollision()
+void MasterSolverImpl::computeCollision(const core::ExecParams* params)
 {
     if (this->f_printLog.getValue()) std::cerr<<"MasterSolverImpl::computeCollision()"<<endl;
 
 
     {
         CollisionBeginEvent evBegin;
-        PropagateEventVisitor eventPropagation(&evBegin);
+        PropagateEventVisitor eventPropagation( &evBegin, params);
         eventPropagation.execute(getContext());
     }
 
-    CollisionVisitor act;
+    CollisionVisitor act(params);
     act.setTags(this->getTags());
     act.execute( getContext() );
 
     {
         CollisionEndEvent evEnd;
-        PropagateEventVisitor eventPropagation(&evEnd);
+        PropagateEventVisitor eventPropagation( &evEnd, params);
         eventPropagation.execute(getContext());
     }
 }
 
-void MasterSolverImpl::integrate(double dt)
+void MasterSolverImpl::integrate(double dt, const core::ExecParams* params)
 {
-    MechanicalIntegrationVisitor act(dt);
+    MechanicalIntegrationVisitor act( dt, params );
     act.setTags(this->getTags());
     act.execute( getContext() );
 }

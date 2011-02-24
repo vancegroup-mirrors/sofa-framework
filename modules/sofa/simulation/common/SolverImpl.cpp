@@ -42,6 +42,7 @@ namespace sofa
 
 namespace simulation
 {
+using core::VecId;
 
 SolverImpl::SolverImpl()
 : /*mat(NULL),*/ result(0)
@@ -72,7 +73,7 @@ void SolverImpl::prepareVisitor(MechanicalVisitor* v)
 SolverImpl::VecId SolverImpl::v_alloc(VecId::Type t)
 {
     //VecId v(t, vectors[t].alloc());
-    VecId v(t, VecId::V_FIRST_DYNAMIC_INDEX);
+    VecId v(t, VecId::getFirstDynamicIndex(t));
     executeVisitor( MechanicalVAvailVisitor(v) );
     executeVisitor( MechanicalVAllocVisitor(v) );
     return v;

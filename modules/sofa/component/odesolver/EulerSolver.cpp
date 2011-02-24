@@ -23,31 +23,32 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/component/odesolver/EulerSolver.h>
+#include <sofa/simulation/common/MechanicalVisitor.h>
+#include <sofa/simulation/common/MechanicalOperations.h>
+#include <sofa/simulation/common/VectorOperations.h>
 #include <sofa/helper/Quater.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/core/behavior/MultiVec.h>
 #include <math.h>
 #include <iostream>
 
 
 #define SOFA_NO_VMULTIOP
 
-
- 
-
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace odesolver
-    {
+namespace odesolver
+{
 
-      using namespace sofa::defaulttype;
-      using namespace sofa::helper;
-      using namespace core::behavior;
+using namespace sofa::defaulttype;
+using namespace sofa::helper;
+using namespace core::behavior;
 
-      int EulerSolverClass = core::RegisterObject("A simple explicit time integrator")
+int EulerSolverClass = core::RegisterObject("A simple explicit time integrator")
 	.add< EulerSolver >()
 	.addAlias("Euler")
 	.addAlias("EulerExplicit")
@@ -56,95 +57,80 @@ namespace sofa
 	.addAlias("ExplicitEulerSolver")
 	;
 
-      SOFA_DECL_CLASS(Euler);
+SOFA_DECL_CLASS(Euler);
 
-      EulerSolver::EulerSolver()
-	:
-	  symplectic( initData( &symplectic, true, "symplectic", "If true, the velocities are updated before the positions and the method is symplectic (more robust). If false, the positions are updated before the velocities (standard Euler, less robust).") )
-      {
-      }
+EulerSolver::EulerSolver()
+: symplectic( initData( &symplectic, true, "symplectic", "If true, the velocities are updated before the positions and the method is symplectic (more robust). If false, the positions are updated before the velocities (standard Euler, less robust).") )
+{
+}
 
-      typedef simulation::Node::ctime_t ctime_t;
-      void EulerSolver::solve(double dt)
-      {
-	MultiVector pos(this, VecId::position());
-	MultiVector vel(this, VecId::velocity());
-	MultiVector acc(this, VecId::dx());
-	MultiVector f(this, VecId::force());
+typedef simulation::Node::ctime_t ctime_t;
 
-	//---------------------------------------------------------------
-	//DEBUGGING TOOLS
-// 	bool printLog = f_printLog.getValue();
-	//---------------------------------------------------------------
+void EulerSolver::solve(double dt, sofa::core::MultiVecCoordId xResult, sofa::core::MultiVecDerivId vResult, const core::ExecParams* params)
+{
+    sofa::simulation::common::VectorOperations vop( params, this->getContext() );
+    sofa::simulation::common::MechanicalOperations mop( this->getContext(), params );
+    mop->setImplicit(false); // this solver is explicit only
+    MultiVecCoord pos(&vop, core::VecCoordId::position() );
+    MultiVecDeriv vel(&vop, core::VecDerivId::velocity() );
+    MultiVecDeriv acc(&vop, core::VecDerivId::dx() );
+    MultiVecDeriv f  (&vop, core::VecDerivId::force() );
+    MultiVecCoord pos2(&vop, xResult /*core::VecCoordId::position()*/ );
+    MultiVecDeriv vel2(&vop, vResult /*core::VecDerivId::velocity()*/ );
 
-	addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
-	computeForce(f);
-// 	if( printLog )
-// 	  {
-// 	    serr<<"EulerSolver, dt = "<< dt <<sendl;
-// 	    serr<<"EulerSolver, initial x = "<< pos <<sendl;
-// 	    serr<<"EulerSolver, initial v = "<< vel <<sendl;
-// 	    serr<<"EulerSolver, f = "<< f <<sendl;
-// 	  }
-	accFromF(acc, f);
-	projectResponse(acc);
-// 	if( printLog )
-// 	  {
-// 	    serr<<"EulerSolver, a = "<< acc <<sendl;
-// 	  }
+    mop.addSeparateGravity(dt); // v += dt*g . Used if mass wants to added G separately from the other forces to v.
+    mop.computeForce(f);
 
-	
-    solveConstraint(dt,acc,core::behavior::BaseConstraintSet::ACC);
+    mop.accFromF(acc, f);
+    mop.projectResponse(acc);
 
-	// update state
-#ifdef SOFA_NO_VMULTIOP // unoptimized version
-	if( symplectic.getValue() )
-	  {
-	    vel.peq(acc,dt);
-        solveConstraint(dt,vel,core::behavior::BaseConstraintSet::VEL);
-	    pos.peq(vel,dt);
-        solveConstraint(dt,pos,core::behavior::BaseConstraintSet::POS);
-
-	  }
-	else
-	  {
-	    pos.peq(vel,dt);
-        solveConstraint(dt,pos,core::behavior::BaseConstraintSet::POS);
-	    vel.peq(acc,dt);
-        solveConstraint(dt,vel,core::behavior::BaseConstraintSet::VEL);
-	  }
-#else // single-operation optimization
-	{
-	  typedef core::behavior::BaseMechanicalState::VMultiOp VMultiOp;
-	  VMultiOp ops;
-	  ops.resize(2);
-	  // change order of operations depending on the symplectic flag
-	  int op_vel = (symplectic.getValue()?0:1);
-	  int op_pos = (symplectic.getValue()?1:0);
-	  ops[op_vel].first = (VecId)vel;
-	  ops[op_vel].second.push_back(std::make_pair((VecId)vel,1.0));
-	  ops[op_vel].second.push_back(std::make_pair((VecId)acc,dt));
-	  ops[op_pos].first = (VecId)pos;
-	  ops[op_pos].second.push_back(std::make_pair((VecId)pos,1.0));
-	  ops[op_pos].second.push_back(std::make_pair((VecId)vel,dt));
-	  simulation::MechanicalVMultiOpVisitor vmop(ops);
-	  vmop.execute(this->getContext());
-
-      solveConstraint(dt,vel,core::behavior::BaseConstraintSet::VEL);
-      solveConstraint(dt,pos,core::behavior::BaseConstraintSet::POS);
-	}
+    mop.solveConstraint(dt, acc, core::ConstraintParams::ACC);
+#ifdef SOFA_SMP
+    // For SofaSMP we would need VMultiOp to be implemented in a SofaSMP compatible way
+#define SOFA_NO_VMULTIOP
 #endif
 
-// 	if( printLog )
-// 	  {
-// 	    serr<<"EulerSolver, final x = "<< pos <<sendl;
-// 	    serr<<"EulerSolver, final v = "<< vel <<sendl;
-// 	  }
-      }
+    // update state
+#ifdef SOFA_NO_VMULTIOP // unoptimized version
+    if (symplectic.getValue())
+    {
+        vel2.eq(vel, acc, dt);
+        mop.solveConstraint(dt, vel2, core::ConstraintParams::VEL);
+        pos2.eq(pos, vel2, dt);
+        mop.solveConstraint(dt, pos2, core::ConstraintParams::POS);
+    }
+    else
+    {
+        pos2.eq(pos, vel, dt);
+        mop.solveConstraint(dt, pos2, core::ConstraintParams::POS);
+        vel2.eq(vel, acc, dt);
+        mop.solveConstraint(dt, vel2, core::ConstraintParams::VEL);
+    }
+#else // single-operation optimization
+    {
+        typedef core::behavior::BaseMechanicalState::VMultiOp VMultiOp;
+        VMultiOp ops;
+        ops.resize(2);
+        // change order of operations depending on the symplectic flag
+        int op_vel = (symplectic.getValue()?0:1);
+        int op_pos = (symplectic.getValue()?1:0);
+        ops[op_vel].first = vel2;
+        ops[op_vel].second.push_back(std::make_pair(vel.id(),1.0));
+        ops[op_vel].second.push_back(std::make_pair(acc.id(),dt));
+        ops[op_pos].first = pos2;
+        ops[op_pos].second.push_back(std::make_pair(pos.id(),1.0));
+        ops[op_pos].second.push_back(std::make_pair(vel2.id(),dt));
 
-    } // namespace odesolver
+        vop.v_multiop(ops);
 
-  } // namespace component
+        mop.solveConstraint(dt,vel2,core::ConstraintParams::VEL);
+        mop.solveConstraint(dt,pos2,core::ConstraintParams::POS);
+    }
+#endif
+}
+
+} // namespace odesolver
+
+} // namespace component
 
 } // namespace sofa
-

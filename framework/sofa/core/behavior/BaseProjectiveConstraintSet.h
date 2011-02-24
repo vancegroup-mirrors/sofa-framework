@@ -33,105 +33,94 @@
 namespace sofa
 {
 
-  namespace core
-  {
+namespace core
+{
 
-    namespace behavior
-    {
+namespace behavior
+{
 
-      /**
-   *  \brief Component computing projective constraints within a simulated body.
-   *
-   *  This class define the abstract API common to all projective constraints.
-   *  A BaseConstraint computes constraints applied to one or more simulated body
-   *  given its current position and velocity.
-   *
-   *  Constraints can be internal to a given body (attached to one MechanicalState,
-   *  see the Constraint class), or link several bodies together (such as contacts,
-   *  see the InteractionConstraint class).
-   *
-   */
-      class SOFA_CORE_API BaseProjectiveConstraintSet : public virtual objectmodel::BaseObject
-      {
-      public:
-        SOFA_CLASS(BaseProjectiveConstraintSet, objectmodel::BaseObject);
+/**
+*  \brief Component computing projective constraints within a simulated body.
+*
+*  This class define the abstract API common to all projective constraints.
+*  A BaseConstraint computes constraints applied to one or more simulated body
+*  given its current position and velocity.
+*
+*  Constraints can be internal to a given body (attached to one MechanicalState,
+*  see the Constraint class), or link several bodies together (such as contacts,
+*  see the InteractionConstraint class).
+*
+*/
+class SOFA_CORE_API BaseProjectiveConstraintSet : public virtual objectmodel::BaseObject
+{
+public:
+	SOFA_CLASS(BaseProjectiveConstraintSet, objectmodel::BaseObject);
 
-        BaseProjectiveConstraintSet()
-          : group(initData(&group, 0, "group", "ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle."))
-        {
-        }
+	BaseProjectiveConstraintSet()
+		: group(initData(&group, 0, "group", "ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle."))
+	{
+	}
 
-        virtual ~BaseProjectiveConstraintSet() {}
+	virtual ~BaseProjectiveConstraintSet() {}
 
-        /// Get the ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
-        int getGroup() const { return group.getValue(); }
+	/// Get the ID of the group containing this constraint.
+	/// This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
+	int getGroup() const { return group.getValue(); }
 
-        /// Set the ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
-        void setGroup(int g) { group.setValue(g); }
+	/// Set the ID of the group containing this constraint.
+	/// This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
+	void setGroup(int g) { group.setValue(g); }
 
+	/// @name Vector operations
+	/// @{
 
+	/// Project dx to constrained space (dx models an acceleration).
+	/// \param dxId output vector
+	virtual void projectResponse(MultiVecDerivId dxId, const MechanicalParams* mparams) = 0;
 
+	/// Project the L matrix of the Lagrange Multiplier equation system.
+	/// \param cId output vector
+	virtual void projectJacobianMatrix(MultiMatrixDerivId cId, const MechanicalParams* mparams) = 0;
 
-        /// @name Vector operations
-        /// @{
+	/// Project v to constrained space (v models a velocity).
+	/// \param vId output vector
+	virtual void projectVelocity(MultiVecDerivId vId, const MechanicalParams* mparams) = 0;
 
-        /// Project dx to constrained space (dx models an acceleration).
-        virtual void projectResponse() = 0;
+	/// Project x to constrained space (x models a position).
+	/// \param xId output vector
+	virtual void projectPosition(MultiVecCoordId xId, const MechanicalParams* mparams) = 0;
 
-        /// Project the L matrix of the Lagrange Multiplier equation system.
-        virtual void projectJacobianMatrix() = 0;
-
-        /// Project v to constrained space (v models a velocity).
-        virtual void projectVelocity() = 0;
-
-        /// Project x to constrained space (x models a position).
-        virtual void projectPosition() = 0;
-
-        /// Project vFree to constrained space (vFree models a velocity).
-        virtual void projectFreeVelocity() = 0;
-
-        /// Project xFree to constrained space (xFree models a position).
-        virtual void projectFreePosition() = 0;
-
-        /// @}
-
-        /// @name Matrix operations
-        /// @{
-
-        /// Project the compliance Matrix to constrained space.
-        virtual void projectResponse(double **){};
-
-        /// Project the global Mechanical Matrix to constrained space using offset parameter
-        virtual void applyConstraint(const sofa::core::behavior::MultiMatrixAccessor* /*matrix*/){};
-
-        /// Project the global Mechanical Vector to constrained space using offset parameter
-        virtual void applyConstraint(defaulttype::BaseVector* /*vector*/, const sofa::core::behavior::MultiMatrixAccessor* /*matrix*/){};
+	/// @}
 
 
+	/// @name Matrix operations
+	/// @{
 
-        /// @}
+	/// Project the compliance Matrix to constrained space.
+	virtual void projectResponse(double **, const MechanicalParams* /*mparams*/){};
+
+	/// Project the global Mechanical Matrix to constrained space using offset parameter
+	virtual void applyConstraint(const behavior::MultiMatrixAccessor* /*matrix*/, const MechanicalParams* /*mparams*/){};
+
+	/// Project the global Mechanical Vector to constrained space using offset parameter
+	virtual void applyConstraint(defaulttype::BaseVector* /*vector*/, const behavior::MultiMatrixAccessor* /*matrix*/, const MechanicalParams* /*mparams*/){};
+
+	/// @}
 
 
-        /// If the constraint is applied only on a subset of particles.
-        /// That way, we can optimize the time spent traversing the mappings
-        /// Deactivated by default. The constraints using only a subset of particles should activate the mask,
-        /// and during projectResponse(), insert the indices of the particles modified
-        virtual bool useMask() const {return false;}
+	/// If the constraint is applied only on a subset of particles.
+	/// That way, we can optimize the time spent traversing the mappings
+	/// Deactivated by default. The constraints using only a subset of particles should activate the mask,
+	/// and during projectResponse(), insert the indices of the particles modified
+	virtual bool useMask() const {return false;}
 
+protected:
+	Data<int> group;
+};
 
-        /// says if the constraint is holonomic or not
-        /// holonomic constraints can be processed using different methods such as :
-        /// projection - reducing the degrees of freedom - simple lagrange multiplier process
-        /// Non-holonomic constraints (like contact, friction...) need more specific treatments
-        virtual bool isHolonomic() {return false; }
+} // namespace behavior
 
-      protected:
-        Data<int> group;
-      };
-
-    } // namespace behavior
-
-  } // namespace core
+} // namespace core
 
 } // namespace sofa
 

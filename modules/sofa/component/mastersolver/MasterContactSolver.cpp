@@ -80,7 +80,7 @@ void MasterContactSolver::init()
 }
 
 
-void MasterContactSolver::step(double dt)
+void MasterContactSolver::step(double dt, const sofa::core::ExecParams* params)
 {
 	using helper::system::thread::CTime;
 	using sofa::helper::AdvancedTimer;
@@ -98,7 +98,12 @@ void MasterContactSolver::step(double dt)
 		//sout << "********* Start Iteration : " << _numConstraints << " constraints *********" << sendl;
 	}
 
-	context->execute< simulation::CollisionResetVisitor >();
+	// This solver will work in freePosition and freeVelocity vectors.
+	// We need to initialize them if it's not already done.
+	simulation::MechanicalVInitVisitor<V_COORD>(VecCoordId::freePosition(), ConstVecCoordId::position()).execute(context);
+	simulation::MechanicalVInitVisitor<V_DERIV>(VecDerivId::freeVelocity(), ConstVecDerivId::velocity()).execute(context);
+
+	context->execute< simulation::CollisionResetVisitor >(params);
 
 	// Update the BehaviorModels
 	// Required to allow the RayPickInteractor interaction
@@ -107,14 +112,14 @@ void MasterContactSolver::step(double dt)
 		serr << "updatePos called" << sendl;
 
 	AdvancedTimer::stepBegin("UpdatePosition");
-	simulation::BehaviorUpdatePositionVisitor updatePos(dt);
+	simulation::BehaviorUpdatePositionVisitor updatePos(dt, params);
 	context->execute(&updatePos);
 	AdvancedTimer::stepEnd("UpdatePosition");
 
 	if (f_printLog.getValue())
 		serr << "updatePos performed - beginVisitor called" << sendl;
 
-	simulation::MechanicalBeginIntegrationVisitor beginVisitor(dt);
+	simulation::MechanicalBeginIntegrationVisitor beginVisitor(dt, params);
 	context->execute(&beginVisitor);
 
 	if (f_printLog.getValue())
@@ -122,10 +127,16 @@ void MasterContactSolver::step(double dt)
 
 	// Free Motion
 	AdvancedTimer::stepBegin("FreeMotion");
-	simulation::SolveVisitor freeMotion(dt, true);
+	simulation::SolveVisitor freeMotion(dt, true, params);
 	context->execute(&freeMotion);
 	AdvancedTimer::stepBegin("PropagateFreePosition");
-	simulation::MechanicalPropagateFreePositionVisitor().execute(context);
+	//simulation::MechanicalPropagateFreePositionVisitor(params).execute(context);
+    {
+        sofa::core::MechanicalParams mparams(*params);
+        sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
+        mparams.x() = xfree;
+        simulation::MechanicalPropagatePositionVisitor(0, xfree, true, &mparams).execute(context);
+    }
 	AdvancedTimer::stepEnd("PropagateFreePosition");
 	AdvancedTimer::stepEnd("FreeMotion");
 
@@ -142,7 +153,7 @@ void MasterContactSolver::step(double dt)
 
 	// Collision detection and response creation
 	AdvancedTimer::stepBegin("Collision");
-	computeCollision();
+	computeCollision(params);
 	AdvancedTimer::stepEnd  ("Collision");
 
 	if (displayTime.getValue())
@@ -152,19 +163,17 @@ void MasterContactSolver::step(double dt)
 	}
 
 	// Restore force, intForce and extForce on the correct vectors (MState permanent VecIds)
-	simulation::MechanicalResetForceVisitor resetForceVisitor(core::VecId::force());
-	simulation::MechanicalResetForceVisitor resetIntForceVisitor(core::VecId::internalForce());
-	simulation::MechanicalResetForceVisitor resetExtForceVisitor(core::VecId::externalForce());
+	simulation::MechanicalResetForceVisitor resetForceVisitor(core::VecId::force(), false, params);
+	simulation::MechanicalResetForceVisitor resetExtForceVisitor(core::VecId::externalForce(), false, params);
 
 	context->execute(&resetForceVisitor);
-	context->execute(&resetIntForceVisitor);
 	context->execute(&resetExtForceVisitor);
 
 	// Solve constraints	
 	if (constraintSolver)
 	{
 		AdvancedTimer::stepBegin("ConstraintSolver");
-        constraintSolver->solveConstraint(dt, core::VecId::freePosition(), core::behavior::BaseConstraintSet::POS);
+        constraintSolver->solveConstraint(dt, core::VecId::freePosition(), core::ConstraintParams::POS);
 		AdvancedTimer::stepEnd("ConstraintSolver");
 	}
 
@@ -174,12 +183,13 @@ void MasterContactSolver::step(double dt)
 		sout << "<<<<<< End display MasterContactSolver time." << sendl;
 	}
 
-	simulation::MechanicalEndIntegrationVisitor endVisitor(dt);
+	simulation::MechanicalEndIntegrationVisitor endVisitor(dt, params);
 	context->execute(&endVisitor);
 
 	// Restore force, intForce and extForce on the correct vectors (MState permanent VecIds)
 	context->execute(&resetForceVisitor);
-	context->execute(&resetIntForceVisitor);
+        //<TO REMOVE>
+        //context->execute(&resetIntForceVisitor);
 	context->execute(&resetExtForceVisitor);
 }
 

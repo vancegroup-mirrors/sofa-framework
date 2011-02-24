@@ -14,7 +14,7 @@
 	showWireFrame="0" 
 	showNormals="0" 
 	 >
-	<Node name="Newmark" >
+<!--	<Node name="Newmark" >
 		<Newmark name="ode solver" rayleighMass="0" rayleighStiffness="0" printLog="true"/>
 		<LULinearSolver/>
 		<MechanicalObject template="Vec3d">
@@ -40,7 +40,7 @@
 				<Data value="1 0 100 0 1"/>
 			</Attribute>
 		</StiffSpringForceField>
-	</Node>
+	</Node>-->
 	<Node name="Euler Implicit" >
 		<EulerImplicit name="ode solver" rayleighMass="0" rayleighStiffness="0" printLog="true"/>
 		<LULinearSolver/>
@@ -68,7 +68,7 @@
 			</Attribute>
 		</StiffSpringForceField>
 	</Node>
-	<Node name="RK4 Explicit" >
+<!--	<Node name="RK4 Explicit" >
 		<RungeKutta4 name="ode solver" printLog="true"/>
 		<MechanicalObject template="Vec3d">
 			<Attribute type="position">
@@ -119,5 +119,5 @@
 				<Data value="1 0 100 0 1"/>
 			</Attribute>
 		</StiffSpringForceField>
-	</Node>
+	</Node>-->
 </Node>

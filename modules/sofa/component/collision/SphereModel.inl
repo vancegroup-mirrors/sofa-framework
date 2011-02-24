@@ -83,16 +83,20 @@ void TSphereModel<DataTypes>::resize(int size)
 {
 	this->core::CollisionModel::resize(size);
 
-	if((int) radius.getValue().size() < size)
+	VecReal &r = *radius.beginEdit();
+
+	if ((int)r.size() < size)
 	{
-		radius.beginEdit()->reserve(size);
-		while((int)radius.getValue().size() < size)
-			radius.beginEdit()->push_back(defaultRadius.getValue());
+		r.reserve(size);
+		while ((int)r.size() < size)
+			r.push_back(defaultRadius.getValue());
 	}
 	else
 	{
-		radius.beginEdit()->resize(size);
+		r.resize(size);
 	}
+
+	radius.endEdit();
 }
 
 
@@ -100,22 +104,22 @@ template<class DataTypes>
 void TSphereModel<DataTypes>::init()
 {
     this->CollisionModel::init();
-	mstate = dynamic_cast< core::behavior::MechanicalState<DataTypes>* > (getContext()->getMechanicalState());
-	if (mstate==NULL)
-	{
-		serr<<"TSphereModel requires a Vec3 Mechanical Model" << sendl;
-		return;
-	}
+    mstate = dynamic_cast< core::behavior::MechanicalState<DataTypes>* > (getContext()->getMechanicalState());
+    if (mstate==NULL)
+    {
+            serr<<"TSphereModel requires a Vec3 Mechanical Model" << sendl;
+            return;
+    }
 
-        if (radius.getValue().empty() && !filename.getValue().empty())
-	{
-		load(filename.getFullPath().c_str());
-	}
-	else
-	{
-		const int npoints = mstate->getX()->size();
-		resize(npoints);
-	}
+    if (radius.getValue().empty() && !filename.getValue().empty())
+    {
+            load(filename.getFullPath().c_str());
+    }
+    else
+    {
+            const int npoints = mstate->getX()->size();
+            resize(npoints);
+    }
 }
 
 template<class DataTypes>
@@ -301,23 +305,29 @@ typename TSphereModel<DataTypes>::Real TSphereModel<DataTypes>::getRadius(const 
 }
 
 template <class DataTypes>
-void TSphereModel<DataTypes>::setRadius(const int i, const typename TSphereModel<DataTypes>::Real r)
+void TSphereModel<DataTypes>::setRadius(const int i, const typename TSphereModel<DataTypes>::Real _r)
 {
-	if((int) radius.getValue().size() <= i)
+	VecReal &r = *radius.beginEdit();
+
+	if ((int)r.size() <= i)
 	{
-		radius.beginEdit()->reserve(i+1);
-		while((int)radius.getValue().size() <= i)
-			radius.beginEdit()->push_back(defaultRadius.getValue());
+		r.reserve(i+1);
+		while ((int)r.size() <= i)
+			r.push_back(defaultRadius.getValue());
 	}
 
-	(*radius.beginEdit())[i] = r;
+	r[i] = _r;
+	radius.endEdit();
 }
 
 template <class DataTypes>
 void TSphereModel<DataTypes>::setRadius(const typename TSphereModel<DataTypes>::Real r)
 {
 	*defaultRadius.beginEdit() = r;
+	defaultRadius.endEdit();
+
 	radius.beginEdit()->clear();
+	radius.endEdit();
 }
 
 template <class DataTypes>
@@ -361,7 +371,8 @@ int TSphereModel<DataTypes>::addSphere(const Vector3& pos, Real r)
 template <class DataTypes>
 void TSphereModel<DataTypes>::setSphere(int i, const Vector3& pos, Real r)
 {
-	(*mstate->getX())[i] = pos;
+    helper::WriteAccessor<Data<VecCoord> > xData = *mstate->write(core::VecCoordId::position());
+    xData.wref()[i] = pos;
 	setRadius(i,r);
 }
 

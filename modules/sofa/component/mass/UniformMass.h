@@ -55,6 +55,8 @@ public:
     typedef typename DataTypes::Coord Coord;
     typedef typename DataTypes::Deriv Deriv;
     typedef typename Coord::value_type Real;
+		typedef core::objectmodel::Data<VecCoord> DataVecCoord; 
+		typedef core::objectmodel::Data<VecDeriv> DataVecDeriv; 
     typedef TMassType MassType;
 
 //protected:
@@ -98,22 +100,22 @@ public:
 
 	void handleTopologyChange();
 
-    void addMDx(VecDeriv& f, const VecDeriv& dx, double factor = 1.0);
+    void addMDx(DataVecDeriv& f, const DataVecDeriv& dx, double factor, const core::MechanicalParams* mparams);
 
-    void accFromF(VecDeriv& a, const VecDeriv& f);
+    void accFromF(DataVecDeriv& a, const DataVecDeriv& f, const core::MechanicalParams* mparams);
 
-    void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+    void addForce(DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v, const core::MechanicalParams* mparams);
 
-    double getKineticEnergy(const VecDeriv& v) const;  ///< vMv/2 using dof->getV()
+    double getKineticEnergy(const DataVecDeriv& v, const core::MechanicalParams* mparams) const;  ///< vMv/2 using dof->getV()
 
-    double getPotentialEnergy(const VecCoord& x) const;   ///< Mgx potential in a uniform gravity field, null at origin
+    double getPotentialEnergy(const DataVecCoord& x, const core::MechanicalParams* mparams) const;   ///< Mgx potential in a uniform gravity field, null at origin
 
 	void addMDxToVector(defaulttype::BaseVector *resVect, const VecDeriv *dx, SReal mFact, unsigned int& offset);
 
-	void addGravityToV(double dt);
+	void addGravityToV(DataVecDeriv& d_v, const core::MechanicalParams* mparams);
 
     /// Add Mass contribution to global Matrix assembling
-    void addMToMatrix(defaulttype::BaseMatrix * mat, double mFact, unsigned int &offset);
+    void addMToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams *mparams);
 
     double getElementMass(unsigned int index) const;
     void getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const;
@@ -127,21 +129,22 @@ public:
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MASS_UNIFORMMASS_CPP)
 #pragma warning(disable : 4231)
+using namespace sofa::defaulttype;
 #ifndef SOFA_FLOAT
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec3dTypes,double>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec2dTypes,double>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec1dTypes,double>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec6dTypes,double>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Rigid3dTypes,defaulttype::Rigid3dMass>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Rigid2dTypes,defaulttype::Rigid2dMass>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec3dTypes, double>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec2dTypes, double>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec1dTypes, double>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec6dTypes, double>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Rigid3dTypes, Rigid3dMass>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Rigid2dTypes, Rigid2dMass>;
 #endif
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec3fTypes,float>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec2fTypes,float>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec1fTypes,float>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Vec6fTypes,float>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Rigid3fTypes,defaulttype::Rigid3fMass>;
-extern template class SOFA_COMPONENT_MASS_API UniformMass<defaulttype::Rigid2fTypes,defaulttype::Rigid2fMass>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec3fTypes, float>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec2fTypes, float>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec1fTypes, float>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Vec6fTypes, float>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Rigid3fTypes, Rigid3fMass>;
+extern template class SOFA_COMPONENT_MASS_API UniformMass<Rigid2fTypes, Rigid2fMass>;
 #endif
 #endif
 

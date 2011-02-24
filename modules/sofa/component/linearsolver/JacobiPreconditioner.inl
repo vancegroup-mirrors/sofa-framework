@@ -61,20 +61,23 @@ JacobiPreconditioner<TMatrix,TVector>::JacobiPreconditioner()
 }
 
 template<class TMatrix, class TVector>
-void JacobiPreconditioner<TMatrix,TVector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
-    Inherit::setSystemMBKMatrix(mFact,bFact,kFact);
+void JacobiPreconditioner<TMatrix,TVector>::setSystemMBKMatrix(const core::MechanicalParams* mparams) 
+{
+    Inherit::setSystemMBKMatrix(mparams);
 }
 
 /// Solve P^-1 Mx= P^-1 b
 // P[i][j] = M[i][j] ssi i=j
 //P^-1[i][j] = 1/M[i][j]
 template<class TMatrix, class TVector>
-void JacobiPreconditioner<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r) {
+void JacobiPreconditioner<TMatrix,TVector>::solve (Matrix& M, Vector& z, Vector& r) 
+{
     M.mult(z,r);
 }
 
 template<class TMatrix, class TVector>
-void JacobiPreconditioner<TMatrix,TVector>::invert(Matrix& M) {
+void JacobiPreconditioner<TMatrix,TVector>::invert(Matrix& M) 
+{
     M.invert();
 }
 

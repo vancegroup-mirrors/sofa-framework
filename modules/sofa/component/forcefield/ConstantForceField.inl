@@ -22,13 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_INTERACTIONFORCEFIELD_ConstantForceField_INL
-#define SOFA_COMPONENT_INTERACTIONFORCEFIELD_ConstantForceField_INL
+#ifndef SOFA_COMPONENT_FORCEFIELD_CONSTANTFORCEFIELD_INL
+#define SOFA_COMPONENT_FORCEFIELD_CONSTANTFORCEFIELD_INL
 
 #include "ConstantForceField.h"
 #include <sofa/helper/system/config.h>
-#include <sofa/defaulttype/VecTypes.h>
-#include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/gl/template.h>
 #include <assert.h>
 #include <iostream>
@@ -61,9 +59,10 @@ ConstantForceField<DataTypes>::ConstantForceField()
 
 
 template<class DataTypes>
-void ConstantForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, const VecDeriv&)
-{        
-	f1.resize(p1.size());                
+void ConstantForceField<DataTypes>::addForce(DataVecDeriv& f1, const DataVecCoord& p1, const DataVecDeriv&, const core::MechanicalParams* /*params*/)
+{ 
+	sofa::helper::WriteAccessor< core::objectmodel::Data< VecDeriv > > _f1 = f1;	
+	_f1.resize(p1.getValue().size());
 
         //std::cout << "Points = " << points.getValue() << std::endl;
         Deriv singleForce;
@@ -79,39 +78,40 @@ void ConstantForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, c
 	const VecIndex& indices = points.getValue();
 	const VecDeriv& f = forces.getValue();
         //const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
-        const Deriv f_end = (f.empty()? singleForce : f[f.size()-1]);
+	const Deriv f_end = (f.empty()? singleForce : f[f.size()-1]);
 	unsigned int i = 0;
 
 	if (!indexFromEnd.getValue())
 	{
 		for (; i < f.size(); i++)
 		{
-			f1[indices[i]] += f[i];
+			_f1[indices[i]] += f[i];
 		}
 		for (; i < indices.size(); i++)
 		{
-			f1[indices[i]] += f_end;
+			_f1[indices[i]] += f_end;
 		}
 	}
 	else
 	{
 		for (; i < f.size(); i++)
 		{
-			f1[f1.size() - indices[i] - 1] += f[i];
+			_f1[_f1.size() - indices[i] - 1] += f[i];
 		}
 		for (; i < indices.size(); i++)
 		{
-			f1[f1.size() - indices[i] - 1] += f_end;
+			_f1[_f1.size() - indices[i] - 1] += f_end;
 		}
 	}
 }
 
 
 template <class DataTypes>
-double ConstantForceField<DataTypes>::getPotentialEnergy(const VecCoord& x) const
+double ConstantForceField<DataTypes>::getPotentialEnergy(const DataVecCoord& x, const core::MechanicalParams* /*params*/) const
 {
 	const VecIndex& indices = points.getValue();
 	const VecDeriv& f = forces.getValue();
+	const VecCoord& _x = x.getValue();
 	const Deriv f_end = (f.empty()? force.getValue() : f[f.size()-1]);
 	double e = 0;
 	unsigned int i = 0;
@@ -120,22 +120,22 @@ double ConstantForceField<DataTypes>::getPotentialEnergy(const VecCoord& x) cons
 	{
 		for (; i<f.size(); i++)
 		{
-			e -= f[i] * x[indices[i]];
+			e -= f[i] * _x[indices[i]];
 		}
 		for (; i<indices.size(); i++)
 		{
-			e -= f_end * x[indices[i]];
+			e -= f_end * _x[indices[i]];
 		}
 	}
 	else
 	{
 		for (; i < f.size(); i++)
 		{
-			e -= f[i] * x[x.size() - indices[i] -1];
+			e -= f[i] * _x[_x.size() - indices[i] -1];
 		}
 		for (; i < indices.size(); i++)
 		{
-			e -= f_end * x[x.size() - indices[i] -1];
+			e -= f_end * _x[_x.size() - indices[i] -1];
 		}
 	}
 
@@ -157,16 +157,16 @@ void ConstantForceField<DataTypes>::setForce(unsigned i, const Deriv& force)
 
 #ifndef SOFA_FLOAT
 template <>
-double ConstantForceField<defaulttype::Rigid3dTypes>::getPotentialEnergy(const VecCoord& ) const;
+double ConstantForceField<defaulttype::Rigid3dTypes>::getPotentialEnergy(const DataVecCoord& , const core::MechanicalParams* ) const;
 template <>
-double ConstantForceField<defaulttype::Rigid2dTypes>::getPotentialEnergy(const VecCoord& ) const;
+double ConstantForceField<defaulttype::Rigid2dTypes>::getPotentialEnergy(const DataVecCoord& , const core::MechanicalParams* ) const;
 #endif
 
 #ifndef SOFA_DOUBLE
 template <>
-double ConstantForceField<defaulttype::Rigid3fTypes>::getPotentialEnergy(const VecCoord& ) const;
+double ConstantForceField<defaulttype::Rigid3fTypes>::getPotentialEnergy(const DataVecCoord&, const core::MechanicalParams* ) const;
 template <>
-double ConstantForceField<defaulttype::Rigid2fTypes>::getPotentialEnergy(const VecCoord& ) const;
+double ConstantForceField<defaulttype::Rigid2fTypes>::getPotentialEnergy(const DataVecCoord&, const core::MechanicalParams* ) const;
 #endif
 
 
@@ -262,7 +262,7 @@ bool ConstantForceField<DataTypes>::addBBox(double*, double* )
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_CONSTANTFORCEFIELD_INL
 
 
 

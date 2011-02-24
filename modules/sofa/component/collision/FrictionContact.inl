@@ -405,7 +405,7 @@ template < class TCollisionModel1, class TCollisionModel2 >
 
     if(map!=NULL)
     {
-        helper::vector<sofa::core::objectmodel::BaseObject*> fromObjects = map->getFrom();
+        helper::vector<core::BaseState*> fromObjects = map->getFrom();
 
         if (fromObjects.size( ) == 0)
         {
@@ -666,8 +666,8 @@ void ContinuousFrictionContact<TCollisionModel1,TCollisionModel2>::activateConst
     }
     else
     {        
-        map1->propagateX();
-        map1->propagateXfree();
+        map1->apply();
+        map1->apply(sofa::core::VecCoordId::freePosition(), sofa::core::ConstVecCoordId::freePosition());
     }
 
     if(use_mapper_for_state2){
@@ -676,8 +676,8 @@ void ContinuousFrictionContact<TCollisionModel1,TCollisionModel2>::activateConst
     }
     else
     {
-        map2->propagateX();
-        map2->propagateXfree();
+        map2->apply();
+        map2->apply(sofa::core::VecCoordId::freePosition(), sofa::core::ConstVecCoordId::freePosition());
     }
 
     //std::cout<<" ===================== "<<std::endl;

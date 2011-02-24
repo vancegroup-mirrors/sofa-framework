@@ -570,7 +570,7 @@ namespace sofa
           Coord center = picked.point;
 
           // - STEP 2: Compute baryCoord of elements in list:
-          typename DataTypes::VecCoord& X = *mstateCollision->getX();
+          const VecCoord& X = *mstateCollision->getX();
 
           VecCoord baryCoord;
           baryCoord.resize (elementsToTest.size());
@@ -650,7 +650,7 @@ namespace sofa
           if (mstateCollision == NULL) return;
 
 
-          typename DataTypes::VecCoord& X = *mstateCollision->getX();
+          const VecCoord& X = *mstateCollision->getX();
           //core::topology::BaseMeshTopology* topo = picked.body->getMeshTopology();
 
           glDisable(GL_LIGHTING);

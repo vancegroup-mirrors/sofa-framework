@@ -553,7 +553,7 @@ int TopologicalChangeProcessorClass = core::RegisterObject("Read topological Cha
 	  else
 	  {
 	    core::behavior::MechanicalState<Vec3Types>* mstate = m_topology->getContext()->get<core::behavior::MechanicalState<Vec3Types> >();
-	    helper::vector<Vector3> &v_coords =  *mstate->getX();
+            const helper::vector<Vector3> &v_coords =  *mstate->getX();
 	    a = v_coords[a_last];
 	  }
 

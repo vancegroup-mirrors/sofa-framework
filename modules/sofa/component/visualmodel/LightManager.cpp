@@ -367,15 +367,15 @@ void LightManager::preDrawScene(VisualParameters* vp)
 {
 #ifdef SOFA_HAVE_GLEW
 	for (std::vector<Light*>::iterator itl = lights.begin(); itl != lights.end() ; itl++){
-                if(shadowsEnabled.getValue())
-                {
+        if(shadowsEnabled.getValue())
+        {
 			(*itl)->preDrawShadow(vp);
-
-                        simulation::VisualDrawVisitor vdv( core::VisualModel::Shadow );
-
+            
+            simulation::VisualDrawVisitor vdv( core::VisualModel::Shadow, core::ExecParams::defaultInstance());
+            
 			vdv.execute ( getContext() );
-
-                        (*itl)->postDrawShadow();
+            
+            (*itl)->postDrawShadow();
 		}
 	}
 

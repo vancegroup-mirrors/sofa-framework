@@ -33,6 +33,8 @@
 #include <vector>
 #include <math.h>
 
+#include <sofa/component/component.h>
+
 
 
 namespace sofa
@@ -57,7 +59,7 @@ template<class DataTypes>
 class SPHFluidForceField : public sofa::core::behavior::ForceField<DataTypes>
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(SPHFluidForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+	SOFA_CLASS(SOFA_TEMPLATE(SPHFluidForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
 	typedef sofa::core::behavior::ForceField<DataTypes> Inherit;
 	typedef typename DataTypes::VecCoord VecCoord; 
@@ -65,7 +67,10 @@ public:
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
 	typedef typename Coord::value_type Real;
-	
+
+	typedef core::objectmodel::Data<VecDeriv>    DataVecDeriv; 
+	typedef core::objectmodel::Data<VecCoord>    DataVecCoord; 
+
 public:
 	Data< Real > particleRadius;
 	Data< Real > particleMass;
@@ -103,20 +108,20 @@ protected:
 		int neighborhood;
 	};
 
-    Real lastTime;
+	Real lastTime;
 	sofa::helper::vector<Particle> particles;
 	sofa::helper::vector<PredictedParticle> PCIParticles;
-std::vector< VecCoord > iterParticles;
-	
+	std::vector< VecCoord > iterParticles;
+
 	typedef SpatialGridContainer<DataTypes> Grid;
-	
+
 	Grid* grid;
 
-    SPHFluidForceFieldInternalData<DataTypes> data;
-    friend class SPHFluidForceFieldInternalData<DataTypes>;
+	SPHFluidForceFieldInternalData<DataTypes> data;
+	friend class SPHFluidForceFieldInternalData<DataTypes>;
 
 public:
-    /// this method is called by the SpatialGrid when w connection between two particles is detected
+	/// this method is called by the SpatialGrid when w connection between two particles is detected
 	void addNeighbor(int i1, int i2, Real r2, Real h2)
 	{
 		Real r_h = (Real)sqrt(r2/h2);
@@ -136,7 +141,7 @@ protected:
 	Real  Wd(Real r_h, Real C)
 	{
 		Real a = (1-r_h*r_h);
-if(a<=0)return 0;
+		if(a<=0)return 0;
 		return  C*a*a*a;
 	}
 
@@ -156,15 +161,15 @@ if(a<=0)return 0;
 	Real constGradWd(Real h) const
 	{
 		return -6*constWd(h)/(h*h);
-//		return -6*constWd(h)/h;
+		//		return -6*constWd(h)/h;
 	}
 
 	Deriv gradWd(const Deriv& d, Real r_h, Real C)
 	{
 		Real a = (1-r_h*r_h);
-if(a<=0)return Deriv();
+		if(a<=0)return Deriv();
 		return d*(C*a*a);
-//		return d*(C*a*a)*r_h;
+		//		return d*(C*a*a)*r_h;
 	}
 
 
@@ -314,11 +319,11 @@ if(a<=0)return Deriv();
 		unsigned int a,b;
 		Real df;
 	};
-	
+
 	sofa::helper::vector<DForce> dforces;
-	
+
 public:
-    SPHFluidForceField();
+	SPHFluidForceField();
 
 	Real getParticleRadius() const { return particleRadius.getValue(); }
 	void setParticleRadius(Real v) { particleRadius.setValue(v);    }
@@ -332,95 +337,111 @@ public:
 	void setViscosity(Real v) { viscosity.setValue(v);    }
 	Real getSurfaceTension() const { return surfaceTension.getValue(); }
 	void setSurfaceTension(Real v) { surfaceTension.setValue(v);    }
-	
+
 	Real getParticleField(int i, Real r2_h2)
 	{
 		Real a = 1-r2_h2;
 		return (a*a*a)/particles[i].density;
 	}
-	
+
 	Real getParticleFieldConstant(Real h)
 	{
 		return constWc(h)*particleMass.getValue();
 	}
 
 
-Real GetMonaghanKernel(Real r,Real smoothRadius)
-{
-	float h = (float)smoothRadius/2;
-
-	float q = (float)r / h;
-
-	static float norm = (float)15.0 / (float)(14 * 3.141592);
-
-
-	static float h2 = h * h;
-
-	float q2 = (2-q);
-	if (q<=1)
+	Real GetMonaghanKernel(Real r,Real smoothRadius)
 	{
-		float q1 = (1-q);
-		return (norm / h2) * (q2*q2*q2 - 4*q1*q1*q1);
+		float h = (float)smoothRadius/2;
+
+		float q = (float)r / h;
+
+		static float norm = (float)15.0 / (float)(14 * 3.141592);
+
+
+		static float h2 = h * h;
+
+		float q2 = (2-q);
+		if (q<=1)
+		{
+			float q1 = (1-q);
+			return (norm / h2) * (q2*q2*q2 - 4*q1*q1*q1);
+		}
+		else if (q>1.0 && q<=2.0)
+		{
+			return (norm / h2) * q2*q2*q2;
+		}
+		else return 0.0;
 	}
-	else if (q>1.0 && q<=2.0)
+
+
+	Real GetMonaghanGrad(Real r,Real smoothRadius)
 	{
-		return (norm / h2) * q2*q2*q2;
+		float h = (float)smoothRadius/2;
+		float q = (float)r / h;
+
+
+		static float h4 = pow(h,4);
+		static float norm = (float)15.0 / (float)(14 * M_PI * h4);
+
+		if (q<=1.0)
+		{
+			return (3*norm*r) * (3*q - 4);
+		}
+		else if (q>1.0 && q<=2.0)
+		{
+			return (3*norm*r) * (-1*(2-q)*(2-q)/q);
+		}
+		else return 0.0;
 	}
-	else return 0.0;
-}
 
 
-Real GetMonaghanGrad(Real r,Real smoothRadius)
-{
-	float h = (float)smoothRadius/2;
-	float q = (float)r / h;
-
-
-	static float h4 = pow(h,4);
-	static float norm = (float)15.0 / (float)(14 * M_PI * h4);
-
-	if (q<=1.0)
+	Real GetMonaghanLap(Real r, Real smoothRadius)
 	{
-		return (3*norm*r) * (3*q - 4);
+		float h = (float)smoothRadius/2;
+
+		float q = (float)r / h;
+
+		static float norm = (float)15.0 / (float)(14 * 3.141592);
+
+		static float h2 = h * h;
+		if (q<=1.0)
+		{
+			return norm / (h2 * h2) * (6*(2-q) - 24*(1-q));
+		}
+		else if (q>1.0 && q<=2.0)
+		{
+			return norm / (h2 * h2) *  6 * (2-q);
+		}
+		else return 0.0;
 	}
-	else if (q>1.0 && q<=2.0)
-	{
-		return (3*norm*r) * (-1*(2-q)*(2-q)/q);
-	}
-	else return 0.0;
-}
-
-
-Real GetMonaghanLap(Real r, Real smoothRadius)
-{
-	float h = (float)smoothRadius/2;
-
-	float q = (float)r / h;
-
-	static float norm = (float)15.0 / (float)(14 * 3.141592);
-
-	static float h2 = h * h;
-	if (q<=1.0)
-	{
-		return norm / (h2 * h2) * (6*(2-q) - 24*(1-q));
-	}
-	else if (q>1.0 && q<=2.0)
-	{
-		return norm / (h2 * h2) *  6 * (2-q);
-	}
-	else return 0.0;
-}
 
 	virtual void init();
-	
-	virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
-	
-	virtual void addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
 
-	virtual double getPotentialEnergy(const VecCoord& x) const;
-	
+    virtual void addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* mparams);
+    virtual void addDForce(DataVecDeriv& d_df, const DataVecDeriv& d_dx, const core::MechanicalParams* mparams);
+
 	void draw();
 };
+
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+using sofa::defaulttype::Vec2dTypes;
+using sofa::defaulttype::Vec2fTypes;
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_SPHFLUIDFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API SPHFluidForceField<Vec3dTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SPHFluidForceField<Vec2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API SPHFluidForceField<Vec3fTypes>;
+extern template class SOFA_COMPONENT_FORCEFIELD_API SPHFluidForceField<Vec2fTypes>;
+#endif
+
+#endif // defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_SPHFLUIDFORCEFIELD_CPP)
 
 } // namespace forcefield
 
@@ -428,4 +449,4 @@ Real GetMonaghanLap(Real r, Real smoothRadius)
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_SPHFLUIDFORCEFIELD_H

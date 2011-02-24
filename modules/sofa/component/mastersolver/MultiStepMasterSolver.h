@@ -46,7 +46,7 @@ public:
     SOFA_CLASS(MultiStepMasterSolver, sofa::simulation::MasterSolverImpl);
     MultiStepMasterSolver();
     virtual ~MultiStepMasterSolver();
-    void step (double dt);
+    void step (double dt, const sofa::core::ExecParams* params);
     Data<int> collisionSteps;
     Data<int> integrationSteps;
 };

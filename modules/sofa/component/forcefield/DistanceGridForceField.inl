@@ -127,8 +127,13 @@ void DistanceGridForceField<DataTypes>::init()
 }
 
 template<class DataTypes>
-void DistanceGridForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1)
+void DistanceGridForceField<DataTypes>::addForce(DataVecDeriv &  dataF, const DataVecCoord &  dataX , const DataVecDeriv & dataV, const sofa::core::MechanicalParams* /*mparams*/ )
 {
+	VecDeriv& f1 = *(dataF.beginEdit());
+	const VecCoord& p1=dataX.getValue();
+	const VecDeriv& v1=dataV.getValue();
+
+
     if (!grid) return;
 	//this->dfdd.resize(p1.size());
     f1.resize(p1.size());
@@ -291,100 +296,118 @@ void DistanceGridForceField<DataTypes>::addForce(VecDeriv& f1, const VecCoord& p
 	}
     }
     this->vcontacts.endEdit();
+
+	dataF.endEdit();
+
 }
 
 template<class DataTypes>
-void DistanceGridForceField<DataTypes>::addDForce(VecDeriv& df1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
+void DistanceGridForceField<DataTypes>::addDForce(DataVecDeriv&   datadF , const DataVecDeriv&   datadX , const sofa::core::MechanicalParams* mparams )
 {
-    if (!grid) return;
+	VecDeriv& df1      = *(datadF.beginEdit());
+	const VecCoord& dx1=   datadX.getValue()  ;
+	double kFactor     =   mparams->kFactor() ;
+
+	//(VecDeriv& df1, const VecDeriv& dx1, double kFactor, double /*bFactor*/)
+    if (!grid)
+		return;
+
     const sofa::helper::vector<Contact>& contacts = this->contacts.getValue();
     const sofa::helper::vector<TContact>& tcontacts = this->tcontacts.getValue();
     const sofa::helper::vector<VContact>& vcontacts = this->vcontacts.getValue();
-    if (contacts.empty() && tcontacts.empty() && vcontacts.empty()) return;
+    
+	if (contacts.empty() && tcontacts.empty() && vcontacts.empty())
+		return;
+
     df1.resize(dx1.size());
-    const Real fact = (Real)(/* -this->stiffness.getValue()* */ kFactor);
+    const Real fact = (Real)(kFactor);
+
     for (unsigned int i=0; i<contacts.size(); i++)
     {
         const Contact& c = (this->contacts.getValue())[i];
-	Coord du = dx1[c.index];
+		Coord du = dx1[c.index];
 
-	Real dd = du * c.normal;
-	Deriv dforce = c.normal * (dd * c.fact * fact);
+		Real dd = du * c.normal;
+		Deriv dforce = c.normal * (dd * c.fact * fact);
         df1[c.index] += dforce;
     }
+
     const Real factA = (Real)( -this->stiffnessArea.getValue()* kFactor );
     for (unsigned int i=0; i<tcontacts.size(); i++)
     {
         const TContact& c = (this->tcontacts.getValue())[i];
-	const helper::fixed_array<unsigned int,3>& t = c.index;
-	Coord dB = dx1[t[1]]-dx1[t[0]];
-	Coord dC = dx1[t[2]]-dx1[t[0]];
-	// d(area) = dot(0.5*cross(C,sN), dB) + dot(0.5*cross(sN,B), dC)
-	Real darea = 0.5f*(cross(c.C,c.normal)*dB + cross(c.normal,c.B)*dC);
+		const helper::fixed_array<unsigned int,3>& t = c.index;
+		Coord dB = dx1[t[1]]-dx1[t[0]];
+		Coord dC = dx1[t[2]]-dx1[t[0]];
+		// d(area) = dot(0.5*cross(C,sN), dB) + dot(0.5*cross(sN,B), dC)
+		Real darea = 0.5f*(cross(c.C,c.normal)*dB + cross(c.normal,c.B)*dC);
 
-	// fB = (C x sN) * (stiffA * (minA-area));
-	// dfB = (C x sN) * (-stiffA * d(area)) + (dC x sN) * (stiffA * (minA-area));
-	Coord dfB = cross(c.C, c.normal) * (factA * darea) - cross (dC, c.normal) * (factA*c.fact);
-	Coord dfC = cross(c.normal, c.B) * (factA * darea) - cross (c.normal, dB) * (factA*c.fact);
-	Coord dfA = -(dfB+dfC);
-	df1[t[0]] += dfA;
-	df1[t[1]] += dfB;
-	df1[t[2]] += dfC;
+		// fB = (C x sN) * (stiffA * (minA-area));
+		// dfB = (C x sN) * (-stiffA * d(area)) + (dC x sN) * (stiffA * (minA-area));
+		Coord dfB = cross(c.C, c.normal) * (factA * darea) - cross (dC, c.normal) * (factA*c.fact);
+		Coord dfC = cross(c.normal, c.B) * (factA * darea) - cross (c.normal, dB) * (factA*c.fact);
+		Coord dfA = -(dfB+dfC);
+		df1[t[0]] += dfA;
+		df1[t[1]] += dfB;
+		df1[t[2]] += dfC;
     }
 
     const Real factV = (Real)( - this->stiffnessVolume.getValue()*(1.0/6.0)* kFactor );
     for (unsigned int i=0; i<vcontacts.size(); i++)
     {
-	const Real v1_6 = (Real)(1.0/6.0);
+		const Real v1_6 = (Real)(1.0/6.0);
         const VContact& c = (this->vcontacts.getValue())[i];
-	const helper::fixed_array<unsigned int,4>& t = c.index;
-	Coord dA = dx1[t[1]]-dx1[t[0]];
-	Coord dB = dx1[t[2]]-dx1[t[0]];
-	Coord dC = dx1[t[3]]-dx1[t[0]];
-	// d(vol) = 1/6*(dot(cross(B,C), dA) + dot(cross(C,A), dB) + dot(cross(A,B), dC))
-	Real dvolume = v1_6*(dA*cross(c.B,c.C) + dB*cross(c.C,c.A) + dC*cross(c.A,c.B));
+		const helper::fixed_array<unsigned int,4>& t = c.index;
+		Coord dA = dx1[t[1]]-dx1[t[0]];
+		Coord dB = dx1[t[2]]-dx1[t[0]];
+		Coord dC = dx1[t[3]]-dx1[t[0]];
+		// d(vol) = 1/6*(dot(cross(B,C), dA) + dot(cross(C,A), dB) + dot(cross(A,B), dC))
+		Real dvolume = v1_6*(dA*cross(c.B,c.C) + dB*cross(c.C,c.A) + dC*cross(c.A,c.B));
 
-	// fA = (1/6)*(B x C)*(stiffV * (minV-volume))
-	// dfA = (stiffV*1/6) * ((dB x C + B x dC) * (minV-volume) - (B x C) * dvol)
-	// dfB = (stiffV*1/6) * ((dC x A + C x dA) * (minV-volume) - (C x A) * dvol)
-	// dfC = (stiffV*1/6) * ((dA x B + A x dB) * (minV-volume) - (A x B) * dvol)
-	Coord dfA = cross(c.B, c.C) * (factV * dvolume) - (cross(dB, c.C) + cross(c.B, dC)) * (factV*c.fact);
-	Coord dfB = cross(c.C, c.A) * (factV * dvolume) - (cross(dC, c.A) + cross(c.C, dA)) * (factV*c.fact);
-	Coord dfC = cross(c.A, c.B) * (factV * dvolume) - (cross(dA, c.B) + cross(c.A, dB)) * (factV*c.fact);
-	Coord df0 = -(dfA+dfB+dfC);
-	df1[t[1]] += dfA;
-	df1[t[2]] += dfB;
-	df1[t[3]] += dfC;
-	df1[t[0]] += df0;
+		// fA = (1/6)*(B x C)*(stiffV * (minV-volume))
+		// dfA = (stiffV*1/6) * ((dB x C + B x dC) * (minV-volume) - (B x C) * dvol)
+		// dfB = (stiffV*1/6) * ((dC x A + C x dA) * (minV-volume) - (C x A) * dvol)
+		// dfC = (stiffV*1/6) * ((dA x B + A x dB) * (minV-volume) - (A x B) * dvol)
+		Coord dfA = cross(c.B, c.C) * (factV * dvolume) - (cross(dB, c.C) + cross(c.B, dC)) * (factV*c.fact);
+		Coord dfB = cross(c.C, c.A) * (factV * dvolume) - (cross(dC, c.A) + cross(c.C, dA)) * (factV*c.fact);
+		Coord dfC = cross(c.A, c.B) * (factV * dvolume) - (cross(dA, c.B) + cross(c.A, dB)) * (factV*c.fact);
+		Coord df0 = -(dfA+dfB+dfC);
+		df1[t[1]] += dfA;
+		df1[t[2]] += dfB;
+		df1[t[3]] += dfC;
+		df1[t[0]] += df0;
     }
+
+	datadF.endEdit();
 }
 
 template<class DataTypes>
-void DistanceGridForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal kFactor, unsigned int &offset)
+void DistanceGridForceField<DataTypes>::addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const sofa::core::MechanicalParams* mparams)
 {
-    if (!grid) return;
-    const sofa::helper::vector<Contact>& contacts = this->contacts.getValue();
-    if (contacts.empty()) return;
-    for (unsigned int i=0; i<contacts.size(); i++)
-    {
-        const Contact& c = contacts[i];
-	const int p = c.index;
-	const Real fact = (Real)(c.fact * -kFactor);
-	const Deriv& normal = c.normal;
-	for (int l=0;l<Deriv::total_size;++l)
-	    for (int c=0;c<Deriv::total_size;++c)
-	    {
-		SReal coef = normal[l] * fact * normal[c];
-		mat->add(offset + p*Deriv::total_size + l, offset + p*Deriv::total_size + c, coef);
-	    }
-    }
-}
+    sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
+    double kFactor = mparams->kFactor();
+    unsigned int &offset = r.offset;
+    sofa::defaulttype::BaseMatrix* mat = r.matrix;
 
-template <class DataTypes>
-    double DistanceGridForceField<DataTypes>::getPotentialEnergy(const VecCoord&) const
-{
-    serr<<"DistanceGridForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
+    if (r)
+    {
+    	if (!grid) return;
+    	const sofa::helper::vector<Contact>& contacts = this->contacts.getValue();
+    	if (contacts.empty()) return;
+    	for (unsigned int i=0; i<contacts.size(); i++)
+    	{
+    		const Contact& c = contacts[i];
+    		const int p = c.index;
+    		const Real fact = (Real)(c.fact * -kFactor);
+    		const Deriv& normal = c.normal;
+    		for (int l=0;l<Deriv::total_size;++l)
+    			for (int c=0;c<Deriv::total_size;++c)
+    			{
+    				SReal coef = normal[l] * fact * normal[c];
+    				mat->add(offset + p*Deriv::total_size + l, offset + p*Deriv::total_size + c, coef);
+    			}
+    	}
+    }
 }
 
 template<class DataTypes>
@@ -515,4 +538,4 @@ bool DistanceGridForceField<DataTypes>::addBBox(double* /*minBBox*/, double* /*m
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_INTERACTIONFORCEFIELD_DISTANCEGRIDFORCEFIELD_INL

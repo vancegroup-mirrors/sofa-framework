@@ -28,7 +28,7 @@
 #include <string>
 #include <sofa/helper/gl/template.h>
 #include <sofa/core/VisualModel.h>
-#include <sofa/core/behavior/MappedModel.h>
+#include <sofa/core/State.h>
 #include <sofa/component/component.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Vec3Types.h>
@@ -45,10 +45,10 @@ namespace visualmodel
 
 using namespace sofa::defaulttype;
 
-class SOFA_COMPONENT_VISUALMODEL_API DrawV : public core::VisualModel, public core::behavior::MappedModel< ExtVec3fTypes >
+class SOFA_COMPONENT_VISUALMODEL_API DrawV : public core::VisualModel, public core::State< ExtVec3fTypes >
 {
 public:
-    SOFA_CLASS2(DrawV, core::VisualModel, SOFA_TEMPLATE(core::behavior::MappedModel, ExtVec3fTypes));
+    SOFA_CLASS2(DrawV, core::VisualModel, SOFA_TEMPLATE(core::State, ExtVec3fTypes));
 
     Data<bool> castShadow; ///< True if object cast shadows
     Data<bool> useAlpha; ///< True if velocity displayed using alpha blending
@@ -69,17 +69,27 @@ public:
     bool addBBox(double* minBBox, double* maxBBox);
 
     virtual void resize(int vsize) { inputX.resize( vsize); inputV.resize( vsize);}
+	virtual int getSize() const { return 0; }
 
     const VecCoord* getX()  const { return &inputX; }
     const VecDeriv* getV()  const { return &inputV; }
     VecCoord* getX()  { return &inputX; }
     VecCoord* getV()  { return &inputV; }
 
-    VecCoord* getX0() { return NULL; };
-    VecCoord* getN() { return NULL; };
+    VecCoord* getX0() { return NULL; }
+    VecCoord* getN() { return NULL; }
 
-    const VecCoord* getX0() const { return NULL; };
-    const VecDeriv* getN() const { return NULL; };
+    const VecCoord* getX0() const { return NULL; }
+    const VecDeriv* getN() const { return NULL; }
+
+    virtual       Data<VecCoord>* write(     core::VecCoordId /* v */) { return NULL; }
+    virtual const Data<VecCoord>*  read(core::ConstVecCoordId /* v */) const { return NULL; }
+
+    virtual       Data<VecDeriv>* write(     core::VecDerivId /* v */) { return NULL; }
+    virtual const Data<VecDeriv>*  read(core::ConstVecDerivId /* v */) const { return NULL; }
+
+    virtual       Data<MatrixDeriv>* write(     core::MatrixDerivId /* v */) { return NULL; }
+    virtual const Data<MatrixDeriv>*  read(core::ConstMatrixDerivId /* v */) const {  return NULL; }
 
 protected:
     ResizableExtVector<Coord> inputX;

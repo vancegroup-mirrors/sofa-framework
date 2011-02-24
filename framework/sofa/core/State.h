@@ -24,18 +24,15 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_BEHAVIOR_BASEMODEL_H
-#define SOFA_CORE_BEHAVIOR_BASEMODEL_H
+#ifndef SOFA_CORE_STATE_H
+#define SOFA_CORE_STATE_H
 
-#include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/BaseState.h>
 
 namespace sofa
 {
 
 namespace core
-{
-
-namespace behavior
 {
 
 /**
@@ -53,17 +50,16 @@ namespace behavior
  *  \li \code VecReal \endcode : container of scalar values with the same API as sofa::helper::vector.
  *  \li \code VecCoord \endcode : container of Coord values with the same API as sofa::helper::vector.
  *  \li \code VecDeriv \endcode : container of Deriv values with the same API as sofa::helper::vector
- *  \li \code SparseVecDeriv \endcode : sparse vector of Deriv values (defining coefficient of a constraint).
- *  \li \code VecConst \endcode : vector of constraints (i.e. of SparseVecDeriv).
+ *  \li \code MatrixDeriv \endcode : vector of constraints.
  *
- *  \todo sofa::core::behavior::State is related to sofa::core::Mapping, and not to sofa::core::behavior::MechanicalMapping, so why is it in the same namespace ? Maybe we should put it in componentmodel namespace instead or directly in Core.
+ *  \todo sofa::core::behavior::State is related to sofa::core::Mapping, and not to sofa::core::behavior::MechanicalMapping. It should be moved to sofa::core ?
  *
  */
 template<class TDataTypes>
-class State : public virtual objectmodel::BaseObject
+class State : public virtual BaseState
 {
 public:
-    SOFA_CLASS(SOFA_TEMPLATE(State,TDataTypes), objectmodel::BaseObject);
+    SOFA_CLASS(SOFA_TEMPLATE(State,TDataTypes), BaseState);
 
     typedef TDataTypes DataTypes;
     /// Scalar values (float or double).
@@ -78,45 +74,63 @@ public:
     typedef typename DataTypes::VecCoord VecCoord;
     /// Container of Deriv values with the same API as sofa::helper::vector.
     typedef typename DataTypes::VecDeriv VecDeriv;
-    ///// Sparse vector of Deriv values (defining coefficient of a constraint).
-    //typedef typename DataTypes::SparseVecDeriv SparseVecDeriv;
-    ///// Vector of constraints (i.e. of SparseVecDeriv).
-    //typedef typename DataTypes::VecConst VecConst;
-	/// Sparse matrix containing derivative values (constraints)
-	typedef typename DataTypes::MatrixDeriv MatrixDeriv;
+    /// Vector of constraints
+    typedef typename DataTypes::MatrixDeriv MatrixDeriv;
 
     virtual ~State() { }
 
-    /// Resize all stored vector
-    virtual void resize(int vsize) = 0;
+    /// @name New vectors access API based on VecId
+    /// @{
 
-    /// Return the current position vector (read-write access).
-    virtual VecCoord* getX() = 0;
-    /// Return the current velocity vector (read-write access).
-    virtual VecDeriv* getV() = 0;
-    /// Return the current rest position vector (read-write access)
-    /// (return NULL if the state does not store rest position .
-    virtual VecCoord* getX0() = 0;
-    /// Return the current reset position vector (read-write access)
-    /// (return NULL if the state does not store rest position .
-    virtual VecCoord* getXReset() = 0;
-    /// Return the current velocity vector (read-write access).
-    /// (return NULL if the state does not store normal .
-    virtual VecCoord* getN() = 0;
+	virtual Data< VecCoord >* write(VecCoordId v) = 0;
+    virtual const Data< VecCoord >* read(ConstVecCoordId v) const = 0;
 
-    /// Return the current position vector (read-only access).
-    virtual const VecCoord* getX()  const = 0;
-    /// Return the current velocity vector (read-only access).
-    virtual const VecDeriv* getV()  const = 0;
-    /// Return the current rest position vector (read-only access)
-    /// (return NULL if the state does not store rest position .
-    virtual const VecCoord* getX0() const = 0;
-    /// Return the current reset position vector (read-write access)
-    /// (return NULL if the state does not store rest position .
-    virtual const VecCoord* getXReset() const = 0;
-    /// Return the current velocity vector (read-only access).
-    /// (return NULL if the state does not store normal .
-    virtual const VecCoord* getN() const = 0;
+    virtual Data< VecDeriv >* write(VecDerivId v) = 0;
+    virtual const Data< VecDeriv >* read(ConstVecDerivId v) const = 0;
+
+    virtual Data< MatrixDeriv >* write(MatrixDerivId v) = 0;
+    virtual const Data< MatrixDeriv >* read(ConstMatrixDerivId v) const = 0;
+
+    /// @}
+
+    /// @name Old specific vectors access API (now limited to read-only accesses)
+    /// @{
+
+    /// Return the current position vector.
+    /// @deprecated use read(ConstVecCoordId::position()) instead.
+    virtual const VecCoord* getX()  const
+    {
+        const Data<VecCoord>* v = read(ConstVecCoordId::position());
+        return (v == NULL) ? NULL : &(v->getValue());
+    }
+
+    /// Return the current velocity vector.
+    /// @deprecated use read(ConstVecDerivId::velocity()) instead.
+    virtual const VecDeriv* getV()  const
+    {
+        const Data<VecDeriv>* v = read(ConstVecDerivId::velocity());
+        return (v == NULL) ? NULL : &(v->getValue());
+    }
+
+    /// Return the current rest position vector
+    /// (return NULL if the state does not store rest position).
+    /// @deprecated use read(ConstVecCoordId::restPosition()) instead.
+    virtual const VecCoord* getX0() const
+    {
+        const Data<VecCoord>* v = read(ConstVecCoordId::restPosition());
+        return (v == NULL) ? NULL : &(v->getValue());
+    }
+
+    /// Return the current normal vector
+    /// (return NULL if the state does not store normal).
+    /// @deprecated use read(ConstVecDerivId::velocity()) instead.
+    virtual const VecDeriv* getN() const
+    {
+        const Data<VecDeriv>* v = read(ConstVecDerivId::normal());
+        return (v == NULL) ? NULL : &(v->getValue());
+    }
+
+    /// @}
 
     virtual std::string getTemplateName() const
     {
@@ -127,14 +141,7 @@ public:
     {
         return TDataTypes::Name();
     }
-
-    //static std::string Name(const State<DataTypes>* = NULL)
-    //{
-    //  return std::string("State");
-    //}
 };
-
-} // namespace behavior
 
 } // namespace core
 

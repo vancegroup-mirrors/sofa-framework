@@ -75,7 +75,7 @@ namespace behavior
     typedef VecEquations::const_iterator EquationConstIterator;
     typedef VecEquations::iterator       EquationIterator;
 
-    ConstraintGroup( BaseConstraintSet::ConstOrder idConstraint);
+	ConstraintGroup(ConstraintParams::ConstOrder idConstraint);
     /**
      * Method to add an interaction constraint to the group
      *
@@ -119,14 +119,14 @@ namespace behavior
 
     /// Return the order of the constraint
     /// @see ConstOrder
-    BaseConstraintSet::ConstOrder getOrder() const { return Order;};
+	ConstraintParams::ConstOrder getOrder() const { return Order;};
 
     bool isActive()const {return active;}
     void setActive(bool b){active=b;}
   protected:
     /// Order of the constraint
     /// @see ConstOrder
-    BaseConstraintSet::ConstOrder Order;
+    ConstraintParams::ConstOrder Order;
     VecEquations equations;
     bool active;
   };
@@ -149,7 +149,7 @@ namespace behavior
 
 
 	  /// Called by MechanicalWriteLMConstaint: The Object will compute the constraints present in the current state, and create the ConstraintGroup related.
-      virtual void writeConstraintEquations(unsigned int& lineNumber, VecId id, ConstOrder order)=0;
+	  virtual void writeConstraintEquations(unsigned int& lineNumber, MultiVecId id, ConstraintParams::ConstOrder order)=0;
 
       /// Compute the new Lagrange Multiplier given a block of the compliance matrix W, and the current correction (left hand term) and previous Lagrange Multiplier
       virtual void LagrangeMultiplierEvaluation(const SReal* /*W*/,
@@ -158,16 +158,20 @@ namespace behavior
 
 
       /// Get Right Hand Term
-      virtual void getConstraintViolation(defaulttype::BaseVector * /*v*/, VecId /*vId*/, ConstOrder /*order*/ = BaseConstraintSet::POS);
+      virtual void getConstraintViolation(defaulttype::BaseVector * /*v*/, const sofa::core::ConstraintParams* );
+
+      // Override used in LMConstraintSolver::buildSystem method
+      void getConstraintViolation(defaulttype::BaseVector *v, const core::ConstraintParams::ConstOrder );
 
 
 	  /// Get the internal structure: return all the constraint stored by their nature in a map
-	  virtual void getConstraints( std::map< ConstOrder, helper::vector< ConstraintGroup* > >  &i) { i=constraintOrder;}
+	  virtual void getConstraints( std::map< ConstraintParams::ConstOrder, helper::vector< ConstraintGroup* > >  &i) { i=constraintOrder;}
 	  /// Get all the constraints stored of a given nature
-	  virtual const helper::vector< ConstraintGroup* > &getConstraintsOrder(ConstOrder Order) const { 
-        constraintOrder_t::const_iterator c = constraintOrder.find( Order );
-        assert( c != constraintOrder.end());
-	    return c->second;
+	  virtual const helper::vector< ConstraintGroup* > &getConstraintsOrder(ConstraintParams::ConstOrder Order) const
+	  {
+		  constraintOrder_t::const_iterator c = constraintOrder.find( Order );
+		  assert( c != constraintOrder.end());
+		  return c->second;
 	  }
 
 
@@ -182,7 +186,7 @@ namespace behavior
 
       /// Get Left Hand Term for each ConstraintGroup of a given order
       template <typename DataStorage>
-      void getEquationsUsed(ConstOrder Order, DataStorage &used0) const
+      void getEquationsUsed(ConstraintParams::ConstOrder Order, DataStorage &used0) const
       {
           constraintOrder_t::const_iterator g = constraintOrder.find(Order);
           if (g == constraintOrder.end()) return;
@@ -198,7 +202,7 @@ namespace behavior
 
 
 	  /// get the number of expressed constraints of a given order
-      virtual unsigned int getNumConstraint(ConstOrder Order);
+      virtual unsigned int getNumConstraint(ConstraintParams::ConstOrder Order);
 
 
 	  /// get Mechanical State 1 where the constraint will be expressed (can be a Mapped mechanical state)
@@ -219,18 +223,18 @@ namespace behavior
 
 	  /// Methods to know if we have to propagate the state we want to constrain before computing the correction
 	  /// If the correction is computed with the simulatedDOF, there is no need, and we can reach a good speed-up
-      virtual bool isCorrectionComputedWithSimulatedDOF(ConstOrder) const {return false;}
+      virtual bool isCorrectionComputedWithSimulatedDOF(ConstraintParams::ConstOrder) const {return false;}
 
 	  virtual void resetConstraint();
 	protected:
 
       /// Interface to construct a group of constraint: Giving the order of these constraints, it returns a pointer to the structure
       /// @see ConstraintGroup
-      virtual ConstraintGroup* addGroupConstraint( ConstOrder Order);
+      virtual ConstraintGroup* addGroupConstraint(ConstraintParams::ConstOrder Order);
 
 	  /// Constraints stored depending on their nature
 	  /// @see ConstraintGroup
-	  typedef std::map< ConstOrder, helper::vector< ConstraintGroup* > > constraintOrder_t;
+	  typedef std::map< ConstraintParams::ConstOrder, helper::vector< ConstraintGroup* > > constraintOrder_t;
 	  constraintOrder_t constraintOrder;
 
 	  Data<std::string> pathObject1;

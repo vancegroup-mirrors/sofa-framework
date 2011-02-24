@@ -29,56 +29,61 @@
 #include <sofa/core/behavior/MechanicalState.h>
 #include <vector>
 
+#include <sofa/component/component.h>
+
 namespace sofa
 {
 
 namespace component
 {
 
-  namespace forcefield
-  {
+namespace forcefield
+{
 
-    template<class DataTypes>
-    class LennardJonesForceField : public sofa::core::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
-    {
-    public:
-      SOFA_CLASS(SOFA_TEMPLATE(LennardJonesForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+template<class DataTypes>
+class LennardJonesForceField : public sofa::core::behavior::ForceField<DataTypes>, public virtual core::objectmodel::BaseObject
+{
+public:
+	SOFA_CLASS(SOFA_TEMPLATE(LennardJonesForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
-      typedef sofa::core::behavior::ForceField<DataTypes> Inherit;
-      typedef typename DataTypes::VecCoord VecCoord;
-      typedef typename DataTypes::VecDeriv VecDeriv;
-      typedef typename DataTypes::Coord Coord;
-      typedef typename DataTypes::Deriv Deriv;
-      typedef typename Coord::value_type Real;
-	
-    protected:
-      Real a,b;
-      Data<Real> alpha,beta,dmax,fmax;
-      Data<Real> d0,p0;
-      Data<Real> damping;
+	typedef sofa::core::behavior::ForceField<DataTypes> Inherit;
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::Coord Coord;
+	typedef typename DataTypes::Deriv Deriv;
+	typedef typename Coord::value_type Real;
 
-      struct DForce
-      {
-	unsigned int a,b;
-	Real df;
-      };
-	
-      sofa::helper::vector<DForce> dforces;
-	
-    public:
-      LennardJonesForceField()
-	: a(1)
-	, b(1)
-	, alpha  (initData(&alpha  ,Real(6), "alpha"  ,"Alpha"))
-	, beta   (initData(&beta   ,Real(12),"beta"   ,"Beta"))
-	, dmax   (initData(&dmax   ,Real(2), "dmax"   ,"DMax"))
-	, fmax   (initData(&fmax   ,Real(1), "fmax"   ,"FMax"))
-	, d0     (initData(&d0     ,Real(1), "d0"     ,"d0"))
-	, p0     (initData(&p0     ,Real(1), "p0"     ,"p0"))
-	, damping(initData(&damping,Real(0), "damping","Damping"))
+	typedef core::objectmodel::Data<VecDeriv>    DataVecDeriv; 
+	typedef core::objectmodel::Data<VecCoord>    DataVecCoord; 
+
+protected:
+	Real a,b;
+	Data<Real> alpha,beta,dmax,fmax;
+	Data<Real> d0,p0;
+	Data<Real> damping;
+
+	struct DForce
+	{
+		unsigned int a,b;
+		Real df;
+	};
+
+	sofa::helper::vector<DForce> dforces;
+
+public:
+	LennardJonesForceField()
+		: a(1)
+		, b(1)
+		, alpha  (initData(&alpha  ,Real(6), "alpha"  ,"Alpha"))
+		, beta   (initData(&beta   ,Real(12),"beta"   ,"Beta"))
+		, dmax   (initData(&dmax   ,Real(2), "dmax"   ,"DMax"))
+		, fmax   (initData(&fmax   ,Real(1), "fmax"   ,"FMax"))
+		, d0     (initData(&d0     ,Real(1), "d0"     ,"d0"))
+		, p0     (initData(&p0     ,Real(1), "p0"     ,"p0"))
+		, damping(initData(&damping,Real(0), "damping","Damping"))
 	{
 	}
-	
+
 	void setAlpha(Real v) { alpha.setValue(v); }
 	void setBeta(Real v) { beta.setValue(v); }
 	void setFMax(Real v) { fmax.setValue(v); }
@@ -87,23 +92,36 @@ namespace component
 	void setP0(Real v) { p0.setValue(v); }
 	void setDamping(Real v) { damping.setValue(v); }
 
-	
+
 	virtual void init();
-	
-	virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
-	
-        virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
-	
-        virtual double getPotentialEnergy(const VecCoord& x) const;
-	
+
+    virtual void addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* mparams);
+    virtual void addDForce(DataVecDeriv& d_df, const DataVecDeriv& d_dx, const core::MechanicalParams* mparams);
+
 	void draw();
 
-    };
+};
 
-  } // namespace forcefield
+
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_LENNARDJONESFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API LennardJonesForceField<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API LennardJonesForceField<Vec3fTypes>;
+#endif
+
+#endif // defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_LENNARDJONESFORCEFIELD_CPP)
+
+} // namespace forcefield
 
 } // namespace component
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_LENNARDJONESFORCEFIELD_H

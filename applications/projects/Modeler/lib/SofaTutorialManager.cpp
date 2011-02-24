@@ -103,6 +103,8 @@ namespace sofa
           buttonRunInSofa = new QPushButton(QString("Launch scene in Sofa"), toolBar);
           connect(buttonRunInSofa, SIGNAL(clicked()), this, SLOT(launchScene()));
           
+          buttonEditInModeler = new QPushButton(QString("Edit in Modeler"), toolBar);
+          connect(buttonEditInModeler, SIGNAL(clicked()), this, SLOT(editScene()));
 
           //Set up the list of tutorials
           selector->init();
@@ -127,6 +129,12 @@ namespace sofa
           this->setIcon(QPixmap(pathIcon));
   #endif
       }
+
+      void SofaTutorialManager::editScene()
+      {
+        emit( editInModeler(graph->getFilename() ) );
+
+      }
       
 
 
@@ -138,9 +146,11 @@ namespace sofa
           {
               graph->hide();
               buttonRunInSofa->hide();
+              buttonEditInModeler->hide();
               return;
           }
           buttonRunInSofa->show();
+          buttonEditInModeler->show();
           graph->show();
           std::string file=filename;
           const std::string &dirSofa = sofa::helper::system::SetDirectory::GetParentDir(sofa::helper::system::DataRepository.getFirstPath().c_str());

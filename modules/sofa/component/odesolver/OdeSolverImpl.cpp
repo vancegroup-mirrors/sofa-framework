@@ -38,12 +38,13 @@ namespace component
 
 namespace odesolver
 {
+using core::VecId;
+using linearsolver::FullVector;
+using linearsolver::FullMatrix;
 
-  using linearsolver::FullVector;
-  using linearsolver::FullMatrix;
-  OdeSolverImpl::OdeSolverImpl()
-  {
-  }
+OdeSolverImpl::OdeSolverImpl()
+{
+}
 
 void OdeSolverImpl::init()
 {  
@@ -59,7 +60,7 @@ void OdeSolverImpl::propagatePositionAndVelocity(double t, VecId x, VecId v)
 
 void OdeSolverImpl::computeAcc(double t, VecId a, VecId x, VecId v)
 {
-    MultiVector f(this, VecId::force());
+    MultiVector f(this, core::VecDerivId::force());
     propagatePositionAndVelocity(t, x, v);
     computeForce(f);
 
@@ -72,7 +73,7 @@ void OdeSolverImpl::computeAcc(double t, VecId a, VecId x, VecId v)
 
 void OdeSolverImpl::computeContactAcc(double t, VecId a, VecId x, VecId v)
 {
-    MultiVector f(this, VecId::force());
+    MultiVector f(this, core::VecDerivId::force());
     propagatePositionAndVelocity(t, x, v);
     computeContactForce(f);
     if (f_printLog.getValue()) sout<<"OdeSolver::computeContactAcc, f = "<<f<<sendl;

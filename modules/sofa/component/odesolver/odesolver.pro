@@ -14,24 +14,22 @@ DEFINES += SOFA_BUILD_COMPONENT_ODESOLVER
 
 HEADERS += initOdeSolver.h \
            CentralDifferenceSolver.h \
-#           CGImplicitSolver.h \
            DampVelocitySolver.h \
            EulerSolver.h \
            EulerImplicitSolver.h \
            NewmarkImplicitSolver.h \
-           OdeSolverImpl.h \
+#           OdeSolverImpl.h \
            RungeKutta2Solver.h \
            RungeKutta4Solver.h \
            StaticSolver.h
 
 SOURCES += initOdeSolver.cpp \
            CentralDifferenceSolver.cpp \
-#           CGImplicitSolver.cpp \
            DampVelocitySolver.cpp \
            EulerSolver.cpp \
            EulerImplicitSolver.cpp \
            NewmarkImplicitSolver.cpp \
-           OdeSolverImpl.cpp \
+#           OdeSolverImpl.cpp \
            RungeKutta2Solver.cpp \
            RungeKutta4Solver.cpp \
            StaticSolver.cpp

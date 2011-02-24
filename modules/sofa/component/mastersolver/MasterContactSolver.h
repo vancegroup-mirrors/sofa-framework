@@ -22,8 +22,8 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_ODESOLVER_MASTERCONTACTSOLVER_H
-#define SOFA_COMPONENT_ODESOLVER_MASTERCONTACTSOLVER_H
+#ifndef SOFA_COMPONENT_MASTERSOLVER_MASTERCONTACTSOLVER_H
+#define SOFA_COMPONENT_MASTERSOLVER_MASTERCONTACTSOLVER_H
 
 #include <sofa/core/behavior/OdeSolver.h>
 #include <sofa/simulation/common/MasterSolverImpl.h>
@@ -32,7 +32,7 @@
 #include <sofa/core/behavior/ConstraintSolver.h>
 #include <sofa/core/behavior/BaseConstraintCorrection.h>
 #include <sofa/core/behavior/OdeSolver.h>
-#include <sofa/component/odesolver/OdeSolverImpl.h>
+//#include <sofa/component/odesolver/OdeSolverImpl.h>
 #include <sofa/component/constraintset/LCPConstraintSolver.h>
 #include <sofa/helper/set.h>
 
@@ -54,7 +54,7 @@ class SOFA_COMPONENT_MASTERSOLVER_API MasterContactSolver : public sofa::simulat
 public:
 	SOFA_CLASS(MasterContactSolver, sofa::simulation::MasterSolverImpl);
         MasterContactSolver();
-        void step (double dt);
+        void step (double dt, const sofa::core::ExecParams* params);
         void init();
 
         virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );

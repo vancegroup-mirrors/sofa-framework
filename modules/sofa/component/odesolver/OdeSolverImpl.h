@@ -46,11 +46,11 @@ namespace component
 namespace odesolver
 {
 
+#if 0
 
 class SOFA_COMPONENT_ODESOLVER_API OdeSolverImpl : public sofa::core::behavior::OdeSolver, public simulation::SolverImpl
 {
 public:
-    typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
     typedef sofa::core::behavior::MultiVector<OdeSolverImpl> MultiVector;
     typedef sofa::core::behavior::MultiMatrix<OdeSolverImpl> MultiMatrix;
     typedef sofa::core::behavior::MechanicalMatrix MechanicalMatrix;
@@ -60,12 +60,12 @@ public:
     OdeSolverImpl();
     virtual void init();
     /// Propagate the given state (time, position and velocity) through all mappings
-    virtual void propagatePositionAndVelocity(double t, VecId x, VecId v);
+    virtual void propagatePositionAndVelocity(double t, core::VecId x, core::VecId v);
     /// Compute the acceleration corresponding to the given state (time, position and velocity)
-    virtual void computeAcc(double t, VecId a, VecId x, VecId v);
-    virtual void computeContactAcc(double t, VecId a, VecId x, VecId v);
+    virtual void computeAcc(double t, core::VecId a, core::VecId x, core::VecId v);
+    virtual void computeContactAcc(double t, core::VecId a, core::VecId x, core::VecId v);
 
-    virtual void solveConstraint(double /*dt*/, VecId, core::behavior::BaseConstraintSet::ConstOrder);
+    virtual void solveConstraint(double /*dt*/, core::VecId, core::behavior::BaseConstraintSet::ConstOrder);
 
 
     /// @name Matrix operations using LinearSolver components
@@ -73,13 +73,15 @@ public:
 
     virtual void m_resetSystem();
     virtual void m_setSystemMBKMatrix(double mFact, double bFact, double kFact);
-    virtual void m_setSystemRHVector(VecId v);
-    virtual void m_setSystemLHVector(VecId v);
+    virtual void m_setSystemRHVector(core::VecId v);
+    virtual void m_setSystemLHVector(core::VecId v);
     virtual void m_solveSystem();
     virtual void m_print( std::ostream& out );
 
     /// @}
 };
+
+#endif
 
 } // namespace odesolver
 

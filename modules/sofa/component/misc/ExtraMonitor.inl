@@ -307,15 +307,15 @@ void ExtraMonitor<DataTypes>::exportGnuplot ( Real time )
 
 	if ( this->saveWcinToGnuplot.getValue() )
 	{
-		sofa::simulation::MechanicalComputeEnergyVisitor *kineticEnergy = new sofa::simulation::MechanicalComputeEnergyVisitor();;
-		kineticEnergy->execute( this->getContext() );
-		( *this->saveGnuplotWcin ) << time <<"\t";
-		( *this->saveGnuplotWcin ) << kineticEnergy->getKineticEnergy() << endl;
+            sofa::simulation::MechanicalComputeEnergyVisitor *kineticEnergy = new sofa::simulation::MechanicalComputeEnergyVisitor(core::MechanicalParams::defaultInstance());
+            kineticEnergy->execute( this->getContext() );
+            ( *this->saveGnuplotWcin ) << time <<"\t";
+            ( *this->saveGnuplotWcin ) << kineticEnergy->getKineticEnergy() << endl;
 	}// export kinetic energy
 
 	if ( this->saveWextToGnuplot.getValue() )
 	{
-		sofa::simulation::MechanicalComputeEnergyVisitor *potentialEnergy= new sofa::simulation::MechanicalComputeEnergyVisitor();;
+                sofa::simulation::MechanicalComputeEnergyVisitor *potentialEnergy= new sofa::simulation::MechanicalComputeEnergyVisitor(core::MechanicalParams::defaultInstance());
 		potentialEnergy->execute( this->getContext() );
 		( *this->saveGnuplotWext ) << time <<"\t";
 		( *this->saveGnuplotWext ) << potentialEnergy->getPotentialEnergy() << endl;

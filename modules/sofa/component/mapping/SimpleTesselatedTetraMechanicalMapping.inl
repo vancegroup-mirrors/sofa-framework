@@ -36,9 +36,8 @@ namespace component
 namespace mapping
 {
 
-
-template <class BaseMapping>
-SimpleTesselatedTetraMechanicalMapping<BaseMapping>::SimpleTesselatedTetraMechanicalMapping(In* from, Out* to)
+template <class TIn, class TOut>
+SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::SimpleTesselatedTetraMechanicalMapping(core::State<In>* from, core::State<Out>* to)
 : Inherit(from, to)
 , topoMap(NULL)
 , inputTopo(NULL)
@@ -46,28 +45,31 @@ SimpleTesselatedTetraMechanicalMapping<BaseMapping>::SimpleTesselatedTetraMechan
 {
 }
 
-template <class BaseMapping>
-SimpleTesselatedTetraMechanicalMapping<BaseMapping>::~SimpleTesselatedTetraMechanicalMapping()
+template <class TIn, class TOut>
+SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::~SimpleTesselatedTetraMechanicalMapping()
 {
 }
 
-template <class BaseMapping>
-void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::init()
+template <class TIn, class TOut>
+void SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::init()
 {
     this->Inherit::init();
     this->getContext()->get(topoMap);
-	inputTopo = this->fromModel->getContext()->getMeshTopology();
-	outputTopo = this->toModel->getContext()->getMeshTopology();
+    inputTopo = this->fromModel->getContext()->getMeshTopology();
+    outputTopo = this->toModel->getContext()->getMeshTopology();
 }
 
-template <class BaseMapping>
-void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::apply( typename Out::VecCoord& out, const typename In::VecCoord& in )
+template <class TIn, class TOut>
+void SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::apply ( OutDataVecCoord& dOut, const InDataVecCoord& dIn, const core::MechanicalParams* /* mparams */)
 {
-	if (!topoMap) return;
-	const topology::PointData<int>& pointMap = topoMap->getPointMappedFromPoint();
-	const helper::vector<int>& edgeMap = topoMap->getPointMappedFromEdge();
-	if (pointMap.getValue().empty() && edgeMap.empty()) return;
-	const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
+    const InVecCoord& in = dIn.getValue();
+    OutVecCoord& out = *dOut.beginEdit();
+
+    if (!topoMap) return;
+    const topology::PointData<int>& pointMap = topoMap->getPointMappedFromPoint();
+    const helper::vector<int>& edgeMap = topoMap->getPointMappedFromEdge();
+    if (pointMap.getValue().empty() && edgeMap.empty()) return;
+    const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
 
     out.resize(outputTopo->getNbPoints());
     for(unsigned int i = 0; i < pointMap.getValue().size(); ++i)
@@ -80,16 +82,21 @@ void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::apply( typename Out::V
         if (edgeMap[i] != -1)
             out[edgeMap[i]] = (in[ edges[i][0] ]+in[ edges[i][1] ])/2;
     }
+
+    dOut.endEdit();
 }
 
-template <class BaseMapping>
-void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
+template <class TIn, class TOut>
+void SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::applyJ( OutDataVecDeriv& dOut, const InDataVecDeriv& dIn, const core::MechanicalParams* /* mparams */ )
 {
-	if (!topoMap) return;
-	const topology::PointData<int>& pointMap = topoMap->getPointMappedFromPoint();
-	const helper::vector<int>& edgeMap = topoMap->getPointMappedFromEdge();
-	if (pointMap.getValue().empty() && edgeMap.empty()) return;
-	const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
+    const InVecDeriv& in = dIn.getValue();
+    OutVecDeriv& out = *dOut.beginEdit();
+
+    if (!topoMap) return;
+    const topology::PointData<int>& pointMap = topoMap->getPointMappedFromPoint();
+    const helper::vector<int>& edgeMap = topoMap->getPointMappedFromEdge();
+    if (pointMap.getValue().empty() && edgeMap.empty()) return;
+    const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
 
     out.resize(outputTopo->getNbPoints());
     for(unsigned int i = 0; i < pointMap.getValue().size(); ++i)
@@ -102,16 +109,20 @@ void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJ( typename Out::
         if (edgeMap[i] != -1)
             out[edgeMap[i]] = (in[ edges[i][0] ]+in[ edges[i][1] ])/2;
     }
+    dOut.endEdit();
 }
 
-template <class BaseMapping>
-void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
+template <class TIn, class TOut>
+void SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::applyJT( InDataVecDeriv& dOut, const OutDataVecDeriv& dIn, const core::MechanicalParams* /* mparams */ )
 {
-	if (!topoMap) return;
-	const topology::PointData<int>& pointMap = topoMap->getPointMappedFromPoint();
-	const helper::vector<int>& edgeMap = topoMap->getPointMappedFromEdge();
-	if (pointMap.getValue().empty() && edgeMap.empty()) return;
-	const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
+    const OutVecDeriv& in = dIn.getValue();
+    InVecDeriv& out = *dOut.beginEdit();
+
+    if (!topoMap) return;
+    const topology::PointData<int>& pointMap = topoMap->getPointMappedFromPoint();
+    const helper::vector<int>& edgeMap = topoMap->getPointMappedFromEdge();
+    if (pointMap.getValue().empty() && edgeMap.empty()) return;
+    const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
 
     out.resize(inputTopo->getNbPoints());
     for(unsigned int i = 0; i < pointMap.getValue().size(); ++i)
@@ -127,93 +138,58 @@ void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::
             out[edges[i][1]] += (in[edgeMap[i]])/2;
         }
     }
+    dOut.endEdit();
 }
 
 
-template <class BaseMapping>
-void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
+template <class TIn, class TOut>
+void SimpleTesselatedTetraMechanicalMapping<TIn, TOut>::applyJT( InDataMatrixDeriv& dOut, const OutDataMatrixDeriv& dIn, const core::ConstraintParams * /*cparams*/)
 {
-    if (!topoMap) return;
-    
-    const topology::PointData<int>& pointSource = topoMap->getPointSource();
-    if (pointSource.getValue().empty()) return;
-    
-    const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
-
-	typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
-	
-	for (typename Out::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
-	{
-		typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin();
-		typename Out::MatrixDeriv::ColConstIterator colItEnd = rowIt.end();
-
-		// Creates a constraints if the input constraint is not empty.
-		if (colIt != colItEnd)
-		{
-			typename In::MatrixDeriv::RowIterator o = out.writeLine(rowIt.index());
-			
-			for (typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
-			{
-				unsigned int indexIn = colIt.index();
-           	 	OutDeriv data = (OutDeriv) colIt.val();
-           	 	
-	   		 	int source = pointSource.getValue()[indexIn];
-				if (source > 0)
-	    		{
-	    			o.addCol(source-1, data);
-	    		}
-	    		else if (source < 0)
-	    		{
-					core::topology::BaseMeshTopology::Edge e = edges[-source-1];
-					InDeriv f =  data;
-					f*=0.5f;
-					o.addCol(e[0] , f);
-					o.addCol(e[1] , f);
-	    		}
-			}
-		}
-	}
-}
-
-/*
-template <class BaseMapping>
-void SimpleTesselatedTetraMechanicalMapping<BaseMapping>::applyJT( typename In::VecConst& out, const typename Out::VecConst& in )
-{
+    const OutMatrixDeriv& in = dIn.getValue();
+    InMatrixDeriv& out = *dOut.beginEdit();
 
     if (!topoMap) return;
+
     const topology::PointData<int>& pointSource = topoMap->getPointSource();
     if (pointSource.getValue().empty()) return;
+
     const core::topology::BaseMeshTopology::SeqEdges& edges = inputTopo->getEdges();
 
-    int offset = out.size();
-    out.resize(offset+in.size());
+    typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
 
-    for(unsigned int i = 0; i < in.size(); ++i)
-      {
-        OutConstraintIterator itOut;
-        std::pair< OutConstraintIterator, OutConstraintIterator > iter=in[i].data();
-        
-        for (itOut=iter.first;itOut!=iter.second;itOut++)
-          {
-            unsigned int indexIn = itOut->first;
-            OutDeriv data = (OutDeriv) itOut->second;
-	    int source = pointSource.getValue()[indexIn];
-	    if (source > 0)
-	    {
-                out[i+offset].add(source-1 , data);
-	    }
-	    else if (source < 0)
-	    {
-		core::topology::BaseMeshTopology::Edge e = edges[-source-1];
-		InDeriv f =  data;
-		f*=0.5f;
-                out[i+offset].add( e[0] , f );
-                out[i+offset].add( e[1] , f );
-	    }
-	}
+    for (typename Out::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
+    {
+        typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin();
+        typename Out::MatrixDeriv::ColConstIterator colItEnd = rowIt.end();
+
+        // Creates a constraints if the input constraint is not empty.
+        if (colIt != colItEnd)
+        {
+            typename In::MatrixDeriv::RowIterator o = out.writeLine(rowIt.index());
+
+            for (typename Out::MatrixDeriv::ColConstIterator colIt = rowIt.begin(); colIt != colItEnd; ++colIt)
+            {
+                unsigned int indexIn = colIt.index();
+                OutDeriv data = (OutDeriv) colIt.val();
+
+                int source = pointSource.getValue()[indexIn];
+                if (source > 0)
+                {
+                    o.addCol(source-1, data);
+                }
+                else if (source < 0)
+                {
+                    core::topology::BaseMeshTopology::Edge e = edges[-source-1];
+                    InDeriv f =  data;
+                    f*=0.5f;
+                    o.addCol(e[0] , f);
+                    o.addCol(e[1] , f);
+                }
+            }
+        }
     }
+    dOut.endEdit();
 }
-*/
 
 } // namespace mapping
 

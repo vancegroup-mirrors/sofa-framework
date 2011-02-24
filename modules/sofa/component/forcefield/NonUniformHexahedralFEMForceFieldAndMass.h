@@ -80,8 +80,8 @@ class NonUniformHexahedralFEMForceFieldAndMass : virtual public HexahedralFEMFor
 public:
   SOFA_CLASS(SOFA_TEMPLATE(NonUniformHexahedralFEMForceFieldAndMass, DataTypes), SOFA_TEMPLATE(HexahedralFEMForceFieldAndMass, DataTypes));
 
-	typedef typename DataTypes::VecCoord VecCoord;
-	typedef typename DataTypes::VecDeriv VecDeriv;
+        typedef typename DataTypes::VecCoord VecCoord;
+        typedef typename DataTypes::VecDeriv VecDeriv;
 	typedef VecCoord Vector;
 	typedef typename DataTypes::Coord Coord;
 	typedef typename DataTypes::Deriv Deriv;
@@ -112,12 +112,12 @@ public:
 
 protected:
 	/// condensate matrice from finest level to the actual mechanical level
-	virtual void computeMechanicalMatricesByCondensation( ElementStiffness &K, 
-														ElementMass &M, 
-														Real& totalMass,
-														const int elementIndex);
+        virtual void computeMechanicalMatricesByCondensation(
+                ElementStiffness &K,
+                ElementMass &M,
+                Real& totalMass,const int elementIndex);
 
-  virtual void computeCorrection(ElementMass& /*M*/) {}; 
+//  virtual void computeCorrection(ElementMass& /*M*/) {};
 
 	void initLarge(const int i);
 
@@ -134,33 +134,36 @@ private:
 	void addHtfineHtoCoarse(const Mat88& H, const ElementStiffness& fine, ElementStiffness& coarse ) const;
 	void subtractHtfineHfromCoarse(const Mat88& H, const ElementStiffness& fine, ElementStiffness& coarse ) const;
 
-	void computeMechanicalMatricesByCondensation_IntervalAnalysis(ElementStiffness &K, 
-												  ElementMass &M, 
-												  Real& totalMass,
-												  const ElementStiffness &K_fine,
-												  const ElementMass &M_fine,
-												  const Real& mass_fine,
-												  const unsigned int level,
-												  const std::set<Vec3i>& voxels) const;
+        void computeMechanicalMatricesByCondensation_IntervalAnalysis(
+                ElementStiffness &K,
+                ElementMass &M,
+                Real& totalMass,
+                const ElementStiffness &K_fine,
+                const ElementMass &M_fine,
+                const Real& mass_fine,
+                const unsigned int level,
+                const std::set<Vec3i>& voxels) const;
 
-	void computeMechanicalMatricesByCondensation_Recursive( ElementStiffness &K, 
-												  ElementMass &M, 
-												  Real& totalMass,
-												  const ElementStiffness &K_fine,
-												  const ElementMass &M_fine,
-												  const Real& mass_fine,
-												  const unsigned int level,
-												  const unsigned int startIdx,
-												  const std::set<unsigned int>& fineChildren) const;
+        void computeMechanicalMatricesByCondensation_Recursive(
+                ElementStiffness &K,
+                ElementMass &M,
+                Real& totalMass,
+                const ElementStiffness &K_fine,
+                const ElementMass &M_fine,
+                const Real& mass_fine,
+                const unsigned int level,
+                const unsigned int startIdx,
+                const std::set<unsigned int>& fineChildren) const;
 
-	void computeMechanicalMatricesByCondensation_Direct( ElementStiffness &K, 
-												  ElementMass &M, 
-												  Real& totalMass,
-												  const ElementStiffness &K_fine,
-												  const ElementMass &M_fine,
-												  const Real& mass_fine,
-												  const unsigned int level,
-												  const std::set<Vec3i>& voxels) const;
+        void computeMechanicalMatricesByCondensation_Direct(
+                ElementStiffness &K,
+                ElementMass &M,
+                Real& totalMass,
+                const ElementStiffness &K_fine,
+                const ElementMass &M_fine,
+                const Real& mass_fine,
+                const unsigned int level,
+                const std::set<Vec3i>& voxels) const;
 
 
 	int ijk2octree(const int i, const int j, const int k) const;
@@ -174,8 +177,8 @@ private:
 	{
 		MaterialStiffness	C;	// Mat<6, 6, Real>
 		ElementStiffness	K;	// Mat<24, 24, Real>
-		ElementMass			M;	// Mat<24, 24, Real>
-		Real				mass;
+                ElementMass		M;	// Mat<24, 24, Real>
+                Real			mass;
 	} Material;
 
 	Material _material; // TODO: enable combination of multiple materials
@@ -183,6 +186,29 @@ private:
 	MultilevelHexahedronSetTopologyContainer*	_multilevelTopology;
 
 	Data<bool>		_bRecursive;
+
+protected:
+
+        // ---------------  Modified method: compute and re-use MBK
+        typedef HexahedralFEMForceFieldAndMass<DataTypes> Inherited;
+        typedef typename Inherited::HexahedronInformation HexahedronInformation;
+        typedef typename Inherited::Mat33 Mat33;
+        typedef typename Inherited::Displacement Displacement;
+        typedef core::objectmodel::Data<VecCoord> DataVecCoord;
+        typedef core::objectmodel::Data<VecDeriv> DataVecDeriv;
+
+        Data<bool> useMBK; ///< if true, compute and use MBK matrix
+
+        /** Matrix-vector product for implicit methods with iterative solvers.
+            If the MBK matrix is ill-conditionned, recompute it, and correct it to avoid too small singular values.
+        */
+        virtual void addMBKdx(core::MultiVecDerivId dfId , const core::MechanicalParams* mparams);
+
+        bool matrixIsDirty;                      ///< Matrix \f$ \alpha M + \beta B + \gamma C \f$ needs to be recomputed
+        helper::vector< ElementMass > mbkMatrix; ///< Matrix \f$ \alpha M + \beta B + \gamma C \f$
+
+protected:
+        virtual void computeCorrection( ElementMass& ){} ///< Limit the conditioning number of each mbkMatrix as defined by maxConditioning (in derived classes).
 };
 
 } // namespace forcefield

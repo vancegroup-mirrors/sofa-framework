@@ -46,7 +46,7 @@ namespace component
 
 namespace linearsolver
 {
-
+using core::VecId;
 using namespace sofa::defaulttype;
 using namespace sofa::core::behavior;
 using namespace sofa::simulation;

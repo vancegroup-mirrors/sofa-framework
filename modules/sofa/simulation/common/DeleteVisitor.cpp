@@ -51,7 +51,7 @@ Visitor::Result DeleteVisitor::processNodeTopDown(Node* node)
         }
         else
         {
-            DeleteVisitor deleteV;
+            DeleteVisitor deleteV(params);
             node->nodeInVisualGraph->executeVisitor(&deleteV);
             node->nodeInVisualGraph->detachFromGraph();
             delete node->nodeInVisualGraph;
@@ -60,7 +60,7 @@ Visitor::Result DeleteVisitor::processNodeTopDown(Node* node)
     for (simulation::Node::ChildIterator itChild = node->childInVisualGraph.begin(); itChild != node->childInVisualGraph.end(); ++itChild)
     {
         simulation::Node *child=*itChild;
-        DeleteVisitor deleteV;
+        DeleteVisitor deleteV(params);
         child->executeVisitor(&deleteV);
         child->detachFromGraph();
         delete child;
@@ -73,17 +73,17 @@ void DeleteVisitor::processNodeBottomUp(Node* node)
 {
 	while (!node->child.empty())
 	{
-                Node* child = *node->child.begin();
-                node->removeChild((Node*)child);
+		Node* child = *node->child.begin();
+		node->removeChild((Node*)child);
 		delete child;
-        }
+	}
 	while (!node->object.empty())
-        {
-                core::objectmodel::BaseObject* object = *node->object.begin();
-                node->removeObject(object);
-                if (object != (core::objectmodel::BaseObject*)getSimulation())
-                delete object;
-        }
+	{
+		core::objectmodel::BaseObject* object = *node->object.begin();
+		node->removeObject(object);
+		if (object != (core::objectmodel::BaseObject*)getSimulation())
+			delete object;
+	}
 }
 
 } // namespace simulation

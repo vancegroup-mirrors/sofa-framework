@@ -60,95 +60,107 @@ template<class DataTypes>
 class ConicalForceField : public core::behavior::ForceField<DataTypes>
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(ConicalForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+	SOFA_CLASS(SOFA_TEMPLATE(ConicalForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
 	typedef core::behavior::ForceField<DataTypes> Inherit;
-	typedef typename DataTypes::VecCoord VecCoord;
-	typedef typename DataTypes::VecDeriv VecDeriv;
-	typedef typename DataTypes::Coord Coord;
-	typedef typename DataTypes::Deriv Deriv;
-	typedef typename Coord::value_type Real;
-	
+	typedef typename DataTypes::Real        Real        ;
+	typedef typename DataTypes::Coord       Coord       ;
+	typedef typename DataTypes::Deriv       Deriv       ;
+	typedef typename DataTypes::VecCoord    VecCoord    ;
+	typedef typename DataTypes::VecDeriv    VecDeriv    ;
+	typedef typename DataTypes::VecReal     VecReal     ;
+
+	typedef Data<VecCoord>                  DataVecCoord;
+	typedef Data<VecDeriv>                  DataVecDeriv;
+
 protected:
-    class Contact
-    {
-    public:
-        int index;
-        Coord normal;
-        Coord pos;
-	Contact( int index=0, Coord normal=Coord(),Coord pos=Coord())
-	  : index(index),normal(normal),pos(pos)
-	  {
-	  }
+	class Contact
+	{
+	public:
+		int index;
+		Coord normal;
+		Coord pos;
+		Contact( int index=0, Coord normal=Coord(),Coord pos=Coord())
+			: index(index),normal(normal),pos(pos)
+		{
+		}
 
-        inline friend std::istream& operator >> ( std::istream& in, Contact& c ){
-	  in>>c.index>>c.normal>>c.pos;
-            return in;
-        }
+		inline friend std::istream& operator >> ( std::istream& in, Contact& c ){
+			in>>c.index>>c.normal>>c.pos;
+			return in;
+		}
 
-        inline friend std::ostream& operator << ( std::ostream& out, const Contact& c ){
-	  out << c.index << " " << c.normal << " " << c.pos ;
-	  return out;
-        }
+		inline friend std::ostream& operator << ( std::ostream& out, const Contact& c ){
+			out << c.index << " " << c.normal << " " << c.pos ;
+			return out;
+		}
 
-    };
+	};
 
-    Data<sofa::helper::vector<Contact> > contacts;
+	Data<sofa::helper::vector<Contact> > contacts;
 
-    ConicalForceFieldInternalData<DataTypes> data;
-	
+	ConicalForceFieldInternalData<DataTypes> data;
+
 public:
 
-    Data<Coord> coneCenter;
-    Data<Coord> coneHeight;
-    Data<Real> coneAngle;
+	Data<Coord> coneCenter;
+	Data<Coord> coneHeight;
+	Data<Real> coneAngle;
 
-    Data<Real> stiffness;
-    Data<Real> damping;
-    Data<defaulttype::Vec3f> color;
-    Data<bool> bDraw;
+	Data<Real> stiffness;
+	Data<Real> damping;
+	Data<defaulttype::Vec3f> color;
+	Data<bool> bDraw;
 
-    ConicalForceField()
-      : coneCenter(initData(&coneCenter, "coneCenter", "cone center"))
-      , coneHeight(initData(&coneHeight, "coneHeight", "cone height"))
-      , coneAngle(initData(&coneAngle, (Real)10, "coneAngle", "cone angle"))
+	ConicalForceField()
+		: coneCenter(initData(&coneCenter, "coneCenter", "cone center"))
+		, coneHeight(initData(&coneHeight, "coneHeight", "cone height"))
+		, coneAngle(initData(&coneAngle, (Real)10, "coneAngle", "cone angle"))
 
-      , stiffness(initData(&stiffness, (Real)500, "stiffness", "force stiffness"))
-      , damping(initData(&damping, (Real)5, "damping", "force damping"))
-      , color(initData(&color, defaulttype::Vec3f(0.0f,0.0f,1.0f), "color", "cone color"))
-      , bDraw(initData(&bDraw, true, "draw", "enable/disable drawing of the cone"))
-    {
-    }
+		, stiffness(initData(&stiffness, (Real)500, "stiffness", "force stiffness"))
+		, damping(initData(&damping, (Real)5, "damping", "force damping"))
+		, color(initData(&color, defaulttype::Vec3f(0.0f,0.0f,1.0f), "color", "cone color"))
+		, bDraw(initData(&bDraw, true, "draw", "enable/disable drawing of the cone"))
+	{
+	}
 
-    void setCone(const Coord& center, Coord height, Real angle)
-    {
-        coneCenter.setValue( center );
-	coneHeight.setValue( height );
-	coneAngle.setValue( angle );
-    }
+	void setCone(const Coord& center, Coord height, Real angle)
+	{
+		coneCenter.setValue( center );
+		coneHeight.setValue( height );
+		coneAngle.setValue( angle );
+	}
 
-    void setStiffness(Real stiff)
-    {
-        stiffness.setValue( stiff );
-    }
+	void setStiffness(Real stiff)
+	{
+		stiffness.setValue( stiff );
+	}
 
-    void setDamping(Real damp)
-    {
-        damping.setValue( damp );
-    }
+	void setDamping(Real damp)
+	{
+		damping.setValue( damp );
+	}
 
-    virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+	virtual void addForce(DataVecDeriv &  dataF, const DataVecCoord &  dataX , const DataVecDeriv & dataV, const sofa::core::MechanicalParams* /*mparams*/ ) ;
+	virtual void addDForce(DataVecDeriv&   datadF , const DataVecDeriv&   datadX , const sofa::core::MechanicalParams* /*mparams*/ ) ;
 
-    virtual void addDForce (VecDeriv& df, const VecDeriv& dx);
-	
-    virtual double getPotentialEnergy(const VecCoord& x) const;
 
-    virtual void updateStiffness( const VecCoord& x );
+	virtual void updateStiffness( const VecCoord& x );
 
-    virtual bool isIn(Coord p);
+	virtual bool isIn(Coord p);
 
-    void draw();
+	void draw();
 };
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_CONICALFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API ConicalForceField<defaulttype::Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API ConicalForceField<defaulttype::Vec3fTypes>;
+#endif
+#endif
 
 } // namespace forcefield
 
@@ -156,4 +168,4 @@ public:
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_CONICALFORCEFIELD_H

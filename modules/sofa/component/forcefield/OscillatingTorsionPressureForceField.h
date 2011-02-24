@@ -48,136 +48,155 @@ using namespace sofa::component::topology;
 template<class DataTypes>
 class OscillatingTorsionPressureForceField : public core::behavior::ForceField<DataTypes>
 {
-
 public:
 
-  SOFA_CLASS(SOFA_TEMPLATE(OscillatingTorsionPressureForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
+	SOFA_CLASS(SOFA_TEMPLATE(OscillatingTorsionPressureForceField, DataTypes), SOFA_TEMPLATE(core::behavior::ForceField, DataTypes));
 
-  typedef typename DataTypes::VecCoord VecCoord;
-  typedef typename DataTypes::VecDeriv VecDeriv;
-  typedef typename DataTypes::Coord    Coord   ;
-  typedef typename DataTypes::Deriv    Deriv   ;
-  typedef typename Coord::value_type   Real    ;
+	typedef typename DataTypes::VecCoord VecCoord;
+	typedef typename DataTypes::VecDeriv VecDeriv;
+	typedef typename DataTypes::Coord    Coord   ;
+	typedef typename DataTypes::Deriv    Deriv   ;
+	typedef typename Coord::value_type   Real    ;
 
+	typedef core::objectmodel::Data<VecDeriv>    DataVecDeriv; 
+	typedef core::objectmodel::Data<VecCoord>    DataVecCoord; 
 
 protected: 
 
-  class TrianglePressureInformation
-  {
-  public:
-    Real area;
+	class TrianglePressureInformation
+	{
+	public:
+		Real area;
 
-    TrianglePressureInformation() {}
-    TrianglePressureInformation(const TrianglePressureInformation &e)
-      : area(e.area)
-    { }
-  };
-  std::ofstream file;
-
-
-public:
-  TriangleSubsetData<TrianglePressureInformation> trianglePressureMap;
-  sofa::core::topology::BaseMeshTopology* _topology;
-
-  Data<Real> moment;   // total moment/torque applied
-  Data<std::string> triangleList;  
-  Data<Deriv> axis;    // axis of rotation and normal used to define the edge subjected to the pressure force  
-  Data<Coord> center;  // center of rotation
-  Data<Real> penalty;  // strength of penalty force
-  Data<Real> frequency; // frequency of change
-  Data<Real> dmin;     // coordinates min of the plane for the vertex selection
-  Data<Real> dmax;     // coordinates max of the plane for the vertex selection
-
-  protected:
-  
-  std::vector<Real> relMomentToApply;   // estimated share of moment to apply to each point
-  std::vector<bool> pointActive;        // true if moment is applied to specific point (surface)
-  std::vector<Coord> vecFromCenter;     // vector from rotation axis for all points
-  std::vector<Real> distFromCenter;     // norm of vecFromCenter
-  std::vector<Coord> momentDir;         // direction in which to apply a moment
-  std::vector<Coord> origVecFromCenter; // vector from rotation axis for all points in original state
-  std::vector<Coord> origCenter;        // center of rotation for original points
-  double rotationAngle;
-  
+		TrianglePressureInformation() {}
+		TrianglePressureInformation(const TrianglePressureInformation &e)
+			: area(e.area)
+		{ }
+	};
+	std::ofstream file;
 
 
 public:
+	TriangleSubsetData<TrianglePressureInformation> trianglePressureMap;
+	sofa::core::topology::BaseMeshTopology* _topology;
 
-  OscillatingTorsionPressureForceField():
-      moment(initData(&moment, "moment", "Moment force applied on the entire surface"))
-        , triangleList(initData(&triangleList,std::string(),"triangleList", "Indices of triangles separated with commas where a pressure is applied"))
-        , axis(initData(&axis, Coord(0,0,1), "axis", "Axis of rotation and normal direction for the plane selection of triangles"))
-        , center(initData(&center,"center", "Center of rotation"))
-        , penalty(initData(&penalty, (Real)1000, "penalty", "Strength of the penalty force"))
-        , frequency(initData(&frequency, (Real)1, "frequency", "frequency of oscillation"))
-        , dmin(initData(&dmin,(Real)0.0, "dmin", "Minimum distance from the origin along the normal direction"))
-        , dmax(initData(&dmax,(Real)0.0, "dmax", "Maximum distance from the origin along the normal direction"))
-      {
-        rotationAngle = 0;
-      }
+	Data<Real> moment;   // total moment/torque applied
+	Data<std::string> triangleList;  
+	Data<Deriv> axis;    // axis of rotation and normal used to define the edge subjected to the pressure force  
+	Data<Coord> center;  // center of rotation
+	Data<Real> penalty;  // strength of penalty force
+	Data<Real> frequency; // frequency of change
+	Data<Real> dmin;     // coordinates min of the plane for the vertex selection
+	Data<Real> dmax;     // coordinates max of the plane for the vertex selection
 
-      virtual ~OscillatingTorsionPressureForceField();
+protected:
 
-      virtual void init();
-
-      virtual void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& v);
-      virtual void addDForce (VecDeriv& df, const VecDeriv& dx, double kFactor, double bFactor);
-      virtual double getPotentialEnergy(const VecCoord& x) const;
-
-      // Handle topological changes
-      virtual void handleTopologyChange();
+	std::vector<Real> relMomentToApply;   // estimated share of moment to apply to each point
+	std::vector<bool> pointActive;        // true if moment is applied to specific point (surface)
+	std::vector<Coord> vecFromCenter;     // vector from rotation axis for all points
+	std::vector<Real> distFromCenter;     // norm of vecFromCenter
+	std::vector<Coord> momentDir;         // direction in which to apply a moment
+	std::vector<Coord> origVecFromCenter; // vector from rotation axis for all points in original state
+	std::vector<Coord> origCenter;        // center of rotation for original points
+	double rotationAngle;
 
 
-      void draw();
 
-      void setDminAndDmax(const double _dmin, const double _dmax) { 
-        dmin.setValue((Real)_dmin);dmax.setValue((Real)_dmax);}
-      void setAxis(const Coord n) { axis.setValue(n);}
+public:
 
-      void setMoment(Real x) { moment.setValue( x ); }
+	OscillatingTorsionPressureForceField():
+	  moment(initData(&moment, "moment", "Moment force applied on the entire surface"))
+		  , triangleList(initData(&triangleList,std::string(),"triangleList", "Indices of triangles separated with commas where a pressure is applied"))
+		  , axis(initData(&axis, Coord(0,0,1), "axis", "Axis of rotation and normal direction for the plane selection of triangles"))
+		  , center(initData(&center,"center", "Center of rotation"))
+		  , penalty(initData(&penalty, (Real)1000, "penalty", "Strength of the penalty force"))
+		  , frequency(initData(&frequency, (Real)1, "frequency", "frequency of oscillation"))
+		  , dmin(initData(&dmin,(Real)0.0, "dmin", "Minimum distance from the origin along the normal direction"))
+		  , dmax(initData(&dmax,(Real)0.0, "dmax", "Maximum distance from the origin along the normal direction"))
+	  {
+		  rotationAngle = 0;
+	  }
 
-      // returns the amplitude/modifier of the set moment (dependent on frequency)
-      double getAmplitude();
+	  virtual ~OscillatingTorsionPressureForceField();
 
-      // returns the rotation of the driven part of the object relative to the original state (in radians)
-      // this value is updated in addForce()
-      double getRotationAngle() { return rotationAngle; }
+	  virtual void init();
+
+	  virtual void addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v, const core::MechanicalParams* mparams);
+	  virtual void addDForce(DataVecDeriv& /* d_df */, const DataVecDeriv& /* d_dx */, const core::MechanicalParams* mparams)
+	  { 
+	    	//TODO: remove this line (avoid warning message) ...
+		  mparams->kFactor();
+	  };
+
+	  // Handle topological changes
+	  virtual void handleTopologyChange();
+
+
+	  void draw();
+
+	  void setDminAndDmax(const double _dmin, const double _dmax) { 
+		  dmin.setValue((Real)_dmin);dmax.setValue((Real)_dmax);}
+	  void setAxis(const Coord n) { axis.setValue(n);}
+
+	  void setMoment(Real x) { moment.setValue( x ); }
+
+	  // returns the amplitude/modifier of the set moment (dependent on frequency)
+	  double getAmplitude();
+
+	  // returns the rotation of the driven part of the object relative to the original state (in radians)
+	  // this value is updated in addForce()
+	  double getRotationAngle() { return rotationAngle; }
 
 protected :
 
-  void selectTrianglesAlongPlane();
+	void selectTrianglesAlongPlane();
 
-  void selectTrianglesFromString();
+	void selectTrianglesFromString();
 
-  void initTriangleInformation();
+	void initTriangleInformation();
 
-  bool isPointInPlane(Coord p) 
-  {
-    Real d=dot(p,axis.getValue());
-    if ((d>dmin.getValue())&& (d<dmax.getValue())) 
-      return true;
-    else
-      return false;
-  }
+	bool isPointInPlane(Coord p) 
+	{
+		Real d=dot(p,axis.getValue());
+		if ((d>dmin.getValue())&& (d<dmax.getValue())) 
+			return true;
+		else
+			return false;
+	}
 
-  Coord getVecFromRotAxis( const Coord &x )
-  {
-    Coord vecFromCenter = x - center.getValue();
-    Coord axisProj = axis.getValue() * dot( vecFromCenter, axis.getValue() ) + center.getValue();
-    return (x - axisProj);
-  }
+	Coord getVecFromRotAxis( const Coord &x )
+	{
+		Coord vecFromCenter = x - center.getValue();
+		Coord axisProj = axis.getValue() * dot( vecFromCenter, axis.getValue() ) + center.getValue();
+		return (x - axisProj);
+	}
 
-  Real getAngle( const Coord &v1, const Coord &v2 )
-  {
-    Real dp = dot( v1, v2 ) / (v1.norm()*v2.norm());
-    if (dp>1.0) dp=1.0; else if (dp<-1.0) dp=-1.0;
-    Real angle = acos( dp );
-    // check direction!
-    if (dot( axis.getValue(), v1.cross( v2 ) ) > 0) angle *= -1;
-    return angle;
-  }
+	Real getAngle( const Coord &v1, const Coord &v2 )
+	{
+		Real dp = dot( v1, v2 ) / (v1.norm()*v2.norm());
+		if (dp>1.0) dp=1.0; else if (dp<-1.0) dp=-1.0;
+		Real angle = acos( dp );
+		// check direction!
+		if (dot( axis.getValue(), v1.cross( v2 ) ) > 0) angle *= -1;
+		return angle;
+	}
 
 };
+
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+
+#if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_OSCILLATINGTORSIONPRESSUREFORCEFIELD_CPP)
+#pragma warning(disable : 4231)
+
+#ifndef SOFA_FLOAT
+extern template class SOFA_COMPONENT_FORCEFIELD_API OscillatingTorsionPressureForceField<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+extern template class SOFA_COMPONENT_FORCEFIELD_API OscillatingTorsionPressureForceField<Vec3fTypes>;
+#endif
+
+#endif // defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_OSCILLATINGTORSIONPRESSUREFORCEFIELD_CPP)
 
 
 } // namespace forcefield
@@ -186,4 +205,4 @@ protected :
 
 } // namespace sofa
 
-#endif /* _TRIANGLEPRESSUREFORCEFIELD_H_ */
+#endif // SOFA_COMPONENT_FORCEFIELD_OSCILLATINGTORSIONPRESSUREFORCEFIELD_H

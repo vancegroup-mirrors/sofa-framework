@@ -25,6 +25,7 @@
 #ifndef SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGYCHANGE_H
 #define SOFA_COMPONENT_TOPOLOGY_TRIANGLESETTOPOLOGYCHANGE_H
 
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/topology/Topology.h>		// TopologyChange
 #include <sofa/helper/vector.h>
 

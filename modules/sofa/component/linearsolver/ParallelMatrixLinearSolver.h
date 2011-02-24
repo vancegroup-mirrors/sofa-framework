@@ -27,7 +27,8 @@
 
 #include <sofa/component/linearsolver/MatrixLinearSolver.h>
 
-#ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver
+#if 1 // TODO replace this line by the following one and fix this class
+//#ifndef SOFA_HAVE_BOOST //use previous declaration of matrixlinearsolver
 
 #define ParallelMatrixLinearSolver MatrixLinearSolver
 // namespace sofa {
@@ -124,8 +125,7 @@ class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public BaseMatrix
 {
 public:
 	SOFA_CLASS2(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), SOFA_TEMPLATE2(BaseMatrixLinearSolver,Matrix,Vector), sofa::simulation::SolverImpl);
-    
-	typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
+
 	typedef  std::list<int> ListIndex;
 	typedef typename Matrix::Real Real;
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
@@ -169,6 +169,8 @@ public:
 
 	/// Get the linear system matrix, or NULL if this solver does not build it
 	defaulttype::BaseMatrix* getSystemBaseMatrix() { return sharedData.matricesWork[indexwork]; }
+
+	void updateSystemMatrix();
 
 	/// Get the linear system right-hand term vector, or NULL if this solver does not build it
 	defaulttype::BaseVector* getSystemRHBaseVector() { return systemRHVector; }

@@ -36,7 +36,11 @@ namespace behavior
 //------------------------------------------------------------------------
 //ConstraintGroup
 
-  ConstraintGroup::ConstraintGroup( BaseConstraintSet::ConstOrder idConstraint):Order(idConstraint), active(true){}
+ConstraintGroup::ConstraintGroup(ConstraintParams::ConstOrder idConstraint)
+	: Order(idConstraint)
+	, active(true)
+{
+}
 
 void ConstraintGroup::addConstraint( unsigned int &constraintId, unsigned int idx, SReal c)
 {
@@ -50,13 +54,13 @@ void ConstraintGroup::addConstraint( unsigned int &constraintId, unsigned int id
   constraintId++;
 }
 //------------------------------------------------------------------------
-BaseLMConstraint::BaseLMConstraint():
-        pathObject1( initData(&pathObject1,  "object1","First Object to constrain") ),
-        pathObject2( initData(&pathObject2,  "object2","Second Object to constrain") )
+BaseLMConstraint::BaseLMConstraint()
+: pathObject1( initData(&pathObject1,  "object1","First Object to constrain") ),
+  pathObject2( initData(&pathObject2,  "object2","Second Object to constrain") )
 {
-};
+}
 
-unsigned int BaseLMConstraint::getNumConstraint(ConstOrder Order)
+unsigned int BaseLMConstraint::getNumConstraint(ConstraintParams::ConstOrder Order)
 {
     unsigned int result=0;
     const helper::vector< ConstraintGroup* > &vec = constraintOrder[Order];
@@ -64,33 +68,37 @@ unsigned int BaseLMConstraint::getNumConstraint(ConstOrder Order)
     return result;
 }
 
-ConstraintGroup* BaseLMConstraint::addGroupConstraint( ConstOrder id)
+ConstraintGroup* BaseLMConstraint::addGroupConstraint(ConstraintParams::ConstOrder id)
 {
-    ConstraintGroup *c=new ConstraintGroup(id);
+    ConstraintGroup *c = new ConstraintGroup(id);
     constraintOrder[id].push_back(c);
     return c;
 }
 
-
-void BaseLMConstraint::getConstraintViolation(defaulttype::BaseVector *v, VecId /*vId*/, ConstOrder order)
+void BaseLMConstraint::getConstraintViolation(defaulttype::BaseVector *v, const core::ConstraintParams* cparams)
 {
-    const helper::vector< ConstraintGroup* > &constraints = constraintOrder[order];
-    for (unsigned int idxGroupConstraint=0;idxGroupConstraint<constraints.size(); ++idxGroupConstraint)
-    {
-        ConstraintGroup *group=constraints[idxGroupConstraint];
-        std::pair< ConstraintGroup::EquationIterator, ConstraintGroup::EquationIterator > range=group->data();
-
-        for (ConstraintGroup::EquationIterator equation = range.first; equation != range.second;++equation)
-        {
-            v->set(equation->constraintId, equation->correction);
-        }
-    }
+  getConstraintViolation(v,cparams->constOrder());
 }
 
+void BaseLMConstraint::getConstraintViolation(defaulttype::BaseVector * v, const sofa::core::ConstraintParams::ConstOrder Order)
+{
+  const helper::vector< ConstraintGroup* > &constraints = constraintOrder[Order];
+  for (unsigned int idxGroupConstraint=0;idxGroupConstraint<constraints.size(); ++idxGroupConstraint)
+  {
+    ConstraintGroup *group=constraints[idxGroupConstraint];
+    std::pair< ConstraintGroup::EquationIterator, ConstraintGroup::EquationIterator > range=group->data();
+
+    for (ConstraintGroup::EquationIterator equation = range.first; equation != range.second;++equation)
+    {
+      v->set(equation->constraintId, equation->correction);
+    }
+  }
+
+}
 
 void BaseLMConstraint::resetConstraint()
 {
-    std::map< ConstOrder, helper::vector< ConstraintGroup*> >::iterator it;
+	std::map< ConstraintParams::ConstOrder, helper::vector< ConstraintGroup*> >::iterator it;
     for (it=constraintOrder.begin(); it!=constraintOrder.end();it++)
     {
         helper::vector< ConstraintGroup* > &v=it->second;

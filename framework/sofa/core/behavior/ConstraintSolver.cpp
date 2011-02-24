@@ -42,7 +42,7 @@ namespace behavior
 ConstraintSolver::~ConstraintSolver()
 {}
 
-  void ConstraintSolver::solveConstraint(double dt, VecId id, ConstOrder order)
+  void ConstraintSolver::solveConstraint(double dt, MultiVecId id, ConstOrder order)
   {
       sofa::helper::AdvancedTimer::stepBegin("SolveConstraints " + id.getName());
       bool continueSolving=true;

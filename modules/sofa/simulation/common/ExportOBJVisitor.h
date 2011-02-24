@@ -25,6 +25,7 @@
 #ifndef SOFA_SIMULATION_TREE_EXPORTOBJACTION_H
 #define SOFA_SIMULATION_TREE_EXPORTOBJACTION_H
 
+#include <sofa/core/ExecParams.h>
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/simulation/common/Node.h>
 #include <string>
@@ -43,14 +44,15 @@ public:
 	std::ostream* out;
 	std::ostream* mtl;
 
-	ExportOBJVisitor(std::ostream* out, std::ostream* mtl=NULL);
+	ExportOBJVisitor(std::ostream* out, const core::ExecParams* params);
+	ExportOBJVisitor(std::ostream* out, std::ostream* mtl, const core::ExecParams* params);
 	~ExportOBJVisitor();
 
 	virtual void processVisualModel(Node* node, core::VisualModel* vm);
 
 	virtual Result processNodeTopDown(Node* node);
 	virtual void processNodeBottomUp(Node* node);
-        virtual const char* getClassName() const { return "ExportOBJVisitor"; }
+	virtual const char* getClassName() const { return "ExportOBJVisitor"; }
 
 protected:
 	int ID;
@@ -63,4 +65,4 @@ protected:
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_SIMULATION_TREE_EXPORTOBJACTION_H

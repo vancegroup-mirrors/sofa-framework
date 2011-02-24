@@ -50,9 +50,9 @@ void IdentityContactMapper<TCollisionModel,DataTypes>::cleanup()
         {
             simulation::Node* child = dynamic_cast<simulation::Node*>(mapping->getContext());
             child->detachFromGraph();
-            child->execute<simulation::DeleteVisitor>();
+            child->execute<simulation::DeleteVisitor>(sofa::core::ExecParams::defaultInstance());
             delete child;
-	    mapping = NULL;
+	    	mapping = NULL;
         }
     }
 }

@@ -38,8 +38,8 @@ HEADERS +=  initMapping.h \
            ImplicitSurfaceMapping.inl \
            LaparoscopicRigidMapping.h \
            LaparoscopicRigidMapping.inl \
-           LineSetSkinningMapping.h \
-           LineSetSkinningMapping.inl \
+          LineSetSkinningMapping.h \
+          LineSetSkinningMapping.inl \
            Mesh2PointMechanicalMapping.h \
            Mesh2PointMechanicalMapping.inl \
            RigidMapping.h \

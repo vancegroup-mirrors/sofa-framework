@@ -359,7 +359,10 @@ void CudaVisualModel< TDataTypes >::internalDraw()
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    VecCoord& x = *state->getX();
+	//TODO: Const ? Read-Only ?
+    //VecCoord& x = *state->getX();
+	Data<VecCoord>* d_x = state->write(core::VecCoordId::position());
+	VecCoord& x = *d_x->beginEdit();
 
     bool vbo = useVBO.getValue();
 
@@ -440,6 +443,8 @@ void CudaVisualModel< TDataTypes >::internalDraw()
 	    glEnd();
 	}
     }
+
+	d_x->endEdit();
 }
 
 } // namespace visualmodel

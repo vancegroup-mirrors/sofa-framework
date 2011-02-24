@@ -53,12 +53,12 @@ int FixedLMConstraintClass = core::RegisterObject("Maintain a set of particle to
 ;
 
 #ifndef SOFA_FLOAT
-template class FixedLMConstraint<Vec3dTypes>;
-template class FixedLMConstraint<Rigid3dTypes>;
+template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<Vec3dTypes>;
+template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<Rigid3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-template class FixedLMConstraint<Vec3fTypes>;
-template class FixedLMConstraint<Rigid3fTypes>;
+template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<Vec3fTypes>;
+template class SOFA_COMPONENT_CONSTRAINTSET_API FixedLMConstraint<Rigid3fTypes>;
 #endif
 
 
@@ -68,7 +68,7 @@ void FixedLMConstraint<Rigid3dTypes>::draw()
 {
 	const SetIndexArray & indices = f_indices.getValue().getArray();
 	if (!getContext()->getShowBehaviorModels()) return;
-	VecCoord& x = *constrainedObject1->getX();
+	const VecCoord& x = *constrainedObject1->getX();
 	glDisable (GL_LIGHTING);
 	glPointSize(10);
 	glColor4f (1,0.5,0.5,1);
@@ -86,7 +86,7 @@ void FixedLMConstraint<Rigid3fTypes>::draw()
 {
 	const SetIndexArray & indices = f_indices.getValue().getArray();
 	if (!getContext()->getShowBehaviorModels()) return;
-	VecCoord& x = *constrainedObject1->getX();
+	const VecCoord& x = *constrainedObject1->getX();
 
         std::vector< Vector3 > points;
         for (SetIndexArray::const_iterator it = indices.begin();

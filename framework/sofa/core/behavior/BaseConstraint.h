@@ -69,22 +69,7 @@ public:
 
     /// Set the ID of the group containing this constraint. This ID is used to specify which constraints are solved by which solver, by specifying in each solver which groups of constraints it should handle.
     void setGroup(int g) { group.setValue(g); }
-
-    /// @name Matrix operations
-    /// @{
-
-    /// Project the compliance Matrix to constrained space.
-    virtual void projectResponse(double **);
-
-	/// Set the violation of each constraint
-    virtual void getConstraintValue(defaulttype::BaseVector *, bool /* freeMotion */ = true ) {}
-
-	/// Set the violation of each constraint (NEW API)
-	virtual void getConstraintViolation(defaulttype::BaseVector * /*v*/, VecId /*vId*/, ConstOrder order = BaseConstraintSet::POS);
 	
-	/// Set an Id for each constraint
-	virtual void getConstraintId(long * /*id*/, unsigned int & /*offset*/) {}
-
     typedef long long PersistentID;
     typedef helper::vector<PersistentID> VecPersistentID;
     typedef defaulttype::Vec<3,int> ConstCoord;
@@ -117,26 +102,6 @@ public:
 	/// Get information for each constraint: pointer to parent BaseConstraint, unique persistent ID, 3D position
 	virtual void getConstraintInfo(VecConstraintBlockInfo& /*blocks*/, VecPersistentID& /*ids*/, VecConstCoord& /*positions*/, VecConstDeriv& /*directions*/, VecConstArea& /*areas*/) {}
 
-
-
-
-//    virtual void buildConstraintMatrix(unsigned int &, core::VecId =core::VecId::position())=0;
-
-
-	/// says if the constraint is holonomic or not
-	/// holonomic constraints can be processed using different methods such as :
-	/// projection - reducing the degrees of freedom - simple lagrange multiplier process
-	/// Non-holonomic constraints (like contact, friction...) need more specific treatments
-	virtual bool isHolonomic() {return false; }
-
-	/// Test if the constraint is satisfied: return the error.
-	virtual double getError(){ return 0.0;}
-
-        /// If the constraint is applied only on a subset of particles. 
-        /// That way, we can optimize the time spent traversing the mappings
-        /// Deactivated by default. The constraints using only a subset of particles should activate the mask,
-        /// and during projectResponse(), insert the indices of the particles modified
-        virtual bool useMask() const {return false;}
 };
 
 } // namespace behavior

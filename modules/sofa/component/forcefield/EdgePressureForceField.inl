@@ -1,27 +1,30 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
-*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
-*                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
-* under the terms of the GNU Lesser General Public License as published by    *
-* the Free Software Foundation; either version 2.1 of the License, or (at     *
-* your option) any later version.                                             *
-*                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
-* for more details.                                                           *
-*                                                                             *
-* You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
-*******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
-* Authors: The SOFA Team and external contributors (see Authors.txt)          *
-*                                                                             *
-* Contact information: contact@sofa-framework.org                             *
-******************************************************************************/
+ *       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+ *                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
+ *                                                                             *
+ * This library is free software; you can redistribute it and/or modify it     *
+ * under the terms of the GNU Lesser General Public License as published by    *
+ * the Free Software Foundation; either version 2.1 of the License, or (at     *
+ * your option) any later version.                                             *
+ *                                                                             *
+ * This library is distributed in the hope that it will be useful, but WITHOUT *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+ * for more details.                                                           *
+ *                                                                             *
+ * You should have received a copy of the GNU Lesser General Public License    *
+ * along with this library; if not, write to the Free Software Foundation,     *
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+ *******************************************************************************
+ *                               SOFA :: Modules                               *
+ *                                                                             *
+ * Authors: The SOFA Team and external contributors (see Authors.txt)          *
+ *                                                                             *
+ * Contact information: contact@sofa-framework.org                             *
+ ******************************************************************************/
+#ifndef SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_INL
+#define SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_INL
+
 #include <sofa/component/forcefield/EdgePressureForceField.h>
 #include <sofa/component/topology/EdgeSubsetData.inl>
 #include <sofa/helper/gl/template.h>
@@ -55,22 +58,22 @@ template <class DataTypes> EdgePressureForceField<DataTypes>::~EdgePressureForce
 }
 // Handle topological changes
 template <class DataTypes> void  EdgePressureForceField<DataTypes>::handleTopologyChange()
-{	
+		{
 	std::list<const TopologyChange *>::const_iterator itBegin=_topology->beginChange();
 	std::list<const TopologyChange *>::const_iterator itEnd=_topology->endChange();
 
 
 	edgePressureMap.handleTopologyEvents(itBegin,itEnd,_topology->getNbEdges());
 
-}
+		}
 template <class DataTypes> void EdgePressureForceField<DataTypes>::init()
-{
-    this->core::behavior::ForceField<DataTypes>::init();
-    	
+		{
+	this->core::behavior::ForceField<DataTypes>::init();
+
 	_topology = this->getContext()->getMeshTopology();
 	_completeTopology = NULL;
 	this->getContext()->get(_completeTopology, core::objectmodel::BaseContext::SearchUp);
-	
+
 	this->getContext()->get(edgeGeo);
 
 	assert(edgeGeo!=0);
@@ -85,7 +88,7 @@ template <class DataTypes> void EdgePressureForceField<DataTypes>::init()
 	{
 		serr << "ERROR(EdgePressureForceField): assume that pressure vector is provdided otherwise TriangleSetTopology is required" << sendl;
 	}
-	
+
 	if (dmin.getValue()!=dmax.getValue()) {
 		selectEdgesAlongPlane();
 	}
@@ -93,14 +96,16 @@ template <class DataTypes> void EdgePressureForceField<DataTypes>::init()
 		selectEdgesFromString();
 	}
 
-    initEdgeInformation();
+	initEdgeInformation();
 
-}
+		}
 
 
 template <class DataTypes> 
-void EdgePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& /*x*/, const VecDeriv& /*v*/)
+void EdgePressureForceField<DataTypes>::addForce(DataVecDeriv &  dataF, const DataVecCoord &  /*dataX */, const DataVecDeriv & /*dataV*/, const sofa::core::MechanicalParams* /*mparams*/ )
 {
+	VecDeriv& f        = *(dataF.beginEdit());
+
 	Deriv force;
 
 	typename topology::EdgeSubsetData<EdgePressureInformation>::iterator it;
@@ -113,14 +118,8 @@ void EdgePressureForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& /*
 
 	}
 
-        updateEdgeInformation();
-}
-
-template <class DataTypes> 
-    double EdgePressureForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/) const
-{
-    serr<<"EdgePressureForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
+	updateEdgeInformation();
+	dataF.endEdit();
 }
 
 template<class DataTypes>
@@ -163,16 +162,16 @@ void EdgePressureForceField<DataTypes>::initEdgeInformation()
 			}
 		}
 		else
-		// if no pressure is provided, assume that boundary edges received pressure along their normal
+			// if no pressure is provided, assume that boundary edges received pressure along their normal
 		{
 			for(int i = 0; i < _topology->getNbEdges() ; i++)
 			{
 				Edge e = _topology->getEdge(i), f;
-				
+
 				Vec3d tang, n1, n2;
 				n2 = Vec3d(0,0,1);
 				tang = x[e[1]] - x[e[0]]; tang.normalize();
-				
+
 				Vec3d sum;
 				bool found = false;
 				int k = 0;
@@ -193,8 +192,8 @@ void EdgePressureForceField<DataTypes>::initEdgeInformation()
 				}
 
 				TrianglesAroundEdge t_a_E = _completeTopology->getTrianglesAroundEdge(k);
-							std::cout << "Triangle Around Edge : " << t_a_E.size() << std::endl;
-				
+				std::cout << "Triangle Around Edge : " << t_a_E.size() << std::endl;
+
 				if(t_a_E.size() == 1) // 2D cases
 				{
 					Triangle t = _completeTopology->getTriangle(t_a_E[0]);
@@ -227,7 +226,7 @@ void EdgePressureForceField<DataTypes>::initEdgeInformation()
 			}
 		}
 	}
-	
+
 	return;
 }
 
@@ -236,30 +235,30 @@ template<class DataTypes>
 void EdgePressureForceField<DataTypes>::updateEdgeInformation()
 {
 	/*typename topology::EdgeSubsetData<EdgePressureInformation>::iterator it;
-		
+
 	const VecCoord& x = *this->mstate->getX();
-	
+
 	for(it=edgePressureMap.begin(); it!=edgePressureMap.end(); it++ )
 	{
 		Vec3d p1 = x[_topology->getEdge((*it).first)[0]];
 		Vec3d p2 = x[_topology->getEdge((*it).first)[1]];
 		Vec3d orig(0,0,0);
-		
+
 		Vec3d tang = p2 - p1;
 		tang.norm();
-		
+
 		Deriv myPressure;
-		
+
 		if( (p1[0] - orig[0]) * tang[1] > 0)
 			myPressure[0] = tang[1];
 		else
 			myPressure[0] = - tang[1];
-		
+
 		if( (p1[1] - orig[1]) * tang[0] > 0)
 			myPressure[1] = tang[0];
 		else
 			myPressure[1] = - tang[0];
-		
+
 		//(*it).second.force=pressure.getValue()*((*it).second.length);
 		(*it).second.force=myPressure*((*it).second.length);
 
@@ -301,14 +300,14 @@ void EdgePressureForceField<DataTypes>::selectEdgesFromString()
 	{
 		EdgePressureInformation t;
 		edgePressureMap[inputString[i]]=t;
-		
+
 	}
 
 }
 template<class DataTypes>
 void EdgePressureForceField<DataTypes>::draw()
 {
-        double aSC = arrowSizeCoef.getValue();
+	double aSC = arrowSizeCoef.getValue();
 
 	if ((!this->getContext()->getShowForceFields() && (aSC==0)) || (aSC < 0.0)) return;
 	if (!this->mstate) return;
@@ -326,12 +325,12 @@ void EdgePressureForceField<DataTypes>::draw()
 
 	glBegin(GL_LINES);
 	glColor4f(1,1,0,1);
-	
+
 	for(it=edgePressureMap.begin(); it!=edgePressureMap.end(); it++ )
 	{
 		Vec3d p = (x[_topology->getEdge((*it).first)[0]] + x[_topology->getEdge((*it).first)[1]]) / 2.0;
 		helper::gl::glVertexT(p);
-		
+
 		Vec3d f = (*it).second.force;
 		//f.normalize();
 		f *= aSC;
@@ -341,7 +340,7 @@ void EdgePressureForceField<DataTypes>::draw()
 
 	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		
+
 }
 
 } // namespace forcefield
@@ -349,3 +348,5 @@ void EdgePressureForceField<DataTypes>::draw()
 } // namespace component
 
 } // namespace sofa
+
+#endif // SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_INL

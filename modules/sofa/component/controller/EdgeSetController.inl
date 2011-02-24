@@ -234,16 +234,16 @@ void EdgeSetController<DataTypes>::applyController()
 	{
 	    depl += (Real)(speed.getValue() * this->getContext()->getDt());
 		this->mouseMode = Inherit::None;
-
 		if (this->mState)
 		{
+            helper::WriteAccessor<Data<VecCoord> > x0 = *this->mState->write(core::VecCoordId::restPosition());
 			if (!reversed.getValue())
 			{
 				if (startId != 0)
 				{
 					for(int index_it = 0; index_it <= startId; index_it++)
 					{
-						Coord& pos = (*this->mState->getX0())[index_it];
+						Coord& pos = x0[index_it];
 
 						pos =  getNewRestPos(pos, vertexT[index_it], -depl);
 						vertexT[index_it] -= depl;
@@ -252,7 +252,7 @@ void EdgeSetController<DataTypes>::applyController()
 				}
 				else
 				{
-					Coord& pos = (*this->mState->getX0())[0];
+					Coord& pos = x0[0];
 					Real d;
 
 					if (maxDepl.getValue() == 0 || fabs(depl) < maxDepl.getValue())
@@ -304,7 +304,7 @@ void EdgeSetController<DataTypes>::applyController()
 
 				if (n > 0)
 				{
-					Coord& pos = (*this->mState->getX0())[n-1];
+					Coord& pos = x0[n-1];
 					Real d;
 
 					if (maxDepl.getValue() == 0 || fabs(depl) < maxDepl.getValue())
@@ -349,14 +349,14 @@ void EdgeSetController<DataTypes>::applyController()
 		}
                 {
                     sofa::simulation::Node *node = static_cast<sofa::simulation::Node*> (this->getContext());
-                    sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor mechaVisitor; mechaVisitor.execute(node);
-                    sofa::simulation::UpdateMappingVisitor updateVisitor; updateVisitor.execute(node);
+                    sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor mechaVisitor(core::MechanicalParams::defaultInstance()); mechaVisitor.execute(node);
+                    sofa::simulation::UpdateMappingVisitor updateVisitor(core::ExecParams::defaultInstance()); updateVisitor.execute(node);
                 }
 		if (modifyTopology())
                 {
                     sofa::simulation::Node *node = static_cast<sofa::simulation::Node*> (this->getContext());
-                    sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor mechaVisitor; mechaVisitor.execute(node);
-                    sofa::simulation::UpdateMappingVisitor updateVisitor; updateVisitor.execute(node);
+                    sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor mechaVisitor(core::MechanicalParams::defaultInstance()); mechaVisitor.execute(node);
+                    sofa::simulation::UpdateMappingVisitor updateVisitor(core::ExecParams::defaultInstance()); updateVisitor.execute(node);
                 }
 	}
 	//serr<<"applyController ended"<<sendl;
@@ -402,16 +402,17 @@ bool EdgeSetController<DataTypes>::modifyTopology(void)
 		{
 			if (fabs(vertexT[startId+1] - vertexT[startId]) > ( 2 * edgeTLength ))
 			{
+                helper::WriteAccessor<Data<VecCoord> > x0 = *this->mState->write(core::VecCoordId::restPosition());
 				// First Edge makes 2
 				sofa::helper::vector<unsigned int> indices(0);
 				indices.push_back(baseEdge[0]);
 
 				edgeMod->splitEdges(indices);
 				// pos = pos of the last point of the wire
-				Coord& pos = (*this->mState->getX0())[this->mState->getSize() - 1];
+				Coord& pos = x0[this->mState->getSize() - 1];
 
 				// point placed in the middle of the edge
-				pos = getNewRestPos((	*this->mState->getX0())[startId],
+				pos = getNewRestPos(	x0[startId],
 										vertexT[startId], 
 										(vertexT[startId + 1] - vertexT[startId]) / static_cast<Real>(2.0));
 
@@ -593,14 +594,16 @@ void EdgeSetController<DataTypes>::draw()
 
 	glDisable(GL_LIGHTING);
 
-	if (edgeGeo)
+	if (edgeGeo && this->mState)
 	{
+        helper::ReadAccessor<Data<VecCoord> > x = *this->mState->read(core::VecCoordId::position());
+
 		glBegin(GL_LINES);
 		for (int i=0; i<_topology->getNbEdges(); i++)
 		{
 			glColor4f(1.0,1.0,0.0,1.0);
-			helper::gl::glVertexT((*this->mState->getX())[_topology->getEdge(i)[0]]);
-			helper::gl::glVertexT((*this->mState->getX())[_topology->getEdge(i)[1]]);
+			helper::gl::glVertexT(x[_topology->getEdge(i)[0]]);
+			helper::gl::glVertexT(x[_topology->getEdge(i)[1]]);
 		}
 		glEnd();
 /*

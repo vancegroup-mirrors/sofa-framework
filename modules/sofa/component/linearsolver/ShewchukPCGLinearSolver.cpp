@@ -102,11 +102,11 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::init() {
 }
 
 template<class TMatrix, class TVector>
-void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, double bFact, double kFact) {
+void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(const core::MechanicalParams* mparams) {
 	sofa::helper::AdvancedTimer::valSet("PCG::buildMBK", 1);
 	sofa::helper::AdvancedTimer::stepBegin("PCG::setSystemMBKMatrix");
 	
-	Inherit::setSystemMBKMatrix(mFact,bFact,kFact);
+	Inherit::setSystemMBKMatrix(mparams);
 	
 	sofa::helper::AdvancedTimer::stepEnd("PCG::setSystemMBKMatrix(Precond)");
 
@@ -116,7 +116,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, 
 
 	if (first) { //We initialize all the preconditioners for the first step
 		for (unsigned int i=0;i<this->preconditioners.size();++i) {
-			preconditioners[i]->setSystemMBKMatrix(mFact,bFact,kFact);
+			preconditioners[i]->setSystemMBKMatrix(mparams);
 		}
 		first = false;
 		next_refresh_step = 1;
@@ -126,21 +126,21 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, 
 
 		if ((f_update_step.getValue()>0) && (f_update_iteration.getValue()>0)) {
 		  if ((next_refresh_step>=f_update_step.getValue()) && (next_refresh_iteration>=f_update_iteration.getValue())) {
-			preconditioners[0]->setSystemMBKMatrix(mFact,bFact,kFact);
+			preconditioners[0]->setSystemMBKMatrix(mparams);
 			next_refresh_step=1;
 		  } else {
 			next_refresh_step++;
 		  }
 		} else if (f_update_step.getValue()>0) {
 		  if (next_refresh_step>=f_update_step.getValue()) {
-			preconditioners[0]->setSystemMBKMatrix(mFact,bFact,kFact);
+			preconditioners[0]->setSystemMBKMatrix(mparams);
 			next_refresh_step=1;
 		  } else {
 			next_refresh_step++;
 		  }
 		} else if (f_update_iteration.getValue()>0) {
 		  if (next_refresh_iteration>=f_update_iteration.getValue()) {
-			preconditioners[0]->setSystemMBKMatrix(mFact,bFact,kFact);
+			preconditioners[0]->setSystemMBKMatrix(mparams);
 			next_refresh_iteration=1;
 		  }
 		}
@@ -153,7 +153,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::setSystemMBKMatrix(double mFact, 
 
 template<>
 inline void ShewchukPCGLinearSolver<component::linearsolver::GraphScatteredMatrix,component::linearsolver::GraphScatteredVector>::cgstep_beta(Vector& p, Vector& r, double beta) {
-    this->v_op(p,r,p,beta); // p = p*beta + r
+    p.eq(r,p,beta); // p = p*beta + r
 }
 
 template<>
@@ -164,11 +164,12 @@ inline void ShewchukPCGLinearSolver<component::linearsolver::GraphScatteredMatri
 template<class TMatrix, class TVector>
 void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vector& b) {
 	sofa::helper::AdvancedTimer::stepBegin("PCGLinearSolver::solve");
-	  
-	Vector& r = *this->createVector();
-	Vector& d = *this->createVector();
-	Vector& q = *this->createVector();
-	Vector& s = *this->createVector();
+    const core::ExecParams* params = core::ExecParams::defaultInstance();
+    typename Inherit::TempVectorContainer vtmp(this, params, M, x, b);
+    Vector& r = *vtmp.createTempVector();
+    Vector& d = *vtmp.createTempVector();
+    Vector& q = *vtmp.createTempVector();
+    Vector& s = *vtmp.createTempVector();
 	const bool verbose  = f_verbose.getValue();
 	
 	unsigned iter=1;
@@ -244,10 +245,10 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 	sofa::helper::AdvancedTimer::valSet("PCG iterations", iter);
 
 	f_graph.endEdit();
-	this->deleteVector(&r);
-	this->deleteVector(&q);
-	this->deleteVector(&d);
-	this->deleteVector(&s);
+	vtmp.deleteTempVector(&r);
+	vtmp.deleteTempVector(&q);
+	vtmp.deleteTempVector(&d);
+	vtmp.deleteTempVector(&s);
 	sofa::helper::AdvancedTimer::stepEnd("PCGLinearSolver::solve");
 }
 

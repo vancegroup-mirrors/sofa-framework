@@ -102,7 +102,7 @@ void SparseTAUCSLUSolver<TMatrix,TVector>::invert(Matrix& M) {
     taucs_ccs_order(&data->matrix_taucs,&data->perm,&data->invperm,(char *) "metis");
     data->PAPT = taucs_ccs_permute_symmetrically(&data->matrix_taucs,data->perm,data->invperm);
 //     if (f_dropTol.getValue()) {      
-      data->L = taucs_ccs_factor_llt(data->PAPT,f_dropTol.getValue(),true);	
+    data->L = taucs_ccs_factor_llt(data->PAPT,f_dropTol.getValue(),true);	
 //     } else {
 //       data->L = (taucs_ccs_matrix*) taucs_ccs_factor_llt_ll_maxdepth(data->PAPT,0.0);
 //     }

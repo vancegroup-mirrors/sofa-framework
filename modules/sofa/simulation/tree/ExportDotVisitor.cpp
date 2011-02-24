@@ -37,8 +37,9 @@ namespace simulation
 namespace tree
 {
 
-ExportDotVisitor::ExportDotVisitor(std::ostream* out)
-: out(out),
+ExportDotVisitor::ExportDotVisitor(std::ostream* out, const sofa::core::ExecParams* params)
+: GNodeVisitor(params),
+  out(out),
   showNode(true),
   showObject(true),
   showBehaviorModel(true),
@@ -101,9 +102,7 @@ bool ExportDotVisitor::display(core::objectmodel::BaseObject* obj, const char **
 		if (showTopology) { show = true; *color = COLOR[TOPOLOGY]; } else hide = true;}
 	if (dynamic_cast<core::CollisionModel*>(obj)){
 		if (showCollisionModel) { show = true; *color = COLOR[CMODEL]; } else hide = true;}
-	if (dynamic_cast<core::behavior::BaseMechanicalMapping*>(obj)){
-		if (showMechanicalMapping) { show = true; *color = COLOR[MMAPPING]; } else hide = true;}
-	else if (dynamic_cast<core::BaseMapping*>(obj)){
+	if (dynamic_cast<core::BaseMapping*>(obj)){
 		if (showMapping) { show = true; *color = COLOR[MAPPING]; } else hide = true;}
 	if (dynamic_cast<core::objectmodel::ContextObject*>(obj)){
 		if (showContext) { show = true; *color = COLOR[CONTEXT]; } else hide = true;}
@@ -115,8 +114,8 @@ bool ExportDotVisitor::display(core::objectmodel::BaseObject* obj, const char **
 		if (showCollisionPipeline) { show = true; *color = COLOR[COLLISION]; } else hide = true;}
 	if (dynamic_cast<core::behavior::OdeSolver*>(obj)){
 		if (showSolver) { show = true; *color = COLOR[SOLVER]; } else hide = true;}
-	if (dynamic_cast<core::behavior::InteractionForceField*>(obj) &&
-	    dynamic_cast<core::behavior::InteractionForceField*>(obj)->getMechModel1()!=dynamic_cast<core::behavior::InteractionForceField*>(obj)->getMechModel2()){
+	if (dynamic_cast<core::behavior::BaseInteractionForceField*>(obj) &&
+	    dynamic_cast<core::behavior::BaseInteractionForceField*>(obj)->getMechModel1()!=dynamic_cast<core::behavior::BaseInteractionForceField*>(obj)->getMechModel2()){
 		if (showInteractionForceField) { show = true; *color = COLOR[IFFIELD]; } else hide = true;}
 	else if (dynamic_cast<core::behavior::BaseForceField*>(obj)){
 		if (showForceField) { show = true; *color = COLOR[FFIELD]; } else hide = true;}
@@ -238,7 +237,7 @@ void ExportDotVisitor::processObject(GNode* /*node*/, core::objectmodel::BaseObj
 				*out << "[constraint=false]";
 			*out << ";" << std::endl;
 		}
-		core::behavior::InteractionForceField* iff = dynamic_cast<core::behavior::InteractionForceField*>(obj);
+		core::behavior::BaseInteractionForceField* iff = dynamic_cast<core::behavior::BaseInteractionForceField*>(obj);
 		if (iff!=NULL)
 		{
 			core::behavior::BaseMechanicalState* model1 = iff->getMechModel1();
@@ -259,8 +258,12 @@ void ExportDotVisitor::processObject(GNode* /*node*/, core::objectmodel::BaseObj
 			if (display(model1))
 			{
 				*out << getName(model1) << " -> " << name << " [style=\"dashed\",arrowhead=\"none\"";
-				if (dynamic_cast<core::behavior::BaseMechanicalMapping*>(obj))
-					*out << ",arrowtail=\"open\"";
+				core::BaseMapping* bmm = dynamic_cast<core::BaseMapping*>(obj);
+				if (bmm)
+				{
+					if(bmm->isMechanical())
+						*out << ",arrowtail=\"open\"";
+				}
 				*out << "];" << std::endl;
 			}
 			if (display(model2))

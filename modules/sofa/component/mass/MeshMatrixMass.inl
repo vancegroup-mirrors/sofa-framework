@@ -807,11 +807,13 @@ using namespace core::topology;
 
   // -- Mass interface
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addMDx(VecDeriv& res, const VecDeriv& dx, double factor)
+  void MeshMatrixMass<DataTypes, MassType>::addMDx(DataVecDeriv& vres, const DataVecDeriv& vdx, double factor, const core::MechanicalParams*)
   {
 
     const MassVector &vertexMass= vertexMassInfo.getValue();
        
+		helper::WriteAccessor< DataVecDeriv > res = vres;
+		helper::ReadAccessor< DataVecDeriv > dx = vdx;
     if (factor == 1.0)
     {
       for (unsigned int i=0;i<dx.size();i++)
@@ -827,7 +829,7 @@ using namespace core::topology;
 
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f)
+  void MeshMatrixMass<DataTypes, MassType>::accFromF(DataVecDeriv& a, const DataVecDeriv& f, const core::MechanicalParams*)
   {
     (void)a;
     (void)f;
@@ -837,11 +839,15 @@ using namespace core::topology;
 
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v)
+  void MeshMatrixMass<DataTypes, MassType>::addForce(DataVecDeriv& vf, const DataVecCoord& vx, const DataVecDeriv& vv, const core::MechanicalParams*)
   {
     //if gravity was added separately (in solver's "solve" method), then nothing to do here
     if(this->m_separateGravity.getValue())
       return;
+
+		helper::WriteAccessor< DataVecDeriv > f = vf;
+		helper::ReadAccessor< DataVecCoord > x = vx;
+		helper::ReadAccessor< DataVecDeriv > v = vv;
 
     const MassVector &vertexMass= vertexMassInfo.getValue();
     
@@ -866,10 +872,12 @@ using namespace core::topology;
   
 
   template <class DataTypes, class MassType>
-  double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const VecDeriv& v ) const
+  double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const DataVecDeriv& vv, const core::MechanicalParams* ) const
   {
      const MassVector &vertexMass= vertexMassInfo.getValue();
      const MassVector &edgeMass= edgeMassInfo.getValue();
+		 
+		 helper::ReadAccessor< DataVecDeriv > v = vv;
 
      unsigned int nbEdges=_topology->getNbEdges();
      unsigned int v0,v1;
@@ -894,9 +902,11 @@ using namespace core::topology;
 
   
   template <class DataTypes, class MassType>
-  double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const VecCoord& x ) const
+  double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const DataVecCoord& vx , const core::MechanicalParams*) const
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
+		
+		helper::ReadAccessor< DataVecCoord > x = vx;
 
     SReal e = 0;
     // gravity
@@ -912,29 +922,33 @@ using namespace core::topology;
 
 
 
-    template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addGravityToV(double dt)
-  {
-    if(this->mstate){
-      VecDeriv& v = *this->mstate->getV();
+template <class DataTypes, class MassType>
+void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const core::MechanicalParams* mparams)
+{
+	if(this->mstate && mparams)
+	{
+	  VecDeriv& v = *d_v.beginEdit();
 
       // gravity
       Vec3d g ( this->getContext()->getLocalGravity() );
       Deriv theGravity;
       DataTypes::set ( theGravity, g[0], g[1], g[2]);
-      Deriv hg = theGravity * (typename DataTypes::Real)dt;
+      Deriv hg = theGravity * (typename DataTypes::Real)(mparams->dt());
 
-      for (unsigned int i=0;i<v.size();i++) {
-	v[i] += hg;
+      for (unsigned int i=0;i<v.size();i++) 
+	  {
+		v[i] += hg;
       }
+		d_v.endEdit();
     }
+
   }
 
 
   
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addMToMatrix(defaulttype::BaseMatrix * mat, double mFact, unsigned int &offset)
+  void MeshMatrixMass<DataTypes, MassType>::addMToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams *mparams)
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
     const MassVector &edgeMass= edgeMassInfo.getValue();
@@ -944,17 +958,18 @@ using namespace core::topology;
 
     const int N = defaulttype::DataTypeInfo<Deriv>::size();
     AddMToMatrixFunctor<Deriv,MassType> calc;
-    
+		sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
+	 	Real mFactor = (Real)mparams->mFactor();	
     for (unsigned int i=0;i<vertexMass.size();i++)
-      calc(mat, vertexMass[i], offset + N*i, mFact);
+      calc(r.matrix, vertexMass[i], r.offset + N*i, mFactor);
 
     for (unsigned int i=0; i<nbEdges; ++i)
     {
       v0=_topology->getEdge(i)[0];
       v1=_topology->getEdge(i)[1];
 
-      calc(mat, edgeMass[i], offset + v0, offset + v1, mFact);
-      calc(mat, edgeMass[i], offset + v1, offset + v0, mFact);
+      calc(r.matrix, edgeMass[i], r.offset + v0, r.offset + v1, mFactor);
+      calc(r.matrix, edgeMass[i], r.offset + v1, r.offset + v0, mFactor);
     }
   }
 

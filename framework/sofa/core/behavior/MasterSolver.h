@@ -28,6 +28,7 @@
 #define SOFA_CORE_BEHAVIOR_MASTERSOLVER_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/ExecParams.h>
 
 namespace sofa
 {
@@ -63,7 +64,7 @@ public:
     ///
     /// Specify and execute all computations for computing a timestep, such
     /// as one or more collisions and integrations stages.
-    virtual void step(double dt) = 0;
+    virtual void step(double dt, const core::ExecParams* params=ExecParams::defaultInstance()) = 0;
 
     /// @name Visitors
     /// These methods provides an abstract view of the mechanical system to animate.
@@ -71,10 +72,10 @@ public:
     /// @{
 
     /// Activate collision pipeline
-    virtual void computeCollision() = 0;
+    virtual void computeCollision(const core::ExecParams* params=ExecParams::defaultInstance()) = 0;
 
     /// Activate OdeSolvers
-    virtual void integrate(double dt) = 0;
+    virtual void integrate(double dt, const core::ExecParams* params=ExecParams::defaultInstance()) = 0;
 
     /// @}
 };

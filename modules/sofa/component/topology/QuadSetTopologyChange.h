@@ -78,7 +78,7 @@ namespace topology
 			return quadIndexArray;
 		}	
 
-		const Quad &getQuad(const unsigned int i)
+		const Quad &getQuad(const unsigned int i) const
 		{
 			return quadArray[i];
 		}

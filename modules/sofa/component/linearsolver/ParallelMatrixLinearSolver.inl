@@ -27,7 +27,8 @@
 
 #include <sofa/component/linearsolver/ParallelMatrixLinearSolver.h>
 
-#ifdef SOFA_HAVE_BOOST
+#if 0 // TODO replace this line by the following one and fix this class
+//#ifdef SOFA_HAVE_BOOST
 
 #include <sofa/component/misc/ParallelizeBuildMatrixEvent.h>
 #include <sofa/helper/AdvancedTimer.h>
@@ -211,7 +212,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(double mFact,
 		std::cout << "thread swap " << nbstep_update << " setSystemMBKMatrix in the preconditioner" << std::endl;
 	    }
 	    nbstep_update = 1;
-	} else nbstep_update++;
+	}
 }
 
 template<class Matrix, class Vector>
@@ -223,6 +224,12 @@ template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(VecId v) {
     solutionVecId = v;
     this->multiVector2BaseVector(v, systemLHVector, &matrixAccessor);
+}
+
+template<class Matrix, class Vector>
+void ParallelMatrixLinearSolver<Matrix,Vector>::updateSystemMatrix() {
+	nbstep_update++;
+	this->frozen = false;
 }
 
 template<class Matrix, class Vector>

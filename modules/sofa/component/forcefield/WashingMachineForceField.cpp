@@ -16,56 +16,51 @@
 * along with this library; if not, write to the Free Software Foundation,     *
 * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
 *******************************************************************************
-*                              SOFA :: Framework                              *
+*                               SOFA :: Modules                               *
 *                                                                             *
-* Authors: M. Adam, J. Allard, B. Andre, P-J. Bensoussan, S. Cotin, C. Duriez,*
-* H. Delingette, F. Falipou, F. Faure, S. Fonteneau, L. Heigeas, C. Mendoza,  *
-* M. Nesme, P. Neumann, J-P. de la Plata Alcade, F. Poyer and F. Roy          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_BEHAVIOR_INTERACTIONCONSTRAINT_H
-#define SOFA_CORE_BEHAVIOR_INTERACTIONCONSTRAINT_H
-
-#include <sofa/core/behavior/BaseConstraint.h>
-#include <sofa/core/behavior/BaseMechanicalState.h>
+#include <sofa/component/forcefield/WashingMachineForceField.inl>
+#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/core/ObjectFactory.h>
 
 namespace sofa
 {
 
-namespace core
+namespace component
 {
 
-namespace behavior
+namespace forcefield
 {
 
-/**
- *  \brief InteractionConstraint is a constraint linking several bodies (MechanicalState) together.
- *
- *  An InteractionConstraint computes constraints applied to several simulated
- *  bodies given their current positions and velocities.
- *
- */
-class SOFA_CORE_API InteractionConstraint : public BaseConstraint
-{
-public:
-    SOFA_CLASS(InteractionConstraint, BaseConstraint);
+using namespace sofa::defaulttype;
 
-    /// Get the first MechanicalState
-    /// \todo Rename to getMechState1()
-    /// \todo Replace with an accessor to a list of states, as an InteractionConstraint can be applied to more than two.
-    virtual BaseMechanicalState* getMechModel1() = 0;
 
-    /// Get the first MechanicalState
-    /// \todo Rename to getMechState2()
-    /// \todo Replace with an accessor to a list of states, as an InteractionConstraint can be applied to more than two.
-    virtual BaseMechanicalState* getMechModel2() = 0;
-};
+SOFA_DECL_CLASS(WashingMachineForceField)
 
-} // namespace behavior
+// Register in the Factory
+int WashingMachineForceFieldClass = core::RegisterObject("A custom force field")
+#ifndef SOFA_FLOAT
+.add< WashingMachineForceField<Vec3dTypes> >()
+#endif
+#ifndef SOFA_DOUBLE
+.add< WashingMachineForceField<Vec3fTypes> >()
+#endif
+;
 
-} // namespace core
+#ifndef SOFA_FLOAT
+template class WashingMachineForceField<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+template class WashingMachineForceField<Vec3fTypes>;
+#endif
+;
+
+} // namespace forcefield
+
+} // namespace component
 
 } // namespace sofa
 
-#endif

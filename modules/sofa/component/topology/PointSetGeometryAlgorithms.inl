@@ -75,7 +75,7 @@ namespace topology
 	{
 		typename DataTypes::Coord center;
 		// get current positions
-		typename DataTypes::VecCoord& p = *(object->getX());
+		const typename DataTypes::VecCoord& p = *(object->getX());
 
 		const int numVertices = this->m_topology->getNbPoints();
 		for(int i=0; i<numVertices; ++i) 
@@ -92,7 +92,7 @@ namespace topology
 		typename DataTypes::Real &radius) const
 	{
 		// get current positions
-		typename DataTypes::VecCoord& p = *(object->getX());
+		const typename DataTypes::VecCoord& p = *(object->getX());
 
 		const unsigned int numVertices = this->m_topology->getNbPoints();
 		for(unsigned int i=0; i<numVertices; ++i) 

@@ -25,25 +25,20 @@
 #ifndef SOFA_COMPONENT_MAPPING_BARYCENTRICMAPPING_H
 #define SOFA_COMPONENT_MAPPING_BARYCENTRICMAPPING_H
 
-#include <sofa/helper/vector.h>
 #include <sofa/component/topology/PointData.h>
 #include <sofa/component/topology/HexahedronData.h>
 #include <sofa/component/topology/RegularGridTopology.h>
 #include <sofa/component/linearsolver/CompressedRowSparseMatrix.h>
+
 #include <sofa/core/Mapping.h>
-#include <sofa/core/behavior/MechanicalMapping.h>
-#include <sofa/core/behavior/MappedModel.h>
-#include <sofa/core/behavior/BaseMechanicalState.h>
-#include <sofa/core/behavior/MechanicalState.h>
+#include <sofa/core/MechanicalParams.h>
+
 #include <sofa/defaulttype/VecTypes.h>
-#include <sofa/defaulttype/RigidTypes.h>
-
 #include <sofa/defaulttype/Quat.h>
-
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Mat.h>
 
-#include <sofa/component/forcefield/TetrahedronFEMForceField.h>
+#include <sofa/helper/vector.h>
 
 
 // forward declarations
@@ -102,137 +97,136 @@ template<class In, class Out>
 class BarycentricMapper
 {
 public:
-      typedef typename In::Real Real;
-      typedef typename In::Real InReal;
-      typedef typename Out::Real OutReal;
+	typedef typename In::Real Real;
+	typedef typename In::Real InReal;
+	typedef typename Out::Real OutReal;
 
-      typedef typename In::VecDeriv InVecDeriv;
-      typedef typename In::Deriv InDeriv;
-      typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-      typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
+	typedef typename In::VecDeriv InVecDeriv;
+	typedef typename In::Deriv InDeriv;
 
-      typedef typename Out::VecDeriv OutVecDeriv;
-      typedef typename Out::Deriv OutDeriv;
-      typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-      typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
+	typedef typename Out::VecDeriv OutVecDeriv;
+	typedef typename Out::Deriv OutDeriv;
 
-    enum { NIn = sofa::defaulttype::DataTypeInfo<InDeriv>::Size };
-    enum { NOut = sofa::defaulttype::DataTypeInfo<OutDeriv>::Size };
-    typedef defaulttype::Mat<NOut, NIn, Real> MBloc;
-    typedef sofa::component::linearsolver::CompressedRowSparseMatrix<MBloc> MatrixType;
+	enum { NIn = sofa::defaulttype::DataTypeInfo<InDeriv>::Size };
+	enum { NOut = sofa::defaulttype::DataTypeInfo<OutDeriv>::Size };
+	typedef defaulttype::Mat<NOut, NIn, Real> MBloc;
+	typedef sofa::component::linearsolver::CompressedRowSparseMatrix<MBloc> MatrixType;
 
 protected:
 
-    void addMatrixContrib(MatrixType* m, int row, int col, Real value)
-    {
-        MBloc* b = m->wbloc(row, col, true); // get write access to a matrix bloc, creating it if not found
-        for (int i=0; i < ((int)NIn < (int)NOut ? (int)NIn : (int)NOut); ++i)
-            (*b)[i][i] += value;
-    }
-
-    template< int NC,  int NP>
-	class MappingData
-    {
-    public:
-        int in_index;
-        //unsigned int points[NP];
-        Real baryCoords[NC];
-
-	inline friend std::istream& operator >> ( std::istream& in, MappingData< NC, NP> &m )
-	  {
-	    in>>m.in_index;
-	    for (int i=0;i<NC;i++) in >> m.baryCoords[i];
-	    return in;
-	  }
-
-	inline friend std::ostream& operator << ( std::ostream& out, const MappingData< NC , NP > & m ){
-	  out << m.in_index;
-	  for (int i=0;i<NC;i++)
-	    out << " " << m.baryCoords[i];
-          out << "\n";
-	  return out;
+	void addMatrixContrib(MatrixType* m, int row, int col, Real value)
+	{
+		MBloc* b = m->wbloc(row, col, true); // get write access to a matrix bloc, creating it if not found
+		for (int i=0; i < ((int)NIn < (int)NOut ? (int)NIn : (int)NOut); ++i)
+			(*b)[i][i] += value;
 	}
 
-    };
+	template< int NC,  int NP>
+	class MappingData
+	{
+	public:
+		int in_index;
+		//unsigned int points[NP];
+		Real baryCoords[NC];
+
+		inline friend std::istream& operator >> ( std::istream& in, MappingData< NC, NP> &m )
+		{
+			in>>m.in_index;
+			for (int i=0;i<NC;i++) in >> m.baryCoords[i];
+			return in;
+		}
+
+		inline friend std::ostream& operator << ( std::ostream& out, const MappingData< NC , NP > & m ){
+			out << m.in_index;
+			for (int i=0;i<NC;i++)
+				out << " " << m.baryCoords[i];
+			out << "\n";
+			return out;
+		}
+
+	};
 
 public:
-      typedef MappingData<1,2> LineData;
-      typedef MappingData<2,3> TriangleData;
-      typedef MappingData<2,4> QuadData;
-      typedef MappingData<3,4> TetraData;
-      typedef MappingData<3,8> CubeData;
-      typedef MappingData<1,0> MappingData1D;
-      typedef MappingData<2,0> MappingData2D;
-      typedef MappingData<3,0> MappingData3D;
+	typedef MappingData<1,2> LineData;
+	typedef MappingData<2,3> TriangleData;
+	typedef MappingData<2,4> QuadData;
+	typedef MappingData<3,4> TetraData;
+	typedef MappingData<3,8> CubeData;
+	typedef MappingData<1,0> MappingData1D;
+	typedef MappingData<2,0> MappingData2D;
+	typedef MappingData<3,0> MappingData3D;
 
-      virtual ~BarycentricMapper(){}
-      virtual void init(const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
-      virtual void apply( typename Out::VecCoord& out, const typename In::VecCoord& in ) = 0;
-    virtual const sofa::defaulttype::BaseMatrix* getJ(int /*outSize*/, int /*inSize*/)
-    {
-        std::cerr << "BaseMechanicalMapping::getJ() NOT IMPLEMENTED BY " << sofa::core::objectmodel::Base::decodeClassName(typeid(*this)) << std::endl;
-        return NULL;
-    }
-      virtual void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in ) = 0;
-      virtual void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in ) = 0;
-      virtual void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in ) = 0;
-      virtual void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
+	virtual ~BarycentricMapper(){}
+	virtual void init(const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
+	virtual void apply( typename Out::VecCoord& out, const typename In::VecCoord& in ) = 0;
+	virtual const sofa::defaulttype::BaseMatrix* getJ(int /*outSize*/, int /*inSize*/)
+	{
+		std::cerr << "BaseMechanicalMapping::getJ() NOT IMPLEMENTED BY " << sofa::core::objectmodel::Base::decodeClassName(typeid(*this)) << std::endl;
+		return NULL;
+	}
+	virtual void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in ) = 0;
+	virtual void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in ) = 0;
+	virtual void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in ) = 0;
+	virtual void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
 
-	  //-- test mapping partiel
-	  virtual void applyOnePoint( const unsigned int& /*hexaId*/, typename Out::VecCoord& /*out*/, const typename In::VecCoord& /*in*/)
-	  {};
-	  //--
+	//-- test mapping partiel
+	virtual void applyOnePoint( const unsigned int& /*hexaId*/, typename Out::VecCoord& /*out*/, const typename In::VecCoord& /*in*/)
+	{};
+	//--
 
-	  virtual void clear( int reserve=0 ) =0;
+	virtual void clear( int reserve=0 ) =0;
 
 
-      //Nothing to do
-      inline friend std::istream& operator >> ( std::istream& in, BarycentricMapper< In, Out > & ) {return in;}
-      inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapper< In, Out > &  ){ return out; }
+	//Nothing to do
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapper< In, Out > & ) {return in;}
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapper< In, Out > &  ){ return out; }
 };
+
+
 
 /// Template class for barycentric mapping topology-specific mappers.
 template<class In, class Out>
 class TopologyBarycentricMapper : public BarycentricMapper<In,Out>
 {
 public:
-		typedef BarycentricMapper<In,Out> Inherit;
-		typedef typename Inherit::Real Real;
+	typedef BarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
 
-		virtual ~TopologyBarycentricMapper() {}
+	virtual ~TopologyBarycentricMapper() {}
 
-		virtual int addPointInLine(const int /*lineIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int setPointInLine(const int /*pointIndex*/, const int /*lineIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int createPointInLine(const typename Out::Coord& /*p*/, int /*lineIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
+	virtual int addPointInLine(const int /*lineIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int setPointInLine(const int /*pointIndex*/, const int /*lineIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int createPointInLine(const typename Out::Coord& /*p*/, int /*lineIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
 
-		virtual int addPointInTriangle(const int /*triangleIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int setPointInTriangle(const int /*pointIndex*/, const int /*triangleIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int createPointInTriangle(const typename Out::Coord& /*p*/, int /*triangleIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
+	virtual int addPointInTriangle(const int /*triangleIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int setPointInTriangle(const int /*pointIndex*/, const int /*triangleIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int createPointInTriangle(const typename Out::Coord& /*p*/, int /*triangleIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
 
-		virtual int addPointInQuad(const int /*quadIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int setPointInQuad(const int /*pointIndex*/, const int /*quadIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int createPointInQuad(const typename Out::Coord& /*p*/, int /*quadIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
+	virtual int addPointInQuad(const int /*quadIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int setPointInQuad(const int /*pointIndex*/, const int /*quadIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int createPointInQuad(const typename Out::Coord& /*p*/, int /*quadIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
 
-		virtual int addPointInTetra(const int /*tetraIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int setPointInTetra(const int /*pointIndex*/, const int /*tetraIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int createPointInTetra(const typename Out::Coord& /*p*/, int /*tetraIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
+	virtual int addPointInTetra(const int /*tetraIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int setPointInTetra(const int /*pointIndex*/, const int /*tetraIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int createPointInTetra(const typename Out::Coord& /*p*/, int /*tetraIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
 
-		virtual int addPointInCube(const int /*cubeIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int setPointInCube(const int /*pointIndex*/, const int /*cubeIndex*/, const SReal* /*baryCoords*/) {return 0;}
-		virtual int createPointInCube(const typename Out::Coord& /*p*/, int /*cubeIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
+	virtual int addPointInCube(const int /*cubeIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int setPointInCube(const int /*pointIndex*/, const int /*cubeIndex*/, const SReal* /*baryCoords*/) {return 0;}
+	virtual int createPointInCube(const typename Out::Coord& /*p*/, int /*cubeIndex*/, const typename In::VecCoord* /*points*/) {return 0;}
 
-		virtual void setToTopology( topology::PointSetTopologyContainer* toTopology) {this->toTopology = toTopology;};
-		const topology::PointSetTopologyContainer *getToTopology() const {return toTopology;};
+	virtual void setToTopology( topology::PointSetTopologyContainer* toTopology) {this->toTopology = toTopology;};
+	const topology::PointSetTopologyContainer *getToTopology() const {return toTopology;};
 
 protected:
-		TopologyBarycentricMapper(core::topology::BaseMeshTopology* fromTopology, topology::PointSetTopologyContainer* toTopology = NULL)
+	TopologyBarycentricMapper(core::topology::BaseMeshTopology* fromTopology, topology::PointSetTopologyContainer* toTopology = NULL)
 		: fromTopology(fromTopology), toTopology(toTopology)
-		{}
+	{}
 
 protected:
-		core::topology::BaseMeshTopology* fromTopology;
-		topology::PointSetTopologyContainer* toTopology;
+	core::topology::BaseMeshTopology* fromTopology;
+	topology::PointSetTopologyContainer* toTopology;
 };
+
 
 
 /// Class allowing barycentric mapping computation on a MeshTopology
@@ -244,214 +238,209 @@ public:
 	typedef typename Inherit::Real Real;
 	typedef typename Inherit::OutReal OutReal;
 	typedef typename Inherit::OutDeriv  OutDeriv;
-        typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-        typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
 
 	typedef typename Inherit::InDeriv  InDeriv;
-        typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-        typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
 	typedef typename Inherit::MappingData1D MappingData1D;
 	typedef typename Inherit::MappingData2D MappingData2D;
 	typedef typename Inherit::MappingData3D MappingData3D;
-    
-    enum { NIn = Inherit::NIn };
-    enum { NOut = Inherit::NOut };
-    typedef typename Inherit::MBloc MBloc;
-    typedef typename Inherit::MatrixType MatrixType;
+
+	enum { NIn = Inherit::NIn };
+	enum { NOut = Inherit::NOut };
+	typedef typename Inherit::MBloc MBloc;
+	typedef typename Inherit::MatrixType MatrixType;
 
 protected:
-    void addMatrixContrib(MatrixType* m, int row, int col, Real value)
-    {
-        Inherit::addMatrixContrib(m, row, col, value);
-    }
+	void addMatrixContrib(MatrixType* m, int row, int col, Real value)
+	{
+		Inherit::addMatrixContrib(m, row, col, value);
+	}
 
 	sofa::helper::vector< MappingData1D >  map1d;
 	sofa::helper::vector< MappingData2D >  map2d;
 	sofa::helper::vector< MappingData3D >  map3d;
 
-        helper::ParticleMask *maskFrom;
-        helper::ParticleMask *maskTo;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
 
-    MatrixType* matrixJ;
-    bool updateJ;
+	MatrixType* matrixJ;
+	bool updateJ;
 public:
-    BarycentricMapperMeshTopology(core::topology::BaseMeshTopology* fromTopology,
-                                  topology::PointSetTopologyContainer* toTopology,
-                                  helper::ParticleMask *_maskFrom,
-                                  helper::ParticleMask *_maskTo)
-    : TopologyBarycentricMapper<In,Out>(fromTopology, toTopology),
-      maskFrom(_maskFrom), maskTo(_maskTo),
-      matrixJ(NULL), updateJ(true)
-    {
-    }
+	BarycentricMapperMeshTopology(core::topology::BaseMeshTopology* fromTopology,
+		topology::PointSetTopologyContainer* toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, toTopology),
+		maskFrom(_maskFrom), maskTo(_maskTo),
+		matrixJ(NULL), updateJ(true)
+	{
+	}
 
-    virtual ~BarycentricMapperMeshTopology()
-    {
-        if (matrixJ) delete matrixJ;
-    }
+	virtual ~BarycentricMapperMeshTopology()
+	{
+		if (matrixJ) delete matrixJ;
+	}
 
-	  void clear(int reserve=0);
+	void clear(int reserve=0);
 
-	  int addPointInLine(const int lineIndex, const SReal* baryCoords);
-	  int createPointInLine(const typename Out::Coord& p, int lineIndex, const typename In::VecCoord* points);
+	int addPointInLine(const int lineIndex, const SReal* baryCoords);
+	int createPointInLine(const typename Out::Coord& p, int lineIndex, const typename In::VecCoord* points);
 
-	  int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
-	  int createPointInTriangle(const typename Out::Coord& p, int triangleIndex, const typename In::VecCoord* points);
+	int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
+	int createPointInTriangle(const typename Out::Coord& p, int triangleIndex, const typename In::VecCoord* points);
 
-	  int addPointInQuad(const int quadIndex, const SReal* baryCoords);
-	  int createPointInQuad(const typename Out::Coord& p, int quadIndex, const typename In::VecCoord* points);
+	int addPointInQuad(const int quadIndex, const SReal* baryCoords);
+	int createPointInQuad(const typename Out::Coord& p, int quadIndex, const typename In::VecCoord* points);
 
-	  int addPointInTetra(const int tetraIndex, const SReal* baryCoords);
+	int addPointInTetra(const int tetraIndex, const SReal* baryCoords);
 
-	  int addPointInCube(const int cubeIndex, const SReal* baryCoords);
+	int addPointInCube(const int cubeIndex, const SReal* baryCoords);
 
-	  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
-	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-	  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-    const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
-	  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
-	  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperMeshTopology<In, Out> &b )
-	    {
-	      unsigned int size_vec;
-	      in >> size_vec;
-	      b.map1d.clear();
-	      MappingData1D value1d;
-	      for (unsigned int i=0;i<size_vec;i++)
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperMeshTopology<In, Out> &b )
+	{
+		unsigned int size_vec;
+		in >> size_vec;
+		b.map1d.clear();
+		MappingData1D value1d;
+		for (unsigned int i=0;i<size_vec;i++)
 		{
-		  in >> value1d;
-		  b.map1d.push_back(value1d);
+			in >> value1d;
+			b.map1d.push_back(value1d);
 		}
 
-	      in >> size_vec;
-	      b.map2d.clear();
-	      MappingData2D value2d;
-	      for (unsigned int i=0;i<size_vec;i++)
+		in >> size_vec;
+		b.map2d.clear();
+		MappingData2D value2d;
+		for (unsigned int i=0;i<size_vec;i++)
 		{
-		  in >> value2d;
-		  b.map2d.push_back(value2d);
+			in >> value2d;
+			b.map2d.push_back(value2d);
 		}
 
-	      in >> size_vec;
-	      b.map3d.clear();
-	      MappingData3D value3d;
-	      for (unsigned int i=0;i<size_vec;i++)
+		in >> size_vec;
+		b.map3d.clear();
+		MappingData3D value3d;
+		for (unsigned int i=0;i<size_vec;i++)
 		{
-		  in >> value3d;
-		  b.map3d.push_back(value3d);
+			in >> value3d;
+			b.map3d.push_back(value3d);
 		}
-	      return in;
-	    }
+		return in;
+	}
 
-	  inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperMeshTopology<In, Out> & b ){
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperMeshTopology<In, Out> & b ){
 
-	    out << b.map1d.size();
-	    out << " " ;
-	    out << b.map1d;
-	    out << " " ;
-	    out << b.map2d.size();
-	    out << " " ;
-	    out << b.map2d;
-	    out << " " ;
-	    out << b.map3d.size();
-	    out << " " ;
-	    out << b.map3d;
+		out << b.map1d.size();
+		out << " " ;
+		out << b.map1d;
+		out << " " ;
+		out << b.map2d.size();
+		out << " " ;
+		out << b.map2d;
+		out << " " ;
+		out << b.map3d.size();
+		out << " " ;
+		out << b.map3d;
 
-	    return out;
-	  }
+		return out;
+	}
 
 private:
-		void clear1d(int reserve=0);
-		void clear2d(int reserve=0);
-		void clear3d(int reserve=0);
+	void clear1d(int reserve=0);
+	void clear2d(int reserve=0);
+	void clear3d(int reserve=0);
 
 };
+
+
 
 /// Class allowing barycentric mapping computation on a RegularGridTopology
 template<class In, class Out>
 class BarycentricMapperRegularGridTopology : public TopologyBarycentricMapper<In,Out>
 {
 public:
-    typedef TopologyBarycentricMapper<In,Out> Inherit;
-    typedef typename Inherit::Real Real;
-    typedef typename Inherit::OutReal OutReal;
-    typedef typename Inherit::OutDeriv  OutDeriv;
-    typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-    typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-    typedef typename Inherit::InDeriv  InDeriv;
-    typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-    typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
-    typedef typename Inherit::CubeData CubeData;
-    
-    enum { NIn = Inherit::NIn };
-    enum { NOut = Inherit::NOut };
-    typedef typename Inherit::MBloc MBloc;
-    typedef typename Inherit::MatrixType MatrixType;
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
+	typedef typename Inherit::CubeData CubeData;
+
+	enum { NIn = Inherit::NIn };
+	enum { NOut = Inherit::NOut };
+	typedef typename Inherit::MBloc MBloc;
+	typedef typename Inherit::MatrixType MatrixType;
 
 protected:
-    void addMatrixContrib(MatrixType* m, int row, int col, Real value)
-    {
-        Inherit::addMatrixContrib(m, row, col, value);
-    }
+	void addMatrixContrib(MatrixType* m, int row, int col, Real value)
+	{
+		Inherit::addMatrixContrib(m, row, col, value);
+	}
 
-    sofa::helper::vector<CubeData> map;
-    topology::RegularGridTopology* fromTopology;
-    helper::ParticleMask *maskFrom;
-    helper::ParticleMask *maskTo;
+	sofa::helper::vector<CubeData> map;
+	topology::RegularGridTopology* fromTopology;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
 
-    MatrixType* matrixJ;
-    bool updateJ;
+	MatrixType* matrixJ;
+	bool updateJ;
 
 public:
-    BarycentricMapperRegularGridTopology(topology::RegularGridTopology* fromTopology,
-																				 topology::PointSetTopologyContainer* toTopology,
-                                     helper::ParticleMask *_maskFrom,
-                                     helper::ParticleMask *_maskTo)
-    : Inherit(fromTopology, toTopology),fromTopology(fromTopology),
-      maskFrom(_maskFrom), maskTo(_maskTo),
-      matrixJ(NULL), updateJ(true)
-    {
-    }
+	BarycentricMapperRegularGridTopology(topology::RegularGridTopology* fromTopology,
+		topology::PointSetTopologyContainer* toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: Inherit(fromTopology, toTopology),fromTopology(fromTopology),
+		maskFrom(_maskFrom), maskTo(_maskTo),
+		matrixJ(NULL), updateJ(true)
+	{
+	}
 
-    virtual ~BarycentricMapperRegularGridTopology()
-    {
-        if (matrixJ) delete matrixJ;
-    }
+	virtual ~BarycentricMapperRegularGridTopology()
+	{
+		if (matrixJ) delete matrixJ;
+	}
 
-    void clear(int reserve=0);
+	void clear(int reserve=0);
 
-    bool isEmpty(){return this->map.size() == 0;}
-    void setTopology(topology::RegularGridTopology* _topology){this->fromTopology = _topology;}
-    void setMaskFrom(helper::ParticleMask *m){maskFrom = m;}
-    void setMaskTo  (helper::ParticleMask *m){maskTo = m;}
-    topology::RegularGridTopology *getTopology(){return dynamic_cast<topology::RegularGridTopology *>(this->fromTopology);}
+	bool isEmpty(){return this->map.size() == 0;}
+	void setTopology(topology::RegularGridTopology* _topology){this->fromTopology = _topology;}
+	void setMaskFrom(helper::ParticleMask *m){maskFrom = m;}
+	void setMaskTo  (helper::ParticleMask *m){maskTo = m;}
+	topology::RegularGridTopology *getTopology(){return dynamic_cast<topology::RegularGridTopology *>(this->fromTopology);}
 
-    int addPointInCube(const int cubeIndex, const SReal* baryCoords);
+	int addPointInCube(const int cubeIndex, const SReal* baryCoords);
 
-    void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
-    void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-    void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-    void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-    void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-    const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
-    void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
-    inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperRegularGridTopology<In, Out> &b )
-    {
-        in >> b.map;
-        return in;
-    }
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperRegularGridTopology<In, Out> &b )
+	{
+		in >> b.map;
+		return in;
+	}
 
-    inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperRegularGridTopology<In, Out> & b )
-    {
-        out << b.map;
-        return out;
-    }
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperRegularGridTopology<In, Out> & b )
+	{
+		out << b.map;
+		return out;
+	}
 
 };
+
 
 
 /// Class allowing barycentric mapping computation on a SparseGridTopology
@@ -459,589 +448,570 @@ template<class In, class Out>
 class BarycentricMapperSparseGridTopology : public TopologyBarycentricMapper<In,Out>
 {
 public:
-    typedef TopologyBarycentricMapper<In,Out> Inherit;
-    typedef typename Inherit::Real Real;
-    typedef typename Inherit::OutReal OutReal;
-    typedef typename Inherit::OutDeriv  OutDeriv;
-    typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-    typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-    typedef typename Inherit::InDeriv  InDeriv;
-    typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-    typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
 
-    typedef typename Inherit::CubeData CubeData;
+	typedef typename Inherit::CubeData CubeData;
 
-    enum { NIn = Inherit::NIn };
-    enum { NOut = Inherit::NOut };
-    typedef typename Inherit::MBloc MBloc;
-    typedef typename Inherit::MatrixType MatrixType;
+	enum { NIn = Inherit::NIn };
+	enum { NOut = Inherit::NOut };
+	typedef typename Inherit::MBloc MBloc;
+	typedef typename Inherit::MatrixType MatrixType;
 
 protected:
-    void addMatrixContrib(MatrixType* m, int row, int col, Real value)
-    {
-        Inherit::addMatrixContrib(m, row, col, value);
-    }
+	void addMatrixContrib(MatrixType* m, int row, int col, Real value)
+	{
+		Inherit::addMatrixContrib(m, row, col, value);
+	}
 
-    sofa::helper::vector<CubeData> map;
-    topology::SparseGridTopology* fromTopology;
-    helper::ParticleMask *maskFrom;
-    helper::ParticleMask *maskTo;
+	sofa::helper::vector<CubeData> map;
+	topology::SparseGridTopology* fromTopology;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
 
-    MatrixType* matrixJ;
-    bool updateJ;
+	MatrixType* matrixJ;
+	bool updateJ;
 public:
-    BarycentricMapperSparseGridTopology(topology::SparseGridTopology* fromTopology,
-                                        topology::PointSetTopologyContainer* _toTopology,
-                                        helper::ParticleMask *_maskFrom,
-                                        helper::ParticleMask *_maskTo)
-    : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
-      fromTopology(fromTopology),
-      maskFrom(_maskFrom), maskTo(_maskTo),
-      matrixJ(NULL), updateJ(true)
-    {
-    }
+	BarycentricMapperSparseGridTopology(topology::SparseGridTopology* fromTopology,
+		topology::PointSetTopologyContainer* _toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+		fromTopology(fromTopology),
+		maskFrom(_maskFrom), maskTo(_maskTo),
+		matrixJ(NULL), updateJ(true)
+	{
+	}
 
-    virtual ~BarycentricMapperSparseGridTopology()
-    {
-        if (matrixJ) delete matrixJ;
-    }
+	virtual ~BarycentricMapperSparseGridTopology()
+	{
+		if (matrixJ) delete matrixJ;
+	}
 
-    void clear(int reserve=0);
+	void clear(int reserve=0);
 
-    int addPointInCube(const int cubeIndex, const SReal* baryCoords);
+	int addPointInCube(const int cubeIndex, const SReal* baryCoords);
 
-    void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
-    void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-    void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-    void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-    void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-    const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
-    void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
-    inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperSparseGridTopology<In, Out> &b )
-    {
-	in >> b.map;
-	return in;
-    }
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperSparseGridTopology<In, Out> &b )
+	{
+		in >> b.map;
+		return in;
+	}
 
-    inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperSparseGridTopology<In, Out> & b )
-    {
-	out << b.map;
-	return out;
-    }
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperSparseGridTopology<In, Out> & b )
+	{
+		out << b.map;
+		return out;
+	}
 
 };
 
 
-    /// Base class for barycentric mapping topology-specific mappers. Enables topological changes.
-	class BarycentricMapperDynamicTopology
-	{
-	public:
-		virtual ~BarycentricMapperDynamicTopology() {}
 
-		// handle topology changes in the From topology
-		virtual void handleTopologyChange()=0;
-
-		// handle topology changes in the To topology
-		virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
-										std::list< const core::topology::TopologyChange *>::const_iterator )=0;
-	protected:
-		BarycentricMapperDynamicTopology() {}
-	};
-
-
-    /// Class allowing barycentric mapping computation on a EdgeSetTopology
-    template<class In, class Out>
-      class BarycentricMapperEdgeSetTopology : public TopologyBarycentricMapper<In,Out>,
-												public BarycentricMapperDynamicTopology
-
-      {
-      public:
-		typedef TopologyBarycentricMapper<In,Out> Inherit;
-		typedef typename Inherit::Real Real;
-		typedef typename Inherit::OutReal OutReal;
-                typedef typename Inherit::OutDeriv  OutDeriv;
-                typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-                typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-                typedef typename Inherit::InDeriv  InDeriv;
-                typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-                typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
-		typedef typename Inherit::MappingData1D MappingData;
-
-      protected:
-		topology::PointData< MappingData >  map;
-		topology::EdgeSetTopologyContainer*			_fromContainer;
-		topology::EdgeSetGeometryAlgorithms<In>*	_fromGeomAlgo;
-                helper::ParticleMask *maskFrom;
-                helper::ParticleMask *maskTo;
-
-      public:
-		BarycentricMapperEdgeSetTopology(topology::EdgeSetTopologyContainer* fromTopology,
-																		 topology::PointSetTopologyContainer* _toTopology,
-                                                 helper::ParticleMask *_maskFrom,
-                                                 helper::ParticleMask *_maskTo)
-          : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
-            _fromContainer(fromTopology),
-            _fromGeomAlgo(NULL),
-            maskFrom(_maskFrom), maskTo(_maskTo)
-	    {}
-
-	  virtual ~BarycentricMapperEdgeSetTopology(){}
-
-	  void clear(int reserve=0);
-
-	  int addPointInLine(const int edgeIndex, const SReal* baryCoords);
-	  int createPointInLine(const typename Out::Coord& p, int edgeIndex, const typename In::VecCoord* points);
-
-	  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-	  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-	  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-	  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-	  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-	  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-	  // handle topology changes in the From topology
-	  virtual void handleTopologyChange();
-	  // handle topology changes in the To topology
-	  virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
-										std::list< const core::topology::TopologyChange *>::const_iterator);
-
-	  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperEdgeSetTopology<In, Out> &b )
-	    {
-	      unsigned int size_vec;
-
-	      in >> size_vec;
-		  sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
-		  m.clear();
-
-		  MappingData value;
-	      for (unsigned int i=0;i<size_vec;i++)
-		{
-		  in >> value;
-		  m.push_back(value);
-		}
-		  b.map.endEdit();
-		  return in;
-	    }
-
-	  inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperEdgeSetTopology<In, Out> & b ){
-
-	    out << b.map.getValue().size();
-	    out << " " ;
-	    out << b.map;
-
-	    return out;
-	  }
-
-
-      };
-
-
-	  /// Class allowing barycentric mapping computation on a TriangleSetTopology
-	  template<class In, class Out>
-	  class BarycentricMapperTriangleSetTopology : public TopologyBarycentricMapper<In,Out>,
-												public BarycentricMapperDynamicTopology
-	  {
-	  public:
-		  typedef TopologyBarycentricMapper<In,Out> Inherit;
-		  typedef typename Inherit::Real Real;
-		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-                  typedef typename Inherit::InDeriv  InDeriv;
-                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
-		  typedef typename Inherit::MappingData2D MappingData;
-	  protected:
-		topology::PointData< MappingData >		map;
-		topology::TriangleSetTopologyContainer*			_fromContainer;
-		topology::TriangleSetGeometryAlgorithms<In>*	_fromGeomAlgo;
-                helper::ParticleMask *maskFrom;
-                helper::ParticleMask *maskTo;
-
-	  public:
-                BarycentricMapperTriangleSetTopology(topology::TriangleSetTopologyContainer* fromTopology,
-																										 topology::PointSetTopologyContainer* _toTopology,
-                                                     helper::ParticleMask *_maskFrom,
-                                                     helper::ParticleMask *_maskTo)
-                    : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
-                  _fromContainer(fromTopology),
-                  _fromGeomAlgo(NULL),
-                  maskFrom(_maskFrom), maskTo(_maskTo)
-		{}
-
-		virtual ~BarycentricMapperTriangleSetTopology(){}
-
-		  void clear(int reserve=0);
-
-		  virtual int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
-		  int createPointInTriangle(const typename Out::Coord& p, int triangleIndex, const typename In::VecCoord* points);
-
-		  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-		  // handle topology changes in the From topology
-		  virtual void handleTopologyChange();
-		  // handle topology changes in the To topology
-		  virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
-										std::list< const core::topology::TopologyChange *>::const_iterator);
-
-		  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperTriangleSetTopology<In, Out> &b )
-		  {
-			  unsigned int size_vec;
-
-			  in >> size_vec;
-
-	  		  sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
-			  m.clear();
-			  MappingData value;
-			  for (unsigned int i=0;i<size_vec;i++)
-			  {
-				  in >> value;
-				  m.push_back(value);
-			  }
-			  b.map.endEdit();
-			  return in;
-		  }
-
-		  inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperTriangleSetTopology<In, Out> & b ){
-
-			  out << b.map.getValue().size();
-			  out << " " ;
-			  out << b.map;
-
-			  return out;
-		  }
-
-
-	  };
-
-
-	  /// Class allowing barycentric mapping computation on a QuadSetTopology
-	  template<class In, class Out>
-	  class BarycentricMapperQuadSetTopology : public TopologyBarycentricMapper<In,Out>,
-												public BarycentricMapperDynamicTopology
-	  {
-	  public:
-		  typedef TopologyBarycentricMapper<In,Out> Inherit;
-		  typedef typename Inherit::Real Real;
-		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-                  typedef typename Inherit::InDeriv  InDeriv;
-                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
-		  typedef typename Inherit::MappingData2D MappingData;
-	  protected:
-		topology::PointData< MappingData >  map;
-		topology::QuadSetTopologyContainer*			_fromContainer;
-		topology::QuadSetGeometryAlgorithms<In>*	_fromGeomAlgo;
-                helper::ParticleMask *maskFrom;
-                helper::ParticleMask *maskTo;
-
-	  public:
-		  BarycentricMapperQuadSetTopology(topology::QuadSetTopologyContainer* fromTopology,
-																			 topology::PointSetTopologyContainer* _toTopology,
-                                                     helper::ParticleMask *_maskFrom,
-                                                     helper::ParticleMask *_maskTo)
-                : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
-		_fromContainer(fromTopology),
-		_fromGeomAlgo(NULL),
-                  maskFrom(_maskFrom), maskTo(_maskTo)
-		{}
-
-		virtual ~BarycentricMapperQuadSetTopology(){}
-
-		  void clear(int reserve=0);
-
-		  int addPointInQuad(const int index, const SReal* baryCoords);
-		  int createPointInQuad(const typename Out::Coord& p, int index, const typename In::VecCoord* points);
-
-		  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-		  // handle topology changes in the From topology
-		  virtual void handleTopologyChange();
-		  // handle topology changes in the To topology
-		  virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
-										std::list< const core::topology::TopologyChange *>::const_iterator);
-
-		  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperQuadSetTopology<In, Out> &b )
-		  {
-			  unsigned int size_vec;
-
-			  in >> size_vec;
-  	  		  sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
-			  m.clear();
-			  MappingData value;
-			  for (unsigned int i=0;i<size_vec;i++)
-			  {
-				  in >> value;
-				  m.push_back(value);
-			  }
-			  b.map.endEdit();
-			  return in;
-		  }
-
-		  inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperQuadSetTopology<In, Out> & b ){
-
-			  out << b.map.getValue().size();
-			  out << " " ;
-			  out << b.map;
-
-			  return out;
-		  }
-
-	  };
-
-	  /// Class allowing barycentric mapping computation on a TetrehedronSetTopology
-	  template<class In, class Out>
-	  class BarycentricMapperTetrahedronSetTopology : public TopologyBarycentricMapper<In,Out>,
-													public BarycentricMapperDynamicTopology
-	  {
-	  public:
-		  typedef TopologyBarycentricMapper<In,Out> Inherit;
-		  typedef typename Inherit::Real Real;
-		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-                  typedef typename Inherit::InDeriv  InDeriv;
-                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
-		  typedef typename Inherit::MappingData3D MappingData;
-                  
-                  typedef typename In::VecCoord VecCoord;
-
-                  enum { NIn = Inherit::NIn };
-                  enum { NOut = Inherit::NOut };
-                  typedef typename Inherit::MBloc MBloc;
-                  typedef typename Inherit::MatrixType MatrixType;
-
-	  protected:
-		topology::PointData< MappingData >  map;
-                topology::PointData< MappingData >  mapOrient[3];
-
-                VecCoord actualTetraPosition;
-
-		topology::TetrahedronSetTopologyContainer*			_fromContainer;
-		topology::TetrahedronSetGeometryAlgorithms<In>*	_fromGeomAlgo;
-                helper::ParticleMask *maskFrom;
-                helper::ParticleMask *maskTo;
-
-                MatrixType* matrixJ;
-                bool updateJ;
-
-	  public:
-		  BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* fromTopology, topology::PointSetTopologyContainer* _toTopology,
-                                                     helper::ParticleMask *_maskFrom,
-                                                     helper::ParticleMask *_maskTo)
-                 : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
-		_fromContainer(fromTopology),
-		_fromGeomAlgo(NULL),
-                maskFrom(_maskFrom),
-                maskTo(_maskTo),
-                matrixJ(NULL),
-                updateJ(true)
-		{}
-
-                /*  //IPB
-                BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* topology,
-                                                     helper::ParticleMask *_maskFrom,
-                                                     helper::ParticleMask *_maskTo,
-                                                     core::objectmodel::BaseContext *_mappingContext)
-                 : TopologyBarycentricMapper<In,Out>(topology),
-                _container(topology),
-                _geomAlgo(NULL),
-                  maskFrom(_maskFrom), maskTo(_maskTo),
-                  mappingContext(_mappingContext)
-                {
-                    //mappingContext->get(forceField);
-                }
-                //IPE*/
-
-		virtual ~BarycentricMapperTetrahedronSetTopology(){}
-
-		  void clear(int reserve=0);
-
-		  int addPointInTetra(const int index, const SReal* baryCoords);
-          virtual int addPointOrientationInTetra ( const int /*tetraIndex*/, const Matrix3 /*baryCoorsOrient*/) { return 0; }
-
-		  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-                  virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize) {
-                        return TopologyBarycentricMapper<In,Out>::getJ(outSize, inSize);
-                  }                 
-
-		  // handle topology changes in the From topology
-		  virtual void handleTopologyChange();
-		  // handle topology changes in the To topology
-		  virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
-										std::list< const core::topology::TopologyChange *>::const_iterator);
-
-		  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperTetrahedronSetTopology<In, Out> &b )
-		  {
-			  unsigned int size_vec;
-
-			  in >> size_vec;
-  	  		  sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
-			  m.clear();
-			  MappingData value;
-			  for (unsigned int i=0;i<size_vec;i++)
-			  {
-				  in >> value;
-				  m.push_back(value);
-			  }
-			  b.map.endEdit();
-			  return in;
-		  }
-
-		  inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperTetrahedronSetTopology<In, Out> & b ){
-
-			  out << b.map.getValue().size();
-			  out << " " ;
-			  out << b.map;
-
-			  return out;
-		  }
-	  };
-
-
-	  /// Class allowing barycentric mapping computation on a HexahedronSetTopology
-	  template<class In, class Out>
-	  class BarycentricMapperHexahedronSetTopology : public TopologyBarycentricMapper<In,Out>,
-													public BarycentricMapperDynamicTopology
-	  {
-	  public:
-		  typedef TopologyBarycentricMapper<In,Out> Inherit;
-		  typedef typename Inherit::Real Real;
-		  typedef typename Inherit::OutReal OutReal;
-                  typedef typename Inherit::OutDeriv  OutDeriv;
-                  typedef typename defaulttype::SparseConstraint<OutDeriv> OutSparseConstraint;
-                  typedef typename OutSparseConstraint::const_data_iterator OutConstraintIterator;
-                  typedef typename Inherit::InDeriv  InDeriv;
-                  typedef typename defaulttype::SparseConstraint<InDeriv> InSparseConstraint;
-                  typedef typename InSparseConstraint::const_data_iterator InConstraintIterator;
-		  typedef typename Inherit::MappingData3D MappingData;
-
-
-	  protected:
-		topology::PointData< MappingData >  map;
-		topology::HexahedronSetTopologyContainer*		_fromContainer;
-		topology::HexahedronSetGeometryAlgorithms<In>*	_fromGeomAlgo;
-
-		std::set<int>	_invalidIndex;
-                helper::ParticleMask *maskFrom;
-                helper::ParticleMask *maskTo;
-
-	  public:
-		  BarycentricMapperHexahedronSetTopology()
-                    : TopologyBarycentricMapper<In,Out>(NULL, NULL),_fromContainer(NULL),_fromGeomAlgo(NULL),
-                  maskFrom(NULL), maskTo(NULL)
-		{}
-
-		  BarycentricMapperHexahedronSetTopology(topology::HexahedronSetTopologyContainer* fromTopology,
-																						 topology::PointSetTopologyContainer* _toTopology,
-                                                    helper::ParticleMask *_maskFrom,
-                                                    helper::ParticleMask *_maskTo)
-                 : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
-		_fromContainer(fromTopology),
-		_fromGeomAlgo(NULL),
-                  maskFrom(_maskFrom), maskTo(_maskTo)
-		{}
-
-		virtual ~BarycentricMapperHexahedronSetTopology(){}
-
-		  void clear(int reserve=0);
-
-		  int addPointInCube(const int index, const SReal* baryCoords);
-
-		  int setPointInCube(const int pointIndex, const int cubeIndex, const SReal* baryCoords);
-
-		  void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-		  void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
-		  void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
-		  void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
-		  void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
-		  void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
-
-  		  //-- test mapping partiel
-		  void applyOnePoint( const unsigned int& hexaId, typename Out::VecCoord& out, const typename In::VecCoord& in);
-		  //--
-
-		  // handle topology changes in the From topology
-		  virtual void handleTopologyChange();
-		  // handle topology changes in the To topology
-		  virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
-										std::list< const core::topology::TopologyChange *>::const_iterator);
-                  bool isEmpty(){return this->map.getValue().empty();}
-                  void setTopology(topology::HexahedronSetTopologyContainer* _topology){this->fromTopology = _topology; _fromContainer=_topology;}
-                  void setMaskFrom(helper::ParticleMask *m) {maskFrom = m;}
-                  void setMaskTo(helper::ParticleMask *m) {maskTo = m;}
-		  inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperHexahedronSetTopology<In, Out> &b )
-		  {
-			  unsigned int size_vec;
-
-			  in >> size_vec;
-   	  		  sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
-			  m.clear();
-			  MappingData value;
-			  for (unsigned int i=0;i<size_vec;i++)
-			  {
-				  in >> value;
-				  m.push_back(value);
-			  }
-			  b.map.endEdit();
-			  return in;
-		  }
-
-		  inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperHexahedronSetTopology<In, Out> & b ){
-
-			  out << b.map.getValue().size();
-			  out << " " ;
-			  out << b.map;
-
-			  return out;
-		  }
-	  };
-
-template <class BasicMapping>
-class BarycentricMapping : public BasicMapping
+/// Base class for barycentric mapping topology-specific mappers. Enables topological changes.
+class BarycentricMapperDynamicTopology
 {
 public:
-	SOFA_CLASS(SOFA_TEMPLATE(BarycentricMapping,BasicMapping), BasicMapping);
+	virtual ~BarycentricMapperDynamicTopology() {}
 
-	typedef BasicMapping Inherit;
-	typedef typename Inherit::In In;
-	typedef typename Inherit::Out Out;
-	typedef typename In::DataTypes InDataTypes;
+	// handle topology changes in the From topology
+	virtual void handleTopologyChange()=0;
+
+	// handle topology changes in the To topology
+	virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
+		std::list< const core::topology::TopologyChange *>::const_iterator )=0;
+protected:
+	BarycentricMapperDynamicTopology() {}
+};
+
+
+
+/// Class allowing barycentric mapping computation on a EdgeSetTopology
+template<class In, class Out>
+class BarycentricMapperEdgeSetTopology : public TopologyBarycentricMapper<In,Out>,
+	public BarycentricMapperDynamicTopology
+
+{
+public:
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
+	typedef typename Inherit::MappingData1D MappingData;
+
+protected:
+	topology::PointData< MappingData >  map;
+	topology::EdgeSetTopologyContainer*			_fromContainer;
+	topology::EdgeSetGeometryAlgorithms<In>*	_fromGeomAlgo;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
+
+public:
+	BarycentricMapperEdgeSetTopology(topology::EdgeSetTopologyContainer* fromTopology,
+		topology::PointSetTopologyContainer* _toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+		_fromContainer(fromTopology),
+		_fromGeomAlgo(NULL),
+		maskFrom(_maskFrom), maskTo(_maskTo)
+	{}
+
+	virtual ~BarycentricMapperEdgeSetTopology(){}
+
+	void clear(int reserve=0);
+
+	int addPointInLine(const int edgeIndex, const SReal* baryCoords);
+	int createPointInLine(const typename Out::Coord& p, int edgeIndex, const typename In::VecCoord* points);
+
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	// handle topology changes in the From topology
+	virtual void handleTopologyChange();
+	// handle topology changes in the To topology
+	virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
+		std::list< const core::topology::TopologyChange *>::const_iterator);
+
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperEdgeSetTopology<In, Out> &b )
+	{
+		unsigned int size_vec;
+
+		in >> size_vec;
+		sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
+		m.clear();
+
+		MappingData value;
+		for (unsigned int i=0;i<size_vec;i++)
+		{
+			in >> value;
+			m.push_back(value);
+		}
+		b.map.endEdit();
+		return in;
+	}
+
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperEdgeSetTopology<In, Out> & b ){
+
+		out << b.map.getValue().size();
+		out << " " ;
+		out << b.map;
+
+		return out;
+	}
+};
+
+
+
+/// Class allowing barycentric mapping computation on a TriangleSetTopology
+template<class In, class Out>
+class BarycentricMapperTriangleSetTopology : public TopologyBarycentricMapper<In,Out>,
+	public BarycentricMapperDynamicTopology
+{
+public:
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
+	typedef typename Inherit::MappingData2D MappingData;
+protected:
+	topology::PointData< MappingData >		map;
+	topology::TriangleSetTopologyContainer*			_fromContainer;
+	topology::TriangleSetGeometryAlgorithms<In>*	_fromGeomAlgo;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
+
+public:
+	BarycentricMapperTriangleSetTopology(topology::TriangleSetTopologyContainer* fromTopology,
+		topology::PointSetTopologyContainer* _toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+		_fromContainer(fromTopology),
+		_fromGeomAlgo(NULL),
+		maskFrom(_maskFrom), maskTo(_maskTo)
+	{}
+
+	virtual ~BarycentricMapperTriangleSetTopology(){}
+
+	void clear(int reserve=0);
+
+	virtual int addPointInTriangle(const int triangleIndex, const SReal* baryCoords);
+	int createPointInTriangle(const typename Out::Coord& p, int triangleIndex, const typename In::VecCoord* points);
+
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	// handle topology changes in the From topology
+	virtual void handleTopologyChange();
+	// handle topology changes in the To topology
+	virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
+		std::list< const core::topology::TopologyChange *>::const_iterator);
+
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperTriangleSetTopology<In, Out> &b )
+	{
+		unsigned int size_vec;
+
+		in >> size_vec;
+
+		sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
+		m.clear();
+		MappingData value;
+		for (unsigned int i=0;i<size_vec;i++)
+		{
+			in >> value;
+			m.push_back(value);
+		}
+		b.map.endEdit();
+		return in;
+	}
+
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperTriangleSetTopology<In, Out> & b ){
+
+		out << b.map.getValue().size();
+		out << " " ;
+		out << b.map;
+
+		return out;
+	}
+};
+
+
+
+/// Class allowing barycentric mapping computation on a QuadSetTopology
+template<class In, class Out>
+class BarycentricMapperQuadSetTopology : public TopologyBarycentricMapper<In,Out>,
+	public BarycentricMapperDynamicTopology
+{
+public:
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
+	typedef typename Inherit::MappingData2D MappingData;
+protected:
+	topology::PointData< MappingData >  map;
+	topology::QuadSetTopologyContainer*			_fromContainer;
+	topology::QuadSetGeometryAlgorithms<In>*	_fromGeomAlgo;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
+
+public:
+	BarycentricMapperQuadSetTopology(topology::QuadSetTopologyContainer* fromTopology,
+		topology::PointSetTopologyContainer* _toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+		_fromContainer(fromTopology),
+		_fromGeomAlgo(NULL),
+		maskFrom(_maskFrom), maskTo(_maskTo)
+	{}
+
+	virtual ~BarycentricMapperQuadSetTopology(){}
+
+	void clear(int reserve=0);
+
+	int addPointInQuad(const int index, const SReal* baryCoords);
+	int createPointInQuad(const typename Out::Coord& p, int index, const typename In::VecCoord* points);
+
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	// handle topology changes in the From topology
+	virtual void handleTopologyChange();
+	// handle topology changes in the To topology
+	virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
+		std::list< const core::topology::TopologyChange *>::const_iterator);
+
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperQuadSetTopology<In, Out> &b )
+	{
+		unsigned int size_vec;
+
+		in >> size_vec;
+		sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
+		m.clear();
+		MappingData value;
+		for (unsigned int i=0;i<size_vec;i++)
+		{
+			in >> value;
+			m.push_back(value);
+		}
+		b.map.endEdit();
+		return in;
+	}
+
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperQuadSetTopology<In, Out> & b ){
+
+		out << b.map.getValue().size();
+		out << " " ;
+		out << b.map;
+
+		return out;
+	}
+
+};
+
+
+
+/// Class allowing barycentric mapping computation on a TetrehedronSetTopology
+template<class In, class Out>
+class BarycentricMapperTetrahedronSetTopology : public TopologyBarycentricMapper<In,Out>,
+	public BarycentricMapperDynamicTopology
+{
+public:
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
+	typedef typename Inherit::MappingData3D MappingData;
+
+	typedef typename In::VecCoord VecCoord;
+
+	enum { NIn = Inherit::NIn };
+	enum { NOut = Inherit::NOut };
+	typedef typename Inherit::MBloc MBloc;
+	typedef typename Inherit::MatrixType MatrixType;
+
+protected:
+	topology::PointData< MappingData >  map;
+	topology::PointData< MappingData >  mapOrient[3];
+
+	VecCoord actualTetraPosition;
+
+	topology::TetrahedronSetTopologyContainer*			_fromContainer;
+	topology::TetrahedronSetGeometryAlgorithms<In>*	_fromGeomAlgo;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
+
+	MatrixType* matrixJ;
+	bool updateJ;
+
+public:
+	BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* fromTopology, topology::PointSetTopologyContainer* _toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+		_fromContainer(fromTopology),
+		_fromGeomAlgo(NULL),
+		maskFrom(_maskFrom),
+		maskTo(_maskTo),
+		matrixJ(NULL),
+		updateJ(true)
+	{}
+
+	/*  //IPB
+	BarycentricMapperTetrahedronSetTopology(topology::TetrahedronSetTopologyContainer* topology,
+	helper::ParticleMask *_maskFrom,
+	helper::ParticleMask *_maskTo,
+	core::objectmodel::BaseContext *_mappingContext)
+	: TopologyBarycentricMapper<In,Out>(topology),
+	_container(topology),
+	_geomAlgo(NULL),
+	maskFrom(_maskFrom), maskTo(_maskTo),
+	mappingContext(_mappingContext)
+	{
+	//mappingContext->get(forceField);
+	}
+	//IPE*/
+
+	virtual ~BarycentricMapperTetrahedronSetTopology(){}
+
+	void clear(int reserve=0);
+
+	int addPointInTetra(const int index, const SReal* baryCoords);
+	virtual int addPointOrientationInTetra ( const int /*tetraIndex*/, const Matrix3 /*baryCoorsOrient*/) { return 0; }
+
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize) {
+		return TopologyBarycentricMapper<In,Out>::getJ(outSize, inSize);
+	}                 
+
+	// handle topology changes in the From topology
+	virtual void handleTopologyChange();
+	// handle topology changes in the To topology
+	virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
+		std::list< const core::topology::TopologyChange *>::const_iterator);
+
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperTetrahedronSetTopology<In, Out> &b )
+	{
+		unsigned int size_vec;
+
+		in >> size_vec;
+		sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
+		m.clear();
+		MappingData value;
+		for (unsigned int i=0;i<size_vec;i++)
+		{
+			in >> value;
+			m.push_back(value);
+		}
+		b.map.endEdit();
+		return in;
+	}
+
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperTetrahedronSetTopology<In, Out> & b ){
+
+		out << b.map.getValue().size();
+		out << " " ;
+		out << b.map;
+
+		return out;
+	}
+};
+
+
+
+/// Class allowing barycentric mapping computation on a HexahedronSetTopology
+template<class In, class Out>
+class BarycentricMapperHexahedronSetTopology : public TopologyBarycentricMapper<In,Out>,
+	public BarycentricMapperDynamicTopology
+{
+public:
+	typedef TopologyBarycentricMapper<In,Out> Inherit;
+	typedef typename Inherit::Real Real;
+	typedef typename Inherit::OutReal OutReal;
+	typedef typename Inherit::OutDeriv  OutDeriv;
+	typedef typename Inherit::InDeriv  InDeriv;
+	typedef typename Inherit::MappingData3D MappingData;
+
+
+protected:
+	topology::PointData< MappingData >  map;
+	topology::HexahedronSetTopologyContainer*		_fromContainer;
+	topology::HexahedronSetGeometryAlgorithms<In>*	_fromGeomAlgo;
+
+	std::set<int>	_invalidIndex;
+	helper::ParticleMask *maskFrom;
+	helper::ParticleMask *maskTo;
+
+public:
+	BarycentricMapperHexahedronSetTopology()
+		: TopologyBarycentricMapper<In,Out>(NULL, NULL),_fromContainer(NULL),_fromGeomAlgo(NULL),
+		maskFrom(NULL), maskTo(NULL)
+	{}
+
+	BarycentricMapperHexahedronSetTopology(topology::HexahedronSetTopologyContainer* fromTopology,
+		topology::PointSetTopologyContainer* _toTopology,
+		helper::ParticleMask *_maskFrom,
+		helper::ParticleMask *_maskTo)
+		: TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+		_fromContainer(fromTopology),
+		_fromGeomAlgo(NULL),
+		maskFrom(_maskFrom), maskTo(_maskTo)
+	{}
+
+	virtual ~BarycentricMapperHexahedronSetTopology(){}
+
+	void clear(int reserve=0);
+
+	int addPointInCube(const int index, const SReal* baryCoords);
+
+	int setPointInCube(const int pointIndex, const int cubeIndex, const SReal* baryCoords);
+
+	void init(const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+
+	//-- test mapping partiel
+	void applyOnePoint( const unsigned int& hexaId, typename Out::VecCoord& out, const typename In::VecCoord& in);
+	//--
+
+	// handle topology changes in the From topology
+	virtual void handleTopologyChange();
+	// handle topology changes in the To topology
+	virtual void handlePointEvents(std::list< const core::topology::TopologyChange *>::const_iterator,
+		std::list< const core::topology::TopologyChange *>::const_iterator);
+	bool isEmpty(){return this->map.getValue().empty();}
+	void setTopology(topology::HexahedronSetTopologyContainer* _topology){this->fromTopology = _topology; _fromContainer=_topology;}
+	void setMaskFrom(helper::ParticleMask *m) {maskFrom = m;}
+	void setMaskTo(helper::ParticleMask *m) {maskTo = m;}
+	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperHexahedronSetTopology<In, Out> &b )
+	{
+		unsigned int size_vec;
+
+		in >> size_vec;
+		sofa::helper::vector<MappingData>& m = *(b.map.beginEdit());
+		m.clear();
+		MappingData value;
+		for (unsigned int i=0;i<size_vec;i++)
+		{
+			in >> value;
+			m.push_back(value);
+		}
+		b.map.endEdit();
+		return in;
+	}
+
+	inline friend std::ostream& operator << ( std::ostream& out, const BarycentricMapperHexahedronSetTopology<In, Out> & b ){
+
+		out << b.map.getValue().size();
+		out << " " ;
+		out << b.map;
+
+		return out;
+	}
+};
+
+
+
+template <class TIn, class TOut>
+class BarycentricMapping : public core::Mapping<TIn, TOut>
+{
+public:
+	SOFA_CLASS(SOFA_TEMPLATE2(BarycentricMapping,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut));
+
+    typedef core::Mapping<TIn, TOut> Inherit;
+    typedef TIn In;
+    typedef TOut Out;
+	typedef In InDataTypes;
 	typedef typename InDataTypes::VecCoord InVecCoord;
 	typedef typename InDataTypes::VecDeriv InVecDeriv;
 	typedef typename InDataTypes::Coord InCoord;
 	typedef typename InDataTypes::Deriv InDeriv;
 	typedef typename InDataTypes::Real Real;
-	typedef typename Out::DataTypes OutDataTypes;
+	typedef Out OutDataTypes;
 	typedef typename OutDataTypes::VecCoord OutVecCoord;
 	typedef typename OutDataTypes::VecDeriv OutVecDeriv;
 	typedef typename OutDataTypes::Coord OutCoord;
@@ -1053,8 +1023,6 @@ public:
 	typedef TopologyBarycentricMapper<InDataTypes,OutDataTypes> Mapper;
 	typedef BarycentricMapperRegularGridTopology<InDataTypes, OutDataTypes> RegularGridMapper;
 	typedef BarycentricMapperHexahedronSetTopology<InDataTypes, OutDataTypes> HexaMapper;
-
-	//typedef forcefield::TetrahedronFEMForceField<InDataTypes> TetraFF;
 
 protected:
 
@@ -1069,7 +1037,7 @@ public:
 	Data< bool > useRestPosition;
 
 
-	BarycentricMapping(In* from, Out* to)
+	BarycentricMapping(core::State<In>* from, core::State<Out>* to)
 		: Inherit(from, to), mapper(NULL)
 		, f_grid(new RegularGridMapper(NULL, NULL, NULL, NULL))
 		, f_hexaMapper(new HexaMapper())
@@ -1077,7 +1045,7 @@ public:
 	{
 	}
 
-	BarycentricMapping(In* from, Out* to, Mapper* mapper)
+	BarycentricMapping(core::State<In>* from, core::State<Out>* to, Mapper* mapper)
 		: Inherit(from, to), mapper(mapper)
 		, f_grid(0)
 		, f_hexaMapper(0)
@@ -1092,7 +1060,7 @@ public:
 		}
 	}
 
-	BarycentricMapping(In* from, Out* to, BaseMeshTopology * topology );
+	BarycentricMapping(core::State<In>* from, core::State<Out>* to, BaseMeshTopology * topology );
 
 	virtual ~BarycentricMapping()
 	{
@@ -1104,13 +1072,13 @@ public:
 
 	void reinit();
 
-	void apply( typename Out::VecCoord& out, const typename In::VecCoord& in );
+	void apply(Data< typename Out::VecCoord >& out, const Data< typename In::VecCoord >& in, const core::MechanicalParams *mparams);
 
-	void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in );
+	void applyJ(Data< typename Out::VecDeriv >& out, const Data< typename In::VecDeriv >& in, const core::MechanicalParams *mparams);
 
-	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
+	void applyJT(Data< typename In::VecDeriv >& out, const Data< typename Out::VecDeriv >& in, const core::MechanicalParams *mparams);
 
-	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
+	void applyJT(Data< typename In::MatrixDeriv >& out, const Data< typename Out::MatrixDeriv >& in, const core::ConstraintParams *cparams);
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ();
 
@@ -1119,7 +1087,10 @@ public:
 	// handle topology changes depending on the topology
 	virtual void handleTopologyChange(core::topology::Topology* t);
 
-	TopologyBarycentricMapper<InDataTypes,OutDataTypes>*	getMapper() {return mapper;}
+	TopologyBarycentricMapper<InDataTypes,OutDataTypes> *getMapper() 
+	{
+		return mapper;
+	}
 
 protected:
 	sofa::core::topology::BaseMeshTopology* topology_from;
@@ -1129,120 +1100,84 @@ private:
 	void createMapperFromTopology(BaseMeshTopology * topology);
 };
 
-using sofa::defaulttype::Vec1dTypes;
-using sofa::defaulttype::Vec2dTypes;
+
 using sofa::defaulttype::Vec3dTypes;
-using sofa::defaulttype::Vec1fTypes;
-using sofa::defaulttype::Vec2fTypes;
 using sofa::defaulttype::Vec3fTypes;
-using sofa::defaulttype::ExtVec1fTypes;
-using sofa::defaulttype::ExtVec2fTypes;
 using sofa::defaulttype::ExtVec3fTypes;
-using core::Mapping;
-using core::behavior::MechanicalMapping;
-using core::behavior::MappedModel;
-using core::behavior::State;
-using core::behavior::MechanicalState;
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_BARYCENTRICMAPPING_CPP)
 #ifndef SOFA_FLOAT
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3dTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3dTypes>, MappedModel<Vec3dTypes> > >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3dTypes>, MappedModel<ExtVec3dTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3dTypes>, MappedModel<ExtVec3fTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3dTypes, ExtVec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3dTypes, Vec3dTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3dTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology< Vec3dTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology< Vec3dTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology< Vec3dTypes, ExtVec3fTypes >;
 #endif
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3fTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3fTypes>, MappedModel<Vec3fTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3fTypes>, MappedModel<ExtVec3fTypes> > >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3fTypes>, MappedModel<ExtVec3dTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3fTypes, ExtVec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3fTypes, ExtVec3fTypes >;
-// extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3fTypes, ExtVec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology< Vec3fTypes, ExtVec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology< Vec3fTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology< Vec3fTypes, ExtVec3fTypes >;
 #endif
 #ifndef SOFA_FLOAT
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< MechanicalMapping< MechanicalState<Vec3dTypes>, MechanicalState<Vec3fTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< MechanicalMapping< MechanicalState<Vec3fTypes>, MechanicalState<Vec3dTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3dTypes>, MappedModel<Vec3fTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Mapping< State<Vec3fTypes>, MappedModel<Vec3dTypes> > >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology<Vec3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology<Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapping< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapper< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API TopologyBarycentricMapper< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperRegularGridTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperSparseGridTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperMeshTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperEdgeSetTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTriangleSetTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperQuadSetTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperTetrahedronSetTopology< Vec3fTypes, Vec3dTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology< Vec3dTypes, Vec3fTypes >;
+extern template class SOFA_COMPONENT_MAPPING_API BarycentricMapperHexahedronSetTopology< Vec3fTypes, Vec3dTypes >;
 #endif
 #endif
 #endif

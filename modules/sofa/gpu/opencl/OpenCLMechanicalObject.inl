@@ -449,12 +449,12 @@ template<class TCoord, class TDeriv, class TReal>
 void MechanicalObjectInternalData< gpu::opencl::OpenCLVectorTypes<TCoord,TDeriv,TReal> >::vAlloc(Main* m, VecId v)
 {
 DEBUG_TEXT("*MechanicalObjectInternalData::vAlloc ");
-	if (v.type == VecId::V_COORD && v.index >= VecId::V_FIRST_DYNAMIC_INDEX)
+	if (v.type == sofa::core::V_COORD && v.index >= VecId::V_FIRST_DYNAMIC_INDEX)
 	{
 		VecCoord* vec = m->getVecCoord(v.index);
 		vec->recreate(m->vsize);
 	}
-	else if (v.type == VecId::V_DERIV && v.index >= VecId::V_FIRST_DYNAMIC_INDEX)
+	else if (v.type == sofa::core::V_DERIV && v.index >= VecId::V_FIRST_DYNAMIC_INDEX)
 	{
 		VecDeriv* vec = m->getVecDeriv(v.index);
 		vec->recreate(m->vsize);
@@ -481,7 +481,7 @@ DEBUG_TEXT(" MechanicalObjectInternalData::vOp ");
 		op.a = a;
 		op.b = b;
 		op.f = f;
-		op.size = (a.type == VecId::V_COORD) ? m->getVecCoord(a.index)->size() : m->getVecDeriv(a.index)->size();
+		op.size = (a.type == sofa::core::V_COORD) ? m->getVecCoord(a.index)->size() : m->getVecDeriv(a.index)->size();
 		m->data.preVOp.push_back(op);
 		m->data.preVOp.id = m->data.preVOp.objects().size();
 		m->data.preVOp.objects().push_back(m);
@@ -512,9 +512,9 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp ");
 				for (unsigned int j=0;j<oops.size();++j)
 				{
 
-				ops[nops].res = (oops[j].v.type == VecId::V_COORD) ? o->getVecCoord(v.index)->deviceWrite() : o->getVecDeriv(v.index)->deviceWrite();
-				ops[nops].a   = (oops[j].a.type == VecId::V_COORD) ? o->getVecCoord(a.index)->deviceRead() : o->getVecDeriv(a.index)->deviceRead();
-				ops[nops].b   = (oops[j].b.type == VecId::V_COORD) ? o->getVecCoord(b.index)->deviceRead() : o->getVecDeriv(b.index)->deviceRead();
+				ops[nops].res = (oops[j].v.type == sofa::core::V_COORD) ? o->getVecCoord(v.index)->deviceWrite() : o->getVecDeriv(v.index)->deviceWrite();
+				ops[nops].a   = (oops[j].a.type == sofa::core::V_COORD) ? o->getVecCoord(a.index)->deviceRead() : o->getVecDeriv(a.index)->deviceRead();
+				ops[nops].b   = (oops[j].b.type == sofa::core::V_COORD) ? o->getVecCoord(b.index)->deviceRead() : o->getVecDeriv(b.index)->deviceRead();
 				ops[nops].f   = (Real)oops[j].f;
 				ops[nops].size = oops[j].size;
 				++nops;
@@ -545,7 +545,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 		if (b.isNull())
 		{
 			// v = 0
-			if (v.type == VecId::V_COORD)
+			if (v.type == sofa::core::V_COORD)
 			{
 				VecCoord* vv = m->getVecCoord(v.index);
 				vv->recreate(m->vsize);
@@ -569,7 +569,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 			if (v == b)
 			{
 				// v *= f
-				if (v.type == VecId::V_COORD)
+				if (v.type == sofa::core::V_COORD)
 				{
 					VecCoord* vv = m->getVecCoord(v.index);
 					Kernels::vMEq(vv->size(), vv->deviceWrite(), (Real) f);
@@ -583,7 +583,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 			else
 			{
 				// v = b*f
-				if (v.type == VecId::V_COORD)
+				if (v.type == sofa::core::V_COORD)
 				{
 					VecCoord* vv = m->getVecCoord(v.index);
 					VecCoord* vb = m->getVecCoord(b.index);
@@ -611,7 +611,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 		if (b.isNull())
 		{
 			// v = a
-			if (v.type == VecId::V_COORD)
+			if (v.type == sofa::core::V_COORD)
 			{
 				VecCoord* vv = m->getVecCoord(v.index);
 				VecCoord* va = m->getVecCoord(a.index);
@@ -633,10 +633,10 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 				if (f==1.0)
 				{
 					// v += b
-					if (v.type == VecId::V_COORD)
+					if (v.type == sofa::core::V_COORD)
 					{
 						VecCoord* vv = m->getVecCoord(v.index);
-						if (b.type == VecId::V_COORD)
+						if (b.type == sofa::core::V_COORD)
 						{
 							VecCoord* vb = m->getVecCoord(b.index);
 							vv->resize(vb->size());
@@ -649,7 +649,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 							Kernels::vPEq(vv->size(), vv->deviceWrite(), vb->deviceRead());
 						}
 					}
-					else if (b.type == VecId::V_DERIV)
+					else if (b.type == sofa::core::V_DERIV)
 					{
 						VecDeriv* vv = m->getVecDeriv(v.index);
 						VecDeriv* vb = m->getVecDeriv(b.index);
@@ -666,10 +666,10 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 				else
 				{
 					// v += b*f
-					if (v.type == VecId::V_COORD)
+					if (v.type == sofa::core::V_COORD)
 					{
 						VecCoord* vv = m->getVecCoord(v.index);
-						if (b.type == VecId::V_COORD)
+						if (b.type == sofa::core::V_COORD)
 						{
 							VecCoord* vb = m->getVecCoord(b.index);
 							vv->resize(vb->size());
@@ -682,7 +682,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 							Kernels::vPEqBF(vv->size(), vv->deviceWrite(), vb->deviceRead(), (Real)f);
 						}
 					}
-					else if (b.type == VecId::V_DERIV)
+					else if (b.type == sofa::core::V_DERIV)
 					{
 						VecDeriv* vv = m->getVecDeriv(v.index);
 						VecDeriv* vb = m->getVecDeriv(b.index);
@@ -702,12 +702,12 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 				if (f==1.0)
 				{
 					// v = a+b
-					if (v.type == VecId::V_COORD)
+					if (v.type == sofa::core::V_COORD)
 					{
 						VecCoord* vv = m->getVecCoord(v.index);
 						VecCoord* va = m->getVecCoord(a.index);
 						vv->recreate(va->size());
-						if (b.type == VecId::V_COORD)
+						if (b.type == sofa::core::V_COORD)
 						{
 							VecCoord* vb = m->getVecCoord(b.index);
 							Kernels::vAdd(vv->size(), vv->deviceWrite(), va->deviceRead(), vb->deviceRead());
@@ -718,7 +718,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 							Kernels::vAdd(vv->size(), vv->deviceWrite(), va->deviceRead(), vb->deviceRead());
 						}
 					}
-					else if (b.type == VecId::V_DERIV)
+					else if (b.type == sofa::core::V_DERIV)
 					{
 						VecDeriv* vv = m->getVecDeriv(v.index);
 						VecDeriv* va = m->getVecDeriv(a.index);
@@ -736,12 +736,12 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 				else
 				{
 					// v = a+b*f
-					if (v.type == VecId::V_COORD)
+					if (v.type == sofa::core::V_COORD)
 					{
 						VecCoord* vv = m->getVecCoord(v.index);
 						VecCoord* va = m->getVecCoord(a.index);
 						vv->recreate(va->size());
-						if (b.type == VecId::V_COORD)
+						if (b.type == sofa::core::V_COORD)
 						{
 							VecCoord* vb = m->getVecCoord(b.index);
 							Kernels::vOp(vv->size(), vv->deviceWrite(), va->deviceRead(), vb->deviceRead(), (Real)f);
@@ -752,7 +752,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vOp " );
 							Kernels::vOp(vv->size(), vv->deviceWrite(), va->deviceRead(), vb->deviceRead(), (Real)f);
 						}
 					}
-					else if (b.type == VecId::V_DERIV)
+					else if (b.type == sofa::core::V_DERIV)
 					{
 						VecDeriv* vv = m->getVecDeriv(v.index);
 						VecDeriv* va = m->getVecDeriv(a.index);
@@ -781,8 +781,8 @@ DEBUG_TEXT(" MechanicalObjectInternalData::vMultiOp ");
 
 	if (prefetch) return;
 	// optimize common integration case: v += a*dt, x += v*dt
-	if (ops.size() == 2 && ops[0].second.size() == 2 && ops[0].first == ops[0].second[0].first && ops[0].first.type == VecId::V_DERIV && ops[0].second[1].first.type == VecId::V_DERIV
-					&& ops[1].second.size() == 2 && ops[1].first == ops[1].second[0].first && ops[0].first == ops[1].second[1].first && ops[1].first.type == VecId::V_COORD)
+	if (ops.size() == 2 && ops[0].second.size() == 2 && ops[0].first == ops[0].second[0].first && ops[0].first.type == sofa::core::V_DERIV && ops[0].second[1].first.type == sofa::core::V_DERIV
+					&& ops[1].second.size() == 2 && ops[1].first == ops[1].second[0].first && ops[0].first == ops[1].second[1].first && ops[1].first.type == sofa::core::V_COORD)
 	{
 	VecDeriv* va = m->getVecDeriv(ops[0].second[1].first.index);
 	VecDeriv* vv = m->getVecDeriv(ops[0].first.index);
@@ -795,8 +795,8 @@ DEBUG_TEXT(" MechanicalObjectInternalData::vMultiOp ");
 	Kernels::vIntegrate(n, va->deviceRead(), vv->deviceWrite(), vx->deviceWrite(), (Real)f_v_v, (Real)f_v_a, (Real)f_x_x, (Real)f_x_v);
 	}
 	// optimize common CG step: x += a*p, q -= a*v
-	else if (ops.size() == 2 && ops[0].second.size() == 2 && ops[0].first == ops[0].second[0].first && ops[0].second[0].second == 1.0 && ops[0].first.type == VecId::V_DERIV && ops[0].second[1].first.type == VecId::V_DERIV
-							 && ops[1].second.size() == 2 && ops[1].first == ops[1].second[0].first && ops[1].second[0].second == 1.0 && ops[1].first.type == VecId::V_DERIV && ops[1].second[1].first.type == VecId::V_DERIV)
+	else if (ops.size() == 2 && ops[0].second.size() == 2 && ops[0].first == ops[0].second[0].first && ops[0].second[0].second == 1.0 && ops[0].first.type == sofa::core::V_DERIV && ops[0].second[1].first.type == sofa::core::V_DERIV
+							 && ops[1].second.size() == 2 && ops[1].first == ops[1].second[0].first && ops[1].second[0].second == 1.0 && ops[1].first.type == sofa::core::V_DERIV && ops[1].second[1].first.type == sofa::core::V_DERIV)
 	{
 		VecDeriv* vv1 = m->getVecDeriv(ops[0].second[1].first.index);
 		VecDeriv* vres1 = m->getVecDeriv(ops[0].first.index);
@@ -812,13 +812,13 @@ DEBUG_TEXT(" MechanicalObjectInternalData::vMultiOp ");
 	{
 		const unsigned int n = m->getSize();
 		Kernels::vOp2(n,
-			(ops[0].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].first.index)->deviceWrite() : m->getVecDeriv(ops[0].first.index)->deviceWrite(),
-			(ops[0].second[0].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].second[0].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[0].first.index)->deviceRead(),
-			(ops[0].second[1].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[1].first.index)->deviceRead(),
+			(ops[0].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].first.index)->deviceWrite() : m->getVecDeriv(ops[0].first.index)->deviceWrite(),
+			(ops[0].second[0].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].second[0].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[0].first.index)->deviceRead(),
+			(ops[0].second[1].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[1].first.index)->deviceRead(),
 			ops[0].second[1].second,
-			(ops[1].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].first.index)->deviceWrite() : m->getVecDeriv(ops[1].first.index)->deviceWrite(),
-			(ops[1].second[0].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].second[0].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[0].first.index)->deviceRead(),
-			(ops[1].second[1].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[1].first.index)->deviceRead(),
+			(ops[1].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].first.index)->deviceWrite() : m->getVecDeriv(ops[1].first.index)->deviceWrite(),
+			(ops[1].second[0].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].second[0].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[0].first.index)->deviceRead(),
+			(ops[1].second[1].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[1].first.index)->deviceRead(),
 			ops[1].second[1].second);
 	}
 	// optimize a pair of 4-way accumulations (such as at the end of RK4)
@@ -827,23 +827,23 @@ DEBUG_TEXT(" MechanicalObjectInternalData::vMultiOp ");
 	{
 		const unsigned int n = m->getSize();
 		Kernels::vPEq4BF2(n,
-			(ops[0].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].first.index)->deviceWrite() : m->getVecDeriv(ops[0].first.index)->deviceWrite(),
-			(ops[0].second[1].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[1].first.index)->deviceRead(),
+			(ops[0].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].first.index)->deviceWrite() : m->getVecDeriv(ops[0].first.index)->deviceWrite(),
+			(ops[0].second[1].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[1].first.index)->deviceRead(),
 			ops[0].second[1].second,
-			(ops[0].second[2].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].second[2].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[2].first.index)->deviceRead(),
+			(ops[0].second[2].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].second[2].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[2].first.index)->deviceRead(),
 			ops[0].second[2].second,
-			(ops[0].second[3].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].second[3].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[3].first.index)->deviceRead(),
+			(ops[0].second[3].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].second[3].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[3].first.index)->deviceRead(),
 			ops[0].second[3].second,
-			(ops[0].second[4].first.type == VecId::V_COORD) ? m->getVecCoord(ops[0].second[4].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[4].first.index)->deviceRead(),
+			(ops[0].second[4].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[0].second[4].first.index)->deviceRead() : m->getVecDeriv(ops[0].second[4].first.index)->deviceRead(),
 			ops[0].second[4].second,
-			(ops[1].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].first.index)->deviceWrite() : m->getVecDeriv(ops[1].first.index)->deviceWrite(),
-			(ops[1].second[1].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[1].first.index)->deviceRead(),
+			(ops[1].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].first.index)->deviceWrite() : m->getVecDeriv(ops[1].first.index)->deviceWrite(),
+			(ops[1].second[1].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].second[1].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[1].first.index)->deviceRead(),
 			ops[1].second[1].second,
-			(ops[1].second[2].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].second[2].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[2].first.index)->deviceRead(),
+			(ops[1].second[2].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].second[2].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[2].first.index)->deviceRead(),
 			ops[1].second[2].second,
-			(ops[1].second[3].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].second[3].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[3].first.index)->deviceRead(),
+			(ops[1].second[3].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].second[3].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[3].first.index)->deviceRead(),
 			ops[1].second[3].second,
-			(ops[1].second[4].first.type == VecId::V_COORD) ? m->getVecCoord(ops[1].second[4].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[4].first.index)->deviceRead(),
+			(ops[1].second[4].first.type == sofa::core::V_COORD) ? m->getVecCoord(ops[1].second[4].first.index)->deviceRead() : m->getVecDeriv(ops[1].second[4].first.index)->deviceRead(),
 			ops[1].second[4].second);
 	}
 	else // no optimization for now for other cases
@@ -878,9 +878,9 @@ DEBUG_TEXT(" MechanicalObjectInternalData::vDot ");
 		if (!Kernels::supportMultiVDot()) {DEBUG_TEXT("~MechanicalObjectInternalData::vDot ");return 0.0;} // no kernel available for combining multiple operations
 		m->data.preVDot.a = a;
 		m->data.preVDot.b = b;
-		if (a.type == VecId::V_COORD && b.type == VecId::V_COORD)
+		if (a.type == sofa::core::V_COORD && b.type == sofa::core::V_COORD)
 			m->data.preVDot.size = m->getVecCoord(a.index)->size();
-		else if (a.type == VecId::V_DERIV && b.type == VecId::V_DERIV)
+		else if (a.type == sofa::core::V_DERIV && b.type == sofa::core::V_DERIV)
 			m->data.preVDot.size = m->getVecDeriv(a.index)->size();
 		else {DEBUG_TEXT("~MechanicalObjectInternalData::vDot");return 0.0;} // invalid operation -> ignore prefetching
 		if (m->data.preVDot.size == 0) return 0.0; // empty operation -> ignore prefetching
@@ -908,8 +908,8 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vDot ");
 				{
 					VecId a = objects[i]->data.preVDot.a;
 					VecId b = objects[i]->data.preVDot.b;
-					ops[i].a = (a.type == VecId::V_COORD) ? objects[i]->getVecCoord(a.index)->deviceRead() : objects[i]->getVecDeriv(a.index)->deviceRead();
-					ops[i].b = (b.type == VecId::V_COORD) ? objects[i]->getVecCoord(b.index)->deviceRead() : objects[i]->getVecDeriv(b.index)->deviceRead();
+					ops[i].a = (a.type == sofa::core::V_COORD) ? objects[i]->getVecCoord(a.index)->deviceRead() : objects[i]->getVecDeriv(a.index)->deviceRead();
+					ops[i].b = (b.type == sofa::core::V_COORD) ? objects[i]->getVecCoord(b.index)->deviceRead() : objects[i]->getVecDeriv(b.index)->deviceRead();
 					ops[i].size = objects[i]->data.preVDot.size;
 					results[i] = 0.0;
 				}
@@ -944,7 +944,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vDot ");
 		}
 	}
 	Real r = 0.0f;
-	if (a.type == VecId::V_COORD && b.type == VecId::V_COORD)
+	if (a.type == sofa::core::V_COORD && b.type == sofa::core::V_COORD)
 	{
 		VecCoord* va = m->getVecCoord(a.index);
 		VecCoord* vb = m->getVecCoord(b.index);
@@ -959,7 +959,7 @@ DEBUG_TEXT("~MechanicalObjectInternalData::vDot ");
 						Kernels::vDot(va->size(), &r, va->deviceRead(), vb->deviceRead(), m->data.tmpdot.deviceWrite(), (Real*)(&(m->data.tmpdot.getCached(0))));
 		}
 	}
-	else if (a.type == VecId::V_DERIV && b.type == VecId::V_DERIV)
+	else if (a.type == sofa::core::V_DERIV && b.type == sofa::core::V_DERIV)
 	{
 		VecDeriv* va = m->getVecDeriv(a.index);
 		VecDeriv* vb = m->getVecDeriv(b.index);

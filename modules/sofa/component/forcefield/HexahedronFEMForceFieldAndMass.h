@@ -33,108 +33,109 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace forcefield
-    {
+namespace forcefield
+{
 
-      using namespace sofa::defaulttype;
-      using sofa::helper::vector;
-      using sofa::core::behavior::Mass;
+using namespace sofa::defaulttype;
+using sofa::helper::vector;
+using sofa::core::behavior::Mass;
 
-      /** Compute Finite Element forces based on hexahedral elements including continuum mass matrices
-       */
-      template<class DataTypes>
-      class HexahedronFEMForceFieldAndMass : virtual public Mass<DataTypes>, virtual public HexahedronFEMForceField<DataTypes>
-      {
-      public:
-          SOFA_CLASS2(SOFA_TEMPLATE(HexahedronFEMForceFieldAndMass,DataTypes), SOFA_TEMPLATE(Mass,DataTypes), SOFA_TEMPLATE(HexahedronFEMForceField,DataTypes));
+/** Compute Finite Element forces based on hexahedral elements including continuum mass matrices
+*/
+template<class DataTypes>
+class HexahedronFEMForceFieldAndMass : virtual public Mass<DataTypes>, virtual public HexahedronFEMForceField<DataTypes>
+{
+public:
+	SOFA_CLASS2(SOFA_TEMPLATE(HexahedronFEMForceFieldAndMass,DataTypes), SOFA_TEMPLATE(Mass,DataTypes), SOFA_TEMPLATE(HexahedronFEMForceField,DataTypes));
 
-        typedef HexahedronFEMForceField<DataTypes> HexahedronFEMForceFieldT;
-        typedef Mass<DataTypes> MassT;
+	typedef HexahedronFEMForceField<DataTypes> HexahedronFEMForceFieldT;
+	typedef Mass<DataTypes> MassT;
 
+	typedef typename DataTypes::Real        Real        ;
+	typedef typename DataTypes::Coord       Coord       ;
+	typedef typename DataTypes::Deriv       Deriv       ;
+	typedef typename DataTypes::VecCoord    VecCoord    ;
+	typedef typename DataTypes::VecDeriv    VecDeriv    ;
+	typedef typename DataTypes::VecReal     VecReal     ;
+	typedef VecCoord Vector;
 
-        typedef typename DataTypes::VecCoord VecCoord;
-        typedef typename DataTypes::VecDeriv VecDeriv;
-        typedef VecCoord Vector;
-        typedef typename DataTypes::Coord Coord;
-        typedef typename DataTypes::Deriv Deriv;
-        typedef typename Coord::value_type Real;
+	typedef core::objectmodel::Data<VecDeriv> DataVecDeriv; 
+	typedef core::objectmodel::Data<VecCoord> DataVecCoord; 
+
 	typedef typename HexahedronFEMForceFieldT::Mat33 Mat33;
 	typedef typename HexahedronFEMForceFieldT::Displacement Displacement;
 	typedef typename HexahedronFEMForceFieldT::VecElement VecElement;
 	typedef typename HexahedronFEMForceFieldT::VecElementStiffness VecElementMass;
 	typedef typename HexahedronFEMForceFieldT::ElementStiffness ElementMass;
 	typedef helper::vector<Real> MassVector;
-		
-
-		HexahedronFEMForceFieldAndMass();
 
 
-        virtual void init( );
-		virtual void reinit( );
-		
-		virtual void computeElementMasses( ); ///< compute the mass matrices
-		virtual void computeElementMass( ElementMass &Mass, const helper::fixed_array<Coord,8> &nodes, const int elementIndice, double stiffnessFactor=1.0); ///< compute the mass matrix of an element
-		Real integrateMass( int signx, int signy, int signz, Real l0, Real l1, Real l2 );
+	HexahedronFEMForceFieldAndMass();
 
-        virtual std::string getTemplateName() const;
 
-        // -- Mass interface
-		virtual  void addMDx(VecDeriv& f, const VecDeriv& dx, double factor = 1.0);
+	virtual void init( );
+	virtual void reinit( );
 
-		virtual void addMToMatrix(defaulttype::BaseMatrix * matrix, double mFact, unsigned int &offset);
+	virtual void computeElementMasses( ); ///< compute the mass matrices
+	virtual void computeElementMass( ElementMass &Mass, const helper::fixed_array<Coord,8> &nodes, const int elementIndice, double stiffnessFactor=1.0); ///< compute the mass matrix of an element
+	Real integrateMass( int signx, int signy, int signz, Real l0, Real l1, Real l2 );
 
-        void addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset)
-        {
-            HexahedronFEMForceFieldT::addKToMatrix(mat, k, offset);
-        }
+	virtual std::string getTemplateName() const;
 
-		virtual  void accFromF(VecDeriv& a, const VecDeriv& f);
+	// -- Mass interface
+	virtual  void addMDx(DataVecDeriv& f, const DataVecDeriv& dx, double factor, const core::MechanicalParams* mparams);
 
-		virtual  void addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v);
+	virtual void addMToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams* mparams);
 
-                virtual double getKineticEnergy(const VecDeriv& /*v*/) const  ///< vMv/2 using dof->getV()
-		{serr<<"HexahedronFEMForceFieldAndMass<DataTypes>::getKineticEnergy not yet implemented"<<sendl;return 0;}
+	void addKToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams* mparams)
+	{
+		HexahedronFEMForceFieldT::addKToMatrix(matrix, mparams);
+	}
 
-                virtual double getPotentialEnergy(const VecCoord& /*x*/)  const  ///< Mgx potential in a uniform gravity field, null at origin
-		{serr<<"HexahedronFEMForceFieldAndMass<DataTypes>::getPotentialEnergy not yet implemented"<<sendl;return 0;}
+	virtual  void accFromF(DataVecDeriv& a, const DataVecDeriv& f, const core::MechanicalParams* mparams);
 
-		virtual void addDForce(VecDeriv& df, const VecDeriv& dx);
-		virtual void addDForce(VecDeriv& df, const VecDeriv& dx, double kFactor, double);
+	virtual  void addForce(DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v, const core::MechanicalParams* mparams);
 
-		virtual void addGravityToV(double dt);
+	virtual double getKineticEnergy(const DataVecDeriv& /*v*/, const core::MechanicalParams* ) const  ///< vMv/2 using dof->getV()
+	{serr<<"HexahedronFEMForceFieldAndMass<DataTypes>::getKineticEnergy not yet implemented"<<sendl;return 0;}
 
-		double getElementMass(unsigned int index);
-		// visual model
+	virtual void addDForce(DataVecDeriv& df, const DataVecDeriv& dx, const core::MechanicalParams* mparams);
+	// virtual void addDForce(DataVecDeriv& df, const DataVecDeriv& dx, double kFactor, double);
 
-        virtual void draw();
+	virtual void addGravityToV(DataVecDeriv& d_v, const core::MechanicalParams* mparams);
 
-	    virtual bool addBBox(double* minBBox, double* maxBBox);
+	double getElementMass(unsigned int index);
+	// visual model
 
-		virtual void initTextures() { }
+	virtual void draw();
 
-		virtual void update() { }
-		
-		
-		
-		void setDensity(Real d){_density.setValue( d );}
-		Real getDensity(){return _density.getValue();}
-		
-		
-		
-		  protected :
-			  
-			  Data<VecElementMass> _elementMasses; ///< mass matrices per element
-			  Data<Real> _density;
-			  Data<bool> _lumpedMass;
-			  
-			  MassVector _particleMasses; ///< masses per particle in order to compute gravity
-			  helper::vector<Coord> _lumpedMasses; ///< masses per particle computed by lumping mass matrices
-	  
-	  
-	  };
+	virtual bool addBBox(double* minBBox, double* maxBBox);
+
+	virtual void initTextures() { }
+
+	virtual void update() { }
+
+
+
+	void setDensity(Real d){_density.setValue( d );}
+	Real getDensity(){return _density.getValue();}
+
+
+
+protected :
+
+	Data<VecElementMass> _elementMasses; ///< mass matrices per element
+	Data<Real> _density;
+	Data<bool> _lumpedMass;
+
+	MassVector _particleMasses; ///< masses per particle in order to compute gravity
+	helper::vector<Coord> _lumpedMasses; ///< masses per particle computed by lumping mass matrices
+
+
+};
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELDANDMASS_CPP)
 #pragma warning(disable : 4231)
@@ -152,4 +153,4 @@ extern template class SOFA_COMPONENT_FORCEFIELD_API HexahedronFEMForceFieldAndMa
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONANDMASSFEMFORCEFIELD_H

@@ -623,7 +623,7 @@ static bool RightPressedForMove = false;
 
    
 
-      ColourPickingVisitor cpv(code);
+        ColourPickingVisitor cpv(sofa::core::ExecParams::defaultInstance(), code);
       cpv.execute(sofa::simulation::getSimulation()->getContext() );
 
 	    glMatrixMode(GL_PROJECTION);

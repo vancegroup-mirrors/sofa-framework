@@ -66,12 +66,13 @@ class SubsetContactMapper : public BaseContactMapper<DataTypes>
 public:
     typedef typename DataTypes::Real Real;
     typedef typename DataTypes::Coord Coord;
+	typedef typename DataTypes::VecCoord VecCoord;
     typedef TCollisionModel MCollisionModel;
     typedef typename MCollisionModel::InDataTypes InDataTypes;
     typedef core::behavior::MechanicalState<InDataTypes> InMechanicalState;
     typedef core::behavior::MechanicalState<typename SubsetContactMapper::DataTypes> MMechanicalState;
     typedef component::container::MechanicalObject<typename SubsetContactMapper::DataTypes> MMechanicalObject;
-    typedef mapping::SubsetMapping< core::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
+    typedef mapping::SubsetMapping< InDataTypes, typename SubsetContactMapper::DataTypes > MMapping;
     MCollisionModel* model;
     simulation::Node* child;
     MMapping* mapping;
@@ -114,21 +115,25 @@ public:
         }
         else
         {
-            (*outmodel->getX())[i] = P;
+			helper::WriteAccessor<Data<VecCoord> > d_x = *outmodel->write(core::VecCoordId::position());
+			VecCoord& x = d_x.wref();
+            x[i] = P;
         }
         return i;
     }
 
-    void update()
+	void update()
     {
         if (mapping!=NULL)
         {
-	    if (needInit)
-	    {
-		mapping->init();
-		needInit = false;
-	    }
-            mapping->updateMapping();
+			if (needInit)
+			{
+				mapping->init();
+				needInit = false;
+			}
+
+			((core::BaseMapping*)mapping)->apply(core::VecCoordId::position(), core::ConstVecCoordId::position());
+			((core::BaseMapping*)mapping)->applyJ(core::VecDerivId::velocity(), core::ConstVecDerivId::velocity());
         }
     }
 
@@ -136,12 +141,13 @@ public:
     {
         if (mapping!=NULL)
         {
-	    if (needInit)
-	    {
-		mapping->init();
-		needInit = false;
-	    }
-            mapping->propagateXfree();
+			if (needInit)
+			{
+				mapping->init();
+				needInit = false;
+			}
+
+            ((core::BaseMapping*)mapping)->apply(core::VecCoordId::freePosition(), core::ConstVecCoordId::freePosition());
         }
     }
 

@@ -14,8 +14,8 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_COLLISION
 
 HEADERS += initCollision.h \
-           AddFramePerformer.h \
-           AddFramePerformer.inl \
+#           AddFramePerformer.h \
+#           AddFramePerformer.inl \
            AttachBodyPerformer.h \
            AttachBodyPerformer.inl \
            BaseContactMapper.h \
@@ -93,7 +93,7 @@ HEADERS += initCollision.h \
            TriangleOctreeModel.h \
 
 SOURCES += initCollision.cpp \
-           AddFramePerformer.cpp \
+#           AddFramePerformer.cpp \
            AttachBodyPerformer.cpp \
            BaseContactMapper.cpp \
            BarycentricContactMapper.cpp \

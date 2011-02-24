@@ -28,6 +28,7 @@
 #include <sofa/core/behavior/MasterSolver.h>
 #include <sofa/simulation/common/common.h>
 #include <sofa/simulation/common/Node.h>
+#include <sofa/core/ExecParams.h>
 
 namespace sofa
 {
@@ -58,10 +59,10 @@ public:
     /// @{
 
     /// Activate collision pipeline
-    virtual void computeCollision();
+    virtual void computeCollision(const core::ExecParams* params = core::ExecParams::defaultInstance());
 
     /// Activate OdeSolvers
-    virtual void integrate(double dt);
+    virtual void integrate(double dt, const core::ExecParams* params = core::ExecParams::defaultInstance());
 	
 	protected:
 		typedef simulation::Node::Sequence<core::behavior::OdeSolver> Solvers;

@@ -47,14 +47,15 @@ namespace component
 namespace constraintset
 {
 
+using core::behavior::BaseLMConstraint;
+using core::behavior::ConstraintGroup;
 
-  using core::behavior::BaseLMConstraint;
-  using core::behavior::ConstraintGroup;
 class SOFA_COMPONENT_CONSTRAINTSET_API LMConstraintSolver : public sofa::core::behavior::ConstraintSolver
 {
 protected:
-    typedef sofa::core::VecId VecId;
-    typedef sofa::core::behavior::BaseLMConstraint::ConstOrder ConstOrder;
+   typedef sofa::core::VecId VecId;
+    typedef sofa::core::MultiVecId MultiVecId;
+	typedef sofa::core::ConstraintParams::ConstOrder ConstOrder;
 
     typedef Eigen::Matrix<SReal, Eigen::Dynamic, Eigen::Dynamic> MatrixEigen;
     typedef linearsolver::VectorEigen          VectorEigen;
@@ -74,10 +75,10 @@ protected:
     virtual void reinit(){graphKineticEnergy.setDisplayed(traceKineticEnergy.getValue());};
 
 
-    virtual bool prepareStates(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder);
-    virtual bool buildSystem(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder);
-    virtual bool solveSystem(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder);
-    virtual bool applyCorrection(double dt, VecId, core::behavior::BaseConstraintSet::ConstOrder);
+    virtual bool prepareStates(double dt, MultiVecId, core::ConstraintParams::ConstOrder);
+    virtual bool buildSystem(double dt, MultiVecId, core::ConstraintParams::ConstOrder);
+    virtual bool solveSystem(double dt, MultiVecId, core::ConstraintParams::ConstOrder);
+    virtual bool applyCorrection(double dt, MultiVecId, core::ConstraintParams::ConstOrder);
  
     virtual void handleEvent( core::objectmodel::Event *e);
 
@@ -105,11 +106,11 @@ protected:
     void convertSparseToDense(const SparseMatrixEigen& sparseM, MatrixEigen& out) const;
  protected:
     /// Explore the graph, looking for LMConstraints: each LMConstraint can tell if they need State Propagation in order to compute the right hand term of the system
-    virtual bool needPriorStatePropagation(core::behavior::BaseLMConstraint::ConstOrder order) const;
+    virtual bool needPriorStatePropagation(core::ConstraintParams::ConstOrder order) const;
 
     /// Construct the Right hand term of the system
     virtual void buildRightHandTerm      ( const helper::vector< core::behavior::BaseLMConstraint* > &LMConstraints,
-                                           VectorEigen &c, VecId, ConstOrder Order ) const;
+                                           VectorEigen &c, MultiVecId, ConstOrder Order ) const;
     /// Construct the Inverse of the mass matrix for a set of Dofs
     virtual void buildInverseMassMatrices( const SetDof &setDofs,
                                    DofToMatrix& invMassMatrices);
@@ -120,14 +121,14 @@ protected:
     virtual void buildLeftMatrix         ( const DofToMatrix& invMassMatrices,
                                    DofToMatrix& LMatrices, SparseMatrixEigen &LeftMatrix, DofToMatrix &invMass_Ltrans) const;
     /// Solve the System using a projective Gauss-Seidel algorithm: compute the Lagrange Multipliers Lambda
-    virtual bool solveConstraintSystemUsingGaussSeidel(VecId id, ConstOrder Order,
+    virtual bool solveConstraintSystemUsingGaussSeidel(MultiVecId id, ConstOrder Order,
                                                const helper::vector< core::behavior::BaseLMConstraint* > &LMConstraints, 
                                                const MatrixEigen &W,
                                                const VectorEigen &c,
                                                VectorEigen &Lambda);
 
     /// Compute Kinetic Energy
-    virtual void computeKineticEnergy(VecId id);
+    virtual void computeKineticEnergy(MultiVecId id);
 
     /** Apply the correction to the state corresponding
      * @param id nature of the constraint, and correction to apply
@@ -136,7 +137,7 @@ protected:
      * @param c correction vector
      * @param propageVelocityChange need to propagate the correction done to the velocity for the position
      **/
-    virtual void constraintStateCorrection(VecId id, core::behavior::BaseConstraintSet::ConstOrder order,
+    virtual void constraintStateCorrection(VecId id, core::ConstraintParams::ConstOrder order,
                                            bool isPositionChangesUpdateVelocity,
                                    const SparseMatrixEigen  &invM_Ltrans,
                                    const VectorEigen  &Lambda, 
@@ -155,7 +156,7 @@ protected:
                                  const core::behavior::BaseMass* mass, 
                                  SparseMatrixEigen& matrix) const;
 
-    core::behavior::BaseConstraintSet::ConstOrder orderState;
+    core::ConstraintParams::ConstOrder orderState;
     unsigned int numConstraint;
 
     //Variables used to do the computation

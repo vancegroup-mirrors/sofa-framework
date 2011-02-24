@@ -70,7 +70,7 @@ public:
     typedef core::behavior::MechanicalState<InDataTypes> InMechanicalState;
     typedef core::behavior::MechanicalState<typename IdentityContactMapper::DataTypes> MMechanicalState;
     typedef component::container::MechanicalObject<typename IdentityContactMapper::DataTypes> MMechanicalObject;
-    typedef mapping::IdentityMapping< core::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
+    typedef mapping::IdentityMapping< InDataTypes, typename IdentityContactMapper::DataTypes > MMapping;
     MCollisionModel* model;
     MMapping* mapping;
     
@@ -96,20 +96,21 @@ public:
     {
         return index;
     }
-    
-    void update()
+
+	void update()
     {
         if (mapping!=NULL)
         {
-            mapping->updateMapping();
+			((core::BaseMapping*)mapping)->apply(core::VecCoordId::position(), core::ConstVecCoordId::position());
+			((core::BaseMapping*)mapping)->applyJ(core::VecDerivId::velocity(), core::ConstVecDerivId::velocity());
         }
     }
-    
+
     void updateXfree()
     {
         if (mapping!=NULL)
         {
-            mapping->propagateXfree();
+            ((core::BaseMapping*)mapping)->apply(core::VecCoordId::freePosition(), core::ConstVecCoordId::freePosition());
         }
     }
 };

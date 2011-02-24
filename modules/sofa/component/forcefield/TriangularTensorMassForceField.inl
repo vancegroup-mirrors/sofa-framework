@@ -22,6 +22,9 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
+#ifndef SOFA_COMPONENT_FORCEFIELD_TRIANGULARTENSORMASSFORCEFIELD_INL
+#define SOFA_COMPONENT_FORCEFIELD_TRIANGULARTENSORMASSFORCEFIELD_INL
+
 #include <sofa/component/forcefield/TriangularTensorMassForceField.h>
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
@@ -44,16 +47,13 @@ using namespace	sofa::component::topology;
 using namespace core::topology;
 
 
-
-
-
 using core::topology::BaseMeshTopology;
 typedef BaseMeshTopology::EdgesInTriangle EdgesInTriangle;
 
 template< class DataTypes>
 void TriangularTensorMassForceField<DataTypes>::TriangularTMEdgeCreationFunction(int /*edgeIndex*/, void* param, EdgeRestInformation &ei,
-																				 const Edge& ,  const sofa::helper::vector< unsigned int > &,
-																				 const sofa::helper::vector< double >&)
+	const Edge& ,  const sofa::helper::vector< unsigned int > &,
+	const sofa::helper::vector< double >&)
 {
 	TriangularTensorMassForceField<DataTypes> *ff= (TriangularTensorMassForceField<DataTypes> *)param;
 	if (ff) {
@@ -71,11 +71,11 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMEdgeCreationFunction
 
 template< class DataTypes>
 void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleCreationFunction (const sofa::helper::vector<unsigned int> &triangleAdded, 
-																					  void* param, vector<EdgeRestInformation> &edgeData)
+	void* param, vector<EdgeRestInformation> &edgeData)
 {
 	TriangularTensorMassForceField<DataTypes> *ff= (TriangularTensorMassForceField<DataTypes> *)param;
 	if (ff) {
-		
+
 		unsigned int i,j,k,l,u,v;
 
 		typename DataTypes::Real val1,area,restSquareLength[3],cotangent[3];
@@ -83,7 +83,7 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleCreationFunc
 		typename DataTypes::Real mu=ff->getMu();
 		typename DataTypes::Real lambdastar, mustar;
 		typename DataTypes::Coord point[3],dpk,dpl;
-		
+
 		const typename DataTypes::VecCoord *restPosition=ff->mstate->getX0();
 
 		for (i=0;i<triangleAdded.size();++i) {
@@ -112,7 +112,7 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleCreationFunc
 				cotangent[j]=(restSquareLength[(j+1)%3] +restSquareLength[(j+2)%3]-restSquareLength[j])/(4*area);
 				if (ff->f_printLog.getValue()) {
 					if (cotangent[j]<0) 
-                                          ff->serr<<"negative cotangent["<<triangleAdded[i]<<"]["<<j<<"]"<<ff->sendl;
+						ff->serr<<"negative cotangent["<<triangleAdded[i]<<"]["<<j<<"]"<<ff->sendl;
 				}
 			}
 			for(j=0;j<3;++j){
@@ -147,11 +147,11 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleCreationFunc
 
 template< class DataTypes>
 void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleDestructionFunction (const sofa::helper::vector<unsigned int> &triangleRemoved, 
-																					  void* param, vector<EdgeRestInformation> &edgeData)
+	void* param, vector<EdgeRestInformation> &edgeData)
 {
 	TriangularTensorMassForceField<DataTypes> *ff= (TriangularTensorMassForceField<DataTypes> *)param;
 	if (ff) {
-		
+
 		unsigned int i,j,k,l,u,v;
 
 		typename DataTypes::Real val1,area,restSquareLength[3],cotangent[3];
@@ -159,7 +159,7 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleDestructionF
 		typename DataTypes::Real mu=ff->getMu();
 		typename DataTypes::Real lambdastar, mustar;
 		typename DataTypes::Coord point[3],dpk,dpl;
-		
+
 		const typename DataTypes::VecCoord *restPosition=ff->mstate->getX0();
 
 		for (i=0;i<triangleRemoved.size();++i) {
@@ -188,7 +188,7 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleDestructionF
 				cotangent[j]=(restSquareLength[(j+1)%3] +restSquareLength[(j+2)%3]-restSquareLength[j])/(4*area);
 				if (ff->f_printLog.getValue()) {
 					if (cotangent[j]<0) 
-                                          ff->serr<<"negative cotangent["<<triangleRemoved[i]<<"]["<<j<<"]"<<ff->sendl;
+						ff->serr<<"negative cotangent["<<triangleRemoved[i]<<"]["<<j<<"]"<<ff->sendl;
 				}
 			}
 			for(j=0;j<3;++j){
@@ -223,14 +223,14 @@ void TriangularTensorMassForceField<DataTypes>::TriangularTMTriangleDestructionF
 
 
 template <class DataTypes> TriangularTensorMassForceField<DataTypes>::TriangularTensorMassForceField() 
-: _initialPoints(0) 
-, updateMatrix(true)
-, f_poissonRatio(initData(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
-, f_youngModulus(initData(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
-, lambda(0)
-, mu(0)
-	{
-	}
+	: _initialPoints(0) 
+	, updateMatrix(true)
+	, f_poissonRatio(initData(&f_poissonRatio,(Real)0.3,"poissonRatio","Poisson ratio in Hooke's law"))
+	, f_youngModulus(initData(&f_youngModulus,(Real)1000.,"youngModulus","Young modulus in Hooke's law"))
+	, lambda(0)
+	, mu(0)
+{
+}
 
 template <class DataTypes> void TriangularTensorMassForceField<DataTypes>::handleTopologyChange()
 {
@@ -266,9 +266,9 @@ template <class DataTypes> void TriangularTensorMassForceField<DataTypes>::init(
 
 	if (_initialPoints.size() == 0)
 	{
-	// get restPosition
-	  VecCoord& p = *this->mstate->getX0();
-	  _initialPoints=p;
+		// get restPosition
+		const VecCoord& p = *this->mstate->getX0();
+		_initialPoints=p;
 	}
 
 	int i;
@@ -295,26 +295,20 @@ template <class DataTypes> void TriangularTensorMassForceField<DataTypes>::init(
 	edgeInfo.endEdit();
 }
 
+template <class DataTypes> 
+void TriangularTensorMassForceField<DataTypes>::addForce(DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& /* d_v */, const core::MechanicalParams* /* mparams */)
+{
+	VecDeriv& f = *d_f.beginEdit();
+	const VecCoord& x = d_x.getValue();
 
-template <class DataTypes> 
-    double TriangularTensorMassForceField<DataTypes>::getPotentialEnergy(const VecCoord& /*x*/) const
-{
-	serr<<"TriangularTensorMassForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
-    return 0;
-}
-template <class DataTypes> 
-void TriangularTensorMassForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& /*v*/)
-{
 	unsigned int i,v0,v1;
 	unsigned int nbEdges=_topology->getNbEdges();
-
 	EdgeRestInformation *einfo;
 
 	helper::vector<EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
 
 	Deriv force;
 	Coord dp0,dp1,dp;
-
 
 	for(i=0; i<nbEdges; i++ )
 	{
@@ -330,15 +324,19 @@ void TriangularTensorMassForceField<DataTypes>::addForce(VecDeriv& f, const VecC
 	}
 
 	edgeInfo.endEdit();
+	d_f.endEdit();
 }
 
 
 template <class DataTypes> 
-void TriangularTensorMassForceField<DataTypes>::addDForce(VecDeriv& df, const VecDeriv& dx)
+void TriangularTensorMassForceField<DataTypes>::addDForce(DataVecDeriv& d_df, const DataVecDeriv& d_dx, const core::MechanicalParams* mparams)
 {
+	VecDeriv& df = *d_df.beginEdit();
+	const VecDeriv& dx = d_dx.getValue();
+	double kFactor = mparams->kFactor();
+
 	unsigned int v0,v1;
 	int nbEdges=_topology->getNbEdges();
-
 	EdgeRestInformation *einfo;
 
 	helper::vector<EdgeRestInformation>& edgeInf = *(edgeInfo.beginEdit());
@@ -355,11 +353,12 @@ void TriangularTensorMassForceField<DataTypes>::addDForce(VecDeriv& df, const Ve
 		dp1=dx[v1];
 		dp = dp1-dp0;
 
-		df[v1]+=einfo->DfDx*dp;
-		df[v0]-=einfo->DfDx.transposeMultiply(dp);
+		df[v1]+= (einfo->DfDx*dp) * kFactor;
+		df[v0]-= (einfo->DfDx.transposeMultiply(dp)) * kFactor;
 	}
 
 	edgeInfo.endEdit();
+	d_df.endEdit();
 }
 
 
@@ -368,7 +367,7 @@ void TriangularTensorMassForceField<DataTypes>::updateLameCoefficients()
 {
 	lambda= f_youngModulus.getValue()*f_poissonRatio.getValue()/(1-f_poissonRatio.getValue()*f_poissonRatio.getValue());
 	mu = f_youngModulus.getValue()*(1-f_poissonRatio.getValue())/(1-f_poissonRatio.getValue()*f_poissonRatio.getValue());
-//	serr << "initialized Lame coef : lambda=" <<lambda<< " mu="<<mu<<sendl;
+	//	serr << "initialized Lame coef : lambda=" <<lambda<< " mu="<<mu<<sendl;
 }
 
 
@@ -382,7 +381,7 @@ void TriangularTensorMassForceField<DataTypes>::draw()
 	if (this->getContext()->getShowWireFrame())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	VecCoord& x = *this->mstate->getX();	
+	const VecCoord& x = *this->mstate->getX();	
 	int nbTriangles=_topology->getNbTriangles();
 
 	glDisable(GL_LIGHTING);
@@ -410,6 +409,8 @@ void TriangularTensorMassForceField<DataTypes>::draw()
 
 } // namespace forcefield
 
-} // namespace Components
+} // namespace component
 
-} // namespace Sofa
+} // namespace sofa
+
+#endif //#ifndef SOFA_COMPONENT_FORCEFIELD_TRIANGULARTENSORMASSFORCEFIELD_INL

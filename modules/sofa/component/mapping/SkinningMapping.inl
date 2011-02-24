@@ -26,10 +26,9 @@
 #define SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_INL
 
 #include <sofa/component/mapping/SkinningMapping.h>
-#include <string>
-#include <iostream>
+
 #include <sofa/component/topology/TriangleSetTopologyContainer.h>
-#include <sofa/core/behavior/MechanicalMapping.inl>
+#include <sofa/core/Mapping.inl>
 #include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/helper/gl/Axis.h>
 #include <sofa/helper/gl/Color.h>
@@ -38,6 +37,8 @@
 #include <sofa/helper/io/Mesh.h>
 
 
+#include <string>
+#include <iostream>
 
 namespace sofa
 {
@@ -52,8 +53,8 @@ using namespace sofa::defaulttype;
 using sofa::component::topology::TriangleSetTopologyContainer;
 
 
-template <class BasicMapping>
-SkinningMapping<BasicMapping>::SkinningMapping ( In* from, Out* to )
+template <class TIn, class TOut>
+SkinningMapping<TIn, TOut>::SkinningMapping (core::State<In>* from, core::State<Out>* to )
         : Inherit ( from, to )
         , repartition ( initData ( &repartition,"repartition","repartition between input DOFs and skinned vertices" ) )
         , weights ( initData ( &weights,"weights","weights list for the influences of the references Dofs" ) )
@@ -92,21 +93,22 @@ SkinningMapping<BasicMapping>::SkinningMapping ( In* from, Out* to )
     wheightingTypeOptions.setSelectedItem(WEIGHT_INVDIST_SQUARE);
     wheightingType.setValue(wheightingTypeOptions);
 
-    sofa::helper::OptionsGroup distanceTypeOptions(4,"Euclidian","Geodesic", "Harmonic", "StiffnessDiffusion");
-    distanceTypeOptions.setSelectedItem(DISTANCE_EUCLIDIAN);
-    distanceType.setValue(distanceTypeOptions);
+    sofa::helper::OptionsGroup* distanceTypeOptions = distanceType.beginEdit();
+    distanceTypeOptions->setNames(5,"Euclidian","Geodesic", "Harmonic", "StiffnessDiffusion", "HarmonicWithStiffness");
+    distanceTypeOptions->setSelectedItem(0);
+    distanceType.endEdit();
 }
 
-template <class BasicMapping>
-SkinningMapping<BasicMapping>::~SkinningMapping ()
+template <class TIn, class TOut>
+SkinningMapping<TIn, TOut>::~SkinningMapping ()
 {
 }
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::computeInitPos ( )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::computeInitPos ( )
 {
-    const VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
+    const VecCoord& xto = ( this->toModel->getX0()->size() == 0)?*this->toModel->getX():*this->toModel->getX0();
     const VecInCoord& xfrom = *this->fromModel->getX0();
 
     const vector<int>& m_reps = repartition.getValue();
@@ -121,17 +123,17 @@ void SkinningMapping<BasicMapping>::computeInitPos ( )
             }
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::computeDistances ()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::computeDistances ()
 {
 
     this->getDistances( 0);
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::getDistances( int xfromBegin)
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::getDistances( int xfromBegin)
 {
-    const VecCoord& xto0 = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
+    const VecCoord& xto0 = ( this->toModel->getX0()->size() == 0)?*this->toModel->getX():*this->toModel->getX0();
     const VecInCoord& xfrom0 = *this->fromModel->getX0();
 
     switch ( distanceType.getValue().getSelectedId() )
@@ -157,11 +159,11 @@ void SkinningMapping<BasicMapping>::getDistances( int xfromBegin)
     }
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::sortReferences( vector<int>& references)
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::sortReferences( vector<int>& references)
 {
-    VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
-    VecInCoord& xfrom = *this->fromModel->getX0();
+    const VecCoord& xto = ( this->toModel->getX0()->size() == 0)?*this->toModel->getX():*this->toModel->getX0();
+    const VecInCoord& xfrom = *this->fromModel->getX0();
     const unsigned int& nbRef = nbRefs.getValue();
 
     references.clear();
@@ -185,8 +187,8 @@ void SkinningMapping<BasicMapping>::sortReferences( vector<int>& references)
 }
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::normalizeWeights()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::normalizeWeights()
 {
     const unsigned int xtoSize = this->toModel->getX()->size();
     const unsigned int& nbRef = nbRefs.getValue();
@@ -216,12 +218,12 @@ void SkinningMapping<BasicMapping>::normalizeWeights()
 }
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::init()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::init()
 {
     distanceType.beginEdit()->setSelectedItem(DISTANCE_EUCLIDIAN);
     distanceType.endEdit();
-    VecInCoord& xfrom = *this->fromModel->getX0();
+    const VecInCoord& xfrom = *this->fromModel->getX0();
     if ( this->initPos.empty() && this->toModel!=NULL && computeWeights==true && weights.getValue().size() ==0 )
     {
       /* Temporary remove optimistaion. TODO: reactivate this when the different types will be instanciated
@@ -249,41 +251,41 @@ void SkinningMapping<BasicMapping>::init()
     }
 
 
-    this->BasicMapping::init();
+    Inherit::init();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::clear()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::clear()
 {
     this->initPos.clear();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::setWeightsToHermite()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::setWeightsToHermite()
 {
   wheightingType.beginEdit()->setSelectedItem(WEIGHT_HERMITE);
   wheightingType.endEdit();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::setWeightsToLinear()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::setWeightsToLinear()
 {
   wheightingType.beginEdit()->setSelectedItem(WEIGHT_LINEAR);
   wheightingType.endEdit();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::setWeightsToInvDist()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::setWeightsToInvDist()
 {
   wheightingType.beginEdit()->setSelectedItem(WEIGHT_INVDIST_SQUARE);
   wheightingType.endEdit();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::updateWeights ()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::updateWeights ()
 {
-    VecCoord& xto = ( this->toModel->getX0() == NULL)?*this->toModel->getX():*this->toModel->getX0();
-    VecInCoord& xfrom = *this->fromModel->getX0();
+    const VecCoord& xto = ( this->toModel->getX0()->size() == 0)?*this->toModel->getX():*this->toModel->getX0();
+    const VecInCoord& xfrom = *this->fromModel->getX0();
 
     VVD& m_weights = * ( weights.beginEdit() );
     SVector<SVector<GeoCoord> >& m_dweight = * ( weightGradients.beginEdit());
@@ -449,8 +451,8 @@ void SkinningMapping<BasicMapping>::updateWeights ()
     normalizeWeights();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::setWeightCoefs ( VVD &weights )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::setWeightCoefs ( VVD &weights )
 {
     VVD * m_weights = this->weights.beginEdit();
     m_weights->clear();
@@ -458,8 +460,8 @@ void SkinningMapping<BasicMapping>::setWeightCoefs ( VVD &weights )
     this->weights.endEdit();
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::setRepartition ( vector<int> &rep )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::setRepartition ( vector<int> &rep )
 {
     vector<int> * m_reps = repartition.beginEdit();
     m_reps->clear();
@@ -468,34 +470,34 @@ void SkinningMapping<BasicMapping>::setRepartition ( vector<int> &rep )
 }
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::apply ( typename Out::VecCoord& out, const typename In::VecCoord& in )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::apply ( typename Out::VecCoord& out, const typename In::VecCoord& in )
 {
-  _apply<typename In::DataTypes::Coord>( out, in);
+	_apply< InCoord >(out, in);
 }
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::applyJ ( typename Out::VecDeriv& out, const typename In::VecDeriv& in )
 {
-  _applyJ<typename In::DataTypes::Deriv>( out, in);
+	_applyJ< InDeriv >(out, in);
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::applyJT ( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 {
-  _applyJT<typename In::DataTypes::Deriv>( out, in);
+	_applyJT< InDeriv >(out, in);
 }
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
 {
-  _applyJT_Matrix<typename In::DataTypes::MatrixDeriv>( out, in);
+	_applyJT_Matrix< InMatrixDeriv >( out, in);
 }
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::draw()
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::draw()
 {
     const typename Out::VecCoord& xto = *this->toModel->getX();
     const typename In::VecCoord& xfrom = *this->fromModel->getX();
@@ -591,8 +593,8 @@ void SkinningMapping<BasicMapping>::draw()
 
 
 
-template <class BasicMapping>
-void SkinningMapping<BasicMapping>::getLocalCoord( Coord& result, const typename defaulttype::StdRigidTypes<N, InReal>::Coord& inCoord, const Coord& coord) const
+template <class TIn, class TOut>
+void SkinningMapping<TIn, TOut>::getLocalCoord( Coord& result, const typename defaulttype::StdRigidTypes<N, InReal>::Coord& inCoord, const Coord& coord) const
 {
   result = inCoord.getOrientation().inverseRotate ( coord - inCoord.getCenter() );
 }
@@ -600,10 +602,10 @@ void SkinningMapping<BasicMapping>::getLocalCoord( Coord& result, const typename
 
 
 // Generic Apply (old one in .inl)
-template <class BasicMapping>
+template <class TIn, class TOut>
 template<class TCoord>
-typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::Coord, TCoord > >::type
-SkinningMapping<BasicMapping>::_apply( typename Out::VecCoord& out, const sofa::helper::vector<typename RigidType::Coord>& in)
+typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Coord, TCoord > >::type
+SkinningMapping<TIn, TOut>::_apply( typename Out::VecCoord& out, const sofa::helper::vector<typename RigidType::Coord>& in)
 {
     const vector<int>& m_reps = repartition.getValue();
     const VVD& m_weights = weights.getValue();
@@ -629,13 +631,13 @@ SkinningMapping<BasicMapping>::_apply( typename Out::VecCoord& out, const sofa::
 }
 
 
-template <class BasicMapping>
+template <class TIn, class TOut>
 template<class TDeriv>
-typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::Deriv, TDeriv> >::type SkinningMapping<BasicMapping>::_applyJ( typename Out::VecDeriv& out, const sofa::helper::vector<typename RigidType::Deriv>& in)
+typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, TDeriv> >::type SkinningMapping<TIn, TOut>::_applyJ( typename Out::VecDeriv& out, const sofa::helper::vector<typename RigidType::Deriv>& in)
 {
     const vector<int>& m_reps = repartition.getValue();
     const VVD& m_weights = weights.getValue();
-    VecCoord& xto = *this->toModel->getX();
+    const VecCoord& xto = *this->toModel->getX();
     out.resize ( xto.size() );
     Deriv v,omega;
 
@@ -679,9 +681,9 @@ typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::Deri
 }
 
 
-template <class BasicMapping>
+template <class TIn, class TOut>
 template<class TDeriv>
-typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::Deriv, TDeriv> >::type SkinningMapping<BasicMapping>::_applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in)
+typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::Deriv, TDeriv> >::type SkinningMapping<TIn, TOut>::_applyJT( sofa::helper::vector<typename RigidType::Deriv>& out, const typename Out::VecDeriv& in)
 {
     const vector<int>& m_reps = repartition.getValue();
     const VVD& m_weights = weights.getValue();
@@ -730,9 +732,9 @@ typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::Deri
 }
 
 
-template <class BasicMapping>
+template <class TIn, class TOut>
 template<class TMatrixDeriv>
-typename enable_if<Equal<typename SkinningMapping<BasicMapping>::RigidType::MatrixDeriv, TMatrixDeriv> >::type SkinningMapping<BasicMapping>::_applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in)
+typename enable_if<Equal<typename SkinningMapping<TIn, TOut>::RigidType::MatrixDeriv, TMatrixDeriv> >::type SkinningMapping<TIn, TOut>::_applyJT_Matrix( typename RigidType::MatrixDeriv& out, const typename Out::MatrixDeriv& in)
 {
     const vector<int>& m_reps = repartition.getValue();
     const VVD& m_weights = weights.getValue();

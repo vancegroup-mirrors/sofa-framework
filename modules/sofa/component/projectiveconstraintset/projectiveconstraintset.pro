@@ -26,6 +26,10 @@ HEADERS +=  initProjectiveConstraintSet.h \
            FixedTranslationConstraint.inl \
            HermiteSplineConstraint.h \
            HermiteSplineConstraint.inl \
+           LinearMovementConstraint.h \
+           LinearMovementConstraint.inl \
+           LinearVelocityConstraint.h \
+           LinearVelocityConstraint.inl \
            OscillatorConstraint.h \
            OscillatorConstraint.inl \
            ParabolicConstraint.h \
@@ -33,11 +37,7 @@ HEADERS +=  initProjectiveConstraintSet.h \
            PartialFixedConstraint.h \
            PartialFixedConstraint.inl \
 #          PartialLinearMovementConstraint.h \
-#          PartialLinearMovementConstraint.inl \
-           LinearMovementConstraint.h \
-           LinearMovementConstraint.inl \
-           LinearVelocityConstraint.h \
-           LinearVelocityConstraint.inl
+#          PartialLinearMovementConstraint.inl
 
 SOURCES += initProjectiveConstraintSet.cpp \
            AttachConstraint.cpp \
@@ -46,12 +46,12 @@ SOURCES += initProjectiveConstraintSet.cpp \
            FixedRotationConstraint.cpp \
            FixedTranslationConstraint.cpp \
            HermiteSplineConstraint.cpp \
+           LinearMovementConstraint.cpp \
+           LinearVelocityConstraint.cpp \
            OscillatorConstraint.cpp \
            ParabolicConstraint.cpp \
            PartialFixedConstraint.cpp \
-#          PartialLinearMovementConstraint.cpp \
-           LinearMovementConstraint.cpp  \
-           LinearVelocityConstraint.cpp 
+#          PartialLinearMovementConstraint.cpp
 
 
 

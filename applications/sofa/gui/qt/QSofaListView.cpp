@@ -383,7 +383,7 @@ namespace sofa{
           else
           {
               node->detachFromGraph();
-              node->execute<simulation::DeleteVisitor>();
+              node->execute<simulation::DeleteVisitor>(sofa::core::ExecParams::defaultInstance());
               emit NodeRemoved();
           }
           emit Lock(false);
@@ -593,7 +593,7 @@ namespace sofa{
         if ( node == NULL ) return;
         const SReal conversionDegRad = 3.141592653/180.0;
         Vector3 rotationVector = Vector3(rx,ry,rz)*conversionDegRad;
-        TransformationVisitor transform;
+        TransformationVisitor transform(sofa::core::ExecParams::defaultInstance());
         transform.setTranslation(dx,dy,dz);
         transform.setRotation(rx,ry,rz);
         transform.setScale(scale,scale,scale);

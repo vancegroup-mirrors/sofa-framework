@@ -30,7 +30,7 @@
 #endif
 
 #include <sofa/simulation/common/Visitor.h>
-
+#include <sofa/core/ExecParams.h>
 namespace sofa
 {
 
@@ -41,7 +41,7 @@ class SOFA_SIMULATION_COMMON_API InstrumentVisitor : public Visitor
 {
 
 public:
-	InstrumentVisitor() {}
+	InstrumentVisitor(const core::ExecParams* params) : Visitor(params) {}
 
 	virtual Result processNodeTopDown(simulation::Node* node);
 

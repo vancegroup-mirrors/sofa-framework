@@ -54,7 +54,7 @@ void initOdeSolver()
 ////////// BEGIN CLASS LIST //////////
 SOFA_LINK_CLASS(CentralDifferenceSolver)
 SOFA_LINK_CLASS(EulerImplicitSolver)
-SOFA_LINK_CLASS(NewmarkImplicitSolver)
+//SOFA_LINK_CLASS(NewmarkImplicitSolver)
 SOFA_LINK_CLASS(RungeKutta4)
 SOFA_LINK_CLASS(StaticSolver)
 

@@ -71,7 +71,7 @@ public:
     typedef core::behavior::MechanicalState< InDataTypes> InMechanicalState;
     typedef core::behavior::MechanicalState<  typename BarycentricContactMapper::DataTypes> MMechanicalState;
     typedef component::container::MechanicalObject<typename BarycentricContactMapper::DataTypes> MMechanicalObject;
-    typedef mapping::BarycentricMapping< core::behavior::MechanicalMapping< InMechanicalState, MMechanicalState > > MMapping;
+    typedef mapping::BarycentricMapping< InDataTypes, typename BarycentricContactMapper::DataTypes > MMapping;
     typedef mapping::TopologyBarycentricMapper<InDataTypes, typename BarycentricContactMapper::DataTypes> MMapper;
     MCollisionModel* model;
     MMapping* mapping;
@@ -100,19 +100,20 @@ public:
         }
     }
     
-    void update()
+	void update()
     {
         if (mapping!=NULL)
         {
-            mapping->updateMapping();
+			((core::BaseMapping*)mapping)->apply(core::VecCoordId::position(), core::ConstVecCoordId::position());
+			((core::BaseMapping*)mapping)->applyJ(core::VecDerivId::velocity(), core::ConstVecDerivId::velocity());
         }
     }
-    
+
     void updateXfree()
     {
         if (mapping!=NULL)
         {
-            mapping->propagateXfree();
+            ((core::BaseMapping*)mapping)->apply(core::VecCoordId::freePosition(), core::ConstVecCoordId::freePosition());
         }
     }
 };

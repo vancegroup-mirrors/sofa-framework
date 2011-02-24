@@ -24,8 +24,8 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_BEHAVIOR_INTERACTIONPROJECTIVECONSTRAINTSET_H
-#define SOFA_CORE_BEHAVIOR_INTERACTIONPROJECTIVECONSTRAINTSET_H
+#ifndef SOFA_CORE_BEHAVIOR_BASEINTERACTIONPROJECTIVECONSTRAINTSET_H
+#define SOFA_CORE_BEHAVIOR_BASEINTERACTIONPROJECTIVECONSTRAINTSET_H
 
 #include <sofa/core/behavior/BaseProjectiveConstraintSet.h>
 #include <sofa/core/behavior/BaseMechanicalState.h>
@@ -40,16 +40,16 @@ namespace behavior
 {
 
 /**
- *  \brief InteractionConstraint is a constraint linking several bodies (MechanicalState) together.
+ *  \brief BaseInteractionProjectiveConstraintSet is a constraint linking several bodies (MechanicalState) together.
  *
- *  An InteractionConstraint computes constraints applied to several simulated
+ *  A BaseInteractionProjectiveConstraintSet computes constraints applied to several simulated
  *  bodies given their current positions and velocities.
  *
  */
-class SOFA_CORE_API InteractionProjectiveConstraintSet : public BaseProjectiveConstraintSet
+class SOFA_CORE_API BaseInteractionProjectiveConstraintSet : public BaseProjectiveConstraintSet
 {
 public:
-    SOFA_CLASS(InteractionProjectiveConstraintSet, BaseProjectiveConstraintSet);
+    SOFA_CLASS(BaseInteractionProjectiveConstraintSet, BaseProjectiveConstraintSet);
 
     /// Get the first MechanicalState
     /// \todo Rename to getMechState1()
@@ -68,4 +68,4 @@ public:
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_CORE_BEHAVIOR_BASEINTERACTIONPROJECTIVECONSTRAINTSET_H

@@ -117,10 +117,6 @@ public:
 
 	virtual void draw();
 
-
-	// this constraint is holonomic
-	bool isHolonomic() {return true;}
-
 protected :
     void projectPosition(Coord& x1, Coord& x2, bool /*freeRotations*/, unsigned index) {
         // do nothing if distance between x2 & x1 is bigger than f_minDistance

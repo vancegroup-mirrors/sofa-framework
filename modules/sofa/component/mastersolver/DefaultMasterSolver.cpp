@@ -54,36 +54,36 @@ DefaultMasterSolver::~DefaultMasterSolver()
 {
 }
 
-void DefaultMasterSolver::step(double dt)
+void DefaultMasterSolver::step(double dt, const sofa::core::ExecParams* params)
 {
   if (firstCollision.getValue())
   {
     // First we reset the constraints
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin constraints reset" << sendl;
-    sofa::simulation::MechanicalResetConstraintVisitor().execute(this->getContext());
+    sofa::simulation::MechanicalResetConstraintVisitor(params).execute(this->getContext());
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end constraints reset" << sendl;
     // Then do collision detection and response creation
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin collision" << sendl;
-    computeCollision();
+    computeCollision(params);
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end collision" << sendl;
     // And finally integrate the time step
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
-    integrate(dt);
+    integrate(dt, params);
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
   }
   else
   {
     // First integrate the time step
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
-    integrate(dt);
+    integrate(dt, params);
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
     // Then we reset the constraints
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin constraints reset" << sendl;
-    sofa::simulation::MechanicalResetConstraintVisitor().execute(this->getContext());
+    sofa::simulation::MechanicalResetConstraintVisitor(params).execute(this->getContext());
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end constraints reset" << sendl;
     // Finally do collision detection and response creation
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin collision" << sendl;
-    computeCollision();
+    computeCollision(params);
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end collision" << sendl;
   }
 }

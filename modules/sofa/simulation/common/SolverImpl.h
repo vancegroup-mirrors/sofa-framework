@@ -29,17 +29,21 @@
 #include <sofa/core/behavior/LinearSolver.h>
 #include <sofa/core/behavior/MultiMatrixAccessor.h>
 #include <sofa/simulation/common/common.h>
+#include <sofa/core/VecId.h>
 
+#if 0
 #ifdef SOFA_SMP
-#include <sofa/core/behavior/ParallelMultivector.h>
+#include <sofa/core/behavior/ParallelMultiVec.h>
 using namespace sofa::defaulttype::SharedTypes;
-#endif
+#endif /* SOFA_SMP */
+#endif 
 
 namespace sofa
 {
 
 namespace simulation
 {
+#if 0
 
 class Visitor;
 class MechanicalVisitor;
@@ -51,7 +55,6 @@ class MechanicalVisitor;
 class SOFA_SIMULATION_COMMON_API SolverImpl : public virtual sofa::core::objectmodel::BaseObject
 {
 public:
-    typedef sofa::core::behavior::BaseMechanicalState::VecId VecId;
     typedef std::map<core::objectmodel::BaseContext*, double> MultiNodeDataMap;
 
     SolverImpl();
@@ -73,57 +76,57 @@ public:
     virtual double finish();
 
     /// Allocate a temporary vector
-    virtual VecId v_alloc(VecId::Type t);
+    virtual core::VecId v_alloc(core::VecId::Type t);
     /// Free a previously allocated temporary vector
-    virtual void v_free(VecId v);
+    virtual void v_free(core::VecId v);
 
-    virtual void v_clear(VecId v); ///< v=0
-    virtual void v_eq(VecId v, VecId a); ///< v=a
-    virtual void v_peq(VecId v, VecId a, double f=1.0); ///< v+=f*a
+    virtual void v_clear(core::VecId v); ///< v=0
+    virtual void v_eq(core::VecId v, core::VecId a); ///< v=a
+    virtual void v_peq(core::VecId v, core::VecId a, double f=1.0); ///< v+=f*a
 #ifdef SOFA_SMP
-    virtual void v_peq(VecId v, VecId a, Shared<double> &fSh, double f=1.0); ///< v+=f*a
-    virtual void v_meq(VecId v, VecId a, Shared<double> &fSh); ///< v+=f*a
+    virtual void v_peq(core::VecId v, core::VecId a, Shared<double> &fSh, double f=1.0); ///< v+=f*a
+    virtual void v_meq(core::VecId v, core::VecId a, Shared<double> &fSh); ///< v+=f*a
 #endif
-    virtual void v_teq(VecId v, double f); ///< v*=f
-    virtual void v_op(VecId v, VecId a, VecId b, double f=1.0); ///< v=a+b*f
+    virtual void v_teq(core::VecId v, double f); ///< v*=f
+    virtual void v_op(core::VecId v, core::VecId a, core::VecId b, double f=1.0); ///< v=a+b*f
 #ifdef SOFA_SMP
-    virtual void v_op(VecId v, VecId a, VecId b, Shared<double> &f); ///< v=a+b*f
+    virtual void v_op(core::VecId v, core::VecId a, core::VecId b, Shared<double> &f); ///< v=a+b*f
 #endif
 
-    virtual void v_dot(VecId a, VecId b); ///< a dot b ( get result using finish )
+    virtual void v_dot(core::VecId a, core::VecId b); ///< a dot b ( get result using finish )
 #ifdef SOFA_SMP
-    virtual void v_dot(Shared<double> &result,VecId a, VecId b); ///< a dot b
+    virtual void v_dot(Shared<double> &result,core::VecId a, core::VecId b); ///< a dot b
 #endif
-    virtual void v_threshold(VecId a, double threshold); ///< nullify the values below the given threshold
+    virtual void v_threshold(core::VecId a, double threshold); ///< nullify the values below the given threshold
     /// Propagate the given displacement through all mappings
-    virtual void propagateDx(VecId dx);
+    virtual void propagateDx(core::VecId dx);
     /// Propagate the given displacement through all mappings and reset the current force delta
-    virtual void propagateDxAndResetDf(VecId dx, VecId df);
+    virtual void propagateDxAndResetDf(core::VecId dx, core::VecId df);
     /// Propagate the given position through all mappings
-	virtual void propagateX(VecId x);
+	virtual void propagateX(core::VecId x);
     /// Propagate the given position through all mappings and reset the current force delta
-    virtual void propagateXAndResetF(VecId x, VecId f);
+    virtual void propagateXAndResetF(core::VecId x, core::VecId f);
     /// Apply projective constraints to the given vector
-    virtual void projectResponse(VecId dx, double **W=NULL);
-    virtual void addMdx(VecId res, VecId dx=VecId(), double factor = 1.0); ///< res += factor M.dx
-    virtual void integrateVelocity(VecId res, VecId x, VecId v, double dt); ///< res = x + v.dt
-    virtual void accFromF(VecId a, VecId f); ///< a = M^-1 . f
+    virtual void projectResponse(core::VecId dx, double **W=NULL);
+    virtual void addMdx(core::VecId res, core::VecId dx=core::VecId(), double factor = 1.0); ///< res += factor M.dx
+    virtual void integrateVelocity(core::VecId res, core::VecId x, core::VecId v, double dt); ///< res = x + v.dt
+    virtual void accFromF(core::VecId a, core::VecId f); ///< a = M^-1 . f
 
     /// Compute the current force (given the latest propagated position and velocity)
-    virtual void computeForce(VecId result, bool clear = true, bool accumulate = true);
+    virtual void computeForce(core::VecId result, bool clear = true, bool accumulate = true);
     /// Compute the current force delta (given the latest propagated displacement)
-    virtual void computeDf(VecId df, bool clear = true, bool accumulate = true);
+    virtual void computeDf(core::VecId df, bool clear = true, bool accumulate = true);
     /// Compute the current force delta (given the latest propagated velocity)
-    virtual void computeDfV(VecId df, bool clear = true, bool accumulate = true);
+    virtual void computeDfV(core::VecId df, bool clear = true, bool accumulate = true);
     /// accumulate $ df += (m M + b B + k K) dx $ (given the latest propagated displacement)
-    virtual void addMBKdx(VecId df, double m, double b, double k, bool clear = true, bool accumulate = true);
+    virtual void addMBKdx(core::VecId df, double m, double b, double k, bool clear = true, bool accumulate = true);
     /// accumulate $ df += (m M + b B + k K) velocity $
-    virtual void addMBKv(VecId df, double m, double b, double k, bool clear = true, bool accumulate = true);
+    virtual void addMBKv(core::VecId df, double m, double b, double k, bool clear = true, bool accumulate = true);
     /// Add dt*Gravity to the velocity
-    virtual void addSeparateGravity(double dt, VecId result=VecId::velocity());
+    virtual void addSeparateGravity(double dt, core::VecId result=core::VecId::velocity());
 
-    virtual void computeContactForce(VecId result);
-    virtual void computeContactDf(VecId df);
+    virtual void computeContactForce(core::VecId result);
+    virtual void computeContactDf(core::VecId df);
 
 
     /// @}
@@ -138,8 +141,8 @@ public:
         getMatrixDimension(NULL, NULL, matrix);
     }
 	virtual void addMBK_ToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, double mFact, double bFact, double kFact);
-	virtual void multiVector2BaseVector(VecId src, defaulttype::BaseVector *dest, const sofa::core::behavior::MultiMatrixAccessor* matrix);
-	virtual void multiVectorPeqBaseVector(VecId dest, defaulttype::BaseVector *src, const sofa::core::behavior::MultiMatrixAccessor* matrix);
+	virtual void multiVector2BaseVector(core::VecId src, defaulttype::BaseVector *dest, const sofa::core::behavior::MultiMatrixAccessor* matrix);
+	virtual void multiVectorPeqBaseVector(core::VecId dest, defaulttype::BaseVector *src, const sofa::core::behavior::MultiMatrixAccessor* matrix);
 
     /// @}
 
@@ -147,8 +150,8 @@ public:
     /// @{
 
     /// Dump the content of the given vector.
-    virtual void print( VecId v, std::ostream& out );
-    virtual void printWithElapsedTime( VecId v,  unsigned time, std::ostream& out=std::cerr );
+    virtual void print( core::VecId v, std::ostream& out );
+    virtual void printWithElapsedTime( core::VecId v,  unsigned time, std::ostream& out=std::cerr );
 
     /// @}
 
@@ -214,6 +217,8 @@ protected:
     /// Result of latest v_dot operation
     double result;
 };
+
+#endif
 
 } // namespace simulation
 

@@ -4,30 +4,41 @@
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/common/Visitor.h>
 #include <sofa/core/CollisionModel.h>
+#include <sofa/core/ExecParams.h>
 
-namespace sofa{
-  namespace simulation{
-  
-    /* Launches the drawColourPicking() method of each CollisionModel */
-    class SOFA_SIMULATION_COMMON_API ColourPickingVisitor : public Visitor
-    {
-      public:
-        ColourPickingVisitor(core::CollisionModel::ColourCode Method):method(Method){};
-    void processCollisionModel(simulation::Node* /*node*/, core::CollisionModel* /*o*/); 
+namespace sofa
+{
 
-    virtual Result processNodeTopDown(simulation::Node* node);
+namespace simulation
+{
 
-	    /// Return a category name for this action.
-	    /// Only used for debugging / profiling purposes
-	      virtual const char* getCategoryName() const { return "collision"; }
-        virtual const char* getClassName() const { return "ColourPickingVisitor"; }
-    private:
-      core::CollisionModel::ColourCode method;
-    };
+/* Launches the drawColourPicking() method of each CollisionModel */
+class SOFA_SIMULATION_COMMON_API ColourPickingVisitor : public Visitor
+{
 
-   
-  
-  }
+public:
+
+	ColourPickingVisitor(const core::ExecParams* params, core::CollisionModel::ColourCode Method)
+	:Visitor(params),method(Method)
+	{}
+
+	void processCollisionModel(simulation::Node* /*node*/, core::CollisionModel* /*o*/);
+
+	virtual Result processNodeTopDown(simulation::Node* node);
+
+	/// Return a category name for this action.
+	/// Only used for debugging / profiling purposes
+	virtual const char* getCategoryName() const { return "collision"; }
+	virtual const char* getClassName() const { return "ColourPickingVisitor"; }
+
+private:
+
+	core::CollisionModel::ColourCode method;
+};
+
+
+
+}
 }
 
 

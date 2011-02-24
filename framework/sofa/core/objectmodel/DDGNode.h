@@ -96,10 +96,10 @@ public:
     /// Utility method to call update if necessary. This method should be called before reading of writing the value of this node.
     void updateIfDirty() const
     {
-	if (isDirty())
-	{
-	    const_cast <DDGNode*> (this)->update();
-	}
+		if (isDirty())
+		{
+			const_cast <DDGNode*> (this)->update();
+		}
     }
 
 protected:
@@ -109,22 +109,22 @@ protected:
 
     virtual void doAddInput(DDGNode* n)
     {
-	inputs.push_back(n);
+		inputs.push_back(n);
     }
 
     virtual void doDelInput(DDGNode* n)
     {
-	inputs.remove(n);
+		inputs.remove(n);
     }
 
     virtual void doAddOutput(DDGNode* n)
     {
-	outputs.push_back(n);
+		outputs.push_back(n);
     }
 
     virtual void doDelOutput(DDGNode* n)
     {
-	outputs.remove(n);
+		outputs.remove(n);
     }
 
 private:

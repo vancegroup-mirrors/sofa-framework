@@ -277,7 +277,7 @@ void FixedConstraintInternalData<gpu::cuda::CudaVec3d1Types>::projectResponse(Ma
     { data.addConstraint(this, index); } \
     template<> void FixedConstraint< T >::removeConstraint(unsigned int index) \
     { data.removeConstraint(this, index); } \
-    template<> void FixedConstraint< T >::projectResponse(DataVecDeriv& d_resData, const core::MechanicalParams* /* mparams */) \
+    template<> void FixedConstraint< T >::projectResponse(const core::MechanicalParams* /* mparams */ /* PARAMS FIRST */, DataVecDeriv& d_resData) \
     {  \
 		VecDeriv &resData = *d_resData.beginEdit(); \
 		data.projectResponse(this, resData);  \

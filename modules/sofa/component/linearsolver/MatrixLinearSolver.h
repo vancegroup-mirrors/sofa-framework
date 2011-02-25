@@ -406,7 +406,7 @@ void MatrixLinearSolver<Matrix,Vector>::createGroups(const core::MechanicalParam
         {
             simulation::Node* n = root->child[g];
             double gdim = 0;
-            simulation::MechanicalGetDimensionVisitor(&gdim, mparams).execute(n);
+            simulation::MechanicalGetDimensionVisitor(mparams /* PARAMS FIRST */, &gdim).execute(n);
             if (gdim <= 0) continue;
             groups.push_back(n);
             gData[n].systemSize = (int)gdim;
@@ -418,7 +418,7 @@ void MatrixLinearSolver<Matrix,Vector>::createGroups(const core::MechanicalParam
     {
         groups.clear();
         double dim = 0;
-        simulation::MechanicalGetDimensionVisitor(&dim, mparams).execute(root);
+        simulation::MechanicalGetDimensionVisitor(mparams /* PARAMS FIRST */, &dim).execute(root);
         defaultGroup.systemSize = (int)dim;
     }
     currentNode = root;
@@ -462,7 +462,7 @@ void MatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::Mechanica
     for (unsigned int g=0, nbg = getNbGroups(); g < nbg; ++g) { setGroup(g);
     if (!this->frozen)
     {
-        simulation::common::MechanicalOperations mops(this->getContext(), mparams);
+        simulation::common::MechanicalOperations mops(mparams /* PARAMS FIRST */, this->getContext());
         if (!currentGroup->systemMatrix) currentGroup->systemMatrix = createMatrix();
         currentGroup->matrixAccessor.setGlobalMatrix(currentGroup->systemMatrix);
         currentGroup->matrixAccessor.clear();
@@ -488,7 +488,7 @@ void MatrixLinearSolver<Matrix,Vector>::setSystemRHVector(core::MultiVecDerivId 
 {
     for (unsigned int g=0, nbg = getNbGroups(); g < nbg; ++g) { setGroup(g);
         //this->multiVector2BaseVector(v, currentGroup->systemRHVector, &(currentGroup->matrixAccessor));
-        executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor(v, currentGroup->systemRHVector, &(currentGroup->matrixAccessor)) );
+        executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor(core::ExecParams::defaultInstance(), v, currentGroup->systemRHVector, &(currentGroup->matrixAccessor)) );
     }
 }
 
@@ -498,7 +498,7 @@ void MatrixLinearSolver<Matrix,Vector>::setSystemLHVector(core::MultiVecDerivId 
     for (unsigned int g=0, nbg = getNbGroups(); g < nbg; ++g) { setGroup(g);
     currentGroup->solutionVecId = v;
     //this->multiVector2BaseVector(v, currentGroup->systemLHVector, &(currentGroup->matrixAccessor));
-    executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, currentGroup->systemLHVector, &(currentGroup->matrixAccessor)) );
+    executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( core::ExecParams::defaultInstance(), v, currentGroup->systemLHVector, &(currentGroup->matrixAccessor)) );
     }
 }
 
@@ -516,7 +516,7 @@ void MatrixLinearSolver<Matrix,Vector>::solveSystem()
     {
         //v_clear(currentGroup->solutionVecId);
         //multiVectorPeqBaseVector(currentGroup->solutionVecId, currentGroup->systemLHVector, &(currentGroup->matrixAccessor));
-        executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(currentGroup->solutionVecId, currentGroup->systemLHVector, &(currentGroup->matrixAccessor)) );
+        executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(core::ExecParams::defaultInstance(), currentGroup->solutionVecId, currentGroup->systemLHVector, &(currentGroup->matrixAccessor)) );
     }
     }
 }
@@ -664,7 +664,7 @@ public:
     simulation::common::MechanicalOperations mops;
     GraphScatteredMatrix* matrix;
     TempVectorContainer(MatrixLinearSolver<GraphScatteredMatrix,GraphScatteredVector>* p, const core::ExecParams* params, GraphScatteredMatrix& M, GraphScatteredVector& x, GraphScatteredVector& b)
-    : parent(p), vops(params, p->getContext()), mops(p->getContext(), M.mparams.setExecParams(params)), matrix(&M)
+    : parent(p), vops(params, p->getContext()), mops(M.mparams.setExecParams(params), p->getContext()), matrix(&M)
     {
         x.setOps( &vops );
         b.setOps( &vops );

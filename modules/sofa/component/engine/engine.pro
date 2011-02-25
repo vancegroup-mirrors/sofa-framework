@@ -65,7 +65,10 @@ HEADERS += initEngine.h \
            RigidEngine.h \
            RigidEngine.inl \
            ValuesFromPositions.h \
-           ValuesFromPositions.inl
+           ValuesFromPositions.inl \
+           NormalsFromPoints.h \
+           NormalsFromPoints.inl 
+
 
 SOURCES += initEngine.cpp \
            AverageCoord.cpp \
@@ -93,7 +96,9 @@ SOURCES += initEngine.cpp \
            TextureInterpolation.cpp \
            SubsetTopology.cpp \
            RigidEngine.cpp \
-           ValuesFromPositions.cpp
+           ValuesFromPositions.cpp \
+           NormalsFromPoints.cpp 
+
            
       
 

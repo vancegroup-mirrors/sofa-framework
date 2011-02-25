@@ -61,7 +61,7 @@ bool LCPConstraintSolver::prepareStates(double /*dt*/, MultiVecId id, core::Cons
 	sofa::helper::AdvancedTimer::StepVar vtimer("PrepareStates");
 	// const sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
 	last_lcp = lcp;
-	simulation::MechanicalVOpVisitor((VecId)core::VecDerivId::dx()).setMapped(true).execute( context); //dX=0
+	simulation::MechanicalVOpVisitor(core::ExecParams::defaultInstance(), (VecId)core::VecDerivId::dx()).setMapped(true).execute( context); //dX=0
 	//simulation::MechanicalPropagateDxVisitor(dx_id,true,true).execute( context); //Propagate dX //ignore the mask here
 
 	if( f_printLog.getValue())
@@ -349,7 +349,7 @@ void LCPConstraintSolver::build_LCP()
     sofa::helper::AdvancedTimer::stepBegin("Accumulate Constraint");
 	// mechanical action executed from root node to propagate the constraints
 	simulation::MechanicalResetConstraintVisitor(&cparams).execute(context);
-	simulation::MechanicalAccumulateConstraint(core::MatrixDerivId::holonomicC(), _numConstraints, &cparams).execute(context);
+	simulation::MechanicalAccumulateConstraint(&cparams /* PARAMS FIRST */, core::MatrixDerivId::holonomicC(), _numConstraints).execute(context);
     sofa::helper::AdvancedTimer::stepEnd  ("Accumulate Constraint");
 	_mu = mu.getValue();
     sofa::helper::AdvancedTimer::valSet("numConstraints", _numConstraints);
@@ -358,7 +358,7 @@ void LCPConstraintSolver::build_LCP()
 	lcp->clear(_numConstraints);
 
     sofa::helper::AdvancedTimer::stepBegin("Get Constraint Value");
-	MechanicalGetConstraintValueVisitor(_dFree, &cparams).execute(context);
+	MechanicalGetConstraintValueVisitor(&cparams /* PARAMS FIRST */, _dFree).execute(context);
     sofa::helper::AdvancedTimer::stepEnd("Get Constraint Value");
     //	simulation::MechanicalComputeComplianceVisitor(_W).execute(context);
 
@@ -405,7 +405,7 @@ void LCPConstraintSolver::build_LCP()
     if ((initial_guess.getValue() || multi_grid.getValue() || showLevels.getValue()) && (_numConstraints != 0))
     {
         sofa::helper::AdvancedTimer::stepBegin("Get Constraint Info");
-        MechanicalGetConstraintInfoVisitor(hierarchy_constraintBlockInfo[0], hierarchy_constraintIds[0], hierarchy_constraintPositions[0], hierarchy_constraintDirections[0], hierarchy_constraintAreas[0], &cparams).execute(context);
+        MechanicalGetConstraintInfoVisitor(&cparams /* PARAMS FIRST */, hierarchy_constraintBlockInfo[0], hierarchy_constraintIds[0], hierarchy_constraintPositions[0], hierarchy_constraintDirections[0], hierarchy_constraintAreas[0]).execute(context);
         sofa::helper::AdvancedTimer::stepEnd  ("Get Constraint Info");
         if (initial_guess.getValue())
             computeInitialGuess();
@@ -742,7 +742,7 @@ void LCPConstraintSolver::build_problem_info()
 	// Accumulate Constraints
 
 	simulation::MechanicalResetConstraintVisitor(&cparams).execute(context);
-	simulation::MechanicalAccumulateConstraint(core::MatrixDerivId::holonomicC(), _numConstraints, &cparams ).execute(context);
+	simulation::MechanicalAccumulateConstraint(&cparams /* PARAMS FIRST */, core::MatrixDerivId::holonomicC(), _numConstraints ).execute(context);
     sofa::helper::AdvancedTimer::stepEnd  ("Accumulate Constraint");
 	_mu = mu.getValue();
     sofa::helper::AdvancedTimer::valSet("numConstraints", _numConstraints);
@@ -757,7 +757,7 @@ void LCPConstraintSolver::build_problem_info()
 	//std::cout<<" resize done "  <<std::endl;
 		
     sofa::helper::AdvancedTimer::stepBegin("Get Constraint Value");
-	MechanicalGetConstraintValueVisitor(_dFree, &cparams).execute(context);
+	MechanicalGetConstraintValueVisitor(&cparams /* PARAMS FIRST */, _dFree).execute(context);
     sofa::helper::AdvancedTimer::stepEnd  ("Get Constraint Value");
 
     if (this->f_printLog.getValue()) sout<<"LCPConstraintSolver: "<<_numConstraints<<" constraints, mu = "<<_mu<<sendl;
@@ -788,7 +788,7 @@ void LCPConstraintSolver::build_problem_info()
     if ((initial_guess.getValue() || multi_grid.getValue() || showLevels.getValue()) && (_numConstraints != 0))
     {
         sofa::helper::AdvancedTimer::stepBegin("Get Constraint Info");
-        MechanicalGetConstraintInfoVisitor(hierarchy_constraintBlockInfo[0], hierarchy_constraintIds[0], hierarchy_constraintPositions[0], hierarchy_constraintDirections[0], hierarchy_constraintAreas[0],&cparams).execute(context);
+        MechanicalGetConstraintInfoVisitor(&cparams /* PARAMS FIRST */, hierarchy_constraintBlockInfo[0], hierarchy_constraintIds[0], hierarchy_constraintPositions[0], hierarchy_constraintDirections[0], hierarchy_constraintAreas[0]).execute(context);
         sofa::helper::AdvancedTimer::stepEnd  ("Get Constraint Info");
         if (initial_guess.getValue())
             computeInitialGuess();

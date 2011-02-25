@@ -85,7 +85,7 @@
 			<Node name="LensCapsule">
 				<Object type="MechanicalObject" name="LensCapsuleBM" />
 				<Object type="TriangleSetTopology" fileTopology="Demos/Ophtalmo/data/mesh/eye_lens_capsule_with_hole_2.obj" scale="1.0"/>
-				<Object type="TriangularFEMForceField" name="FEM" youngModulus="50000" poissonRatio="0.45" method="large"/>
+				<Object type="TriangularFEMForceField" name="FEM" youngModulus="300000" poissonRatio="0.45" method="large"/>
 				<Object type="TriangularBendingSprings" name="FEM-Bend" stiffness="100000" damping="100"/>
 				<Object type="UniformMass" totalmass="0.005" />
 
@@ -105,7 +105,7 @@
 				<include href="Objects/TetrahedronSetTopology.xml" />
 				<Object type="ClipPlane" normal="1 0 0" active="false" />
 			<Node>
-				<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="50000" poissonRatio="0.45" method="large" />
+				<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="300000" poissonRatio="0.45" method="large" />
 			</Node>
 				<Object type="UniformMass" totalmass="0.01" />
 		<Object type="EllipsoidForceField" name="EllipsoidForceFieldOnLens" stiffness="-5000" damping="0.1" center="-0.025 5.016 -3.636" vradius="1.45 1.45 0.4"  color="1 0 0 1" />

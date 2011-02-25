@@ -54,7 +54,7 @@ class SOFA_COMPONENT_MASTERSOLVER_API FreeMotionMasterSolver : public sofa::simu
 public:
 	SOFA_CLASS(FreeMotionMasterSolver, sofa::simulation::MasterSolverImpl);
         FreeMotionMasterSolver();
-        void step (double dt, const sofa::core::ExecParams* params);
+        void step (const sofa::core::ExecParams* params /* PARAMS FIRST */, double dt);
         void init();
 
         virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );

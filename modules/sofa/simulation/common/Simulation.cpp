@@ -144,12 +144,12 @@ void Simulation::exportXML ( Node* root, const char* fileName, bool compact )
 					std::ofstream out ( fileName );
                     out << "<?xml version=\"1.0\"?>\n";
 
-					XMLPrintVisitor print ( out,compact, params );
+					XMLPrintVisitor print ( params /* PARAMS FIRST */, out,compact );
 					root->execute ( print );
 				}
 				else
 				{
-					XMLPrintVisitor print ( std::cout,compact, params );
+					XMLPrintVisitor print ( params /* PARAMS FIRST */, std::cout,compact );
 					root->execute ( print );
 				}
 }
@@ -169,7 +169,7 @@ void Simulation::init ( Node* root )
         root->execute<MechanicalPropagatePositionAndVelocityVisitor>(&mparams);
         /*sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
         mparams.x() = xfree;
-        MechanicalPropagatePositionVisitor act(0, xfree, true, &mparams);
+        MechanicalPropagatePositionVisitor act(&mparams   // PARAMS FIRST //, 0, xfree, true);
         root->execute(act);*/
     }
 
@@ -197,7 +197,7 @@ void Simulation::initNode( Node* node)
 		node->execute<MechanicalPropagatePositionAndVelocityVisitor>(&mparams);
 		/*sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
 		mparams.x() = xfree;
-		MechanicalPropagatePositionVisitor act(0, xfree, true, &mparams);
+		MechanicalPropagatePositionVisitor act(&mparams   // PARAMS FIRST //, 0, xfree, true);
 		node->execute(act);*/
 	}
 
@@ -227,7 +227,7 @@ void Simulation::animate ( Node* root, double dt )
     
     {
         AnimateBeginEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
 
@@ -241,7 +241,7 @@ void Simulation::animate ( Node* root, double dt )
     
     AnimateVisitor act(params);
     act.setDt ( mechanicalDt );
-    BehaviorUpdatePositionVisitor beh(root->getDt(), params);
+    BehaviorUpdatePositionVisitor beh(params /* PARAMS FIRST */, root->getDt());
     for( unsigned i=0; i<numMechSteps.getValue(); i++ )
     {
         root->execute ( beh );
@@ -254,7 +254,7 @@ void Simulation::animate ( Node* root, double dt )
     
     {
         AnimateEndEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
 
@@ -264,7 +264,7 @@ void Simulation::animate ( Node* root, double dt )
     sofa::helper::AdvancedTimer::step("UpdateMappingEndEvent");
     {
         UpdateMappingEndEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
     sofa::helper::AdvancedTimer::stepEnd("UpdateMapping");
@@ -290,7 +290,7 @@ void Simulation::updateVisual ( Node* root, double dt )
     sofa::helper::AdvancedTimer::step("UpdateMappingEndEvent");
     {
         UpdateMappingEndEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
     sofa::helper::AdvancedTimer::stepEnd("UpdateMapping");
@@ -379,7 +379,7 @@ void Simulation::updateVisualContext ( Node* root, Node::VISUAL_FLAG FILTER)
 {
     if ( !root ) return;                          
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
-    UpdateVisualContextVisitor vis(FILTER, params);
+    UpdateVisualContextVisitor vis(params /* PARAMS FIRST */, FILTER);
     vis.execute(root);
 }
 /// Render the scene
@@ -389,10 +389,10 @@ void Simulation::draw ( Node* root, helper::gl::VisualParameters* params )
     sofa::core::ExecParams* eparams = sofa::core::ExecParams::defaultInstance();
     if (root->visualManager.empty())
     {
-        VisualDrawVisitor act ( core::VisualModel::Std, eparams );
+        VisualDrawVisitor act ( eparams /* PARAMS FIRST */, core::VisualModel::Std );
         root->execute ( &act );
         
-        VisualDrawVisitor act2 ( core::VisualModel::Transparent, eparams );
+        VisualDrawVisitor act2 ( eparams /* PARAMS FIRST */, core::VisualModel::Transparent );
         root->execute ( &act2 );
     }
     else
@@ -409,10 +409,10 @@ void Simulation::draw ( Node* root, helper::gl::VisualParameters* params )
             }
         if (!rendered) // do the rendering
         {
-            VisualDrawVisitor act ( core::VisualModel::Std, eparams );
+            VisualDrawVisitor act ( eparams /* PARAMS FIRST */, core::VisualModel::Std );
             root->execute ( &act );
             
-            VisualDrawVisitor act2 ( core::VisualModel::Transparent, eparams );
+            VisualDrawVisitor act2 ( eparams /* PARAMS FIRST */, core::VisualModel::Transparent );
             root->execute ( &act2 );
         }
         Node::Sequence<core::VisualManager>::reverse_iterator rbegin = root->visualManager.rbegin(), rend = root->visualManager.rend(), rit;
@@ -442,7 +442,7 @@ void Simulation::exportOBJ ( Node* root, const char* filename, bool exportMTL )
 
     if ( !exportMTL )
     {
-        ExportOBJVisitor act ( &fout, params );
+        ExportOBJVisitor act ( params /* PARAMS FIRST */, &fout );
         root->execute ( &act );
     }
     else
@@ -462,7 +462,7 @@ void Simulation::exportOBJ ( Node* root, const char* filename, bool exportMTL )
         mtl << "# Generated from SOFA Simulation" << std::endl;
         fout << "mtllib "<<mtlfilename<<'\n';
         
-        ExportOBJVisitor act ( &fout,&mtl, params );
+        ExportOBJVisitor act ( params /* PARAMS FIRST */, &fout,&mtl );
         root->execute ( &act );
     }
 }
@@ -471,7 +471,7 @@ void Simulation::dumpState ( Node* root, std::ofstream& out )
 {
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
     out<<root->getTime() <<" ";
-    WriteStateVisitor ( out, params ).execute ( root );
+    WriteStateVisitor ( params /* PARAMS FIRST */, out ).execute ( root );
     out<<endl;
 }
 
@@ -480,7 +480,7 @@ void Simulation::initGnuplot ( Node* root )
 {
     if ( !root ) return;
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
-    InitGnuplotVisitor v(gnuplotDirectory.getFullPath(), params);
+    InitGnuplotVisitor v(params /* PARAMS FIRST */, gnuplotDirectory.getFullPath());
     root->execute( v );
 }
 
@@ -489,7 +489,7 @@ void Simulation::exportGnuplot ( Node* root, double time )
 {
     if ( !root ) return;
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
-    ExportGnuplotVisitor expg ( time, params);
+    ExportGnuplotVisitor expg ( params /* PARAMS FIRST */, time);
     root->execute ( expg );
 }
 

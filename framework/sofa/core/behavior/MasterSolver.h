@@ -64,7 +64,7 @@ public:
     ///
     /// Specify and execute all computations for computing a timestep, such
     /// as one or more collisions and integrations stages.
-    virtual void step(double dt, const core::ExecParams* params=ExecParams::defaultInstance()) = 0;
+    virtual void step(const core::ExecParams* params /* PARAMS FIRST =ExecParams::defaultInstance()*/, double dt) = 0;
 
     /// @name Visitors
     /// These methods provides an abstract view of the mechanical system to animate.
@@ -75,7 +75,7 @@ public:
     virtual void computeCollision(const core::ExecParams* params=ExecParams::defaultInstance()) = 0;
 
     /// Activate OdeSolvers
-    virtual void integrate(double dt, const core::ExecParams* params=ExecParams::defaultInstance()) = 0;
+    virtual void integrate(const core::ExecParams* params /* PARAMS FIRST =ExecParams::defaultInstance()*/, double dt) = 0;
 
     /// @}
 };

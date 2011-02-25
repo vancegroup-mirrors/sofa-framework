@@ -319,7 +319,7 @@ namespace sofa
                 sofa::core::objectmodel::MouseEvent mouseEvent(
                   sofa::core::objectmodel::MouseEvent::Reset);
                 if (groot)
-                  groot->propagateEvent(&mouseEvent);
+                  groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
               }
             default:
               {
@@ -331,7 +331,7 @@ namespace sofa
             {
               sofa::core::objectmodel::KeyreleasedEvent keyEvent(e->key());
               if (groot)
-                groot->propagateEvent(&keyEvent);
+                groot->propagateEvent(core::ExecParams::defaultInstance(), &keyEvent);
             }
           
         }
@@ -351,7 +351,7 @@ namespace sofa
           getQWidget()->update();
 
 		  if (groot)
-			  groot->propagateEvent(&me);
+			  groot->propagateEvent(core::ExecParams::defaultInstance(), &me);
         }
 
         void SofaViewer::mouseMoveEvent ( QMouseEvent *e )
@@ -363,7 +363,7 @@ namespace sofa
           getQWidget()->update();
 
 		  if (groot)
-			  groot->propagateEvent(&me);
+			  groot->propagateEvent(core::ExecParams::defaultInstance(), &me);
         }
 
         void SofaViewer::mousePressEvent ( QMouseEvent * e)
@@ -380,7 +380,7 @@ namespace sofa
 
           getQWidget()->update();
 		  if (groot)
-			  groot->propagateEvent(mEvent);
+			  groot->propagateEvent(core::ExecParams::defaultInstance(), mEvent);
         }
 
         void SofaViewer::mouseReleaseEvent ( QMouseEvent * e)
@@ -397,7 +397,7 @@ namespace sofa
 
           getQWidget()->update();
 		  if (groot)
-			  groot->propagateEvent(mEvent);
+			  groot->propagateEvent(core::ExecParams::defaultInstance(), mEvent);
         }
 
         void SofaViewer::mouseEvent(QMouseEvent *e)
@@ -608,21 +608,21 @@ namespace sofa
                 {
                   sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::LeftPressed, eventX, eventY);
                   if (groot)
-                    groot->propagateEvent(&mouseEvent);
+                    groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                 }
                 // Mouse right button is pushed
                 else if (e->button() == Qt::RightButton)
                 {
                   sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::RightPressed, eventX, eventY);
                   if (groot)
-                    groot->propagateEvent(&mouseEvent);
+                    groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                 }
                 // Mouse middle button is pushed
                 else if (e->button() == Qt::MidButton)
                 {
                   sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::MiddlePressed, eventX, eventY);
                   if (groot)
-                    groot->propagateEvent(&mouseEvent);
+                    groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                 }
                 break;
 
@@ -632,7 +632,7 @@ namespace sofa
                   {
                     sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Move, eventX, eventY);
                     if (groot)
-                      groot->propagateEvent(&mouseEvent);
+                      groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                   }
                 }
                 break;
@@ -643,21 +643,21 @@ namespace sofa
                 {
                   sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::LeftReleased, eventX, eventY);
                   if (groot)
-                    groot->propagateEvent(&mouseEvent);
+                    groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                 }
                 // Mouse right button is released
                 else if (e->button() == Qt::RightButton)
                 {
                   sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::RightReleased, eventX, eventY);
                   if (groot)
-                    groot->propagateEvent(&mouseEvent);
+                    groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                 }
                 // Mouse middle button is released
                 else if (e->button() == Qt::MidButton)
                 {
                   sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::MiddleReleased, eventX, eventY);
                   if (groot)
-                    groot->propagateEvent(&mouseEvent);
+                    groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
                 }
                 break;
 
@@ -692,7 +692,7 @@ namespace sofa
             sofa::core::objectmodel::MouseEvent mouseEvent(
               sofa::core::objectmodel::MouseEvent::Wheel, e->delta());
             if (groot)
-              groot->propagateEvent(&mouseEvent);
+              groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
             getQWidget()->update();
           }
         }

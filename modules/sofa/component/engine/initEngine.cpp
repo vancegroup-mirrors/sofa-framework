@@ -70,4 +70,5 @@ SOFA_LINK_CLASS(TransformEngine)
 SOFA_LINK_CLASS(TextureInterpolation)
 SOFA_LINK_CLASS(ValuesFromPositions)
 SOFA_LINK_CLASS(ValuesFromIndices)
+SOFA_LINK_CLASS(NormalsFromPoints)
 

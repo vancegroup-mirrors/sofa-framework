@@ -54,7 +54,7 @@ void MasterSolverImpl::computeCollision(const core::ExecParams* params)
 
     {
         CollisionBeginEvent evBegin;
-        PropagateEventVisitor eventPropagation( &evBegin, params);
+        PropagateEventVisitor eventPropagation( params /* PARAMS FIRST */, &evBegin);
         eventPropagation.execute(getContext());
     }
 
@@ -64,14 +64,14 @@ void MasterSolverImpl::computeCollision(const core::ExecParams* params)
 
     {
         CollisionEndEvent evEnd;
-        PropagateEventVisitor eventPropagation( &evEnd, params);
+        PropagateEventVisitor eventPropagation( params /* PARAMS FIRST */, &evEnd);
         eventPropagation.execute(getContext());
     }
 }
 
-void MasterSolverImpl::integrate(double dt, const core::ExecParams* params)
+void MasterSolverImpl::integrate(const core::ExecParams* params /* PARAMS FIRST */, double dt)
 {
-    MechanicalIntegrationVisitor act( dt, params );
+    MechanicalIntegrationVisitor act( params /* PARAMS FIRST */, dt );
     act.setTags(this->getTags());
     act.execute( getContext() );
 }

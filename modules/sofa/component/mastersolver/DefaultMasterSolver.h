@@ -47,7 +47,7 @@ public:
 
     DefaultMasterSolver();
 	virtual ~DefaultMasterSolver();
-    void step (double dt, const sofa::core::ExecParams* params);
+    void step (const sofa::core::ExecParams* params /* PARAMS FIRST */, double dt);
 protected:
     Data<bool> firstCollision;
 };

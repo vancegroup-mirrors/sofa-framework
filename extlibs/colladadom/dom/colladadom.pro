@@ -52,6 +52,7 @@ unix {
   else {
     LIBS += -lpcrecpp -lpcre
   }
+  LIBS += -ltinyxml$$LIBSUFFIX
 }
 
 HEADERS += \

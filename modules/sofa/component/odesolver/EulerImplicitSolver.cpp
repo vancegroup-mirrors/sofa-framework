@@ -76,13 +76,13 @@ void EulerImplicitSolver::init()
     sofa::core::behavior::OdeSolver::init();
 }
 
-void EulerImplicitSolver::solve(double dt, sofa::core::MultiVecCoordId xResult, sofa::core::MultiVecDerivId vResult, const core::ExecParams* params)
+void EulerImplicitSolver::solve(const core::ExecParams* params /* PARAMS FIRST */, double dt, sofa::core::MultiVecCoordId xResult, sofa::core::MultiVecDerivId vResult)
 {
 #ifdef SOFA_DUMP_VISITOR_INFO
     sofa::simulation::Visitor::printNode("SolverVectorAllocation");
 #endif
     sofa::simulation::common::VectorOperations vop( params, this->getContext() );
-    sofa::simulation::common::MechanicalOperations mop( this->getContext() );
+    sofa::simulation::common::MechanicalOperations mop( params, this->getContext() );
     MultiVecCoord pos(&vop, core::VecCoordId::position() );
     MultiVecDeriv vel(&vop, core::VecDerivId::velocity() );
     MultiVecDeriv f(&vop, core::VecDerivId::force() );

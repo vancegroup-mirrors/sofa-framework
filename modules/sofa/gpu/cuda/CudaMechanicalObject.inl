@@ -897,7 +897,7 @@ void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TRea
 }
 
 template<class TCoord, class TDeriv, class TReal>
-void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::vMultiOp(Main* m, const VMultiOp& ops)
+void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> >::vMultiOp(Main* m, const core::ExecParams* params, const VMultiOp& ops)
 {
 	// optimize common integration case: v += a*dt, x += v*dt
 	if (ops.size() == 2
@@ -1046,7 +1046,7 @@ void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TRea
 		}
 		{
 			using namespace sofa::core::behavior;
-			m->BaseMechanicalState::vMultiOp(ops);
+			m->BaseMechanicalState::vMultiOp(params, ops);
 		}
 	}
 }
@@ -1670,7 +1670,7 @@ void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::vOp(Mai
 }
 
 template<int N, class real>
-void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::vMultiOp(Main* m, const VMultiOp& ops)
+void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::vMultiOp(Main* m, const core::ExecParams* params, const VMultiOp& ops)
 {
     std::cerr<<"MechanicalObjectInternalData::vMultiOp currently not implemented for CudaRigidTypes !"<<std::endl;
     // TODO : make corresponding kernels
@@ -1759,7 +1759,7 @@ void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::vMultiO
 //         }
  		{
  			using namespace sofa::core::behavior;
- 			m->BaseMechanicalState::vMultiOp(ops);
+ 			m->BaseMechanicalState::vMultiOp(params, ops);
  		}
 //     }
 }
@@ -2031,11 +2031,11 @@ void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::addFrom
 #define CudaMechanicalObject_ImplMethods(T) \
 template<> void MechanicalObject< T >::accumulateForce(const core::ExecParams* /* params */) \
 { data.accumulateForce(this); } \
-template<> void MechanicalObject< T >::vOp(core::VecId v, core::ConstVecId a, core::ConstVecId b, double f, const core::ExecParams* /* params */) \
+template<> void MechanicalObject< T >::vOp(const core::ExecParams* /* params */ /* PARAMS FIRST */, core::VecId v, core::ConstVecId a, core::ConstVecId b, double f) \
 { data.vOp(this, v, a, b, f); }		\
-template<> void MechanicalObject< T >::vMultiOp(const VMultiOp& ops, const core::ExecParams* /* params */) \
-{ data.vMultiOp(this, ops); } \
-template<> double MechanicalObject< T >::vDot(core::ConstVecId a, core::ConstVecId b, const core::ExecParams* /* params */) \
+template<> void MechanicalObject< T >::vMultiOp(const core::ExecParams* params /* PARAMS FIRST */, const VMultiOp& ops) \
+{ data.vMultiOp(this, params, ops); }                                    \
+template<> double MechanicalObject< T >::vDot(const core::ExecParams* /* params */ /* PARAMS FIRST */, core::ConstVecId a, core::ConstVecId b) \
 { return data.vDot(this, a, b); }				    \
 template<> void MechanicalObject< T >::resetForce(const core::ExecParams* /* params */) \
 { data.resetForce(this); } \

@@ -154,10 +154,10 @@ template<class DataTypes>
 #ifdef SOFA_SMP
 template <class DataTypes>
 struct ParallelPairInteractionForceFieldAddForce{
-void	operator()(PairInteractionForceField<DataTypes> *ff,
+void	operator()(const MechanicalParams* mparams /* PARAMS FIRST */, PairInteractionForceField<DataTypes> *ff,
         Shared_rw<objectmodel::Data< typename DataTypes::VecDeriv> > _f1,Shared_rw<objectmodel::Data< typename DataTypes::VecDeriv> > _f2,
         Shared_r<objectmodel::Data< typename DataTypes::VecCoord> > _x1,Shared_r<objectmodel::Data< typename DataTypes::VecCoord> > _x2,
-        Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _v1,Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _v2, const MechanicalParams* mparams)
+        Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _v1,Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _v2)
 {
 	helper::WriteAccessor< objectmodel::Data<typename DataTypes::VecDeriv> > f1= _f1.access();
 	helper::WriteAccessor< objectmodel::Data<typename DataTypes::VecDeriv> > f2= _f2.access();
@@ -171,13 +171,13 @@ void	operator()(PairInteractionForceField<DataTypes> *ff,
 	{
 	 f2.resize(x2.size());
 	}
-	ff->addForce(_f1.access(),_f2.access(),_x1.read(),_x2.read(),_v1.read(),_v2.read(), mparams);	  
+	ff->addForce(mparams /* PARAMS FIRST */, _f1.access(),_f2.access(),_x1.read(),_x2.read(),_v1.read(),_v2.read());	  
 }
 
-void	operator()(PairInteractionForceField<DataTypes> *ff,
+void	operator()(const MechanicalParams *mparams /* PARAMS FIRST */, PairInteractionForceField<DataTypes> *ff,
         Shared_rw<objectmodel::Data< typename DataTypes::VecDeriv> > _f1,
         Shared_r<objectmodel::Data< typename DataTypes::VecCoord> > _x1,
-        Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _v1, const MechanicalParams *mparams)
+        Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _v1)
 {
 	helper::WriteAccessor< objectmodel::Data< typename DataTypes::VecDeriv > > f1= _f1.access();
   
@@ -187,7 +187,7 @@ void	operator()(PairInteractionForceField<DataTypes> *ff,
 	{
   	f1.resize(x1.size());
   }
-	ff->addForce(_f1.access(),_f1.access(),_x1.read(),_x1.read(),_v1.read(),_v1.read(), mparams);	
+	ff->addForce(mparams /* PARAMS FIRST */, _f1.access(),_f1.access(),_x1.read(),_x1.read(),_v1.read(),_v1.read());	
 }
 
 };
@@ -195,9 +195,9 @@ void	operator()(PairInteractionForceField<DataTypes> *ff,
 
 template <class DataTypes>
 struct ParallelPairInteractionForceFieldAddDForce{
-void	operator()(PairInteractionForceField<DataTypes> *ff,
+void	operator()(const MechanicalParams* mparams /* PARAMS FIRST */, PairInteractionForceField<DataTypes> *ff,
         Shared_rw<objectmodel::Data< typename DataTypes::VecDeriv> > _df1,Shared_rw<objectmodel::Data< typename DataTypes::VecDeriv> > _df2,
-        Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _dx1,Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _dx2, const MechanicalParams* mparams)
+        Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _dx1,Shared_r<objectmodel::Data< typename DataTypes::VecDeriv> > _dx2)
 {
 	helper::WriteAccessor< objectmodel::Data<typename DataTypes::VecDeriv> > df1= _df1.access();
 	helper::WriteAccessor< objectmodel::Data<typename DataTypes::VecDeriv> > df2= _df2.access();
@@ -213,10 +213,10 @@ void	operator()(PairInteractionForceField<DataTypes> *ff,
   	df2.resize(dx2.size());
   }
 	// mparams->setKFactor(1.0);
-	ff->addDForce(_df1.access(),_df2.access(),_dx1.read(),_dx2.read(),mparams);	
+	ff->addDForce(mparams /* PARAMS FIRST */, _df1.access(),_df2.access(),_dx1.read(),_dx2.read());	
 }
 
-void	operator()(PairInteractionForceField<DataTypes> *ff,Shared_rw< objectmodel::Data< typename DataTypes::VecDeriv> > _df1, Shared_r< objectmodel::Data< typename DataTypes::VecDeriv> > _dx1, const MechanicalParams* mparams)
+void	operator()(const MechanicalParams* mparams /* PARAMS FIRST */, PairInteractionForceField<DataTypes> *ff,Shared_rw< objectmodel::Data< typename DataTypes::VecDeriv> > _df1, Shared_r< objectmodel::Data< typename DataTypes::VecDeriv> > _dx1)
 {
 	helper::WriteAccessor< objectmodel::Data<typename DataTypes::VecDeriv> > df1= _df1.access();
 	helper::ReadAccessor< objectmodel::Data<typename DataTypes::VecDeriv> > dx1= _dx1.read();
@@ -226,14 +226,14 @@ void	operator()(PairInteractionForceField<DataTypes> *ff,Shared_rw< objectmodel:
 	  df1.resize(dx1.size());
 	}
 	// mparams->setKFactor(1.0);
-	ff->addDForce(_df1.access(),_df1.access(),_dx1.read(),_dx1.read(),mparams);	
+	ff->addDForce(mparams /* PARAMS FIRST */, _df1.access(),_df1.access(),_dx1.read(),_dx1.read());	
 }
 
 }; // ParallelPairInteractionForceFieldAddDForce
 #endif /* SOFA_SMP */
 
 template<class DataTypes>
-void PairInteractionForceField<DataTypes>::addForce(MultiVecDerivId fId , const MechanicalParams* mparams )
+void PairInteractionForceField<DataTypes>::addForce(const MechanicalParams* mparams /* PARAMS FIRST */, MultiVecDerivId fId )
 {
     if (mstate1 && mstate2)
       {
@@ -244,27 +244,27 @@ void PairInteractionForceField<DataTypes>::addForce(MultiVecDerivId fId , const 
 		if (mparams->execMode() == ExecParams::EXEC_KAAPI)
 		{
 			if (mstate1 == mstate2)
-				Task<ParallelPairInteractionForceFieldAddForce< DataTypes > >(this,
+				Task<ParallelPairInteractionForceFieldAddForce< DataTypes > >(mparams /* PARAMS FIRST */, this,
 						**defaulttype::getShared(*fId[mstate1].write()), 
-						**defaulttype::getShared(*mparams->readX(mstate1)), **defaulttype::getShared(*mparams->readV(mstate1)), mparams);
+						**defaulttype::getShared(*mparams->readX(mstate1)), **defaulttype::getShared(*mparams->readV(mstate1)));
 			else
-				Task<ParallelPairInteractionForceFieldAddForce< DataTypes > >(this,
+				Task<ParallelPairInteractionForceFieldAddForce< DataTypes > >(mparams /* PARAMS FIRST */, this,
 						**defaulttype::getShared(*fId[mstate1].write()), **defaulttype::getShared(*fId[mstate2].write()),
 						**defaulttype::getShared(*mparams->readX(mstate1)), **defaulttype::getShared(*mparams->readX(mstate2)),
-						**defaulttype::getShared(*mparams->readV(mstate1)), **defaulttype::getShared(*mparams->readV(mstate2)), mparams);
+						**defaulttype::getShared(*mparams->readV(mstate1)), **defaulttype::getShared(*mparams->readV(mstate2)));
 		}
 		else
 #endif /* SOFA_SMP */
-			addForce( *fId[mstate1].write()   , *fId[mstate2].write()   ,
+			addForce( mparams /* PARAMS FIRST */, *fId[mstate1].write()   , *fId[mstate2].write()   ,
 				  *mparams->readX(mstate1), *mparams->readX(mstate2),
-				  *mparams->readV(mstate1), *mparams->readV(mstate2), mparams );
+				  *mparams->readV(mstate1), *mparams->readV(mstate2) );
       }
     else
-		serr<<"PairInteractionForceField<DataTypes>::addForce(MultiVecDerivId /*fId*/ , const MechanicalParams* /*mparams*/ ), mstate missing"<<sendl;
+		serr<<"PairInteractionForceField<DataTypes>::addForce(const MechanicalParams* /*mparams*/ /* PARAMS FIRST */, MultiVecDerivId /*fId*/ ), mstate missing"<<sendl;
 }
 
 template<class DataTypes>
-void PairInteractionForceField<DataTypes>::addDForce(MultiVecDerivId dfId , const MechanicalParams* mparams )
+void PairInteractionForceField<DataTypes>::addDForce(const MechanicalParams* mparams /* PARAMS FIRST */, MultiVecDerivId dfId )
 {
     if (mstate1 && mstate2)
 		{
@@ -272,32 +272,32 @@ void PairInteractionForceField<DataTypes>::addDForce(MultiVecDerivId dfId , cons
 			if (mparams->execMode() == ExecParams::EXEC_KAAPI)
 			{
 				if (mstate1 == mstate2)
-					Task<ParallelPairInteractionForceFieldAddDForce< DataTypes > >(this, 
+					Task<ParallelPairInteractionForceFieldAddDForce< DataTypes > >(mparams /* PARAMS FIRST */, this, 
 							**defaulttype::getShared(*dfId[mstate1].write()), 
-							**defaulttype::getShared(*mparams->readDx(mstate1)), mparams);
+							**defaulttype::getShared(*mparams->readDx(mstate1)));
 				else
-					Task<ParallelPairInteractionForceFieldAddDForce< DataTypes > >(this,
+					Task<ParallelPairInteractionForceFieldAddDForce< DataTypes > >(mparams /* PARAMS FIRST */, this,
 							**defaulttype::getShared(*dfId[mstate1].write()), **defaulttype::getShared(*dfId[mstate2].write()),
-							**defaulttype::getShared(*mparams->readDx(mstate1)), **defaulttype::getShared(*mparams->readDx(mstate2)), mparams);
+							**defaulttype::getShared(*mparams->readDx(mstate1)), **defaulttype::getShared(*mparams->readDx(mstate2)));
 			}
 			else
 #endif /* SOFA_SMP */
-				addDForce( *dfId[mstate1].write()    , *dfId[mstate2].write()   ,
-				   *mparams->readDx(mstate1) , *mparams->readDx(mstate2),
-				   mparams );
+				addDForce( 
+				   mparams /* PARAMS FIRST */, *dfId[mstate1].write()    , *dfId[mstate2].write()   ,
+				   *mparams->readDx(mstate1) , *mparams->readDx(mstate2) );
 		}
     else
-		serr<<"PairInteractionForceField<DataTypes>::addDForce(MultiVecDerivId /*fId*/ , const MechanicalParams* /*mparams*/ ), mstate missing"<<sendl;
+		serr<<"PairInteractionForceField<DataTypes>::addDForce(const MechanicalParams* /*mparams*/ /* PARAMS FIRST */, MultiVecDerivId /*fId*/ ), mstate missing"<<sendl;
 }
 
 /*
 template<class DataTypes>
-void PairInteractionForceField<DataTypes>::addForce(DataVecDeriv& f1, DataVecDeriv& f2, const DataVecCoord& x1, const DataVecCoord& x2, const DataVecDeriv& v1, const DataVecDeriv& v2 , const MechanicalParams* )
+void PairInteractionForceField<DataTypes>::addForce(const MechanicalParams* mparams, DataVecDeriv& f1, DataVecDeriv& f2, const DataVecCoord& x1, const DataVecCoord& x2, const DataVecDeriv& v1, const DataVecDeriv& v2 )
 {
-    addForce( *f1.beginEdit() , *f2.beginEdit(),
-			  x1.getValue()   , x2.getValue()  ,
-			  v1.getValue()   , v2.getValue() );
-	f1.endEdit(); f2.endEdit();
+    addForce( *f1.beginEdit(mparams) , *f2.beginEdit(mparams),
+			  x1.getValue(mparams)   , x2.getValue(mparams)  ,
+			  v1.getValue(mparams)   , v2.getValue(mparams) );
+	f1.endEdit(mparams); f2.endEdit(mparams);
 }
 template<class DataTypes>
 void PairInteractionForceField<DataTypes>::addForce(VecDeriv& , VecDeriv& , const VecCoord& , const VecCoord& , const VecDeriv& , const VecDeriv& )
@@ -309,10 +309,10 @@ void PairInteractionForceField<DataTypes>::addForce(VecDeriv& , VecDeriv& , cons
 
 /*
 template<class DataTypes>
-void PairInteractionForceField<DataTypes>::addDForce(DataVecDeriv& df1, DataVecDeriv& df2, const DataVecDeriv& dx1, const DataVecDeriv& dx2 , const MechanicalParams* mparams)
+void PairInteractionForceField<DataTypes>::addDForce(const MechanicalParams* mparams, DataVecDeriv& df1, DataVecDeriv& df2, const DataVecDeriv& dx1, const DataVecDeriv& dx2)
 {
-	addDForce(*df1.beginEdit(), *df2.beginEdit(), dx1.getValue(), dx2.getValue(),mparams->kFactor(),mparams->bFactor());
-	df1.endEdit(); df2.endEdit();
+	addDForce(*df1.beginEdit(mparams), *df2.beginEdit(mparams), dx1.getValue(mparams), dx2.getValue(mparams),mparams->kFactor(),mparams->bFactor());
+	df1.endEdit(mparams); df2.endEdit(mparams);
 }
 template<class DataTypes>
 void PairInteractionForceField<DataTypes>::addDForce(VecDeriv& df1, VecDeriv& df2, const VecDeriv& dx1, const VecDeriv& dx2, double kFactor, double)
@@ -372,15 +372,15 @@ template<class DataTypes>
 double PairInteractionForceField<DataTypes>::getPotentialEnergy(const MechanicalParams* mparams) const
 {
     if (mstate1 && mstate2)
-        return getPotentialEnergy(*mparams->readX(mstate1),*mparams->readX(mstate2),mparams);
+        return getPotentialEnergy(mparams /* PARAMS FIRST */, *mparams->readX(mstate1),*mparams->readX(mstate2));
     else return 0.0;
 }
 
 /*
 template<class DataTypes>
-double PairInteractionForceField<DataTypes>::getPotentialEnergy(const DataVecCoord& x1, const DataVecCoord& x2, const MechanicalParams* ) const
+double PairInteractionForceField<DataTypes>::getPotentialEnergy(const MechanicalParams* mparams, const DataVecCoord& x1, const DataVecCoord& x2 ) const
 {
-	return getPotentialEnergy( x1.getValue() , x2.getValue() );
+	return getPotentialEnergy( x1.getValue(mparams) , x2.getValue(mparams) );
 }
 template<class DataTypes>
 double PairInteractionForceField<DataTypes>::getPotentialEnergy(const VecCoord& , const VecCoord& ) const

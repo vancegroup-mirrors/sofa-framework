@@ -275,10 +275,10 @@ namespace sofa{
           std::cout << "Simulation parameters saved in "<<simulationFileName<<std::endl;
         }
         //Change the state of the writers
-        WriteStateActivator v_write(value,sofa::core::ExecParams::defaultInstance());
+        WriteStateActivator v_write(sofa::core::ExecParams::defaultInstance() /* PARAMS FIRST */, value);
         v_write.addTag(Tag("AutoRecord"));
         v_write.execute(root);	
-        ReadStateActivator v_read(false,sofa::core::ExecParams::defaultInstance());
+        ReadStateActivator v_read(sofa::core::ExecParams::defaultInstance() /* PARAMS FIRST */, false);
         v_read.addTag(Tag("AutoRecord"));
         v_read.execute(root);	  
       }
@@ -388,7 +388,7 @@ namespace sofa{
         root->execute< UpdateSimulationContextVisitor >(sofa::core::ExecParams::defaultInstance());
         root->execute< VisualUpdateVisitor >(sofa::core::ExecParams::defaultInstance());
         //read the state for the current time
-        ReadStateModifier v(time,sofa::core::ExecParams::defaultInstance());
+        ReadStateModifier v(sofa::core::ExecParams::defaultInstance() /* PARAMS FIRST */, time);
         v.addTag(Tag("AutoRecord"));
         v.execute(root);		
         if (!one_step) 
@@ -440,7 +440,7 @@ namespace sofa{
         Node* root = dynamic_cast<Node*>(getSimulation()->getContext());
         assert(root);
         	//record X, V, but won't record in the Mapping
-        WriteStateCreator v(writeSceneName, true, true, false, sofa::core::ExecParams::defaultInstance());
+        WriteStateCreator v(sofa::core::ExecParams::defaultInstance() /* PARAMS FIRST */, writeSceneName, true, true, false);
          v.addTag(Tag("AutoRecord"));
 	       v.execute(root);	
 	       std::cout << "Recording simulation with base name: " << writeSceneName << "\n";

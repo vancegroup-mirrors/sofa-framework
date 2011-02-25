@@ -82,7 +82,7 @@ PartialFixedConstraint<DataTypes>::PartialFixedConstraint()
     // default to indice 0
     f_indices.beginEdit()->push_back(0);
     f_indices.endEdit();
-    Vec6Bool blockedDirection;
+    VecBool blockedDirection;
     for( unsigned i=0; i<NumDimensions; i++)
         blockedDirection[i] = true;
     fixedDirections.setValue(blockedDirection);
@@ -160,10 +160,10 @@ void PartialFixedConstraint<DataTypes>::init()
 
 template <class DataTypes>
 template <class DataDeriv>
-void PartialFixedConstraint<DataTypes>::projectResponseT(DataDeriv& res, const core::MechanicalParams* /*mparams*/)
+void PartialFixedConstraint<DataTypes>::projectResponseT(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataDeriv& res)
 {
     const SetIndexArray & indices = f_indices.getValue().getArray();
-    Vec6Bool blockedDirection = fixedDirections.getValue();
+    VecBool blockedDirection = fixedDirections.getValue();
     //serr<<"PartialFixedConstraint<DataTypes>::projectResponse, res.size()="<<res.size()<<sendl;
     if (f_fixAll.getValue() == true)
     { // fix everyting
@@ -194,10 +194,10 @@ void PartialFixedConstraint<DataTypes>::projectResponseT(DataDeriv& res, const c
 }
 
 template <class DataTypes>
-void PartialFixedConstraint<DataTypes>::projectResponse(DataVecDeriv& resData, const core::MechanicalParams* mparams)
+void PartialFixedConstraint<DataTypes>::projectResponse(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& resData)
 {
     helper::WriteAccessor<DataVecDeriv> res = resData;
-    projectResponseT(res.wref(), mparams);
+    projectResponseT(mparams /* PARAMS FIRST */, res.wref());
 }
 
 // projectVelocity applies the same changes on velocity vector as projectResponse on position vector :
@@ -205,7 +205,7 @@ void PartialFixedConstraint<DataTypes>::projectResponse(DataVecDeriv& resData, c
 // When a new fixed point is added while its velocity vector is already null, projectVelocity is not usefull.
 // But when a new fixed point is added while its velocity vector is not null, it's necessary to fix it to null. If not, the fixed point is going to drift.
 template <class DataTypes>
-void PartialFixedConstraint<DataTypes>::projectVelocity(DataVecDeriv& /*vData*/, const core::MechanicalParams* /*mparams*/)
+void PartialFixedConstraint<DataTypes>::projectVelocity(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& /*vData*/)
 {
 #if 0 /// @TODO ADD A FLAG FOR THIS
     helper::WriteAccessor<DataVecDeriv> res = vData;
@@ -231,13 +231,13 @@ void PartialFixedConstraint<DataTypes>::projectVelocity(DataVecDeriv& /*vData*/,
 }
 
 template <class DataTypes>
-void PartialFixedConstraint<DataTypes>::projectPosition(DataVecCoord& /*xData*/, const core::MechanicalParams* /*mparams*/)
+void PartialFixedConstraint<DataTypes>::projectPosition(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecCoord& /*xData*/)
 {
 
 }
 
 template <class DataTypes>
-void PartialFixedConstraint<DataTypes>::projectJacobianMatrix(DataMatrixDeriv& cData, const core::MechanicalParams* mparams)
+void PartialFixedConstraint<DataTypes>::projectJacobianMatrix(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataMatrixDeriv& cData)
 {
     helper::WriteAccessor<DataMatrixDeriv> c = cData;
 
@@ -246,7 +246,7 @@ void PartialFixedConstraint<DataTypes>::projectJacobianMatrix(DataMatrixDeriv& c
 
     while (rowIt != rowItEnd)
     {
-        projectResponseT<MatrixDerivRowType>(rowIt.row(), mparams);
+        projectResponseT<MatrixDerivRowType>(mparams /* PARAMS FIRST */, rowIt.row());
         ++rowIt;
     }
 }
@@ -259,7 +259,7 @@ void PartialFixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseMatrix 
     const unsigned int N = Deriv::size();
     const SetIndexArray & indices = f_indices.getValue().getArray();
 
-    Vec6Bool blockedDirection = fixedDirections.getValue();
+    VecBool blockedDirection = fixedDirections.getValue();
     for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
     {
         // Reset Fixed Row and Col
@@ -281,7 +281,7 @@ void PartialFixedConstraint<DataTypes>::applyConstraint(defaulttype::BaseVector 
     //sout << "applyConstraint in Vector with offset = " << offset << sendl;
     const unsigned int N = Deriv::size();
 
-    Vec6Bool blockedDirection = fixedDirections.getValue();
+    VecBool blockedDirection = fixedDirections.getValue();
     const SetIndexArray & indices = f_indices.getValue().getArray();
     for (SetIndexArray::const_iterator it = indices.begin(); it != indices.end(); ++it)
     {

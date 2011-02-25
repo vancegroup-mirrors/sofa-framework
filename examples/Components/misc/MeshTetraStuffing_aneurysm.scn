@@ -8,7 +8,7 @@
         <TetrahedronSetTopologyContainer name="volume" points="@../input/stuffing.outputPoints" tetras="@../input/stuffing.outputTetras"/>
         <MechanicalObject />
         <UniformMass />
-        <TetrahedralCorotationalFEMForceField name="FEM" youngModulus="500" poissonRatio="0.3" method="large" />
+        <TetrahedralCorotationalFEMForceField name="FEM" youngModulus="3000" poissonRatio="0.3" method="large" />
         <Node name="Surface">
 	  <include href="Objects/TriangleSetTopology.xml" />
 	  <Tetra2TriangleTopologicalMapping object1="../../volume" object2="Container"/>

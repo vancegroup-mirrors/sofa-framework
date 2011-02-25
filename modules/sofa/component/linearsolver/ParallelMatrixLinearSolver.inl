@@ -178,7 +178,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(const core::
     if (!this->frozen) {
 	  matricesWork[id]->clear();
 	  matricesWork[id]->resize(systemSize,systemSize);
-	  simulation::common::MechanicalOperations mops(this->getContext(), mparams);	  
+	  simulation::common::MechanicalOperations mops(mparams /* PARAMS FIRST */, this->getContext());	  
 	  mops.addMBK_ToMatrix(matrixAccessor[id], mparams->mFactor(), mparams->bFactor(), mparams->kFactor());
 	  matrixAccessor[id]->computeGlobalMatrix();
     }
@@ -219,7 +219,7 @@ int ParallelMatrixLinearSolver<Matrix,Vector>::getDimension(const core::Mechanic
     if (!matrixAccessor[id]) matrixAccessor[id] = new DefaultMultiMatrixAccessor();  
     if (useRotation && !rotationWork[indexwork]) rotationWork[indexwork] = createRotationMatrix();
     
-    simulation::common::MechanicalOperations mops(this->getContext(), mparams);
+    simulation::common::MechanicalOperations mops(mparams /* PARAMS FIRST */, this->getContext());
     matrixAccessor[id]->setGlobalMatrix(matricesWork[id]); 
     matrixAccessor[id]->clear();
     mops.getMatrixDimension(matrixAccessor[id]);
@@ -268,7 +268,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::M
 		params = *mparams;
 	    } else {
 		sofa::component::misc::ParallelizeBuildMatrixEvent event;
-		this->getContext()->propagateEvent(&event);
+		this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &event);
 		handeled = event.isHandled();
 		if (! handeled) computeSystemMatrix(mparams,indexwork);
 		else params = *mparams;
@@ -298,7 +298,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemRHVector(core::MultiVec
 #ifdef DEBUG_PARALLELMATRIX
     printf(">setSystemRHVector\n");
 #endif  
-    this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, systemRHVector, matrixAccessor[indexwork]) );
+    this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( core::ExecParams::defaultInstance(), v, systemRHVector, matrixAccessor[indexwork]) );
 #ifdef DEBUG_PARALLELMATRIX
     printf("<setSystemRHVector\n");
 #endif     
@@ -310,7 +310,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(core::MultiVec
     printf(">setSystemLHVector\n");
 #endif  
     solutionVecId = v;
-    //this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, systemLHVector, matrixAccessor[indexwork]) );
+    //this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( core::ExecParams::defaultInstance(), v, systemLHVector, matrixAccessor[indexwork]) );
 #ifdef DEBUG_PARALLELMATRIX
     printf("<setSystemLHVector\n");
 #endif      
@@ -383,7 +383,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
     }
     
     if (!solutionVecId.isNull()) {
-	executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(solutionVecId, systemLHVector, matrixAccessor[indexwork]) );
+	executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(core::ExecParams::defaultInstance(), solutionVecId, systemLHVector, matrixAccessor[indexwork]) );
     }
 #ifdef DEBUG_PARALLELMATRIX
 //     std::cout << *systemLHVector << std::endl;

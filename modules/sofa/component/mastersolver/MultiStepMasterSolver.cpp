@@ -56,7 +56,7 @@ MultiStepMasterSolver::~MultiStepMasterSolver()
 {
 }
 
-void MultiStepMasterSolver::step(double dt, const sofa::core::ExecParams* params)
+void MultiStepMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS FIRST */, double dt)
 {
     const int ncollis = collisionSteps.getValue();
     const int ninteg = integrationSteps.getValue();
@@ -67,12 +67,12 @@ void MultiStepMasterSolver::step(double dt, const sofa::core::ExecParams* params
         sofa::simulation::MechanicalResetConstraintVisitor(params).execute(this->getContext());
         // Then do collision detection and response creation
         sout << "collision" << sendl;
-        computeCollision();
+        computeCollision(params);
         for (int i=0;i<ninteg;++i)
         {
             // Then integrate the time step
             sout << "integration" << sendl;
-            integrate(dt);
+            integrate(params, dt);
          }
     }
 }

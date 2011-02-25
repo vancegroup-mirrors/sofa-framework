@@ -63,33 +63,17 @@ public:
       srgbColorspace(srgbColorspace), minLod(minLod), maxLod(maxLod)
      {}
 
-    Texture(const Texture& tex)
-    :image(tex.image),id(tex.id), repeat(tex.repeat), linearInterpolation(tex.linearInterpolation), generateMipmaps(tex.generateMipmaps),
-     srgbColorspace(tex.srgbColorspace), minLod(tex.minLod), maxLod(tex.maxLod)
-    {
-    }
-
-    Texture operator=(const Texture& tex)
-    {
-
-        image = tex.image;
-        id = tex.id;
-        repeat = tex.repeat;
-        linearInterpolation = tex.linearInterpolation;
-        generateMipmaps = tex.generateMipmaps;
-        srgbColorspace = tex.srgbColorspace;
-        minLod = tex.minLod;
-        maxLod = tex.maxLod;
-
-        return *this;
-    }
-
 	io::Image* getImage(void);
     GLuint getTarget() const { return target; }
 	void   bind(void);
 	void   unbind(void);
-	void   init (void);
+	void   init ();
+	void   update ();	// to use for dynamic change of the texture image (no memory overhead due to multiple texture creation)
 	~Texture();
+
+private: 
+  Texture(const Texture& ) {};
+  Texture operator=(const Texture& ) { return Texture(); }
 };
 
 } // namespace gl

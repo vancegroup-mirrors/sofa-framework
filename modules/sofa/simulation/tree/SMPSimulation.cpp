@@ -200,11 +200,11 @@ void SMPSimulation::animate ( Node* root, double dt )
 
   {
     AnimateBeginEvent ev ( dt );
-    PropagateEventVisitor act ( &ev, params );
+    PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
     root->execute ( act );
   }
 
-  BehaviorUpdatePositionVisitor beh(_root->getDt(), params);
+  BehaviorUpdatePositionVisitor beh(params /* PARAMS FIRST */, _root->getDt());
   _root->execute ( beh );
 
   if (changeListener->changed()||nbSteps.getValue()<2) {
@@ -230,7 +230,7 @@ void SMPSimulation::animate ( Node* root, double dt )
   _root->execute<UpdateSimulationContextVisitor>(params);
   {
     AnimateEndEvent ev ( dt );
-    PropagateEventVisitor act ( &ev, params );
+    PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
     root->execute ( act );
   }
   *(nbSteps.beginEdit()) = nbSteps.getValue() + 1;
@@ -246,7 +246,7 @@ void SMPSimulation::generateTasks ( Node* root, double dt )
 
     {
         AnimateBeginEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
 
@@ -260,7 +260,7 @@ void SMPSimulation::generateTasks ( Node* root, double dt )
 
     AnimateVisitor act( params );
     act.setDt ( mechanicalDt );
-    BehaviorUpdatePositionVisitor beh(root->getDt(), params);
+    BehaviorUpdatePositionVisitor beh(params /* PARAMS FIRST */, root->getDt());
     for ( unsigned i=0; i<numMechSteps.getValue(); i++ )
     {
         root->execute ( act );
@@ -271,14 +271,14 @@ void SMPSimulation::generateTasks ( Node* root, double dt )
 
     {
         AnimateEndEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
 
     root->execute<UpdateMappingVisitor>(params);
     {
         UpdateMappingEndEvent ev ( dt );
-        PropagateEventVisitor act ( &ev, params );
+        PropagateEventVisitor act ( params /* PARAMS FIRST */, &ev );
         root->execute ( act );
     }
   root->execute<ParallelVisualUpdateVisitor>(params);

@@ -114,7 +114,7 @@ class SOFA_COMPONENT_MISC_API WriteStateCreator: public Visitor
 {
 public:
     WriteStateCreator(const core::ExecParams* params);
-    WriteStateCreator(const std::string &n, bool _recordX, bool _recordV, bool _createInMapping, const core::ExecParams* params, int c=0);
+    WriteStateCreator(const core::ExecParams* params, const std::string &n, bool _recordX, bool _recordV, bool _createInMapping, int c=0);
     virtual Result processNodeTopDown( simulation::Node*  );
 
     void setSceneName(std::string &n) { sceneName = n; }
@@ -138,7 +138,7 @@ protected:
 class SOFA_COMPONENT_MISC_API WriteStateActivator: public simulation::Visitor
 {
 public:
-    WriteStateActivator( bool active, const core::ExecParams* params) : Visitor(params), state(active) {}
+    WriteStateActivator( const core::ExecParams* params /* PARAMS FIRST */, bool active) : Visitor(params), state(active) {}
     virtual Result processNodeTopDown( simulation::Node*  );
 
     bool getState() const { return state; }

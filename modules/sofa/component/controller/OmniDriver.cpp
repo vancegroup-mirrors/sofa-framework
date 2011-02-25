@@ -382,7 +382,7 @@ void OmniDriver::handleEvent(core::objectmodel::Event *event)
 
                         cout << "driver is working ! " << data.deviceData.pos << endl;
 
-			this->getContext()->propagateEvent(&omniEvent);
+			this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &omniEvent);
 		}
 	}
 }

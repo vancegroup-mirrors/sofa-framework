@@ -39,15 +39,15 @@
 namespace sofa
 {
 
-    namespace defaulttype
-    {
+namespace defaulttype
+{
 
-        enum NoInit { NOINIT }; ///< use when calling Vec or Mat constructor to skip initialization of values to 0
+enum NoInit { NOINIT }; ///< use when calling Vec or Mat constructor to skip initialization of values to 0
 
-        template <int N, typename real=float>
-                                       class Vec : public helper::fixed_array<real,N>
-                                       {
-                                       public:
+template <int N, typename real=float>
+class Vec : public helper::fixed_array<real,N>
+{
+public:
             /// Compile-time constant specifying the number of scalars within this vector (equivalent to static_size and size() method)
             enum { total_size = N };
             /// Compile-time constant specifying the number of dimensions of space (equivalent to total_size here)

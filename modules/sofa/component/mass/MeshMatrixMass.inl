@@ -814,7 +814,7 @@ using namespace core::topology;
 
   // -- Mass interface
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addMDx(DataVecDeriv& vres, const DataVecDeriv& vdx, double factor, const core::MechanicalParams*)
+  void MeshMatrixMass<DataTypes, MassType>::addMDx(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& vres, const DataVecDeriv& vdx, double factor)
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
     const MassVector &edgeMass= edgeMassInfo.getValue();
@@ -859,7 +859,7 @@ using namespace core::topology;
 
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::accFromF(DataVecDeriv& a, const DataVecDeriv& f, const core::MechanicalParams*)
+  void MeshMatrixMass<DataTypes, MassType>::accFromF(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& a, const DataVecDeriv& f)
   {
     (void)a;
     (void)f;
@@ -888,7 +888,7 @@ using namespace core::topology;
 
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addForce(DataVecDeriv& vf, const DataVecCoord& vx, const DataVecDeriv& vv, const core::MechanicalParams*)
+  void MeshMatrixMass<DataTypes, MassType>::addForce(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& vf, const DataVecCoord& vx, const DataVecDeriv& vv)
   {
 
     //if gravity was added separately (in solver's "solve" method), then nothing to do here
@@ -924,7 +924,7 @@ using namespace core::topology;
   
 
   template <class DataTypes, class MassType>
-  double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const DataVecDeriv& vv, const core::MechanicalParams* ) const
+  double MeshMatrixMass<DataTypes, MassType>::getKineticEnergy( const core::MechanicalParams* /* PARAMS FIRST */, const DataVecDeriv& vv ) const
   {
      const MassVector &vertexMass= vertexMassInfo.getValue();
      const MassVector &edgeMass= edgeMassInfo.getValue();
@@ -954,7 +954,7 @@ using namespace core::topology;
 
   
   template <class DataTypes, class MassType>
-  double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const DataVecCoord& vx , const core::MechanicalParams*) const
+  double MeshMatrixMass<DataTypes, MassType>::getPotentialEnergy( const core::MechanicalParams* /* PARAMS FIRST */, const DataVecCoord& vx) const
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
 		
@@ -975,7 +975,7 @@ using namespace core::topology;
 
 
 template <class DataTypes, class MassType>
-void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const core::MechanicalParams* mparams)
+void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& d_v)
 {
 	if(this->mstate && mparams)
 	{
@@ -1000,7 +1000,7 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const
   
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::addMToMatrix(const sofa::core::behavior::MultiMatrixAccessor* matrix, const core::MechanicalParams *mparams)
+  void MeshMatrixMass<DataTypes, MassType>::addMToMatrix(const core::MechanicalParams *mparams /* PARAMS FIRST */, const sofa::core::behavior::MultiMatrixAccessor* matrix)
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
     const MassVector &edgeMass= edgeMassInfo.getValue();

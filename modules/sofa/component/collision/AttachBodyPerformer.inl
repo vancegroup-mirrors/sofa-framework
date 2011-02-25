@@ -56,8 +56,8 @@ namespace sofa
         ray.setOrigin(ray.origin() + ray.direction()*distanceFromMouse);
         sofa::core::BaseMapping *mapping;
         this->interactor->getContext()->get(mapping); assert(mapping);
-        mapping->apply();
-        mapping->applyJ();
+        mapping->apply(core::MechanicalParams::defaultInstance());
+        mapping->applyJ(core::MechanicalParams::defaultInstance());
         forcefield->init();
         this->interactor->setMouseAttached(true);
       }
@@ -69,8 +69,8 @@ namespace sofa
       {
         sofa::core::BaseMapping *mapping;
         this->interactor->getContext()->get(mapping); assert(mapping);
-        mapping->apply();
-        mapping->applyJ();
+        mapping->apply(core::MechanicalParams::defaultInstance());
+        mapping->applyJ(core::MechanicalParams::defaultInstance());
         this->interactor->setMouseAttached(true);
       }
 

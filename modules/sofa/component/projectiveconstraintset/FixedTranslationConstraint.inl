@@ -133,8 +133,21 @@ void FixedTranslationConstraint<DataTypes>::init()
 }
 
 
+template<int N, class T>
+static inline void clearPos(defaulttype::RigidDeriv<N,T>& v)
+{
+    getVCenter(v).clear();
+}
+
+template<class T>
+static inline void clearPos(defaulttype::Vec<6,T>& v)
+{
+    for (unsigned int i=0;i<3;++i)
+        v[i] = 0;
+}
+
 template <class DataTypes> template <class DataDeriv>
-void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res, const core::MechanicalParams* /*mparams*/)
+void FixedTranslationConstraint<DataTypes>::projectResponseT(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataDeriv& res)
 {
     const SetIndexArray & indices = f_indices.getValue().getArray();
 
@@ -142,7 +155,7 @@ void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res, con
     {
         for (int i = 0; i < topology->getNbPoints(); ++i)
         {
-            getVCenter(res[i]) -= getVCenter(res[i]);
+            clearPos(res[i]);
         }
     }
     else
@@ -150,32 +163,32 @@ void FixedTranslationConstraint<DataTypes>::projectResponseT(DataDeriv& res, con
         for (SetIndexArray::const_iterator it = indices.begin(); it
             != indices.end(); ++it)
         {
-            getVCenter(res[*it]) -= getVCenter(res[*it]);
+            clearPos(res[*it]);
         }
     }
 }
 
 template <class DataTypes>
-void FixedTranslationConstraint<DataTypes>::projectResponse(DataVecDeriv& resData, const core::MechanicalParams* mparams)
+void FixedTranslationConstraint<DataTypes>::projectResponse(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& resData)
 {
     helper::WriteAccessor<DataVecDeriv> res = resData;
-    projectResponseT(res.wref(), mparams);
+    projectResponseT(mparams /* PARAMS FIRST */, res.wref());
 }
 
 template <class DataTypes>
-void FixedTranslationConstraint<DataTypes>::projectVelocity(DataVecDeriv& /*vData*/, const core::MechanicalParams* /*mparams*/)
+void FixedTranslationConstraint<DataTypes>::projectVelocity(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& /*vData*/)
 {
 
 }
 
 template <class DataTypes>
-void FixedTranslationConstraint<DataTypes>::projectPosition(DataVecCoord& /*xData*/, const core::MechanicalParams* /*mparams*/)
+void FixedTranslationConstraint<DataTypes>::projectPosition(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecCoord& /*xData*/)
 {
 
 }
 
 template <class DataTypes>
-void FixedTranslationConstraint<DataTypes>::projectJacobianMatrix(DataMatrixDeriv& cData, const core::MechanicalParams* mparams)
+void FixedTranslationConstraint<DataTypes>::projectJacobianMatrix(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataMatrixDeriv& cData)
 {
     helper::WriteAccessor<DataMatrixDeriv> c = cData;
 
@@ -184,7 +197,7 @@ void FixedTranslationConstraint<DataTypes>::projectJacobianMatrix(DataMatrixDeri
 
     while (rowIt != rowItEnd)
     {
-        projectResponseT<MatrixDerivRowType>(rowIt.row(), mparams);
+        projectResponseT<MatrixDerivRowType>(mparams /* PARAMS FIRST */, rowIt.row());
         ++rowIt;
     }
 }

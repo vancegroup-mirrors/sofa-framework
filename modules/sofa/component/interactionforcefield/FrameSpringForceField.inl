@@ -99,8 +99,8 @@ void FrameSpringForceField<DataTypes>::addSpringForce ( double& /*potentialEnerg
         VecN C1 = fR + cross( Mr01 * ( spring.vec1), fT) + damping.linearProduct ( getVOrientation(Vp1p2) );
         VecN C2 = fR + cross( Mr02 * ( spring.vec2), fT) + damping.linearProduct ( -getVOrientation(Vp1p2) );
 
-        f1[a] += Deriv ( fT[0],fT[1],fT[2], C1[0],C1[1],C1[2]);
-        f2[b] -= Deriv ( fT[0],fT[1],fT[2], C2[0],C2[1],C2[2]);
+        f1[a] += Deriv ( fT, C1);
+        f2[b] -= Deriv ( fT, C2);
 
 	/*serr << "f1: " << fT1 << ", " << fR1 << endl;
 serr << "f2: " << fT2 << ", " << fR2 << endl;
@@ -127,14 +127,14 @@ void FrameSpringForceField<DataTypes>::addSpringDForce ( VecDeriv& f1, const Vec
 	//compute rotational force
         VecN dR0 = Mr01 * ( ksr.linearProduct ( Mr10* getVOrientation(Mdx1dx2) ) );
 
-        const Deriv dforce ( df0[0],df0[1],df0[2], dR0[0],dR0[1],dR0[2] );
+        const Deriv dforce ( df0, dR0 );
 
 	f1[a] += dforce;
 	f2[b] -= dforce;
 }
 
 template<class DataTypes>
-void FrameSpringForceField<DataTypes>::addForce(DataVecDeriv& data_f1, DataVecDeriv& data_f2, const DataVecCoord& data_x1, const DataVecCoord& data_x2, const DataVecDeriv& data_v1, const DataVecDeriv& data_v2 , const MechanicalParams* /*mparams*/ )
+void FrameSpringForceField<DataTypes>::addForce(const MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& data_f1, DataVecDeriv& data_f2, const DataVecCoord& data_x1, const DataVecCoord& data_x2, const DataVecDeriv& data_v1, const DataVecDeriv& data_v2 )
 {
 
 	VecDeriv&       f1 = *data_f1.beginEdit();
@@ -160,7 +160,7 @@ void FrameSpringForceField<DataTypes>::addForce(DataVecDeriv& data_f1, DataVecDe
 }
 
 template<class DataTypes>
-void FrameSpringForceField<DataTypes>::addDForce(DataVecDeriv& data_df1, DataVecDeriv& data_df2, const DataVecDeriv& data_dx1, const DataVecDeriv& data_dx2, const core::MechanicalParams* /*mparams*/)
+void FrameSpringForceField<DataTypes>::addDForce(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& data_df1, DataVecDeriv& data_df2, const DataVecDeriv& data_dx1, const DataVecDeriv& data_dx2)
 {
 	VecDeriv&        df1 = *data_df1.beginEdit();
 	VecDeriv&        df2 = *data_df2.beginEdit();

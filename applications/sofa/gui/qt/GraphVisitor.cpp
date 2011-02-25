@@ -241,41 +241,29 @@ namespace sofa
 
         unsigned int sizeVisitedNode=visitedNode.size();
 	std::string nameOfNode=node->Value();
-	int typeOfNode=node->Type();
+    // TinyXml API changed in 2.6.0, ELEMENT was replaced with TINYXML_ELEMENT
+    // As the version number is not available as a macro, the most portable was is to
+    // replace these constants with checks of the return value of ToElement(), ...
+    // -- Jeremie A. 02/07/2011
+	//int typeOfNode=node->Type();
 	Q3ListViewItem *graphNode=NULL;
-	switch (typeOfNode)
-	  {
-	  case TiXmlNode::DOCUMENT:
-	    break;
-
-	  case TiXmlNode::ELEMENT:
-            if (nameOfNode == "Time")
-              {
-                openTime( node, parent);
-              }
-            else
-              {
-                graphNode = addNode(parent, elementAbove, nameOfNode);
-                openAttribute( node->ToElement(), graphNode);
-              }
-	    break;
-
-	  case TiXmlNode::COMMENT:
+    if (node->ToDocument()) { // case TiXmlNode::DOCUMENT:
+    } else if (node->ToElement()) { // case TiXmlNode::ELEMENT:
+        if (nameOfNode == "Time")
+        {
+            openTime( node, parent);
+        }
+        else
+        {
+            graphNode = addNode(parent, elementAbove, nameOfNode);
+            openAttribute( node->ToElement(), graphNode);
+        }
+    } else if (node->ToComment()) { // case TiXmlNode::COMMENT:
 	    graphNode = addComment(parent, elementAbove, nameOfNode); 
-	    break;
-
-	  case TiXmlNode::UNKNOWN:
-	    break;
-
-	  case TiXmlNode::TEXT:
-	    break;
-
-	  case TiXmlNode::DECLARATION:
-	    break;
-	  default:
-	    break;
-
-	  }
+    } else if (node->ToText()) { // case TiXmlNode::TEXT:
+    } else if (node->ToDeclaration()) { // case TiXmlNode::DECLARATION:
+    } else { // default:
+    }
 
 	Q3ListViewItem *element=NULL;
         timeComponentsBelow.push_back(0);

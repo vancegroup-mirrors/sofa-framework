@@ -95,6 +95,11 @@ namespace sofa
 
                 Image();
                 virtual ~Image();
+                Image(const Image& rhs);
+
+                Image& operator=(const Image& rhs);
+
+
 
                 unsigned getWidth(unsigned mipmap = 0) const;
                 unsigned getHeight(unsigned mipmap = 0) const;

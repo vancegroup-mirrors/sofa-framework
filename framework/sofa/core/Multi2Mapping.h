@@ -121,7 +121,7 @@ public:
     ///
     /// If the Mapping can be represented as a matrix J, this method computes
     /// $ out = J in $
-    virtual void apply (MultiVecCoordId outPos, ConstMultiVecCoordId inPos, const MechanicalParams* mparams = MechanicalParams::defaultInstance() )
+    virtual void apply (const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecCoordId outPos, ConstMultiVecCoordId inPos )
     {
         helper::vector<OutDataVecCoord*> vecOutPos;
         getVecOutCoord(outPos, vecOutPos);
@@ -130,16 +130,16 @@ public:
         helper::vector<const In2DataVecCoord*> vecIn2Pos;
         getConstVecIn2Coord(inPos, vecIn2Pos);
 
-        this->apply(vecOutPos, vecIn1Pos, vecIn2Pos, mparams);
+        this->apply(mparams /* PARAMS FIRST */, vecOutPos, vecIn1Pos, vecIn2Pos);
     }
     /// This method must be reimplemented by all mappings.
     /// InPos and OutPos by default contains VecIds of type V_COORD.
     /// The size of InPos vector is the same as the number of fromModels.
     /// The size of OutPos vector is the same as the number of OutModels.
-    virtual void apply(const helper::vector<OutDataVecCoord*>& dataVecOutPos,
+    virtual void apply(
+                       const MechanicalParams* mparams /* PARAMS FIRST */, const helper::vector<OutDataVecCoord*>& dataVecOutPos,
                        const helper::vector<const In1DataVecCoord*>& dataVecIn1Pos ,
-                       const helper::vector<const In2DataVecCoord*>& dataVecIn2Pos,
-                       const MechanicalParams* /* mparams */)
+                       const helper::vector<const In2DataVecCoord*>& dataVecIn2Pos)
 #ifdef SOFA_DEPRECATE_OLD_API
     = 0;
 #else
@@ -147,20 +147,20 @@ public:
         //Not optimized at all...
         helper::vector<OutVecCoord*> vecOutPos;
         for(unsigned int i=0; i<dataVecOutPos.size(); i++)
-            vecOutPos.push_back(dataVecOutPos[i]->beginEdit());
+            vecOutPos.push_back(dataVecOutPos[i]->beginEdit(mparams));
 
         helper::vector<const In1VecCoord*> vecIn1Pos;
         for(unsigned int i=0; i<dataVecIn1Pos.size(); i++)
-            vecIn1Pos.push_back(&dataVecIn1Pos[i]->getValue());
+            vecIn1Pos.push_back(&dataVecIn1Pos[i]->getValue(mparams));
         helper::vector<const In2VecCoord*> vecIn2Pos;
         for(unsigned int i=0; i<dataVecIn2Pos.size(); i++)
-            vecIn2Pos.push_back(&dataVecIn2Pos[i]->getValue());
+            vecIn2Pos.push_back(&dataVecIn2Pos[i]->getValue(mparams));
 
         this->apply(vecOutPos, vecIn1Pos, vecIn2Pos);
 
         //Really Not optimized at all...
         for(unsigned int i=0; i<dataVecOutPos.size(); i++)
-            dataVecOutPos[i]->endEdit();
+            dataVecOutPos[i]->endEdit(mparams);
     }
     /// Compat Method
     /// @deprecated
@@ -174,7 +174,7 @@ public:
     ///
     /// If the Mapping can be represented as a matrix J, this method computes
     /// $ out = J in $
-    virtual void applyJ (MultiVecDerivId outVel, ConstMultiVecDerivId inVel, const MechanicalParams* mparams = MechanicalParams::defaultInstance() )
+    virtual void applyJ (const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecDerivId outVel, ConstMultiVecDerivId inVel )
     {
         helper::vector<OutDataVecDeriv*> vecOutVel;
         getVecOutDeriv(outVel, vecOutVel);
@@ -182,16 +182,16 @@ public:
         getConstVecIn1Deriv(inVel, vecIn1Vel);
         helper::vector<const In2DataVecDeriv*> vecIn2Vel;
         getConstVecIn2Deriv(inVel, vecIn2Vel);
-        this->applyJ(vecOutVel, vecIn1Vel, vecIn2Vel, mparams);
+        this->applyJ(mparams /* PARAMS FIRST */, vecOutVel, vecIn1Vel, vecIn2Vel);
     }
     /// This method must be reimplemented by all mappings.
     /// InDeriv and OutDeriv by default contains VecIds of type V_DERIV.
     /// The size of InDeriv vector is the same as the number of fromModels.
     /// The size of OutDeriv vector is the same as the number of OutModels.
-    virtual void applyJ(const helper::vector< OutDataVecDeriv*>& dataVecOutVel,
+    virtual void applyJ(
+                        const MechanicalParams* mparams /* PARAMS FIRST */, const helper::vector< OutDataVecDeriv*>& dataVecOutVel,
                         const helper::vector<const In1DataVecDeriv*>& dataVecIn1Vel,
-                        const helper::vector<const In2DataVecDeriv*>& dataVecIn2Vel,
-                        const MechanicalParams* /* mparams */)
+                        const helper::vector<const In2DataVecDeriv*>& dataVecIn2Vel)
 #ifdef SOFA_DEPRECATE_OLD_API
     = 0;
 #else
@@ -199,19 +199,19 @@ public:
         //Not optimized at all...
         helper::vector<OutVecDeriv*> vecOutVel;
         for(unsigned int i=0; i<dataVecOutVel.size(); i++)
-            vecOutVel.push_back(dataVecOutVel[i]->beginEdit());
+            vecOutVel.push_back(dataVecOutVel[i]->beginEdit(mparams));
 
         helper::vector<const In1VecDeriv*> vecIn1Vel;
         for(unsigned int i=0; i<dataVecIn1Vel.size(); i++)
-            vecIn1Vel.push_back(&dataVecIn1Vel[i]->getValue());
+            vecIn1Vel.push_back(&dataVecIn1Vel[i]->getValue(mparams));
         helper::vector<const In2VecDeriv*> vecIn2Vel;
         for(unsigned int i=0; i<dataVecIn2Vel.size(); i++)
-            vecIn2Vel.push_back(&dataVecIn2Vel[i]->getValue());
+            vecIn2Vel.push_back(&dataVecIn2Vel[i]->getValue(mparams));
         this->applyJ(vecOutVel, vecIn1Vel, vecIn2Vel);
 
         //Really Not optimized at all...
         for(unsigned int i=0; i<dataVecOutVel.size(); i++)
-            dataVecOutVel[i]->endEdit();
+            dataVecOutVel[i]->endEdit(mparams);
     }
     /// Compat Method
     /// @deprecated
@@ -222,7 +222,7 @@ public:
 
     /// ApplyJT (Force)///
     /// Apply the mapping on Force vectors.
-    virtual void applyJT (MultiVecDerivId inForce, ConstMultiVecDerivId outForce, const MechanicalParams* mparams = MechanicalParams::defaultInstance() )
+    virtual void applyJT (const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecDerivId inForce, ConstMultiVecDerivId outForce )
     {
         helper::vector<In1DataVecDeriv*> vecOut1Force;
         getVecIn1Deriv(inForce, vecOut1Force);
@@ -231,16 +231,16 @@ public:
 
         helper::vector<const OutDataVecDeriv*> vecInForce;
         getConstVecOutDeriv(outForce, vecInForce);
-        this->applyJT(vecOut1Force, vecOut2Force, vecInForce, mparams);
+        this->applyJT(mparams /* PARAMS FIRST */, vecOut1Force, vecOut2Force, vecInForce);
     }
     /// This method must be reimplemented by all mappings.
     /// InDeriv and OutDeriv by default contains VecIds of type V_DERIV.
     /// The size of InDeriv vector is the same as the number of fromModels.
     /// The size of OutDeriv vector is the same as the number of OutModels.
-    virtual void applyJT(const helper::vector< In1DataVecDeriv*>& dataVecOut1Force,
+    virtual void applyJT(
+                         const MechanicalParams* mparams /* PARAMS FIRST */, const helper::vector< In1DataVecDeriv*>& dataVecOut1Force,
                          const helper::vector< In2DataVecDeriv*>& dataVecOut2Force,
-                         const helper::vector<const OutDataVecDeriv*>& dataVecInForce,
-                         const MechanicalParams* /* mparams */)
+                         const helper::vector<const OutDataVecDeriv*>& dataVecInForce)
 #ifdef SOFA_DEPRECATE_OLD_API
     = 0;
 #else
@@ -248,25 +248,25 @@ public:
         //Not optimized at all...
         helper::vector<In1VecDeriv*> vecOut1Force;
         for(unsigned int i=0; i<dataVecOut1Force.size(); i++)
-            vecOut1Force.push_back(dataVecOut1Force[i]->beginEdit());
+            vecOut1Force.push_back(dataVecOut1Force[i]->beginEdit(mparams));
         helper::vector<In2VecDeriv*> vecOut2Force;
         for(unsigned int i=0; i<dataVecOut2Force.size(); i++)
-            vecOut2Force.push_back(dataVecOut2Force[i]->beginEdit());
+            vecOut2Force.push_back(dataVecOut2Force[i]->beginEdit(mparams));
 
         helper::vector<const OutVecDeriv*> vecInForce;
         for(unsigned int i=0; i<dataVecInForce.size(); i++)
-            vecInForce.push_back(&dataVecInForce[i]->getValue());
+            vecInForce.push_back(&dataVecInForce[i]->getValue(mparams));
 
         this->applyJT(vecOut1Force, vecOut2Force, vecInForce);
 
         //Really Not optimized at all...
         for(unsigned int i=0; i<dataVecOut1Force.size(); i++)
         {
-            dataVecOut1Force[i]->endEdit();
+            dataVecOut1Force[i]->endEdit(mparams);
         }
         for(unsigned int i=0; i<dataVecOut2Force.size(); i++)
         {
-            dataVecOut2Force[i]->endEdit();
+            dataVecOut2Force[i]->endEdit(mparams);
         }
     }
     /// Compat Method
@@ -277,7 +277,7 @@ public:
 #endif //SOFA_DEPRECATE_OLD_API
 
     /// ApplyJT (Constraint)///
-    virtual void applyJT(MultiMatrixDerivId inConst, ConstMultiMatrixDerivId outConst, const ConstraintParams* cparams = ConstraintParams::defaultInstance() )
+    virtual void applyJT(const ConstraintParams* cparams /* PARAMS FIRST  = ConstraintParams::defaultInstance()*/, MultiMatrixDerivId inConst, ConstMultiMatrixDerivId outConst )
     {
         helper::vector<In1DataMatrixDeriv*> matOut1Const;
         getMatIn1Deriv(inConst, matOut1Const);
@@ -286,13 +286,13 @@ public:
 
         helper::vector<const OutDataMatrixDeriv*> matInConst;
         getConstMatOutDeriv(outConst, matInConst);
-        this->applyJT(matOut1Const, matOut2Const, matInConst, cparams);
+        this->applyJT(cparams /* PARAMS FIRST */, matOut1Const, matOut2Const, matInConst);
     }
     /// This method must be reimplemented by all mappings if they need to support constraints.
-    virtual void applyJT( const helper::vector< In1DataMatrixDeriv*>& dataMatOut1Const ,
+    virtual void applyJT( 
+                          const ConstraintParams* cparams /* PARAMS FIRST */, const helper::vector< In1DataMatrixDeriv*>& dataMatOut1Const ,
                           const helper::vector< In2DataMatrixDeriv*>&  dataMatOut2Const ,
-                          const helper::vector<const OutDataMatrixDeriv*>& dataMatInConst ,
-                          const ConstraintParams* /* cparams */)
+                          const helper::vector<const OutDataMatrixDeriv*>& dataMatInConst)
 #ifdef SOFA_DEPRECATE_OLD_API
     {
         serr << "This mapping does not support constraints" << sendl;
@@ -302,25 +302,25 @@ public:
         //Not optimized at all...
         helper::vector<In1MatrixDeriv*> matOut1Const;
         for(unsigned int i=0; i<dataMatOut1Const.size(); i++)
-            matOut1Const.push_back(dataMatOut1Const[i]->beginEdit());
+            matOut1Const.push_back(dataMatOut1Const[i]->beginEdit(cparams));
         helper::vector<In2MatrixDeriv*> matOut2Const;
         for(unsigned int i=0; i<dataMatOut2Const.size(); i++)
-            matOut2Const.push_back(dataMatOut2Const[i]->beginEdit());
+            matOut2Const.push_back(dataMatOut2Const[i]->beginEdit(cparams));
 
         helper::vector<const OutMatrixDeriv*> matInConst;
         for(unsigned int i=0; i<dataMatInConst.size(); i++)
-            matInConst.push_back(&dataMatInConst[i]->getValue());
+            matInConst.push_back(&dataMatInConst[i]->getValue(cparams));
 
         this->applyJT(matOut1Const, matOut2Const, matInConst);
 
         //Really Not optimized at all...
         for(unsigned int i=0; i<dataMatOut1Const.size(); i++)
         {
-            dataMatOut1Const[i]->endEdit();
+            dataMatOut1Const[i]->endEdit(cparams);
         }
         for(unsigned int i=0; i<dataMatOut2Const.size(); i++)
         {
-            dataMatOut2Const[i]->endEdit();
+            dataMatOut2Const[i]->endEdit(cparams);
         }
     }
     /// Compat Method
@@ -334,7 +334,7 @@ public:
 #endif //SOFA_DEPRECATE_OLD_API
 
     /// computeAccFromMapping
-    virtual void computeAccFromMapping(MultiVecDerivId outAcc, ConstMultiVecDerivId inVel, ConstMultiVecDerivId inAcc, const MechanicalParams* mparams = MechanicalParams::defaultInstance() )
+    virtual void computeAccFromMapping(const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecDerivId outAcc, ConstMultiVecDerivId inVel, ConstMultiVecDerivId inAcc )
     {
         helper::vector<OutDataVecDeriv*> vecOutAcc;
         getVecOutDeriv(outAcc, vecOutAcc);
@@ -349,15 +349,15 @@ public:
         helper::vector<const In2DataVecDeriv*> vecIn2Acc;
         getConstVecIn2Deriv(inAcc, vecIn2Acc);
 
-        this->computeAccFromMapping(vecOutAcc, vecIn1Vel, vecIn2Vel,vecIn1Acc, vecIn2Acc, mparams);
+        this->computeAccFromMapping(mparams /* PARAMS FIRST */, vecOutAcc, vecIn1Vel, vecIn2Vel,vecIn1Acc, vecIn2Acc);
     }
     /// This method must be reimplemented by all mappings if they need to support composite accelerations
-    virtual void computeAccFromMapping( const helper::vector< OutDataVecDeriv*>& dataVecOutAcc,
+    virtual void computeAccFromMapping( 
+                                        const MechanicalParams* mparams /* PARAMS FIRST */, const helper::vector< OutDataVecDeriv*>& dataVecOutAcc,
                                         const helper::vector<const In1DataVecDeriv*>& dataVecIn1Vel,
                                         const helper::vector<const In2DataVecDeriv*>& dataVecIn2Vel,
                                         const helper::vector<const In1DataVecDeriv*>& dataVecIn1Acc,
-                                        const helper::vector<const In2DataVecDeriv*>& dataVecIn2Acc,
-                                        const MechanicalParams* /* mparams */)
+                                        const helper::vector<const In2DataVecDeriv*>& dataVecIn2Acc)
 #ifdef SOFA_DEPRECATE_OLD_API
     {
     }
@@ -366,27 +366,27 @@ public:
         //Not optimized at all...
         helper::vector<OutVecDeriv*> vecOutAcc;
         for(unsigned int i=0; i<dataVecOutAcc.size(); i++)
-            vecOutAcc.push_back(dataVecOutAcc[i]->beginEdit());
+            vecOutAcc.push_back(dataVecOutAcc[i]->beginEdit(mparams));
 
         helper::vector<const In1VecDeriv*> vecIn1Vel;
         for(unsigned int i=0; i<dataVecIn1Vel.size(); i++)
-            vecIn1Vel.push_back(&dataVecIn1Vel[i]->getValue());
+            vecIn1Vel.push_back(&dataVecIn1Vel[i]->getValue(mparams));
         helper::vector<const In1VecDeriv*> vecIn1Acc;
         for(unsigned int i=0; i<dataVecIn1Acc.size(); i++)
-            vecIn1Acc.push_back(&dataVecIn1Acc[i]->getValue());
+            vecIn1Acc.push_back(&dataVecIn1Acc[i]->getValue(mparams));
 
         helper::vector<const In2VecDeriv*> vecIn2Vel;
         for(unsigned int i=0; i<dataVecIn2Vel.size(); i++)
-            vecIn2Vel.push_back(&dataVecIn2Vel[i]->getValue());
+            vecIn2Vel.push_back(&dataVecIn2Vel[i]->getValue(mparams));
         helper::vector<const In2VecDeriv*> vecIn2Acc;
         for(unsigned int i=0; i<dataVecIn2Acc.size(); i++)
-            vecIn2Acc.push_back(&dataVecIn2Acc[i]->getValue());
+            vecIn2Acc.push_back(&dataVecIn2Acc[i]->getValue(mparams));
 
         this->computeAccFromMapping(vecOutAcc, vecIn1Vel, vecIn2Vel, vecIn1Acc, vecIn2Acc);
 
         //Really Not optimized at all...
         for(unsigned int i=0; i<dataVecOutAcc.size(); i++)
-            dataVecOutAcc[i]->endEdit();
+            dataVecOutAcc[i]->endEdit(mparams);
     }
     /// Compat Method
     /// @deprecated

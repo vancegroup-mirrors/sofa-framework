@@ -198,7 +198,7 @@
 		<Node name="LensKernel" activated="1">
 			<Object type="MechanicalObject" />
 			<Object type="TetrahedronSetTopology" name="topo_Volume" fileTopology="Topology/eye_lens_kernel_3.msh" scale="1.0"/>
-			<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="2000" poissonRatio="0.4" method="large" /> 
+			<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="12000" poissonRatio="0.4" method="large" /> 
 			<Object type="UniformMass" totalmass="0.001" />
 	  	<Object type="EllipsoidForceField" name="EllipsoidForceFieldOnLens" stiffness="-1000" damping="0.0" center="-0.025 5.016 -3.636" vradius="1.45 1.45 0.4"  color="1 0 0 1" />
 
@@ -288,7 +288,7 @@
 			<Object type="MeshLoader" filename="data/mesh/eye_lens_kernel_3.msh" />
 			<Object type="MechanicalObject" scale="1.0" />
 			<include href="Objects/TetrahedronSetTopology.xml" />
-			<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="2000" poissonRatio="0.45" method="large" />
+			<Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="12000" poissonRatio="0.45" method="large" />
 			<Object type="UniformMass" totalmass="0.01" />
 	  	<!-- <Object type="EllipsoidForceField" name="EllipsoidForceFieldOnLens" stiffness="-1000" damping="0.0" center="-0.025 5.016 -3.636" vradius="1.45 1.45 0.4"  color="1 0 0 1" /> -->
 
@@ -382,7 +382,7 @@
 			<Object type="MeshLoader" filename="data/mesh/eye_lens_cortex_3.msh"/>
 			<Object type="MechanicalObject" />
 			<include href="Objects/TetrahedronSetTopology.xml" />
-			 <Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="5000" poissonRatio="0.45" method="large" /> 
+			 <Object type="TetrahedralCorotationalFEMForceField" name="FEM" youngModulus="30000" poissonRatio="0.45" method="large" /> 
 			<Object type="UniformMass" totalmass="0.01" /><!--
 	  	<Object type="EllipsoidForceField" name="EllipsoidForceFieldOnLens" stiffness="-1000" damping="0.0" center="-0.025 5.016 -3.636" vradius="1.45 1.45 0.4"  color="1 0 0 1" />
 

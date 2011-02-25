@@ -49,7 +49,7 @@ simulation::Visitor::Result InitGnuplotVisitor::processNodeTopDown(simulation::N
 	return RESULT_CONTINUE;
 }
 
-ExportGnuplotVisitor::ExportGnuplotVisitor(double time, const core::ExecParams* params)
+ExportGnuplotVisitor::ExportGnuplotVisitor(const core::ExecParams* params /* PARAMS FIRST */, double time)
 : Visitor(params), m_time(time)
   {
 
@@ -63,7 +63,7 @@ simulation::Visitor::Result ExportGnuplotVisitor::processNodeTopDown(simulation:
 	}
 	if (node->mass!= NULL ) 
 	{
-		node->mass->exportGnuplot(m_time);
+		node->mass->exportGnuplot(core::MechanicalParams::defaultInstance(), m_time);
 	}
 	return RESULT_CONTINUE;
 }

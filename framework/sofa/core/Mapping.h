@@ -74,9 +74,9 @@ public:
 	typedef Data<OutMatrixDeriv> OutDataMatrixDeriv;
 
 protected:
-	/// Input Model
+        /// Input Model, also called parent
 	State< In >* fromModel;
-	/// Output Model
+        /// Output Model, also called child
 	State< Out >* toModel;
 public:
 	/// Name of the Input Model
@@ -119,16 +119,16 @@ public:
 	///
 	/// If the Mapping can be represented as a matrix J, this method computes
 	/// $ out = J in $
-	virtual void apply (MultiVecCoordId outPos, ConstMultiVecCoordId inPos, const MechanicalParams* mparams = MechanicalParams::defaultInstance() ) ;
+	virtual void apply (const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecCoordId outPos, ConstMultiVecCoordId inPos ) ;
 
 	/// This method must be reimplemented by all mappings.
-	virtual void apply( OutDataVecCoord& out, const InDataVecCoord& in, const MechanicalParams* /* mparams */)
+	virtual void apply( const MechanicalParams* mparams /* PARAMS FIRST */, OutDataVecCoord& out, const InDataVecCoord& in)
 #ifdef SOFA_DEPRECATE_OLD_API
 		= 0;
 #else
 	{
-		this->apply(*out.beginEdit(), in.getValue());
-		out.endEdit();
+		this->apply(*out.beginEdit(mparams), in.getValue(mparams));
+		out.endEdit(mparams);
 	}
 	/// Compat Method
 	/// @deprecated
@@ -140,20 +140,20 @@ public:
 	///
 	/// If the Mapping can be represented as a matrix J, this method computes
 	/// $ out = J in $
-	virtual void applyJ(MultiVecDerivId outVel, ConstMultiVecDerivId inVel, const MechanicalParams* mparams = MechanicalParams::defaultInstance() );
+	virtual void applyJ(const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecDerivId outVel, ConstMultiVecDerivId inVel );
 
 	/// This method must be reimplemented by all mappings.
-	virtual void applyJ( OutDataVecDeriv& out, const InDataVecDeriv& in, const MechanicalParams* /* mparams */)
+	virtual void applyJ( const MechanicalParams* mparams /* PARAMS FIRST */, OutDataVecDeriv& out, const InDataVecDeriv& in)
 #ifdef SOFA_DEPRECATE_OLD_API
 		= 0;
 #else
 	{
-		this->applyJ(*out.beginEdit(), in.getValue());
-		out.endEdit();
+		this->applyJ(*out.beginEdit(mparams), in.getValue(mparams));
+		out.endEdit(mparams);
 	}
 	/// Compat Method
 	/// @deprecated
-	virtual void applyJ( OutVecDeriv& /* out */, const InVecDeriv& /* in */) { };
+	virtual void applyJ( OutVecDeriv& /* out */, const InVecDeriv& /* in */) { }
 #endif //SOFA_DEPRECATE_OLD_API
 
 	/// ApplyJT (Force)///
@@ -161,35 +161,34 @@ public:
 	///
 	/// If the MechanicalMapping can be represented as a matrix J, this method computes
 	/// $ out += J^t in $
-	virtual void applyJT(MultiVecDerivId inForce, ConstMultiVecDerivId outForce, const MechanicalParams* mparams = MechanicalParams::defaultInstance() );
+	virtual void applyJT(const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecDerivId inForce, ConstMultiVecDerivId outForce );
 
 	/// This method must be reimplemented by all mappings.
-	virtual void applyJT( InDataVecDeriv& out, const OutDataVecDeriv& in, const MechanicalParams* /* mparams */)
+	virtual void applyJT( const MechanicalParams* mparams /* PARAMS FIRST */, InDataVecDeriv& out, const OutDataVecDeriv& in)
 #ifdef SOFA_DEPRECATE_OLD_API
 		= 0;
 #else
 	{
-		this->applyJT(*out.beginEdit(), in.getValue());
-		out.endEdit();
+		this->applyJT(*out.beginEdit(mparams), in.getValue(mparams));
+		out.endEdit(mparams);
 	}
 	/// Compat Method
 	/// @deprecated
-	virtual void applyJT( InVecDeriv& /* out */, const OutVecDeriv& /* in */) { };
+	virtual void applyJT( InVecDeriv& /* out */, const OutVecDeriv& /* in */) { }
 #endif //SOFA_DEPRECATE_OLD_API
 
-        /// ApplyDJT (Force)///
-        /// Apply the change of force due to the nonlinearity of the mapping.
-        /// The default implementation does nothing, assuming a linear mapping.
-        ///
-        /// If the MechanicalMapping can be represented as a matrix J, this method computes
-        /// $ parentForce += dJ^t childForce $
-        /// This requires that the child force vector has remained unchanged since the last computation of the force.
-        virtual void applyDJT(MultiVecDerivId /*parentForce*/, ConstMultiVecDerivId  /*childForce*/, const MechanicalParams* /*mparams = MechanicalParams::defaultInstance()*/ ){}
+    /// ApplyDJT (Force)///
+    /// Apply the change of force due to the nonlinearity of the mapping and the last propagated displacement.
+    /// The default implementation does nothing, assuming a linear mapping.
+    ///
+    /// If the MechanicalMapping can be represented as a matrix J, this method computes
+    /// \f$ f_p += dJ^t f_c \f$, where \f$ f_p \f$ is the parent force and  \f$ f_c \f$ is the child force.
+    /// The child force is accessed in the child state using mparams->readF() .  This requires that the child force vector is used by the solver to compute the force \f$ f(x,v)\f$ corresponding to the current positions and velocities, and not to store auxiliary values.
+    /// The displacement is accessed in the parent state using mparams->readDx() .
+    virtual void applyDJT(const MechanicalParams* /*mparams = MechanicalParams::defaultInstance()*/ /* PARAMS FIRST */, MultiVecDerivId /*parentForce*/, ConstMultiVecDerivId  /*childForce*/ ){}
 
-
-
-        /// ApplyJT (Constraint)///
-	virtual void applyJT(MultiMatrixDerivId inConst, ConstMultiMatrixDerivId outConst, const ConstraintParams* cparams = ConstraintParams::defaultInstance() )
+    /// ApplyJT (Constraint)///
+	virtual void applyJT(const ConstraintParams* cparams /* PARAMS FIRST  = ConstraintParams::defaultInstance()*/, MultiMatrixDerivId inConst, ConstMultiMatrixDerivId outConst )
 	{
 		if(this->fromModel && this->toModel)
 		{
@@ -198,22 +197,25 @@ public:
 			if(out && in)
 			{
 				if (this->isMechanical() && this->f_checkJacobian.getValue())
-					checkApplyJT(*out->beginEdit(), in->getValue(), this->getJ());
+                {
+					checkApplyJT(*out->beginEdit(cparams), in->getValue(cparams), this->getJ());
+                    out->endEdit(cparams);
+                }
 				else
-					this->applyJT(*out, *in, cparams);
+					this->applyJT(cparams /* PARAMS FIRST */, *out, *in);
 			}
 		}
 	}
     /// This method must be reimplemented by all mappings if they need to support constraints.
-    virtual void applyJT( InDataMatrixDeriv& out, const OutDataMatrixDeriv& in, const ConstraintParams* /* mparams */)
+    virtual void applyJT( const ConstraintParams* mparams /* PARAMS FIRST */, InDataMatrixDeriv& out, const OutDataMatrixDeriv& in)
 #ifdef SOFA_DEPRECATE_OLD_API
 	{
 		serr << "This mapping does not support constraints" << sendl;
 	}
 #else
 	{
-		this->applyJT(*out.beginEdit(), in.getValue());
-		out.endEdit();
+		this->applyJT(*out.beginEdit(mparams), in.getValue(mparams));
+		out.endEdit(mparams);
 	}
 	/// Compat Method
 	/// @deprecated
@@ -224,10 +226,11 @@ public:
 #endif //SOFA_DEPRECATE_OLD_API
 
 	/// computeAccFromMapping
-	/// If the mapping input has a rotation velocity, it computes the subsequent acceleration
-	/// created by the derivative terms
-	/// $ a_out = w^(w^rel_pos)	$
-	virtual void computeAccFromMapping(MultiVecDerivId outAcc, ConstMultiVecDerivId inVel, ConstMultiVecDerivId inAcc, const MechanicalParams* mparams = MechanicalParams::defaultInstance() )
+        /// Compute the acceleration of the child, based on the acceleration and the velocity of the parent.
+        /// Let \f$ v_c = J v_p \f$ be the velocity of the child given the velocity of the parent, then the acceleration is \f$ a_c = J a_p + dJ v_p \f$.
+        /// The second term is null in linear mappings, otherwise it encodes the acceleration due to the change of mapping at constant parent velocity.
+        /// For instance, in a rigid mapping with angular velocity\f$ w \f$,  the second term is $ w^(w^rel_pos) $
+	virtual void computeAccFromMapping(const MechanicalParams* mparams /* PARAMS FIRST  = MechanicalParams::defaultInstance()*/, MultiVecDerivId outAcc, ConstMultiVecDerivId inVel, ConstMultiVecDerivId inAcc )
 	{
 		if(this->fromModel && this->toModel)
 		{
@@ -235,19 +238,18 @@ public:
 			const InDataVecDeriv* inV = inVel[fromModel].read();
 			const InDataVecDeriv* inA = inAcc[fromModel].read();
 			if(out && inV && inA)
-				this->computeAccFromMapping(*out, *inV, *inA, mparams);
+				this->computeAccFromMapping(mparams /* PARAMS FIRST */, *out, *inV, *inA);
 		}
 	}
 	/// This method must be reimplemented by all mappings if they need to support composite accelerations
-	virtual void computeAccFromMapping(OutDataVecDeriv& accOut, const InDataVecDeriv& vIn, const InDataVecDeriv& accIn, const MechanicalParams* /* mparams */)
+	virtual void computeAccFromMapping(const MechanicalParams* mparams /* PARAMS FIRST */, OutDataVecDeriv& accOut, const InDataVecDeriv& vIn, const InDataVecDeriv& accIn)
 #ifdef SOFA_DEPRECATE_OLD_API
 	{
-
 	}
 #else
 	{
-		this->computeAccFromMapping(*accOut.beginEdit(), vIn.getValue(), accIn.getValue());
-		accOut.endEdit();
+		this->computeAccFromMapping(*accOut.beginEdit(mparams), vIn.getValue(mparams), accIn.getValue(mparams));
+		accOut.endEdit(mparams);
 	}
 	/// Compat Method
 	/// @deprecated
@@ -342,119 +344,119 @@ public:
 		return BaseMapping::canCreate(obj, context, arg);
 	}
 
-	/// Construction method called by ObjectFactory.
-	///
-	/// This implementation read the input and output attributes to
-	/// find the input and output models of this mapping.
-	template<class T>
-	static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
-	{
+    /// Construction method called by ObjectFactory.
+    ///
+    /// This implementation read the input and output attributes to
+    /// find the input and output models of this mapping.
+    template<class T>
+    static void create(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
+    {
+        State<In>* stin = NULL;
+        State<Out>* stout = NULL;
+        
+#ifndef SOFA_DEPRECATE_OLD_API
+        ////Deprecated check
+        std::string object1Path;
+        std::string object2Path;
+        
+        Base* bobjInput = NULL;
+        Base* bobjOutput = NULL;
+        
+        if(arg != NULL )
+        {
+            //Input
+            if(arg->getAttribute("object1",NULL) == NULL && arg->getAttribute("input",NULL) == NULL)
+            {
+                object1Path = "..";
+                //context->serr << "Deprecated use of implicit value for input" << context->sendl;
+                //context->serr << "Use now : input=\"@" << object1Path << "\" "<< context->sendl;
+                bobjInput = arg->findObject("../..");
+            }
+            
+            if(arg->getAttribute("object1",NULL) != NULL)
+            {
+                object1Path = sofa::core::objectmodel::ObjectRef::convertFromXMLPathToSofaScenePath(arg->getAttribute("object1",NULL));
+                //context->serr << "Deprecated use of attribute " << "object1" << context->sendl;
+                //context->serr << "Use now : input=\"@" 
+                //              << object1Path
+                //              << "\""<< context->sendl;
+                bobjInput = sofa::core::objectmodel::ObjectRef::parseFromXMLPath("object1", arg);
+            }
+            
+            if (BaseObject* bo = dynamic_cast< BaseObject* >(bobjInput))
+            {
+                stin = dynamic_cast< State<In>* >(bo);
+            }
+            else if (core::objectmodel::BaseContext* bc = dynamic_cast< core::objectmodel::BaseContext* >(bobjInput))
+            {
+                stin = dynamic_cast< State<In>* >(bc->getState());
+            }
+            
+            //Output
+            if(arg->getAttribute("object2",NULL) == NULL && arg->getAttribute("output",NULL) == NULL)
+            {
+                object2Path = ".";
+                //context->serr << "Deprecated use of implicit value for output" << context->sendl;
+                //context->serr << "Use now : output=\"@" << object2Path << "\" "<< context->sendl;
+                bobjOutput = arg->findObject("..");
+            }
+            
+            if(arg->getAttribute("object2",NULL) != NULL)
+            {
+                object2Path = sofa::core::objectmodel::ObjectRef::convertFromXMLPathToSofaScenePath(arg->getAttribute("object2",NULL));
+                //context->serr << "Deprecated use of attribute " << "object2" << context->sendl;
+                //context->serr << "Use now : output=\"@" 
+                //              << object2Path
+                //              << "\""<< context->sendl;
+                bobjOutput = sofa::core::objectmodel::ObjectRef::parseFromXMLPath("object2", arg);
+            }
+            
+            if (BaseObject* bo = dynamic_cast< BaseObject* >(bobjOutput))
+            {
+                stout = dynamic_cast< State<Out>* >(bo);
+            }
+            else if (core::objectmodel::BaseContext* bc = dynamic_cast< core::objectmodel::BaseContext* >(bobjOutput))
+            {
+                stout = dynamic_cast< State<Out>* >(bc->getState());
+            }
+            
+            /////
+        }
+        
+        if (stin == NULL && stout == NULL)
+#endif // SOFA_DEPRECATE_OLD_API
+        {
+            if (arg)
+            {
+                stin = sofa::core::objectmodel::ObjectRef::parse< State<In> >("input", arg);
+                stout = sofa::core::objectmodel::ObjectRef::parse< State<Out> >("output", arg);
+            }
+        }
+        
 #ifdef SOFA_SMP_NUMA
-		if(context&&context->getProcessor()!=-1)
-		{
-			obj = new(numa_alloc_onnode(sizeof(T),context->getProcessor()/2)) T(
-				(arg?dynamic_cast< State< In >* >(arg->findObject(arg->getAttribute("object1","../.."))):NULL),
-				(arg?dynamic_cast< State< Out >* >(arg->findObject(arg->getAttribute("object2",".."))):NULL));
-		}
-		else
+        if(context&&context->getProcessor()!=-1)
+        {
+            obj = new(numa_alloc_onnode(sizeof(T),context->getProcessor()/2)) T(
+             (arg?stin:NULL), (arg?stout:NULL));
+        }
+        else
 #endif
-		{
-			State<In>* stin = NULL;
-			State<Out>* stout = NULL;
-
+        {
+            obj = new T( (arg?stin:NULL), (arg?stout:NULL));
+        }
 #ifndef SOFA_DEPRECATE_OLD_API
-			////Deprecated check
-			std::string object1Path;
-			std::string object2Path;
-			
-			Base* bobjInput = NULL;
-			Base* bobjOutput = NULL;
-
-      if(arg != NULL )
-      {
-			  //Input
-			  if(arg->getAttribute("object1",NULL) == NULL && arg->getAttribute("input",NULL) == NULL)
-			  {
-				  object1Path = "..";
-				  context->serr << "Deprecated use of implicit value for input" << context->sendl;
-				  context->serr << "Use now : input=\"@" << object1Path << "\" "<< context->sendl;
-				  bobjInput = arg->findObject("../..");
-			  }
-
-			  if(arg->getAttribute("object1",NULL) != NULL)
-			  {
-				  object1Path = sofa::core::objectmodel::ObjectRef::convertFromXMLPathToSofaScenePath(arg->getAttribute("object1",NULL));
-				  context->serr << "Deprecated use of attribute " << "object1" << context->sendl;
-				  context->serr << "Use now : input=\"@" 
-							    << object1Path
-							    << "\""<< context->sendl;
-				  bobjInput = sofa::core::objectmodel::ObjectRef::parseFromXMLPath("object1", arg);
-			  }
-
-			  if (BaseObject* bo = dynamic_cast< BaseObject* >(bobjInput))
-			  {
-				  stin = dynamic_cast< State<In>* >(bo);
-			  }
-			  else if (core::objectmodel::BaseContext* bc = dynamic_cast< core::objectmodel::BaseContext* >(bobjInput))
-			  {
-				  stin = dynamic_cast< State<In>* >(bc->getState());
-			  }
-
-			  //Output
-			  if(arg->getAttribute("object2",NULL) == NULL && arg->getAttribute("output",NULL) == NULL)
-			  {
-				  object2Path = ".";
-				  context->serr << "Deprecated use of implicit value for output" << context->sendl;
-				  context->serr << "Use now : output=\"@" << object2Path << "\" "<< context->sendl;
-				  bobjOutput = arg->findObject("..");
-			  }
-
-			  if(arg->getAttribute("object2",NULL) != NULL)
-			  {
-				  object2Path = sofa::core::objectmodel::ObjectRef::convertFromXMLPathToSofaScenePath(arg->getAttribute("object2",NULL));
-				  context->serr << "Deprecated use of attribute " << "object2" << context->sendl;
-				  context->serr << "Use now : output=\"@" 
-							    << object2Path
-							    << "\""<< context->sendl;
-				  bobjOutput = sofa::core::objectmodel::ObjectRef::parseFromXMLPath("object2", arg);
-			  }
-
-			  if (BaseObject* bo = dynamic_cast< BaseObject* >(bobjOutput))
-			  {
-				  stout = dynamic_cast< State<Out>* >(bo);
-			  }
-			  else if (core::objectmodel::BaseContext* bc = dynamic_cast< core::objectmodel::BaseContext* >(bobjOutput))
-			  {
-				  stout = dynamic_cast< State<Out>* >(bc->getState());
-			  }
-				
-			  /////
-      }
-
-			if(stin == NULL && stout == NULL)
+        if (!object1Path.empty())
+            obj->m_inputObject.setValue( object1Path );
+        if (!object2Path.empty())
+            obj->m_outputObject.setValue( object2Path );
 #endif // SOFA_DEPRECATE_OLD_API
-			{
-        if(arg){
-				  stin = sofa::core::objectmodel::ObjectRef::parse< State<In> >("input", arg);
-				  stout = sofa::core::objectmodel::ObjectRef::parse< State<Out> >("output", arg);
-        }  
-      }
 
-			obj = new T( (arg?stin:NULL), (arg?stout:NULL));
-#ifndef SOFA_DEPRECATE_OLD_API
-			if (!object1Path.empty())
-				obj->m_inputObject.setValue( object1Path );
-			if (!object2Path.empty())
-				obj->m_outputObject.setValue( object2Path );
-#endif // SOFA_DEPRECATE_OLD_API
-		}
-
-		if (context) 
-			context->addObject(obj);
-
-		if (arg)
-			obj->parse(arg);
-	}
+        if (context) 
+            context->addObject(obj);
+        
+        if (arg)
+            obj->parse(arg);
+    }
 
 	virtual std::string getTemplateName() const
 	{

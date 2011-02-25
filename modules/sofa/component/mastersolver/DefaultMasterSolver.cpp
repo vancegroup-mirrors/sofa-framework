@@ -54,7 +54,7 @@ DefaultMasterSolver::~DefaultMasterSolver()
 {
 }
 
-void DefaultMasterSolver::step(double dt, const sofa::core::ExecParams* params)
+void DefaultMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS FIRST */, double dt)
 {
   if (firstCollision.getValue())
   {
@@ -68,14 +68,14 @@ void DefaultMasterSolver::step(double dt, const sofa::core::ExecParams* params)
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end collision" << sendl;
     // And finally integrate the time step
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
-    integrate(dt, params);
+    integrate(params /* PARAMS FIRST */, dt);
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
   }
   else
   {
     // First integrate the time step
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin integration" << sendl;
-    integrate(dt, params);
+    integrate(params /* PARAMS FIRST */, dt);
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, end integration" << sendl;
     // Then we reset the constraints
     if (this->f_printLog.getValue()) sout << "DefaultMasterSolver::step, begin constraints reset" << sendl;

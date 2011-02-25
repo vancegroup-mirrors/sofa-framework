@@ -66,7 +66,6 @@ namespace gl
         ,depthTexture(depthTexture)
         ,enableDepth(enableDepth)
         ,enableColor(enableColor)
-        ,_systemDraw(sofa::helper::gl::DrawManager::OPENGL)
     {
     }
 

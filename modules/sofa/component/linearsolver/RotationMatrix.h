@@ -37,7 +37,6 @@ namespace linearsolver {
 template<class Real>
 class RotationMatrix : public defaulttype::BaseMatrix {
   public:    
-    typedef RotationMatrix<Real> Matrix;
     
     virtual unsigned int rowSize(void) const {
 	return data.size()/3;
@@ -64,7 +63,7 @@ class RotationMatrix : public defaulttype::BaseMatrix {
 
     /// Reset all values to 0
     virtual void clear() {
-	for (unsigned i=0;i<data.size();i++) data[i] = 0.0;
+	data.clear();
     }
     
     /// Write the value of the element at row i, column j (using 0-based indices)
@@ -157,7 +156,7 @@ class RotationMatrix : public defaulttype::BaseMatrix {
 	}	
     }
 
-    friend std::ostream& operator << (std::ostream& out, const Matrix& v ) {
+    friend std::ostream& operator << (std::ostream& out, const RotationMatrix<Real> & v ) {
         out << "[";
         for (unsigned y=0;y<v.data.size();y+=9) {
             for (int x=0;x<3;++x) {

@@ -396,9 +396,12 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::computeMaterialStiffness(M
 	{
 		serr << "ERROR: Negative volume for tetra "<<a<<','<<b<<','<<c<<','<<d<<"> = "<<volumes6/6<<sendl;
 	}
-	materialMatrix  /= (volumes6);//*6 christian
-    /// @TODO: in TetrahedronFEMForceField, the stiffness matrix is divided by 6 compared to the code in TetrahedralCorotationalFEMForceField. Check which is the correct one...
-	//materialMatrix  /= volumes6*6;
+//	materialMatrix  /= (volumes6);//*6 christian
+//    /// @TODO: in TetrahedronFEMForceField, the stiffness matrix is divided by 6 compared to the code in TetrahedralCorotationalFEMForceField. Check which is the correct one...
+
+        // FF:  there is normally  a factor 1/6v in the strain-displacement matrix. Times transpose makes 1/36v². Integrating accross the volume multiplies by v, so the factor is 1/36v
+        materialMatrix  /= (volumes6*6);
+
 }
 
 template<class DataTypes>
@@ -462,8 +465,6 @@ inline void TetrahedralCorotationalFEMForceField<DataTypes>::computeForce( Displ
 	           J[ 3][5]*Depl[ 3]+/*J[ 4][5]*Depl[ 4]*/ J[ 5][5]*Depl[ 5]+
 	           J[ 6][5]*Depl[ 6]+/*J[ 7][5]*Depl[ 7]*/ J[ 8][5]*Depl[ 8]+
 	           J[ 9][5]*Depl[ 9]+/*J[10][5]*Depl[10]*/ J[11][5]*Depl[11];
-//         serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, D = "<<Depl<<sendl;
-//         serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, JtD = "<<JtD<<sendl;
 
 	VecNoInit<6,Real> KJtD;
 	KJtD[0] =   K[0][0]*JtD[0]+  K[0][1]*JtD[1]+  K[0][2]*JtD[2]
@@ -503,6 +504,11 @@ inline void TetrahedralCorotationalFEMForceField<DataTypes>::computeForce( Displ
 	          J[10][3]*KJtD[3]+  J[10][4]*KJtD[4] /*J[10][5]*KJtD[5]*/;
 	F[11] = /*J[11][0]*KJtD[0]+  J[11][1]*KJtD[1]+*/J[11][2]*KJtD[2]+
 	        /*J[11][3]*KJtD[3]+*/J[11][4]*KJtD[4]+  J[11][5]*KJtD[5]  ;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, D = "<<Depl<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, JtD = "<<JtD<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, K = "<<K<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, KJtD = "<<KJtD<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, F = "<<F<<sendl;
 #endif
 }
 
@@ -611,6 +617,13 @@ inline void TetrahedralCorotationalFEMForceField<DataTypes>::computeForce( Displ
 	          J[10][3]*KJtD[3]+  J[10][4]*KJtD[4] /*J[10][5]*KJtD[5]*/;
 	F[11] = /*J[11][0]*KJtD[0]+  J[11][1]*KJtD[1]+*/J[11][2]*KJtD[2]+
 	        /*J[11][3]*KJtD[3]+*/J[11][4]*KJtD[4]+  J[11][5]*KJtD[5]  ;
+
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, D = "<<Depl<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, JtD = "<<JtD<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, K = "<<K<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, KJtD = "<<KJtD<<sendl;
+//        serr<<"TetrahedronFEMForceField<DataTypes>::computeForce, F = "<<F<<sendl;
+
 #endif
 }
 
@@ -1286,7 +1299,7 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::draw()
 	const VecCoord& x = *this->mstate->getX();
 
 	if (this->getContext()->getShowWireFrame())
-	  simulation::getSimulation()->DrawUtility.setPolygonMode(0,true);
+          simulation::getSimulation()->DrawUtility().setPolygonMode(0,true);
 
 
 	std::vector< Vector3 > points[4];
@@ -1325,13 +1338,13 @@ void TetrahedralCorotationalFEMForceField<DataTypes>::draw()
 		points[3].push_back(pb);
 	}
 
-	simulation::getSimulation()->DrawUtility.drawTriangles(points[0], Vec<4,float>(0.0,0.0,1.0,1.0));
-	simulation::getSimulation()->DrawUtility.drawTriangles(points[1], Vec<4,float>(0.0,0.5,1.0,1.0));
-	simulation::getSimulation()->DrawUtility.drawTriangles(points[2], Vec<4,float>(0.0,1.0,1.0,1.0));
-	simulation::getSimulation()->DrawUtility.drawTriangles(points[3], Vec<4,float>(0.5,1.0,1.0,1.0));
+        simulation::getSimulation()->DrawUtility().drawTriangles(points[0], Vec<4,float>(0.0,0.0,1.0,1.0));
+        simulation::getSimulation()->DrawUtility().drawTriangles(points[1], Vec<4,float>(0.0,0.5,1.0,1.0));
+        simulation::getSimulation()->DrawUtility().drawTriangles(points[2], Vec<4,float>(0.0,1.0,1.0,1.0));
+        simulation::getSimulation()->DrawUtility().drawTriangles(points[3], Vec<4,float>(0.5,1.0,1.0,1.0));
 
 	if (this->getContext()->getShowWireFrame())
-	  simulation::getSimulation()->DrawUtility.setPolygonMode(0,false);
+          simulation::getSimulation()->DrawUtility().setPolygonMode(0,false);
 }
 
 

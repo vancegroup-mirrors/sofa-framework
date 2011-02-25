@@ -35,6 +35,7 @@
 #include <sofa/component/mass/AddMToMatrixFunctor.h>
 #include <sofa/simulation/common/Simulation.h>
 
+
 namespace sofa
 {
 
@@ -481,7 +482,7 @@ using namespace core::topology;
       // Initialisation
       typename DataTypes::Real densityM = MMM->getMassDensity();
       typename DataTypes::Real mass = (typename DataTypes::Real) 0;
-      
+
       for (unsigned int i = 0; i<hexahedronAdded.size(); ++i)
       {
 	// Get the hexahedron to be added
@@ -648,6 +649,8 @@ using namespace core::topology;
     this->Inherited::init();
     
     _topology = this->getContext()->getMeshTopology();
+    savedMass = m_massDensity.getValue();
+
     //    sofa::core::objectmodel::Tag mechanicalTag(m_tagMeshMechanics.getValue());
     //    this->getContext()->get(triangleGeo, mechanicalTag,sofa::core::objectmodel::BaseContext::SearchUp);
     
@@ -690,16 +693,16 @@ using namespace core::topology;
     //edgeMassInfo.setCreateHexahedronFunction(EdgeMassHexahedronCreationFunction);
     //edgeMassInfo.setDestroyHexahedronFunction(EdgeMassHexahedronDestroyFunction);
 
-    if ((vertexMassInfo.getValue().size()==0 || edgeMassInfo.getValue().size()==0) && (_topology!=0)) {
-      reinit();
-    }
+    if ((vertexMassInfo.getValue().size()==0 || edgeMassInfo.getValue().size()==0) && (_topology!=0))
+        reinit();
+
   }
 
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::reinit()
   {
 
-    if (_topology && (m_massDensity.getValue() > 0 && (vertexMassInfo.getValue().size() == 0 || edgeMassInfo.getValue().size() == 0)))
+    if (_topology && ((m_massDensity.getValue() > 0 && (vertexMassInfo.getValue().size() == 0 || edgeMassInfo.getValue().size() == 0)) || (m_massDensity.getValue()!= savedMass) ))
     {
       // resize array
       clear();
@@ -820,36 +823,24 @@ using namespace core::topology;
     helper::ReadAccessor< DataVecDeriv > dx = vdx;
 
 
-
-    //using a lumped matrix (default)
+    //using a lumped matrix (default)-----
     if(this->lumping.getValue())
     {
-        if(factor==1.0)
-        {
-            for (unsigned int i=0;i<dx.size();i++)
-               res[i] += dx[i] * vertexMass[i] * massLumpingCoeff;
-
-        }
-        else
-        {
-            for (unsigned int i=0;i<dx.size();i++)
-               res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
-        }
-
+        for (unsigned int i=0;i<dx.size();i++)
+           res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
     }
 
-    //using a sparse matrix
+
+    //using a sparse matrix---------------
     else
     {
         unsigned int nbEdges=_topology->getNbEdges();
         unsigned int v0,v1;
 
         for (unsigned int i=0;i<dx.size();i++)
-        {
            res[i] += dx[i] * vertexMass[i] * (Real)factor;
-        }
 
-       Real tempMass;
+       Real tempMass=0.0;
 
        for (unsigned int j=0; j<nbEdges; ++j)
        {
@@ -858,11 +849,11 @@ using namespace core::topology;
            v0=_topology->getEdge(j)[0];
            v1=_topology->getEdge(j)[1];
 
-           res[v0] += dx[v1] * tempMass ;
-           res[v1] += dx[v0] * tempMass ;
-
+           res[v0] += dx[v1] * tempMass;
+           res[v1] += dx[v0] * tempMass;
        }
      }
+
   }
 
 
@@ -872,11 +863,12 @@ using namespace core::topology;
   {
     (void)a;
     (void)f;
+
 //    if(!this->lumping.getValue())
         serr << "WARNING: the methode 'accFromF' can't be used with MeshMatrixMass as this SPARSE mass matrix can't be inversed easily. \nPlease proceed to mass lumping." << sendl;
 //    else
 //    {
-//        std::cout<< "\t--- Inversion of M after mass lumping";
+//        //Inversion of M after mass lumping
 
 //        const MassVector &vertexMass= vertexMassInfo.getValue();
 //        unsigned int vertexNb = vertexMass.size();
@@ -886,7 +878,7 @@ using namespace core::topology;
 
 //        for (unsigned int i=0;i<vertexNb;i++)
 //        {
-//            _acc[i] = _f[i] / (massLumpingCoeff * vertexMass[i]);
+//            _acc[i] = _f[i] / (vertexMass[i] * massLumpingCoeff);
 //        }
 
 //    }
@@ -1018,19 +1010,33 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const
 
     const int N = defaulttype::DataTypeInfo<Deriv>::size();
     AddMToMatrixFunctor<Deriv,MassType> calc;
-		sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
-	 	Real mFactor = (Real)mparams->mFactor();	
-    for (unsigned int i=0;i<vertexMass.size();i++)
-      calc(r.matrix, vertexMass[i], r.offset + N*i, mFactor);
+    sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
+    Real mFactor = (Real)mparams->mFactor();
 
-
-    for (unsigned int i=0; i<nbEdges; ++i)
+    if(this->lumping.getValue())
     {
-      v0=_topology->getEdge(i)[0];
-      v1=_topology->getEdge(i)[1];
+        for (unsigned int i=0;i<vertexMass.size();i++)
+            calc(r.matrix, vertexMass[i]*massLumpingCoeff, r.offset + N*i, mFactor);
+    }
 
-      calc(r.matrix, edgeMass[i], r.offset + v0, r.offset + v1, mFactor);
-      calc(r.matrix, edgeMass[i], r.offset + v1, r.offset + v0, mFactor);
+
+    else
+    {
+        for (unsigned int i=0;i<vertexMass.size();i++)
+          calc(r.matrix, vertexMass[i], r.offset + N*i, mFactor);
+
+
+        for (unsigned int i=0; i<nbEdges; ++i)
+        {
+          v0=_topology->getEdge(i)[0];
+          v1=_topology->getEdge(i)[1];
+
+
+          calc(r.matrix, edgeMass[i], r.offset + v0, r.offset + v1, mFactor);
+          calc(r.matrix, edgeMass[i], r.offset + v1, r.offset + v0, mFactor);
+
+
+        }
     }
 
 
@@ -1082,31 +1088,45 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(DataVecDeriv& d_v, const
     Real totalMass=0.0;
 
     std::vector<  Vector3 > points;
-    std::vector< Vec<2,int> > indices;
 
-    for (unsigned int i=0; i<x.size(); i++)
+    if(this->lumping.getValue())
     {
-      Vector3 p;
-      p = DataTypes::getCPos(x[i]);
+        for (unsigned int i=0; i<x.size(); i++)
+        {
+          Vector3 p;
+          p = DataTypes::getCPos(x[i]);
 
-      points.push_back(p);
-      gravityCenter += x[i]*vertexMass[i];
-      totalMass += vertexMass[i];
+          points.push_back(p);
+          gravityCenter += x[i]*vertexMass[i]*massLumpingCoeff;
+          totalMass += vertexMass[i]*massLumpingCoeff;
+        }
     }
-
-    for (unsigned int i=0; i<nbEdges; ++i)
+    else
     {
-      v0=_topology->getEdge(i)[0];
-      v1=_topology->getEdge(i)[1];
+        for (unsigned int i=0; i<x.size(); i++)
+        {
+          Vector3 p;
+          p = DataTypes::getCPos(x[i]);
 
-      gravityCenter += x[v0]*edgeMass[v0];
-      gravityCenter += x[v1]*edgeMass[v1];
-      totalMass += edgeMass[v0];
-      totalMass += edgeMass[v1];
+          points.push_back(p);
+          gravityCenter += x[i]*vertexMass[i];
+          totalMass += vertexMass[i];
+        }
+
+        for (unsigned int i=0; i<nbEdges; ++i)
+        {
+          v0=_topology->getEdge(i)[0];
+          v1=_topology->getEdge(i)[1];
+
+          gravityCenter += x[v0]*edgeMass[v0];
+          gravityCenter += x[v1]*edgeMass[v1];
+          totalMass += edgeMass[v0];
+          totalMass += edgeMass[v1];
+        }
     }
     
     
-    simulation::getSimulation()->DrawUtility.drawPoints(points, 2, Vec<4,float>(1,1,1,1));
+    simulation::getSimulation()->DrawUtility().drawPoints(points, 2, Vec<4,float>(1,1,1,1));
 
     if(showCenterOfGravity.getValue()){
       glBegin (GL_LINES);

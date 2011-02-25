@@ -1,6 +1,8 @@
 SOFA_DIR =.
 TEMPLATE = subdirs
 
+message( "PRE-CONFIG: " $${CONFIG})
+
 include($${SOFA_DIR}/sofa.cfg) 
 
 SUBDIRS += extlibs/newmat
@@ -234,7 +236,7 @@ else {
 
 !contains(DEFINES,SOFA_GUI_QTVIEWER) {
 !contains(DEFINES,SOFA_GUI_QGLVIEWER) {
-!contains(DEFINES,SOFA_GUI_QTOGREVIEWER) {
+{
   message( "|  Qt GUI: DISABLED")
 }
 else {
@@ -262,14 +264,13 @@ contains(DEFINES,SOFA_GUI_QGLVIEWER) {
 else {
   message( "|  -  Qt QGLViewer viewer: DISABLED")
 }
-contains(DEFINES,SOFA_GUI_QTOGREVIEWER) {
-  message( "|  -  Qt OGRE 3D viewer: ENABLED")
-}
-else {
-  message( "|  -  Qt OGRE 3D viewer: DISABLED")
-}
 
 message( "======================================")
+message( "|  CONFIG: " $${CONFIG})
+message( "|  DEFINES: " $${DEFINES})
+message( "======================================")
+
+
 
 unix {
   contains(DEFINES, SOFA_QT4):DOLLAR="\\$"

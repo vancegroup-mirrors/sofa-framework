@@ -22,6 +22,7 @@ namespace sofa
         , backgroundImage("textures/SOFA_logo.bmp")
         , ambientColour(Vector3())
         {
+
         }
 
 
@@ -341,6 +342,9 @@ namespace sofa
           currentCamera->manageEvent(&me);
 
           getQWidget()->update();
+
+		  if (groot)
+			  groot->propagateEvent(&me);
         }
 
         void SofaViewer::mouseMoveEvent ( QMouseEvent *e )
@@ -350,6 +354,9 @@ namespace sofa
           currentCamera->manageEvent(&me);
 
           getQWidget()->update();
+
+		  if (groot)
+			  groot->propagateEvent(&me);
         }
 
         void SofaViewer::mousePressEvent ( QMouseEvent * e)
@@ -365,6 +372,8 @@ namespace sofa
           currentCamera->manageEvent(mEvent);
 
           getQWidget()->update();
+		  if (groot)
+			  groot->propagateEvent(mEvent);
         }
 
         void SofaViewer::mouseReleaseEvent ( QMouseEvent * e)
@@ -380,6 +389,8 @@ namespace sofa
           currentCamera->manageEvent(mEvent);
 
           getQWidget()->update();
+		  if (groot)
+			  groot->propagateEvent(mEvent);
         }
 
         void SofaViewer::mouseEvent(QMouseEvent *e)

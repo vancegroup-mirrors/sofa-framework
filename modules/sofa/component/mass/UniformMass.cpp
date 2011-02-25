@@ -231,7 +231,7 @@ template <> SOFA_COMPONENT_MASS_API
 
   for (unsigned int i=0; i<x.size(); i++)
   {
-      simulation::getSimulation()->DrawUtility.drawFrame(x[i].getCenter(), x[i].getOrientation(), len*showAxisSize.getValue() );
+      simulation::getSimulation()->DrawUtility().drawFrame(x[i].getCenter(), x[i].getOrientation(), len*showAxisSize.getValue() );
       gravityCenter += (x[i].getCenter());
   }
 
@@ -277,7 +277,7 @@ template <> SOFA_COMPONENT_MASS_API
     Quat orient(Vec3d(0,0,1), x[i].getOrientation());
     Vec3d center; center = x[i].getCenter();
 
-    simulation::getSimulation()->DrawUtility.drawFrame(center, orient, len*showAxisSize.getValue() );
+    simulation::getSimulation()->DrawUtility().drawFrame(center, orient, len*showAxisSize.getValue() );
   }
 }
 
@@ -525,7 +525,7 @@ template <> SOFA_COMPONENT_MASS_API
 
   for (unsigned int i=0; i<x.size(); i++)
   {
-      simulation::getSimulation()->DrawUtility.drawFrame(x[i].getCenter(), x[i].getOrientation(), len*showAxisSize.getValue() );
+      simulation::getSimulation()->DrawUtility().drawFrame(x[i].getCenter(), x[i].getOrientation(), len*showAxisSize.getValue() );
       gravityCenter += (x[i].getCenter());
   }
 
@@ -559,7 +559,7 @@ template <> SOFA_COMPONENT_MASS_API
     Quat orient(Vec3d(0,0,1), x[i].getOrientation());
     Vec3d center; center = x[i].getCenter();
 
-    simulation::getSimulation()->DrawUtility.drawFrame(center, orient, len*showAxisSize.getValue() );    
+    simulation::getSimulation()->DrawUtility().drawFrame(center, orient, len*showAxisSize.getValue() );
   }
 }
 

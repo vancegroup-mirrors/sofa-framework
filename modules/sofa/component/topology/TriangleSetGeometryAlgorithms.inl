@@ -1934,7 +1934,6 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
 
        while (!_neighTri.empty() && cpt_secu < max)
        {
-
            for (unsigned int i=0; i<_neighTri.size(); ++i)
            {
                unsigned int triId = _neighTri[i];
@@ -1942,7 +1941,7 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
                //std::cout << "triNormal: "<< triNormal << std::endl;
                double prod = (firstNormal*triNormal)/(firstNormal.norm()*triNormal.norm());
                 //std::cout << "prod: "<< prod << std::endl;
-               if (prod < 0.0) //change orientation
+               if (prod < 0.15) //change orientation
                    this->m_topology->reOrientateTriangle(triId);
            }
 
@@ -2104,133 +2103,174 @@ int TriangleSetGeometryAlgorithms<DataTypes>::getTriangleInDirection(PointID p, 
 
   
   template<class DataTypes>
-  void TriangleSetGeometryAlgorithms<DataTypes>::draw()
-  {
-    EdgeSetGeometryAlgorithms<DataTypes>::draw();
+   void TriangleSetGeometryAlgorithms<DataTypes>::draw()
+   {
+       EdgeSetGeometryAlgorithms<DataTypes>::draw();
 
-    // Draw Triangles indices
-    if (showTriangleIndices.getValue())
-    {
-      Mat<4,4, GLfloat> modelviewM;
-      const VecCoord& coords = *(this->object->getX());
-      const Vector3& color = _drawColor.getValue();
-      glColor3f(color[0]-0.2, color[1]-0.2, color[2]-0.2);
-      glDisable(GL_LIGHTING);
-      float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
+       // Draw Triangles indices
+       if (showTriangleIndices.getValue())
+       {
+           Mat<4,4, GLfloat> modelviewM;
+           const VecCoord& coords = *(this->object->getX());
+           const Vector3& color = _drawColor.getValue();
+           glColor3f(color[0]-0.2, color[1]-0.2, color[2]-0.2);
+           glDisable(GL_LIGHTING);
+           float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
 
-      //for triangles:
-      scale = scale/2;
+           //for triangles:
+           scale = scale/2;
 
-      const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles(); 	 
-      
-      for (unsigned int i =0; i<triangleArray.size(); i++)
-      {
-	
-	Triangle the_tri = triangleArray[i];
-	Coord baryCoord;
-	Coord vertex1 = coords[ the_tri[0] ];
-	Coord vertex2 = coords[ the_tri[1] ];
-	Coord vertex3 = coords[ the_tri[2] ];
-	  
-	for (unsigned int k = 0; k<3; k++)
-	  baryCoord[k] = (vertex1[k]+vertex2[k]+vertex3[k])/3;
+           const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles();
 
-	std::ostringstream oss;
-	oss << i;
-	std::string tmp = oss.str();
-	const char* s = tmp.c_str();
-	glPushMatrix();
+           for (unsigned int i =0; i<triangleArray.size(); i++)
+           {
 
-	glTranslatef(baryCoord[0], baryCoord[1], baryCoord[2]);
-	glScalef(scale,scale,scale);
+               Triangle the_tri = triangleArray[i];
+               Coord baryCoord;
+               Coord vertex1 = coords[ the_tri[0] ];
+               Coord vertex2 = coords[ the_tri[1] ];
+               Coord vertex3 = coords[ the_tri[2] ];
 
-	// Makes text always face the viewer by removing the scene rotation
-	// get the current modelview matrix
-	glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
-	modelviewM.transpose();
+               for (unsigned int k = 0; k<3; k++)
+                   baryCoord[k] = (vertex1[k]+vertex2[k]+vertex3[k])/3;
 
-	Vec3d temp(baryCoord[0], baryCoord[1], baryCoord[2]);
-	temp = modelviewM.transform(temp);
-	
-	//glLoadMatrixf(modelview);
-	glLoadIdentity();
-	
-	glTranslatef(temp[0], temp[1], temp[2]);
-	glScalef(scale,scale,scale);
-	
-	while(*s){
-	  glutStrokeCharacter(GLUT_STROKE_ROMAN, *s);
-	  s++;
-	}
-	
-	glPopMatrix();
-	
-      }
-    }
+               std::ostringstream oss;
+               oss << i;
+               std::string tmp = oss.str();
+               const char* s = tmp.c_str();
+               glPushMatrix();
+
+               glTranslatef(baryCoord[0], baryCoord[1], baryCoord[2]);
+               glScalef(scale,scale,scale);
+
+               // Makes text always face the viewer by removing the scene rotation
+               // get the current modelview matrix
+               glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
+               modelviewM.transpose();
+
+               Vec3d temp(baryCoord[0], baryCoord[1], baryCoord[2]);
+               temp = modelviewM.transform(temp);
+
+               //glLoadMatrixf(modelview);
+               glLoadIdentity();
+
+               glTranslatef(temp[0], temp[1], temp[2]);
+               glScalef(scale,scale,scale);
+
+               while(*s){
+                   glutStrokeCharacter(GLUT_STROKE_ROMAN, *s);
+                   s++;
+               }
+
+               glPopMatrix();
+
+           }
+       }
 
 
-    // Draw Triangles
-    if (_draw.getValue())
-    {
-      const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles();
-      
-      if (!triangleArray.empty()) // Draw triangle surfaces
-      {
-	const VecCoord& coords = *(this->object->getX());
+       // Draw Triangles
+       if (_draw.getValue())
+       {
+           const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles();
 
-	glDisable(GL_LIGHTING);
-   const Vector3& color = _drawColor.getValue();
-   glColor3f(color[0], color[1], color[2]);
-	glBegin(GL_TRIANGLES);
-	for (unsigned int i = 0; i<triangleArray.size(); i++)
-	{
-	  const Triangle& t = triangleArray[i];
+           if (!triangleArray.empty()) // Draw triangle surfaces
+           {
+               const VecCoord& coords = *(this->object->getX());
 
-	  for (unsigned int j = 0; j<3; j++)
-	  {
-	    Coord coordP = coords[t[j]];
-	    glVertex3d(coordP[0], coordP[1], coordP[2]);
-	  }
-	}
-	glEnd();
+               glDisable(GL_LIGHTING);
+               const Vector3& color = _drawColor.getValue();
+               glColor3f(color[0], color[1], color[2]);
+               glBegin(GL_TRIANGLES);
+               for (unsigned int i = 0; i<triangleArray.size(); i++)
+               {
+                   const Triangle& t = triangleArray[i];
 
-   glColor3f(color[0]-0.2, color[1]-0.2, color[2]-0.2);
-	glBegin(GL_LINES);
-	const sofa::helper::vector<Edge> &edgeArray = this->m_topology->getEdges();
+                   for (unsigned int j = 0; j<3; j++)
+                   {
+                       Coord coordP = coords[t[j]];
+                       glVertex3d(coordP[0], coordP[1], coordP[2]);
+                   }
+               }
+               glEnd();
 
-	if (!edgeArray.empty()) // Draw triangle edges for better display
-	{
-	  for (unsigned int i = 0; i<edgeArray.size(); i++)
-	  {
-	    const Edge& e = edgeArray[i];
-	    Coord coordP1 = coords[e[0]];
-	    Coord coordP2 = coords[e[1]];
-	    glVertex3d(coordP1[0], coordP1[1], coordP1[2]);
-	    glVertex3d(coordP2[0], coordP2[1], coordP2[2]);
-	  }
-	}
-	else
-	{
-	  for (unsigned int i = 0; i<triangleArray.size(); i++)
-	  {
-	    const Triangle& t = triangleArray[i];
-	    sofa::helper::vector <Coord> triCoord;
+               glColor3f(color[0]-0.2, color[1]-0.2, color[2]-0.2);
+               glBegin(GL_LINES);
+               const sofa::helper::vector<Edge> &edgeArray = this->m_topology->getEdges();
 
-	    for (unsigned int j = 0; j<3; j++)
-	      triCoord.push_back (coords[t[j]]);
+               if (!edgeArray.empty()) // Draw triangle edges for better display
+               {
+                   for (unsigned int i = 0; i<edgeArray.size(); i++)
+                   {
+                       const Edge& e = edgeArray[i];
+                       Coord coordP1 = coords[e[0]];
+                       Coord coordP2 = coords[e[1]];
+                       glVertex3d(coordP1[0], coordP1[1], coordP1[2]);
+                       glVertex3d(coordP2[0], coordP2[1], coordP2[2]);
+                   }
+               }
+               else
+               {
+                   for (unsigned int i = 0; i<triangleArray.size(); i++)
+                   {
+                       const Triangle& t = triangleArray[i];
+                       sofa::helper::vector <Coord> triCoord;
 
-	    for (unsigned int j = 0; j<3; j++)
-	    {
-	      glVertex3d(triCoord[j][0], triCoord[j][1], triCoord[j][2]);
-	      glVertex3d(triCoord[(j+1)%3][0], triCoord[(j+1)%3][1], triCoord[(j+1)%3][2]);
-	    }
-	  }
-	}
-	glEnd();
-      }
-    }
-    
-  }
+                       for (unsigned int j = 0; j<3; j++)
+                           triCoord.push_back (coords[t[j]]);
+
+                       for (unsigned int j = 0; j<3; j++)
+                       {
+                           glVertex3d(triCoord[j][0], triCoord[j][1], triCoord[j][2]);
+                           glVertex3d(triCoord[(j+1)%3][0], triCoord[(j+1)%3][1], triCoord[(j+1)%3][2]);
+                       }
+                   }
+               }
+               glEnd();
+           }
+       }
+
+
+       if (_drawNormals.getValue())
+       {
+           const sofa::helper::vector<Triangle> &triangleArray = this->m_topology->getTriangles();
+           unsigned int nbrTtri = triangleArray.size();
+
+           Coord point2;
+           Vec<3,double> colors;
+           SReal normalLength = _drawNormalLength.getValue();
+           unsigned int _size = sizeof(point2)/sizeof(SReal);
+
+           glDisable(GL_LIGHTING);
+           glBegin(GL_LINES);
+
+           for (unsigned int i =0; i<nbrTtri; i++)
+           {
+               Triangle _tri = triangleArray[i];
+               sofa::defaulttype::Vec<3,double> normal = this->computeTriangleNormal(i);
+               normal.normalize();
+
+               // compute bary triangle
+               Coord point1 = this->getPointPosition(_tri[0]);
+               for (unsigned int j = 1; j<3; j++)
+                   point1 += this->getPointPosition(_tri[j]);
+               point1 = point1/3;
+
+               for(unsigned int j=0; j<_size; j++)
+                   point2[j] = point1[j] + normal[j]*normalLength;
+
+               for(unsigned int j=0; j<3; j++)
+                   colors[j] = fabs (normal[j]);
+
+               glColor3f (colors[0], colors[1], colors[2]);
+
+               glVertex3d(point1[0], point1[1], point1[2]);
+               glVertex3d(point2[0], point2[1], point2[2]);
+           }
+           glEnd();
+       }
+
+
+   }
 
 
 

@@ -25,6 +25,7 @@
 #ifndef SOFA_COMPONENT_VISUALMODEL_OGLMODEL_H
 #define SOFA_COMPONENT_VISUALMODEL_OGLMODEL_H
 
+#include <vector>
 #include <string>
 #include <sofa/helper/gl/template.h>
 #include <sofa/helper/gl/Texture.h>
@@ -38,7 +39,7 @@
 #include <windows.h>
 #endif // _WIN32
 
-
+#define   NB_MAX_TEXTURES 16
 
 namespace sofa
 {
@@ -65,7 +66,7 @@ public:
 protected:
     Data<bool> premultipliedAlpha, useVBO, writeZTransparent, alphaBlend, depthTest;
     Data<int> cullFace;
-    helper::gl::Texture *tex;
+    helper::gl::Texture *tex; //this texture is used only if a texture name is specified in the scn
     GLuint vbo, iboTriangles, iboQuads;
     bool canUseVBO, VBOGenDone, initDone, useTriangles, useQuads;
     unsigned int oldVerticesSize, oldTrianglesSize, oldQuadsSize;
@@ -77,6 +78,9 @@ protected:
     virtual void pushTransformMatrix(float* matrix) { glPushMatrix(); glMultMatrixf(matrix); }
     virtual void popTransformMatrix() { glPopMatrix(); }
 
+    std::vector<helper::gl::Texture*> textures;
+
+    std::map<int, int> materialTextureIdMap; //link between a material and a texture
 
 public:
 
@@ -85,6 +89,7 @@ public:
     ~OglModel();
 
     bool loadTexture(const std::string& filename);
+    bool loadTextures() ;
 
 	void initTextures();
 	virtual void initVisual();

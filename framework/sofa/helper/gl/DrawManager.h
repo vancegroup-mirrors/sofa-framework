@@ -26,131 +26,105 @@
 ******************************************************************************/
 #ifndef SOFA_HELPER_GL_DRAWMANAGER_H
 #define SOFA_HELPER_GL_DRAWMANAGER_H
+
 #include <sofa/helper/helper.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
 
 #include <vector>
 
-
-#include <sofa/helper/gl/template.h>
-#ifdef SOFA_GUI_QTOGREVIEWER
-#include <OgreManualObject.h>
-#endif
+#include "template.h"
 
 namespace sofa
 {
 
-namespace helper
-{
+  namespace helper
+  {
 
-namespace gl
-{
-  using namespace defaulttype;
-
+    namespace gl
+    {
+  
+      using namespace defaulttype;
 
   class SOFA_HELPER_API DrawManager
   {
   public:
-    enum MODEDISPLAY{OPENGL
-#ifdef SOFA_GUI_QTOGREVIEWER
-		     , OGRE
-#endif
-    };
+             DrawManager() {}
+    virtual ~DrawManager() {}
     
-    DrawManager();
+    virtual void drawPoints(const std::vector<Vector3> &points, float size,  const Vec<4,float> colour) = 0 ;
     
-    void drawPoints(const std::vector<Vector3> &points, float size,  const Vec<4,float> colour);
-    void drawLines(const std::vector<Vector3> &points, float size, const Vec<4,float> colour);
-    void drawTriangles(const std::vector<Vector3> &points, const Vec<4,float> colour);
-    void drawTriangles(const std::vector<Vector3> &points, const Vector3 normal, const Vec<4,float> colour);
-
-
-    void drawLines(const std::vector<Vector3> &points, const std::vector< defaulttype::Vec<2,int> > &index, float size, const Vec<4,float> colour);
-    void drawTriangles(const std::vector<Vector3> &points, 
-		       const std::vector< defaulttype::Vec<3,int> > &index, 
+    virtual void drawLines(const std::vector<Vector3> &points, float size, const Vec<4,float> colour) = 0 ;
+    virtual void drawLines(const std::vector<Vector3> &points, const std::vector< Vec<2,int> > &index, float size, const Vec<4,float> colour) = 0 ;
+    
+    virtual void drawTriangles(const std::vector<Vector3> &points, const Vec<4,float> colour) = 0 ;
+    virtual void drawTriangles(const std::vector<Vector3> &points, const Vector3 normal, const Vec<4,float> colour) = 0 ;
+    virtual void drawTriangles(const std::vector<Vector3> &points, 
+		       const std::vector< Vec<3,int> > &index, 
 		       const std::vector<Vector3>  &normal,
-		       const Vec<4,float> colour);
-    void drawTriangles(const std::vector<Vector3> &points,
+		       const Vec<4,float> colour) = 0 ;
+    virtual void drawTriangles(const std::vector<Vector3> &points,
                        const std::vector<Vector3>  &normal,
-                       const std::vector< Vec<4,float> > &colour);
+                       const std::vector< Vec<4,float> > &colour) = 0 ;
 
-    void drawTriangleStrip(const std::vector<Vector3> &points,
+    virtual void drawTriangleStrip(const std::vector<Vector3> &points,
 			   const std::vector<Vector3>  &normal,
-			   const Vec<4,float> colour);
-    void drawTriangleFan(const std::vector<Vector3> &points,
+			   const Vec<4,float> colour) = 0 ;
+			   
+    virtual void drawTriangleFan(const std::vector<Vector3> &points,
                          const std::vector<Vector3>  &normal,
-                         const Vec<4,float> colour);
+                         const Vec<4,float> colour) = 0 ;
+    
+    virtual void drawFrame   (const Vector3& position, const Quaternion &orientation, const Vec<3,float> &size) = 0 ;
 
-    void drawSpheres (const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec<4,float> colour);
-    void drawSpheres (const std::vector<Vector3> &points, float radius, const Vec<4,float> colour);
-    //void drawFlatSpheres ( const std::vector<Vector3>& points, const std::vector<float>& radix, const std::vector< Vec<4,float> > colours); 
-    void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subdRadius=16);
-    void drawCube    (const float& radius, const Vec<4,float>& colour, const int& subd=16); // Draw a cube of size one centered on the current point.
-    void drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
-    void drawArrow   (const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16);
-    void drawFrame   (const Vector3& position, const Quaternion &orientation, const Vec<3,float> &size);
-    void drawPlus    (const float& radius, const Vec<4,float>& colour, const int& subd=16); // Draw a plus sign of size one centered on the current point.
+    virtual void drawSpheres (const std::vector<Vector3> &points, const std::vector<float>& radius, const Vec<4,float> colour) = 0;
+    virtual void drawSpheres (const std::vector<Vector3> &points, float radius, const Vec<4,float> colour) = 0 ;
+    
+    //void drawFlatSpheres ( const std::vector<Vector3>& points, const std::vector<float>& radix, const std::vector< Vec<4,float> > colours) = 0 ;
+ 
+    virtual void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subd=16) = 0 ;
+    //virtual void drawCone    (const Vector3& p1, const Vector3 &p2, float radius1, float radius2, const Vec<4,float> colour, int subdRadius=16) = 0 ;
+    
+    virtual void drawCube    (const float& radius, const Vec<4,float>& colour, const int& subd=16) = 0 ; // Draw a cube of size one centered on the current point.
 
+    virtual void drawCylinder(const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16) = 0 ;
+   
+    virtual void drawArrow   (const Vector3& p1, const Vector3 &p2, float radius, const Vec<4,float> colour,  int subd=16) = 0 ;
 
-
-    void addPoint(const Vector3 &p, const Vec<4,float> &c);
-    void addPoint(const Vector3 &p, const Vector3 &n, const Vec<4,float> &c);
-    void addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
-		     const Vector3 &normal, const Vec<4,float> &c);
-    void addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
+    virtual void drawPlus    (const float& radius, const Vec<4,float>& colour, const int& subd=16) = 0 ; // Draw a plus sign of size one centered on the current point.
+    
+    virtual void addPoint(const Vector3 &p, const Vec<4,float> &c) = 0 ;
+    virtual void addPoint(const Vector3 &p, const Vector3 &n, const Vec<4,float> &c) = 0 ;
+    
+    virtual void addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
+		     const Vector3 &normal, const Vec<4,float> &c) = 0 ;
+    virtual void addTriangle(const Vector3 &p1,const Vector3 &p2,const Vector3 &p3,
                      const Vector3 &normal,
-                     const Vec<4,float> &c1, const Vec<4,float> &c2, const Vec<4,float> &c3);
+                     const Vec<4,float> &c1, const Vec<4,float> &c2, const Vec<4,float> &c3) = 0 ;
 
-
-    void addSphere( const Vector3 &p, float radius);
-
-
-    void setPolygonMode(int mode, bool wireframe);
-    void setLightingEnabled(bool b);
-
-    void setSystemDraw(MODEDISPLAY mode){SystemDraw=mode;}
-    MODEDISPLAY getSystemDraw() const {return SystemDraw;}
-#ifdef SOFA_GUI_QTOGREVIEWER
-    void addOgreVertexPosition(const Vector3 &p);
-    void addOgreVertexColour(const Vec<4,float> &p);
-    void addOgreVertexNormal(const Vector3 &p);
+    virtual void addSphere( const Vector3 &p, float radius) = 0 ;
     
-    void setOgreObject(Ogre::ManualObject* o){ogreDraw=o;};
-    void setOgreMaterial(Ogre::MaterialPtr s){currentMaterial=s;}
-    void setSceneMgr(Ogre::SceneManager* s){mSceneMgr=s;}
-#endif      
-
-    void clear();
-    void setMaterial(const Vec<4,float> &colour, std::string name=std::string());
-    void resetMaterial(const Vec<4,float> &colour, std::string name=std::string());
-
+    virtual void clear() = 0 ;
     
-  protected:
-    MODEDISPLAY SystemDraw;
-    bool lightEnabled;
-    int polygonMode; //0: no cull, 1 front, 2 back
-    bool wireframeEnabled;
+    virtual void setMaterial(const Vec<4,float> &colour, std::string name=std::string()) = 0 ;
+    
+    virtual void resetMaterial(const Vec<4,float> &colour, std::string name=std::string()) = 0 ;
 
-#ifdef SOFA_GUI_QTOGREVIEWER
-    Ogre::ManualObject *ogreDraw;
-    Ogre::MaterialPtr currentMaterial;
-    Ogre::SceneManager* mSceneMgr;
+    virtual void setPolygonMode(int _mode, bool _wireframe) = 0 ;
 
+    virtual void setLightingEnabled(bool _isAnabled) = 0 ;  
 
+    virtual void pushMatrix() = 0;
+    virtual void popMatrix() =  0;
+    virtual void multMatrix(float*  ) = 0;
+    virtual void scale(float ) = 0;
 
-    //Basic shapes
-    std::string sphereMeshName;
+        };
 
-#endif
-    static int materialName;
-    static int meshName;
-  };
+    } // namespace gl
 
-} // namespace gl
-
-} // namespace helper
+  } // namespace helper
 
 } // namespace sofa
 
-#endif
+#endif //SOFA_HELPER_GL_DRAWMANAGER_H

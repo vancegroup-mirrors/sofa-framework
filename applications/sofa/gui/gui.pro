@@ -16,9 +16,6 @@ SUBDIRS += qt
 
 !contains (DEFINES, SOFA_GUI_QTVIEWER) {
 	!contains (DEFINES, SOFA_GUI_QGLVIEWER) {
-		!contains (DEFINES, SOFA_GUI_QTOGREVIEWER) {
-			SUBDIRS -= qt
-		}
 	}
 }
 

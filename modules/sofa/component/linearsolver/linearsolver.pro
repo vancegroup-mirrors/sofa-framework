@@ -106,16 +106,27 @@ win32{
   LIBS *= -lblas_win32_MT
   # LAPACK
   LIBS *= -llapack_win32_MT
+  # LAPACK
   }
+  LIBS *= -lmetis
+
     HEADERS +=  \
                SparseTAUCSSolver.h \
-	       SparseTAUCSLUSolver.h \
 	       IncompleteTAUCSSolver.h
 
     SOURCES +=  \
                SparseTAUCSSolver.cpp \
-	       SparseTAUCSLUSolver.cpp \
 	       IncompleteTAUCSSolver.cpp
+}
+
+contains(DEFINES,SOFA_HAVE_TAUCS_MT){
+    LIBS *= -lmetis
+
+    HEADERS +=  \
+	       SparseTAUCSLUSolver.h \
+
+    SOURCES +=  \
+	       SparseTAUCSLUSolver.cpp \
 
 }
 

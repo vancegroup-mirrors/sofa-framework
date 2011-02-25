@@ -87,6 +87,7 @@ HEADERS += initCollision.h \
            Triangle.h \
 	   TriangleLocalMinDistanceFilter.h \
            TriangleModel.h \
+#           TriangleModel.inl \
            TriangleModelInRegularGrid.h \
            RayTraceDetection.h \
            TriangleOctree.h \

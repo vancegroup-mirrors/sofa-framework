@@ -95,7 +95,7 @@ template class SOFA_COMPONENT_CONSTRAINTSET_API DistanceLMConstraint<Rigid3fType
                 points.push_back(x1[edges[i][0]].getCenter());
                 points.push_back(x2[edges[i][1]].getCenter());
               }
-            simulation::getSimulation()->DrawUtility.drawLines(points, 1, Vec<4,float>(0.0,1.0,0.0f,1.0f));
+            simulation::getSimulation()->DrawUtility().drawLines(points, 1, Vec<4,float>(0.0,1.0,0.0f,1.0f));
           }
   }
 #endif
@@ -127,7 +127,7 @@ template class SOFA_COMPONENT_CONSTRAINTSET_API DistanceLMConstraint<Rigid3fType
                 points.push_back(x1[edges[i][0]].getCenter());
                 points.push_back(x2[edges[i][1]].getCenter());
               }
-            simulation::getSimulation()->DrawUtility.drawLines(points, 1, Vec<4,float>(0.0,1.0,0.0f,1.0f));
+            simulation::getSimulation()->DrawUtility().drawLines(points, 1, Vec<4,float>(0.0,1.0,0.0f,1.0f));
           }
   }
 #endif

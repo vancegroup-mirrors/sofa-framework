@@ -70,8 +70,8 @@ public:
     typedef typename DataTypes::Coord                       Coord;
     typedef typename DataTypes::Deriv                       Deriv;
     typedef typename DataTypes::Real                        Real;
-		typedef core::objectmodel::Data<VecCoord> DataVecCoord; 
-		typedef core::objectmodel::Data<VecDeriv> DataVecDeriv; 
+    typedef core::objectmodel::Data<VecCoord>               DataVecCoord;
+    typedef core::objectmodel::Data<VecDeriv>               DataVecDeriv;
     typedef TMassType                                       MassType;
     typedef helper::vector<MassType> MassVector;
 
@@ -106,9 +106,10 @@ public:
 
 protected:
     
-	/// The type of topology to build the mass from the topology
-	TopologyType topologyType;	
+   /// The type of topology to build the mass from the topology
+   TopologyType topologyType;
    float massLumpingCoeff;
+   Real savedMass;
 
 
 public:
@@ -140,7 +141,7 @@ public:
 
     
 	Real getMassDensity() const {
-	  return m_massDensity.getValue();
+          return m_massDensity.getValue();
 	}
     
 	void setMassDensity(Real m) {
@@ -165,7 +166,7 @@ public:
 
 	void addGravityToV(DataVecDeriv& d_v, const core::MechanicalParams* mparams);
 
-   bool isDiagonal(){return false;}
+        bool isDiagonal(){return false;}
 
         
 
@@ -175,9 +176,12 @@ public:
 	double getElementMass(unsigned int index) const;
 	void getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const;
 
-   void draw();
+        void draw();
 
 	bool addBBox(double* minBBox, double* maxBBox);
+
+        /// Answer wether mass matrix is lumped or not
+        bool isLumped() { return lumping.getValue(); }
 
 
 protected:

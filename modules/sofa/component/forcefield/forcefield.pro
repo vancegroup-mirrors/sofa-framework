@@ -15,6 +15,8 @@ DEFINES += SOFA_BUILD_COMPONENT_FORCEFIELD
 HEADERS += initForceField.h \
            BeamFEMForceField.h \
            BeamFEMForceField.inl \
+           BuoyantForceField.h \
+           BuoyantForceField.inl \
            ConicalForceField.h \
            ConicalForceField.inl \
            ConstantForceField.h \
@@ -87,6 +89,7 @@ HEADERS += initForceField.h \
            
 SOURCES += initForceField.cpp \
            BeamFEMForceField.cpp \
+           BuoyantForceField.cpp \
            ConicalForceField.cpp \
            ConstantForceField.cpp \
            DistanceGridForceField.cpp \

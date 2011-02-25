@@ -40,29 +40,32 @@ namespace linearsolver {
   
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
-: useWarping( initData( &useWarping, true, "useWarping", "use Warping around the solver" ) )
-, useRotationFinder( initData( &useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
-, useMultiThread( initData( &useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
-, check_symetric( initData( &check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
+: f_useWarping( initData( &f_useWarping, true, "useWarping", "use Warping around the solver" ) )
+, f_useDerivative( initData( &f_useDerivative, false, "useDerivative", "use Derivative (A + epsilon X-1 = A-1 - epsilon A-1 X A-1 + O(epsilon2))" ) )
+, f_useRotationFinder( initData( &f_useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
+, f_useMultiThread( initData( &f_useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
+, f_check_symetric( initData( &f_check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
 {
     thread = NULL;
     systemRHVector = NULL;
     systemLHVector = NULL;
     Rcur = NULL;
-    tmpVectorRotation = NULL;
+    tmpVector1 = NULL;
+    tmpVector2 = NULL;
     invertData[0] = NULL;
     invertData[1] = NULL;
     invertData[2] = NULL;
     matricesWork[0] = NULL;
     matricesWork[1] = NULL;
+    matricesWork[2] = NULL;
     rotationWork[0] = NULL;
     rotationWork[1] = NULL;
     matrixAccessor[0] = NULL;
     matrixAccessor[1] = NULL;
+    matrixAccessor[2] = NULL;
     tmpComputeCompliance[0] = NULL;
     tmpComputeCompliance[1] = NULL;
     solutionVecId = core::MultiVecDerivId::null();
-    useRotation = false;
 }
 
 template<class Matrix, class Vector>
@@ -76,16 +79,19 @@ ParallelMatrixLinearSolver<Matrix,Vector>::~ParallelMatrixLinearSolver() {
     if (systemRHVector) delete systemRHVector;
     if (systemLHVector) delete systemLHVector;
     if (Rcur) delete Rcur;
-    if (tmpVectorRotation) delete tmpVectorRotation;
+    if (tmpVector1) delete tmpVector1;
+    if (tmpVector2) delete tmpVector2;
     if (invertData[0]) delete invertData[0];
     if (invertData[1]) delete invertData[1];
     if (invertData[2]) delete invertData[2];
     if (matricesWork[0]) delete matricesWork[0];
     if (matricesWork[1]) delete matricesWork[1];
+    if (matricesWork[2]) delete matricesWork[2];
     if (rotationWork[0]) delete rotationWork[0];
     if (rotationWork[1]) delete rotationWork[1];
     if (matrixAccessor[0]) delete matrixAccessor[0];
     if (matrixAccessor[1]) delete matrixAccessor[1];
+    if (matrixAccessor[2]) delete matrixAccessor[2];
     if (tmpComputeCompliance[0]) delete tmpComputeCompliance[0];
     if (tmpComputeCompliance[1]) delete tmpComputeCompliance[1];
 }
@@ -104,7 +110,7 @@ void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
     indexwork = 0;
     handeled = false;
     ready_thread = 1;
-    useRotation = useWarping.getValue() && rotationFinders.size();
+    nbstep_update = 1;
 }
 
 template<class Matrix, class Vector>
@@ -121,7 +127,11 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
     if (!systemLHVector) systemLHVector = createPersistentVector();
     if (useRotation) {
 	if (!Rcur) Rcur = createRotationMatrix();
-	if (!tmpVectorRotation) tmpVectorRotation = createPersistentVector();
+	if (!tmpVector1) tmpVector1 = createPersistentVector();
+    } 
+    if (useDerivative) {
+	if (!tmpVector1) tmpVector1 = createPersistentVector();
+	if (!tmpVector2) tmpVector2 = createPersistentVector();
     }
 
     if (systemSize == n) return ;
@@ -129,7 +139,13 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
     if (!this->frozen) {
       systemRHVector->resize(n);
       systemLHVector->resize(n);
-      if (useRotation) tmpVectorRotation->resize(n);
+      if (useRotation) {
+	tmpVector1->resize(n);
+      } 
+      if (useDerivative) {
+	tmpVector1->resize(n);
+	tmpVector2->resize(n);
+      }
     } 
     
     systemSize = n;
@@ -146,7 +162,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(const core::
 	  matrixAccessor[id]->computeGlobalMatrix();
     }
     
-    if (check_symetric.getValue()) {
+    if (f_check_symetric.getValue()) {
       for (unsigned i=0;i<matricesWork[id]->colSize();i++) {
 	  for (unsigned j=0;j<matricesWork[id]->rowSize();j++) {
 	      double diff = matricesWork[id]->element(j,i) - matricesWork[id]->element(i,j);
@@ -177,39 +193,54 @@ int ParallelMatrixLinearSolver<Matrix,Vector>::getDimension(const core::Mechanic
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::MechanicalParams* mparams) {	  
-    useRotation = useWarping.getValue() && rotationFinders.size();
-    indRotationFinder = useRotationFinder.getValue()<rotationFinders.size() ? useRotationFinder.getValue() : 0;
-        
-    resizeSystem(this->getDimension(mparams,indexwork));
-    
-    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
-        
-    if (! useMultiThread.getValue()) {
+    if (f_useMultiThread.getValue()) {
+	useRotation = f_useWarping.getValue() && rotationFinders.size();
+	useDerivative = f_useDerivative.getValue();
+	indRotationFinder = f_useRotationFinder.getValue()<rotationFinders.size() ? f_useRotationFinder.getValue() : 0;
+	
+	if (ready_thread) {
+	    if (thread==NULL) {	
+		indexwork=0;
+		this->resizeSystem(this->getDimension(mparams,indexwork));
+		this->computeSystemMatrix(mparams,indexwork);
+		if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+		this->invertSystem();
+		indexwork=1;	  
+		std::cout << "Creating thread ... " << std::endl;
+		thread = new boost::thread(Thread_invert(this));
+	    } else sout << "Update preconditioner after " << nbstep_update << " steps" << sendl;
+
+	    this->resizeSystem(this->getDimension(mparams,indexwork));
+
+	    nbstep_update = 1;
+	    
+	    if (useDerivative) { // build the matrix in the current thread
+		computeSystemMatrix(mparams,indexwork);
+		handeled = false;
+		params = *mparams;
+	    } else {
+		sofa::component::misc::ParallelizeBuildMatrixEvent event;
+		this->getContext()->propagateEvent(&event);
+		handeled = event.isHandled();
+		if (! handeled) computeSystemMatrix(mparams,indexwork);
+		else params = *mparams;
+	    }
+	    
+	    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+	    if (useDerivative) this->getDimension(mparams,2);
+	    
+	    if (indexwork) indexwork = 0;
+	    else indexwork = 1;
+	    
+	    ready_thread = 0; //unlock the second thread
+	} else nbstep_update++;
+    } else {
+	useRotation = false;
+	useDerivative = false;
+	resizeSystem(getDimension(mparams,indexwork));
 	this->computeSystemMatrix(mparams,indexwork);
 	this->invertSystem(); 
-    } else if (ready_thread) {
-	if (thread==NULL) {	
-	  indexwork=0;
-	  this->computeSystemMatrix(mparams,indexwork);
-	  this->invertSystem();
-	  indexwork=1;	  
-	  getDimension(mparams,indexwork);// allocate and initialize data for second buffer  
-	  thread = new boost::thread(Thread_invert(this));
-	} else sout << "Update preconditioner after " << nbstep_update << " steps" << sendl;
-
-	nbstep_update = 0;  	
-	sofa::component::misc::ParallelizeBuildMatrixEvent event;
-	this->getContext()->propagateEvent(&event);
-	handeled = event.isHandled();
-	
-	if (! handeled) computeSystemMatrix(mparams,indexwork);
-	else params = *mparams;
-
-	if (indexwork) indexwork = 0;
-	else indexwork = 1;
-			
-	ready_thread = 0; //unlock the second thread
-    }
+    }    
 }
 
 template<class Matrix, class Vector>
@@ -220,7 +251,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemRHVector(core::MultiVec
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(core::MultiVecDerivId v) {
     solutionVecId = v;
-    this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, systemLHVector, matrixAccessor[indexwork]) );
+    //this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, systemLHVector, matrixAccessor[indexwork]) );
 }
 
 template<class Matrix, class Vector>
@@ -230,26 +261,53 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::invertSystem() {
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::updateSystemMatrix() {
-    nbstep_update++;
-    
     if (useRotation) {
 	rotationFinders[indRotationFinder]->getRotations(Rcur);
 	rotationWork[indexwork]->opMulTM(Rcur,Rcur);
+    } 
+    
+    if (useDerivative) {	
+	this->computeSystemMatrix(&params,2); 
+	internalData.subM(matricesWork[2],matricesWork[indexwork]);
     }
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
-    if (useRotation) {
-	    Rcur->opMulTV(systemLHVector,systemRHVector);
-	    this->solve(*matricesWork[indexwork], *tmpVectorRotation, *systemLHVector);
-	    Rcur->opMulV(systemLHVector,tmpVectorRotation);
+    
+    
+    if (useRotation && useDerivative) { 
+	Rcur->opMulTV(systemLHVector,systemRHVector);
+	
+	this->solve(*matricesWork[indexwork], *tmpVector1, *systemLHVector);
+	internalData.mulMV(matricesWork[2],tmpVector1,systemLHVector);
+	this->solve(*matricesWork[indexwork], *tmpVector2, *systemLHVector);
+	internalData.subV(tmpVector1,tmpVector2,tmpVector1);
+		
+	Rcur->opMulV(systemLHVector,tmpVector1);
+    } else if (useRotation) {
+	Rcur->opMulTV(systemLHVector,systemRHVector);
+	this->solve(*matricesWork[indexwork], *tmpVector1, *systemLHVector);
+	Rcur->opMulV(systemLHVector,tmpVector1);
+    } else if (useDerivative) { 
+	// see http://en.wikipedia.org/wiki/Invertible_matrix
+	// (A + epsilon * X) -1  = A-1 - epsilon * A-1 * X * A -1  + O(epsilon²)
+	
+	// Solve(matricesWork[indexwork] * tmpVector1 = systemRHVector)  <=> tmpVector1 = matricesWork[indexwork]-1 * systemRHVector
+	// systemLHVector = matricesWork[2] * tmpVector1
+	// Solve(matricesWork[indexwork] * tmpVector2 = systemLHVector)  <=> tmpVector2 = matricesWork[indexwork]-1 * systemLHVector
+	// systemLHVector = tmpVector1 - tmpVector2
+	
+	this->solve(*matricesWork[indexwork], *tmpVector1, *systemRHVector);
+	internalData.mulMV(matricesWork[2],tmpVector1,systemLHVector);
+	this->solve(*matricesWork[indexwork], *tmpVector2, *systemLHVector);
+	internalData.subV(tmpVector1,tmpVector2,systemLHVector);
     } else {
-	    this->solve(*matricesWork[indexwork], *systemLHVector, *systemRHVector);
+	this->solve(*matricesWork[indexwork], *systemLHVector, *systemRHVector);
     }
     
     if (!solutionVecId.isNull()) {
-	    executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(solutionVecId, systemLHVector, matrixAccessor[indexwork]) );
+	executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(solutionVecId, systemLHVector, matrixAccessor[indexwork]) );
     }
 }
 
@@ -274,7 +332,7 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(Matrix & M, RMatrix& 
       // STEP 1 : put each line of matrix Jt in the right hand term of the system
       if (tmpComputeCompliance[0]==NULL) tmpComputeCompliance[0] = new Vector();
       if (tmpComputeCompliance[1]==NULL) tmpComputeCompliance[1] = new Vector();
-      
+
       tmpComputeCompliance[1]->resize(J.colSize());
       for (typename JMatrix::LineConstIterator jit1 = J.begin(); jit1 != jitend; ++jit1) {
 	  int row1 = jit1->first;
@@ -331,22 +389,20 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(defaulttype::BaseMatr
 
       if (!Jrows) return false;
   
-//       if (useRotation) {
-// 	  JR.resize(Jrows,Jcols);     
-// 	
-// 	  if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) {
-// 	    Rcur->opMulJ(&JR,j);
-// 	  } else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) {
-// 	    Rcur->opMulJ(&JR,j);
-// 	  } else {
-// 	    serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
-// 	    return false;
-// 	  }
-// 	  
-// 	  return addWarrpedJMInvJt(matricesWork[indexwork],result,&JR,fact);
-//       } else return addWarrpedJMInvJt(matricesWork[indexwork],result,J,fact);
-
-      return addJMInvJt(matricesWork[indexwork],result,J,fact);
+      if (useRotation) {
+	  JR.resize(Jrows,Jcols);     
+	
+	  if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) Rcur->opMulJ(&JR,j);
+	  else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) Rcur->opMulJ(&JR,j);
+	  else {
+	    serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
+	    return false;
+	  }
+	  
+	  return addJMInvJt(matricesWork[indexwork],result,&JR,fact);
+      } else {
+	return addJMInvJt(matricesWork[indexwork],result,J,fact);
+      }
 }
 
 } // namespace linearsolver

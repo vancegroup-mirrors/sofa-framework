@@ -1,0 +1,181 @@
+material Frame/Soft
+{
+	technique
+	{
+		pass
+		{       scene_blend alpha_blend
+			depth_write off
+			ambient 0.02 0.15 0.06 0.6
+			diffuse 0.1  0.8  0.3  0.6
+		}
+	}
+}
+
+material Frame/Rigid
+{
+	technique
+	{
+		pass
+		{
+ 			diffuse  1 0.5 0.5 0.5 1.0 
+			ambient  1 0.1 0.1 0.1 1.0 
+			texture_unit
+			{
+						
+				texture Chrome.jpg
+		        }
+		}
+	}
+}
+
+
+
+
+//------------------------
+// Bump mapping section
+//------------------------
+
+// Bump map vertex program, support for this is required
+vertex_program Frame/BumpMapVP cg
+{
+	source Example_BumpMapping.cg
+	entry_point main_vp
+	profiles vs_1_1 arbvp1
+}
+
+// Bump map vertex program, with tangent parity support for this is required
+vertex_program Frame/BumpMapVPTangentParity cg
+{
+	source Example_BumpMapping.cg
+	entry_point main_vp
+	profiles vs_1_1 arbvp1
+	compile_arguments -DTANGENTS_HAVE_PARITY=1
+}
+
+// Bump map fragment program, support for this is optional
+fragment_program Frame/BumpMapFP cg
+{
+	source Example_BumpMapping.cg
+	entry_point main_fp
+	profiles ps_2_0 arbfp1 fp20
+}
+
+// Bump map with specular vertex program, support for this is required
+vertex_program Examples/BumpMapVPSpecular cg
+{
+	source Example_BumpMapping.cg
+	entry_point specular_vp
+	profiles vs_1_1 arbvp1
+}
+
+// Bump map fragment program, support for this is optional
+fragment_program Frame/BumpMapFPSpecular cg
+{
+	source Example_BumpMapping.cg
+	entry_point specular_fp
+	profiles ps_2_0 arbfp1 fp20
+}
+
+
+// Any number of lights, diffuse
+material Frame/BumpMapping/Steak
+{
+
+	// This is the preferred technique which uses both vertex and
+	// fragment programs, supports coloured lights
+	technique
+	{
+		// Base ambient pass
+		pass ambient
+		{
+			// base colours, not needed for rendering, but as information
+			// to lighting pass categorisation routine
+			ambient 1 1 1
+			diffuse 0 0 0 
+			specular 0 0 0 0 
+			// Really basic vertex program
+			// NB we don't use fixed function here because GL does not like
+			// mixing fixed function and vertex programs, depth fighting can
+			// be an issue
+			vertex_program_ref Ogre/BasicVertexPrograms/AmbientOneTexture
+			{
+				param_named_auto worldViewProj worldviewproj_matrix
+				param_named_auto ambient ambient_light_colour
+			}
+			
+		}
+		// Now do the lighting pass
+		// NB we don't do decal texture here because this is repeated per light
+		pass perlight
+		{
+			// base colours, not needed for rendering, but as information
+			// to lighting pass categorisation routine
+			ambient 0 0 0 
+			
+			// do this for each light
+			iteration once_per_light
+
+		
+			scene_blend add
+
+			// Vertex program reference
+			vertex_program_ref Frame/BumpMapVP
+			{
+				param_named_auto lightPosition light_position_object_space 0
+				param_named_auto worldViewProj worldviewproj_matrix
+			}
+
+			// Fragment program
+			fragment_program_ref Frame/BumpMapFP
+			{
+				param_named_auto lightDiffuse light_diffuse_colour 0 
+			}
+
+			// texture shadow receiver program
+			shadow_receiver_vertex_program_ref Examples/BumpMapVPShadowRcv
+			{
+				param_named_auto lightPosition light_position_object_space 0
+				param_named_auto worldViewProj worldviewproj_matrix
+				param_named_auto worldMatrix world_matrix
+				param_named_auto texViewProj texture_viewproj_matrix
+			}
+			// Additive texture shadow receiver program
+			shadow_receiver_fragment_program_ref Examples/BumpMapFPShadowRcv
+			{
+				param_named_auto lightDiffuse light_diffuse_colour 0 
+			}
+			
+			// Base bump map
+			texture_unit normalmap
+			{
+				texture P1030250_NRM.jpg
+				colour_op replace
+			}
+		}
+		
+		// Decal pass
+		pass decal
+		{
+			// base colours, not needed for rendering, but as information
+			// to lighting pass categorisation routine
+			lighting off
+			// Really basic vertex program
+			// NB we don't use fixed function here because GL does not like
+			// mixing fixed function and vertex programs, depth fighting can
+			// be an issue
+			vertex_program_ref Ogre/BasicVertexPrograms/AmbientOneTexture
+			{
+				param_named_auto worldViewProj worldviewproj_matrix
+				param_named ambient float4 1 1 1 1
+			}
+			scene_blend dest_colour zero
+			texture_unit decalmap
+			{
+				texture P1030250.JPG
+			}
+			
+		}
+	}
+
+
+}

@@ -27,6 +27,8 @@
 #ifndef SOFA_VIEWER_H
 #define SOFA_VIEWER_H
 
+#include <sofa/gui/qt/SofaGUIQt.h>
+
 #include <qstring.h>
 #include <qwidget.h>
 #include <sofa/helper/Factory.h>
@@ -79,6 +81,8 @@
 #include <qevent.h>
 #endif
 
+#include <sofa/gui/qt/viewer/VisualModelPolicy.h>
+
 namespace sofa
 {
 
@@ -98,12 +102,14 @@ enum
 };
 
 
-class SofaViewer
+
+
+class SOFA_SOFAGUIQT_API SofaViewer
 {
 
 public:
   SofaViewer();
-  virtual ~SofaViewer() {};
+  virtual ~SofaViewer() {  };
 
   virtual void drawColourPicking (core::CollisionModel::ColourCode /*code*/) {};
   virtual void removeViewerTab(QTabWidget *){};         
@@ -216,6 +222,20 @@ protected:
 	int _mouseInteractorSavedPosY;
 
 };
+
+template < typename VisualModelPolicyType >
+class CustomPolicySofaViewer : public VisualModelPolicyType, public sofa::gui::qt::viewer::SofaViewer
+{
+public:
+    using VisualModelPolicyType::load;
+    using VisualModelPolicyType::unload;
+    CustomPolicySofaViewer() { load(); }
+    virtual ~CustomPolicySofaViewer() { unload(); }
+
+};
+
+typedef CustomPolicySofaViewer< OglModelPolicy > OglModelSofaViewer;
+
 
 class ColourPickingRenderCallBack : public sofa::gui::CallBackRender
 {

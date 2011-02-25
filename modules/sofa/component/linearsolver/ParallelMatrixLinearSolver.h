@@ -103,7 +103,19 @@ class ParallelMatrixLinearSolverInternalData {
   public :  
 	typedef typename TVector::Real Real;
 	typedef RotationMatrix<Real> TRotationMatrix;
-	typedef SparseMatrix<Real> JRMatrixType;
+	typedef SparseMatrix<Real> JRMatrixType;	
+	
+	void mulMV(const sofa::defaulttype::BaseMatrix * m,const TVector * v,TVector * res) {
+		m->opMulV(res,v);
+	}
+	
+	void subM(sofa::defaulttype::BaseMatrix * m1,const sofa::defaulttype::BaseMatrix * m2) {
+		m2->opAddM(m1,-1.0);
+	}	
+	
+	void subV(const TVector * v1,const TVector * v2,TVector * v3) {
+		for (unsigned j=0;j<v1->size();j++) v3->set(j,v1->element(j)-v2->element(j));
+	}	
 };
 
 template<class Matrix, class Vector>
@@ -116,10 +128,11 @@ public:
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::JRMatrixType JRMatrixType;
 
-	Data<bool> useWarping;
-	Data<unsigned> useRotationFinder;
-	Data<bool> useMultiThread;
-	Data<bool> check_symetric;
+	Data<bool> f_useWarping;
+	Data<bool> f_useDerivative;
+	Data<unsigned> f_useRotationFinder;
+	Data<bool> f_useMultiThread;
+	Data<bool> f_check_symetric;
 
 	ParallelMatrixLinearSolver();
 	virtual ~ParallelMatrixLinearSolver();
@@ -184,23 +197,27 @@ public:
 
 	virtual void solve(Matrix& M, Vector& solution, Vector& rh) = 0;
 	
-	/// Wrapper on the correct method
+	/// Default implementation for contacts
 	/// @param result the variable where the result will be added
 	/// @param J the matrix J to use
 	/// @return false if the solver does not support this operation, of it the system matrix is not invertible
-	bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
+	virtual bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 
+	/// Warp the J matrix if necessary and call the  Default implementation
+	/// @param result the variable where the result will be added
+	/// @param J the matrix J to use
+	/// @return false if the solver does not support this operation, of it the system matrix is not invertible
+	virtual bool addJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
+	
 	/// Default implementation of Multiply the inverse of the system matrix by the transpose of the given matrix, and multiply the result with the given matrix J
 	template<class RMatrix, class JMatrix>
 	bool addJMInvJt(Matrix & M, RMatrix& result, JMatrix& J, double fact);	
-	
-	virtual bool addJMInvJt(Matrix * M, defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact);
 	
 protected:
 
 	/// newPartially solve the system
 	virtual void partial_solve(Matrix& /*M*/, Vector& /*partial_solution*/, Vector& /*sparse_rh*/, ListIndex& /* indices_solution*/, ListIndex& /* indices input */) {}
-
+	
 	static Vector* createVector() {
 	    return new Vector;
 	}
@@ -239,19 +256,22 @@ protected:
 	
 	int indexwork;	
 	bool useRotation;
+	bool useDerivative;
 	
 	unsigned indRotationFinder;
-	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;	
+	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;
+	ParallelMatrixLinearSolverInternalData<Vector> internalData;
 		
 	int nbstep_update;
 	Vector* systemRHVector;
 	Vector* systemLHVector;
 	TRotationMatrix * Rcur;
-	Vector * tmpVectorRotation;
+	Vector * tmpVector1;
+	Vector * tmpVector2;
 	
 	int systemSize;
-	Matrix * matricesWork[2]; 
-	DefaultMultiMatrixAccessor * matrixAccessor[2];
+	Matrix * matricesWork[3]; 
+	DefaultMultiMatrixAccessor * matrixAccessor[3];
 	MatrixInvertData * invertData[3];
 	TRotationMatrix * rotationWork[2];
 	Vector * tmpComputeCompliance[2];
@@ -269,23 +289,22 @@ protected:
 	    public :  
 		Thread_invert(ParallelMatrixLinearSolver<Matrix,Vector> * s) {
 			this->solver = s;
-			solver->sout << "Creating thread ... " << solver->sendl;			
-			
 		}
 
 		void operator()() {
-			int indexwork;
+			int indexwork = 1;
 			solver->run=1;
 			while (solver->run) {
-				while (solver->ready_thread && solver->run) usleep(50);
-				if (solver->indexwork) indexwork = 0;
-				else indexwork = 1;
+				while (solver->ready_thread && solver->run) usleep(50);				
+
 				if (! solver->run) break;
 				if (solver->handeled) solver->computeSystemMatrix(&solver->params,indexwork);
 				if (! solver->run) break;
 				solver->invert(*(solver->matricesWork[indexwork]));
-				if (! solver->run) break;	
-				solver->ready_thread = 1; //signal the main thread the invert is finish
+				if (! solver->run) break;				
+				solver->ready_thread = 1; //signal the main thread the invert is finish				
+				if (solver->indexwork) indexwork = 0;
+				else indexwork = 1;				
 			}
 			solver->ready_thread = 1;
 		} 

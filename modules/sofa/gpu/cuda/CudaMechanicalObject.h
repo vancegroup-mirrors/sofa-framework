@@ -82,15 +82,19 @@ public:
     static double vDot(Main* m, ConstVecId a, ConstVecId b);
     static void resetForce(Main* m);
 
-	//loadInBaseVector
+    //loadInBaseVector
     static void copyToBaseVector(Main* m,defaulttype::BaseVector * dest, ConstVecId src, unsigned int &offset);
+    //loadToBaseVector
+    static void copyFromBaseVector(Main* m, VecId dest, const defaulttype::BaseVector * src, unsigned int &offset);
     //loadInCudaBaseVector
-	static void copyToCudaBaseVector(Main* m,sofa::gpu::cuda::CudaBaseVector<Real> * dest, ConstVecId src, unsigned int &offset);
+    static void copyToCudaBaseVector(Main* m,sofa::gpu::cuda::CudaBaseVector<Real> * dest, ConstVecId src, unsigned int &offset);
+    //loadInCudaBaseVector
+    static void copyFromCudaBaseVector(Main* m, VecId src, const sofa::gpu::cuda::CudaBaseVector<Real> * dest, unsigned int &offset);
 
-	//addBaseVectorToState
-	static void addFromBaseVectorSameSize(Main* m, VecId dest, const defaulttype::BaseVector *src, unsigned int &offset);
-	//addCudaBaseVectorToState
-	static void addFromCudaBaseVectorSameSize(Main* m, VecId dest, const sofa::gpu::cuda::CudaBaseVector<Real> *src, unsigned int &offset);
+    //addBaseVectorToState
+    static void addFromBaseVectorSameSize(Main* m, VecId dest, const defaulttype::BaseVector *src, unsigned int &offset);
+    //addCudaBaseVectorToState
+    static void addFromCudaBaseVectorSameSize(Main* m, VecId dest, const sofa::gpu::cuda::CudaBaseVector<Real> *src, unsigned int &offset);
 };
 
 
@@ -127,13 +131,19 @@ public:
 
 //    static void loadInBaseVector(Main* m,defaulttype::BaseVector * dest, VecId src, unsigned int &offset);
     static void copyToBaseVector(Main* m,defaulttype::BaseVector * dest, ConstVecId src, unsigned int &offset);
+    //loadToBaseVector
+    static void copyFromBaseVector(Main* m, VecId dest, const defaulttype::BaseVector * src, unsigned int &offset);
+    
+    
     // static void loadInCudaBaseVector(Main* m,sofa::gpu::cuda::CudaBaseVector<Real> * dest, VecId src, unsigned int &offset);
-	static void copyToCudaBaseVector(Main* m,sofa::gpu::cuda::CudaBaseVector<Real> * dest, ConstVecId src, unsigned int &offset);
+    static void copyToCudaBaseVector(Main* m,sofa::gpu::cuda::CudaBaseVector<Real> * dest, ConstVecId src, unsigned int &offset);
+    // static void loadInCudaBaseVector(Main* m,sofa::gpu::cuda::CudaBaseVector<Real> * dest, VecId src, unsigned int &offset);
+    static void copyFromCudaBaseVector(Main* m, VecId src, const sofa::gpu::cuda::CudaBaseVector<Real> * dest,  unsigned int &offset);
 
 //    static void addBaseVectorToState(Main* m, VecId dest, defaulttype::BaseVector *src, unsigned int &offset);
-	static void addFromBaseVectorSameSize(Main* m, VecId dest, const defaulttype::BaseVector *src, unsigned int &offset);
+    static void addFromBaseVectorSameSize(Main* m, VecId dest, const defaulttype::BaseVector *src, unsigned int &offset);
 //    static void addCudaBaseVectorToState(Main* m, VecId dest, sofa::gpu::cuda::CudaBaseVector<Real> *src, unsigned int &offset);
-	static void addFromCudaBaseVectorSameSize(Main* m, VecId dest, const sofa::gpu::cuda::CudaBaseVector<Real> *src, unsigned int &offset);
+    static void addFromCudaBaseVectorSameSize(Main* m, VecId dest, const sofa::gpu::cuda::CudaBaseVector<Real> *src, unsigned int &offset);
 };
 
 
@@ -145,9 +155,10 @@ public:
     template<> inline double MechanicalObject< T >::vDot(core::ConstVecId a, core::ConstVecId b, const core::ExecParams* params); \
     template<> inline void MechanicalObject< T >::resetForce(const core::ExecParams* params); \
     template<> inline void MechanicalObject< T >::addDxToCollisionModel(); \
-	template<> inline void MechanicalObject< T >::copyToBaseVector(defaulttype::BaseVector * dest, core::ConstVecId src, unsigned int &offset); \
+    template<> inline void MechanicalObject< T >::copyToBaseVector(defaulttype::BaseVector * dest, core::ConstVecId src, unsigned int &offset); \
+    template<> inline void MechanicalObject< T >::copyFromBaseVector(core::VecId dest, const defaulttype::BaseVector * src,  unsigned int &offset); \
     template<> inline void MechanicalObject< T >::addFromBaseVectorSameSize(core::VecId dest, const defaulttype::BaseVector *src, unsigned int &offset);
-
+    
 CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec3fTypes);
 CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec3f1Types);
 CudaMechanicalObject_DeclMethods(gpu::cuda::CudaVec6fTypes);

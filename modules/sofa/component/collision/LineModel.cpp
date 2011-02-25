@@ -400,7 +400,7 @@ void LineModel::draw()
 	if (getContext()->getShowCollisionModels())
 	{
 		if (getContext()->getShowWireFrame())
-		  simulation::getSimulation()->DrawUtility.setPolygonMode(0,true);
+                  simulation::getSimulation()->DrawUtility().setPolygonMode(0,true);
 
 		for (int i=0;i<size;i++) //elems.size()
 		{
@@ -419,10 +419,10 @@ void LineModel::draw()
 		  }
 		}
 
-		simulation::getSimulation()->DrawUtility.drawLines(points, 1, Vec<4,float>(getColor4f()));
+                simulation::getSimulation()->DrawUtility().drawLines(points, 1, Vec<4,float>(getColor4f()));
 
 		if (getContext()->getShowWireFrame())
-		  simulation::getSimulation()->DrawUtility.setPolygonMode(0,false);
+                  simulation::getSimulation()->DrawUtility().setPolygonMode(0,false);
 	}
 	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
 		getPrevious()->draw();

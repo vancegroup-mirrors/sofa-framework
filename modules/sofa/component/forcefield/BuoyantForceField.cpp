@@ -22,9 +22,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-
-#include <sofa/component/configurationsetting/OgreViewerSetting.h>
+#define SOFA_COMPONENT_FORCEFIELD_BUOYANTFORCEFIELD_CPP
+#include <sofa/component/forcefield/BuoyantForceField.inl>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/defaulttype/Vec3Types.h>
+
 
 namespace sofa
 {
@@ -32,23 +34,32 @@ namespace sofa
 namespace component
 {
 
-namespace configurationsetting
+namespace forcefield
 {
 
-    SOFA_DECL_CLASS(OgreViewerSetting)
-    int OgreViewerSettingClass = core::RegisterObject("Configuration for the Ogre Viewer")
-                                 .add< OgreViewerSetting >()
-                                 .addAlias("OgreViewer")
-                                 ;
+using namespace sofa::defaulttype;
 
-    OgreViewerSetting::OgreViewerSetting():
-        shadows(initData(&shadows, false, "shadows", "Enabled Shadows"))
-        , compositors(initData(&compositors, "compositors", "List of compositor to be activated within the OgreViewer"))
-    {
-    }
+SOFA_DECL_CLASS(BuoyantForceField)
 
-}
+int BuoyantForceFieldClass = core::RegisterObject("Upward acting force exerted by a fluid, that opposes an object's weight")
+#ifndef SOFA_FLOAT
+.add< BuoyantForceField<Vec3dTypes> >()
+#endif
+#ifndef SOFA_DOUBLE
+.add< BuoyantForceField<Vec3fTypes> >()
+#endif
+;
 
-}
+#ifndef SOFA_FLOAT
+template class SOFA_COMPONENT_FORCEFIELD_API BuoyantForceField<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+template class SOFA_COMPONENT_FORCEFIELD_API BuoyantForceField<Vec3fTypes>;
+#endif
 
-}
+
+} // namespace forcefield
+
+} // namespace component
+
+} // namespace sofa

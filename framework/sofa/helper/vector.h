@@ -340,9 +340,12 @@ public:
 		   MemoryManager::memsetHost(hostPointer+vectorSize,0,(s-vectorSize)*sizeof(T));
 		 }
 		 clearDevice=s; 
-// 		for (int d=0;d<MemoryManager::numDevices();d++) {
-// 		  if (isDeviceValid(d)) MemoryManager::memsetDevice(d,MemoryManager::deviceOffset(devicePointer[d],vectorSize), 0, (s-vectorSize)*sizeof(T));
-// 		}
+		 for (int d=0;d<MemoryManager::numDevices();d++) {
+		   if (isDeviceValid(d)) {
+		     if (s<vectorSizeDevice[d]) MemoryManager::memsetDevice(d, devicePointer[d], 0, s*sizeof(T));
+		     else deviceIsValid &= ~(1<<d);
+		   }
+		 }
             } else { /// this is no thread safe
 		DEBUG_OUT_V(SPACEN << "ZEROCONST " << std::endl);
                 copyToHost();
@@ -380,7 +383,7 @@ public:
             deviceIsValid = ALL_DEVICE_VALID;
             hostIsValid = true;
         }
-        deviceIsValid = 0;
+        //deviceIsValid = 0;
 	
         DEBUG_OUT_V(SPACEM << "resize " << std::endl);
     }

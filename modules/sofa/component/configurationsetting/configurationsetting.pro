@@ -35,14 +35,6 @@ SOURCES += initConfigurationSetting.cpp \
            ViewerSetting.cpp
 
 
-contains(DEFINES,SOFA_GUI_QTOGREVIEWER){
-
-HEADERS += OgreViewerSetting.h
-
-SOURCES += OgreViewerSetting.cpp
-} 
-
-
 LIBS += $$SOFA_FRAMEWORK_LIBS
 LIBS += -lsofasimulation$$LIBSUFFIX
 LIBS += -lsofatree$$LIBSUFFIX

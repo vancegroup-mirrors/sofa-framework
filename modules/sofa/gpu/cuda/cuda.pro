@@ -9,10 +9,15 @@ DEFINES += SOFA_BUILD_GPU_CUDA
 include($${SOFA_DIR}/sofa.cfg)
 
 CONFIG += $$CONFIGLIBRARIES
+DEFINES += CUDPP_STATIC_LIB
 
 !contains(CONFIGSTATIC, static) {
 	CONFIG -= staticlib
 CONFIG += dll
+}
+
+win32 {
+QMAKE_CXXFLAGS += /bigobj
 }
 
 LIBS += $$SOFA_FRAMEWORK_LIBS

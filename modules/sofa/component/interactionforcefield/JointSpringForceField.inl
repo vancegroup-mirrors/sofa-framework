@@ -31,6 +31,7 @@
 #include <sofa/helper/io/MassSpringLoader.h>
 #include <sofa/helper/gl/template.h>
 #include <sofa/helper/gl/Cylinder.h>
+#include <sofa/helper/gl/BasicShapes.h>
 #include <sofa/helper/gl/Axis.h>
 #include <sofa/helper/system/config.h>
 #include <cassert>
@@ -54,7 +55,7 @@ JointSpringForceField<DataTypes>::JointSpringForceField(MechanicalState* object1
 , springs(initData(&springs,"spring","pairs of indices, stiffness, damping, rest length"))
 , showLawfulTorsion(initData(&showLawfulTorsion, false, "showLawfulTorsion", "display the lawful part of the joint rotation"))
 , showExtraTorsion(initData(&showExtraTorsion, false, "showExtraTorsion", "display the illicit part of the joint rotation"))
-, showFactorSize(initData(&showFactorSize, 1.0, "showFactorSize", "modify the size of the debug information of a given factor" ))
+, showFactorSize(initData(&showFactorSize, (Real)1.0, "showFactorSize", "modify the size of the debug information of a given factor" ))
 {
 }
 	
@@ -63,7 +64,7 @@ JointSpringForceField<DataTypes>::JointSpringForceField()
 : springs(initData(&springs,"spring","pairs of indices, stiffness, damping, rest length"))
 , showLawfulTorsion(initData(&showLawfulTorsion, false, "showLawfulTorsion", "display the lawful part of the joint rotation"))
 , showExtraTorsion(initData(&showExtraTorsion, false, "showExtraTorsion", "display the illicit part of the joint rotation"))
-, showFactorSize(initData(&showFactorSize, 1.0, "showFactorSize", "modify the size of the debug information of a given factor" ))
+, showFactorSize(initData(&showFactorSize, (Real)1.0, "showFactorSize", "modify the size of the debug information of a given factor" ))
 {
 }
 
@@ -96,13 +97,54 @@ void JointSpringForceField<DataTypes>::bwdInit()
   springs.endEdit();
 }
 
+static const double PI=3.14159265358979323846264338327950288;
+
+template<class DataTypes>
+void JointSpringForceField<DataTypes>::projectTorsion(Spring& spring)
+{
+Real pi2=(Real)2.*(Real)PI;
+
+for (unsigned int i=0; i<3; i++){
+	// remove modulo(2PI) from torsion
+	while(spring.torsion[i]<-PI) spring.torsion[i]+=pi2;
+	while(spring.torsion[i]>PI) spring.torsion[i]-=pi2;
+
+	if (!spring.freeMovements[3+i]) // hard constraint
+		{
+		spring.lawfulTorsion[i]=0; 
+		}
+	else if(spring.torsion[i]>spring.limitAngles[i*2] && spring.torsion[i]<spring.limitAngles[i*2+1]) // inside limits
+		{
+		spring.lawfulTorsion[i]=spring.torsion[i];
+		}
+	else // outside limits
+		{
+		Real d1,d2;
+		if(spring.torsion[i]>0)
+			{
+			d1=spring.torsion[i]-spring.limitAngles[i*2+1];
+			d2=spring.limitAngles[i*2]+pi2-spring.torsion[i];
+			if(d1<d2) spring.lawfulTorsion[i]=spring.limitAngles[i*2+1];
+			else spring.lawfulTorsion[i]=spring.limitAngles[i*2];
+			}
+		else
+			{
+			d1=spring.torsion[i]-spring.limitAngles[i*2+1]+pi2;
+			d2=spring.limitAngles[i*2]-spring.torsion[i];
+			if(d1<d2) spring.lawfulTorsion[i]=spring.limitAngles[i*2+1];
+			else spring.lawfulTorsion[i]=spring.limitAngles[i*2];
+			}
+		}
+	}
+}
 
 template<class DataTypes>
 void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy*/, VecDeriv& f1, const VecCoord& p1, const VecDeriv& v1, VecDeriv& f2, const VecCoord& p2, const VecDeriv& v2, int , /*const*/ Spring& spring)
 {
 	int a = spring.m1;
-        int b = spring.m2;
-    
+    int b = spring.m2;
+
+	
 	Mat Mr01, Mr10;
 	p1[a].writeRotationMatrix(Mr01);
 	invertMatrix(Mr10, Mr01);
@@ -121,6 +163,7 @@ void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy
 	//compute torsion
 	Mp1p2.getOrientation() = Mp1p2.getOrientation() * spring.initRot.inverse();
 
+	/*
 	//-- decomposing spring torsion in 2 parts (lawful rotation and illicit rotation) to fix bug with large rotations
 	Vector dRangles = Mp1p2.getOrientation().toEulerVector();
 		//lawful torsion = spring torsion in the axis where ksr is null 
@@ -149,7 +192,6 @@ void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy
 		}
 	}
 	//--
-
 	//compute stiffnesses components
 	Vector kst( spring.freeMovements[0]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans, spring.freeMovements[1]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans, spring.freeMovements[2]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans);
 	Vector ksrH( spring.freeMovements[3]!=0?(Real)0.0:spring.hardStiffnessRot, spring.freeMovements[4]!=0?(Real)0.0:spring.hardStiffnessRot, spring.freeMovements[5]!=0?(Real)0.0:spring.hardStiffnessRot);
@@ -163,14 +205,45 @@ void JointSpringForceField<DataTypes>::addSpringForce( double& /*potentialEnergy
 	//--
 	if(bloc)
                 fR0 += Mr01 * ( spring.bloquage.linearProduct( dTorsion)) + damping.linearProduct(getVOrientation(Vp1p2));
+*/
 
+	Mp1p2.getOrientation().normalize();
+
+	//compute linear force
+	for (unsigned int i=0; i<3; i++) spring.KT[i]=spring.freeMovements[i]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans;
+    Vector fT0 = Mr01 * (spring.KT.linearProduct(Mr10 * Mp1p2.getCenter())) + damping.linearProduct(getVCenter(Vp1p2));
+
+	// get current torsion in axis/angle format
+	Real phi; Mp1p2.getOrientation().quatToAxis(spring.torsion,phi); spring.torsion*=phi;
+	// update lawfull torsion
+	projectTorsion(spring);
+	Vector extraTorsion=spring.torsion-spring.lawfulTorsion;
+	Real pi2=(Real)2.*(Real)PI;
+	for (unsigned int i=0; i<3; i++){
+		// remove modulo(2PI) from torsion
+		while(extraTorsion[i]<-PI) extraTorsion[i]+=pi2;
+		while(extraTorsion[i]>PI) extraTorsion[i]-=pi2;
+		}
+
+	//compute torque
+	for (unsigned int i=0; i<3; i++) spring.KR[i]=spring.freeMovements[3+i]==0?spring.hardStiffnessRot:spring.softStiffnessRot;
+	Vector fR0;
+	for (unsigned int i=0; i<3; i++) 
+		if(spring.freeMovements[3+i] && spring.torsion[i]!=spring.lawfulTorsion[i]) // outside limits
+			{
+			spring.KR[i]=spring.blocStiffnessRot;
+			fR0[i]=extraTorsion[i]*spring.KR[i];
+			}
+		else fR0[i]=spring.torsion[i]*spring.KR[i]; // hard constraint or soft constraint inside limits
+
+	fR0 = Mr01 * fR0 + damping.linearProduct(getVOrientation(Vp1p2));
+
+	// add force
 	const Deriv force(fT0, fR0 );
-	//affect forces
 	f1[a] += force;
-        this->mask1->insertEntry(a);
+    this->mask1->insertEntry(a);
 	f2[b] -= force;
-        this->mask2->insertEntry(b);
-
+    this->mask2->insertEntry(b);
 }
 
 template<class DataTypes>
@@ -183,7 +256,7 @@ void JointSpringForceField<DataTypes>::addSpringDForce(VecDeriv& f1, const VecDe
 	Mat Mr01, Mr10;
 	springRef[a].writeRotationMatrix(Mr01);
 	invertMatrix(Mr10, Mr01);
-
+/*
 	Vector kst( spring.freeMovements[0]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans, spring.freeMovements[1]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans, spring.freeMovements[2]==0?spring.hardStiffnessTrans:spring.softStiffnessTrans);
 	Vector ksr( spring.freeMovements[3]==0?spring.hardStiffnessRot:spring.softStiffnessRot+spring.bloquage[0], spring.freeMovements[4]==0?spring.hardStiffnessRot:spring.softStiffnessRot+spring.bloquage[1], spring.freeMovements[5]==0?spring.hardStiffnessRot:spring.softStiffnessRot+spring.bloquage[2]);
 	
@@ -191,6 +264,12 @@ void JointSpringForceField<DataTypes>::addSpringDForce(VecDeriv& f1, const VecDe
         Vector df0 = Mr01 * (kst.linearProduct(Mr10*getVCenter(Mdx1dx2) ));
 	//compute rotational force
         Vector dR0 = Mr01 * (ksr.linearProduct(Mr10* getVOrientation(Mdx1dx2)));
+*/
+
+	//compute directional force
+        Vector df0 = Mr01 * (spring.KT.linearProduct(Mr10* getVCenter(Mdx1dx2)));
+	//compute rotational force
+        Vector dR0 = Mr01 * (spring.KR.linearProduct(Mr10* getVOrientation(Mdx1dx2)));
 
 	const Deriv dforce(df0,dR0);
 
@@ -198,7 +277,7 @@ void JointSpringForceField<DataTypes>::addSpringDForce(VecDeriv& f1, const VecDe
 	f2[b] -= dforce * kFactor;
 
 	//--
-	spring.bloquage=Vector();
+//	spring.bloquage=Vector();
 }
 
 template<class DataTypes>
@@ -299,10 +378,14 @@ void JointSpringForceField<DataTypes>::draw()
 		}
 
 		//---debugging
+//		if (showLawfulTorsion.getValue())
+//			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].lawfulTorsion, 0.5*showFactorSize.getValue());
+//		if (showExtraTorsion.getValue())
+//			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].extraTorsion, 0.5*showFactorSize.getValue());
 		if (showLawfulTorsion.getValue())
-			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].lawfulTorsion, 0.5*showFactorSize.getValue());
+			helper::gl::drawArrow(p1[springs[i].m1].getCenter(), p1[springs[i].m1].pointToParent(springs[i].lawfulTorsion), (float)(0.5*showFactorSize.getValue()));
 		if (showExtraTorsion.getValue())
-			helper::gl::Axis::draw(p1[springs[i].m1].getCenter(), p1[springs[i].m1].getOrientation()*springs[i].extraTorsion, 0.5*showFactorSize.getValue());
+			helper::gl::drawArrow(p1[springs[i].m1].getCenter(), p1[springs[i].m1].pointToParent(springs[i].torsion-springs[i].lawfulTorsion), (float)(0.5*showFactorSize.getValue()));
 	}
 
 }

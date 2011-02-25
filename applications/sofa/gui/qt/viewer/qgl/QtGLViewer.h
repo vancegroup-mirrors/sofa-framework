@@ -105,8 +105,6 @@ class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::OglModelSofa
 
 	      int				_renderingMode;
 
-	      Texture			*texLogo;
-
 	      ctime_t			_beginTime;
 
 
@@ -157,13 +155,10 @@ class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::OglModelSofa
 
 	      void moveRayPickInteractor(int eventX, int eventY);
 
-              void setCameraMode(component::visualmodel::BaseCamera::CameraType mode);
+        void setCameraMode(component::visualmodel::BaseCamera::CameraType mode);
 
 	      QString helpString();
 	      
-	      virtual void setBackgroundImage(std::string imageFileName);
-    
-
 
 	    private:
 

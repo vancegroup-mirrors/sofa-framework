@@ -22,34 +22,51 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-// Author: Hadrien Courtecuisse
-//
-// Copyright: See COPYING file that comes with this distribution
-#include <sofa/component/linearsolver/SparseLDLSolver.inl>
+#include "CudaTypes.h"
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/component/engine/SphereROI.inl>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
-namespace sofa {
+namespace sofa
+{
 
-namespace component {
+namespace component
+{
 
-namespace linearsolver {
+namespace engine
+{
 
-SOFA_DECL_CLASS(SparseLDLSolver)
+template class SphereROI<gpu::cuda::CudaVec3fTypes>;
+template class SphereROI<gpu::cuda::CudaVec3f1Types>;
+#ifdef SOFA_GPU_CUDA_DOUBLE
+template class SphereROI<gpu::cuda::CudaVec3dTypes>;
+template class SphereROI<gpu::cuda::CudaVec3d1Types>;
+#endif // SOFA_GPU_CUDA_DOUBLE
 
-int SparseLDLSolverClass = core::RegisterObject("Direct linear solver based on Sparse LDL^T factorization, implemented with the CSPARSE library")
-.add< SparseLDLSolver< CompressedRowSparseMatrix<double>,FullVector<double> > >(true)
-.add< SparseLDLSolver< CompressedRowSparseMatrix<defaulttype::Mat<3,3,double> >,FullVector<double> > >(true)
-.add< SparseLDLSolver< CompressedRowSparseMatrix<float>,FullVector<float> > >(true)
-.add< SparseLDLSolver< CompressedRowSparseMatrix<defaulttype::Mat<3,3,float> >,FullVector<float> > >(true)
-;
-
-template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix<double>,FullVector<double> >;
-template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix< defaulttype::Mat<3,3,double> >,FullVector<double> >;
-template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix<float>,FullVector<float> >;
-template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix< defaulttype::Mat<3,3,float> >,FullVector<float> >;
-
-} // namespace linearsolver
+} // namespace engine
 
 } // namespace component
+
+namespace gpu
+{
+
+namespace cuda
+{
+
+SOFA_DECL_CLASS(CudaSphereROI)
+
+int SphereROICudaClass = core::RegisterObject("Supports GPU-side computations using CUDA")
+.add< component::engine::SphereROI<CudaVec3fTypes> >()
+.add< component::engine::SphereROI<CudaVec3f1Types> >()
+#ifdef SOFA_GPU_CUDA_DOUBLE
+.add< component::engine::SphereROI<CudaVec3dTypes> >()
+.add< component::engine::SphereROI<CudaVec3d1Types> >()
+#endif // SOFA_GPU_CUDA_DOUBLE
+;
+
+} // namespace cuda
+
+} // namespace gpu
 
 } // namespace sofa

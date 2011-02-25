@@ -77,13 +77,15 @@ void SparseTAUCSSolver<TMatrix,TVector>::invert(Matrix& M) {
     SparseTAUCSSolverInvertData * data = (SparseTAUCSSolverInvertData *) getMatrixInvertData(&M);
     if (f_symmetric.getValue())
     {
-	data->Mfiltered.copyUpperNonZeros(M);
-	sout << "Filtered upper part of M, nnz = " << data->Mfiltered.getRowBegin().back() << sendl;
+		data->Mfiltered.copyUpperNonZeros(M);
+		if (this->f_printLog.getValue())
+			sout << "Filtered upper part of M, nnz = " << data->Mfiltered.getRowBegin().back() << sendl;
     }
     else
     {
-	data->Mfiltered.copyNonZeros(M);
-	sout << "Filtered M, nnz = " << data->Mfiltered.getRowBegin().back() << sendl;
+		data->Mfiltered.copyNonZeros(M);
+		if (this->f_printLog.getValue())
+			sout << "Filtered M, nnz = " << data->Mfiltered.getRowBegin().back() << sendl;
     }
     data->Mfiltered.fullRows();
     data->matrix_taucs.n = data->Mfiltered.rowSize();

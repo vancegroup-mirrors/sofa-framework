@@ -44,19 +44,10 @@ class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public MatrixLine
   public :
     SOFA_CLASS(SOFA_TEMPLATE2(ParallelMatrixLinearSolver,Matrix,Vector), SOFA_TEMPLATE2(MatrixLinearSolver,Matrix,Vector));  
     
-    Data<bool> useWarping;
-    Data<unsigned> useRotationFinder;
-    Data<bool> useMultiThread;
-    Data<bool> check_symetric;
 
     ParallelMatrixLinearSolver()
     : MatrixLinearSolver<Matrix,Vector>()
-    , useWarping( initData( &useWarping, false, "useWarping", "use Warping around the solver" ) )
-    , useRotationFinder( initData( &useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
-    , useMultiThread( initData( &useMultiThread, false, "useMultiThread", "use MultiThraded version of the solver" ) )
-    , check_symetric( initData( &check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
     {
-	if (useMultiThread.getValue()) serr << "WARINIG : you must activate SOFA_HAVE_BOOST to use parallel version of the solver" << sendl;
     }
     
 //     virtual bool addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {      
@@ -132,7 +123,8 @@ public:
 	Data<bool> f_useDerivative;
 	Data<unsigned> f_useRotationFinder;
 	Data<bool> f_useMultiThread;
-	Data<bool> f_check_symetric;
+	Data<bool> f_check_system;
+	Data<bool> f_check_compliance;
 
 	ParallelMatrixLinearSolver();
 	virtual ~ParallelMatrixLinearSolver();
@@ -257,6 +249,7 @@ protected:
 	int indexwork;	
 	bool useRotation;
 	bool useDerivative;
+	double timer;
 	
 	unsigned indRotationFinder;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;

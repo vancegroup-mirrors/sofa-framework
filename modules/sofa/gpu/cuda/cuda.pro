@@ -101,6 +101,7 @@ HEADERS += mycuda.h \
 
 SOURCES += mycuda.cpp \
            CudaBoxROI.cpp  \
+	   CudaSphereROI.cpp  \
 	   CudaBeamLinearMapping.cpp \
 	   CudaRestShapeSpringsForceField.cpp  \
 	   CudaIndexValueMapper.cpp \

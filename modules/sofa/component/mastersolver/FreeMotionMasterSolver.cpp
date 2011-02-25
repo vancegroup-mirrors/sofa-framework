@@ -103,7 +103,7 @@ void FreeMotionMasterSolver::step(double dt, const sofa::core::ExecParams* param
 	simulation::MechanicalVInitVisitor<V_COORD>(VecCoordId::freePosition(), ConstVecCoordId::position(), true).execute(context);
 	simulation::MechanicalVInitVisitor<V_DERIV>(VecDerivId::freeVelocity(), ConstVecDerivId::velocity()).execute(context);
 
-	context->execute< simulation::CollisionResetVisitor >(params);
+//	context->execute< simulation::CollisionResetVisitor >(params);
 
 	// Update the BehaviorModels
 	// Required to allow the RayPickInteractor interaction

@@ -107,7 +107,8 @@ public:
 	/// Pertinent intersections have to belong to this cone, others are not taking into account anymore.
 	bool testValidity(Point&, const Vector3&);
 	bool testValidity(Line&, const Vector3&);
-	bool testValidity(Triangle&, const Vector3&);
+    bool testValidity(Triangle&, const Vector3&);
+
 
 	void draw();
 

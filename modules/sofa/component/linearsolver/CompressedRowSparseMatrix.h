@@ -598,7 +598,8 @@ public:
 	filterValues(M, upper_nonzeros);
     }
 
-    void copyLowerNonZeros(Matrix& M)
+    template <class TMatrix>
+    void copyLowerNonZeros(TMatrix& M)
     {
 	filterValues(M, lower_nonzeros);
     }

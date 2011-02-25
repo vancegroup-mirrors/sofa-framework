@@ -724,15 +724,19 @@ void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TRea
 						{
 							const Data<VecCoord>* d_vb = m->read((ConstVecCoordId)b);
 							const VecCoord* vb = &d_vb->getValue();
-							vv->resize(vb->size());
-							Kernels::vPEq(vv->size(), vv->deviceWrite(), vb->deviceRead());
+                                                        if (vb->size() > vv->size())
+                                                            vv->resize(vb->size());
+                                                        if (vb->size()>0)
+                                                            Kernels::vPEq(vb->size(), vv->deviceWrite(), vb->deviceRead());
 						}
 						else
 						{
 							const Data<VecDeriv>* d_vb = m->read((ConstVecDerivId)b);		
-							const VecDeriv* vb = &d_vb->getValue();
-							vv->resize(vb->size());
-							Kernels::vPEq(vv->size(), vv->deviceWrite(), vb->deviceRead());
+                                                        const VecDeriv* vb = &d_vb->getValue();
+                                                        if (vb->size() > vv->size())
+                                                            vv->resize(vb->size());
+                                                        if (vb->size()>0)
+                                                            Kernels::vPEq(vb->size(), vv->deviceWrite(), vb->deviceRead());
 						}
 						d_vv->endEdit();
 					}
@@ -742,8 +746,10 @@ void MechanicalObjectInternalData< gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TRea
 						const Data<VecDeriv>* d_vb = m->read((ConstVecDerivId)b);
 						VecDeriv* vv = d_vv->beginEdit();
 						const VecDeriv* vb = &d_vb->getValue();
-						vv->resize(vb->size());
-						Kernels::vPEq(vv->size(), vv->deviceWrite(), vb->deviceRead());
+                                                if (vb->size() > vv->size())
+                                                    vv->resize(vb->size());
+                                                if (vb->size() > 0)
+                                                    Kernels::vPEq(vb->size(), vv->deviceWrite(), vb->deviceRead());
 						d_vv->endEdit();
 					}
 					else
@@ -1493,14 +1499,19 @@ void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::vOp(Mai
 						{
 							const Data<VecCoord>* d_vb = m->read((ConstVecCoordId)b);
 							const VecCoord* vb = &d_vb->getValue();
-							Kernels::vPEqCoord(vv->size(), vv->deviceWrite(), vb->deviceRead());
+                                                        if (vb->size() > vv->size())
+                                                            vv->resize(vb->size());
+                                                        if (vb->size() > 0)
+                                                            Kernels::vPEqCoord(vb->size(), vv->deviceWrite(), vb->deviceRead());
 						}
 						else
 						{
 							const Data<VecDeriv>* d_vb = m->read((ConstVecDerivId)b);
 							const VecDeriv* vb = &d_vb->getValue();
-							vv->resize(vb->size());
-							Kernels::vPEqCoordDeriv(vv->size(), vv->deviceWrite(), vb->deviceRead());
+                                                        if (vb->size() > vv->size())
+                                                            vv->resize(vb->size());
+                                                        if (vb->size() > 0)
+                                                            Kernels::vPEqCoordDeriv(vb->size(), vv->deviceWrite(), vb->deviceRead());
 						}
 						d_vv->endEdit();
 					}
@@ -1510,8 +1521,10 @@ void MechanicalObjectInternalData< gpu::cuda::CudaRigidTypes<N, real> >::vOp(Mai
 						const Data<VecDeriv>* d_vb = m->read((ConstVecDerivId)b);
 						VecDeriv* vv = d_vv->beginEdit();
 						const VecDeriv* vb = &d_vb->getValue();
-						vv->resize(vb->size());
-						Kernels::vPEqDeriv(vv->size(), vv->deviceWrite(), vb->deviceRead());
+                                                if (vb->size() > vv->size())
+                                                    vv->resize(vb->size());
+                                                if (vb->size() > 0)
+                                                    Kernels::vPEqDeriv(vb->size(), vv->deviceWrite(), vb->deviceRead());
 						d_vv->endEdit();
 					}
 					else

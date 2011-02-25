@@ -141,6 +141,7 @@ public:
     int computeIntersection(FFDDistanceGridCollisionElement&, Triangle&, OutputVector*);
     int computeIntersection(Ray&, FFDDistanceGridCollisionElement&, OutputVector*);
 
+
 };
 
 } // namespace collision

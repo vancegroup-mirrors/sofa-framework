@@ -228,17 +228,41 @@ namespace sofa
         //};
 
 
-        template<typename T>
-        Vec<3,T>& getLinear(Vec<6,T>& v) { return *reinterpret_cast<Vec<3,T>*>( &v[0]); }
+template<typename T>
+Vec<3,T>& getLinear(Vec<6,T>& v)
+{
+    // We cannot use casts if the compiler adds extra members in Vec
+    BOOST_STATIC_ASSERT(sizeof(Vec<6,T>) == 6*sizeof(T));
+    BOOST_STATIC_ASSERT(sizeof(Vec<3,T>) == 3*sizeof(T));
+    return *reinterpret_cast<Vec<3,T>*>( &v[0]);
+}
 
-        template<typename T>
-        const Vec<3,T>& getLinear(const Vec<6,T>& v) { return *reinterpret_cast<const Vec<3,T>*>( &v[0]); }
+template<typename T>
+const Vec<3,T>& getLinear(const Vec<6,T>& v)
+{
+    // We cannot use casts if the compiler adds extra members in Vec
+    BOOST_STATIC_ASSERT(sizeof(Vec<6,T>) == 6*sizeof(T));
+    BOOST_STATIC_ASSERT(sizeof(Vec<3,T>) == 3*sizeof(T));
+    return *reinterpret_cast<const Vec<3,T>*>( &v[0]);
+}
 
-        template<typename T>
-        Vec<3,T>& getAngular(Vec<6,T>& v) {  return *reinterpret_cast<Vec<3,T>*>( &v[3]);  }
+template<typename T>
+Vec<3,T>& getAngular(Vec<6,T>& v)
+{
+    // We cannot use casts if the compiler adds extra members in Vec
+    BOOST_STATIC_ASSERT(sizeof(Vec<6,T>) == 6*sizeof(T));
+    BOOST_STATIC_ASSERT(sizeof(Vec<3,T>) == 3*sizeof(T));
+    return *reinterpret_cast<Vec<3,T>*>( &v[3]);
+}
 
-        template<typename T>
-        const Vec<3,T>& getAngular(const Vec<6,T>& v) {  return *reinterpret_cast<const Vec<3,T>*>( &v[3]);  }
+template<typename T>
+const Vec<3,T>& getAngular(const Vec<6,T>& v)
+{
+    // We cannot use casts if the compiler adds extra members in Vec
+    BOOST_STATIC_ASSERT(sizeof(Vec<6,T>) == 6*sizeof(T));
+    BOOST_STATIC_ASSERT(sizeof(Vec<3,T>) == 3*sizeof(T));
+    return *reinterpret_cast<const Vec<3,T>*>( &v[3]);
+}
 
         template<typename T>
         Vec<3,T>& getVCenter(Vec<6,T>& v) { return getLinear(v); }
@@ -930,17 +954,35 @@ namespace sofa
         //    }
         //};
 
-        template<typename R>
-        Vec<2,R>& getVCenter ( Vec<3,R>& v ) { return *reinterpret_cast<Vec<2,R>*>(&v[0]); }
+template<typename R>
+Vec<2,R>& getVCenter ( Vec<3,R>& v )
+{
+    // We cannot use casts if the compiler adds extra members in Vec
+    BOOST_STATIC_ASSERT(sizeof(Vec<3,R>) == 3*sizeof(R));
+    BOOST_STATIC_ASSERT(sizeof(Vec<2,R>) == 2*sizeof(R));
+    return *reinterpret_cast<Vec<2,R>*>(&v[0]);
+}
 
-        template<typename R>
-        R& getVOrientation ( Vec<3,R>& v ) { return *reinterpret_cast<R*>(&v[2]); }
+template<typename R>
+R& getVOrientation ( Vec<3,R>& v )
+{
+    return v[2];
+}
 
-        template<typename R>
-        const Vec<2,R>& getVCenter ( const Vec<3,R>& v ) {  return *reinterpret_cast<const Vec<2,R>*>(&v[0]); }
+template<typename R>
+const Vec<2,R>& getVCenter ( const Vec<3,R>& v )
+{
+    // We cannot use casts if the compiler adds extra members in Vec
+    BOOST_STATIC_ASSERT(sizeof(Vec<3,R>) == 3*sizeof(R));
+    BOOST_STATIC_ASSERT(sizeof(Vec<2,R>) == 2*sizeof(R));
+    return *reinterpret_cast<const Vec<2,R>*>(&v[0]);
+}
 
-        template<typename R>
-        const R& getVOrientation ( const Vec<3,R>& v ) { return *reinterpret_cast<const R*>(&v[2]); }
+template<typename R>
+const R& getVOrientation ( const Vec<3,R>& v )
+{
+    return v[2];
+}
 
         template<typename R, typename T>
         Vec<2,R> velocityAtRotatedPoint(const Vec<3,T>& v, const Vec<2,R>& p)

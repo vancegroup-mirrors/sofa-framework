@@ -26,17 +26,12 @@
 #define SOFA_COMPONENT_MAPPING_SKINNINGMAPPING_H
 
 #include <sofa/core/Mapping.h>
-
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
-
-#include <sofa/helper/SVector.h>
-
 #include <vector>
-
+#include <sofa/helper/SVector.h>
 #include <sofa/component/component.h>
-#include <sofa/helper/OptionsGroup.h>
-
+#include <sofa/component/container/MeshLoader.h>
 
 namespace sofa
 {
@@ -48,21 +43,8 @@ namespace mapping
 {
 
 using sofa::helper::vector;
-using sofa::helper::Quater;
 using sofa::helper::SVector;
-
-#define SM_DISTANCE_EUCLIDIAN 0
-#define SM_DISTANCE_GEODESIC 1
-#define SM_DISTANCE_HARMONIC 2
-#define SM_DISTANCE_STIFFNESS_DIFFUSION 3
-#define SM_DISTANCE_HARMONIC_STIFFNESS 4
-
-#define WEIGHT_NONE 0
-#define WEIGHT_INVDIST_SQUARE 1
-#define WEIGHT_LINEAR 2
-#define WEIGHT_HERMITE 3
-#define WEIGHT_SPLINE 4
-
+using sofa::component::container::MeshLoader;
 
 template <class TIn, class TOut>
 class SkinningMapping : public core::Mapping<TIn, TOut>
@@ -71,19 +53,9 @@ public:
     SOFA_CLASS(SOFA_TEMPLATE2(SkinningMapping,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut));
 
     typedef core::Mapping<TIn, TOut> Inherit;
+
+    // Input types
     typedef TIn In;
-    typedef TOut Out;
-
-    typedef Out DataTypes;
-
-    typedef typename Out::VecCoord VecCoord;
-    typedef typename Out::VecDeriv VecDeriv;
-    typedef typename Out::Coord Coord;
-    typedef typename Out::Deriv Deriv;
-    typedef typename Out::MatrixDeriv OutMatrixDeriv;
-    typedef typename Out::Real Real;
-
-
     typedef typename In::Coord InCoord;
     typedef typename In::Deriv InDeriv;
     typedef typename In::VecCoord VecInCoord;
@@ -91,109 +63,47 @@ public:
     typedef typename In::MatrixDeriv InMatrixDeriv;
     typedef typename In::Real InReal;
 
-    enum { N=DataTypes::spatial_dimensions };
-    typedef defaulttype::Mat<3,3,InReal> Mat33;
-    typedef vector<Mat33> VMat33;
-    typedef vector<VMat33> VVMat33;
-    typedef defaulttype::Vec<3,InReal> Vec3;
-    typedef Quater<InReal> Quat;
-    typedef SVector<SVector<double> > VVD;
-
-    typedef Coord GeoCoord;
-    typedef VecCoord GeoVecCoord;
+    // Output types
+    typedef TOut Out;
+    typedef typename Out::VecCoord VecOutCoord;
+    typedef typename Out::VecDeriv VecOutDeriv;
+    typedef typename Out::Coord OutCoord;
+    typedef typename Out::Deriv OutDeriv;
+    typedef typename Out::MatrixDeriv OutMatrixDeriv;
+    typedef typename Out::Real OutReal;
 
 protected:
-    vector<Coord> initPos; // pos: point coord in the local reference frame of In[i].
-    vector<Coord> rotatedPoints;
 
     helper::ParticleMask* maskFrom;
     helper::ParticleMask* maskTo;
 
-    Data<unsigned int> nbRefs; // Number of primitives influencing each point.
-    Data<vector<unsigned int> > repartition; // indices of primitives influencing each point.
-    Data<VVD> weights;
-    Data<SVector<SVector<GeoCoord> > > weightGradients;
+	Data<VecOutCoord> f_initPos;  // initial child coordinates in the world reference frame
+	vector<vector<OutCoord> > f_localPos; /// initial child coordinates in local frame x weight
+	vector<vector<OutCoord> > f_rotatedPos;  /// rotated child coordinates
+
+	Data<unsigned int> nbRef; // Number of primitives influencing each point.
+    Data< vector<SVector<unsigned int> > > f_index; // indices of primitives influencing each point.
+    Data< vector<SVector<InReal> > > weight;
+	void updateWeights();
+
 public:
-    Data<bool> showBlendedFrame;
-    Data<unsigned int> showFromIndex;
-    Data<bool> showDistancesValues;
+	Data<unsigned int> showFromIndex;
     Data<bool> showWeights;
-    Data<double> showGammaCorrection;
-    Data<bool> showWeightsValues;
-    Data<bool> showReps;
-    Data<int> showValuesNbDecimals;
-    Data<double> showTextScaleFactor;
-    Data<bool> showGradients;
-    Data<bool> showGradientsValues;
-    Data<double> showGradientsScaleFactor;
 
-protected:
-    Data<sofa::helper::OptionsGroup> wheightingType;
-    Data<sofa::helper::OptionsGroup> distanceType;
-    bool computeWeights;
-    VVD distances;
-    VVMat33 weightGradients2;
-
-    vector<vector<GeoCoord> > distGradients;
-
-    inline void computeInitPos();
-    inline void computeDistances();
-    inline void sortReferences( vector<unsigned int>& references);
-    inline void normalizeWeights();
-
-public:
     SkinningMapping (core::State<In>* from, core::State<Out>* to );
     virtual ~SkinningMapping();
 
     void init();
+	void reinit();
 
     void apply(typename Out::VecCoord& out, const typename In::VecCoord& in);
     void applyJ(typename Out::VecDeriv& out, const typename In::VecDeriv& in);
     void applyJT(typename In::VecDeriv& out, const typename Out::VecDeriv& in);
     void applyJT(typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in);
 
+	MeshLoader::SeqTriangles triangles; // Topology of toModel (used for weight display)
     void draw();
-    void clear();
 
-    // Weights
-    void setWeightsToHermite();
-    void setWeightsToInvDist();
-    void setWeightsToLinear();
-    inline void updateWeights();
-    inline void getDistances( int xfromBegin);
-
-    // Accessors
-    void setNbRefs ( unsigned int nb )
-    {
-        this->nbRefs.setValue ( nb );
-    }
-    void setRepartition ( vector<int> &rep );
-    void setWeightCoefs ( VVD& weights );
-    void setComputeWeights ( bool val )
-    {
-        computeWeights=val;
-    }
-    unsigned int getNbRefs() const
-    {
-        return this->nbRefs.getValue();
-    }
-    const VVD& getWeightCoefs() const
-    {
-        return weights.getValue();
-    }
-    const vector<unsigned int>& getRepartition() const
-    {
-        return this->repartition.getValue();
-    }
-    bool getComputeWeights() const
-    {
-        return computeWeights;
-    }
-
-    inline void reverseRepartition( bool& influenced, unsigned int& realIndex, const unsigned int& pointIndex, const unsigned int& frameIndex);
-
-protected:
-    inline void getLocalCoord( Coord& result, const typename In::Coord& inCoord, const Coord& coord) const;
 };
 
 using sofa::defaulttype::Vec3dTypes;

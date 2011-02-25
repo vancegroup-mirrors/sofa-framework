@@ -198,7 +198,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 		    for (unsigned int i=1;i<preconditioners.size();++i) {		
 			t = d;
 			preconditioners[i]->setSystemLHVector(d);
-			preconditioners[i]->setSystemRHVector(b);
+			preconditioners[i]->setSystemRHVector(t);
 			preconditioners[i]->solveSystem();	
 		    }
 		    vtmp.deleteTempVector(&t);

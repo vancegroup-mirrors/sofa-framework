@@ -95,6 +95,7 @@ void LocalMinDistance::init()
 	intersectors.ignore<RayModel, PointModel>();
     intersectors.ignore<RayModel, LineModel>();
 	intersectors.add<RayModel, TriangleModel, LocalMinDistance>(this);
+
 }
 
 bool LocalMinDistance::testIntersection(Cube &cube1, Cube &cube2)
@@ -1412,8 +1413,23 @@ bool LocalMinDistance::testValidity(Triangle &t, const Vector3 &PQ)
 void LocalMinDistance::draw()
 {
 	if (!getContext()->getShowCollisionModels())
-		return;			
+		return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 } // namespace collision

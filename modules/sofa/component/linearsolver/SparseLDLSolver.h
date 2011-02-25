@@ -32,7 +32,6 @@
 #include <sofa/component/linearsolver/CompressedRowSparseMatrix.h>
 #include <sofa/helper/map.h>
 #include <math.h>
-#include <ldl.h>
 
 #include <sofa/component/linearsolver/ParallelMatrixLinearSolver.inl>
 #include <sofa/defaulttype/BaseMatrix.h>
@@ -54,6 +53,7 @@ class SparseLDLSolver : public sofa::component::linearsolver::ParallelMatrixLine
   public:
     typedef TMatrix Matrix;
     typedef TVector Vector;
+    typedef typename Matrix::Real Real;
     typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;
 
     Data<bool> f_verbose;
@@ -75,28 +75,47 @@ class SparseLDLSolver : public sofa::component::linearsolver::ParallelMatrixLine
     }
 
     static std::string templateName(const SparseLDLSolver<TMatrix,TVector>* = NULL) {
-        return TVector::Name();
+        return TMatrix::Name();
     }    
     
     MatrixInvertData * createInvertData() {
       return new SparseLDLSolverInvertData();
     }
     
-    
   protected :
+    
+    void LDL_ordering(Matrix& M);
+    void LDL_symbolic(Matrix& M);
+    void LDL_numeric(Matrix& M);
+    
+    helper::vector<int> xadj,adj;
+    helper::vector<Real> Y,B;
+    helper::vector<int> Parent,Lnz,Flag,Pattern;
+    helper::vector<int> perm, invperm; //premutation inverse
+
     
     class SparseLDLSolverInvertData : public MatrixInvertData {
       public :
+	    sofa::component::linearsolver::CompressedRowSparseMatrix<Real> Mfiltered;
 	    int n;
-	    helper::vector<double> A_x,Lx,D,Y;
-	    helper::vector<int> A_i,A_p, Li,Lp,Parent,Lnz,Flag,Pattern;
+	    
+	    int * Mcolptr;
+	    int * Mrowind;
+	    Real * Mvalues;
+	    helper::vector<Real> values,D;
+	    helper::vector<int> rowind,colptr;
+	    helper::vector<int> perm, invperm; //premutation inverse
     };
 
 };
 
 #if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_LINEARSOLVER)
-extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix<double>,FullVector<double> >;
+extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix< double>,FullVector<double> >;
+extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix< defaulttype::Mat<3,3,double> >,FullVector<double> >;
+extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix< float>,FullVector<float> >;
+extern template class SOFA_COMPONENT_LINEARSOLVER_API SparseLDLSolver< CompressedRowSparseMatrix< defaulttype::Mat<3,3,float> >,FullVector<float> >;
 #endif
+
 
 } // namespace linearsolver
 

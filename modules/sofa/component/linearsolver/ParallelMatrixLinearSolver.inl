@@ -31,6 +31,7 @@
 #include <sofa/component/misc/ParallelizeBuildMatrixEvent.h>
 #include <sofa/helper/AdvancedTimer.h>
 #include <string.h>
+#include <sofa/helper/system/thread/CTime.h>
 
 //#define DEBUG_PARALLELMATRIX
 
@@ -40,6 +41,7 @@ namespace component {
 
 namespace linearsolver {
 
+using namespace helper::system::thread;
   
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
@@ -47,7 +49,8 @@ ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
 , f_useDerivative( initData( &f_useDerivative, false, "useDerivative", "use Derivative (A + epsilon X-1 = A-1 - epsilon A-1 X A-1 + O(epsilon2))" ) )
 , f_useRotationFinder( initData( &f_useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
 , f_useMultiThread( initData( &f_useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
-, f_check_symetric( initData( &f_check_symetric, false, "check_symetric", "if true, check if the matrix is symetric" ) )
+, f_check_system( initData( &f_check_system, false, "check_system", "if true, check if the compliance matrix is correct (ie symmetric, diagonal != 0 and without nan)" ) )
+, f_check_compliance( initData( &f_check_compliance, false, "check_compliance", "if true, check if the compliance matrix is correct (ie symmetric, diagonal != 0 and without nan)" ) )
 {
     thread = NULL;
     systemRHVector = NULL;
@@ -180,23 +183,27 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(const core::
 	  matrixAccessor[id]->computeGlobalMatrix();
     }
     
-    if (f_check_symetric.getValue()) {
+    if (f_check_system.getValue()) {
       bool sym = true;
       bool diag = true;
+      bool nan = false;
       for (unsigned i=0;i<matricesWork[id]->colSize();i++) {
 	  for (unsigned j=0;j<matricesWork[id]->rowSize();j++) {
-	      double diff = matricesWork[id]->element(j,i) - matricesWork[id]->element(i,j);
-	      if ((diff<-0.0000001) || (diff>0.0000001)) {		
-		sym = false;
+	      if (i==j) {
+		if ((matricesWork[id]->element(j,i)>-0.00001) && (matricesWork[id]->element(j,i)<0.00001)) diag = false;
+	      } else {
+		double diff = matricesWork[id]->element(j,i) - matricesWork[id]->element(i,j);
+		if ((diff<-0.00001) || (diff>0.00001)) sym = false;
 	      }
-	      if ((i==j) && (matricesWork[id]->element(j,i)>-0.0000001) && (matricesWork[id]->element(j,i)<0.0000001)) {
-		diag = false;
-	      }	      
+	      if (isnan(matricesWork[id]->element(j,i))) {
+		nan = true;
+	      }
 	  }
       }
-      if (! sym) serr << "ERROR : THE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix" << sendl;
-      if (! diag) serr << "ERROR : THE MATRIX ZERO VALUE ON THE DIAGONAL" << sendl;
-      if (sym && diag) serr << "THE MATRIX IS CORRECT" << sendl;
+      if (! sym) serr << "ERROR : THE SYSTEM MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix" << sendl;
+      if (! diag) serr << "ERROR : THE SYSTEM MATRIX ZERO CONTAINS VALUE ON THE DIAGONAL" << sendl;
+      if (nan) serr << "ERROR : THE SYSTEM MATRIX CONTAINS NAN VALUE" << sendl;
+      if (sym && diag && !nan) serr << "THE SYSTEM MATRIX IS CORRECT" << sendl;
     }
 #ifdef DEBUG_PARALLELMATRIX
     printf("<computeSystemMatrix\n");
@@ -244,8 +251,13 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::M
 		indexwork=1;	  
 		std::cout << "Creating thread ... " << std::endl;
 		thread = new boost::thread(Thread_invert(this));
-	    } else sout << "Update preconditioner after " << nbstep_update << " steps" << sendl;
-
+	    } else {
+	      double time = ((double) CTime::getTime() - timer) / (double)CTime::getRefTicksPerSec();
+	      sout << "Update preconditioner after " << nbstep_update << " steps in " << time << " ms" << sendl;
+	    }
+	    
+	    timer = CTime::getTime();
+	    
 	    this->resizeSystem(this->getDimension(mparams,indexwork));
 
 	    nbstep_update = 1;
@@ -457,36 +469,55 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(defaulttype::BaseMatr
 	  serr << "ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt ERROR: incompatible J matrix size." << sendl;
 	  return false;
       }
-
-      if (!Jrows) {
-#ifdef DEBUG_PARALLELMATRIX
-	printf("<addJMInvJt\n");
-#endif	
-	return false;
-      }
-   
-      if (useRotation) {
-	  JR.resize(Jrows,Jcols);
-	
-	  if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) Rcur->opMulJ(&JR,j);
-	  else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) Rcur->opMulJ(&JR,j);
-	  else {
-	    serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
-	    return false;
+      
+      bool res = false;
+      if (Jrows) {
+	if (useRotation) {
+	    JR.resize(Jrows,Jcols);
+	  
+	    if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) {
+	      Rcur->opMulJ(&JR,j);
+	      res = addJMInvJt(matricesWork[indexwork],result,&JR,fact);
+	    } else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) {
+	      Rcur->opMulJ(&JR,j);
+	      res = addJMInvJt(matricesWork[indexwork],result,&JR,fact);
+	    } else {
+	      serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
+	      res = false;
+	    }
+	} else {
+	  res = addJMInvJt(matricesWork[indexwork],result,J,fact);
+	}
+      
+	if (f_check_compliance.getValue() && res) {
+	  bool sym = true;
+	  bool diag = true;
+	  bool nan = false;
+	  for (unsigned i=0;i<result->colSize();i++) {
+	      for (unsigned j=0;j<result->rowSize();j++) {
+		  if (i==j) {
+		    if ((result->element(j,i)>-1e-9) && (result->element(j,i)<1e-9)) diag = false;
+		  } else {
+		    double diff = result->element(j,i) - result->element(i,j);
+		    if ((diff<-0.00001) || (diff>0.00001)) sym = false;
+		  }
+		  if (isnan(result->element(j,i))) {
+		    nan = true;
+		  }
+	      }
 	  }
-
-	  bool b = addJMInvJt(matricesWork[indexwork],result,&JR,fact);
-#ifdef DEBUG_PARALLELMATRIX
-    printf("<addJMInvJt\n");
-#endif 	  
-	  return b;
-      } else {
-	bool b = addJMInvJt(matricesWork[indexwork],result,J,fact);
-#ifdef DEBUG_PARALLELMATRIX
-	printf("<addJMInvJt\n");
-#endif	
-	return b;
+	  if (! sym) serr << "ERROR : THE COMPLIANCE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix" << sendl;
+	  if (! diag) serr << "ERROR : THE COMPLIANCE MATRIX CONTAINS ZERO VALUE ON THE DIAGONAL" << sendl;
+	  if (nan) serr << "ERROR : THE COMPLIANCE  MATRIX CONTAINS NAN VALUE" << sendl;
+	  if (sym && diag && !nan) serr << "THE COMPLIANCE MATRIX IS CORRECT" << sendl;	
+	}
       }
+      
+#ifdef DEBUG_PARALLELMATRIX
+      printf("<addJMInvJt\n");      
+#endif
+      return res;
+
 }
 
 } // namespace linearsolver

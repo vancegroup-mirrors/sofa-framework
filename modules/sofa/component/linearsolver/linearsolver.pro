@@ -123,10 +123,10 @@ contains(DEFINES,SOFA_HAVE_TAUCS_MT){
     LIBS *= -lmetis$$LIBSUFFIX
 
     HEADERS +=  \
-	       SparseTAUCSLUSolver.h \
+	       SparseTAUCSLLtSolver.h \
 
     SOURCES +=  \
-	       SparseTAUCSLUSolver.cpp \
+	       SparseTAUCSLLtSolver.cpp \
 
 }
 

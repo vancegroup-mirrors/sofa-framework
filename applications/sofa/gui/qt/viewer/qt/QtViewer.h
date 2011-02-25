@@ -129,7 +129,6 @@ namespace qt
         bool _waitForRender;
 
         //GLuint			_logoTexture;
-        Texture			*texLogo;
 
         ctime_t			_beginTime;
 
@@ -244,8 +243,6 @@ namespace qt
 
 
         QString helpString();
-
-        virtual void setBackgroundImage(std::string imageFileName);
 
     private:
 

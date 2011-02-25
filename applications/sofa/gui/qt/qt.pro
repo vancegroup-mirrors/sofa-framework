@@ -79,6 +79,7 @@ HEADERS += viewer/VisualModelPolicy.h \
            SofaPluginManager.h \
            SofaMouseManager.h \
            SofaVideoRecorderManager.h \	
+		   PickHandlerCallBacks.h \
            QDataDescriptionWidget.h \
 	   QDisplayDataWidget.h \     
            QEnergyStatWidget.h \              
@@ -95,7 +96,6 @@ HEADERS += viewer/VisualModelPolicy.h \
 
 
 SOURCES += viewer/SofaViewer.cpp \
-           viewer/ViewerFactory.cpp \
            GraphListenerQListView.cpp \
            GenGraphForm.cpp \
            AddObject.cpp \
@@ -115,6 +115,7 @@ SOURCES += viewer/SofaViewer.cpp \
            SofaVideoRecorderManager.cpp \
            SofaMouseManager.cpp \
            QDataDescriptionWidget.cpp \
+		   PickHandlerCallBacks.cpp \
 	   QDisplayDataWidget.cpp \
            QEnergyStatWidget.cpp \       
 	   QMouseOperations.cpp \               

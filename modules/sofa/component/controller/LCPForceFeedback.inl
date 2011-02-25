@@ -314,7 +314,7 @@ void LCPForceFeedback<DataTypes>::handleEvent(sofa::core::objectmodel::Event *ev
 //
 
 template <typename DataTypes>
-void LCPForceFeedback<DataTypes>::computeForce(double , double, double, double, double, double, double, double&, double&, double&)
+void LCPForceFeedback<DataTypes>::computeForce(SReal , SReal, SReal, SReal, SReal, SReal, SReal, SReal&, SReal&, SReal&)
 {}
 
 #ifndef SOFA_DOUBLE
@@ -385,9 +385,9 @@ void LCPForceFeedback<Rigid3dTypes>::computeWrench(const SolidTypes<double>::Tra
 
 
 template <typename DataTypes>
-void LCPForceFeedback<DataTypes>::computeWrench(const SolidTypes<double>::Transform &, 
-									 const SolidTypes<double>::SpatialVector &, 
-									 SolidTypes<double>::SpatialVector & )
+void LCPForceFeedback<DataTypes>::computeWrench(const SolidTypes<SReal>::Transform &,
+                                                                         const SolidTypes<SReal>::SpatialVector &,
+                                                                         SolidTypes<SReal>::SpatialVector & )
 {}
 
 

@@ -30,6 +30,9 @@
 
 #include <sofa/component/misc/ParallelizeBuildMatrixEvent.h>
 #include <sofa/helper/AdvancedTimer.h>
+#include <string.h>
+
+//#define DEBUG_PARALLELMATRIX
 
 namespace sofa {
 
@@ -115,14 +118,23 @@ void ParallelMatrixLinearSolver<TMatrix,TVector>::init() {
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::resetSystem() {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">resetSystem\n");
+#endif
     if (!this->frozen && matricesWork[indexwork]) matricesWork[indexwork]->clear();
     if (systemRHVector) systemRHVector->clear();
     if (systemLHVector) systemLHVector->clear();
     solutionVecId = core::MultiVecDerivId::null();
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<resetSystem\n");
+#endif
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">resizeSystem\n");
+#endif
     if (!systemRHVector) systemRHVector = createPersistentVector();
     if (!systemLHVector) systemLHVector = createPersistentVector();
     if (useRotation) {
@@ -149,12 +161,18 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::resizeSystem(int n) {
     } 
     
     systemSize = n;
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<resizeSystem\n");
+#endif
 }
 
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(const core::MechanicalParams* mparams,int id) {
-   if (!this->frozen) {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">computeSystemMatrix\n");
+#endif
+    if (!this->frozen) {
 	  matricesWork[id]->clear();
 	  matricesWork[id]->resize(systemSize,systemSize);
 	  simulation::common::MechanicalOperations mops(this->getContext(), mparams);	  
@@ -163,21 +181,33 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::computeSystemMatrix(const core::
     }
     
     if (f_check_symetric.getValue()) {
+      bool sym = true;
+      bool diag = true;
       for (unsigned i=0;i<matricesWork[id]->colSize();i++) {
 	  for (unsigned j=0;j<matricesWork[id]->rowSize();j++) {
 	      double diff = matricesWork[id]->element(j,i) - matricesWork[id]->element(i,j);
-	      if ((diff<-0.0000001) || (diff>0.0000001)) {
-		serr << "ERROR : THE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix" << sendl;
-		return;
+	      if ((diff<-0.0000001) || (diff>0.0000001)) {		
+		sym = false;
 	      }
+	      if ((i==j) && (matricesWork[id]->element(j,i)>-0.0000001) && (matricesWork[id]->element(j,i)<0.0000001)) {
+		diag = false;
+	      }	      
 	  }
-      }	
-      serr << "THE MATRIX IS SYMETRIC" << sendl;
+      }
+      if (! sym) serr << "ERROR : THE MATRIX IS NOT SYMETRIX, CHECK THE METHOD addKToMatrix" << sendl;
+      if (! diag) serr << "ERROR : THE MATRIX ZERO VALUE ON THE DIAGONAL" << sendl;
+      if (sym && diag) serr << "THE MATRIX IS CORRECT" << sendl;
     }
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<computeSystemMatrix\n");
+#endif    
 }
 
 template<class Matrix, class Vector>
 int ParallelMatrixLinearSolver<Matrix,Vector>::getDimension(const core::MechanicalParams* mparams,int id) {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">getDimension\n");
+#endif    
     if (!matricesWork[id]) matricesWork[id] = createMatrix();
     if (!matrixAccessor[id]) matrixAccessor[id] = new DefaultMultiMatrixAccessor();  
     if (useRotation && !rotationWork[indexwork]) rotationWork[indexwork] = createRotationMatrix();
@@ -187,17 +217,23 @@ int ParallelMatrixLinearSolver<Matrix,Vector>::getDimension(const core::Mechanic
     matrixAccessor[id]->clear();
     mops.getMatrixDimension(matrixAccessor[id]);
     matrixAccessor[id]->setupMatrices();
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<getDimension\n");
+#endif       
     return matrixAccessor[id]->getGlobalDimension();
 }
 
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::MechanicalParams* mparams) {	  
-    if (f_useMultiThread.getValue()) {
-	useRotation = f_useWarping.getValue() && rotationFinders.size();
-	useDerivative = f_useDerivative.getValue();
-	indRotationFinder = f_useRotationFinder.getValue()<rotationFinders.size() ? f_useRotationFinder.getValue() : 0;
-	
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">setSystemMBKMatrix\n");
+#endif
+    useRotation = f_useWarping.getValue() && rotationFinders.size();
+    useDerivative = f_useDerivative.getValue();
+    indRotationFinder = f_useRotationFinder.getValue()<rotationFinders.size() ? f_useRotationFinder.getValue() : 0;
+
+    if (f_useMultiThread.getValue()) {	
 	if (ready_thread) {
 	    if (thread==NULL) {	
 		indexwork=0;
@@ -226,41 +262,64 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::M
 		else params = *mparams;
 	    }
 	    
-	    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
-	    if (useDerivative) this->getDimension(mparams,2);
-	    
 	    if (indexwork) indexwork = 0;
 	    else indexwork = 1;
 	    
 	    ready_thread = 0; //unlock the second thread
 	} else nbstep_update++;
     } else {
-	useRotation = false;
-	useDerivative = false;
 	resizeSystem(getDimension(mparams,indexwork));
 	this->computeSystemMatrix(mparams,indexwork);
 	this->invertSystem(); 
-    }    
+    }  
+	    
+    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+    if (useDerivative) this->getDimension(mparams,2);    
+#ifdef DEBUG_PARALLELMATRIX
+    //std::cout << *matricesWork[indexwork] << std::endl;
+    printf("<setSystemMBKMatrix\n");
+#endif      
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemRHVector(core::MultiVecDerivId v) {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">setSystemRHVector\n");
+#endif  
     this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, systemRHVector, matrixAccessor[indexwork]) );
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<setSystemRHVector\n");
+#endif     
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemLHVector(core::MultiVecDerivId v) {
+  #ifdef DEBUG_PARALLELMATRIX
+    printf(">setSystemLHVector\n");
+#endif  
     solutionVecId = v;
     //this->executeVisitor( simulation::MechanicalMultiVectorToBaseVectorVisitor( v, systemLHVector, matrixAccessor[indexwork]) );
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<setSystemLHVector\n");
+#endif      
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::invertSystem() {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">invertSystem\n");
+#endif     
     this->invert(*matricesWork[indexwork]);
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<invertSystem\n");
+#endif       
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::updateSystemMatrix() {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">updateSystemMatrix\n");
+#endif       
     if (useRotation) {
 	rotationFinders[indRotationFinder]->getRotations(Rcur);
 	rotationWork[indexwork]->opMulTM(Rcur,Rcur);
@@ -270,11 +329,16 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::updateSystemMatrix() {
 	this->computeSystemMatrix(&params,2); 
 	internalData.subM(matricesWork[2],matricesWork[indexwork]);
     }
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<updateSystemMatrix\n");
+#endif       
 }
 
 template<class Matrix, class Vector>
 void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
-    
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">solveSystem\n");
+#endif       
     
     if (useRotation && useDerivative) { 
 	Rcur->opMulTV(systemLHVector,systemRHVector);
@@ -309,6 +373,10 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::solveSystem() {
     if (!solutionVecId.isNull()) {
 	executeVisitor( simulation::MechanicalMultiVectorFromBaseVectorVisitor(solutionVecId, systemLHVector, matrixAccessor[indexwork]) );
     }
+#ifdef DEBUG_PARALLELMATRIX
+//     std::cout << *systemLHVector << std::endl;
+    printf("<solveSystem\n");
+#endif       
 }
 
 template<class Matrix, class Vector>
@@ -380,6 +448,9 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(Matrix * M, defaultty
 
 template<class Matrix, class Vector>
 bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(defaulttype::BaseMatrix* result, defaulttype::BaseMatrix* J, double fact) {
+#ifdef DEBUG_PARALLELMATRIX
+    printf(">addJMInvJt\n");
+#endif 	   
       const unsigned int Jrows = J->rowSize();
       const unsigned int Jcols = J->colSize();
       if (Jcols != matricesWork[indexwork]->rowSize()) {
@@ -387,10 +458,15 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(defaulttype::BaseMatr
 	  return false;
       }
 
-      if (!Jrows) return false;
-  
+      if (!Jrows) {
+#ifdef DEBUG_PARALLELMATRIX
+	printf("<addJMInvJt\n");
+#endif	
+	return false;
+      }
+   
       if (useRotation) {
-	  JR.resize(Jrows,Jcols);     
+	  JR.resize(Jrows,Jcols);
 	
 	  if (SparseMatrix<double>* j = dynamic_cast<SparseMatrix<double>*>(J)) Rcur->opMulJ(&JR,j);
 	  else if (SparseMatrix<float>* j = dynamic_cast<SparseMatrix<float>*>(J)) Rcur->opMulJ(&JR,j);
@@ -398,10 +474,18 @@ bool ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt(defaulttype::BaseMatr
 	    serr << "ERROR : Unknown matrix format in ParallelMatrixLinearSolver<Matrix,Vector>::addJMInvJt" << sendl;
 	    return false;
 	  }
-	  
-	  return addJMInvJt(matricesWork[indexwork],result,&JR,fact);
+
+	  bool b = addJMInvJt(matricesWork[indexwork],result,&JR,fact);
+#ifdef DEBUG_PARALLELMATRIX
+    printf("<addJMInvJt\n");
+#endif 	  
+	  return b;
       } else {
-	return addJMInvJt(matricesWork[indexwork],result,J,fact);
+	bool b = addJMInvJt(matricesWork[indexwork],result,J,fact);
+#ifdef DEBUG_PARALLELMATRIX
+	printf("<addJMInvJt\n");
+#endif	
+	return b;
       }
 }
 

@@ -295,15 +295,14 @@ protected:
 			int indexwork = 1;
 			solver->run=1;
 			while (solver->run) {
-				while (solver->ready_thread && solver->run) usleep(50);				
-
+				while (solver->ready_thread && solver->run) usleep(50);
 				if (! solver->run) break;
 				if (solver->handeled) solver->computeSystemMatrix(&solver->params,indexwork);
 				if (! solver->run) break;
 				solver->invert(*(solver->matricesWork[indexwork]));
 				if (! solver->run) break;				
 				solver->ready_thread = 1; //signal the main thread the invert is finish				
-				if (solver->indexwork) indexwork = 0;
+				if (indexwork) indexwork = 0;
 				else indexwork = 1;				
 			}
 			solver->ready_thread = 1;

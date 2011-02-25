@@ -25,28 +25,11 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#ifndef SOFA_COMPONENT_BEHAVIORMODEL_MYFAKEEXAMPLE_H
-#define SOFA_COMPONENT_BEHAVIORMODEL_MYFAKEEXAMPLE_H
+#ifndef SOFA_COMPONENT_BEHAVIORMODEL_MyFakeComponent_H
+#define SOFA_COMPONENT_BEHAVIORMODEL_MyFakeComponent_H
 
-
+#include "initPluginExample.h"
 #include <sofa/core/BehaviorModel.h>
-
-
-#ifndef WIN32
-	#define SOFA_EXPORT_DYNAMIC_LIBRARY 
-	#define SOFA_IMPORT_DYNAMIC_LIBRARY 
-#else
-	#ifdef SOFA_BUILD_DYNAMICLIBEXAMPLE
-		#define SOFA_EXPORT_DYNAMIC_LIBRARY __declspec( dllexport )
-		#define SOFA_DYNAMICLIBEXAMPLEAPI SOFA_EXPORT_DYNAMIC_LIBRARY
-	#else
-		#define SOFA_IMPORT_DYNAMIC_LIBRARY __declspec( dllimport )
-		#define SOFA_DYNAMICLIBEXAMPLEAPI SOFA_IMPORT_DYNAMIC_LIBRARY
-	#endif
-#endif
-
-
-
 
 namespace sofa
 {
@@ -58,7 +41,7 @@ namespace behaviormodel
 {
 
 
-class  MyFakeComponent : public sofa::core::BehaviorModel
+class SOFA_PluginExample_API MyFakeComponent : public sofa::core::BehaviorModel
 {
 public:
 SOFA_CLASS(MyFakeComponent,sofa::core::BehaviorModel);

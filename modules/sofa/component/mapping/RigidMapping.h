@@ -40,153 +40,155 @@
 namespace sofa
 {
 
-namespace component
-{
-
-namespace mapping
-{
-
-/// This class can be overridden if needed for additionnal storage within template specializations.
-template<class InDataTypes, class OutDataTypes>
-class RigidMappingInternalData
-{
-public:
-};
-
-template <class TIn, class TOut>
-class RigidMapping : public core::Mapping<TIn, TOut>
-{
-public:
-	SOFA_CLASS(SOFA_TEMPLATE2(RigidMapping,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut));
-
-    typedef core::Mapping<TIn, TOut> Inherit;
-    typedef TIn In;
-    typedef TOut Out;
-    typedef Out OutDataTypes;
-    typedef typename Out::VecCoord VecCoord;
-    typedef typename Out::VecDeriv VecDeriv;
-    typedef typename Out::Coord Coord;
-    typedef typename Out::Deriv Deriv;
-    typedef typename Out::MatrixDeriv OutMatrixDeriv;
-    typedef typename In::Deriv InDeriv;
-    typedef typename In::DRot DRot;
-    typedef typename In::VecCoord InVecCoord;
-    typedef typename In::VecDeriv InVecDeriv;
-    typedef typename In::MatrixDeriv InMatrixDeriv;
-    typedef typename Coord::value_type Real;
-    enum
+    namespace component
     {
-        N = OutDataTypes::spatial_dimensions
-    };
-    enum
-    {
-        NIn = sofa::defaulttype::DataTypeInfo<InDeriv>::Size
-    };
-    enum
-    {
-        NOut = sofa::defaulttype::DataTypeInfo<Deriv>::Size
-    };
-    typedef defaulttype::Mat<N, N, Real> Mat;
-    typedef defaulttype::Vec<N, Real> Vector;
-    typedef defaulttype::Mat<NOut, NIn, Real> MBloc;
-    typedef sofa::component::linearsolver::CompressedRowSparseMatrix<MBloc> MatrixType;
 
-    Data<VecCoord> points;
-    VecCoord rotatedPoints;
-    RigidMappingInternalData<In, Out> data;
-    Data<unsigned int> index;
-    sofa::core::objectmodel::DataFileName fileRigidMapping;
-    Data<bool> useX0;
-    Data<bool> indexFromEnd;
-    /**
-     * Repartitions:
-     *  - no value specified : simple rigid mapping
-     *  - one value specified : uniform repartition mapping on the input dofs
-     *  - n values are specified : heterogen repartition mapping on the input dofs
+        namespace mapping
+        {
+
+            /// This class can be overridden if needed for additionnal storage within template specializations.
+            template<class InDataTypes, class OutDataTypes>
+            class RigidMappingInternalData
+            {
+            public:
+            };
+
+            template <class TIn, class TOut>
+                    class RigidMapping : public core::Mapping<TIn, TOut>
+            {
+            public:
+                SOFA_CLASS(SOFA_TEMPLATE2(RigidMapping,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut));
+
+                typedef core::Mapping<TIn, TOut> Inherit;
+                typedef TIn In;
+                typedef TOut Out;
+                typedef Out OutDataTypes;
+                typedef typename Out::VecCoord VecCoord;
+                typedef typename Out::VecDeriv VecDeriv;
+                typedef typename Out::Coord Coord;
+                typedef typename Out::Deriv Deriv;
+                typedef typename Out::MatrixDeriv OutMatrixDeriv;
+                typedef typename In::Real InReal;
+                typedef typename In::Deriv InDeriv;
+                typedef typename In::DRot DRot;
+                typedef typename In::VecCoord InVecCoord;
+                typedef typename In::VecDeriv InVecDeriv;
+                typedef typename In::MatrixDeriv InMatrixDeriv;
+                typedef typename Coord::value_type Real;
+                enum
+                {
+                    N = OutDataTypes::spatial_dimensions
+                    };
+                enum
+                {
+                    NIn = sofa::defaulttype::DataTypeInfo<InDeriv>::Size
+                      };
+                enum
+                {
+                    NOut = sofa::defaulttype::DataTypeInfo<Deriv>::Size
+                       };
+                typedef defaulttype::Mat<N, N, Real> Mat;
+                typedef defaulttype::Vec<N, Real> Vector;
+                typedef defaulttype::Mat<NOut, NIn, Real> MBloc;
+                typedef sofa::component::linearsolver::CompressedRowSparseMatrix<MBloc> MatrixType;
+
+                Data<VecCoord> points;    ///< mapped points in local coordinates
+                VecCoord rotatedPoints;   ///< vectors from frame origin to mapped points, projected to world coordinates
+                RigidMappingInternalData<In, Out> data;
+                Data<unsigned int> index;
+                sofa::core::objectmodel::DataFileName fileRigidMapping;
+                Data<bool> useX0;
+                Data<bool> indexFromEnd;
+                /**
+     * pointsPerRigid:
+     *  - no value specified : simple rigid mapping, all points attached to the same frame (index=0)
+     *  - one value specified : same number of points for each frame
+     *  - n values are specified : heterogeneous distribution of points per frame
      */
-    Data<sofa::helper::vector<unsigned int> > repartition;
-    Data<bool> globalToLocalCoords;
+                Data<sofa::helper::vector<unsigned int> > pointsPerFrame;
+                Data<bool> globalToLocalCoords;
 
-    helper::ParticleMask* maskFrom;
-    helper::ParticleMask* maskTo;
+                helper::ParticleMask* maskFrom;
+                helper::ParticleMask* maskTo;
 
-	RigidMapping(core::State< In >* from, core::State< Out >* to);
-    virtual ~RigidMapping() {}
+                RigidMapping(core::State< In >* from, core::State< Out >* to);
+                virtual ~RigidMapping() {}
 
-    int addPoint(const Coord& c);
-    int addPoint(const Coord& c, int indexFrom);
+                int addPoint(const Coord& c);
+                int addPoint(const Coord& c, int indexFrom);
 
-    void init();
+                void init();
 
-    //void disable(); //useless now that points are saved in a Data
 
-    void apply(Data<VecCoord>& out, const Data<InVecCoord>& in, const core::MechanicalParams *mparams);
+                void apply(Data<VecCoord>& out, const Data<InVecCoord>& in, const core::MechanicalParams *mparams);
 
-    void applyJ(Data<VecDeriv>& out, const Data<InVecDeriv>& in, const core::MechanicalParams *mparams);
+                void applyJ(Data<VecDeriv>& out, const Data<InVecDeriv>& in, const core::MechanicalParams *mparams);
 
-    void applyJT(Data<InVecDeriv>& out, const Data<VecDeriv>& in, const core::MechanicalParams *mparams);
+                void applyJT(Data<InVecDeriv>& out, const Data<VecDeriv>& in, const core::MechanicalParams *mparams);
 
-	void applyJT(Data<InMatrixDeriv>& out, const Data<OutMatrixDeriv>& in, const core::ConstraintParams *cparams);
+                void applyJT(Data<InMatrixDeriv>& out, const Data<OutMatrixDeriv>& in, const core::ConstraintParams *cparams);
 
-    const sofa::defaulttype::BaseMatrix* getJ();
+                virtual void applyDJT(core::MultiVecDerivId parentForce, core::ConstMultiVecDerivId  childForce, const core::MechanicalParams* mparams = core::MechanicalParams::defaultInstance() );
 
-    void draw();
+                const sofa::defaulttype::BaseMatrix* getJ();
 
-    void clear(int reserve = 0);
+                void draw();
 
-    void setRepartition(unsigned int value);
-    void setRepartition(sofa::helper::vector<unsigned int> values);
+                void clear(int reserve = 0);
 
-protected:
-    class Loader;
+                void setRepartition(unsigned int value);
+                void setRepartition(sofa::helper::vector<unsigned int> values);
 
-    void load(const char* filename);
-    const VecCoord& getPoints();
-    void setJMatrixBlock(unsigned outIdx, unsigned inIdx);
+            protected:
+                class Loader;
 
-    std::auto_ptr<MatrixType> matrixJ;
-    bool updateJ;
-};
+                void load(const char* filename);
+                const VecCoord& getPoints();
+                void setJMatrixBlock(unsigned outIdx, unsigned inIdx);
 
-template <int N, class Real>
-struct RigidMappingMatrixHelper;
+                std::auto_ptr<MatrixType> matrixJ;
+                bool updateJ;
+            };
 
-using sofa::defaulttype::Vec2dTypes;
-using sofa::defaulttype::Vec3dTypes;
-using sofa::defaulttype::Vec2fTypes;
-using sofa::defaulttype::Vec3fTypes;
-using sofa::defaulttype::ExtVec3fTypes;
-using sofa::defaulttype::Rigid2dTypes;
-using sofa::defaulttype::Rigid3dTypes;
-using sofa::defaulttype::Rigid2fTypes;
-using sofa::defaulttype::Rigid3fTypes;
+            template <int N, class Real>
+                    struct RigidMappingMatrixHelper;
+
+            using sofa::defaulttype::Vec2dTypes;
+            using sofa::defaulttype::Vec3dTypes;
+            using sofa::defaulttype::Vec2fTypes;
+            using sofa::defaulttype::Vec3fTypes;
+            using sofa::defaulttype::ExtVec3fTypes;
+            using sofa::defaulttype::Rigid2dTypes;
+            using sofa::defaulttype::Rigid3dTypes;
+            using sofa::defaulttype::Rigid2fTypes;
+            using sofa::defaulttype::Rigid3fTypes;
 
 #if defined(WIN32) && !defined(SOFA_COMPONENT_MAPPING_RIGIDMAPPING_CPP)
 #pragma warning(disable : 4231)
 #ifndef SOFA_FLOAT
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3dTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2dTypes, Vec2dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3dTypes, ExtVec3fTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3dTypes, Vec3dTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2dTypes, Vec2dTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3dTypes, ExtVec3fTypes >;
 #endif
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3fTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2fTypes, Vec2fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3fTypes, ExtVec3fTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3fTypes, Vec3fTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2fTypes, Vec2fTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3fTypes, ExtVec3fTypes >;
 #endif
 
 #ifndef SOFA_FLOAT
 #ifndef SOFA_DOUBLE
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3dTypes, Vec3fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3fTypes, Vec3dTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2dTypes, Vec2fTypes >;
-extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2fTypes, Vec2dTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3dTypes, Vec3fTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid3fTypes, Vec3dTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2dTypes, Vec2fTypes >;
+            extern template class SOFA_COMPONENT_MAPPING_API RigidMapping< Rigid2fTypes, Vec2dTypes >;
 #endif
 #endif
 #endif
 
-} // namespace mapping
+        } // namespace mapping
 
-} // namespace component
+    } // namespace component
 
 } // namespace sofa
 

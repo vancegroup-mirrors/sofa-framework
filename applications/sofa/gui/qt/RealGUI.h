@@ -48,7 +48,7 @@ under the terms of the GNU General Public License as published by the Free  *
 #include <sofa/gui/qt/SofaPluginManager.h>
 #include <sofa/gui/qt/SofaMouseManager.h>
 #include <sofa/gui/qt/SofaVideoRecorderManager.h>
-
+#include <sofa/gui/qt/PickHandlerCallBacks.h>
 #include <sofa/simulation/common/xml/XML.h>
 #include <sofa/helper/system/SetDirectory.h>
 
@@ -241,6 +241,7 @@ namespace sofa
           void currentTabChanged(QWidget*);
       protected slots:
           void changeViewer();
+          void updateViewerList();
 
 signals:
           void reload();
@@ -269,7 +270,8 @@ signals:
         bool _animationOBJ; int _animationOBJcounter;// save a succession of .obj indexed by _animationOBJcounter
         bool m_displayComputationTime;
 
-        std::map< QAction* , helper::SofaViewerFactory::Key > viewerMap;
+        std::map< helper::SofaViewerFactory::Key, QAction* > viewerMap;
+        InformationOnPickCallBack informationOnPickCallBack;
 
         QWidget* currentTab;
         QWidget *tabInstrument;
@@ -334,50 +336,7 @@ signals:
       };
 
 
-      class InformationOnPickCallBack: public CallBackPicker
-      {
-      public:
-        InformationOnPickCallBack(RealGUI *g):gui(g){};
-
-        virtual void execute(const sofa::component::collision::BodyPicked &body)
-        {
-          core::objectmodel::BaseObject *objectPicked=NULL;
-          if (body.body)
-          {
-            Q3ListViewItem* item=gui->simulationGraph->getListener()->items[body.body];
-            gui->simulationGraph->ensureItemVisible(item);
-            gui->simulationGraph->clearSelection();
-            gui->simulationGraph->setSelected(item,true);
-            objectPicked=body.body;
-          }
-          else if (body.mstate)
-          {
-            Q3ListViewItem* item=gui->simulationGraph->getListener()->items[body.mstate];
-            gui->simulationGraph->ensureItemVisible(item);
-            gui->simulationGraph->clearSelection();
-            gui->simulationGraph->setSelected(item,true);
-            objectPicked=body.mstate;
-          }
-          else
-            gui->simulationGraph->clearSelection();
-
-          if (objectPicked)
-          {
-            QString messagePicking;
-            simulation::Node *n=static_cast<simulation::Node*>(objectPicked->getContext());
-            messagePicking=QString("Index ") + QString::number(body.indexCollisionElement)
-              + QString(" of  ")
-              + QString(n->getPathName().c_str())
-              + QString("/") + QString(objectPicked->getName().c_str())
-              + QString(" : ") + QString(objectPicked->getClassName().c_str());
-            if (!objectPicked->getTemplateName().empty())
-              messagePicking += QString("<") + QString(objectPicked->getTemplateName().c_str()) + QString(">");
-            gui->statusBar()->message(messagePicking,3000); //display message during 3 seconds
-          }
-        }
-      protected:
-        RealGUI *gui;
-      };
+      
 
 
       struct ActivationFunctor

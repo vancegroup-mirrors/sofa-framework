@@ -131,6 +131,10 @@ class CudaBaseVector : public BaseVector {
 		void * deviceWrite() {
 		    return v.deviceWrite();
 		}
+		
+		void invalidateDevice() {
+		    v.invalidateDevice();
+		}
 
 		const T* hostRead() const {
 		    return v.hostRead();

@@ -807,6 +807,7 @@ public:
     typedef CudaVector<Deriv> VecDeriv;
     typedef CudaVector<Real> VecReal;
     typedef defaulttype::MapMapSparseMatrix<Deriv> MatrixDeriv;
+    typedef Vec3 AngularVector;
 
     enum { spatial_dimensions = Coord::spatial_dimensions };
     enum { coord_total_size = Coord::total_size };
@@ -945,6 +946,11 @@ public:
 	}
 
     static const char* Name();
+
+    /// double cross product: a * ( b * c )
+    static Vec3 crosscross ( const Vec3& a, const Vec3& b, const Vec3& c){
+        return cross( a, cross( b,c ));
+    }
 };
 
 typedef CudaRigidTypes<3,float> CudaRigid3fTypes;

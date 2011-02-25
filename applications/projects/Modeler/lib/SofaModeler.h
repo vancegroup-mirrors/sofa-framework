@@ -209,7 +209,7 @@ namespace sofa
 	  void fileRecentlyOpened(int id);
 	  
 	  /// Filter in the library all the components containing the text written
-      void searchText(const FilterQuery&);
+    void searchText(const FilterQuery&);
 
 	  void changeSofaBinary();
 	  void GUIChanged();
@@ -218,6 +218,9 @@ namespace sofa
 
 	  ///display the plugin manager window, to add/remove some external dynamic libraries
 	  void showPluginManager();
+
+
+    void updateViewerList();
     protected slots:
       void redirectStderr();
       void redirectStdout();
@@ -244,8 +247,11 @@ namespace sofa
 
       SofaTutorialManager *tuto;
 
+     
+
       //********************************************
       /// Menu runSofa for the GUI
+      Q3PopupMenu *runSofaGUI;
       std::vector< QAction* > listActionGUI;
       /// Menu preset
       Q3PopupMenu *preset;

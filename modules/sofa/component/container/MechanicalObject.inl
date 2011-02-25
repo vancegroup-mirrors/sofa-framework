@@ -165,7 +165,8 @@ MechanicalObject<DataTypes>::MechanicalObject()
 	externalForces	.forceSet();
 
 	write(VecCoordId::null())->forceSet();
-	write(VecDerivId::null())->forceSet();
+        write(VecDerivId::null())->forceSet();
+        write(VecDerivId::dforce())->forceSet();
 
 	// default size is 1
 	resize(1);

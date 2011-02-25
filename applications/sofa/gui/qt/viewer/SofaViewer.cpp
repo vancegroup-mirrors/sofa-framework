@@ -22,7 +22,7 @@ namespace sofa
         , backgroundImage("textures/SOFA_logo.bmp")
         , ambientColour(Vector3())
         {
-
+          colourPickingRenderCallBack = ColourPickingRenderCallBack(this);
         }
 
 
@@ -81,6 +81,7 @@ namespace sofa
 
           // init pickHandler
           pick.init();
+          pick.setColourRenderCallback(&colourPickingRenderCallBack);
           
         }
 

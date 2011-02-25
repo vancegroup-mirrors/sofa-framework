@@ -3089,7 +3089,7 @@ void BarycentricMapping<TIn, TOut>::draw()
 	{
 		points.push_back ( OutDataTypes::getCPos(out[i]) );
 	}
-	glEnd();
+//	glEnd();
 	const InVecCoord& in = *this->fromModel->getX();
 	if ( mapper!=NULL ) mapper->draw ( out, in );
 

@@ -77,6 +77,7 @@ namespace sofa
       protected:
         DataWidget *stiffnessWidget;
         DataWidget *arrowSizeWidget;
+        DataWidget *showSizeFactorWidget;
       };
 
 

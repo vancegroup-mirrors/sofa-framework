@@ -94,9 +94,6 @@ namespace sofa
       {
           delete operations[i];
       }
-
-      if( renderCallback ) delete renderCallback;
-//       for (unsigned int i=0;i<instanceComponents.size();++i) delete instanceComponents[i];
     }
 
     void PickHandler::allocateSelectionBuffer(int width, int height)

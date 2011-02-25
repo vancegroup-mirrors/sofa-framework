@@ -108,7 +108,7 @@ win32{
   LIBS *= -llapack_win32_MT
   # LAPACK
   }
-  LIBS *= -lmetis
+  LIBS *= -lmetis$$LIBSUFFIX
 
     HEADERS +=  \
                SparseTAUCSSolver.h \
@@ -120,7 +120,7 @@ win32{
 }
 
 contains(DEFINES,SOFA_HAVE_TAUCS_MT){
-    LIBS *= -lmetis
+    LIBS *= -lmetis$$LIBSUFFIX
 
     HEADERS +=  \
 	       SparseTAUCSLUSolver.h \

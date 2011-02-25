@@ -36,14 +36,18 @@ LIBS += $$SOFA_EXT_LIBS
 INCLUDEPATH += $$SOFA_DIR/extlibs
 
 SOURCES = MyFakeComponent.cpp \
-		  MyFakeComponentDataWidgets.cpp \
+          CustomDataUnsignedWidget.cpp \
           OtherFakeComponent.cpp \
-	      initPluginExample.cpp
+          PendulumMapping.cpp \
+          initPluginExample.cpp
 
 HEADERS = MyFakeComponent.h \
-		  MyFakeComponentDataWidgets.h \
+          CustomDataUnsignedWidget.h \
+          PendulumMapping.h \
+          PendulumMapping.inl \
           OtherFakeComponent.h \
-		  OtherFakeComponent.inl 
+          OtherFakeComponent.inl \
+		  initPluginExample.h
 		  
 README_FILE = PluginExample.txt
 

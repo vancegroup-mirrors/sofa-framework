@@ -42,8 +42,10 @@ namespace configurationsetting
                                  ;
 
     AttachBodyButtonSetting::AttachBodyButtonSetting():
-        stiffness(initData(&stiffness, 1000.0, "stiffness", "Stiffness of the spring to attach a particule"))
-        , arrowSize(initData(&arrowSize, 0.0, "arrowSize", "Size of the drawn spring: if >0 an arrow will be drawn"))
+        stiffness(initData(&stiffness, (SReal)1000.0, "stiffness", "Stiffness of the spring to attach a particule"))
+        , arrowSize(initData(&arrowSize, (SReal)0.0, "arrowSize", "Size of the drawn spring: if >0 an arrow will be drawn"))
+        , showFactorSize(initData(&showFactorSize, 1.0, "showFactorSize", "Show factor size of the JointSpringForcefield \
+                                                                           when interacting with rigids"))
     {
     }
 

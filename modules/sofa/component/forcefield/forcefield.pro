@@ -13,6 +13,8 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_FORCEFIELD
 
 HEADERS += initForceField.h \
+           AspirationForceField.h \
+           AspirationForceField.inl \
            BeamFEMForceField.h \
            BeamFEMForceField.inl \
            BuoyantForceField.h \
@@ -88,6 +90,7 @@ HEADERS += initForceField.h \
 
            
 SOURCES += initForceField.cpp \
+           AspirationForceField.cpp \
            BeamFEMForceField.cpp \
            BuoyantForceField.cpp \
            ConicalForceField.cpp \

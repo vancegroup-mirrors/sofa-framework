@@ -34,6 +34,7 @@
 #else
 #include <qlistview.h>
 #endif
+#include <set>
 
 
 namespace sofa
@@ -53,12 +54,26 @@ class SofaPluginManager: public PluginManager
 	public:
 
 	SofaPluginManager();
+	void initPluginList();
 
     static SofaPluginManager* getInstance()
     {
 		static SofaPluginManager instance;
 		return &instance;
-	}
+	  }
+    template <typename OutIterator > 
+    void getPluginList( OutIterator out )
+    {
+      std::set<std::string>::const_iterator it;
+      for ( it = pluginList.begin(); it != pluginList.end(); ++it){
+        *out = *it;
+        out++;
+      }
+    }
+	
+signals:
+    void libraryAdded();
+    void libraryRemoved();
 
 	public slots:
 
@@ -71,9 +86,9 @@ class SofaPluginManager: public PluginManager
 		void updateComponentList(QListViewItem*);
 		void updateDescription(QListViewItem*);
 #endif
-
 	private :
 		void transferPluginsToNewPath();
+    std::set< std::string > pluginList;
 };
 
 	

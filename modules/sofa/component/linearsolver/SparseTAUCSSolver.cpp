@@ -109,7 +109,7 @@ void SparseTAUCSSolver<TMatrix,TVector>::invert(Matrix& M) {
 #ifdef SOFA_HAVE_CILK
     if (f_nproc.getValue()>1) {
 	char buf[64];
-	sprintf(buf,"taucs.cilk.nproc=%d",f_nproc_fact.getValue());
+        sprintf(buf,"taucs.cilk.nproc=%d",f_nproc.getValue());
 	opts.push_back(buf);
 	opts.push_back((char *) "taucs.factor.mf=true");
     }

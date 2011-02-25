@@ -177,8 +177,6 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 	graph_error.clear();
 	
 	unsigned iter=1;
-	r = M*x;
-	cgstep_beta(r,b,-1);//for (int i=0; i<n; i++) r[i] = b[i] - r[i];
 	
 	bool apply_precond = false;
 	if ((this->preconditioners.size()>0) && f_build_precond.getValue()) {
@@ -192,7 +190,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 		sofa::helper::AdvancedTimer::stepEnd("PCGLinearSolver::solve");
 		sofa::helper::AdvancedTimer::stepBegin("PCGLinearSolver::apply Precond");	
 		preconditioners[0]->setSystemLHVector(d);
-		preconditioners[0]->setSystemRHVector(r);
+		preconditioners[0]->setSystemRHVector(b);
 		preconditioners[0]->solveSystem();
 
 		if (preconditioners.size() > 1) { // use if multiple preconds
@@ -200,7 +198,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 		    for (unsigned int i=1;i<preconditioners.size();++i) {		
 			t = d;
 			preconditioners[i]->setSystemLHVector(d);
-			preconditioners[i]->setSystemRHVector(t);
+			preconditioners[i]->setSystemRHVector(b);
 			preconditioners[i]->solveSystem();	
 		    }
 		    vtmp.deleteTempVector(&t);
@@ -208,11 +206,13 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 		sofa::helper::AdvancedTimer::stepEnd("PCGLinearSolver::apply Precond");
 		sofa::helper::AdvancedTimer::stepBegin("PCGLinearSolver::solve");
 	} else {
-		d = r;
+		d = b;
 	}
 	
-	double deltaNew = r.dot(d);
-        double eps = f_tolerance.getValue() * f_tolerance.getValue();
+	r = b;
+	double deltaNew = b.dot(d);
+	double delta0 = deltaNew;
+        double eps = f_tolerance.getValue() * f_tolerance.getValue() * delta0;
 	
 	while ((iter <= f_maxIter.getValue()) && (deltaNew > eps)) {
 	  graph_error.push_back(sqrt(deltaNew));
@@ -222,13 +222,7 @@ void ShewchukPCGLinearSolver<TMatrix,TVector>::solve (Matrix& M, Vector& x, Vect
 	  double alpha = deltaNew / dtq;
 
 	  cgstep_alpha(x,d,alpha);//for(int i=0; i<n; i++) x[i] += alpha * d[i];
-
-	  if (iter % 50 == 0) {// periodically compute the exact residual
-	    r = M * x;
-	    cgstep_beta(r,b,-1);//for (int i=0; i<n; i++) r[i] = b[i] - r[i];
-	  } else {
-	    cgstep_alpha(r,q,-alpha);//for (int i=0; i<n; i++) r[i] = r[i] - alpha * q[i];
-	  }
+	  cgstep_alpha(r,q,-alpha);//for (int i=0; i<n; i++) r[i] = r[i] - alpha * q[i];
 
 	  if (this->preconditioners.size()>0 && f_build_precond.getValue()) {		  
 		  if (f_max_use_by_step.getValue()<0) apply_precond = true;

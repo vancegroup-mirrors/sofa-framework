@@ -110,11 +110,8 @@ namespace sofa
       void init( );
       void reset();
 
-      void setColourRenderCallback(CallBackRender * colourRender) {
-        if(renderCallback != NULL){
-          delete renderCallback;
-          renderCallback = NULL;
-        }
+      void setColourRenderCallback(CallBackRender * colourRender) 
+      {
         renderCallback = colourRender; 
       } 
 
@@ -128,7 +125,7 @@ namespace sofa
       
       void addCallBack(CallBackPicker *c){callbacks.push_back(c);}
       helper::vector< CallBackPicker* > getCallBackPicker(){return callbacks;}
-      void clearCallBacks(){for (unsigned int i=0;i<callbacks.size();++i) delete callbacks[i]; callbacks.clear();}
+      void clearCallBacks(){for (unsigned int i=0;i<callbacks.size();++i) callbacks.clear();}
 
       static BodyPicked findCollisionUsingBruteForce(const defaulttype::Vector3& origin, const defaulttype::Vector3& direction, double maxLength);
       BodyPicked findCollisionUsingColourCoding(const defaulttype::Vector3& origin, const defaulttype::Vector3& direction);

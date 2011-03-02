@@ -95,7 +95,7 @@ void AspirationForceField<DataTypes>::addDForce(const core::MechanicalParams* mp
 };
 
 template<class DataTypes>
-void AspirationForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix */*mat*/, SReal /*k*/, unsigned int &/*offset*/) {
+void AspirationForceField<DataTypes>::addKToMatrix(sofa::defaulttype::BaseMatrix * /*mat*/, SReal /*k*/, unsigned int &/*offset*/) {
 
 }
 
@@ -114,12 +114,12 @@ void AspirationForceField<DataTypes>::draw()
 	//double scale = f_scale.getValue();
 	double ray = f_ray.getValue();
 	
-	simulation::getSimulation()->DrawUtility().drawArrow(center,center+(orientation*ray), f_arrowSizeCoef.getValue(), defaulttype::Vec<4,float>(0.1f,0.4f,1.0f,1.0f));
+	simulation::getSimulation()->DrawUtility().drawArrow(center, center+(orientation*ray), (float)f_arrowSizeCoef.getValue(), defaulttype::Vec<4,float>(0.1f,0.4f,1.0f,1.0f));
 
 	glPushMatrix();
-	  glTranslatef(center.x(),center.y(),center.z());
+	  glTranslatef((GLfloat)center.x(), (GLfloat)center.y(), (GLfloat)center.z());
 	  GLUquadric* params = gluNewQuadric();
-	  glColor3f(0.1,0.4,1.0);
+	  glColor3f(0.1f, 0.4f, 1.0f);
 	  gluQuadricDrawStyle(params,GLU_LINE);
 	  gluSphere(params,ray,32,32);
 	  gluDeleteQuadric(params);
@@ -134,9 +134,9 @@ void AspirationForceField<DataTypes>::draw()
 			Coord p2 = x[i] - (dir*(1.0-(norm/ray)));
 			
 			if (dir*orientation>=0) {
-			    simulation::getSimulation()->DrawUtility().drawArrow(p1,p2, f_arrowSizeCoef.getValue(), defaulttype::Vec<4,float>(1.0f,0.4f,0.4f,1.0f));
+			    simulation::getSimulation()->DrawUtility().drawArrow(p1, p2, (float)f_arrowSizeCoef.getValue(), defaulttype::Vec<4,float>(1.0f,0.4f,0.4f,1.0f));
 			} else if (f_opposite_pressure.getValue()>0.0) {
-			    simulation::getSimulation()->DrawUtility().drawArrow(p1,p1-(orientation*f_opposite_pressure.getValue()), f_arrowSizeCoef.getValue(), defaulttype::Vec<4,float>(0.1f,1.0f,0.4f,1.0f));
+			    simulation::getSimulation()->DrawUtility().drawArrow(p1, p1-(orientation*f_opposite_pressure.getValue()), (float)f_arrowSizeCoef.getValue(), defaulttype::Vec<4,float>(0.1f,1.0f,0.4f,1.0f));
 			}
 		}
 	}

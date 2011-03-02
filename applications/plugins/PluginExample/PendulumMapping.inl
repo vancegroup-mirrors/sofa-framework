@@ -159,7 +159,7 @@ template <class In, class Out>
     ReadAccessor<Data<VecOutDeriv> > childForce (*mparams->readF(this->toModel));
     WriteAccessor<Data<VecInDeriv> > parentForce (*parentForceChangeId[this->fromModel].write());
     ReadAccessor<Data<VecInDeriv> > parentDx (*mparams->readDx(this->fromModel));
-    InReal kfactor = mparams->kFactor();
+    InReal kfactor = (InReal)mparams->kFactor();
 
 //    serr<<"PendulumMapping2<In,Out>::applyDJT"<< sendl;
     for(unsigned i=0; i<parentForce.size(); i++)

@@ -110,6 +110,7 @@ typename ContactMapper<RigidDistanceGridCollisionModel,DataTypes>::MMechanicalSt
     return outmodel;
 }
 
+
 } // namespace collision
 
 } // namespace component

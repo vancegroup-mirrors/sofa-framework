@@ -55,10 +55,6 @@ ContactMapperCreator< ContactMapper<RigidDistanceGridCollisionModel> > DistanceG
 
 template class SOFA_COMPONENT_COLLISION_API ContactMapper<RigidDistanceGridCollisionModel>;
 
-
-
-
-
 } // namespace collision
 
 } // namespace component

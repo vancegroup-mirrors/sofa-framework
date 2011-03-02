@@ -167,46 +167,57 @@ void FixedConstraint<DataTypes>::init()
 }
 
 template <class DataTypes>
-template <class DataDeriv>
-void FixedConstraint<DataTypes>::projectResponseT(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataDeriv& dx)
-{
-    const SetIndexArray & indices = f_indices.getValue().getArray();
-  //serr<<"FixedConstraint<DataTypes>::projectResponse, dx.size()="<<dx.size()<<sendl;
-    if( f_fixAll.getValue()==true ) {  // fix everyting
-        for( int i=0; i<topology->getNbPoints(); ++i )
-            dx[i] = Deriv();
-	}
-	else {
-    for (SetIndexArray::const_iterator it = indices.begin();
-        it != indices.end();
-        ++it)
-    {
-        dx[*it] = Deriv();
-    }
-	}
-}
-
-template <class DataTypes>
 void FixedConstraint<DataTypes>::projectResponse(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& resData)
 {
-    helper::WriteAccessor<DataVecDeriv> res = resData;
-    projectResponseT<VecDeriv>(mparams /* PARAMS FIRST */, res.wref());
-//  serr<<"FixedConstraint<DataTypes>::projectResponse, dx.size()="<<dx.size()<<sendl;
+    helper::WriteAccessor<DataVecDeriv> res ( mparams, resData );
+    const SetIndexArray & indices = f_indices.getValue(mparams).getArray();
+    //serr<<"FixedConstraint<DataTypes>::projectResponse, dx.size()="<<res.size()<<sendl;
+    if( f_fixAll.getValue(mparams) )
+    { // fix everything
+        for( int i=0; i<topology->getNbPoints(); ++i )
+            res[i] = Deriv();
+	}
+	else
+    {
+        for (SetIndexArray::const_iterator it = indices.begin();
+             it != indices.end();
+             ++it)
+        {
+            res[*it] = Deriv();
+        }
+	}
 }
 
 template <class DataTypes>
 void FixedConstraint<DataTypes>::projectJacobianMatrix(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataMatrixDeriv& cData)
 {
-    helper::WriteAccessor<DataMatrixDeriv> c = cData;
+    helper::WriteAccessor<DataMatrixDeriv> c ( mparams, cData );
+    const SetIndexArray & indices = f_indices.getValue(mparams).getArray();
 
     MatrixDerivRowIterator rowIt = c->begin();
     MatrixDerivRowIterator rowItEnd = c->end();
 
-    while (rowIt != rowItEnd)
+    if( f_fixAll.getValue(mparams) )
+    { // fix everything
+        while (rowIt != rowItEnd)
+        {
+            rowIt.row().clear();
+            ++rowIt;
+        }
+	}
+	else
     {
-        projectResponseT<MatrixDerivRowType>(mparams /* PARAMS FIRST */, rowIt.row());
-        ++rowIt;
-    }
+        while (rowIt != rowItEnd)
+        {
+            for (SetIndexArray::const_iterator it = indices.begin();
+                 it != indices.end();
+                 ++it)
+            {
+                rowIt.row().erase(*it);
+            }
+            ++rowIt;
+        }
+	}
 }
 
 // projectVelocity applies the same changes on velocity vector as projectResponse on position vector :

@@ -207,6 +207,11 @@ public:
 };
 
 
+
+
+
+
+
 #if defined(WIN32) && !defined(SOFA_BUILD_COMPONENT_COLLISION)
 
 	#ifndef SOFA_DOUBLE

@@ -50,9 +50,10 @@ using namespace sofa::defaulttype;
 using namespace core::behavior;
 
 StaticSolver::StaticSolver()
-       : massCoef( initData(&massCoef,(double)0.0,"massCoef","coefficient associated with the mass matrix in the equation system") )
-       , dampingCoef( initData(&dampingCoef,(double)0.0,"dampingCoef","coefficient associated with the mass matrix in the equation system") )
-       , stiffnessCoef( initData(&stiffnessCoef,(double)1.0,"stiffnessCoef","coefficient associated with the mass matrix in the equation system") )
+       : massCoef( initData(&massCoef,(double)0.0,"massCoef","factor associated with the mass matrix in the equation system") )
+       , dampingCoef( initData(&dampingCoef,(double)0.0,"dampingCoef","factor associated with the mass matrix in the equation system") )
+       , stiffnessCoef( initData(&stiffnessCoef,(double)1.0,"stiffnessCoef","factor associated with the mass matrix in the equation system") )
+       , applyIncrementFactor( initData(&applyIncrementFactor,false,"applyIncrementFactor","multiply the solution by dt before adding it to the current state") )
 {
 }
 
@@ -68,7 +69,7 @@ void StaticSolver::solve(const core::ExecParams* params /* PARAMS FIRST */, doub
 //    MultiVecDeriv b(&vop);
     MultiVecDeriv x(&vop);
 
-    mop.addSeparateGravity(dt);	// v += dt*g . Used if mass wants to added G separately from the other forces to v.
+    mop.addSeparateGravity(dt);	// v += dt*g . Used if mass wants to add G to v separately from the other forces.
 
     // compute the right-hand term of the equation system
     mop.computeForce(force);             // b = f0
@@ -93,7 +94,11 @@ void StaticSolver::solve(const core::ExecParams* params /* PARAMS FIRST */, doub
 
     if( f_printLog.getValue() )
         serr<<"StaticSolver, opposite solution = "<< x <<sendl;
-    pos2.eq( pos, x, -1 );
+
+    if(applyIncrementFactor.getValue()==true )
+        pos2.eq( pos, x, -dt );
+    else
+        pos2.eq( pos, x, -1 );
 
     mop.solveConstraint(dt,pos2,core::ConstraintParams::POS);
 

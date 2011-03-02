@@ -31,11 +31,14 @@
 
 #define DEBUG_TEXT(t) //printf("\t%s\t %s %d\n",t,__FILE__,__LINE__);
 
-namespace sofa {
+namespace sofa
+{
 
-namespace gpu {
+namespace gpu
+{
 
-namespace opencl {
+namespace opencl
+{
 
 SOFA_DECL_CLASS(OpenCLUniformMass)
 

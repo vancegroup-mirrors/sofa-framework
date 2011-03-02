@@ -113,10 +113,10 @@ namespace sofa{
           {
              object_.ptr.Node = node;
              object_.type  = typeNode;
-             emit RequestActivation(object_.ptr.Node, true);
+			 emit RequestActivation(object_.ptr.Node, node->isActive());
           }
         }
-        
+      
       }
 
       void QSofaListView::CloseAllDialogs()

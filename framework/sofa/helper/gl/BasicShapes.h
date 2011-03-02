@@ -100,7 +100,7 @@ namespace sofa
 	  {
 		  V p3 = p1*.2+p2*.8;
 		  drawCylinder( p1,p3,rad,subd);
-		  drawCone( p3,p2,rad*2.5,0,subd);
+		  drawCone( p3,p2,rad*2.5f,0.f,subd);
 	  }
 
 

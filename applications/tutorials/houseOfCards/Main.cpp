@@ -209,22 +209,22 @@ int main(int argc, char** argv)
     SReal distanceInBetween=0.1;
     SReal friction=0.8;
     SReal contactDistance=0.03;
-	std::string gui = "";
+    std::string gui = "";
 
 
-	std::string gui_help = "choose the UI (";
-	gui_help += sofa::gui::GUIManager::ListSupportedGUI('|');
-	gui_help += ")";
+    std::string gui_help = "choose the UI (";
+    gui_help += sofa::gui::GUIManager::ListSupportedGUI('|');
+    gui_help += ")";
 
     sofa::helper::parse("This is a SOFA application. Here are the command line arguments")
-        .option(&simulationType,'s',"simulation","type of the simulation(bgl,tree)")
-        .option(&sizeHouseOfCards,'l',"level","number of level of the house of cards")
-        .option(&angle,'a',"angle","angle formed by two cards")
-        .option(&distanceInBetween,'d',"distance","distance between two cards")
-        .option(&friction,'f',"friction","friction coeff")
-        .option(&contactDistance,'c',"contactDistance","contact distance")
-        .option(&gui,'g',"gui",gui_help.c_str())
-        (argc,argv);
+            .option(&simulationType,'s',"simulation","type of the simulation(bgl,tree)")
+            .option(&sizeHouseOfCards,'l',"level","number of level of the house of cards")
+            .option(&angle,'a',"angle","angle formed by two cards")
+            .option(&distanceInBetween,'d',"distance","distance between two cards")
+            .option(&friction,'f',"friction","friction coeff")
+            .option(&contactDistance,'c',"contactDistance","contact distance")
+            .option(&gui,'g',"gui",gui_help.c_str())
+            (argc,argv);
 
         sofa::simulation::setSimulation(new sofa::simulation::tree::TreeSimulation());
 
@@ -254,28 +254,28 @@ int main(int argc, char** argv)
     for (unsigned int i=0;i<listCollisionModels.size();++i) listCollisionModels[i]->setContactFriction(contactFriction);
     root->setAnimate(false);
 
-	//=======================================
-	// Export the scene to file
+    //=======================================
+    // Export the scene to file
     const std::string fileName="HouseOfCards.xml";
     sofa::simulation::getSimulation()->exportXML(root,fileName.c_str(), true);
 
-	//=======================================
-	// Destroy created scene: step needed, as I can't get rid of the locales (the mass can't init correctly as 0.1 is not considered as a floating point).
+    //=======================================
+    // Destroy created scene: step needed, as I can't get rid of the locales (the mass can't init correctly as 0.1 is not considered as a floating point).
     sofa::simulation::DeleteVisitor deleteScene(sofa::core::ExecParams::defaultInstance() );
     root->execute(deleteScene);
     delete root;
-  
-	//=======================================
-	// Create the GUI	
-	if (int err=sofa::gui::GUIManager::Init(argv[0],gui.c_str()))
-		return err;
+
+    //=======================================
+    // Create the GUI
+    if (int err=sofa::gui::GUIManager::Init(argv[0],gui.c_str()))
+        return err;
 
     if (int err=sofa::gui::GUIManager::createGUI(NULL))
         return err;
-  
+
     sofa::gui::GUIManager::SetDimension(800,600); 
-	//=======================================
-	// Load the Scene
+    //=======================================
+    // Load the Scene
     sofa::simulation::Node* groot = dynamic_cast<sofa::simulation::Node*>( sofa::simulation::getSimulation()->load(fileName.c_str()));
 
 
@@ -283,13 +283,13 @@ int main(int argc, char** argv)
     sofa::gui::GUIManager::SetScene(groot,fileName.c_str());
 
 
-	//=======================================
-	// Run the main loop
+    //=======================================
+    // Run the main loop
     if (int err=sofa::gui::GUIManager::MainLoop(groot,fileName.c_str()))
         return err;
     groot = dynamic_cast<sofa::simulation::Node*>( sofa::gui::GUIManager::CurrentSimulation() );
-          
 
-	if (groot!=NULL) sofa::simulation::getSimulation()->unload(groot);
-	return 0;
+
+    if (groot!=NULL) sofa::simulation::getSimulation()->unload(groot);
+    return 0;
 }

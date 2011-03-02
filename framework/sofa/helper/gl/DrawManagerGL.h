@@ -129,7 +129,7 @@ public:
     
     virtual void setPolygonMode(int _mode, bool _wireframe);
     
-    bool getPolygonMode(){return mPolygonMode;}
+    int getPolygonMode(){return mPolygonMode;}
     bool getWireFrameEnabled(){return mWireFrameEnabled;}
     
 };

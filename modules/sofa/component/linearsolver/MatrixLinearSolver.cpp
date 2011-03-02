@@ -50,9 +50,18 @@ void MatrixLinearSolver<GraphScatteredMatrix,GraphScatteredVector>::resetSystem(
 {
 //    serr << "resetSystem()" << sendl;
     for (unsigned int g=0, nbg = getNbGroups(); g < nbg; ++g) { setGroup(g);
-        if (!currentGroup->systemMatrix)  { serr << "new systemMatrix" << sendl; currentGroup->systemMatrix = new GraphScatteredMatrix(); }
-        if (!currentGroup->systemRHVector) { serr << "new systemRHVector" << sendl; currentGroup->systemRHVector = new GraphScatteredVector(NULL,core::VecDerivId::null()); }
-        if (!currentGroup->systemLHVector)  { serr << "new systemLHVector" << sendl; currentGroup->systemLHVector = new GraphScatteredVector(NULL,core::VecDerivId::null()); }
+        if (!currentGroup->systemMatrix)  {
+//            serr << "new systemMatrix" << sendl;
+            currentGroup->systemMatrix = new GraphScatteredMatrix();
+        }
+        if (!currentGroup->systemRHVector) {
+//            serr << "new systemRHVector" << sendl;
+            currentGroup->systemRHVector = new GraphScatteredVector(NULL,core::VecDerivId::null());
+        }
+        if (!currentGroup->systemLHVector)  {
+//            serr << "new systemLHVector" << sendl;
+            currentGroup->systemLHVector = new GraphScatteredVector(NULL,core::VecDerivId::null());
+        }
         currentGroup->systemRHVector->reset();
         currentGroup->systemLHVector->reset();
         currentGroup->solutionVecId = core::MultiVecDerivId::null();

@@ -36,8 +36,8 @@ HEADERS +=  initProjectiveConstraintSet.h \
            ParabolicConstraint.inl \
            PartialFixedConstraint.h \
            PartialFixedConstraint.inl \
-#          PartialLinearMovementConstraint.h \
-#          PartialLinearMovementConstraint.inl
+           PartialLinearMovementConstraint.h \
+           PartialLinearMovementConstraint.inl
 
 SOURCES += initProjectiveConstraintSet.cpp \
            AttachConstraint.cpp \
@@ -51,7 +51,7 @@ SOURCES += initProjectiveConstraintSet.cpp \
            OscillatorConstraint.cpp \
            ParabolicConstraint.cpp \
            PartialFixedConstraint.cpp \
-#          PartialLinearMovementConstraint.cpp
+           PartialLinearMovementConstraint.cpp
 
 
 

@@ -598,7 +598,7 @@ void RigidRigidMapping<TIn, TOut>::disable()
                 helper::ReadAccessor<Data<OutVecDeriv> > childForces (*mparams->readF(this->toModel));
                 helper::WriteAccessor<Data<InVecDeriv> > parentForces (*parentForceChangeId[this->fromModel].write());
                 helper::ReadAccessor<Data<InVecDeriv> > parentDisplacements (*mparams->readDx(this->fromModel));
-                Real kfactor = mparams->kFactor();
+                Real kfactor = (Real)mparams->kFactor();
 
                 unsigned int childrenPerParent;
                 unsigned childIndex;

@@ -83,14 +83,14 @@ namespace simulation
 
 using namespace sofa::defaulttype;
 Simulation::Simulation()
-: numMechSteps( initData(&numMechSteps,(unsigned) 1,"numMechSteps","Number of mechanical steps within one update step. If the update time step is dt, the mechanical time step is dt/numMechSteps.") ),
-  nbSteps( initData(&nbSteps, (unsigned)0, "nbSteps", "Steps number of computation", true, false)),
-  gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
-  instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used")),
-  paused(false),mDrawUtility(0l)
+    : numMechSteps( initData(&numMechSteps,(unsigned) 1,"numMechSteps","Number of mechanical steps within one update step. If the update time step is dt, the mechanical time step is dt/numMechSteps.") ),
+      nbSteps( initData(&nbSteps, (unsigned)0, "nbSteps", "Steps number of computation", true, false)),
+      gnuplotDirectory( initData(&gnuplotDirectory,std::string(""),"gnuplotDirectory","Directory where the gnuplot files will be saved")),
+      instrumentInUse( initData( &instrumentInUse, -1, "instrumentinuse", "Numero of the instrument currently used")),
+      paused(false),mDrawUtility(0l)
 {
-/// By default, initialise the Viewer with openGL
-/// We can switch Viewer between GL, OGRE and OSG with the setDrawUtility method
+    /// By default, initialise the Viewer with openGL
+    /// We can switch Viewer between GL, OGRE and OSG with the setDrawUtility method
     this->setDrawUtility(new sofa::helper::gl::DrawManagerGL() );
 }
 
@@ -103,7 +103,7 @@ std::auto_ptr<Simulation> Simulation::theSimulation;
 
 sofa::helper::gl::DrawManager& Simulation::DrawUtility()
 {
-        return *mDrawUtility;
+    return *mDrawUtility;
 }
 
 
@@ -139,19 +139,19 @@ void Simulation::exportXML ( Node* root, const char* fileName, bool compact )
 {
     if ( !root ) return;
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
-				if ( fileName!=NULL )
-				{
-					std::ofstream out ( fileName );
-                    out << "<?xml version=\"1.0\"?>\n";
+    if ( fileName!=NULL )
+    {
+        std::ofstream out ( fileName );
+        out << "<?xml version=\"1.0\"?>\n";
 
-					XMLPrintVisitor print ( params /* PARAMS FIRST */, out,compact );
-					root->execute ( print );
-				}
-				else
-				{
-					XMLPrintVisitor print ( params /* PARAMS FIRST */, std::cout,compact );
-					root->execute ( print );
-				}
+        XMLPrintVisitor print ( params /* PARAMS FIRST */, out,compact );
+        root->execute ( print );
+    }
+    else
+    {
+        XMLPrintVisitor print ( params /* PARAMS FIRST */, std::cout,compact );
+        root->execute ( print );
+    }
 }
 
 /// Initialize the scene.
@@ -162,25 +162,28 @@ void Simulation::init ( Node* root )
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
 
     setContext( root->getContext());
+
+    // apply the init() and bwdInit() methods to all the components.
+    // and put the VisualModels in a separate graph, rooted at getVisualRoot()
     root->execute<InitVisitor>(params);
-    
+
+    // Save reset state for later uses in reset()
+    root->execute<StoreResetStateVisitor>(params);
     {
+        // Why do we need  a copy of the params here ?
         sofa::core::MechanicalParams mparams(*params);
         root->execute<MechanicalPropagatePositionAndVelocityVisitor>(&mparams);
-        /*sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
-        mparams.x() = xfree;
-        MechanicalPropagatePositionVisitor act(&mparams   // PARAMS FIRST //, 0, xfree, true);
-        root->execute(act);*/
     }
-
-	// Save reset state for later uses in reset()
-    root->execute<StoreResetStateVisitor>(params);
-    
+ 
     //Get the list of instruments present in the scene graph
     getInstruments(root);
+
+    // propagate the visualization settings (showVisualModels, etc.) in the whole graph
+    updateVisualContext(root,Node::ALLFLAGS);
+    updateVisualContext(getVisualRoot(),Node::ALLFLAGS);
 }
 
-      
+
 void Simulation::initNode( Node* node)
 {  
     if(!node) {
@@ -192,14 +195,14 @@ void Simulation::initNode( Node* node)
 
     //node->execute<MechanicalPropagatePositionAndVelocityVisitor>(params);
     //node->execute<MechanicalPropagateFreePositionVisitor>(params);
-	{
-		sofa::core::MechanicalParams mparams(*params);
-		node->execute<MechanicalPropagatePositionAndVelocityVisitor>(&mparams);
-		/*sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
-		mparams.x() = xfree;
-		MechanicalPropagatePositionVisitor act(&mparams   // PARAMS FIRST //, 0, xfree, true);
-		node->execute(act);*/
-	}
+    {
+        sofa::core::MechanicalParams mparams(*params);
+        node->execute<MechanicalPropagatePositionAndVelocityVisitor>(&mparams);
+        /*sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
+  mparams.x() = xfree;
+  MechanicalPropagatePositionVisitor act(&mparams   // PARAMS FIRST //, 0, xfree, true);
+  node->execute(act);*/
+    }
 
     node->execute<StoreResetStateVisitor>(params);
     getInstruments(node);
@@ -248,7 +251,7 @@ void Simulation::animate ( Node* root, double dt )
         root->execute ( act );
         root->setTime ( startTime + (i+1)* act.getDt() );
         getVisualRoot()->setTime ( root->getTime() );
-        root->execute<UpdateSimulationContextVisitor>(params);
+        root->execute<UpdateSimulationContextVisitor>(params);  // propagate time
         getVisualRoot()->execute<UpdateSimulationContextVisitor>(params);
     }
     
@@ -306,7 +309,7 @@ void Simulation::reset ( Node* root )
 {
     if ( !root ) return;
     sofa::core::ExecParams* params = sofa::core::ExecParams::defaultInstance();
-                
+
     root->execute<CleanupVisitor>(params);
     root->execute<ResetVisitor>(params);
     sofa::core::MechanicalParams mparams(*params);

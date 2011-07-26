@@ -287,7 +287,7 @@ template <> SOFA_COMPONENT_MASS_API
   double e = 0;
 	helper::ReadAccessor< DataVecCoord > x = vx;
     // gravity
-  Vec3d g ( this->getContext()->getLocalGravity() );
+  Vec3d g ( this->getContext()->getGravity() );
   for (unsigned int i=0;i<x.size();i++)
   {
     e -= g*mass.getValue().mass*x[i].getCenter();
@@ -302,7 +302,7 @@ template <> SOFA_COMPONENT_MASS_API
   double e = 0;
 	helper::ReadAccessor< DataVecCoord > x = vx;
     // gravity
-  Vec2d g; g = this->getContext()->getLocalGravity();
+  Vec2d g; g = this->getContext()->getGravity();
   for (unsigned int i=0;i<x.size();i++)
   {
     e -= g*mass.getValue().mass*x[i].getCenter();
@@ -354,7 +354,7 @@ template <> SOFA_COMPONENT_MASS_API
 
   unsigned int vecDim = mstate->getX()->size();
 
-  const double* g = this->getContext()->getLocalGravity().ptr();
+  const double* g = this->getContext()->getGravity().ptr();
 
   for (unsigned int i=0; i<vecDim; i++)
     for (unsigned int j=0; j<derivDim; j++)
@@ -569,7 +569,7 @@ template <> SOFA_COMPONENT_MASS_API
   double e = 0;
 	helper::ReadAccessor< DataVecCoord > x = vx;
     // gravity
-  Vec3d g ( this->getContext()->getLocalGravity() );
+  Vec3d g ( this->getContext()->getGravity() );
   for (unsigned int i=0;i<x.size();i++)
   {
     e -= g*mass.getValue().mass*x[i].getCenter();
@@ -583,7 +583,7 @@ template <> SOFA_COMPONENT_MASS_API
   double e = 0;
 	helper::ReadAccessor< DataVecCoord > x = vx;
     // gravity
-  Vec2d g; g = this->getContext()->getLocalGravity();
+  Vec2d g; g = this->getContext()->getGravity();
   for (unsigned int i=0;i<x.size();i++)
   {
     e -= g*mass.getValue().mass*x[i].getCenter();
@@ -636,7 +636,7 @@ template <> SOFA_COMPONENT_MASS_API
 
   unsigned int vecDim = mstate->getX()->size();
 
-  const SReal* g = this->getContext()->getLocalGravity().ptr();
+  const SReal* g = this->getContext()->getGravity().ptr();
 
   for (unsigned int i=0; i<vecDim; i++)
     for (unsigned int j=0; j<derivDim; j++)

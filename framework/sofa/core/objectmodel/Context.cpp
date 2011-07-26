@@ -39,7 +39,7 @@ namespace objectmodel
 
 Context::Context()
   : is_activated(initData(&is_activated, true, "activated", "To Activate a node"))
-  , worldGravity_(initData(&worldGravity_, Vec3(0,0,0),"gravity","Gravity in the world coordinate system"))
+  , worldGravity_(initData(&worldGravity_, Vec3((SReal)0,(SReal)-9.81,(SReal)0),"gravity","Gravity in the world coordinate system"))
   , dt_(initData(&dt_,0.01,"dt","Time step"))
   , time_(initData(&time_,0.,"time","Current time"))
   , animate_(initData(&animate_,false,"animate","Animate the Simulation(applied at initialization only)"))
@@ -63,10 +63,7 @@ Context::Context()
   partition_(0)
 #endif
 {
-    setPositionInWorld(objectmodel::BaseContext::getPositionInWorld());
-    setGravityInWorld(objectmodel::BaseContext::getLocalGravity());
-    setVelocityInWorld(objectmodel::BaseContext::getVelocityInWorld());
-    setVelocityBasedLinearAccelerationInWorld(objectmodel::BaseContext::getVelocityBasedLinearAccelerationInWorld());
+
 #ifdef SOFA_SMP
     is_partition_.setValue(false);
 #endif
@@ -107,39 +104,6 @@ void Context::setActive(bool val)
 	is_activated.setValue(val);
 }
 
-/// Projection from the local coordinate system to the world coordinate system.
-const Context::Frame& Context::getPositionInWorld() const
-{
-    return localFrame_;
-}
-/// Projection from the local coordinate system to the world coordinate system.
-void Context::setPositionInWorld(const Frame& f)
-{
-    localFrame_ = f;
-}
-
-/// Spatial velocity (linear, angular) of the local frame with respect to the world
-const Context::SpatialVector& Context::getVelocityInWorld() const
-{
-    return spatialVelocityInWorld_;
-}
-/// Spatial velocity (linear, angular) of the local frame with respect to the world
-void Context::setVelocityInWorld(const SpatialVector& v)
-{
-    spatialVelocityInWorld_ = v;
-}
-
-/// Linear acceleration of the origin induced by the angular velocity of the ancestors
-const Context::Vec3& Context::getVelocityBasedLinearAccelerationInWorld() const
-{
-    return velocityBasedLinearAccelerationInWorld_;
-}
-/// Linear acceleration of the origin induced by the angular velocity of the ancestors
-void Context::setVelocityBasedLinearAccelerationInWorld(const Vec3& a )
-{
-    velocityBasedLinearAccelerationInWorld_ = a;
-}
-
 
 
 /// Simulation timestep
@@ -154,20 +118,9 @@ double Context::getTime() const
     return time_.getValue();
 }
 
-/// Gravity vector in local coordinates
-// const Context::Vec3& Context::getGravity() const
-// {
-// 	return gravity_;
-// }
-
-/// Gravity vector in local coordinates
-Context::Vec3 Context::getLocalGravity() const
-{
-    return getPositionInWorld().backProjectVector(worldGravity_.getValue());
-}
 
 /// Gravity vector in world coordinates
-const Context::Vec3& Context::getGravityInWorld() const
+const Context::Vec3& Context::getGravity() const
 {
     return worldGravity_.getValue();
 }
@@ -280,7 +233,7 @@ void Context::setTime(double val)
 // }
 
 /// Gravity vector
-void Context::setGravityInWorld(const Vec3& g)
+void Context::setGravity(const Vec3& g)
 {
     worldGravity_ .setValue(g);
 }
@@ -384,18 +337,15 @@ void Context::setProcessor(int p)
 
 void Context::copySimulationContext(const Context& c)
 {
-  worldGravity_.setValue(c.worldGravity_.getValue());  ///< Gravity IN THE WORLD COORDINATE SYSTEM.
-  dt_.setValue(c.dt_.getValue());
-  time_.setValue(c.time_.getValue());
-  animate_.setValue(c.animate_.getValue());
+  worldGravity_.setValue(c.getGravity());  ///< Gravity IN THE WORLD COORDINATE SYSTEM.
+  setDt(c.getDt());
+  setTime(c.getTime());
+  setAnimate(c.getAnimate());
 #ifdef SOFA_SMP
 if(c.gpuPrioritary.getValue())
   gpuPrioritary.setValue(true);
 #endif
 
-  localFrame_ = c.localFrame_;
-  spatialVelocityInWorld_ = c.spatialVelocityInWorld_;
-  velocityBasedLinearAccelerationInWorld_ = c.velocityBasedLinearAccelerationInWorld_;
 
 
 #ifdef SOFA_SMP
@@ -427,34 +377,34 @@ if(!partition_){
 
 void Context::copyVisualContext(const Context& c)
 {
-  showCollisionModels_.setValue(c.showCollisionModels_.getValue());
-  showBoundingCollisionModels_.setValue(c.showBoundingCollisionModels_.getValue());
-  showBehaviorModels_.setValue(c.showBehaviorModels_.getValue());
-  showVisualModels_.setValue(c.showVisualModels_.getValue());
-  showMappings_.setValue(c.showMappings_.getValue());
-  showMechanicalMappings_.setValue(c.showMechanicalMappings_.getValue());
-  showForceFields_.setValue(c.showForceFields_.getValue());
-  showInteractionForceFields_.setValue(c.showInteractionForceFields_.getValue());
-  showWireFrame_.setValue(c.showWireFrame_.getValue());
-  showNormals_.setValue(c.showNormals_.getValue());
+  setShowCollisionModels(c.getShowCollisionModels());
+  setShowBoundingCollisionModels(c.getShowBoundingCollisionModels());
+  setShowBehaviorModels(c.getShowBehaviorModels());
+  setShowVisualModels(c.getShowVisualModels());
+  setShowMappings(c.getShowMappings());
+  setShowMechanicalMappings(c.getShowMechanicalMappings());
+  setShowForceFields(c.getShowForceFields());
+  setShowInteractionForceFields(c.getShowInteractionForceFields());
+  setShowWireFrame(c.getShowWireFrame());
+  setShowNormals(c.getShowNormals());
 #ifdef SOFA_SMP
-  showProcessorColor_.setValue(c.showProcessorColor_.getValue());
+  setShowProcessorColor(c.getShowProcessorColor());
 #endif
 }
 
 
 void Context::fusionVisualContext(const Context& c)
 {
-  showCollisionModels_.setValue(showCollisionModels_.getValue() || c.showCollisionModels_.getValue());
-  showBoundingCollisionModels_.setValue(showBoundingCollisionModels_.getValue() || c.showBoundingCollisionModels_.getValue());
-  showBehaviorModels_.setValue(showBehaviorModels_.getValue() || c.showBehaviorModels_.getValue());
-  showVisualModels_.setValue(showVisualModels_.getValue() || c.showVisualModels_.getValue());
-  showMappings_.setValue(showMappings_.getValue() || c.showMappings_.getValue());
-  showMechanicalMappings_.setValue(showMechanicalMappings_.getValue() || c.showMechanicalMappings_.getValue());
-  showForceFields_.setValue(showForceFields_.getValue() || c.showForceFields_.getValue());
-  showInteractionForceFields_.setValue(showInteractionForceFields_.getValue() || c.showInteractionForceFields_.getValue());
-  showWireFrame_.setValue(showWireFrame_.getValue() || c.showWireFrame_.getValue());
-  showNormals_.setValue(showNormals_.getValue() || c.showNormals_.getValue());
+  setShowCollisionModels(getShowCollisionModels() || c.getShowCollisionModels());
+  setShowBoundingCollisionModels(getShowBoundingCollisionModels() || c.getShowBoundingCollisionModels());
+  setShowBehaviorModels(getShowBehaviorModels() || c.getShowBehaviorModels());
+  setShowVisualModels(getShowVisualModels() || c.getShowVisualModels());
+  setShowMappings(getShowMappings() || c.getShowMappings());
+  setShowMechanicalMappings(getShowMechanicalMappings() || c.getShowMechanicalMappings());
+  setShowForceFields(getShowForceFields() || c.getShowForceFields());
+  setShowInteractionForceFields(getShowInteractionForceFields() || c.getShowInteractionForceFields());
+  setShowWireFrame(getShowWireFrame() || c.getShowWireFrame());
+  setShowNormals(getShowNormals() || c.getShowNormals());
 }
 
 

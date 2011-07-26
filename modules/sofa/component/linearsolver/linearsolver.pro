@@ -73,9 +73,11 @@ contains(DEFINES,SOFA_HAVE_MKL){
 
 contains(DEFINES, SOFA_HAVE_EIGEN2){
 	HEADERS += EigenMatrixManipulator.h
+        HEADERS += SVDLinearSolver.h
 
 	SOURCES += EigenMatrixManipulator.cpp
-} 
+        SOURCES += SVDLinearSolver.cpp
+}
 
 contains(DEFINES, SOFA_SMP){ # BEGIN SOFA_SMP
 	HEADERS += ParallelCGLinearSolver.h \

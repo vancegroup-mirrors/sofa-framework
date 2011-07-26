@@ -52,5 +52,4 @@ void initContextObject()
 } // namespace sofa
 
 ////////// BEGIN CLASS LIST //////////
-SOFA_LINK_CLASS(CoordinateSystem)
 SOFA_LINK_CLASS(Gravity)

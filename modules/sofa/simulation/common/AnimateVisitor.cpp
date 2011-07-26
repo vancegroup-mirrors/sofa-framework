@@ -109,7 +109,7 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
 {
 
   //cerr<<"AnimateVisitor::process Node  "<<node->getName()<<endl;
-    if (!node->is_activated.getValue()) return Visitor::RESULT_PRUNE;
+    if (!node->isActive()) return Visitor::RESULT_PRUNE;
 #ifdef SOFA_HAVE_EIGEN2
     //If we have a mastersolver in the scene, we let him rule the simulation, and chose when to reset the constraints
     if (!firstNodeVisited)
@@ -136,6 +136,9 @@ Visitor::Result AnimateVisitor::processNodeTopDown(simulation::Node* node)
 		ctime_t t0 = begin(node, node->masterSolver);
 		processMasterSolver(node, node->masterSolver);
 		end(node, node->masterSolver, t0);
+                // In case the timestep was changed by the MasterSolver, we would like the simulation
+                // to use the new one to compute the next simulation time.
+                setDt(node->getDt());
 		return RESULT_PRUNE;
 	}
 	if (node->collisionPipeline != NULL)

@@ -18,8 +18,8 @@
             <FixedConstraint name="FixedConstraint" indices="3 39 64"  />
 
 		<Node name="Surf">
-			<Sphere name="CollisionModel" filename="mesh/liver.sph" contactStiffness="100" />
 			<MechanicalObject  />
+			<Sphere name="CollisionModel" filename="mesh/liver.sph" contactStiffness="100" />
 			<BarycentricMapping name="sphere-mapping"  />
 		</Node>
 		</Node>
@@ -32,8 +32,8 @@
 		    <TetrahedronFEMForceField name="FEM" youngModulus="3000" poissonRatio="0.3" computeGlobalMatrix="false" method="large"  />
             <FixedConstraint name="FixedConstraint" indices="3 39 64"  />
 		<Node name="Surf">
-			<Sphere name="CollisionModel" filename="mesh/liver.sph" contactStiffness="100" />
 			<MechanicalObject  dx2="5" dy2="-2" />
+			<Sphere name="CollisionModel" filename="mesh/liver.sph" contactStiffness="100" />
 			<BarycentricMapping name="sphere-mapping"  />
 		</Node>
 		</Node>

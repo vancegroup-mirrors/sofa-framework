@@ -13,12 +13,11 @@ CONFIG += dll
 DEFINES += SOFA_BUILD_COMPONENT_CONTEXTOBJECT
 
 HEADERS += \
-           CoordinateSystem.h \
            Gravity.h 
 
 SOURCES += initContextObject.cpp \
-           CoordinateSystem.cpp \
            Gravity.cpp 
+
 
 
 LIBS += $$SOFA_FRAMEWORK_LIBS

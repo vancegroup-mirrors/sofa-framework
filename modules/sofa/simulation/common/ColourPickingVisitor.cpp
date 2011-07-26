@@ -8,9 +8,11 @@ namespace sofa{
     Visitor::Result ColourPickingVisitor::processNodeTopDown(simulation::Node* node)
     {
       glPushMatrix();
-	    double glMatrix[16];
+#ifdef SOFA_SUPPORT_MOVING_FRAMES
+            double glMatrix[16];
 	    node->getPositionInWorld().writeOpenGlMatrix(glMatrix);
 	    glMultMatrixd( glMatrix );
+#endif
       for_each(this, node, node->collisionModel, &ColourPickingVisitor::processCollisionModel);
       glPopMatrix();
 

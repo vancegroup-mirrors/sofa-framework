@@ -62,8 +62,11 @@ int SphereTreeModelClass = core::RegisterObject("CollisionModel based on a hiera
 .addAlias("SphereTree")
 ;
 
-SphereTreeModel::SphereTreeModel(double radius)
-: defaultRadius(initData(&defaultRadius, radius, "radius","TODO"))
+SphereTreeModel::SphereTreeModel()
+: filename(initData(&filename,"filename","Sphere tree description file (.sph)")) 
+,defaultRadius(initData(&defaultRadius, 1.0, "radius","Default radius."))
+,scale(initData(&scale,1.0,"scale","Uniform scale of the spheres"))
+,translation(initData(&translation,Vector3(),"translation","Translation of the spheres"))
 ,mstate(NULL)
 {
 }
@@ -72,6 +75,10 @@ SphereTreeModel::SphereTreeModel(double radius)
 void SphereTreeModel::init()
 {
   mstate = dynamic_cast< core::behavior::MechanicalState<DataTypes>* > (this->getContext()->getMechanicalState());
+  if (filename.getValue() != "") load(filename.getFullPath().c_str());
+  applyScale(scale.getValue());
+  applyTranslation(translation.getValue()[0],translation.getValue()[1],translation.getValue()[2]);
+
 }
 
 void SphereTreeModel::resize(int size)
@@ -219,14 +226,24 @@ bool SphereTreeModel::loadSphereTree( const char *fileName )
   return true; 
 }
 
-void SphereTreeModel::applyScale(const double sx,const double sy,const double sz)
+void SphereTreeModel::applyScale(const double sx)
 {
-        mstate->applyScale(sx,sy,sz);
-        sout << "Applying scale " << sx << " to " << size << " spheres" << sendl;
-	for (int i=0;i<size;i++)
-                radius[i] *= sx;
+  mstate->applyScale(sx,sx,sx);
+  sout << "Applying scale " << sx << " to " << size << " spheres" << sendl;
+	for (int i=0;i<size;i++) radius[i] *= sx;
 }
 
+void SphereTreeModel::applyTranslation(const double dx, const double dy, const double dz)
+{
+  for( int index = 0; index < mstate->getSize(); ++index)
+  {
+    // Collision element iterator
+    SingleSphere s(this, index);
+    s.translate(dx,dy,dz);
+
+  }
+  
+}
 
 void SphereTreeModel::draw(int index)
 {

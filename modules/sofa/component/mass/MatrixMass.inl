@@ -35,288 +35,314 @@
 namespace sofa
 {
 
-namespace component
-{
+    namespace component
+    {
 
-namespace mass
-{
-
-	using namespace	sofa::component::topology;
-	using namespace core::topology;
-using namespace sofa::defaulttype;
-using namespace sofa::core::behavior;
-
-
-
-
-
-
-
-
-template <class DataTypes, class MassType>
-MatrixMass<DataTypes, MassType>::~MatrixMass()
-{
-}
-
-
-///////////////////////////////////////////
-
-
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::clear()
-{
-    VecMass& masses = *f_mass.beginEdit();
-    masses.clear();
-    f_mass.endEdit();
-}
-
-
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::resize(int vsize)
-{
-    VecMass& masses = *f_mass.beginEdit();
-    masses.resize(vsize);
-    f_mass.endEdit();
-}
-
-
-
-///////////////////////////////////////////
-
-
-
-
-// -- Mass interface
-template <class DataTypes, class MassType>
-    void MatrixMass<DataTypes, MassType>::addMDx(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& res, const DataVecDeriv& dx, double factor)
-{
-	const VecMass &masses= *_usedMassMatrices;
-    
-	helper::WriteAccessor< DataVecDeriv > _res = res;
-	helper::ReadAccessor< DataVecDeriv > _dx = dx;
-	if (factor == 1.0)
-	{
-        for (unsigned int i=0;i<_dx.size();i++)
+        namespace mass
         {
+
+            using namespace	sofa::component::topology;
+            using namespace core::topology;
+            using namespace sofa::defaulttype;
+            using namespace sofa::core::behavior;
+
+
+
+
+
+
+
+
+            template <class DataTypes, class MassType>
+                    MatrixMass<DataTypes, MassType>::~MatrixMass()
+            {
+            }
+
+
+            ///////////////////////////////////////////
+
+
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::clear()
+            {
+                VecMass& masses = *f_mass.beginEdit();
+                masses.clear();
+                f_mass.endEdit();
+            }
+
+
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::resize(int vsize)
+            {
+                VecMass& masses = *f_mass.beginEdit();
+                masses.resize(vsize);
+                f_mass.endEdit();
+            }
+
+
+
+            ///////////////////////////////////////////
+
+
+
+
+            // -- Mass interface
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::addMDx(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& res, const DataVecDeriv& dx, double factor)
+            {
+                const VecMass &masses= *_usedMassMatrices;
+
+                helper::WriteAccessor< DataVecDeriv > _res = res;
+                helper::ReadAccessor< DataVecDeriv > _dx = dx;
+                if (factor == 1.0)
+                {
+                    for (unsigned int i=0;i<_dx.size();i++)
+                    {
 			_res[i] += masses[i] * _dx[i];
-        }
-	}
-	else
-		for (unsigned int i=0;i<_dx.size();i++)
-		{
-			_res[i] += masses[i] * _dx[i] * factor;
+                    }
+                }
+                else
+                    for (unsigned int i=0;i<_dx.size();i++)
+                    {
+                    _res[i] += masses[i] * _dx[i] * factor;
 		}
-    
-}
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::accFromF(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& , const DataVecDeriv&)
-{
-	serr<<"void MatrixMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f) not yet implemented (need the matrix assembly and inversion)"<<sendl;
-}
+            }
 
-template <class DataTypes, class MassType>
-    double MatrixMass<DataTypes, MassType>::getKineticEnergy( const core::MechanicalParams* /* PARAMS FIRST */, const DataVecDeriv& ) const
-{
-	serr<<"void MatrixMass<DataTypes, MassType>::getKineticEnergy not yet implemented"<<sendl;
-	return 0;
-}
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::accFromF(const core::MechanicalParams* /* PARAMS FIRST */, DataVecDeriv& , const DataVecDeriv&)
+            {
+                serr<<"void MatrixMass<DataTypes, MassType>::accFromF(VecDeriv& a, const VecDeriv& f) not yet implemented (need the matrix assembly and inversion)"<<sendl;
+            }
 
-template <class DataTypes, class MassType>
-    double MatrixMass<DataTypes, MassType>::getPotentialEnergy( const core::MechanicalParams* /* PARAMS FIRST */, const DataVecCoord& ) const
-{
-	serr<<"void MatrixMass<DataTypes, MassType>::getPotentialEnergy not yet implemented"<<sendl;
-    return 0;
-}
+            template <class DataTypes, class MassType>
+                    double MatrixMass<DataTypes, MassType>::getKineticEnergy( const core::MechanicalParams* /* PARAMS FIRST */, const DataVecDeriv& ) const
+            {
+                serr<<"void MatrixMass<DataTypes, MassType>::getKineticEnergy not yet implemented"<<sendl;
+                return 0;
+            }
+
+            template <class DataTypes, class MassType>
+                    double MatrixMass<DataTypes, MassType>::getPotentialEnergy( const core::MechanicalParams* /* PARAMS FIRST */, const DataVecCoord& ) const
+            {
+                serr<<"void MatrixMass<DataTypes, MassType>::getPotentialEnergy not yet implemented"<<sendl;
+                return 0;
+            }
 
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& d_v)
-{
-	if(mparams)
-	{
-		VecDeriv& v = *d_v.beginEdit();
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& d_v)
+            {
+                if(mparams)
+                {
+                    VecDeriv& v = *d_v.beginEdit();
 
-		// gravity
-		Vec3d g ( this->getContext()->getLocalGravity() * (mparams->dt()) );
-		Deriv theGravity;
-		DataTypes::set ( theGravity, g[0], g[1], g[2]);
-		Deriv hg = theGravity * (mparams->dt());
+                    // gravity
+                    Vec3d g ( this->getContext()->getGravity() * (mparams->dt()) );
+                    Deriv theGravity;
+                    DataTypes::set ( theGravity, g[0], g[1], g[2]);
+                    Deriv hg = theGravity * (mparams->dt());
 
-		// add weight and inertia force
-		for (unsigned int i=0;i<v.size();i++) {
+                    // add weight and inertia force
+                    for (unsigned int i=0;i<v.size();i++) {
 			v[i] += hg;
-		}
-		d_v.endEdit();
-	}
-}
+                    }
+                    d_v.endEdit();
+                }
+            }
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::addForce(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v)
-{
-	//if gravity was added separately (in solver's "solve" method), then nothing to do here
-	if(this->m_separateGravity.getValue())
-		return;
+#ifdef SOFA_SUPPORT_MOVING_FRAMES
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::addForce(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v)
+            {
+                //if gravity was added separately (in solver's "solve" method), then nothing to do here
+                if(this->m_separateGravity.getValue())
+                    return;
 
-	const VecMass &masses= *_usedMassMatrices;
+                const VecMass &masses= *_usedMassMatrices;
 		helper::WriteAccessor< DataVecDeriv > _f = f;
-		helper::ReadAccessor< DataVecCoord > _x = x;
-		helper::ReadAccessor< DataVecDeriv > _v = v;
 
-    // gravity
-	Vec3d g ( this->getContext()->getLocalGravity() );
-	Deriv theGravity;
-	DataTypes::set ( theGravity, g[0], g[1], g[2]);
-    
-    // velocity-based stuff
-	core::objectmodel::BaseContext::SpatialVector vframe = this->getContext()->getVelocityInWorld();
-	core::objectmodel::BaseContext::Vec3 aframe = this->getContext()->getVelocityBasedLinearAccelerationInWorld() ;
+                // gravity
+                Vec3d g ( this->getContext()->getGravity() );
+                Deriv theGravity;
+                DataTypes::set ( theGravity, g[0], g[1], g[2]);
 
-    // project back to local frame
-	vframe = this->getContext()->getPositionInWorld() / vframe;
-	aframe = this->getContext()->getPositionInWorld().backProjectVector( aframe );
-    
-    // add weight and inertia force
-	for (unsigned int i=0;i<masses.size();i++) {
-		_f[i] += masses[i]*theGravity + core::behavior::inertiaForce(vframe,aframe,masses[i],_x[i],_v[i]);
-	}
-}
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::addMToMatrix(const core::MechanicalParams *mparams /* PARAMS FIRST */, const sofa::core::behavior::MultiMatrixAccessor* matrix)
+                helper::ReadAccessor< DataVecCoord > _x = x;
+                helper::ReadAccessor< DataVecDeriv > _v = v;
+                // velocity-based stuff
+                core::objectmodel::BaseContext::SpatialVector vframe = this->getContext()->getVelocityInWorld();
+                core::objectmodel::BaseContext::Vec3 aframe = this->getContext()->getVelocityBasedLinearAccelerationInWorld() ;
 
-{
-    const VecMass &masses= *_usedMassMatrices;
-    const int N = defaulttype::DataTypeInfo<Deriv>::size();
-    AddMToMatrixFunctor<Deriv,MassType> calc;
+                // project back to local frame
+                vframe = this->getContext()->getPositionInWorld() / vframe;
+                aframe = this->getContext()->getPositionInWorld().backProjectVector( aframe );
+
+                // add weight and inertia force
+                for (unsigned int i=0;i<masses.size();i++) {
+                    _f[i] += masses[i]*theGravity + core::behavior::inertiaForce(vframe,aframe,masses[i],_x[i],_v[i]);
+                }
+            }
+#else
+
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::addForce(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv& f, const DataVecCoord& /*x*/, const DataVecDeriv& /*v*/)
+            {
+                //if gravity was added separately (in solver's "solve" method), then nothing to do here
+                if(this->m_separateGravity.getValue())
+                    return;
+
+                const VecMass &masses= *_usedMassMatrices;
+                helper::WriteAccessor< DataVecDeriv > _f = f;
+
+                // gravity
+                Vec3d g ( this->getContext()->getGravity() );
+                Deriv theGravity;
+                DataTypes::set ( theGravity, g[0], g[1], g[2]);
+
+
+                // add weight
+                for (unsigned int i=0;i<masses.size();i++) {
+                    _f[i] += masses[i]*theGravity;
+                }
+            }
+#endif
+
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::addMToMatrix(const core::MechanicalParams *mparams /* PARAMS FIRST */, const sofa::core::behavior::MultiMatrixAccessor* matrix)
+
+            {
+                const VecMass &masses= *_usedMassMatrices;
+                const int N = defaulttype::DataTypeInfo<Deriv>::size();
+                AddMToMatrixFunctor<Deriv,MassType> calc;
 		sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
 		Real mFactor = (Real)mparams->mFactor();
-    for (unsigned int i=0;i<masses.size();i++)
-        calc(r.matrix, masses[i], r.offset + N*i, mFactor);
-}
+                for (unsigned int i=0;i<masses.size();i++)
+                    calc(r.matrix, masses[i], r.offset + N*i, mFactor);
+            }
 
 
-template <class DataTypes, class MassType>
-    double MatrixMass<DataTypes, MassType>::getElementMass(unsigned int /*index*/) const
-{
-	//NOT IMPLEMENTED YET
-  return (sofa::defaulttype::Vector3::value_type)(_defaultValue.getValue());
-}
+            template <class DataTypes, class MassType>
+                    double MatrixMass<DataTypes, MassType>::getElementMass(unsigned int /*index*/) const
+            {
+                //NOT IMPLEMENTED YET
+                return (sofa::defaulttype::Vector3::value_type)(_defaultValue.getValue());
+            }
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const
-{
-  MassType mElement=f_mass.getValue()[index];
-  const int dimension=mElement.getNbLines();
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::getElementMass(unsigned int index, defaulttype::BaseMatrix *m) const
+            {
+                MassType mElement=f_mass.getValue()[index];
+                const int dimension=mElement.getNbLines();
 
-  if ((int)m->rowSize() != dimension || (int)m->colSize() != dimension) m->resize(dimension,dimension);
-  
-  m->clear();
-  AddMToMatrixFunctor<Deriv,MassType>()(m, mElement, 0, 1);
+                if ((int)m->rowSize() != dimension || (int)m->colSize() != dimension) m->resize(dimension,dimension);
 
-}
+                m->clear();
+                AddMToMatrixFunctor<Deriv,MassType>()(m, mElement, 0, 1);
 
-
-
+            }
 
 
 
-//////////////////////////////////
 
 
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::init()
-{
-	Inherited::init();
-	
-	if (f_mass.getValue().empty())
-	{
-		clear();
-		defaultDiagonalMatrices();
-		_usingDefaultDiagonalMatrices=true;
-	}
-	
-	assert( f_mass.getValue().size() == this->mstate->getX()->size() );
-	
-	if( this->_lumped.getValue() )
-	{
-		lumpMatrices();
-		_usedMassMatrices = &_lumpedMasses;
-	}
-	else
-	{
-		_usedMassMatrices = &f_mass.getValue();
-	}
-}
+            //////////////////////////////////
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::reinit()
-{
-	if( _usingDefaultDiagonalMatrices ) // in case where defaultValue is modified
-	{
-		clear();
-		defaultDiagonalMatrices();
-	}
 
-	if( this->_lumped.getValue() ) // in case of _lumped is modified
-	{
-		lumpMatrices();
-		_usedMassMatrices = &_lumpedMasses;
-	}
-	else
-	{
-		_usedMassMatrices = &f_mass.getValue();
-	}
-}
 
-template <class DataTypes, class MassType>
-MassType MatrixMass<DataTypes, MassType>::diagonalMass( const Real& m )
-{
-	MassType diagonalMatrixMass;
-	diagonalMatrixMass.identity();
-	return diagonalMatrixMass*m;
-}
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::init()
+            {
+                Inherited::init();
 
-template <class DataTypes, class MassType>
-MassType MatrixMass<DataTypes, MassType>::lump( const MassType& m )
-{
-	MassType lumpedM;
-	lumpedM.fill(0);
-	for (int i=0;i<m.getNbLines();i++)
-	{
-		lumpedM[i][i] = m.line(i).sum();
-	}
-	return lumpedM;
-}
+                if (f_mass.getValue().empty())
+                {
+                    clear();
+                    defaultDiagonalMatrices();
+                    _usingDefaultDiagonalMatrices=true;
+                }
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::lumpMatrices( )
-{
-	_lumpedMasses.clear();
-	for (unsigned i=0;i<f_mass.getValue().size();++i)
-	{
-		_lumpedMasses.push_back( lump( f_mass.getValue()[i] ) );
-	}
-}
+                assert( f_mass.getValue().size() == this->mstate->getX()->size() );
 
-template <class DataTypes, class MassType>
-void MatrixMass<DataTypes, MassType>::defaultDiagonalMatrices( )
-{
-	VecMass& masses = *f_mass.beginEdit();
-	masses.resize(this->mstate->getX()->size());
-	MassType diagonalMatrixMass = diagonalMass( _defaultValue.getValue() );
-	for (unsigned i=0;i<masses.size();++i)
-	{
-		masses[i] = diagonalMatrixMass;
-	}
-	_usingDefaultDiagonalMatrices=true;
-	f_mass.endEdit();
-}
+                if( this->_lumped.getValue() )
+                {
+                    lumpMatrices();
+                    _usedMassMatrices = &_lumpedMasses;
+                }
+                else
+                {
+                    _usedMassMatrices = &f_mass.getValue();
+                }
+            }
 
-} // namespace mass
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::reinit()
+            {
+                if( _usingDefaultDiagonalMatrices ) // in case where defaultValue is modified
+                {
+                    clear();
+                    defaultDiagonalMatrices();
+                }
 
-} // namespace component
+                if( this->_lumped.getValue() ) // in case of _lumped is modified
+                {
+                    lumpMatrices();
+                    _usedMassMatrices = &_lumpedMasses;
+                }
+                else
+                {
+                    _usedMassMatrices = &f_mass.getValue();
+                }
+            }
+
+            template <class DataTypes, class MassType>
+                    MassType MatrixMass<DataTypes, MassType>::diagonalMass( const Real& m )
+            {
+                MassType diagonalMatrixMass;
+                diagonalMatrixMass.identity();
+                return diagonalMatrixMass*m;
+            }
+
+            template <class DataTypes, class MassType>
+                    MassType MatrixMass<DataTypes, MassType>::lump( const MassType& m )
+            {
+                MassType lumpedM;
+                lumpedM.fill(0);
+                for (int i=0;i<m.getNbLines();i++)
+                {
+                    lumpedM[i][i] = m.line(i).sum();
+                }
+                return lumpedM;
+            }
+
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::lumpMatrices( )
+            {
+                _lumpedMasses.clear();
+                for (unsigned i=0;i<f_mass.getValue().size();++i)
+                {
+                    _lumpedMasses.push_back( lump( f_mass.getValue()[i] ) );
+                }
+            }
+
+            template <class DataTypes, class MassType>
+                    void MatrixMass<DataTypes, MassType>::defaultDiagonalMatrices( )
+            {
+                VecMass& masses = *f_mass.beginEdit();
+                masses.resize(this->mstate->getX()->size());
+                MassType diagonalMatrixMass = diagonalMass( _defaultValue.getValue() );
+                for (unsigned i=0;i<masses.size();++i)
+                {
+                    masses[i] = diagonalMatrixMass;
+                }
+                _usingDefaultDiagonalMatrices=true;
+                f_mass.endEdit();
+            }
+
+        } // namespace mass
+
+    } // namespace component
 
 } // namespace sofa
 

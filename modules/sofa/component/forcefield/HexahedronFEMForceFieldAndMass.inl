@@ -344,7 +344,7 @@ void HexahedronFEMForceFieldAndMass<DataTypes>::addGravityToV(const core::Mechan
 		VecDeriv& v = *d_v.beginEdit();
 		double dt = mparams->dt();
 		for (unsigned int i=0;i<_particleMasses.size();i++) {
-			v[i] +=this->getContext()->getLocalGravity()*dt;
+                        v[i] +=this->getContext()->getGravity()*dt;
 		}
 		d_v.beginEdit();
 	}
@@ -361,7 +361,7 @@ void HexahedronFEMForceFieldAndMass<DataTypes>::addForce (const core::Mechanical
 		return;
 
 	// gravity
-	// 		Vec3d g ( this->getContext()->getLocalGravity() );
+        // 		Vec3d g ( this->getContext()->getGravity() );
 	// 		Deriv theGravity;
 	// 		DataTypes::set ( theGravity, g[0], g[1], g[2]);
 
@@ -380,11 +380,11 @@ void HexahedronFEMForceFieldAndMass<DataTypes>::addForce (const core::Mechanical
 
 	// add weight and inertia force
 	for (unsigned int i=0;i<_particleMasses.size();i++) {
-		_f[i] += this->getContext()->getLocalGravity()*_particleMasses[i] + core::behavior::inertiaForce(vframe,aframe,_particleMasses[i],_x[i],_v[i]);
+                _f[i] += this->getContext()->getGravity()*_particleMasses[i] + core::behavior::inertiaForce(vframe,aframe,_particleMasses[i],_x[i],_v[i]);
 	}
 #else
 	for (unsigned int i=0;i<_particleMasses.size();i++) {
-		_f[i] += this->getContext()->getLocalGravity()*_particleMasses[i];
+                _f[i] += this->getContext()->getGravity()*_particleMasses[i];
 	}	
 #endif
 }

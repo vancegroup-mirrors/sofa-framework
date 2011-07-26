@@ -83,6 +83,7 @@ class OmniDriver : public core::behavior::BaseController
 {
 
 public:
+        SOFA_CLASS(OmniDriver,sofa::core::behavior::BaseController);
         Data<double> scale;
         Data<double> forceScale;
         Data<Vec3d> position;

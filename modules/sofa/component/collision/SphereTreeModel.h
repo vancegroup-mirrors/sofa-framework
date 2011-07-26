@@ -84,11 +84,17 @@ public:
 	/** @brief  Set center of sphere. It modifies the center of the sphere with index "i"
 	i.e. it modifies one element of the DOF's of the collision model*/
 	void setCenter( double x, double y, double z );
+
+  /** @brief  Translates center of sphere. It modifies the center of the sphere with index "i"
+	i.e. it modifies one element of the DOF's of the collision model*/
+  void translate(double dx, double dy, double z);
 	
 	const Vector3& v() const;
 
 	/** @brief Returns the radius of the sphere "i" */
 	double r() const;
+
+  
 	
 };
 
@@ -109,7 +115,7 @@ public:
 	friend class SingleSphere;
 
 	/** @brief Constructor */
-	SphereTreeModel(double radius = 1.0);
+	SphereTreeModel();
 
   template<class T>
   static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
@@ -137,7 +143,7 @@ public:
 		Windows executables to obtain the file are available at cesarmendoza_serrano@yahoo.fr*/
 	bool load(const char* filename);
 
-  void applyScale (const double /*sx*/,const double /*sy*/,const double /*sz*/);
+ 
 
   sofa::core::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return mstate; }
 
@@ -174,13 +180,20 @@ public:
 
 	void draw();
 
+  sofa::core::objectmodel::DataFileName filename;
+
+  Data<double> defaultRadius;
+  Data<double> scale;
+  Data< Vector3 > translation;
+
 protected:
+   void applyScale (const double /*sx*/);
+   void applyTranslation( const double /*dx*/, const double /*dy*/, const double /*dz*/);
 
 	/** @brief  vector of radii of spheres in the model */
 	sofa::helper::vector<double> radius;	
 
-	/** @brief default radius */
-	Data<double> defaultRadius;
+
 
   sofa::core::behavior::MechanicalState<Vec3Types>* mstate;
 
@@ -217,6 +230,15 @@ inline void SingleSphere::setCenter( double x, double y, double z )
     center.x() = (SReal)x;
     center.y() = (SReal)y;
     center.z() = (SReal)z;
+}
+
+inline void SingleSphere::translate( double dx, double dy, double dz)
+{
+  helper::WriteAccessor<Data<SphereTreeModel::VecCoord> > xData = *this->model->mstate->write(core::VecCoordId::position());
+  Coord& center = xData.wref()[index];
+  center.x() += (SReal)dx;
+  center.y() += (SReal)dy;
+  center.z() += (SReal)dz;
 }
 
 inline double SingleSphere::r() const

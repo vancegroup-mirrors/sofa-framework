@@ -57,6 +57,8 @@ BaseContext* BaseContext::getDefault()
     return &defaultContext;
 }
 
+
+
 ////////////////
 // Parameters //
 ////////////////
@@ -67,15 +69,9 @@ bool BaseContext::isActive() const { return true;};
 bool BaseContext::is_partition() const { return false;};
 #endif
 
-/// Gravity in the local coordinate system
-BaseContext::Vec3 BaseContext::getLocalGravity() const
-{
-    static const Vec3 G((SReal)0,(SReal)-9.81,(SReal)0);
-    return G;
-}
 
 /// Gravity in the world coordinate system
-const BaseContext::Vec3& BaseContext::getGravityInWorld() const
+const BaseContext::Vec3& BaseContext::getGravity() const
 {
     static const Vec3 G((SReal)0,(SReal)-9.81,(SReal)0);
     return G;
@@ -178,31 +174,6 @@ bool BaseContext::getShowProcessorColor() const
 #endif
 
 
-//////////////////////////////
-// Local Coordinates System //
-//////////////////////////////
-
-
-/// Projection from the local coordinate system to the world coordinate system.
-const BaseContext::Frame& BaseContext::getPositionInWorld() const
-{
-    static const Frame f;
-    return f;
-}
-
-/// Spatial velocity (linear, angular) of the local frame with respect to the world
-const BaseContext::SpatialVector& BaseContext::getVelocityInWorld() const
-{
-    static const SpatialVector v( Vec3(0,0,0), Vec3(0,0,0) );
-    return v;
-}
-
-/// Linear acceleration of the origin induced by the angular velocity of the ancestors
-const BaseContext::Vec3& BaseContext::getVelocityBasedLinearAccelerationInWorld() const
-{
-    static const Vec3 a(0,0,0);
-    return a;
-}
 
 
 ////////////////
@@ -303,11 +274,6 @@ void BaseContext::executeVisitor( simulation::Visitor* )
 
 std::ostream& operator << (std::ostream& out, const BaseContext& c )
 {
-  out<<std::endl<<"local gravity = "<<c.getLocalGravity();
-  out<<std::endl<<"transform from local to world = "<<c.getPositionInWorld();
-  //out<<std::endl<<"transform from world to local = "<<c.getWorldToLocal();
-  out<<std::endl<<"spatial velocity = "<<c.getVelocityInWorld();
-  out<<std::endl<<"acceleration of the origin = "<<c.getVelocityBasedLinearAccelerationInWorld();
   out<<std::endl<<"showBehaviorModels = "<<c.getShowBehaviorModels();
   return out;
 }

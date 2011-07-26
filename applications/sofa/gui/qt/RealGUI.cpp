@@ -1878,7 +1878,7 @@ namespace sofa
       }
 
 #ifdef SOFA_GUI_INTERACTION
-      bool RealGUI::eventFilter(QObject */*obj*/, QEvent *e)
+      bool RealGUI::eventFilter(QObject * /*obj*/, QEvent *e)
       {
 	  if (m_interactionActived) {
 	      if (e->type() == QEvent::Wheel) {

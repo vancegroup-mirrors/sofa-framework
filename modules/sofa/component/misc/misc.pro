@@ -48,6 +48,7 @@ HEADERS += initMisc.h \
            MeshTetraStuffing.h \
            TopologicalChangeProcessor.h \
            VTKExporter.h \
+           OBJExporter.h \
            MeshExporter.h
 
 
@@ -74,6 +75,7 @@ SOURCES += initMisc.cpp \
            MeshTetraStuffing.cpp \
            TopologicalChangeProcessor.cpp \
            VTKExporter.cpp \
+           OBJExporter.cpp \
            MeshExporter.cpp
 
 

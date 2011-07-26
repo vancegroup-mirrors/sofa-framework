@@ -69,13 +69,31 @@ protected:
     defaulttype::BaseMatrix* globalMatrix;
     unsigned int globalDim;
     std::map< const sofa::core::behavior::BaseMechanicalState*, int > globalOffsets;
-    std::set< defaulttype::BaseMatrix* > tempMatrices;
-    std::map< const sofa::core::behavior::BaseMechanicalState*, MatrixRef > localMatrixMap;
-    std::map< std::pair<const sofa::core::behavior::BaseMechanicalState*, const sofa::core::behavior::BaseMechanicalState*>, InteractionMatrixRef > interactionMatrixMap;
-    std::map< const sofa::core::behavior::BaseMechanicalState*, std::map< const sofa::core::behavior::BaseMechanicalState*, InteractionMatrixRef > > mappingMatrixMap;
 
-    virtual defaulttype::BaseMatrix* createMatrix(const sofa::core::behavior::BaseMechanicalState* mstate);
-    virtual defaulttype::BaseMatrix* createInteractionMatrix(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2);
+    unsigned int totalMappedDim;
+    mutable std::map< const sofa::core::behavior::BaseMechanicalState*, defaulttype::BaseMatrix* > mappedMatrices;
+
+    mutable std::map< const sofa::core::behavior::BaseMechanicalState*, MatrixRef > localMatrixMap;
+    mutable std::map< std::pair<const sofa::core::behavior::BaseMechanicalState*, const sofa::core::behavior::BaseMechanicalState*>, InteractionMatrixRef > interactionMatrixMap;
+
+    virtual defaulttype::BaseMatrix* createMatrix(const sofa::core::behavior::BaseMechanicalState* mstate) const;
+    virtual defaulttype::BaseMatrix* createInteractionMatrix(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2) const;
+
+};
+
+
+
+//TODO separating in other file
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class SOFA_COMPONENT_LINEARSOLVER_API MappedMultiMatrixAccessor : public DefaultMultiMatrixAccessor
+{
+public:
+	MappedMultiMatrixAccessor() : DefaultMultiMatrixAccessor() {}
+    virtual ~MappedMultiMatrixAccessor(){ this->clear();}
+
+    virtual defaulttype::BaseMatrix* createMatrix(const sofa::core::behavior::BaseMechanicalState* mstate) const;
+    virtual defaulttype::BaseMatrix* createInteractionMatrix(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2) const;
 
 };
 

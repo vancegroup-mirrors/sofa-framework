@@ -25,7 +25,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#include <sofa/gui/qt/DisplayFlagWidget.h>
+#include "DisplayFlagWidget.h"
 #include <sofa/simulation/common/Node.h>
 #include <sofa/simulation/common/UpdateContextVisitor.h>
 

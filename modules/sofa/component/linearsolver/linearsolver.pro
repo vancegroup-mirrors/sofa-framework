@@ -97,7 +97,7 @@ contains(DEFINES,SOFA_HAVE_CSPARSE){
 
     SOURCES +=  \
                SparseCholeskySolver.cpp \
-               SparseLUSolver.cpp \
+               SparseLUSolver.cpp\
                SparseLDLSolver.cpp
                
 }

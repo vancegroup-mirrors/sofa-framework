@@ -47,7 +47,8 @@ public:
 	{
 		POS = 0,
 		VEL,
-		ACC
+		ACC,
+		POS_AND_VEL
 	};
 
     /// @name Flags and parameters getters
@@ -55,27 +56,32 @@ public:
 
 	ConstOrder constOrder() const { return m_constOrder; }
 
+	ConstraintParams& setOrder(ConstOrder o) { m_constOrder = o;   return *this; }
+
     /// @}
 
-  std::string getName() const
-  {
-    std::string result;
-    switch ( m_constOrder )
-    {
-    case POS : 
-      result += "POSITION";
-    	break;
-    case VEL : 
-      result += "VELOCITY";
-      break;
-    case ACC :
-      result += "ACCELERATION";
-      break;
-    default :
-      assert(false);
-    }
-    return result;
-  }
+	std::string getName() const
+	{
+		std::string result;
+		switch ( m_constOrder )
+		{
+		case POS : 
+			result += "POSITION";
+			break;
+		case VEL : 
+			result += "VELOCITY";
+			break;
+		case ACC :
+			result += "ACCELERATION";
+			break;
+		case POS_AND_VEL :
+			result += "POSITION AND VELOCITY";
+			break;
+		default :
+			assert(false);
+		}
+		return result;
+	}
 
     /// @name Access to vectors from a given state container (i.e. State or MechanicalState)
     /// @{
@@ -124,6 +130,7 @@ public:
     : sofa::core::ExecParams(p)
     , m_x (ConstVecCoordId::position())
     , m_v (ConstVecDerivId::velocity())
+	, m_constOrder (POS_AND_VEL)
     {
     }
 

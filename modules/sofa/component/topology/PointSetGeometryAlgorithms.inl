@@ -63,7 +63,7 @@ namespace topology
   	template <class DataTypes>
 	void PointSetGeometryAlgorithms< DataTypes >::computeIndicesScale()
 	{
-		Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
+		sofa::defaulttype::Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
 		sofa::simulation::Node* context = dynamic_cast<sofa::simulation::Node*>(this->getContext());
 		sofa::simulation::getSimulation()->computeBBox((sofa::simulation::Node*)context, sceneMinBBox.ptr(), sceneMaxBBox.ptr());
 		PointIndicesScale = (sceneMaxBBox - sceneMinBBox).norm() * showIndicesScale.getValue();
@@ -189,7 +189,7 @@ namespace topology
     if (showPointIndices.getValue())
     {
       Mat<4,4, GLfloat> modelviewM;
-      Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
+      sofa::defaulttype::Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
       const VecCoord& coords = *(this->object->getX());
 
       sofa::simulation::Node* context = dynamic_cast<sofa::simulation::Node*>(this->getContext());
@@ -208,8 +208,8 @@ namespace topology
 	std::string tmp = oss.str();
 	const char* s = tmp.c_str();
 	glPushMatrix();
-
-	glTranslatef(coords[i][0], coords[i][1], coords[i][2]);
+    sofa::defaulttype::Vec3f center; center = DataTypes::getCPos(coords[i]);
+	glTranslatef(center[0], center[1], center[2]);
 	glScalef(PointIndicesScale,PointIndicesScale,PointIndicesScale);
 
 	// Makes text always face the viewer by removing the scene rotation
@@ -217,8 +217,7 @@ namespace topology
 	glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
 	modelviewM.transpose();
 
-	Vec3d temp(coords[i][0], coords[i][1], coords[i][2]);
-	temp = modelviewM.transform(temp);
+	sofa::defaulttype::Vec3f temp = modelviewM.transform(center);
 	
 	//glLoadMatrixf(modelview);
 	glLoadIdentity();

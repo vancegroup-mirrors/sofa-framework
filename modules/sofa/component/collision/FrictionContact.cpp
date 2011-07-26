@@ -25,8 +25,6 @@
 #include <sofa/component/collision/FrictionContact.inl>
 #include <sofa/component/collision/BarycentricContactMapper.h>
 
-
-
 namespace sofa
 {
 
@@ -79,8 +77,6 @@ Creator<Contact::Factory, FrictionContact<FFDDistanceGridCollisionModel, RigidDi
 Creator<Contact::Factory, FrictionContact<FFDDistanceGridCollisionModel, PointModel> > FFDDistanceGridPointFrictionContactClass("FrictionContact", true);
 Creator<Contact::Factory, FrictionContact<FFDDistanceGridCollisionModel, SphereModel> > FFDDistanceGridSphereFrictionContactClass("FrictionContact", true);
 Creator<Contact::Factory, FrictionContact<FFDDistanceGridCollisionModel, TriangleModel> > FFDDistanceGridTriangleFrictionContactClass("FrictionContact", true);
-
-
 
 
 } // namespace collision

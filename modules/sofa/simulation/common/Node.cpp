@@ -46,6 +46,7 @@
 #include <sofa/simulation/common/UpdateMappingVisitor.h>
 
 #include <sofa/helper/Factory.inl>
+#include <sofa/simulation/common/xml/Element.inl>
 #include <iostream>
 
 #include <boost/graph/adjacency_list.hpp>
@@ -501,6 +502,8 @@ const core::objectmodel::BaseContext* Node::getContext() const
 
 void Node::setDefaultVisualContextValue()
 {
+    /// @TODO: This method is now broken because getShow*() methods never return -1
+/*
     if (getShowVisualModels() == -1)            setShowVisualModels(true);
     if (getShowBehaviorModels() == -1)          setShowBehaviorModels(false);
     if (getShowCollisionModels() == -1)         setShowCollisionModels(false);
@@ -514,6 +517,7 @@ void Node::setDefaultVisualContextValue()
 #ifdef SOFA_SMP
     if (showProcessorColor_.getValue() == -1)                 showProcessorColor_.setValue(false);
 #endif
+*/
 }
 
 void Node::initialize()

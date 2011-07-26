@@ -137,7 +137,7 @@ namespace topology
 
 	template<class DataTypes>
 	typename DataTypes::Coord HexahedronSetGeometryAlgorithms<DataTypes>::getRestPointPositionInHexahedron(const HexaID h, 
-																							const Vector3& baryC) const
+																							const sofa::defaulttype::Vector3& baryC) const
 	{
 		Coord	p[8];
 		getRestHexahedronVertexCoordinates(h, p);
@@ -183,7 +183,7 @@ namespace topology
 
 	template<class DataTypes>
 	typename DataTypes::Coord HexahedronSetGeometryAlgorithms<DataTypes>::getPointPositionInHexahedron(const HexaID h, 
-																							const Vector3& baryC) const
+																							const sofa::defaulttype::Vector3& baryC) const
 	{
 		Coord	p[8];
 		getHexahedronVertexCoordinates(h, p);
@@ -205,18 +205,18 @@ namespace topology
 	}
 
 	template<class DataTypes>
-	Vector3 HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronRestBarycentricCoeficients(const HexaID h,
+	sofa::defaulttype::Vector3 HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronRestBarycentricCoeficients(const HexaID h,
 																								const Coord& pos) const
 	{
 		Coord	p[8];
 		getRestHexahedronVertexCoordinates(h, p);
 
-		Vector3 origin;
+		sofa::defaulttype::Vector3 origin;
 		origin[0] = p[0][0];
 		origin[1] = p[0][1];
 		origin[2] = p[0][2];
 
-		Vector3 p1, p3, p4;
+		sofa::defaulttype::Vector3 p1, p3, p4;
 		p1[0] = p[1][0];
 		p1[1] = p[1][1];
 		p1[2] = p[1][2];
@@ -236,7 +236,7 @@ namespace topology
 		mt.transpose(m);
 		base.invert(mt);
 
-		Vector3 pnt;
+		sofa::defaulttype::Vector3 pnt;
 		pnt[0] = pos[0];
 		pnt[1] = pos[1];
 		pnt[2] = pos[2];
@@ -245,7 +245,7 @@ namespace topology
 	}
 
 	template<class DataTypes>
-	Vector3 HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronBarycentricCoeficients(const HexaID h,
+	sofa::defaulttype::Vector3 HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronBarycentricCoeficients(const HexaID h,
 																								const Coord& pos) const
 	{
 		// Warning: this is only correct if the hexahedron is not deformed
@@ -255,12 +255,12 @@ namespace topology
 		Coord	p[8];
 		getHexahedronVertexCoordinates(h, p);
 
-		Vector3 origin;
+		sofa::defaulttype::Vector3 origin;
 		origin[0] = p[0][0];
 		origin[1] = p[0][1];
 		origin[2] = p[0][2];
 
-		Vector3 p1, p3, p4;
+		sofa::defaulttype::Vector3 p1, p3, p4;
 		p1[0] = p[1][0];
 		p1[1] = p[1][1];
 		p1[2] = p[1][2];
@@ -280,7 +280,7 @@ namespace topology
 		mt.transpose(m);
 		base.invert(mt);
 
-		Vector3 pnt;
+		sofa::defaulttype::Vector3 pnt;
 		pnt[0] = pos[0];
 		pnt[1] = pos[1];
 		pnt[2] = pos[2];
@@ -293,7 +293,7 @@ namespace topology
 	{
 		typedef typename DataTypes::Real Real;
  
-		const Vector3 v = computeHexahedronBarycentricCoeficients(h, pos);
+		const sofa::defaulttype::Vector3 v = computeHexahedronBarycentricCoeficients(h, pos);
 		
 		Real d = (Real) std::max(std::max(-v[0], -v[1]), std::max(std::max(-v[2], v[0]-1), std::max(v[1]-1, v[2]-1)));
 		
@@ -308,7 +308,7 @@ namespace topology
 	{
 		typedef typename DataTypes::Real Real;
 
-		const Vector3 v = computeHexahedronRestBarycentricCoeficients(h, pos);
+		const sofa::defaulttype::Vector3 v = computeHexahedronRestBarycentricCoeficients(h, pos);
 		
 		Real d = (Real) std::max(std::max(-v[0], -v[1]), std::max(std::max(-v[2], v[0]-1), std::max(v[1]-1, v[2]-1)));
 		
@@ -319,7 +319,7 @@ namespace topology
 	}
 
 	template< class DataTypes>
-	int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElement(const Coord& pos, Vector3& baryC, Real& distance) const
+	int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElement(const Coord& pos, sofa::defaulttype::Vector3& baryC, Real& distance) const
 	{
 		int index=-1;
 		distance = 1e10;
@@ -354,7 +354,7 @@ namespace topology
 	}
 
     template< class DataTypes>
-    int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElementInRestPos(const Coord& pos, Vector3& baryC, Real& distance) const
+    int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElementInRestPos(const Coord& pos, sofa::defaulttype::Vector3& baryC, Real& distance) const
     {
       int index=-1;
       distance = 1e10;
@@ -468,7 +468,7 @@ namespace topology
     {
       Mat<4,4, GLfloat> modelviewM;
       const VecCoord& coords = *(this->object->getX());
-      const Vector3& color = _drawColor.getValue();
+      const sofa::defaulttype::Vector3& color = _drawColor.getValue();
       glColor3f(color[0], color[1], color[2]);
       glDisable(GL_LIGHTING);
       float scale = PointSetGeometryAlgorithms<DataTypes>::PointIndicesScale;
@@ -482,17 +482,15 @@ namespace topology
       {
 	
 	Hexahedron the_hexa = hexaArray[i];
-	Coord baryCoord;
+	sofa::defaulttype::Vec3f center;
 	
 	for (unsigned int j = 0; j<8; j++)
 	{
-	  Coord vertex = coords[ the_hexa[j] ];
-	  
-	  for (unsigned int k = 0; k<3; k++)
-	    baryCoord[k] += vertex[k];
+		sofa::defaulttype::Vec3f vertex; vertex = DataTypes::getCPos(coords[ the_hexa[j] ]);
+		center += vertex;
 	}
 
-	baryCoord = baryCoord/8;
+	center = center/8;
 	
 	std::ostringstream oss;
 	oss << i;
@@ -500,7 +498,7 @@ namespace topology
 	const char* s = tmp.c_str();
 	glPushMatrix();
 
-	glTranslatef(baryCoord[0], baryCoord[1], baryCoord[2]);
+	glTranslatef(center[0], center[1], center[2]);
 	glScalef(scale,scale,scale);
 
 	// Makes text always face the viewer by removing the scene rotation
@@ -508,8 +506,7 @@ namespace topology
 	glGetFloatv(GL_MODELVIEW_MATRIX , modelviewM.ptr() );
 	modelviewM.transpose();
 
-	Vec3d temp(baryCoord[0], baryCoord[1], baryCoord[2]);
-	temp = modelviewM.transform(temp);
+	sofa::defaulttype::Vec3f temp = modelviewM.transform(center);
 	
 	//glLoadMatrixf(modelview);
 	glLoadIdentity();
@@ -528,7 +525,7 @@ namespace topology
     }
 
 
-    //Draw triangles
+    //Draw hexahedra
     if (_draw.getValue())
     {
       const sofa::helper::vector<Hexahedron> &hexaArray = this->m_topology->getHexahedra(); 	 
@@ -536,7 +533,7 @@ namespace topology
       if (!hexaArray.empty())
       {
 	glDisable(GL_LIGHTING);
-   const Vector3& color = _drawColor.getValue();
+   const sofa::defaulttype::Vector3& color = _drawColor.getValue();
    glColor3f(color[0], color[1], color[2]);
 	glBegin(GL_LINES);
 	const VecCoord& coords = *(this->object->getX());
@@ -544,21 +541,24 @@ namespace topology
 	for (unsigned int i = 0; i<hexaArray.size(); i++)
 	{
 	  const Hexahedron& H = hexaArray[i];
-	  sofa::helper::vector <Coord> hexaCoord;
+	  sofa::helper::vector <sofa::defaulttype::Vec3f> hexaCoord;
 	  
 	  for (unsigned int j = 0; j<8; j++)
-	    hexaCoord.push_back (coords[H[j]]);
+	  {
+		  sofa::defaulttype::Vec3f p; p = DataTypes::getCPos(coords[H[j]]);
+		  hexaCoord.push_back(p);
+	  }
 	  
 	  for (unsigned int j = 0; j<4; j++)
 	  {
-	    glVertex3d(hexaCoord[j][0], hexaCoord[j][1], hexaCoord[j][2]);
-	    glVertex3d(hexaCoord[(j+1)%4][0], hexaCoord[(j+1)%4][1], hexaCoord[(j+1)%4][2]);
+	    glVertex3f(hexaCoord[j][0], hexaCoord[j][1], hexaCoord[j][2]);
+	    glVertex3f(hexaCoord[(j+1)%4][0], hexaCoord[(j+1)%4][1], hexaCoord[(j+1)%4][2]);
 
-	    glVertex3d(hexaCoord[j+4][0], hexaCoord[j+4][1], hexaCoord[j+4][2]);
-	    glVertex3d(hexaCoord[(j+1)%4 +4][0], hexaCoord[(j+1)%4 +4][1], hexaCoord[(j+1)%4 +4][2]);
+	    glVertex3f(hexaCoord[j+4][0], hexaCoord[j+4][1], hexaCoord[j+4][2]);
+	    glVertex3f(hexaCoord[(j+1)%4 +4][0], hexaCoord[(j+1)%4 +4][1], hexaCoord[(j+1)%4 +4][2]);
 
-	    glVertex3d(hexaCoord[j][0], hexaCoord[j][1], hexaCoord[j][2]);
-	    glVertex3d(hexaCoord[j+4][0], hexaCoord[j+4][1], hexaCoord[j+4][2]);
+	    glVertex3f(hexaCoord[j][0], hexaCoord[j][1], hexaCoord[j][2]);
+	    glVertex3f(hexaCoord[j+4][0], hexaCoord[j+4][1], hexaCoord[j+4][2]);
 	  }
 	}
 	glEnd();
@@ -568,7 +568,7 @@ namespace topology
   
 
 
-  
+
 } // namespace topology
 
 } // namespace component

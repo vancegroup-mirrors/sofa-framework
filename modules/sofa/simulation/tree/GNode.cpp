@@ -399,6 +399,8 @@ void GNode::initVisualContext()
     if (getParent() != NULL)
     {
         this->setDisplayWorldGravity(false); //only display gravity for the root: it will be propagated at each time step
+    /// @TODO: This method is now broken because getShow*() methods never return -1
+/*
         if (getShowVisualModels() == -1)
             setShowVisualModels(static_cast<GNode *>(getParent())->getShowVisualModels());
         if (getShowBehaviorModels() == -1)
@@ -423,6 +425,7 @@ void GNode::initVisualContext()
         if (getShowProcessorColor() == -1)
                         setShowProcessorColor(static_cast<GNode *>(getParent())->getShowProcessorColor());
 #endif
+*/
     }     
 }
 

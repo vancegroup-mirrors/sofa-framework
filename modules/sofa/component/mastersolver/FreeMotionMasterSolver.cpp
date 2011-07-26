@@ -24,21 +24,17 @@
 ******************************************************************************/
 #include <sofa/component/mastersolver/FreeMotionMasterSolver.h>
 
-#include <sofa/simulation/common/AnimateVisitor.h>
-#include <sofa/simulation/common/BehaviorUpdatePositionVisitor.h>
-#include <sofa/simulation/common/MechanicalVisitor.h>
-#include <sofa/simulation/common/CollisionVisitor.h>
-#include <sofa/simulation/common/SolveVisitor.h>
+#include <sofa/component/constraintset/LCPConstraintSolver.h>
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/VecId.h>
 
 #include <sofa/helper/AdvancedTimer.h>
-#include <sofa/helper/system/thread/CTime.h>
-#include <math.h>
-#include <iostream>
 
-
+#include <sofa/simulation/common/BehaviorUpdatePositionVisitor.h>
+#include <sofa/simulation/common/MechanicalOperations.h>
+#include <sofa/simulation/common/SolveVisitor.h>
+#include <sofa/simulation/common/VectorOperations.h>
 
 
 namespace sofa
@@ -50,9 +46,18 @@ namespace component
 namespace mastersolver
 {
 
+using namespace core::behavior;
+
 FreeMotionMasterSolver::FreeMotionMasterSolver()
-: constraintSolver(NULL), defaultSolver(NULL)
+: constraintSolver(NULL)
+, defaultSolver(NULL)
 {
+}
+
+FreeMotionMasterSolver::~FreeMotionMasterSolver()
+{
+	if (defaultSolver != NULL)
+		delete defaultSolver;
 }
 
 void FreeMotionMasterSolver::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
@@ -85,7 +90,15 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 	using helper::system::thread::CTime;
 	using sofa::helper::AdvancedTimer;
 
-	simulation::Node *context = (simulation::Node *)(this->getContext()); // access to current node
+	simulation::Node *context = (simulation::Node *)(this->getContext());
+
+	simulation::common::VectorOperations vop(params, this->getContext());	  
+	simulation::common::MechanicalOperations mop(params, this->getContext());
+
+	MultiVecCoord pos(&vop, core::VecCoordId::position() );
+    MultiVecDeriv vel(&vop, core::VecDerivId::velocity() );
+	MultiVecCoord freePos(&vop, core::VecCoordId::freePosition() );
+    MultiVecDeriv freeVel(&vop, core::VecDerivId::freeVelocity() );
 
 	double time = 0.0;
 	double timeTotal = 0.0;
@@ -95,15 +108,12 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 	{
 		time = (double) CTime::getTime();
 		timeTotal = (double) CTime::getTime();
-		//sout << "********* Start Iteration : " << _numConstraints << " constraints *********" << sendl;
 	}
 
 	// This solver will work in freePosition and freeVelocity vectors.
 	// We need to initialize them if it's not already done.
-	simulation::MechanicalVInitVisitor<V_COORD>(params, VecCoordId::freePosition(), ConstVecCoordId::position(), true).execute(context);
-	simulation::MechanicalVInitVisitor<V_DERIV>(params, VecDerivId::freeVelocity(), ConstVecDerivId::velocity()).execute(context);
-
-//	context->execute< simulation::CollisionResetVisitor >(params);
+	simulation::MechanicalVInitVisitor<core::V_COORD>(params, core::VecCoordId::freePosition(), core::ConstVecCoordId::position(), true).execute(context);
+	simulation::MechanicalVInitVisitor<core::V_DERIV>(params, core::VecDerivId::freeVelocity(), core::ConstVecDerivId::velocity()).execute(context);
 
 	// Update the BehaviorModels
 	// Required to allow the RayPickInteractor interaction
@@ -112,14 +122,14 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 		serr << "updatePos called" << sendl;
 
 	AdvancedTimer::stepBegin("UpdatePosition");
-	simulation::BehaviorUpdatePositionVisitor updatePos(params /* PARAMS FIRST */, dt);
+	simulation::BehaviorUpdatePositionVisitor updatePos(params, dt);
 	context->execute(&updatePos);
 	AdvancedTimer::stepEnd("UpdatePosition");
 
 	if (f_printLog.getValue())
 		serr << "updatePos performed - beginVisitor called" << sendl;
 
-	simulation::MechanicalBeginIntegrationVisitor beginVisitor(params /* PARAMS FIRST */, dt);
+	simulation::MechanicalBeginIntegrationVisitor beginVisitor(params, dt);
 	context->execute(&beginVisitor);
 
 	if (f_printLog.getValue())
@@ -127,18 +137,11 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 
 	// Free Motion
 	AdvancedTimer::stepBegin("FreeMotion");
-	simulation::SolveVisitor freeMotion(params /* PARAMS FIRST */, dt, true);
+	simulation::SolveVisitor freeMotion(params, dt, true);
 	context->execute(&freeMotion);
-	AdvancedTimer::stepBegin("PropagateFreePosition");
-	//simulation::MechanicalPropagateFreePositionVisitor(params).execute(context);
-    {
-        sofa::core::MechanicalParams mparams(*params);
-        sofa::core::MultiVecCoordId xfree = sofa::core::VecCoordId::freePosition();
-        mparams.x() = xfree;
-        simulation::MechanicalPropagatePositionVisitor(&mparams /* PARAMS FIRST */, 0, xfree, true).execute(context);
-    }
-	AdvancedTimer::stepEnd("PropagateFreePosition");
 	AdvancedTimer::stepEnd("FreeMotion");
+
+	mop.propagateXAndV(freePos, freeVel);
 
 	if (f_printLog.getValue())
 		serr << " SolveVisitor for freeMotion performed" << sendl;
@@ -149,15 +152,14 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 		sout <<" Free Motion " << ((double)CTime::getTime() - time) * timeScale << " ms" << sendl;
 
 		time = (double)CTime::getTime();
-	}	 	
+	}	 	 
 
 	// Collision detection and response creation
 	AdvancedTimer::stepBegin("Collision");
 	computeCollision(params);
 	AdvancedTimer::stepEnd  ("Collision");
 	
-	core::MechanicalParams mparams(*params);
-	simulation::MechanicalPropagatePositionVisitor(&mparams, 0, VecCoordId::position(), true).execute(context);
+	mop.propagateX(pos);
 
 	if (displayTime.getValue())
 	{
@@ -165,19 +167,26 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 		time = (double)CTime::getTime();
 	}
 
-	// Restore force, intForce and extForce on the correct vectors (MState permanent VecIds)
-	simulation::MechanicalResetForceVisitor resetForceVisitor(params /* PARAMS FIRST */, core::VecId::force(), false);
-	simulation::MechanicalResetForceVisitor resetExtForceVisitor(params /* PARAMS FIRST */, core::VecId::externalForce(), false);
-
-	context->execute(&resetForceVisitor);
-	context->execute(&resetExtForceVisitor);
-
-	// Solve constraints	
+	// Solve constraints
 	if (constraintSolver)
 	{
 		AdvancedTimer::stepBegin("ConstraintSolver");
-        constraintSolver->solveConstraint(dt, core::VecId::freePosition(), core::ConstraintParams::POS);
+		
+		core::ConstraintParams cparams(*params);
+		cparams.setX(freePos);
+		cparams.setV(freeVel);
+        
+		constraintSolver->solveConstraint(&cparams, pos, vel);
+
 		AdvancedTimer::stepEnd("ConstraintSolver");
+
+		mop.propagateV(vel);
+
+		MultiVecDeriv dx(&vop, constraintSolver->getDx());
+		mop.propagateDx(dx);
+
+		// "mapped" x = xfree + dx
+		simulation::MechanicalVOpVisitor(params, pos, freePos, dx, 1.0 ).setOnlyMapped(true).execute(context);
 	}
 
 	if ( displayTime.getValue() )
@@ -188,12 +197,6 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 
 	simulation::MechanicalEndIntegrationVisitor endVisitor(params /* PARAMS FIRST */, dt);
 	context->execute(&endVisitor);
-
-	// Restore force, intForce and extForce on the correct vectors (MState permanent VecIds)
-	context->execute(&resetForceVisitor);
-        //<TO REMOVE>
-        //context->execute(&resetIntForceVisitor);
-	context->execute(&resetExtForceVisitor);
 }
 
 

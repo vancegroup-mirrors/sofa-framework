@@ -22,9 +22,29 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/component/forcefield/MappedBeamToTetraForceField.inl>
-#include <sofa/defaulttype/Vec3Types.h>
+#ifndef SOFA_COMPONENT_COLLISION_LOCALMINDISTANCE_INL
+#define SOFA_COMPONENT_COLLISION_LOCALMINDISTANCE_INL
+
+#include <sofa/helper/system/config.h>
+#include <sofa/component/collision/LocalMinDistance.h>
+#include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/core/ObjectFactory.h>
+#include <sofa/helper/proximity.h>
+#include <sofa/defaulttype/Mat.h>
+#include <sofa/defaulttype/Vec.h>
+#include <sofa/core/collision/Intersection.inl>
+//#include <sofa/component/collision/RayPickInteractor.h>
+#include <iostream>
+#include <algorithm>
+#include <sofa/helper/gl/template.h>
+
+#include <sofa/simulation/common/Node.h>
+
+#include <iostream>
+#include <algorithm>
+
+
+#define DYNAMIC_CONE_ANGLE_COMPUTATION
 
 namespace sofa
 {
@@ -32,39 +52,27 @@ namespace sofa
 namespace component
 {
 
-namespace forcefield
+namespace collision
 {
 
 using namespace sofa::defaulttype;
+using namespace sofa::core::collision;
+using namespace helper;
+
+using core::topology::BaseMeshTopology;
+typedef BaseMeshTopology::PointID			PointID;
 
 
-SOFA_DECL_CLASS(MappedBeamToTetraForceField)
 
-// Register in the Factory
-int MappedBeamToTetraForceFieldClass = core::RegisterObject("A custom force field")
-#ifndef SOFA_FLOAT
-.add< MappedBeamToTetraForceField<Vec3dTypes> >()
-.add< MappedBeamToTetraForceField<Rigid3dTypes> >()
-#endif
-#ifndef SOFA_DOUBLE
-.add< MappedBeamToTetraForceField<Vec3fTypes> >()
-.add< MappedBeamToTetraForceField<Rigid3fTypes> >()
-#endif
-;
 
-#ifndef SOFA_FLOAT
-template class MappedBeamToTetraForceField<Vec3dTypes>;
-template class MappedBeamToTetraForceField<Rigid3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-template class MappedBeamToTetraForceField<Vec3fTypes>;
-template class MappedBeamToTetraForceField<Rigid3fTypes>;
-#endif
-;
 
-} // namespace forcefield
+
+
+} // namespace collision
 
 } // namespace component
 
 } // namespace sofa
 
+
+#endif /* SOFA_COMPONENT_COLLISION_LOCALMINDISTANCE_INL */

@@ -22,23 +22,9 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/helper/system/config.h>
-#include <sofa/component/collision/LocalMinDistance.h>
-#include <sofa/core/topology/BaseMeshTopology.h>
+#include <sofa/component/collision/LocalMinDistance.inl>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/helper/proximity.h>
-#include <sofa/defaulttype/Mat.h>
-#include <sofa/defaulttype/Vec.h>
-#include <sofa/core/collision/Intersection.inl>
-//#include <sofa/component/collision/RayPickInteractor.h>
-#include <iostream>
-#include <algorithm>
-#include <sofa/helper/gl/template.h>
 
-#include <sofa/simulation/common/Node.h>
-
-#include <iostream>
-#include <algorithm>
 
 
 #define DYNAMIC_CONE_ANGLE_COMPUTATION
@@ -51,13 +37,6 @@ namespace component
 
 namespace collision
 {
-
-using namespace sofa::defaulttype;
-using namespace sofa::core::collision;
-using namespace helper;
-
-using core::topology::BaseMeshTopology;
-typedef BaseMeshTopology::PointID			PointID;
 
 SOFA_DECL_CLASS(LocalMinDistance)
 
@@ -1415,24 +1394,6 @@ void LocalMinDistance::draw()
 	if (!getContext()->getShowCollisionModels())
 		return;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 } // namespace collision

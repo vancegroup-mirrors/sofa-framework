@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<Node name="root"  dt="0.02" showBehaviorModels="1" showCollisionModels="1" showMappings="1" showForceFields="1" showInteractionForceFields="1">
+	<CollisionPipeline depth="6" verbose="0" draw="0"/>
+	<BruteForceDetection name="N2" />
+	<MinProximityIntersection name="Proximity" alarmDistance="0.3" contactDistance="0.2" />
+	<CollisionResponse name="Response" response="default" />
+	<CollisionGroup name="Group" />
+	<Node name="All">
+		<EulerImplicit rayleighStiffness="0.01" />                
+		<LULinearSolver/>
+		<Node name="Tetra1">
+			<TetrahedronSetTopologyContainer name="TetraContainer" position="0. 0. 0. 5. 0. 0. 0. 5. 0. 0. 0. 5." tetrahedra="0 1 2 3"/>
+			<TetrahedronSetTopologyModifier/>
+			<TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+			<MechanicalObject  template="Vec3d"  name="MS1"/>
+			<UniformMass mass="0.1" />
+			<TetrahedronFEMForceField name="FEM" youngModulus="1000" poissonRatio="0.3" computeGlobalMatrix="false" method="polar"/>
+			<FixedConstraint name="FixedConstraint" indices="0" /> 
+			<Node name="MappedPoints1">
+				<MechanicalObject template="Vec3d" name="MS3" position="2  2 2"/>
+				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping13" input="@../MS1" output="@MS3"/>
+				<SphereModel/>
+			</Node>
+		</Node>
+		<Node name="Tetra2">
+			<TetrahedronSetTopologyContainer name="TetraContainer" position="5. 5. 5. 8. 5. 5. 5. 8. 5. 5. 5. 8. 8. 8. 8." tetrahedra="0 1 2 3 4 1 2 3"/>
+			<TetrahedronSetTopologyModifier/>
+			<TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+			<MechanicalObject name="MS2"/>
+			<UniformMass mass="0.1" />
+			<TetrahedronFEMForceField name="FEM" youngModulus="1000" poissonRatio="0.3" computeGlobalMatrix="false" method="polar"/>
+			<FixedConstraint name="FixedConstraint" indices="0" /> 
+			<PointModel/>
+		</Node>
+		<StiffSpringForceField name="ExternalSprings" spring="0 4 50 5 3.5" object1="Tetra1/MappedPoints1" object2="Tetra2"/>
+	</Node>
+</Node>
+
+<!--
+
+			<TriangleSet/>
+-->

@@ -88,25 +88,38 @@ protected:
 		Deriv norm;		///< contact normal, from m1 to m2
 		Deriv t;		///< added for friction
 		Deriv s;		///< added for friction
-		Real dt;
-		Real delta;		///< QP * normal - contact distance
-		Real dfree;		///< QPfree * normal - contact distance
-		Real dfree_t;   ///< QPfree * t
-		Real dfree_s;   ///< QPfree * s
+		Real contactDistance;
+		
 		unsigned int id;
 		long contactId;
         PersistentID localId;
 		double mu;		///< angle for friction
 
-		// for visu
 		Coord P, Q;
 		Coord Pfree, Qfree;
+		Deriv Pvfree, Qvfree; ///< to compute velocity violation
+
+		mutable Real dfree;
 	};
 	
 	sofa::helper::vector<Contact> contacts;
 	Real epsilon;
 	bool yetIntegrated;
 
+
+	/**
+	 * @brief Computes constraint violation in position and stores it into resolution global vector
+	 *
+	 * @param v Global resolution vector
+	 */
+	void getPositionViolation(defaulttype::BaseVector *v);
+
+	/**
+	 * @brief Computes constraint violation in velocity and stores it into resolution global vector
+	 *
+	 * @param v Global resolution vector
+	 */
+	void getVelocityViolation(defaulttype::BaseVector *v);
 	
 public:
 

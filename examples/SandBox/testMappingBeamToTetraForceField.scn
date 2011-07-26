@@ -1,19 +1,22 @@
+<?xml version="1.0"?>
 <Node name="root" dt="0.01" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="0" showBoundingTree="0" showVisualModels="1" gravity="0 0 0">
-	<CollisionPipeline verbose="0" />
+<!--	<CollisionPipeline verbose="0" />
 	<BruteForceDetection name="N2" />
 	<LocalMinDistance name="Proximity" alarmDistance="0.5" contactDistance="0.05" />
-        <CollisionResponse response="default" />
+        <CollisionResponse response="default" />-->
 
 	<!-- A deformable square mesh -->
 	<Node name="Truss" activated="true" gravity="0 0 0" >
 		<EulerImplicitSolver />
-		<!--<CGLinearSolver iterations="100" tolerance="1e-10" threshold="1e-10" verbose="false"/>-->
-		<PCGLinearSolver iterations="100" tolerance="1e-10" threshold="1e-10" use_precond="true" preconditioners="precond" verbose="false"/>
+<!-- 		<CGLinearSolver iterations="100" tolerance="1e-10" threshold="1e-10" verbose="false"/> -->
+		<PCGLinearSolver iterations="100" tolerance="1e-20" threshold="1e-20" use_precond="true" preconditioners="precond" verbose="false"/>
+
 
                 <!--<ShewchukPCGLinearSolver iterations="1000" tolerance="1e-10" use_precond="false"/>-->
                 <!--<ShewchukPCGLinearSolver iterations="1000" tolerance="1e-10" use_precond="true" preconditioners="precond" update_step="1" />-->
 
 		<SparseCholeskySolver name="precond"/>
+<!-- 		<LULinearSolver name="precond"/> -->
 
                 <TetrahedronSetTopologyContainer name="Container" fileTopology="mesh/LShape.msh"/>
                 <TetrahedronSetTopologyModifier name="Modifier"/>
@@ -30,13 +33,15 @@
        	        <!--<BoxConstantForceField box="0.099 0.099 -0.011 0.111 0.121 0.011" force="0 5 0"/>-->
 
 		<Node name="Beam">
-			
+<!-- 			<EulerImplicitSolver/> -->
+<!-- 			<BTDLinearSolver/> -->
 			<MechanicalObject template="Rigid" name="BeamMO" position="0 0 0  0 0 0.7071 0.7071  0 0.02 0 0  0 0.7071 0.7071   0 0.04 0 0 0 0.7071 0.7071  0 0.06 0   0 0 0.7071 0.7071  0 0.08 0  0 0 0.3827 0.9239  0.02 0.1 0  0 0 0 1  0.04 0.1 0  0 0 0 1   0.06 0.1 0  0 0 0 1  0.08 0.1 0  0 0 0 1   0.1 0.1 0  0 0 0 1"  />
 			<Mesh name="BeamMesh" lines="0 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9"/>
-			<UniformMass mass="0.001 0.001 [0.0001 0 0 0 0.0001 0 0 0 0.0001]" totalMass="0.01" showAxisSizeFactor="1"/>
+<!-- 			<UniformMass mass="0.001 0.001 [0.0001 0 0 0 0.0001 0 0 0 0.0001]" totalMass="0.01" showAxisSizeFactor="1"/>			 -->
+<!-- 			<UniformMass totalmass="0.08" showAxisSizeFactor="0.001"/> -->
 			<BeamFEMForceField name="MappedBeamFEMFF" radius="0.01" youngModulus="500000" poissonRatio="0.45"/>
-			<BarycentricMapping name="MappingBeamTetra" isMechanical="true" object1="TrussMO" object2="BeamMO" checkJacobian="true"/>
-			<ConstantForceField points="9" totalForce="0 -1 0  0 0 0" />
+			<BarycentricMapping name="MappingBeamTetra" input="@../TrussMO" output="@BeamMO"/>
+<!-- 			<ConstantForceField points="9" totalForce="0 -1 0  0 0 0" /> -->
 			<FixedConstraint indices="0"/>
 
 			    <Node name="VisuThread">

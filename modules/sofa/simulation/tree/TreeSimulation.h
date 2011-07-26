@@ -29,6 +29,8 @@
 #include <sofa/simulation/tree/tree.h>
 #include <memory>
 
+
+
 namespace sofa
 {
 
@@ -48,6 +50,7 @@ Derives from BaseObject in order to model the parameters as Datas, which makes t
       SOFA_CLASS(TreeSimulation, Simulation);
 
       TreeSimulation();
+      ~TreeSimulation(); // this is a terminal class
 
       Node *getVisualRoot();
 

@@ -194,6 +194,7 @@ void DistanceLMContactConstraint<DataTypes>::writeConstraintEquations(unsigned i
 				break;
 			}
 		case core::ConstraintParams::POS :
+		case core::ConstraintParams::POS_AND_VEL :
 			{
 				SReal minDistance = 0;
 
@@ -230,6 +231,7 @@ void DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation(const 
 {
 	switch (group->getOrder())
 	{
+	case core::ConstraintParams::ACC :
 	case core::ConstraintParams::VEL :
 		{
 			Contact &out=*(this->constraintGroupToContact[group]);
@@ -299,6 +301,7 @@ void DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation(const 
 			break;
 		}
 	case core::ConstraintParams::POS :
+	case core::ConstraintParams::POS_AND_VEL :
 		{
 			//The force cannot be attractive!
 			if (Lambda[0] < 0)
@@ -320,8 +323,11 @@ bool DistanceLMContactConstraint<DataTypes>::isCorrectionComputedWithSimulatedDO
 	switch(order)
 	{
 	case core::ConstraintParams::ACC :
-	case core::ConstraintParams::VEL : return true;
-	case core::ConstraintParams::POS : return false;
+	case core::ConstraintParams::VEL :
+        return true;
+	case core::ConstraintParams::POS :
+	case core::ConstraintParams::POS_AND_VEL :
+        return false;
 	}
 	return false;
 }

@@ -44,58 +44,45 @@ namespace forcefield
 {
 
 template<class DataTypes>
-		void WashingMachineForceField<DataTypes>::addForce(VecDeriv& f, const VecCoord& x, const VecDeriv& v)
-		{
-			for(int i=0;i<6;++i)
-			{
-				_planes[i]->addForce(f,x,v);
-				_planes[i]->rotate(Deriv(1,0,0),_speed.getValue());
-			}
-		}
+void WashingMachineForceField<DataTypes>::addForce(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v)
+{
+    for(int i=0;i<6;++i)
+    {
+        _planes[i]->rotate(_axis.getValue(),_speed.getValue());
+        _planes[i]->addForce(mparams,f,x,v);
+    }
+}
 
-		template<class DataTypes>
-		void WashingMachineForceField<DataTypes>::addDForce(VecDeriv& f1, const VecDeriv& dx1, double kFactor, double bFactor)
-		{
-			for(int i=0;i<6;++i)
-				_planes[i]->addDForce(f1, dx1, kFactor, bFactor);
-		}
+template<class DataTypes>
+void WashingMachineForceField<DataTypes>::addDForce(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& df, const DataVecDeriv& dx)
+{
+    for(int i=0;i<6;++i)
+        _planes[i]->addDForce(mparams, df, dx);
+}
 
-
-
-		template <class DataTypes> 
-                    double WashingMachineForceField<DataTypes>::getPotentialEnergy(const VecCoord&x) const
-		{
-			double energy = 0.0;
-			for(int i=0;i<6;++i)
-				energy += _planes[i]->getPotentialEnergy(x);
-			return energy;
-		}
-
-
-
-		template<class DataTypes>
-				void WashingMachineForceField<DataTypes>::draw()
-		{
-			if (!this->getContext()->getShowForceFields() || !_alreadyInit ) return;
-			for(int i=0;i<6;++i)
+template<class DataTypes>
+void WashingMachineForceField<DataTypes>::draw()
+{
+    if (!this->getContext()->getShowForceFields() || !_alreadyInit ) return;
+    for(int i=0;i<6;++i)
 // 				_planes[i]->drawPlane(_size.getValue()[0]);
-				_planes[i]->draw();
-		}
+        _planes[i]->draw();
+}
 
-		template<class DataTypes>
-		    bool WashingMachineForceField<DataTypes>::addBBox(double* minBBox, double* maxBBox)
-		{
-			Deriv corner0 = _center.getValue() - _size.getValue() * .5;
-			Deriv corner1 = _center.getValue() + _size.getValue() * .5;
-			for (int c=0;c<3;c++)
-			{
-			    if (minBBox[c] > corner0[c]) minBBox[c] = corner0[c];
-			    if (maxBBox[c] < corner1[c]) maxBBox[c] = corner1[c];
-			}
-			return true;
-		}
+template<class DataTypes>
+bool WashingMachineForceField<DataTypes>::addBBox(double* minBBox, double* maxBBox)
+{
+    Deriv corner0 = _center.getValue() - _size.getValue() * .5;
+    Deriv corner1 = _center.getValue() + _size.getValue() * .5;
+    for (int c=0;c<3;c++)
+    {
+        if (minBBox[c] > corner0[c]) minBBox[c] = corner0[c];
+        if (maxBBox[c] < corner1[c]) maxBBox[c] = corner1[c];
+    }
+    return true;
+}
 
-	} // namespace forcefield
+} // namespace forcefield
 
 } // namespace component
 

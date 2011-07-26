@@ -67,7 +67,11 @@ HEADERS += mycuda.h \
            CudaSpringForceField.inl \
            CudaTetrahedronFEMForceField.h \
            CudaTetrahedronFEMForceField.inl \
-           CudaPlaneForceField.h \
+           CudaTetrahedronTLEDForceField.h \
+           CudaTetrahedronTLEDForceField.inl \
+		   CudaHexahedronTLEDForceField.h \
+		   CudaHexahedronTLEDForceField.inl \
+   	       CudaPlaneForceField.h \
            CudaPlaneForceField.inl \
            CudaSphereForceField.h \
            CudaSphereForceField.inl \
@@ -116,7 +120,9 @@ SOURCES += mycuda.cpp \
            CudaLinearVelocityConstraint.cpp \
 	   CudaLinearForceField.cpp \
            CudaSpringForceField.cpp \
-           CudaTetrahedronFEMForceField.cpp \
+           CudaTetrahedronFEMForceField.cpp \ 
+           CudaTetrahedronTLEDForceField.cpp \
+	       CudaHexahedronTLEDForceField.cpp \
            CudaPlaneForceField.cpp \
            CudaSphereForceField.cpp \
            CudaEllipsoidForceField.cpp \
@@ -145,6 +151,8 @@ CUDA_SOURCES += mycuda.cu \
 	   CudaLinearForceField.cu \
            CudaSpringForceField.cu \
            CudaTetrahedronFEMForceField.cu \
+           CudaTetrahedronTLEDForceField.cu \
+	       CudaHexahedronTLEDForceField.cu \
            CudaPlaneForceField.cu \
            CudaSphereForceField.cu \
            CudaEllipsoidForceField.cu \

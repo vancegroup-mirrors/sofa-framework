@@ -36,51 +36,61 @@ namespace core
 namespace behavior
 {
 
-  ConstraintSolver::ConstraintSolver()
-  {}
+ConstraintSolver::ConstraintSolver()
+	: m_fId(VecDerivId::externalForce())
+	, m_dxId(VecDerivId::dx())
+{}
 
 ConstraintSolver::~ConstraintSolver()
 {}
 
-  void ConstraintSolver::solveConstraint(double dt, MultiVecId id, ConstOrder order)
-  {
-      sofa::helper::AdvancedTimer::stepBegin("SolveConstraints " + id.getName());
-      bool continueSolving=true;
-      sofa::helper::AdvancedTimer::stepBegin("SolveConstraints "  + id.getName() + " PrepareState");
-      continueSolving=prepareStates(dt, id, order);
-      sofa::helper::AdvancedTimer::stepEnd  ("SolveConstraints "  + id.getName() + " PrepareState");
-      if (continueSolving)
-      {
-          sofa::helper::AdvancedTimer::stepBegin("SolveConstraints "  + id.getName() + " BuildSystem");
-          continueSolving=buildSystem(dt, id, order);
-          sofa::helper::AdvancedTimer::stepEnd  ("SolveConstraints "  + id.getName() + " BuildSystem");
-      }
-      else
-      {
-          sofa::helper::AdvancedTimer::stepEnd  ("SolveConstraints "  + id.getName());
-          return;
-      }
-      if (continueSolving)
-      {
-          sofa::helper::AdvancedTimer::stepBegin("SolveConstraints "  + id.getName() + " SolveSystem ");
-          continueSolving=solveSystem(dt, id, order);
-          sofa::helper::AdvancedTimer::stepEnd  ("SolveConstraints "  + id.getName() + " SolveSystem ");
-      }
-      else
-      {
-          sofa::helper::AdvancedTimer::stepEnd  ("SolveConstraints "  + id.getName());
-          return;
-      }
+void ConstraintSolver::solveConstraint(const ConstraintParams * cParams, MultiVecId res1, MultiVecId res2)
+{
+	using sofa::helper::AdvancedTimer;
 
-      if (continueSolving)
-      {
-          sofa::helper::AdvancedTimer::stepBegin("SolveConstraints "  + id.getName() + " ApplyCorrection ");
-          continueSolving=applyCorrection(dt, id, order);
-          sofa::helper::AdvancedTimer::stepEnd  ("SolveConstraints "  + id.getName() + " ApplyCorrection ");
-      }
+	std::string className = "SolveConstraints " + cParams->getName();
+	AdvancedTimer::stepBegin(className);
+	
+	bool continueSolving = true;
 
-      sofa::helper::AdvancedTimer::stepEnd("SolveConstraints "  + id.getName() + "SolveConstraints ");
-  }
+	AdvancedTimer::stepBegin(className + " PrepareState");
+	continueSolving = prepareStates(cParams, res1, res2);
+	AdvancedTimer::stepEnd(className + " PrepareState");
+	
+	if (continueSolving)
+	{
+		AdvancedTimer::stepBegin(className + " BuildSystem");
+		continueSolving = buildSystem(cParams, res1, res2);
+		AdvancedTimer::stepEnd(className + " BuildSystem");
+	}
+	else
+	{
+		AdvancedTimer::stepEnd(className);
+		return;
+	}
+
+	if (continueSolving)
+	{
+		AdvancedTimer::stepBegin(className + " SolveSystem ");
+		continueSolving = solveSystem(cParams, res1, res2);
+		AdvancedTimer::stepEnd(className + " SolveSystem ");
+	}
+	else
+	{
+		AdvancedTimer::stepEnd(className);
+		return;
+	}
+
+	if (continueSolving)
+	{
+		AdvancedTimer::stepBegin(className + " ApplyCorrection ");
+		continueSolving = applyCorrection(cParams, res1, res2);
+		AdvancedTimer::stepEnd(className + " ApplyCorrection ");
+	}
+
+	AdvancedTimer::stepEnd(className + "SolveConstraints ");
+}
+
 } // namespace behavior
 
 } // namespace core

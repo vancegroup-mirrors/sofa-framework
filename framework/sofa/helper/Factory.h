@@ -65,10 +65,11 @@ public:
 	typedef TObject Object;
 	typedef TArgument Argument;
 	typedef BaseCreator<Object, Argument> Creator;
+  typedef std::multimap<Key, Creator> Registry;
 	
 protected:
 	std::multimap<Key, Creator*> registry;
-	
+
 public:
 	bool registerCreator(Key key, Creator* creator, bool multi=false)
 	{
@@ -84,11 +85,13 @@ public:
 	Object* createObject(Key key, Argument arg);
 	Object* createAnyObject(Argument arg);
 
-        template< typename OutIterator >
-        void uniqueKeys(OutIterator out);
+  template< typename OutIterator >
+  void uniqueKeys(OutIterator out);
 	
 	bool hasKey(Key key);
-	
+  bool duplicateEntry( Key existing, Key duplicate);
+  bool resetEntry( Key existingKey);
+
 	static Factory<Key, Object, Argument>* getInstance();
 	
 	static Object* CreateObject(Key key, Argument arg)
@@ -106,12 +109,23 @@ public:
 		return getInstance()->hasKey(key);
 	}
 
-    typedef typename std::multimap<Key, Creator*>::iterator iterator;
-    iterator begin() { return registry.begin(); }
-    iterator end() { return registry.end(); }
-    typedef typename std::multimap<Key, Creator*>::const_iterator const_iterator;
-    const_iterator begin() const { return registry.begin(); }
-    const_iterator end() const { return registry.end(); }
+  static bool DuplicateEntry(Key existing,Key duplicate )
+  {
+    return getInstance()->duplicateEntry(existing, duplicate);
+  }
+
+  static bool ResetEntry(Key existing)
+  {
+    return getInstance()->resetEntry(existing);
+  }
+
+
+  typedef typename std::multimap<Key, Creator*>::iterator iterator;
+  iterator begin() { return registry.begin(); }
+  iterator end() { return registry.end(); }
+  typedef typename std::multimap<Key, Creator*>::const_iterator const_iterator;
+  const_iterator begin() const { return registry.begin(); }
+  const_iterator end() const { return registry.end(); }
 };
 
 template <class Factory, class RealObject>

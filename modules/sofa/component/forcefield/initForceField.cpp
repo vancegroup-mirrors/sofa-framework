@@ -93,4 +93,5 @@ SOFA_LINK_CLASS(SurfacePressureForceField)
 SOFA_LINK_CLASS(TriangularBendingSprings)
 /////SOFA_LINK_CLASS(QuadBendingSprings)
 SOFA_LINK_CLASS(QuadularBendingSprings)
+SOFA_LINK_CLASS(WashingMachineForceField)
 

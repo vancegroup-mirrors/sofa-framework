@@ -54,6 +54,7 @@ HEADERS += initCollision.h \
            LMDNewProximityIntersection.h \
            LMDNewProximityIntersection.inl \
            LocalMinDistance.h \
+                      LocalMinDistance.inl \
 	   LocalMinDistanceFilter.h \
            MinProximityIntersection.h \
            MouseInteractor.h \

@@ -4,7 +4,7 @@
 	<BruteForceDetection name="BruteForceDetection" />
 	<MinProximityIntersection name="default0"  alarmDistance="0.3"  contactDistance="0.2" />
 	<DefaultContactManager name="Response"  response="distanceLMConstraint" />
-	<BglCollisionGroupManager name="group" />
+	<DefaultCollisionGroupManager name="group" />
   <EulerImplicitSolver name="EulerImplicit" />
 	<CGLinearSolver template="GraphScattered" name="CG Solver" />
   <LMConstraintSolver name="default22"  listening="1"  constraintVel="1"  constraintPos="1" />
@@ -84,8 +84,8 @@
 	</Node>
   <Node name="COMMultiMapping" >
 		<MechanicalObject template="Vec3d" />
-		<SphereModel /> 
-		<ConstantForceField totalForce="0 10 0" />
+		<SphereModel radius="0.5" /> 
+		
     <CenterOfMassMultiMapping input="@../Cube1,@../Cube2,@../Cube3,@../Cube4" output="@." />
 	</Node>
 	

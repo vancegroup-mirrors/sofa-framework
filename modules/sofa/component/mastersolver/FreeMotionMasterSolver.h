@@ -25,16 +25,20 @@
 #ifndef SOFA_COMPONENT_MASTERSOLVER_FREEMOTIONMASTERSOLVER_H
 #define SOFA_COMPONENT_MASTERSOLVER_FREEMOTIONMASTERSOLVER_H
 
-#include <sofa/core/behavior/OdeSolver.h>
 #include <sofa/simulation/common/MasterSolverImpl.h>
-#include <sofa/simulation/common/Node.h>
-#include <sofa/simulation/common/MechanicalVisitor.h>
-#include <sofa/core/behavior/ConstraintSolver.h>
-#include <sofa/core/behavior/BaseConstraintCorrection.h>
-#include <sofa/core/behavior/OdeSolver.h>
-//#include <sofa/component/odesolver/OdeSolverImpl.h>
-#include <sofa/component/constraintset/LCPConstraintSolver.h>
-#include <sofa/helper/set.h>
+
+#include <sofa/component/component.h>
+
+namespace sofa
+{
+	namespace component
+	{
+		namespace constraintset
+		{
+			class LCPConstraintSolver;
+		} // namespace constraintset
+	} // namespace component
+} // namespace sofa
 
 namespace sofa
 {
@@ -45,24 +49,23 @@ namespace component
 namespace mastersolver
 {
 
-using namespace sofa::defaulttype;
-using namespace sofa::component::linearsolver;
-using namespace helper::system::thread;
-
 class SOFA_COMPONENT_MASTERSOLVER_API FreeMotionMasterSolver : public sofa::simulation::MasterSolverImpl
 {
 public:
 	SOFA_CLASS(FreeMotionMasterSolver, sofa::simulation::MasterSolverImpl);
-        FreeMotionMasterSolver();
-        void step (const sofa::core::ExecParams* params /* PARAMS FIRST */, double dt);
-        void init();
 
-        virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );
+	FreeMotionMasterSolver();
+	virtual ~FreeMotionMasterSolver();
 
-        Data<bool> displayTime;
+	void step (const sofa::core::ExecParams* params /* PARAMS FIRST */, double dt);
+	void init();
+
+	virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );
+
+	Data<bool> displayTime;
 protected:
-        sofa::core::behavior::ConstraintSolver *constraintSolver;
-        constraintset::LCPConstraintSolver* defaultSolver;
+	sofa::core::behavior::ConstraintSolver *constraintSolver;
+	component::constraintset::LCPConstraintSolver* defaultSolver;
 };
 
 } // namespace mastersolver

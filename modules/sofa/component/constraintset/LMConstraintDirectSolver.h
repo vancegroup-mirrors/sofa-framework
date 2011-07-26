@@ -50,8 +50,8 @@ public:
 	SOFA_CLASS(LMConstraintDirectSolver, LMConstraintSolver);
 	LMConstraintDirectSolver();
 
-	virtual bool buildSystem(double dt, VecId, core::ConstraintParams::ConstOrder);
-	virtual bool solveSystem(double dt, VecId, core::ConstraintParams::ConstOrder);
+	virtual bool buildSystem(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null());
+	virtual bool solveSystem(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null());
 
 protected:
 

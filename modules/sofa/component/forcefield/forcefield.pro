@@ -86,7 +86,9 @@ HEADERS += initForceField.h \
            TriangularTensorMassForceField.h \
            TriangularTensorMassForceField.inl \
            VaccumSphereForceField.h \
-           VaccumSphereForceField.inl
+           VaccumSphereForceField.inl \
+           WashingMachineForceField.h \
+           WashingMachineForceField.inl
 
            
 SOURCES += initForceField.cpp \
@@ -126,7 +128,8 @@ SOURCES += initForceField.cpp \
            TriangularFEMForceField.cpp \
            TriangularQuadraticSpringsForceField.cpp \
            TriangularTensorMassForceField.cpp \
-           VaccumSphereForceField.cpp
+           VaccumSphereForceField.cpp \
+           WashingMachineForceField.cpp
 
            
 

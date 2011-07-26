@@ -132,4 +132,4 @@ private:
 
 } // namespace sofa
 
-#endif
+#endif /* SOFA_COMPONENT_COLLISION_LOCALMINDISTANCE_H */

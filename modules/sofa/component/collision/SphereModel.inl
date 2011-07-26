@@ -59,20 +59,22 @@ using namespace helper;
 
 template<class DataTypes>
 TSphereModel<DataTypes>::TSphereModel()
-: mstate(NULL)
-, radius(initData(&radius, "listRadius","Radius of each sphere"))
+: radius(initData(&radius, "listRadius","Radius of each sphere"))
 , defaultRadius(initData(&defaultRadius,(SReal)(1.0), "radius","Default Radius"))
+, translation(initData(&translation,Vector3(),"translation","Translation of the spheres"))
 , filename(initData(&filename, "fileSphere", "File .sph describing the spheres"))
+, mstate(NULL)
 {
   addAlias(&filename,"filename");
 }
 
 template<class DataTypes>
 TSphereModel<DataTypes>::TSphereModel(core::behavior::MechanicalState<DataTypes>* _mstate )
-: mstate(_mstate)
-, radius(initData(&radius, "listRadius","Radius of each sphere"))
+: radius(initData(&radius, "listRadius","Radius of each sphere"))
 , defaultRadius(initData(&defaultRadius,(SReal)(1.0), "radius","Default Radius"))
+, translation(initData(&translation,Vector3(),"translation","Translation of the spheres"))
 , filename(initData(&filename, "fileSphere", "File .sph describing the spheres"))
+, mstate(_mstate)
 {
   addAlias(&filename,"filename");
 }
@@ -120,6 +122,18 @@ void TSphereModel<DataTypes>::init()
             const int npoints = mstate->getX()->size();
             resize(npoints);
     }
+
+    applyTranslation(translation.getValue().x(),translation.getValue().y(),translation.getValue().z());
+}
+
+template<class DataTypes> 
+void TSphereModel<DataTypes>::applyTranslation(const double dx, const double dy, const double dz)
+{
+  for( int index = 0; index< mstate->getSize(); ++index){
+    // Collision element iterator
+    TSphere<DataTypes> s(this, index);
+    s.translate(dx,dy,dz);
+  }
 }
 
 template<class DataTypes>

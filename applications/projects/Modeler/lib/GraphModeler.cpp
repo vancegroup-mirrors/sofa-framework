@@ -67,6 +67,11 @@ namespace sofa
 
     namespace qt
     {
+      namespace
+      {
+        int numNode= 0;
+        int numComponent= 0;
+      }
 
 #ifndef SOFA_QT4
       typedef QPopupMenu Q3PopupMenu;
@@ -117,7 +122,9 @@ namespace sofa
         GNode *lastRoot = getRoot();
         if (!child)
         {
-          child = new GNode();
+          std::ostringstream oss;
+          oss << GNode::shortName(child) << numNode++;
+          child = new GNode(oss.str() );
           if (!parent)
             child->setName("Root");
         }
@@ -182,8 +189,12 @@ namespace sofa
         }
         if (c->canCreate(parent->getContext(), &description))
         {
-          object = c->createInstance(parent->getContext(), NULL);
-          //parent->addObject(object);
+          core::objectmodel::BaseObjectDescription arg;
+          std::ostringstream oss;
+          oss << c->shortName(&description) << numComponent++;
+          arg.setName(oss.str());
+          object = c->createInstance(parent->getContext(), &arg);
+          
           if (saveHistory)
           {
               GraphHistoryManager::Operation adding(object, GraphHistoryManager::Operation::ADD_OBJECT);
@@ -267,6 +278,7 @@ namespace sofa
           if (newComponent)
           {
             Q3ListViewItem *after = graphListener->items[newComponent];
+            after->setText(0, QString(newComponent->getName().c_str()));
             Q3ListViewItem *item = itemAt(event->pos());
             if (getObject(item)) initItem(after, item);
           }

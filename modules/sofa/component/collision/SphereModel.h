@@ -31,8 +31,8 @@
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/component/component.h>
 #include <sofa/defaulttype/VecTypes.h>
+#include <sofa/helper/accessor.h>
 
-#include <vector>
 
 namespace sofa
 {
@@ -55,6 +55,8 @@ public:
     typedef TDataTypes DataTypes;
     typedef typename DataTypes::Real   Real;
     typedef typename DataTypes::Coord Coord;
+    typedef typename DataTypes::VecCoord VecCoord;
+
     typedef TSphereModel<DataTypes> ParentModel;
 
     TSphere(ParentModel* model, int index);
@@ -65,6 +67,10 @@ public:
     const Coord& p() const;
     const Coord& pFree() const;
     const Coord& v() const;
+
+    /** @brief  Translates center of sphere. It modifies the center of the sphere with index "i"
+	  i.e. it modifies one element of the DOF's of the collision model*/
+    void translate(double dx, double dy, double dz);
 
 	/// Return true if the element stores a free position vector
 	bool hasFreePosition() const;
@@ -114,6 +120,8 @@ public:
 
 	virtual bool load(const char* filename);
 
+  void applyTranslation(const double /*dx*/, const double /*dy*/, const double /*dz*/);
+
 	int addSphere(const Vector3& pos, Real r);
 	void setSphere(int i, const Vector3& pos, Real r);
 
@@ -159,15 +167,14 @@ public:
         return DataTypes::Name();
     }
 
+    Data< VecReal > radius;
+    Data< SReal > defaultRadius;
+    Data< Vector3 > translation;
+    sofa::core::objectmodel::DataFileName filename;
+
+
 protected:
-
 	core::behavior::MechanicalState<DataTypes>* mstate;
-
-	Data< VecReal > radius;
-	Data< SReal > defaultRadius;
-
-	sofa::core::objectmodel::DataFileName filename;
-
 	class Loader;
 };
 
@@ -200,7 +207,17 @@ inline typename DataTypes::Real TSphere<DataTypes>::r() const { return (Real) th
 template<class DataTypes>
 inline bool TSphere<DataTypes>::hasFreePosition() const { return this->model->mstate->read(core::ConstVecCoordId::freePosition())->isSet(); }
 
-using namespace sofa::defaulttype;
+template<class DataTypes>
+void TSphere<DataTypes>::translate(double dx, double dy, double dz)
+{
+  helper::WriteAccessor<Data<VecCoord> > xData = *this->model->mstate->write(core::VecCoordId::position());
+  Coord& pos = xData.wref()[this->index];
+  pos.x() += (Real)dx;
+  pos.y() += (Real)dy;
+  pos.z() += (Real)dz;
+}
+
+
 typedef TSphereModel<Vec3Types> SphereModel;
 typedef TSphere<Vec3Types> Sphere;
 

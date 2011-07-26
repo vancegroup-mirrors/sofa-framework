@@ -87,50 +87,58 @@ bool BaseCamera::isActivated()
 
 void BaseCamera::init()
 {
-        if(p_position.isSet())
-        {
-                if(!p_orientation.isSet())
-                {
-                        p_distance.setValue((p_lookAt.getValue() - p_position.getValue()).norm());
 
-                        Quat q  = getOrientationFromLookAt(p_position.getValue(), p_lookAt.getValue());
-                        p_orientation.setValue(q);
-                }
-                else if(!p_lookAt.isSet())
-                {
-                        //distance assumed to be set
-                        if(!p_distance.isSet())
-                                sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
+}
 
-                        Vec3 lookat = getLookAtFromOrientation(p_position.getValue(), p_distance.getValue(), p_orientation.getValue());
-                        p_lookAt.setValue(lookat);
-                }
-                else
-                {
-                        serr << "Too many missing parameters ; taking default ..." << sendl;
-                }
-        }
-        else
-        {
-                if(p_lookAt.isSet() && p_orientation.isSet())
-                {
-                        //distance assumed to be set
-                        if(!p_distance.isSet())
-                                sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
+void BaseCamera::bwdInit()
+{
 
-                        Vec3 pos = getPositionFromOrientation(p_lookAt.getValue(), p_distance.getValue(), p_orientation.getValue());
-                        p_position.setValue(pos);
-                }
-                else
-                {
-                        serr << "Too many missing parameters ; taking default ..." << sendl;
-                }
-        }
+  if(p_position.isSet())
+  {
+    if(!p_orientation.isSet())
+    {
+      p_distance.setValue((p_lookAt.getValue() - p_position.getValue()).norm());
 
-        currentLookAt = p_lookAt.getValue();
-        currentDistance = p_distance.getValue();
-		currentZNear = p_zNear.getValue();
-		currentZFar = p_zFar.getValue();
+      Quat q  = getOrientationFromLookAt(p_position.getValue(), p_lookAt.getValue());
+      p_orientation.setValue(q);
+    }
+    else if(!p_lookAt.isSet())
+    {
+      //distance assumed to be set
+      if(!p_distance.isSet())
+        sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
+
+      Vec3 lookat = getLookAtFromOrientation(p_position.getValue(), p_distance.getValue(), p_orientation.getValue());
+      p_lookAt.setValue(lookat);
+    }
+    else
+    {
+      serr << "Too many missing parameters ; taking default ..." << sendl;
+    }
+  }
+  else
+  {
+    if(p_lookAt.isSet() && p_orientation.isSet())
+    {
+      //distance assumed to be set
+      if(!p_distance.isSet())
+        sout << "Missing distance parameter ; taking default value (0.0, 0.0, 0.0)" << sendl;
+
+      Vec3 pos = getPositionFromOrientation(p_lookAt.getValue(), p_distance.getValue(), p_orientation.getValue());
+      p_position.setValue(pos);
+    }
+    else
+    {
+      serr << "Too many missing parameters ; taking default ..." << sendl;
+    }
+  }
+  currentDistance = p_distance.getValue();
+  currentZNear = p_zNear.getValue();
+  currentZFar = p_zFar.getValue();
+  p_minBBox.setValue(getContext()->f_bbox.getValue().minBBox());
+  p_maxBBox.setValue(getContext()->f_bbox.getValue().maxBBox());
+
+
 }
 
 void BaseCamera::translate(const Vec3& t)
@@ -346,6 +354,7 @@ void BaseCamera::computeZ()
 
 		//get the same zFar and zNear calculations as QGLViewer
 		sceneCenter = (minBBox + maxBBox)*0.5;
+    sceneRadius = 0.5*(maxBBox - minBBox).norm();
 
 		double distanceCamToCenter = (currentPosition - sceneCenter).norm();
 		double zClippingCoeff = 3.5;
@@ -550,6 +559,8 @@ bool BaseCamera::importParametersFromFile(const std::string& viewFilename)
 			p_orientation.endEdit();
 			translate(translation);
 			in.close();
+
+      setDefaultView(this->getContext()->getGravity());
 
 			return true;
 		}

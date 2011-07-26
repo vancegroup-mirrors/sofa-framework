@@ -96,6 +96,7 @@ HEADERS += component.h \
            topology/PointSetGeometryAlgorithms.inl \
            topology/PointSetTopologyAlgorithms.inl \
            topology/PointSubset.h \
+           topology/PointSubset.inl \
            topology/Quad2TriangleTopologicalMapping.h \
            topology/QuadData.h \
            topology/QuadData.inl \

@@ -41,7 +41,7 @@
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
-#include <sofa/component/topology/PointSubset.h>
+#include <sofa/component/topology/PointSubset.inl>
 #include <sofa/component/topology/PointSetTopologyModifier.h>
 #include <sofa/component/topology/PointSetTopologyChange.h>
 #include <vector>
@@ -109,8 +109,9 @@ public:
     int N;
     Real lasttime;
     //int lastparticle;
-    topology::PointSubset lastparticles;
-    helper::vector<Coord> lastpos;
+    typedef typename VecCoord::template rebind<unsigned int>::other VecIndex;
+    topology::PointSubsetT< VecIndex > lastparticles;
+    VecCoord lastpos;
 
     virtual void init()
     {
@@ -358,13 +359,28 @@ protected :
     {
 		std::cout << "PSRemovalFunction\n";
         ParticleSource* ps = (ParticleSource*)p;
-        topology::PointSubset::const_iterator it = std::find(ps->lastparticles.begin(),ps->lastparticles.end(), (unsigned int)index);
+        /*topology::PointSubset::const_iterator it = std::find(ps->lastparticles.begin(),ps->lastparticles.end(), (unsigned int)index);
         if (it != ps->lastparticles.end())
         {
             ps->lastpos.erase( ps->lastpos.begin()+(it-ps->lastparticles.begin()) );
             //ps->lastparticles.getArray().erase(it);
             helper::removeValue(ps->lastparticles,(unsigned int)index);
-        }
+	}*/
+	unsigned int size = ps->lastparticles.size();
+	for (unsigned int i = 0; i < size; ++i)
+	{
+	    if ((int)ps->lastparticles[i] == index)
+	    {
+		if (i < size-1)
+		{
+		    ps->lastparticles[i] = ps->lastparticles[size-1];
+		    ps->lastpos[i] = ps->lastpos[size-1];
+		}
+		ps->lastparticles.pop_back();
+		ps->lastpos.pop_back();
+		return;
+	    }
+	}
     }
 
 };

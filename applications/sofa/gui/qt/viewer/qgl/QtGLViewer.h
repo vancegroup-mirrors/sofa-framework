@@ -194,7 +194,7 @@ class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::OglModelSofa
 	      virtual void mousePressEvent ( QMouseEvent * e );
 	      virtual void mouseReleaseEvent ( QMouseEvent * e );
 	      virtual void mouseMoveEvent ( QMouseEvent * e );
-              virtual void wheelEvent(QWheelEvent* e);
+        virtual void wheelEvent(QWheelEvent* e);
 	      bool mouseEvent( QMouseEvent * e );
 
 
@@ -206,6 +206,36 @@ class QtGLViewer :public QGLViewer,   public sofa::gui::qt::viewer::OglModelSofa
 	      void setSizeW(int);
 	      void setSizeH(int);
 	      virtual void captureEvent() { SofaViewer::captureEvent(); }
+        void fitObjectBBox(sofa::core::objectmodel::BaseObject* object)
+        {
+          if( object->f_bbox.getValue().isValid() && !object->f_bbox.getValue().isFlat() )
+            this->camera()->fitBoundingBox(
+                ::qglviewer::Vec(object->f_bbox.getValue().minBBox()),
+                ::qglviewer::Vec(object->f_bbox.getValue().maxBBox())
+                );
+          else{
+            if(object->getContext()->f_bbox.getValue().isValid() && !object->getContext()->f_bbox.getValue().isFlat()  )
+            {
+              this->camera()->fitBoundingBox(
+                  ::qglviewer::Vec(object->getContext()->f_bbox.getValue().minBBox()),
+                  ::qglviewer::Vec(object->getContext()->f_bbox.getValue().maxBBox())
+                  );
+            }
+          }
+          this->update();
+        }
+
+        void fitNodeBBox(sofa::core::objectmodel::BaseNode* node)
+        {
+          if( node->f_bbox.getValue().isValid() && !node->f_bbox.getValue().isFlat() )
+            this->camera()->fitBoundingBox(
+                ::qglviewer::Vec(node->f_bbox.getValue().minBBox()),
+                ::qglviewer::Vec(node->f_bbox.getValue().maxBBox())
+                );
+
+          this->update();
+
+        }
 
 	    signals:
 	      void redrawn();

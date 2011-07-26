@@ -30,8 +30,9 @@
 
 #include <sofa/component/misc/ParallelizeBuildMatrixEvent.h>
 #include <sofa/helper/AdvancedTimer.h>
-#include <string.h>
 #include <sofa/helper/system/thread/CTime.h>
+#include <string.h>
+#include <math.h>
 
 //#define DEBUG_PARALLELMATRIX
 
@@ -40,6 +41,13 @@ namespace sofa {
 namespace component {
 
 namespace linearsolver {
+
+#ifdef _MSC_VER
+static inline bool isnan(double v)
+{
+	return v!=v;
+}
+#endif
 
 using namespace helper::system::thread;
   
@@ -257,7 +265,7 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::M
 		    std::cout << "Creating thread ... " << std::endl;
 		    thread = new boost::thread(Thread_invert(this));
 		} else {
-		  double time = ((double) CTime::getTime() - timer) / (double)CTime::getRefTicksPerSec();
+		  double time = ((double) (CTime::getTime() - timer)) / (double)CTime::getRefTicksPerSec();
 		  sout << "Update preconditioner after " << nbstep_update << " steps in " << time << " ms" << sendl;
 		}
 		

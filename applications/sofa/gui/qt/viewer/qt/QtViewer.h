@@ -40,7 +40,7 @@
 
 #include <viewer/SofaViewer.h>
 
-#include "viewer/ViewerFactory.h"
+#include <viewer/ViewerFactory.h>
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
@@ -204,7 +204,7 @@ namespace qt
         void resizeGL( int w, int h );
 
     public:
-        void setScene(sofa::simulation::Node* scene, const char* filename=NULL, bool keepParams=false);
+
         sofa::simulation::Node* getScene()
         {
             return groot;

@@ -67,6 +67,7 @@ int Hexa2TetraTopologicalMappingClass = core::RegisterObject("Special case of ma
 
 Hexa2TetraTopologicalMapping::Hexa2TetraTopologicalMapping(In* from, Out* to)
 : TopologicalMapping(from, to)
+, swapping(initData(&swapping, false, "swapping","Boolean enabling to swapp hexa-edges\n in order to avoid bias effect"))
 {
 }
 
@@ -107,8 +108,8 @@ void Hexa2TetraTopologicalMapping::init()
 #else
 			int nbcubes = fromModel->getNbCubes();
 #endif
-			// These values are only correct if the mesh is a grid topology
-			int nx = 2;
+                        // These values are only correct if the mesh is a grid topology
+                        int nx = 2;
 			int ny = 1;
 			int nz = 1;
 			{
@@ -127,36 +128,53 @@ void Hexa2TetraTopologicalMapping::init()
 #ifdef SOFA_NEW_HEXA			
 				core::topology::BaseMeshTopology::Hexa c = fromModel->getHexahedron(i);
 #define swap(a,b) { int t = a; a = b; b = t; }
-				// TODO : swap indexes where needed (currently crash in TriangleSetContainer)
-// 				if (!((i%nx)&1))
-// 				{ // swap all points on the X edges
-// 					swap(c[0],c[1]);
-// 					swap(c[3],c[2]);
-// 					swap(c[4],c[5]);
-// 					swap(c[7],c[6]);
-// 				}
-// 				if (((i/nx)%ny)&1)
-// 				{ // swap all points on the Y edges
-// 					swap(c[0],c[3]);
-// 					swap(c[1],c[2]);
-// 					swap(c[4],c[7]);
-// 					swap(c[5],c[6]);
-// 				}
-// 				if ((i/(nx*ny))&1)
-// 				{ // swap all points on the Z edges
-// 					swap(c[0],c[4]);
-// 					swap(c[1],c[5]);
-// 					swap(c[2],c[6]);
-// 					swap(c[3],c[7]);
-// 				}
+                              // TODO : swap indexes where needed (currently crash in TriangleSetContainer)
+                                bool swapped = false;
+
+                                if(swapping.getValue())
+                                {
+                                    if (!((i%nx)&1))
+                                    { // swap all points on the X edges
+                                            swap(c[0],c[1]);
+                                            swap(c[3],c[2]);
+                                            swap(c[4],c[5]);
+                                            swap(c[7],c[6]);
+                                            swapped = !swapped;
+                                    }
+                                    if (((i/nx)%ny)&1)
+                                    { // swap all points on the Y edges
+                                            swap(c[0],c[3]);
+                                            swap(c[1],c[2]);
+                                            swap(c[4],c[7]);
+                                            swap(c[5],c[6]);
+                                            swapped = !swapped;
+                                    }
+                                    if ((i/(nx*ny))&1)
+                                    { // swap all points on the Z edges
+                                            swap(c[0],c[4]);
+                                            swap(c[1],c[5]);
+                                            swap(c[2],c[6]);
+                                            swap(c[3],c[7]);
+                                            swapped = !swapped;
+                                    }
+                                }
 #undef swap
 				typedef core::topology::BaseMeshTopology::Tetra Tetra;
-				to_tstm->addTetrahedronProcess(Tetra(c[0],c[5],c[1],c[6]));
-				to_tstm->addTetrahedronProcess(Tetra(c[0],c[1],c[3],c[6]));
-				to_tstm->addTetrahedronProcess(Tetra(c[1],c[3],c[6],c[2]));
-				to_tstm->addTetrahedronProcess(Tetra(c[6],c[3],c[0],c[7]));
-				to_tstm->addTetrahedronProcess(Tetra(c[6],c[7],c[0],c[5]));
-				to_tstm->addTetrahedronProcess(Tetra(c[7],c[5],c[4],c[0]));
+
+                                if(!swapped){
+                                    to_tstm->addTetrahedronProcess(Tetra(c[0],c[5],c[1],c[6]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[0],c[1],c[3],c[6]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[1],c[3],c[6],c[2]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[6],c[3],c[0],c[7]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[6],c[7],c[0],c[5]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[7],c[5],c[4],c[0]));}
+                                else{
+                                    to_tstm->addTetrahedronProcess(Tetra(c[0],c[5],c[6],c[1]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[0],c[1],c[6],c[3]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[1],c[3],c[2],c[6]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[6],c[3],c[7],c[0]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[6],c[7],c[5],c[0]));
+                                    to_tstm->addTetrahedronProcess(Tetra(c[7],c[5],c[0],c[4]));}
 #else
 				core::topology::BaseMeshTopology::Cube c = fromModel->getCube(i);
 				int sym = 0;
@@ -175,7 +193,7 @@ void Hexa2TetraTopologicalMapping::init()
 					Loc2GlobVec.push_back(i);
 				Glob2LocMap[i]=Loc2GlobVec.size()-1;
 			}
-			
+
 			//to_tstm->propagateTopologicalChanges();
 			to_tstm->notifyEndingEvent();
 			//to_tstm->propagateTopologicalChanges();

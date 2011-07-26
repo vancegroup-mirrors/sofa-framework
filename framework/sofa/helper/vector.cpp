@@ -25,6 +25,7 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <sofa/helper/vector.h>
+#include <sofa/helper/vector_device.h>
 #include <sofa/helper/Factory.h>
 #include <sofa/helper/BackTrace.h>
 #include <cassert>
@@ -35,11 +36,11 @@ namespace sofa
 
 namespace helper
 {
-  
+
 #ifdef DEBUG_OUT_VECTOR 
 int cptid = 0;
 #endif
-  
+
 void SOFA_HELPER_API vector_access_failure(const void* vec, unsigned size, unsigned i, const std::type_info& type)
 {
     std::cerr << "ERROR in vector<"<<gettypename(type)<<"> " << std::hex << (long)vec << std::dec << " size " << size << " : invalid index " << (int)i << std::endl;

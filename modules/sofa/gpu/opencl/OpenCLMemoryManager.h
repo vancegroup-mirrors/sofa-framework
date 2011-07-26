@@ -22,9 +22,14 @@ void OpenCLMemoryManager_memsetDevice(int d, _device_pointer a, int value, size_
   * OpenCL and multi-GPU version of MemoryManager
   */
 template <class T>
-class OpenCLMemoryManager: public sofa::helper::MemoryManager<T> {
+class OpenCLMemoryManager: public sofa::helper::MemoryManager<T>
+{
+public:
 
-  public :
+    template<class T2> struct rebind {
+	typedef OpenCLMemoryManager<T2> other;
+    };
+
 	typedef T* host_pointer;
 
 	typedef _device_pointer device_pointer ;

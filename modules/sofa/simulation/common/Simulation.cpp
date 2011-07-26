@@ -45,7 +45,7 @@
 #include <sofa/simulation/common/UpdateMappingEndEvent.h>
 #include <sofa/simulation/common/CleanupVisitor.h>
 #include <sofa/simulation/common/DeleteVisitor.h>
-
+#include <sofa/simulation/common/UpdateBoundingBoxVisitor.h>
 #include <sofa/simulation/common/xml/NodeElement.h>
 
 #include <sofa/helper/system/SetDirectory.h>
@@ -273,6 +273,10 @@ void Simulation::animate ( Node* root, double dt )
         root->execute ( act );
     }
     sofa::helper::AdvancedTimer::stepEnd("UpdateMapping");
+
+    sofa::helper::AdvancedTimer::stepBegin("UpdateBBox");
+    root->execute<UpdateBoundingBoxVisitor>(params);
+    sofa::helper::AdvancedTimer::stepEnd("UpdateBBox");
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printCloseNode(std::string("Step"));
 #endif

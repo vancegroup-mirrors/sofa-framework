@@ -128,6 +128,7 @@ SOURCES += mycuda.cpp \
            CudaEllipsoidForceField.cpp \
            CudaIdentityMapping.cpp \
            CudaBarycentricMapping.cpp \
+           CudaBarycentricMappingRigid.cpp \
            CudaRigidMapping.cpp \
            CudaSubsetMapping.cpp \
            CudaDistanceGridCollisionModel.cpp \

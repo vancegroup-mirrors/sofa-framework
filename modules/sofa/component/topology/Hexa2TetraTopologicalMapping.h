@@ -92,6 +92,9 @@ namespace topology
 		virtual void updateTopologicalMappingTopDown();
 
 		virtual unsigned int getFromIndex(unsigned int ind);
+
+                sofa::core::objectmodel::Data<bool> swapping;
+
 	};
 
 } // namespace topology

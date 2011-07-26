@@ -52,6 +52,25 @@ namespace mass
 using namespace	sofa::component::topology;
 using namespace core::topology;
 
+using namespace sofa::defaulttype;
+using namespace sofa::core::behavior;
+
+
+template <class DataTypes, class MassType>
+MeshMatrixMass<DataTypes, MassType>::MeshMatrixMass()
+  : vertexMassInfo( initData(&vertexMassInfo, "vertexMass", "values of the particles masses on vertices") )
+  , edgeMassInfo( initData(&edgeMassInfo, "edgeMass", "values of the particles masses on edges") )
+  , m_massDensity( initData(&m_massDensity, (Real)1.0,"massDensity", "mass density that allows to compute the  particles masses from a mesh topology and geometry.\nOnly used if > 0") )
+  , showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
+  , showAxisSize( initData(&showAxisSize, (Real)1.0, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
+  , lumping( initData(&lumping, true, "lumping","boolean if you need to use a lumped mass matrix") )
+  , printMass( initData(&printMass, false, "printMass","boolean if you want to get the totalMass") )
+  , f_graph( initData(&f_graph,"graph","Graph of the controlled potential") )
+  , topologyType(TOPOLOGY_UNKNOWN)
+
+{
+    f_graph.setWidget("graph");
+}
 
   template< class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::VertexMassCreationFunction(int, void* , MassType & VertexMass,
@@ -600,27 +619,6 @@ using namespace core::topology;
 
 
 
-
-  using namespace sofa::defaulttype;
-  using namespace sofa::core::behavior;
-
-
-  template <class DataTypes, class MassType>
-  MeshMatrixMass<DataTypes, MassType>::MeshMatrixMass()
-    : vertexMassInfo( initData(&vertexMassInfo, "vertexMass", "values of the particles masses on vertices") )
-    , edgeMassInfo( initData(&edgeMassInfo, "edgeMass", "values of the particles masses on edges") )
-    , m_massDensity( initData(&m_massDensity, (Real)1.0,"massDensity", "mass density that allows to compute the  particles masses from a mesh topology and geometry.\nOnly used if > 0") )
-    , showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
-    , showAxisSize( initData(&showAxisSize, 1.0f, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
-    , lumping( initData(&lumping, true, "lumping","boolean if you need to use a lumped mass matrix") )
-    , printMass( initData(&printMass, false, "printMass","boolean if you want to get the totalMass") )
-    , topologyType(TOPOLOGY_UNKNOWN)
-    , massLumpingCoeff(0.0)
-  {
-
-  }
-
-
   template <class DataTypes, class MassType>
   void MeshMatrixMass<DataTypes, MassType>::init()
   {
@@ -651,6 +649,7 @@ using namespace core::topology;
 	}*/
     
     this->Inherited::init();
+    massLumpingCoeff = 0.0;
     
     _topology = this->getContext()->getMeshTopology();
     savedMass = m_massDensity.getValue();
@@ -700,6 +699,9 @@ using namespace core::topology;
     if ((vertexMassInfo.getValue().size()==0 || edgeMassInfo.getValue().size()==0) && (_topology!=0))
         reinit();
 
+    //Reset the graph
+    f_graph.beginEdit()->clear();
+    f_graph.endEdit();
   }
 
   template <class DataTypes, class MassType>
@@ -833,11 +835,20 @@ using namespace core::topology;
     {
         for (unsigned int i=0;i<dx.size();i++)
         {
-           res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
-           massTotal += vertexMass[i]*2.5;
+           res[i] += dx[i] * vertexMass[i] * massLumpingCoeff * (Real)factor;
+           massTotal += vertexMass[i]*massLumpingCoeff * (Real)factor;
         }
         if(printMass.getValue() && (this->getContext()->getTime()==0.0))
             std::cout<<"Mass totale = "<<massTotal<<std::endl;
+
+        if(printMass.getValue())
+        {
+            std::map < std::string, sofa::helper::vector<double> >& graph = *f_graph.beginEdit();
+            sofa::helper::vector<double>& graph_error = graph["Mass variations"];
+            graph_error.push_back(massTotal);
+
+            f_graph.endEdit();
+        }
     }
 
 
@@ -850,14 +861,14 @@ using namespace core::topology;
         for (unsigned int i=0;i<dx.size();i++)
         {
            res[i] += dx[i] * vertexMass[i] * (Real)factor;
-           massTotal += vertexMass[i];
+           massTotal += vertexMass[i] * (Real)factor;
         }
 
        Real tempMass=0.0;
 
        for (unsigned int j=0; j<nbEdges; ++j)
        {
-           tempMass = edgeMass[j] *(Real)factor;
+           tempMass = edgeMass[j] * (Real)factor;
 
            v0=_topology->getEdge(j)[0];
            v1=_topology->getEdge(j)[1];
@@ -865,11 +876,20 @@ using namespace core::topology;
            res[v0] += dx[v1] * tempMass;
            res[v1] += dx[v0] * tempMass;
 
-           massTotal += 2*edgeMass[j];
+           massTotal += 2*edgeMass[j] * (Real)factor;
        }
 
        if(printMass.getValue() && (this->getContext()->getTime()==0.0))
            std::cout<<"Mass totale = "<<massTotal<<std::endl;
+
+       if(printMass.getValue())
+       {
+           std::map < std::string, sofa::helper::vector<double> >& graph = *f_graph.beginEdit();
+           sofa::helper::vector<double>& graph_error = graph["Mass variations"];
+           graph_error.push_back(massTotal+0.000001);
+
+           f_graph.endEdit();
+       }
      }
 
   }
@@ -882,27 +902,12 @@ using namespace core::topology;
     (void)a;
     (void)f;
 
-//    if(!this->lumping.getValue())
-        serr << "WARNING: the methode 'accFromF' can't be used with MeshMatrixMass as this SPARSE mass matrix can't be inversed easily. \nPlease proceed to mass lumping." << sendl;
-//    else
-//    {
-//        //Inversion of M after mass lumping
-
-//        const MassVector &vertexMass= vertexMassInfo.getValue();
-//        unsigned int vertexNb = vertexMass.size();
-
-//        helper::WriteAccessor< DataVecDeriv > _acc = a;
-//        const VecDeriv& _f = f.getValue();
-
-//        for (unsigned int i=0;i<vertexNb;i++)
-//        {
-//            _acc[i] = _f[i] / (vertexMass[i] * massLumpingCoeff);
-//        }
-
-//    }
-
+    serr << "WARNING: the methode 'accFromF' can't be used with MeshMatrixMass as this SPARSE mass matrix can't be inversed easily. \nPlease proceed to mass lumping." << sendl;
     return;
   }
+
+
+
 
 #ifdef SOFA_SUPPORT_MOVING_FRAMES
   template <class DataTypes, class MassType>
@@ -1013,21 +1018,19 @@ using namespace core::topology;
 template <class DataTypes, class MassType>
 void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalParams* mparams /* PARAMS FIRST */, DataVecDeriv& d_v)
 {
-	if(this->mstate && mparams)
-	{
-	  VecDeriv& v = *d_v.beginEdit();
+    if(this->mstate && mparams)
+    {
+        VecDeriv& v = *d_v.beginEdit();
 
-      // gravity
-      Vec3d g ( this->getContext()->getGravity() );
-      Deriv theGravity;
-      DataTypes::set ( theGravity, g[0], g[1], g[2]);
-      Deriv hg = theGravity * (typename DataTypes::Real)(mparams->dt());
+        // gravity
+        Vec3d g ( this->getContext()->getGravity() );
+        Deriv theGravity;
+        DataTypes::set ( theGravity, g[0], g[1], g[2]);
+        Deriv hg = theGravity * (typename DataTypes::Real)(mparams->dt());
 
-      for (unsigned int i=0;i<v.size();i++) 
-	  {
-		v[i] += hg;
-      }
-		d_v.endEdit();
+        for (unsigned int i=0;i<v.size();i++)
+          v[i] += hg;
+        d_v.endEdit();
     }
 
   }
@@ -1040,7 +1043,7 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalPa
   {
     const MassVector &vertexMass= vertexMassInfo.getValue();
     const MassVector &edgeMass= edgeMassInfo.getValue();
-    
+
     unsigned int nbEdges=_topology->getNbEdges();
     unsigned int v0,v1;
 
@@ -1049,36 +1052,66 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalPa
     sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
     Real mFactor = (Real)mparams->mFactor();
 
+    double massTotal=0.0;
+
     if(this->lumping.getValue())
     {
         for (unsigned int i=0;i<vertexMass.size();i++)
-            calc(r.matrix, vertexMass[i]*massLumpingCoeff, r.offset + N*i, mFactor);
+        {
+            calc(r.matrix, vertexMass[i] * massLumpingCoeff, r.offset + N*i, mFactor);
+            massTotal += vertexMass[i] * massLumpingCoeff;
+        }
+
+        if(printMass.getValue() && (this->getContext()->getTime()==0.0))
+            std::cout<<"Mass totale = "<<massTotal<<std::endl;
+
+        if(printMass.getValue())
+        {
+            std::map < std::string, sofa::helper::vector<double> >& graph = *f_graph.beginEdit();
+            sofa::helper::vector<double>& graph_error = graph["Mass variations"];
+            graph_error.push_back(massTotal);
+
+            f_graph.endEdit();
+        }
     }
 
 
     else
     {
         for (unsigned int i=0;i<vertexMass.size();i++)
-          calc(r.matrix, vertexMass[i], r.offset + N*i, mFactor);
-
-
-        for (unsigned int i=0; i<nbEdges; ++i)
         {
-          v0=_topology->getEdge(i)[0];
-          v1=_topology->getEdge(i)[1];
-
-
-          calc(r.matrix, edgeMass[i], r.offset + v0, r.offset + v1, mFactor);
-          calc(r.matrix, edgeMass[i], r.offset + v1, r.offset + v0, mFactor);
-
-
+            calc(r.matrix, vertexMass[i], r.offset + N*i, mFactor);
+            massTotal += vertexMass[i];
         }
+
+
+        for (unsigned int j=0; j<nbEdges; ++j)
+        {
+            v0=_topology->getEdge(j)[0];
+            v1=_topology->getEdge(j)[1];
+
+            calc(r.matrix, edgeMass[j], r.offset + N*v0, r.offset + N*v1, mFactor);
+            calc(r.matrix, edgeMass[j], r.offset + N*v1, r.offset + N*v0, mFactor);
+
+            massTotal += 2*edgeMass[j];
+        }
+
+        if(printMass.getValue() && (this->getContext()->getTime()==0.0))
+            std::cout<<"Mass totale = "<<massTotal<<std::endl;
+
+        if(printMass.getValue())
+        {
+            std::map < std::string, sofa::helper::vector<double> >& graph = *f_graph.beginEdit();
+            sofa::helper::vector<double>& graph_error = graph["Mass variations"];
+            graph_error.push_back(massTotal+0.000001);
+
+            f_graph.endEdit();
+        }
+
     }
 
 
   }
-
-
 
 
   
@@ -1092,6 +1125,7 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalPa
 
      return mass;
   }
+
 
 
   //TODO: special case for Rigid Mass

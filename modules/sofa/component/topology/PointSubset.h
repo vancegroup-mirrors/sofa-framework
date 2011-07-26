@@ -59,45 +59,55 @@ namespace topology
 		return;
 	}
 
-	/** \brief A class for storing indices of points as to define a subset of the DOFs. Automatically manages topology changes.
-	*
-	* This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
-	* happen (non exhaustive list: points added, removed, fused, renumbered).
-	*/
-	class SOFA_COMPONENT_TOPOLOGY_API PointSubset 
-	{
-	public:
-		// forwarding common vector methods and typedefs
-		typedef  helper::vector<unsigned int>::value_type                value_type;
-		typedef  helper::vector<unsigned int>::pointer                   pointer;
-		typedef  helper::vector<unsigned int>::reference                 reference;
-		typedef  helper::vector<unsigned int>::const_reference           const_reference;
-		typedef  helper::vector<unsigned int>::size_type                 size_type;
-		typedef  helper::vector<unsigned int>::difference_type          difference_type;
-		typedef  helper::vector<unsigned int>::iterator                  iterator;
-		typedef  helper::vector<unsigned int>::const_iterator            const_iterator;
-		typedef  helper::vector<unsigned int>::reverse_iterator          reverse_iterator;
-		typedef  helper::vector<unsigned int>::const_reverse_iterator    const_reverse_iterator;
+/** \brief A class for storing indices of points as to define a subset of the DOFs. Automatically manages topology changes.
+ *
+ * This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
+ * happen (non exhaustive list: points added, removed, fused, renumbered).
+ */
+template< class VecT = helper::vector<unsigned int> > 
+class PointSubsetT 
+{
+public:
+    // forwarding common vector methods and typedefs
+    typedef VecT Container;
+    typedef PointSubsetT<Container> PointSubset;
+    typedef typename Container::value_type                value_type;
+    //typedef typename Container::pointer                   pointer;
+    typedef typename Container::reference                 reference;
+    typedef typename Container::const_reference           const_reference;
+    typedef typename Container::size_type                 size_type;
+    //typedef typename Container::difference_type          difference_type;
+    typedef typename Container::iterator                  iterator;
+    typedef typename Container::const_iterator            const_iterator;
+    //typedef typename Container::reverse_iterator          reverse_iterator;
+    //typedef typename Container::const_reverse_iterator    const_reverse_iterator;
 
-	public:
-		/// Optionally takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
-		PointSubset( bool (*testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&)=ps_testNewPointFunc, 
-					void* testParam  = (void*)NULL, 
-					void (*removeFunc)(int, void*) = ps_removeFunc, 
-					void* removeParam = (void*)NULL ) 
-		: m_testNewPointFunc(testNewPointFunc), 
-		m_removalFunc(removeFunc), m_testParam(testParam), m_removeParam(removeParam), lastPointIndex(0)
-		{}
+public:
+    /// Optionally takes 2 parameters, a creation and a destruction function that will be called when adding/deleting elements.
+    PointSubsetT( bool (*testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&)=ps_testNewPointFunc, 
+		 void* testParam  = (void*)NULL, 
+		 void (*removeFunc)(int, void*) = ps_removeFunc, 
+		 void* removeParam = (void*)NULL ) 
+	: m_testNewPointFunc(testNewPointFunc), 
+	m_removalFunc(removeFunc), m_testParam(testParam), m_removeParam(removeParam), lastPointIndex(0)
+    {}
 
-		/// Handle PointSetTopology related events, ignore others.
-		void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
-								std::list< const core::topology::TopologyChange *>::const_iterator &end,
-								const unsigned int totalPointSetArraySize);
+    /// Handle PointSetTopology related events, ignore others.
+    void handleTopologyEvents( std::list< const core::topology::TopologyChange *>::const_iterator changeIt, 
+			       std::list< const core::topology::TopologyChange *>::const_iterator &end,
+			       const unsigned int totalPointSetArraySize);
+    
+    // defining operators so that pointSubset can be used in a Data (see Data class).
+    friend std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset)
+    {
+	return ostream << pointSubset.m_subset;
+    }
 
-		// defining operators so that pointSubset can be used in a Data (see Data class).
-		friend SOFA_COMPONENT_TOPOLOGY_API std::ostream& operator<< (std::ostream& ostream, const PointSubset& pointSubset);
-		friend SOFA_COMPONENT_TOPOLOGY_API std::istream& operator>> (std::istream& i,             PointSubset& pointSubset);
-
+    friend std::istream& operator>> (std::istream& istream,       PointSubset& pointSubset)
+    {
+	return istream >> pointSubset.m_subset;
+    }
+    
 		void setTestFunction(bool (*testNewPointFunc )(int, void*, const sofa::helper::vector< unsigned int > &, 
 														const sofa::helper::vector< double >& )) 
 		{
@@ -119,7 +129,7 @@ namespace topology
 			m_testParam=testParam;
 		}
 
-		const helper::vector< unsigned int > & getArray() const { return m_subset; }
+		const Container & getArray() const { return m_subset; }
 
 		iterator begin() { return m_subset.begin(); }
 
@@ -128,7 +138,7 @@ namespace topology
 		const_iterator begin() const { return m_subset.begin(); }
 
 		const_iterator end() const { return m_subset.end(); }
-
+#if 0
 		reverse_iterator rbegin() { return m_subset.rbegin(); }
 
 		reverse_iterator rend() { return m_subset.rend(); }
@@ -136,7 +146,7 @@ namespace topology
 		const_reverse_iterator rbegin() const { return m_subset.rbegin(); }
 
 		const_reverse_iterator rend() const { return m_subset.rend(); }
-
+#endif
 		size_type size() const { return m_subset.size(); }
 
 		size_type max_size() const { return m_subset.max_size(); }
@@ -148,10 +158,6 @@ namespace topology
 		reference operator[]( size_type n ) { return m_subset[n]; }
 
 		const_reference operator[]( size_type i ) const { return m_subset[i]; }
-
-		//        PointSubset& operator=( const sofa::helper::vector<unsigned int> & vector ) { m_subset( vector ); return *this; }
-
-		//        PointSubset& operator=( const PointSubset& pointSubset ) { m_subset( pointSubset.m_subset ); return *this; }
 
 		void reserve( size_t n ) { m_subset.reserve( n ); }
 
@@ -167,7 +173,7 @@ namespace topology
 
 		void pop_back() { m_subset.pop_back(); }
 
-		void swap( helper::vector<unsigned int> &vector ) { m_subset.swap( vector ); }
+		void swap( Container &vector ) { m_subset.swap( vector ); }
 
 		void swap( PointSubset &pointSubset) { m_subset.swap( pointSubset.m_subset ); }
 
@@ -192,9 +198,9 @@ namespace topology
 
 		void setTotalPointSetArraySize(const unsigned int s) { lastPointIndex=s-1; }
 
-	private:
+private:
 		/// Actual point subset stored.
-		helper::vector< unsigned int > m_subset;
+		Container m_subset;
 
 		/// test function, called when new points are created.
 		bool (*m_testNewPointFunc)(int, void*, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&);
@@ -216,13 +222,14 @@ namespace topology
 
 		/// to handle properly the removal of items, the container must know the index of the last element
 		unsigned int lastPointIndex;
-	};
+};
 
-	/// Needed to be compliant with Datas.
-	SOFA_COMPONENT_TOPOLOGY_API std::ostream& operator<< (std::ostream& os, const PointSubset& pointSubset);
+typedef PointSubsetT<> PointSubset;
 
-	/// Needed to be compliant with Datas.
-	SOFA_COMPONENT_TOPOLOGY_API std::istream& operator>>(std::istream& i, PointSubset& pointSubset);
+#if defined(WIN32) && !defined(SOFA_COMPONENT_TOPOLOGY_POINTSUBSET_CPP)
+#pragma warning(disable : 4231)
+extern template class SOFA_COMPONENT_TOPOLOGY_API PointSubsetT< helper::vector<unsigned int> >;
+#endif
 
 } // namespace topology
 
@@ -233,8 +240,8 @@ namespace topology
 namespace defaulttype
 {
 
-template<>
-struct DataTypeInfo< sofa::component::topology::PointSubset > : public VectorTypeInfo<sofa::component::topology::PointSubset >
+template<class VecT>
+struct DataTypeInfo< sofa::component::topology::PointSubsetT<VecT> > : public VectorTypeInfo<sofa::component::topology::PointSubsetT<VecT> >
 {
     static const char* name() { return "PointSubset"; }
 };
@@ -243,4 +250,4 @@ struct DataTypeInfo< sofa::component::topology::PointSubset > : public VectorTyp
 
 } // namespace sofa
 
-#endif // _POINTSUBSET_H_
+#endif // SOFA_COMPONENT_TOPOLOGY_POINTSUBSET_H

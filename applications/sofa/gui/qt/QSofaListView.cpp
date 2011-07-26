@@ -229,6 +229,18 @@ namespace sofa{
         graphListener_->unfreeze(groot);
       }
 
+      void QSofaListView::focusObject()
+      {
+        if( object_.isObject())
+        emit( focusChanged(object_.ptr.Object));
+
+      }
+      void QSofaListView::focusNode()
+      {
+        if( object_.isNode())
+        emit( focusChanged(object_.ptr.Node));
+      }
+
 
         /*****************************************************************************************************************/
       void QSofaListView::RunSofaRightClicked( Q3ListViewItem *item, 
@@ -244,7 +256,18 @@ namespace sofa{
           object_hasData = object_.ptr.Object->getFields().size() > 0 ? true : false;
         }
         Q3PopupMenu *contextMenu = new Q3PopupMenu ( this, "ContextMenu" );
-        
+        if( object_.isNode() ){
+          int index_menu = contextMenu->insertItem("Focus", this,SLOT(focusNode()) );
+          bool enable = object_.ptr.Node->f_bbox.getValue().isValid() && !object_.ptr.Node->f_bbox.getValue().isFlat();
+          contextMenu->setItemEnabled(index_menu,enable);
+         }
+        if( object_.isObject() ){
+          int index_menu = contextMenu->insertItem("Focus", this,SLOT( focusObject() ) );
+          bool enable = object_.ptr.Object->f_bbox.getValue().isValid() && !object_.ptr.Object->f_bbox.getValue().isFlat() ;
+          contextMenu->setItemEnabled(index_menu,enable);
+        }
+        contextMenu->insertSeparator();
+
         //Creation of the context Menu
         if ( object_.type == typeNode)
         {

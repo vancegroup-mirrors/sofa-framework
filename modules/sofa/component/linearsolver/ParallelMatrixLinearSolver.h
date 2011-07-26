@@ -82,7 +82,8 @@ class SOFA_EXPORT_DYNAMIC_LIBRARY ParallelMatrixLinearSolver : public MatrixLine
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <sofa/helper/system/atomic.h>
-    
+#include <sofa/helper/system/thread/CTime.h>
+
 namespace sofa {
 
 namespace component {
@@ -253,7 +254,7 @@ protected:
 	int indexwork;	
 	bool useRotation;
 	bool useDerivative;
-	double timer;
+	sofa::helper::system::thread::ctime_t timer;
 	
 	unsigned indRotationFinder;
 	std::vector<sofa::component::misc::BaseRotationFinder *> rotationFinders;

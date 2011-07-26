@@ -14,13 +14,6 @@
 			<CGLinearSolver iterations="25" threshold="0.000000000001" tolerance="0.000001"  />
 			<MechanicalObject template="Rigid" name="MS2"/>
 			<UniformMass filename="BehaviorModels/torus.rigid" />
-			<Node name="mappednode0">
-        		        <MeshLoader name="meshLoader"  filename="mesh/torus_for_collision.obj"/>
-				<Mesh />
-				<MechanicalObject name="MS4"/>
-				<Triangle />
-				<RigidMapping name="mapping24" input="@../MS2" output="@MS4"  mapForces="1" mapConstraints="1" mapMasses="1"/>
-			</Node>
 			<Node name="mappednode2">
 				<MechanicalObject name="MS6"/>
 				<RigidMapping name="mapping26" input="@../MS2" output="@MS6"  mapForces="1" mapConstraints="1" mapMasses="1"/>
@@ -32,6 +25,13 @@
 						<IdentityMapping name="mapping8v" input="@../MS8" output="@Visual" />
 					</Node>
 				</Node>
+			</Node>
+			<Node name="mappednode0">
+        		        <MeshLoader name="meshLoader"  filename="mesh/torus_for_collision.obj"/>
+				<Mesh />
+				<MechanicalObject name="MS4"/>
+				<Triangle />
+				<RigidMapping name="mapping24" input="@../MS2" output="@MS4"  mapForces="1" mapConstraints="1" mapMasses="1"/>
 			</Node>
 		</Node>
 		<Node name="TorusRigid2">

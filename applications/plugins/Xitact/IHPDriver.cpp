@@ -140,8 +140,6 @@ SOFA_XITACTPLUGIN_API void UpdateForceFeedBack(void* toolData)
 	
 	if (myData->lcp_true_vs_vm_false)
 		myData->lcp_forceFeedback->computeForce(currentState, ForceBack);//Error here
-	else
-		myData->vm_forceFeedback->computeForce(currentState, velocity, ForceBack);
 
 
 
@@ -237,8 +235,6 @@ IHPDriver::IHPDriver()
 	graspElasticMode = false;
 	findForceFeedback= false;
 
-
-	data.vm_forceFeedback=NULL;
 	data.lcp_forceFeedback=NULL;
 }
 
@@ -276,21 +272,6 @@ void IHPDriver::setLCPForceFeedback(LCPForceFeedback<defaulttype::Vec1dTypes>* f
 	data.lcp_true_vs_vm_false = true;
 };
 
-void IHPDriver::setVMForceFeedback(VMechanismsForceFeedback<defaulttype::Vec1dTypes>* ff)
-{
-	std::cout<<"IHPDriver::setVMForceFeedback() called:"<<std::endl;/////////////////////////////////////////////////////////
-	if(data.vm_forceFeedback == ff)
-	{
-		return;
-	}
-
-	if(data.vm_forceFeedback)
-		delete data.vm_forceFeedback;
-	data.vm_forceFeedback =ff;
-	data.lcp_true_vs_vm_false=false;
-
-	std::cout<<"IHPDriver::setVMForceFeedback() ok:"<<std::endl;/////////////////////////////////////////////////////////
-};
 
 void IHPDriver::bwdInit()
 {
@@ -317,18 +298,9 @@ void IHPDriver::bwdInit()
 		this->setLCPForceFeedback(ff);
 		findForceFeedback = true;
 		sout << "setLCPForceFeedback(ff) ok" << sendl;
-	}
+	}   
 	else
 	{
-		
-		VMechanismsForceFeedback<defaulttype::Vec1dTypes> *ff = context->get<VMechanismsForceFeedback<defaulttype::Vec1dTypes>>();
-		if(ff)
-		{
-			this->setVMForceFeedback(ff);
-			findForceFeedback = true;
-			sout << "setVMForceFeedback(ff) ok" << sendl;
-		}
-		else
 			std::cout << " Error: no FF found" << std::endl;
 	}
 
@@ -579,12 +551,15 @@ void IHPDriver::handleEvent(core::objectmodel::Event *event)
 
 			if(_mstate->getSize()>5)
 			{
-				(*_mstate->getX0())[0].x() = thetaX;
-				(*_mstate->getX0())[1].x() = thetaZ;
-				(*_mstate->getX0())[2].x() = state.toolRoll;
-				(*_mstate->getX0())[3].x() = state.toolDepth*Scale.getValue();
-				(*_mstate->getX0())[4].x() =state.opening;
-				(*_mstate->getX0())[5].x() =state.opening;
+				Data<Vec1dTypes::VecCoord >* dataTrocar = _mstate->write(sofa::core::VecCoordId::restPosition());
+				helper::WriteAccessor< Data< Vec1dTypes::VecCoord > > vecXTrocar = dataTrocar;
+
+				vecXTrocar[0].x() = thetaX;
+				vecXTrocar[1].x() = thetaZ;
+				vecXTrocar[2].x() = state.toolRoll;
+				vecXTrocar[3].x() = state.toolDepth*Scale.getValue();
+				vecXTrocar[4].x() = state.opening;
+				vecXTrocar[5].x() = state.opening;
 			}
 			else
 			{

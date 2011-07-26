@@ -160,7 +160,7 @@ if(dynamicGpuPrioritary)
 
     
     if (!files.empty()) fileName = files[0];
-    else fileName = "examples/CUDA/quadSpringSphereCUDA.scn";
+    else fileName = "CUDA/quadSpringSphereCUDA.scn";
     //std::string fileName = "CUDA/beam10x10x46-spring-rk4-CUDA.scn";
 
 

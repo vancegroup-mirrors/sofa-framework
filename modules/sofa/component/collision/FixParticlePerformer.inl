@@ -109,7 +109,7 @@ namespace sofa
           {
               bool b = fixations[i]->getContext()->getShowBehaviorModels();
               fixations[i]->getContext()->setShowBehaviorModels(true);
-              simulation::getSimulation()->draw(fixations[i],const_cast<core::visual::VisualParams*>(vparams));
+              simulation::getSimulation()->draw(const_cast<core::visual::VisualParams*>(vparams),fixations[i]);
               fixations[i]->getContext()->setShowBehaviorModels(b);              
           }
       }

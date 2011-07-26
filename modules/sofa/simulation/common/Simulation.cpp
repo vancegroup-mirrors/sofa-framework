@@ -51,7 +51,6 @@
 #include <sofa/helper/system/SetDirectory.h>
 #include <sofa/helper/system/PipeProcess.h>
 #include <sofa/helper/AdvancedTimer.h>
-#include <sofa/helper/gl/DrawManagerGL.h>
 
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/visual/VisualParams.h>
@@ -379,7 +378,7 @@ void Simulation::updateVisualContext ( Node* root, Node::VISUAL_FLAG FILTER)
   vis.execute(root);
 }
 /// Render the scene
-void Simulation::draw ( Node* root, sofa::core::visual::VisualParams* vparams )
+void Simulation::draw ( sofa::core::visual::VisualParams* vparams, Node* root  )
 {
   if ( !root ) return;
   if (root->visualManager.empty())

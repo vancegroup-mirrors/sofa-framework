@@ -103,7 +103,7 @@ void Tetra2TriangleTopologicalMapping::init()
 		    toModel->getContext()->get(to_tstm);
 
 			const sofa::helper::vector<Triangle> &triangleArray=fromModel->getTriangles();
-
+            const bool flipN = flipNormals.getValue();
 
 			unsigned int nb_visible_triangles = 0;
 			/// only initialize with border triangles if necessary
@@ -117,7 +117,7 @@ void Tetra2TriangleTopologicalMapping::init()
 				for (unsigned int i=0; i<triangleArray.size(); ++i) {
 
 					if (fromModel->getTetrahedraAroundTriangle(i).size()==1) {
-						if(flipNormals.getValue()){
+						if(flipN){
 							Triangle t = triangleArray[i];
 							unsigned int tmp = t[2];
 							t[2] = t[1];
@@ -291,6 +291,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 						sofa::helper::vector< Triangle > triangles_to_create;
 						sofa::helper::vector< unsigned int > trianglesIndexList;
 						int nb_elems = toModel->getNbTriangles();
+                        const bool flipN = flipNormals.getValue();
 
 						for (unsigned int i = 0; i <tab.size(); ++i)
 						{
@@ -327,7 +328,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 											} else {
 												t[0]=(int)(te[(j+1)%4]); t[2]=(int)(te[(j+2)%4]); t[1]=(int)(te[(j+3)%4]);
 											}
-											if(flipNormals.getValue()==true)
+											if(flipN)
 											{
 												unsigned int temp=t[2];
 												t[2]=t[1];
@@ -461,6 +462,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
                            sofa::helper::vector< Triangle > triangles_to_create;
                            sofa::helper::vector< unsigned int > trianglesIndexList;
                            int nb_elems = toModel->getNbTriangles();
+                           const bool flipN = flipNormals.getValue();
 
                            for (unsigned int i = 0; i < tab.size(); ++i)
                            {
@@ -512,7 +514,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 
 									   int h = fromModel->getTriangleIndexInTetrahedron(fromModel->getTrianglesInTetrahedron(ind_test),k);
 
-									   if ((h%2) && (flipNormals.getValue()==false))   {
+									   if ((h%2) && (!flipN))   {
 										   t[0]=(int)(te[(h+1)%4]); t[1]=(int)(te[(h+2)%4]); t[2]=(int)(te[(h+3)%4]);
 									   } else {
 										   t[0]=(int)(te[(h+1)%4]); t[2]=(int)(te[(h+2)%4]); t[1]=(int)(te[(h+3)%4]);
@@ -536,7 +538,7 @@ void Tetra2TriangleTopologicalMapping::updateTopologicalMappingTopDown(){
 											   } else {
 												   t[0]=(int)(te[(j+1)%4]); t[2]=(int)(te[(j+2)%4]); t[1]=(int)(te[(j+3)%4]);
 											   }
-											   if(flipNormals.getValue()==true)
+											   if(flipN)
 											   {
 												   unsigned int temp=t[2];
 												   t[2]=t[1];

@@ -25,7 +25,6 @@
 #include <sofa/component/misc/MeshTetraStuffing.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/common/Simulation.h>
-#include <sofa/helper/gl/DrawManager.h>
 #include <sofa/component/collision/TriangleOctree.h>
 #include <sofa/component/collision/RayTriangleIntersection.h>
 

@@ -22,8 +22,10 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <sofa/helper/system/config.h>
-#include <sofa/component/engine/initEngine.h>
+#define SOFA_COMPONENT_ENGINE_EXTRUDEQUADSANDGENERATEHEXAS_CPP
+#include <sofa/component/engine/ExtrudeQuadsAndGenerateHexas.inl>
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/defaulttype/Vec3Types.h>
 
 namespace sofa
 {
@@ -31,49 +33,32 @@ namespace sofa
 namespace component
 {
 
-
-void initEngine()
+namespace engine
 {
-    static bool first = true;
-    if (first)
-    {
-//         sout << "Sofa components initialized."<<sendl;
 
-        //std::ofstream ofile("sofa-classes.html");
-        //ofile << "<html><body>\n";
-        //sofa::core::ObjectFactory::getInstance()->dumpHTML(ofile);
-        //ofile << "</body></html>\n";
-        first = false;
-    }
-}
+SOFA_DECL_CLASS(ExtrudeQuadsAndGenerateHexas)
+
+int ExtrudeQuadsAndGenerateHexasClass = core::RegisterObject("This engine extrudes a quad-based surface into a set of hexahedral elements")
+#ifndef SOFA_FLOAT
+.add< ExtrudeQuadsAndGenerateHexas<Vec3dTypes> >()
+#endif //SOFA_FLOAT
+#ifndef SOFA_DOUBLE
+.add< ExtrudeQuadsAndGenerateHexas<Vec3fTypes> >()
+#endif //SOFA_DOUBLE
+;
+
+#ifndef SOFA_FLOAT
+template class SOFA_COMPONENT_ENGINE_API ExtrudeQuadsAndGenerateHexas<Vec3dTypes>;
+#endif //SOFA_FLOAT
+#ifndef SOFA_DOUBLE
+template class SOFA_COMPONENT_ENGINE_API ExtrudeQuadsAndGenerateHexas<Vec3fTypes>;
+#endif //SOFA_DOUBLE
+
+
+} // namespace constraint
 
 } // namespace component
 
 } // namespace sofa
 
-////////// BEGIN CLASS LIST //////////
-SOFA_LINK_CLASS(AverageCoord)
-SOFA_LINK_CLASS(BoxROI)
-SOFA_LINK_CLASS(PlaneROI)
-SOFA_LINK_CLASS(SphereROI)
-SOFA_LINK_CLASS(ExtrudeSurface)
-SOFA_LINK_CLASS(ExtrudeQuadsAndGenerateHexas)
-SOFA_LINK_CLASS(GroupFilterYoungModulus)
-SOFA_LINK_CLASS(GenerateRigidMass)
-//SOFA_LINK_CLASS(HexasFromQuads)
-SOFA_LINK_CLASS(JoinPoints)
-SOFA_LINK_CLASS(MergeMeshes)
-SOFA_LINK_CLASS(MergePoints)
-SOFA_LINK_CLASS(PointsFromIndices)
-SOFA_LINK_CLASS(RandomPointDistributionInSurface)
-SOFA_LINK_CLASS(Spiral)
-SOFA_LINK_CLASS(Vertex2Frame)
-SOFA_LINK_CLASS(TransformPosition)
-SOFA_LINK_CLASS(TransformEngine)
-SOFA_LINK_CLASS(TextureInterpolation)
-SOFA_LINK_CLASS(ValuesFromPositions)
-SOFA_LINK_CLASS(ValuesFromIndices)
-SOFA_LINK_CLASS(NormalsFromPoints)
-SOFA_LINK_CLASS(QuatToRigidEngine)
-SOFA_LINK_CLASS(RigidToQuatEngine)
 

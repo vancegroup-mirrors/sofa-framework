@@ -18,18 +18,22 @@ HEADERS += initEngine.h \
            AverageCoord.inl \
            BoxROI.h \
            BoxROI.inl \
-					Distances.h \
-					Distances.inl \
+   	   Distances.h \
+	   Distances.inl \
            PlaneROI.h \
            PlaneROI.inl \
 	   SphereROI.h \
 	   SphereROI.inl \
            ExtrudeSurface.h \
            ExtrudeSurface.inl \
+           ExtrudeQuadsAndGenerateHexas.h \
+           ExtrudeQuadsAndGenerateHexas.inl \
            GenerateRigidMass.h \
            GenerateRigidMass.inl \
            GroupFilterYoungModulus.h \
            GroupFilterYoungModulus.inl \
+#           HexasFromQuads.h \
+#           HexasFromQuads.inl \
            MergeMeshes.h \
            MergeMeshes.inl \
            MergePoints.h \
@@ -77,12 +81,14 @@ HEADERS += initEngine.h \
 SOURCES += initEngine.cpp \
            AverageCoord.cpp \
            BoxROI.cpp \
-					Distances.cpp \
+   	   Distances.cpp \
            PlaneROI.cpp \
 	   SphereROI.cpp \
            ExtrudeSurface.cpp \
+ 	   ExtrudeQuadsAndGenerateHexas.cpp \
            GenerateRigidMass.cpp \
            GroupFilterYoungModulus.cpp \
+#           HexasFromQuads.cpp \
            MergeMeshes.cpp \
            MergePoints.cpp \
            MergeSets.cpp \

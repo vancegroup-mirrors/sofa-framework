@@ -48,8 +48,6 @@
 #include <qevent.h>
 #include "GenGraphForm.h"
 
-#include <sofa/helper/gl/DrawManagerGL.h>
-
 #include <sofa/helper/gl/glfont.h>
 #include <sofa/helper/gl/RAII.h>
 #ifdef SOFA_HAVE_GLEW
@@ -668,9 +666,9 @@ void QtGLViewer::DisplayOBJs()
 
   {
     //Draw Debug information of the components
-    simulation::getSimulation()->draw(groot, vparams);
+    simulation::getSimulation()->draw(vparams,groot);
     //Draw Visual Models
-    simulation::getSimulation()->draw(simulation::getSimulation()->getVisualRoot(), vparams);
+    simulation::getSimulation()->draw(vparams,simulation::getSimulation()->getVisualRoot());
     if (_axis)
     {
       this->setSceneBoundingBox(qglviewer::Vec(vparams->sceneBBox().minBBoxPtr()),

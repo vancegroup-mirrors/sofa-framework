@@ -26,7 +26,6 @@
 #define SOFA_SIMULATION_COMMON_SIMULATION_H
 
 #include <sofa/simulation/common/Node.h>
-#include <sofa/helper/gl/DrawManager.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/simulation/common/xml/BaseElement.h>
 #include <sofa/simulation/common/xml/XML.h>
@@ -85,7 +84,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
   virtual void computeBBox(Node* root, SReal* minBBox, SReal* maxBBox, bool init=true);
 
 	/// Render the scene
-  virtual void draw(Node* root, sofa::core::visual::VisualParams* vparams = sofa::core::visual::VisualParams::defaultInstance());
+  virtual void draw(sofa::core::visual::VisualParams* vparams, Node* root);
 
 	/// Render the scene - Shadows pass
 	virtual void drawShadows(Node* root);

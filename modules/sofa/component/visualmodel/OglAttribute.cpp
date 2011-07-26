@@ -28,11 +28,11 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace visualmodel
-    {
+namespace visualmodel
+{
 
       using namespace sofa::defaulttype;
 
@@ -67,8 +67,8 @@ namespace sofa
       int OglUInt3AttributeClass = core::RegisterObject ( "OglUInt3Attribute" ).add< OglUInt3Attribute >();
       int OglUInt4AttributeClass = core::RegisterObject ( "OglUInt4Attribute" ).add< OglUInt4Attribute >();
 
-    }
+} // namespace visual
 
-  }
+} // namespace component
 
-}
+} // namespace sofa

@@ -47,13 +47,12 @@
 #include <sofa/helper/gl/Transformation.h>
 #include <sofa/helper/gl/Trackball.h>
 #include <sofa/helper/gl/Texture.h>
-#include <sofa/helper/gl/VisualParameters.h>
+
 #include <sofa/helper/system/thread/CTime.h>
 #include <sofa/simulation/common/xml/Element.h>
 
 // allow catheter navigation using the tracking system (very simple version, surely will be modified)
 //#define TRACKING
-#define TRACKING_MOUSE
 
 namespace sofa
 {
@@ -90,9 +89,6 @@ namespace qt
         bool tracking;
 #endif // TRACKING
 
-#ifdef TRACKING_MOUSE
-        bool m_grabActived;
-#endif
         // Interaction
         enum {
             XY_TRANSLATION = 1,
@@ -101,7 +97,6 @@ namespace qt
 
         enum { MINMOVE = 10 };
 
-        VisualParameters visualParameters;
 
         QTimer* timerAnimate;
         int				_W, _H;

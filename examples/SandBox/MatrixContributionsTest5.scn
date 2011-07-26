@@ -10,6 +10,7 @@ To be compared CGLinearSolver with LULinearSolver to see if the matrix construct
 	<DefaultContactManager name="default22" response="default"/>
 	<MinProximityIntersection name="Proximity" alarmDistance="0.8" contactDistance="0.5"/>
 	<DefaultCollisionGroupManager name="default23"/>
+<!---->
 	<Node name="Node1">
 		<EulerImplicit name="cg_odesolver" printLog="false"/>
 		<LULinearSolver name="lu_solver"/>
@@ -28,7 +29,7 @@ To be compared CGLinearSolver with LULinearSolver to see if the matrix construct
 			<MechanicalObject name="MS1"/>
 			<DiagonalMass massDensity="0.5" />
 			<FixedConstraint indices="0 1 2" />     
-			<HexahedronFEMForceField name="HexaFF" youngModulus="500" poissonRatio="0.3"  method="small" drawing="0"/>
+			<HexahedronFEMForceField name="HexaFF" youngModulus="500" poissonRatio="0.3"  method="large" drawing="0"/>
 			<Node name="Tetra" >
 				<TetrahedronSetTopologyContainer name="tetraContainer" position="@../MS1.position"/>
 				<TetrahedronSetTopologyModifier name="tetraModifier"/>
@@ -36,7 +37,7 @@ To be compared CGLinearSolver with LULinearSolver to see if the matrix construct
 				<TetrahedronSetGeometryAlgorithms template="Vec3d" name="tetraGeomAlgo"/>
 				<Hexa2TetraTopologicalMapping name="topoMappingHexa2Tetra" input="@../hexaContainer" output="@tetraContainer"/>
 				<MechanicalObject name="MS2" position="@../MS1.position"/>
-				<TetrahedralCorotationalFEMForceField name="TetraFF" youngModulus="500" poissonRatio="0.3" method="small"  drawing="1"/>
+				<TetrahedralCorotationalFEMForceField name="TetraFF" youngModulus="500" poissonRatio="0.3" method="large"  drawing="1"/>
 				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping12" input="@../MS1" output="@MS2"/>
 			</Node>
 			<Node name="Visu">
@@ -62,9 +63,9 @@ To be compared CGLinearSolver with LULinearSolver to see if the matrix construct
 			<HexahedronSetTopologyAlgorithms name="hexaAlgo"   template="Vec3d" />
 			<HexahedronSetGeometryAlgorithms name="hexaGeomAlgo"   template="Vec3d" />
 			<MechanicalObject name="MS3"/>
+			<HexahedronFEMForceField name="HexaFF" youngModulus="500" poissonRatio="0.3"  method="large" drawing="0"/>
 			<DiagonalMass massDensity="0.5" />
 			<FixedConstraint indices="0 1 2" />     
-			<HexahedronFEMForceField name="HexaFF" youngModulus="500" poissonRatio="0.3"  method="small" drawing="0"/>
 			<Node name="Tetra2" >
 				<TetrahedronSetTopologyContainer name="tetraContainer" position="@../MS3.position"/>
 				<TetrahedronSetTopologyModifier name="tetraModifier"/>
@@ -72,7 +73,7 @@ To be compared CGLinearSolver with LULinearSolver to see if the matrix construct
 				<TetrahedronSetGeometryAlgorithms template="Vec3d" name="tetraGeomAlgo"/>
 				<Hexa2TetraTopologicalMapping name="topoMappingHexa2Tetra" input="@../hexaContainer" output="@tetraContainer"/>
 				<MechanicalObject name="MS4" position="@../MS3.position"/>
-				<TetrahedralCorotationalFEMForceField name="TetraFF" youngModulus="500" poissonRatio="0.3" method="small"  drawing="1"/>
+				<TetrahedralCorotationalFEMForceField name="TetraFF" youngModulus="500" poissonRatio="0.3" method="large"  drawing="1"/>
 				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping12" input="@../MS3" output="@MS4"/>
 			</Node>
 			<Node name="Visu2">
@@ -82,7 +83,6 @@ To be compared CGLinearSolver with LULinearSolver to see if the matrix construct
 		</Node>
 	</Node>
 	<EvalPointsDistance name="comparator" object1="@Node1/Hexahedron/MS1" object2="@Node2/Hexahedron2/MS3" printLog="1" draw="1"/>
-
 </Node>
 <!--
 [comparator(EvalPointsDistance)]: # name	time	mean	min	max	dev	mean(%)	min(%)	max(%)	dev(%)

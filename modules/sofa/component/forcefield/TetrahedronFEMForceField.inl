@@ -1507,11 +1507,69 @@ void TetrahedronFEMForceField<DataTypes>::draw()
 
 	const VecCoord& x = *this->mstate->getX();
 
-	if (this->getContext()->getShowWireFrame())
-          simulation::getSimulation()->DrawUtility().setPolygonMode(0,true);
+    const bool edges = (drawAsEdges.getValue() || this->getContext()->getShowWireFrame());
+    const bool heterogeneous = (drawHeterogeneousTetra.getValue() && minYoung!=maxYoung);
 
 	const VecReal & youngModulus = _youngModulus.getValue();
-        simulation::getSimulation()->DrawUtility().setLightingEnabled(false);
+    simulation::getSimulation()->DrawUtility().setLightingEnabled(false);
+if (edges)
+{
+	std::vector< Vector3 > points[3];
+	typename VecElement::const_iterator it;
+	int i;
+	for(it = _indexedElements->begin(), i = 0 ; it != _indexedElements->end() ; ++it, ++i)
+	{
+		Index a = (*it)[0];
+		Index b = (*it)[1];
+		Index c = (*it)[2];
+		Index d = (*it)[3];
+		Coord pa = x[a];
+		Coord pb = x[b];
+		Coord pc = x[c];
+		Coord pd = x[d];
+
+// 		glColor4f(0,0,1,1);
+		points[0].push_back(pa);
+		points[0].push_back(pb);
+		points[0].push_back(pc);
+		points[0].push_back(pd);
+
+// 		glColor4f(0,0.5,1,1);
+		points[1].push_back(pa);
+		points[1].push_back(pc);
+		points[1].push_back(pb);
+		points[1].push_back(pd);
+
+// 		glColor4f(0,1,1,1);
+		points[2].push_back(pa);
+		points[2].push_back(pd);
+		points[2].push_back(pb);
+		points[2].push_back(pc);
+		
+		if(heterogeneous) {
+			float col = (float)((youngModulus[i]-minYoung) / (maxYoung-minYoung));
+			float fac = col * 0.5f;
+			Vec<4,float> color2 = Vec<4,float>(col      , 0.5f - fac , 1.0f-col,1.0f);
+			Vec<4,float> color3 = Vec<4,float>(col      , 1.0f - fac , 1.0f-col,1.0f);
+			Vec<4,float> color4 = Vec<4,float>(col+0.5f , 1.0f - fac , 1.0f-col,1.0f);
+
+            simulation::getSimulation()->DrawUtility().drawLines(points[0],1,color2 );
+            simulation::getSimulation()->DrawUtility().drawLines(points[1],1,color3 );
+            simulation::getSimulation()->DrawUtility().drawLines(points[2],1,color4 );
+
+			for(unsigned int i=0 ; i<3 ; i++) points[i].clear();
+        }
+	}
+
+	if(!heterogeneous)
+	{
+        simulation::getSimulation()->DrawUtility().drawLines(points[0], 1, Vec<4,float>(0.0,0.5,1.0,1.0));
+        simulation::getSimulation()->DrawUtility().drawLines(points[1], 1, Vec<4,float>(0.0,1.0,1.0,1.0));
+        simulation::getSimulation()->DrawUtility().drawLines(points[2], 1, Vec<4,float>(0.5,1.0,1.0,1.0));
+	}
+}
+else
+{
 	std::vector< Vector3 > points[4];
 	typename VecElement::const_iterator it;
 	int i;
@@ -1547,7 +1605,7 @@ void TetrahedronFEMForceField<DataTypes>::draw()
 		points[3].push_back(pa);
 		points[3].push_back(pb);
 		
-		if(drawHeterogeneousTetra.getValue() && minYoung!=maxYoung) {
+		if(heterogeneous) {
 			float col = (float)((youngModulus[i]-minYoung) / (maxYoung-minYoung));
 			float fac = col * 0.5f;
 			Vec<4,float> color1 = Vec<4,float>(col      , 0.0f - fac , 1.0f-col,1.0f);
@@ -1561,10 +1619,10 @@ void TetrahedronFEMForceField<DataTypes>::draw()
                         simulation::getSimulation()->DrawUtility().drawTriangles(points[3],color4 );
 
 			for(unsigned int i=0 ; i<4 ; i++) points[i].clear();
-               }
+        }
 	}
 
-	if(!drawHeterogeneousTetra.getValue() || minYoung==maxYoung)
+	if(!heterogeneous)
 	{
           simulation::getSimulation()->DrawUtility().drawTriangles(points[0], Vec<4,float>(0.0,0.0,1.0,1.0));
           simulation::getSimulation()->DrawUtility().drawTriangles(points[1], Vec<4,float>(0.0,0.5,1.0,1.0));
@@ -1572,8 +1630,7 @@ void TetrahedronFEMForceField<DataTypes>::draw()
           simulation::getSimulation()->DrawUtility().drawTriangles(points[3], Vec<4,float>(0.5,1.0,1.0,1.0));
 	}
 	  
-	if (this->getContext()->getShowWireFrame())
-          simulation::getSimulation()->DrawUtility().setPolygonMode(0,false);
+}
 
 	////////////// AFFICHAGE DES ROTATIONS ////////////////////////
 if (this->getContext()->getShowNormals())

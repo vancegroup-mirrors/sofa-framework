@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cassert>
 
 #include "mycuda.h"
 
@@ -92,9 +93,10 @@ void mycudaPrivateInit(int /*device*/)
 
 void mycudaLogError(const char* err, const char* src)
 {
-        std::cerr << "CUDA error: "<< err <<" returned from "<< src <<".\n";
+    std::cerr << "CUDA error: "<< err <<" returned from "<< src <<".\n";
 	sofa::helper::BackTrace::dump();
-	exit(1);
+    assert(0);
+    //exit(1);
 }
 
 int myprintf(const char* fmt, ...)

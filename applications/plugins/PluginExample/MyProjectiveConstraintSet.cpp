@@ -24,7 +24,9 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include "initPluginExample.h"
+
+#include "MyProjectiveConstraintSet.inl"
+#include <sofa/core/ObjectFactory.h>
 
 namespace sofa
 {
@@ -32,60 +34,42 @@ namespace sofa
 namespace component
 {
 
-	//Here are just several convenient functions to help user to know what contains the plugin
+namespace projectiveconstraintset
+{
 
-	extern "C" {
-                SOFA_PluginExample_API void initExternalModule();
-                SOFA_PluginExample_API const char* getModuleName();
-                SOFA_PluginExample_API const char* getModuleVersion();
-                SOFA_PluginExample_API const char* getModuleLicense();
-                SOFA_PluginExample_API const char* getModuleDescription();
-                SOFA_PluginExample_API const char* getModuleComponentList();
-	}
-	
-	void initExternalModule()
-	{
-		static bool first = true;
-		if (first)
-		{
-			first = false;
-		}
-	}
-
-	const char* getModuleName()
-	{
-    return "PluginExample";
-	}
-
-	const char* getModuleVersion()
-	{
-		return "0.2";
-	}
-
-	const char* getModuleLicense()
-	{
-		return "LGPL";
-	}
-
-
-	const char* getModuleDescription()
-	{
-		return "a simple example of a plugin component module";
-	}
-
-	const char* getModuleComponentList()
-	{
-    return "PendulumMapping, MyFakeComponent, OtherFakeComponent";
-	}
+using namespace sofa::defaulttype;
 
 
 
-} 
-
-} 
+SOFA_DECL_CLASS(MyProjectiveConstraintSet)
 
 
-SOFA_LINK_CLASS(PendulumMapping)
-SOFA_LINK_CLASS(MyFakeComponent)
-SOFA_LINK_CLASS(OtherFakeComponent)
+int MyProjectiveConstraintSetClass = core::RegisterObject("just an example of templated component")
+#ifndef SOFA_FLOAT
+.add< MyProjectiveConstraintSet<Vec3dTypes> >()
+.add< MyProjectiveConstraintSet<Vec1dTypes> >()
+.add< MyProjectiveConstraintSet<Rigid3dTypes> >()
+#endif
+#ifndef SOFA_DOUBLE
+.add< MyProjectiveConstraintSet<Vec3fTypes> >()
+.add< MyProjectiveConstraintSet<Rigid3fTypes> >()
+#endif
+;
+
+#ifndef SOFA_FLOAT
+template class SOFA_MyPluginExample_API MyProjectiveConstraintSet<Rigid3dTypes>;
+template class SOFA_MyPluginExample_API MyProjectiveConstraintSet<Vec3dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+template class SOFA_MyPluginExample_API MyProjectiveConstraintSet<Rigid3fTypes>;
+template class SOFA_MyPluginExample_API MyProjectiveConstraintSet<Vec3fTypes>;
+#endif
+
+
+
+}	//constraint
+
+}	//component
+
+}	//sofa
 

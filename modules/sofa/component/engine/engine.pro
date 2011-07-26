@@ -30,6 +30,8 @@ HEADERS += initEngine.h \
            GenerateRigidMass.inl \
            GroupFilterYoungModulus.h \
            GroupFilterYoungModulus.inl \
+           MergeMeshes.h \
+           MergeMeshes.inl \
            MergePoints.h \
            MergePoints.inl \
            MergeSets.h \
@@ -62,8 +64,10 @@ HEADERS += initEngine.h \
            TextureInterpolation.inl \
            SubsetTopology.h \
            SubsetTopology.inl \
-           RigidEngine.h \
-           RigidEngine.inl \
+           RigidToQuatEngine.h \
+           RigidToQuatEngine.inl \
+           QuatToRigidEngine.h \
+           QuatToRigidEngine.inl \
            ValuesFromPositions.h \
            ValuesFromPositions.inl \
            NormalsFromPoints.h \
@@ -79,6 +83,7 @@ SOURCES += initEngine.cpp \
            ExtrudeSurface.cpp \
            GenerateRigidMass.cpp \
            GroupFilterYoungModulus.cpp \
+           MergeMeshes.cpp \
            MergePoints.cpp \
            MergeSets.cpp \
 	   MeshBarycentricMapperEngine.cpp \
@@ -95,7 +100,8 @@ SOURCES += initEngine.cpp \
            Vertex2Frame.cpp \
            TextureInterpolation.cpp \
            SubsetTopology.cpp \
-           RigidEngine.cpp \
+           RigidToQuatEngine.cpp \
+           QuatToRigidEngine.cpp \
            ValuesFromPositions.cpp \
            NormalsFromPoints.cpp 
 

@@ -9,7 +9,7 @@ CONFIG += dll
 }
 DEFINES += SOFA_BUILD_COMPONENT_VISUALMODEL
 HEADERS += initVisualModel.h \
-    ClipPlane.h \
+    BaseCamera.h \
     DrawV.h \
     OglModel.h \
     OglViewport.h \
@@ -18,11 +18,11 @@ HEADERS += initVisualModel.h \
     LightManager.h \
     PointSplatModel.h \
     OglRenderingSRGB.h \
-    BaseCamera.h \
+    ClipPlane.h \
     InteractiveCamera.h
     
 SOURCES += initVisualModel.cpp \
-    ClipPlane.cpp \
+    BaseCamera.cpp \
     DrawV.cpp \
     OglModel.cpp \
     OglViewport.cpp \
@@ -31,7 +31,7 @@ SOURCES += initVisualModel.cpp \
     LightManager.cpp \
     PointSplatModel.cpp \
     OglRenderingSRGB.cpp \
-    BaseCamera.cpp \
+    ClipPlane.cpp \
     InteractiveCamera.cpp    
     
 contains(DEFINES,SOFA_HAVE_GLEW) { 

@@ -42,44 +42,37 @@ namespace gl
 class SOFA_HELPER_API Transformation
 {
   public:
-
     SReal			translation[3];
     SReal			scale[3];
     SReal			rotation[4][4];
-
     SReal			objectCenter[3];
 
-  private:
-
   public:
+    Transformation();	// constructor
+    ~Transformation();	// destructor
+    Transformation&	operator=(const Transformation& transform);
 
-					Transformation();	// constructor
-					~Transformation();	// destructor
+    void Apply();
+    void ApplyWithCentring();
+    void ApplyInverse();
 
+    template<class Vector>
+    Vector operator*(Vector v) const
+    {
+      for(int c=0;c<3;c++)
+        v[c] *= scale[c];
+      Vector r;
+      for(int c=0;c<3;c++)
+        r[c] = rotation[0][c]*v[0]+rotation[1][c]*v[1]+rotation[2][c]*v[2];
+      for(int c=0;c<3;c++)
+        r[c] += translation[c];
+      return r;
+    }
 
-
-	Transformation&	operator=(const Transformation& transform);
-
-	void			Apply();
-	void			ApplyWithCentring();
-	void			ApplyInverse();
-
-  template<class Vector>
-  Vector operator*(Vector v) const
-  {
-    for(int c=0;c<3;c++)
-      v[c] *= scale[c];
-    Vector r;
-    for(int c=0;c<3;c++)
-      r[c] = rotation[0][c]*v[0]+rotation[1][c]*v[1]+rotation[2][c]*v[2];
-    for(int c=0;c<3;c++)
-      r[c] += translation[c];
-    return r;
-  }
-
-  private:void		InvertTransRotMatrix(SReal matrix[4][4]);
-  void			InvertTransRotMatrix(SReal sMatrix[4][4],
-					     SReal dMatrix[4][4]);
+  private:
+    void InvertTransRotMatrix(SReal matrix[4][4]);
+    void InvertTransRotMatrix(SReal sMatrix[4][4],
+                 SReal dMatrix[4][4]);
 };
 
 } // namespace gl

@@ -99,7 +99,7 @@ namespace viewer
 using namespace sofa::defaulttype;
 enum
 {
-	BTLEFT_MODE = 101, BTRIGHT_MODE = 102, BTMIDDLE_MODE = 103,
+  BTLEFT_MODE = 101, BTRIGHT_MODE = 102, BTMIDDLE_MODE = 103,
 };
 
 
@@ -117,121 +117,120 @@ public:
   virtual void configureViewerTab(QTabWidget *){}; 
   
 
-	virtual QWidget* getQWidget()=0;
+  virtual QWidget* getQWidget()=0;
   virtual QString helpString()=0;
 
-	virtual sofa::simulation::Node* getScene();
-	virtual const std::string& getSceneFileName();
-	virtual void setSceneFileName(const std::string &f);
-	virtual void setScene(sofa::simulation::Node* scene, const char* filename =
-			NULL, bool /*keepParams*/= false);
+  virtual sofa::simulation::Node* getScene();
+  virtual const std::string& getSceneFileName();
+  virtual void setSceneFileName(const std::string &f);
+  virtual void setScene(sofa::simulation::Node* scene, const char* filename =
+                        NULL, bool /*keepParams*/= false);
   virtual void setCameraMode(component::visualmodel::BaseCamera::CameraType mode);
 
 
-	virtual bool ready();
-	virtual void wait()
-	{
-	}
+  virtual bool ready();
+  virtual void wait()
+  {
+  }
 	
-	//Allow to configure your viewer using the Sofa Component, ViewerSetting
-    virtual void configure(sofa::component::configurationsetting::ViewerSetting* viewerConf);
+  //Allow to configure your viewer using the Sofa Component, ViewerSetting
+  virtual void configure(sofa::component::configurationsetting::ViewerSetting* viewerConf);
 
-	//Fonctions needed to take a screenshot
-	virtual const std::string screenshotName();
-	virtual void setPrefix(const std::string filename);
-	virtual void screenshot(const std::string filename, int compression_level =
-			-1);
+  //Fonctions needed to take a screenshot
+  virtual const std::string screenshotName();
+  virtual void setPrefix(const std::string filename);
+  virtual void screenshot(const std::string filename, int compression_level =
+                          -1);
 
-	virtual void getView(Vec3d& pos, Quat& ori) const;
-	virtual void setView(const Vec3d& pos, const Quat &ori);
-	virtual void moveView(const Vec3d& pos, const Quat &ori);
+  virtual void getView(Vec3d& pos, Quat& ori) const;
+  virtual void setView(const Vec3d& pos, const Quat &ori);
+  virtual void moveView(const Vec3d& pos, const Quat &ori);
   virtual void newView();   
-	virtual void resetView();
+  virtual void resetView();
 
-	virtual void setBackgroundColour(float r, float g, float b);
+  virtual void setBackgroundColour(float r, float g, float b);
   virtual void setBackgroundImage(std::string imageFileName = std::string("textures/SOFA_logo.bmp"));
-	std::string getBackgroundImage();
+  std::string getBackgroundImage();
 
-	PickHandler* getPickHandler();
+  PickHandler* getPickHandler();
 
   //*************************************************************
-	// QT
-	//*************************************************************
-	//SLOTS
-	virtual void saveView()=0;
-	virtual void setSizeW(int)=0;
-	virtual void setSizeH(int)=0;
-	virtual void captureEvent();
+  // QT
+  //*************************************************************
+  //SLOTS
+  virtual void saveView()=0;
+  virtual void setSizeW(int)=0;
+  virtual void setSizeH(int)=0;
+  virtual void captureEvent();
   virtual void fitObjectBBox(sofa::core::objectmodel::BaseObject* ){}
   virtual void fitNodeBBox(sofa::core::objectmodel::BaseNode*) {}
 	
 
-	//SIGNALS
-	virtual void redrawn()=0;
-	virtual void resizeW(int)=0;
-	virtual void resizeH(int)=0;
+  //SIGNALS
+  virtual void redrawn()=0;
+  virtual void resizeW(int)=0;
+  virtual void resizeH(int)=0;
 
 protected:
 
-	// ---------------------- Here are the Keyboard controls   ----------------------
-	void keyPressEvent(QKeyEvent * e);
+  // ---------------------- Here are the Keyboard controls   ----------------------
+  void keyPressEvent(QKeyEvent * e);
   void keyReleaseEvent(QKeyEvent * e);
-	bool isControlPressed() const;
-	// ---------------------- Here are the Mouse controls   ----------------------
-	void wheelEvent(QWheelEvent *e);
-	void mouseMoveEvent ( QMouseEvent *e );
-	void mousePressEvent ( QMouseEvent * e);
-	void mouseReleaseEvent ( QMouseEvent * e);
-	void mouseEvent(QMouseEvent *e);
+  bool isControlPressed() const;
+  // ---------------------- Here are the Mouse controls   ----------------------
+  void wheelEvent(QWheelEvent *e);
+  void mouseMoveEvent ( QMouseEvent *e );
+  void mousePressEvent ( QMouseEvent * e);
+  void mouseReleaseEvent ( QMouseEvent * e);
+  void mouseEvent(QMouseEvent *e);
 	
-	// ---------------------- Here are the controls for instruments  ----------------------
-	void moveLaparoscopic( QMouseEvent *e); 
-	void moveLaparoscopic(QWheelEvent *e);
+  // ---------------------- Here are the controls for instruments  ----------------------
+  void moveLaparoscopic( QMouseEvent *e); 
+  void moveLaparoscopic(QWheelEvent *e);
 	
   // ---------------------- RayCasting PickHandler  ----------------------
-	virtual void moveRayPickInteractor(int, int)
-	{
-	}
-	;
+  virtual void moveRayPickInteractor(int, int)
+  {
+  }
+  ;
 
   sofa::simulation::Node* groot;
   sofa::component::visualmodel::BaseCamera* currentCamera;  
   std::string sceneFileName;
-	sofa::helper::gl::Capture capture;
+  sofa::helper::gl::Capture capture;
   
 #ifdef SOFA_HAVE_FFMPEG
-	sofa::helper::gl::VideoRecorder videoRecorder;
+  sofa::helper::gl::VideoRecorder videoRecorder;
 #endif //SOFA_HAVE_FFMPEG
-	QTimer captureTimer;
+  QTimer captureTimer;
 	
-	bool m_isControlPressed;
-	bool _video;
-	bool _shadow;
-	bool _gl_shadow;
-	bool _axis;
-	int _background;
-	bool initTexturesDone;
-	bool sceneBBoxIsValid;
+  bool m_isControlPressed;
+  bool _video;
+  bool _shadow;
+  bool _gl_shadow;
+  bool _axis;
+  int _background;
+  bool initTexturesDone;
 
-	Vector3 backgroundColour;
+  Vector3 backgroundColour;
   sofa::helper::gl::Texture* texLogo;
   std::string backgroundImageFile;
 
-	Vector3 ambientColour;
+  Vector3 ambientColour;
 
-	PickHandler pick;
+  PickHandler pick;
   ColourPickingRenderCallBack colourPickingRenderCallBack;
 
-	//instruments handling
-	int _navigationMode;
-	bool _mouseInteractorMoving;
-	int _mouseInteractorSavedPosX;
-	int _mouseInteractorSavedPosY;
+  //instruments handling
+  int _navigationMode;
+  bool _mouseInteractorMoving;
+  int _mouseInteractorSavedPosX;
+  int _mouseInteractorSavedPosY;
 
-	//Stereo parameters
-	bool _stereoEnabled;
-    bool _binocularModeEnabled;
-    double _stereoShift;
+  //Stereo parameters
+  bool _stereoEnabled;
+  bool _binocularModeEnabled;
+  double _stereoShift;
 
 };
 
@@ -239,11 +238,11 @@ template < typename VisualModelPolicyType >
 class CustomPolicySofaViewer : public VisualModelPolicyType, public sofa::gui::qt::viewer::SofaViewer
 {
 public:
-    using VisualModelPolicyType::load;
-    using VisualModelPolicyType::unload;
-    CustomPolicySofaViewer() { load(); }
-    virtual ~CustomPolicySofaViewer() { unload(); }
-
+  using VisualModelPolicyType::load;
+  using VisualModelPolicyType::unload;
+  CustomPolicySofaViewer() { load(); }
+  virtual ~CustomPolicySofaViewer() { unload(); }
+protected:
 };
 
 typedef CustomPolicySofaViewer< OglModelPolicy > OglModelSofaViewer;

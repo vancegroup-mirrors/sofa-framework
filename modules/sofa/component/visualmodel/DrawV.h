@@ -27,7 +27,7 @@
 
 #include <string>
 #include <sofa/helper/gl/template.h>
-#include <sofa/core/VisualModel.h>
+#include <sofa/core/visual/VisualModel.h>
 #include <sofa/core/State.h>
 #include <sofa/component/component.h>
 #include <sofa/defaulttype/Vec.h>
@@ -45,10 +45,10 @@ namespace visualmodel
 
 using namespace sofa::defaulttype;
 
-class SOFA_COMPONENT_VISUALMODEL_API DrawV : public core::VisualModel, public core::State< ExtVec3fTypes >
+class SOFA_COMPONENT_VISUALMODEL_API DrawV : public core::visual::VisualModel, public core::State< ExtVec3fTypes >
 {
 public:
-    SOFA_CLASS2(DrawV, core::VisualModel, SOFA_TEMPLATE(core::State, ExtVec3fTypes));
+    SOFA_CLASS2(DrawV, core::visual::VisualModel, SOFA_TEMPLATE(core::State, ExtVec3fTypes));
 
     Data<bool> castShadow; ///< True if object cast shadows
     Data<bool> useAlpha; ///< True if velocity displayed using alpha blending

@@ -25,12 +25,13 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#include "PendulumMapping.inl"
-#include <sofa/core/Mapping.inl>
-#include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec3Types.h>
-#include <sofa/defaulttype/VecTypes.h>
+#ifndef SOFA_COMPONENT_CONSTRAINT_MyProjectiveConstraintSet_H
+#define SOFA_COMPONENT_CONSTRAINT_MyProjectiveConstraintSet_H
 
+#include "initPlugin.h"
+#include <sofa/core/behavior/ProjectiveConstraintSet.h>
+#include <sofa/defaulttype/VecTypes.h>
+#include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
 {
@@ -38,44 +39,53 @@ namespace sofa
 namespace component
 {
 
-namespace mapping
+namespace projectiveconstraintset{
+
+template <class DataTypes>
+class  MyProjectiveConstraintSet : public core::behavior::ProjectiveConstraintSet<DataTypes>
 {
+public:
+  SOFA_CLASS(SOFA_TEMPLATE(MyProjectiveConstraintSet,DataTypes),SOFA_TEMPLATE(core::behavior::ProjectiveConstraintSet,DataTypes));
+  typedef typename  DataTypes::VecDeriv VecDeriv;
+  typedef typename  DataTypes::MatrixDeriv MatrixDeriv;
+  typedef typename  DataTypes::MatrixDeriv::RowType MatrixDerivRowType;
+  typedef typename  DataTypes::VecCoord VecCoord;
+    MyProjectiveConstraintSet();
+	~MyProjectiveConstraintSet();
 
-using namespace sofa::defaulttype;
-using sofa::defaulttype::Vec3dTypes;
-using sofa::defaulttype::Vec3fTypes;
-using sofa::defaulttype::Vec2dTypes;
-using sofa::defaulttype::Vec1dTypes;
-using sofa::defaulttype::Vec1fTypes;
+	  void init();
+
+    void reinit();
+
+    void projectResponse(MatrixDerivRowType& /*dx*/) {}
+    void projectResponse(VecDeriv& /*dx*/) {}
+    void projectVelocity(VecDeriv& /*dx*/){}
+    void projectPosition(VecCoord& /*x*/){} 
 
 
+protected:
 
-SOFA_DECL_CLASS(PendulumMapping)
 
+private:
 
-int PendulumMappingClass = core::RegisterObject("Mapping from an angle to a point in 2D")
+};
+
+#if defined(WIN32) && !defined(SOFA_BUILD_PLUGINEXAMPLE)
 #ifndef SOFA_FLOAT
-.add< PendulumMapping<Vec1dTypes,Vec3dTypes> >()
-.add< PendulumMapping<Vec1dTypes,Vec2dTypes> >()
+extern template class MyProjectiveConstraintSet<defaulttype::Vec3dTypes>;
+extern template class MyProjectiveConstraintSet<defaulttype::Rigid3dTypes>;
 #endif
 #ifndef SOFA_DOUBLE
-.add< PendulumMapping<Vec1fTypes,Vec3fTypes> >()
+extern template class MyProjectiveConstraintSet<defaulttype::Vec3fTypes>;
+extern template class MyProjectiveConstraintSet<defaulttype::Rigid3fTypes>;
 #endif
-;
+#endif 
+}
 
-#ifndef SOFA_FLOAT
-template class PendulumMapping<Vec1dTypes,Vec3dTypes>;
-template class PendulumMapping<Vec1dTypes,Vec2dTypes>;
+}
+
+}
+
+
+
 #endif
-#ifndef SOFA_DOUBLE
-template class PendulumMapping<Vec1fTypes,Vec3fTypes>;
-#endif
-
-
-
-}	//mapping
-
-}	//component
-
-}	//sofa
-

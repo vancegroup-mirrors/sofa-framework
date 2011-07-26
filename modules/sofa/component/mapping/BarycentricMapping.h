@@ -1103,6 +1103,7 @@ public:
 		, f_hexaMapper(new HexaMapper())
 		, useRestPosition(core::objectmodel::Base::initData(&useRestPosition, false, "useRestPosition", "Use the rest position of the input and output models to initialize the mapping"))
 	{
+
 	}
 
 	BarycentricMapping(core::State<In>* from, core::State<Out>* to, Mapper* mapper)

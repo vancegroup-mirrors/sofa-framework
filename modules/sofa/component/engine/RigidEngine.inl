@@ -1,7 +1,7 @@
-#ifndef RIGIDENGINE_INL
-#define RIGIDENGINE_INL
+#ifndef RIGIDTOQUATENGINE_INL
+#define RIGIDTOQUATENGINE_INL
 
-#include <sofa/component/engine/RigidEngine.h>
+#include <sofa/component/engine/RigidToQuatEngine.h>
 
 namespace sofa
 {
@@ -12,7 +12,7 @@ namespace component
 namespace engine
 {
 template <class DataTypes>
-RigidEngine<DataTypes>::RigidEngine()
+RigidToQuatEngine<DataTypes>::RigidToQuatEngine()
 : f_positions( initData (&f_positions, "positions", "Positions (Vector of 3)") )
 , f_orientations( initData (&f_orientations, "orientations", "Orientations (Quaternion)") )
 , f_rigids( initData (&f_rigids, "rigids", "Rigid (Position + Orientation)") )
@@ -24,13 +24,13 @@ RigidEngine<DataTypes>::RigidEngine()
 }
 
 template <class DataTypes>
-RigidEngine<DataTypes>::~RigidEngine()
+RigidToQuatEngine<DataTypes>::~RigidToQuatEngine()
 {
 
 }
 
 template <class DataTypes>
-void RigidEngine<DataTypes>::init()
+void RigidToQuatEngine<DataTypes>::init()
 {
     addInput(&f_positions);
     addInput(&f_orientations);
@@ -41,13 +41,13 @@ void RigidEngine<DataTypes>::init()
 }
 
 template <class DataTypes>
-void RigidEngine<DataTypes>::reinit()
+void RigidToQuatEngine<DataTypes>::reinit()
 {
     update();
 }
 
 template <class DataTypes>
-void RigidEngine<DataTypes>::update()
+void RigidToQuatEngine<DataTypes>::update()
 {
     cleanDirty();
 
@@ -80,4 +80,4 @@ void RigidEngine<DataTypes>::update()
 
 } // namespace sofa
 
-#endif // RIGIDENGINE_INL
+#endif // RIGIDTOQUATENGINE_INL

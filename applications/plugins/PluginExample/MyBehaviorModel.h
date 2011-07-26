@@ -25,13 +25,11 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#ifndef SOFA_COMPONENT_CONSTRAINT_OtherFakeComponent_H
-#define SOFA_COMPONENT_CONSTRAINT_OtherFakeComponent_H
+#ifndef SOFA_COMPONENT_BEHAVIORMODEL_MyBehaviorModel_H
+#define SOFA_COMPONENT_BEHAVIORMODEL_MyBehaviorModel_H
 
-#include "initPluginExample.h"
-#include <sofa/core/behavior/ProjectiveConstraintSet.h>
-#include <sofa/defaulttype/VecTypes.h>
-#include <sofa/defaulttype/RigidTypes.h>
+#include "initPlugin.h"
+#include <sofa/core/BehaviorModel.h>
 
 namespace sofa
 {
@@ -39,47 +37,36 @@ namespace sofa
 namespace component
 {
 
-namespace projectiveconstraintset{
+namespace behaviormodel
+{
 
-template <class DataTypes>
-class  OtherFakeComponent : public core::behavior::ProjectiveConstraintSet<DataTypes>
+/**
+  This BehaviorModel does nothing but contain a custom data widget.
+  */
+
+class SOFA_MyPluginExample_API MyBehaviorModel : public sofa::core::BehaviorModel
 {
 public:
-  SOFA_CLASS(SOFA_TEMPLATE(OtherFakeComponent,DataTypes),SOFA_TEMPLATE(core::behavior::ProjectiveConstraintSet,DataTypes));
-  typedef typename  DataTypes::VecDeriv VecDeriv;
-  typedef typename  DataTypes::MatrixDeriv MatrixDeriv;
-  typedef typename  DataTypes::MatrixDeriv::RowType MatrixDerivRowType;
-  typedef typename  DataTypes::VecCoord VecCoord;
-    OtherFakeComponent();
-	~OtherFakeComponent();
+SOFA_CLASS(MyBehaviorModel,sofa::core::BehaviorModel);
+    MyBehaviorModel();
+	~MyBehaviorModel();
 
-	  void init();
+	virtual void init();
 
-    void reinit();
+    virtual void reinit();
 
-    void projectResponse(MatrixDerivRowType& /*dx*/) {}
-    void projectResponse(VecDeriv& /*dx*/) {}
-    void projectVelocity(VecDeriv& /*dx*/){}
-    void projectPosition(VecCoord& /*x*/){} 
+    virtual void updatePosition(double dt);
 
 
 protected:
 
-
+	Data<unsigned> customUnsignedData;
+  Data<unsigned> regularUnsignedData;
 private:
 
 };
 
-#if defined(WIN32) && !defined(SOFA_BUILD_PLUGINEXAMPLE)
-#ifndef SOFA_FLOAT
-extern template class OtherFakeComponent<defaulttype::Vec3dTypes>;
-extern template class OtherFakeComponent<defaulttype::Rigid3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class OtherFakeComponent<defaulttype::Vec3fTypes>;
-extern template class OtherFakeComponent<defaulttype::Rigid3fTypes>;
-#endif
-#endif 
+
 }
 
 }

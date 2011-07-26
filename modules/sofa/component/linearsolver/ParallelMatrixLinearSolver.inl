@@ -87,7 +87,7 @@ ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::~ParallelMatrixLinearSolver() {
     if (thread) {
-      std::cout << "Wait for destoying thread" << std::endl;
+      std::cout << "Wait for destroying thread" << std::endl;
       run = 0;
       while (!ready_thread) usleep(50);
       delete thread;

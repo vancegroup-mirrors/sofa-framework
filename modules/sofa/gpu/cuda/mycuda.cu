@@ -155,8 +155,7 @@ bool cudaCheck(cudaError_t err, const char* src="?")
 	if (err == cudaSuccess) return true;
 	//fprintf(stderr, "CUDA: Error %d returned from %s.\n",(int)err,src);
 	mycudaLogError(cudaGetErrorString(err), src);
-	sofa::helper::BackTrace::dump();
-        return false;
+    return false;
 }
 
 bool cudaInitCalled = false;
@@ -272,6 +271,7 @@ void mycudaFreeHost(void *hostPtr)
 
 void mycudaMemcpyHostToDevice(void *dst, const void *src, size_t count,int /*d*/)
 {
+    //count = (count+3)&(size_t)-4;
     if (!cudaCheck(cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice),"cudaMemcpyHostToDevice"))
         myprintf("in mycudaMemcpyHostToDevice(0x%x, 0x%x, %d)\n",dst,src,count);
 }
@@ -283,6 +283,7 @@ void mycudaMemcpyDeviceToDevice(void *dst, const void *src, size_t count,int /*d
 
 void mycudaMemcpyDeviceToHost(void *dst, const void *src, size_t count,int /*d*/)
 {
+    //count = (count+3)&(size_t)-4;
 	cudaCheck(cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost),"cudaMemcpyDeviceToHost");
 }
 
@@ -312,6 +313,13 @@ void mycudaThreadSynchronize()
     if (!cudaInitCalled) return; // no need to synchronize if no-one used cuda yet
 
     cudaThreadSynchronize();
+}
+
+void mycudaCheckError(const char* src)
+{
+    if (!cudaInitCalled) return; // no need to check errors if no-one used cuda yet
+    cudaThreadSynchronize();
+    cudaCheck(cudaGetLastError(),src);
 }
 
 void mycudaGLRegisterBufferObject(int id)
@@ -357,7 +365,7 @@ void cuda_void_kernel()
     
     dim3 threads(1,1);
     dim3 grid(1,1);
-    cuda_debug_kernel<<< grid, threads >>>();
+    {cuda_debug_kernel<<< grid, threads >>>(); mycudaDebugError("cuda_debug_kernel");}
 }
 
 #endif

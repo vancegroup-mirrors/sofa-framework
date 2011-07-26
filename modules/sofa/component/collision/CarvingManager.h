@@ -65,10 +65,12 @@ public:
     Data < Real > f_maxDistance;
     Data < Real > f_edgeDistance;
     
+    
     Data < bool > active;
     Data < char > keyEvent;
     Data < char > keySwitchEvent;
-
+    Data < bool > mouseEvent;
+    
 protected:
     ToolModel* modelTool;
     core::CollisionModel* modelSurface;

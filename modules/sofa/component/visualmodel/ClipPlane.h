@@ -25,8 +25,7 @@
 #ifndef SOFA_COMPONENT_CLIPPLANE_H
 #define SOFA_COMPONENT_CLIPPLANE_H
 
-#include <sofa/core/VisualModel.h>
-#include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/visual/VisualModel.h>
 #include <sofa/component/component.h>
 #include <sofa/defaulttype/Vec3Types.h>
 #include <sofa/helper/gl/template.h>
@@ -42,9 +41,9 @@ namespace visualmodel
 
 using sofa::defaulttype::Vector3;
 
-class SOFA_COMPONENT_VISUALMODEL_API ClipPlane : public core::VisualModel {
+class SOFA_COMPONENT_VISUALMODEL_API ClipPlane : public core::visual::VisualModel {
 public:
-	SOFA_CLASS(ClipPlane, core::VisualModel);
+	SOFA_CLASS(ClipPlane, core::visual::VisualModel);
 
     Data<Vector3> position;
     Data<Vector3> normal;
@@ -56,8 +55,8 @@ public:
     
     virtual void init();
     virtual void reinit();
-    virtual void fwdDraw(Pass);
-    virtual void bwdDraw(Pass);
+    virtual void fwdDraw(core::visual::VisualParams*);
+    virtual void bwdDraw(core::visual::VisualParams*);
 
 protected:
     GLboolean wasActive;

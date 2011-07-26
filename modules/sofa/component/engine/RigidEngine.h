@@ -1,5 +1,5 @@
-#ifndef RIGIDENGINE_H
-#define RIGIDENGINE_H
+#ifndef RIGIDTOQUATENGINE_H
+#define RIGIDTOQUATENGINE_H
 
 #if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
 #pragma once
@@ -27,18 +27,18 @@ namespace engine
      */
 
 template <class DataTypes>
-class RigidEngine : public sofa::core::DataEngine
+class RigidToQuatEngine : public sofa::core::DataEngine
 {
 public:
-    SOFA_CLASS(RigidEngine,sofa::core::DataEngine);
+    SOFA_CLASS(RigidToQuatEngine,sofa::core::DataEngine);
 
     typedef typename DataTypes::Real Real;
     typedef sofa::defaulttype::Vec<3,Real> Vec3;
     typedef sofa::helper::Quater<Real> Quat;
     typedef typename sofa::defaulttype::StdRigidTypes<3,Real>::Coord RigidVec3;
 
-    RigidEngine();
-    virtual ~RigidEngine();
+    RigidToQuatEngine();
+    virtual ~RigidToQuatEngine();
 
     void update();
     void init();
@@ -56,7 +56,7 @@ public:
         return templateName(this);
       }
 
-    static std::string templateName(const RigidEngine<DataTypes>* = NULL)
+    static std::string templateName(const RigidToQuatEngine<DataTypes>* = NULL)
     {
       return DataTypes::Name();
     }
@@ -67,13 +67,13 @@ public:
     Data<helper::vector<RigidVec3> > f_rigids;
 };
 
-#if defined(WIN32) && !defined(RIGIDENGINE_CPP)
+#if defined(WIN32) && !defined(RIGIDTOQUATENGINE_CPP)
 #pragma warning(disable : 4231)
 #ifndef SOFA_FLOAT
-template class SOFA_COMPONENT_ENGINE_API RigidEngine<defaulttype::Vec3dTypes>;
+template class SOFA_COMPONENT_ENGINE_API RigidToQuatEngine<defaulttype::Vec3dTypes>;
 #endif //SOFA_FLOAT
 #ifndef SOFA_DOUBLE
-template class SOFA_COMPONENT_ENGINE_API RigidEngine<defaulttype::Vec3fTypes>;
+template class SOFA_COMPONENT_ENGINE_API RigidToQuatEngine<defaulttype::Vec3fTypes>;
 #endif //SOFA_DOUBLE
 #endif
 
@@ -83,4 +83,4 @@ template class SOFA_COMPONENT_ENGINE_API RigidEngine<defaulttype::Vec3fTypes>;
 
 } // namespace sofa
 
-#endif // RIGIDENGINE_H
+#endif // RIGIDTOQUATENGINE_H

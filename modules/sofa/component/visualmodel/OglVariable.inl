@@ -59,7 +59,7 @@ namespace visualmodel
 //template<class DataTypes>
 //void OglVariable<DataTypes>::initVisual()
 //{ 
-//    core::VisualModel::initVisual();
+//    core::visual::VisualModel::initVisual();
 //}
 //
 //template<class DataTypes>

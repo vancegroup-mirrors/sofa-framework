@@ -25,7 +25,11 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#include "OtherFakeComponent.h"
+#include "MyMappingPendulumInPlane.inl"
+#include <sofa/core/Mapping.inl>
+#include <sofa/core/ObjectFactory.h>
+#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 
 
 namespace sofa
@@ -34,36 +38,42 @@ namespace sofa
 namespace component
 {
 
-namespace projectiveconstraintset
+namespace mapping
 {
 
-
-
-template <class DataTypes>
-OtherFakeComponent<DataTypes>::OtherFakeComponent()
-:core::behavior::ProjectiveConstraintSet<DataTypes>(NULL)
-{
-}
-
-
-template <class DataTypes>
-OtherFakeComponent<DataTypes>::~OtherFakeComponent()
-{
-}
-
-template <class DataTypes>
-void OtherFakeComponent<DataTypes>::init()
-{
-}
-
-template <class DataTypes>
-void OtherFakeComponent<DataTypes>::reinit()
-{
-}
+using namespace sofa::defaulttype;
+using sofa::defaulttype::Vec3dTypes;
+using sofa::defaulttype::Vec3fTypes;
+using sofa::defaulttype::Vec2dTypes;
+using sofa::defaulttype::Vec1dTypes;
+using sofa::defaulttype::Vec1fTypes;
 
 
 
-}	//constraint
+SOFA_DECL_CLASS(MyMappingPendulumInPlane)
+
+
+int MyMappingPendulumInPlaneClass = core::RegisterObject("Mapping from an angle to a point in 2D")
+#ifndef SOFA_FLOAT
+.add< MyMappingPendulumInPlane<Vec1dTypes,Vec3dTypes> >()
+.add< MyMappingPendulumInPlane<Vec1dTypes,Vec2dTypes> >()
+#endif
+#ifndef SOFA_DOUBLE
+.add< MyMappingPendulumInPlane<Vec1fTypes,Vec3fTypes> >()
+#endif
+;
+
+#ifndef SOFA_FLOAT
+template class MyMappingPendulumInPlane<Vec1dTypes,Vec3dTypes>;
+template class MyMappingPendulumInPlane<Vec1dTypes,Vec2dTypes>;
+#endif
+#ifndef SOFA_DOUBLE
+template class MyMappingPendulumInPlane<Vec1fTypes,Vec3fTypes>;
+#endif
+
+
+
+}	//mapping
 
 }	//component
 

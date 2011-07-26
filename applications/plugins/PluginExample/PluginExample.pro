@@ -35,19 +35,19 @@ LIBS += $$SOFA_EXT_LIBS
 
 INCLUDEPATH += $$SOFA_DIR/extlibs
 
-SOURCES = MyFakeComponent.cpp \
-          CustomDataUnsignedWidget.cpp \
-          OtherFakeComponent.cpp \
-          PendulumMapping.cpp \
-          initPluginExample.cpp
+SOURCES = MyBehaviorModel.cpp \
+          MyDataWidgetUnsigned.cpp \
+          MyProjectiveConstraintSet.cpp \
+          MyMappingPendulumInPlane.cpp \
+          initPlugin.cpp
 
-HEADERS = MyFakeComponent.h \
-          CustomDataUnsignedWidget.h \
-          PendulumMapping.h \
-          PendulumMapping.inl \
-          OtherFakeComponent.h \
-          OtherFakeComponent.inl \
-		  initPluginExample.h
+HEADERS = MyBehaviorModel.h \
+          MyDataWidgetUnsigned.h \
+          MyMappingPendulumInPlane.h \
+          MyMappingPendulumInPlane.inl \
+          MyProjectiveConstraintSet.h \
+          MyProjectiveConstraintSet.inl \
+		  initPlugin.h
 		  
 README_FILE = PluginExample.txt
 

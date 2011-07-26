@@ -130,15 +130,8 @@ void OglShaderVisualModel::init()
 	vrestnormals.setIndexShader( 0);
     vrestnormals.init();
 
-    ResizableExtVector<Coord>& vrestnorm = * ( vrestnormals.beginEdit() );
-    const ResizableExtVector<Coord>& vnormals = m_vnormals.getValue();
-    vrestnorm.resize ( vnormals.size() );
-    for ( unsigned int i = 0; i < vnormals.size(); i++ )
-    {
-      vrestnorm[i] = vnormals[i];
-    }
+    computeRestNormals();
 
-    vrestnormals.endEdit();
 //
 //    //add Model Matrix as Uniform
     modelMatrixUniform.setContext( this->getContext());
@@ -209,16 +202,16 @@ void OglShaderVisualModel::handleTopologyChange()
   // For the moment, the only class using dynamic topology is HexaToTriangleTopologicalMapping which update itself the attributes...
 }
 
-void OglShaderVisualModel::bwdDraw(Pass pass)
+void OglShaderVisualModel::bwdDraw(core::visual::VisualParams* vp)
 {
-	 vrestpositions.bwdDraw(pass);
-	 vrestnormals.bwdDraw(pass);
+   vrestpositions.bwdDraw(vp);
+   vrestnormals.bwdDraw(vp);
 }
 
-void OglShaderVisualModel::fwdDraw(Pass pass)
+void OglShaderVisualModel::fwdDraw(core::visual::VisualParams* vp)
 {
-	 vrestpositions.fwdDraw(pass);
-	 vrestnormals.fwdDraw(pass);
+   vrestpositions.fwdDraw(vp);
+   vrestnormals.fwdDraw(vp);
 }
 
 void OglShaderVisualModel::computeRestNormals()
@@ -227,6 +220,11 @@ void OglShaderVisualModel::computeRestNormals()
   const ResizableExtVector<Triangle>& triangles = m_triangles.getValue();
   const ResizableExtVector<Quad>& quads = m_quads.getValue();
   ResizableExtVector<Coord>& restNormals = * ( vrestnormals.beginEdit() );
+  restNormals.resize(vrestpos.size());
+  for (unsigned int i = 0; i < restNormals.size(); i++)
+  {
+      restNormals[i].clear();
+  }
   for (unsigned int i = 0; i < triangles.size() ; i++)
   {
     const Coord  v1 = vrestpos[triangles[i][0]];

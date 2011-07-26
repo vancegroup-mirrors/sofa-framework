@@ -149,7 +149,7 @@ public:
         return hostIsValid;
     }
     bool isDeviceValid(unsigned gpu) const {
-        return deviceIsValid & (1<<gpu);
+        return (deviceIsValid & (1<<gpu))!=0;
     }
 
     void clear() {

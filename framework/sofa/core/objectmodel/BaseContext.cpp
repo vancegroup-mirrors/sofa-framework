@@ -31,7 +31,7 @@
 #include <sofa/core/topology/Topology.h>
 #include <sofa/core/topology/BaseTopology.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
-#include <sofa/core/Shader.h>
+#include <sofa/core/visual/Shader.h>
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -256,8 +256,8 @@ core::topology::BaseMeshTopology* BaseContext::getMeshTopology() const
 /// Shader
 BaseObject* BaseContext::getShader() const
 {
-    return this->get<sofa::core::Shader>();
-    return NULL;
+  return this->get<sofa::core::visual::Shader>();
+  return NULL;
 }
 
 /// Propagate an event 

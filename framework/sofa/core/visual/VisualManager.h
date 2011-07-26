@@ -24,20 +24,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-//
-// C++ Interface: Shader
-//
-// Description:
-//
-//
-// Author: The SOFA team </www.sofa-framework.org>, (C) 2007
-//
-// Copyright: See COPYING file that comes with this distribution
-//
-//
-#ifndef SOFA_CORE_SHADER_H
-#define SOFA_CORE_SHADER_H
+#ifndef SOFA_CORE_VISUAL_VISUALMANAGER_H
+#define SOFA_CORE_VISUAL_VISUALMANAGER_H
 
+#include <sofa/core/visual/VisualModel.h>
+#include <sofa/core/visual/VisualParams.h>
 
 namespace sofa
 {
@@ -45,43 +36,39 @@ namespace sofa
 namespace core
 {
 
-/**
- *  \brief A basic interface to define a Shader for different system (OpenGL, DirectX, ...).
- *
- *
- *
- */
-class Shader : public virtual objectmodel::BaseObject
+namespace visual
+{
+
+class VisualManager : public virtual VisualModel
 {
 public:
-    SOFA_CLASS(Shader, objectmodel::BaseObject);
+    SOFA_CLASS(VisualManager, VisualModel);
 
-	/// Destructor
-	virtual ~Shader() { };
-	/// Start the shader
-	virtual void start() = 0;
-	/// Stop the shader
-	virtual void stop() = 0;
-	///Tells if it must be activated automatically(value false : the visitor will switch the shader)
-	///or manually (value true : useful when another component wants to use it for itself only)
-	virtual bool isActive() = 0;
+    /// Destructor
+    virtual ~VisualManager() { }
+
+    /**
+     *  \brief Called before rendering the scene
+     */
+    virtual void preDrawScene(VisualParams* /*vparams*/) {}
+
+    /**
+     *  \brief Called after rendering the scene
+     */
+    virtual void postDrawScene(VisualParams* /*vparams*/) {}
+
+    /**
+     *  \brief Called instead of rendering the scene
+     *
+     *  Return true if this object actually did the rendering, or false if it wasn't done.
+     */
+    virtual bool drawScene(VisualParams* /*vparams*/) { return false; }
 };
 
-/**
- *  \brief A basic interface to define an element to be used with a Shader.
- *
- *
- *
- */
-class ShaderElement: public virtual objectmodel::BaseObject
-{
-public:
-	/// Destructor
-	virtual ~ShaderElement() { };
-};
+} // namespace visual
 
 } // namespace core
 
 } // namespace sofa
 
-#endif //SOFA_CORE_SHADER_H
+#endif // SOFA_CORE_VISUAL_VISUALMANAGER_H

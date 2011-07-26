@@ -26,7 +26,7 @@
 #ifndef _OGL_ATTRIBUTE_H_
 #define _OGL_ATTRIBUTE_H_
 
-#include <sofa/core/VisualModel.h>
+#include <sofa/core/visual/VisualModel.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/component/visualmodel/OglModel.h>
 #include <sofa/component/visualmodel/OglShader.h>
@@ -35,58 +35,58 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace visualmodel
-    {
+namespace visualmodel
+{
 
-      template< int size, unsigned int type, class DataTypes>
-      class OglAttribute: public core::VisualModel, public OglShaderElement
-      {
-        public:
-    	  SOFA_CLASS2(SOFA_TEMPLATE3(OglAttribute, size, type, DataTypes), core::VisualModel, OglShaderElement);
-          OglAttribute();
-          virtual ~OglAttribute();
+template< int size, unsigned int type, class DataTypes>
+class OglAttribute: public core::visual::VisualModel, public OglShaderElement
+{
+public:
+    SOFA_CLASS2(SOFA_TEMPLATE3(OglAttribute, size, type, DataTypes), core::visual::VisualModel, OglShaderElement);
+    OglAttribute();
+    virtual ~OglAttribute();
 
-          virtual void init();
+    virtual void init();
 
-          virtual void initVisual();
+    virtual void initVisual();
 
-          virtual void reinit();
+    virtual void reinit();
 
-          // TODO
-          // if attributes are not static, need to update buffer
-          bool updateABO();
+    /// if attributes are not static, update the buffer
+    void updateVisual();
 
-          ResizableExtVector<DataTypes>* beginEdit();
-          void endEdit();
-          const ResizableExtVector<DataTypes>& getValue() const;
-          void setValue( const ResizableExtVector<DataTypes>& value);
-          void enable();
-          void disable();
-          virtual void bwdDraw(Pass);
-          virtual void fwdDraw(Pass);
+    ResizableExtVector<DataTypes>* beginEdit();
+    void endEdit();
+    const ResizableExtVector<DataTypes>& getValue() const;
+    void setValue( const ResizableExtVector<DataTypes>& value);
+    void enable();
+    void disable();
+    virtual void bwdDraw(core::visual::VisualParams* );
+    virtual void fwdDraw(core::visual::VisualParams* );
 
-		  void setUsage(unsigned int usage) { _usage = usage; }
+    void setUsage(unsigned int usage) { _usage = usage; }
 
-          // handle topological changes
-          virtual void handleTopologyChange();
+    // handle topological changes
+    virtual void handleTopologyChange();
 
-        protected:
-            // attribute buffer object identity
-            // to send data to the graphics card faster
-            GLuint _abo;
-            // memory index of the attribute into the graphics memory
-            GLuint _index;
+protected:
+    // attribute buffer object identity
+    // to send data to the graphics card faster
+    GLuint _abo;
+    unsigned int _aboSize;
+    bool _needUpdate;
+    // memory index of the attribute into the graphics memory
+    GLuint _index;
 
-            unsigned int _usage;
+    unsigned int _usage;
 
-            Data<ResizableExtVector<DataTypes> > value;
+    Data<ResizableExtVector<DataTypes> > value;
 
-            sofa::core::topology::BaseMeshTopology* _topology;
-      };
-
+    sofa::core::topology::BaseMeshTopology* _topology;
+};
 
 /** FLOAT ATTRIBUTE **/
 class SOFA_COMPONENT_VISUALMODEL_API OglFloatAttribute : public OglAttribute<1, GL_FLOAT, float>
@@ -205,10 +205,10 @@ public:
 
 };
 
-    }
+} // namespace visual
 
-  }
+} // namespace component
 
-}
+} // namespace sofa
 
 #endif

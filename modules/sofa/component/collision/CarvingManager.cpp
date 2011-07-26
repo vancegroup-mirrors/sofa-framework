@@ -27,6 +27,7 @@
 #include <sofa/core/collision/DetectionOutput.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
+#include <sofa/core/objectmodel/MouseEvent.h>
 #include <sofa/core/objectmodel/OmniEvent.h>
 #include <sofa/simulation/common/AnimateBeginEvent.h>
 #include <sofa/simulation/common/AnimateEndEvent.h>
@@ -58,6 +59,7 @@ CarvingManager::CarvingManager()
 , active( initData(&active, false, "active", "Activate this object.\nNote that this can be dynamically controlled by using a key") )
 , keyEvent( initData(&keyEvent, '1', "key", "key to press to activate this object until the key is released") )
 , keySwitchEvent( initData(&keySwitchEvent, '4', "keySwitch", "key to activate this object until the key is pressed again") )
+, mouseEvent( initData(&mouseEvent, "mouseEvent", "Activate carving with middle mouse button") )
 , modelTool(NULL)
 , modelSurface(NULL)
 , intersectionMethod(NULL)
@@ -224,6 +226,18 @@ void CarvingManager::handleEvent(sofa::core::objectmodel::Event* event)
             active.setValue(false);
         }
     }
+    else if (sofa::core::objectmodel::MouseEvent * ev = dynamic_cast<sofa::core::objectmodel::MouseEvent*>(event))
+    {
+        if ((ev->getState() == sofa::core::objectmodel::MouseEvent::MiddlePressed) && (mouseEvent.getValue()))
+        {
+            active.setValue(true);
+        }
+        else
+        if ((ev->getState() == sofa::core::objectmodel::MouseEvent::MiddleReleased) && (mouseEvent.getValue()))
+        {
+            active.setValue(false);
+        }
+    }    
     else if (sofa::core::objectmodel::OmniEvent* ev = dynamic_cast<sofa::core::objectmodel::OmniEvent*>(event))
     {
         active.setValue(ev->getButtonState() != 0);

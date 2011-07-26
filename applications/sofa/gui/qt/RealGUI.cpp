@@ -268,6 +268,24 @@ namespace sofa
         recentlyOpenedFilesManager("config/Sofa.ini"),
         saveReloadFile(false)
       {
+	
+#ifdef SOFA_GUI_INTERACTION
+	interactionButton = new QPushButton(optionTabs);
+        interactionButton->setObjectName(QString::fromUtf8("interactionButton"));
+        interactionButton->setCheckable(true);
+	interactionButton->setStyleSheet("background-color: cyan;");
+
+	
+	gridLayout->addWidget(interactionButton, 3, 0, 1, 1);
+	gridLayout->removeWidget(screenshotButton);
+	gridLayout->addWidget(screenshotButton, 3, 1, 1,1);
+
+	interactionButton->setText(QApplication::translate("GUI", "&Interaction", 0, QApplication::UnicodeUTF8));
+        interactionButton->setShortcut(QApplication::translate("GUI", "Alt+i", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        interactionButton->setProperty("toolTip", QVariant(QApplication::translate("GUI", "Start interaction mode", 0, QApplication::UnicodeUTF8)));
+#endif // QT_NO_TOOLTIP	
+#endif	
 
         connect(this, SIGNAL(quit()), this, SLOT(fileExit()));
 
@@ -292,6 +310,9 @@ namespace sofa
 
         left_stack = new QWidgetStack ( splitter2 );
         connect ( startButton, SIGNAL ( toggled ( bool ) ), this , SLOT ( playpauseGUI ( bool ) ) );
+#ifdef SOFA_GUI_INTERACTION
+	connect ( interactionButton, SIGNAL ( toggled ( bool ) ), this , SLOT ( interactionGUI ( bool ) ) );
+#endif
         connect ( ResetSceneButton, SIGNAL ( clicked() ), this, SLOT ( resetScene() ) );
         connect ( dtEdit, SIGNAL ( textChanged ( const QString& ) ), this, SLOT ( setDt ( const QString& ) ) );
         connect ( stepButton, SIGNAL ( clicked() ), this, SLOT ( step() ) );
@@ -462,6 +483,12 @@ namespace sofa
         connect ( timerStep, SIGNAL ( timeout() ), this, SLOT ( step() ) );
 
         animationState = false;
+	
+#ifdef SOFA_GUI_INTERACTION	
+	m_interactionActived = false;
+	viewer->getQWidget()->installEventFilter(this);
+#endif
+
       }
 
       void RealGUI::fileRecentlyOpened(int id)
@@ -1387,6 +1414,34 @@ namespace sofa
           timerStep->stop();
         }
       }
+      
+#ifdef SOFA_GUI_INTERACTION     
+      void RealGUI::interactionGUI ( bool value )
+      {
+	interactionButton->setOn ( value );
+	m_interactionActived = value;
+	viewer->getQWidget()->setMouseTracking ( ! value);
+	if (value==true) playpauseGUI(value);
+	  
+        if(value){
+	  interactionButton->setText(QApplication::translate("GUI", "Alt+i to quit", 0, QApplication::UnicodeUTF8));
+	  this->grabMouse();
+	  this->grabKeyboard();
+	  this->setMouseTracking(true);
+	  //this->setCursor(QCursor(Qt::BlankCursor));
+      application->setOverrideCursor( QCursor( Qt::BlankCursor ) );
+	  QPoint p = mapToGlobal(QPoint((this->width()+2)/2,(this->height()+2)/2));
+	  QCursor::setPos(p);
+        } else{
+	  interactionButton->setText(QApplication::translate("GUI", "&Interaction", 0, QApplication::UnicodeUTF8));	  
+	  this->releaseKeyboard();
+	  this->releaseMouse();
+	  this->setMouseTracking(false);
+	  //this->setCursor(QCursor(Qt::ArrowCursor));
+      application->restoreOverrideCursor();
+        }
+      }
+#endif     
 
 
       void RealGUI::setGUI ( void )
@@ -1762,12 +1817,27 @@ namespace sofa
 
       void RealGUI::keyPressEvent ( QKeyEvent * e )
       {
-        // ignore if there are modifiers (i.e. CTRL of SHIFT)
+#ifdef SOFA_GUI_INTERACTION
+	if(m_interactionActived)
+	  {
+		  if ((e->key()==Qt::Key_Escape) || (e->modifiers() && (e->key()=='I'))) {
+		    this->interactionGUI (false);
+		  } else {
+		    sofa::core::objectmodel::KeypressedEvent keyEvent(e->key());
+		    Node* groot = viewer->getScene();
+		    if (groot) groot->propagateEvent(core::ExecParams::defaultInstance(), &keyEvent);
+		  }
+		  return;
+	  }
+#endif
+
+
 #ifdef SOFA_QT4
         if (e->modifiers()) return;
 #else
         if (e->state() & (Qt::KeyButtonMask)) return;
-#endif
+#endif	
+        // ignore if there are modifiers (i.e. CTRL of SHIFT)
         switch ( e->key() )
         {
 
@@ -1799,8 +1869,115 @@ namespace sofa
             break;
           }
         }
+
+
       }
 
+#ifdef SOFA_GUI_INTERACTION
+      bool RealGUI::eventFilter(QObject */*obj*/, QEvent *e)
+      {
+	  if (m_interactionActived) {
+	      if (e->type() == QEvent::Wheel) {
+		this->wheelEvent((QWheelEvent*)e);
+		return true;
+	      }
+	  }
+	  return false; // pass other events
+      }
+ 
+      void RealGUI::mouseMoveEvent(QMouseEvent * /*e*/)
+      {
+	  if (m_interactionActived) {
+          QPoint p = mapToGlobal(QPoint((this->width()+2)/2,(this->height()+2)/2));
+		  QPoint c = QCursor::pos();
+		  sofa::core::objectmodel::MouseEvent mouseEvent(sofa::core::objectmodel::MouseEvent::Move,c.x() - p.x(),c.y() - p.y());
+		  QCursor::setPos(p);
+		  Node* groot = viewer->getScene();
+		  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+		  return;
+	  }	  
+      }   
+      
+      void RealGUI::wheelEvent(QWheelEvent* e)
+      {
+	  if(m_interactionActived)
+	  {
+		  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::Wheel,e->delta());
+		  Node* groot = viewer->getScene();
+		  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+		  e->accept();
+		  return;
+	  }
+      }      
+      
+      void RealGUI::mousePressEvent(QMouseEvent * e)
+      {	    
+	  if(m_interactionActived)
+	  {
+		  if (e->type() == QEvent::MouseButtonPress)
+		  {
+			  if (e->button() == Qt::LeftButton)
+			  {
+				  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::LeftPressed);
+				  Node* groot = viewer->getScene();
+				  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+			  }
+			  else if (e->button() == Qt::RightButton)
+			  {
+				  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::RightPressed);
+				  Node* groot = viewer->getScene();
+				  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+			  }
+			  else if (e->button() == Qt::MidButton)
+			  {
+				  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::MiddlePressed);
+				  Node* groot = viewer->getScene();
+				  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+			  }
+			  return;
+		  }
+	  }
+      }
+
+      void RealGUI::mouseReleaseEvent(QMouseEvent * e)
+      {  
+	  if(m_interactionActived)
+	  {
+		  if (e->type() == QEvent::MouseButtonRelease)
+		  {
+			  if (e->button() == Qt::LeftButton)
+			  {
+				  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::LeftReleased);
+				  Node* groot = viewer->getScene();
+				  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+			  }
+			  else if (e->button() == Qt::RightButton)
+			  {
+				  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::RightReleased);
+				  Node* groot = viewer->getScene();
+				  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+			  }
+			  else if (e->button() == Qt::MidButton)
+			  {
+				  sofa::core::objectmodel::MouseEvent mouseEvent = sofa::core::objectmodel::MouseEvent(sofa::core::objectmodel::MouseEvent::MiddleReleased);
+				  Node* groot = viewer->getScene();
+				  if (groot)groot->propagateEvent(core::ExecParams::defaultInstance(), &mouseEvent);
+			  }
+			  return;
+		  }
+	  } 
+      }   
+     
+      void RealGUI::keyReleaseEvent(QKeyEvent * e) {
+	  if(m_interactionActived)
+	  {
+		  sofa::core::objectmodel::KeyreleasedEvent keyEvent(e->key());
+		  Node* groot = viewer->getScene();
+		  if (groot) groot->propagateEvent(core::ExecParams::defaultInstance(), &keyEvent);
+		  return;
+	  }	
+      }
+#endif      
 
       void RealGUI::dropEvent(QDropEvent* event)
       {

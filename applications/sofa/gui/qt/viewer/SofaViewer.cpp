@@ -63,9 +63,7 @@ namespace sofa
           sceneFileName = filename ? filename : std::string("default.scn");
           groot = scene;
           initTexturesDone = false;
-          sceneBBoxIsValid = false;
-
-		  _stereoEnabled = false;
+		      _stereoEnabled = false;
           _stereoShift = 1.0;
           _binocularModeEnabled = false;
 
@@ -380,9 +378,10 @@ namespace sofa
           currentCamera->manageEvent(&me);
 
           getQWidget()->update();
-
+#ifndef SOFA_GUI_INTERACTION
 		  if (groot)
 			  groot->propagateEvent(core::ExecParams::defaultInstance(), &me);
+#endif		  
         }
 
         void SofaViewer::mouseMoveEvent ( QMouseEvent *e )
@@ -392,9 +391,10 @@ namespace sofa
           currentCamera->manageEvent(&me);
 
           getQWidget()->update();
-
+#ifndef SOFA_GUI_INTERACTION
 		  if (groot)
 			  groot->propagateEvent(core::ExecParams::defaultInstance(), &me);
+#endif		  
         }
 
         void SofaViewer::mousePressEvent ( QMouseEvent * e)
@@ -410,8 +410,10 @@ namespace sofa
           currentCamera->manageEvent(mEvent);
 
           getQWidget()->update();
+#ifndef SOFA_GUI_INTERACTION	  
 		  if (groot)
 			  groot->propagateEvent(core::ExecParams::defaultInstance(), mEvent);
+#endif		  
         }
 
         void SofaViewer::mouseReleaseEvent ( QMouseEvent * e)
@@ -427,8 +429,10 @@ namespace sofa
           currentCamera->manageEvent(mEvent);
 
           getQWidget()->update();
+#ifndef SOFA_GUI_INTERACTION	  
 		  if (groot)
 			  groot->propagateEvent(core::ExecParams::defaultInstance(), mEvent);
+#endif		  
         }
 
         void SofaViewer::mouseEvent(QMouseEvent *e)

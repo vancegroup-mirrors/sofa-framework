@@ -24,11 +24,7 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-
-#include "MyFakeComponent.h"
-#include <sofa/core/ObjectFactory.h>
-
-
+#include "initPlugin.h"
 
 namespace sofa
 {
@@ -36,47 +32,60 @@ namespace sofa
 namespace component
 {
 
-namespace behaviormodel
-{
+	//Here are just several convenient functions to help user to know what contains the plugin
+
+	extern "C" {
+                SOFA_MyPluginExample_API void initExternalModule();
+                SOFA_MyPluginExample_API const char* getModuleName();
+                SOFA_MyPluginExample_API const char* getModuleVersion();
+                SOFA_MyPluginExample_API const char* getModuleLicense();
+                SOFA_MyPluginExample_API const char* getModuleDescription();
+                SOFA_MyPluginExample_API const char* getModuleComponentList();
+	}
+	
+	void initExternalModule()
+	{
+		static bool first = true;
+		if (first)
+		{
+			first = false;
+		}
+	}
+
+	const char* getModuleName()
+	{
+    return "MyPluginExample";
+	}
+
+	const char* getModuleVersion()
+	{
+		return "0.2";
+	}
+
+	const char* getModuleLicense()
+	{
+		return "LGPL";
+	}
 
 
- 
-MyFakeComponent::MyFakeComponent()
-: customUnsignedData( initData(&customUnsignedData,(unsigned)1,"Custom Unsigned Data","Example of unsigned data with custom widget") ),
-regularUnsignedData( initData(&regularUnsignedData,(unsigned)1,"Unsigned Data","Example of unsigned data with standard widget") )
-{
-  customUnsignedData.setWidget("widget_myData");
-}
+	const char* getModuleDescription()
+	{
+		return "a simple example of a plugin component module";
+	}
 
-
-MyFakeComponent::~MyFakeComponent()
-{
-}
-
-void MyFakeComponent::init()
-{
-}
-
-void MyFakeComponent::reinit()
-{
-}
-
-void MyFakeComponent::updatePosition(double /*dt*/)
-{
-}
+	const char* getModuleComponentList()
+	{
+    return "MyMappingPendulumInPlane, MyBehaviorModel, MyProjectiveConstraintSet";
+	}
 
 
 
+} 
 
-SOFA_DECL_CLASS(MyFakeComponent)
+} 
 
-int MyFakeComponentClass = core::RegisterObject("just an example of component")
-.add< MyFakeComponent >()
-;
 
-}	//behaviormodel
-
-}	//component
-
-}	//sofa
+SOFA_LINK_CLASS(MyMappingPendulumInPlane)
+SOFA_LINK_CLASS(MyBehaviorModel)
+SOFA_LINK_CLASS(MyProjectiveConstraintSet)
 

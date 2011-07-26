@@ -24,10 +24,11 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_CORE_VISUALMODEL_H
-#define SOFA_CORE_VISUALMODEL_H
+#ifndef SOFA_CORE_VISUAL_VISUALMODEL_H
+#define SOFA_CORE_VISUAL_VISUALMODEL_H
 
 #include <sofa/core/objectmodel/BaseObject.h>
+#include <sofa/core/visual/VisualParams.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
 
@@ -35,6 +36,9 @@ namespace sofa
 {
 
 namespace core
+{
+
+namespace visual
 {
 
 /**
@@ -72,27 +76,21 @@ public:
      *  @deprecated Use initVisual() instead.
      */
     virtual void initTextures() {}
-    
-    /// The enumeration used to describe each step of the rendering.
-    enum Pass { Std,		///< Standard pass
-		Transparent,	///< Transparent pass
-		Shadow 		///< Shadow pass
-	};
 
     /**
      *  \brief Called before objects in the current branch are displayed
      */
-    virtual void fwdDraw(Pass /*pass*/ = Std) {}
+    virtual void fwdDraw(VisualParams* /*vparams*/) {}
     
     /**
      *  \brief Called after objects in the current branch are displayed
      */
-    virtual void bwdDraw(Pass /*pass*/ = Std) {}
+    virtual void bwdDraw(VisualParams* /*vparams*/) {}
     
     /**
      *  \brief Display the VisualModel object.
      */
-    virtual void drawVisual() {}
+    virtual void drawVisual(const VisualParams* /*vparams*/) {}
     //virtual void drawVisual() = 0;
 
     /**
@@ -100,7 +98,7 @@ public:
      *
      *  Transparent objects should use this method to get a correct display order.
      */
-    virtual void drawTransparent()
+    virtual void drawTransparent(const VisualParams* /*vparams*/)
     {
     }
 
@@ -110,9 +108,9 @@ public:
      *  This method default to calling draw(). Object that do not cast any
      *  shadows, or that use a different LOD for them should reimplement it.
      */
-    virtual void drawShadow()
+    virtual void drawShadow(const VisualParams* vparams)
     {
-        drawVisual();
+        drawVisual(vparams);
     }
 
     /**
@@ -186,8 +184,10 @@ public:
     }
 };
 
+} // namespace visual
+
 } // namespace core
 
 } // namespace sofa
 
-#endif
+#endif //SOFA_CORE_VISUAL_VISUALMODEL_H

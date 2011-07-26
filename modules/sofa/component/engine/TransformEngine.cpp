@@ -38,17 +38,23 @@ namespace engine
 SOFA_DECL_CLASS(TransformEngine)
 
 int TransformEngineClass = core::RegisterObject("Transform position of 3d points")
+#ifdef SOFA_FLOAT
+  .add< TransformEngine<defaulttype::Vec3fTypes> >(true) // default template
+#else
+  .add< TransformEngine<defaulttype::Vec3dTypes> >(true) // default template
+#ifndef SOFA_DOUBLE
+  .add< TransformEngine<defaulttype::Vec3fTypes> >()
+#endif
+#endif
 #ifndef SOFA_FLOAT
   .add< TransformEngine<defaulttype::Vec1dTypes> >()
   .add< TransformEngine<defaulttype::Vec2dTypes> >()
-  .add< TransformEngine<defaulttype::Vec3dTypes> >()
   .add< TransformEngine<defaulttype::Rigid2dTypes> >()
   .add< TransformEngine<defaulttype::Rigid3dTypes> >()
 #endif //SOFA_FLOAT
 #ifndef SOFA_DOUBLE
   .add< TransformEngine<defaulttype::Vec1fTypes> >()
   .add< TransformEngine<defaulttype::Vec2fTypes> >()
-  .add< TransformEngine<defaulttype::Vec3fTypes> >()
   .add< TransformEngine<defaulttype::Rigid2fTypes> >()
   .add< TransformEngine<defaulttype::Rigid3fTypes> >()
 #endif //SOFA_DOUBLE

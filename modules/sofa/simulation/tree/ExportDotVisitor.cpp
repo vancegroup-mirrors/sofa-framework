@@ -126,7 +126,7 @@ bool ExportDotVisitor::display(core::objectmodel::BaseObject* obj, const char **
 	if (dynamic_cast<core::BehaviorModel*>(obj)){
 		if (showBehaviorModel) { show = true; *color = COLOR[BMODEL]; } else hide = true;}
 
-	if (dynamic_cast<core::VisualModel*>(obj) && !hide && !show){
+  if (dynamic_cast<core::visual::VisualModel*>(obj) && !hide && !show){
 		if (showVisualModel) { show = true; *color = COLOR[VMODEL]; } else hide = true;}
 
 	return show || !hide;

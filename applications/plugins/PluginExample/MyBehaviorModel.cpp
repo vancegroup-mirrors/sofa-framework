@@ -25,11 +25,10 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#ifndef SOFA_COMPONENT_BEHAVIORMODEL_MyFakeComponent_H
-#define SOFA_COMPONENT_BEHAVIORMODEL_MyFakeComponent_H
+#include "MyBehaviorModel.h"
+#include <sofa/core/ObjectFactory.h>
 
-#include "initPluginExample.h"
-#include <sofa/core/BehaviorModel.h>
+
 
 namespace sofa
 {
@@ -41,35 +40,43 @@ namespace behaviormodel
 {
 
 
-class SOFA_PluginExample_API MyFakeComponent : public sofa::core::BehaviorModel
+ 
+MyBehaviorModel::MyBehaviorModel()
+: customUnsignedData( initData(&customUnsignedData,(unsigned)1,"Custom Unsigned Data","Example of unsigned data with custom widget") ),
+regularUnsignedData( initData(&regularUnsignedData,(unsigned)1,"Unsigned Data","Example of unsigned data with standard widget") )
 {
-public:
-SOFA_CLASS(MyFakeComponent,sofa::core::BehaviorModel);
-    MyFakeComponent();
-	~MyFakeComponent();
-
-	virtual void init();
-
-    virtual void reinit();
-
-    virtual void updatePosition(double dt);
-
-
-protected:
-
-	Data<unsigned> customUnsignedData;
-  Data<unsigned> regularUnsignedData;
-private:
-
-};
-
-
+  customUnsignedData.setWidget("widget_myData");
 }
 
+
+MyBehaviorModel::~MyBehaviorModel()
+{
 }
 
+void MyBehaviorModel::init()
+{
+}
+
+void MyBehaviorModel::reinit()
+{
+}
+
+void MyBehaviorModel::updatePosition(double /*dt*/)
+{
 }
 
 
 
-#endif
+
+SOFA_DECL_CLASS(MyBehaviorModel)
+
+int MyBehaviorModelClass = core::RegisterObject("just an example of component")
+.add< MyBehaviorModel >()
+;
+
+}	//behaviormodel
+
+}	//component
+
+}	//sofa
+

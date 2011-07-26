@@ -27,7 +27,6 @@
 
 #include <sofa/simulation/common/Node.h>
 #include <sofa/helper/gl/DrawManager.h>
-#include <sofa/helper/gl/VisualParameters.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/simulation/common/xml/BaseElement.h>
 #include <sofa/simulation/common/xml/XML.h>
@@ -53,11 +52,11 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Print all object in the graph
 	virtual void print(Node* root);
 
-        /// Initialize the objects
-        virtual void init(Node* root);
+  /// Initialize the objects
+  virtual void init(Node* root);
 
-        //Init a node without changing the context of the simulation.
-        virtual void initNode(Node* node);
+  ///Init a node without changing the context of the simulation.
+  virtual void initNode(Node* node);
 
 
 
@@ -67,8 +66,8 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Execute one timestep. If dt is 0, the dt parameter in the graph will be used
 	virtual void animate(Node* root, double dt=0.0);
 
-        /// Update the Visual Models: triggers the Mappings
-        virtual void updateVisual(Node* root, double dt=0.0);
+  /// Update the Visual Models: triggers the Mappings
+  virtual void updateVisual(Node* root, double dt=0.0);
 
 	/// Reset to initial state
 	virtual void reset(Node* root);
@@ -82,11 +81,11 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Update contexts. Required before drawing the scene if root flags are modified.
 	virtual void updateVisualContext(Node* root,Node::VISUAL_FLAG FILTER=Node::ALLFLAGS);
 
-        /// Compute the bounding box of the scene. If init is set to "true", then minBBox and maxBBox will be initialised to a default value
-        virtual void computeBBox(Node* root, SReal* minBBox, SReal* maxBBox, bool init=true);
+  /// Compute the bounding box of the scene. If init is set to "true", then minBBox and maxBBox will be initialised to a default value
+  virtual void computeBBox(Node* root, SReal* minBBox, SReal* maxBBox, bool init=true);
 
 	/// Render the scene
-	virtual void draw(Node* root, helper::gl::VisualParameters* params = NULL);
+  virtual void draw(Node* root, sofa::core::visual::VisualParams* vparams = sofa::core::visual::VisualParams::defaultInstance());
 
 	/// Render the scene - Shadows pass
 	virtual void drawShadows(Node* root);

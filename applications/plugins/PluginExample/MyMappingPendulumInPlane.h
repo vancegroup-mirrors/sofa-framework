@@ -25,8 +25,8 @@
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
-#ifndef SOFA_COMPONENT_CONSTRAINT_PendulumMapping_H
-#define SOFA_COMPONENT_CONSTRAINT_PendulumMapping_H
+#ifndef SOFA_COMPONENT_CONSTRAINT_MyMappingPendulumInPlane_H
+#define SOFA_COMPONENT_CONSTRAINT_MyMappingPendulumInPlane_H
 
 
 #include <sofa/core/Mapping.h>
@@ -52,10 +52,10 @@ namespace sofa
               */
 
             template <class TIn, class TOut>
-                    class PendulumMapping : public core::Mapping<TIn, TOut>
+                    class MyMappingPendulumInPlane : public core::Mapping<TIn, TOut>
             {
             public:
-                SOFA_CLASS( SOFA_TEMPLATE2(PendulumMapping,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut) );
+                SOFA_CLASS( SOFA_TEMPLATE2(MyMappingPendulumInPlane,TIn,TOut), SOFA_TEMPLATE2(core::Mapping,TIn,TOut) );
                 typedef core::Mapping<TIn, TOut> Inherit;
                 typedef TIn In;
                 typedef TOut Out;
@@ -70,8 +70,8 @@ namespace sofa
                 typedef typename Out::VecDeriv VecOutDeriv;
                 typedef typename Out::MatrixDeriv MatrixOutDeriv;
 
-                PendulumMapping(core::State<In>* from, core::State<Out>* to );
-                ~PendulumMapping();
+                MyMappingPendulumInPlane(core::State<In>* from, core::State<Out>* to );
+                ~MyMappingPendulumInPlane();
 
                 Data<vector<OutReal> > f_length;
 

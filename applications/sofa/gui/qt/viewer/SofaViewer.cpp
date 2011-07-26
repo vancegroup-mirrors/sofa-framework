@@ -94,7 +94,7 @@ namespace sofa
           
         }
 
-        void SofaViewer::setCameraMode(component::visualmodel::BaseCamera::CameraType mode)
+        void SofaViewer::setCameraMode(core::visual::VisualParams::CameraType mode)
         {
           currentCamera->setCameraType(mode);
         }
@@ -106,10 +106,11 @@ namespace sofa
 
         void SofaViewer::configure(sofa::component::configurationsetting::ViewerSetting* viewerConf)
         {
-          if (viewerConf->cameraMode.getValue().getSelectedId() == component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE)
-            setCameraMode(component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE);
+          using namespace core::visual;
+          if (viewerConf->cameraMode.getValue().getSelectedId() == VisualParams::ORTHOGRAPHIC_TYPE)
+            setCameraMode(VisualParams::ORTHOGRAPHIC_TYPE);
           else
-            setCameraMode(component::visualmodel::BaseCamera::PERSPECTIVE_TYPE);
+            setCameraMode(VisualParams::PERSPECTIVE_TYPE);
           if ( viewerConf->objectPickingMethod.getValue().getSelectedId() == gui::PickHandler::RAY_CASTING)
             pick.setPickingMethod( gui::PickHandler::RAY_CASTING );
           else
@@ -197,10 +198,10 @@ namespace sofa
             {
             case Qt::Key_T:
               {
-                if (currentCamera->getCameraType() == component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE)
-                  setCameraMode(component::visualmodel::BaseCamera::PERSPECTIVE_TYPE);
+                if (currentCamera->getCameraType() == core::visual::VisualParams::ORTHOGRAPHIC_TYPE)
+                  setCameraMode(core::visual::VisualParams::PERSPECTIVE_TYPE);
                 else
-                  setCameraMode(component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE);
+                  setCameraMode(core::visual::VisualParams::ORTHOGRAPHIC_TYPE);
                 break;
               }
             case Qt::Key_Shift:

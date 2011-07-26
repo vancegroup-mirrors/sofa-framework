@@ -180,7 +180,7 @@ public:
     virtual void getConstraintInfo(VecConstraintBlockInfo& blocks, VecPersistentID& ids, VecConstCoord& positions, VecConstDeriv& directions, VecConstArea& areas);
 
 
-    void draw();
+    void draw(const core::visual::VisualParams*);
 };
 
 

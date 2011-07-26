@@ -165,7 +165,7 @@ public:
 	// handle topological changes
 	virtual void handleTopologyChange();
 
-	void draw();
+	void draw(const core::visual::VisualParams*);
 
 protected:
 

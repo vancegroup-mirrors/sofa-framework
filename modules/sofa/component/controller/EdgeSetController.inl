@@ -588,7 +588,7 @@ bool EdgeSetController<DataTypes>::modifyTopology(void)
 
 
 template <class DataTypes>
-void EdgeSetController<DataTypes>::draw()
+void EdgeSetController<DataTypes>::draw(const core::visual::VisualParams* )
 {
 	if (!this->getContext()->getShowBehaviorModels()) return;
 

@@ -305,7 +305,7 @@ void EdgePressureForceField<DataTypes>::selectEdgesFromString()
 
 }
 template<class DataTypes>
-void EdgePressureForceField<DataTypes>::draw()
+void EdgePressureForceField<DataTypes>::draw(const core::visual::VisualParams* )
 {
 	double aSC = arrowSizeCoef.getValue();
 

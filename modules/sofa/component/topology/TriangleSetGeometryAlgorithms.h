@@ -73,7 +73,7 @@ namespace topology
 		
 		virtual ~TriangleSetGeometryAlgorithms() {}
 
-		virtual void draw();
+		virtual void draw(const core::visual::VisualParams*);
 
       virtual void init();
 

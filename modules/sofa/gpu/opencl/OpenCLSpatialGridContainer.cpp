@@ -80,9 +80,9 @@ namespace gpu
 namespace opencl
 {
 
-int SpatialGridContainer_RadixSortTempStorage(unsigned int numElements)
-{NOT_IMPLEMENTED();
-
+int SpatialGridContainer_RadixSortTempStorage(unsigned int /*numElements*/)
+{
+    return 0;
 }
 
 typedef struct v
@@ -236,7 +236,7 @@ BARRIER(x,__FILE__,__LINE__);
 //ShowVector *show_hash;
 
 sofa::helper::OpenCLKernel *SpatialGridContainer3f_findCellRange_kernel;
-void SpatialGridContainer_findCellRange(int cellBits, int index0, float cellWidth, int nbPoints, const gpu::opencl::_device_pointer particleHash8,gpu::opencl::_device_pointer cellRange,gpu::opencl::_device_pointer cellGhost)
+void SpatialGridContainer_findCellRange(int cellBits, int index0, float /*cellWidth*/, int nbPoints, const gpu::opencl::_device_pointer particleHash8,gpu::opencl::_device_pointer cellRange,gpu::opencl::_device_pointer cellGhost)
 {
 DEBUG_TEXT("SpatialGridContainer_findCellRange");
 BARRIER(particleHash8,__FILE__,__LINE__);

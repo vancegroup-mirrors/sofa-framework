@@ -114,10 +114,10 @@ namespace sofa
 
 
 
-      void BaseMouseInteractor::draw()
+      void BaseMouseInteractor::draw(const core::visual::VisualParams* vparams)
       {
         VecPerformer::iterator it=performers.begin(), it_end=performers.end();
-        for (;it!=it_end;++it) (*it)->draw();
+        for (;it!=it_end;++it) (*it)->draw(vparams);
 
         if (lastPicked.body) 
           {           
@@ -129,7 +129,7 @@ namespace sofa
             glDisable(GL_LIGHTING);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glLineWidth(3);
-            lastPicked.body->draw(lastPicked.indexCollisionElement);
+            lastPicked.body->draw(vparams,lastPicked.indexCollisionElement);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

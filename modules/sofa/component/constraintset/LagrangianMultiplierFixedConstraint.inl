@@ -139,7 +139,7 @@ template <class DataTypes>
 
 
 template<class DataTypes>
-void LagrangianMultiplierFixedConstraint<DataTypes>::draw()
+void LagrangianMultiplierFixedConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
 	if (!getContext()->getShowForceFields()) return;
 	const VecCoord& p = *this->mstate->getX();

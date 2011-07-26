@@ -1,27 +1,27 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
-*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
-*                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
-* under the terms of the GNU Lesser General Public License as published by    *
-* the Free Software Foundation; either version 2.1 of the License, or (at     *
-* your option) any later version.                                             *
-*                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
-* for more details.                                                           *
-*                                                                             *
-* You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
-*******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
-* Authors: The SOFA Team and external contributors (see Authors.txt)          *
-*                                                                             *
-* Contact information: contact@sofa-framework.org                             *
-******************************************************************************/
+ *       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+ *                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
+ *                                                                             *
+ * This library is free software; you can redistribute it and/or modify it     *
+ * under the terms of the GNU Lesser General Public License as published by    *
+ * the Free Software Foundation; either version 2.1 of the License, or (at     *
+ * your option) any later version.                                             *
+ *                                                                             *
+ * This library is distributed in the hope that it will be useful, but WITHOUT *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+ * for more details.                                                           *
+ *                                                                             *
+ * You should have received a copy of the GNU Lesser General Public License    *
+ * along with this library; if not, write to the Free Software Foundation,     *
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+ *******************************************************************************
+ *                               SOFA :: Modules                               *
+ *                                                                             *
+ * Authors: The SOFA Team and external contributors (see Authors.txt)          *
+ *                                                                             *
+ * Contact information: contact@sofa-framework.org                             *
+ ******************************************************************************/
 #ifndef SOFA_SIMULATION_COMMON_SIMULATION_H
 #define SOFA_SIMULATION_COMMON_SIMULATION_H
 
@@ -40,8 +40,8 @@ namespace simulation
 
 
 /** Main controller of the scene.
-Defines how the scene is inited at the beginning, and updated at each time step.
-Derives from BaseObject in order to model the parameters as Datas, which makes their edition easy in the GUI.
+    Defines how the scene is inited at the beginning, and updated at each time step.
+    Derives from BaseObject in order to model the parameters as Datas, which makes their edition easy in the GUI.
 */
 class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmodel::BaseObject
 {public:
@@ -94,7 +94,7 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	virtual void exportOBJ(Node* root, const char* filename, bool exportMTL = true);
 
 	/// Print all object in the graph in XML format
-        virtual void exportXML(Node* root, const char* fileName=0, bool compact=false);
+  virtual void exportXML(Node* root, const char* fileName=0, bool compact=false);
 
 	/// Dump the current state in the given stream
 	virtual void dumpState( Node* root, std::ofstream& out );
@@ -109,41 +109,32 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	/// Unload a scene from a Node.
 	virtual void unload(Node * /* root */);
 	
+  virtual Node *getVisualRoot()=0;
 
-        virtual Node *getVisualRoot()=0;
+  /// Create a new Node of the simulation
+  virtual Node* newNode(const std::string& name)=0;
 
+  /// Pause the simulation
+  virtual void setPaused(bool paused);
 
-
-
-
-
-        /// Create a new Node of the simulation
-        virtual Node* newNode(const std::string& name)=0;
-
-        /// Pause the simulation
-        virtual void setPaused(bool paused);
-
-        /// Return the current pause state
-        virtual bool getPaused();
+  /// Return the current pause state
+  virtual bool getPaused();
 
 	/// Number of mechanical steps within an animation step
 	Data<unsigned> numMechSteps;
 
-        /// Number of animation steps completed 
-        Data<unsigned> nbSteps;
+  /// Number of animation steps completed 
+  Data<unsigned> nbSteps;
 
 	/// Number of mechanical steps completed
 	Data<unsigned> nbMechSteps;
 
-        sofa::core::objectmodel::DataFileName gnuplotDirectory;
+  sofa::core::objectmodel::DataFileName gnuplotDirectory;
 	
 	helper::vector< Node* > instruments;
 	Data< int > instrumentInUse;
 
-        sofa::helper::gl::DrawManager& DrawUtility();
-        void setDrawUtility(sofa::helper::gl::DrawManager* _NewDrawUtility);
-
-    bool paused;
+  bool paused;
 
 	///load a scene from memory (typically : an xml into a string)
 	static Node* loadFromMemory ( const char *filename, const char *data, unsigned int size );
@@ -153,16 +144,13 @@ class SOFA_SIMULATION_COMMON_API Simulation: public virtual sofa::core::objectmo
 	static Node* processXML(xml::BaseElement* xml, const char *filename);
 
 	static std::auto_ptr<Simulation> theSimulation;
-
-    private:
-        sofa::helper::gl::DrawManager* mDrawUtility;
 };
 
 /// Set the (unique) simulation which controls the scene
 SOFA_SIMULATION_COMMON_API void setSimulation(Simulation* s);
 
 /** Get the (unique) simulation which controls the scene.
-Automatically creates one if no Simulation has been set.
+    Automatically creates one if no Simulation has been set.
 */
 SOFA_SIMULATION_COMMON_API Simulation* getSimulation();
 

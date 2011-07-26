@@ -90,8 +90,8 @@ helper::SofaViewerCreator<QtGLViewer> QtGLViewer_class("qglviewer",false);
 SOFA_DECL_CLASS ( QGLViewerGUI )
 
 
-static bool LeftPressedForMove = false;
-static bool RightPressedForMove = false;
+//static bool LeftPressedForMove = false;
+//static bool RightPressedForMove = false;
 
 
 // ---------------------------------------------------------
@@ -100,8 +100,6 @@ static bool RightPressedForMove = false;
 QtGLViewer::QtGLViewer(QWidget* parent, const char* name)
 : QGLViewer(parent, name)
 {
-  sofa::simulation::getSimulation()->setDrawUtility(new sofa::helper::gl::DrawManagerGL);
-
   groot = NULL;
   initTexturesDone = false;
 
@@ -755,7 +753,7 @@ void QtGLViewer::DrawScene(void)
   viewport[0] = 0;
   viewport[1] = 0;
   viewport[2] = camera()->screenWidth();
-  viewport[3] = -camera()->screenHeight();
+  viewport[3] = camera()->screenHeight();
 
   vparams->zFar() = camera()->zFar();
   vparams->zNear() = camera()->zNear();
@@ -968,16 +966,16 @@ void QtGLViewer::draw()
   emit( redrawn() );
 }
 
-void QtGLViewer::setCameraMode(component::visualmodel::BaseCamera::CameraType mode)
+void QtGLViewer::setCameraMode(core::visual::VisualParams::CameraType mode)
 {
   SofaViewer::setCameraMode(mode);
 
   switch (mode)
   {
-  case component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE:
+  case core::visual::VisualParams::ORTHOGRAPHIC_TYPE:
     camera()->setType( qglviewer::Camera::ORTHOGRAPHIC );
     break;
-  case component::visualmodel::BaseCamera::PERSPECTIVE_TYPE:
+  case core::visual::VisualParams::PERSPECTIVE_TYPE:
     camera()->setType( qglviewer::Camera::PERSPECTIVE  );
     break;
   }

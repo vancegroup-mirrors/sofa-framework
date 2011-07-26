@@ -243,7 +243,7 @@ void VoxelGrid::addCollisionPair(const std::pair<CollisionModel*, CollisionModel
 	}
 }
 
-void VoxelGrid::draw()
+void VoxelGrid::draw(const core::visual::VisualParams* vparams)
 {
 	if (!bDraw) return;
 	Vector3 nbSubdiv;
@@ -284,7 +284,7 @@ void VoxelGrid::draw()
 	{
 		for(int j = 0 ; j < (int) nbSubdiv[1]; j++){
 			for(int k = 0 ; k < (int) nbSubdiv[2]; k++){
-				grid[i][j][k].draw(timeStamp);
+				grid[i][j][k].draw(vparams,timeStamp);
 			}
 		}
 	}
@@ -298,8 +298,8 @@ void VoxelGrid::draw()
 		//std::cout << "Size : " << elemPairs.size() << std::endl;
 		for (; it != itEnd; it++)
 		{
-			it->first->draw();
-			it->second->draw();
+			it->first->draw(vparams);
+			it->second->draw(vparams);
 		}
 		glLineWidth(1);
 	}
@@ -402,7 +402,7 @@ void GridCell::setMinMax(const Vector3 &minimum, const Vector3 &maximum)
 	maxCell = maximum;
 }
 
-void GridCell::draw (int timeStampMethod)
+void GridCell::draw (const core::visual::VisualParams* vparams,int timeStampMethod)
 {
 	if (timeStampMethod != timeStamp || (collisElems.empty() && collisElemsImmobile[1].empty()))
 	{

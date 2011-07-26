@@ -1,27 +1,27 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
-*                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
-*                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
-* under the terms of the GNU Lesser General Public License as published by    *
-* the Free Software Foundation; either version 2.1 of the License, or (at     *
-* your option) any later version.                                             *
-*                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
-* for more details.                                                           *
-*                                                                             *
-* You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
-*******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
-* Authors: The SOFA Team and external contributors (see Authors.txt)          *
-*                                                                             *
-* Contact information: contact@sofa-framework.org                             *
-******************************************************************************/
+ *       SOFA, Simulation Open-Framework Architecture, version 1.0 beta 4      *
+ *                (c) 2006-2009 MGH, INRIA, USTL, UJF, CNRS                    *
+ *                                                                             *
+ * This library is free software; you can redistribute it and/or modify it     *
+ * under the terms of the GNU Lesser General Public License as published by    *
+ * the Free Software Foundation; either version 2.1 of the License, or (at     *
+ * your option) any later version.                                             *
+ *                                                                             *
+ * This library is distributed in the hope that it will be useful, but WITHOUT *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+ * for more details.                                                           *
+ *                                                                             *
+ * You should have received a copy of the GNU Lesser General Public License    *
+ * along with this library; if not, write to the Free Software Foundation,     *
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+ *******************************************************************************
+ *                               SOFA :: Modules                               *
+ *                                                                             *
+ * Authors: The SOFA Team and external contributors (see Authors.txt)          *
+ *                                                                             *
+ * Contact information: contact@sofa-framework.org                             *
+ ******************************************************************************/
 
 #include <sofa/component/collision/RayTriangleIntersection.h>
 
@@ -47,37 +47,37 @@
 namespace sofa
 {
 
-  namespace component
-  {
+namespace component
+{
 
-    namespace collision
-    {
+namespace collision
+{
 
-      using namespace sofa::defaulttype;
-      using namespace sofa::core::collision;
-      using namespace collision;
-      using sofa::helper::system::thread::CTime;
-      using sofa::helper::system::thread::ctime_t;
+using namespace sofa::defaulttype;
+using namespace sofa::core::collision;
+using namespace collision;
+using sofa::helper::system::thread::CTime;
+using sofa::helper::system::thread::ctime_t;
 
-        SOFA_DECL_CLASS (RayTraceDetection)
-	int RayTraceDetectionClass =
+SOFA_DECL_CLASS (RayTraceDetection)
+int RayTraceDetectionClass =
 	core::
 	RegisterObject
 	("Collision detection using TriangleOctreeModel").add <
 	RayTraceDetection > ();
 
-      using namespace core::objectmodel;
+using namespace core::objectmodel;
 
-        RayTraceDetection::
-	RayTraceDetection ():bDraw (initData
-				  (&bDraw, false, "draw",
-				   "enable/disable display of results"))
-      {
-      }
+RayTraceDetection::
+RayTraceDetection ():bDraw (initData
+                            (&bDraw, false, "draw",
+                             "enable/disable display of results"))
+{
+}
 
 
-      void RayTraceDetection::findPairsVolume (CubeModel * cm1, CubeModel * cm2)
-      {
+void RayTraceDetection::findPairsVolume (CubeModel * cm1, CubeModel * cm2)
+{
 	/*Obtain the CollisionModel at the lowest level, in this case it must be a TriangleOctreeModel */
 
 	TriangleOctreeModel *tm1 =
@@ -85,22 +85,22 @@ namespace sofa
 	TriangleOctreeModel *tm2 =
 	  dynamic_cast < TriangleOctreeModel * >(cm2->getLast ());
 	if (!tm1 || !tm2)
-	    return;
+    return;
 
 
-		/*construct the octree of both models, when it still doesn't exisits */
+  /*construct the octree of both models, when it still doesn't exisits */
 	if (!tm1->octreeRoot)
-	  {
+  {
 
-	    tm1->buildOctree ();
-	  }
+    tm1->buildOctree ();
+  }
 
 	if (!tm2->octreeRoot)
-	  {
+  {
 
-	    tm2->buildOctree ();
+    tm2->buildOctree ();
 
-	  }
+  }
 
 	/* get the output vector for a TriangleOctreeModel, TriangleOctreeModel Collision*/
 	/*Get the cube representing the bounding box of both Models */
@@ -109,17 +109,17 @@ namespace sofa
 
 
 	if (contacts == NULL)
-	  {
-	    contacts = new
-	      sofa::core::collision::TDetectionOutputVector <
-	      TriangleOctreeModel, TriangleOctreeModel >;
+  {
+    contacts = new
+      sofa::core::collision::TDetectionOutputVector <
+      TriangleOctreeModel, TriangleOctreeModel >;
 
-	  }
-
-
+  }
 
 
-		TDetectionOutputVector < TriangleOctreeModel,
+
+
+  TDetectionOutputVector < TriangleOctreeModel,
 	  TriangleOctreeModel > *outputs =
 	  static_cast < TDetectionOutputVector < TriangleOctreeModel,
 	  TriangleOctreeModel > *>(contacts);
@@ -133,182 +133,182 @@ namespace sofa
 	int size = tm1->getSize ();
 
 	for (int j = 0; j < size; j++)
-	  {
+  {
 
-	    /*creates a Triangle for each object being tested */
-	    Triangle tri1 (tm1, j);
-
-
-	    /*cosAngle will store the angle between the triangle from t1 and his corresponding in t2 */
-	    double cosAngle;
-	    /*cosAngle will store the angle between the triangle from t1 and another triangle on t1 that is crossed by the -normal of tri1*/
-	    double cosAngle2;
-	    /*resTriangle and resTriangle2 will store the triangle result from the trace method */
-	    int resTriangle = -1;
-	    int resTriangle2 = -1;
-	    Vector3 trianglePoints[4];
-	    bool found = false;
-	    int nPoints = 0;
-	    Vector3 normau[3];
-	    /*if it fails to find a correspondence between the triangles it tries the raytracing procedure */
-	    /*test if this triangle was tested before */
-
-	    /*set the triangle as tested */
-	    int flags = tri1.flags();
-
-	    /*test only the points related to this triangle */
-	    if (flags & TriangleModel::FLAG_P1)
-	      {
-		normau[nPoints] = tm1->pNorms[tri1.p1Index ()];
-		trianglePoints[nPoints++] = tri1.p1 ();
-
-	      }
-	    if (flags & TriangleModel::FLAG_P2)
-	      {
-		normau[nPoints] = tm1->pNorms[tri1.p2Index ()];
-		trianglePoints[nPoints++] = tri1.p2 ();
-	      }
-	    if (flags & TriangleModel::FLAG_P3)
-	      {
-		normau[nPoints] = tm1->pNorms[tri1.p3Index ()];
-		trianglePoints[nPoints++] = tri1.p3 ();
-	      }
-
-	    for (int t = 0; t < nPoints; t++)
-	      {
-
-		Vector3 point = trianglePoints[t];
-
-             if ((point[0] < (minVect2[0]))
-                 || (point[0] > maxVect2[0] )
-                 || (point[1] < minVect2[1] )
-                 || (point[1] > maxVect2[1] )
-                 || (point[2] < minVect2[2] )
-                 || (point[2] > maxVect2[2] ))
-               continue;
-	        /*res and res2 will store the point of intercection and the distance from the point */
-		TriangleOctree::traceResult res, res2;
-		/*search a triangle on t2 */
-		resTriangle =
-		  tm2->octreeRoot->
-		  trace (point /*+ normau[t] * (contactDistance / 2) */ ,
-			 -normau[t], res);
-		if (resTriangle == -1)
-		  continue;
-		Triangle triang2 (tm2, resTriangle);
-		cosAngle = dot (tri1.n (), triang2.n ());
-		if (cosAngle > 0)
-		  continue;
-		/*search a triangle on t1, to be sure that the triangle found on t2 isn't outside the t1 object */
-
-		/*if there is no triangle in t1  that is crossed by the tri1 normal (resTriangle2==-1), it means that t1 is not an object with a closed volume, so we can't continue.
-		   If the distance from the  point to the triangle on t1 is less than the distance to the triangle on t2 it means that the corresponding point is outside t1, and is not a good point */
-		resTriangle2 =
-		  tm1->octreeRoot->trace (point, -normau[t], res2);
+    /*creates a Triangle for each object being tested */
+    Triangle tri1 (tm1, j);
 
 
+    /*cosAngle will store the angle between the triangle from t1 and his corresponding in t2 */
+    double cosAngle;
+    /*cosAngle will store the angle between the triangle from t1 and another triangle on t1 that is crossed by the -normal of tri1*/
+    double cosAngle2;
+    /*resTriangle and resTriangle2 will store the triangle result from the trace method */
+    int resTriangle = -1;
+    int resTriangle2 = -1;
+    Vector3 trianglePoints[4];
+    bool found = false;
+    int nPoints = 0;
+    Vector3 normau[3];
+    /*if it fails to find a correspondence between the triangles it tries the raytracing procedure */
+    /*test if this triangle was tested before */
 
-		if (resTriangle2 == -1 || res2.t < res.t)
+    /*set the triangle as tested */
+    int flags = tri1.flags();
+
+    /*test only the points related to this triangle */
+    if (flags & TriangleModel::FLAG_P1)
+    {
+      normau[nPoints] = tm1->pNorms[tri1.p1Index ()];
+      trianglePoints[nPoints++] = tri1.p1 ();
+
+    }
+    if (flags & TriangleModel::FLAG_P2)
+    {
+      normau[nPoints] = tm1->pNorms[tri1.p2Index ()];
+      trianglePoints[nPoints++] = tri1.p2 ();
+    }
+    if (flags & TriangleModel::FLAG_P3)
+    {
+      normau[nPoints] = tm1->pNorms[tri1.p3Index ()];
+      trianglePoints[nPoints++] = tri1.p3 ();
+    }
+
+    for (int t = 0; t < nPoints; t++)
+    {
+
+      Vector3 point = trianglePoints[t];
+
+      if ((point[0] < (minVect2[0]))
+          || (point[0] > maxVect2[0] )
+          || (point[1] < minVect2[1] )
+          || (point[1] > maxVect2[1] )
+          || (point[2] < minVect2[2] )
+          || (point[2] > maxVect2[2] ))
+        continue;
+      /*res and res2 will store the point of intercection and the distance from the point */
+      TriangleOctree::traceResult res, res2;
+      /*search a triangle on t2 */
+      resTriangle =
+        tm2->octreeRoot->
+        trace (point /*+ normau[t] * (contactDistance / 2) */ ,
+               -normau[t], res);
+      if (resTriangle == -1)
+        continue;
+      Triangle triang2 (tm2, resTriangle);
+      cosAngle = dot (tri1.n (), triang2.n ());
+      if (cosAngle > 0)
+        continue;
+      /*search a triangle on t1, to be sure that the triangle found on t2 isn't outside the t1 object */
+
+      /*if there is no triangle in t1  that is crossed by the tri1 normal (resTriangle2==-1), it means that t1 is not an object with a closed volume, so we can't continue.
+        If the distance from the  point to the triangle on t1 is less than the distance to the triangle on t2 it means that the corresponding point is outside t1, and is not a good point */
+      resTriangle2 =
+        tm1->octreeRoot->trace (point, -normau[t], res2);
+
+
+
+      if (resTriangle2 == -1 || res2.t < res.t)
 		  {
 
 		    continue;
 		  }
 
 
-		Triangle tri3 (tm1, resTriangle2);
-		cosAngle2 = dot (tri1.n (), tri3.n ());
-		if (cosAngle2 > 0)
-		  continue;
+      Triangle tri3 (tm1, resTriangle2);
+      cosAngle2 = dot (tri1.n (), tri3.n ());
+      if (cosAngle2 > 0)
+        continue;
 
-		Vector3 Q =
-		  (triang2.p1 () * (1.0 - res.u - res.v)) +
-		  (triang2.p2 () * res.u) + (triang2.p3 () * res.v);
+      Vector3 Q =
+        (triang2.p1 () * (1.0 - res.u - res.v)) +
+        (triang2.p2 () * res.u) + (triang2.p3 () * res.v);
 
-		outputs->resize (outputs->size () + 1);
-		DetectionOutput *detection = &*(outputs->end () - 1);
+      outputs->resize (outputs->size () + 1);
+      DetectionOutput *detection = &*(outputs->end () - 1);
 
 
-		detection->elem =
-		  std::pair <
-		  core::CollisionElementIterator,
-		  core::CollisionElementIterator > (tri1, triang2);
-		detection->point[0] = point;
+      detection->elem =
+        std::pair <
+        core::CollisionElementIterator,
+        core::CollisionElementIterator > (tri1, triang2);
+      detection->point[0] = point;
 
-		detection->point[1] = Q;
+      detection->point[1] = Q;
 
-		detection->normal = normau[t];
+      detection->normal = normau[t];
 
-		detection->value = -(res.t);
+      detection->value = -(res.t);
 
-		detection->id = tri1.getIndex()*3+t;
-		found = true;
+      detection->id = tri1.getIndex()*3+t;
+      found = true;
 
-	      }
+    }
 
-	  }
+  }
 
-      }
+}
 
-      void RayTraceDetection::addCollisionModel (core::CollisionModel * cm)
-      {
+void RayTraceDetection::addCollisionModel (core::CollisionModel * cm)
+{
 	if (cm->empty ())
 	  return;
 	for (sofa::helper::vector < core::CollisionModel * >::iterator it =
-	     collisionModels.begin (); it != collisionModels.end (); ++it)
-	  {
-	    core::CollisionModel * cm2 = *it;
-	    if (!cm->isSimulated() && !cm2->isSimulated())
-	      continue;
-	    if (!cm->canCollideWith (cm2))
-	      continue;
+         collisionModels.begin (); it != collisionModels.end (); ++it)
+  {
+    core::CollisionModel * cm2 = *it;
+    if (!cm->isSimulated() && !cm2->isSimulated())
+      continue;
+    if (!cm->canCollideWith (cm2))
+      continue;
 
-              bool swapModels = false;
-              core::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
-              if (intersector == NULL)
-                  continue;
+    bool swapModels = false;
+    core::collision::ElementIntersector* intersector = intersectionMethod->findIntersector(cm, cm2, swapModels);
+    if (intersector == NULL)
+      continue;
 
-              core::CollisionModel* cm1 = (swapModels?cm2:cm);
-              cm2 = (swapModels?cm:cm2);
+    core::CollisionModel* cm1 = (swapModels?cm2:cm);
+    cm2 = (swapModels?cm:cm2);
 
 
-	    // Here we assume a single root element is present in both models
-	    if (intersector->canIntersect (cm1->begin (), cm2->begin ()))
-	      {
+    // Here we assume a single root element is present in both models
+    if (intersector->canIntersect (cm1->begin (), cm2->begin ()))
+    {
 
-		cmPairs.push_back (std::make_pair (cm1, cm2));
-	      }
-	  }
+      cmPairs.push_back (std::make_pair (cm1, cm2));
+    }
+  }
 	collisionModels.push_back (cm);
-      }
+}
 
-      void RayTraceDetection::addCollisionPair (const std::pair <
-					      core::CollisionModel *,
-					      core::CollisionModel * >&cmPair)
-      {
+void RayTraceDetection::addCollisionPair (const std::pair <
+                                          core::CollisionModel *,
+                                          core::CollisionModel * >&cmPair)
+{
 	typedef std::pair < std::pair < core::CollisionElementIterator,
 	  core::CollisionElementIterator >,
 	  std::pair < core::CollisionElementIterator,
 	  core::CollisionElementIterator > >TestPair;
 
 
-	CubeModel *cm1 = dynamic_cast < CubeModel * >(cmPair.first);
-	CubeModel *cm2 = dynamic_cast < CubeModel * >(cmPair.second);
-	if (cm1 && cm2)
-	  {
-	    ctime_t t0, t1, t2;
-	    t0 = CTime::getRefTime ();
-	    findPairsVolume (cm1, cm2);
+CubeModel *cm1 = dynamic_cast < CubeModel * >(cmPair.first);
+CubeModel *cm2 = dynamic_cast < CubeModel * >(cmPair.second);
+if (cm1 && cm2)
+{
+  ctime_t t0, t1, t2;
+  t0 = CTime::getRefTime ();
+  findPairsVolume (cm1, cm2);
 
 
-	    t1 = CTime::getRefTime ();
+  t1 = CTime::getRefTime ();
 
-	    findPairsVolume (cm2, cm1);
-	    t2 = CTime::getRefTime ();
-	  }
-      }
+  findPairsVolume (cm2, cm1);
+  t2 = CTime::getRefTime ();
+}
+}
 
-      void RayTraceDetection::draw ()
-      {
+void RayTraceDetection::draw (const core::visual::VisualParams* vparams)
+{
 	if (!bDraw.getValue ())
 	  return;
 
@@ -320,35 +320,35 @@ namespace sofa
 
 	for (DetectionOutputMap::iterator it = outputsMap.begin ();
 	     it != outputsMap.end (); it++)
-	  {
-	    TDetectionOutputVector < TriangleOctreeModel,
-	      TriangleOctreeModel > *outputs =
-	      static_cast <
-	      sofa::core::collision::TDetectionOutputVector <
-	      TriangleOctreeModel, TriangleOctreeModel > *>(it->second);
-	    for (TDetectionOutputVector < TriangleOctreeModel,
-		 TriangleOctreeModel >::iterator it2 = (outputs)->begin ();
-		 it2 != outputs->end (); it2++)
-	      {
-		glBegin (GL_LINES);
-		glVertex3d (it2->point[0][0], it2->point[0][1],
-			    it2->point[0][2]);
-		glVertex3d (it2->point[1][0], it2->point[1][1],
-			    it2->point[1][2]);
-		glEnd ();
-		serr << it2->point[0] << " " << it2->
-		  point[0] << sendl;
-		it2->elem.first.draw ();
-		it2->elem.second.draw ();
-	      }
-	  }
+  {
+    TDetectionOutputVector < TriangleOctreeModel,
+      TriangleOctreeModel > *outputs =
+      static_cast <
+      sofa::core::collision::TDetectionOutputVector <
+    TriangleOctreeModel, TriangleOctreeModel > *>(it->second);
+    for (TDetectionOutputVector < TriangleOctreeModel,
+           TriangleOctreeModel >::iterator it2 = (outputs)->begin ();
+         it2 != outputs->end (); it2++)
+    {
+      glBegin (GL_LINES);
+      glVertex3d (it2->point[0][0], it2->point[0][1],
+                  it2->point[0][2]);
+      glVertex3d (it2->point[1][0], it2->point[1][1],
+                  it2->point[1][2]);
+      glEnd ();
+      serr << it2->point[0] << " " << it2->
+        point[0] << sendl;
+      it2->elem.first.draw(vparams);
+      it2->elem.second.draw(vparams);
+    }
+  }
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth (1);
 	glPointSize (1);
-      }
+}
 
-    }				// namespace collision
+}				// namespace collision
 
-  }				// namespace component
+}				// namespace component
 
 }				// namespace sofa

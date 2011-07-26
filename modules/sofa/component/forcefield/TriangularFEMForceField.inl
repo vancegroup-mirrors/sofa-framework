@@ -1564,7 +1564,7 @@ int TriangularFEMForceField<DataTypes>::getFracturedEdge()
 
 
 template<class DataTypes>
-void TriangularFEMForceField<DataTypes>::draw()
+void TriangularFEMForceField<DataTypes>::draw(const core::visual::VisualParams* )
 {
     if (!this->getContext()->getShowForceFields())
         return;

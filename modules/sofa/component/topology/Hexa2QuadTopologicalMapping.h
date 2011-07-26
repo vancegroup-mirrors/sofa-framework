@@ -91,6 +91,9 @@ namespace topology
 
 		virtual unsigned int getFromIndex(unsigned int ind);
 
+        protected:
+                        Data<bool> flipNormals;
+
 	};
 
 } // namespace topology

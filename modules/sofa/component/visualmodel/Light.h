@@ -96,12 +96,12 @@ public:
   void setID(const GLint& id);
 
   //VisualModel
-  virtual void initVisual() ;
+  virtual void initVisual();
   void init();
   virtual void drawLight();
-  virtual void draw() { } ;
+  virtual void draw() {}
   virtual void reinit();
-  void update() {} ;
+  virtual void update();
 
   //CastShadowModel
   virtual void preDrawShadow(core::visual::VisualParams* vp);
@@ -112,6 +112,10 @@ public:
   virtual GLfloat* getProjectionMatrix() { return NULL ;};
   virtual GLfloat* getModelviewMatrix() { return NULL ;};
   virtual const sofa::defaulttype::Vector3 getPosition() { return sofa::defaulttype::Vector3(0.0,0.0,0.0); }
+
+protected:
+  bool needUpdate;
+
 };
 
 class DirectionalLight : public Light {
@@ -122,10 +126,8 @@ public:
 
   DirectionalLight();
   virtual ~DirectionalLight();
-  virtual void initVisual() ;
   virtual void drawLight();
-  virtual void draw();
-  virtual void reinit();
+  virtual void draw(const core::visual::VisualParams*);
 
 
 };
@@ -140,10 +142,8 @@ public:
 
   PositionalLight();
   virtual ~PositionalLight();
-  virtual void initVisual() ;
   virtual void drawLight();
-  virtual void draw();
-  virtual void reinit();
+  virtual void draw(const core::visual::VisualParams*);
   virtual const sofa::defaulttype::Vector3 getPosition() { return position.getValue(); }
 
 };
@@ -155,13 +155,12 @@ public:
   Data<sofa::defaulttype::Vector3> direction;
   Data<float> cutoff;
   Data<float> exponent;
+  Data<bool> lookat;
 
   SpotLight();
   virtual ~SpotLight();
-  virtual void initVisual() ;
   virtual void drawLight();
-  virtual void draw();
-  virtual void reinit();
+  virtual void draw(const core::visual::VisualParams*);
 
   void preDrawShadow(core::visual::VisualParams*  vp);
   GLuint getDepthTexture();

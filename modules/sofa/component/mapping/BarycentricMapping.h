@@ -167,7 +167,7 @@ public:
 	virtual void applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in ) = 0;
 	virtual void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in ) = 0;
 	virtual void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in ) = 0;
-	virtual void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
+  virtual void draw(const core::visual::VisualParams*, const typename Out::VecCoord& out, const typename In::VecCoord& in) = 0;
 
 	//-- test mapping partiel
 	virtual void applyOnePoint( const unsigned int& /*hexaId*/, typename Out::VecCoord& /*out*/, const typename In::VecCoord& /*in*/)
@@ -303,7 +303,7 @@ public:
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 	const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	int addContactPointFromInputMapping(const typename In::VecDeriv& /*in*/, const sofa::defaulttype::Vector3& /*pos*/, std::vector< std::pair<int, double> > & /*baryCoords*/);
 
@@ -428,7 +428,7 @@ public:
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 	const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperRegularGridTopology<In, Out> &b )
 	{
@@ -505,7 +505,7 @@ public:
 	void applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in );
 	void applyJT( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in );
 	const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	inline friend std::istream& operator >> ( std::istream& in, BarycentricMapperSparseGridTopology<In, Out> &b )
 	{
@@ -599,7 +599,7 @@ public:
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
 
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	// handle topology changes in the From topology
 	virtual void handleTopologyChange();
@@ -694,7 +694,7 @@ public:
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
 
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	// handle topology changes in the From topology
 	virtual void handleTopologyChange();
@@ -789,7 +789,7 @@ public:
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
 
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	// handle topology changes in the From topology
 	virtual void handleTopologyChange();
@@ -905,7 +905,7 @@ public:
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
 
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 
 	// handle topology changes in the From topology
@@ -1010,7 +1010,7 @@ public:
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ(int outSize, int inSize);
 
-	void draw( const typename Out::VecCoord& out, const typename In::VecCoord& in);
+	void draw(const core::visual::VisualParams*,const typename Out::VecCoord& out, const typename In::VecCoord& in);
 
 	//-- test mapping partiel
 	void applyOnePoint( const unsigned int& hexaId, typename Out::VecCoord& out, const typename In::VecCoord& in);
@@ -1143,7 +1143,7 @@ public:
 
 	virtual const sofa::defaulttype::BaseMatrix* getJ();
 
-	void draw();
+	void draw(const core::visual::VisualParams*);
 
 	// handle topology changes depending on the topology
 	virtual void handleTopologyChange(core::topology::Topology* t);

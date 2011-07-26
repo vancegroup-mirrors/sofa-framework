@@ -374,7 +374,7 @@ void VectorSpringForceField<DataTypes>::addDForce(const core::MechanicalParams* 
 }
 
 template<class DataTypes>
-void VectorSpringForceField<DataTypes>::draw()
+void VectorSpringForceField<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
 	if (!((this->mstate1 == this->mstate2)?this->getContext()->getShowForceFields():this->getContext()->getShowInteractionForceFields()))
 		return;
@@ -405,7 +405,7 @@ void VectorSpringForceField<DataTypes>::draw()
 			points.push_back(Vector3(x2[e[1]]));
 		}
 	}
-        simulation::getSimulation()->DrawUtility().drawLines(points, 3, Vec<4,float>(0,1,1,1));
+        vparams->drawTool()->drawLines(points, 3, Vec<4,float>(0,1,1,1));
 }
 
 } // namespace interactionforcefield

@@ -170,7 +170,7 @@ namespace forcefield
 		virtual void init();
 		virtual void reinit();
 		virtual void updatePosition(double dt);
-		virtual void draw();
+		virtual void draw(const core::visual::VisualParams*);
 
 	protected:
 		

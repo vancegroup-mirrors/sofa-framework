@@ -71,7 +71,7 @@ public:
 
     virtual void init();
 
-    virtual void draw();
+    virtual void draw(const core::visual::VisualParams*);
 
     Data< helper::fixed_array<Point,2> > bbox;
     Data< Real > size;

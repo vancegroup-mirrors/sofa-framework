@@ -25,6 +25,8 @@ HEADERS += initMisc.h \
            ExtraMonitor.h \
            ExtraMonitor.inl \
            InputEventReader.h \
+#           Image.h \
+#           Image.inl \
            Monitor.h \
            Monitor.inl \
            ParticleSink.h \
@@ -57,6 +59,7 @@ SOURCES += initMisc.cpp \
            DevMonitorManager.cpp \
            ExtraMonitor.cpp \
            InputEventReader.cpp \
+#           Image.cpp \
            Monitor.cpp \
            ParticleSink.cpp \
            ParticleSource.cpp \
@@ -101,5 +104,6 @@ macx : LIBS += -framework GLUT
 
 # Make sure there are no cross-dependencies
 INCLUDEPATH -= $$SOFA_DIR/applications
+INCLUDEPATH += $$SOFA_DIR/extlibs
 
 exists(misc-local.cfg): include(misc-local.cfg) 

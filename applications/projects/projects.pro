@@ -9,6 +9,7 @@ SUBDIRS += meshconv
 SUBDIRS += generateDoc
 SUBDIRS += GenerateRigid
 SUBDIRS += generateTypedefs
+#SUBDIRS += ldidetection
 
 #Projects using Qt4: if no QtViewer is available, we deactivate their compilation
 contains (DEFINES, SOFA_GUI_QTVIEWER) || contains (DEFINES, SOFA_GUI_QGLVIEWER) || contains (DEFINES, SOFA_GUI_QTOGREVIEWER) {

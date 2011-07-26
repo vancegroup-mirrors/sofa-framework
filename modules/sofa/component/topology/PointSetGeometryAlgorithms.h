@@ -77,7 +77,7 @@ namespace topology
 		
 		virtual void reinit();
 
-		void draw();
+		void draw(const core::visual::VisualParams*);
 
 		void computeIndicesScale();
 		

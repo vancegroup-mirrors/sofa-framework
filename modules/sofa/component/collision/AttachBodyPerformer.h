@@ -73,7 +73,7 @@ namespace sofa
 
         void start();
         void execute();
-        void draw();
+        void draw(const core::visual::VisualParams*);
         void clear();
         
         

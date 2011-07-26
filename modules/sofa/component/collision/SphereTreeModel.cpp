@@ -245,7 +245,7 @@ void SphereTreeModel::applyTranslation(const double dx, const double dy, const d
   
 }
 
-void SphereTreeModel::draw(int index)
+void SphereTreeModel::draw(const core::visual::VisualParams* ,int index)
 {
 	Vector3 p = (*mstate->getX())[index];
 	glPushMatrix();
@@ -254,7 +254,7 @@ void SphereTreeModel::draw(int index)
 	glPopMatrix();
 }
 
-void SphereTreeModel::draw()
+void SphereTreeModel::draw(const core::visual::VisualParams* vparams)
 {  
 	float color = 1.0f;
 	if ( getContext()->getShowCollisionModels())
@@ -283,7 +283,7 @@ void SphereTreeModel::draw()
 
 			for (int i = 0; i < numnodes; i++) 
 			{	
-				draw( node );
+				draw(vparams,node );
 				node++;	
 			} 
 			numnodes *= degree;
@@ -299,7 +299,7 @@ void SphereTreeModel::draw()
 
 	}
 	if (isActive() && getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
-		getPrevious()->draw();
+		getPrevious()->draw(vparams);
 }
 
 void SphereTreeModel::computeBoundingTree(int /*maxDepth*/)

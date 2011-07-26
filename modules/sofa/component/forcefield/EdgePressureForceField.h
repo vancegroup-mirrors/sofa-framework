@@ -116,7 +116,7 @@ public:
 	// Handle topological changes
 	virtual void handleTopologyChange();
 
-    void draw();
+    void draw(const core::visual::VisualParams*);
 
 	void setDminAndDmax(const double _dmin, const double _dmax) { 
 		dmin.setValue((Real)_dmin);dmax.setValue((Real)_dmax);}

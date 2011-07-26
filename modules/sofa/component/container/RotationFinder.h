@@ -110,7 +110,7 @@ public:
 
 	void handleEvent(sofa::core::objectmodel::Event* event);
 
-	void draw();
+	void draw(const core::visual::VisualParams*);
 
 	void flipAxis(Mat3x3 & rotation);
         

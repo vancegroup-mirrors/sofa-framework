@@ -224,7 +224,7 @@ void BarycentricMapperRegularGridTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJ
 }
 
 template<>
-void BarycentricMapperRegularGridTopology<CudaVec3fTypes,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperRegularGridTopology<CudaVec3fTypes,CudaVec3fTypes>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -264,7 +264,7 @@ void BarycentricMapperRegularGridTopology<CudaVec3f1Types,CudaVec3f1Types>::appl
 }
 
 template<>
-void BarycentricMapperRegularGridTopology<CudaVec3f1Types,CudaVec3f1Types>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperRegularGridTopology<CudaVec3f1Types,CudaVec3f1Types>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -304,7 +304,7 @@ void BarycentricMapperRegularGridTopology<CudaVec3f1Types,CudaVec3fTypes>::apply
 }
 
 template<>
-void BarycentricMapperRegularGridTopology<CudaVec3f1Types,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperRegularGridTopology<CudaVec3f1Types,CudaVec3fTypes>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -343,7 +343,7 @@ void BarycentricMapperRegularGridTopology<CudaVec3fTypes,CudaVec3f1Types>::apply
 }
 
 template<>
-void BarycentricMapperRegularGridTopology<CudaVec3fTypes,CudaVec3f1Types>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperRegularGridTopology<CudaVec3fTypes,CudaVec3f1Types>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -596,7 +596,7 @@ void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3fTypes>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -700,7 +700,7 @@ void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3f1Types>::apply
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3f1Types>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3f1Types>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -804,7 +804,7 @@ void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJ
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -908,7 +908,7 @@ void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJ
 }
 
 template<>
-void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -1357,7 +1357,7 @@ void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::applyJT( In::
 }
 
 template<>
-void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3fTypes>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -1389,7 +1389,7 @@ void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3f1Types>::applyJT( In
 }
 
 template<>
-void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3f1Types>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3f1Types>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -1421,7 +1421,7 @@ void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJT( In:
 }
 
 template<>
-void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3fTypes>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperMeshTopology<CudaVec3f1Types,CudaVec3fTypes>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 
@@ -1453,7 +1453,7 @@ void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJT( In:
 }
 
 template<>
-void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3f1Types>::draw( const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
+void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3f1Types>::draw (const core::visual::VisualParams* ,const Out::VecCoord& /*out*/, const In::VecCoord& /*in*/)
 {
 }
 

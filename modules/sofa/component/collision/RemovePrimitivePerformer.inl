@@ -643,7 +643,7 @@ namespace sofa
        //***************************************************************************************************************
 
        template <class DataTypes>
-       void RemovePrimitivePerformer<DataTypes>::draw()
+       void RemovePrimitivePerformer<DataTypes>::draw(const core::visual::VisualParams* )
        {
           if (picked.body == NULL) return;
 

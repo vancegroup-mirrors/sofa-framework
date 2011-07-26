@@ -548,9 +548,9 @@ namespace topology
 
   
   template<class DataTypes>
-  void TetrahedronSetGeometryAlgorithms<DataTypes>::draw()
+  void TetrahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visual::VisualParams* vparams)
   {
-    TriangleSetGeometryAlgorithms<DataTypes>::draw();
+    TriangleSetGeometryAlgorithms<DataTypes>::draw(vparams);
 
     //Draw tetra indices
     if (showTetrahedraIndices.getValue())

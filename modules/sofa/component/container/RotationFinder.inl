@@ -535,7 +535,7 @@ void RotationFinder<DataTypes>::handleEvent(sofa::core::objectmodel::Event* even
 }
 
 template <class DataTypes>
-void RotationFinder<DataTypes>::draw()
+void RotationFinder<DataTypes>::draw(const core::visual::VisualParams* )
 {
     if (showRotations.getValue())
     {

@@ -127,7 +127,7 @@ public:
 	const component::topology::EdgeData<Spring> &getSpringArray() const{
 		return springArray;
 	}
-	void draw();
+	void draw(const core::visual::VisualParams*);
 	
 	// -- Modifiers
 	

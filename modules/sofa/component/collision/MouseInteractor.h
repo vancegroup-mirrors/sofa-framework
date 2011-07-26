@@ -60,7 +60,7 @@ namespace sofa
           typedef helper::vector< InteractionPerformer* > VecPerformer;
         BaseMouseInteractor(): isAttached(false),distanceFromMouse(0) {};
        
-          virtual void draw();
+          virtual void draw(const core::visual::VisualParams*);
 
           void cleanup();
           

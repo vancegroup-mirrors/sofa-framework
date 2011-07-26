@@ -85,7 +85,7 @@ namespace sofa
           void start();
           void execute();
           void end();
-          void draw();
+          void draw(const core::visual::VisualParams*);
 
        protected:
 

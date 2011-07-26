@@ -183,7 +183,7 @@ namespace topology
 
 
   template<class DataTypes>
-  void PointSetGeometryAlgorithms<DataTypes>::draw()
+  void PointSetGeometryAlgorithms<DataTypes>::draw(const core::visual::VisualParams* )
   {
     
     if (showPointIndices.getValue())

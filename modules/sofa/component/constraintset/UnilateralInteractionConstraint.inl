@@ -311,7 +311,7 @@ void UnilateralInteractionConstraint<DataTypes>::getConstraintInfo(VecConstraint
 
 
 template<class DataTypes>
-void UnilateralInteractionConstraint<DataTypes>::draw()
+void UnilateralInteractionConstraint<DataTypes>::draw(const core::visual::VisualParams* )
 {
 	if (!this->getContext()->getShowInteractionForceFields()) return;
 

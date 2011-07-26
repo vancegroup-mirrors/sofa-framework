@@ -35,8 +35,8 @@ namespace simulation
 
 Visitor::Result VisualDrawVisitor::processNodeTopDown(simulation::Node* node)
 {
-  glPushMatrix();
 #ifdef SOFA_SUPPORT_MOVING_FRAMES
+  glPushMatrix();
   double glMatrix[16];
   node->getPositionInWorld().writeOpenGlMatrix(glMatrix);
   glMultMatrixd( glMatrix );
@@ -46,7 +46,9 @@ Visitor::Result VisualDrawVisitor::processNodeTopDown(simulation::Node* node)
   for_each(this, node, node->visualModel,     &VisualDrawVisitor::fwdVisualModel);
   this->VisualVisitor::processNodeTopDown(node);
 
+#ifdef SOFA_SUPPORT_MOVING_FRAMES
   glPopMatrix();
+#endif
   return RESULT_CONTINUE;
 }
 
@@ -62,7 +64,7 @@ void VisualDrawVisitor::processObject(simulation::Node* /*node*/, core::objectmo
 #ifdef DEBUG_DRAW
     std::cerr << ">" << o->getClassName() << "::draw() of " << o->getName() << std::endl;
 #endif
-    o->draw();
+    o->draw(vparams);
 #ifdef DEBUG_DRAW
     std::cerr << "<" << o->getClassName() << "::draw() of " << o->getName() << std::endl;
 #endif

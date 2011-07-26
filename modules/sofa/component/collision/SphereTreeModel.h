@@ -163,7 +163,7 @@ public:
 	/** @brief To do */
 	virtual void computeContinuousBoundingTree(double dt, int maxDepth=0);
 
-	void draw(int index);
+	void draw(const core::visual::VisualParams*,int index);
 	
 	/** @brief Levels of the tree of the collision model */
 	int levels;
@@ -178,7 +178,7 @@ public:
 	/** @brief It returns true is the element iterator is a leaf of the spheretree collision model*/
 	virtual bool isLeaf( int index ) const;
 
-	void draw();
+	void draw(const core::visual::VisualParams*);
 
   sofa::core::objectmodel::DataFileName filename;
 

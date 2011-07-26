@@ -338,8 +338,9 @@ protected:
         Vector* systemRHVector;
         Vector* systemLHVector;
         core::MultiVecDerivId solutionVecId;
-#ifdef SOFA_SUPPORT_MAPPED_MATRIX
-        MappedMultiMatrixAccessor matrixAccessor;
+
+#ifdef SOFA_SUPPORT_CRS_MATRIX
+        CRSMultiMatrixAccessor matrixAccessor;
 #else
         DefaultMultiMatrixAccessor matrixAccessor;
 #endif
@@ -381,6 +382,7 @@ MatrixLinearSolver<Matrix,Vector>::~MatrixLinearSolver()
     //if (systemLHVector) deleteVector(systemLHVector);
     if (invertData) delete invertData;
     invertData = NULL;
+    delete data;
 }
 
 template<class Matrix, class Vector>

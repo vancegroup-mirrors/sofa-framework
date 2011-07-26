@@ -1500,7 +1500,7 @@ void TetrahedronFEMForceField<DataTypes>::addDForce(const core::MechanicalParams
 //////////////////////////////////////////////////////////////////////
 
 template<class DataTypes>
-void TetrahedronFEMForceField<DataTypes>::draw()
+void TetrahedronFEMForceField<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
 	if (!this->getContext()->getShowForceFields()) return;
 	if (!this->mstate) return;
@@ -1511,7 +1511,7 @@ void TetrahedronFEMForceField<DataTypes>::draw()
     const bool heterogeneous = (drawHeterogeneousTetra.getValue() && minYoung!=maxYoung);
 
 	const VecReal & youngModulus = _youngModulus.getValue();
-    simulation::getSimulation()->DrawUtility().setLightingEnabled(false);
+    vparams->drawTool()->setLightingEnabled(false);
 if (edges)
 {
 	std::vector< Vector3 > points[3];
@@ -1553,9 +1553,9 @@ if (edges)
 			Vec<4,float> color3 = Vec<4,float>(col      , 1.0f - fac , 1.0f-col,1.0f);
 			Vec<4,float> color4 = Vec<4,float>(col+0.5f , 1.0f - fac , 1.0f-col,1.0f);
 
-            simulation::getSimulation()->DrawUtility().drawLines(points[0],1,color2 );
-            simulation::getSimulation()->DrawUtility().drawLines(points[1],1,color3 );
-            simulation::getSimulation()->DrawUtility().drawLines(points[2],1,color4 );
+            vparams->drawTool()->drawLines(points[0],1,color2 );
+            vparams->drawTool()->drawLines(points[1],1,color3 );
+            vparams->drawTool()->drawLines(points[2],1,color4 );
 
 			for(unsigned int i=0 ; i<3 ; i++) points[i].clear();
         }
@@ -1563,9 +1563,9 @@ if (edges)
 
 	if(!heterogeneous)
 	{
-        simulation::getSimulation()->DrawUtility().drawLines(points[0], 1, Vec<4,float>(0.0,0.5,1.0,1.0));
-        simulation::getSimulation()->DrawUtility().drawLines(points[1], 1, Vec<4,float>(0.0,1.0,1.0,1.0));
-        simulation::getSimulation()->DrawUtility().drawLines(points[2], 1, Vec<4,float>(0.5,1.0,1.0,1.0));
+        vparams->drawTool()->drawLines(points[0], 1, Vec<4,float>(0.0,0.5,1.0,1.0));
+        vparams->drawTool()->drawLines(points[1], 1, Vec<4,float>(0.0,1.0,1.0,1.0));
+        vparams->drawTool()->drawLines(points[2], 1, Vec<4,float>(0.5,1.0,1.0,1.0));
 	}
 }
 else
@@ -1613,10 +1613,10 @@ else
 			Vec<4,float> color3 = Vec<4,float>(col      , 1.0f - fac , 1.0f-col,1.0f);
 			Vec<4,float> color4 = Vec<4,float>(col+0.5f , 1.0f - fac , 1.0f-col,1.0f);
 
-                        simulation::getSimulation()->DrawUtility().drawTriangles(points[0],color1 );
-                        simulation::getSimulation()->DrawUtility().drawTriangles(points[1],color2 );
-                        simulation::getSimulation()->DrawUtility().drawTriangles(points[2],color3 );
-                        simulation::getSimulation()->DrawUtility().drawTriangles(points[3],color4 );
+                        vparams->drawTool()->drawTriangles(points[0],color1 );
+                        vparams->drawTool()->drawTriangles(points[1],color2 );
+                        vparams->drawTool()->drawTriangles(points[2],color3 );
+                        vparams->drawTool()->drawTriangles(points[3],color4 );
 
 			for(unsigned int i=0 ; i<4 ; i++) points[i].clear();
         }
@@ -1624,10 +1624,10 @@ else
 
 	if(!heterogeneous)
 	{
-          simulation::getSimulation()->DrawUtility().drawTriangles(points[0], Vec<4,float>(0.0,0.0,1.0,1.0));
-          simulation::getSimulation()->DrawUtility().drawTriangles(points[1], Vec<4,float>(0.0,0.5,1.0,1.0));
-          simulation::getSimulation()->DrawUtility().drawTriangles(points[2], Vec<4,float>(0.0,1.0,1.0,1.0));
-          simulation::getSimulation()->DrawUtility().drawTriangles(points[3], Vec<4,float>(0.5,1.0,1.0,1.0));
+          vparams->drawTool()->drawTriangles(points[0], Vec<4,float>(0.0,0.0,1.0,1.0));
+          vparams->drawTool()->drawTriangles(points[1], Vec<4,float>(0.0,0.5,1.0,1.0));
+          vparams->drawTool()->drawTriangles(points[2], Vec<4,float>(0.0,1.0,1.0,1.0));
+          vparams->drawTool()->drawTriangles(points[3], Vec<4,float>(0.5,1.0,1.0,1.0));
 	}
 	  
 }
@@ -1665,9 +1665,9 @@ if (this->getContext()->getShowNormals())
 		points[2].push_back(b);
 	}
 
-        simulation::getSimulation()->DrawUtility().drawLines(points[0], 5, Vec<4,float>(1,0,0,1));
-        simulation::getSimulation()->DrawUtility().drawLines(points[1], 5, Vec<4,float>(0,1,0,1));
-        simulation::getSimulation()->DrawUtility().drawLines(points[2], 5, Vec<4,float>(0,0,1,1));
+        vparams->drawTool()->drawLines(points[0], 5, Vec<4,float>(1,0,0,1));
+        vparams->drawTool()->drawLines(points[1], 5, Vec<4,float>(0,1,0,1));
+        vparams->drawTool()->drawLines(points[2], 5, Vec<4,float>(0,0,1,1));
 
 }
 }

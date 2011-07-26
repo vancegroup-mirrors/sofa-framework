@@ -1143,7 +1143,7 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalPa
   
 
   template <class DataTypes, class MassType>
-  void MeshMatrixMass<DataTypes, MassType>::draw()
+  void MeshMatrixMass<DataTypes, MassType>::draw(const core::visual::VisualParams* vparams)
   {
     if (!this->getContext()->getShowBehaviorModels()) return;
 
@@ -1196,7 +1196,7 @@ void MeshMatrixMass<DataTypes, MassType>::addGravityToV(const core::MechanicalPa
     }
     
     
-    simulation::getSimulation()->DrawUtility().drawPoints(points, 2, Vec<4,float>(1,1,1,1));
+    vparams->drawTool()->drawPoints(points, 2, Vec<4,float>(1,1,1,1));
 
     if(showCenterOfGravity.getValue()){
       glBegin (GL_LINES);

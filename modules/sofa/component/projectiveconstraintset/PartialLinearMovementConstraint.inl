@@ -487,7 +487,7 @@ void PartialLinearMovementConstraint<DataTypes>::applyConstraint(defaulttype::Ba
 
 //display the path the constrained dofs will go through
 template <class DataTypes>
-void PartialLinearMovementConstraint<DataTypes>::draw()
+void PartialLinearMovementConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
     if (!this->getContext()->getShowBehaviorModels() || m_keyTimes.getValue().size() == 0)
         return;
@@ -520,7 +520,7 @@ void PartialLinearMovementConstraint<DataTypes>::draw()
             point = DataTypes::getCPos(x[*it]);
             points.push_back(point);
         }
-        simulation::getSimulation()->DrawUtility().drawPoints(points, 10, Vec<4, float> (1, 0.5, 0.5, 1));
+        vparams->drawTool()->drawPoints(points, 10, Vec<4, float> (1, 0.5, 0.5, 1));
     }
 }
 

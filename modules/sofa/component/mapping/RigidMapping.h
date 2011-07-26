@@ -133,7 +133,7 @@ namespace sofa
 
                 const sofa::defaulttype::BaseMatrix* getJ();
 
-                void draw();
+                void draw(const core::visual::VisualParams*);
 
                 void clear(int reserve = 0);
 

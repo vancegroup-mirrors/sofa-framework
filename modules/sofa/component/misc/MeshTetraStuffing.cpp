@@ -893,7 +893,7 @@ MeshTetraStuffing::Point MeshTetraStuffing::getEdgeDir(int e)
     return p;
 }
 
-void MeshTetraStuffing::draw()
+void MeshTetraStuffing::draw(const sofa::core::visual::VisualParams* vparams)
 {
     if (!bDraw.getValue()) return;
     //const SeqPoints& inP = inputPoints.getValue();
@@ -901,15 +901,15 @@ void MeshTetraStuffing::draw()
     const SeqPoints& outP = outputPoints.getValue();
     //const SeqTetrahedra& outT = outputTetrahedra.getValue();
 
-    //simulation::getSimulation()->DrawUtility().drawPoints(inP, 1, Vec<4,float>(1,0,0,1));
-    simulation::getSimulation()->DrawUtility().drawPoints(intersections, 2, Vec<4,float>(1,0,0,1));
-    //simulation::getSimulation()->DrawUtility().drawPoints(insides, 1, Vec<4,float>(0,1,0,1));
-    //simulation::getSimulation()->DrawUtility().drawLines(rays, 1, Vec<4,float>(1,1,0,1));
-    simulation::getSimulation()->DrawUtility().drawPoints(outP, 1, Vec<4,float>(0,1,0,1));
+    //vparams->drawTool()->drawPoints(inP, 1, Vec<4,float>(1,0,0,1));
+    vparams->drawTool()->drawPoints(intersections, 2, Vec<4,float>(1,0,0,1));
+    //vparams->drawTool()->drawPoints(insides, 1, Vec<4,float>(0,1,0,1));
+    //vparams->drawTool()->drawLines(rays, 1, Vec<4,float>(1,1,0,1));
+    vparams->drawTool()->drawPoints(outP, 1, Vec<4,float>(0,1,0,1));
     if (!diags.empty())
-        simulation::getSimulation()->DrawUtility().drawLines(diags, 1, Vec<4,float>(0,1,1,1));
+        vparams->drawTool()->drawLines(diags, 1, Vec<4,float>(0,1,1,1));
     if (!snaps.empty())
-        simulation::getSimulation()->DrawUtility().drawPoints(snaps, 4, Vec<4,float>(0,0,1,1));
+        vparams->drawTool()->drawPoints(snaps, 4, Vec<4,float>(0,0,1,1));
 }
 
 }

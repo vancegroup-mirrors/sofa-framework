@@ -215,7 +215,7 @@ void ParabolicConstraint<DataTypes>::projectJacobianMatrix(const core::Mechanica
 
 
 template <class DataTypes>
-void ParabolicConstraint<DataTypes>::draw()
+void ParabolicConstraint<DataTypes>::draw(const core::visual::VisualParams* )
 {
     if (!this->getContext()->getShowBehaviorModels()) return;
 

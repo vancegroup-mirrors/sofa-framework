@@ -295,7 +295,7 @@ void SpringEdgeDataForceField<DataTypes>::addDForce(VecDeriv& df, const VecDeriv
 }
 
 template<class DataTypes>
-void SpringEdgeDataForceField<DataTypes>::draw()
+void SpringEdgeDataForceField<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
 	if (this->getContext()->getShowForceFields()==false)
 		return;

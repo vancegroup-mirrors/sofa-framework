@@ -53,6 +53,7 @@ void initMisc()
 
 ////////// BEGIN CLASS LIST //////////
 SOFA_LINK_CLASS(InputEventReader)
+// SOFA_LINK_CLASS(Image)
 SOFA_LINK_CLASS(Monitor)
 SOFA_LINK_CLASS(ParticleSink)
 SOFA_LINK_CLASS(ParticleSource)

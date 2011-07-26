@@ -228,7 +228,7 @@ void MechanicalObject<defaulttype::Rigid3dTypes>::addFromBaseVectorSameSize(core
 
 
 template<> SOFA_COMPONENT_CONTAINER_API
-void MechanicalObject<defaulttype::Rigid3dTypes>::draw()
+void MechanicalObject<defaulttype::Rigid3dTypes>::draw(const core::visual::VisualParams* vparams)
 {
   Mat<4,4, GLfloat> modelviewM;
   Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
@@ -290,7 +290,7 @@ void MechanicalObject<defaulttype::Rigid3dTypes>::draw()
         x[i].writeOpenGlMatrix( glTransform);
         glMultMatrixf( glTransform);
         glScalef(scale,scale,scale);
-        simulation::getSimulation()->DrawUtility().drawFrame(Vector3(), Quat(), Vector3(1.0,1.0,1.0));
+        vparams->drawTool()->drawFrame(Vector3(), Quat(), Vector3(1.0,1.0,1.0));
         glPopMatrix();
     }
     glPopAttrib();
@@ -433,7 +433,7 @@ void MechanicalObject<defaulttype::Rigid3fTypes>::addFromBaseVectorSameSize(core
 // }
 
 template<> SOFA_COMPONENT_CONTAINER_API
-void MechanicalObject<defaulttype::Rigid3fTypes>::draw()
+void MechanicalObject<defaulttype::Rigid3fTypes>::draw(const core::visual::VisualParams* vparams)
 {
   Mat<4,4, GLfloat> modelviewM;
   Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
@@ -495,7 +495,7 @@ void MechanicalObject<defaulttype::Rigid3fTypes>::draw()
         x[i].writeOpenGlMatrix( glTransform);
         glMultMatrixf( glTransform);
         glScalef(scale,scale,scale);
-        simulation::getSimulation()->DrawUtility().drawFrame(Vector3(), Quat(), Vector3(1.0,1.0,1.0));
+        vparams->drawTool()->drawFrame(Vector3(), Quat(), Vector3(1.0,1.0,1.0));
         glPopMatrix();
     }
     glPopAttrib();
@@ -505,7 +505,7 @@ void MechanicalObject<defaulttype::Rigid3fTypes>::draw()
 #endif
 
 template<> SOFA_COMPONENT_CONTAINER_API
-void MechanicalObject<defaulttype::LaparoscopicRigid3Types>::draw()
+void MechanicalObject<defaulttype::LaparoscopicRigid3Types>::draw(const core::visual::VisualParams* vparams)
 {
   Mat<4,4, GLfloat> modelviewM;
   Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
@@ -564,7 +564,7 @@ void MechanicalObject<defaulttype::LaparoscopicRigid3Types>::draw()
         glPushMatrix();
         glTranslatef(getPX(i), getPY(i), getPZ(i));
         glScalef(scale,scale,scale);
-        simulation::getSimulation()->DrawUtility().drawFrame(Vector3(), x[i].getOrientation(), Vector3(1.0,1.0,1.0));
+        vparams->drawTool()->drawFrame(Vector3(), x[i].getOrientation(), Vector3(1.0,1.0,1.0));
         glPopMatrix();
     }
     glPopAttrib();

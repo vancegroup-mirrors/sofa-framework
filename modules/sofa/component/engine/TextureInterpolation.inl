@@ -195,7 +195,7 @@ namespace engine
 
   
   template <class DataTypes>
-  void TextureInterpolation<DataTypes>::draw()
+  void TextureInterpolation<DataTypes>::draw(const core::visual::VisualParams* )
   {
     // to force update. getX() must have call to endEdit() 
     _outputCoord.getValue();

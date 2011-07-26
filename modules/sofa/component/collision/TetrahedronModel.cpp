@@ -91,7 +91,7 @@ void TetrahedronModel::handleTopologyChange()
     resize(_topology->getNbTetrahedra());
 }
 
-void TetrahedronModel::draw(int index)
+void TetrahedronModel::draw(const core::visual::VisualParams* ,int index)
 {
     Tetrahedron t(this,index);
     glBegin(GL_TRIANGLES);
@@ -149,7 +149,7 @@ void TetrahedronModel::draw(int index)
     }
 }
 
-void TetrahedronModel::draw()
+void TetrahedronModel::draw(const core::visual::VisualParams* vparams)
 {
 	if (mstate && _topology && getContext()->getShowCollisionModels())
 	{
@@ -169,7 +169,7 @@ void TetrahedronModel::draw()
 
 		for (int i=0;i<size;i++)
 		{
-			draw(i);
+			draw(vparams,i);
 		}
 
 		glColor3f(1.0f, 1.0f, 1.0f);
@@ -178,7 +178,7 @@ void TetrahedronModel::draw()
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	if (getPrevious()!=NULL && getContext()->getShowBoundingCollisionModels())
-		getPrevious()->draw();
+		getPrevious()->draw(vparams);
 }
 
 void TetrahedronModel::computeBoundingTree(int maxDepth)

@@ -123,7 +123,7 @@ vec3 CookTorrance(vec3 Normal, vec3 LightDir, vec3 ViewDir,
 // The computation of the tangent-space basis for flat shading
 ///////////////////////////////////////////////////////////////////////////////
 
-mat3 ComputeFlatTangentSpaceBasis(vec3 Position, vec2 Texcoord)
+/*mat3 ComputeFlatTangentSpaceBasis(vec3 Position, vec2 Texcoord)
 {
     vec3 dxPosition = dFdx(Position);
     vec3 dyPosition = dFdy(Position);
@@ -135,7 +135,7 @@ mat3 ComputeFlatTangentSpaceBasis(vec3 Position, vec2 Texcoord)
     vec3 Normal    = normalize(cross(dxPosition, dyPosition));
 
     return mat3(Tangent, Bitangent, Normal);
-}
+}*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vertex shader:
@@ -161,9 +161,6 @@ void main()
     gl_Position = ftransform();
     Position = gl_Vertex.xyz;
     Normal = gl_Normal;
-#if defined(Mirrored)
-    Normal = -Normal;
-#endif
 
 #if defined(PlanarMapping)
     Texcoord.x = dot(vec4(gl_Vertex.xyz, 1.0), PlaneS);
@@ -176,6 +173,12 @@ void main()
 #endif
     Tangent   = gl_MultiTexCoord1.xyz;
     Bitangent = gl_MultiTexCoord2.xyz;
+
+#if defined(Mirrored)
+    Normal = -Normal;
+    Tangent = -Tangent;
+    Bitangent = -Bitangent;
+#endif
 
     ViewDirection  = gl_ModelViewMatrixInverse[3].xyz - Position;
 #if 0
@@ -222,6 +225,7 @@ uniform vec3 LightColor;
 
 // Textures
 uniform sampler2D DiffuseMap;
+uniform sampler2D SpecularMap;
 uniform sampler2D NormalMap;
 uniform sampler3D NoiseMap;
 uniform samplerCube EnvMap;
@@ -236,7 +240,7 @@ varying vec3 Bitangent;
 varying vec3 ViewDirection;
 varying vec3 LightDirection;
 
-vec3 mainFS()
+vec4 mainFS()
 {
 #if defined(DistanceBasedCutting)
     if (distance(Position, ClipOrigin) > ClipDistance) discard;
@@ -254,13 +258,22 @@ vec3 mainFS()
     vec3 ViewDir  = normalize(ViewDirection);
     vec3 LightDir = normalize(LightDirection);
 
+    float alpha = 1.0f;
+
 #if defined(ExponentialMapping)
     Texcoord = Pow(fract(Texcoord) - 0.5, ExpScale) + 0.5;
 #endif
 
 #if defined(DiffuseMap_Present)
     // Read the diffuse map
+#if defined(DiffuseMap_Alpha)
+    vec4 DiffuseTexColor4 = texture2D(DiffuseMap, Texcoord);
+    vec3 DiffuseTexColor = DiffuseTexColor4.xyz;
+    alpha = DiffuseTexColor4.w;
+    //return vec4(alpha,alpha,alpha,1);
+#else
     vec3 DiffuseTexColor = texture2D(DiffuseMap, Texcoord).xyz;
+#endif
 
     // Adjust contrast if needed
 #if defined(DiffuseMap_AdjustContrast)
@@ -271,9 +284,17 @@ vec3 mainFS()
     Diffuse *= DiffuseTexColor;
 #endif
 
+#if defined(SpecularMap_Present)
+    vec3 SpecularTexColor = texture2D(SpecularMap, Texcoord).xyz;
+    //return vec4(SpecularTexColor,1);
+    Specular *= SpecularTexColor;
+#endif
+
+    
     // Apply the normal map and convert vectors to tangent space
 #if defined(NormalMap_Present)
     mat3 TBN = mat3(Tangent, Bitangent, Normal);
+    //return vec4(Bitangent,1);
 
     Normal = normalize(texture2D(NormalMap, Texcoord).xyz * 2.0 - 1.0);
     ViewDir = normalize(ViewDir * TBN);
@@ -302,12 +323,13 @@ vec3 mainFS()
     Final = mix(Final, EnvColor, Fresnel(dot(Normal, ViewDir), EnvReflectance));
 #endif
 
-    return Final;
+    return vec4(Final,alpha);
+
 }
 
 void main()
 {
-    gl_FragColor = vec4(mainFS(), 0);
+    gl_FragColor = mainFS();
 }
 
 #endif

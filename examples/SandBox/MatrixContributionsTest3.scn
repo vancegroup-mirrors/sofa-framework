@@ -18,7 +18,7 @@ The interaction forcefield may interact beetween mapped or real state
 			<TetrahedronSetTopologyModifier   name="tetraModifier" />
 			<TetrahedronSetTopologyAlgorithms name="tetraAlgo"  template="Vec3d" />
 			<TetrahedronSetGeometryAlgorithms name="tetraGeomAlgo"  template="Vec3d" />
-			<MechanicalObject name="TetraMS" />
+			<MechanicalObject name="MS1" />
 			<DiagonalMass massDensity="0.5" />
 			<FixedConstraint indices="4" />		
 			<TetrahedralCorotationalFEMForceField name="FEM" youngModulus="5000" poissonRatio="0.3" method="large" />
@@ -28,11 +28,11 @@ The interaction forcefield may interact beetween mapped or real state
 				<TriangleSetTopologyAlgorithms name="triangleAlgo"  template="Vec3d" />
 				<TriangleSetGeometryAlgorithms name="triangleGeomAlgo"  template="Vec3d" />
 				<Tetra2TriangleTopologicalMapping input="@../tetraContainer" output="@triangleContainer"/>
-				<MechanicalObject name="TriangleMS" position="@../TetraMS.position"/>
-				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping12" input="@../TetraMS" output="@TriangleMS" useRestPosition="true"/>
+				<MechanicalObject name="MS2" position="@../MS1.position"/>
+				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping12" input="@../MS1" output="@MS2"/>
 				<Node name="mappedPoint">
-					<MechanicalObject name="PointMS" position="2.5 2.5 2.5"/>
-					<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping23" input="@../TriangleMS" output="@PointMS" useRestPosition="true"/>
+					<MechanicalObject name="MS3" position="2.5 2.5 2.5"/>
+					<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping23" input="@../MS2" output="@MS3"/>
 					<SphereModel radius="0.2"/>
 				</Node>
 			</Node>
@@ -49,7 +49,7 @@ The interaction forcefield may interact beetween mapped or real state
 			<HexahedronSetTopologyModifier   name="hexaModifier" />
 			<HexahedronSetTopologyAlgorithms name="hexaAlgo"   template="Vec3d" />
 			<HexahedronSetGeometryAlgorithms name="hexaGeomAlgo"   template="Vec3d" />
-			<MechanicalObject name="HexaMS"/>
+			<MechanicalObject name="MS4"/>
 			<DiagonalMass massDensity="0.5" />
 			<FixedConstraint indices="6 7" />     
 			<HexahedronFEMForceField name="FEM" youngModulus="500" poissonRatio="0.3"  method="large" />
@@ -60,9 +60,9 @@ The interaction forcefield may interact beetween mapped or real state
 				<QuadSetTopologyAlgorithms name="quadAlgo"  template="Vec3d" />
 				<QuadSetGeometryAlgorithms name="quadGeomAlgo"  template="Vec3d" />
 				<Hexa2QuadTopologicalMapping input="@../hexaContainer" output="@quadContainer"/>	
-				<MechanicalObject name="QuadMS" position="@../HexaMS.position"/>
-				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping45" input="@../HexaMS" output="@QuadMS"/>
-				<TriangleSet/>
+				<MechanicalObject name="MS5" position="@../MS4.position"/>
+				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping45" input="@../MS4" output="@MS5"/>
+				<LineModel/>
 			</Node>
 		</Node>
 		<StiffSpringForceField name="ExternalSprings1" spring="0 0 2 5 3.5" object1="Tetrahedra/mappedTriangle/mappedPoint" object2="Hexahedron/mappedQuads"/>

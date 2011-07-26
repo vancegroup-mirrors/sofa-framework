@@ -45,7 +45,8 @@ using namespace helper::system::thread;
   
 template<class Matrix, class Vector>
 ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
-: f_useWarping( initData( &f_useWarping, true, "useWarping", "use Warping around the solver" ) )
+: f_precompute( initData( &f_precompute, false, "precompute", "If true compute the system only at the initial step => linear deformation" ) )
+, f_useWarping( initData( &f_useWarping, true, "useWarping", "use Warping around the solver" ) )
 , f_useDerivative( initData( &f_useDerivative, false, "useDerivative", "use Derivative (A + epsilon X-1 = A-1 - epsilon A-1 X A-1 + O(epsilon2))" ) )
 , f_useRotationFinder( initData( &f_useRotationFinder, (unsigned)0, "useRotationFinder", "Which rotation Finder to use" ) )
 , f_useMultiThread( initData( &f_useMultiThread, true, "useMultiThread", "use MultiThraded version of the solver" ) )
@@ -72,6 +73,7 @@ ParallelMatrixLinearSolver<Matrix,Vector>::ParallelMatrixLinearSolver()
     tmpComputeCompliance[0] = NULL;
     tmpComputeCompliance[1] = NULL;
     solutionVecId = core::MultiVecDerivId::null();
+    initialStep = true;
 }
 
 template<class Matrix, class Vector>
@@ -236,61 +238,69 @@ void ParallelMatrixLinearSolver<Matrix,Vector>::setSystemMBKMatrix(const core::M
 #ifdef DEBUG_PARALLELMATRIX
     printf(">setSystemMBKMatrix\n");
 #endif
-    useRotation = f_useWarping.getValue() && rotationFinders.size();
-    useDerivative = f_useDerivative.getValue();
-    indRotationFinder = f_useRotationFinder.getValue()<rotationFinders.size() ? f_useRotationFinder.getValue() : 0;
+    if (initialStep ||  (! f_precompute.getValue())) {
+	initialStep = false;
 
-    if (f_useMultiThread.getValue()) {	
-	if (ready_thread) {
-	    if (thread==NULL) {	
-		indexwork=0;
+	useRotation = f_useWarping.getValue() && rotationFinders.size();
+	useDerivative = f_useDerivative.getValue();
+	indRotationFinder = f_useRotationFinder.getValue()<rotationFinders.size() ? f_useRotationFinder.getValue() : 0;
+	
+	if (f_useMultiThread.getValue() && (!f_precompute.getValue())) {	
+	    if (ready_thread) {
+		if (thread==NULL) {	
+		    indexwork=0;
+		    this->resizeSystem(this->getDimension(mparams,indexwork));
+		    this->computeSystemMatrix(mparams,indexwork);
+		    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+		    this->invertSystem();
+		    indexwork=1;	  
+		    std::cout << "Creating thread ... " << std::endl;
+		    thread = new boost::thread(Thread_invert(this));
+		} else {
+		  double time = ((double) CTime::getTime() - timer) / (double)CTime::getRefTicksPerSec();
+		  sout << "Update preconditioner after " << nbstep_update << " steps in " << time << " ms" << sendl;
+		}
+		
+		timer = CTime::getTime();
+		
 		this->resizeSystem(this->getDimension(mparams,indexwork));
-		this->computeSystemMatrix(mparams,indexwork);
-		if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
-		this->invertSystem();
-		indexwork=1;	  
-		std::cout << "Creating thread ... " << std::endl;
-		thread = new boost::thread(Thread_invert(this));
-	    } else {
-	      double time = ((double) CTime::getTime() - timer) / (double)CTime::getRefTicksPerSec();
-	      sout << "Update preconditioner after " << nbstep_update << " steps in " << time << " ms" << sendl;
-	    }
-	    
-	    timer = CTime::getTime();
-	    
-	    this->resizeSystem(this->getDimension(mparams,indexwork));
 
-	    nbstep_update = 1;
-	    
-	    if (useDerivative) { // build the matrix in the current thread
-		computeSystemMatrix(mparams,indexwork);
-		handeled = false;
-		params = *mparams;
-	    } else {
-		sofa::component::misc::ParallelizeBuildMatrixEvent event;
-		this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &event);
-		handeled = event.isHandled();
-		if (! handeled) computeSystemMatrix(mparams,indexwork);
-		else params = *mparams;
-	    }
-	    
-	    if (indexwork) indexwork = 0;
-	    else indexwork = 1;
-	    
-	    ready_thread = 0; //unlock the second thread
-	} else nbstep_update++;
-    } else {
-	resizeSystem(getDimension(mparams,indexwork));
-	this->computeSystemMatrix(mparams,indexwork);
-	this->invertSystem(); 
-    }  
-	    
-    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
-    if (useDerivative) this->getDimension(mparams,2);    
+		nbstep_update = 1;
+		
+		if (useDerivative) { // build the matrix in the current thread
+		    computeSystemMatrix(mparams,indexwork);
+		    handeled = false;
+		    params = *mparams;
+		} else {
+		    sofa::component::misc::ParallelizeBuildMatrixEvent event;
+		    this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &event);
+		    handeled = event.isHandled();
+		    if (! handeled) computeSystemMatrix(mparams,indexwork);
+		    else params = *mparams;
+		}
+		
+		if (indexwork) indexwork = 0;
+		else indexwork = 1;
+		
+		ready_thread = 0; //unlock the second thread
+		
+		if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+		if (useDerivative) this->getDimension(mparams,2);		
+	    } else nbstep_update++;
+	} else {
+	    resizeSystem(getDimension(mparams,indexwork));
+	    this->computeSystemMatrix(mparams,indexwork);
+	    this->invertSystem(); 
+	    if (useRotation) rotationFinders[indRotationFinder]->getRotations(rotationWork[indexwork]);
+	    if (useDerivative) this->getDimension(mparams,2);
+	}
+    }
 #ifdef DEBUG_PARALLELMATRIX
     //std::cout << *matricesWork[indexwork] << std::endl;
     printf("<setSystemMBKMatrix\n");
 #endif      
+
+    this->updateSystemMatrix();
 }
 
 template<class Matrix, class Vector>

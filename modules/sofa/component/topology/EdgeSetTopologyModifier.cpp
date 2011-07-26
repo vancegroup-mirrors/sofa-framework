@@ -58,9 +58,8 @@ namespace topology
 	  .add< EdgeSetTopologyModifier >();	
 
 	using namespace std;
-    using namespace sofa::defaulttype;
-    using namespace sofa::core::behavior;
-
+  using namespace sofa::defaulttype;
+ 
 	void EdgeSetTopologyModifier::init()
 	{
 		PointSetTopologyModifier::init();

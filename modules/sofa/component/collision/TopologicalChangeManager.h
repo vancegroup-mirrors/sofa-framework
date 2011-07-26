@@ -60,7 +60,7 @@ using namespace sofa::defaulttype;
 using namespace sofa::core::topology;
 
 /// a class to manage the handling of topological changes which have been requested from the Collision Model
-class TopologicalChangeManager
+class SOFA_COMPONENT_COLLISION_API TopologicalChangeManager
 {
 public:
     TopologicalChangeManager();
@@ -112,6 +112,12 @@ public:
                                 sofa::core::CollisionModel *model2, unsigned int idx2, const Vector3& secondPoint,
                                 int snapingValue = 0, int snapingBorderValue = 0);
 
+	/** Sets incision starting parameter - incision is just started or already in course
+	 *
+	 * @param isFirstCut - true if the next incision event will be the first of a new incision
+	 */
+	void setIncisionFirstCut(bool isFirstCut);
+
   protected:
 
   private:
@@ -134,8 +140,8 @@ public:
     bool incisionTriangleModel(TriangleModel* model1, unsigned int idx1, const Vector3& firstPoint, 
                                TriangleModel *model2, unsigned int idx2, const Vector3& secondPoint,
                                int snapingValue = 0, int snapingBorderValue = 0);
-    
 
+    
 
     int removeItemsFromTriangleModel(sofa::component::collision::TriangleModel* model, const helper::vector<int>& indices) const;
 

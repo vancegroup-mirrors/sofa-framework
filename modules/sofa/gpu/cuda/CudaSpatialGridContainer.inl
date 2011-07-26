@@ -41,6 +41,13 @@
 #include <sofa/component/container/SpatialGridContainer.inl>
 #include <sofa/helper/gl/template.h>
 
+#ifdef SOFA_GPU_CUDPP
+#include <cudpp.h>
+#include <cudpp_plan.h>
+#include <cudpp_plan_manager.h>
+#include <cudpp_radixsort.h>
+#else
+#endif
 
 namespace sofa
 {
@@ -81,6 +88,18 @@ SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> 
 {
     cellBits = 15;
     nbCells = 1<<cellBits;
+#ifdef SOFA_GPU_CUDPP
+    cudppHandleSortMaxElements = 0;
+#endif
+}
+
+template<class TCoord, class TDeriv, class TReal>
+SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TReal> > >::~SpatialGrid()
+{
+#ifdef SOFA_GPU_CUDPP
+    if (cudppHandleSortMaxElements > 0)
+        cudppDestroyPlan(cudppHandleSort);
+#endif
 }
 
 template<class TCoord, class TDeriv, class TReal> template<class NeighborListener>
@@ -102,23 +121,60 @@ void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TR
 }
 
 template<>
-void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3fTypes > >::kernel_updateGrid(int cellBits, int index0, Real cellWidth, int nbPoints, void* particleIndex, void* particleHash, void* sortTmp, void* cells, void* cellGhost, const void* x)
+void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3fTypes > >::kernel_updateGrid(
+    int cellBits, int index0, Real cellWidth, int nbPoints, void* particleIndex, void* particleHash,
+#ifndef SOFA_GPU_CUDPP
+    void* sortTmp,
+#endif
+    void* cells, void* cellGhost, const void* x)
 {
     gpu::cuda::SpatialGridContainer3f_computeHash(cellBits, cellWidth, nbPoints, particleIndex, particleHash, x);
+
+    int nbbits = 8;
+    while (nbbits < cellBits + 1) nbbits+=8;
+
+#ifdef SOFA_GPU_CUDPP
+	//std::cout << "ERROR : CUDPP is not compatible with SpatialGrid\n";
+	cudppSort(cudppHandleSort,particleHash,particleIndex,nbbits,nbPoints*8);
+#else
+	std::cout << "ERROR : CUDPP is required for SpatialGrid\n";
+#endif
+
     gpu::cuda::SpatialGridContainer_findCellRange(cellBits, index0, cellWidth, nbPoints, particleHash, cells, cellGhost);
 }
 
 template<>
-void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3f1Types > >::kernel_updateGrid(int cellBits, int index0, Real cellWidth, int nbPoints, void* particleIndex, void* particleHash, void* sortTmp, void* cells, void* cellGhost, const void* x)
+void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3f1Types > >::kernel_updateGrid(
+    int cellBits, int index0, Real cellWidth, int nbPoints, void* particleIndex, void* particleHash,
+#ifndef SOFA_GPU_CUDPP
+    void* sortTmp,
+#endif
+    void* cells, void* cellGhost, const void* x)
 {
     gpu::cuda::SpatialGridContainer3f1_computeHash(cellBits, cellWidth, nbPoints, particleIndex, particleHash, x);
+
+    int nbbits = 8;
+    while (nbbits < cellBits + 1) nbbits+=8;
+
+#ifdef SOFA_GPU_CUDPP
+	//std::cout << "ERROR : CUDPP is not compatible with SpatialGrid\n";
+	cudppSort(cudppHandleSort,particleHash,particleIndex,nbbits,nbPoints*8);
+#else
+	std::cout << "ERROR : CUDPP is required for SpatialGrid\n";
+#endif
+
     gpu::cuda::SpatialGridContainer_findCellRange(cellBits, index0, cellWidth, nbPoints, particleHash, cells, cellGhost);
 }
 
 #ifdef SOFA_GPU_CUDA_DOUBLE
 
 template<>
-void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3dTypes > >::kernel_updateGrid(int /*cellBits*/, int /*index0*/, Real /*cellWidth*/, int /*nbPoints*/, void* /*particleIndex*/, void* /*particleHash*/, void* /*sortTmp*/, void* /*cells*/, void* /*cellGhost*/, const void* /*x*/)
+void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3dTypes > >::kernel_updateGrid(
+    int /*cellBits*/, int /*index0*/, Real /*cellWidth*/, int /*nbPoints*/, void* /*particleIndex*/, void* /*particleHash*/,
+#ifndef SOFA_GPU_CUDPP
+    void* /*sortTmp*/,
+#endif
+    void* /*cells*/, void* /*cellGhost*/, const void* /*x*/)
 {
     std::cerr << "TODO: SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVec3dTypes > >::kernel_updateGrid(int cellBits, int index0, Real cellWidth, int nbPoints, void* particleIndex, void* particleHash, void* sortTmp, void* cells, void* cellGhost, const void* x)"<<std::endl;
 }
@@ -148,21 +204,55 @@ void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TR
     int index0 = nbCells+BSIZE;
     /*particleIndex*/ cells.recreate(index0+nbPoints*8,8*BSIZE);
     particleHash.recreate(nbPoints*8,8*BSIZE);
+
+#ifdef SOFA_GPU_CUDPP
+    unsigned int numElements = (unsigned int)nbPoints*8;
+    if (numElements > cudppHandleSortMaxElements)
+    {
+        if (cudppHandleSortMaxElements > 0)
+        {
+            cudppDestroyPlan(cudppHandleSort);
+            cudppHandleSortMaxElements = (((cudppHandleSortMaxElements>>7)+1)<<7); // increase size to at least the next multiple of 128
+        }
+        if (numElements > cudppHandleSortMaxElements)
+            cudppHandleSortMaxElements = numElements;
+        cudppHandleSortMaxElements = ((cudppHandleSortMaxElements + 255) & ~255);
+
+        std::cout << "Creating CUDPP RadixSort Plan for " << cudppHandleSortMaxElements << " elements." << std::endl;
+        CUDPPConfiguration config;    
+        config.algorithm = CUDPP_SORT_RADIX;
+        config.datatype = CUDPP_UINT;
+        config.options = CUDPP_OPTION_KEY_VALUE_PAIRS;
+        if (cudppPlan(&cudppHandleSort, config, cudppHandleSortMaxElements, 1, 0) != CUDPP_SUCCESS)
+        {
+            std::cerr << "ERROR creating CUDPP RadixSort Plan for " << cudppHandleSortMaxElements << " elements." << std::endl;
+            cudppHandleSortMaxElements = 0;
+            cudppDestroyPlan(cudppHandleSort);
+        }
+    }
+#else
+#endif
     //cells.recreate(nbCells+1);
     cellGhost.recreate(nbCells);
     //sortedPos.recreate(nbPoints);
-    kernel_updateGrid(cellBits, index0, cellWidth*2, nbPoints, cells.deviceWriteAt(index0), particleHash.deviceWrite(), sortTmp.deviceWrite(), cells.deviceWrite(), cellGhost.deviceWrite(), x.deviceRead());
-/*
+    kernel_updateGrid(
+        cellBits, index0, cellWidth*2, nbPoints, cells.deviceWriteAt(index0), particleHash.deviceWrite(),
+#ifndef SOFA_GPU_CUDPP
+        sortTmp.deviceWrite(),
+#endif
+        cells.deviceWrite(), cellGhost.deviceWrite(), x.deviceRead());
+
     std::cout << nbPoints*8 << " entries in " << nbCells << " cells." << std::endl;
     int nfill = 0;
     for (int c=0;c<nbCells;++c)
     {
         if (cells[c] <= 0) continue;
-        std::cout << "Cell " << c << ": range = " << cells[c]-index0 << " - " << cells[c+1]-index0 << "     ghost = " << cellGhost[c] << std::endl;
+        if (nfill >= 100 && nfill < 110)
+            std::cout << "Cell " << c << ": range = " << cells[c]-index0 << " - " << (cells[c+1]&~(1U<<31))-index0 << "     ghost = " << cellGhost[c]-index0 << std::endl;
         ++nfill;
     }
     std::cout << ((1000*nfill)/nbCells) * 0.1 << " % cells with particles." << std::endl;
-*/
+
     //kernel_reorderData(nbPoints, particleHash.deviceRead(), sortedPos.deviceWrite(), x.deviceRead());
 }
 
@@ -176,10 +266,16 @@ void SpatialGrid< SpatialGridTypes < gpu::cuda::CudaVectorTypes<TCoord,TDeriv,TR
     glColor4f(1,1,1,1);
     glPointSize(3);
     glBegin(GL_POINTS);
+    unsigned int last = 0;
     for (int i=0;i<nbPoints;i++)
     {
 	unsigned int cell = particleHash[i];
 	unsigned int p = cells[index0+i]; //particleIndex[i];
+    if (cell < last)
+    {
+        std::cerr << "SORT ERROR: index " << i << " key " << cell << " value " << p << " last key " << last << std::endl;
+    }
+    last = cell;
     if (!(cell&1)) continue; // this is a ghost particle from a neighbor cell
     cell>>=1;
 	//if (cell != 0 && cell != 65535)

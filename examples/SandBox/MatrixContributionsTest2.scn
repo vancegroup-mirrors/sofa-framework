@@ -57,14 +57,14 @@
 				<Hexa2QuadTopologicalMapping input="@../hexaContainer" output="@quadContainer"/>	
 				<MechanicalObject name="MS4" position="@../MS3.position"/>
 				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping34" input="@../MS3" output="@MS4"/>
-				<TriangleSet/>
+				<LineModel/>
 			</Node>
 		</Node>
 		<StiffSpringForceField name="ExternalSprings1" spring="0 0 10 5 3.5" object1="Tetrahedra/mappedTriangle" object2="Hexahedron/mappedQuads"/>
-		<!--
 		<StiffSpringForceField name="ExternalSprings2" spring="0 0 10 5 3.5" object1="Tetrahedra"                object2="Hexahedron/mappedQuads"/>
 		<StiffSpringForceField name="ExternalSprings3" spring="0 0 10 5 3.5" object1="Tetrahedra/mappedTriangle" object2="Hexahedron"/>
 		<StiffSpringForceField name="ExternalSprings4" spring="0 0 10 5 3.5" object1="Tetrahedra"                object2="Hexahedron"/>
+		<!--
 		-->
 	</Node>
 </Node>

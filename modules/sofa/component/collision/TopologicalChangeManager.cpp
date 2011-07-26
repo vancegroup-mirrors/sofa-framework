@@ -413,6 +413,10 @@ int TopologicalChangeManager::removeItemsFromCollisionModel(sofa::core::Collisio
       return false;
   }
 
+  void TopologicalChangeManager::setIncisionFirstCut(bool b)
+  {
+	  incision.firstCut = b;
+  }
 
   // Handle Cutting for general model (only Triangle for the moment)
   bool TopologicalChangeManager::incisionCollisionModel(sofa::core::CollisionModel *firstModel , unsigned int idxA, const Vector3& firstPoint,

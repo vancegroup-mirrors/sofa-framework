@@ -43,8 +43,7 @@
 		</Node>
 		<StiffSpringForceField name="ExternalSprings1" spring="0 4 50 5 3.5" object1="Tetra1/MappedPoints1" object2="Tetra2"/>
 		<!--
-			<PointModel/>
-				<SphereModel/>
+		<StiffSpringForceField name="ExternalSprings1" spring="0 0 50 5 3.5" object1="Tetra2" object2="Tetra1/MappedPoints1" />  <!--bug here--
 		<StiffSpringForceField name="ExternalSprings2" spring="3 4 50 5 3.5" object1="Tetra1" object2="Tetra2"/>
 		-->
 	</Node>

@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0"?> 
 <Node name="root"  dt="0.02" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1" showBehavior="1">
 	<CollisionPipeline depth="6" verbose="0" draw="0"/>
 	<BruteForceDetection name="N2" />
@@ -8,7 +8,7 @@
 
 	<Node name="ChainRigid">
 		<Node name="TorusFixed">
-        	<MeshLoader name="meshLoader" filename="mesh/torus2_for_collision.obj"/>
+			<MeshLoader name="meshLoader" filename="mesh/torus2_for_collision.obj"/>
 			<Mesh />
 			<MechanicalObject />
 			<Triangle simulated="0" moving="0" />
@@ -21,9 +21,10 @@
 			<MechanicalObject name="rigidframe" template="Rigid" position="1 2 0 0 0 0.7 0.7" />
 			<UniformMass filename="BehaviorModels/torus.rigid" />
 			<noFixedConstraint />
+	</Node>
 
 			<Node name="TorusDeformLocal">
- 				<SparseGrid filename="mesh/torus_for_collision.obj" n="7 2 4" />
+				<SparseGrid filename="mesh/torus_for_collision.obj" n="7 2 4" />
 				<MechanicalObject />		                                  
 				<TetrahedronFEMForceField youngModulus="125" />
 				<BoxConstraint box="-1 -1 -1 1 1 1"/>
@@ -49,7 +50,6 @@
 					</Node>
 
 				</Node>
-			</Node>
 			
 		</Node>
 	</Node>

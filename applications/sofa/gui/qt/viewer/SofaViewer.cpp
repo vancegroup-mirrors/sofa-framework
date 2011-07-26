@@ -65,6 +65,10 @@ namespace sofa
           initTexturesDone = false;
           sceneBBoxIsValid = false;
 
+		  _stereoEnabled = false;
+          _stereoShift = 1.0;
+          _binocularModeEnabled = false;
+
           //Camera initialization
           if (groot)
           {
@@ -288,6 +292,32 @@ namespace sofa
                 saveView();
                 break;
               }
+			  case Qt::Key_F1:
+			// --- enable stereo mode
+			{
+				_stereoEnabled = !_stereoEnabled;
+				std::cout << "Stereoscopic View Enabled" << std::endl;
+				break;
+			}
+			case Qt::Key_F2:
+			// --- reduce shift distance 
+			{
+				_stereoShift -= 0.1;
+				break;
+			}
+			case Qt::Key_F3:
+			// --- increase shift distance 
+			{
+				_stereoShift += 0.1;
+				break;
+			}
+			case Qt::Key_F5:
+			// --- enable binocular mode
+			{
+				std::cout << "Binocular View Enabled" << std::endl;
+				_binocularModeEnabled = !_binocularModeEnabled;
+				break;
+			}
             case Qt::Key_Control:
               {
                 m_isControlPressed = true;

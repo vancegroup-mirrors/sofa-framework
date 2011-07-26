@@ -119,12 +119,16 @@ public:
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::TRotationMatrix TRotationMatrix;
 	typedef typename ParallelMatrixLinearSolverInternalData<Vector>::JRMatrixType JRMatrixType;
 
+	Data<bool> f_precompute;
 	Data<bool> f_useWarping;
 	Data<bool> f_useDerivative;
 	Data<unsigned> f_useRotationFinder;
 	Data<bool> f_useMultiThread;
 	Data<bool> f_check_system;
 	Data<bool> f_check_compliance;
+	
+	bool initialStep;
+	
 
 	ParallelMatrixLinearSolver();
 	virtual ~ParallelMatrixLinearSolver();

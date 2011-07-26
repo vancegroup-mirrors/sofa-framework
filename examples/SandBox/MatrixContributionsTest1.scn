@@ -42,8 +42,8 @@
 			</Node>
 		</Node>
 		<StiffSpringForceField name="ExternalSprings1" spring="7 0 2 5 3.5" object1="Beams/MappedPoints1" object2="Tetra/MappedPoints2"/>
-		<!--
 		<StiffSpringForceField name="ExternalSprings2" spring="7 3 2 5 3.5" object1="Beams/MappedPoints1" object2="Tetra"/>
+		<!--
 			
 				<SphereModel radius="0.1"/>
 				<Triangle/>

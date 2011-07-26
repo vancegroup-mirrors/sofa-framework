@@ -26,8 +26,8 @@
 * 227.7202-4 (JUNE 1995), all U.S. Government End Users acquire the 
 * source code with only those rights set forth herein.
 */
-#ifndef   __RADIXSORT_H__
-#define   __RADIXSORT_H__
+#ifndef   SOFA_GPU_CUDA_RADIXSORT_H
+#define   SOFA_GPU_CUDA_RADIXSORT_H
 
 // -----------------------------------------------------------------------
 // Fast CUDA Radix Sort Class

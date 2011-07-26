@@ -40,10 +40,7 @@ using namespace sofa::defaulttype;
 using helper::Creator;
 
 //template class Factory< std::string, objectmodel::BaseObject, Node<objectmodel::BaseObject*>* >;
-namespace
-{
-int counterDefault = 0;
-}
+
 ObjectElement::ObjectElement(const std::string& name, const std::string& type, BaseElement* parent)
 : Element<core::objectmodel::BaseObject>(name, type, parent)
 {
@@ -79,12 +76,7 @@ bool ObjectElement::initNode()
             setAttribute(it->first,replaceAttribute[it->first].c_str());
           }
     }
-    if( getName().empty() ){
-      std::ostringstream oss;
-      oss << core::ObjectFactory::ShortName(this->getType()) <<  counterDefault++ ;
-      setName(oss.str());
-    }
-
+  
     core::objectmodel::BaseObject *obj = core::ObjectFactory::CreateObject(ctx, this);
 
     if (obj == NULL)
@@ -95,8 +87,6 @@ bool ObjectElement::initNode()
         return false;
     }
     setObject(obj);
-    obj->setName(getName());
-
         // display any unused attributes
    std::string unused;
     for (AttributeMap::iterator it = attributes.begin(), itend = attributes.end(); it != itend; ++it)

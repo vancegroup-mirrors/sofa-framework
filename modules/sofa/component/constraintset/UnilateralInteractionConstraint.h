@@ -96,8 +96,6 @@ protected:
 		double mu;		///< angle for friction
 
 		Coord P, Q;
-		Coord Pfree, Qfree;
-		Deriv Pvfree, Qvfree; ///< to compute velocity violation
 
 		mutable Real dfree;
 	};
@@ -107,19 +105,15 @@ protected:
 	bool yetIntegrated;
 
 
-	/**
-	 * @brief Computes constraint violation in position and stores it into resolution global vector
-	 *
-	 * @param v Global resolution vector
-	 */
-	void getPositionViolation(defaulttype::BaseVector *v);
+	/// Computes constraint violation in position and stores it into resolution global vector
+	///
+	/// @param v Global resolution vector
+	virtual void getPositionViolation(defaulttype::BaseVector *v);
 
-	/**
-	 * @brief Computes constraint violation in velocity and stores it into resolution global vector
-	 *
-	 * @param v Global resolution vector
-	 */
-	void getVelocityViolation(defaulttype::BaseVector *v);
+	///Computes constraint violation in velocity and stores it into resolution global vector
+	///
+	/// @param v Global resolution vector
+	virtual void getVelocityViolation(defaulttype::BaseVector *v);
 	
 public:
 

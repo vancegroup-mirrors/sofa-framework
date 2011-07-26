@@ -610,6 +610,7 @@ using namespace core::topology;
     , showCenterOfGravity( initData(&showCenterOfGravity, false, "showGravityCenter", "display the center of gravity of the system" ) )
     , showAxisSize( initData(&showAxisSize, 1.0f, "showAxisSizeFactor", "factor length of the axis displayed (only used for rigids)" ) )
     , lumping( initData(&lumping, true, "lumping","boolean if you need to use a lumped mass matrix") )
+    , printMass( initData(&printMass, false, "printMass","boolean if you want to get the totalMass") )
     , topologyType(TOPOLOGY_UNKNOWN)
     , massLumpingCoeff(0.0)
   {
@@ -822,12 +823,18 @@ using namespace core::topology;
     helper::WriteAccessor< DataVecDeriv > res = vres;
     helper::ReadAccessor< DataVecDeriv > dx = vdx;
 
+    double massTotal = 0.0;
 
     //using a lumped matrix (default)-----
     if(this->lumping.getValue())
     {
         for (unsigned int i=0;i<dx.size();i++)
+        {
            res[i] += (dx[i] * vertexMass[i] * massLumpingCoeff) * (Real)factor;
+           massTotal += vertexMass[i]*2.5;
+        }
+        if(printMass.getValue() && (this->getContext()->getTime()==0.0))
+            std::cout<<"Mass totale = "<<massTotal<<std::endl;
     }
 
 
@@ -838,7 +845,10 @@ using namespace core::topology;
         unsigned int v0,v1;
 
         for (unsigned int i=0;i<dx.size();i++)
+        {
            res[i] += dx[i] * vertexMass[i] * (Real)factor;
+           massTotal += vertexMass[i];
+        }
 
        Real tempMass=0.0;
 
@@ -851,7 +861,12 @@ using namespace core::topology;
 
            res[v0] += dx[v1] * tempMass;
            res[v1] += dx[v0] * tempMass;
+
+           massTotal += 2*edgeMass[j];
        }
+
+       if(printMass.getValue() && (this->getContext()->getTime()==0.0))
+           std::cout<<"Mass totale = "<<massTotal<<std::endl;
      }
 
   }

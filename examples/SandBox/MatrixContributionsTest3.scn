@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!-- 
+Test Matrix Creation in the direct solver for tree of 2 mapping and 1 interaction forces. 
+The interaction forcefield may interact beetween mapped or real state
+-->
+<Node name="root" dt="0.05" showBehaviorModels="1" showCollisionModels="1" showMappings="0" showForceFields="0" showInteractionForceFields="1" gravity="0 -9.8 0">
+	<CollisionPipeline verbose="0" />
+	<BruteForceDetection name="N2" />
+	<CollisionResponse response="default" />
+	<MinProximityIntersection name="Proximity" alarmDistance="0.1" contactDistance="0.1" />
+	<CollisionGroup />
+
+	<Node name="All">
+		<EulerImplicit name="cg_odesolver" printLog="false"/>
+		<LULinearSolver name="lu_solver"/>
+		<Node name="Tetrahedra">
+			<TetrahedronSetTopologyContainer  name="tetraContainer" position="2. 2. 2. 3. 2. 2. 2. 3. 2. 2. 2. 3. 3. 3. 3." tetrahedra="0 1 2 3 1 2 3 4"/>
+			<TetrahedronSetTopologyModifier   name="tetraModifier" />
+			<TetrahedronSetTopologyAlgorithms name="tetraAlgo"  template="Vec3d" />
+			<TetrahedronSetGeometryAlgorithms name="tetraGeomAlgo"  template="Vec3d" />
+			<MechanicalObject name="TetraMS" />
+			<DiagonalMass massDensity="0.5" />
+			<FixedConstraint indices="4" />		
+			<TetrahedralCorotationalFEMForceField name="FEM" youngModulus="5000" poissonRatio="0.3" method="large" />
+			<Node name="mappedTriangle">
+				<TriangleSetTopologyContainer  name="triangleContainer"/>
+				<TriangleSetTopologyModifier   name="triangleModifier" />
+				<TriangleSetTopologyAlgorithms name="triangleAlgo"  template="Vec3d" />
+				<TriangleSetGeometryAlgorithms name="triangleGeomAlgo"  template="Vec3d" />
+				<Tetra2TriangleTopologicalMapping input="@../tetraContainer" output="@triangleContainer"/>
+				<MechanicalObject name="TriangleMS" position="@../TetraMS.position"/>
+				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping12" input="@../TetraMS" output="@TriangleMS" useRestPosition="true"/>
+				<Node name="mappedPoint">
+					<MechanicalObject name="PointMS" position="2.5 2.5 2.5"/>
+					<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping23" input="@../TriangleMS" output="@PointMS" useRestPosition="true"/>
+					<SphereModel radius="0.2"/>
+				</Node>
+			</Node>
+		</Node>
+		<Node name="Hexahedron">
+			<HexahedronSetTopologyContainer name="hexaContainer" position="0. 0. 0. 
+										       1. 0. 0. 
+										       1. 1. 0. 
+										       0. 1. 0.  
+										       0. 0. 1. 
+										       1. 0. 1. 
+					                                               1. 1. 1. 
+					                                               0. 1. 1." hexahedra="0 1 2 3 4 5 6 7"/>
+			<HexahedronSetTopologyModifier   name="hexaModifier" />
+			<HexahedronSetTopologyAlgorithms name="hexaAlgo"   template="Vec3d" />
+			<HexahedronSetGeometryAlgorithms name="hexaGeomAlgo"   template="Vec3d" />
+			<MechanicalObject name="HexaMS"/>
+			<DiagonalMass massDensity="0.5" />
+			<FixedConstraint indices="6 7" />     
+			<HexahedronFEMForceField name="FEM" youngModulus="500" poissonRatio="0.3"  method="large" />
+		
+			<Node name="mappedQuads">
+				<QuadSetTopologyContainer  name="quadContainer" />
+				<QuadSetTopologyModifier   name="quadModifier" />
+				<QuadSetTopologyAlgorithms name="quadAlgo"  template="Vec3d" />
+				<QuadSetGeometryAlgorithms name="quadGeomAlgo"  template="Vec3d" />
+				<Hexa2QuadTopologicalMapping input="@../hexaContainer" output="@quadContainer"/>	
+				<MechanicalObject name="QuadMS" position="@../HexaMS.position"/>
+				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping45" input="@../HexaMS" output="@QuadMS"/>
+				<TriangleSet/>
+			</Node>
+		</Node>
+		<StiffSpringForceField name="ExternalSprings1" spring="0 0 2 5 3.5" object1="Tetrahedra/mappedTriangle/mappedPoint" object2="Hexahedron/mappedQuads"/>
+		<!--
+		<StiffSpringForceField name="ExternalSprings2" spring="0 0 2 5 3.5" object1="Tetrahedra/mappedTriangle"             object2="Hexahedron/mappedQuads"/>
+		<StiffSpringForceField name="ExternalSprings3" spring="0 0 2 5 3.5" object1="Tetrahedra"                            object2="Hexahedron/mappedQuads"/>
+		<StiffSpringForceField name="ExternalSprings4" spring="0 0 2 5 3.5" object1="Tetrahedra/mappedTriangle/mappedPoint" object2="Hexahedron"/>
+		<StiffSpringForceField name="ExternalSprings5" spring="0 0 2 5 3.5" object1="Tetrahedra/mappedTriangle"             object2="Hexahedron"/>
+		<StiffSpringForceField name="ExternalSprings6" spring="0 0 2 5 3.5" object1="Tetrahedra/"                           object2="Hexahedron"/>
+		-->
+	</Node>
+</Node>
+
+<!-- empty 
+			<MeshSpringForceField name="Springs" stiffness="1000000000" damping="0"/>
+			<QuadBendingSprings name="Bend" stiffness="200000000000" damping="1"/>
+				<TriangleFEMForceField name="triangleFF" youngModulus="50" poissonRatio="0.3" method="large"/>
+-->
+

@@ -37,10 +37,7 @@ namespace xml
 {
 
 using namespace sofa::defaulttype;
-namespace
-{
-int counterDefault = 0;
-}
+
 
 NodeElement::NodeElement(const std::string& name, const std::string& type, BaseElement* parent)
 : Element<core::objectmodel::BaseNode>(name, type, parent)
@@ -65,13 +62,6 @@ bool NodeElement::initNode()
   if (obj != NULL)
   {
     setObject(obj);
-    if(getName().empty() ){
-      std::ostringstream oss;
-      oss << obj->getClass()->shortName << counterDefault++;
-      setName(oss.str());
-    }
-
-    obj->setName(getName());
     if (getTypedObject()!=NULL && getParentElement()!=NULL && dynamic_cast<core::objectmodel::BaseNode*>(getParentElement()->getObject())!=NULL)
     {
       // 		std::cout << "Adding Child "<<getName()<<" to "<<getParentElement()->getName()<<std::endl;

@@ -63,6 +63,9 @@ public:
 	virtual void parse ( sofa::core::objectmodel::BaseObjectDescription* arg );
 
 	Data<bool> displayTime;
+
+	Data<bool> m_solveVelocityConstraintFirst;
+
 protected:
 	sofa::core::behavior::ConstraintSolver *constraintSolver;
 	component::constraintset::LCPConstraintSolver* defaultSolver;

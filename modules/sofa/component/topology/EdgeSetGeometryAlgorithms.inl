@@ -561,21 +561,29 @@ namespace topology
       if (!edgeArray.empty())
       {
 	glDisable(GL_LIGHTING);
-   const sofa::defaulttype::Vector3& color = _drawColor.getValue();
-   glColor3f(color[0], color[1], color[2]);
+        const sofa::defaulttype::Vector3& color = _drawColor.getValue();
+        glColor3f(color[0], color[1], color[2]);
 
 	const VecCoord& coords = *(this->object->getX());
 
-	glBegin(GL_LINES);
+        glPointSize(4);
 	for (unsigned int i = 0; i<edgeArray.size(); i++)
 	{
 	  const Edge& e = edgeArray[i];
 	  sofa::defaulttype::Vec3f coordP1; coordP1 = DataTypes::getCPos(coords[e[0]]);
 	  sofa::defaulttype::Vec3f coordP2; coordP2 = DataTypes::getCPos(coords[e[1]]);
+          glBegin(GL_LINES);
 	  glVertex3f(coordP1[0], coordP1[1], coordP1[2]);
 	  glVertex3f(coordP2[0], coordP2[1], coordP2[2]);
+          glEnd();
+
+
+          glBegin(GL_POINTS);
+          glVertex3d(coordP1[0], coordP1[1], coordP1[2]);
+          glVertex3d(coordP2[0], coordP2[1], coordP2[2]);
+          glEnd();
 	}
-	glEnd();
+        glPointSize(1);
       }
     }
     

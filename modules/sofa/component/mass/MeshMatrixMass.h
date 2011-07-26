@@ -102,6 +102,7 @@ public:
     Data< bool >         showCenterOfGravity;
     Data< float >        showAxisSize;
     Data< bool >         lumping;
+    Data< bool >         printMass;
 
 
 protected:

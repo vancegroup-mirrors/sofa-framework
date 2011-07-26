@@ -49,7 +49,8 @@ namespace mastersolver
 using namespace core::behavior;
 
 FreeMotionMasterSolver::FreeMotionMasterSolver()
-: constraintSolver(NULL)
+: m_solveVelocityConstraintFirst(initData(&m_solveVelocityConstraintFirst , false, "solveVelocityConstraintFirst", "solve separately velocity constraint violations before position constraint violations"))
+, constraintSolver(NULL)
 , defaultSolver(NULL)
 {
 }
@@ -62,6 +63,8 @@ FreeMotionMasterSolver::~FreeMotionMasterSolver()
 
 void FreeMotionMasterSolver::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
 {
+	this->simulation::MasterSolverImpl::parse(arg);
+
     defaultSolver = new constraintset::LCPConstraintSolver;
     defaultSolver->parse(arg);
 }
@@ -113,7 +116,7 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 	// This solver will work in freePosition and freeVelocity vectors.
 	// We need to initialize them if it's not already done.
 	simulation::MechanicalVInitVisitor<core::V_COORD>(params, core::VecCoordId::freePosition(), core::ConstVecCoordId::position(), true).execute(context);
-	simulation::MechanicalVInitVisitor<core::V_DERIV>(params, core::VecDerivId::freeVelocity(), core::ConstVecDerivId::velocity()).execute(context);
+	simulation::MechanicalVInitVisitor<core::V_DERIV>(params, core::VecDerivId::freeVelocity(), core::ConstVecDerivId::velocity(), true).execute(context);
 
 	// Update the BehaviorModels
 	// Required to allow the RayPickInteractor interaction
@@ -171,22 +174,50 @@ void FreeMotionMasterSolver::step(const sofa::core::ExecParams* params /* PARAMS
 	if (constraintSolver)
 	{
 		AdvancedTimer::stepBegin("ConstraintSolver");
-		
-		core::ConstraintParams cparams(*params);
-		cparams.setX(freePos);
-		cparams.setV(freeVel);
-        
-		constraintSolver->solveConstraint(&cparams, pos, vel);
 
-		AdvancedTimer::stepEnd("ConstraintSolver");
+		if (m_solveVelocityConstraintFirst.getValue())
+		{
+			core::ConstraintParams cparams(*params);
+			cparams.setX(freePos);
+			cparams.setV(freeVel);
 
-		mop.propagateV(vel);
+			cparams.setOrder(core::ConstraintParams::VEL);
+			constraintSolver->solveConstraint(&cparams, vel);
 
-		MultiVecDeriv dx(&vop, constraintSolver->getDx());
-		mop.propagateDx(dx);
+			MultiVecDeriv dv(&vop, constraintSolver->getDx());
+			mop.propagateDx(dv);
 
-		// "mapped" x = xfree + dx
-		simulation::MechanicalVOpVisitor(params, pos, freePos, dx, 1.0 ).setOnlyMapped(true).execute(context);
+			// xfree += dv * dt
+			freePos.eq(freePos, dv, this->getContext()->getDt());
+			mop.propagateX(freePos);
+
+			cparams.setOrder(core::ConstraintParams::POS);
+			constraintSolver->solveConstraint(&cparams, pos);
+
+			MultiVecDeriv dx(&vop, constraintSolver->getDx());
+
+			mop.propagateV(vel);
+			mop.propagateDx(dx);
+
+			// "mapped" x = xfree + dx
+			simulation::MechanicalVOpVisitor(params, pos, freePos, dx, 1.0 ).setOnlyMapped(true).execute(context);
+		}
+		else
+		{
+			core::ConstraintParams cparams(*params);
+			cparams.setX(freePos);
+			cparams.setV(freeVel);
+	 
+			constraintSolver->solveConstraint(&cparams, pos, vel);
+
+			mop.propagateV(vel);
+
+			MultiVecDeriv dx(&vop, constraintSolver->getDx());
+			mop.propagateDx(dx);
+
+			// "mapped" x = xfree + dx
+			simulation::MechanicalVOpVisitor(params, pos, freePos, dx, 1.0 ).setOnlyMapped(true).execute(context);
+		}
 	}
 
 	if ( displayTime.getValue() )

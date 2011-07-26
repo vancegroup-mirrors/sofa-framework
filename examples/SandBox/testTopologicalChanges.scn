@@ -1,0 +1,54 @@
+<!-- Scene to test the topological changes on a triangular mesh with different force fields-->
+
+<Node name="root" dt="0.0025" 
+showBehaviorModels="1" 
+showCollisionModels="0" 
+showMappings="0" 
+showForceFields="1" 
+showBoundingTree="0" 
+showVisualModels="1" 
+showWireFrame="1" 
+gravity="0 0 0">
+	<CollisionPipeline verbose="0" />
+	<BruteForceDetection name="N2" />
+	<CollisionResponse response="default" />
+	<MinProximityIntersection name="Proximity" alarmDistance="0.8" contactDistance="0.5" />
+	<TreeCollisionGroupManager name="default2" />
+	<Node name="Square1">
+	
+		<EulerImplicit />
+		<CGLinearSolver iterations="50" tolerance="1e-25" threshold="1e-25"/>
+		
+		<TriangleSetTopologyContainer  name="Container" fileTopology="mesh/square3.msh"/>
+		<TriangleSetTopologyModifier   name="Modifier" />
+		<TriangleSetTopologyAlgorithms name="TopoAlgo"   template="Vec3d" />
+		<TriangleSetGeometryAlgorithms name="GeomAlgo"   template="Vec3d" />
+		
+		<MechanicalObject scale3d="10 10 10"/>
+		<UniformMass totalmass="0.1" />
+		<Triangle name="surfaceModel"/>
+		
+		<BoxROI name="boxLeft" box="0 0 -0.5 0.1 10 0.5" drawBoxes="true"/>
+		<BoxROI name="boxRight" box="9.9 0 -0.5 10 10 0.5" drawBoxes="true"/>
+
+		<ConstantForceField points="@boxLeft.indices"
+		forces="-30 0 0"/>
+		<ConstantForceField points="@boxRight.indices"
+		forces="30 0 0"/>
+		
+		
+		<!-- test with an anisotropic FEM force field >> something's wrong with topological changes-->
+		<TriangularAnisotropicFEMForceField name="AnisotropicFEM" 
+		youngModulus="5000" transverseYoungModulus="500" poissonRatio="0.45" fiberAngle="45" method="large" fracturable="true" 
+		showStressValue="true" showStressVector="false" showFiber="true"/>
+		
+<!--		<TriangularFEMForceField template="Vec3d" name="FEM"  method="large"  poissonRatio="0.3"  youngModulus="6000" />-->
+		<TriangleModel/>
+		<Node name="Visu">
+			<OglModel name="Visual" color="0.75 0.75 0.75 1.0"/>
+			<IdentityMapping object1="../.." object2="Visual"/>
+		</Node>
+		
+ 		<TopologicalChangeProcessor listening="1" filename="IncisionTrianglesProcess.txt"/>
+	</Node>
+</Node>

@@ -8,9 +8,12 @@
 
 #include <algorithm>
 
-namespace sofa{
-  namespace gui{
-    namespace qt{
+namespace sofa
+{
+namespace gui
+{
+namespace qt
+{
 
 helper::Creator<DataWidgetFactory,DataFileNameWidget> DW_Datafilename("widget_filename",false);
 
@@ -51,7 +54,7 @@ void DataFileNameWidget::writeToData()
 }
 
 
-void DataFileNameWidget::raiseFileDialog()
+void DataFileNameWidget::raiseDialog()
 {
   std::string fileName( openFilePath->text().ascii() );
 
@@ -87,7 +90,7 @@ void DataFileNameWidget::raiseFileDialog()
 }
 
 
-    }
-  }
+}
+}
 }
 

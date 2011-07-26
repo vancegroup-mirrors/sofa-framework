@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!-- Test Matrix Creation in the direct solver for tree of 2 mapping and 1 interaction forces the different MS is of different template (Beams is templated on Rigid )-->
+<Node name="root" dt="0.1" showBehaviorModels="0" showCollisionModels="1" showBoundingCollisionModels="0" showForceFields="1" showInteractionForceFields="1" gravity="0 -9.8 0">
+	<CollisionPipeline depth="6" verbose="1" draw="0"/>
+	<BruteForceDetection name="N2" />
+	<LocalMinDistance name="localmindistance" alarmDistance="0.03" contactDistance="0.02" />
+	<CollisionResponse name="Response" response="FrictionContact" />
+	<CollisionGroup name="Group" />
+	<Node name="All">
+		<EulerImplicit rayleighStiffness="0" printLog="false" />
+		<BTDLinearSolver name="m_lSolver" printLog="false" verbose="false" />
+
+		<Node name="Beams">
+			<MechanicalObject template="Rigid" name="MS1" position="0 0 0 0 0 0 1  1 0 0 0 0 0 1  2 0 0 0 0 0 1  3 0 0 0 0 0 1 4 0 0 0 0 0 1" />
+			<EdgeSetTopologyContainer edges="0 1 1 2 2 3 3 4"/>
+			<FixedConstraint name="FixedConstraint" indices="4" />
+			<BeamFEMForceField name="FEM" radius="0.7" youngModulus="5000" poissonRatio="0.3" />
+			<Node name="MappedPoints1">
+				<HexahedronSetTopologyContainer name="hexaContainer" position="-0.1 -0.1 -0.1 
+												0.1 -0.1 -0.1 
+												0.1  0.1 -0.1 
+											       -0.1  0.1 -0.1  
+											       -0.1 -0.1  0.1 
+												0.1 -0.1  0.1 
+							                                        0.1  0.1  0.1 
+							                                       -0.1  0.1  0.1" hexahedra="0 1 2 3 4 5 6 7"/>
+				<MechanicalObject  template="Vec3d" name="MS2" position="@hexaContainer.position"/>
+				<BeamLinearMapping name="mapping12" input="@../MS1" output="@MS2"/>
+			</Node>
+		</Node>
+		<Node name="Tetra">
+			<TetrahedronSetTopologyContainer name="TetraContainer" position="0 -3 0 1 -3 0 0 -2 0 0 -3 1" tetrahedra="0 1 2 3"/>
+			<TetrahedronSetTopologyModifier/>
+			<TetrahedronSetGeometryAlgorithms name="GeomAlgo"  />
+			<MechanicalObject  template="Vec3d"  name="MS3"/>
+			<TetrahedronFEMForceField name="FEM" youngModulus="1000000" poissonRatio="0.3" method="large"/>
+			<FixedConstraint name="FixedConstraint" indices="0 1" /> 
+			<UniformMass name="mass3" mass="0.1" />
+			<Node name="MappedPoints2">
+				<MechanicalObject template="Vec3d" name="MS4" position="0.5 -2.5 0.5"/>
+				<BarycentricMapping template="MechanicalMapping&lt;Vec3d,Vec3d&gt;" name="mapping34" input="@../MS3" output="@MS4"/>
+			</Node>
+		</Node>
+		<StiffSpringForceField name="ExternalSprings1" spring="7 0 2 5 3.5" object1="Beams/MappedPoints1" object2="Tetra/MappedPoints2"/>
+		<!--
+		<StiffSpringForceField name="ExternalSprings2" spring="7 3 2 5 3.5" object1="Beams/MappedPoints1" object2="Tetra"/>
+			
+				<SphereModel radius="0.1"/>
+				<Triangle/>
+		-->
+	</Node>
+</Node>
+
+<!--
+-->

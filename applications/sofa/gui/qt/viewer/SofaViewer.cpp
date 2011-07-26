@@ -22,6 +22,7 @@ namespace sofa
         , texLogo(NULL)
         , ambientColour(Vector3())
         {
+          colourPickingRenderCallBack = ColourPickingRenderCallBack(this);
         }
 
         SofaViewer::~SofaViewer()
@@ -103,11 +104,11 @@ namespace sofa
 
         void SofaViewer::configure(sofa::component::configurationsetting::ViewerSetting* viewerConf)
         {
-          if (viewerConf->getCameraModeId() == component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE)
+          if (viewerConf->cameraMode.getValue().getSelectedId() == component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE)
             setCameraMode(component::visualmodel::BaseCamera::ORTHOGRAPHIC_TYPE);
           else
             setCameraMode(component::visualmodel::BaseCamera::PERSPECTIVE_TYPE);
-          if ( viewerConf->getPickingMethodId() == gui::PickHandler::RAY_CASTING)
+          if ( viewerConf->objectPickingMethod.getValue().getSelectedId() == gui::PickHandler::RAY_CASTING)
             pick.setPickingMethod( gui::PickHandler::RAY_CASTING );
           else
             pick.setPickingMethod( gui::PickHandler::SELECTION_BUFFER);

@@ -32,7 +32,7 @@ SOURCES += initVisualModel.cpp \
     PointSplatModel.cpp \
     OglRenderingSRGB.cpp \
     BaseCamera.cpp \
-    InteractiveCamera.cpp
+    InteractiveCamera.cpp    
     
 contains(DEFINES,SOFA_HAVE_GLEW) { 
     HEADERS += OglAttribute.h \

@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!-- Test Matrix Creation in the direct solver for tree of several mappings with different deeps -->
+<Node name="root"  dt="0.02" showBehaviorModels="1" showCollisionModels="1" showMappings="1" showForceFields="1" showInteractionForceFields="1">
+	<CollisionPipeline depth="6" verbose="0" draw="0"/>
+	<BruteForceDetection name="N2" />
+	<MinProximityIntersection name="Proximity" alarmDistance="0.3" contactDistance="0.2" />
+	<CollisionResponse name="Response" response="default" />
+	<CollisionGroup name="Group" />
+	<Node name="All">
+		<EulerImplicit rayleighStiffness="0.01" />                
+		<LULinearSolver/>
+		<Node name="TorusRigid1">
+			<EulerImplicit />
+			<CGLinearSolver iterations="25" threshold="0.000000000001" tolerance="0.000001"  />
+			<MechanicalObject template="Rigid" name="MS2"/>
+			<UniformMass filename="BehaviorModels/torus.rigid" />
+			<Node name="mappednode0">
+        		        <MeshLoader name="meshLoader"  filename="mesh/torus_for_collision.obj"/>
+				<Mesh />
+				<MechanicalObject name="MS4"/>
+				<Triangle />
+				<RigidMapping name="mapping24" input="@../MS2" output="@MS4"  mapForces="1" mapConstraints="1" mapMasses="1"/>
+			</Node>
+			<Node name="mappednode2">
+				<MechanicalObject name="MS6"/>
+				<RigidMapping name="mapping26" input="@../MS2" output="@MS6"  mapForces="1" mapConstraints="1" mapMasses="1"/>
+				<Node name="mappedlever22">
+					<MechanicalObject name="MS8"/>
+					<IdentityMapping name="mapping68" input="@../MS6" output="@MS8"  mapForces="1" mapConstraints="1" mapMasses="1"/>
+					<Node name="Visu">
+						<OglModel name="Visual" fileMesh="mesh/torus.obj" color="red" texturename="textures/brushed_metal.bmp" />
+						<IdentityMapping name="mapping8v" input="@../MS8" output="@Visual" />
+					</Node>
+				</Node>
+			</Node>
+		</Node>
+		<Node name="TorusRigid2">
+			<MechanicalObject template="Rigid" dx="5" name="MS1"/>
+			<UniformMass filename="BehaviorModels/torus.rigid" />
+			<Node name="mappednode1">
+			        <MeshLoader name="meshLoader"  filename="mesh/torus_for_collision.obj"/>
+				<Mesh />
+				<MechanicalObject name="MS3"/>
+				<Triangle />
+				<RigidMapping name="mapping13" input="@../MS1" output="@MS3"  mapForces="1" mapConstraints="1" mapMasses="1"/>
+			</Node>
+			<Node name="mappednode3">
+				<MechanicalObject name="MS5"/>
+				<RigidMapping name="mapping15" input="@../MS1" output="@MS5" mapForces="0" mapConstraints="1" mapMasses="1"/>
+				<Node name="mappedlever23">
+					<MechanicalObject name="MS7"/>
+					<IdentityMapping name="mapping57" input="@../MS5" output="@MS7"  mapForces="1" mapConstraints="1" mapMasses="1"/>
+					<Node name="Visu">
+						<OglModel name="Visual" fileMesh="mesh/torus.obj" color="blue" texturename="textures/brushed_metal.bmp" />
+						<IdentityMapping name="mapping7v" input="@../MS7" output="@Visual" />
+					</Node>
+				</Node>
+			</Node>
+		</Node>
+	</Node>
+</Node>
+
+<!--
+-->

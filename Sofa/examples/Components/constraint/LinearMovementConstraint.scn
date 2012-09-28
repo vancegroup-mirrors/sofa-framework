@@ -1,0 +1,65 @@
+<Node name="Root">
+    <Node name="Spoon1">
+        <EulerImplicit name="cg_odesolver" printLog="false" />
+        <CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+        <MechanicalObject template="Rigid" dx="0" dy="0" dz="0" name="default118" position="0 1.41421 0 0 0 0.382683 0.92388" rest_position="0 1.41421 0 0 0 0.382683 0.92388" />
+        <LinearMovementConstraint template="Rigid" keyTimes="0 2 10 40 50" movements="0 0 0   0 0 0
+										      0 0 0   0 0 0
+										      0 0 -1  0 0 0
+										      0 0 -1  0 0 6.3
+										      0 0 -1   0 0 6.3" />
+        <Node name="coli">
+            <MeshObjLoader name="loader" filename="mesh/liver.obj" />
+            <Mesh src="@loader" />
+            <MechanicalObject src="@loader" template="Vec3d" name="dofs" />
+            <TriangleMeshModel moving="1" simulated="1" contactStiffness="100000000"/>
+            <RigidMapping template="MechanicalMapping&lt;MechanicalState&lt;StdRigidTypes&lt;3,double&gt; &gt;,MechanicalState&lt;StdVectorTypes&lt;Vec&lt;3,double&gt;,Vec&lt;3,double&gt;,double&gt; &gt; &gt; &gt;" />
+        </Node>
+        <Node name="Visu">
+            <OglModel name="Visual" fileMesh="mesh/liver.obj" color="red" />
+            <RigidMapping template="Mapping&lt;State&lt;StdRigidTypes&lt;3,double&gt; &gt;,MappedModel&lt;ExtVectorTypes&lt;Vec&lt;3,float&gt;,Vec&lt;3,float&gt;,float&gt; &gt; &gt; &gt;" name="default161" object1="../.." object2="Visual" />
+        </Node>
+    </Node>
+    <Node name="Spoon2">
+        <EulerImplicit name="cg_odesolver" printLog="false" />
+        <CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+        <MechanicalObject template="Rigid" dx="10" dy="0" dz="0" name="default118" position="0 1.41421 0 0 0 0.382683 0.92388" rest_position="0 1.41421 0 0 0 0.382683 0.92388"/>
+        <LinearMovementConstraint template="Rigid" keyTimes="0 2 10 40 50" movements="0 0 0   0 0 0
+										      0 0 0   0 0 0
+										      0 0 -1  0 0 0
+										      0 0 -1  0 0 6.3
+										      0 0 0   0 0 6.3" />
+        <Node name="coli">
+            <MeshObjLoader name="loader" filename="mesh/liver.obj" />
+            <Mesh src="@loader" />
+            <MechanicalObject src="@loader" template="Vec3d" name="dofs" />
+            <TriangleMeshModel moving="1" simulated="1" contactStiffness="100000000" />
+            <RigidMapping template="MechanicalMapping&lt;MechanicalState&lt;StdRigidTypes&lt;3,double&gt; &gt;,MechanicalState&lt;StdVectorTypes&lt;Vec&lt;3,double&gt;,Vec&lt;3,double&gt;,double&gt; &gt; &gt; &gt;" />
+        </Node>
+        <Node name="Visu">
+            <OglModel name="Visual" fileMesh="mesh/liver.obj" color="green" />
+            <RigidMapping template="Mapping&lt;State&lt;StdRigidTypes&lt;3,double&gt; &gt;,MappedModel&lt;ExtVectorTypes&lt;Vec&lt;3,float&gt;,Vec&lt;3,float&gt;,float&gt; &gt; &gt; &gt;" name="default161" object1="../.." object2="Visual"/>
+        </Node>
+    </Node>
+    <Node name="Spoon3">
+        <EulerImplicit name="cg_odesolver" printLog="false" />
+        <CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+        <MechanicalObject template="Rigid" dx="20" dy="0" dz="0" name="default118" position="0 1.41421 0 0 0 0.382683 0.92388" rest_position="0 1.41421 0 0 0 0.382683 0.92388" />
+        <LinearMovementConstraint template="Rigid" keyTimes="0 2 10 40 50" movements="0 0 0   0 0 0
+										      0 0 0   0 0 0
+										      0 0 -1  0 0 0
+										      0 0 -1  0 0 6.3
+										      0 0 -1   0 0 0" />
+        <Node name="coli">
+            <MeshObjLoader name="loader" filename="mesh/liver.obj" />
+            <Mesh src="@loader" />
+            <MechanicalObject src="@loader" template="Vec3d" name="dofs" />
+            <TriangleMeshModel moving="1" simulated="1" contactStiffness="100000000" />
+            <RigidMapping template="MechanicalMapping&lt;MechanicalState&lt;StdRigidTypes&lt;3,double&gt; &gt;,MechanicalState&lt;StdVectorTypes&lt;Vec&lt;3,double&gt;,Vec&lt;3,double&gt;,double&gt; &gt; &gt; &gt;" />
+        </Node>
+        <Node name="Visu">
+            <OglModel name="Visual" fileMesh="mesh/liver.obj" color="blue" />
+            <RigidMapping template="Mapping&lt;State&lt;StdRigidTypes&lt;3,double&gt; &gt;,MappedModel&lt;ExtVectorTypes&lt;Vec&lt;3,float&gt;,Vec&lt;3,float&gt;,float&gt; &gt; &gt; &gt;" name="default161" object1="../.." object2="Visual" />
+        </Node>
+    </Node>
+</Node>

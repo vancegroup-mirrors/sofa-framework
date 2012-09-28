@@ -1,0 +1,42 @@
+<Node name="root" dt="0.005">
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showMappings" />
+    <Node name="Poutre1">
+        <EulerImplicit name="cg_odesolver" printLog="false" />
+        <CGLinearSolver iterations="25" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+        <Node name="M1">
+            <MeshGmshLoader filename="mesh/smCube27.msh" name="loader" />
+            <MechanicalObject src="@loader" />
+            <UniformMass mass="0.1" />
+            <include href="Objects/internalSpringsCube.xml" InternalSprings__name="InternalSprings1" />
+            <FixedConstraint indices="0 3 6 9 12 15 18 21 24" />
+        </Node>
+        <Node name="M2">
+            <MeshGmshLoader filename="mesh/smCube27.msh" name="loader" />
+            <MechanicalObject src="@loader" dz="10.5" />
+            <UniformMass mass="0.1" />
+            <include href="Objects/internalSpringsCube.xml" InternalSprings__name="InternalSprings2" />
+        </Node>
+        <Node name="M3">
+            <MeshGmshLoader filename="mesh/smCube27.msh" name="loader" />
+            <MechanicalObject src="@loader" dz="21" />
+            <UniformMass mass="0.1" />
+            <include href="Objects/internalSpringsCube.xml" InternalSprings__name="InternalSprings3" />
+        </Node>
+        <Node name="M4">
+            <MeshGmshLoader filename="mesh/smCube27.msh" name="loader" />
+            <MechanicalObject src="@loader" dz="31.5" />
+            <UniformMass mass="0.1" />
+            <include href="Objects/internalSpringsCube.xml" InternalSprings__name="InternalSprings4" />
+        </Node>
+        <Node name="M5">
+            <MeshGmshLoader filename="mesh/smCube27.msh" name="loader" />
+            <MechanicalObject src="@loader" dz="42" />
+            <UniformMass mass="0.1" />
+            <include href="Objects/internalSpringsCube.xml" InternalSprings__name="InternalSprings5" />
+        </Node>
+        <include href="Objects/externalSpringsCube.xml" ExternalSprings__name="ExternalSprings1" object1="M1" object2="M2" />
+        <include href="Objects/externalSpringsCube.xml" ExternalSprings__name="ExternalSprings2" object1="M2" object2="M3" />
+        <include href="Objects/externalSpringsCube.xml" ExternalSprings__name="ExternalSprings3" object1="M3" object2="M4" />
+        <include href="Objects/externalSpringsCube.xml" ExternalSprings__name="ExternalSprings4" object1="M4" object2="M5" />
+    </Node>
+</Node>

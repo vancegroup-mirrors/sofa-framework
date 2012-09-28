@@ -1,0 +1,19 @@
+<Node name="Group"> 
+  <QuadSetTopologyContainer  name="Container" src="@" tags=" " />
+  <QuadSetTopologyModifier   name="Modifier" />
+  <QuadSetTopologyAlgorithms name="TopoAlgo"  template="Vec3d" />
+  <QuadSetGeometryAlgorithms name="GeomAlgo"  template="Vec3d" />
+</Node>
+<!-- 
+     Template List 
+       - Vec3d
+       - Vec2d
+       - Vec1d
+
+       - Vec3f
+       - Vec2f
+       - Vec1f
+
+     Example of use:
+     <include href="Objects/QuadSetTopology.xml" template="Vec1d" />
+-->

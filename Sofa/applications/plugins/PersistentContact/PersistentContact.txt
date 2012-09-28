@@ -1,0 +1,20 @@
+
+*************************************
+*      PersistentContact.txt        *
+*************************************
+
+
+
+AUTHOR :
+ - Pierre-Jean Bensoussan
+ - Christian Duriez
+
+
+
+
+LICENCE :
+ - None
+
+
+
+OTHER COMMENTS :

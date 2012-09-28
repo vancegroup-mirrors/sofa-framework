@@ -1,0 +1,5 @@
+<Node name="root" gravity="0 -9.81 0" dt="0.01">
+    <VisualStyle displayFlags="showBehavior" />
+    <MeshVTKLoader name="vtkloader" filename="mesh/Armadillo_Tetra_4406.vtu" />
+    <OglModel name="bunny" src="@vtkloader" />
+</Node>

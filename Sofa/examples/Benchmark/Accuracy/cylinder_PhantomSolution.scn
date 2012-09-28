@@ -1,0 +1,25 @@
+<!-- SOFA - Validation environment -->
+<!-- Cylindrical beam under gravity : phantom experiment -->
+<!-- Date : 07/24/08 -->
+
+
+<Node name="root" dt="1" showBehaviorModels="1" showCollisionModels="0" showMappings="0" showForceFields="1">
+	<Gravity name="G" gravity="0 -9.81 0" />
+	<Node name="Cylinder Reference">
+            <Node name="Visual">
+               <OglModel filename="mesh/truthCylinder-Deformed.obj" color="0.5 0.5 0.5 0.5" scale="1.0" />
+            </Node>
+            <Node name="EndPoint">
+                <MechanicalObject position="0.0 -0.119383 0.126842" />
+                <FixedConstraint indices="0" />
+            </Node>
+            <Node name="Surface">
+            	<MeshObjLoader  filename="mesh/truthCylinder-Deformed.obj"  name="loader"/>
+                <Mesh src="@loader" />
+                <MechanicalObject src="@loader" scale="1.0" />
+                <Triangle />
+                <Line />
+                <Point />
+            </Node>
+        </Node>
+</Node>

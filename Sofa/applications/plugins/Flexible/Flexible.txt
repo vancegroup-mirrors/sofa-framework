@@ -1,0 +1,20 @@
+
+************************************
+*         Flexible.txt        *
+************************************
+
+
+
+AUTHOR :
+ - Francois Faure
+ - Benjamin Gilles
+ - Matthieu Nesme
+ - Maxime Tournier
+
+
+LICENCE :
+ - None
+
+
+
+OTHER COMMENTS :

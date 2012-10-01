@@ -40,23 +40,38 @@ CMakeFiles/*
 CMakeCache.txt
 sofaDefines.cfg
 
-Makefile
-applications/Makefile
-applications/plugins/Makefile
+# let's use wildcards, shall we ?
+Makefile*
+*.o
+moc_*.cpp
+*~
+/share/config/sofaplugins_release.ini
+/share/config/sofaplugins_debug.ini
+/share/config/lastUsedGUI.ini
+
+/applications/plugins/EmptyPlugin/
+/applications-dev/
+
+# anything user-specific (as opposed to repository-specific) should go
+# to .git/info/exclude instead of .gitignore. Also, .gitignore files
+# can be placed in sub-directories to avoid polluting the root one.
+
+# the following needs to be cleaned up:
+
 applications/plugins/PluginExample/Makefile
 applications/plugins/PluginExample/OBJ/
 applications/plugins/PluginExample/moc_CustomDataUnsignedWidget.cpp
 applications/plugins/PluginExample/moc_MyDataWidgetUnsigned.cpp
 applications/plugins/QtOgreViewer/QtOgreViewer.pro.orig
-applications/projects/GenerateRigid/Makefile
+#applications/projects/GenerateRigid/Makefile
 applications/projects/GenerateRigid/OBJ/
 applications/projects/Makefile
-applications/projects/Modeler/Makefile
-applications/projects/Modeler/exec/Makefile
+#applications/projects/Modeler/Makefile
+#applications/projects/Modeler/exec/Makefile
 applications/projects/Modeler/exec/OBJ/
 applications/projects/Modeler/lib/DialogAddPreset.cpp
 applications/projects/Modeler/lib/DialogAddPreset.h
-applications/projects/Modeler/lib/Makefile
+#applications/projects/Modeler/lib/Makefile
 applications/projects/Modeler/lib/Modeler.cpp
 applications/projects/Modeler/lib/Modeler.h
 applications/projects/Modeler/lib/OBJ/
@@ -210,14 +225,4 @@ share/config/Sofa.ini
 share/config/Ogre.log
 share/config/plugins.cfg
 Sofa.pro.user
-
-# let's try using wildcards shall we ?
-Makefile*
-*.o
-moc_*.cpp
-*~
-/share/config/sofaplugins_release.ini
-/share/config/sofaplugins_debug.ini
-/share/config/lastUsedGUI.ini
-/applications/plugins/EmptyPlugin/
 

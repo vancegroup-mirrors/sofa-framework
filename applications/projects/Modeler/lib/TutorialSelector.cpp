@@ -26,11 +26,6 @@
 #include "TutorialSelector.h"
 #include "iconnode.xpm"
 
-#include <tinyxml.cpp>
-#include <tinyxmlerror.cpp>
-#include <tinystr.cpp>
-#include <tinyxmlparser.cpp>
-
 #include <iostream>
 
 #include <sofa/helper/vector.h>

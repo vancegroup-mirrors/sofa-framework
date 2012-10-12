@@ -117,7 +117,7 @@ DEFINES += SOFA_HAVE_GLEW
 # BOOST_SUFFIX = -vc90-mt-1_46_1
 
 # Uncomment if you want Python scripting support in sofa
-# DEFINES += SOFA_HAVE_PYTHON
+DEFINES += SOFA_HAVE_PYTHON
 
 # Uncomment if you want to use EIGEN2 for Matrix Solvers
  DEFINES += SOFA_HAVE_EIGEN2
